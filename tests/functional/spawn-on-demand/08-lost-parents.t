@@ -18,8 +18,6 @@
 
 # Check a task gets auto-spawned after losing its parents.
 . "$(dirname "$0")/test_header"
-install_suite "${TEST_NAME_BASE}"
-
 set_test_number 2
 reftest
 exit

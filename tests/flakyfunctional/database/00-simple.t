@@ -17,17 +17,15 @@
 #-------------------------------------------------------------------------------
 # Suite database content, a basic non-cycling suite of 3 tasks
 . "$(dirname "$0")/test_header"
+if ! command -v 'sqlite3' >'/dev/null'; then
+    skip_all "sqlite3 not installed?"
+fi
 set_test_number 21
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
-
-if ! command -v 'sqlite3' >'/dev/null'; then
-    skip 7 "sqlite3 not installed?"
-    purge
-    exit 0
-fi
 
 DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
 
@@ -36,7 +34,7 @@ ORIG="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}"
 SORTED_ORIG="sorted-${NAME}"
 sqlite3 "${DB_FILE}" ".schema" | env LANG='C' sort >"${NAME}"
 env LANG='C' sort "${ORIG}" > "${SORTED_ORIG}"
-cmp_ok "${SORTED_ORIG}" "${NAME}"
+cmp_ok "${NAME}" "${SORTED_ORIG}"
 
 NAME='select-suite-params.out'
 sqlite3 "${DB_FILE}" \
@@ -44,12 +42,25 @@ sqlite3 "${DB_FILE}" \
     WHERE key != "uuid_str" AND key != "cycle_point_tz" ORDER BY key' \
     >"${NAME}"
 sed -i "s/$(cylc --version)/<SOME-VERSION>/g" "${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+cmp_ok "${NAME}" << __EOF__
+UTC_mode|0
+cylc_version|<SOME-VERSION>
+__EOF__
 
 NAME='select-task-events.out'
 sqlite3 "${DB_FILE}" 'SELECT name, cycle, event, message FROM task_events' \
     >"${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+cmp_ok "${NAME}" << __EOF__
+foo|1|submitted|
+foo|1|started|
+foo|1|succeeded|
+bar|1|submitted|
+bar|1|started|
+bar|1|succeeded|
+baz|1|submitted|
+baz|1|started|
+baz|1|succeeded|
+__EOF__
 
 NAME='select-task-jobs.out'
 sqlite3 "${DB_FILE}" \
@@ -87,12 +98,21 @@ cmp_ok "${NAME}" <'/dev/null'
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name' \
     >"${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+cmp_ok "${NAME}" << __EOF__
+bar|1|succeeded
+baz|1|succeeded
+foo|1|succeeded
+__EOF__
 
 NAME='select-inheritance.out'
 sqlite3 "${DB_FILE}" 'SELECT namespace, inheritance FROM inheritance ORDER BY namespace' \
     >"${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+cmp_ok "${NAME}" << __EOF__
+bar|["bar", "root"]
+baz|["baz", "root"]
+foo|["foo", "root"]
+root|["root"]
+__EOF__
 
 purge
 exit

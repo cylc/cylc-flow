@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
+from typing import Optional, Type
 
 import pytest
 from graphql import parse
@@ -34,8 +34,7 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
     'expected_variables,'
     'expected_error',
     [
-        # a simple query with the correct variables
-        (
+        pytest.param(
             '''
             query ($workflowID: ID) {
                 workflows (ids: [$workflowID]) {
@@ -49,10 +48,10 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
             {
                 'workflowID': 'cylc|workflow'
             },
-            None
+            None,
+            id="simple query with correct variables"
         ),
-        # a query with a fragment and with the correct variables
-        (
+        pytest.param(
             '''
             query ($workflowID: ID) {
                 ...WorkflowData
@@ -69,11 +68,10 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
             {
                 'workflowID': 'cylc|workflow'
             },
-            None
+            None,
+            id="query with a fragment and correct variables"
         ),
-        # a query with the right variable definition, but missing
-        # variable in the provided values
-        (
+        pytest.param(
             '''
             query ($workflowID: ID) {
                 workflows (ids: [$workflowID]) {
@@ -85,7 +83,9 @@ TASK_PROXY_PREREQS.prerequisites.append(PbPrerequisite(expression="foo"))
                 'workflowId': 'cylc|workflow'
             },
             None,
-            ValueError
+            ValueError,
+            id="correct variable definition, but missing variable in "
+               "provided values"
         )
     ]
 )
@@ -93,15 +93,15 @@ def test_query_variables(
         query: str,
         variables: dict,
         expected_variables: Optional[dict],
-        expected_error: Optional[Exception],
+        expected_error: Optional[Type[Exception]],
 ):
     """Test that query variables are parsed correctly.
 
     Args:
-        query (str): a valid GraphQL query (using our schema)
-        variables (dict): map with variable values for the query
-        expected_variables (dict): expected parsed variables
-        expected_error (Exception): expected error, if any
+        query: a valid GraphQL query (using our schema)
+        variables: map with variable values for the query
+        expected_variables: expected parsed variables
+        expected_error: expected error, if any
     """
     def test():
         """Inner function to avoid duplication in if/else"""

@@ -15,11 +15,15 @@
 [runtime]
     [[root]]
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+    [[picard, janeway]]
+        # Longer polling so that they finish before the first poll is done
+        submission polling intervals = PT10S
+        execution polling intervals = PT10S
     [[picard]]
         script = true
         [[[events]]]
             started handler = echo "THERE ARE FOUR LIGHTS"
     [[janeway]]
         script = false
-    [[[events]]]
+        [[[events]]]
             started handler = echo "THERE'S COFFEE IN THAT NEBULA"
