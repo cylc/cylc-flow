@@ -250,7 +250,7 @@ def _close_logs():
             pass
 
 
-def scheduler_cli(parser, options, args):
+def scheduler_cli(parser, options, reg):
     """Run the workflow.
 
     This function should contain all of the command line facing
@@ -261,7 +261,7 @@ def scheduler_cli(parser, options, args):
     functionality.
 
     """
-    reg = os.path.normpath(args[0])
+    reg = os.path.normpath(reg)
     try:
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
@@ -366,8 +366,6 @@ async def _run(parser, options, reg, scheduler):
 
 
 @cli_function(get_option_parser)
-def play(parser, options, *args):
+def play(parser, options, reg):
     """Implement cylc play."""
-    if not args:
-        _auto_install()
-    return scheduler_cli(parser, options, args)
+    return scheduler_cli(parser, options, reg)
