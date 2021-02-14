@@ -16,12 +16,9 @@
 
 """Cylc task queue."""
 
-from cylc.flow import LOG
-from collections import deque
-from typing import List, Set, Dict, Deque, Counter, Any
+from typing import List, Set, Dict, Counter, Any
 
 from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.task_state import TASK_STATUS_PREPARING
 
 
 class Limiter:
@@ -51,18 +48,13 @@ class Limiter:
 class TaskQueue:
     """Cylc task queue with multiple limit groups.
 
-    A single FIFO queue, but tasks whose release would violate any active task
-    limits are pushed back on in the same order they came off.
+    A single queue that is FIFO for not-limited tasks; others remain in place.
 
     1. "classic" queue (as for Cylc 7 and earlier):
-
-    Tasks cannot appear in multiple limit groups, so (for example) the
-    "default" group limits only tasks not assigned to any other limit group.
+     No overlap between limit groups; "default" retains only un-assigned tasks.
 
     2. "overlapping" queue:
-
-    The same task can appear in multiple limit groups. The "default" group
-    includes all tasks, so it provides a global limit.
+     Tasks can appear in multiple limit groups; "default" is a global limit.
 
     """
     Q_DEFAULT = "default"
@@ -73,7 +65,7 @@ class TaskQueue:
                  descendants: dict) -> None:
         """Configure the task queue."""
         self.queue_type = qconfig["type"]
-        self.task_deque: Deque = deque()
+        self.queue: List[TaskProxy] = []
         self.limiters: Dict[str, Limiter] = {}
 
         # Expand family names.
@@ -147,50 +139,33 @@ class TaskQueue:
         for name, config in queues.items():
             self.limiters[name] = Limiter(config["limit"], config["members"])
 
-    def add(self, itask: TaskProxy) -> None:
-        """Queue a task."""
-        LOG.debug(f"Queue add: {itask.identity}")
-        itask.state.reset(is_queued=True)
-        self.task_deque.appendleft(itask)
+    def push_tasks(self, itasks: List[TaskProxy]) -> None:
+        """Append tasks to back of queue."""
+        self.queue += itasks
 
-    def release(self, active: Counter[str]) -> List[TaskProxy]:
-        """Release queued tasks."""
+    def release_tasks(self, active: Counter[str]) -> List[TaskProxy]:
+        """Release tasks from front of queue if not limited."""
         released: List[TaskProxy] = []
-        rejects: List[TaskProxy] = []
-        while True:
-            try:
-                candidate = self.task_deque.pop()
-            except IndexError:
-                # queue empty
-                break
-            if (candidate.state.is_held or
-                any(limiter.is_limited(candidate, active)
+        for itask in list(self.queue):
+            if (itask.state.is_held or
+                any(limiter.is_limited(itask, active)
                     for name, limiter in self.limiters.items())):
                 # Task held, or limited by at least one limit group
-                rejects.append(candidate)
+                continue
             else:
+                released.append(itask)
                 # Not limited by any groups.
-                candidate.state.reset(TASK_STATUS_PREPARING)
-                candidate.state.reset(is_queued=False)
-                released.append(candidate)
-                active.update({candidate.tdef.name: 1})
-
-        # Re-queue rejected tasks, in the original order.
-        for itask in reversed(rejects):
-            self.task_deque.append(itask)
-        if released:
-            LOG.debug("Queue release:")
-            for r in released:
-                LOG.debug(f"  {r.identity}")
+                self.queue.remove(itask)
+                active.update({itask.tdef.name: 1})
         return released
 
-    def remove(self, itask: TaskProxy) -> None:
+    def remove_task(self, itask: TaskProxy) -> None:
         """Remove a task from the queue."""
         try:
-            self.task_deque.remove(itask)
+            self.queue.remove(itask)
         except ValueError:
             pass
 
-    def adopt_orphans(self, orphans: List[str]) -> None:
+    def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt orphaned tasks to the default group."""
         self.limiters[self.Q_DEFAULT].adopt(orphans)

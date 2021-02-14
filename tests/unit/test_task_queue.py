@@ -138,15 +138,16 @@ def test_queue_and_release(
     queue = TaskQueue(QCONFIG, ALL_TASK_NAMES, DESCENDANTS)
 
     # add newly ready tasks to the queue
+    queue_me = []
     for name in READY_TASK_NAMES:
         itask = Mock()
         itask.tdef.name = name
         itask.state.is_held = False
-        queue.add(itask)
-        itask.state.reset.assert_called_with(is_queued=True)
+        queue_me.append(itask)
+    queue.push_tasks(queue_me)
 
     # release tasks, given current active task counter
-    released = queue.release(active)
+    released = queue.release_tasks(active)
     assert [r.tdef.name for r in released] == expected_released
 
     # check released tasks change state to "preparing", and not is_queued
@@ -156,13 +157,12 @@ def test_queue_and_release(
 
     # check unreleased tasks pushed back in the correct order
     assert (
-        [r.tdef.name for r in reversed(queue.task_deque)] ==
-        expected_still_queued
+        [r.tdef.name for r in queue.queue] == expected_still_queued
     )
 
     # check that adopted orphans end up in the default queue
     orphans = ["orphan1", "orphan2"]
-    queue.adopt_orphans(orphans)
+    queue.adopt_tasks(orphans)
     for orphan in orphans:
         assert orphan in queue.limiters["default"].members
 

@@ -1211,16 +1211,8 @@ class Scheduler:
         ]
 
         if self.stop_mode is None and self.auto_restart_time is None:
-            self.pool.queue_tasks_if_ready()
-            released_tasks = self.pool.release_queued_tasks()
-            for itask in released_tasks:
-                itask.waiting_on_job_prep = True
-                # Status has changed to PREPARING
-                self.data_store_mgr.delta_task_state(itask)
-                self.data_store_mgr.delta_task_queued(itask)
-
             # Add newly released tasks to those still preparing.
-            self.pre_submit_tasks += released_tasks
+            self.pre_submit_tasks += self.pool.queue_and_release()
             if self.pre_submit_tasks:
                 self.is_updated = True
                 self.task_job_mgr.task_remote_mgr.rsync_includes = (

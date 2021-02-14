@@ -154,7 +154,7 @@ def testrender_node__cycle_point():
         # is-held modifier
         ('waiting', True, False, None, None, ['\u030E', '○']),
         # is-queued modifier
-        ('waiting', False, True, None, None, ['\u030A', '○'])
+        ('waiting', False, True, None, None, ['\u02ED', '○'])
     ]
 )
 def test_get_task_icon(

@@ -584,7 +584,7 @@ class TaskPool:
                 if not self.pool[itask.point]:
                     del self.pool[itask.point]
                 self.pool_changed = True
-                self.task_queue.remove(itask)
+                self.task_queue.remove_task(itask)
                 if itask.tdef.max_future_prereq_offset is not None:
                     self.set_max_future_offset()
         else:
@@ -649,8 +649,13 @@ class TaskPool:
             except KeyError:
                 pass
 
-    def queue_tasks_if_ready(self):
+    def queue_and_release(self):
+        self._queue_tasks()
+        return self._release_tasks()
+
+    def _queue_tasks(self):
         """Queue tasks that are ready to run."""
+        queue_me = []
         for itask in self.get_tasks():
             if itask.state.is_queued:
                 continue
@@ -661,23 +666,43 @@ class TaskPool:
                 self.data_store_mgr.delta_task_clock_trigger(
                     itask, ready_check_items)
             if all(ready_check_items):
-                self.task_queue.add(itask)
+                queue_me.append(itask)
+                itask.state.reset(is_queued=True)
                 # Reset manual trigger flag. One manual trigger queues and
                 # unqueued task, another one triggers a queued task.
                 itask.reset_manual_trigger()
                 self.data_store_mgr.delta_task_state(itask)
                 self.data_store_mgr.delta_task_queued(itask)
 
-    def release_queued_tasks(self):
+        self.task_queue.push_tasks(queue_me)
+        LOG.debug(
+            "Queue pushed:\n"
+            + '\n'.join(f"* {t.identity}" for t in queue_me)
+        )
+
+    def _release_tasks(self):
         """Return list of queue-released tasks for job prep."""
-        return self.task_queue.release(
-            Counter([
+        released = self.task_queue.release_tasks(
+            Counter(
+                [
                     t.tdef.name for t in self.get_tasks()
                     if t.state(TASK_STATUS_PREPARING,
                                TASK_STATUS_SUBMITTED,
                                TASK_STATUS_RUNNING)
-                    ])
+                ]
+            )
         )
+        for itask in released:
+            itask.state.reset(is_queued=False)
+            itask.state.reset(TASK_STATUS_PREPARING)
+            itask.waiting_on_job_prep = True
+            self.data_store_mgr.delta_task_state(itask)
+            self.data_store_mgr.delta_task_queued(itask)
+        LOG.debug(
+            "Queue released:\n"
+            + '\n'.join(f"* {r.identity}" for r in released)
+        )
+        return released
 
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
@@ -799,9 +824,8 @@ class TaskPool:
             self.config.get_task_name_list(),
             self.config.runtime['descendants']
         )
-        self.task_queue.adopt_orphans(self.orphans)
-
-        self.queue_tasks_if_ready()
+        self.task_queue.adopt_tasks(self.orphans)
+        self._queue_tasks()
 
         LOG.info("Reload completed.")
         self.do_reload = False
