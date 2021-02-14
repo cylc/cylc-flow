@@ -83,6 +83,11 @@ FLOW_FILES = {
     'log'
 }
 
+EXCLUDE_FILES = {
+    SuiteFiles.RUN_N,
+    SuiteFiles.Install.SOURCE
+}
+
 
 def dir_is_flow(listing):
     """Return True if a Path contains a flow at the top level.
@@ -169,7 +174,8 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
             elif depth < max_depth:
                 # we may have a nested flow, lets see...
                 for subdir in contents:
-                    if subdir.is_dir():
+                    if (subdir.is_dir()
+                            and subdir.stem not in EXCLUDE_FILES):
                         running.append(
                             asyncio.create_task(
                                 _scandir(subdir, depth + 1)
