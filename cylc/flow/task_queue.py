@@ -151,7 +151,6 @@ class TaskQueue:
         """Queue a task."""
         LOG.debug(f"Queue add: {itask.identity}")
         itask.state.reset(is_queued=True)
-        itask.reset_manual_trigger()
         self.task_deque.appendleft(itask)
 
     def release(self, active: Counter[str]) -> List[TaskProxy]:

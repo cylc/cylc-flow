@@ -144,7 +144,6 @@ def test_queue_and_release(
         itask.state.is_held = False
         queue.add(itask)
         itask.state.reset.assert_called_with(is_queued=True)
-        itask.reset_manual_trigger.assert_called()
 
     # release tasks, given current active task counter
     released = queue.release(active)

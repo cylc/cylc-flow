@@ -655,13 +655,16 @@ class TaskPool:
             if itask.state.is_queued:
                 continue
             ready_check_items = itask.is_ready()
-            # use this periodic checking point for data-store delta
+            # Use this periodic checking point for data-store delta
             # creation, some items aren't event driven (i.e. clock).
             if itask.tdef.clocktrigger_offset is not None:
                 self.data_store_mgr.delta_task_clock_trigger(
                     itask, ready_check_items)
             if all(ready_check_items):
                 self.task_queue.add(itask)
+                # Reset manual trigger flag. One manual trigger queues and
+                # unqueued task, another one triggers a queued task.
+                itask.reset_manual_trigger()
                 self.data_store_mgr.delta_task_state(itask)
                 self.data_store_mgr.delta_task_queued(itask)
 
