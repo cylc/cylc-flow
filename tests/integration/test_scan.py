@@ -31,16 +31,37 @@ from cylc.flow.suite_files import SuiteFiles
 
 SRV_DIR = Path(SuiteFiles.Service.DIRNAME)
 CONTACT = Path(SuiteFiles.Service.CONTACT)
+RUN_N = Path(SuiteFiles.RUN_N)
+INSTALL = Path(SuiteFiles.Install.DIRNAME)
 
 
 def init_flows(tmp_path, running=None, registered=None, un_registered=None):
-    """Create some dummy workflows for scan to discover."""
+    """Create some dummy workflows for scan to discover.
+
+    Assume "run1, run2, ..., runN" structure if flow name constains "run".
+    """
+    def make_registered(name, running=False):
+        run_d = Path(tmp_path, name)
+        run_d.mkdir(parents=True, exist_ok=True)
+        if "run" in name:
+            root = Path(tmp_path, name).parent
+            try:
+                (root / "runN").symlink_to(run_d, target_is_directory=True)
+            except FileExistsError:
+                # Already make the runN symink
+                pass
+        else:
+            root = run_d
+        (root / INSTALL).mkdir(parents=True, exist_ok=True)
+        srv_d = (run_d / SRV_DIR)
+        srv_d.mkdir(parents=True, exist_ok=True)
+        if running:
+            (srv_d / CONTACT).touch()
+
     for name in (running or []):
-        path = Path(tmp_path, name, SRV_DIR)
-        path.mkdir(parents=True, exist_ok=True)
-        (path / CONTACT).touch()
+        make_registered(name, running=True)
     for name in (registered or []):
-        Path(tmp_path, name, SRV_DIR).mkdir(parents=True, exist_ok=True)
+        make_registered(name)
     for name in (un_registered or []):
         Path(tmp_path, name).mkdir(parents=True, exist_ok=True)
 
@@ -51,8 +72,8 @@ def sample_run_dir():
     tmp_path.mkdir()
     init_flows(
         tmp_path,
-        running=('foo', 'bar/pub'),
-        registered=('baz',),
+        running=('foo', 'bar/pub', 'cheese/run2'),
+        registered=('baz', 'cheese/run1'),
         un_registered=('qux',)
     )
     yield tmp_path
@@ -140,6 +161,8 @@ async def test_scan(sample_run_dir):
     ) == [
         'bar/pub',
         'baz',
+        'cheese/run1',
+        'cheese/run2',
         'foo'
     ]
 
@@ -154,7 +177,9 @@ async def test_scan_with_files(sample_run_dir):
     ) == [
         'bar/pub',
         'baz',
-        'foo'
+        'cheese/run1',
+        'cheese/run2',
+        'foo',
     ]
 
 
