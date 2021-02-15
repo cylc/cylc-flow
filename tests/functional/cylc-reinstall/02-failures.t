@@ -41,7 +41,7 @@ run_ok "${TEST_NAME}-install" cylc install -C "${RND_SUITE_SOURCE}" --flow-name=
 rm -rf "${RND_SUITE_RUNDIR}"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_SUITE_NAME}" 
 contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: "${RND_SUITE_RUNDIR}" does not exist. Check path provided: "${RND_SUITE_NAME}"
+WorkflowFilesError: "${RND_SUITE_NAME}" is not an installed workflow.
 __ERR__
 purge_rnd_suite
 
@@ -49,11 +49,12 @@ purge_rnd_suite
 
 TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-dir"
 make_rnd_suite
-run_ok "${TEST_NAME}-install" cylc install -C "${RND_SUITE_SOURCE}" --flow-name="${RND_SUITE_NAME}" 
+run_ok "${TEST_NAME}-install" cylc install -C "${RND_SUITE_SOURCE}" --flow-name="${RND_SUITE_NAME}" --no-run-name
 rm -rf "${RND_SUITE_SOURCE}"
-run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_SUITE_NAME}/run1"  
+run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_SUITE_NAME}"  
 contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: "${RND_SUITE_SOURCE}" does not exist. Check path provided: "${RND_SUITE_NAME}/run1"
+WorkflowFilesError: Workflow source dir is not accessible: "${RND_SUITE_SOURCE}".
+Restore the source or modify the "${RND_SUITE_RUNDIR}/_cylc-install/source" symlink to continue.
 __ERR__
 purge_rnd_suite
 
@@ -93,8 +94,9 @@ run_ok "${TEST_NAME}-install" cylc install --no-run-name --flow-name="${RND_SUIT
 pushd "${RND_SUITE_RUNDIR}" || exit 1
 rm -rf "_cylc-install"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall
+CWD=$(pwd -P)
 contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: Cannot find an installed flow in \$PWD. Try again, stating the named run. E.g. cylc reinstall my-flow/run1
+WorkflowFilesError: "${CWD}" is not a workflow run directory.
 __ERR__
 popd || exit 1
 popd || exit 1
@@ -109,7 +111,7 @@ pushd "${RND_SUITE_RUNDIR}" || exit 1
 rm -rf "_cylc-install"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "$RND_SUITE_NAME"
 contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: Could not establish source directory. Check path provided: "$RND_SUITE_NAME"
+WorkflowFilesError: "${RND_SUITE_NAME}" was not installed with cylc install.
 __ERR__
 popd || exit 1
 popd || exit 1

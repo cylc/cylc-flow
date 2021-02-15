@@ -102,30 +102,31 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, opts, named_run=None):
     if not named_run:
-        source = get_workflow_source_dir(Path.cwd())
+        source, _ = get_workflow_source_dir(Path.cwd())
         if source is None:
-            raise WorkflowFilesError("Cannot find an installed flow in $PWD. "
-                                     "Try again, stating the named run. "
-                                     "E.g. cylc reinstall my-flow/run1")
+            raise WorkflowFilesError(
+                f'"{Path.cwd()}" is not a workflow run directory.')
         base_run_dir = Path(
             get_platform()['run directory'].replace('$HOME', '~')).expanduser()
         named_run = Path.cwd().relative_to(Path(base_run_dir).resolve())
     run_dir = Path(get_workflow_run_dir(named_run)).expanduser()
     if not run_dir.exists():
-        raise(WorkflowFilesError(f"\"{run_dir}\" does not exist. "
-                                 f"Check path provided: \"{named_run}\""))
+        raise WorkflowFilesError(
+            f'\"{named_run}\" is not an installed workflow.')
     if run_dir.name in [SuiteFiles.FLOW_FILE, SuiteFiles.SUITE_RC]:
         run_dir = run_dir.parent
         named_run = named_run.rsplit('/', 1)[0]
-    source = get_workflow_source_dir(run_dir)
+    source, source_path = get_workflow_source_dir(run_dir)
     if not source:
-        raise(WorkflowFilesError("Could not establish source directory. "
-                                 f"Check path provided: \"{named_run}\"")
-              )
+        raise WorkflowFilesError(
+            f'\"{named_run}\" was not installed with cylc install.')
     source = Path(source)
     if not source.exists():
-        raise(WorkflowFilesError(f"\"{source}\" does not exist. "
-                                 f"Check path provided: \"{named_run}\""))
+        raise WorkflowFilesError(
+            f'Workflow source dir is not accessible: \"{source}\".\n'
+            f'Restore the source or modify the \"{source_path}\"'
+            ' symlink to continue.'
+        )
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.pre_configure'
     ):

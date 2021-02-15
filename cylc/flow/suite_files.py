@@ -385,13 +385,14 @@ def get_workflow_source_dir(dir_):
         SuiteFiles.Install.SOURCE)
     try:
         source = os.readlink(source_path)
+        return source, source_path
     except OSError:
         try:
             source = os.readlink(alt_source_path)
-        except OSError:
-            source = None
+            return source, alt_source_path
 
-    return source
+        except OSError:
+            return None, None
 
 
 def get_suite_srv_dir(reg, suite_owner=None):

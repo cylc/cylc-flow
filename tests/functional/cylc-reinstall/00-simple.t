@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow re-installation
 . "$(dirname "$0")/test_header"
-set_test_number 44
+set_test_number 36
 
 # Test basic cylc reinstall, named run given 
 TEST_NAME="${TEST_NAME_BASE}-basic-named-run"

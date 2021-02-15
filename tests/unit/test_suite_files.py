@@ -639,9 +639,10 @@ def test_get_workflow_source_dir_numbered_run(tmp_path):
     run_dir.mkdir()
     source_dir = (tmp_path / "cylc-source" / "flow-name")
     source_dir.mkdir(parents=True)
-    assert get_workflow_source_dir(run_dir) is None
+    assert get_workflow_source_dir(run_dir) == (None, None)
     (cylc_install_dir / "source").symlink_to(source_dir)
-    assert get_workflow_source_dir(run_dir) == str(source_dir)
+    assert get_workflow_source_dir(run_dir) == (
+        str(source_dir), cylc_install_dir / "source")
 
 
 def test_get_workflow_source_dir_named_run(tmp_path):
@@ -655,7 +656,10 @@ def test_get_workflow_source_dir_named_run(tmp_path):
     source_dir = (tmp_path / "cylc-source" / "flow-name")
     source_dir.mkdir(parents=True)
     (cylc_install_dir / "source").symlink_to(source_dir)
-    assert get_workflow_source_dir(cylc_install_dir.parent) == str(source_dir)
+    assert get_workflow_source_dir(
+        cylc_install_dir.parent) == (
+        str(source_dir),
+        cylc_install_dir / "source")
 
 
 def test_reinstall_workflow(tmp_path, capsys):
