@@ -64,10 +64,9 @@ point, using the option --startcp=CYCLE_POINT. The initial cycle point is
 preserved, but the workflow does not start there and instead starts part-way
 through the graph (historically known as a "warm start").
 
-A "restart" continues the workflow from the earliest cycle point that was
-incomplete when shutdown occurred. Tasks recorded as submitted or running are
-polled at restart to determine what happened to them while the workflow was
-shut down."""
+A "restart" continues on from the most recent recorded state of the workflow.
+Tasks recorded as submitted or running are polled at restart to determine what
+happened to them while the workflow was shut down."""
 
 
 FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
@@ -265,9 +264,9 @@ def scheduler_cli(parser, options, reg):
     try:
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
-        LOG.debug(exc)
         # TODO: unpause
-        sys.exit("Workflow is already running")
+        print(f"Workflow is already running\n\n{exc}")
+        sys.exit(0)
 
     _check_srvd(reg)
 

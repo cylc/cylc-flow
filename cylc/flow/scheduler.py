@@ -172,6 +172,7 @@ class Scheduler:
     contact_data: Optional[dict] = None
 
     # run options
+    is_restart: Optional[bool] = None
     template_vars: Optional[dict] = None
     options: Optional[Values] = None
 
@@ -399,7 +400,7 @@ class Scheduler:
 
         self.is_restart = self.suite_db_mgr.restart_check()
         # Note: since cylc play replaced cylc run/restart, we wait until this
-        # point before creating the attr self.is_restart as we couldn't tell if
+        # point before setting self.is_restart as we couldn't tell if
         # we're restarting until now.
 
         self.process_cycle_point_opts()
