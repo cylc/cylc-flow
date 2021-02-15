@@ -28,7 +28,7 @@ create_test_global_config '
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 
 sqlite3 \
     "$RUN_DIR/${SUITE_NAME}/log/db" \

@@ -46,7 +46,7 @@ grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
 
 # Run the suite
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach \
+    cylc play --debug --no-detach \
     -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
 
 ## Check that the upgradeable config has been run on a sensible host.

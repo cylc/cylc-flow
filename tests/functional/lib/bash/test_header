@@ -129,6 +129,8 @@
 #         SSH to TARGET and return `hostname -f`.
 #     dump_std TEST_NAME
 #         Dump stdout and stderr of TEST_NAME to the test log dir.
+#     delete_db [SUITE_RUN_DIR]
+#         Delete private/public workflow databases for a cold start.
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -685,11 +687,11 @@ reftest() {
     run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
     if [[ -n "${REFTEST_OPTS:-}" ]]; then
         suite_run_ok "${TEST_NAME}-run" \
-            cylc run --reference-test --debug --no-detach \
+            cylc play --reference-test --debug --no-detach \
             "${REFTEST_OPTS}" "${SUITE_NAME}"
     else
         suite_run_ok "${TEST_NAME}-run" \
-            cylc run --reference-test --debug --no-detach \
+            cylc play --reference-test --debug --no-detach \
             "${SUITE_NAME}"
     fi
     # shellcheck disable=SC2119
@@ -898,6 +900,12 @@ _check_test_requirements () {
     if ! _get_test_platform "${REQUIRE_PLATFORM}"; then
         skip_all "requires $REQUIRE_PLATFORM"
     fi
+}
+
+delete_db() {
+    # Delete private/public workflow databases for a cold start
+    local SUITE_RUN_DIR="${1:-$SUITE_RUN_DIR}"
+    rm "${SUITE_RUN_DIR}/.service/db" "${SUITE_RUN_DIR}/log/db"
 }
 
 

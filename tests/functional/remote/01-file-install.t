@@ -27,7 +27,7 @@ install_suite "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME_BASE}-run1" cylc run "${SUITE_NAME}" \
+suite_run_ok "${TEST_NAME_BASE}-run1" cylc play "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 RRUND="cylc-run/${SUITE_NAME}"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
@@ -43,6 +43,7 @@ __OUT__
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 purge
+# -----------------------------------------------------------------------------
 
 install_suite "${TEST_NAME_BASE}"
 
@@ -50,7 +51,7 @@ export SECOND_RUN="dir1/, dir2/, file1, file2"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
     -s "SECOND_RUN='${SECOND_RUN}'"
-suite_run_ok "${TEST_NAME_BASE}-run2" cylc run "${SUITE_NAME}" \
+suite_run_ok "${TEST_NAME_BASE}-run2" cylc play "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" \
     -s "SECOND_RUN='${SECOND_RUN}'"
 poll_grep_suite_log 'Holding all waiting or queued tasks now'
@@ -69,6 +70,7 @@ __OUT__
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
 purge
+# -----------------------------------------------------------------------------
 
 # Test file install completes before dependent tasks are executed
 create_test_global_config "" "
@@ -115,6 +117,7 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
+
 purge
 exit

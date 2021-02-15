@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -26,12 +26,12 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-run-hold
-suite_run_ok "${TEST_NAME}" cylc run --warm "${SUITE_NAME}" 20130101T12 --hold
+suite_run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}" --startcp=20130101T12 --hold
 #-------------------------------------------------------------------------------
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-run-hold-restart
-suite_run_ok "${TEST_NAME}" cylc restart "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}"
 # Ensure suite has started
 poll_suite_running
 #-------------------------------------------------------------------------------

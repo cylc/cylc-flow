@@ -47,7 +47,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
 b'retry: 1/t1/01'

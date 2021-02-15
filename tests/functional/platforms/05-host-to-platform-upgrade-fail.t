@@ -40,7 +40,7 @@ grep_ok "\[not_upgradable_cylc7_settings\]\[remote\]host = parasite"\
 
 # Run the suite
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach \
+    cylc play --debug --no-detach \
     -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
 
 # Check that the suite failed because no matching platform could be found.

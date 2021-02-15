@@ -20,9 +20,9 @@
 set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --no-detach "${SUITE_NAME}"
+    cylc play --no-detach "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-check" \
     test -e "${SUITE_RUN_DIR}/work/2/pub/log-duplication"
 run_fail "${TEST_NAME_BASE}-check" \

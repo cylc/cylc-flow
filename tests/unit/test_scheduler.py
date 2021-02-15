@@ -15,12 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for Cylc scheduler server."""
 
+import logging
 import pytest
-
 from types import SimpleNamespace
-from unittest.mock import patch, create_autospec
+from typing import Any, Dict, List, Optional
+from unittest.mock import create_autospec, Mock, patch
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.scheduler import Scheduler
+
+Fixture = Any
 
 
 @pytest.mark.parametrize(
@@ -29,7 +33,7 @@ from cylc.flow.scheduler import Scheduler
         (
             {
                 'self.is_restart': True,
-                'self.options.ignore_stopcp': True,
+                'self.options.stopcp': 'ignore',
             },
             '2000'
         ),
@@ -72,7 +76,6 @@ def test_process_cylc_stop_point(get_point, options, expected):
     get_point.return_value = None
     inputs = {
         'self.is_restart': False,
-        'self.options.ignore_stopcp': False,
         'self.options.stopcp': '1990',
         'self.pool.stop_point': '1991',
         'self.config.final_point': '2000',
@@ -91,7 +94,6 @@ def test_process_cylc_stop_point(get_point, options, expected):
     scheduler.is_restart = inputs['self.is_restart']
     # Set-up a fake options object.
     scheduler.options = SimpleNamespace(
-        ignore_stopcp=inputs['self.options.ignore_stopcp'],
         stopcp=inputs['self.options.stopcp']
     )
     # Set-up fake config object
@@ -107,3 +109,55 @@ def test_process_cylc_stop_point(get_point, options, expected):
 
     scheduler.process_cylc_stop_point(scheduler)
     assert scheduler.options.stopcp == expected
+
+
+@pytest.mark.parametrize(
+    'opts, is_restart, expected_set_opts, expected_warnings',
+    [
+        pytest.param(
+            {}, False, {}, [], id="No opts"
+        ),
+        pytest.param(
+            {'icp': 'ignore'}, True, {'icp': 'ignore'}, [],
+            id="opt=ignore on restart"
+        ),
+        pytest.param(
+            {'icp': 3, 'startcp': 5}, True, {'icp': None, 'startcp': None},
+            [("Ignoring option: --icp=3. The only valid "
+              "value for a restart is 'ignore'."),
+             ("Ignoring option: --startcp=5. The only valid "
+              "value for a restart is 'ignore'.")],
+            id="icp & startcp on restart"
+        ),
+        pytest.param(
+            {'icp': 'ignore'}, False, {'icp': None},
+            [("Ignoring option: --icp=ignore. The value cannot be 'ignore' "
+              "unless restarting the workflow.")],
+            id="opt=ignore on first start"
+        ),
+        pytest.param(
+            {'icp': '22', 'stopcp': 'ignore'}, False,
+            {'icp': '22', 'stopcp': None},
+            [("Ignoring option: --stopcp=ignore. The value cannot be 'ignore' "
+              "unless restarting the workflow.")],
+            id="mixed opts on first start"
+        )
+    ]
+)
+def test_process_cycle_point_opts(
+        opts: Dict[str, Optional[str]],
+        is_restart: bool,
+        expected_set_opts: Dict[str, Optional[str]],
+        expected_warnings: List[str],
+        caplog: Fixture):
+    """Test Scheduler.process_cycle_point_opts()"""
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    mocked_scheduler = Mock()
+    mocked_scheduler.options = Mock(spec=[], **opts)
+    mocked_scheduler.is_restart = is_restart
+
+    Scheduler.process_cycle_point_opts(mocked_scheduler)
+    for opt, value in expected_set_opts.items():
+        assert getattr(mocked_scheduler.options, opt) == value
+    actual_warnings: List[str] = [rec.message for rec in caplog.records]
+    assert sorted(actual_warnings) == sorted(expected_warnings)

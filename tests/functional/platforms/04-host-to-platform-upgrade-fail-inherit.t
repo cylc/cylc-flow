@@ -35,7 +35,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 
 # Run the suite
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 
 # Grep for inherit-fail to fail later at submit time
 grep_ok "SuiteConfigError:.*non-valid-child.1" \

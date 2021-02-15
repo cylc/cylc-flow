@@ -14,27 +14,30 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Run a workflow with ``cylc run --host=somewhere-else``
-export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
+
+# Ensure that the Scheduler is able to run in profile mode without falling
+# over. It should produce a profile file at the end.
+
 . "$(dirname "$0")/test_header"
-set_test_number 2
 
-# shellcheck disable=SC2016
-init_suite "${TEST_NAME_BASE}" <<< '
-# A total non-entity workflow - just something to run.
+set_test_number 4
+
+init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
-    initial cycle point = 2020
+    initial cycle point = 1
+    cycling mode = integer
     [[graph]]
-        R1 = Aleph
+        R1 = a
+__FLOW_CONFIG__
 
-[runtime]
-    [[Aleph]]
-'
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate "${SUITE_NAME}" --profile
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
+exists_ok 'profile.prof'
 
-grep_ok "Suite server:.*${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/suite/log"
+run_ok "${TEST_NAME_BASE}-run" \
+    cylc play "${SUITE_NAME}" --profile --no-detach
+
+exists_ok "${RUN_DIR}/${SUITE_NAME}/log/suite/profile.prof"
 
 purge
-exit

@@ -25,7 +25,7 @@ install_suite
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "$SUITE_NAME"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --reference-test --no-detach "$SUITE_NAME"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --reference-test --no-detach "$SUITE_NAME"
 
 # Check 'started' event handlers ran
 PICARD_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/picard/01/job-activity.log"

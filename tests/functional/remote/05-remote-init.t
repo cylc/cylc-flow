@@ -34,12 +34,13 @@ create_test_global_config "" "
     "
 
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
+install_suite
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
+
 NAME='select-task-jobs.out'
 DB_FILE="${SUITE_RUN_DIR}/log/db"
 sqlite3 "${DB_FILE}" \
@@ -55,9 +56,10 @@ g|0|0|localhost
 __SELECT__
 
 grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
-    "${TEST_NAME_BASE}-run.stderr" 
+    "${TEST_NAME_BASE}-run.stderr"
 grep_ok "* b.1 (submit-failed)
 	* a.1 (submit-failed)" \
-    "${TEST_NAME_BASE}-run.stderr" 
+    "${TEST_NAME_BASE}-run.stderr"
+
 purge
 exit

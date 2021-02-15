@@ -172,7 +172,7 @@ class Scheduler:
     contact_data: Optional[dict] = None
 
     # run options
-    is_restart: bool = False
+    is_restart: Optional[bool] = None
     template_vars: Optional[dict] = None
     options: Optional[Values] = None
 
@@ -245,7 +245,7 @@ class Scheduler:
     time_next_kill: Optional[float] = None
     already_timed_out: bool = False
 
-    def __init__(self, reg, options, is_restart=False):
+    def __init__(self, reg, options):
         # flow information
         self.suite = reg
         self.owner = get_user()
@@ -253,7 +253,6 @@ class Scheduler:
         self.id = f'{self.owner}{ID_DELIM}{self.suite}'
         self.uuid_str = SchedulerUUID()
         self.options = options
-        self.is_restart = is_restart
         self.template_vars = load_template_vars(
             self.options.templatevars,
             self.options.templatevars_file
@@ -398,14 +397,24 @@ class Scheduler:
 
         """
         self.profiler.log_memory("scheduler.py: start configure")
+
+        self.is_restart = self.suite_db_mgr.restart_check()
+        # Note: since cylc play replaced cylc run/restart, we wait until this
+        # point before setting self.is_restart as we couldn't tell if
+        # we're restarting until now.
+
+        self.process_cycle_point_opts()
+
         if self.is_restart:
-            self.suite_db_mgr.on_restart()
-            # This logic handles lack of initial cycle point in "flow.cylc".
-            # Things that can't change on suite reload.
             pri_dao = self.suite_db_mgr.get_pri_dao()
-            pri_dao.select_suite_params(self._load_suite_params)
-            pri_dao.select_suite_template_vars(self._load_template_vars)
-            pri_dao.execute_queued_items()
+            try:
+                # This logic handles lack of initial cycle point in flow.cylc
+                # Things that can't change on workflow reload.
+                pri_dao.select_suite_params(self._load_suite_params)
+                pri_dao.select_suite_template_vars(self._load_template_vars)
+                pri_dao.execute_queued_items()
+            finally:
+                pri_dao.close()
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         self.load_flow_file()
@@ -627,10 +636,8 @@ class Scheduler:
 
         """
         if self.config.start_point is not None:
-            if self.options.warm:
-                LOG.info('Warm Start %s' % self.config.start_point)
-            else:
-                LOG.info('Cold Start %s' % self.config.start_point)
+            start_type = "Warm" if self.options.startcp else "Cold"
+            LOG.info(f"{start_type} Start {self.config.start_point}")
 
         task_list = self.config.get_task_name_list()
 
@@ -1096,33 +1103,33 @@ class Scheduler:
             LOG.info('LOADING suite parameters')
         key, value = row
         if key in self.suite_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.ignore_icp:
-                LOG.debug('- initial point = %s (ignored)' % value)
+            if self.is_restart and self.options.icp == 'ignore':
+                LOG.debug(f"- initial point = {value} (ignored)")
             elif self.options.icp is None:
                 self.options.icp = value
-                LOG.info('+ initial point = %s' % value)
+                LOG.info(f"+ initial point = {value}")
         elif key in self.suite_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.ignore_startcp:
-                LOG.debug('- start point = %s (ignored)' % value)
+            if self.is_restart and self.options.startcp == 'ignore':
+                LOG.debug(f"- start point = {value} (ignored)")
             elif self.options.startcp is None:
                 self.options.startcp = value
-                LOG.info('+ start point = %s' % value)
+                LOG.info(f"+ start point = {value}")
         elif key in self.suite_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.ignore_fcp:
-                LOG.debug('- override final point = %s (ignored)' % value)
+            if self.is_restart and self.options.fcp == 'ignore':
+                LOG.debug(f"- override final point = {value} (ignored)")
             elif self.options.fcp is None:
                 self.options.fcp = value
-                LOG.info('+ override final point = %s' % value)
+                LOG.info(f"+ override final point = {value}")
         elif key == self.suite_db_mgr.KEY_STOP_CYCLE_POINT:
-            if self.is_restart and self.options.ignore_stopcp:
-                LOG.debug('- stop point = %s (ignored)' % value)
+            if self.is_restart and self.options.stopcp == 'ignore':
+                LOG.debug(f"- stop point = {value} (ignored)")
             elif self.options.stopcp is None:
                 self.options.stopcp = value
-                LOG.info('+ stop point = %s' % value)
+                LOG.info(f"+ stop point = {value}")
         elif key == self.suite_db_mgr.KEY_RUN_MODE:
             if self.options.run_mode is None:
                 self.options.run_mode = value
-                LOG.info('+ run mode = %s' % value)
+                LOG.info(f"+ run mode = {value}")
         elif key == self.suite_db_mgr.KEY_UUID_STR:
             self.uuid_str.value = value
             LOG.info('+ suite UUID = %s', value)
@@ -1150,10 +1157,10 @@ class Scheduler:
         elif key == self.suite_db_mgr.KEY_UTC_MODE:
             value = bool(int(value))
             self.options.utc_mode = value
-            LOG.info('+ UTC mode = %s' % value)
+            LOG.info(f"+ UTC mode = {value}")
         elif key == self.suite_db_mgr.KEY_CYCLE_POINT_TIME_ZONE:
             self.options.cycle_point_tz = value
-            LOG.info('+ cycle point time zone = %s' % value)
+            LOG.info(f"+ cycle point time zone = {value}")
 
     def _load_template_vars(self, _, row):
         """Load suite start up template variables."""
@@ -1322,38 +1329,33 @@ class Scheduler:
 
     def suite_auto_restart(self, max_retries=3):
         """Attempt to restart the suite assuming it has already stopped."""
+        cmd = ['cylc', 'play', quote(self.suite)]
         if self.options.abort_if_any_task_fails:
-            cmd = [
-                'cylc',
-                'restart',
-                '--abort-if-any-task-fails',
-                quote(self.suite)
-            ]
-        else:
-            cmd = ['cylc', 'restart', quote(self.suite)]
+            cmd.append('--abort-if-any-task-fails')
 
         for attempt_no in range(max_retries):
             new_host = select_suite_host(cached=False)[0]
-            LOG.info('Attempting to restart on "%s"', new_host)
+            LOG.info(f'Attempting to restart on "{new_host}"')
 
             # proc will start with current env (incl CYLC_HOME etc)
             proc = Popen(
-                cmd + ['--host=%s' % new_host],
+                [*cmd, f'--host={new_host}'],
                 stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
             if proc.wait():
                 msg = 'Could not restart suite'
                 if attempt_no < max_retries:
-                    msg += (' will retry in %ss'
-                            % self.INTERVAL_AUTO_RESTART_ERROR)
-                LOG.critical(msg + '. Restart error:\n%s',
-                             proc.communicate()[1].decode())
+                    msg += (
+                        f' will retry in {self.INTERVAL_AUTO_RESTART_ERROR}s')
+                LOG.critical(
+                    f"{msg}. Restart error:\n",
+                    f"{proc.communicate()[1].decode()}")
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
-                LOG.info('Suite now running on "%s".', new_host)
+                LOG.info(f'Suite now running on "{new_host}".')
                 return True
         LOG.critical(
-            'Suite unable to automatically restart after %s tries - '
-            'manual restart required.', max_retries)
+            'Suite unable to automatically restart after '
+            f'{max_retries} tries - manual restart required.')
         return False
 
     def update_profiler_logs(self, tinit):
@@ -1774,18 +1776,41 @@ class Scheduler:
         return self.suite_event_handler.get_events_conf(
             self.config, key, default)
 
+    def process_cycle_point_opts(self) -> None:
+        """Check the values of --icp, --fcp, --startcp, --stopcp.
+
+        Reset the values to None if necessary:
+        * The value 'ignore' is not used in a first start.
+        * The opts --icp and --startcp cannot be used in a restart.
+        """
+        if self.is_restart:
+            for opt in ('icp', 'startcp'):
+                val = getattr(self.options, opt, None)
+                if val not in (None, 'ignore'):
+                    LOG.warning(
+                        f"Ignoring option: --{opt}={val}. The only valid "
+                        "value for a restart is 'ignore'.")
+                    setattr(self.options, opt, None)
+        else:
+            for opt in ('icp', 'fcp', 'startcp', 'stopcp'):
+                if getattr(self.options, opt, None) == 'ignore':
+                    LOG.warning(
+                        f"Ignoring option: --{opt}=ignore. The value cannot "
+                        "be 'ignore' unless restarting the workflow.")
+                    setattr(self.options, opt, None)
+
     def process_cylc_stop_point(self):
         """
         Set stop point.
 
-        In priority order stop cyclepoint (``stopcp``) is set:
-        * From the final point ff ``cylc restart --ignore-stop-cycle-point``.
-        * From the command line (``cylc <run/restart> --stop-point``).
+        In decreasing priority, stop cycle point (``stopcp``) is set:
+        * From the final point for ``cylc play --stopcp=ignore``.
+        * From the command line (``cylc play --stopcp=XYZ``).
         * From the database.
-        * From the flow.cylc file (``[scheduler]stop after cycle point``).
+        * From the flow.cylc file (``[scheduling]stop after cycle point``).
         """
         stoppoint = None
-        if self.is_restart and self.options.ignore_stopcp:
+        if self.is_restart and self.options.stopcp == 'ignore':
             stoppoint = self.config.final_point
         elif self.options.stopcp:
             stoppoint = self.options.stopcp

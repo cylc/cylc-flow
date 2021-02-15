@@ -35,7 +35,7 @@ SYM_SUITE_NAME="${SUITE_NAME}-sym"
 ln -s "$(basename "${SUITE_NAME}")" "${SYM_SUITE_RUND}"
 # shellcheck disable=SC2086
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --no-detach --abort-if-any-task-fails ${OPT_SET} "${SYM_SUITE_NAME}"
+    cylc play --no-detach --abort-if-any-task-fails ${OPT_SET} "${SYM_SUITE_NAME}"
 # Possible failure modes:
 # - health check detects missing run directory
 # - DB housekeeping cannot access DB because run directory missing

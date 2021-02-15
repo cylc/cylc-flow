@@ -50,7 +50,7 @@ create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 "
 
-run_ok "${TEST_NAME}-suite-start" cylc run "${SUITE_NAME}" --host=localhost
+run_ok "${TEST_NAME}-suite-start" cylc play "${SUITE_NAME}" --host=localhost
 cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 

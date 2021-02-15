@@ -43,7 +43,7 @@ create_test_global_config '' '
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 FILES="$(ls "${HOME}/cylc-run/${SUITE_NAME}/log/suite/log."*)"
 run_ok "${TEST_NAME_BASE}-n-logs" test 8 -eq "$(wc -l <<<"${FILES}")"
 for FILE in ${FILES}; do

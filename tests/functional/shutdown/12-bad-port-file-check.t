@@ -35,7 +35,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --no-detach --abort-if-any-task-fails ${OPT_SET} "${SUITE_NAME}"
+    cylc play --no-detach --abort-if-any-task-fails ${OPT_SET} "${SUITE_NAME}"
 SRVD="$RUN_DIR/${SUITE_NAME}/.service"
 LOGD="$RUN_DIR/${SUITE_NAME}/log"
 grep_ok \

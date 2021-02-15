@@ -43,7 +43,7 @@ __FLOW_CONFIG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 
 cylc cat-log "${SUITE_NAME}" \
     | sed -n -e 's/^.*\(\[(('"'"'event-handler-00'"'"'.*$\)/\1/p' >'log'

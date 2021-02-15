@@ -37,7 +37,7 @@ fi
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 # ssh security warnings may appear between outputs => check separately too.
 sed -n 's/^.*\(\[jobs-poll err\]\) \(Connection refused\).*$/\1\n\2/p;
         s/^.*\(\[jobs-poll err\]\).*$/\1/p;

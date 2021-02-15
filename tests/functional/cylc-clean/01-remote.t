@@ -53,7 +53,7 @@ FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "$SUITE_NAME"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "$SUITE_NAME"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "$SUITE_NAME"
 poll_suite_stopped
 
 # Create a fake sibling workflow dir:

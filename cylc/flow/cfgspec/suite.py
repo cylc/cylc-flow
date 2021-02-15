@@ -44,7 +44,7 @@ with Conf(
         .. note::
 
            Prior to Cylc 8, this was named ``suite.rc``, but that
-           name is now deprecated. The ``cylc run`` command will automatically
+           name is now deprecated. The ``cylc play`` command will automatically
            symlink an existing ``suite.rc`` file to ``flow.cylc``.
     '''
 ) as SPEC:

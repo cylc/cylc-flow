@@ -39,7 +39,7 @@ $SCP "${PWD}/bin/my-tailer.sh" \
 "
 #-------------------------------------------------------------------------------
 # Run detached.
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 poll_grep_suite_log -F '[foo.1] status=submitted'
 # cylc cat-log -m 't' tail-follows a file, so needs to be killed.

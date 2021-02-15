@@ -27,7 +27,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-ps
 for DIR in "${SUITE_RUN_DIR}"/work/*/t*; do

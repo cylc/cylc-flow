@@ -35,13 +35,13 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --no-detach --stop-point=2019 --mode=simulation --abort-if-any-task-fails "${SUITE_NAME}"
+    cylc play --no-detach --stopcp=2019 --mode=simulation --abort-if-any-task-fails "${SUITE_NAME}"
 # Force a waiting task into a running task
 sqlite3 "${HOME}/cylc-run/${SUITE_NAME}/.service/db" \
     'UPDATE task_states SET status="running" WHERE name=="t1" AND cycle=="2019"'
 sqlite3 "${HOME}/cylc-run/${SUITE_NAME}/.service/db" \
     'UPDATE task_pool SET status="running" WHERE name=="t1" AND cycle=="2019"'
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart --debug --no-detach --until=2020 --mode=simulation --abort-if-any-task-fails "${SUITE_NAME}"
+    cylc play --debug --no-detach --fcp=2020 --mode=simulation --abort-if-any-task-fails "${SUITE_NAME}"
 purge
 exit

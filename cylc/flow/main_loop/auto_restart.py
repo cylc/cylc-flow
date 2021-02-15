@@ -199,7 +199,7 @@ def _set_auto_restart(
             'host is unable to continue running it.\n'
             'When another suite host becomes available '
             'the suite can be restarted by:\n'
-            '    $ cylc restart %s', scheduler.suite)
+            f'    $ cylc play {scheduler.suite}')
         if scheduler.auto_restart_time:
             LOG.info('Scheduled automatic restart canceled')
         scheduler.auto_restart_time = time()

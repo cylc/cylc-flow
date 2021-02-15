@@ -24,7 +24,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc run --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --no-detach --reference-test "${SUITE_NAME}"
 
 # Make sure t1.1.1's status file is in place
 T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"

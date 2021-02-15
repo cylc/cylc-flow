@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -30,7 +30,7 @@ run_ok "${TEST_NAME}" cylc validate \
     --set="TEST_OUTPUT_PATH='${TEST_SHOW_OUTPUT_PATH}'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --reference-test --debug --no-detach \
+suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
     --set="TEST_OUTPUT_PATH='${TEST_SHOW_OUTPUT_PATH}'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show"
@@ -70,8 +70,8 @@ TEST_NAME="${TEST_NAME_BASE}-show-json"
 cmp_json "${TEST_NAME}-suite" "${TEST_NAME}-suite" <<'__SHOW_OUTPUT__'
 {
     "title": "a test suite",
-    "description": "the quick brown fox", 
-    "URL": "", 
+    "description": "the quick brown fox",
+    "URL": "",
     "custom": "custard"
 }
 __SHOW_OUTPUT__
@@ -79,9 +79,9 @@ __SHOW_OUTPUT__
 cmp_json "${TEST_NAME}-task" "${TEST_NAME}-task" <<'__SHOW_OUTPUT__'
 {
     "foo": {
-        "title": "a task", 
-        "description": "jumped over the lazy dog", 
-        "URL": "", 
+        "title": "a task",
+        "description": "jumped over the lazy dog",
+        "URL": "",
         "baz": "pub"
     }
 }

@@ -38,7 +38,7 @@ grep_ok 'WARNING - The event handler template variable "%(batch_sys_job_id)s" is
 grep_ok 'WARNING - The event handler template variable "%(batch_sys_name)s" is deprecated - use "%(job_runner_name)s" instead' \
     "${TEST_NAME_BASE}-validate.stderr" -F
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
 poll_suite_stopped
 
 FOO_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"

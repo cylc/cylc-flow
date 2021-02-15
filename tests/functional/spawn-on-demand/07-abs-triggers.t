@@ -22,16 +22,16 @@
 
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" 
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --reference-test --no-detach --stop-point=3
+    cylc play "${SUITE_NAME}" --reference-test --no-detach --stopcp=3
 
 # Restart will hang if abs triggers not remembered.
 suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 
 purge
 exit

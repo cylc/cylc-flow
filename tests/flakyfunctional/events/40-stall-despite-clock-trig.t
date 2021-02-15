@@ -23,9 +23,9 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
+suite_run_fail "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
 
-grep_ok "suite stalled" "${TEST_NAME}.stderr" 
+grep_ok "suite stalled" "${TEST_NAME}.stderr"
 
 purge
 exit

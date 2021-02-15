@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 
 run_suite() {
-  cylc run --no-detach --debug "$1" \
+  cylc play --no-detach --debug "$1" \
     -s "START='$2'" -s "HOUR='$3'" -s "OFFSET='$4'"
 }
 
@@ -44,6 +44,7 @@ START="$(cylc cycle-point "${NOW}" --offset-hour='-10')"
 HOUR="$(cylc cycle-point "${START}" --print-hour)"
 OFFSET='PT0S'
 
+delete_db
 TEST_NAME="${TEST_NAME_BASE}-past"
 run_ok "${TEST_NAME}" run_suite "${SUITE_NAME}" "${START}" "${HOUR}" "${OFFSET}"
 
@@ -51,6 +52,7 @@ run_ok "${TEST_NAME}" run_suite "${SUITE_NAME}" "${START}" "${HOUR}" "${OFFSET}"
 START="$(cylc cycle-point "${NOW}" --offset-hour=10)"
 HOUR="$(cylc cycle-point "${START}" --print-hour)"
 
+delete_db
 TEST_NAME="${TEST_NAME_BASE}-future"
 run_fail "${TEST_NAME}" run_suite "${SUITE_NAME}" "${START}" "${HOUR}" "${OFFSET}"
 LOG="$(cylc cat-log -m p "${SUITE_NAME}")"

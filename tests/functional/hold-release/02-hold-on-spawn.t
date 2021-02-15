@@ -27,7 +27,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --hold "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --hold "${SUITE_NAME}"
 
 cylc release "${SUITE_NAME}" foo.1
 # foo.1 should run and spawn bar.1 as waiting and held

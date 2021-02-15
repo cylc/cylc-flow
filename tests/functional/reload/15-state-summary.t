@@ -38,7 +38,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # Suite runs and shuts down with a failed task.
-cylc run --hold "${SUITE_NAME}" > /dev/null 2>&1
+cylc play --hold "${SUITE_NAME}" > /dev/null 2>&1
 sleep 5
 cylc reload "${SUITE_NAME}"
 sleep 5

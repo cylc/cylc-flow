@@ -31,7 +31,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate \
     --set=SUITE_LOG_DIR=\""${SUITE_RUN_DIR}/log/suite"\" \
     "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach \
+    cylc play --reference-test --debug --no-detach \
     --set=SUITE_LOG_DIR=\""${SUITE_RUN_DIR}/log/suite"\" \
     "${SUITE_NAME}"
 sort -u 'events.log' >'expected.events.log'

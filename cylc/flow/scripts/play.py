@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,29 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Ensure that the Scheduler is able to run in profile mode without falling
-# over. It should produce a profile file at the end.
+# (hack to import the __doc__ from another file)
+# type: ignore
+from cylc.flow.scheduler_cli import (  # noqa: F401
+    play as main,
+    PLAY_DOC as __doc__
+)
 
-. "$(dirname "$0")/test_header"
+# CLI of "cylc play". See cylc.flow.scheduler_cli for details.
 
-set_test_number 4
-
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[scheduling]
-    initial cycle point = 1
-    cycling mode = integer
-    [[graph]]
-        R1 = a
-__FLOW_CONFIG__
-
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" --profile
-
-exists_ok 'profile.prof'
-
-run_ok "${TEST_NAME_BASE}-run" \
-    cylc run "${SUITE_NAME}" --profile --no-detach
-
-exists_ok "${RUN_DIR}/${SUITE_NAME}/log/suite/profile.prof"
-
-purge
+if __name__ == "__main__":
+    main()

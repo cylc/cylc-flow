@@ -45,10 +45,11 @@ init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
     [[graph]]
         R1 = "task<foo> => task<foo+1>"
 __FLOW_CONFIG__
+
 # run suite on localhost normally
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
-    cylc run "${SUITE_NAME}" --host=localhost -s 'FOO="foo"' -v
+    cylc play "${SUITE_NAME}" --host=localhost -s 'FOO="foo"' -v
 cylc suite-state "${SUITE_NAME}" --task='task_foo01' \
     --status='succeeded' --point=1 --interval=1 --max-polls=20 >& $ERR
 
@@ -80,7 +81,7 @@ run_ok "${TEST_NAME}-restart-success" cylc suite-state "${SUITE_NAME}" \
 
 # check the command the suite has been restarted with
 run_ok "${TEST_NAME}-contact" cylc get-contact "${SUITE_NAME}"
-grep_ok "cylc restart ${SUITE_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
+grep_ok "cylc play ${SUITE_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
     "${TEST_NAME}-contact.stdout"
 
 # stop suite

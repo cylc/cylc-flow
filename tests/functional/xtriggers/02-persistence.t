@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -40,7 +40,7 @@ run_ok "${TEST_NAME_BASE}-val" cylc val --debug "${SUITE_NAME}"
 
 # Run the first cycle, till auto shutdown by task.
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc run --no-detach --debug "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${SUITE_NAME}"
 
 # Check the broadcast result of xtrigger.
 cylc cat-log "${SUITE_NAME}" 'foo.2010' >'foo.2010.out'
@@ -54,7 +54,7 @@ run_ok "${TEST_NAME_BASE}-val2" cylc val --debug "${SUITE_NAME}"
 
 # Restart the suite, to run the final cycle point.
 TEST_NAME="${TEST_NAME_BASE}-restart"
-suite_run_ok "${TEST_NAME}" cylc restart --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --no-detach "${SUITE_NAME}"
 
 # Check the broadcast result has persisted from first run.
 cylc cat-log "${SUITE_NAME}" 'foo.2011' >'foo.2011.out'

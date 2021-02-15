@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -27,9 +27,9 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # Suite runs and shuts down with a failed task.
-cylc run --no-detach "${SUITE_NAME}" > /dev/null 2>&1
+cylc play --no-detach "${SUITE_NAME}" > /dev/null 2>&1
 # Restart with a failed task and a succeeded task.
-cylc restart "${SUITE_NAME}"
+cylc play "${SUITE_NAME}"
 poll_grep_suite_log -F '[foo.1] status=failed: (polled)failed'
 cylc dump "${SUITE_NAME}" > dump.out
 TEST_NAME=${TEST_NAME_BASE}-grep

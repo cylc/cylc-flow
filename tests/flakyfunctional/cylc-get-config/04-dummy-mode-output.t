@@ -28,20 +28,24 @@ run_ok "${TEST_NAME_BASE}-validate" \
 
 # Live mode run: outputs not received, suite shuts down early without running baz
 suite_run_ok "${TEST_NAME_BASE}-run-live" \
-    cylc run --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="$(cylc log -m p "$SUITE_NAME")"
 count_ok '(received)meet' "${LOG}" 0
 count_ok '(received)greet' "${LOG}" 0
 
+delete_db
+
 # Dummy and sim mode: outputs auto-completed, baz runs
 suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
-    cylc run -m 'dummy' --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play -m 'dummy' --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="$(cylc log -m p "$SUITE_NAME")"
 count_ok '(received)meet' "${LOG}" 1
 count_ok '(received)greet' "${LOG}" 1
 
+delete_db
+
 suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
-    cylc run -m 'simulation' --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc play -m 'simulation' --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="$(cylc log -m p "$SUITE_NAME")"
 count_ok '(received)meet' "${LOG}" 1
 count_ok '(received)greet' "${LOG}" 1

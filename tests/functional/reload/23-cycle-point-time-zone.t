@@ -42,7 +42,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Set time zone to +01:00
 export TZ=BST-1
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --hold
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --hold
 poll_suite_running
 
 # Simulate DST change

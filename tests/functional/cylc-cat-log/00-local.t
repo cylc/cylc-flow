@@ -24,7 +24,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-log
 run_ok "${TEST_NAME}" cylc cat-log "${SUITE_NAME}"

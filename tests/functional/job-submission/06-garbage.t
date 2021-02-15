@@ -32,7 +32,7 @@ create_test_global_config '
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 
 #-------------------------------------------------------------------------------
 purge

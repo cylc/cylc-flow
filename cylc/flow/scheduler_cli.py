@@ -13,10 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Common logic for "cylc run" and "cylc restart" CLI."""
+"""Common logic for "cylc play" CLI."""
 
 import asyncio
-from functools import partial, lru_cache
+from functools import lru_cache
 import os
 import sys
 
@@ -42,67 +42,44 @@ from cylc.flow.scripts import cylc_header
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
-RUN_DOC = r"""cylc [control] run|start [OPTIONS] [ARGS]
+PLAY_DOC = r"""cylc [control] play [OPTIONS] [ARGS]
 
-Start a new suite run.
-
-Any dependencies prior to the start point will be ignored.
-
-WARNING: this will wipe out previous suite state. To restart from a previous
-state, see 'cylc restart --help'.
+Start running a workflow, or restart a stopped workflow from its previous
+state/cycle point, or resume a paused workflow by releasing all tasks.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
-If the suite is not already installed (by "cylc install" or a previous run)
+If the workflow is not already installed (by "cylc install" or a previous run)
 it will be installed on the fly before start up.
 
 Examples:
-    # Run the suite installed with name REG.
-    $ cylc run REG
+    # Start/restart the workflow with name REG.
+    $ cylc play REG
 
-    # Install $PWD/flow.cylc as $(basename $PWD) and run it.
-    # Note REG must be given explicitly if START_POINT is on the command line.
-    $ cylc run
+A "cold start" (the default for a freshly-installed workflow) starts from the
+initial cycle point (specified in flow.cylc or on the command line). Any
+dependence on tasks prior to the initial cycle point is ignored.
+It is also possible to start from a point that is later than the initial cycle
+point, using the option --startcp=CYCLE_POINT. The initial cycle point is
+preserved, but the workflow does not start there and instead starts part-way
+through the graph (historically known as a "warm start").
 
-A "cold start" (the default) starts from the suite initial cycle point
-(specified in flow.cylc or on the command line). Any dependence on tasks
-prior to the suite initial cycle point is ignored.
+A "restart" continues on from the most recent recorded state of the workflow.
+Tasks recorded as submitted or running are polled at restart to determine what
+happened to them while the workflow was shut down."""
 
-A "warm start" (-w/--warm) starts from a given cycle point later than the suite
-initial cycle point (specified in flow.cylc). Any dependence on tasks prior
-to the given warm start cycle point is ignored. The suite initial cycle point
-is preserved."""
 
-RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
-
-Continue a suite run from the previous state.
-
-To start from scratch (cold or warm start) see the 'cylc run' command.
-
-The scheduler runs as a daemon unless you specify --no-detach.
-
-Tasks recorded as submitted or running are polled at start-up to determine what
-happened to them while the suite was down."""
-
-SUITE_NAME_ARG_DOC = ("[REG]", "Suite name")
-START_POINT_ARG_DOC = (
-    "[START_POINT]",
-    "Initial cycle point or 'now';\n" +
-    " " * 31 +  # 20 + len("START_POINT")
-    "overrides the suite definition.")
+FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
 
 
 @lru_cache()
-def get_option_parser(is_restart, add_std_opts=False):
-    """Parse CLI for "cylc run" or "cylc restart"."""
-    if is_restart:
-        parser = COP(RESTART_DOC, jset=True, argdoc=[SUITE_NAME_ARG_DOC])
-    else:
-        parser = COP(
-            RUN_DOC,
-            icp=True,
-            jset=True,
-            argdoc=[SUITE_NAME_ARG_DOC, START_POINT_ARG_DOC])
+def get_option_parser(add_std_opts=False):
+    """Parse CLI for "cylc play"."""
+    parser = COP(
+        PLAY_DOC,
+        icp=True,
+        jset=True,
+        argdoc=[FLOW_NAME_ARG_DOC])
 
     parser.add_option(
         "-n", "--no-detach", "--non-daemon",
@@ -113,63 +90,34 @@ def get_option_parser(is_restart, add_std_opts=False):
         "--profile", help="Output profiling (performance) information",
         action="store_true", dest="profile_mode")
 
-    if is_restart:
-        parser.add_option(
-            "--ignore-initial-cycle-point",
-            help=(
-                "Ignore the initial cycle point in the suite run database. " +
-                "If one is specified in the suite definition it will " +
-                "be used, however."),
-            action="store_true", dest="ignore_icp")
-
-        parser.add_option(
-            "--ignore-final-cycle-point",
-            help=(
-                "Ignore the final cycle point in the suite run database. " +
-                "If one is specified in the suite definition it will " +
-                "be used, however."),
-            action="store_true", dest="ignore_fcp")
-
-        parser.add_option(
-            "--ignore-start-cycle-point",
-            help="Ignore the start cycle point in the suite run database.",
-            action="store_true", dest="ignore_startcp")
-
-        parser.add_option(
-            "--ignore-stop-cycle-point",
-            help="Ignore the stop cycle point in the suite run database.",
-            action="store_true", dest="ignore_stopcp")
-
-        parser.set_defaults(
-            icp=None, startcp=None, warm=None, ignore_stopcp=None
-        )
-    else:
-        parser.add_option(
-            "-w", "--warm",
-            help="Warm start the suite. The default is to cold start.",
-            action="store_true", dest="warm")
-
-        parser.add_option(
-            "--start-cycle-point", "--start-point",
-            help=(
-                "Set the start cycle point. Implies --warm."
-                "(Not to be confused with the initial cycle point.)"
-            ),
-            metavar="CYCLE_POINT", action="store", dest="startcp")
+    parser.add_option(
+        "--start-cycle-point", "--startcp",
+        help=(
+            "Set the start cycle point, which may be after the initial cycle "
+            "point. If the specified start point is not in the sequeunce, the "
+            "next on-sequence point will be used. "
+            "(Not to be confused with the initial cycle point.) "
+            "This replaces the Cylc 7 --warm option."
+        ),
+        metavar="CYCLE_POINT", action="store", dest="startcp")
 
     parser.add_option(
-        "--final-cycle-point", "--final-point", "--until", "--fcp",
-        help="Set the final cycle point.",
+        "--final-cycle-point", "--fcp",
+        help=(
+            "Set the final cycle point. "
+            "This command line option overrides the workflow "
+            "config option '[scheduling]final cycle point'."
+        ),
         metavar="CYCLE_POINT", action="store", dest="fcp")
 
     parser.add_option(
-        "--stop-cycle-point", "--stop-point",
+        "--stop-cycle-point", "--stopcp",
         help=(
-            "Set stop point. "
+            "Set the stop cycle point. "
             "Shut down after all tasks have PASSED this cycle point. "
-            "(Not to be confused with the final cycle point.)"
-            "Adding this command line option over-rides the workflow"
-            "config option [scheduling]stop after cycle point"
+            "(Not to be confused with the final cycle point.) "
+            "This command line option overrides the workflow "
+            "config option '[scheduling]stop after cycle point'."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
@@ -235,7 +183,6 @@ def get_option_parser(is_restart, add_std_opts=False):
         action="store_true", default=False, dest="abort_if_any_task_fails"
     )
 
-    parser.set_defaults(stop_point_string=None)
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI
         # use) "standard options" are added later in options.parse_args().
@@ -257,9 +204,7 @@ DEFAULT_OPTS = {
 
 
 RunOptions = Options(
-    get_option_parser(is_restart=False, add_std_opts=True), DEFAULT_OPTS)
-RestartOptions = Options(
-    get_option_parser(is_restart=True, add_std_opts=True), DEFAULT_OPTS)
+    get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
 def _auto_install():
@@ -268,7 +213,7 @@ def _auto_install():
         reg = suite_files.register()
     except SuiteServiceFileError as exc:
         sys.exit(exc)
-    # Replace this process with "cylc run REG ..." for 'ps -f'.
+    # Replace this process with "cylc play REG ..." for 'ps -f'.
     os.execv(
         sys.argv[0],
         [sys.argv[0]] + sys.argv[1:] + [reg]
@@ -304,8 +249,8 @@ def _close_logs():
             pass
 
 
-def scheduler_cli(parser, options, args, is_restart=False):
-    """Implement cylc (run|restart).
+def scheduler_cli(parser, options, reg):
+    """Run the workflow.
 
     This function should contain all of the command line facing
     functionality of the Scheduler, exit codes, logging, etc.
@@ -315,16 +260,18 @@ def scheduler_cli(parser, options, args, is_restart=False):
     functionality.
 
     """
-    reg = os.path.normpath(args[0])
-    # Check suite is not already running before start of host selection.
+    reg = os.path.normpath(reg)
     try:
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
-        sys.exit(exc)
+        # TODO: unpause
+        print(f"Workflow is already running\n\n{exc}")
+        sys.exit(0)
+
     _check_srvd(reg)
 
     # re-execute on another host if required
-    _distribute(options.host, is_restart)
+    _distribute(options.host)
 
     # print the start message
     if options.no_detach or options.format == 'plain':
@@ -337,9 +284,9 @@ def scheduler_cli(parser, options, args, is_restart=False):
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
     #       then shutdown async generators and closes the event loop
-    scheduler = Scheduler(reg, options, is_restart=is_restart)
+    scheduler = Scheduler(reg, options)
     asyncio.run(
-        _setup(parser, options, reg, is_restart, scheduler)
+        _setup(parser, options, reg, scheduler)
     )
 
     # daemonize if requested
@@ -354,7 +301,7 @@ def scheduler_cli(parser, options, args, is_restart=False):
 
     # run the workflow
     ret = asyncio.run(
-        _run(parser, options, reg, is_restart, scheduler)
+        _run(parser, options, reg, scheduler)
     )
 
     # exit
@@ -376,7 +323,7 @@ def _check_srvd(reg):
         sys.exit(1)
 
 
-def _distribute(host, is_restart):
+def _distribute(host):
     """Re-invoke this command on a different host if requested."""
     # Check whether a run host is explicitly specified, else select one.
     if not host:
@@ -389,7 +336,7 @@ def _distribute(host, is_restart):
         sys.exit(0)
 
 
-async def _setup(parser, options, reg, is_restart, scheduler):
+async def _setup(parser, options, reg, scheduler):
     """Initialise the scheduler."""
     try:
         await scheduler.install()
@@ -397,7 +344,7 @@ async def _setup(parser, options, reg, is_restart, scheduler):
         sys.exit(exc)
 
 
-async def _run(parser, options, reg, is_restart, scheduler):
+async def _run(parser, options, reg, scheduler):
     """Run the workflow and handle exceptions."""
     # run cylc run
     ret = 0
@@ -417,35 +364,7 @@ async def _run(parser, options, reg, is_restart, scheduler):
         return ret
 
 
-def main(*args, is_restart=False):
-    """Abstraction for cylc (run|restart) CLI"""
-    # the cli_function decorator changes the function signature which
-    # irritates pylint.
-    if is_restart:
-        return restart(*args)  # pylint: disable=E1120
-    else:
-        return run(*args)  # pylint: disable=E1120
-
-
-@cli_function(partial(get_option_parser, is_restart=True))
-def restart(parser, options, *args):
-    """Implement cylc restart."""
-    return scheduler_cli(parser, options, args, is_restart=True)
-
-
-@cli_function(partial(get_option_parser, is_restart=False))
-def run(parser, options, *args):
-    """Implement cylc run."""
-    if not args:
-        _auto_install()
-    if options.startcp:
-        options.warm = True
-    if len(args) >= 2:
-        if not options.warm and not options.icp:
-            options.icp = args[1]
-        elif options.warm and not options.startcp:
-            options.startcp = args[1]
-    if options.warm and not options.startcp:
-        # Warm start must have a start point
-        sys.exit(parser.get_usage())
-    return scheduler_cli(parser, options, args, is_restart=False)
+@cli_function(get_option_parser)
+def play(parser, options, reg):
+    """Implement cylc play."""
+    return scheduler_cli(parser, options, reg)

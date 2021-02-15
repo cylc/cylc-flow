@@ -21,7 +21,7 @@
 Install a new workflow.
 
 Install the name REG. The workflow server program can then be started, stopped,
-and targeted by name REG. (Note that "cylc run" can also install workflows on
+and targeted by name REG. (Note that "cylc play" can also install workflows on
 the fly).
 
 Installation creates a workflow run directory "~/cylc-run/REG/", with a run

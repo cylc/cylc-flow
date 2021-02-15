@@ -3,7 +3,7 @@ title = Test: flow.cylc[scheduling]stop after cycle point
 description = """
     Test:
       1. That [scheduling]stop after cycle point works
-      2. That cylc run --stop-cycle-point over-rides the config.
+      2. That cylc play --stop-cycle-point overrides the config.
 """
 
 [scheduler]

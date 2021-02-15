@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -28,7 +28,7 @@ run_ok "${TEST_NAME}" cylc validate --set="SHOW_OUT='$SHOW_OUT'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" \
-    cylc run --debug --no-detach --set="SHOW_OUT='$SHOW_OUT'" "${SUITE_NAME}"
+    cylc play --debug --no-detach --set="SHOW_OUT='$SHOW_OUT'" "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 contains_ok "$SHOW_OUT" <<'__SHOW_DUMP__'
   + (((1 | 0) & (3 | 2) & (5 | 4)) & (0 | 2 | 4))

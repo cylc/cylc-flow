@@ -34,7 +34,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} "${SUITE_NAME}"
 # shellcheck disable=SC2086
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
+    cylc play --reference-test --debug --no-detach ${OPT_SET} "${SUITE_NAME}"
 
 LOGD="$RUN_DIR/${SUITE_NAME}/log"
 SUITE_UUID="$(sqlite3 "${LOGD}/db" 'SELECT value FROM suite_params WHERE key=="uuid_str"')"

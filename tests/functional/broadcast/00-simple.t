@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -24,7 +24,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Debug mode not needed here (and set-x w/ XTRACEFD broken some bash versions)
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --no-detach --reference-test "${SUITE_NAME}"
+    cylc play --no-detach --reference-test "${SUITE_NAME}"
 sort "${SUITE_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'
 cmp_ok 'broadcast.ref' 'broadcast.log.sorted'
 

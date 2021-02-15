@@ -28,7 +28,7 @@ run_ok "${TEST_NAME}" cylc validate -v \
     "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_fail "${TEST_NAME}" cylc run --debug --no-detach \
+run_fail "${TEST_NAME}" cylc play --debug --no-detach \
     --set="FUTURE_TRIGGER_START_POINT='T02'" \
     "${SUITE_NAME}"
 #-------------------------------------------------------------------------------

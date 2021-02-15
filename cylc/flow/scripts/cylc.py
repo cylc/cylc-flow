@@ -63,7 +63,7 @@ Version:
 Usage:
   $ cylc help all                 # list all commands
   $ cylc validate FLOW            # validate a workflow configuration
-  $ cylc run FLOW                 # run a workflow
+  $ cylc play FLOW                # run/resume a workflow
   $ cylc scan                     # list all running workflows (by default)
   $ cylc tui FLOW                 # view a running workflow in the terminal
   $ cylc stop FLOW                # stop a running workflow
@@ -136,7 +136,6 @@ ALIASES = {
     'log': 'cat-log',
     'ls': 'list',
     'shutdown': 'stop',
-    'start': 'run',
     'task-message': 'message',
     'unhold': 'release'
 }
@@ -156,8 +155,12 @@ DEAD_ENDS = {
     ),
     'jobscript': 'cylc jobscript has been removed',
     'submit': 'cylc submit has been removed',
-    'register': 'cylc register had been removed, use cylc install or cylc run',
-    'get-directory': 'cylc get-directory has been removed.'
+    'register': (
+        'cylc register has been removed; use cylc install or cylc play'),
+    'get-directory': 'cylc get-directory has been removed.',
+    'run': 'cylc run & cylc restart have been replaced by cylc play',
+    'restart': 'cylc run & cylc restart have been replaced by cylc play',
+    'start': 'cylc start & cylc restart have been replaced by cylc play'
 }
 
 
@@ -346,9 +349,8 @@ def cli_help():
         commands=[
             'hold',
             'kill',
+            'play',
             'release',
-            'restart',
-            'run',
             'scan',
             'stop',
             'trigger',

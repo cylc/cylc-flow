@@ -804,6 +804,8 @@ class SuiteConfig:
         ):
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
+        if fcp_str == 'ignore':
+            fcp_str = self.options.fcp = None
         if fcp_str is None:
             fcp_str = self.cfg['scheduling']['final cycle point']
         if fcp_str is not None:

@@ -44,9 +44,9 @@ cat >"${RND_SUITE_SOURCE2}/flow.cylc" <<__FLOW_CONFIG__
         script=cylc shutdown "${NAME1}"
 __FLOW_CONFIG__
 cylc install --flow-name="${NAME2}" --directory="${RND_SUITE_SOURCE2}" --no-run-name
-cylc run --no-detach "${NAME1}" 1>'1.out' 2>&1 &
+cylc play --no-detach "${NAME1}" 1>'1.out' 2>&1 &
 SUITE_RUN_DIR="${SUITE1_RUND}" poll_suite_running
-run_ok "${TEST_NAME_BASE}" cylc run --no-detach --abort-if-any-task-fails "${NAME2}"
+run_ok "${TEST_NAME_BASE}" cylc play --no-detach --abort-if-any-task-fails "${NAME2}"
 cylc shutdown "${NAME1}" --max-polls=20 --interval=1 1>'/dev/null' 2>&1 || true
 purge "${NAME1}"
 purge "${NAME2}"

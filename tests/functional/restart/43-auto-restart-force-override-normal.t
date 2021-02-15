@@ -56,7 +56,7 @@ set_test_number 8
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 # run suite
-cylc run "${SUITE_NAME}" --abort-if-any-task-fails
+cylc play "${SUITE_NAME}" --abort-if-any-task-fails
 poll_suite_running
 sleep 1
 FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)

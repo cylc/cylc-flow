@@ -5,14 +5,14 @@
 [scheduling]
     [[graph]]
     R1 = """
-a & b & g      
-# a & b setup to submit-fail, g (localhost) does not require remote init
-b:submitted => c
-b:start  => d 
-# c & d should not be triggered
-b:submit-fail => e & f 
-#  e and f on a same install target but with a different platform name - these should execute
-"""
+        a & b & g
+        # a & b setup to submit-fail, g (localhost) does not require remote init
+        b:submitted => c
+        b:start  => d
+        # c & d should not be triggered
+        b:submit-fail => e & f
+        #  e and f on a same install target but with a different platform name - these should execute
+    """
 [runtime]
     [[task]]
         script="sleep 1; echo hello"
@@ -21,10 +21,10 @@ b:submit-fail => e & f
         platform=belle
     [[b]]
         inherit=task
-        platform=belle  
+        platform=belle
     [[c]]
         inherit=task
-        platform=belle 
+        platform=belle
     [[d]]
         inherit=task
         platform= belle

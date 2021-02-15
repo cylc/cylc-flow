@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,21 +14,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Run a workflow with ``cylc play --host=somewhere-else``
+export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
+. "$(dirname "$0")/test_header"
+set_test_number 2
 
-# (hack to import the __doc__ from another file)
-# type: ignore
-from cylc.flow.scheduler_cli import (  # noqa: F401
-    main as scheduler_main,
-    RUN_DOC as __doc__
-)
+# shellcheck disable=SC2016
+init_suite "${TEST_NAME_BASE}" <<< '
+# A total non-entity workflow - just something to run.
+[scheduling]
+    initial cycle point = 2020
+    [[graph]]
+        R1 = Aleph
 
+[runtime]
+    [[Aleph]]
+'
 
-# CLI of "cylc run". See cylc.flow.scheduler_cli for detail
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
 
+grep_ok "Suite server:.*${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/suite/log"
 
-def main(*args):
-    scheduler_main(*args, is_restart=False)
-
-
-if __name__ == "__main__":
-    main()
+purge
+exit

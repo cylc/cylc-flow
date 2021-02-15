@@ -37,7 +37,7 @@ create_test_global_config "" "
 
 # reference test
 TEST_NAME="${TEST_NAME_BASE}"-run
-suite_run_ok "${TEST_NAME}" cylc run --reference-test --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME}" cylc play --reference-test --no-detach "${SUITE_NAME}"
 
 # extract flow labels from job files
 # shellcheck disable=SC2046

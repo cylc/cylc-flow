@@ -59,13 +59,13 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}" --no-detach
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --no-detach
 read -r CLOCKTIME <"${SUITE_RUN_DIR}/clocktime"
 dumpdbtables
 cmp_ok 'stopclocktime.out' <<<"stop_clock_time|${CLOCKTIME}"
 
 suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc restart "${SUITE_NAME}" --no-detach
+    cylc play "${SUITE_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopclocktime.out' <'/dev/null'
 cut -d ' ' -f 4- "${SUITE_RUN_DIR}/log/suite/log" >'log.edited'

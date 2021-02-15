@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -23,14 +23,14 @@ set_test_number 4
 install_suite "${TEST_NAME_BASE}" bad-job-host
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 # Modify DB with garbage host
 CYLC_SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 for DB_NAME in 'log/db' '.service/db'; do
     sqlite3 "${CYLC_SUITE_RUN_DIR}/${DB_NAME}" \
         'UPDATE task_jobs SET platform_name="garbage" WHERE name=="t-remote";'
 done
-suite_run_fail "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+suite_run_fail "${TEST_NAME_BASE}-restart" cylc play --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
 grep_ok PlatformLookupError "${CYLC_SUITE_RUN_DIR}/log/suite/log"
 #-------------------------------------------------------------------------------
 purge

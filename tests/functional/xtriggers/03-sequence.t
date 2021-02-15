@@ -47,7 +47,7 @@ __FLOW_CONFIG__
 run_ok "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 
 # Run suite; it will stall waiting on the never-satisfied xtriggers.
-cylc run "${SUITE_NAME}"
+cylc play "${SUITE_NAME}"
 
 poll_grep_suite_log 'start.2025.*succeeded'
 

@@ -35,7 +35,7 @@ __FLOW_CONFIG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${SUITE_NAME}"
 JOB_STFILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
 JOB_START_TIME="$(sed -n 's/^CYLC_JOB_INIT_TIME=//p' "${JOB_STFILE}")"
 cylc cat-log "${SUITE_NAME}" \

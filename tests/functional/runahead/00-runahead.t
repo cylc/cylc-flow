@@ -26,7 +26,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_fail "${TEST_NAME}" cylc run --debug --no-detach "${SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-max-cycle"
 DB="${SUITE_RUN_DIR}/log/db"

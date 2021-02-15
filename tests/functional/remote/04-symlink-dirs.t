@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Checks configured symlinks are created for run, work, share, share/cycle, log 
+# Checks configured symlinks are created for run, work, share, share/cycle, log
 # # directories on localhost and the remote platform.
 export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
@@ -46,7 +46,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME_BASE}-run-ok" cylc run "${SUITE_NAME}" \
+suite_run_ok "${TEST_NAME_BASE}-run-ok" cylc play "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" --debug
 poll_grep_suite_log 'File installation complete'
 TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
@@ -106,4 +106,4 @@ done
 # clean up remote
 ${SSH} "${CYLC_TEST_HOST}" rm -rf "${TMPDIR}/${USER}/test_cylc_symlink/"
 purge
-exit 
+exit

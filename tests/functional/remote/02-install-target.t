@@ -36,7 +36,7 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug \
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug \
      "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 CYLC_SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
 poll_grep_suite_log 'Suite held'

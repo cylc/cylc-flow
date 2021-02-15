@@ -50,7 +50,7 @@ __FLOW_CONFIG__
 
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
 grep_ok "# will invoke in batches, sizes=\[68, 68, 66\]" \
     "${SUITE_RUN_DIR}/log/suite/log"
 

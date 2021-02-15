@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
     'SELECT name, cycle, status FROM task_pool ORDER BY name, cycle' \
     >'mid-state'
@@ -30,7 +30,7 @@ cmp_ok 'mid-state' <<"__OUT__"
 p1|20100808T0000Z|running
 __OUT__
 
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc play --debug --no-detach "${SUITE_NAME}"
 sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
     'SELECT name, cycle, status FROM task_states ORDER BY name, cycle' \
     >'final-state'
