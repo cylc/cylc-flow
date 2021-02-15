@@ -1026,11 +1026,11 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
                        f"\"{source}\" to \"{rundir}\"")
     rsync_cmd = get_rsync_rund_cmd(
         source, rundir, reinstall=True, dry_run=dry_run)
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
     stdout, stderr = proc.communicate()
     REINSTALL_LOG.info(f"Copying files from {source} to {rundir}")
     REINSTALL_LOG.info(f"{stdout}")
-    if stderr:
+    if not proc.returncode == 0:
         REINSTALL_LOG.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         REINSTALL_LOG.warning(f" Error: {stderr}")
@@ -1113,11 +1113,11 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
     stdout, stderr = proc.communicate()
     INSTALL_LOG.info(f"Copying files from {source} to {rundir}")
     INSTALL_LOG.info(f"{stdout}")
-    if stderr:
+    if not proc.returncode == 0:
         INSTALL_LOG.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         INSTALL_LOG.warning(f" Error: {stderr}")

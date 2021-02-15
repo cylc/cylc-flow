@@ -24,7 +24,10 @@ from cylc.flow import CYLC_LOG
 from cylc.flow import suite_files
 from cylc.flow.exceptions import (
     CylcError, SuiteServiceFileError, TaskRemoteMgmtError, WorkflowFilesError)
-from cylc.flow.suite_files import check_nested_run_dirs
+from cylc.flow.suite_files import (
+    check_nested_run_dirs,
+    get_workflow_source_dir,
+    reinstall_workflow)
 
 
 @pytest.mark.parametrize(
@@ -622,3 +625,53 @@ def test_symlinkrundir_children_that_contain_workflows_raise_error(
         check_nested_run_dirs(run_dir, 'placeholder_flow')
     except SuiteServiceFileError:
         pytest.fail("Unexpected SuiteServiceFileError, Check symlink logic.")
+
+
+def test_get_workflow_source_dir_numbered_run(tmp_path):
+    """Test get_workflow_source_dir returns correct source for numbered run"""
+    cylc_install_dir = (
+        tmp_path /
+        "cylc-run" /
+        "flow-name" /
+        "_cylc-install")
+    cylc_install_dir.mkdir(parents=True)
+    run_dir = (tmp_path / "cylc-run" / "flow-name" / "run1")
+    run_dir.mkdir()
+    source_dir = (tmp_path / "cylc-source" / "flow-name")
+    source_dir.mkdir(parents=True)
+    assert get_workflow_source_dir(run_dir) is None
+    (cylc_install_dir / "source").symlink_to(source_dir)
+    assert get_workflow_source_dir(run_dir) == str(source_dir)
+
+
+def test_get_workflow_source_dir_named_run(tmp_path):
+    """Test get_workflow_source_dir returns correct source for named run"""
+    cylc_install_dir = (
+        tmp_path /
+        "cylc-run" /
+        "flow-name" /
+        "_cylc-install")
+    cylc_install_dir.mkdir(parents=True)
+    source_dir = (tmp_path / "cylc-source" / "flow-name")
+    source_dir.mkdir(parents=True)
+    (cylc_install_dir / "source").symlink_to(source_dir)
+    assert get_workflow_source_dir(cylc_install_dir.parent) == str(source_dir)
+
+
+def test_reinstall_workflow(tmp_path, capsys):
+
+    cylc_install_dir = (
+        tmp_path /
+        "cylc-run" /
+        "flow-name" /
+        "_cylc-install")
+    cylc_install_dir.mkdir(parents=True)
+    source_dir = (tmp_path / "cylc-source" / "flow-name")
+    source_dir.mkdir(parents=True)
+    (source_dir / "flow.cylc").touch()
+
+    (cylc_install_dir / "source").symlink_to(source_dir)
+    run_dir = cylc_install_dir.parent
+    reinstall_workflow("flow-name", run_dir, source_dir)
+    assert capsys.readouterr().out == (
+        f"REINSTALLED flow-name from {source_dir} -> {run_dir}\n")

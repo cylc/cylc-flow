@@ -35,7 +35,7 @@ grep_ok "REINSTALLED ${RND_SUITE_NAME}/run1 from ${RND_SUITE_SOURCE} -> ${RND_SU
 popd || exit 1
 purge_rnd_suite
 
-# Test basic cylc reinstall, named run (including flow name) given 
+# Test basic cylc reinstall, named run (including ``flow.cylc``) given
 TEST_NAME="${TEST_NAME_BASE}-flow-as-arg"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
@@ -65,39 +65,6 @@ grep_ok "REINSTALLED ${RND_SUITE_NAME}/run1 from ${RND_SUITE_SOURCE} -> ${RND_SU
 popd || exit 1
 purge_rnd_suite
 
-# Test case cylc install --no-run-name, then reinstall
-TEST_NAME="${TEST_NAME_BASE}--no-run-name-install-before-reinstall"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
-
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}
-__OUT__
-run_ok "${TEST_NAME}" cylc reinstall "${RND_SUITE_NAME}"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-REINSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}
-__OUT__
-popd || exit 1
-purge_rnd_suite
-
-
-# Test install/reinstall with named flow
-TEST_NAME="${TEST_NAME_BASE}-named-flow"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-install" cylc install --flow-name="${RND_SUITE_NAME}-olaf" 
-contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_SUITE_NAME}-olaf from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf/run1
-__OUT__
-popd || exit 1
-run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_SUITE_NAME}-olaf/run1"
-contains_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
-REINSTALLED $RND_SUITE_NAME-olaf/run1 from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf/run1
-__OUT__
-rm -rf "${RUN_DIR}/${RND_SUITE_NAME}-olaf"
-purge_rnd_suite
-
 # Test install/reinstall executed from elsewhere in filesystem
 TEST_NAME="${TEST_NAME_BASE}-named-flow"
 make_rnd_suite
@@ -115,7 +82,6 @@ purge_rnd_suite
 rm -rf "${RUN_DIR:?}/${RND_SUITE_NAME}/"
 
 # Test cylc reinstall succeeds if suite.rc file in source dir
-
 TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 make_rnd_suite
 rm -f "${RND_SUITE_SOURCE}/flow.cylc"
