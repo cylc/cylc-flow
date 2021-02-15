@@ -32,6 +32,19 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
+
+# Cylc8 Deprecation note.
+DEPRECATION_WARN = '''
+.. warning::
+
+   Deprecated section kept for compatibility with Cylc 7 workflow definitions.
+
+   **It will not be available at Cylc 9**.
+
+   Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
+'''
+
+
 with Conf(
     'flow.cylc',
     desc='''
@@ -988,11 +1001,12 @@ with Conf(
             with Conf('job', desc='''
                 This section configures the means by which cylc submits task
                 job scripts to run.
-            '''):
+
+            ''' + DEPRECATION_WARN):
                 Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
 
-            with Conf('remote'):
+            with Conf('remote', desc=DEPRECATION_WARN):
                 Conf('host', VDR.V_STRING)
                 Conf('owner', VDR.V_STRING)
                 Conf('suite definition directory', VDR.V_STRING)
