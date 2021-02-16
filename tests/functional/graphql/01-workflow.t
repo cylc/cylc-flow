@@ -23,7 +23,7 @@ set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # run suite
-run_ok "${TEST_NAME_BASE}-run" cylc play --hold "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play --pause "${SUITE_NAME}"
 
 # query suite
 TEST_NAME="${TEST_NAME_BASE}-workflows"
@@ -75,14 +75,13 @@ SUITE_LOG_DIR="$( cylc cat-log -m p "${SUITE_NAME}" \
 cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 
 # compare to expectation
-# Note: Runahead pool has no members on start-up, which means,
-# newestRunaheadCyclePoint is expected to be blank.
+# Note: Zero active cycle points when starting paused
 cat > expected << __HERE__
 {
     "workflows": [
         {
             "name": "${SUITE_NAME}",
-            "status": "held",
+            "status": "paused",
             "statusMsg": "",
             "host": "${HOST}",
             "port": ${PORT},
@@ -92,13 +91,13 @@ cat > expected << __HERE__
                 "title": "foo",
                 "description": "bar"
             },
-            "newestRunaheadCyclePoint": "",
-            "newestActiveCyclePoint": "1",
-            "oldestActiveCyclePoint": "1",
+            "newestRunaheadCyclePoint": "1",
+            "newestActiveCyclePoint": "",
+            "oldestActiveCyclePoint": "",
             "reloaded": false,
             "runMode": "live",
             "stateTotals": {
-                "waiting": 1,
+                "waiting": 0,
                 "expired": 0,
                 "preparing": 0,
                 "submit-failed": 0,
@@ -116,9 +115,7 @@ cat > expected << __HERE__
                 "foo",
                 "root"
             ],
-            "states": [
-                "waiting"
-            ]
+            "states": []
         }
     ]
 }
