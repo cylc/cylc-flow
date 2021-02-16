@@ -155,8 +155,8 @@ class Diff:
         ret = ''
 
         if indent == 0:
-            ret += '+++ %s\n' % self.this_name
-            ret += '--- %s\n' % self.that_name
+            ret += '--- %s\n' % self.this_name
+            ret += '+++ %s\n' % self.that_name
             ret += '============\n'
             ret += ' %s\n' % self.BRACES[self.typ][0]
 

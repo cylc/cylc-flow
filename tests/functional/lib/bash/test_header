@@ -44,7 +44,7 @@
 #     run_graphql_ok SUITE TEST_NAME JSON
 #         Send a graphql query to the suite, extract the result from
 #         ${TEST_NAME}.stdout
-#     cmp_ok FILE_TEST [FILE_CONTROL]
+#     cmp_ok FILE_TEST FILE_CONTROL
 #         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
 #         if FILE_CONTROL is "-" or missing). By default, it uses "diff -u" to
 #         compare files. However, if an alternate command such as "xxdiff -D"
@@ -291,11 +291,12 @@ cmp_ok() {
 
 cmp_json() {
     local TEST_NAME="$1"
-    local FILE1="$2"
-    shift; shift
+    local FILE_TEST="$2"
+    local FILE_CONTROL="${3:--}"
 
     if python3 "$CYLC_REPO_DIR/tests/f/lib/python/diffr.py" \
-        "$(cat "${FILE1}")" "$@" >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
+        "$(cat "$FILE_CONTROL")" "$(cat "$FILE_TEST")" \
+        >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     then
         ok "${TEST_NAME}"
         return
