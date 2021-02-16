@@ -109,7 +109,7 @@ purge
 # -----------------------------------------------------------------------------
 
 if ! command -v xfs_mkfile; then
-    skip 2
+    skip 2 "xfs_mkfile not installed"
     exit
 fi
 
