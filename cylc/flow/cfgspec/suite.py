@@ -854,11 +854,48 @@ with Conf(
 
                 ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
-            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
-            Conf('execution time limit', VDR.V_INTERVAL)
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, None)
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
+            Conf(
+                'execution polling intervals',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
+
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]execution polling intervals`
+                ''')
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+                .. warning::
+
+                   Deprecated, use :cylc:conf:`global.cylc[platforms]
+                   [<platform name>]execution retry delays`
+            ''')
+            Conf('execution time limit', VDR.V_INTERVAL, desc='''
+                .. warning::
+
+                   Deprecated, use :cylc:conf:`global.cylc[platforms]
+                   [<platform name>]execution time limit`
+            ''')
+            Conf(
+                'submission polling intervals',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
+
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]submission polling intervals`
+            ''')
+            Conf(
+                'submission retry delays',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
+
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]submission retry delays`
+            ''')
 
             with Conf('meta', desc=r'''
                 Section containing metadata items for this task or family

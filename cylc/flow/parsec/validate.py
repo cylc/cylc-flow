@@ -630,8 +630,13 @@ class CylcConfigValidator(ParsecValidator):
         ),
         V_INTERVAL_LIST: (
             'time interval list',
-            'A comma separated list of time intervals',
-            ['P1Y, P2Y, P3Y'],
+            'A comma separated list of time intervals. '
+            'These can include multipliers.',
+            {
+                'P1Y, P2Y, P3Y': 'After 1, 2 and 3 years.',
+                'PT1M, 2*PT1H, P1D': 'After 1 minute, 1 hour, 1 hour and 1 '
+                'day'
+            },
             [('std:term', 'ISO8601 duration')]
         ),
         V_PARAMETER_LIST: (
