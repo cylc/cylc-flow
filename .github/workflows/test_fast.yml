@@ -76,7 +76,10 @@ jobs:
         run: |
           pytest --cov --cov-append -n 5 tests/integration
 
-      - name: Coverage
-        run: |
-          coverage report
-          bash <(curl -s https://codecov.io/bash)
+      - name: Coverage Upload
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: .coverage
+          flags: ${{ matrix.os }}_${{ matrix.python-version }}
+          fail_ci_if_error: false
