@@ -1414,9 +1414,9 @@ class TaskPool:
             # Nothing to do.
             return
         # Gather all current labels.
-        labels = []
-        for itask in self.get_all_tasks():
-            labels.append(itask.flow_label)
+        labels = [itask.flow_label for itask in self.get_all_tasks()]
+        if not labels:
+            return
         # Find any labels common to all tasks.
         common = self.flow_label_mgr.get_common_labels(labels)
         # And prune them back to just one.
