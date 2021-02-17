@@ -247,21 +247,6 @@ class TestSuiteConfig:
                        config.runtime['descendants']['SOMEFAM']
 
 
-def test_missing_initial_cycle_point():
-    """Test that validation fails when the initial cycle point is
-    missing for datetime cycling"""
-    mocked_config = Mock()
-    mocked_config.cfg = {
-        'scheduling': {
-            'cycling mode': None,
-            'initial cycle point': None
-        }
-    }
-    with pytest.raises(SuiteConfigError) as exc:
-        SuiteConfig.process_initial_cycle_point(mocked_config)
-    assert "This suite requires an initial cycle point" in str(exc.value)
-
-
 @pytest.mark.parametrize(
     'scheduling_cfg, expected_icp, expected_opt_icp, expected_err',
     [
