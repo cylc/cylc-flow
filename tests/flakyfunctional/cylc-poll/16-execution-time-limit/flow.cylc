@@ -12,6 +12,7 @@
         """
 [runtime]
     [[foo]]
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
         init-script = cylc__job__disable_fail_signals ERR EXIT
         script = cylc__job__wait_cylc_message_started; exit 1
         [[[job]]]
