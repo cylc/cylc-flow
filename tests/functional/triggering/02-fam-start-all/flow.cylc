@@ -3,7 +3,7 @@
         R1 = """FAM:start-all => foo"""
 [runtime]
     [[FAM]]
-        script = wait
+        script = cylc__job__wait_cylc_message_started
     [[a,b,c]]
         inherit = FAM
     [[foo]]

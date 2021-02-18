@@ -9,7 +9,7 @@
 [runtime]
     [[t1]]
         script="""
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc__job__wait_cylc_message_started
 mv "$0.out" "$0.out.keep"
 mv "$0.err" "$0.err.keep"
 cylc message 'succeeded' >>"$0.out.keep"

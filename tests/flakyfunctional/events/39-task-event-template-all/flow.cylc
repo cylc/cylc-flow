@@ -11,7 +11,7 @@
 [runtime]
     [[foo]]
         script = """
-cylc__job__wait_cylc_started_message
+cylc__job__wait_cylc_message_started
 cylc message -p CUSTOM "cheesy peas"
 """
         [[[events]]]

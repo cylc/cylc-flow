@@ -8,7 +8,7 @@ new task proxy; ref github #945"""
 [runtime]
     [[retrier]]
         script = """
-wait
+cylc__job__wait_cylc_message_started
 sleep 1
 if ((CYLC_TASK_TRY_NUMBER == 1)); then
     # Kill the job, so task will go into waiting (held)

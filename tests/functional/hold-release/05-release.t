@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[holdrelease]]
         script = """
-wait
+cylc__job__wait_cylc_message_started
 cylc hold $CYLC_SUITE_NAME
 cylc__job__poll_grep_suite_log 'Suite held.'
 cylc release ${CYLC_SUITE_NAME} '*FF.1'  # inexact fam
