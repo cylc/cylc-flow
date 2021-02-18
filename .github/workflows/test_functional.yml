@@ -157,7 +157,7 @@ jobs:
             > test-file
           if [[ $REMOTE_PLATFORM == 'true' ]]; then
             # skip tests that don't configure platform requirements
-            grep -l --color-never REQUIRE_PLATFORM $(cat test-file) > test-file
+            grep -l --color=never REQUIRE_PLATFORM $(cat test-file) > test-file
           fi
 
       - name: Test
