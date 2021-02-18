@@ -116,7 +116,6 @@ class SLURMHandler():
     # signalled.
     # XCPU isn't used by SLURM at the moment, but it's a valid way
     # to manually signal jobs using scancel or sbatch --signal.
-    FAIL_SIGNALS = ("EXIT", "ERR", "XCPU")
     KILL_CMD_TMPL = "scancel '%(job_id)s'"
     # N.B. The "squeue -j JOB_ID" command returns 1 if JOB_ID is no longer in
     # the system, so there is no need to filter its output.
