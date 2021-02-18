@@ -11,7 +11,5 @@
 
 [runtime]
     [[foo]]
-        init-script = """
-trap '' EXIT
-exit
-"""
+        init-script = cylc__job__disable_fail_signals ERR EXIT
+        script = exit 1

@@ -16,9 +16,11 @@ suicide via a :fail trigger, and the suite to shut down successfully."""
            """
 [runtime]
     [[a]]
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
-trap '' EXIT # die silently
-exit 0"""
+           cylc__job__wait_cylc_message_started
+           exit 1
+        """
     [[b]]
         script = cylc poll "$CYLC_SUITE_NAME" 'a'
     [[handled]]
