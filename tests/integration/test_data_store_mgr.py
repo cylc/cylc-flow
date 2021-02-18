@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import copy, deepcopy
 import pytest
+from typing import TYPE_CHECKING
 
 from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
@@ -23,14 +23,20 @@ from cylc.flow.data_store_mgr import (
     JOBS,
     TASKS,
     TASK_PROXIES,
-    WORKFLOW,
-    JOB_STATUSES_ALL
+    WORKFLOW
 )
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
 )
 from cylc.flow.wallclock import get_current_time_string
+
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
+
+
+# NOTE: These tests mutate the data store, so running them in isolation may
+# see failures when they actually pass if you run the whole file
 
 
 def job_config(schd):
@@ -94,9 +100,11 @@ async def harness(mod_flow, mod_scheduler, mod_run):
             }
         }
     }
-    reg = mod_flow(flow_def)
-    schd = mod_scheduler(reg)
+    reg: str = mod_flow(flow_def)
+    schd: 'Scheduler' = mod_scheduler(reg)
     async with mod_run(schd):
+        schd.pool.hold_tasks('*')
+        schd.resume_workflow()
         # Think this is needed to save the data state at first start (?)
         # Fails without it.. and a test needs to overwrite schd data with this.
         data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
@@ -261,7 +269,7 @@ def test_update_data_structure(harness):
     assert TASK_STATUS_FAILED in set(collect_states(data, FAMILY_PROXIES))
     # state totals changed
     assert TASK_STATUS_FAILED in data[WORKFLOW].state_totals
-    # Shows prunning worked
+    # Shows pruning worked
     assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 1
 
 
