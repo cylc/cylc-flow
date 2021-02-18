@@ -1,5 +1,5 @@
 [meta]
-    title = Test: run task - hold suite - task job retry - release suite
+    title = Test: run task - pause workflow - task job retry - resume workflow
 
 [scheduler]
     [[events]]
@@ -10,30 +10,29 @@
 [scheduling]
     [[graph]]
         R1 = """
-t-retry-able:start => t-hold
-t-submit-retry-able:submit => t-hold
-"""
+            t-retry-able:start => t-pause
+            t-submit-retry-able:submit => t-pause
+        """
 
 [runtime]
-    [[t-hold]]
+    [[t-pause]]
         script = """
-            # Hold the suite
-            cylc hold "${CYLC_SUITE_NAME}"
-            cylc__job__poll_grep_suite_log -F 'Command succeeded: hold'
+            cylc pause "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log -F 'Command succeeded: pause'
             # Poll t-submit-retry-able, should return submit-fail
             cylc poll "${CYLC_SUITE_NAME}" 't-submit-retry-able'
             # Allow t-retry-able to continue
             rm -f "${CYLC_SUITE_RUN_DIR}/file"
             cylc__job__poll_grep_suite_log -F \
-                '[t-retry-able.1] -running (held) => waiting (held)'
+                '[t-retry-able.1] -running => waiting'
             cylc__job__poll_grep_suite_log -F \
-                '[t-submit-retry-able.1] -submitted (held) => waiting (held)'
-            # Release the suite
-            cylc release "${CYLC_SUITE_NAME}"
+                '[t-submit-retry-able.1] -submitted => waiting'
+            # Resume the suite
+            cylc play "${CYLC_SUITE_NAME}"
             cylc__job__poll_grep_suite_log -F \
-                '[t-retry-able.1] -waiting (held) => waiting'
+                '[t-retry-able.1] -waiting => waiting (queued)'
             cylc__job__poll_grep_suite_log -F \
-                '[t-submit-retry-able.1] -waiting (held) => waiting'
+                '[t-submit-retry-able.1] -waiting => waiting (queued)'
         """
     [[t-retry-able]]
         script = """
@@ -45,8 +44,7 @@ t-submit-retry-able:submit => t-hold
                 false
             fi
         """
-        [[[job]]]
-            execution retry delays = PT5S
+        execution retry delays = PT5S
     [[t-submit-retry-able]]
         env-script = """
             if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
@@ -55,5 +53,4 @@ t-submit-retry-able:submit => t-hold
             fi
         """
         script = true
-        [[[job]]]
-            submission retry delays = PT5S
+        submission retry delays = PT5S

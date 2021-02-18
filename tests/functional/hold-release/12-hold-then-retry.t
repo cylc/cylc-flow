@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite hold => retry and submit-retry => suite release
+# Test workflow pause => retry and submit-retry => workflow resume
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest
