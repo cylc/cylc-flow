@@ -30,7 +30,7 @@
                 echo 'CYLC_JOB_EXIT=SUCCEEDED'
                 echo "CYLC_JOB_EXIT_TIME=$(date +%FT%H:%M:%SZ)"
             } >>"${CYLC_TASK_LOG_ROOT}.status"
-            exit
+            exit 1
         """
     [[local-success-1]]
         inherit = SUCCESS

@@ -10,7 +10,7 @@
 
 [runtime]
     [[t1]]
-        init-script = cylc__job__disable_fail_signals ERR
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
 sleep 1
 cylc stop --now --now "${CYLC_SUITE_NAME}"
