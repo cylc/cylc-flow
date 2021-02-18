@@ -18,7 +18,7 @@
 # Test communication from a remote host (non-shared file system) when it has
 # a suite with the same name registered, but not running. (Obviously, it will
 # be very confused if it is running under its ~/cylc-run/SUITE as well.)
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 

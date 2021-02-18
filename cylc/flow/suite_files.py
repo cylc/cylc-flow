@@ -364,7 +364,9 @@ def get_contact_file(reg):
 
 def get_flow_file(reg):
     """Return the path of a suite's flow.cylc file."""
-    flow_file = os.path.join(get_workflow_run_dir(reg), SuiteFiles.FLOW_FILE)
+    run_dir = get_workflow_run_dir(reg)
+    check_flow_file(run_dir, LOG)
+    flow_file = os.path.join(run_dir, SuiteFiles.FLOW_FILE)
     if os.path.exists(flow_file):
         return flow_file
 
@@ -447,11 +449,11 @@ async def load_contact_file_async(reg, run_dir=None):
 def parse_suite_arg(options, arg):
     """From CLI arg "SUITE", return suite name and flow.cylc path.
 
-    If arg is a installed suite, suite name is the installed name.
-    If arg is a directory, suite name is the base name of the
-    directory.
-    If arg is a file, suite name is the base name of its container
-    directory.
+    * If arg is an installed suite, suite name is the installed name.
+    * If arg is a directory, suite name is the base name of the
+      directory.
+    * If arg is a file, suite name is the base name of its container
+      directory.
     """
     if arg == '.':
         arg = os.getcwd()

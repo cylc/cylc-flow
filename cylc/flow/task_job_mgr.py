@@ -372,11 +372,15 @@ class TaskJobManager:
             # Chop itasks into a series of shorter lists if it's very big
             # to prevent overloading of stdout and stderr pipes.
             itasks = sorted(itasks, key=lambda itask: itask.identity)
-            chunk_size = len(itasks) // ((len(itasks) // 100) + 1) + 1
+            chunk_size = (
+                len(itasks) // (
+                    (len(itasks) // platform['max batch submit size']) + 1
+                ) + 1
+            )
             itasks_batches = [
-                itasks[i:i + chunk_size] for i in range(0,
-                                                        len(itasks),
-                                                        chunk_size)]
+                itasks[i:i + chunk_size]
+                for i in range(0, len(itasks), chunk_size)
+            ]
             LOG.debug(
                 '%s ... # will invoke in batches, sizes=%s',
                 cmd, [len(b) for b in itasks_batches])

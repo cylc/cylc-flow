@@ -45,8 +45,9 @@ SUITE_LOG_DIR=$(cylc cat-log -m p "${SUITE_NAME}")
 JOB_LOG_DIR="${SUITE_LOG_DIR%suite/log}"
 JOB_LOG_DIR="${JOB_LOG_DIR/$HOME/\$HOME}"
 
+DEFAULT_PATHS='--path=/bin --path=/usr/bin --path=/usr/local/bin --path=/sbin --path=/usr/sbin --path=/usr/local/sbin'
 cmp_ok log <<__END__
-ERROR - [jobs-submit cmd] cylc jobs-submit --debug -- '${JOB_LOG_DIR}job' 1/foo/01
+ERROR - [jobs-submit cmd] cylc jobs-submit --debug ${DEFAULT_PATHS} -- '${JOB_LOG_DIR}job' 1/foo/01
 	[jobs-submit ret_code] -9
 	[jobs-submit err] killed on timeout (PT10S)
 __END__

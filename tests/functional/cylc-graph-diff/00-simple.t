@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc graph-diff for two suites.
+# Test cylc graph --diff for two suites.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 24
+set_test_number 15
 #-------------------------------------------------------------------------------
 install_suite "${TEST_NAME_BASE}-control" "${TEST_NAME_BASE}-control"
 CONTROL_SUITE_NAME="${SUITE_NAME}"
@@ -36,50 +36,22 @@ run_ok "${TEST_NAME}" cylc validate "${SAME_SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-validate-new"
 run_ok "${TEST_NAME}" cylc validate "${CONTROL_SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-bad-suites-number-1"
-run_fail "${TEST_NAME}" cylc graph-diff "${DIFF_SUITE_NAME}"
-cmp_ok "${TEST_NAME}.stdout" <'/dev/null'
-cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-Usage: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
-
-Difference 'cylc graph --reference' output for SUITE1 and SUITE2.
-
-OPTIONS: Use '-g' to launch a graphical diff utility.
-         Use '--diff-cmd=MY_DIFF_CMD' to use a custom diff tool.
-
-SUITE1, SUITE2: Suite names to compare.
-GRAPH_OPTIONS_ARGS: Options and arguments passed directly to cylc graph.
-__ERR__
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-bad-suites-number-3"
-run_fail "${TEST_NAME}" cylc graph-diff \
-    "${DIFF_SUITE_NAME}" "${CONTROL_SUITE_NAME}" "${SAME_SUITE_NAME}"
-cmp_ok "${TEST_NAME}.stdout" <'/dev/null'
-cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-Usage: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
-
-Difference 'cylc graph --reference' output for SUITE1 and SUITE2.
-
-OPTIONS: Use '-g' to launch a graphical diff utility.
-         Use '--diff-cmd=MY_DIFF_CMD' to use a custom diff tool.
-
-SUITE1, SUITE2: Suite names to compare.
-GRAPH_OPTIONS_ARGS: Options and arguments passed directly to cylc graph.
-__ERR__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-bad-suite-name"
 run_fail "${TEST_NAME}" \
-    cylc graph-diff "${DIFF_SUITE_NAME}" "${CONTROL_SUITE_NAME}.bad"
+    cylc graph "${DIFF_SUITE_NAME}" --diff "${CONTROL_SUITE_NAME}.bad"
 cmp_ok "${TEST_NAME}.stdout" </'dev/null'
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-Suite not found: ${CONTROL_SUITE_NAME}.bad
+WorkflowFilesError: no flow.cylc or suite.rc in ${RUN_DIR}/${CONTROL_SUITE_NAME}.bad
 __ERR__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-deps-fail"
 run_fail "${TEST_NAME}" \
-    cylc graph-diff "${DIFF_SUITE_NAME}" "${CONTROL_SUITE_NAME}"
+    cylc graph "${DIFF_SUITE_NAME}" --diff "${CONTROL_SUITE_NAME}"
 sed -i "/\.graph\.ref\./d" "${TEST_NAME}.stdout"
-cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
+cmp_ok "${TEST_NAME}.stdout" <<__OUT__
+--- ${DIFF_SUITE_NAME}
++++ ${CONTROL_SUITE_NAME}
 @@ -1,10 +1,10 @@
 -edge "bar.20140808T0000Z" "baz.20140808T0000Z"
 -edge "bar.20140809T0000Z" "baz.20140809T0000Z"
@@ -99,15 +71,17 @@ cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-deps-ok"
 run_ok "${TEST_NAME}" \
-    cylc graph-diff "${SAME_SUITE_NAME}" "${CONTROL_SUITE_NAME}"
+    cylc graph "${SAME_SUITE_NAME}" --diff "${CONTROL_SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stdout" <'/dev/null'
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-ns"
 run_fail "${TEST_NAME}" \
-    cylc graph-diff "${DIFF_SUITE_NAME}" "${CONTROL_SUITE_NAME}" -- --namespaces
+    cylc graph "${DIFF_SUITE_NAME}" --diff "${CONTROL_SUITE_NAME}" --namespaces
 sed -i "/\.graph\.ref\./d" "${TEST_NAME}.stdout"
-cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
+cmp_ok "${TEST_NAME}.stdout" <<__OUT__
+--- ${DIFF_SUITE_NAME}
++++ ${CONTROL_SUITE_NAME}
 @@ -1,7 +1,7 @@
 -edge FOO bar
 -edge FOO baz
@@ -118,51 +92,6 @@ cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
  edge root cold_foo
  graph
  node FOO FOO
-__OUT__
-cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-custom-diff"
-run_ok "${TEST_NAME}" \
-    cylc graph-diff --diff-cmd=cat "${DIFF_SUITE_NAME}" "${CONTROL_SUITE_NAME}"
-cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
-edge "bar.20140808T0000Z" "baz.20140808T0000Z"
-edge "bar.20140809T0000Z" "baz.20140809T0000Z"
-edge "bar.20140810T0000Z" "baz.20140810T0000Z"
-edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z"
-edge "foo.20140808T0000Z" "bar.20140808T0000Z"
-edge "foo.20140809T0000Z" "bar.20140809T0000Z"
-edge "foo.20140810T0000Z" "bar.20140810T0000Z"
-graph
-node "bar.20140808T0000Z" "bar\n20140808T0000Z"
-node "bar.20140809T0000Z" "bar\n20140809T0000Z"
-node "bar.20140810T0000Z" "bar\n20140810T0000Z"
-node "baz.20140808T0000Z" "baz\n20140808T0000Z"
-node "baz.20140809T0000Z" "baz\n20140809T0000Z"
-node "baz.20140810T0000Z" "baz\n20140810T0000Z"
-node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z"
-node "foo.20140808T0000Z" "foo\n20140808T0000Z"
-node "foo.20140809T0000Z" "foo\n20140809T0000Z"
-node "foo.20140810T0000Z" "foo\n20140810T0000Z"
-stop
-edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z"
-edge "foo.20140808T0000Z" "bar.20140808T0000Z"
-edge "foo.20140808T0000Z" "baz.20140808T0000Z"
-edge "foo.20140809T0000Z" "bar.20140809T0000Z"
-edge "foo.20140809T0000Z" "baz.20140809T0000Z"
-edge "foo.20140810T0000Z" "bar.20140810T0000Z"
-edge "foo.20140810T0000Z" "baz.20140810T0000Z"
-graph
-node "bar.20140808T0000Z" "bar\n20140808T0000Z"
-node "bar.20140809T0000Z" "bar\n20140809T0000Z"
-node "bar.20140810T0000Z" "bar\n20140810T0000Z"
-node "baz.20140808T0000Z" "baz\n20140808T0000Z"
-node "baz.20140809T0000Z" "baz\n20140809T0000Z"
-node "baz.20140810T0000Z" "baz\n20140810T0000Z"
-node "cold_foo.20140808T0000Z" "cold_foo\n20140808T0000Z"
-node "foo.20140808T0000Z" "foo\n20140808T0000Z"
-node "foo.20140809T0000Z" "foo\n20140809T0000Z"
-node "foo.20140810T0000Z" "foo\n20140810T0000Z"
-stop
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------

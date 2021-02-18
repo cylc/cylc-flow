@@ -420,7 +420,7 @@ graph_suite() {
 init_suite() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
@@ -431,7 +431,7 @@ init_suite() {
 install_suite() {
     local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/" # make source dir
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
@@ -516,7 +516,7 @@ purge () {
         # NOTE: lsof can raise warnings with some filesystems so ignore stderr
         # shellcheck disable=SC2034
         for try in $(seq 1 5); do
-            if grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); then
+            if ! grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); then
                 break
             fi
             sleep 1
@@ -730,6 +730,15 @@ create_test_global_config() {
     mkdir 'etc'
     # Scheduler host self-identification method.
     echo "$PRE" >'etc/global.cylc'
+    cat >>'etc/global.cylc' <<__HERE__
+    # set a default timeout for all flow runs to avoid hanging tests
+    [scheduler]
+        [[events]]
+            inactivity = PT5M
+            timeout = PT5M
+            abort on inactivity = true
+            abort on timeout = true
+__HERE__
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
     if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
@@ -743,7 +752,7 @@ _parse_platform_spec () {
     local requirement="$1"
 
     local locality='local'
-    local job_runner='background'
+    local job_runner='*'
     local file_system='*'
     local comms='*'
     for req in ${requirement}; do
@@ -780,7 +789,9 @@ _get_test_platform () {
         # we are purposfully allowing pattern matching here
         # shellcheck disable=SC2053
         if [[ "$platform" == $required_platform ]]; then
-            export CYLC_TEST_PLATFORM="$platform"
+            CYLC_TEST_PLATFORM="$platform"
+            CYLC_TEST_JOB_RUNNER="$(cut -d '_' -f 3 <<< "$platform")"
+            export CYLC_TEST_PLATFORM CYLC_TEST_JOB_RUNNER
             return 0
         fi
     done
@@ -909,7 +920,6 @@ delete_db() {
 }
 
 
-
 # tags
 
 PATH="${CYLC_REPO_DIR}/bin:${PATH}"
@@ -921,7 +931,8 @@ TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_DIR="$(mktemp -d)"
 cd "${TEST_DIR}"
 TEST_SOURCE_DIR_BASE="${TEST_SOURCE_DIR##*tests/}"
-TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/cylctb-${CYLC_TEST_TIME_INIT}"
+# this prevents test runs started at the same time from conflicting
+TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/${CYLC_TEST_REG_BASE}"
 TEST_LOG_DIR="${TEST_LOG_DIR_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 SUITE_RUN_FAILS=false
 
@@ -956,6 +967,12 @@ _get_test_host
 # extract a test install target from the test platform
 # provides: CYLC_TEST_INSTALL_TARGET
 _get_test_install_target
+
+if ${CYLC_SHOW_TEST_EXECUTION:-false}; then
+    # write the name of tests as they are run
+    # (helpful for debugging hanging tests)
+    echo "# $TEST_NAME_BASE" >&2
+fi
 
 set +x
 set +e

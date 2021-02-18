@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
-SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
+SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
 mkdir -p 'good' "${SUITE_NAME}"
 cat >'good/flow.cylc' <<'__FLOW_CONFIG__'

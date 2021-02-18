@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test install target.
+# Test remote installation only happens when appropriate
 export REQUIRE_PLATFORM='loc:remote fs:shared comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 3
@@ -24,25 +24,21 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!jinja2
 [scheduling]
     [[graph]]
-        graph = remote => held
+        graph = remote
 [runtime]
     [[remote]]
+        # thie should not require remote-init because the platform
+        # has a shared filesystem (same install target)
         script = """cylc hold "${CYLC_SUITE_NAME}" """
-        platform = {{CYLC_TEST_PLATFORM}}
-    [[held]]
-        script = sleep 1
         platform = {{CYLC_TEST_PLATFORM}}
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug \
+    --no-detach \
      "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-CYLC_SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
-poll_grep_suite_log 'Suite held'
-grep_ok "REMOTE INIT NOT REQUIRED for localhost" "${CYLC_SUITE_RUN_DIR}/log/suite/log"
-cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
+grep_ok "REMOTE INIT NOT REQUIRED for localhost" "${SUITE_RUN_DIR}/log/suite/log"
 
-# Clean up the task host.
 purge
 exit
