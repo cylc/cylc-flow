@@ -46,5 +46,5 @@ TEST_NAME=${TEST_NAME_BASE}-grep
 # State summary should not say "reloaded = True"
 grep_ok "reloaded=False" dump.out
 #-------------------------------------------------------------------------------
-cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
+cylc stop --now --now "${SUITE_NAME}"
 purge

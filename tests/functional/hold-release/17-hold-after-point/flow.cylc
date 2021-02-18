@@ -16,8 +16,8 @@
 [runtime]
     [[stopper]]
         script = """
-cylc__job__poll_grep_suite_log -F 'holding (beyond suite hold point) 20100102T00Z'
-cylc stop "${CYLC_SUITE_NAME}"
-"""
+            cylc__job__poll_grep_suite_log -F 'holding (beyond suite hold point) 20100102T00Z'
+            cylc stop "${CYLC_SUITE_NAME}"
+        """
     [[foo]]
         script = true

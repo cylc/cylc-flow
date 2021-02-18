@@ -28,13 +28,8 @@ init_suite "${TEST_NAME_BASE}" << '__FLOW__'
     UTC mode = False
 [scheduling]
     initial cycle point = now
-    [[special tasks]]
-        clock-trigger = foo(PT0M)
     [[graph]]
-        T23 = foo
-[runtime]
-    [[foo]]
-        script = true
+        R1 = foo
 __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -50,11 +45,11 @@ export TZ=UTC
 
 run_ok "${TEST_NAME_BASE}-reload" cylc reload "${SUITE_NAME}"
 poll_suite_running
-cylc stop "${SUITE_NAME}"
-poll_suite_stopped
+
+cylc stop --now --now "${SUITE_NAME}"
 
 log_scan "${TEST_NAME_BASE}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 1 0 \
-    'LOADING suite parameters' '+ cycle point time zone = +0100'
+    'LOADING suite parameters' \
+    '+ cycle point time zone = +0100'
 
 purge
-exit

@@ -70,7 +70,5 @@ log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
     'Suite unable to automatically restart after 3 tries'
 
 # stop suite - suite should already by stopped but just to be safe
-cylc stop --max-polls=10 --interval=2 -kill "${SUITE_NAME}" 2>'/dev/null'
+cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}" 2>'/dev/null'
 purge
-
-exit

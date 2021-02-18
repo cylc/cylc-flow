@@ -109,7 +109,5 @@ else
 fi
 
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
-sleep 1
-purge
 
-exit
+purge

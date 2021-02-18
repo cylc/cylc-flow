@@ -21,10 +21,10 @@
 set_test_number 2
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
-   [[dependencies]]
+    [[dependencies]]
         R1 = "foo => bar"
 [runtime]
-   [[foo, bar]]
+    [[foo, bar]]
         script = true
 __FLOW_CONFIG__
 
@@ -42,6 +42,6 @@ cmp_ok task-pool.out <<__OUT__
 1|bar|waiting|1
 __OUT__
 
-cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
+cylc stop --now --now "${SUITE_NAME}"
 
 purge
