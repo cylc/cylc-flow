@@ -10,7 +10,7 @@
 [runtime]
     [[ECHO]]
         script = """
-            wait
+            cylc__job__wait_cylc_message_started
             echo rubbish
             echo garbage >&2
             cylc message 'echo done'

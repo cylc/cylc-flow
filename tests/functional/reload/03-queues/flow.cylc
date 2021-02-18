@@ -25,7 +25,7 @@ cylc__job__poll_grep_suite_log 'Reload completed'
 """
     [[monitor]]
         script = """
-        wait
+        cylc__job__wait_cylc_message_started
         while true; do
             TASKS=$(cylc suite-state $CYLC_SUITE_NAME -S running | wc -l)
             if ((TASKS > 4)); then

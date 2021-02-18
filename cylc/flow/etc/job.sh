@@ -109,6 +109,9 @@ cylc__job__main() {
     export CYLC_SUITE_FINAL_CYCLE_TIME="${CYLC_SUITE_FINAL_CYCLE_POINT}"
     export CYLC_TASK_CYCLE_TIME="${CYLC_TASK_CYCLE_POINT}"
     export CYLC_TASK_WORK_PATH="${CYLC_TASK_WORK_DIR}"
+    # TODO? not in subshell (env-script moved up here on master)
+    # Env-Script
+    cylc__job__run_inst_func 'env_script'
     # Send task started message
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
@@ -121,7 +124,7 @@ cylc__job__main() {
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
-    # Env-Script, User Environment, Pre-Script, Script and Post-Script
+    # User Environment, Pre-Script, Script and Post-Script
     # Run user scripts in subshell to protect cylc job script from interference.
     # Waiting on background process allows signal traps to trigger immediately.
     cylc__job__run_user_scripts &
@@ -159,7 +162,7 @@ cylc__job__main() {
 # Run user scripts.
 cylc__job__run_user_scripts() {
     typeset func_name=
-    for func_name in 'env_script' 'user_env' 'pre_script' 'script' 'post_script'; do
+    for func_name in 'user_env' 'pre_script' 'script' 'post_script'; do
         cylc__job__run_inst_func "${func_name}"
     done
 }
