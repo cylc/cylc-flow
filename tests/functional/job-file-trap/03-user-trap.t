@@ -57,7 +57,7 @@ __SUITERC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Needs to be detaching:
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
 
 JOB_LOG_ROOT="${SUITE_RUN_DIR}/log/job/1/foo/01/job"
 
@@ -81,5 +81,5 @@ The undead child shall speak
 Exit with code 143
 __EOF__
 
-purge_suite "${SUITE_NAME}"
+purge
 exit

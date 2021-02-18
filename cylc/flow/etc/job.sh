@@ -109,7 +109,7 @@ cylc__job__main() {
     export CYLC_SUITE_FINAL_CYCLE_TIME="${CYLC_SUITE_FINAL_CYCLE_POINT}"
     export CYLC_TASK_CYCLE_TIME="${CYLC_TASK_CYCLE_POINT}"
     export CYLC_TASK_WORK_PATH="${CYLC_TASK_WORK_DIR}"
-    # TODO? not in subshell (env-script moved up here on master)
+    # TODO: this in subshell? (it moved up here after Tomek's made his branch?)
     # Env-Script
     cylc__job__run_inst_func 'env_script'
     # Send task started message

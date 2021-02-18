@@ -8,6 +8,7 @@
 
 [runtime]
     [[t1]]
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script="""
 cylc__job__wait_cylc_message_started
 mv "$0.out" "$0.out.keep"
@@ -16,6 +17,4 @@ cylc message 'succeeded' >>"$0.out.keep"
 sleep 5
 cp -p "$0.out.keep" "$0.out"
 cp -p "$0.err.keep" "$0.err"
-
-trap '' EXIT
 """

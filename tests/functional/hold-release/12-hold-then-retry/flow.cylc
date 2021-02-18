@@ -50,8 +50,8 @@ t-submit-retry-able:submit => t-hold
     [[t-submit-retry-able]]
         init-script = """
             if [[ "${CYLC_TASK_JOB}" == *"/01" ]]; then
-                trap '' EXIT
-                exit
+                cylc__job__disable_fail_signals ERR EXIT
+                exit 1
             fi
         """
         script = true

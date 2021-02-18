@@ -10,11 +10,7 @@
         """
 [runtime]
     [[POLLABLE]]
-        pre-script = """
-            # Stop script from reporting anything back
-            trap '' 'EXIT'
-            trap '' 'ERR'
-        """
+        init-script = cylc__job__disable_fail_signals ERR EXIT
     [[FAIL]]
         inherit = POLLABLE
         script = """
