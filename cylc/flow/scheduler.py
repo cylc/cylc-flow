@@ -1232,7 +1232,8 @@ class Scheduler:
             itask.waiting_on_job_prep
         ]
 
-        if self.stop_mode is None and self.auto_restart_time is None:
+        if (not self.is_paused and
+                self.stop_mode is None and self.auto_restart_time is None):
             # Add newly released tasks to those still preparing.
             self.pre_submit_tasks += self.pool.queue_and_release()
             if self.pre_submit_tasks:
@@ -1569,9 +1570,6 @@ class Scheduler:
         """Return True if waiting tasks are ready."""
         # do we need to do a pass through the main task processing loop?
         process = False
-
-        if self.is_paused:
-            return False
 
         # New-style xtriggers.
         self.xtrigger_mgr.check_xtriggers(self.pool.get_tasks())
