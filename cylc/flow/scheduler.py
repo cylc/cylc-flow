@@ -21,6 +21,7 @@ from dataclasses import dataclass
 import logging
 from optparse import Values
 import os
+from pathlib import Path
 from queue import Empty, Queue
 from shlex import quote
 from subprocess import Popen, PIPE, DEVNULL
@@ -276,7 +277,7 @@ class Scheduler:
 
         """
         # Install
-        source = suite_files.get_suite_source_dir()
+        source = suite_files.get_workflow_source_dir(Path.cwd())
         if source is None:
             # register workflow
             rund = get_workflow_run_dir(self.suite)
@@ -689,7 +690,6 @@ class Scheduler:
 
         """
         distinct_install_target_platforms = []
-
         for itask in self.pool.get_rh_tasks():
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))

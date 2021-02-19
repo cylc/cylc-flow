@@ -19,27 +19,6 @@
 # Test workflow installation failures
 
 
-export RND_SUITE_NAME
-export RND_SUITE_SOURCE
-export RND_SUITE_RUNDIR
-
-function make_rnd_suite() {
-    # Create a randomly-named suite source directory.
-    # Define its run directory.
-    RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
-    RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
-    mkdir -p "${RND_SUITE_SOURCE}"
-    touch "${RND_SUITE_SOURCE}/flow.cylc"
-    RND_SUITE_RUNDIR="${RUN_DIR}/${RND_SUITE_NAME}"
-}
-
-function purge_rnd_suite() {
-    # Remove the suite source created by make_rnd_suite().
-    # And remove its run-directory too.
-    rm -rf "${RND_SUITE_SOURCE}"
-    rm -rf "${RND_SUITE_RUNDIR}"
-}
-
 . "$(dirname "$0")/test_header"
 set_test_number 37
 
@@ -88,6 +67,7 @@ contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
 __ERR__
 purge_rnd_suite
+
 
 # Test cylc install fails when given flow-name that is an absolute path
 
