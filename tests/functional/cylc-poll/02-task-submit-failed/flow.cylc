@@ -15,12 +15,15 @@
     [[foo]]
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[poll_foo]]
-        script = cylc__job__wait_cylc_message_started; cylc poll "$CYLC_SUITE_NAME" 'foo'
+        script = """
+           cylc__job__wait_cylc_message_started
+           cylc poll "$CYLC_SUITE_NAME" 'foo'
+        """
     [[stop]]
         script = cylc stop $CYLC_SUITE_NAME
     [[kill_foo_submit]]
         script = """
-            wait
+            cylc__job__wait_cylc_message_started
             ID=$(sed -n "s/^CYLC_JOB_ID=//p" \
                  $CYLC_SUITE_RUN_DIR/log/job/1/foo/01/job.status)
             atrm $ID
