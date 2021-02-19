@@ -109,9 +109,6 @@ cylc__job__main() {
     export CYLC_SUITE_FINAL_CYCLE_TIME="${CYLC_SUITE_FINAL_CYCLE_POINT}"
     export CYLC_TASK_CYCLE_TIME="${CYLC_TASK_CYCLE_POINT}"
     export CYLC_TASK_WORK_PATH="${CYLC_TASK_WORK_DIR}"
-    # TODO: this in subshell? (it moved up here after Tomek's made his branch?)
-    # Env-Script
-    cylc__job__run_inst_func 'env_script'
     # Send task started message
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
@@ -162,7 +159,8 @@ cylc__job__main() {
 # Run user scripts.
 cylc__job__run_user_scripts() {
     typeset func_name=
-    for func_name in 'user_env' 'pre_script' 'script' 'post_script'; do
+    for func_name in 'env_script' 'user_env' 'pre_script' \
+           'script' 'post_script'; do
         cylc__job__run_inst_func "${func_name}"
     done
 }
