@@ -5,18 +5,19 @@
 
 [scheduler]
     UTC mode = True
+    cycle point format = CCYYMMDDThhmmZ
 
 [scheduling]
-    initial cycle point  = 20100101T00Z
-    final cycle point    = 20100110T00Z
-    hold after cycle point    = 20100102T00Z
+    initial cycle point  = 2010-01-01
+    final cycle point    = 2010-01-10
+    hold after cycle point    = 2010-01-02
     [[graph]]
         R1 = stopper
         T00 = foo[-P1D] => foo
 [runtime]
     [[stopper]]
         script = """
-            cylc__job__poll_grep_suite_log -F 'holding (beyond suite hold point) 20100102T00Z'
+            cylc__job__poll_grep_suite_log -F 'holding (beyond suite hold point) 20100102T0000Z'
             cylc stop "${CYLC_SUITE_NAME}"
         """
     [[foo]]
