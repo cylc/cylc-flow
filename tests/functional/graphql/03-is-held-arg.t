@@ -24,7 +24,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # run suite
 run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
-cylc hold "${SUITE_NAME}"
+cylc hold --after=0 "${SUITE_NAME}"
 sleep 1
 
 # query suite
