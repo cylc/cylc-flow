@@ -77,15 +77,15 @@ async def test_scheduler_arguments(flow, scheduler, run, one_conf):
     Use the `dest` value specified in the option parser.
 
     """
-    # Ensure the hold_start option is obeyed by the scheduler.
+    # Ensure the paused_start option is obeyed by the scheduler.
     reg = flow(one_conf)
-    schd = scheduler(reg, hold_start=True)
+    schd = scheduler(reg, paused_start=True)
     async with run(schd):
-        assert schd.paused()
+        assert schd.is_paused
     reg = flow(one_conf)
-    schd = scheduler(reg, hold_start=False)
+    schd = scheduler(reg, paused_start=False)
     async with run(schd):
-        assert not schd.paused()
+        assert not schd.is_paused
 
 
 @pytest.mark.asyncio

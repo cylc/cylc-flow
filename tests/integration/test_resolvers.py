@@ -58,7 +58,7 @@ async def flow(mod_flow, mod_scheduler, mod_run):
         }
     })
 
-    ret.schd = mod_scheduler(ret.reg, hold_start=True)
+    ret.schd = mod_scheduler(ret.reg, paused_start=True)
     await ret.schd.install()
     await ret.schd.initialise()
     await ret.schd.configure()
@@ -178,7 +178,7 @@ async def test_mutator(flow, flow_args):
     args = {}
     response = await flow.resolvers.mutator(
         None,
-        'hold',
+        'pause',
         flow_args,
         args
     )
@@ -203,5 +203,5 @@ async def test_nodes_mutator(flow, flow_args):
 @pytest.mark.asyncio
 async def test_mutation_mapper(flow):
     """Test the mapping of mutations to internal command methods."""
-    response = await flow.resolvers._mutation_mapper('hold', {})
+    response = await flow.resolvers._mutation_mapper('pause', {})
     assert response is not None
