@@ -33,16 +33,6 @@ run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
 
 # If rose-cylc plugin is installed add install files to tree.
 export ROSE_FILES=''
-if python -c "import cylc.rose" > /dev/null 2>&1; then
-    export ROSE_FILES="├── log
-│   └── install
-├── opt
-│   └── rose-suite-cylc-install.conf
-└── rose-suite.conf"
-else
-    export ROSE_FILES="└── log
-    └── install"
-fi
 
 tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
 
@@ -58,7 +48,8 @@ ${RND_SUITE_RUNDIR}/
 ├── file1
 ├── file2
 ├── flow.cylc
-${ROSE_FILES}
+└── log
+    └── install
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
@@ -91,7 +82,8 @@ ${RND_SUITE_RUNDIR}/
 │   └── source -> ${RND_SUITE_SOURCE}
 ├── file1
 ├── flow.cylc
-${ROSE_FILES}
+└── log
+    └── install
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__

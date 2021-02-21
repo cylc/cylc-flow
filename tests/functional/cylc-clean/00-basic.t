@@ -82,9 +82,6 @@ ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
             |   \`-- source -> ${TEST_DIR}/${SUITE_NAME}
             |-- flow.cylc
             |-- log -> ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${SUITE_NAME}/log
-            |-- opt
-            |   \`-- rose-suite-cylc-install.conf
-            |-- rose-suite.conf
             |-- share -> ${TEST_DIR}/${SYM_NAME}/share/cylc-run/${SUITE_NAME}/share
             \`-- work -> ${TEST_DIR}/${SYM_NAME}/work/cylc-run/${SUITE_NAME}/work
 ${TEST_DIR}/${SYM_NAME}/share/cylc-run/${CYLC_TEST_REG_BASE}
