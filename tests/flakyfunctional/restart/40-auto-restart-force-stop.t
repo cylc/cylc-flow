@@ -45,7 +45,7 @@ ${BASE_GLOBAL_CONFIG}
         available = localhost
 "
 
-cylc play "${SUITE_NAME}" --hold
+cylc play "${SUITE_NAME}" --pause
 poll_suite_running
 
 create_test_global_config '' "

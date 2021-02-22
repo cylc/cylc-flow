@@ -34,7 +34,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-cylc play --hold --no-detach "${SUITE_NAME}" 1>'cylc-run.out' 2>&1 &
+cylc play --pause --no-detach "${SUITE_NAME}" 1>'cylc-run.out' 2>&1 &
 MYPID=$!
 poll_suite_running
 kill "${MYPID}"  # Should leave behind the contact file

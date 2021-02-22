@@ -27,9 +27,9 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         graph = remote
 [runtime]
     [[remote]]
-        # thie should not require remote-init because the platform
+        # this should not require remote-init because the platform
         # has a shared filesystem (same install target)
-        script = """cylc hold "${CYLC_SUITE_NAME}" """
+        script = true
         platform = {{CYLC_TEST_PLATFORM}}
 __FLOW_CONFIG__
 

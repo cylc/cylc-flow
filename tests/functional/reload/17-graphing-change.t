@@ -26,8 +26,8 @@ set_test_number 12
 install_suite "${TEST_NAME_BASE}" 'graphing-change'
 LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
 
-# start suite in held mode
-run_ok "${TEST_NAME_BASE}-add-run" cylc play --debug --hold "${SUITE_NAME}"
+# start suite in paused mode
+run_ok "${TEST_NAME_BASE}-add-run" cylc play --debug --pause "${SUITE_NAME}"
 
 # change the flow.cylc file
 cp "${TEST_SOURCE_DIR}/graphing-change/flow-1.cylc" \
