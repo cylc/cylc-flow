@@ -1,27 +1,31 @@
 [meta]
-    title = "hold/release a suite with tasks held beyond suite stop point"
+    title = "test hold point and release, with tasks beyond suite stop point"
 
     description = """
-Releasing a held suite should not release tasks that are held because they're
-beyond the suite stop point."""
+        Releasing all tasks should not release tasks that are held because they're
+        beyond the suite stop point.
+    """
 
-# ref: GitHub Pull Request #1144
+# https://github.com/cylc/cylc-flow/pull/1144
+
+# See also tests/f/pause-resume/01-beyond-stop
 
 [scheduler]
     cycle point format = %Y%m%dT%H
 
 [scheduling]
     initial cycle point = 20140101T00
-    final cycle point   = 20140101T00
+    stop after cycle point = 20140101T00
     [[graph]]
         R1 = foo => holdrelease
         T00 = "foo => bar"
 [runtime]
     [[holdrelease]]
-        # When this task runs foo will be held beyond the suite stop point.
+        # When this task runs foo will be held beyond the stop point.
         script = """
-cylc hold $CYLC_SUITE_NAME
-cylc release $CYLC_SUITE_NAME"""
+            cylc hold --after=1900 $CYLC_SUITE_NAME
+            cylc release --all $CYLC_SUITE_NAME
+        """
     [[foo]]
         script = true
     [[bar]]

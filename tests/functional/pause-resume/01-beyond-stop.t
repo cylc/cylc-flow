@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test hold point and release, with tasks present beyond stop point.
+# Test pause and resume, with tasks present beyond stop point.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest
