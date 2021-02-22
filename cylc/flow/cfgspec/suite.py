@@ -865,16 +865,28 @@ with Conf(
                        [<platform name>]execution polling intervals`
                 ''')
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
-                .. warning::
+                Cylc can automate resubmission of failed a task job.
 
-                   Deprecated, use :cylc:conf:`global.cylc[platforms]
-                   [<platform name>]execution retry delays`
+                Execution retry delays are a list of ISO 8601
+                durations/intervals which tell Cylc how long to wait before
+                resubmitting a failed job.
+
+                Each time Cylc resubmits a task job it will increment the
+                variable $CYLC_TASK_TRY_NUMBER in the task execution
+                environment. $CYLC_TASK_TRY_NUMBER allows you to vary task
+                behavior between submission attempts.
             ''')
             Conf('execution time limit', VDR.V_INTERVAL, desc='''
-                .. warning::
+                Set the execution time (wall clock) limit a job of a task.
 
-                   Deprecated, use :cylc:conf:`global.cylc[platforms]
-                   [<platform name>]execution time limit`
+                For ``background`` and ``at`` job runners Cylc invokes the
+                job's script using the timeout command. For other job runners
+                Cylc will convert execution time limit to a directive.
+
+                If a task job exceeds its execution time limit Cylc can
+                poll the job multiple times. You you can set polling
+                intervals using cylc:conf:`global.cylc[platforms]
+                [<platform name>]execution time limit polling intervals`
             ''')
             Conf(
                 'submission polling intervals',
