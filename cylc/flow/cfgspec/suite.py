@@ -865,27 +865,27 @@ with Conf(
                        [<platform name>]execution polling intervals`
                 ''')
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
-                Cylc can automate resubmission of failed a task job.
+                Cylc can automate resubmission of a failed task job.
 
                 Execution retry delays are a list of ISO 8601
                 durations/intervals which tell Cylc how long to wait before
                 resubmitting a failed job.
 
                 Each time Cylc resubmits a task job it will increment the
-                variable $CYLC_TASK_TRY_NUMBER in the task execution
-                environment. $CYLC_TASK_TRY_NUMBER allows you to vary task
+                variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
+                environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
                 behavior between submission attempts.
             ''')
             Conf('execution time limit', VDR.V_INTERVAL, desc='''
-                Set the execution time (wall clock) limit a job of a task.
+                Set the execution (:ref:`wall-clock`) time limit of a task job.
 
                 For ``background`` and ``at`` job runners Cylc invokes the
                 job's script using the timeout command. For other job runners
-                Cylc will convert execution time limit to a directive.
+                Cylc will convert execution time limit to a :ref:`directive`.
 
                 If a task job exceeds its execution time limit Cylc can
-                poll the job multiple times. You you can set polling
-                intervals using cylc:conf:`global.cylc[platforms]
+                poll the job multiple times. You can set polling
+                intervals using :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
             ''')
             Conf(
@@ -908,7 +908,6 @@ with Conf(
                        Deprecated, use :cylc:conf:`global.cylc[platforms]
                        [<platform name>]submission retry delays`
             ''')
-
             with Conf('meta', desc=r'''
                 Section containing metadata items for this task or family
                 namespace.  Several items (title, description, URL) are
@@ -1483,6 +1482,16 @@ def upg(cfg, descr):
             '8.0.0',
             ['runtime', '__MANY__', 'job', job_setting],
             ['runtime', '__MANY__', job_setting]
+        )
+    for job_setting in [
+        'execution polling intervals',
+        'submission polling intervals',
+        'submission retry delays'
+    ]:
+        LOG.warning(
+            f"'{job_setting}' set in global.cylc[platforms] at Cylc 8.\n"
+            "Currently this item will over-ride the platform config, "
+            "but this config item will be obsolete at Cylc 9."
         )
 
     u.deprecate('8.0.0', ['cylc'], ['scheduler'])
