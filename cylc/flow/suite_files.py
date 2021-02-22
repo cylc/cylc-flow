@@ -992,6 +992,7 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         '.svn',
         '.cylcignore',
         'log',
+        'opt/rose-suite-cylc-install.conf',
         SuiteFiles.Install.DIRNAME,
         SuiteFiles.Service.DIRNAME]
     for exclude in ignore_dirs:
