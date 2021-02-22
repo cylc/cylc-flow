@@ -1,12 +1,13 @@
 [meta]
-    title = "hold/release test suite"
+    title = "hold/release test"
 
     description = """
-        One task that holds then releases the suite, with
-        short sleeps to make the effect on the downstream task obvious.
+        One task that sets hold point then releases all tasks.
     """
 
-# ref: bug-fix GitHub Pull Request #843 (5412d01)
+# https://github.com/cylc/cylc-flow/pull/843
+
+# See also tests/f/pause-resume/00-suite
 
 [scheduler]
     cycle point format = %Y%m%dT%H
@@ -20,10 +21,10 @@
 [runtime]
     [[holdrelease]]
         script = """
-wait
-cylc hold "${CYLC_SUITE_NAME}"
-cylc__job__poll_grep_suite_log -F 'INFO - Command succeeded: hold()'
-cylc release "${CYLC_SUITE_NAME}"
-"""
+            wait
+            cylc hold --after=1900 "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log -F 'INFO - Command succeeded: hold'
+            cylc release --all "${CYLC_SUITE_NAME}"
+        """
     [[foo,bar]]
         script = true

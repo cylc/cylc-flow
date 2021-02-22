@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test abort on stalled with hold, ensure abort on stalled does not applied to
-# a suite started with --hold.
+# Test abort on stalled does not apply to a workflow started with --hold-after
+
+# See also tests/functional/pause-resume/02-paused-not-stalled.t
+
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --hold --no-detach "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --hold-after=0 --no-detach "${SUITE_NAME}"
 
 purge
 exit

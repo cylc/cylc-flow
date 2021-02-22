@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test hold point and release, with cycling and async tasks present.
+# Test workflow pause and resume, with cycling and async tasks present.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest

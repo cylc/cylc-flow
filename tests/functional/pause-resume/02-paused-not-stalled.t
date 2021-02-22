@@ -15,8 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test hold point and release, with cycling and async tasks present.
+# Test that abort on stalled does not apply to a paused workflow
+
+# See also tests/functional/events/25-held-not-stalled.t
+
 . "$(dirname "$0")/test_header"
 set_test_number 2
-reftest
-exit
+
+
+init_suite "${TEST_NAME_BASE}" << __FLOW__
+[scheduler]
+    [[events]]
+        abort on inactivity = False
+        abort on stalled = True
+        inactivity handler = cylc play '%(suite)s'
+        inactivity = PT5S
+[scheduling]
+    [[graph]]
+        R1 = t1
+[runtime]
+    [[t1]]
+        script = true
+__FLOW__
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --pause --no-detach "${SUITE_NAME}"
+
+purge
