@@ -487,7 +487,7 @@ class Resolvers(BaseResolvers):
             if command == 'put_messages':
                 args['task_job'] = items[0]
             else:
-                args['task_globs'] = items
+                args['tasks'] = items
         result = await self._mutation_mapper(command, args)
         if result is None:
             result = (True, 'Command queued')
