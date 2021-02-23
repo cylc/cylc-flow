@@ -20,12 +20,14 @@ from functools import partial
 from pathlib import Path
 import re
 from shutil import rmtree
+from typing import List, TYPE_CHECKING
 
 import pytest
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import platform_from_name
+from cylc.flow.rundb import CylcSuiteDAO
 
 from .utils import (
     _expanduser,
@@ -36,6 +38,9 @@ from .utils.flow_tools import (
     _make_scheduler,
     _run_flow
 )
+
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -240,3 +245,54 @@ def event_loop():
     for task in asyncio.all_tasks(loop):
         task.cancel()
     loop.close()
+
+
+@pytest.fixture
+def db_select():
+    """Select columns from workflow database.
+
+    Args:
+        schd: The Scheduler object for the workflow.
+        table: The name of the database table to query.
+        *columns (optional): The columns to select from the table. To select
+            all columns, omit or use '*'.
+        **where (optional): Kwargs specifying <column>='<value>' for use in
+            WHERE clauses. If more than one specified, they will be chained
+            together using an AND operator.
+    """
+
+    def _check_columns(table: str, *columns: str) -> None:
+        all_columns = [x[0] for x in CylcSuiteDAO.TABLES_ATTRS[table]]
+        if not all(col in all_columns for col in columns):
+            raise ValueError(
+                f"One or more unrecognised column names for table {table} "
+                f"in: {columns}")
+
+    def _inner(
+        schd: 'Scheduler', table: str, *columns: str, **where: str
+    ) -> List[str]:
+
+        if table not in CylcSuiteDAO.TABLES_ATTRS:
+            raise ValueError(f"Table name '{table}' not recognised")
+        if not columns:
+            columns = ('*',)
+        elif columns != ('*',):
+            _check_columns(table, *columns)
+
+        stmt = f'SELECT {",".join(columns)} FROM {table}'
+        stmt_args = []
+        if where:
+            _check_columns(table, *where.keys())
+            where_stmt = ' AND '.join([
+                f'{col}=?' for col in where.keys()
+            ])
+            stmt += f' WHERE {where_stmt}'
+            stmt_args = list(where.values())
+
+        dao = schd.suite_db_mgr.get_pri_dao()
+        try:
+            return [i for i in dao.connect().execute(stmt, stmt_args)]
+        finally:
+            dao.close()
+
+    return _inner

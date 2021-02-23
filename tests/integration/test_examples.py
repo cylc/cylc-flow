@@ -211,3 +211,22 @@ def test_module_one(myflow):
 def test_module_two(myflow):
     # Ensure the uuid is set on __init__
     assert myflow.uuid_str
+
+
+@pytest.mark.asyncio
+async def test_db_select(one, run, db_select):
+    """Demonstrate and test querying the workflow database."""
+    schd = one
+    async with run(schd):
+        # Note: can't query database here unfortunately
+        pass
+    # Now we can query the DB
+    # Select all from suite_params table:
+    assert ('UTC_mode', '0') in db_select(schd, 'suite_params')
+    # Select name & status columns from task_states table:
+    results = db_select(schd, 'task_states', 'name', 'status')
+    assert results[0] == ('one', 'waiting')
+    # Select all columns where name==one & status==waiting from
+    # task_states table:
+    results = db_select(schd, 'task_states', name='one', status='waiting')
+    assert len(results) == 1
