@@ -148,8 +148,8 @@ class GraphParser:
     # <REMOVE_TOKEN>   : <TASK_NAME_PART> <_REMOVE>
     #                    <TASK_NAME_PART>?
     _TASK_NAME_PART = rf'[^\s{OP_AND}{OP_OR}]'
-    _REMOVE_TOKEN = rf'{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?' \
-                    rf'{_TASK_NAME_PART}+'
+    _REMOVE_TOKEN = (rf'{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?'
+                     rf'{_TASK_NAME_PART}+')
     REC_NODE_OUT_OF_RANGE = re.compile(rf'''
         (                                     #
             ^{_REMOVE_TOKEN}[{OP_AND}{OP_OR}] # ^<REMOVE> <AND|OR>

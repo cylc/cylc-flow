@@ -18,7 +18,7 @@
     [[reloader]]
         script = """
 # change the limit on number of members of q_fam:
-perl -pi -e 's/(limit = )5( # marker)/\1 3 \2/' $CYLC_SUITE_DEF_PATH/flow.cylc
+perl -pi -e 's/(limit = )5( # marker)/\1 3 \2/' $CYLC_SUITE_RUN_DIR/flow.cylc
 # reload
 cylc reload "${CYLC_SUITE_NAME}"
 cylc__job__poll_grep_suite_log 'Reload completed'

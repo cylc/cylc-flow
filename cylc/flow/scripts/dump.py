@@ -51,6 +51,7 @@ fragment tProxy on TaskProxy {
   cyclePoint
   state
   isHeld
+  isQueued
   flowLabel
   firstParent {
     id
@@ -254,6 +255,8 @@ def main(_, options, suite):
                                 item['cyclePoint'],
                                 item['state']]
                         values.append('held' if item['isHeld'] else 'unheld')
+                        values.append('queued' if item['isQueued']
+                                      else 'unqueued')
                         if options.flow:
                             values.append(item['flowLabel'])
                         print(', '.join(values))

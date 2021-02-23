@@ -18,7 +18,6 @@
 
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
-    TASK_STATUS_QUEUED,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -73,11 +72,7 @@ SUITE_COLOURS = {
 # unicode task icons
 TASK_ICONS = {
     f'{TASK_STATUS_WAITING}': '\u25cb',
-
     f'{TASK_STATUS_PREPARING}': '\u25cb',
-    f'{TASK_STATUS_QUEUED}': '\u25cb',
-    # TODO: remove with https://github.com/cylc/cylc-admin/pull/47
-
     f'{TASK_STATUS_SUBMITTED}': '\u2299',
     f'{TASK_STATUS_RUNNING}': '\u2299',
     f'{TASK_STATUS_RUNNING}:0': '\u2299',
@@ -92,7 +87,8 @@ TASK_ICONS = {
 
 # unicode modifiers for special task states
 TASK_MODIFIERS = {
-    'held': '\u030E'
+    'held': '\u030E',
+    'queued': '\u033F'
 }
 
 # unicode job icon

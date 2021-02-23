@@ -1227,17 +1227,20 @@ class DataStoreMgr:
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
             tp_added = self.added[TASK_PROXIES]
-            # gather child family states for count and set is_held
+            # gather child family states for count, set is_held, is_queued
             state_counter = Counter({})
             is_held_total = 0
+            is_queued_total = 0
             for child_id in fam_node.child_families:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
                 if child_node is not None:
                     is_held_total += child_node.is_held_total
+                    is_queued_total += child_node.is_queued_total
                     state_counter += Counter(dict(child_node.state_totals))
             # Gather all child task states
             task_states = []
             for tp_id in fam_node.child_tasks:
+
                 tp_delta = tp_updated.get(tp_id)
                 tp_node = tp_added.get(tp_id, tp_data.get(tp_id))
 
@@ -1253,6 +1256,12 @@ class DataStoreMgr:
                 if tp_held.is_held:
                     is_held_total += 1
 
+                tp_queued = tp_delta
+                if tp_queued is None or not tp_queued.HasField('is_queued'):
+                    tp_queued = tp_node
+                if tp_queued.is_queued:
+                    is_queued_total += 1
+
             state_counter += Counter(task_states)
             # created delta data element
             fp_delta = PbFamilyProxy(
@@ -1260,7 +1269,9 @@ class DataStoreMgr:
                 stamp=f'{fp_id}@{time()}',
                 state=extract_group_state(state_counter.keys()),
                 is_held=(is_held_total > 0),
-                is_held_total=is_held_total
+                is_held_total=is_held_total,
+                is_queued=(is_queued_total > 0),
+                is_queued_total=is_queued_total
             )
             fp_delta.states[:] = state_counter.keys()
             for state, state_cnt in state_counter.items():
@@ -1297,6 +1308,7 @@ class DataStoreMgr:
         if self.updated_state_families:
             state_counter = Counter({})
             is_held_total = 0
+            is_queued_total = 0
             for root_id in set(
                     [n.id
                      for n in data[FAMILY_PROXIES].values()
@@ -1309,12 +1321,14 @@ class DataStoreMgr:
                     root_id, data.get(root_id))
                 if root_node is not None and root_node.state:
                     is_held_total += root_node.is_held_total
+                    is_queued_total += root_node.is_queued_total
                     state_counter += Counter(dict(root_node.state_totals))
             w_delta.states[:] = state_counter.keys()
             for state, state_cnt in state_counter.items():
                 w_delta.state_totals[state] = state_cnt
 
             w_delta.is_held_total = is_held_total
+            w_delta.is_queued_total = is_queued_total
             delta_set = True
 
         # Set status & msg if changed.
@@ -1421,6 +1435,26 @@ class DataStoreMgr:
                 tp_id, PbTaskProxy(id=tp_id))
             tp_delta.stamp = f'{tp_id}@{time()}'
             tp_delta.is_held = itask.state.is_held
+            self.state_update_families.add(tproxy.first_parent)
+            self.updates_pending = True
+
+    def delta_task_queued(self, itask):
+        """Create delta for change in task proxy queued state.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                Update task-node from corresponding task proxy
+                objects from the workflow task pool.
+
+        """
+        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        if not tproxy:
+            return
+        if itask.state.is_queued is not tproxy.is_queued:
+            tp_delta = self.updated[TASK_PROXIES].setdefault(
+                tp_id, PbTaskProxy(id=tp_id))
+            tp_delta.stamp = f'{tp_id}@{time()}'
+            tp_delta.is_queued = itask.state.is_queued
             self.state_update_families.add(tproxy.first_parent)
             self.updates_pending = True
 

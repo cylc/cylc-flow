@@ -247,61 +247,6 @@ class TestSuiteConfig:
                        config.runtime['descendants']['SOMEFAM']
 
 
-def test_queue_config_repeated(caplog, tmp_path):
-    """Test repeated assignment to same queue."""
-    flow_file_content = """
-[scheduling]
-   [[queues]]
-       [[[q1]]]
-           members = A, B
-       [[[q2]]]
-           members = x
-   [[dependencies]]
-       graph = "x => y"
-[runtime]
-   [[A]]
-   [[B]]
-   [[x]]
-       inherit = A, B
-   [[y]]
-    """
-    flow_file = tmp_path / SuiteFiles.FLOW_FILE
-    flow_file.write_text(flow_file_content)
-    SuiteConfig(suite="qtest", fpath=flow_file.absolute(),
-                options=Mock(spec=[]))
-    log = caplog.messages[0].split('\n')
-    assert log[0] == "Queue configuration warnings:"
-    assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
-
-
-def test_queue_config_not_used_not_defined(caplog, tmp_path):
-    """Test task not defined vs no used, in queue config."""
-    flow_file_content = """
-[scheduling]
-   [[queues]]
-       [[[q1]]]
-           members = foo
-       [[[q2]]]
-           members = bar
-   [[dependencies]]
-       # foo and bar not used
-       graph = "beef => wellington"
-[runtime]
-   [[beef]]
-   [[wellington]]
-   [[foo]]
-   # bar not even defined
-    """
-    flow_file = tmp_path / SuiteFiles.FLOW_FILE
-    flow_file.write_text(flow_file_content)
-    SuiteConfig(suite="qtest", fpath=flow_file.absolute(),
-                options=Mock(spec=[]))
-    log = caplog.messages[0].split('\n')
-    assert log[0] == "Queue configuration warnings:"
-    assert log[1] == "+ q1: ignoring foo (task not used in the graph)"
-    assert log[2] == "+ q2: ignoring bar (task not defined)"
-
-
 def test_missing_initial_cycle_point():
     """Test that validation fails when the initial cycle point is
     missing for datetime cycling"""
