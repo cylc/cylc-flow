@@ -30,9 +30,6 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution time limit] -> [run
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission polling intervals] -> [runtime][foo, cat, dog][submission polling intervals] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [runtime][foo, cat, dog][submission retry delays] - value unchanged
 WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged
-WARNING - '[runtime][foo, cat, dog]execution polling intervals' set in global.cylc[platforms] at Cylc 8.
-	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
-WARNING - '[runtime][foo, cat, dog]submission polling intervals' set in global.cylc[platforms] at Cylc 8.
-	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
-WARNING - '[runtime][foo, cat, dog]submission retry delays' set in global.cylc[platforms] at Cylc 8.
-	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
+WARNING - * (8.0.0) '[runtime][{task}]{job_setting}' - this setting is deprecated; use'global.cylc[platforms][<platform name>]{job_setting}' instead. Currently, this item will override the corresponding item in global.cylc,but support for this will be removed in Cylc 9.
+WARNING - * (8.0.0) '[runtime][{task}]{job_setting}' - this setting is deprecated; use'global.cylc[platforms][<platform name>]{job_setting}' instead. Currently, this item will override the corresponding item in global.cylc,but support for this will be removed in Cylc 9.
+WARNING - * (8.0.0) '[runtime][{task}]{job_setting}' - this setting is deprecated; use'global.cylc[platforms][<platform name>]{job_setting}' instead. Currently, this item will override the corresponding item in global.cylc,but support for this will be removed in Cylc 9.
