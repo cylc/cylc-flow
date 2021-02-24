@@ -879,7 +879,8 @@ with Conf(
                 behavior between submission attempts.
             ''')
             Conf('execution time limit', VDR.V_INTERVAL, desc='''
-                Set the execution (:ref:`wall-clock`) time limit of a task job.
+                Set the execution (:term:`wall-clock <wall-clock time>`) time
+                limit of a task job.
 
                 For ``background`` and ``at`` job runners Cylc invokes the
                 job's script using the timeout command. For other job runners
