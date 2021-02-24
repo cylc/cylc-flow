@@ -884,7 +884,7 @@ with Conf(
 
                 For ``background`` and ``at`` job runners Cylc invokes the
                 job's script using the timeout command. For other job runners
-                Cylc will convert execution time limit to a :ref:`directive`.
+                Cylc will convert execution time limit to a :term:`directive`.
 
                 If a task job exceeds its execution time limit Cylc can
                 poll the job multiple times. You can set polling
