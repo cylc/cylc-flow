@@ -46,7 +46,7 @@ from cylc.flow.terminal import cli_function
 PLAY_DOC = r"""cylc [control] play [OPTIONS] [ARGS]
 
 Start running a workflow, or restart a stopped workflow from its previous
-state/cycle point, or resume a paused workflow by releasing all tasks.
+state, or resume a paused workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
@@ -54,10 +54,10 @@ If the workflow is not already installed (by "cylc install" or a previous run)
 it will be installed on the fly before start up.
 
 Examples:
-    # Start/restart the workflow with name REG.
+    # Start, restart or resume the workflow with name REG.
     $ cylc play REG
 
-A "cold start" (the default for a freshly-installed workflow) starts from the
+A "(cold) start" (the default for a freshly-installed workflow) starts from the
 initial cycle point (specified in flow.cylc or on the command line). Any
 dependence on tasks prior to the initial cycle point is ignored.
 It is also possible to start from a point that is later than the initial cycle
@@ -67,7 +67,10 @@ through the graph (historically known as a "warm start").
 
 A "restart" continues on from the most recent recorded state of the workflow.
 Tasks recorded as submitted or running are polled at restart to determine what
-happened to them while the workflow was shut down."""
+happened to them while the workflow was shut down.
+
+A "resume" of a paused (but not stopped) workflow allows task jobs to be
+submitted once again."""
 
 
 FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
