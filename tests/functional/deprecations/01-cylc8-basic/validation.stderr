@@ -1,9 +1,3 @@
-WARNING - 'execution polling intervals' set in global.cylc[platforms] at Cylc 8.
-	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
-WARNING - 'submission polling intervals' set in global.cylc[platforms] at Cylc 8.
-	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
-WARNING - 'submission retry delays' set in global.cylc[platforms] at Cylc 8.
-	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
 WARNING - deprecated items were automatically upgraded in "suite definition"
 WARNING -  * (8.0.0) [cylc][force run mode] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE)
@@ -36,3 +30,9 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution time limit] -> [run
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission polling intervals] -> [runtime][foo, cat, dog][submission polling intervals] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [runtime][foo, cat, dog][submission retry delays] - value unchanged
 WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged
+WARNING - '[runtime][foo, cat, dog]execution polling intervals' set in global.cylc[platforms] at Cylc 8.
+	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
+WARNING - '[runtime][foo, cat, dog]submission polling intervals' set in global.cylc[platforms] at Cylc 8.
+	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.
+WARNING - '[runtime][foo, cat, dog]submission retry delays' set in global.cylc[platforms] at Cylc 8.
+	Currently this item will over-ride the platform config, but this config item will be obsolete at Cylc 9.

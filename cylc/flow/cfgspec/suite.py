@@ -17,6 +17,8 @@
 
 import re
 
+from itertools import product
+
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
@@ -1483,16 +1485,6 @@ def upg(cfg, descr):
             ['runtime', '__MANY__', 'job', job_setting],
             ['runtime', '__MANY__', job_setting]
         )
-    for job_setting in [
-        'execution polling intervals',
-        'submission polling intervals',
-        'submission retry delays'
-    ]:
-        LOG.warning(
-            f"'{job_setting}' set in global.cylc[platforms] at Cylc 8.\n"
-            "Currently this item will over-ride the platform config, "
-            "but this config item will be obsolete at Cylc 9."
-        )
 
     u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()
@@ -1502,6 +1494,23 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
+
+    # Warn about config items moved to global.cylc.
+    for job_setting, task in product(
+        [
+            'execution polling intervals',
+            'submission polling intervals',
+            'submission retry delays'
+        ],
+        cfg['runtime'].keys()
+    ):
+        if job_setting in cfg['runtime'][task]:
+            LOG.warning(
+                f"'[runtime][{task}]{job_setting}' set in "
+                "global.cylc[platforms] at Cylc 8.\n"
+                "Currently this item will over-ride the platform config, "
+                "but this config item will be obsolete at Cylc 9."
+            )
 
 
 def upgrade_graph_section(cfg, descr):
