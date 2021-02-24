@@ -42,8 +42,10 @@ from cylc.flow.pathutil import (
     remove_dir,
     get_next_rundir_number)
 from cylc.flow.platforms import (
-    get_platform,
-    get_install_target_to_platforms_map)
+    get_install_target_to_platforms_map,
+    get_localhost_install_target,
+    get_platform
+)
 from cylc.flow.hostuserutil import (
     get_user,
     is_remote_host
@@ -657,7 +659,7 @@ def remote_clean(reg, platform_names, timeout):
 
     pool = []
     for target, platforms in install_targets_map.items():
-        if target == 'localhost':
+        if target == get_localhost_install_target():
             continue
         shuffle(platforms)
         LOG.info(

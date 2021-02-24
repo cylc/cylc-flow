@@ -47,7 +47,10 @@ from cylc.flow.suite_files import (
     KeyType,
     get_suite_srv_dir,
     get_contact_file)
-from cylc.flow.platforms import get_random_platform_for_install_target
+from cylc.flow.platforms import (
+    get_localhost_install_target,
+    get_random_platform_for_install_target
+)
 from cylc.flow.remote import construct_ssh_cmd
 
 if TYPE_CHECKING:
@@ -170,7 +173,7 @@ class TaskRemoteMgr:
 
         """
         install_target = platform['install target']
-        if install_target == 'localhost':
+        if install_target == get_localhost_install_target():
             self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_DONE
             return
         # Set status of install target to in progress while waiting for remote
@@ -224,7 +227,7 @@ class TaskRemoteMgr:
         for install_target, message in self.remote_init_map.items():
             if message != REMOTE_FILE_INSTALL_DONE:
                 continue
-            if install_target == 'localhost':
+            if install_target == get_localhost_install_target():
                 continue
             platform = get_random_platform_for_install_target(install_target)
             platform_n = platform['name']
