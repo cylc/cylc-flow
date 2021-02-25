@@ -247,21 +247,6 @@ class TestSuiteConfig:
                        config.runtime['descendants']['SOMEFAM']
 
 
-def test_missing_initial_cycle_point():
-    """Test that validation fails when the initial cycle point is
-    missing for datetime cycling"""
-    mocked_config = Mock()
-    mocked_config.cfg = {
-        'scheduling': {
-            'cycling mode': None,
-            'initial cycle point': None
-        }
-    }
-    with pytest.raises(SuiteConfigError) as exc:
-        SuiteConfig.process_initial_cycle_point(mocked_config)
-    assert "This suite requires an initial cycle point" in str(exc.value)
-
-
 @pytest.mark.parametrize(
     'scheduling_cfg, expected_icp, expected_opt_icp, expected_err',
     [
@@ -580,6 +565,80 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
         assert mocked_config.cfg[
             'scheduling']['final cycle point'] == expected_fcp
         assert str(mocked_config.final_point) == str(expected_fcp)
+
+
+@pytest.mark.parametrize(
+    'scheduling_cfg, scheduling_expected, expected_err',
+    [
+        pytest.param(
+            {
+                'graph': {}
+            },
+            None,
+            (SuiteConfigError, "No suite dependency graph defined"),
+            id="Empty graph"
+        ),
+        pytest.param(
+            {
+                'graph': {'R1': 'foo'}
+            },
+            {
+                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'initial cycle point': '1',
+                'final cycle point': '1',
+                'graph': {'R1': 'foo'}
+            },
+            None,
+            id="Pure acyclic graph"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'graph': {'R1': 'foo'}
+            },
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'graph': {'R1': 'foo'}
+            },
+            None,
+            id="Pure acyclic graph but datetime cycling"
+        ),
+        pytest.param(
+            {
+                'graph': {'R1': 'foo', 'R2': 'bar'}
+            },
+            {
+                'graph': {'R1': 'foo', 'R2': 'bar'}
+            },
+            None,
+            id="Acyclic graph with >1 recurrence"
+        ),
+    ]
+)
+def test_prelim_process_graph(
+        scheduling_cfg: Dict[str, Any],
+        scheduling_expected: Optional[Dict[str, Any]],
+        expected_err: Optional[Tuple[Type[Exception], str]]):
+    """Test SuiteConfig.prelim_process_graph().
+
+    Params:
+        scheduling_cfg: 'scheduling' section of workflow config.
+        scheduling_expected: The expected scheduling section after preliminary
+            processing.
+        expected_err: Exception class expected to be raised plus the message.
+    """
+    mock_config = Mock(cfg={
+        'scheduling': scheduling_cfg
+    })
+
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            SuiteConfig.prelim_process_graph(mock_config)
+        assert msg in str(exc.value)
+    else:
+        SuiteConfig.prelim_process_graph(mock_config)
+        assert mock_config.cfg['scheduling'] == scheduling_expected
 
 
 def test_utc_mode(caplog, mock_glbl_cfg):

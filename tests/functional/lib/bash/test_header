@@ -44,7 +44,7 @@
 #     run_graphql_ok SUITE TEST_NAME JSON
 #         Send a graphql query to the suite, extract the result from
 #         ${TEST_NAME}.stdout
-#     cmp_ok FILE_TEST [FILE_CONTROL]
+#     cmp_ok FILE_TEST FILE_CONTROL
 #         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
 #         if FILE_CONTROL is "-" or missing). By default, it uses "diff -u" to
 #         compare files. However, if an alternate command such as "xxdiff -D"
@@ -203,7 +203,9 @@ fail() {
 dump_std() {
     local TEST_NAME="$1"
     mkdir -p "${TEST_LOG_DIR}"  # directory may not exist if run fails very early
-    cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+    if [[ -s "${TEST_NAME}.stdout" ]]; then
+        cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+    fi
     cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
 }
 
@@ -283,26 +285,25 @@ cmp_ok() {
     else
         cat "${TEST_NAME}.stderr" >&2
     fi
-    mkdir -p "${TEST_LOG_DIR}"
-    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    dump_std "$TEST_NAME"
     fail "${TEST_NAME}"
 }
 
 cmp_json() {
     local TEST_NAME="$1"
-    local FILE1="$2"
-    shift; shift
+    local FILE_TEST="$2"
+    local FILE_CONTROL="${3:--}"
 
     if python3 "$CYLC_REPO_DIR/tests/f/lib/python/diffr.py" \
-        "$(cat "${FILE1}")" "$@" >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
+        "$(cat "$FILE_CONTROL")" "$(cat "$FILE_TEST")" \
+        >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     then
         ok "${TEST_NAME}"
         return
     else
         cat "${TEST_NAME}.stderr" >&2
     fi
-    mkdir -p "${TEST_LOG_DIR}"
-    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    dump_std "$TEST_NAME"
     fail "${TEST_NAME}"
 }
 

@@ -40,10 +40,6 @@ import argparse
 import json
 import sys
 
-import colorama
-
-colorama.init(strip=True)
-
 
 class Diff:
     """Representation of a diff between two dictionaries."""
@@ -159,11 +155,8 @@ class Diff:
         ret = ''
 
         if indent == 0:
-            # ret += colorama.Fore.GREEN + '+++ %s\n' % self.this_name
-            # ret += colorama.Fore.RED + '--- %s\n' % self.that_name
-            # ret += colorama.Fore.RESET + '============\n'
-            ret += '+++ %s\n' % self.this_name
-            ret += '--- %s\n' % self.that_name
+            ret += '--- %s\n' % self.this_name
+            ret += '+++ %s\n' % self.that_name
             ret += '============\n'
             ret += ' %s\n' % self.BRACES[self.typ][0]
 
@@ -274,9 +267,6 @@ def parse_args():
             'Use color? Option in always, never'), dest='color')
 
     args = parser.parse_args()
-
-    # if args.color == 'always':
-    #     colorama.init(autoreset=True)
 
     return args
 
