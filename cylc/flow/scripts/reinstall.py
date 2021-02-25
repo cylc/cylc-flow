@@ -93,6 +93,15 @@ def get_option_parser():
             default=[],
             dest="define_suites"
         )
+        parser.add_option(
+            "--clear-rose-install-options",
+            help=(
+                "Clear options previously set by cylc-rose."
+            ),
+            action='store_true',
+            default=False,
+            dest="clear_rose_install_opts"
+        )
     except ImportError:
         pass
 
