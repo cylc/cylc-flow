@@ -19,7 +19,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name || matrix.chunk }}
-    timeout-minutes: 40
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
