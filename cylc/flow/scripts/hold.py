@@ -43,11 +43,16 @@ See also 'cylc release'.
 """
 
 import os.path
+from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from cylc.flow.option_parsers import Options
+
 
 MUTATION = '''
 mutation (
@@ -66,7 +71,7 @@ mutation (
 '''
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
@@ -82,9 +87,8 @@ def get_option_parser():
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser, options, workflow, *task_globs):
-
+def _validate(options: 'Options', *task_globs: str) -> None:
+    """Check combination of options and task globs is valid."""
     if options.hold_point_string:
         if task_globs:
             raise UserInputError(
@@ -95,6 +99,12 @@ def main(parser, options, workflow, *task_globs):
         if not task_globs:
             raise UserInputError(
                 "Missing arguments: TASK_GLOB [...]. See `cylc hold --help`.")
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Options', workflow: str, *task_globs: str):
+
+    _validate(options, *task_globs)
 
     workflow = os.path.normpath(workflow)
     pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
