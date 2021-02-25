@@ -1,0 +1,13 @@
+#!jinja2
+{% from "cylc.flow" import LOG %} # cylc8
+{% do LOG.critical(CYLC_TEMPLATE_VARS) %}
+[scheduling]
+  initial cycle point = 2020
+  [[graph]]
+    R1 = another => one_thing
+
+[runtime]
+  [[root]]
+    script = true
+  [[another]]
+  [[one_thing]]
