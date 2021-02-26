@@ -498,7 +498,7 @@ class Scheduler:
         elif self.config.cfg['scheduling']['hold after cycle point']:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
-            self.command_hold(point=holdcp)
+            self.command_set_hold_point(holdcp)
 
         if self.options.paused_start:
             LOG.info("Paused on start up")
@@ -883,13 +883,15 @@ class Scheduler:
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode
 
-    def command_release(
-            self, task_globs: Optional[Iterable[str]] = None) -> int:
-        """Release held tasks.
-
-        If no task globs specified, release all tasks.
-        """
+    def command_release(self, task_globs: Iterable[str]) -> int:
+        """Release held tasks."""
         return self.pool.release_tasks(task_globs)
+
+    def command_release_hold_point(self) -> None:
+        """Release all held tasks and unset workflow hold after cycle point,
+        if set."""
+        LOG.info("Releasing all tasks and removing hold cycle point.")
+        self.pool.release_hold_point()
 
     def command_resume(self) -> None:
         """Resume paused workflow."""
@@ -915,25 +917,17 @@ class Scheduler:
         self.task_job_mgr.kill_task_jobs(self.suite, itasks)
         return len(bad_items)
 
-    def command_hold(
-            self, task_globs: Optional[Iterable[str]] = None,
-            point: Optional[str] = None
-    ) -> int:
-        """Hold specified tasks now, or all tasks after a specified
-        cycle point.
-        """
-        if (task_globs and point) or not (task_globs or point):
-            raise TypeError(
-                "command_hold() accepts either 'task_globs' or 'point' "
-                "(not both)")
-        if point:
-            point = TaskID.get_standardised_point(point)
-            LOG.info(
-                f"Setting hold cycle point: {point}\n"
-                'All tasks after this point will be held.')
-            self.pool.set_hold_point(point)
-            return 0
+    def command_hold(self, task_globs: Iterable[str]) -> int:
+        """Hold specified tasks."""
         return self.pool.hold_tasks(task_globs)
+
+    def command_set_hold_point(self, point: str) -> None:
+        """Hold all tasks after the specified cycle point."""
+        point = TaskID.get_standardised_point(point)
+        LOG.info(
+            f"Setting hold cycle point: {point}\n"
+            "All tasks after this point will be held.")
+        self.pool.set_hold_point(point)
 
     def command_pause(self) -> None:
         """Pause the workflow."""

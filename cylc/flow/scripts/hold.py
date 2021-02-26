@@ -26,11 +26,12 @@ Examples:
   # Hold mytask at cycle point 1234 in my_flow
   $ cylc hold my_flow mytask.1234
 
-  # Hold all active tasks at cycle 1234 in my_flow (tasks before/after this
-  # will not be held)
+  # Hold all active tasks at cycle 1234 in my_flow (note: tasks before/after
+  # this cycle point will not be held)
   $ cylc hold my_flow '*.1234'
 
-  # Hold all active instances of mytask in my_flow
+  # Hold all active instances of mytask in my_flow (note: this will not hold
+  # any unspawned tasks that might spawn in the future)
   $ cylc hold my_flow 'mytask.*'
 
   # Hold all tasks after cycle point 1234 in my_flow
@@ -54,15 +55,27 @@ if TYPE_CHECKING:
     from cylc.flow.option_parsers import Options
 
 
-MUTATION = '''
+HOLD_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob],
-  $point: TimePoint
+  $tasks: [NamespaceIDGlob]!
 ) {
   hold (
     workflows: $wFlows,
-    tasks: $tasks,
+    tasks: $tasks
+  ) {
+    result
+  }
+}
+'''
+
+SET_HOLD_POINT_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $point: TimePoint!
+) {
+  setHoldPoint (
+    workflows: $wFlows,
     point: $point
   ) {
     result
@@ -109,12 +122,18 @@ def main(parser: COP, options: 'Options', workflow: str, *task_globs: str):
     workflow = os.path.normpath(workflow)
     pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
 
+    if options.hold_point_string:
+        mutation = SET_HOLD_POINT_MUTATION
+        args = {'point': options.hold_point_string}
+    else:
+        mutation = HOLD_MUTATION
+        args = {'tasks': list(task_globs)}
+
     mutation_kwargs = {
-        'request_string': MUTATION,
+        'request_string': mutation,
         'variables': {
             'wFlows': [workflow],
-            'tasks': list(task_globs),
-            'point': options.hold_point_string,
+            **args
         }
     }
 

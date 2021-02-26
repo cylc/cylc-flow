@@ -33,7 +33,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
             wait
             cylc hold --after=0 ${CYLC_SUITE_NAME}
-            cylc__job__poll_grep_suite_log 'Command succeeded: hold'
+            cylc__job__poll_grep_suite_log 'Command succeeded: set_hold_point'
             cylc release ${CYLC_SUITE_NAME} '*FF.1'  # inexact fam
             cylc release ${CYLC_SUITE_NAME} 'TOAST.1'  # exact fam
             cylc release ${CYLC_SUITE_NAME} 'cat*.1'  # inexact tasks

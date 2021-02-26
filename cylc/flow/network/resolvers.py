@@ -21,7 +21,7 @@ from fnmatch import fnmatchcase
 import logging
 import queue
 from time import time
-from typing import Iterable, Optional, Tuple, TYPE_CHECKING
+from typing import Iterable, Tuple, TYPE_CHECKING
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
@@ -525,21 +525,14 @@ class Resolvers(BaseResolvers):
                 cutoff)
         raise ValueError('Unsupported broadcast mode')
 
-    def hold(
-            self, tasks: Optional[Iterable[str]] = None,
-            point: Optional[str] = None
-    ) -> Tuple[bool, str]:
+    def hold(self, tasks: Iterable[str]) -> Tuple[bool, str]:
         """Hold tasks."""
-        if (tasks and point) or not (tasks or point):
-            return (False, 'Argument must be either tasks or point (not both)')
-        self.schd.command_queue.put((
-            'hold',
-            tuple(),
-            filter_none({
-                'task_globs': tasks or None,
-                'point': point
-            })
-        ))
+        self.schd.command_queue.put(('hold', (tasks,), {}))
+        return (True, 'Command queued')
+
+    def set_hold_point(self, point: str) -> Tuple[bool, str]:
+        """Set workflow hold after cycle point."""
+        self.schd.command_queue.put(('set_hold_point', (point,), {}))
         return (True, 'Command queued')
 
     def pause(self) -> Tuple[bool, str]:
@@ -664,16 +657,14 @@ class Resolvers(BaseResolvers):
         self.schd.command_queue.put(("reload_suite", (), {}))
         return (True, 'Command queued')
 
-    def release(
-            self, tasks: Optional[Iterable[str]] = None) -> Tuple[bool, str]:
+    def release(self, tasks: Iterable[str]) -> Tuple[bool, str]:
         """Release held tasks."""
-        self.schd.command_queue.put((
-            'release',
-            tuple(),
-            filter_none({
-                'task_globs': tasks
-            })
-        ))
+        self.schd.command_queue.put(('release', (tasks,), {}))
+        return (True, 'Command queued')
+
+    def release_hold_point(self) -> Tuple[bool, str]:
+        """Release all tasks and unset workflow hold point."""
+        self.schd.command_queue.put(('release_hold_point', tuple(), {}))
         return (True, 'Command queued')
 
     def resume(self) -> Tuple[bool, str]:

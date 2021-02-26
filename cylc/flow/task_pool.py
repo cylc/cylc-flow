@@ -23,7 +23,7 @@ from fnmatch import fnmatchcase
 from string import ascii_letters
 import json
 from time import time
-from typing import Iterable, Optional, TYPE_CHECKING, Union
+from typing import Iterable, TYPE_CHECKING
 
 from cylc.flow.parsec.OrderedDict import OrderedDict
 
@@ -977,20 +977,17 @@ class TaskPool:
                 )
             )
 
-    def set_hold_point(self, point: Union['PointBase', None]) -> None:
+    def set_hold_point(self, point: 'PointBase') -> None:
         """Set the point after which all tasks must be held.
 
         If None, unset the hold point.
         """
         self.hold_point = point
-        if point is None:
-            self.suite_db_mgr.delete_suite_hold_cycle_point()
-        else:
-            for itask in self.get_all_tasks():
-                if itask.point > point:
-                    if itask.state.reset(is_held=True):
-                        self.data_store_mgr.delta_task_held(itask)
-            self.suite_db_mgr.put_suite_hold_cycle_point(point)
+        for itask in self.get_all_tasks():
+            if itask.point > point:
+                if itask.state.reset(is_held=True):
+                    self.data_store_mgr.delta_task_held(itask)
+        self.suite_db_mgr.put_suite_hold_cycle_point(point)
 
     def hold_tasks(self, items: Iterable[str]) -> int:
         """Hold tasks with IDs matching the specified items."""
@@ -1000,18 +997,21 @@ class TaskPool:
                 self.data_store_mgr.delta_task_held(itask)
         return len(bad_items)
 
-    def release_tasks(self, items: Optional[Iterable[str]] = None) -> int:
-        """Release held tasks with IDs matching any specified items, or release
-        all tasks and unset the hold point if no items specified."""
-        if items:
-            itasks, bad_items = self.filter_task_proxies(items)
-        else:
-            itasks, bad_items = self.get_all_tasks(), []
-            self.set_hold_point(None)
+    def release_tasks(self, items: Iterable[str]) -> int:
+        """Release held tasks with IDs matching any specified items."""
+        itasks, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             if itask.state.reset(is_held=False):
                 self.data_store_mgr.delta_task_held(itask)
         return len(bad_items)
+
+    def release_hold_point(self) -> None:
+        """Release all tasks and unset the workflow hold point."""
+        self.hold_point = None
+        for itask in self.get_all_tasks():
+            if itask.state.reset(is_held=False):
+                self.data_store_mgr.delta_task_held(itask)
+        self.suite_db_mgr.delete_suite_hold_cycle_point()
 
     def check_abort_on_task_fails(self):
         """Check whether suite should abort on task failure.

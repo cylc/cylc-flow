@@ -50,14 +50,26 @@ if TYPE_CHECKING:
     from cylc.flow.option_parsers import Options
 
 
-MUTATION = '''
+RELEASE_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob],
+  $tasks: [NamespaceIDGlob]!
 ) {
   release (
     workflows: $wFlows,
     tasks: $tasks,
+  ) {
+    result
+  }
+}
+'''
+
+RELEASE_HOLD_POINT_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!
+) {
+  releaseHoldPoint (
+    workflows: $wFlows
   ) {
     result
   }
@@ -103,12 +115,19 @@ def main(parser: COP, options: 'Options', workflow: str, *task_globs: str):
     workflow = os.path.normpath(workflow)
     pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
 
+    if options.release_all:
+        mutation = RELEASE_HOLD_POINT_MUTATION
+        args = {}
+    else:
+        mutation = RELEASE_MUTATION
+        args = {'tasks': list(task_globs)}
+
     mutation_kwargs = {
-        'request_string': MUTATION,
+        'request_string': mutation,
         'variables': {
             'wFlows': [workflow],
-            'tasks': list(task_globs),
-        }  # If --all, the list of task_globs is empty
+            **args
+        }
     }
 
     pclient('graphql', mutation_kwargs)
