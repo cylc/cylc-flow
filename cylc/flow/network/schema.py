@@ -1524,7 +1524,7 @@ class SetHoldPoint(Mutation):
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        point = TimePoint(
+        point = CyclePoint(
             description='Hold all tasks after the specified cycle point.',
             required=True
         )

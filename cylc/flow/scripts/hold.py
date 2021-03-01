@@ -72,7 +72,7 @@ mutation (
 SET_HOLD_POINT_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $point: TimePoint!
+  $point: CyclePoint!
 ) {
   setHoldPoint (
     workflows: $wFlows,
