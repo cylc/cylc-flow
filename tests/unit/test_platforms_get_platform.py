@@ -210,3 +210,16 @@ def test_get_platform_warn_mode_fail_if_backticks():
 
 def test_get_localhost_install_target():
     assert get_localhost_install_target() == 'localhost'
+
+
+def test_localhost_different_install_target(mock_glbl_cfg):
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[localhost]]
+                install target = file_system_1
+        '''
+    )
+
+    assert get_localhost_install_target() == 'file_system_1'
