@@ -21,6 +21,8 @@ View and control running suites in the terminal.
 (Tui = Terminal User Interface)
 
 WARNING: Tui is experimental and may break with large flows.
+An upcoming change to the way Tui receives data from the scheduler will make it
+much more efficient in the future.
 """
 # TODO: remove this warning once Tui is delta-driven
 # https://github.com/cylc/cylc-flow/issues/3527
