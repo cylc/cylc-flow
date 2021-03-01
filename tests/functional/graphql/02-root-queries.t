@@ -90,7 +90,7 @@ run_ok "${TEST_NAME_BASE}-contact" cylc get-contact "${SUITE_NAME}"
 cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 
 # compare to expectation
-cat > expected << __HERE__
+cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-root-queries.stdout" << __HERE__
 {
     "workflows": [
         {
@@ -249,10 +249,5 @@ cat > expected << __HERE__
     }
 }
 __HERE__
-cmp_json "${TEST_NAME}-out" \
-    "${TEST_NAME_BASE}-root-queries.stdout" \
-    "$(cat expected)"
 
 purge
-
-exit

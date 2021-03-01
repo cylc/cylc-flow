@@ -76,7 +76,7 @@ cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 
 # compare to expectation
 # Note: Zero active cycle points when starting paused
-cat > expected << __HERE__
+cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
 {
     "workflows": [
         {
@@ -120,9 +120,6 @@ cat > expected << __HERE__
     ]
 }
 __HERE__
-cmp_json "${TEST_NAME}-out" \
-    "${TEST_NAME_BASE}-workflows.stdout" \
-    "$(cat expected)"
 
 purge
 

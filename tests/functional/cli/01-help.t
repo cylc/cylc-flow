@@ -73,7 +73,7 @@ cmp_ok "${TEST_NAME_BASE}-version.stdout" "${TEST_NAME_BASE}-V.stdout"
 
 # Check "cylc version --long" output is correct.
 cylc version --long > long1
-WHICH="$(which cylc)"
+WHICH="$(command -v cylc)"
 PARENT1="$(dirname "${WHICH}")"
 PARENT2="$(dirname "${PARENT1}")"
 echo "$(cylc version) (${PARENT2})" > long2

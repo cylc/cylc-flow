@@ -243,21 +243,7 @@ class SuiteConfig:
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
 
-        graphdict = self.cfg['scheduling']['graph']
-
-        if not any(graphdict.values()):
-            raise SuiteConfigError('No suite dependency graph defined.')
-
-        if (
-            'cycling mode' not in self.cfg['scheduling'] and
-            self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
-            all(item in ['graph', '1', 'R1'] for item in graphdict)
-        ):
-            # Pure async graph, assume integer cycling mode with '1' cycle
-            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
-            for key in ('initial cycle point', 'final cycle point'):
-                if key not in self.cfg['scheduling']:
-                    self.cfg['scheduling'][key] = '1'
+        self.prelim_process_graph()
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -660,6 +646,25 @@ class SuiteConfig:
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+    def prelim_process_graph(self) -> None:
+        """Ensure graph is not empty; set integer cycling mode and icp/fcp = 1
+        for simplest "R1 = foo" type graphs.
+        """
+        graphdict = self.cfg['scheduling']['graph']
+        if not any(graphdict.values()):
+            raise SuiteConfigError('No suite dependency graph defined.')
+
+        if (
+            'cycling mode' not in self.cfg['scheduling'] and
+            self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
+            all(item in ['graph', '1', 'R1'] for item in graphdict)
+        ):
+            # Pure acyclic graph, assume integer cycling mode with '1' cycle
+            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
+            for key in ('initial cycle point', 'final cycle point'):
+                if key not in self.cfg['scheduling']:
+                    self.cfg['scheduling'][key] = '1'
 
     def process_utc_mode(self):
         """Set UTC mode from config or from stored value on restart.

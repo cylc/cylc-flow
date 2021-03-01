@@ -17,6 +17,8 @@
 
 import re
 
+from itertools import product
+
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
@@ -854,12 +856,61 @@ with Conf(
 
                 ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
-            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
-            Conf('execution time limit', VDR.V_INTERVAL)
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, None)
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
+            Conf(
+                'execution polling intervals',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
 
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]execution polling intervals`
+                ''')
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+                Cylc can automate resubmission of a failed task job.
+
+                Execution retry delays are a list of ISO 8601
+                durations/intervals which tell Cylc how long to wait before
+                resubmitting a failed job.
+
+                Each time Cylc resubmits a task job it will increment the
+                variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
+                environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
+                behavior between submission attempts.
+            ''')
+            Conf('execution time limit', VDR.V_INTERVAL, desc='''
+                Set the execution (:term:`wall-clock <wall-clock time>`) time
+                limit of a task job.
+
+                For ``background`` and ``at`` job runners Cylc invokes the
+                job's script using the timeout command. For other job runners
+                Cylc will convert execution time limit to a :term:`directive`.
+
+                If a task job exceeds its execution time limit Cylc can
+                poll the job multiple times. You can set polling
+                intervals using :cylc:conf:`global.cylc[platforms]
+                [<platform name>]execution time limit polling intervals`
+            ''')
+            Conf(
+                'submission polling intervals',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
+
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]submission polling intervals`
+            ''')
+            Conf(
+                'submission retry delays',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
+
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]submission retry delays`
+            ''')
             with Conf('meta', desc=r'''
                 Section containing metadata items for this task or family
                 namespace.  Several items (title, description, URL) are
@@ -1444,6 +1495,27 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
+
+    # Warn about config items moved to global.cylc.
+    if 'runtime' in cfg:
+        for job_setting, task in product(
+            [
+                'execution polling intervals',
+                'submission polling intervals',
+                'submission retry delays'
+            ],
+            cfg['runtime'].keys()
+        ):
+            if job_setting in cfg['runtime'][task]:
+                LOG.warning(
+                    "* (8.0.0) '[runtime][{task}]{job_setting}' - this "
+                    "setting is deprecated; use"
+                    "'global.cylc[platforms][<platform name>]{job_setting}' "
+                    "instead. "
+                    "Currently, this item will override the corresponding "
+                    "item in global.cylc,"
+                    "but support for this will be removed in Cylc 9."
+                )
 
 
 def upgrade_graph_section(cfg, descr):
