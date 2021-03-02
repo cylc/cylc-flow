@@ -58,6 +58,7 @@ from cylc.flow.platforms import (
     PLATFORM_REC_COMMAND,
     get_host_from_platform,
     get_install_target_from_platform,
+    get_localhost_install_target,
     get_platform
 )
 from cylc.flow.remote import construct_ssh_cmd
@@ -254,7 +255,7 @@ class TaskJobManager:
             ri_map = self.task_remote_mgr.remote_init_map
 
             if (ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE):
-                if install_target == 'localhost':
+                if install_target == get_localhost_install_target():
                     # Skip init and file install for localhost.
                     LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
                     ri_map[install_target] = (REMOTE_FILE_INSTALL_DONE)
