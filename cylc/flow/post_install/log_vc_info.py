@@ -16,13 +16,13 @@
 
 """Record version control information on workflow install."""
 
-from cylc.flow.exceptions import CylcError
+from collections import OrderedDict
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
 from typing import Iterable, Optional, TYPE_CHECKING
 
 from cylc.flow import LOG
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.flow.exceptions import CylcError
 
 if TYPE_CHECKING:
     from cylc.flow.option_parsers import Options
@@ -36,7 +36,7 @@ class VCInfo:
 
     INFO_COMMANDS = {
         SVN: ['info', '--non-interactive'],
-        GIT: ['describe', '--always', '--dirty']  # or rev-parse HEAD?
+        GIT: ['describe', '--always', '--dirty']
     }
 
     # git ['show', '--quiet', '--format=short'],
@@ -81,10 +81,10 @@ class VCSNotInstalledError(CylcError):
         return f"{self.vcs} does not appear to be installed ({self.exc})"
 
 
-def get_vc_info(path: str) -> Optional['OrderedDictWithDefaults[str, str]']:
+def get_vc_info(path: str) -> Optional['OrderedDict[str, str]']:
     """Return the version control information for a repository, given its path.
     """
-    info = OrderedDictWithDefaults()
+    info = OrderedDict()
     for vcs, args in VCInfo.INFO_COMMANDS.items():
         try:
             out = _run_cmd(vcs, args, cwd=path)
@@ -140,8 +140,7 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: str) -> str:
     return out
 
 
-def write_vc_info(
-        info: 'OrderedDictWithDefaults[str, str]', run_dir: str) -> None:
+def write_vc_info(info: 'OrderedDict[str, str]', run_dir: str) -> None:
     """Write version control info to the workflow's vcs log dir.
 
     Args:
@@ -179,9 +178,9 @@ def get_status(vcs: str, path: str) -> str:
     return _run_cmd(vcs, args, cwd=path).rstrip('\n')
 
 
-def parse_svn_info(info_text: str) -> 'OrderedDictWithDefaults[str, str]':
+def parse_svn_info(info_text: str) -> 'OrderedDict[str, str]':
     """Return OrderedDict of certain info parsed from svn info raw output."""
-    ret = OrderedDictWithDefaults()
+    ret = OrderedDict()
     for line in info_text.splitlines():
         if line:
             key, value = (ln.strip() for ln in line.split(':', 1))
