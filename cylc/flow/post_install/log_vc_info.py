@@ -16,6 +16,7 @@
 
 """Record version control information on workflow install."""
 
+from cylc.flow.exceptions import CylcError
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
 from typing import Iterable, Optional, TYPE_CHECKING
@@ -54,13 +55,30 @@ class VCInfo:
     GIT_REV_PARSE_COMMAND = ['rev-parse', 'HEAD']
 
     NOT_REPO_ERRS = {
-        SVN: 'svn: e155007:',
-        GIT: 'fatal: not a git repository'
+        SVN: ['svn: e155007:',
+              'svn: warning: w155007:'],
+        GIT: ['fatal: not a git repository',
+              'warning: not a git repository']
     }
 
     SVN_INFO_KEYS = [
         'revision', 'url', 'working copy root path', 'repository uuid'
     ]
+
+
+class VCSNotInstalledError(CylcError):
+    """Exception to be raised if an attempted VCS command is not installed.
+
+    Args:
+        vcs: The version control system command.
+        exc: The exception that was raised when attempting to run the command.
+    """
+    def __init__(self, vcs: str, exc: Exception) -> None:
+        self.vcs = vcs
+        self.exc = exc
+
+    def __str__(self) -> str:
+        return f"{self.vcs} does not appear to be installed ({self.exc})"
 
 
 def get_vc_info(path: str) -> Optional['OrderedDictWithDefaults[str, str]']:
@@ -70,9 +88,13 @@ def get_vc_info(path: str) -> Optional['OrderedDictWithDefaults[str, str]']:
     for vcs, args in VCInfo.INFO_COMMANDS.items():
         try:
             out = _run_cmd(vcs, args, cwd=path)
+        except VCSNotInstalledError as exc:
+            LOG.debug(exc)
+            continue
         except OSError as exc:
-            if exc.strerror.lower().startswith(VCInfo.NOT_REPO_ERRS[vcs]):
-                # Dir is not a repo in this VCS
+            if any(exc.strerror.lower().startswith(err)
+                   for err in VCInfo.NOT_REPO_ERRS[vcs]):
+                LOG.debug(f"Source dir {path} is not a {vcs} repository")
                 continue
             else:
                 raise exc
@@ -85,27 +107,32 @@ def get_vc_info(path: str) -> Optional['OrderedDictWithDefaults[str, str]']:
             info['commit'] = get_git_commit(path)
             info['working copy root path'] = path
         info['status'] = get_status(vcs, path)
+
+        LOG.debug(f"{vcs} repository detected")
         return info
 
-    LOG.debug(
-        f"Cannot log version control information, as the directory at {path} "
-        "is not recognised as a repository under the supported version "
-        f"control systems: {', '.join(VCInfo.INFO_COMMANDS.keys())}.")
     return None
 
 
 def _run_cmd(vcs: str, args: Iterable[str], cwd: str) -> str:
-    """Run a command, return stdout or raise OSError with stderr if non-zero
-    return code.
+    """Run a command, return stdout.
 
     Args:
         vcs: The version control system.
         args: The args to pass to the version control command.
         cwd: Directory to run the command in.
+
+    Raises:
+        OSError: with stderr if non-zero return code.
     """
     cmd = [vcs, *args]
-    proc = Popen(
-        cmd, cwd=cwd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
+    try:
+        proc = Popen(
+            cmd, cwd=cwd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
+    except FileNotFoundError as exc:
+        # This will only be raised if the VCS command is not installed,
+        # otherwise Popen() will succeed with a non-zero return code
+        raise VCSNotInstalledError(vcs, exc)
     ret_code = proc.wait()
     out, err = proc.communicate()
     if ret_code:
