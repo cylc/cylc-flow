@@ -412,6 +412,7 @@ def test_write_task_environment():
     """Test task environment is correctly written in jobscript"""
     # set some task environment conditions
     expected = ('\n\n    # CYLC TASK ENVIRONMENT:\n    '
+                'export CYLC_TASK_COMMS_METHOD=ssh\n    '
                 'export CYLC_TASK_JOB="1/moo/01"\n    export '
                 'CYLC_TASK_NAMESPACE_HIERARCHY="baa moo"\n    export '
                 'CYLC_TASK_DEPENDENCIES="moo neigh quack"\n    export '
@@ -421,6 +422,7 @@ def test_write_task_environment():
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
     job_conf = {
+        "platform": {'communication method': 'ssh'},
         "job_d": "1/moo/01",
         "namespace_hierarchy": ["baa", "moo"],
         "dependencies": ['moo', 'neigh', 'quack'],
