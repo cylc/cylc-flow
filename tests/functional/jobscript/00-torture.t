@@ -28,7 +28,7 @@ export PATH_TO_CYLC_BIN="/path/to/cylc/bin"
 create_test_global_config '' "
 [platforms]
     [[localhost]]
-        cylc executable = $PATH_TO_CYLC_BIN/cylc"
+        cylc path = $PATH_TO_CYLC_BIN"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
