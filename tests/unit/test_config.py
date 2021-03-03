@@ -834,7 +834,7 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
 
 
 @pytest.mark.parametrize(
-    'opt', [None, 'check_circular', 'strict']
+    'opt', [None, 'check_circular']
 )
 def test_check_circular(opt, monkeypatch, caplog, tmp_path):
     """Test SuiteConfig._check_circular()."""

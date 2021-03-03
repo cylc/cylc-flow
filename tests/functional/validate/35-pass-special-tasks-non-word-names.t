@@ -26,15 +26,15 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         clock-trigger = t-1, t+1, t%1, t@1
     [[graph]]
         P1D = """
-t-1
-t+1
-t%1
-t@1
-"""
+            t-1
+            t+1
+            t%1
+            t@1
+        """
 
 [runtime]
     [[t-1, t+1, t%1, t@1]]
         script = true
 __FLOW_CONFIG__
-run_ok "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/flow.cylc"
+run_ok "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
 exit

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,14 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test strict validation of suite for tasks without runtime entries
+# Test validation of workflow for tasks without runtime entries
+# (accidental implicit tasks)
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+init_suite "${TEST_NAME_BASE}" << __FLOW__
+[scheduling]
+    [[graph]]
+        R1 = "foo => bar"
+[runtime]
+    [[foo]]
+__FLOW__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_fail "${TEST_NAME}" cylc validate --strict "${SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 purge

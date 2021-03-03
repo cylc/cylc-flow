@@ -24,6 +24,6 @@ init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
 
 run_ok "${TEST_NAME_BASE}" cylc get-config "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --strict "${TEST_NAME_BASE}.stdout"
+    cylc validate --check-circular "${TEST_NAME_BASE}.stdout"
 purge
 exit

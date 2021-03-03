@@ -18,7 +18,7 @@
 # Test for handling task proxy sequence bounds error. #2735
 
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 4
 
 cat > flow.cylc <<__END__
 [scheduler]
@@ -32,13 +32,9 @@ cat > flow.cylc <<__END__
         script = true
 __END__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
-run_ok "${TEST_NAME_BASE}-v" cylc validate -v 'flow.cylc'
-contains_ok "${TEST_NAME_BASE}-v.stderr" <<'__ERR__'
- + R1/P0Y/19990101T0000Z: sequence out of bounds for initial cycle point 20000101T0000Z
-__ERR__
-run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'flow.cylc'
-cmp_ok "${TEST_NAME_BASE}-strict.stderr" <<'__ERR__'
+TEST_NAME="${TEST_NAME_BASE}-single"
+run_ok "$TEST_NAME" cylc validate 'flow.cylc'
+cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 WARNING - R1/P0Y/19990101T0000Z: sequence out of bounds for initial cycle point 20000101T0000Z
 __ERR__
 
@@ -54,8 +50,9 @@ cat > flow.cylc <<__END__
         script = true
 __END__
 
-run_ok "${TEST_NAME_BASE}-strict" cylc validate --strict 'flow.cylc'
-contains_ok "${TEST_NAME_BASE}-strict.stderr" <<'__ERR__'
+TEST_NAME="${TEST_NAME_BASE}-multiple"
+run_ok "$TEST_NAME" cylc validate 'flow.cylc'
+contains_ok "${TEST_NAME}.stderr" <<'__ERR__'
 WARNING - multiple sequences out of bounds for initial cycle point 20000101T0000Z:
 	R1/P0Y/19960101T0000Z, R1/P0Y/19970101T0000Z, R1/P0Y/19980101T0000Z,
 	R1/P0Y/19990101T0000Z
