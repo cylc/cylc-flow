@@ -19,7 +19,7 @@
 from collections import OrderedDict
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
-from typing import Iterable, Optional, TYPE_CHECKING
+from typing import Dict, Iterable, List, Optional, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -31,37 +31,43 @@ if TYPE_CHECKING:
 class VCInfo:
     """Centralised commands etc for recording version control information."""
 
-    SVN = 'svn'
-    GIT = 'git'
+    SVN: str = 'svn'
+    GIT: str = 'git'
 
-    INFO_COMMANDS = {
+    INFO_COMMANDS: Dict[str, List[str]] = {
         SVN: ['info', '--non-interactive'],
         GIT: ['describe', '--always', '--dirty']
     }
 
     # git ['show', '--quiet', '--format=short'],
 
-    STATUS_COMMANDS = {
+    STATUS_COMMANDS: Dict[str, List[str]] = {
         SVN: ['status', '--non-interactive'],
         GIT: ['status', '--short']
     }
 
-    DIFF_COMMANDS = {
+    DIFF_COMMANDS: Dict[str, List[str]] = {
         SVN: ['diff', '--internal-diff', '--non-interactive'],
         GIT: ['diff', 'HEAD']
         # ['diff', '--no-index', '/dev/null', '{0}']  # untracked files
     }
 
-    GIT_REV_PARSE_COMMAND = ['rev-parse', 'HEAD']
+    GIT_REV_PARSE_COMMAND: List[str] = ['rev-parse', 'HEAD']
 
-    NOT_REPO_ERRS = {
+    NOT_REPO_ERRS: Dict[str, List[str]] = {
         SVN: ['svn: e155007:',
               'svn: warning: w155007:'],
         GIT: ['fatal: not a git repository',
               'warning: not a git repository']
     }
 
-    SVN_INFO_KEYS = [
+    NO_BASE_ERRS: Dict[str, List[str]] = {
+        SVN: [],  # Not possible for svn working copy to have no base commit?
+        GIT: ['fatal: bad revision \'head\'',
+              'fatal: ambiguous argument \'head\': unknown revision']
+    }
+
+    SVN_INFO_KEYS: List[str] = [
         'revision', 'url', 'working copy root path', 'repository uuid'
     ]
 
@@ -81,16 +87,35 @@ class VCSNotInstalledError(CylcError):
         return f"{self.vcs} does not appear to be installed ({self.exc})"
 
 
+class VCSMissingBaseError(CylcError):
+    """Exception to be raised if a repository is missing a base commit.
+
+    Args:
+        vcs: The version control system command.
+        repo_path: The path to the working copy.
+    """
+    def __init__(self, vcs: str, repo_path: str) -> None:
+        self.vcs = vcs
+        self.path = repo_path
+
+    def __str__(self) -> str:
+        return f"{self.vcs} repository at {self.path} is missing a base commit"
+
+
 def get_vc_info(path: str) -> Optional['OrderedDict[str, str]']:
     """Return the version control information for a repository, given its path.
     """
     info = OrderedDict()
+    missing_base = False
     for vcs, args in VCInfo.INFO_COMMANDS.items():
         try:
             out = _run_cmd(vcs, args, cwd=path)
         except VCSNotInstalledError as exc:
             LOG.debug(exc)
             continue
+        except VCSMissingBaseError as exc:
+            missing_base = True
+            LOG.debug(exc)
         except OSError as exc:
             if any(exc.strerror.lower().startswith(err)
                    for err in VCInfo.NOT_REPO_ERRS[vcs]):
@@ -103,8 +128,9 @@ def get_vc_info(path: str) -> Optional['OrderedDict[str, str]']:
         if vcs == VCInfo.SVN:
             info.update(parse_svn_info(out))
         elif vcs == VCInfo.GIT:
-            info['repository version'] = out.splitlines()[0]
-            info['commit'] = get_git_commit(path)
+            if not missing_base:
+                info['repository version'] = out.splitlines()[0]
+                info['commit'] = get_git_commit(path)
             info['working copy root path'] = path
         info['status'] = get_status(vcs, path)
 
@@ -136,6 +162,10 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: str) -> str:
     ret_code = proc.wait()
     out, err = proc.communicate()
     if ret_code:
+        if any(err.lower().startswith(msg)
+               for msg in VCInfo.NO_BASE_ERRS[vcs]):
+            # No base commit in repo
+            raise VCSMissingBaseError(vcs, cwd)
         raise OSError(ret_code, err)
     return out
 
@@ -190,7 +220,7 @@ def parse_svn_info(info_text: str) -> 'OrderedDict[str, str]':
     return ret
 
 
-def get_diff(vcs: str, path: str) -> str:
+def get_diff(vcs: str, path: str) -> Optional[str]:
     """Return the diff of uncommitted changes for a repository.
 
     Args:
@@ -198,7 +228,10 @@ def get_diff(vcs: str, path: str) -> str:
         path: The path to the repo.
     """
     args = VCInfo.DIFF_COMMANDS[vcs]
-    diff = _run_cmd(vcs, args, cwd=path)
+    try:
+        diff = _run_cmd(vcs, args, cwd=path)
+    except (VCSNotInstalledError, VCSMissingBaseError):
+        return None
     header = (
         "# Auto-generated diff of uncommitted changes in the Cylc "
         "workflow repository:\n"
@@ -237,8 +270,9 @@ def main(dir_: str, opts: 'Options', dest_root: str) -> bool:
     vc_info = get_vc_info(dir_)
     if vc_info is None:
         return False
-    write_vc_info(vc_info, dest_root)
     vcs = vc_info['version control system']
     diff = get_diff(vcs, dir_)
-    write_diff(diff, dest_root)
+    write_vc_info(vc_info, dest_root)
+    if diff is not None:
+        write_diff(diff, dest_root)
     return True

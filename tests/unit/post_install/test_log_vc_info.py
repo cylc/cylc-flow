@@ -185,3 +185,23 @@ def test_not_repo(tmp_path: Fixture, monkeypatch: Fixture):
 
     assert get_vc_info(source_dir) is None
     assert main(source_dir, None, None) is False
+
+
+def test_no_base_commit_git(tmp_path: Fixture):
+    """Test get_vc_info() and get_diff() for a recently init'd git source dir
+    that does not have a base commit yet."""
+    skip_if_not_installed('git')
+    source_dir = Path(tmp_path, 'new_git_repo')
+    source_dir.mkdir()
+    subprocess.run(['git', 'init'], cwd=source_dir, check=True)
+    flow_file = source_dir.joinpath('flow.cylc')
+    flow_file.write_text(BASIC_FLOW_1)
+
+    vc_info = get_vc_info(source_dir)
+    expected = [
+        ('version control system', "git"),
+        ('working copy root path', source_dir),
+        ('status', "?? flow.cylc")
+    ]
+    assert list(vc_info.items()) == expected
+    assert get_diff('git', source_dir) is None
