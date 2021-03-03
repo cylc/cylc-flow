@@ -662,7 +662,7 @@ with Conf(
 
             Names may not contain colons (which would preclude use of
             directory paths involving the registration name in ``$PATH``
-            variables). They may not contain the "." character (it will be
+            variables). They may not contain the ``.`` character (it will be
             interpreted as the namespace hierarchy delimiter, separating
             groups and names -huh?).
 
@@ -674,7 +674,7 @@ with Conf(
             If multiple names are listed the subsequent settings apply to
             each.
 
-            All namespaces inherit initially from *root*, which can be
+            All namespaces inherit initially from ``root``, which can be
             explicitly configured to provide or override default settings for
             all tasks in the suite.
         '''):
