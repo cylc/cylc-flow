@@ -124,7 +124,7 @@
 #         Install a reference suite using `install_suite`, run a validation
 #         test on the suite and run the reference suite with `suite_run_ok`.
 #         Expect 2 OK tests.
-#     
+#
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for e.g. jinja2 shebang).
@@ -501,7 +501,7 @@ log_scan () {
 make_rnd_suite() {
     # Create a randomly-named suite source directory.
     # Define its run directory.
-    RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
+    RND_SUITE_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
     RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
     mkdir -p "${RND_SUITE_SOURCE}"
     touch "${RND_SUITE_SOURCE}/flow.cylc"
@@ -566,6 +566,10 @@ purge () {
     bash -c "$CMD" 2>/dev/null || true
 }
 purge_rnd_suite() {
+    if ((FAILURES != 0)); then
+        # if tests have failed then don't clean up
+        return 0
+    fi
     # Remove the suite source created by make_rnd_suite().
     # And remove its run-directory too.
     rm -rf "${RND_SUITE_SOURCE}"
