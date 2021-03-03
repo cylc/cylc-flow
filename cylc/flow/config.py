@@ -647,7 +647,7 @@ class SuiteConfig:
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
 
-        if self._is_validate():
+        if self._is_validate:
             self.mem_log("config.py: before _check_circular()")
             self._check_circular()
             self.mem_log("config.py: after _check_circular()")
@@ -987,12 +987,10 @@ class SuiteConfig:
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
-    def _is_validate(self, is_strict=False):
-        """Return whether we are in (strict) validate mode."""
-        return (
-            getattr(self.options, 'is_validate', False) and
-            (not is_strict or getattr(self.options, 'strict', False))
-        )
+    @property
+    def _is_validate(self) -> bool:
+        """Return whether we are in validate mode."""
+        return getattr(self.options, 'is_validate', False)
 
     @staticmethod
     def dequote(s):
@@ -1759,7 +1757,7 @@ class SuiteConfig:
         In validate mode, set ungroup_all to True, and only return non-suicide
         edges with left and right nodes.
         """
-        is_validate = self._is_validate()  # this is for _check_circular
+        is_validate = self._is_validate  # this is for _check_circular
         if is_validate:
             ungroup_all = True
         if group_nodes is None:
