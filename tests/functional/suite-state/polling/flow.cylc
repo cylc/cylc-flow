@@ -2,6 +2,8 @@
 
 [meta]
     title = "polls for success and failure tasks in another suite"
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = """

@@ -14,5 +14,5 @@
         """
     [[remove_me]]
         script = false
-    [[foo]]
+    [[foo, inter]]
         script = true

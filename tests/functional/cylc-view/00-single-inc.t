@@ -34,6 +34,9 @@ cmp_ok tmp.stdout << EOF
     title = "Jinja2 simple ensemble example"
     description = "Auto-generation of dependencies for related tasks."
 
+[scheduler]
+    allow implicit tasks = True
+
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
@@ -58,6 +61,8 @@ cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"
     description = "Auto-generation of dependencies for related tasks."
+[scheduler]
+    allow implicit tasks = True
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
@@ -82,6 +87,9 @@ cmp_ok tmp.stdout << EOF
     title = "Jinja2 simple ensemble example"
     description = "Auto-generation of dependencies for related tasks."
 
+[scheduler]
+    allow implicit tasks = True
+
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
@@ -105,6 +113,8 @@ cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"
     description = "Auto-generation of dependencies for related tasks."
+[scheduler]
+    allow implicit tasks = True
 # Note that depending on the structure of the suite you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation of special tasks names with non-word characters
+# Test validation fails for special implicit tasks
 . "$(dirname "$0")/test_header"
 set_test_number 2
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -29,10 +29,10 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[bar]]
         script = true
 __FLOW_CONFIG__
-run_fail "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/flow.cylc"
-cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-WARNING - naked tasks detected (no entry under [runtime]):
-	+       foo
-SuiteConfigError: strict validation fails naked tasks
+run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
+cmp_ok "${TEST_NAME_BASE}.stderr" << '__ERR__'
+SuiteConfigError: implicit tasks detected (no entry under [runtime]): foo
+
+To allow implicit tasks, use 'flow.cylc[scheduler]allow implicit tasks'
 __ERR__
 exit

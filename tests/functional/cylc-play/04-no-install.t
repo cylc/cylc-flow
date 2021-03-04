@@ -25,6 +25,8 @@ set_test_number 1
 SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 mkdir -p "${RUN_DIR}/${SUITE_NAME}"
 cat > "${RUN_DIR}/${SUITE_NAME}/flow.cylc" <<__HERE__
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = foo

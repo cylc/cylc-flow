@@ -22,6 +22,8 @@ set_test_number 3
 
 # Test example with trailing whitespace
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 20000101T06
     final cycle point = 20010101T18
@@ -40,7 +42,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-simple-fail" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}-simple-fail.stderr" <<'__ERR__'
-FileParseError: Syntax error line 7: Whitespace after the line continuation character (\).
+FileParseError: Syntax error line 9: Whitespace after the line continuation character (\).
 __ERR__
 
 # Test example with correct syntax

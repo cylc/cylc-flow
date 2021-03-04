@@ -1,6 +1,6 @@
 [scheduling]
     [[graph]]
-         R1 = foo => FAM:succeed-all => bar
+        R1 = foo => FAM:succeed-all => bar
 [runtime]
     [[FAM]]
     [[BAM]]
@@ -9,3 +9,4 @@
         inherit = FAM
     [[x, y]]
         inherit = BAM
+    [[foo, bar]]

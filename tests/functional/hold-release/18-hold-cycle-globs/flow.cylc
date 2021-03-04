@@ -29,5 +29,5 @@ cylc hold "${CYLC_SUITE_NAME}" '*/t*'
         script = cylc release "${CYLC_SUITE_NAME}" '20*/t*'
     [[stopper]]
         script = cylc stop "${CYLC_SUITE_NAME}"
-    [[t1, t2, t3]]
+    [[spawner, t1, t2, t3]]
         script = true

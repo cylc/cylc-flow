@@ -6,7 +6,7 @@
     [[graph]]
         R//T00 = "daily_foo"
 [runtime]
-    [[root]]
+    [[daily_foo]]
         script = true
 [visualization]
     initial cycle point = 20140101

@@ -16,3 +16,4 @@
 [runtime]
     [[t1<p>]]
         platform = {{ CYLC_TEST_PLATFORM }}
+    [[fin]]
