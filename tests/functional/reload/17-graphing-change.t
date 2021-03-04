@@ -19,6 +19,12 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 12
+
+grep_suite_log_n_times() {
+    TEXT="$1"
+    N_TIMES="$2"
+    [[ $(grep -c "$TEXT" "${SUITE_RUN_DIR}/log/suite/log") == "$N_TIMES" ]]
+}
 #-------------------------------------------------------------------------------
 # test reporting of added tasks
 
@@ -35,9 +41,7 @@ cp "${TEST_SOURCE_DIR}/graphing-change/flow-1.cylc" \
 
 # reload suite
 run_ok "${TEST_NAME_BASE}-add-reload" cylc reload "${SUITE_NAME}"
-while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 1)); do
-    sleep 1  # make sure reload 1 completes
-done
+poll grep_suite_log_n_times 'Reload completed' 1
 
 # check suite log
 grep_ok "Added task: 'one'" "${LOG_FILE}"
@@ -50,9 +54,7 @@ cp "${TEST_SOURCE_DIR}/graphing-change/flow.cylc" \
 
 # reload suite
 run_ok "${TEST_NAME_BASE}-remove-reload" cylc reload "${SUITE_NAME}"
-while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 2)); do
-    sleep 1  # make sure reload 2 completes
-done
+poll grep_suite_log_n_times 'Reload completed' 2
 
 # check suite log
 grep_ok "Removed task: 'one'" "${LOG_FILE}"
@@ -67,9 +69,7 @@ cylc set-outputs "${SUITE_NAME}"  foo.1
 cylc set-outputs "${SUITE_NAME}"  baz.1
 # reload suite
 run_ok "${TEST_NAME_BASE}-swap-reload" cylc reload "${SUITE_NAME}"
-while (($(grep -c 'Reload completed' "${LOG_FILE}" || true) < 3)); do
-    sleep 1  # make sure reload 3 completes
-done
+poll grep_suite_log_n_times 'Reload completed' 3
 
 # check suite log
 grep_ok "Added task: 'one'" "${LOG_FILE}"
