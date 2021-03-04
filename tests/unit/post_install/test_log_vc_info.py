@@ -17,10 +17,12 @@
 from pathlib import Path
 import subprocess
 import pytest
+from pytest import MonkeyPatch, TempPathFactory
 from typing import Any, Tuple
+from unittest.mock import Mock
 
 from cylc.flow.post_install.log_vc_info import (
-    get_diff, get_git_commit, get_status, get_vc_info, main
+    get_diff, _get_git_commit, get_status, get_vc_info, main
 )
 
 Fixture = Any
@@ -47,7 +49,7 @@ def skip_if_not_installed(command: str) -> None:
 
 
 @pytest.fixture(scope='module')
-def git_source_repo(tmp_path_factory: Fixture) -> Tuple[Path, str]:
+def git_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str]:
     """Init a git repo for a workflow source dir.
 
     The repo has a flow.cylc file with uncommitted changes. This dir is reused
@@ -70,12 +72,11 @@ def git_source_repo(tmp_path_factory: Fixture) -> Tuple[Path, str]:
         ['git', 'rev-parse', 'HEAD'],
         cwd=source_dir, check=True, capture_output=True, text=True
     ).stdout.splitlines()[0]
-    return (source_dir, commit_sha)
+    return (str(source_dir), commit_sha)
 
 
 @pytest.fixture(scope='module')
-def svn_source_repo(
-        tmp_path_factory: Fixture) -> Tuple[Path, str, Path]:
+def svn_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str, str]:
     """Init an svn repo & working copy for a workflow source dir.
 
     The working copy has a flow.cylc file with uncommitted changes. This dir
@@ -107,25 +108,26 @@ def svn_source_repo(
     # Overwrite file to introduce uncommitted changes:
     flow_file.write_text(BASIC_FLOW_2)
 
-    return (source_dir, uuid, repo)
+    return (str(source_dir), uuid, str(repo))
 
 
-def test_get_git_commit(git_source_repo: Fixture):
+def test_get_git_commit(git_source_repo: Tuple[str, str]):
     """Test get_git_commit()"""
     source_dir, commit_sha = git_source_repo
-    assert get_git_commit(source_dir) == commit_sha
+    assert _get_git_commit(source_dir) == commit_sha
 
 
-def test_get_status_git(git_source_repo: Fixture):
+def test_get_status_git(git_source_repo: Tuple[str, str]):
     """Test get_status() for a git repo"""
     source_dir, commit_sha = git_source_repo
     assert get_status('git', source_dir) == " M flow.cylc"
 
 
-def test_get_vc_info_git(git_source_repo: Fixture):
+def test_get_vc_info_git(git_source_repo: Tuple[str, str]):
     """Test get_vc_info() for a git repo"""
     source_dir, commit_sha = git_source_repo
     vc_info = get_vc_info(source_dir)
+    assert vc_info is not None
     expected = [
         ('version control system', "git"),
         ('repository version', f"{commit_sha[:7]}-dirty"),
@@ -136,20 +138,23 @@ def test_get_vc_info_git(git_source_repo: Fixture):
     assert list(vc_info.items()) == expected
 
 
-def test_get_diff_git(git_source_repo: Fixture):
+def test_get_diff_git(git_source_repo: Tuple[str, str]):
     """Test get_diff() for a git repo"""
     source_dir, commit_sha = git_source_repo
-    diff_lines = get_diff('git', source_dir).splitlines()
+    diff = get_diff('git', source_dir)
+    assert diff is not None
+    diff_lines = diff.splitlines()
     for line in ("diff --git a/flow.cylc b/flow.cylc",
                  "-        R1 = foo",
                  "+        R1 = bar"):
         assert line in diff_lines
 
 
-def test_get_vc_info_svn(svn_source_repo: Fixture):
+def test_get_vc_info_svn(svn_source_repo: Tuple[str, str, str]):
     """Test get_vc_info() for an svn working copy"""
     source_dir, uuid, repo_path = svn_source_repo
     vc_info = get_vc_info(source_dir)
+    assert vc_info is not None
     expected = [
         ('version control system', "svn"),
         ('working copy root path', str(source_dir)),
@@ -161,10 +166,12 @@ def test_get_vc_info_svn(svn_source_repo: Fixture):
     assert list(vc_info.items()) == expected
 
 
-def test_get_diff_svn(svn_source_repo: Fixture):
+def test_get_diff_svn(svn_source_repo: Tuple[str, str, str]):
     """Test get_diff() for an svn working copy"""
     source_dir, uuid, repo_path = svn_source_repo
-    diff_lines = get_diff('svn', source_dir).splitlines()
+    diff = get_diff('svn', source_dir)
+    assert diff is not None
+    diff_lines = diff.splitlines()
     for line in ("--- flow.cylc	(revision 1)",
                  "+++ flow.cylc	(working copy)",
                  "-        R1 = foo",
@@ -172,22 +179,26 @@ def test_get_diff_svn(svn_source_repo: Fixture):
         assert line in diff_lines
 
 
-def test_not_repo(tmp_path: Fixture, monkeypatch: Fixture):
+def test_not_repo(tmp_path: Path, monkeypatch: MonkeyPatch):
     """Test get_vc_info() and main() for a dir that is not a supported repo"""
     source_dir = Path(tmp_path, 'git_repo')
     source_dir.mkdir()
     flow_file = source_dir.joinpath('flow.cylc')
     flow_file.write_text(BASIC_FLOW_1)
+    mock_write_vc_info = Mock()
     monkeypatch.setattr('cylc.flow.post_install.log_vc_info.write_vc_info',
-                        lambda *a, **k: None)
+                        mock_write_vc_info)
+    mock_write_diff = Mock()
     monkeypatch.setattr('cylc.flow.post_install.log_vc_info.write_diff',
-                        lambda *a, **k: None)
+                        mock_write_diff)
 
     assert get_vc_info(source_dir) is None
-    assert main(source_dir, None, None) is False
+    assert main(source_dir, None, None) is False  # type: ignore
+    assert mock_write_vc_info.called is False
+    assert mock_write_diff.called is False
 
 
-def test_no_base_commit_git(tmp_path: Fixture):
+def test_no_base_commit_git(tmp_path: Path):
     """Test get_vc_info() and get_diff() for a recently init'd git source dir
     that does not have a base commit yet."""
     skip_if_not_installed('git')
@@ -198,9 +209,10 @@ def test_no_base_commit_git(tmp_path: Fixture):
     flow_file.write_text(BASIC_FLOW_1)
 
     vc_info = get_vc_info(source_dir)
+    assert vc_info is not None
     expected = [
         ('version control system', "git"),
-        ('working copy root path', source_dir),
+        ('working copy root path', str(source_dir)),
         ('status', "?? flow.cylc")
     ]
     assert list(vc_info.items()) == expected

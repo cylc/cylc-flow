@@ -14,18 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Record version control information on workflow install."""
+"""Record version control information on workflow install.
+
+The supported version control systems are git and svn.
+"""
 
 from collections import OrderedDict
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
-from typing import Dict, Iterable, List, Optional, TYPE_CHECKING
+from typing import Dict, Iterable, List, Optional, TYPE_CHECKING, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
 
 if TYPE_CHECKING:
-    from cylc.flow.option_parsers import Options
+    from optparse import Values
 
 
 class VCInfo:
@@ -94,7 +97,7 @@ class VCSMissingBaseError(CylcError):
         vcs: The version control system command.
         repo_path: The path to the working copy.
     """
-    def __init__(self, vcs: str, repo_path: str) -> None:
+    def __init__(self, vcs: str, repo_path: Union[Path, str]) -> None:
         self.vcs = vcs
         self.path = repo_path
 
@@ -102,7 +105,7 @@ class VCSMissingBaseError(CylcError):
         return f"{self.vcs} repository at {self.path} is missing a base commit"
 
 
-def get_vc_info(path: str) -> Optional['OrderedDict[str, str]']:
+def get_vc_info(path: Union[Path, str]) -> Optional['OrderedDict[str, str]']:
     """Return the version control information for a repository, given its path.
     """
     info = OrderedDict()
@@ -126,12 +129,12 @@ def get_vc_info(path: str) -> Optional['OrderedDict[str, str]']:
 
         info['version control system'] = vcs
         if vcs == VCInfo.SVN:
-            info.update(parse_svn_info(out))
+            info.update(_parse_svn_info(out))
         elif vcs == VCInfo.GIT:
             if not missing_base:
                 info['repository version'] = out.splitlines()[0]
-                info['commit'] = get_git_commit(path)
-            info['working copy root path'] = path
+                info['commit'] = _get_git_commit(path)
+            info['working copy root path'] = str(path)
         info['status'] = get_status(vcs, path)
 
         LOG.debug(f"{vcs} repository detected")
@@ -140,7 +143,7 @@ def get_vc_info(path: str) -> Optional['OrderedDict[str, str]']:
     return None
 
 
-def _run_cmd(vcs: str, args: Iterable[str], cwd: str) -> str:
+def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
     """Run a command, return stdout.
 
     Args:
@@ -170,7 +173,9 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: str) -> str:
     return out
 
 
-def write_vc_info(info: 'OrderedDict[str, str]', run_dir: str) -> None:
+def write_vc_info(
+    info: 'OrderedDict[str, str]', run_dir: Union[Path, str]
+) -> None:
     """Write version control info to the workflow's vcs log dir.
 
     Args:
@@ -191,13 +196,13 @@ def write_vc_info(info: 'OrderedDict[str, str]', run_dir: str) -> None:
                 f.write(f"{key} = \"{value}\"\n")
 
 
-def get_git_commit(path: str) -> str:
+def _get_git_commit(path: Union[Path, str]) -> str:
     """Return the hash of the HEAD of the repo at path."""
     args = VCInfo.GIT_REV_PARSE_COMMAND
     return _run_cmd(VCInfo.GIT, args, cwd=path).splitlines()[0]
 
 
-def get_status(vcs: str, path: str) -> str:
+def get_status(vcs: str, path: Union[Path, str]) -> str:
     """Return the short status of a repo.
 
     Args:
@@ -208,7 +213,7 @@ def get_status(vcs: str, path: str) -> str:
     return _run_cmd(vcs, args, cwd=path).rstrip('\n')
 
 
-def parse_svn_info(info_text: str) -> 'OrderedDict[str, str]':
+def _parse_svn_info(info_text: str) -> 'OrderedDict[str, str]':
     """Return OrderedDict of certain info parsed from svn info raw output."""
     ret = OrderedDict()
     for line in info_text.splitlines():
@@ -220,7 +225,7 @@ def parse_svn_info(info_text: str) -> 'OrderedDict[str, str]':
     return ret
 
 
-def get_diff(vcs: str, path: str) -> Optional[str]:
+def get_diff(vcs: str, path: Union[Path, str]) -> Optional[str]:
     """Return the diff of uncommitted changes for a repository.
 
     Args:
@@ -239,7 +244,7 @@ def get_diff(vcs: str, path: str) -> Optional[str]:
     return f"{header}\n{diff}"
 
 
-def write_diff(diff: str, run_dir: str) -> None:
+def write_diff(diff: str, run_dir: Union[Path, str]) -> None:
     """Write a diff to the workflow's vcs log dir.
 
     Args:
@@ -255,24 +260,26 @@ def write_diff(diff: str, run_dir: str) -> None:
 
 
 # Entry point:
-def main(dir_: str, opts: 'Options', dest_root: str) -> bool:
+def main(
+    srcdir: Union[Path, str], opts: 'Values', rundir: Union[Path, str]
+) -> bool:
     """Entry point for this plugin. Write version control info and any
     uncommmited diff to the workflow log dir.
 
     Args:
-        dir_: Workflow source dir for cylc install.
+        srcdir: Workflow source dir for cylc install.
         opts: CLI options (requirement for post_install entry point, but
             not used here)
-        dest_root: Workflow run dir.
+        rundir: Workflow run dir.
 
     Return True if source dir is a supported repo, else False.
     """
-    vc_info = get_vc_info(dir_)
+    vc_info = get_vc_info(srcdir)
     if vc_info is None:
         return False
     vcs = vc_info['version control system']
-    diff = get_diff(vcs, dir_)
-    write_vc_info(vc_info, dest_root)
+    diff = get_diff(vcs, srcdir)
+    write_vc_info(vc_info, rundir)
     if diff is not None:
-        write_diff(diff, dest_root)
+        write_diff(diff, rundir)
     return True
