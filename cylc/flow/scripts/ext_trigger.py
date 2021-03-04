@@ -35,12 +35,12 @@ Use the retry options in case the target suite is down or out of contact.
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
 import os.path
+import os
 from time import sleep
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, ClientError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 
@@ -92,7 +92,10 @@ def get_option_parser():
 def main(parser, options, suite, event_msg, event_id):
     suite = os.path.normpath(suite)
     LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
-
+    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
+        from cylc.flow.network.ssh_client import SuiteRuntimeClient
+    else:
+        from cylc.flow.network.client import SuiteRuntimeClient
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     max_n_tries = int(options.max_n_tries)

@@ -26,11 +26,11 @@ Use the -n option if client function requires no keyword arguments.
 
 import json
 import sys
-import os
 
 from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 from cylc.flow.network.server import PB_METHOD_MAP
 
@@ -52,13 +52,6 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, suite, func):
-
-    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
-        LOG.debug("ssh is the task comms method")
-        from cylc.flow.network.ssh_client import SuiteRuntimeClient
-    else:
-        from cylc.flow.network.client import SuiteRuntimeClient
-
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
     if options.no_input:
         kwargs = {}

@@ -48,7 +48,6 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -120,6 +119,10 @@ def main(parser: COP, options: 'Options', workflow: str, *task_globs: str):
     _validate(options, *task_globs)
 
     workflow = os.path.normpath(workflow)
+    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
+        from cylc.flow.network.ssh_client import SuiteRuntimeClient
+    else:
+        from cylc.flow.network.client import SuiteRuntimeClient
     pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
 
     if options.hold_point_string:

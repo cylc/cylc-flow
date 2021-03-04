@@ -365,8 +365,8 @@ with Conf('global.cylc', desc='''
                    Direct client-server TCP communication via network ports
                 poll
                    The suite polls for the status of tasks (no task messaging)
-                ssh 
-                   
+                ssh
+                   Use non-interactive ssh for task communications
             ''')
             # TODO ensure that it is possible to over-ride the following three
             # settings in suite config.

@@ -1039,8 +1039,6 @@ class Scheduler:
                 process_str,
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
-            # fields.SSH_USE_LOGIN_SHELL:
-            #     str(get_platform()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:

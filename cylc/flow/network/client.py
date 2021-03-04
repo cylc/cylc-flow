@@ -244,10 +244,18 @@ class SuiteRuntimeClient(ZMQSocketBase):
             if cmd.startswith(cylc_bin_dir):
                 cmd = cmd.replace(cylc_bin_dir, '')
 
+            ssh_connection = os.getenv("SSH_CONNECTION")
+            if ssh_connection is not None:
+                host = ssh_connection.split(' ')[0]
+                comms_method = 'ssh'
+            else:
+                host = socket.gethostname()
+                comms_method = 'zmq'
         return {
             'meta': {
                 'prog': cmd,
-                'host': socket.gethostname()
+                'host': host,
+                'comms_method': comms_method
             }
         }
 

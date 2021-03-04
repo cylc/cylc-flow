@@ -76,6 +76,7 @@ Broadcast cannot change [runtime] inheritance.
 See also 'cylc reload' - reload a modified suite definition at run time."""
 
 import os.path
+import os
 import sys
 import re
 from tempfile import NamedTemporaryFile
@@ -90,7 +91,6 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.broadcast_report import (
     get_broadcast_bad_options_report, get_broadcast_change_report)
 from cylc.flow.cfgspec.suite import SPEC, upg
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 
@@ -296,6 +296,10 @@ def get_option_parser():
 def main(_, options, suite):
     """Implement cylc broadcast."""
     suite = os.path.normpath(suite)
+    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
+        from cylc.flow.network.ssh_client import SuiteRuntimeClient
+    else:
+        from cylc.flow.network.client import SuiteRuntimeClient
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {

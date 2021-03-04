@@ -67,6 +67,10 @@ def main(parser, options, suite, severity_str):
         parser.error("Illegal logging level, %s" % severity_str)
 
     suite = os.path.normpath(suite)
+    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
+        from cylc.flow.network.ssh_client import SuiteRuntimeClient
+    else:
+        from cylc.flow.network.client import SuiteRuntimeClient
     pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {

@@ -350,7 +350,7 @@ def remote_cylc_cmd(cmd, platform, **kwargs):
     )
 
 
-def remote_cylc_cmd_using_env_vars(cmd, host, **kwargs):
+def remote_cylc_cmd_using_env_vars(cmd, host, ssh_cmd, login_shell, cylc_path, **kwargs):
     """Execute a Cylc command on a remote platform.
 
     Uses environment variables to construct the command.
@@ -360,11 +360,10 @@ def remote_cylc_cmd_using_env_vars(cmd, host, **kwargs):
     return _remote_cylc_cmd(
         cmd,
         host=host,
-        ssh_cmd=os.getenv('SCHEDULER_SSH_COMMAND'),
-        remote_cylc_path=os.getenv('SCHEDULER_CYLC_PATH'),
-        ssh_login_shell=os.getenv('USE_LOGIN_SHELL'),
-        **kwargs
-    )
+        ssh_cmd=ssh_cmd,
+        remote_cylc_path=cylc_path,
+        ssh_login_shell=login_shell, **kwargs)
+
 
 def _remote_cylc_cmd(
         cmd,
