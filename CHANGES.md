@@ -47,9 +47,9 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
-## __cylc-8.0a3 (<span actions:bind='release-date'>2020-08?</span>)__
+## __cylc-8.0b0 (<span actions:bind='release-date'>2020-08?</span>)__
 
-Fourth alpha release of Cylc 8.
+First beta release of Cylc 8.
 
 (See note on cylc-8 backward-incompatible changes, above)
 
@@ -69,6 +69,11 @@ queueing logic centralized.
 `cylc run` and `cylc restart` have been replaced by `cylc play`, simplifying
 how workflows are restarted
 ([#4040](https://github.com/cylc/cylc-flow/pull/4040)).
+
+"Implicit"/"naked" tasks (tasks that do not have an explicit definition in
+`flow.cylc[runtime]`) are now disallowed by default
+([#4109](https://github.com/cylc/cylc-flow/pull/4109)). You can allow them by
+setting `flow.cylc[scheduler]allow implicit tasks` to `True`.
 
 ### Enhancements
 
