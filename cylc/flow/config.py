@@ -468,14 +468,15 @@ class SuiteConfig:
         # Warn or abort if implicit tasks are found in graph or queue config
         if self.implicit_tasks:
             print_limit = 10
-            implicit_tasks_str = ', '.join(
+            implicit_tasks_str = '\n    * '.join(
                 list(self.implicit_tasks)[:print_limit])
             num = len(self.implicit_tasks)
             if num > print_limit:
-                implicit_tasks_str = f"{implicit_tasks_str} and {num} others"
+                implicit_tasks_str = (
+                    f"{implicit_tasks_str}\n    and {num} more")
             err_msg = (
-                "implicit tasks detected (no entry under [runtime]): "
-                f"{implicit_tasks_str}")
+                "implicit tasks detected (no entry under [runtime]):\n"
+                f"    * {implicit_tasks_str}")
             if self.cfg['scheduler']['allow implicit tasks']:
                 LOG.debug(err_msg)
             else:
@@ -647,7 +648,7 @@ class SuiteConfig:
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
 
-        if self._is_validate:
+        if getattr(self.options, 'is_validate', False):
             self.mem_log("config.py: before _check_circular()")
             self._check_circular()
             self.mem_log("config.py: after _check_circular()")
@@ -986,11 +987,6 @@ class SuiteConfig:
             for name, _ in name_expander.expand(node):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
-
-    @property
-    def _is_validate(self) -> bool:
-        """Return whether we are in validate mode."""
-        return getattr(self.options, 'is_validate', False)
 
     @staticmethod
     def dequote(s):
@@ -1757,7 +1753,8 @@ class SuiteConfig:
         In validate mode, set ungroup_all to True, and only return non-suicide
         edges with left and right nodes.
         """
-        is_validate = self._is_validate  # this is for _check_circular
+        is_validate = getattr(
+            self.options, 'is_validate', False)  # this is for _check_circular
         if is_validate:
             ungroup_all = True
         if group_nodes is None:

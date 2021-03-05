@@ -31,7 +31,8 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" << '__ERR__'
-SuiteConfigError: implicit tasks detected (no entry under [runtime]): foo
+SuiteConfigError: implicit tasks detected (no entry under [runtime]):
+    * foo
 
 To allow implicit tasks, use 'flow.cylc[scheduler]allow implicit tasks'
 __ERR__
