@@ -465,25 +465,7 @@ class SuiteConfig:
         self._check_special_tasks()  # adds to self.implicit_tasks
         self._check_explicit_cycling()
 
-        # Warn or abort if implicit tasks are found in graph or queue config
-        if self.implicit_tasks:
-            print_limit = 10
-            implicit_tasks_str = '\n    * '.join(
-                list(self.implicit_tasks)[:print_limit])
-            num = len(self.implicit_tasks)
-            if num > print_limit:
-                implicit_tasks_str = (
-                    f"{implicit_tasks_str}\n    and {num} more")
-            err_msg = (
-                "implicit tasks detected (no entry under [runtime]):\n"
-                f"    * {implicit_tasks_str}")
-            if self.cfg['scheduler']['allow implicit tasks']:
-                LOG.debug(err_msg)
-            else:
-                raise SuiteConfigError(
-                    f"{err_msg}\n\n"
-                    "To allow implicit tasks, use "
-                    "'flow.cylc[scheduler]allow implicit tasks'")
+        self._check_implicit_tasks()
 
         # Check that external trigger messages are only used once (they have to
         # be discarded immediately to avoid triggering the next instance of the
@@ -858,6 +840,28 @@ class SuiteConfig:
                 raise SuiteConfigError(
                     f"Final cycle point {self.final_point} does not "
                     f"meet the constraints {constraints}")
+
+    def _check_implicit_tasks(self) -> None:
+        """Raise SuiteConfigError if implicit tasks are found in graph or
+        queue config, unless allowed by config."""
+        if self.implicit_tasks:
+            print_limit = 10
+            implicit_tasks_str = '\n    * '.join(
+                list(self.implicit_tasks)[:print_limit])
+            num = len(self.implicit_tasks)
+            if num > print_limit:
+                implicit_tasks_str = (
+                    f"{implicit_tasks_str}\n    and {num} more")
+            err_msg = (
+                "implicit tasks detected (no entry under [runtime]):\n"
+                f"    * {implicit_tasks_str}")
+            if self.cfg['scheduler']['allow implicit tasks']:
+                LOG.debug(err_msg)
+            else:
+                raise SuiteConfigError(
+                    f"{err_msg}\n\n"
+                    "To allow implicit tasks, use "
+                    "'flow.cylc[scheduler]allow implicit tasks'")
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
