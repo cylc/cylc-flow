@@ -13,6 +13,9 @@ Host _remote*
 Host _remote_background_indep_tcp
     Port 42220
 
+Host _remote_background_indep_ssh
+    Port 42220
+
 Host _remote_background_indep_poll
     Port 42221
 

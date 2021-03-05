@@ -32,20 +32,22 @@ command line interfaces / outputs, etc.
 
 ## How To Run "Non-Generic" Tests?
 
-Some tests require job runners (e.g. at, slurm, pbs) or remote platforms.
+Some tests require job runners (e.g. at, slurm, pbs), remote platforms or
+specific configurations.
 
 To run these tests you must configure remote platforms, your options are:
 
-1. Use a swarm of docker containers.
+1. Use a swarm of docker containers
+
+   (currently does not cover all platform types)
 
    $ etc/bin/swarm configure
    $ etc/bin/swarm build
    $ etc/bin/swarm run
 
-2. By configuring your own remote platforms in your Cylc config.
+2. Configure your own remote platforms in your Cylc config.
 
-   Platforms are named using a convention, see /etc/bin/swarm --help for
-   details.
+   See the next section for the platform matrix and naming conventions.
 
 Once you have defined your remote platforms provide them with the `-p` arg:
 
@@ -53,8 +55,75 @@ Once you have defined your remote platforms provide them with the `-p` arg:
 # run ONLY tests compatible with the _remote_background_indep_tcp platform
 $ etc/bin/run-functional-tests -p _remote_background_indep_tcp tests/f
 
+# run tests on the first compatible platform with the "at" job runner
+$ etc/bin/run-functional-tests -p '_*at*' tests/f
+
 # run tests on the first compatible platform configured
 $ etc/bin/run-functional-tests -p '*' tests/f
+```
+
+## Test Platform Names
+
+Each platform is named using this convention:
+
+    _<submission_locality>_<job_runner>_<filesystem>_<comms_method>
+
+`loc` "submission locality" - `{local, remote}`:
+  Where do jobs get submitted?
+
+  * Locally (on the scheduler host).
+  * Remotely (on a remote host).
+
+`runner` "job runner" - `{background, at, slurm, ...}`:
+  The name of the job runner the container is configured to use.
+
+`fs` "filesystem" - `{indep, shared}`:
+  What is the relationship between the filesystem in the contaier to
+  the filesystem on the host?
+
+  * Independent (indep) - it is a completely different filesystem.
+  * Shared (shared) - the cylc-run directory is shared.
+
+  warning: For shared filesystems cylc-run is shared, however, the
+  absolute path to cylc-run on the host system may be different
+  to that on the container, use ~/cylc-run for safety.
+
+`comms` "task communication method" - `{tcp, poll}`
+  The task communication method to use.
+
+## How To Configure "Non-Generic" Tests?
+
+By default tests require the platform `_local_background_indep_tcp`.
+
+If you want your test to run on any other platform export an environment
+variable called `REQUIRE_PLATFORM` *before* the `test_header` is sourced.
+
+This variable should define a test's requirements of a platform e.g:
+
+```bash
+# require a remote platform with a shared filesystem and tcp task comms
+export REQUIRE_PLATFORM='loc:remote fs:shared comms:tcp'
+```
+
+Bash extglob pattern matching can be provided
+(https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html)
+e.g:
+
+```bash
+# run for all job runners with tcp comms on remote platforms
+export REQUIRE_PLATFORM='loc:remote runner:* comms:tcp'
+# run for tcp and ssh comms on remote platform
+export REQUIRE_PLATFORM='loc:remote comms:?(tcp|ssh)'
+```
+
+If a field is not provided it defaults to `*` with the exception of
+`loc` which defaults to `local` i.e:
+
+```bash
+# run for all job runners on local platforms
+export REQUIRE_PLATFORM='runner:*'
+# run for all job runners on remote platforms
+export REQUIRE_PLATFORM='loc:remote runner:*'
 ```
 
 ## Guidelines
