@@ -39,11 +39,11 @@ This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for suite shutdown."""
 
 import os.path
-import os
 import sys
 
 from cylc.flow.command_polling import Poller
 from cylc.flow.exceptions import ClientError, ClientTimeout
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
@@ -152,11 +152,7 @@ def main(parser, options, suite, shutdown_arg=None):
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
     suite = os.path.normpath(suite)
-    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
-        from cylc.flow.network.ssh_client import SuiteRuntimeClient
-    else:
-        from cylc.flow.network.client import SuiteRuntimeClient
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)

@@ -220,10 +220,6 @@ class ContactFileFields:
     PUBLISH_PORT = 'CYLC_SUITE_PUBLISH_PORT'
     """The port Cylc uses to publish data."""
 
-    # SSH_USE_LOGIN_SHELL = 'CYLC_SSH_USE_LOGIN_SHELL'
-    # """TODO: Unused at present, waiting on #2975 (#3327)."""
-
-
     SUITE_RUN_DIR_ON_SUITE_HOST = 'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST'
     """The path to the suite run directory as seen from ``HOST``."""
 
@@ -240,6 +236,7 @@ class ContactFileFields:
 
     SCHEDULER_USE_LOGIN_SHELL = 'SCHEDULER_USE_LOGIN_SHELL'
     """Remote command setting for Scheduler."""
+
 
 REG_DELIM = "/"
 

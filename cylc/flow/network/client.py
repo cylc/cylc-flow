@@ -32,12 +32,14 @@ from cylc.flow.exceptions import (
     SuiteServiceFileError,
     SuiteStopped
 )
+from cylc.flow.hostuserutil import get_local_ip_address
 from cylc.flow.network import (
     encode_,
     decode_,
     get_location,
     ZMQSocketBase
 )
+from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import detect_old_contact_file
 
@@ -243,14 +245,14 @@ class SuiteRuntimeClient(ZMQSocketBase):
 
             if cmd.startswith(cylc_bin_dir):
                 cmd = cmd.replace(cylc_bin_dir, '')
-
-            ssh_connection = os.getenv("SSH_CONNECTION")
-            if ssh_connection is not None:
-                host = ssh_connection.split(' ')[0]
-                comms_method = 'ssh'
-            else:
-                host = socket.gethostname()
-                comms_method = 'zmq'
+        ssh_connection = os.getenv("SSH_CONNECTION")
+        host = socket.gethostname()
+        if ssh_connection is None:
+            comms_method = 'local command'
+        elif host == get_local_ip_address():
+            comms_method = 'ssh'
+        else:
+            comms_method = 'zmq'
         return {
             'meta': {
                 'prog': cmd,

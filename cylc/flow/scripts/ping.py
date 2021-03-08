@@ -23,7 +23,6 @@ Test communication with a running suite.
 If suite REG is running or TASK in suite REG is currently running,
 exit with success status, else exit with error status."""
 
-import os
 import sys
 
 from ansimarkup import parse as cparse
@@ -31,6 +30,7 @@ from ansimarkup import parse as cparse
 from cylc.flow import ID_DELIM
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import TASK_STATUS_RUNNING
@@ -67,11 +67,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, suite, task_id=None):
-    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
-        from cylc.flow.network.ssh_client import SuiteRuntimeClient
-    else:
-        from cylc.flow.network.client import SuiteRuntimeClient
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     if task_id and not TaskID.is_valid_id(task_id):
         raise UserInputError("Invalid task ID: %s" % task_id)

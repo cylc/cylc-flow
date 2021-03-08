@@ -34,8 +34,8 @@ Examples:
   # Display the state of all tasks in a particular cycle point:
   $ cylc dump -t SUITE | grep 2010082406"""
 
+from cylc.flow.network.client_factory import get_client
 import sys
-import os
 import json
 
 from graphene.utils.str_converters import to_snake_case
@@ -167,11 +167,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, suite):
-    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
-        from cylc.flow.network.ssh_client import SuiteRuntimeClient
-    else:
-        from cylc.flow.network.client import SuiteRuntimeClient
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     if options.sort_by_cycle:
         sort_args = {'keys': ['cyclePoint', 'name']}

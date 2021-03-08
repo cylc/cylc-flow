@@ -31,8 +31,8 @@ The --output=OUTPUT option can be used multiple times on the command line.
 """
 
 import os.path
-import os
 
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -69,11 +69,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
     suite = os.path.normpath(suite)
-    if os.getenv('CYLC_TASK_COMMS_METHOD') == 'ssh':
-        from cylc.flow.network.ssh_client import SuiteRuntimeClient
-    else:
-        from cylc.flow.network.client import SuiteRuntimeClient
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,

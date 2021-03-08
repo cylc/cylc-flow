@@ -350,7 +350,8 @@ def remote_cylc_cmd(cmd, platform, **kwargs):
     )
 
 
-def remote_cylc_cmd_using_env_vars(cmd, host, ssh_cmd, login_shell, cylc_path, **kwargs):
+def remote_cylc_cmd_using_env_vars(
+        cmd, host, ssh_cmd, login_shell, cylc_path, **kwargs):
     """Execute a Cylc command on a remote platform.
 
     Uses environment variables to construct the command.
@@ -386,6 +387,7 @@ def _remote_cylc_cmd(
         remote command.
 
     """
+
     return run_cmd(
         _construct_ssh_cmd(
             cmd,
