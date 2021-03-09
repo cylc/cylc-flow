@@ -172,13 +172,28 @@ to control the job submission environment.
 longer check for a cyclic/circular graph if there are more than 100 tasks,
 unless the option  `--check-circular` is used. This is to improve performance.
 
+[#3913](https://github.com/cylc/cylc-flow/pull/3913) - Add ability to use
+pre-install entry point from cylc-rose plugin to provide environment and
+template variables for a workflow.
+
 [#4023](https://github.com/cylc/cylc-flow/pull/4023) - Add ability to use
-post-install entry point from rose-cylc to use Rose style CLI settings of
+post-install entry point from cylc-rose to use Rose style CLI settings of
 configurations in Cylc install. If Cylc-rose is installed three new CLI
 options will be available:
 - `--opt_conf_keys="foo, bar"`
 - `--defines="[env]FOO=BAR"`
-- `--suite-defines="FOO=BAR"
+- `--suite-defines="FOO=BAR"`
+
+[#4101](https://github.com/cylc/cylc-flow/pull/4101) - Add the ability to
+ignore (clear) rose install options from an earlier install:
+`cylc reinstall --clear-rose-install-options`
+
+[#4094](https://github.com/cylc/cylc-flow/pull/4094) - Prevent Cylc from
+rsyncing the following files on install and reinstall:
+- `rose-suite.conf`
+- `opt/rose-suite-cylc-install.conf`
+These files should be handled by the cylc-rose plugin if you require them.
+
 
 ### Fixes
 

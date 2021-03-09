@@ -36,7 +36,7 @@ class EntryPointWrapper:
 
 
 @EntryPointWrapper
-def pre_configure_basic(*_):
+def pre_configure_basic(*_, **__):
     """Simple plugin that returns one env var and one template var."""
     return {
         'env': {
@@ -49,7 +49,7 @@ def pre_configure_basic(*_):
 
 
 @EntryPointWrapper
-def pre_configure_templating_detected(*_):
+def pre_configure_templating_detected(*_, **__):
     """Plugin that detects a random templating engine."""
     return {
         'templating_detected': str(random())
@@ -57,7 +57,7 @@ def pre_configure_templating_detected(*_):
 
 
 @EntryPointWrapper
-def pre_configure_error(*_):
+def pre_configure_error(*_, **__):
     """Plugin that raises an exception."""
     raise Exception('foo')
 
