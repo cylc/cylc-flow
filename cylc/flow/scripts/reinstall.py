@@ -140,7 +140,7 @@ def main(parser, opts, named_run=None):
         'cylc.pre_configure'
     ):
         try:
-            entry_point.resolve()(dir_=source, opts=opts)
+            entry_point.resolve()(srcdir=source, opts=opts)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
@@ -162,9 +162,9 @@ def main(parser, opts, named_run=None):
     ):
         try:
             entry_point.resolve()(
-                dir_=source,
+                srcdir=source,
                 opts=opts,
-                dest_root=str(run_dir)
+                rundir=str(run_dir)
             )
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
