@@ -156,6 +156,10 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, opts, flow_name=None, src=None):
+    install(parser, opts, flow_name, src)
+
+
+def install(parser, opts, flow_name=None, src=None):
     if opts.no_run_name and opts.run_name:
         parser.error(
             """options --no-run-name and --run-name are mutually exclusive.
