@@ -88,7 +88,7 @@ Each platform is named using this convention:
   absolute path to cylc-run on the host system may be different
   to that on the container, use ~/cylc-run for safety.
 
-`comms` "task communication method" - `{tcp, poll}`
+`comms` "task communication method" - `{tcp, ssh, poll}`
   The task communication method to use.
 
 ## How To Configure "Non-Generic" Tests?

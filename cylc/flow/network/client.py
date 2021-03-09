@@ -32,7 +32,6 @@ from cylc.flow.exceptions import (
     SuiteServiceFileError,
     SuiteStopped
 )
-from cylc.flow.hostuserutil import get_local_ip_address
 from cylc.flow.network import (
     encode_,
     decode_,
@@ -225,15 +224,18 @@ class SuiteRuntimeClient(ZMQSocketBase):
         self.loop.run_until_complete(task)
         return task.result()
 
-    @staticmethod
-    def get_header() -> dict:
+    def get_header(self) -> dict:
         """Return "header" data to attach to each request for traceability.
 
         Returns:
             dict: dictionary with the header information, such as
                 program and hostname.
         """
-        cmd = sys.argv[0]
+
+        if len(sys.argv) > 1:
+            cmd = sys.argv[1]
+        else:
+            cmd = sys.argv[0]
 
         cylc_executable_location = which("cylc")
         if cylc_executable_location:
@@ -249,15 +251,15 @@ class SuiteRuntimeClient(ZMQSocketBase):
         host = socket.gethostname()
         if ssh_connection is None:
             comms_method = 'local command'
-        elif host == get_local_ip_address():
-            comms_method = 'ssh'
+        elif socket.gethostbyname(host) == socket.gethostbyname(self.host):
+            comms_method = CommsMeth.SSH
         else:
-            comms_method = 'zmq'
+            comms_method = CommsMeth.ZMQ
         return {
             'meta': {
                 'prog': cmd,
                 'host': host,
-                'comms_method': comms_method
+                'comms_method': comms_method,
             }
         }
 

@@ -49,7 +49,7 @@ def authorise():
             LOG.info(
                 '[client-command] %s %s://%s@%s:%s',
                 fcn.__name__, comms_method, user, host, prog
-                )
+            )
             return fcn(self, *args, **kwargs)
 
         return _authorise

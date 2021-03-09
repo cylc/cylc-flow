@@ -85,7 +85,7 @@ class HostUtil:
         self.remote_users = {}
 
     @staticmethod
-    def get_local_ip_address(target=None):
+    def get_local_ip_address(target):
         """Return IP address of target.
 
         This finds the external address of the particular network adapter
@@ -100,7 +100,7 @@ class HostUtil:
         ipaddr = ""
         with suppress(IOError):
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                # sock.connect((target, 8000))
+                sock.connect((target, 8000))
                 ipaddr = sock.getsockname()[0]
         return ipaddr
 
@@ -233,7 +233,7 @@ def get_host_ip_by_name(target):
     return HostUtil.get_inst().get_host_ip_by_name(target)
 
 
-def get_local_ip_address(target=None):
+def get_local_ip_address(target):
     """Shorthand for HostUtil.get_inst().get_local_ip_address(target)."""
     return HostUtil.get_inst().get_local_ip_address(target)
 

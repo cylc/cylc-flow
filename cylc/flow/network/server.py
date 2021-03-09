@@ -205,7 +205,6 @@ class SuiteRuntimeServer(ZMQSocketBase):
             else:
                 # success case - serve the request
                 res = self._receiver(message)
-                LOG.debug(f"!!!!!!!!!!!!!!!!!!!mesage is {message}")
                 if message['command'] in PB_METHOD_MAP:
                     response = res['data']
                 else:

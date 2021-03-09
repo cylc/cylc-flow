@@ -14,56 +14,92 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Union
+
 from cylc.flow.suite_files import load_contact_file, ContactFileFields
 from cylc.flow.network import (
     get_location,
-    encode_,
-    decode_
 )
-from cylc.flow.remote import remote_cylc_cmd_using_env_vars
+import json
+from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.exceptions import ClientError
 
 
 class SuiteRuntimeClient():
+    """Client to the workflow server communication using ssh.
 
+    Determines host from the contact file unless provided.
+
+    Args:
+        suite (str):
+            Name of the suite to connect to.
+        timeout (float):
+            Set the default timeout in seconds.
+            # TODO: https://github.com/cylc/cylc-flow/issues/4112
+        host (str):
+            The host where the flow is running if known.
+
+            If host is provided it is not necessary to load
+            the contact file.
+    """
     def __init__(
             self,
             suite: str,
+            timeout: Union[float, str] = None,
             host: str = None,
     ):
         self.suite = suite
-        self.header = self.get_header()
 
         if not host:
             self.host, _, _ = get_location(suite)
 
     def send_request(self, command, args=None, timeout=None):
+        """Send a request, using ssh.
+
+        Determines ssh_cmd, cylc_path and login_shell settings from the contact
+        file.
+
+        Converts message to JSON and sends this to stdin. Executes the Cylc
+        command, then deserialises the output.
+
+        For convenience use ``__call__`` to call this method.
+
+        Args:
+            command (str): The name of the endpoint to call.
+            args (dict): Arguments to pass to the endpoint function.
+            timeout (float): Override the default timeout (seconds).
+            # timeout: https://github.com/cylc/cylc-flow/issues/4112
+
+        Raises:
+            ClientError: Coverall, on error from function call
+        Returns:
+            object: Deserialized output from function called.
+        """
 
         command = ["client", self.suite, command]
         contact = load_contact_file(self.suite)
         ssh_cmd = contact[ContactFileFields.SCHEDULER_SSH_COMMAND]
         login_shell = contact[ContactFileFields.SCHEDULER_USE_LOGIN_SHELL]
         cylc_path = contact[ContactFileFields.SCHEDULER_CYLC_PATH]
+        cylc_path = None if cylc_path == 'None' else cylc_path
         if not args:
             args = {}
-        msg = {'command': command, 'args': args}
-        message = decode_(msg)
-        proc = remote_cylc_cmd_using_env_vars(
+        message = json.dumps(args)
+        proc = _remote_cylc_cmd(
             command,
-            self.host,
-            ssh_cmd,
-            login_shell,
-            cylc_path,
-            capture_process=True,
-            stdin=True,
-            stdin_str=message)
+            host=self.host,
+            stdin_str=message,
+            ssh_cmd=ssh_cmd,
+            remote_cylc_path=cylc_path,
+            ssh_login_shell=login_shell,
+            capture_process=True)
 
-        out, err = (f.decode() for f in proc.communicate())
+        out, _err = (f.decode() for f in proc.communicate())
         return_code = proc.wait()
         if return_code:
             from pipes import quote
             command_str = " ".join(quote(item) for item in command)
             raise ClientError(command_str, "return-code=%d" % return_code)
-        return encode_(out)
+        return json.loads(out)
 
     __call__ = send_request

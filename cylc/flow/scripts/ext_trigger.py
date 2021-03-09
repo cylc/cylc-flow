@@ -35,7 +35,6 @@ Use the retry options in case the target suite is down or out of contact.
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
 import os.path
-import os
 from time import sleep
 
 from cylc.flow import LOG

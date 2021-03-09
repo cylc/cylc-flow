@@ -76,7 +76,6 @@ Broadcast cannot change [runtime] inheritance.
 See also 'cylc reload' - reload a modified suite definition at run time."""
 
 import os.path
-import os
 import sys
 import re
 from tempfile import NamedTemporaryFile

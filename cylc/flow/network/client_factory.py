@@ -15,30 +15,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from enum import Enum
 
 
-class CommsMeth(Enum):
-    """Used for identifying communication methods"""
+class CommsMeth():
+    """String literals used for identifying communication methods"""
 
     SSH = 'ssh'
     ZMQ = 'zmq'
 
 
 def get_comms_method():
-    """"Return Communication Method"""
+    """"Return Communication Method from environment variable, default zmq"""
     return os.getenv('CYLC_TASK_COMMS_METHOD', CommsMeth.ZMQ)
 
 
-def get_runtime_client(comms_method, suite, comms_timeout=None):
-    """Return import command for correct client"""
+def get_runtime_client(comms_method, workflow, timeout=None):
+    """Return client for the provided commumication method.
+
+        Args:
+            comm_method: communication method
+            workflow: workflow name
+    """
     if comms_method == CommsMeth.SSH:
         from cylc.flow.network.ssh_client import SuiteRuntimeClient
     else:
         from cylc.flow.network.client import SuiteRuntimeClient
-    return SuiteRuntimeClient(suite, timeout=comms_timeout)
+    return SuiteRuntimeClient(workflow, timeout=timeout)
 
 
-def get_client(suite, timeout=None):
+def get_client(workflow, timeout=None):
+    """Get communication method and return correct SuiteRuntimeClient"""
     comms_method = get_comms_method()
-    return get_runtime_client(comms_method, suite, comms_timeout=timeout)
+    return get_runtime_client(comms_method, workflow, timeout=timeout)
