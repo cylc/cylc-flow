@@ -67,20 +67,6 @@ def fixture_get_platform():
     yield inner_func
 
 
-def test_write_prelude_invalid_cylc_command():
-    job_conf = {
-        "platform": {
-            "job runner": "background",
-            "hosts": ["localhost"],
-            "cylc executable": "sl -a"
-        }
-    }
-    with pytest.raises(ValueError) as ex:
-        with TemporaryFile(mode="w+") as handle:
-            JobFileWriter()._write_prelude(handle, job_conf)
-        assert("bad cylc executable" in str(ex))
-
-
 @mock.patch.dict(
     "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
 @mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
@@ -286,7 +272,7 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
             "copyable environment variables": [
                 "CYLC_SUITE_INITIAL_CYCLE_POINT"
             ],
-            "cylc executable": "moo/baa/cylc"
+            "cylc path": "moo/baa"
         }),
         "directives": {"restart": "yes"},
     }

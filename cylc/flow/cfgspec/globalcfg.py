@@ -427,10 +427,21 @@ with Conf('global.cylc', desc='''
 
                    ssh user@host 'bash --login cylc ...'
 
-                which will source ``/etc/profile`` and ``~/.profile`` to set up
-                the user environment.  However, for security reasons some
-                institutions do not allow unattended commands to start login
-                shells, so you can turn off this behaviour to get:
+                which will source the following files (in order):
+
+                * ``/etc/profile``
+                * ``~/.bash_profile``
+                * ``~/.bash_login``
+                * ``~/.profile``
+
+                .. _Bash man pages: https://linux.die.net/man/1/bash
+
+                For more information on login shells see the "Invocation"
+                section of the `Bash man pages`_.
+
+                For security reasons some institutions do not allow unattended
+                commands to start login shells, so you can turn off this
+                behaviour to get:
 
                 .. code-block:: bash
 
@@ -441,17 +452,33 @@ with Conf('global.cylc', desc='''
                 environment.
             ''')
             Conf('hosts', VDR.V_STRING_LIST)
-            Conf('cylc executable', VDR.V_STRING, 'cylc', desc='''
-                The ``cylc`` executable on a remote host.
+            Conf('cylc path', VDR.V_STRING, desc='''
+                The path containing the ``cylc`` executable on a remote host.
+
+                This may be necessary if the ``cylc`` executable is not in the
+                ``$PATH`` for an ``ssh`` call.
+                Test whether this is the case by using
+                ``ssh <host> command -v cylc``.
+
+                This path is used for remote invocations of the ``cylc``
+                command and is added to the ``$PATH`` in job scripts
+                for the configured platform.
 
                 .. note::
 
-                   This should normally point to the cylc multi-version wrapper
-                   on the host, not ``bin/cylc`` for a specific installed
-                   version.
+                   If :cylc:conf:`[..]use login shell = True` (the default)
+                   then an alternative approach is to add ``cylc`` to the
+                   ``$PATH`` in the system or user Bash profile files
+                   (e.g. ``~/.bash_profile``).
 
-                Specify a full path if ``cylc`` is not in ``$PATH`` when it is
-                invoked via ``ssh`` on this host.
+                .. tip::
+
+                   For multi-version installations this should point to the
+                   Cylc wrapper script rather than the ``cylc`` executable
+                   itself.
+
+                   See :ref:`managing environments` for more information on
+                   the wrapper script.
             ''')
             Conf('global init-script', VDR.V_STRING, desc='''
                 If specified, the value of this setting will be inserted to

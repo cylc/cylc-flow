@@ -22,7 +22,7 @@
 create_test_global_config "" "
 [platforms]
    [[localhost]]
-      cylc executable = $(command -v cylc)
+      cylc path = $(dirname "$(command -v cylc)")
       clean job submission environment = True
       job submission environment pass-through = BEEF
 "
