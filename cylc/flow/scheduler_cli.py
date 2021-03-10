@@ -42,7 +42,7 @@ from cylc.flow.scripts import cylc_header
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
-PLAY_DOC = r"""cylc [control] play [OPTIONS] [ARGS]
+PLAY_DOC = r"""cylc play [OPTIONS] [ARGS]
 
 Start running a workflow, or restart a stopped workflow from its previous
 state/cycle point, or resume a paused workflow by releasing all tasks.
