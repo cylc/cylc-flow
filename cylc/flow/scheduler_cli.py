@@ -274,6 +274,7 @@ def scheduler_cli(parser, options, reg):
     functionality.
 
     """
+    suite_files.validate_flow_name(reg)
     reg = os.path.normpath(reg)
     try:
         suite_files.detect_old_contact_file(reg)
