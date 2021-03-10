@@ -72,6 +72,9 @@ how workflows are restarted
 
 ### Enhancements
 
+[#4115](https://github.com/cylc/cylc-flow/pull/4115) - Raise an error when
+invalid sort keys are provided clients.
+
 [#4105](https://github.com/cylc/cylc-flow/pull/4105) - Replace the
 `cylc executable` global config setting with `cylc path`, for consistency with
 `cylc` invocation in job scripts.

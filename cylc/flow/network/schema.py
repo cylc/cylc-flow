@@ -76,15 +76,19 @@ def sort_elements(elements, args):
     """Sort iterable of elements by given attribute."""
     sort_args = args.get('sort')
     if sort_args and elements:
-        sort_keys = [
-            key
-            for key in [to_snake_case(k) for k in sort_args.keys]
-            if hasattr(elements[0], key)
-        ]
-        if sort_keys:
-            elements.sort(
-                key=attrgetter(*sort_keys),
-                reverse=sort_args.reverse)
+        keys = [
+            key for key in [to_snake_case(k) for k in sort_args.keys]]
+        if not keys:
+            raise ValueError('You must provide at least one key to sort')
+        keys_not_in_schema = [
+            key for key in keys if not hasattr(elements[0], key)]
+        if keys_not_in_schema:
+            raise ValueError(f'''The following sort keys are not in the
+            schema: {', '.join(keys_not_in_schema)}''')
+        # sort using the keys provided
+        elements.sort(
+            key=attrgetter(*keys),
+            reverse=sort_args.reverse)
     return elements
 
 
