@@ -338,7 +338,7 @@ def _check_srvd(reg):
     """Check the run dir contains .service dir"""
     workflow_run_dir = get_workflow_run_dir(reg)
     if not Path(workflow_run_dir,
-                suite_files.SuiteFiles.Service.DIRNAME).exists:
+                suite_files.SuiteFiles.Service.DIRNAME).exists():
         sys.stderr.write(f'suite service directory not found '
                          f'at: {workflow_run_dir}\n')
         sys.exit(1)
