@@ -152,8 +152,8 @@ def platform_from_name(platform_name=None, platforms=None):
     a task platform string.
 
     Verifies selected platform is present in global.cylc file and returns it,
-    raises error if platfrom is not in global.cylc or returns 'localhost' if
-    no platform is initally selected.
+    raises error if platform is not in global.cylc or returns 'localhost' if
+    no platform is initially selected.
 
     Args:
         platform_name (str):

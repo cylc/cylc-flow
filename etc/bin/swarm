@@ -21,7 +21,7 @@ swarm [OPTIONS] (build|configure|run)
 
 Build, configure and run a swarm of docker containers for test purposes.
 
-This swarm is both for local development and automated testing to proivde
+This swarm is both for local development and automated testing to provide
 a stable testing/development platform.
 
 Containers ports are correctly exposed so they can be used either natively
@@ -34,7 +34,7 @@ Commands:
     interactive  Run a docker container interactively.
     run          Run docker containers.
     ps           List running detached containers started with "run"
-    kill         Kill detactched containers started with "run"
+    kill         Kill detached containers started with "run"
 
 Note:
     "ps" and "kill" only track the most resent swarm of containers started
