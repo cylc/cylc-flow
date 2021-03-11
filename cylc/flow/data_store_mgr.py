@@ -74,9 +74,14 @@ from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUS_WAITING, TASK_STATUS_PREPARING, TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED, TASK_STATUS_EXPIRED)
+    TASK_STATUS_WAITING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_EXPIRED
+)
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.taskdef import generate_graph_parents
 from cylc.flow.task_state import TASK_STATUSES_FINAL
@@ -134,7 +139,6 @@ DELTAS_MAP = {
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 
 JOB_STATUSES_ALL = [
-    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
