@@ -39,8 +39,6 @@ jobs:
         run: |
           docker exec -w /root/cylc-flow bash \
             ./etc/bin/run-functional-tests -v \
-            tests/flakyfunctional/events/01-task.t \
-            tests/flakyfunctional/execution-time-limit/00-background.t \
             tests/functional/broadcast/00-simple.t \
             tests/functional/cylc-poll/11-event-time.t \
             tests/functional/cylc-poll/15-job-st-file-no-batch.t \
