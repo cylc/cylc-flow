@@ -50,12 +50,6 @@ jobs:
             python-version: '3.7'
             chunk: '1/1'
             platform: '_remote_background_indep_tcp _remote_at_indep_tcp'
-          - name: '_remote_background_indep_ssh'
-            os: 'ubuntu-latest'
-            test-base: 'tests/f tests/k'
-            python-version: '3.7'
-            chunk: '1/1'
-            platform: '_remote_background_indep_ssh _remote_at_indep_ssh'
           # macos
           - name: 'macos'
             os: 'macos-latest'
