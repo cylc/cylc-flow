@@ -139,6 +139,7 @@
 #         Delete private/public workflow databases for a cold start.
 #-------------------------------------------------------------------------------
 set -eu
+shopt -s extglob
 
 FAILURES=0
 SIGNALS="EXIT INT"

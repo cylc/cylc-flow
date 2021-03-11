@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test remote installation only happens when appropriate
-export REQUIRE_PLATFORM='loc:remote fs:shared comms:tcp'
+export REQUIRE_PLATFORM='loc:remote fs:shared comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 

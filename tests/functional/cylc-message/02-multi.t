@@ -18,10 +18,32 @@
 #------------------------------------------------------------------------------
 # Test "cylc message" with multiple messages.
 
+export REQUIRE_PLATFORM='loc:* comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+init_suite "${TEST_NAME_BASE}" <<__FLOW__
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        platform = $CYLC_TEST_PLATFORM
+        script = """
+            wait "\${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+            cylc message -p WARNING "\${CYLC_SUITE_NAME}" "\${CYLC_TASK_JOB}" \
+                "Warn this" "INFO: Greeting" - <<'__MESSAGES__'
+            Warn that
+
+            DEBUG: Remove stuffs such as
+            badness
+            slowness
+            and other incorrectness.
+
+            CUSTOM: whatever
+            __MESSAGES__
+        """
+__FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
