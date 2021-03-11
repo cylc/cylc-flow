@@ -282,7 +282,7 @@ class Scheduler:
 
         """
         # Install
-        source = suite_files.get_workflow_source_dir(Path.cwd())
+        source, _ = suite_files.get_workflow_source_dir(Path.cwd())
         if source is None:
             # register workflow
             rund = get_workflow_run_dir(self.suite)

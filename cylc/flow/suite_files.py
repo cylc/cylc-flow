@@ -16,7 +16,7 @@
 
 """Suite service files management."""
 
-from typing import Optional
+from typing import Optional, Tuple, Union
 import aiofiles
 from enum import Enum
 import logging
@@ -369,29 +369,32 @@ def get_flow_file(reg):
         return flow_file
 
 
-def get_workflow_source_dir(dir_):
-    """Return the source directory path of the workflow in directory provided.
-        Args:
-            dir_ (path):
-                directory to check for an installed flow
-    """
+def get_workflow_source_dir(
+    run_dir: Union[Path, str]
+) -> Union[Tuple[str, Path], Tuple[None, None]]:
+    """Get the source directory path of the workflow in directory provided.
 
+    Args:
+        run_dir: directory to check for an installed flow inside.
+
+    Returns (source_dir, symlink) where the latter is the symlink to the source
+    dir that exists in the run dir.
+    """
     source_path = Path(
-        dir_,
-        SuiteFiles.Install.DIRNAME,
-        SuiteFiles.Install.SOURCE)
-    alt_source_path = Path(
-        dir_.parent,
+        run_dir,
         SuiteFiles.Install.DIRNAME,
         SuiteFiles.Install.SOURCE)
     try:
         source = os.readlink(source_path)
         return source, source_path
     except OSError:
+        alt_source_path = Path(
+            Path(run_dir).parent,
+            SuiteFiles.Install.DIRNAME,
+            SuiteFiles.Install.SOURCE)
         try:
             source = os.readlink(alt_source_path)
             return source, alt_source_path
-
         except OSError:
             return None, None
 
@@ -527,8 +530,8 @@ def register(
 def is_installed(path):
     """Check to see if the path sent contains installed flow.
 
-       Checks for valid _cylc-install directory in current folder and checks
-       source link exists.
+    Checks for valid _cylc-install directory in current folder and checks
+    source link exists.
     """
     cylc_install_folder = Path(path, SuiteFiles.Install.DIRNAME)
     source = Path(cylc_install_folder, SuiteFiles.Install.SOURCE)
