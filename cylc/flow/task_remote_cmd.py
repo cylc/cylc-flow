@@ -26,7 +26,6 @@ from cylc.flow.suite_files import (
     KeyInfo,
     KeyOwner,
     KeyType,
-    ContactFileFields,
     SuiteFiles
 )
 from cylc.flow.pathutil import make_symlink
