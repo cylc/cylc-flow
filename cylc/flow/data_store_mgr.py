@@ -1604,7 +1604,7 @@ class DataStoreMgr:
             itask (cylc.flow.task_proxy.TaskProxy):
                 Update task-node from corresponding task proxy
                 objects from the workflow task pool.
-            sig (str): Context of funtion call (name, args).
+            sig (str): Context of function call (name, args).
             satisfied (bool): Trigger message.
 
         """

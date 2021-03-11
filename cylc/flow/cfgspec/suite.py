@@ -431,7 +431,7 @@ with Conf(
             .. note::
 
                The integer limit format is irrespective of the labelling of
-               cycle points. For example, if the runhead limit is ``P3`` and
+               cycle points. For example, if the runahead limit is ``P3`` and
                you have a suite *solely* consisting of a task that repeats
                "every four cycles", it would still spawn three consecutive
                cycle points at a time (starting with 1, 5 and 9). This is
@@ -441,7 +441,7 @@ with Conf(
             .. note::
 
                The runahead limit may be automatically raised if this is
-               necessary to allow a future task to be triggererd, preventing
+               necessary to allow a future task to be triggered, preventing
                the suite from stalling.
         ''')
 
@@ -560,13 +560,13 @@ with Conf(
                 Example Recurrences:
 
                 date-time cycling:
-                   * ``R1`` - once at the intial cycle point
+                   * ``R1`` - once at the initial cycle point
                    * ``T00,T06,T12,T18`` - daily at 00:00, 06:00, 12:00
                      & 18:00
                    * ``PT6H`` - every six hours starting at the initial
                      cycle point
                 integer cycling:
-                   * ``R1`` - once at the intial cycle point
+                   * ``R1`` - once at the initial cycle point
                    * ``P2`` - every other cycle
                    * ``P3,P5`` - every third or fifth cycle
 

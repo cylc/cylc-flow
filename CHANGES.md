@@ -1107,7 +1107,7 @@ in `cylc gscan`) is now defined under the suite "[[meta]]" section
 `bash -l` (login shell) instead of explicitly sourcing your
 `.profile` file. *WARNING*: if you have a
 `.bash_profile` and were using `.profile` as well just for
-Cylc, the latter file will now be ignored because bash gives precendence to the
+Cylc, the latter file will now be ignored because bash gives precedence to the
 former. If so, just move your Cylc settings into
 `.bash_profile` or consult the Cylc User Guide for
 other ways to configure the task job environment.
@@ -1179,7 +1179,7 @@ definitions
 [#2517](https://github.com/cylc/cylc-flow/pull/2517) -
 [#2560](https://github.com/cylc/cylc-flow/pull/2560) -
 `cylc gui`
- * put prompt dialogss above all windows
+ * put prompt dialogs above all windows
  * load new-suite log files after switching to another suite via the File menu
  * graph view: reinstate the right-click menu for ghost nodes (lost at cylc-7.5.0)
  * job log files:
@@ -1430,7 +1430,7 @@ via Ctrl-C.
 [#2252](https://github.com/cylc/cylc-flow/pull/2252): `ssh`: add `-Y` (X Forwarding)
 only if necessary.
 
-[#2245](https://github.com/cylc/cylc-flow/pull/2245): SSL certficate: add serial
+[#2245](https://github.com/cylc/cylc-flow/pull/2245): SSL certificate: add serial
 number (issue number). This allows curl, browsers, etc. to connect to
 suite daemons.
 
@@ -1893,7 +1893,7 @@ commands.
 ### Other Changes
 
 [#1585](https://github.com/cylc/cylc-flow/pull/1585): If a suite stalls, report any
-unsatisified task prerequisites that cannot be met.
+unsatisfied task prerequisites that cannot be met.
 
 [#1944](https://github.com/cylc/cylc-flow/pull/1944): `cylc get-config` now returns
 a valid suite definition.

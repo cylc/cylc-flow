@@ -18,7 +18,7 @@
 * Ensures suite run directory is still present.
 * Ensures contact file is present and consistent with the running suite.
 
-Shuts down the suite in the enent of inconsistency or error.
+Shuts down the suite in the event of inconsistency or error.
 
 """
 import os

@@ -337,7 +337,7 @@ def cli_version(long=False):
 def pycoverage(cmd_args):
     """Capture code coverage if configured to do so.
 
-    This requires Cylc to be installed in editible mode
+    This requires Cylc to be installed in editable mode
     (i.e. `pip install -e`) in order to access the coverage configuration
     file, etc.
 
@@ -392,7 +392,7 @@ def pycoverage(cmd_args):
     # the cylc working directory
     cylc_wc = Path(cylc.flow.__file__).parents[2]
 
-    # intiate coverage
+    # initiate coverage
     try:
         cov = coverage.Coverage(
             # NOTE: coverage paths are all relative so we must hack them here
@@ -408,7 +408,7 @@ def pycoverage(cmd_args):
             # make sure this exception is visible in the traceback
             '\n\n*****************************\n\n'
             'Could not initiate coverage, likely because Cylc was not '
-            'installed in editible mode.'
+            'installed in editable mode.'
             '\n\n*****************************\n\n'
         )
 

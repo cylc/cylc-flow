@@ -1501,7 +1501,7 @@ class Broadcast(Mutation):
             # e.g. `{environment: {variable_name: "value",. . .}. . .}`.
         )
         cutoff = CyclePoint(
-            description='Clear broadcasts ealier than cutoff cycle point.'
+            description='Clear broadcasts earlier than cutoff cycle point.'
         )
 
         # TODO: work out how to implement this feature, it needs to be

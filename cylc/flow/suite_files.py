@@ -1021,7 +1021,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
         source (path):
             source directory
         dry_run (bool):
-            if True, will not exectute the file transfer but report what would
+            if True, will not execute the file transfer but report what would
             be changed.
     """
     validate_source_dir(source, named_run)
@@ -1057,7 +1057,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
     Args:
         flow_name (str): workflow name, default basename($PWD).
         source (str): directory location of flow.cylc file, default $PWD.
-        run_name (str): name of the run, overides run1, run2, run 3 etc...
+        run_name (str): name of the run, overrides run1, run2, run 3 etc...
                         If specified, cylc install will not create runN
                         symlink.
         rundir (str): for overriding the default cylc-run directory.
@@ -1066,7 +1066,7 @@ def install_workflow(flow_name=None, source=None, run_name=None,
         no_symlinks (bool): Flag as True to skip making localhost symlink dirs
 
     Return:
-        source (Path): The source direcory.
+        source (Path): The source directory.
         rundir (Path): The directory the workflow has been installed into.
         flow_name (str): The installed suite name (which may be computed here).
 
@@ -1157,7 +1157,7 @@ def get_run_dir(run_path_base, run_name, no_run_name):
         run_name (str):
             Name of the run.
         no_run_name (bool):
-            Flag as True to incidate no run name - worklow installed into
+            Flag as True to indicate no run name - workflow installed into
             ~/cylc-run/$(basename $PWD).
 
     Returns:

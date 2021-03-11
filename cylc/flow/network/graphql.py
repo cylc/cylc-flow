@@ -299,7 +299,7 @@ class CylcGraphQLBackend(GraphQLBackend):
         self.execute_params = {"executor": executor}
 
     def document_from_string(self, schema, document_string):
-        """Parse string and setup request docutment for execution.
+        """Parse string and setup request document for execution.
 
         Args:
 
