@@ -39,6 +39,8 @@ jobs:
         run: |
           docker exec -w /root/cylc-flow bash \
             ./etc/bin/run-functional-tests -v \
+            tests/flakyfunctional/events/01-task.t \
+            tests/flakyfunctional/execution-time-limit/00-background.t \
             tests/functional/broadcast/00-simple.t \
             tests/functional/cylc-poll/11-event-time.t \
             tests/functional/cylc-poll/15-job-st-file-no-batch.t \
@@ -47,6 +49,8 @@ jobs:
             tests/functional/hold-release/12-hold-then-retry.t \
             tests/functional/job-file-trap/00-sigusr1.t \
             tests/functional/job-file-trap/02-pipefail.t \
+            tests/functional/job-file-trap/03-user-trap.t \
+            tests/functional/jobscript/00-torture.t \
             tests/functional/shutdown/09-now2.t \
             tests/functional/shutdown/13-no-port-file-check.t \
             tests/functional/shutdown/14-no-dir-check.t
