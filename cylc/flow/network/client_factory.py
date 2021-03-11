@@ -26,6 +26,7 @@ class CommsMeth():
 
 def get_comms_method():
     """"Return Communication Method from environment variable, default zmq"""
+
     return os.getenv('CYLC_TASK_COMMS_METHOD', CommsMeth.ZMQ)
 
 
@@ -36,6 +37,7 @@ def get_runtime_client(comms_method, workflow, timeout=None):
             comm_method: communication method
             workflow: workflow name
     """
+
     if comms_method == CommsMeth.SSH:
         from cylc.flow.network.ssh_client import SuiteRuntimeClient
     else:
@@ -45,5 +47,6 @@ def get_runtime_client(comms_method, workflow, timeout=None):
 
 def get_client(workflow, timeout=None):
     """Get communication method and return correct SuiteRuntimeClient"""
+
     comms_method = get_comms_method()
     return get_runtime_client(comms_method, workflow, timeout=timeout)

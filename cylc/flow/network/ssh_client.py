@@ -94,12 +94,10 @@ class SuiteRuntimeClient():
             ssh_login_shell=login_shell,
             capture_process=True)
 
-        out, _err = (f.decode() for f in proc.communicate())
+        out, err = (f.decode() for f in proc.communicate())
         return_code = proc.wait()
         if return_code:
-            from shlex import quote
-            command_str = ' '.join(quote(item) for item in command)
-            raise ClientError(command_str, "return-code=%d" % return_code)
+            raise ClientError(err, f"return-code={return_code}")
         return json.loads(out)
 
     __call__ = send_request

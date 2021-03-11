@@ -85,7 +85,7 @@ setting `flow.cylc[scheduler]allow implicit tasks` to `True`.
 
 ### Enhancements
 
-[#](https://github.com/cylc/cylc-flow/pull/) - Reimplement ssh task task
+[#4119](https://github.com/cylc/cylc-flow/pull/4119) - Reimplement ssh task
 communications.
 
 [#4115](https://github.com/cylc/cylc-flow/pull/4115) - Raise an error when

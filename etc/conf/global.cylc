@@ -28,15 +28,15 @@
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
         submission polling intervals = PT1S
-    [[_remote_background_shared_tcp]]
-        hosts = _remote_background_shared_tcp
-    [[_remote_background_shared_ssh]]
-        # TCP and SSH both use TCP (by default) just over different ports
-        # so we can use the same container for both
-        hosts = _remote_background_shared_tcp
-        communication method = ssh
-    [[_remote_background_shared_poll]]
-       hosts = _remote_background_shared_poll
-       communication method = poll
-       execution polling intervals = 5*PT1S, PT5S
-       submission polling intervals = PT1S
+    # [[_remote_background_shared_tcp]]
+    #     hosts = _remote_background_shared_tcp
+    # [[_remote_background_shared_ssh]]
+    #     # TCP and SSH both use TCP (by default) just over different ports
+    #     # so we can use the same container for both
+    #     hosts = _remote_background_shared_tcp
+    #     communication method = ssh
+    # [[_remote_background_shared_poll]]
+    #    hosts = _remote_background_shared_poll
+    #    communication method = poll
+    #    execution polling intervals = 5*PT1S, PT5S
+    #    submission polling intervals = PT1S
