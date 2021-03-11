@@ -84,7 +84,7 @@ def create_client_keys(srvd, install_target):
     os.umask(old_umask)
 
 
-def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
+def remote_init(install_target, rund, *dirs_to_symlink):
     """cylc remote-init
 
     Arguments:
@@ -92,7 +92,6 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         rund (str): suite run directory
         dirs_to_symlink (list): directories to be symlinked in form
         [directory=symlink_location, ...]
-        *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
     rund = os.path.expandvars(rund)
     for item in dirs_to_symlink:
@@ -138,11 +137,6 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         tarhandle.close()
     finally:
         os.chdir(oldcwd)
-    if indirect_comm:
-        fname = os.path.join(srvd, SuiteFiles.Service.CONTACT)
-        with open(fname, 'a') as handle:
-            handle.write('%s=%s\n' % (
-                ContactFileFields.COMMS_PROTOCOL_2, indirect_comm))
     print("KEYSTART", end='')
     with open(client_pub_keyinfo.full_key_path) as keyfile:
         print(keyfile.read(), end='KEYEND')

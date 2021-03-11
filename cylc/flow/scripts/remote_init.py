@@ -49,19 +49,9 @@ def get_option_parser():
         argdoc=[
             ("INSTALL_TARGET", "Target to be initialised"),
             ("RUND", "The run directory of the suite"),
-            ('[DIRS_TO_BE_SYMLINKED ...]', "Directories to be symlinked"),
+            ('[DIRS_TO_BE_SYMLINKED ...]', "Directories to be symlinked")
         ],
         color=False
-    )
-    parser.add_option(
-        "--indirect-comm",
-        metavar="METHOD",
-        type="choice",
-        choices=["ssh"],
-        help="specify use of indirect communication via e.g. ssh",
-        action="store",
-        dest="indirect_comm",
-        default=None,
     )
 
     return parser
@@ -73,8 +63,8 @@ def main(parser, options, install_target, rund, *dirs_to_be_symlinked):
     remote_init(
         install_target,
         rund,
-        *dirs_to_be_symlinked,
-        indirect_comm=options.indirect_comm)
+        *dirs_to_be_symlinked
+    )
 
 
 if __name__ == "__main__":

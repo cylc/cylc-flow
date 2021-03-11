@@ -200,8 +200,6 @@ class ContactFileFields:
     API = 'CYLC_API'
     """The Suite API version string."""
 
-    COMMS_PROTOCOL_2 = 'CYLC_COMMS_PROTOCOL_2'  # indirect comms
-
     HOST = 'CYLC_SUITE_HOST'
     """The name of the host the suite server process is running on."""
 

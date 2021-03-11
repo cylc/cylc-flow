@@ -232,6 +232,15 @@ class SuiteRuntimeClient(ZMQSocketBase):
                 program and hostname.
         """
 
+        ssh_connection = os.getenv("SSH_CONNECTION")
+        host = socket.gethostname()
+
+        if ssh_connection is None:
+            comms_method = 'local command'
+        elif socket.gethostbyname(host) == socket.gethostbyname(self.host):
+            comms_method = CommsMeth.SSH
+        else:
+            comms_method = CommsMeth.ZMQ
         if len(sys.argv) > 1:
             cmd = sys.argv[1]
         else:
@@ -247,14 +256,6 @@ class SuiteRuntimeClient(ZMQSocketBase):
 
             if cmd.startswith(cylc_bin_dir):
                 cmd = cmd.replace(cylc_bin_dir, '')
-        ssh_connection = os.getenv("SSH_CONNECTION")
-        host = socket.gethostname()
-        if ssh_connection is None:
-            comms_method = 'local command'
-        elif socket.gethostbyname(host) == socket.gethostbyname(self.host):
-            comms_method = CommsMeth.SSH
-        else:
-            comms_method = CommsMeth.ZMQ
         return {
             'meta': {
                 'prog': cmd,

@@ -203,8 +203,6 @@ class TaskRemoteMgr:
         for key, value in dirs_to_symlink.items():
             if value is not None:
                 cmd.append(f"{key}={quote(value)} ")
-        if comm_meth in ['ssh']:
-            cmd.append('--indirect-comm=%s' % comm_meth)
         # Create the ssh command
         cmd = construct_ssh_cmd(cmd, platform)
         self.proc_pool.put_command(

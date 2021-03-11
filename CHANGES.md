@@ -85,6 +85,9 @@ setting `flow.cylc[scheduler]allow implicit tasks` to `True`.
 
 ### Enhancements
 
+[#](https://github.com/cylc/cylc-flow/pull/) - Reimplement ssh task task
+communications.
+
 [#4115](https://github.com/cylc/cylc-flow/pull/4115) - Raise an error when
 invalid sort keys are provided clients.
 

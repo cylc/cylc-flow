@@ -35,7 +35,7 @@ class SuiteRuntimeClient():
             Name of the suite to connect to.
         timeout (float):
             Set the default timeout in seconds.
-            # TODO: https://github.com/cylc/cylc-flow/issues/4112
+            See: https://github.com/cylc/cylc-flow/issues/4112
         host (str):
             The host where the flow is running if known.
 
@@ -62,13 +62,13 @@ class SuiteRuntimeClient():
         Converts message to JSON and sends this to stdin. Executes the Cylc
         command, then deserialises the output.
 
-        For convenience use ``__call__`` to call this method.
+        Use ``__call__`` to call this method.
 
         Args:
             command (str): The name of the endpoint to call.
             args (dict): Arguments to pass to the endpoint function.
             timeout (float): Override the default timeout (seconds).
-            # timeout: https://github.com/cylc/cylc-flow/issues/4112
+            See: https://github.com/cylc/cylc-flow/issues/4112
 
         Raises:
             ClientError: Coverall, on error from function call
@@ -97,8 +97,8 @@ class SuiteRuntimeClient():
         out, _err = (f.decode() for f in proc.communicate())
         return_code = proc.wait()
         if return_code:
-            from pipes import quote
-            command_str = " ".join(quote(item) for item in command)
+            from shlex import quote
+            command_str = ' '.join(quote(item) for item in command)
             raise ClientError(command_str, "return-code=%d" % return_code)
         return json.loads(out)
 
