@@ -37,6 +37,8 @@ create_test_global_config "" "
         work = ${TEST_DIR}/${SYM_NAME}/work
 "
 init_suite "${TEST_NAME_BASE}" << '__FLOW__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = darmok

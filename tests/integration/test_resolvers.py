@@ -49,6 +49,9 @@ def node_args():
 async def flow(mod_flow, mod_scheduler, mod_run):
     ret = Mock()
     ret.reg = mod_flow({
+        'scheduler': {
+            'allow implicit tasks': True
+        },
         'scheduling': {
             'initial cycle point': '2000',
             'dependencies': {

@@ -33,6 +33,8 @@ BASE_GLOBAL_CONFIG="
 #-------------------------------------------------------------------------------
 # test the force shutdown option (auto stop, no restart) in condemned hosts
 init_suite "${TEST_NAME_BASE}" <<< '
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = foo

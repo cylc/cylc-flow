@@ -1,6 +1,8 @@
 # foo.3 triggers a reflow at foo.1 and waits for it to catch up and merge.
 # This results in a completely merged flow, e.g. u, V -> uV at foo.3 and bar.3.
 # Then bar.3 waits for the merged labels to be pruned, e.g. uV -> u (or V).
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     cycling mode = integer
     initial cycle point = 1

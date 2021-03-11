@@ -1,6 +1,8 @@
 # Check conditional reflow prevention.
 #   foo | bar => baz
 # baz should not be spawned again if bar runs after baz is gone.
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = """foo | bar => baz => qux

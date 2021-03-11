@@ -36,6 +36,7 @@ BASE_GLOBAL_CONFIG="
 init_suite "${TEST_NAME_BASE}" <<< '
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 2000
     [[graph]]

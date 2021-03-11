@@ -1,5 +1,6 @@
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 20130808T00
     final cycle point = 20130808T18

@@ -1,6 +1,7 @@
 #!jinja2
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
     [[events]]
         inactivity = PT10S
         abort on inactivity = True

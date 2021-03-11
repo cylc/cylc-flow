@@ -1,5 +1,6 @@
 #!Jinja2
 [scheduler]
+    allow implicit tasks = True
     [[events]]
         expected task failures = janeway.1
 [scheduling]

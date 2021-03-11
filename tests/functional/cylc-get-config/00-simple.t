@@ -24,7 +24,7 @@ init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-all"
 run_ok "${TEST_NAME}" cylc get-config "${SUITE_NAME}"
-run_ok "${TEST_NAME}-validate" cylc validate --strict "${TEST_NAME}.stdout"
+run_ok "${TEST_NAME}-validate" cylc validate --check-circular "${TEST_NAME}.stdout"
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-section1

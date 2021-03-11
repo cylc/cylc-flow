@@ -24,7 +24,8 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 
 {% from "cylc.flow" import LOG %}
 {% do LOG.debug("Hello World!") %}
-
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = foo

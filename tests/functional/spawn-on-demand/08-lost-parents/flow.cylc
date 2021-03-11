@@ -1,5 +1,7 @@
 # A task with parents in some cycles but not others must be spawned on demand
 # by parents (when it has them) and auto-spawned otherwise.
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
    cycling mode = integer
    initial cycle point = 1

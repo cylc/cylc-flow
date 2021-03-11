@@ -30,6 +30,8 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         foo = wall_clock():PT1S
     [[graph]]
         R1 = @foo => bar
+[runtime]
+    [[bar]]
 __FLOW_CONFIG__
 run_ok "${TEST_NAME}-valid" cylc validate flow.cylc
 
@@ -41,6 +43,8 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         foo-1 = wall_clock():PT1S
     [[graph]]
             R1 = @foo-1 => bar
+[runtime]
+    [[bar]]
 __FLOW_CONFIG__
 
 run_fail "${TEST_NAME}-invalid" cylc validate flow.cylc

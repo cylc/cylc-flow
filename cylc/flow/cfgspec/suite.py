@@ -98,6 +98,17 @@ with Conf(
     with Conf('scheduler'):
         Conf('UTC mode', VDR.V_BOOLEAN)
 
+        Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
+            :term:`Implicit tasks <implicit task>` are tasks without explicit
+            runtime definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
+            these are not allowed, as often they happen to be typos. However,
+            this setting can be set to ``True`` to allow implict tasks.
+            It is recommended to set this to ``True`` if required during
+            development/prototyping of a workflow graph, but set it to
+            ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
+            section.
+        ''')
+
         Conf('install', VDR.V_STRING_LIST, desc='''
             Configure the directories and files to be included in the remote
             file installation.
@@ -651,7 +662,7 @@ with Conf(
 
             Names may not contain colons (which would preclude use of
             directory paths involving the registration name in ``$PATH``
-            variables). They may not contain the "." character (it will be
+            variables). They may not contain the ``.`` character (it will be
             interpreted as the namespace hierarchy delimiter, separating
             groups and names -huh?).
 
@@ -663,7 +674,7 @@ with Conf(
             If multiple names are listed the subsequent settings apply to
             each.
 
-            All namespaces inherit initially from *root*, which can be
+            All namespaces inherit initially from ``root``, which can be
             explicitly configured to provide or override default settings for
             all tasks in the suite.
         '''):

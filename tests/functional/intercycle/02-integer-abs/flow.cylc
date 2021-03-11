@@ -8,5 +8,5 @@
         R1/+P1 = start
         R//P1 = start[2] => foo
 [runtime]
-    [[root]]
+    [[start, foo]]
         script = true

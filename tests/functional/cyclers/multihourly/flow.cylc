@@ -1,5 +1,6 @@
 [scheduler]
     cycle point time zone = +13
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 20000131T0100Z
     final cycle point = 20000202T0600+0600

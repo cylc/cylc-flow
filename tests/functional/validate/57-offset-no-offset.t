@@ -29,7 +29,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [[graph]]
     P1D = foo | foo[-P1D] => bar
 [runtime]
-    [[root]]
+    [[foo, bar]]
         script = true
 __FLOW_CONFIG__
 
