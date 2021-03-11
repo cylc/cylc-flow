@@ -18,7 +18,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -88,25 +88,25 @@ class XtriggerManager:
     call.
 
     Args:
-        suite (str): suite name
-        user (str): suite owner
-        broadcast_mgr (BroadcastMgr): the Broadcast Manager
-        proc_pool (SubProcPool): pool of Subprocesses
-        suite_run_dir (str): suite run directory
-        suite_share_dir (str): suite share directory
+        suite: suite name
+        user: suite owner
+        broadcast_mgr: the Broadcast Manager
+        proc_pool: pool of Subprocesses
+        suite_run_dir: suite run directory
+        suite_share_dir: suite share directory
 
     """
 
     def __init__(
         self,
         suite: str,
-        user: str = None,
+        user: Optional[str] = None,
         *,  # following must be keyword args
-        broadcast_mgr: BroadcastMgr = None,
-        data_store_mgr: DataStoreMgr = None,
-        proc_pool: SubProcPool = None,
-        suite_run_dir: str = None,
-        suite_share_dir: str = None,
+        broadcast_mgr: Optional[BroadcastMgr] = None,
+        data_store_mgr: Optional[DataStoreMgr] = None,
+        proc_pool: Optional[SubProcPool] = None,
+        suite_run_dir: Optional[str] = None,
+        suite_share_dir: Optional[str] = None,
     ):
         # Suite function and clock triggers by label.
         self.functx_map: dict = {}
@@ -133,9 +133,13 @@ class XtriggerManager:
             TMPL_SUITE_SHARE_DIR: suite_share_dir,
             TMPL_DEBUG_MODE: cylc.flow.flags.debug
         }
-        self.proc_pool: 'SubProcPool' = proc_pool
-        self.broadcast_mgr: 'BroadcastMgr' = broadcast_mgr
-        self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
+
+        if proc_pool is not None:
+            self.proc_pool: SubProcPool = proc_pool
+        if broadcast_mgr is not None:
+            self.broadcast_mgr: BroadcastMgr = broadcast_mgr
+        if data_store_mgr is not None:
+            self.data_store_mgr: DataStoreMgr = data_store_mgr
 
     @staticmethod
     def validate_xtrigger(fname: str, fdir: str):
