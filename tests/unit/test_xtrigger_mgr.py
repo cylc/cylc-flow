@@ -15,18 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from unittest.mock import create_autospec
 
-from cylc.flow.broadcast_mgr import BroadcastMgr
-from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.cycling.iso8601 import ISO8601Point, ISO8601Sequence, init
-from cylc.flow.scheduler import Scheduler
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.taskdef import TaskDef
-from cylc.flow.xtrigger_mgr import XtriggerManager, RE_STR_TMPL
+from cylc.flow.xtrigger_mgr import RE_STR_TMPL
 
 
 def test_constructor(xtrigger_mgr):
@@ -394,34 +389,3 @@ def test_check_xtriggers(xtrigger_mgr):
     # won't be satisfied, as it is async, we are are not calling callback
     assert not xtrigger_mgr.sat_xtrig
     assert xtrigger_mgr.all_xtrig
-
-
-# mock objects
-
-class MockedProcPool(SubProcPool):
-
-    def put_command(self, *args, **kwargs):
-        return True
-
-
-class MockedBroadcastMgr(BroadcastMgr):
-
-    def put_broadcast(self, *args, **kwargs):
-        return True
-
-
-# fixtures
-
-@pytest.fixture
-def xtrigger_mgr() -> XtriggerManager:
-    """A fixture to build an XtriggerManager which uses a mocked proc_pool,
-    and uses a mocked broadcast_mgr."""
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo",
-        proc_pool=MockedProcPool(),
-        broadcast_mgr=MockedBroadcastMgr(
-            suite_db_mgr=None, data_store_mgr=None),
-        data_store_mgr=DataStoreMgr(create_autospec(Scheduler))
-    )
-    return xtrigger_mgr

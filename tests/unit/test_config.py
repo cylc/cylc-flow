@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Any, Dict, Optional, Tuple, Type
+from pathlib import Path
 import pytest
 import logging
 from unittest.mock import Mock
@@ -26,6 +27,7 @@ from cylc.flow.cycling import iso8601, loader
 from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
+from cylc.flow.xtrigger_mgr import XtriggerManager
 
 Fixture = Any
 
@@ -93,7 +95,9 @@ def get_test_inheritance_quotes():
 class TestSuiteConfig:
     """Test class for the Cylc SuiteConfig object."""
 
-    def test_xfunction_imports(self, mock_glbl_cfg, tmp_path):
+    def test_xfunction_imports(
+            self, mock_glbl_cfg: Fixture, tmp_path: Path,
+            xtrigger_mgr: XtriggerManager):
         """Test for a suite configuration with valid xtriggers"""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -118,8 +122,10 @@ class TestSuiteConfig:
                 R1 = '@tree => qux'
         """
         flow_file.write_text(flow_config)
-        suite_config = SuiteConfig(suite="name_a_tree", fpath=flow_file,
-                                   options=Mock(spec=[]))
+        suite_config = SuiteConfig(
+            suite="name_a_tree", fpath=flow_file, options=Mock(spec=[]),
+            xtrigger_mgr=xtrigger_mgr
+        )
         assert 'tree' in suite_config.xtrigger_mgr.functx_map
 
     def test_xfunction_import_error(self, mock_glbl_cfg, tmp_path):
