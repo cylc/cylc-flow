@@ -188,9 +188,10 @@ def platform_from_name(platform_name=None, platforms=None):
         # We substitue commas with or without spaces to
         # allow lists of platforms
         if (
-            re.fullmatch(re.sub(r',\s*', '|', platform_name_re), platform_name)
-            or
-            re.fullmatch(platform_name_re, platform_name)
+            re.fullmatch(
+                re.sub(r',[^({\d+,\d+})]\s*', '|', platform_name_re),
+                platform_name
+            )
         ):
             # Deepcopy prevents contaminating platforms with data
             # from other platforms matching platform_name_re
