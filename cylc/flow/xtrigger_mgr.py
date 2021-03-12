@@ -18,7 +18,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -42,7 +42,7 @@ TMPL_TASK_NAME = 'name'
 TMPL_SUITE_RUN_DIR = 'suite_run_dir'
 TMPL_SUITE_SHARE_DIR = 'suite_share_dir'
 TMPL_DEBUG_MODE = 'debug'
-ARG_VAL_TEMPLATES = [
+ARG_VAL_TEMPLATES: List[str] = [
     TMPL_TASK_CYCLE_POINT, TMPL_TASK_IDENT, TMPL_TASK_NAME, TMPL_SUITE_RUN_DIR,
     TMPL_SUITE_SHARE_DIR, TMPL_USER_NAME, TMPL_SUITE_NAME, TMPL_DEBUG_MODE]
 
@@ -100,16 +100,15 @@ class XtriggerManager:
     def __init__(
         self,
         suite: str,
+        broadcast_mgr: BroadcastMgr,
+        data_store_mgr: DataStoreMgr,
+        proc_pool: SubProcPool,
         user: Optional[str] = None,
-        *,  # following must be keyword args
-        broadcast_mgr: Optional[BroadcastMgr] = None,
-        data_store_mgr: Optional[DataStoreMgr] = None,
-        proc_pool: Optional[SubProcPool] = None,
         suite_run_dir: Optional[str] = None,
         suite_share_dir: Optional[str] = None,
     ):
         # Suite function and clock triggers by label.
-        self.functx_map: dict = {}
+        self.functx_map: Dict[str, SubFuncContext] = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
         # Satisfied triggers and their function results, by signature.
@@ -126,7 +125,7 @@ class XtriggerManager:
         # For function arg templating.
         if not user:
             user = get_user()
-        self.farg_templ: dict = {
+        self.farg_templ: Dict[str, Any] = {
             TMPL_SUITE_NAME: suite,
             TMPL_USER_NAME: user,
             TMPL_SUITE_RUN_DIR: suite_run_dir,
@@ -134,26 +133,27 @@ class XtriggerManager:
             TMPL_DEBUG_MODE: cylc.flow.flags.debug
         }
 
-        if proc_pool is not None:
-            self.proc_pool: SubProcPool = proc_pool
-        if broadcast_mgr is not None:
-            self.broadcast_mgr: BroadcastMgr = broadcast_mgr
-        if data_store_mgr is not None:
-            self.data_store_mgr: DataStoreMgr = data_store_mgr
+        self.proc_pool = proc_pool
+        self.broadcast_mgr = broadcast_mgr
+        self.data_store_mgr = data_store_mgr
 
     @staticmethod
-    def validate_xtrigger(fname: str, fdir: str):
+    def validate_xtrigger(label: str, fctx: SubFuncContext, fdir: str) -> None:
         """Validate an Xtrigger function.
 
         Args:
-            fname (str): function name
-            fdir(str): function directory
+            label: xtrigger label
+            fctx: function context
+            fdir: function directory
         Raises:
             ImportError: if the function module was not found
             AttributeError: if the function was not found in the xtrigger
                 module
             ValueError: if the function is not callable
+            ValueError: if any string template in the function context
+                arguments are not present in the expected template values.
         """
+        fname: str = fctx.func_name
         try:
             func = get_func(fname, fdir)
         except ImportError:
@@ -165,21 +165,6 @@ class XtriggerManager:
         if not callable(func):
             raise ValueError(
                 f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
-
-    def add_trig(self, label: str, fctx: SubFuncContext, fdir: str):
-        """Add a new xtrigger function.
-
-        Check the xtrigger function exists here (e.g. during validation).
-        Args:
-            label (str): xtrigger label
-            fctx (SubFuncContext): function context
-            fdir (str): function module directory
-        Raises:
-            ValueError: if any string template in the function context
-                arguments are not present in the expected template values.
-        """
-        self.validate_xtrigger(fctx.func_name, fdir)
-        self.functx_map[label] = fctx
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
         for argv in fctx.func_args + list(fctx.func_kwargs.values()):
@@ -190,7 +175,19 @@ class XtriggerManager:
                             f"Illegal template in xtrigger {label}: {match}")
             except TypeError:
                 # Not a string arg.
-                pass
+                continue
+
+    def add_trig(self, label: str, fctx: SubFuncContext, fdir: str) -> None:
+        """Add a new xtrigger function.
+
+        Check the xtrigger function exists here (e.g. during validation).
+        Args:
+            label: xtrigger label
+            fctx: function context
+            fdir: function module directory
+        """
+        self.validate_xtrigger(label, fctx, fdir)
+        self.functx_map[label] = fctx
 
     def mutate_trig(self, label, kwargs):
         self.functx_map[label].func_kwargs.update(kwargs)

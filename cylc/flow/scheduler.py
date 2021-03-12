@@ -363,7 +363,7 @@ class Scheduler:
 
         self.xtrigger_mgr = XtriggerManager(
             self.suite,
-            self.owner,
+            user=self.owner,
             broadcast_mgr=self.broadcast_mgr,
             data_store_mgr=self.data_store_mgr,
             proc_pool=self.proc_pool,

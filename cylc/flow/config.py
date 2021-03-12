@@ -170,13 +170,8 @@ class SuiteConfig:
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
-        # Old external triggers (client/server)
-        self.ext_triggers = {}
-        if xtrigger_mgr is None:
-            # For validation and graph etc.
-            self.xtrigger_mgr = XtriggerManager(self.suite)
-        else:
-            self.xtrigger_mgr = xtrigger_mgr
+        self.ext_triggers = {}  # Old external triggers (client/server)
+        self.xtrigger_mgr = xtrigger_mgr
         self.suite_polling_tasks = {}
         self._last_graph_raw_id = None
         self._last_graph_raw_edges = []
@@ -1715,7 +1710,10 @@ class SuiteConfig:
                 sig = xtrig.get_signature()
                 raise SuiteConfigError(
                     f"clock xtriggers need date-time cycling: {label} = {sig}")
-            self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
+            if self.xtrigger_mgr is None:
+                XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
+            else:
+                self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
             self.taskdefs[right].add_xtrig_label(label, seq)
 
     def get_actual_first_point(self, start_point):
