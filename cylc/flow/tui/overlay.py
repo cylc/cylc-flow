@@ -26,8 +26,8 @@ Parameters:
         Tui application object.
     widget (urwid.Widget):
         A widget to place in the overlay.
-    overlay_optios (dict):
-        A dictionary of keyword argumnts to provide to the
+    overlay_options (dict):
+        A dictionary of keyword arguments to provide to the
         urwid.Overlay constructor.
 
         You will likely want to override the `width` and `height`

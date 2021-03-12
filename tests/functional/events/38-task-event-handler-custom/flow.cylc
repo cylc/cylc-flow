@@ -1,7 +1,11 @@
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
-        R1 = """foo:a => bar
-                   foo:b => baz"""
+        R1 = """
+            foo:a => bar
+            foo:b => baz
+        """
 [runtime]
     [[root]]
         script = true

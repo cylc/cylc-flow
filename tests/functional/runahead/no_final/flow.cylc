@@ -15,5 +15,5 @@
            @never => bar
         """
 [runtime]
-    [[foo]]
+    [[foo, bar]]
         script = false

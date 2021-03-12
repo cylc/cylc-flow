@@ -1,6 +1,7 @@
 #!jinja2
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 20150304T00
     final cycle point = +P2D

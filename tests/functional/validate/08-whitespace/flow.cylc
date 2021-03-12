@@ -11,5 +11,6 @@
         foo => bar &  baz  """   
         
    [  runtime   ]    
+ [[baz ]] 
     [[  foo,bar   ,  a,  b  ]]   
 %include "inc.cylc"   

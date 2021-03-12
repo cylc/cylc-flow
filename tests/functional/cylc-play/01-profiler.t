@@ -23,6 +23,8 @@
 set_test_number 4
 
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 1
     cycling mode = integer

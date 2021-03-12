@@ -4,6 +4,8 @@
 # 1.  foo => bar => baz (flow a)
 # 2.  foo => bar (flow b)
 # 3.  qux (flow a)
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = "foo => bar => baz => qux"

@@ -1,6 +1,8 @@
 # Check that stopping the only flow causes the suite to shut down without
 # spawning more tasks.
 # Here bar stops the flow, so baz should never run.
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = "foo => bar => baz"

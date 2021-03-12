@@ -98,6 +98,17 @@ with Conf(
     with Conf('scheduler'):
         Conf('UTC mode', VDR.V_BOOLEAN)
 
+        Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
+            :term:`Implicit tasks <implicit task>` are tasks without explicit
+            runtime definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
+            these are not allowed, as often they happen to be typos. However,
+            this setting can be set to ``True`` to allow implict tasks.
+            It is recommended to set this to ``True`` if required during
+            development/prototyping of a workflow graph, but set it to
+            ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
+            section.
+        ''')
+
         Conf('install', VDR.V_STRING_LIST, desc='''
             Configure the directories and files to be included in the remote
             file installation.
@@ -420,7 +431,7 @@ with Conf(
             .. note::
 
                The integer limit format is irrespective of the labelling of
-               cycle points. For example, if the runhead limit is ``P3`` and
+               cycle points. For example, if the runahead limit is ``P3`` and
                you have a suite *solely* consisting of a task that repeats
                "every four cycles", it would still spawn three consecutive
                cycle points at a time (starting with 1, 5 and 9). This is
@@ -430,7 +441,7 @@ with Conf(
             .. note::
 
                The runahead limit may be automatically raised if this is
-               necessary to allow a future task to be triggererd, preventing
+               necessary to allow a future task to be triggered, preventing
                the suite from stalling.
         ''')
 
@@ -549,13 +560,13 @@ with Conf(
                 Example Recurrences:
 
                 date-time cycling:
-                   * ``R1`` - once at the intial cycle point
+                   * ``R1`` - once at the initial cycle point
                    * ``T00,T06,T12,T18`` - daily at 00:00, 06:00, 12:00
                      & 18:00
                    * ``PT6H`` - every six hours starting at the initial
                      cycle point
                 integer cycling:
-                   * ``R1`` - once at the intial cycle point
+                   * ``R1`` - once at the initial cycle point
                    * ``P2`` - every other cycle
                    * ``P3,P5`` - every third or fifth cycle
 
@@ -651,7 +662,7 @@ with Conf(
 
             Names may not contain colons (which would preclude use of
             directory paths involving the registration name in ``$PATH``
-            variables). They may not contain the "." character (it will be
+            variables). They may not contain the ``.`` character (it will be
             interpreted as the namespace hierarchy delimiter, separating
             groups and names -huh?).
 
@@ -663,7 +674,7 @@ with Conf(
             If multiple names are listed the subsequent settings apply to
             each.
 
-            All namespaces inherit initially from *root*, which can be
+            All namespaces inherit initially from ``root``, which can be
             explicitly configured to provide or override default settings for
             all tasks in the suite.
         '''):

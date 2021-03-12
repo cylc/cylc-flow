@@ -18,7 +18,7 @@
 
 """cylc report-timings [OPTIONS] REG
 
-Display suite timing informatiom.
+Display suite timing information.
 
 Retrieve suite timing information for wait and run time performance analysis.
 Raw output and summary output (in text or HTML format) are available.  Output

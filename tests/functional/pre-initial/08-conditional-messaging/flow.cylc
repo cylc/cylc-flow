@@ -1,5 +1,6 @@
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
     [[events]]
         expected task failures = bar.20100809T0000Z
 
@@ -14,9 +15,9 @@
 [runtime]
     [[foo]]
         script = """
-wait
-cylc message "restart files ready"
-"""
+            wait
+            cylc message "restart files ready"
+        """
         [[[outputs]]]
             restart1 = "restart files ready"
     [[bar]]

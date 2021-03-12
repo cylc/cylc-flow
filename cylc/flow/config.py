@@ -32,6 +32,7 @@ from fnmatch import fnmatchcase
 import os
 import re
 import traceback
+from typing import Set
 
 from metomi.isodatetime.data import Calendar
 from metomi.isodatetime.parsers import DurationParser
@@ -161,7 +162,7 @@ class SuiteConfig:
         self.share_dir = share_dir or get_suite_run_share_dir(self.suite)
         self.work_dir = work_dir or get_suite_run_work_dir(self.suite)
         self.options = options
-        self.naked_tasks = []
+        self.implicit_tasks: Set[str] = set()
         self.edges = {}
         self.taskdefs = {}
         self.initial_point = None
@@ -461,21 +462,10 @@ class SuiteConfig:
         self.configure_suite_state_polling_tasks()
 
         self._check_task_event_handlers()
-        self._check_special_tasks()  # adds to self.naked_tasks
+        self._check_special_tasks()  # adds to self.implicit_tasks
         self._check_explicit_cycling()
 
-        # Warn or abort (if --strict) if naked tasks (no runtime
-        # section) are found in graph or queue config.
-        if len(self.naked_tasks) > 0:
-            if self._is_validate(is_strict=True) or cylc.flow.flags.verbose:
-                err_msg = ('naked tasks detected (no entry'
-                           ' under [runtime]):')
-                for ndt in self.naked_tasks:
-                    err_msg += '\n+\t' + str(ndt)
-                LOG.warning(err_msg)
-            if self._is_validate(is_strict=True):
-                raise SuiteConfigError(
-                    'strict validation fails naked tasks')
+        self._check_implicit_tasks()
 
         # Check that external trigger messages are only used once (they have to
         # be discarded immediately to avoid triggering the next instance of the
@@ -640,7 +630,7 @@ class SuiteConfig:
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
 
-        if self._is_validate():
+        if getattr(self.options, 'is_validate', False):
             self.mem_log("config.py: before _check_circular()")
             self._check_circular()
             self.mem_log("config.py: after _check_circular()")
@@ -851,6 +841,28 @@ class SuiteConfig:
                     f"Final cycle point {self.final_point} does not "
                     f"meet the constraints {constraints}")
 
+    def _check_implicit_tasks(self) -> None:
+        """Raise SuiteConfigError if implicit tasks are found in graph or
+        queue config, unless allowed by config."""
+        if self.implicit_tasks:
+            print_limit = 10
+            implicit_tasks_str = '\n    * '.join(
+                list(self.implicit_tasks)[:print_limit])
+            num = len(self.implicit_tasks)
+            if num > print_limit:
+                implicit_tasks_str = (
+                    f"{implicit_tasks_str}\n    and {num} more")
+            err_msg = (
+                "implicit tasks detected (no entry under [runtime]):\n"
+                f"    * {implicit_tasks_str}")
+            if self.cfg['scheduler']['allow implicit tasks']:
+                LOG.debug(err_msg)
+            else:
+                raise SuiteConfigError(
+                    f"{err_msg}\n\n"
+                    "To allow implicit tasks, use "
+                    "'flow.cylc[scheduler]allow implicit tasks'")
+
     def _check_circular(self):
         """Check for circular dependence in graph."""
         if (len(self.taskdefs) > self.CHECK_CIRCULAR_LIMIT and
@@ -979,13 +991,6 @@ class SuiteConfig:
             for name, _ in name_expander.expand(node):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
-
-    def _is_validate(self, is_strict=False):
-        """Return whether we are in (strict) validate mode."""
-        return (
-            getattr(self.options, 'is_validate', False) and
-            (not is_strict or getattr(self.options, 'strict', False))
-        )
 
     @staticmethod
     def dequote(s):
@@ -1496,7 +1501,8 @@ class SuiteConfig:
                                 )
 
     def _check_special_tasks(self):
-        # Check declared special tasks are valid.
+        """Check declared special tasks are valid, and detect special
+        implicit tasks"""
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
                 if task_type in ['clock-trigger', 'clock-expire',
@@ -1507,7 +1513,7 @@ class SuiteConfig:
                         f'Illegal {task_type} task name: {name}')
                 if (name not in self.taskdefs and
                         name not in self.cfg['runtime']):
-                    self.naked_tasks.append(name)
+                    self.implicit_tasks.add(name)
 
     def _check_explicit_cycling(self):
         """Check that inter-cycle offsets refer to cycling tasks.
@@ -1569,8 +1575,8 @@ class SuiteConfig:
                 GraphNodeParser.get_inst().parse(node))
 
             if name not in self.cfg['runtime']:
-                # naked task, implicit inheritance from root
-                self.naked_tasks.append(name)
+                # implicit inheritance from root
+                self.implicit_tasks.add(name)
                 # These can't just be a reference to root runtime as we have to
                 # make some items task-specific: e.g. subst task name in URLs.
                 self.cfg['runtime'][name] = OrderedDictWithDefaults()
@@ -1751,7 +1757,8 @@ class SuiteConfig:
         In validate mode, set ungroup_all to True, and only return non-suicide
         edges with left and right nodes.
         """
-        is_validate = self._is_validate()  # this is for _check_circular
+        is_validate = getattr(
+            self.options, 'is_validate', False)  # this is for _check_circular
         if is_validate:
             ungroup_all = True
         if group_nodes is None:

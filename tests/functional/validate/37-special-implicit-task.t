@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,19 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check that missing explicit cycling fails validation.
+# Test validation fails for special implicit tasks
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
 set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-cmp"
-cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<__ERR__
-TaskDefError: No cycling sequences defined for foo
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduling]
+    initial cycle point = 20200101
+    [[special tasks]]
+        clock-trigger = foo(PT0M)
+    [[graph]]
+        T00 = bar
+[runtime]
+    [[bar]]
+        script = true
+__FLOW_CONFIG__
+run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
+cmp_ok "${TEST_NAME_BASE}.stderr" << '__ERR__'
+SuiteConfigError: implicit tasks detected (no entry under [runtime]):
+    * foo
+
+To allow implicit tasks, use 'flow.cylc[scheduler]allow implicit tasks'
 __ERR__
-#-------------------------------------------------------------------------------
-purge
+exit

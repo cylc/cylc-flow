@@ -354,7 +354,7 @@ class BaseResolvers:
     async def subscribe_delta(self, root, info, args):
         """Delta subscription async generator.
 
-        Async generator mapping the incomming protobuf deltas to
+        Async generator mapping the incoming protobuf deltas to
         yielded GraphQL subscription objects.
 
         """

@@ -21,6 +21,7 @@ set_test_number 10
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     cycle point format = %Y
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 2020
     [[graph]]

@@ -18,7 +18,7 @@
 
 """cylc view [OPTIONS] ARGS
 
-View a processessed suite configuration.
+View a processed suite configuration.
 
 Note:
   This is different to `cylc get-config` which displays the parsed

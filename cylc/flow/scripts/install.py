@@ -84,7 +84,7 @@ def get_option_parser():
     parser.add_option(
         "--directory", "-C",
         help=(
-            "Install the workflow found in path specfied."
+            "Install the workflow found in path specified."
             " This defaults to $PWD."),
         action="store",
         metavar="PATH/TO/FLOW",

@@ -8,5 +8,5 @@
         R1 = "foo"
 
 [runtime]
-    [[root]]
+    [[foo]]
         script = "true" # no sleep

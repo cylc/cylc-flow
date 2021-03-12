@@ -47,9 +47,9 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
-## __cylc-8.0a3 (<span actions:bind='release-date'>2020-08?</span>)__
+## __cylc-8.0b0 (<span actions:bind='release-date'>2020-08?</span>)__
 
-Fourth alpha release of Cylc 8.
+First beta release of Cylc 8.
 
 (See note on cylc-8 backward-incompatible changes, above)
 
@@ -69,6 +69,11 @@ queueing logic centralized.
 `cylc run` and `cylc restart` have been replaced by `cylc play`, simplifying
 how workflows are restarted
 ([#4040](https://github.com/cylc/cylc-flow/pull/4040)).
+
+"Implicit"/"naked" tasks (tasks that do not have an explicit definition in
+`flow.cylc[runtime]`) are now disallowed by default
+([#4109](https://github.com/cylc/cylc-flow/pull/4109)). You can allow them by
+setting `flow.cylc[scheduler]allow implicit tasks` to `True`.
 
 ### Enhancements
 
@@ -1102,7 +1107,7 @@ in `cylc gscan`) is now defined under the suite "[[meta]]" section
 `bash -l` (login shell) instead of explicitly sourcing your
 `.profile` file. *WARNING*: if you have a
 `.bash_profile` and were using `.profile` as well just for
-Cylc, the latter file will now be ignored because bash gives precendence to the
+Cylc, the latter file will now be ignored because bash gives precedence to the
 former. If so, just move your Cylc settings into
 `.bash_profile` or consult the Cylc User Guide for
 other ways to configure the task job environment.
@@ -1174,7 +1179,7 @@ definitions
 [#2517](https://github.com/cylc/cylc-flow/pull/2517) -
 [#2560](https://github.com/cylc/cylc-flow/pull/2560) -
 `cylc gui`
- * put prompt dialogss above all windows
+ * put prompt dialogs above all windows
  * load new-suite log files after switching to another suite via the File menu
  * graph view: reinstate the right-click menu for ghost nodes (lost at cylc-7.5.0)
  * job log files:
@@ -1425,7 +1430,7 @@ via Ctrl-C.
 [#2252](https://github.com/cylc/cylc-flow/pull/2252): `ssh`: add `-Y` (X Forwarding)
 only if necessary.
 
-[#2245](https://github.com/cylc/cylc-flow/pull/2245): SSL certficate: add serial
+[#2245](https://github.com/cylc/cylc-flow/pull/2245): SSL certificate: add serial
 number (issue number). This allows curl, browsers, etc. to connect to
 suite daemons.
 
@@ -1888,7 +1893,7 @@ commands.
 ### Other Changes
 
 [#1585](https://github.com/cylc/cylc-flow/pull/1585): If a suite stalls, report any
-unsatisified task prerequisites that cannot be met.
+unsatisfied task prerequisites that cannot be met.
 
 [#1944](https://github.com/cylc/cylc-flow/pull/1944): `cylc get-config` now returns
 a valid suite definition.

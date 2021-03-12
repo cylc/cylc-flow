@@ -637,7 +637,7 @@ class Scheduler:
 
         (Later on, tasks with parents will be spawned on-demand, and tasks with
         no parents will be auto-spawned when their own previous instances are
-        released from the runhead pool.)
+        released from the runahead pool.)
 
         """
         if self.config.start_point is not None:

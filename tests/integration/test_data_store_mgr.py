@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from copy import copy, deepcopy
 import pytest
 
 from cylc.flow import ID_DELIM
@@ -24,7 +23,6 @@ from cylc.flow.data_store_mgr import (
     TASKS,
     TASK_PROXIES,
     WORKFLOW,
-    JOB_STATUSES_ALL
 )
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
@@ -88,6 +86,9 @@ def int_id(_):
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run):
     flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
         'scheduling': {
             'graph': {
                 'R1': 'foo => bar'

@@ -28,7 +28,7 @@ def find_closest_focus(app, old_node, new_node):
     Arguments:
         app (TuiApp):
             Tui app instance.
-        old_node (MonitiorNode):
+        old_node (MonitorNode):
             The in-focus node from the deceased tree.
         new_node (MonitorNode):
             The root node from the new tree.

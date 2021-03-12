@@ -2,5 +2,5 @@
     [[graph]]
         R1 = "foo => bar"
 [runtime]
-    [[root]]
+    [[foo, bar]]
         script = true

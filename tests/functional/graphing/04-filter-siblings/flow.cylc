@@ -1,3 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = artichoke & azuki => banana & blackberry & blueberry => carrot
