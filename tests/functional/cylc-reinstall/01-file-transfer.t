@@ -27,9 +27,9 @@ set_test_number 14
 TEST_NAME="${TEST_NAME_BASE}-basic"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-mkdir .git .svn dir1 dir2-be-removed 
+mkdir .git .svn dir1 dir2-be-removed
 touch .git/file1 .svn/file1 dir1/file1 dir2-be-removed/file1 file1 file2
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc install
 
 tree_excludes='*.log|01-file-transfer*|rose-suite*.conf|opt'
 
@@ -51,7 +51,7 @@ __OUT__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc install
 mkdir new_dir
 touch new_dir/new_file1 new_dir/new_file2
 rm -rf dir2-be-removed file2
@@ -62,7 +62,7 @@ grep_ok "deleting dir2-be-removed/file1
          new_dir/
          new_dir/new_file1
          new_dir/new_file2" "${REINSTALL_LOG}"
-        
+
 tree -a -v -I "${tree_excludes}" --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/run2" > 'after-reinstall-run2-tree.out'
 cmp_ok 'after-reinstall-run2-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/run2

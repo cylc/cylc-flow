@@ -18,11 +18,8 @@
 
 """cylc install [OPTIONS] ARGS
 
-Install a new workflow.
-
-Install the name REG. The workflow server program can then be started, stopped,
-and targeted by name REG. (Note that "cylc play" can also install workflows on
-the fly).
+Install a new workflow. The workflow can then be started, stopped, and targeted
+by name.
 
 Installation creates a workflow run directory "~/cylc-run/REG/", with a run
 directory "~/cylc-run/REG/run1" containing a "_cylc-install/source" symlink to
@@ -32,25 +29,35 @@ copied to the new run directory.
 A .service directory will also be created and used for server authentication
 files at run time.
 
+If the argument REG is used, Cylc will search for the workflow in the list of
+directories given by `global.cylc[install]source dirs`, and install the first
+match. Otherwise, the workflow in the current working directory, or the one
+specified by --directory, will be installed.
 
 Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
 
 Examples:
-  # Install workflow dogs/fido from $PWD
-  # (with run directory ~/cylc-run/dogs/fido/run1)
-  # (if "run1" exists this will increment)
+  # Install workflow "dogs/fido" from the first match in
+  # `global.cylc[install]source dirs`, e.g. ~/cylc-src/dogs/fido/flow.cylc
+  # (with run directory ~/cylc-run/dogs/fido/run1 (if "run1" already exists,
+  # this will increment))
   $ cylc install dogs/fido
 
-  # Install $PWD/flow.cylc with specified flow name: fido
+  # Install $PWD/flow.cylc as "rabbit", if $PWD is ~/bunny/rabbit
+  # (with run directory ~/cylc-run/rabbit/run1)
+  $ cylc install
+
+  # Install $PWD/flow.cylc as "fido", regardless of what $PWD is
   # (with run directory ~/cylc-run/fido/run1)
   $ cylc install --flow-name=fido
 
-  # Install PATH/TO/FLOW/flow.cylc
-  $ cylc install --directory=PATH/TO/FLOW
+  # Install $PWD/bunny/rabbit/flow.cylc as "bunny/rabbit"
+  # (with run directory ~/cylc-run/bunny/rabbit/run1)
+  $ cylc install --directory=bunny/rabbit
 
-  # Install cats/flow.cylc
+  # Install $PWD/cats/flow.cylc as "cats", overriding the run1, run2, run3 etc
+  # structure.
   # (with run directory ~/cylc-run/cats/paws)
-  # overriding the run1, run2, run3 etc structure.
   $ cylc install --run-name=paws
 
 The same workflow can be installed with multiple names; this results in
@@ -60,32 +67,34 @@ multiple workflow run directories that link to the same suite definition.
 
 
 import pkg_resources
+from typing import Optional, TYPE_CHECKING
 
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import install_workflow
+from cylc.flow.suite_files import install_workflow, search_install_source_dirs
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from cylc.flow.option_parsers import Options
 
 
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, prep=True,
-        argdoc=[("[REG]", "Workflow name")
-                ])
+        argdoc=[("[REG]", "Workflow name")]
+    )
 
     parser.add_option(
         "--flow-name",
-        help="Install into ~/cylc-run/flow-name/runN ",
+        help="Install into ~/cylc-run/<flow_name>/runN ",
         action="store",
-        metavar="MY_FLOW",
+        metavar="FLOW_NAME",
         default=None,
         dest="flow_name")
 
     parser.add_option(
         "--directory", "-C",
-        help=(
-            "Install the workflow found in path specified."
-            " This defaults to $PWD."),
+        help="Install the workflow found in path specfied.",
         action="store",
         metavar="PATH/TO/FLOW",
         default=None,
@@ -101,7 +110,7 @@ def get_option_parser():
 
     parser.add_option(
         "--no-run-name",
-        help="Install the workflow directly into ~/cylc-run/$(basename $PWD)",
+        help="Install the workflow directly into ~/cylc-run/<flow_name>",
         action="store_true",
         default=False,
         dest="no_run_name")
@@ -155,15 +164,23 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, flow_name=None, src=None):
-    install(parser, opts, flow_name, src)
+def main(parser, opts, flow_name=None):
+    install(parser, opts, flow_name)
 
 
-def install(parser, opts, flow_name=None, src=None):
+def install(
+    parser: COP, opts: 'Options', flow_name: Optional[str] = None
+) -> None:
     if opts.no_run_name and opts.run_name:
         parser.error(
             """options --no-run-name and --run-name are mutually exclusive.
             Use one or the other""")
+
+    if flow_name is None:
+        flow_name = opts.flow_name
+        source = opts.source
+    else:
+        source = search_install_source_dirs(flow_name)
 
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.pre_configure'
@@ -184,8 +201,8 @@ def install(parser, opts, flow_name=None, src=None):
             ) from None
 
     source_dir, rundir, _flow_name = install_workflow(
-        flow_name=opts.flow_name,
-        source=opts.source,
+        flow_name=flow_name,
+        source=source,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,
         no_symlinks=opts.no_symlinks

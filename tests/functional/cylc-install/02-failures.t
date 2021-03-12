@@ -129,15 +129,16 @@ popd || exit 1
 
 # Test running cylc install twice, first using --run-name, followed by standard run results in error
 
-TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1"
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1-1st-install"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-1st-cylc-install" cylc install . --run-name=olaf
-contains_ok "${TEST_NAME}-1st-cylc-install.stdout" <<__OUT__
+run_ok "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME} from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/olaf
 __OUT__
-run_fail "${TEST_NAME}-2nd-cylc-install" cylc install "${RND_SUITE_NAME}"
-contains_ok "${TEST_NAME}-2nd-cylc-install.stderr" <<__ERR__
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1-2nd-install"
+run_fail "${TEST_NAME}" cylc install
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: This path: "${RND_SUITE_RUNDIR}" contains an installed workflow. Try again, using --run-name.
 __ERR__
 
@@ -146,15 +147,16 @@ purge_rnd_suite
 
 # Test running cylc install twice, first using standard run, followed by --run-name results in error
 
-TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2"
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2-1st-install"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-1st-cylc-install" cylc install .
-contains_ok "${TEST_NAME}-1st-cylc-install.stdout" <<__OUT__
+run_ok "${TEST_NAME}" cylc install
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME} from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
-run_fail "${TEST_NAME}-2nd-cylc-install" cylc install "${RND_SUITE_NAME}" --run-name=olaf
-contains_ok "${TEST_NAME}-2nd-cylc-install.stderr" <<__ERR__
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2-2nd-install"
+run_fail "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: This path: "${RND_SUITE_RUNDIR}" contains installed numbered runs. Try again, using cylc install without --run-name.
 __ERR__
 
@@ -163,21 +165,23 @@ purge_rnd_suite
 
 # Test running cylc install twice, using the same --run-name results in error
 
-TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name"
+TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name-1st-install"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-1st-cylc-install" cylc install . --run-name=olaf
-contains_ok "${TEST_NAME}-1st-cylc-install.stdout" <<__OUT__
+run_ok "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME} from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/olaf
 __OUT__
-run_fail "${TEST_NAME}-2nd-cylc-install" cylc install --run-name=olaf
-contains_ok "${TEST_NAME}-2nd-cylc-install.stderr" <<__ERR__
+TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name-2nd-install"
+run_fail "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: "${RND_SUITE_RUNDIR}/olaf" exists. \
 Try using cylc reinstall. Alternatively, install with another name, using the --run-name option.
 __ERR__
 
 popd || exit 1
 purge_rnd_suite
+
 # Test cylc install can not be run from within the cylc-run directory
 
 TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"
