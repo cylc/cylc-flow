@@ -1,5 +1,6 @@
 [scheduler]
     UTC mode = True # Ignore DST
+    allow implicit tasks = True
     [[events]]
         abort on stalled = true
         expected task failures = foo.1

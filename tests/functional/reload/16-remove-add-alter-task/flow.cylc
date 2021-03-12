@@ -4,6 +4,7 @@
 
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
 
 [scheduling]
     [[graph]]

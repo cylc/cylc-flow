@@ -35,6 +35,8 @@ def get_test_inheritance_quotes():
     return [
         # first case, second family name surrounded by double quotes
         b'''
+[scheduler]
+    allow implicit tasks = True
 [task parameters]
     major = 1..5
     minor = 10..20
@@ -53,6 +55,8 @@ def get_test_inheritance_quotes():
         ''',
         # second case, second family surrounded by single quotes
         b'''
+[scheduler]
+    allow implicit tasks = True
 [task parameters]
     major = 1..5
     minor = 10..20
@@ -71,6 +75,8 @@ def get_test_inheritance_quotes():
         ''',
         # third case, second family name without quotes
         b'''
+[scheduler]
+    allow implicit tasks = True
 [task parameters]
     major = 1..5
     minor = 10..20
@@ -110,6 +116,8 @@ class TestSuiteConfig:
         name_a_tree_file.write_text("""name_a_tree = lambda: 'jacaranda'""")
         flow_file = tmp_path / SuiteFiles.FLOW_FILE
         flow_config = """
+        [scheduler]
+            allow implicit tasks = True
         [scheduling]
             initial cycle point = 2018-01-01
             [[xtriggers]]
@@ -783,6 +791,7 @@ def test_valid_rsync_includes_returns_correct_list(tmp_path):
             graph = "blah => deeblah"
     [scheduler]
         install = dir/, dir2/, file1, file2
+        allow implicit tasks = True
     """
     flow_cylc = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
     flow_cylc.write_text(flow_cylc_content)
@@ -825,7 +834,7 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
 
 
 @pytest.mark.parametrize(
-    'opt', [None, 'check_circular', 'strict']
+    'opt', [None, 'check_circular']
 )
 def test_check_circular(opt, monkeypatch, caplog, tmp_path):
     """Test SuiteConfig._check_circular()."""

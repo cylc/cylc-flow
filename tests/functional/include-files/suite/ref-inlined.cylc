@@ -1,6 +1,9 @@
 [meta]
     title = "A test with nested include-files"
 
+[scheduler]
+    allow implicit tasks = True
+
 [scheduling]
     initial cycle point = 20130101T00
     final cycle point = 20130101T00

@@ -152,8 +152,8 @@ def platform_from_name(platform_name=None, platforms=None):
     a task platform string.
 
     Verifies selected platform is present in global.cylc file and returns it,
-    raises error if platfrom is not in global.cylc or returns 'localhost' if
-    no platform is initally selected.
+    raises error if platform is not in global.cylc or returns 'localhost' if
+    no platform is initially selected.
 
     Args:
         platform_name (str):
@@ -481,3 +481,9 @@ def get_random_platform_for_install_target(install_target):
     """Return a randomly selected platform (dict) for given install target."""
     platforms = get_all_platforms_for_install_target(install_target)
     return random.choice(platforms)
+
+
+def get_localhost_install_target():
+    """Returns the install target of localhost platform"""
+    localhost = get_platform()
+    return get_install_target_from_platform(localhost)

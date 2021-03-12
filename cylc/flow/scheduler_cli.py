@@ -109,7 +109,7 @@ def get_option_parser(add_std_opts=False):
         "--start-cycle-point", "--startcp",
         help=(
             "Set the start cycle point, which may be after the initial cycle "
-            "point. If the specified start point is not in the sequeunce, the "
+            "point. If the specified start point is not in the sequence, the "
             "next on-sequence point will be used. "
             "(Not to be confused with the initial cycle point.) "
             "This replaces the Cylc 7 --warm option."

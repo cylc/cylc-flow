@@ -28,9 +28,9 @@ cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
-                   bar<i=cat,j=3> => boo"""
+                bar<i=cat,j=3> => boo"""
 [runtime]
-    [[root]]
+    [[foo, boo]]
         script = true
     [[FAM<i,j>]]
     [[bar<i,j>]]
@@ -60,9 +60,9 @@ cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
-                   bar<i=cat,j=3> => boo"""
+                bar<i=cat,j=3> => boo"""
 [runtime]
-    [[root]]
+    [[foo, boo]]
         script = true
     [[FAM<i,j>]]
     [[bar<i,j>]]
@@ -93,9 +93,9 @@ cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """foo => bar< i ,j >
-                   bar< i = cat , j = 3 > => boo"""
+                bar< i = cat , j = 3 > => boo"""
 [runtime]
-    [[root]]
+    [[foo, boo]]
         script = true
     [[FAM<i,j>]]
     [[bar<i,j>]]
@@ -125,9 +125,9 @@ cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
-                   bar<i=cat,j=3> => boo"""
+                bar<i=cat,j=3> => boo"""
 [runtime]
-    [[root]]
+    [[foo, boo]]
         script = true
     [[FAM<i,j>]]
     [[bar<i,j>]]
@@ -157,9 +157,9 @@ cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
-                   bar<i=cat,j=3> => boo"""
+                bar<i=cat,j=3> => boo"""
 [runtime]
-    [[root]]
+    [[foo]]
         script = true
     [[FAM<i,j>]]
     [[bar<i,j>]]
@@ -181,7 +181,7 @@ cat >'flow.cylc' <<'__SUITE__'
     [[graph]]
         R1 = """foo => bar<i>_baz<j>"""
 [runtime]
-    [[root]]
+    [[foo]]
         script = true
     [[BAR<i>]]
     [[BAZ<j>]]
@@ -201,9 +201,9 @@ cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
-                   bar<i=cat,j=3> => boo"""
+                bar<i=cat,j=3> => boo"""
 [runtime]
-    [[root]]
+    [[foo, boo]]
         script = true
     [[FAM<i,j>]]
     [[bar<i,j>]]
@@ -226,9 +226,9 @@ cat >'flow.cylc' <<'__SUITE__'
 [scheduling]
     [[graph]]
         R1 = """foo => bar<i,j>
-                   bar<i=cat,j=3> => boo"""
+                bar<i=cat,j=3> => boo"""
 [runtime]
-    [[root]]
+    [[foo]]
         script = true
     [[FAM<i,j>]]
     [[bar<i,j>]]

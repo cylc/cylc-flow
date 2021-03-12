@@ -36,7 +36,7 @@ Suite run directories are only cleaned up for passing tests on the suite host.
 
 Set "export CYLC_TEST_DEBUG=true" to print failed-test stderr to the terminal.
 
-To change the test file comparision command from "diff -u" do (for example):
+To change the test file comparison command from "diff -u" do (for example):
 export CYLC_TEST_DIFF_CMD='xxdiff -D'
 
 Some test suites submit jobs to the 'at' so atd must be up on the test
@@ -70,7 +70,7 @@ Options:
 
                    '*' will match all configured test platforms.
 
-                   Alternatively provide a space separared string of platforms
+                   Alternatively provide a space separated string of platforms
                    using the CYLC_TEST_PLATFORMS environment variable.
 
 Examples:
@@ -101,7 +101,7 @@ Examples:
   $ run-functional-tests -p <test_platform> <path>
 
   # run tests using the first matching test platform from the test config
-  # (test platforms have names begining with an underscore)
+  # (test platforms have names beggining with an underscore)
   $ run-functional-tests -p all <path>
 eof
 }

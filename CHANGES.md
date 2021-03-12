@@ -47,9 +47,9 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
-## __cylc-8.0a3 (<span actions:bind='release-date'>2020-08?</span>)__
+## __cylc-8.0b0 (<span actions:bind='release-date'>2020-08?</span>)__
 
-Fourth alpha release of Cylc 8.
+First beta release of Cylc 8.
 
 (See note on cylc-8 backward-incompatible changes, above)
 
@@ -78,7 +78,19 @@ how workflows are restarted
 respectively. `cylc hold` and `cylc release` now only hold and release tasks,
 not the whole workflow. ([#4076](https://github.com/cylc/cylc-flow/pull/4076))
 
+"Implicit"/"naked" tasks (tasks that do not have an explicit definition in
+`flow.cylc[runtime]`) are now disallowed by default
+([#4109](https://github.com/cylc/cylc-flow/pull/4109)). You can allow them by
+setting `flow.cylc[scheduler]allow implicit tasks` to `True`.
+
 ### Enhancements
+
+[#4115](https://github.com/cylc/cylc-flow/pull/4115) - Raise an error when
+invalid sort keys are provided clients.
+
+[#4105](https://github.com/cylc/cylc-flow/pull/4105) - Replace the
+`cylc executable` global config setting with `cylc path`, for consistency with
+`cylc` invocation in job scripts.
 
 [#4071](https://github.com/cylc/cylc-flow/pull/4071) - Cylc reinstall command
 added.
@@ -175,13 +187,28 @@ to control the job submission environment.
 longer check for a cyclic/circular graph if there are more than 100 tasks,
 unless the option  `--check-circular` is used. This is to improve performance.
 
+[#3913](https://github.com/cylc/cylc-flow/pull/3913) - Add ability to use
+pre-install entry point from cylc-rose plugin to provide environment and
+template variables for a workflow.
+
 [#4023](https://github.com/cylc/cylc-flow/pull/4023) - Add ability to use
-post-install entry point from rose-cylc to use Rose style CLI settings of
+post-install entry point from cylc-rose to use Rose style CLI settings of
 configurations in Cylc install. If Cylc-rose is installed three new CLI
 options will be available:
 - `--opt_conf_keys="foo, bar"`
 - `--defines="[env]FOO=BAR"`
-- `--suite-defines="FOO=BAR"
+- `--suite-defines="FOO=BAR"`
+
+[#4101](https://github.com/cylc/cylc-flow/pull/4101) - Add the ability to
+ignore (clear) rose install options from an earlier install:
+`cylc reinstall --clear-rose-install-options`
+
+[#4094](https://github.com/cylc/cylc-flow/pull/4094) - Prevent Cylc from
+rsyncing the following files on install and reinstall:
+- `rose-suite.conf`
+- `opt/rose-suite-cylc-install.conf`
+These files should be handled by the cylc-rose plugin if you require them.
+
 
 ### Fixes
 
@@ -1083,7 +1110,7 @@ in `cylc gscan`) is now defined under the suite "[[meta]]" section
 `bash -l` (login shell) instead of explicitly sourcing your
 `.profile` file. *WARNING*: if you have a
 `.bash_profile` and were using `.profile` as well just for
-Cylc, the latter file will now be ignored because bash gives precendence to the
+Cylc, the latter file will now be ignored because bash gives precedence to the
 former. If so, just move your Cylc settings into
 `.bash_profile` or consult the Cylc User Guide for
 other ways to configure the task job environment.
@@ -1155,7 +1182,7 @@ definitions
 [#2517](https://github.com/cylc/cylc-flow/pull/2517) -
 [#2560](https://github.com/cylc/cylc-flow/pull/2560) -
 `cylc gui`
- * put prompt dialogss above all windows
+ * put prompt dialogs above all windows
  * load new-suite log files after switching to another suite via the File menu
  * graph view: reinstate the right-click menu for ghost nodes (lost at cylc-7.5.0)
  * job log files:
@@ -1406,7 +1433,7 @@ via Ctrl-C.
 [#2252](https://github.com/cylc/cylc-flow/pull/2252): `ssh`: add `-Y` (X Forwarding)
 only if necessary.
 
-[#2245](https://github.com/cylc/cylc-flow/pull/2245): SSL certficate: add serial
+[#2245](https://github.com/cylc/cylc-flow/pull/2245): SSL certificate: add serial
 number (issue number). This allows curl, browsers, etc. to connect to
 suite daemons.
 
@@ -1869,7 +1896,7 @@ commands.
 ### Other Changes
 
 [#1585](https://github.com/cylc/cylc-flow/pull/1585): If a suite stalls, report any
-unsatisified task prerequisites that cannot be met.
+unsatisfied task prerequisites that cannot be met.
 
 [#1944](https://github.com/cylc/cylc-flow/pull/1944): `cylc get-config` now returns
 a valid suite definition.

@@ -169,6 +169,9 @@ def run(run_dir, caplog):
 @pytest.fixture
 def one_conf():
     return {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
         'scheduling': {
             'graph': {
                 'R1': 'one'
@@ -180,6 +183,9 @@ def one_conf():
 @pytest.fixture(scope='module')
 def mod_one_conf():
     return {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
         'scheduling': {
             'graph': {
                 'R1': 'one'

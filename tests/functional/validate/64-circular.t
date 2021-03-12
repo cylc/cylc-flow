@@ -21,6 +21,8 @@
 set_test_number 13
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = a => a
@@ -32,6 +34,8 @@ SuiteConfigError: self-edge detected: a:succeed => a
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = a => b => c => d => a => z
@@ -43,6 +47,8 @@ SuiteConfigError: circular edges detected:  d.1 => a.1  a.1 => b.1  b.1 => c.1  
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = FAM:succeed-all => f & g => z
@@ -59,6 +65,7 @@ __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduler]
+    allow implicit tasks = True
     cycle point format = %Y
 [scheduling]
     initial cycle point = 2001
@@ -76,6 +83,8 @@ SuiteConfigError: circular edges detected:  a.2002 => a.2001  a.2001 => a.2002  
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
@@ -90,6 +99,8 @@ SuiteConfigError: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [task parameters]
     foo = 1..5
 [scheduling]
@@ -106,6 +117,8 @@ SuiteConfigError: circular edges detected:  fool_foo2.1 => fool_foo1.1  fool_foo
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     cycling mode = integer
     initial cycle point = 1

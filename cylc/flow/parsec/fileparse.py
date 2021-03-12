@@ -225,7 +225,7 @@ def process_plugins(fpath):
         'cylc.pre_configure'
     ):
         try:
-            plugin_result = entry_point.resolve()(fpath)
+            plugin_result = entry_point.resolve()(srcdir=fpath)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors

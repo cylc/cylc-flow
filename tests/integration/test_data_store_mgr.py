@@ -94,6 +94,9 @@ def int_id(_):
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run):
     flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
         'scheduling': {
             'graph': {
                 'R1': 'foo => bar'

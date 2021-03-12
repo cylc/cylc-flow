@@ -322,7 +322,7 @@ class TuiApp:
             })
         except (ClientError, ClientTimeout) as exc:
             # catch network / client errors
-            self.set_header(('suite_error', str(exc)))
+            self.set_header([('suite_error', str(exc))])
             return False
 
         if isinstance(data, list):
@@ -331,7 +331,7 @@ class TuiApp:
                 message = data[0]['error']['message']
             except (IndexError, KeyError):
                 message = str(data)
-            self.set_header(('suite_error', message))
+            self.set_header([('suite_error', message)])
             return False
 
         if len(data['workflows']) != 1:
@@ -353,7 +353,7 @@ class TuiApp:
         """
         return node.get_value()['id_']
 
-    def set_header(self, message):
+    def set_header(self, message: list):
         """Set the header message for this widget.
 
         Arguments:
@@ -363,12 +363,18 @@ class TuiApp:
 
         """
         # put in a one line gap
-        if isinstance(message, list):
-            message.append('\n')
-        elif isinstance(message, tuple):
-            message = (message[0], message[1] + '\n')
-        else:
-            message += '\n'
+        message.append('\n')
+
+        # TODO: remove once Tui is delta-driven
+        # https://github.com/cylc/cylc-flow/issues/3527
+        message.extend([
+            (
+                'suite_error',
+                'TUI is experimental and may break with large flows'
+            ),
+            '\n'
+        ])
+
         self.view.header = urwid.Text(message)
 
     def _update(self, *_):

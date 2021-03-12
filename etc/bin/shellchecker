@@ -76,6 +76,7 @@ default () {
     # run a strict check on all "functional" scripts
     main '.' \
         --exclude 'etc/bin/live-graph-movie.sh' \
+        --exclude '.git' \
         -- -e SC1090
 }
 

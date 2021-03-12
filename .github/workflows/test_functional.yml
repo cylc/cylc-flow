@@ -116,7 +116,7 @@ jobs:
         run: |
           pip install git+https://github.com/metomi/rose@master
           pip install -e ."[all]"
-          pip install --no-deps git+https://github.com/cylc/cylc-rose.git@master
+          # pip install --no-deps git+https://github.com/cylc/cylc-rose.git@master
           mkdir "$HOME/cylc-run"
 
       - name: Configure Atrun

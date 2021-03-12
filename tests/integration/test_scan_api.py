@@ -71,6 +71,9 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
                     description
                 '''
             },
+            'scheduler': {
+                'allow implicit tasks': True
+            },
             'scheduling': {
                 'graph': {
                     'R1': 'foo'
@@ -78,9 +81,7 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
             },
             'runtime': {
                 'one': {
-                    'job': {
-                        'execution time limit': 'PT10S'
-                    }
+                    'execution time limit': 'PT10S'
                 }
             }
         },

@@ -1,7 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = """
-                    foo => bar => baz
-                    foo:fail => qux => baz
-                    foo:fail & baz => !foo
-                """

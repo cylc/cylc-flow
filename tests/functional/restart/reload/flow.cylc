@@ -15,7 +15,7 @@ which should run to completion on restarting."""
     [[graph]]
         T00 = "foo[-P1D] => foo => bar"
 [runtime]
-    [[root]]
+    [[bar]]
         script = true
     [[foo]]
         script = """

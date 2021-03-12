@@ -17,6 +17,7 @@
 
 import os
 from shlex import quote
+from pathlib import Path
 from posix import WIFSIGNALED
 import shlex
 import signal
@@ -212,7 +213,7 @@ def construct_ssh_cmd(raw_cmd, platform, **kwargs):
         raw_cmd,
         host=get_host_from_platform(platform),
         ssh_cmd=platform['ssh command'],
-        ssh_cylc=platform['cylc executable'],
+        remote_cylc_path=platform['cylc path'],
         ssh_login_shell=platform['use login shell'],
         **kwargs
     )
@@ -225,7 +226,7 @@ def _construct_ssh_cmd(
         stdin=False,
         ssh_cmd=None,
         ssh_login_shell=None,
-        ssh_cylc=None,
+        remote_cylc_path=None,
         set_UTC=False,
         allow_flag_opts=False,
         timeout=None
@@ -245,8 +246,9 @@ def _construct_ssh_cmd(
             ssh command to use: If unset defaults to localhost ssh cmd.
         ssh_login_shell (boolean):
             If True, launch remote command with `bash -l -c 'exec "$0" "$@"'`.
-        ssh_cylc (string):
-            Location of the remote cylc executable.
+        remote_cylc_path (string):
+            Path containing the `cylc` executable.
+            This is required if the remote executable is not in $PATH.
         set_UTC (boolean):
             If True, check UTC mode and specify if set to True (non-default).
         allow_flag_opts (boolean):
@@ -256,8 +258,9 @@ def _construct_ssh_cmd(
             String for bash timeout command.
 
     Return:
-        A list containing a chosen command including all arguments and options
-        necessary to directly execute the bare command on a given host via ssh.
+        list - A list containing a chosen command including all arguments and
+        options necessary to directly execute the bare command on a given host
+        via ssh.
     """
     # If ssh cmd isn't given use the default from localhost settings.
     if ssh_cmd is None:
@@ -306,16 +309,15 @@ def _construct_ssh_cmd(
         command += ['timeout', timeout]
 
     # 'cylc' on the remote host
-    if ssh_cylc:
-        command.append(ssh_cylc)
+    if not remote_cylc_path:
+        remote_cylc_path = get_platform()['cylc path']
+
+    if remote_cylc_path:
+        cylc_cmd = str(Path(remote_cylc_path) / 'cylc')
     else:
-        ssh_cylc = get_platform()['cylc executable']
-        if ssh_cylc.endswith('cylc'):
-            command.append(ssh_cylc)
-        else:
-            # TODO - raise appropriate exception
-            raise ValueError(
-                r'ERROR: bad cylc executable in global config: %s' % ssh_cylc)
+        cylc_cmd = 'cylc'
+
+    command.append(cylc_cmd)
 
     # Insert core raw command after ssh, but before its own, command options.
     command += raw_cmd
@@ -342,7 +344,7 @@ def remote_cylc_cmd(cmd, platform, **kwargs):
         cmd,
         host=get_host_from_platform(platform),
         ssh_cmd=platform['ssh command'],
-        ssh_cylc=platform['cylc executable'],
+        remote_cylc_path=platform['cylc path'],
         ssh_login_shell=platform['use login shell'],
         **kwargs
     )
@@ -355,7 +357,7 @@ def _remote_cylc_cmd(
         stdin_str=None,
         ssh_login_shell=None,
         ssh_cmd=None,
-        ssh_cylc=None,
+        remote_cylc_path=None,
         capture_process=False,
         manage=False
 ):
@@ -376,7 +378,7 @@ def _remote_cylc_cmd(
             stdin=True if stdin_str else stdin,
             ssh_login_shell=ssh_login_shell,
             ssh_cmd=ssh_cmd,
-            ssh_cylc=ssh_cylc
+            remote_cylc_path=remote_cylc_path
         ),
         stdin=stdin,
         stdin_str=stdin_str,

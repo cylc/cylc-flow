@@ -2,6 +2,8 @@
     title = queue size reload test
     description = """change graphing order via a reload."""
 
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = reloader => inter => bar => foo # marker

@@ -21,6 +21,8 @@
 set_test_number 1
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = now
     [[graph]]

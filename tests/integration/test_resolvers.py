@@ -49,6 +49,9 @@ def node_args():
 async def flow(mod_flow, mod_scheduler, mod_run):
     ret = Mock()
     ret.reg = mod_flow({
+        'scheduler': {
+            'allow implicit tasks': True
+        },
         'scheduling': {
             'initial cycle point': '2000',
             'dependencies': {
@@ -185,17 +188,13 @@ async def test_mutator(flow, flow_args):
     assert response[0]['id'] == flow.id
 
 
-@pytest.mark.skip(
-    reason='TODO: trigger_tasks is resultin in traceback due to '
-    'missing task_globs arg')
 @pytest.mark.asyncio
 async def test_nodes_mutator(flow, flow_args):
     """Test the nodes mutation method."""
     flow_args['workflows'].append((flow.owner, flow.name, None))
-    args = {}
     ids = [parse_node_id(n, TASK_PROXIES) for n in flow.node_ids]
     response = await flow.resolvers.nodes_mutator(
-        None, 'trigger_tasks', ids, flow_args, args
+        None, 'force_trigger_tasks', ids, flow_args, {}
     )
     assert response[0]['id'] == flow.id
 

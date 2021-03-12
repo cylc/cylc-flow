@@ -22,7 +22,6 @@ from cylc.flow.network.subscriber import (
 )
 
 
-@pytest.mark.skip('TODO: the delta doesnt seem to have an id for some reason')
 @pytest.mark.asyncio
 async def test_publisher(flow, scheduler, run, one_conf, port_range):
     """It should publish deltas when the flow starts."""
@@ -42,4 +41,9 @@ async def test_publisher(flow, scheduler, run, one_conf, port_range):
             btopic, msg = await subscriber.socket.recv_multipart()
 
         _, delta = process_delta_msg(btopic, msg, None)
-        assert schd.id == delta.added.id
+        for key in ('added', 'updated'):
+            if getattr(getattr(delta, key), 'id', None):
+                assert schd.id == getattr(delta, key).id
+                break
+        else:
+            raise Exception("Delta wasn't added or updated")

@@ -359,7 +359,7 @@ class BaseResolvers:
     async def subscribe_delta(self, root, info, args):
         """Delta subscription async generator.
 
-        Async generator mapping the incomming protobuf deltas to
+        Async generator mapping the incoming protobuf deltas to
         yielded GraphQL subscription objects.
 
         """
@@ -494,7 +494,7 @@ class Resolvers(BaseResolvers):
             if command == 'put_messages':
                 args['task_job'] = items[0]
             else:
-                args['task_globs'] = items
+                args['tasks'] = items
         result = await self._mutation_mapper(command, args)
         if result is None:
             result = (True, 'Command queued')

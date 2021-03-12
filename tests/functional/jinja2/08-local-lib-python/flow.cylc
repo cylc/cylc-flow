@@ -1,5 +1,6 @@
 #!Jinja2
-
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = {{"foo" | qualify}} => {{"bar" | qualify}}

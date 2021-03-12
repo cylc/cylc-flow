@@ -23,7 +23,10 @@ from shutil import rmtree
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import WorkflowFilesError
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    get_localhost_install_target,
+    get_platform
+)
 
 
 def get_remote_suite_run_dir(platform, suite, *args):
@@ -154,7 +157,8 @@ def make_localhost_symlinks(rund, named_sub_dir):
          destinations as values: ``{source: destination}``
 
     """
-    dirs_to_symlink = get_dirs_to_symlink('localhost', named_sub_dir)
+    dirs_to_symlink = get_dirs_to_symlink(
+        get_localhost_install_target(), named_sub_dir)
     symlinks_created = {}
     for key, value in dirs_to_symlink.items():
         if key == 'run':

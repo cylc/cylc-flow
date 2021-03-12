@@ -1,6 +1,9 @@
 [meta]
     title = "A test with nested include-files"
 
+[scheduler]
+    allow implicit tasks = True
+
 %include body.cylc
 
 [visualization]

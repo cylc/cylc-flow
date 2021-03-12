@@ -111,10 +111,10 @@ class AutoRestartMode(Enum):
     """The possible modes of a suite auto-restart."""
 
     RESTART_NORMAL = 'stop and restart'
-    """Suite will stop immeduately and attempt to restart."""
+    """Suite will stop immediately and attempt to restart."""
 
     FORCE_STOP = 'stop'
-    """Suite will stop immeduately but *not* attempt to restart."""
+    """Suite will stop immediately but *not* attempt to restart."""
 
 
 def get_suite_status(schd):
