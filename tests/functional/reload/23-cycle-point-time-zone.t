@@ -26,6 +26,7 @@ set_test_number 5
 init_suite "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduler]
     UTC mode = False
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = now
     [[graph]]
