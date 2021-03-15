@@ -40,15 +40,15 @@ Normal Mode
    running on that host will automatically shutdown then restart selecting a
    new host from :cylc:conf:`[scheduler][run hosts]available`.
 
-   For safety, before attempting to stop the suite cylc will first wait
+   For safety, before attempting to stop the suite Cylc will first wait
    for any jobs running locally (under background or at) to complete.
 
-   In order for Cylc to be able to successfully restart suites the
-   :cylc:conf:`[scheduler][run hosts]available` must all be on a
+   In order for Cylc to be able to restart suites the
+   :cylc:conf:`[scheduler][run hosts]available` hosts must all be on a
    shared filesystem.
 Force Mode
    If a host is suffixed with an exclamation mark then Cylc will not attempt
-   to automatically restart the suite and any local jobs (running under
+   to automatically restart the workflow and any local jobs (running under
    background or at) will be left running.
 
 For example in the following configuration any suites running on
