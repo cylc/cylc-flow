@@ -121,7 +121,7 @@ cylc__job__main() {
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
-    # User Environment, Pre-Script, Script and Post-Script
+    # Env-Script, User Environment, Pre-Script, Script and Post-Script
     # Run user scripts in subshell to protect cylc job script from interference.
     # Waiting on background process allows signal traps to trigger immediately.
     cylc__job__run_user_scripts &
@@ -130,15 +130,13 @@ cylc__job__main() {
         # Check return code for signals (value greater than 128).
         typeset ret_code="$?"
         if ((ret_code > 128)); then
-            # Bypass ERR trap and get on with the signal (if we received one)
-            # or EXIT trap (if the subshell or one of its children received
-            # a signal, e.g. SIGPIPE in a command pipeline).
+            # Trigger the EXIT trap if the process exited due to a signal.
             exit "$ret_code"
         else
             # Trigger ERR trap while preserving the exit code
-            # (NB: bash versions are buggy and neither return statement nor
-            # subshelled exit won't do and we need to spawn another shell).
-            /bin/sh -c "exit $ret_code"
+            # (NB: Bash versions are buggy and neither return statement nor
+            # subshelled exit won't do here.)
+            cylc__set_return "$ret_code"
         fi
     }
     # Empty work directory remove
@@ -163,6 +161,12 @@ cylc__job__run_user_scripts() {
            'script' 'post_script'; do
         cylc__job__run_inst_func "${func_name}"
     done
+}
+
+###############################################################################
+# Set last return code (needed to work around Bash bugs in ERR trapping).
+cylc__set_return() {
+    return ${1:-0}
 }
 
 ###############################################################################
@@ -252,7 +256,7 @@ cylc__job_finish_err() {
     # Propagate real signals to entire process group, if we are a group leader,
     # otherwise just to the backgrounded user script.
     if [[ -n "${CYLC_TASK_USER_SCRIPT_PID:-}" ]] &&
-       [[ ":DEBUG:ERR:EXIT:RETURN:" != *":${signal}:"* ]]; then
+       [[ ! "${signal}" =~ '^(ERR|EXIT)$' ]]; then
         kill -s "${signal}" -- "-$$" 2>'/dev/null' ||
         kill -s "${signal}" -- "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
     fi
