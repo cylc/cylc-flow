@@ -15,18 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from unittest.mock import create_autospec
 
-from cylc.flow.broadcast_mgr import BroadcastMgr
-from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.cycling.iso8601 import ISO8601Point, ISO8601Sequence, init
-from cylc.flow.scheduler import Scheduler
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.taskdef import TaskDef
-from cylc.flow.xtrigger_mgr import XtriggerManager, RE_STR_TMPL
+from cylc.flow.xtrigger_mgr import RE_STR_TMPL
 
 
 def test_constructor(xtrigger_mgr):
@@ -91,10 +86,6 @@ def test_add_xtrigger_with_unknown_params(xtrigger_mgr):
     with pytest.raises(ValueError):
         xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
 
-    # TODO: is it intentional? At the moment when we fail to validate the
-    #       function parameters, we add it to the dict anyway.
-    assert xtrigger_mgr.functx_map["xtrig"] == xtrig
-
 
 def test_load_xtrigger_for_restart(xtrigger_mgr):
     """Test loading a xtrigger for restart.
@@ -130,6 +121,7 @@ def test_housekeeping_nothing_satisfied(xtrigger_mgr):
 def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     """The housekeeping method makes sure only satisfied xtrigger function
     are kept."""
+    xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
     xtrig = SubFuncContext(
         label="get_name",
         func_name="get_name",
@@ -160,8 +152,10 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     assert xtrigger_mgr.sat_xtrig
 
 
-def test_satisfy_xtrigger(xtrigger_mgr_procpool_broadcast):
+def test_satisfy_xtrigger(xtrigger_mgr):
     """Test satisfy_xtriggers"""
+    xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
+
     # the echo1 xtrig (not satisfied)
     echo1_xtrig = SubFuncContext(
         label="echo1",
@@ -171,7 +165,7 @@ def test_satisfy_xtrigger(xtrigger_mgr_procpool_broadcast):
     )
 
     echo1_xtrig.out = "[\"True\", {\"name\": \"herminia\"}]"
-    xtrigger_mgr_procpool_broadcast.add_trig("echo1", echo1_xtrig, "fdir")
+    xtrigger_mgr.add_trig("echo1", echo1_xtrig, "fdir")
     # the echo2 xtrig (satisfied through callback later)
     echo2_xtrig = SubFuncContext(
         label="echo2",
@@ -180,7 +174,7 @@ def test_satisfy_xtrigger(xtrigger_mgr_procpool_broadcast):
         func_kwargs={}
     )
     echo2_xtrig.out = "[\"True\", {\"name\": \"herminia\"}]"
-    xtrigger_mgr_procpool_broadcast.add_trig("echo2", echo2_xtrig, "fdir")
+    xtrigger_mgr.add_trig("echo2", echo2_xtrig, "fdir")
     # create a task
     tdef = TaskDef(
         name="foo",
@@ -199,35 +193,37 @@ def test_satisfy_xtrigger(xtrigger_mgr_procpool_broadcast):
         tdef, start_point, FlowLabelMgr().get_new_label())
 
     # we start with no satisfied xtriggers, and nothing active
-    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 0
-    assert len(xtrigger_mgr_procpool_broadcast.active) == 0
+    assert len(xtrigger_mgr.sat_xtrig) == 0
+    assert len(xtrigger_mgr.active) == 0
 
     # after calling satisfy_xtriggers the first time, we get two active
-    xtrigger_mgr_procpool_broadcast.satisfy_xtriggers(itask)
-    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 0
-    assert len(xtrigger_mgr_procpool_broadcast.active) == 2
+    xtrigger_mgr.satisfy_xtriggers(itask)
+    assert len(xtrigger_mgr.sat_xtrig) == 0
+    assert len(xtrigger_mgr.active) == 2
 
     # calling satisfy_xtriggers again does not change anything
-    xtrigger_mgr_procpool_broadcast.satisfy_xtriggers(itask)
-    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 0
-    assert len(xtrigger_mgr_procpool_broadcast.active) == 2
+    xtrigger_mgr.satisfy_xtriggers(itask)
+    assert len(xtrigger_mgr.sat_xtrig) == 0
+    assert len(xtrigger_mgr.active) == 2
 
     # now we call callback manually as the proc_pool we passed is a mock
     # then both should be satisfied
-    xtrigger_mgr_procpool_broadcast.callback(echo1_xtrig)
-    xtrigger_mgr_procpool_broadcast.callback(echo2_xtrig)
+    xtrigger_mgr.callback(echo1_xtrig)
+    xtrigger_mgr.callback(echo2_xtrig)
     # so both were satisfied, and nothing is active
-    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 2
-    assert len(xtrigger_mgr_procpool_broadcast.active) == 0
+    assert len(xtrigger_mgr.sat_xtrig) == 2
+    assert len(xtrigger_mgr.active) == 0
 
     # calling satisfy_xtriggers again still does not change anything
-    xtrigger_mgr_procpool_broadcast.satisfy_xtriggers(itask)
-    assert len(xtrigger_mgr_procpool_broadcast.sat_xtrig) == 2
-    assert len(xtrigger_mgr_procpool_broadcast.active) == 0
+    xtrigger_mgr.satisfy_xtriggers(itask)
+    assert len(xtrigger_mgr.sat_xtrig) == 2
+    assert len(xtrigger_mgr.active) == 0
 
 
 def test_collate(xtrigger_mgr):
     """Test that collate properly tallies the totals of current xtriggers."""
+    xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
+
     xtrigger_mgr.collate(itasks=[])
     assert not xtrigger_mgr.all_xtrig
 
@@ -332,13 +328,14 @@ def test_callback(xtrigger_mgr):
     assert xtrigger_mgr.sat_xtrig
 
 
-def test_check_xtriggers(xtrigger_mgr_procpool):
+def test_check_xtriggers(xtrigger_mgr):
     """Test check_xtriggers call.
 
     check_xtriggers does pretty much the same as collate. The
     difference is that besides tallying on all the xtriggers and
     clock xtriggers available, it then proceeds to trying to
     satisfy them."""
+    xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
 
     # add a xtrigger
     # that will cause all_xtrig to be populated, but not all_xclock
@@ -348,7 +345,7 @@ def test_check_xtriggers(xtrigger_mgr_procpool):
         func_args=[],
         func_kwargs={}
     )
-    xtrigger_mgr_procpool.add_trig("get_name", get_name, 'fdir')
+    xtrigger_mgr.add_trig("get_name", get_name, 'fdir')
     get_name.out = "[\"True\", {\"name\": \"Yossarian\"}]"
     tdef1 = TaskDef(
         name="foo",
@@ -373,7 +370,7 @@ def test_check_xtriggers(xtrigger_mgr_procpool):
         func_kwargs={}
     )
     wall_clock.out = "[\"True\", \"1\"]"
-    xtrigger_mgr_procpool.add_trig("wall_clock", wall_clock, "fdir")
+    xtrigger_mgr.add_trig("wall_clock", wall_clock, "fdir")
     # create a task
     tdef2 = TaskDef(
         name="foo",
@@ -388,78 +385,7 @@ def test_check_xtriggers(xtrigger_mgr_procpool):
     itask2 = TaskProxy(
         tdef2, start_point, FlowLabelMgr().get_new_label())
 
-    xtrigger_mgr_procpool.check_xtriggers([itask1, itask2])
+    xtrigger_mgr.check_xtriggers([itask1, itask2])
     # won't be satisfied, as it is async, we are are not calling callback
-    assert not xtrigger_mgr_procpool.sat_xtrig
-    assert xtrigger_mgr_procpool.all_xtrig
-
-
-# mock objects
-
-class MockedProcPool(SubProcPool):
-
-    def put_command(self, ctx, callback=None, callback_args=None):
-        return True
-
-
-class MockedBroadcastMgr(BroadcastMgr):
-
-    def put_broadcast(
-            self, point_strings=None, namespaces=None, settings=None):
-        return True
-
-# fixtures
-
-
-@pytest.fixture
-def xtrigger_mgr() -> XtriggerManager:
-    """A fixture to build an XtriggerManager that ignores validation.
-
-    Returns:
-        XtriggerManager: an XtriggerManager that ignores validation
-    """
-    xtrigger_mgr = XtriggerManager(
-        suite="suitea",
-        user="john-foo",
-        data_store_mgr=DataStoreMgr(create_autospec(Scheduler)))
-    xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
-    return xtrigger_mgr
-
-
-@pytest.fixture
-def xtrigger_mgr_procpool() -> XtriggerManager:
-    """A fixture to build an XtriggerManager that ignores validation,
-    and uses a mocked proc_pool.
-
-    Returns:
-        XtriggerManager: an XtriggerManager that ignores validation and
-            uses a mocked proc_pool
-    """
-    xtrigger_mgr = XtriggerManager(
-        suite="suitea",
-        user="john-foo",
-        proc_pool=MockedProcPool()
-    )
-    xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
-    return xtrigger_mgr
-
-
-@pytest.fixture
-def xtrigger_mgr_procpool_broadcast() -> XtriggerManager:
-    """A fixture to build an XtriggerManager that ignores validation,
-    uses a mocked proc_pool, and uses a mocked broadacast_mgr.
-
-    Returns:
-        XtriggerManager: an XtriggerManager that ignores validation,
-            uses a mocked proc_pool, and uses a mocked broadacast_mgr
-    """
-    xtrigger_mgr = XtriggerManager(
-        suite="sample_suite",
-        user="john-foo",
-        proc_pool=MockedProcPool(),
-        broadcast_mgr=MockedBroadcastMgr(
-            suite_db_mgr=None, data_store_mgr=None),
-        data_store_mgr=DataStoreMgr(create_autospec(Scheduler))
-    )
-    xtrigger_mgr.validate_xtrigger = lambda fn, fdir: True
-    return xtrigger_mgr
+    assert not xtrigger_mgr.sat_xtrig
+    assert xtrigger_mgr.all_xtrig

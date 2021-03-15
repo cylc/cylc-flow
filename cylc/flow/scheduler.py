@@ -178,13 +178,13 @@ class Scheduler:
     options: Optional[Values] = None
 
     # suite params
-    stop_mode: StopMode = None
+    stop_mode: Optional[StopMode] = None
     stop_task: Optional[str] = None
     stop_clock_time: Optional[int] = None
 
     # configuration
-    config: SuiteConfig = None  # flow config
-    cylc_config: DictTree = None  # [scheduler] config
+    config: Optional[SuiteConfig] = None  # flow config
+    cylc_config: Optional[DictTree] = None  # [scheduler] config
     flow_file: Optional[str] = None
     flow_file_update_time: Optional[float] = None
 
@@ -202,30 +202,30 @@ class Scheduler:
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
     main_loop_plugins: Optional[dict] = None
-    auto_restart_mode: AutoRestartMode = None
+    auto_restart_mode: Optional[AutoRestartMode] = None
     auto_restart_time: Optional[float] = None
 
     # tcp / zmq
     zmq_context: zmq.Context = None
     port: Optional[int] = None
     pub_port: Optional[int] = None
-    server: SuiteRuntimeServer = None
-    publisher: WorkflowPublisher = None
+    server: Optional[SuiteRuntimeServer] = None
+    publisher: Optional[WorkflowPublisher] = None
     barrier: Optional[Barrier] = None
     curve_auth: ThreadAuthenticator = None
     client_pub_key_dir: Optional[str] = None
 
     # managers
-    profiler: Profiler = None
-    pool: TaskPool = None
-    proc_pool: SubProcPool = None
-    task_job_mgr: TaskJobManager = None
-    task_events_mgr: TaskEventsManager = None
-    suite_event_handler: SuiteEventHandler = None
-    data_store_mgr: DataStoreMgr = None
-    suite_db_mgr: SuiteDatabaseManager = None
-    broadcast_mgr: BroadcastMgr = None
-    xtrigger_mgr: XtriggerManager = None
+    profiler: Optional[Profiler] = None
+    pool: Optional[TaskPool] = None
+    proc_pool: Optional[SubProcPool] = None
+    task_job_mgr: Optional[TaskJobManager] = None
+    task_events_mgr: Optional[TaskEventsManager] = None
+    suite_event_handler: Optional[SuiteEventHandler] = None
+    data_store_mgr: Optional[DataStoreMgr] = None
+    suite_db_mgr: Optional[SuiteDatabaseManager] = None
+    broadcast_mgr: Optional[BroadcastMgr] = None
+    xtrigger_mgr: Optional[XtriggerManager] = None
 
     # queues
     command_queue: Optional[Queue] = None
@@ -363,7 +363,7 @@ class Scheduler:
 
         self.xtrigger_mgr = XtriggerManager(
             self.suite,
-            self.owner,
+            user=self.owner,
             broadcast_mgr=self.broadcast_mgr,
             data_store_mgr=self.data_store_mgr,
             proc_pool=self.proc_pool,

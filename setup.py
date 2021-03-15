@@ -109,7 +109,7 @@ setup(
     package_data={
         'cylc.flow': [
             'etc/*.yaml', 'etc/flow*.eg', 'etc/job.sh',
-            'etc/syntax/*', 'etc/cylc-bash-completion'
+            'etc/syntax/*', 'etc/cylc-bash-completion', 'py.typed'
         ]
     },
     install_requires=install_requires,

@@ -64,7 +64,7 @@ import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG, ID_DELIM
 from cylc.flow.exceptions import SuiteConfigError
-from cylc.flow.data_messages_pb2 import (
+from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)

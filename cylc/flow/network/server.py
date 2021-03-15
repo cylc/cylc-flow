@@ -32,7 +32,7 @@ from cylc.flow.network.graphql import (
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.data_store_mgr import DELTAS_MAP
-from cylc.flow.data_messages_pb2 import PbEntireWorkflow
+from cylc.flow.data_messages_pb2 import PbEntireWorkflow  # type: ignore
 
 # maps server methods to the protobuf message (for client/UIS import)
 PB_METHOD_MAP = {
