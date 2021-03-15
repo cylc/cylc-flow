@@ -189,7 +189,7 @@ def platform_from_name(platform_name=None, platforms=None):
         # allow lists of platforms
         if (
             re.fullmatch(
-                re.sub(r'\s*,[^({\d+,\d+})]\s*', '|', platform_name_re),
+                re.sub(r'\s*(?!{[\s\d]*),(?![\s\d]*})\s*', '|', platform_name_re),
                 platform_name
             )
         ):
