@@ -166,7 +166,7 @@ cylc__job__run_user_scripts() {
 ###############################################################################
 # Set last return code (needed to work around Bash bugs in ERR trapping).
 cylc__set_return() {
-    return ${1:-0}
+    return "${1:-0}"
 }
 
 ###############################################################################
