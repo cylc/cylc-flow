@@ -49,6 +49,7 @@ echo "Here we go..." >>"${CYLC_TASK_LOG_ROOT}.testout"
 wait
 """
         err-script = """
+wait
 echo "Exit with code ${CYLC_TASK_USER_SCRIPT_EXITCODE:-unknown}" \
     >>"${CYLC_TASK_LOG_ROOT}.testout"
 """

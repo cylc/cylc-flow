@@ -258,14 +258,11 @@ cylc__job_finish_err() {
     fi
     grep -q "^CYLC_JOB_EXIT=" "${CYLC_TASK_LOG_ROOT}.status" ||
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" &
+    CYLC_TASK_MESSAGE_FINISHED_PID=$!
     if "${run_err_script}"; then
-        if [[ -n "${CYLC_TASK_USER_SCRIPT_PID:-}" ]]; then
-            # User script might trap the signal, wait for it before err-script
-            wait "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
-        fi
         cylc__job__run_inst_func 'err_script' "${signal}" >&2
     fi
-    wait  # For cylc message and/or user script.
+    wait "${CYLC_TASK_MESSAGE_FINISHED_PID}"
     exit "${CYLC_TASK_USER_SCRIPT_EXITCODE}"
 }
 
