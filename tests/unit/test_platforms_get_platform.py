@@ -33,11 +33,13 @@ def test_get_platform_no_args():
 @pytest.mark.parametrize(
     'platform_re',
     [
+        None,
         'localhost',
         'localhost, otherplatform',
         'otherplatform, localhost',
         'otherplatform|localhost',
-        'localhost|otherplatform'
+        'localhost|otherplatform',
+        'localhost, xylophone\\d{1,5}'
     ]
 )
 def test_get_localhost_platform(mock_glbl_cfg, platform_re):
@@ -55,7 +57,10 @@ def test_get_localhost_platform(mock_glbl_cfg, platform_re):
         '''
     )
     platform = get_platform('localhost')
-    assert platform['ssh command'] == 'ssh -oConnectTimeout=24'
+    if platform_re:
+        assert platform['ssh command'] == 'ssh -oConnectTimeout=24'
+    else:
+        assert platform['ssh command'] == 'ssh -oConnectTimeout=42'
 
 
 @pytest.mark.parametrize(
