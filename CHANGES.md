@@ -207,6 +207,9 @@ rsyncing the following files on install and reinstall:
 These files should be handled by the cylc-rose plugin if you require them.
 
 
+[#4098](https://github.com/cylc/cylc-flow/pull/4098) - Provide a dictionary called
+CYLC_TEMPLATE_VARS into the templating environment.
+
 ### Fixes
 
 [#3984](https://github.com/cylc/cylc-flow/pull/3984) - Only write task
