@@ -76,7 +76,7 @@ PLATFORMS_NO_UNIQUE = {
 PLATFORMS_WITH_RE = {
     'hpc.*': {'hosts': 'hpc1', 'job runner': 'background'},
     'h.*': {'hosts': 'hpc3'},
-    r'vld\d{2,3}': {},
+    r'vld\d{2,3}, anselm\d{4}': {},
     'nu.*': {
         'job runner': 'slurm',
         'hosts': ['localhost']

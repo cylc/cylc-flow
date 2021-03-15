@@ -15,34 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validating platforms in suite.
+# Check that ``[platforms][localhost]`` is only set automatically if it
+# not set in ``global.cylc``.
+
 . "$(dirname "$0")/test_header"
 
-set_test_number 1
-
-TEST_NAME="${TEST_NAME_BASE}-val"
+set_test_number 3
 
 create_test_global_config "" "
     [platforms]
-        [[localhost, lewis]]
+        [[localhost, nine_and_three_quarters]]
             hosts = localhost
-            install target = localhost
+            job runner = at
 "
 
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[meta]
-    title = "Test validation of simple multiple inheritance"
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-    description = """Bug identified at 5.1.1-314-g4960684."""
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
-[scheduling]
-[[graph]]
-R1 = """foo"""
-[runtime]
-[[foo]]
-platform=lewis
+# Run the suite
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${SUITE_NAME}"
 
+grep_ok "Job submit method: at" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job"
 
-__FLOW_CONFIG__
-
-run_ok "${TEST_NAME}" cylc validate flow.cylc
+purge
+exit
