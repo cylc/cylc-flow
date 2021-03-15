@@ -243,10 +243,10 @@ class XtriggerManager:
         """Get a real function context from the template.
 
         Args:
-            itask (TaskProxy): task proxy
-            label (str): xtrigger label
+            itask: task proxy
+            label: xtrigger label
         Returns:
-            SubFuncContext: function context
+            function context
         """
         farg_templ = {
             TMPL_TASK_CYCLE_POINT: str(itask.point),
@@ -255,7 +255,6 @@ class XtriggerManager:
         }
         farg_templ.update(self.farg_templ)
         ctx = deepcopy(self.functx_map[label])
-        ctx.point = itask.point
         kwargs = {}
         args = []
         for val in ctx.func_args:
@@ -308,7 +307,7 @@ class XtriggerManager:
                         xtrigger_env = [{'environment': {key: val}} for
                                         key, val in res.items()]
                         self.broadcast_mgr.put_broadcast(
-                            [str(ctx.point)],
+                            [str(itask.point)],
                             [itask.tdef.name],
                             xtrigger_env
                         )
