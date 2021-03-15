@@ -15,26 +15,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for remote initialisation."""
 
+from pathlib import Path
 from unittest.mock import patch
+from _pytest.capture import CaptureFixture
 
+from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.task_remote_cmd import remote_init
 
 
-@patch('os.makedirs')
-@patch('os.listdir')
-@patch('os.path.join')
-@patch('os.path.expandvars')
-def test_existing_key_raises_error(
-        mocked_expandvars, mocked_pathjoin, mocked_listdir,
-        mocked_makedirs, capsys):
+def test_existing_key_raises_error(tmp_path: Path, capsys: CaptureFixture):
     """Test .service directory that contains existing incorrect key,
-       results in REMOTE INIT FAILED
-    """
-    mocked_expandvars.return_value = "some/expanded/path"
-    mocked_pathjoin.return_value = "joined.path"
-    mocked_listdir.return_value = ['client_wrong.key']
+    results in REMOTE INIT FAILED"""
+    rundir = tmp_path / 'some_rund'
+    srvdir = rundir / SuiteFiles.Service.DIRNAME
+    srvdir.mkdir(parents=True)
+    (srvdir / 'client_wrong.key').touch()
 
-    remote_init('test_install_target', 'some_rund')
+    remote_init('test_install_target', str(rundir))
     assert capsys.readouterr().out == "REMOTE INIT FAILED\n"
 
 
