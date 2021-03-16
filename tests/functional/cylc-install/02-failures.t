@@ -51,7 +51,7 @@ popd || exit
 TEST_NAME="${TEST_NAME_BASE}-nodir"
 make_rnd_suite
 rm -rf "${RND_SUITE_SOURCE}"
-run_fail "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --no-run-name -C "${RND_SUITE_SOURCE}" 
+run_fail "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --no-run-name -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
 __ERR__
@@ -79,21 +79,21 @@ WorkflowFilesError: Workflow name cannot be an absolute path: ${RND_SUITE_SOURCE
 __ERR__
 purge_rnd_suite
 
-# Test cylc install fails when given run-name _cylc-install
+# Test cylc install fails when given forbidden run-name
 
-TEST_NAME="${TEST_NAME_BASE}-run-name-cylc-install-forbidden"
+TEST_NAME="${TEST_NAME_BASE}-run-name-forbidden"
 make_rnd_suite
 run_fail "${TEST_NAME}" cylc install --run-name=_cylc-install -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Run name cannot be "_cylc-install". Please choose another run name.
+WorkflowFilesError: Run name cannot be "_cylc-install".
 __ERR__
 purge_rnd_suite
 
 # Test cylc install invalid flow-name
 
-TEST_NAME="${TEST_NAME_BASE}--invalid-flow-name-cylc-install"
+TEST_NAME="${TEST_NAME_BASE}-invalid-flow-name"
 make_rnd_suite
-run_fail "${TEST_NAME}" cylc install --flow-name=\.invalid -C "${RND_SUITE_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --flow-name=".invalid" -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Invalid workflow name - cannot start with: \`\`.\`\`, \`\`-\`\`
 __ERR__
@@ -120,7 +120,7 @@ done
 TEST_NAME="${TEST_NAME_BASE}--no-run-name-and--run-name-forbidden"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_fail "${TEST_NAME}" cylc install --run-name="${RND_SUITE_NAME}" --no-run-name 
+run_fail "${TEST_NAME}" cylc install --run-name="${RND_SUITE_NAME}" --no-run-name
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 cylc: error: options --no-run-name and --run-name are mutually exclusive.
 __ERR__

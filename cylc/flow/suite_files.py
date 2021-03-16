@@ -159,6 +159,18 @@ class SuiteFiles:
     RUN_N = 'runN'
     """Symbolic link for latest run"""
 
+    LOG_DIR = 'log'
+    """Workflow log directory."""
+
+    SHARE_DIR = 'share'
+    """Workflow share directory."""
+
+    SHARE_CYCLE_DIR = os.path.join(SHARE_DIR, 'cycle')
+    """Workflow share/cycle directory."""
+
+    WORK_DIR = 'work'
+    """Workflow work directory."""
+
     class Service:
         """The directory containing Cylc system files."""
 
@@ -186,6 +198,14 @@ class SuiteFiles:
 
         SOURCE = 'source'
         """Symlink to the workflow definition (For run dir)."""
+
+    RESERVED_DIRNAMES = [
+        LOG_DIR, SHARE_DIR, WORK_DIR, RUN_N, Service.DIRNAME, Install.DIRNAME]
+    """Reserved directory names that cannot be present in a source dir."""
+
+    RESERVED_NAMES = [
+        FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES]
+    """Reserved filenames that cannot be used as run names."""
 
 
 class ContactFileFields:
@@ -258,8 +278,6 @@ To start a new run, stop the old one first with one or more of these:
 * cylc stop --now --now %(suite)s  # don't wait
 * ssh -n "%(host)s" kill %(pid)s   # final brute force!
 """
-
-FORBIDDEN_SOURCE_DIR = ['log', 'share', 'work', SuiteFiles.Install.DIRNAME]
 
 
 def detect_old_contact_file(reg, check_host_port=None):
@@ -621,7 +639,9 @@ def clean(reg):
         return
 
     # Note: 'share/cycle' must come first, and '' must come last
-    for possible_symlink in ('share/cycle', 'share', 'log', 'work', ''):
+    for possible_symlink in (
+            SuiteFiles.SHARE_CYCLE_DIR, SuiteFiles.SHARE_DIR,
+            SuiteFiles.LOG_DIR, SuiteFiles.WORK_DIR, ''):
         name = Path(possible_symlink)
         path = Path(run_dir, possible_symlink)
         if path.is_symlink():
@@ -953,7 +973,7 @@ def _open_install_log(rund, logger):
     log_type = logger.name[logger.name.startswith('cylc-') and len('cylc-'):]
     log_path = Path(
         rund,
-        'log',
+        SuiteFiles.LOG_DIR,
         'install',
         f"{time_str}-{log_type}.log")
     log_parent_dir = log_path.parent
@@ -1003,9 +1023,9 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         '.git',
         '.svn',
         '.cylcignore',
-        'log',
         'rose-suite.conf',
         'opt/rose-suite-cylc-install.conf',
+        SuiteFiles.LOG_DIR,
         SuiteFiles.Install.DIRNAME,
         SuiteFiles.Service.DIRNAME]
     for exclude in ignore_dirs:
@@ -1098,12 +1118,11 @@ def install_workflow(
         source = Path(source).parent
     source = Path(source).expanduser()
     if not flow_name:
-        flow_name = (Path.cwd().stem)
+        flow_name = Path.cwd().stem
     validate_flow_name(flow_name)
-    if run_name == '_cylc-install':
+    if run_name in SuiteFiles.RESERVED_NAMES:
         raise WorkflowFilesError(
-            'Run name cannot be "_cylc-install".'
-            ' Please choose another run name.')
+            f'Run name cannot be "{run_name}".')
     validate_source_dir(source, flow_name)
     run_path_base = Path(get_workflow_run_dir(flow_name)).expanduser()
     relink, run_num, rundir = get_run_dir(run_path_base, run_name, no_run_name)
@@ -1288,9 +1307,8 @@ def validate_source_dir(source, flow_name):
             Cylc installing from within the cylc-run dir
     """
     # Ensure source dir does not contain log, share, work, _cylc-install
-    for dir_ in FORBIDDEN_SOURCE_DIR:
-        path_to_check = Path(source, dir_)
-        if path_to_check.exists():
+    for dir_ in SuiteFiles.RESERVED_DIRNAMES:
+        if Path(source, dir_).exists():
             raise WorkflowFilesError(
                 f'{flow_name} installation failed. - {dir_} exists in source '
                 'directory.')
