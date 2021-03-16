@@ -42,7 +42,7 @@ init_suite "${TEST_NAME_BASE}" <<< '
     [[graph]]
         P1Y = foo[-P1Y] => foo
 [runtime]
-    [[root]]
+    [[foo]]
         script = sleep 5
 '
 cd "${SUITE_RUN_DIR}" || exit 1

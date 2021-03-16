@@ -67,8 +67,6 @@ def fixture_get_platform():
     yield inner_func
 
 
-@mock.patch.dict(
-    "os.environ", {'CYLC_SUITE_DEF_PATH': 'cylc/suite/def/path'})
 @mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
 def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
     """Test write function outputs jobscript file correctly."""
@@ -292,7 +290,6 @@ def test_write_suite_environment(fixture_get_platform, monkeypatch):
         "get_remote_suite_work_dir",
         lambda a, b: "work/dir"
     )
-    monkeypatch.setenv('CYLC_SUITE_DEF_PATH', 'cylc/suite/def/path')
     cylc.flow.flags.debug = True
     cylc.flow.flags.verbose = True
     suite_env = {'CYLC_UTC': 'True',
@@ -305,9 +302,7 @@ def test_write_suite_environment(fixture_get_platform, monkeypatch):
                 '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
                 ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n   '
                 ' export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
-                ' export CYLC_SUITE_DEF_PATH="remote/suite/dir"\n    expor'
-                't CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="cylc/suite/def/path"'
-                '\n    export CYLC_SUITE_UUID="neigh"')
+                ' export CYLC_SUITE_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",
@@ -319,7 +314,8 @@ def test_write_suite_environment(fixture_get_platform, monkeypatch):
     rund = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:
         job_file_writer._write_suite_environment(fake_file, job_conf, rund)
-        assert(fake_file.getvalue() == expected)
+        result = fake_file.getvalue()
+        assert result == expected
 
 
 def test_write_suite_environment_no_remote_suite_d(
@@ -327,7 +323,6 @@ def test_write_suite_environment_no_remote_suite_d(
 ):
     """Test suite environment is correctly written in jobscript"""
 
-    monkeypatch.setenv('CYLC_SUITE_DEF_PATH', 'cylc/suite/def/path')
     monkeypatch.setattr(
         cylc.flow.job_file,
         "get_remote_suite_work_dir",
@@ -343,11 +338,8 @@ def test_write_suite_environment_no_remote_suite_d(
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n    '
                 'export CYLC_UTC="True"\n    export TZ="UTC"\n\n    export '
                 'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    '
-                'export CYLC_SUITE'
-                '_WORK_DIR_ROOT="work/dir"\n    export CYLC_SUITE_DEF_PATH='
-                '"cylc/suite/def/path"\n    export '
-                'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="cylc/suite/def/path"\n'
-                '    export CYLC_SUITE_UUID="neigh"')
+                'export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
+                ' export CYLC_SUITE_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",
@@ -359,9 +351,8 @@ def test_write_suite_environment_no_remote_suite_d(
     rund = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:
         job_file_writer._write_suite_environment(fake_file, job_conf, rund)
-        blah = fake_file.getvalue()
-        print(blah)
-        assert(fake_file.getvalue() == expected)
+        result = fake_file.getvalue()
+        assert result == expected
 
 
 def test_write_script():

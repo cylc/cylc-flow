@@ -209,23 +209,6 @@ class JobFileWriter:
             handle.write(
                 '\n    export CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d
             )
-        if job_conf['remote_suite_d']:
-            handle.write(
-                '\n    export CYLC_SUITE_DEF_PATH="%s"' %
-                job_conf['remote_suite_d'])
-        else:
-            # replace home dir with '$HOME' for evaluation on the task host
-            cylc_suite_def_path = os.environ['CYLC_SUITE_DEF_PATH']
-            if cylc_suite_def_path.startswith(os.environ['HOME']):
-                cylc_suite_def_path = cylc_suite_def_path.replace(
-                    os.environ['HOME'],
-                    '${HOME}'
-                )
-            handle.write(
-                '\n    export CYLC_SUITE_DEF_PATH="%s"' % cylc_suite_def_path)
-        handle.write(
-            '\n    export CYLC_SUITE_DEF_PATH_ON_SUITE_HOST="%s"' %
-            os.environ['CYLC_SUITE_DEF_PATH'])
         handle.write(
             '\n    export CYLC_SUITE_UUID="%s"' % job_conf['uuid_str'])
 
