@@ -346,8 +346,8 @@ def test_missing_initial_cycle_point():
                 'initial cycle point': 'now',
                 'initial cycle point constraints': []
             },
-            '20050102T0615Z',
-            '20050102T0615Z',
+            '20050102T0615+0530',
+            '20050102T0615+0530',
             None
         ),
         (  # Constraints
@@ -356,7 +356,7 @@ def test_missing_initial_cycle_point():
                 'initial cycle point': '2013',
                 'initial cycle point constraints': ['T00', 'T12']
             },
-            '20130101T0000Z',
+            '20130101T0000+0530',
             None,
             None
         ),
@@ -379,7 +379,7 @@ def test_process_icp(
         monkeypatch: Fixture, cycling_mode: Fixture):
     """Test SuiteConfig.process_initial_cycle_point().
 
-    "now" is assumed to be 2005-01-02T06:15Z
+    "now" is assumed to be 2005-01-02T06:15+0530
 
     Params:
         scheduling_cfg: 'scheduling' section of workflow config.
@@ -391,7 +391,7 @@ def test_process_icp(
     int_cycling_mode = True
     if scheduling_cfg['cycling mode'] == loader.ISO8601_CYCLING_TYPE:
         int_cycling_mode = False
-        iso8601.init()
+        iso8601.init(time_zone="+0530")
     cycling_mode(integer=int_cycling_mode)
     mocked_config = Mock()
     mocked_config.cfg = {
@@ -399,7 +399,7 @@ def test_process_icp(
     }
     mocked_config.options.icp = None
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
-                        lambda: '20050102T0615Z')
+                        lambda: '20050102T0615+0530')
 
     if expected_err:
         err, msg = expected_err
@@ -419,27 +419,27 @@ def test_process_icp(
 
 @pytest.mark.parametrize(
     'startcp, expected',
-    [('2021-01-20T17Z', '20210120T1700Z'),
-     ('now', '20050102T0615Z'),
-     (None, '18990501T0000Z')]
+    [('20210120T1700+0530', '20210120T1700+0530'),
+     ('now', '20050102T0615+0530'),
+     (None, '18990501T0000+0530')]
 )
 def test_process_startcp(startcp: Optional[str], expected: str,
                          monkeypatch: Fixture, cycling_mode: Fixture):
     """Test SuiteConfig.process_start_cycle_point().
 
-    An icp of 1899-05-01T00Z is assumed, and "now" is assumed to be
-    2005-01-02T06:15Z
+    An icp of 1899-05-01T00+0530 is assumed, and "now" is assumed to be
+    2005-01-02T06:15+0530
 
     Params:
         startcp: The start cycle point given by cli option.
         expected: The expected startcp value that gets set.
     """
-    iso8601.init()
+    iso8601.init(time_zone="+0530")
     cycling_mode(integer=False)
-    mocked_config = Mock(initial_point='18990501T0000Z')
+    mocked_config = Mock(initial_point='18990501T0000+0530')
     mocked_config.options.startcp = startcp
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
-                        lambda: '20050102T0615Z')
+                        lambda: '20050102T0615+0530')
 
     SuiteConfig.process_start_cycle_point(mocked_config)
     assert str(mocked_config.start_point) == expected
@@ -468,7 +468,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
                 'final cycle point constraints': []
             },
             None,
-            '20210101T0000Z',
+            '20210101T0000+0530',
             None,
             id="fcp in cfg"
         ),
@@ -480,7 +480,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
                 'final cycle point constraints': []
             },
             '2019',
-            '20190101T0000Z',
+            '20190101T0000+0530',
             None,
             id="Overriden by cli option"
         ),
@@ -492,7 +492,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
                 'final cycle point constraints': []
             },
             None,
-            '20170215T0000Z',
+            '20170215T0000+0530',
             None,
             id="Relative fcp"
         ),
@@ -504,7 +504,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
                 'final cycle point constraints': []
             },
             None,
-            '20170215T0000Z',
+            '20170215T0000+0530',
             None,
             id="Relative truncated fcp", marks=pytest.mark.xfail
             # https://github.com/metomi/isodatetime/issues/80
@@ -543,7 +543,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
             None,
             None,
             (SuiteConfigError,
-             "initial cycle point:20130101T0000Z is after the "
+             "initial cycle point:20130101T0000+0530 is after the "
              "final cycle point"),
             id="fcp before icp"
         ),
@@ -557,7 +557,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
             None,
             None,
             (SuiteConfigError,
-             "initial cycle point:20130101T0000Z is after the "
+             "initial cycle point:20130101T0000+0530 is after the "
              "final cycle point"),
             id="Negative relative fcp"
         ),
@@ -569,7 +569,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
                 'final cycle point constraints': ['T00', 'T12']
             },
             None,
-            '20210101T0000Z',
+            '20210101T0000+0530',
             None,
             id="Constraints"
         ),
@@ -593,7 +593,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
                 'final cycle point constraints': []
             },
             'ignore',
-            '20210101T0000Z',
+            '20210101T0000+0530',
             None,
             id="--fcp=ignore"
         ),
@@ -612,7 +612,7 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
         expected_err: Exception class expected to be raised plus the message.
     """
     if scheduling_cfg['cycling mode'] == loader.ISO8601_CYCLING_TYPE:
-        iso8601.init()
+        iso8601.init(time_zone="+0530")
         cycling_mode(integer=False)
     else:
         cycling_mode(integer=True)
