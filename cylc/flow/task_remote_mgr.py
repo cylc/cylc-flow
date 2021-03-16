@@ -230,6 +230,9 @@ class TaskRemoteMgr:
             if install_target == get_localhost_install_target():
                 continue
             platform = get_random_platform_for_install_target(install_target)
+            if platform is None:
+                LOG.debug(f"Remote tidy not required for {install_target}.")
+                continue
             platform_n = platform['name']
             cmd = ['remote-tidy']
             if cylc.flow.flags.debug:
