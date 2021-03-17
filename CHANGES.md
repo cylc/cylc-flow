@@ -84,14 +84,16 @@ invalid sort keys are provided clients.
 `cylc executable` global config setting with `cylc path`, for consistency with
 `cylc` invocation in job scripts.
 
-[#4071](https://github.com/cylc/cylc-flow/pull/4071) - Cylc reinstall command
-added.
-
 [#4014](https://github.com/cylc/cylc-flow/pull/4014) - Rename "ready" task
 state to "preparing".
 
-[#4000](https://github.com/cylc/cylc-flow/pull/4000) - Cylc install command
-added. Install workflows into cylc run directory from arbitrary locations.
+[#4000](https://github.com/cylc/cylc-flow/pull/4000) - `cylc install` command
+added. Install workflows into cylc run directory from source directories
+configured in `global.cylc` (see [#4132](https://github.com/cylc/cylc-flow/pull/4132)),
+or from arbitrary locations.
+
+[#4071](https://github.com/cylc/cylc-flow/pull/4071) - `cylc reinstall` command
+added.
 
 [#3992](https://github.com/cylc/cylc-flow/pull/3992) - Rename
 batch system to job runner.
