@@ -80,8 +80,6 @@ MUTATIONS = {
         'resume',
         'reload',
         'stop',
-        'set_hold_point',
-        'release_hold_point'
     ],
     'cycle_point': [
         'hold',
