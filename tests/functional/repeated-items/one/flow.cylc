@@ -3,6 +3,7 @@
     title = "the quick brown fox"
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = 20130101T0000Z
     [[graph]]

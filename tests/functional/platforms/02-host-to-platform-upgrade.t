@@ -21,13 +21,7 @@
 #   - Task with a host setting that should match the test platform
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-set_test_number 5
-
-create_test_global_config '' "
-[platforms]
-    [[${CYLC_TEST_PLATFORM}]]
-        retrieve job logs = True
-"
+set_test_number 4
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -38,7 +32,8 @@ run_fail "${TEST_NAME_BASE}-validate-fail" \
 # Ensure that you can validate suite
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" \
-        -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
+        -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" \
+        -s CYLC_TEST_HOST_FQDN="'$(ssh "$CYLC_TEST_HOST" hostname -f)'"
 
 # Check that the cfgspec/suite.py has issued a warning about upgrades.
 grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
@@ -46,13 +41,10 @@ grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
 
 # Run the suite
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach \
-    -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
-
-## Check that the upgradeable config has been run on a sensible host.
-grep_ok \
-    "The hostname is $(ssh "${CYLC_TEST_HOST}" hostname -f)" \
-    "${SUITE_RUN_DIR}/log/job/1/upgradeable_cylc7_settings/NN/job.out"
+    cylc play --debug --no-detach --reference-test \
+    -s CYLC_TEST_HOST="'$CYLC_TEST_HOST'" \
+    -s CYLC_TEST_HOST_FQDN="'$(ssh "$CYLC_TEST_HOST" hostname -f)'" \
+    "${SUITE_NAME}"
 
 purge
 exit

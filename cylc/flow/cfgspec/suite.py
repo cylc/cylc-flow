@@ -17,6 +17,8 @@
 
 import re
 
+from itertools import product
+
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
@@ -95,6 +97,17 @@ with Conf(
         ''')
     with Conf('scheduler'):
         Conf('UTC mode', VDR.V_BOOLEAN)
+
+        Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
+            :term:`Implicit tasks <implicit task>` are tasks without explicit
+            runtime definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
+            these are not allowed, as often they happen to be typos. However,
+            this setting can be set to ``True`` to allow implict tasks.
+            It is recommended to set this to ``True`` if required during
+            development/prototyping of a workflow graph, but set it to
+            ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
+            section.
+        ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''
             Configure the directories and files to be included in the remote
@@ -418,7 +431,7 @@ with Conf(
             .. note::
 
                The integer limit format is irrespective of the labelling of
-               cycle points. For example, if the runhead limit is ``P3`` and
+               cycle points. For example, if the runahead limit is ``P3`` and
                you have a suite *solely* consisting of a task that repeats
                "every four cycles", it would still spawn three consecutive
                cycle points at a time (starting with 1, 5 and 9). This is
@@ -428,7 +441,7 @@ with Conf(
             .. note::
 
                The runahead limit may be automatically raised if this is
-               necessary to allow a future task to be triggererd, preventing
+               necessary to allow a future task to be triggered, preventing
                the suite from stalling.
         ''')
 
@@ -547,13 +560,13 @@ with Conf(
                 Example Recurrences:
 
                 date-time cycling:
-                   * ``R1`` - once at the intial cycle point
+                   * ``R1`` - once at the initial cycle point
                    * ``T00,T06,T12,T18`` - daily at 00:00, 06:00, 12:00
                      & 18:00
                    * ``PT6H`` - every six hours starting at the initial
                      cycle point
                 integer cycling:
-                   * ``R1`` - once at the intial cycle point
+                   * ``R1`` - once at the initial cycle point
                    * ``P2`` - every other cycle
                    * ``P3,P5`` - every third or fifth cycle
 
@@ -649,7 +662,7 @@ with Conf(
 
             Names may not contain colons (which would preclude use of
             directory paths involving the registration name in ``$PATH``
-            variables). They may not contain the "." character (it will be
+            variables). They may not contain the ``.`` character (it will be
             interpreted as the namespace hierarchy delimiter, separating
             groups and names -huh?).
 
@@ -661,7 +674,7 @@ with Conf(
             If multiple names are listed the subsequent settings apply to
             each.
 
-            All namespaces inherit initially from *root*, which can be
+            All namespaces inherit initially from ``root``, which can be
             explicitly configured to provide or override default settings for
             all tasks in the suite.
         '''):
@@ -854,12 +867,61 @@ with Conf(
 
                 ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, None)
-            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None)
-            Conf('execution time limit', VDR.V_INTERVAL)
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, None)
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
+            Conf(
+                'execution polling intervals',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
 
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]execution polling intervals`
+                ''')
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+                Cylc can automate resubmission of a failed task job.
+
+                Execution retry delays are a list of ISO 8601
+                durations/intervals which tell Cylc how long to wait before
+                resubmitting a failed job.
+
+                Each time Cylc resubmits a task job it will increment the
+                variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
+                environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
+                behavior between submission attempts.
+            ''')
+            Conf('execution time limit', VDR.V_INTERVAL, desc='''
+                Set the execution (:term:`wall-clock <wall-clock time>`) time
+                limit of a task job.
+
+                For ``background`` and ``at`` job runners Cylc invokes the
+                job's script using the timeout command. For other job runners
+                Cylc will convert execution time limit to a :term:`directive`.
+
+                If a task job exceeds its execution time limit Cylc can
+                poll the job multiple times. You can set polling
+                intervals using :cylc:conf:`global.cylc[platforms]
+                [<platform name>]execution time limit polling intervals`
+            ''')
+            Conf(
+                'submission polling intervals',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
+
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]submission polling intervals`
+            ''')
+            Conf(
+                'submission retry delays',
+                VDR.V_INTERVAL_LIST,
+                None,
+                desc='''
+                    .. warning::
+
+                       Deprecated, use :cylc:conf:`global.cylc[platforms]
+                       [<platform name>]submission retry delays`
+            ''')
             with Conf('meta', desc=r'''
                 Section containing metadata items for this task or family
                 namespace.  Several items (title, description, URL) are
@@ -1444,6 +1506,27 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
+
+    # Warn about config items moved to global.cylc.
+    if 'runtime' in cfg:
+        for job_setting, task in product(
+            [
+                'execution polling intervals',
+                'submission polling intervals',
+                'submission retry delays'
+            ],
+            cfg['runtime'].keys()
+        ):
+            if job_setting in cfg['runtime'][task]:
+                LOG.warning(
+                    "* (8.0.0) '[runtime][{task}]{job_setting}' - this "
+                    "setting is deprecated; use"
+                    "'global.cylc[platforms][<platform name>]{job_setting}' "
+                    "instead. "
+                    "Currently, this item will override the corresponding "
+                    "item in global.cylc,"
+                    "but support for this will be removed in Cylc 9."
+                )
 
 
 def upgrade_graph_section(cfg, descr):

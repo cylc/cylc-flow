@@ -34,7 +34,7 @@ poll_grep_suite_log -F '[foo.1] status=failed: (polled)failed'
 cylc dump "${SUITE_NAME}" > dump.out
 TEST_NAME=${TEST_NAME_BASE}-grep
 # State summary should not just say "Initializing..."
-grep_ok "state totals={'waiting': 0, 'queued': 0, 'expired': 0, 'preparing': 0, 'submit-failed': 0, 'submitted': 0, 'running': 0, 'failed': 1, 'succeeded': 0}" dump.out
+grep_ok "state totals={'waiting': 0, 'expired': 0, 'preparing': 0, 'submit-failed': 0, 'submitted': 0, 'running': 0, 'failed': 1, 'succeeded': 0}" dump.out
 #-------------------------------------------------------------------------------
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 purge

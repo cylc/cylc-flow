@@ -1,6 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = "Foo => bar"
-[runtime]
-    [[foo]]
-    [[bar]]

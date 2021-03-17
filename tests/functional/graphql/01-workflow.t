@@ -77,7 +77,7 @@ cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 # compare to expectation
 # Note: Runahead pool has no members on start-up, which means,
 # newestRunaheadCyclePoint is expected to be blank.
-cat > expected << __HERE__
+cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
 {
     "workflows": [
         {
@@ -99,7 +99,6 @@ cat > expected << __HERE__
             "runMode": "live",
             "stateTotals": {
                 "waiting": 1,
-                "queued": 0,
                 "expired": 0,
                 "preparing": 0,
                 "submit-failed": 0,
@@ -124,9 +123,6 @@ cat > expected << __HERE__
     ]
 }
 __HERE__
-cmp_json "${TEST_NAME}-out" \
-    "${TEST_NAME_BASE}-workflows.stdout" \
-    "$(cat expected)"
 
 purge
 

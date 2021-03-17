@@ -32,6 +32,7 @@ from fnmatch import fnmatchcase
 import os
 import re
 import traceback
+from typing import Set
 
 from metomi.isodatetime.data import Calendar
 from metomi.isodatetime.parsers import DurationParser
@@ -131,7 +132,6 @@ def interpolate_template(tmpl, params_dict):
 class SuiteConfig:
     """Class for suite configuration items and derived quantities."""
 
-    Q_DEFAULT = 'default'
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
 
     def __init__(
@@ -162,7 +162,7 @@ class SuiteConfig:
         self.share_dir = share_dir or get_suite_run_share_dir(self.suite)
         self.work_dir = work_dir or get_suite_run_work_dir(self.suite)
         self.options = options
-        self.naked_tasks = []
+        self.implicit_tasks: Set[str] = set()
         self.edges = {}
         self.taskdefs = {}
         self.initial_point = None
@@ -171,13 +171,8 @@ class SuiteConfig:
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
-        # Old external triggers (client/server)
-        self.ext_triggers = {}
-        if xtrigger_mgr is None:
-            # For validation and graph etc.
-            self.xtrigger_mgr = XtriggerManager(self.suite)
-        else:
-            self.xtrigger_mgr = xtrigger_mgr
+        self.ext_triggers = {}  # Old external triggers (client/server)
+        self.xtrigger_mgr = xtrigger_mgr
         self.suite_polling_tasks = {}
         self._last_graph_raw_id = None
         self._last_graph_raw_edges = []
@@ -244,21 +239,7 @@ class SuiteConfig:
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
 
-        graphdict = self.cfg['scheduling']['graph']
-
-        if not any(graphdict.values()):
-            raise SuiteConfigError('No suite dependency graph defined.')
-
-        if (
-            'cycling mode' not in self.cfg['scheduling'] and
-            self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
-            all(item in ['graph', '1', 'R1'] for item in graphdict)
-        ):
-            # Pure async graph, assume integer cycling mode with '1' cycle
-            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
-            for key in ('initial cycle point', 'final cycle point'):
-                if key not in self.cfg['scheduling']:
-                    self.cfg['scheduling'][key] = '1'
+        self.prelim_process_graph()
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -344,8 +325,6 @@ class SuiteConfig:
         self.mem_log("config.py: before inheritance")
         self.compute_inheritance()
         self.mem_log("config.py: after inheritance")
-
-        # self.print_inheritance() # (debugging)
 
         # filter task environment variables after inheritance
         self.filter_env()
@@ -472,29 +451,16 @@ class SuiteConfig:
 
         self.process_runahead_limit()
 
-        self.configure_queues()
-
         if self.run_mode('simulation', 'dummy', 'dummy-local'):
             self.configure_sim_modes()
 
         self.configure_suite_state_polling_tasks()
 
         self._check_task_event_handlers()
-        self._check_special_tasks()  # adds to self.naked_tasks
+        self._check_special_tasks()  # adds to self.implicit_tasks
         self._check_explicit_cycling()
 
-        # Warn or abort (if --strict) if naked tasks (no runtime
-        # section) are found in graph or queue config.
-        if len(self.naked_tasks) > 0:
-            if self._is_validate(is_strict=True) or cylc.flow.flags.verbose:
-                err_msg = ('naked tasks detected (no entry'
-                           ' under [runtime]):')
-                for ndt in self.naked_tasks:
-                    err_msg += '\n+\t' + str(ndt)
-                LOG.warning(err_msg)
-            if self._is_validate(is_strict=True):
-                raise SuiteConfigError(
-                    'strict validation fails naked tasks')
+        self._check_implicit_tasks()
 
         # Check that external trigger messages are only used once (they have to
         # be discarded immediately to avoid triggering the next instance of the
@@ -659,12 +625,31 @@ class SuiteConfig:
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
 
-        if self._is_validate():
+        if getattr(self.options, 'is_validate', False):
             self.mem_log("config.py: before _check_circular()")
             self._check_circular()
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+    def prelim_process_graph(self) -> None:
+        """Ensure graph is not empty; set integer cycling mode and icp/fcp = 1
+        for simplest "R1 = foo" type graphs.
+        """
+        graphdict = self.cfg['scheduling']['graph']
+        if not any(graphdict.values()):
+            raise SuiteConfigError('No suite dependency graph defined.')
+
+        if (
+            'cycling mode' not in self.cfg['scheduling'] and
+            self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
+            all(item in ['graph', '1', 'R1'] for item in graphdict)
+        ):
+            # Pure acyclic graph, assume integer cycling mode with '1' cycle
+            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
+            for key in ('initial cycle point', 'final cycle point'):
+                if key not in self.cfg['scheduling']:
+                    self.cfg['scheduling'][key] = '1'
 
     def process_utc_mode(self):
         """Set UTC mode from config or from stored value on restart.
@@ -851,6 +836,28 @@ class SuiteConfig:
                     f"Final cycle point {self.final_point} does not "
                     f"meet the constraints {constraints}")
 
+    def _check_implicit_tasks(self) -> None:
+        """Raise SuiteConfigError if implicit tasks are found in graph or
+        queue config, unless allowed by config."""
+        if self.implicit_tasks:
+            print_limit = 10
+            implicit_tasks_str = '\n    * '.join(
+                list(self.implicit_tasks)[:print_limit])
+            num = len(self.implicit_tasks)
+            if num > print_limit:
+                implicit_tasks_str = (
+                    f"{implicit_tasks_str}\n    and {num} more")
+            err_msg = (
+                "implicit tasks detected (no entry under [runtime]):\n"
+                f"    * {implicit_tasks_str}")
+            if self.cfg['scheduler']['allow implicit tasks']:
+                LOG.debug(err_msg)
+            else:
+                raise SuiteConfigError(
+                    f"{err_msg}\n\n"
+                    "To allow implicit tasks, use "
+                    "'flow.cylc[scheduler]allow implicit tasks'")
+
     def _check_circular(self):
         """Check for circular dependence in graph."""
         if (len(self.taskdefs) > self.CHECK_CIRCULAR_LIMIT and
@@ -979,13 +986,6 @@ class SuiteConfig:
             for name, _ in name_expander.expand(node):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
-
-    def _is_validate(self, is_strict=False):
-        """Return whether we are in (strict) validate mode."""
-        return (
-            getattr(self.options, 'is_validate', False) and
-            (not is_strict or getattr(self.options, 'strict', False))
-        )
 
     @staticmethod
     def dequote(s):
@@ -1220,100 +1220,8 @@ class SuiteConfig:
         # definitions have been removed from the suite. Keep them
         # in the default queue and under the root family, until they
         # run their course and disappear.
-        queues = self.cfg['scheduling']['queues']
         for orphan in orphans:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
-            queues[self.Q_DEFAULT]['members'].append(orphan)
-
-    def configure_queues(self):
-        """Assign tasks to internal queues."""
-        # Note this modifies the parsed config dict.
-        queues = self.cfg['scheduling']['queues']
-
-        LOG.debug("Configuring internal queues")
-
-        # First add all tasks to the default queue.
-        all_task_names = self.get_task_name_list()
-        queues[self.Q_DEFAULT]['members'] = all_task_names
-
-        # Then reassign to other queues as requested.
-        warnings = []
-        requeued = []
-        # Record non-default queues by task name, to avoid spurious warnings
-        # about tasks "already added to a queue", when the queue is the same.
-        myq = {}
-        for key, queue in list(queues.copy().items()):
-            myq[key] = []
-            if key == self.Q_DEFAULT:
-                continue
-            # Assign tasks to queue and remove them from default.
-            qmembers = []
-            for qmember in queue['members']:
-                # Is a family.
-                if qmember in self.runtime['descendants']:
-                    # Replace with member tasks.
-                    for fmem in self.runtime['descendants'][qmember]:
-                        # This includes sub-families.
-                        if qmember not in qmembers:
-                            try:
-                                queues[self.Q_DEFAULT]['members'].remove(fmem)
-                            except ValueError:
-                                if fmem in requeued and fmem not in myq[key]:
-                                    msg = "%s: ignoring %s from %s (%s)" % (
-                                        key, fmem, qmember,
-                                        'already assigned to a queue')
-                                    warnings.append(msg)
-                                else:
-                                    # Ignore: task not used in the graph.
-                                    pass
-                            else:
-                                myq[key] = fmem
-                                qmembers.append(fmem)
-                                requeued.append(fmem)
-                else:
-                    # Is a task.
-                    if qmember not in qmembers:
-                        try:
-                            queues[self.Q_DEFAULT]['members'].remove(qmember)
-                        except ValueError:
-                            if qmember in requeued:
-                                msg = "%s: ignoring %s (%s)" % (
-                                    key, qmember,
-                                    'already assigned to a queue')
-                                warnings.append(msg)
-                            elif qmember not in all_task_names:
-                                if qmember not in self.cfg['runtime']:
-                                    err = 'task not defined'
-                                else:
-                                    err = 'task not used in the graph'
-                                msg = "%s: ignoring %s (%s)" % (
-                                    key, qmember, err)
-                                warnings.append(msg)
-                            else:
-                                # Ignore: task not used in the graph.
-                                pass
-                        else:
-                            myq[key] = qmember
-                            qmembers.append(qmember)
-                            requeued.append(qmember)
-            if qmembers:
-                queue['members'] = qmembers
-            else:
-                del queues[key]
-
-        if warnings:
-            err_msg = "Queue configuration warnings:"
-            for msg in warnings:
-                err_msg += "\n+ %s" % msg
-            LOG.warning(err_msg)
-
-        if cylc.flow.flags.verbose and len(queues) > 1:
-            log_msg = "Internal queues created:"
-            for key, queue in queues.items():
-                if key == self.Q_DEFAULT:
-                    continue
-                log_msg += "\n+ %s: %s" % (key, ', '.join(queue['members']))
-            LOG.debug(log_msg)
 
     def configure_suite_state_polling_tasks(self):
         # Check custom script is not defined for automatic suite polling tasks.
@@ -1588,7 +1496,8 @@ class SuiteConfig:
                                 )
 
     def _check_special_tasks(self):
-        # Check declared special tasks are valid.
+        """Check declared special tasks are valid, and detect special
+        implicit tasks"""
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
                 if task_type in ['clock-trigger', 'clock-expire',
@@ -1599,7 +1508,7 @@ class SuiteConfig:
                         f'Illegal {task_type} task name: {name}')
                 if (name not in self.taskdefs and
                         name not in self.cfg['runtime']):
-                    self.naked_tasks.append(name)
+                    self.implicit_tasks.add(name)
 
     def _check_explicit_cycling(self):
         """Check that inter-cycle offsets refer to cycling tasks.
@@ -1661,8 +1570,8 @@ class SuiteConfig:
                 GraphNodeParser.get_inst().parse(node))
 
             if name not in self.cfg['runtime']:
-                # naked task, implicit inheritance from root
-                self.naked_tasks.append(name)
+                # implicit inheritance from root
+                self.implicit_tasks.add(name)
                 # These can't just be a reference to root runtime as we have to
                 # make some items task-specific: e.g. subst task name in URLs.
                 self.cfg['runtime'][name] = OrderedDictWithDefaults()
@@ -1807,7 +1716,10 @@ class SuiteConfig:
                 sig = xtrig.get_signature()
                 raise SuiteConfigError(
                     f"clock xtriggers need date-time cycling: {label} = {sig}")
-            self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
+            if self.xtrigger_mgr is None:
+                XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
+            else:
+                self.xtrigger_mgr.add_trig(label, xtrig, self.fdir)
             self.taskdefs[right].add_xtrig_label(label, seq)
 
     def get_actual_first_point(self, start_point):
@@ -1843,7 +1755,8 @@ class SuiteConfig:
         In validate mode, set ungroup_all to True, and only return non-suicide
         edges with left and right nodes.
         """
-        is_validate = self._is_validate()  # this is for _check_circular
+        is_validate = getattr(
+            self.options, 'is_validate', False)  # this is for _check_circular
         if is_validate:
             ungroup_all = True
         if group_nodes is None:

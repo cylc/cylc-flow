@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,19 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check that missing explicit cycling fails validation.
+# Check that ``[platforms][localhost]`` is only set automatically if it
+# not set in ``global.cylc``.
+
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
+
+set_test_number 3
+
+create_test_global_config "" "
+    [platforms]
+        [[localhost, nine_and_three_quarters]]
+            hosts = localhost
+            job runner = at
+"
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-cmp"
-cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<__ERR__
-TaskDefError: No cycling sequences defined for foo
-__ERR__
-#-------------------------------------------------------------------------------
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
+# Run the suite
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${SUITE_NAME}"
+
+grep_ok "Job submit method: at" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job"
+
 purge
+exit

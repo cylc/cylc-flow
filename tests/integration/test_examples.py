@@ -34,6 +34,9 @@ async def test_create_flow(flow, run_dir):
     """Use the flow fixture to create workflows on the file system."""
     # Ensure a flow.cylc file gets written out
     reg = flow({
+        'scheduler': {
+            'allow implicit tasks': True
+        },
         'scheduling': {
             'graph': {
                 'R1': 'foo'

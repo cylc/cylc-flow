@@ -18,7 +18,10 @@
 
 import pytest
 import random
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    get_localhost_install_target,
+    get_platform
+)
 from cylc.flow.exceptions import PlatformLookupError
 
 
@@ -27,13 +30,55 @@ def test_get_platform_no_args():
     assert get_platform()['hosts'] == ['localhost']
 
 
-def test_get_platform_from_platform_name_str(mock_glbl_cfg):
+@pytest.mark.parametrize(
+    'platform_re',
+    [
+        None,
+        'localhost',
+        'localhost, otherplatform',
+        'otherplatform, localhost',
+        'otherplatform|localhost',
+        'localhost|otherplatform',
+        'localhost, xylophone\\d{1,5}'
+    ]
+)
+def test_get_localhost_platform(mock_glbl_cfg, platform_re):
     # Check that an arbitrary string name returns a sensible platform
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
-        '''
+        f'''
         [platforms]
-            [[saffron]]
+            [[localhost]]
+                hosts = localhost
+                ssh command = ssh -oConnectTimeout=42
+            [[{platform_re}]]
+                hosts = localhost
+                ssh command = ssh -oConnectTimeout=24
+        '''
+    )
+    platform = get_platform('localhost')
+    if platform_re:
+        assert platform['ssh command'] == 'ssh -oConnectTimeout=24'
+    else:
+        assert platform['ssh command'] == 'ssh -oConnectTimeout=42'
+
+
+@pytest.mark.parametrize(
+    'platform_re',
+    [
+        'saffron',
+        'sumac|saffron',
+        'sumac, saffron',
+        'sumac|asafoetida, saffron',
+    ]
+)
+def test_get_platform_from_platform_name_str(mock_glbl_cfg, platform_re):
+    # Check that an arbitrary string name returns a sensible platform
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        f'''
+        [platforms]
+            [[{platform_re}]]
                 hosts = saff01
                 job runner = slurm
         '''
@@ -203,3 +248,20 @@ def test_get_platform_warn_mode_fail_if_backticks():
         r'platform = `echo \$\{chamber\}`: '
         r'backticks are not supported; please use \$\(\)'
     )
+
+
+def test_get_localhost_install_target():
+    assert get_localhost_install_target() == 'localhost'
+
+
+def test_localhost_different_install_target(mock_glbl_cfg):
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[localhost]]
+                install target = file_system_1
+        '''
+    )
+
+    assert get_localhost_install_target() == 'file_system_1'

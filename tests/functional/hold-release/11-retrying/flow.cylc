@@ -24,7 +24,7 @@ t-retry-able => t-analyse
                 '[t-retry-able.1] -running => waiting'
             cylc release "${CYLC_SUITE_NAME}" 't-retry-able.1'
             cylc__job__poll_grep_suite_log -F \
-                '[t-retry-able.1] -waiting => queued'
+                '[t-retry-able.1] -waiting => waiting (queued)'
         """
     [[t-analyse]]
         script = """

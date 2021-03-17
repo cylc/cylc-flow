@@ -25,6 +25,8 @@ TEST_NAME="${TEST_NAME_BASE}-val"
 # test a valid xtrigger
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 #!Jinja2
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = {{ ICP - 1 }}
     cycling mode = integer

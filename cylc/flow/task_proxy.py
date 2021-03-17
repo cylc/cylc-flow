@@ -130,6 +130,8 @@ class TaskProxy:
             flow label
         .reflow (bool)
             flow on from outputs
+        .waiting_on_job_prep (bool)
+            task waiting on job prep
 
     Arguments:
         tdef (cylc.flow.taskdef.TaskDef):
@@ -176,6 +178,7 @@ class TaskProxy:
         'failure_handled',
         'flow_label',
         'reflow',
+        'waiting_on_job_prep',
     ]
 
     def __init__(self, tdef, start_point, flow_label,
@@ -226,6 +229,7 @@ class TaskProxy:
         self.expire_time = None
         self.late_time = None
         self.is_late = is_late
+        self.waiting_on_job_prep = True
 
         self.state = TaskState(tdef, self.point, status, is_held)
 

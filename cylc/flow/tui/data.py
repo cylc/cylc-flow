@@ -33,6 +33,7 @@ QUERY = '''
         cyclePoint
         state
         isHeld
+        isQueued
         firstParent {
           id
           name
@@ -56,6 +57,7 @@ QUERY = '''
         cyclePoint
         state
         isHeld
+        isQueued
         firstParent {
           id
           name
@@ -66,6 +68,7 @@ QUERY = '''
         cyclePoint
         state
         isHeld
+        isQueued
       }
     }
   }

@@ -15,45 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that a job containing more than 100 tasks will split into batches.
-
+# Test validation fails for special implicit tasks
 . "$(dirname "$0")/test_header"
-set_test_number 3
-
-create_test_global_config '' '
-[scheduler]
-    process pool size = 1
-'
-
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[scheduler]
-    [[events]]
-        abort on inactivity = True
-        abort on stalled = True
-        inactivity = PT10M
-[task parameters]
-    p = 1..202
+set_test_number 2
+cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
+    initial cycle point = 20200101
+    [[special tasks]]
+        clock-trigger = foo(PT0M)
     [[graph]]
-        R1 = t1<p>
+        T00 = bar
 [runtime]
-    [[t1<p>]]
-        # Reduce the load on many jobs sending the "started" message
-        init-script = """
-            sleep $((RANDOM % 10))
-        """
-        script = """
-            wait
-            sleep $((RANDOM % 5))
-        """
+    [[bar]]
+        script = true
 __FLOW_CONFIG__
+run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
+cmp_ok "${TEST_NAME_BASE}.stderr" << '__ERR__'
+SuiteConfigError: implicit tasks detected (no entry under [runtime]):
+    * foo
 
-
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
-grep_ok "# will invoke in batches, sizes=\[68, 68, 66\]" \
-    "${SUITE_RUN_DIR}/log/suite/log"
-
-# tidy up
-purge
+To allow implicit tasks, use 'flow.cylc[scheduler]allow implicit tasks'
+__ERR__
 exit

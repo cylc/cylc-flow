@@ -69,7 +69,8 @@ def testrender_node__task__succeeded():
         {
             'name': 'foo',
             'state': 'succeeded',
-            'isHeld': False
+            'isHeld': False,
+            'isQueued': False
         },
         'task'
     ) == [
@@ -94,6 +95,7 @@ def testrender_node__task__running():
             'name': 'foo',
             'state': 'running',
             'isHeld': False,
+            'isQueued': False,
             'task': {'meanElapsedTime': 100}
         },
         'task'
@@ -110,7 +112,12 @@ def testrender_node__family():
     """It renders families."""
     assert render_node(
         None,
-        {'state': 'succeeded', 'isHeld': False, 'id': 'myid'},
+        {
+            'state': 'succeeded',
+            'isHeld': False,
+            'isQueued': False,
+            'id': 'myid'
+        },
         'family'
     ) == [
         [TASK_ICONS['succeeded']],
@@ -129,26 +136,29 @@ def testrender_node__cycle_point():
 
 
 @pytest.mark.parametrize(
-    'status,is_held,start_offset,mean_time,expected',
+    'status,is_held,is_queued,start_offset,mean_time,expected',
     [
         # task states
-        ('waiting', False, None, None, ['○']),
-        ('submitted', False, None, None, ['⊙']),
-        ('running', False, None, None, ['⊙']),
-        ('succeeded', False, None, None, ['●']),
-        ('submit-failed', False, None, None, ['⊘']),
-        ('failed', False, None, None, ['⊗']),
+        ('waiting', False, False, None, None, ['○']),
+        ('submitted', False, False, None, None, ['⊙']),
+        ('running', False, False, None, None, ['⊙']),
+        ('succeeded', False, False, None, None, ['●']),
+        ('submit-failed', False, False, None, None, ['⊘']),
+        ('failed', False, False, None, None, ['⊗']),
         # progress indicator
-        ('running', False, 0, 100, ['⊙']),
-        ('running', False, 25, 100, ['◔']),
-        ('running', False, 50, 100, ['◑']),
-        ('running', False, 75, 100, ['◕']),
-        ('running', False, 100, 100, ['◕']),
+        ('running', False, False, 0, 100, ['⊙']),
+        ('running', False, False, 25, 100, ['◔']),
+        ('running', False, False, 50, 100, ['◑']),
+        ('running', False, False, 75, 100, ['◕']),
+        ('running', False, False, 100, 100, ['◕']),
         # is-held modifier
-        ('waiting', True, None, None, ['\u030E', '○'])
+        ('waiting', True, False, None, None, ['\u030E', '○']),
+        # is-queued modifier
+        ('waiting', False, True, None, None, ['\u033F', '○'])
     ]
 )
-def test_get_task_icon(status, is_held, start_offset, mean_time, expected):
+def test_get_task_icon(
+        status, is_held, is_queued, start_offset, mean_time, expected):
     """It renders task icons."""
     start_time = None
     if start_offset is not None:
@@ -156,7 +166,8 @@ def test_get_task_icon(status, is_held, start_offset, mean_time, expected):
             datetime.utcnow() - timedelta(seconds=start_offset)
         )
     assert (
-        get_task_icon(status, is_held, start_time, mean_time)
+        get_task_icon(status, is_held=is_held, is_queued=is_queued,
+                      start_time=start_time, mean_time=mean_time)
     ) == expected
 
 

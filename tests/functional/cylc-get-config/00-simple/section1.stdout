@@ -9,7 +9,7 @@ runahead limit = P5
 [[queues]]
     [[[default]]]
         limit = 0
-        members = ops_s1, ops_s2, ops_p1, ops_p2, var_s1, var_s2, var_p1, var_p2
+        members = 
 [[special tasks]]
     clock-trigger = 
     external-trigger = 

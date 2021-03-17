@@ -170,14 +170,10 @@ class JobFileWriter:
             job_conf)
         if vacation_signals_str:
             handle.write("\nCYLC_VACATION_SIGNALS='%s'" % vacation_signals_str)
-        # Path to cylc executable, if defined.
-        cylc_exec = job_conf['platform']['cylc executable']
-        if not cylc_exec.endswith('cylc'):
-            raise ValueError(
-                f'ERROR: bad cylc executable in global config: {cylc_exec}')
-        cylc_bin = os.path.dirname(cylc_exec)
-        if cylc_bin:
-            handle.write(f"\nexport PATH={cylc_bin}:$PATH")
+        # Path to the `cylc` executable, if defined.
+        cylc_path = job_conf['platform']['cylc path']
+        if cylc_path:
+            handle.write(f"\nexport PATH={cylc_path}:$PATH")
         # Environment variables for prelude
         if cylc.flow.flags.debug:
             handle.write("\nexport CYLC_DEBUG=true")

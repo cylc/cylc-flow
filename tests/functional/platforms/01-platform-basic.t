@@ -24,7 +24,7 @@ TEST_NAME="${TEST_NAME_BASE}-val"
 
 create_test_global_config "" "
     [platforms]
-        [[lewis]]
+        [[localhost, lewis]]
             hosts = localhost
             install target = localhost
 "

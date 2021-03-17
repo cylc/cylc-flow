@@ -1,0 +1,7 @@
+[meta]
+[scheduling]
+    [[graph]]
+        R1 = """foo"""
+[runtime]
+    [[foo]]
+        script = true

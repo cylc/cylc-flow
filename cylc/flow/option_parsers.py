@@ -159,7 +159,7 @@ TASK_GLOB matches task or family names at a given cycle point.
 
         if self.comms:
             self.add_std_option(
-                "--comms-timeout", "--pyro-timeout", metavar='SEC',
+                "--comms-timeout", metavar='SEC',
                 help=(
                     "Set a timeout for network connections "
                     "to the running suite. The default is no timeout. "

@@ -47,14 +47,6 @@ def get_option_parser():
     parser = COP(__doc__, jset=True, prep=True, icp=True)
 
     parser.add_option(
-        "--strict",
-        help="Fail any use of unsafe or experimental features. "
-             "Currently this just means naked dummy tasks (tasks with no "
-             "corresponding runtime section) as these may result from "
-             "unintentional typographic errors in task names.",
-        action="store_true", default=False, dest="strict")
-
-    parser.add_option(
         "--check-circular",
         help="Check for circular dependencies in graphs when the number of "
              "tasks is greater than 100 (smaller graphs are always checked). "
@@ -107,17 +99,16 @@ def main(_, options, reg):
     if out_of_bounds:
         if len(out_of_bounds) > 1:
             # avoid spamming users with multiple warnings
-            msg = ('multiple sequences out of bounds for initial cycle point '
-                   '%s:\n%s' % (
-                       cfg.start_point,
-                       '\n'.join(textwrap.wrap(', '.join(out_of_bounds), 70))))
+            out_of_bounds_str = '\n'.join(
+                textwrap.wrap(', '.join(out_of_bounds), 70))
+            msg = (
+                "multiple sequences out of bounds for initial cycle point "
+                f"{cfg.start_point}:\n{out_of_bounds_str}")
         else:
-            msg = '%s: sequence out of bounds for initial cycle point %s' % (
-                out_of_bounds[0], cfg.start_point)
-        if options.strict:
-            LOG.warning(msg)
-        elif cylc.flow.flags.verbose:
-            sys.stderr.write(' + %s\n' % msg)
+            msg = (
+                f"{out_of_bounds[0]}: sequence out of bounds for "
+                f"initial cycle point {cfg.start_point}")
+        LOG.warning(msg)
 
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
@@ -129,7 +120,7 @@ def main(_, options, reg):
         try:
             itask = TaskProxy(taskdef, cfg.start_point, flow_label)
         except TaskProxySequenceBoundsError:
-            # Should already failed above in strict mode.
+            # Should already failed above
             mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)
             if cylc.flow.flags.verbose:
                 sys.stderr.write(' + %s\n' % mesg)

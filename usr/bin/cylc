@@ -102,7 +102,7 @@
 #   (Environments must be named for the cylc version, e.g. "cylc-8.0.2")
 # + Set CYLC_VERSION e.g. "8.0.0" to select a version in the root locations
 #   - CYLC_VERSION is propagated to task jobs by the scheduler. If you set it
-#   in .bashrc it must default to an existing value to avoid overiding jobs:
+#   in .bashrc it must default to an existing value to avoid overriding jobs:
 #       $ export CYLC_VERSION=${CYLC_VERSION:-8.0.0}
 #   - Do not explicitly select the default "cylc" symlink as a version
 # + Set CYLC_HOME in .bashrc (on scheduler and job hosts) to select a specific

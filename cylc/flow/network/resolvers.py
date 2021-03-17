@@ -148,6 +148,8 @@ def node_filter(node, node_type, args):
         not (args.get('exstates') and n_atts[5] in args['exstates']) and
         (args.get('is_held') is None
          or (node.is_held == args['is_held'])) and
+        (args.get('is_queued') is None
+         or (node.is_queued == args['is_queued'])) and
         (args.get('mindepth', -1) < 0 or node.depth >= args['mindepth']) and
         (args.get('maxdepth', -1) < 0 or node.depth <= args['maxdepth']) and
         # Now filter node against id arg lists
@@ -352,7 +354,7 @@ class BaseResolvers:
     async def subscribe_delta(self, root, info, args):
         """Delta subscription async generator.
 
-        Async generator mapping the incomming protobuf deltas to
+        Async generator mapping the incoming protobuf deltas to
         yielded GraphQL subscription objects.
 
         """
@@ -487,7 +489,7 @@ class Resolvers(BaseResolvers):
             if command == 'put_messages':
                 args['task_job'] = items[0]
             else:
-                args['task_globs'] = items
+                args['tasks'] = items
         result = await self._mutation_mapper(command, args)
         if result is None:
             result = (True, 'Command queued')

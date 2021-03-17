@@ -30,27 +30,26 @@ settings:
 - :cylc:conf:`[scheduler][run hosts]condemned`
 - :cylc:conf:`[scheduler][run hosts]available`
 
-.. cylc-scope:: global.cylc[scheduler]
+
 
 The auto stop-restart feature has two modes:
 
-- [Normal Mode]
+Normal Mode
+   When a host is added to the
+   :cylc:conf:`[scheduler][run hosts]condemned` list, any suites
+   running on that host will automatically shutdown then restart selecting a
+   new host from :cylc:conf:`[scheduler][run hosts]available`.
 
-  - When a host is added to the
-    :cylc:conf:`global.cylc[scheduler][run hosts]condemned` list, any suites
-    running on that host will automatically shutdown then restart selecting a
-    new host from :cylc:conf:`global.cylc[scheduler][run hosts]available`.
-  - For safety, before attempting to stop the suite cylc will first wait
-    for any jobs running locally (under background or at) to complete.
-  - *In order for Cylc to be able to successfully restart suites the
-    :cylc:conf:`global.cylc[scheduler][run hosts]available` must all be on a
-    shared filesystem.*
+   For safety, before attempting to stop the suite Cylc will first wait
+   for any jobs running locally (under background or at) to complete.
 
-- [Force Mode]
-
-  - If a host is suffixed with an exclamation mark then Cylc will not attempt
-    to automatically restart the suite and any local jobs (running under
-    background or at) will be left running.
+   In order for Cylc to be able to restart suites the
+   :cylc:conf:`[scheduler][run hosts]available` hosts must all be on a
+   shared filesystem.
+Force Mode
+   If a host is suffixed with an exclamation mark then Cylc will not attempt
+   to automatically restart the workflow and any local jobs (running under
+   background or at) will be left running.
 
 For example in the following configuration any suites running on
 ``foo`` will attempt to restart on ``pub`` whereas any suites
@@ -67,14 +66,14 @@ running on ``bar`` will stop immediately, making no attempt to restart.
 
    Cylc will reject hosts with ambiguous names such as ``localhost`` or
    ``127.0.0.1`` for this configuration as
-   `:cylc:conf:`[scheduler][run hosts]condemned`
+   :cylc:conf:`[scheduler][run hosts]condemned`
    are evaluated on the suite host server.
 
 To prevent large numbers of suites attempting to restart simultaneously the
-:cylc:conf:`global.cylc[scheduler]auto restart delay` setting defines a period
+:cylc:conf:`[scheduler]auto restart delay` setting defines a period
 of time in seconds.
 Suites will wait for a random period of time between zero and
-:cylc:conf:`global.cylc[scheduler]auto restart delay` seconds before
+:cylc:conf:`[scheduler]auto restart delay` seconds before
 attempting to stop and restart.
 
 Suites that are started up in no-detach mode cannot auto stop-restart on a

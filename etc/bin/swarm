@@ -21,7 +21,7 @@ swarm [OPTIONS] (build|configure|run)
 
 Build, configure and run a swarm of docker containers for test purposes.
 
-This swarm is both for local development and automated testing to proivde
+This swarm is both for local development and automated testing to provide
 a stable testing/development platform.
 
 Containers ports are correctly exposed so they can be used either natively
@@ -34,7 +34,7 @@ Commands:
     interactive  Run a docker container interactively.
     run          Run docker containers.
     ps           List running detached containers started with "run"
-    kill         Kill detactched containers started with "run"
+    kill         Kill detached containers started with "run"
 
 Note:
     "ps" and "kill" only track the most resent swarm of containers started
@@ -63,32 +63,8 @@ The Containers:
     * The SSH config maps these ports onto hostnames.
     * The Cylc config maps hostnames onto test platforms.
 
-    Each platform is named using this convention:
-
-        _<submission_locality>_<job_runner>_<filesystem>_<comms_method>
-
-        submission_locality {local, remote}:
-            Where do jobs get submitted?
-
-            * Locally (on the scheduler host).
-            * Remotely (on a remote host).
-
-        job_runner {background, at, slurm, ...}:
-            The name of the job runner the container is configured to use.
-
-        filesystem {indep, shared}:
-            What is the relationship between the filesystem in the contaier to
-            the filesystem on the host?
-
-            * Independent (indep) - it is a completely different filesystem.
-            * Shared (shared) - the cylc-run directory is shared.
-
-            warning: For shared filesystems cylc-run is shared, however, the
-            absolute path to cylc-run on the host system may be different
-            to that on the container, use ~/cylc-run for safety.
-
-        comms_method {tcp, poll}:
-            The task communication method to use.
+    See tests/functional/README.md for more information on the test
+    platform matrix.
 
 Running Tests Without The Swarm:
     Configure the platforms with the same names as the swarm platforms.
@@ -135,7 +111,7 @@ Port Mapping:
         * +30 - "shared"
 
     Comms Method:
-        * +0 - "tcp"
+        * +0 - "tcp" & "ssh"
         * +1 - "poll"
 __USAGE__
     exit 0

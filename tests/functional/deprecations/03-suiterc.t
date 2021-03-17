@@ -23,14 +23,16 @@ set_test_number 7
 init_suiterc() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
-    SUITE_RUN_DIR="$RUN_DIR/${SUITE_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_RUN_DIR="$RUN_DIR/$SUITE_NAME"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/suite.rc"
     cd "${TEST_DIR}/${SUITE_NAME}" || exit
 }
 
 init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = foo => bar
@@ -38,7 +40,7 @@ __FLOW__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .
-grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${TEST_NAME_BASE}-validate.stderr" 
+grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${TEST_NAME_BASE}-validate.stderr"
 TEST_NAME="${TEST_NAME_BASE}-install"
 run_ok "${TEST_NAME}" cylc install --flow-name="${SUITE_NAME}" --no-run-name
 cd "${SUITE_RUN_DIR}" || exit 1
@@ -50,6 +52,8 @@ purge
 # Test install upgrades suite.rc and logs deprecation notification
 
 init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = foo => bar
@@ -61,7 +65,7 @@ run_ok "${TEST_NAME}" cylc install --flow-name="${SUITE_NAME}" --no-run-name
 cd "${SUITE_RUN_DIR}" || exit 1
 exists_ok "flow.cylc"
 INSTALL_LOG="$(find "${SUITE_RUN_DIR}/log/install" -type f -name '*.log')"
-grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${INSTALL_LOG}" 
+grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${INSTALL_LOG}"
 cd "${TEST_DIR}" || exit 1
 rm -rf "${TEST_DIR:?}/${SUITE_NAME}/"
 purge

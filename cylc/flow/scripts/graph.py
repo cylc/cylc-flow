@@ -22,13 +22,23 @@ A text-based graph representation of workflow dependencies.
 Implements the old ``cylc graph --reference command`` for producing a textural
 graph of a suite.
 
+Examples:
+    # print a textural representation of the graph of the flow one
+    $ cylc graph one --reference
+
+    # display the difference between the flows one and two
+    $ cylc graph one --diff two
+
 """
+
+from difflib import unified_diff
+import sys
 
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import get_flow_file
+from cylc.flow.suite_files import parse_suite_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -97,8 +107,14 @@ def get_cycling_bounds(config, start_point=None, stop_point=None):
     return start_point, stop_point
 
 
-def graph_workflow(config, start_point=None, stop_point=None, ungrouped=False,
-                   show_suicide=False):
+def graph_workflow(
+    config,
+    start_point=None,
+    stop_point=None,
+    ungrouped=False,
+    show_suicide=False,
+    write=print
+):
     """Implement ``cylc-graph --reference``."""
     # set sort keys based on cycling mode
     if config.cfg['scheduling']['cycling mode'] == 'integer':
@@ -125,9 +141,9 @@ def graph_workflow(config, start_point=None, stop_point=None, ungrouped=False,
         if show_suicide or not suicide
     )
     for left, right in sorted(set(edges), key=edge_sort):
-        print('edge "%s" "%s"' % (left, right))
+        write('edge "%s" "%s"' % (left, right))
 
-    print('graph')
+    write('graph')
 
     # print nodes
     nodes = (
@@ -138,12 +154,12 @@ def graph_workflow(config, start_point=None, stop_point=None, ungrouped=False,
         if show_suicide or not suicide
     )
     for node in sorted(set(nodes), key=node_sort):
-        print('node "%s" "%s"' % (node, node.replace('.', r'\n')))
+        write('node "%s" "%s"' % (node, node.replace('.', r'\n')))
 
-    print('stop')
+    write('stop')
 
 
-def graph_inheritance(config):
+def graph_inheritance(config, write=print):
     """Implement ``cylc-graph --reference --namespaces``."""
     edges = set()
     nodes = set()
@@ -156,24 +172,20 @@ def graph_inheritance(config):
         nodes.add(namespace)
 
     for edge in sorted(edges):
-        print('edge %s %s' % edge)
+        write('edge %s %s' % edge)
 
-    print('graph')
+    write('graph')
 
     for node in sorted(nodes):
-        print('node %s %s' % (node, node))
+        write('node %s %s' % (node, node))
 
-    print('stop')
+    write('stop')
 
 
-def get_config(suite, opts, template_vars=None):
+def get_config(flow, opts, template_vars=None):
     """Return a SuiteConfig object for the provided reg / path."""
-    flow_file = get_flow_file(suite)
-    # could not find suite, assume we have been given a path instead
-    if not flow_file:
-        flow_file = suite
-        suite = 'test'
-    return SuiteConfig(suite, flow_file, opts, template_vars=template_vars)
+    flow, flow_file = parse_suite_arg(opts, flow)
+    return SuiteConfig(flow, flow_file, opts, template_vars=template_vars)
 
 
 def get_option_parser():
@@ -214,6 +226,12 @@ def get_option_parser():
         '--icp', action='store', default=None, metavar='CYCLE_POINT', help=(
             'Set initial cycle point. Required if not defined in flow.cylc.'))
 
+    parser.add_option(
+        '--diff',
+        help='Show the difference between two suites (implies --reference)',
+        action='store',
+    )
+
     return parser
 
 
@@ -222,18 +240,42 @@ def main(parser, opts, suite=None, start=None, stop=None):
     """Implement ``cylc graph``."""
     if opts.ungrouped and opts.namespaces:
         raise UserInputError('Cannot combine --ungrouped and --namespaces.')
-    if not opts.reference:
-        raise UserInputError('Only the --reference use cases are supported')
+    if not (opts.reference or opts.diff):
+        raise UserInputError(
+            'Only the --reference and --diff use cases are supported'
+        )
 
     template_vars = load_template_vars(
         opts.templatevars, opts.templatevars_file)
 
-    config = get_config(suite, opts, template_vars=template_vars)
-    if opts.namespaces:
-        graph_inheritance(config)
-    else:
-        graph_workflow(config, start, stop, ungrouped=opts.ungrouped,
-                       show_suicide=opts.show_suicide)
+    write = print
+    flows = [(suite, [])]
+    if opts.diff:
+        flows.append((opts.diff, []))
+
+    for flow, graph in flows:
+        if opts.diff:
+            write = graph.append
+        config = get_config(flow, opts, template_vars=template_vars)
+        if opts.namespaces:
+            graph_inheritance(config, write=write)
+        else:
+            graph_workflow(config, start, stop, ungrouped=opts.ungrouped,
+                           show_suicide=opts.show_suicide, write=write)
+
+    if opts.diff:
+        lines = list(
+            unified_diff(
+                [f'{line}\n' for line in flows[0][1]],
+                [f'{line}\n' for line in flows[1][1]],
+                fromfile=flows[0][0],
+                tofile=flows[1][0]
+            )
+        )
+
+        if lines:
+            sys.stdout.writelines(lines)
+            sys.exit(1)
 
 
 if __name__ == '__main__':

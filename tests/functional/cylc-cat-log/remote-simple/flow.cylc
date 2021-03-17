@@ -9,4 +9,4 @@
 [runtime]
     [[a-task]]
         script = echo "the quick brown fox"
-        platform = {{ environ['CYLC_TEST_PLATFORM'] | default("localhost") }}
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}

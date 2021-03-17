@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # play a game of Cylc suite ping pong bouncing a suite back and forth between
 # two servers by condemning them in turn in order to see if anything breaks
-export REQUIRE_PLATFORM='loc:remote fs:shared'
+export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 . "$(dirname "$0")/test_header"
 export CLOWNS="${CYLC_TEST_HOST}"
 export JOKERS="${HOSTNAME}"

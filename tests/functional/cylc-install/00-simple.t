@@ -18,28 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 20
-
-export RND_SUITE_NAME
-export RND_SUITE_SOURCE
-export RND_SUITE_RUNDIR
-
-function make_rnd_suite() {
-    # Create a randomly-named suite source directory.
-    # Define its run directory.
-    RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
-    RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
-    mkdir -p "${RND_SUITE_SOURCE}"
-    touch "${RND_SUITE_SOURCE}/flow.cylc"
-    RND_SUITE_RUNDIR="${RUN_DIR}/${RND_SUITE_NAME}"
-}
-
-function purge_rnd_suite() {
-    # Remove the suite source created by make_rnd_suite().
-    # And remove its run-directory too.
-    rm -rf "${RND_SUITE_SOURCE}"
-    rm -rf "${RND_SUITE_RUNDIR}"
-}
+set_test_number 26
 
 # Test default name: "cylc install" (suite in $PWD, no args)
 TEST_NAME="${TEST_NAME_BASE}-basic"
@@ -75,6 +54,33 @@ contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
 popd || exit 1
+purge_rnd_suite
+
+# Test cylc install succeeds if suite.rc file in source dir
+
+TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
+make_rnd_suite
+rm -f "${RND_SUITE_SOURCE}/flow.cylc"
+touch "${RND_SUITE_SOURCE}/suite.rc"
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" -C "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+__OUT__
+# test symlink not made in source dir
+exists_fail "flow.cylc"
+# test symlink correctly made in run dir
+pushd "${RND_SUITE_RUNDIR}/run1" || exit 1
+exists_ok "flow.cylc"
+if [[ $(readlink "${RND_SUITE_RUNDIR}/run1/flow.cylc") == "${RND_SUITE_RUNDIR}/run1/suite.rc" ]] ; then
+    ok "symlink.suite.rc"
+else
+    fail "symlink.suite.rc"
+fi
+
+INSTALL_LOG="$(find "${RND_SUITE_RUNDIR}/run1/log/install" -type f -name '*.log')"
+grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${INSTALL_LOG}" 
+popd || exit 1
+
 purge_rnd_suite
 
 # Test default path: "cylc install REG" --no-run-name (flow in $PWD)

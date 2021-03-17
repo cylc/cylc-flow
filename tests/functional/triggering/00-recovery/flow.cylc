@@ -8,6 +8,7 @@
 
 [scheduler]
     UTC mode = True
+    allow implicit tasks = True
     [[events]]
         expected task failures = model.20110101T1200Z
 

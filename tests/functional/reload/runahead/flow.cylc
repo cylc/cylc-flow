@@ -14,7 +14,7 @@
 [runtime]
     [[foo]]
         script = false
-    [[bar]]
+    [[bar, oops]]
         script = true
     [[reloader]]
         script = """

@@ -44,7 +44,7 @@
 #     run_graphql_ok SUITE TEST_NAME JSON
 #         Send a graphql query to the suite, extract the result from
 #         ${TEST_NAME}.stdout
-#     cmp_ok FILE_TEST [FILE_CONTROL]
+#     cmp_ok FILE_TEST FILE_CONTROL
 #         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
 #         if FILE_CONTROL is "-" or missing). By default, it uses "diff -u" to
 #         compare files. However, if an alternate command such as "xxdiff -D"
@@ -81,6 +81,8 @@
 #         tries grepping for each PATTERN in turn. Tests will only pass if the
 #         PATTERNs appear in FILE in the correct order. Runs one test per
 #         pattern, each prefixed by TEST_NAME.
+#     make_rnd_suite
+#         Create a randomly-named suite source directory.
 #     mock_smtpd_init
 #         Start a mock SMTP server daemon for testing. Write host:port setting
 #         to the variable TEST_SMTPD_HOST. Write pid of daemon to
@@ -108,7 +110,10 @@
 #         guaranteed to be running.
 #     purge [SUITE_NAME [PLATFORM]]
 #         Remove a workflow from the filesystem.
-#         Defaults to remving $SUITE_NAME on $CYLC_TEST_PLATFORM
+#         Defaults to removing $SUITE_NAME on $CYLC_TEST_PLATFORM
+#     purge_rnd_suite
+#         Remove a workflow source dir and rundir.
+#         Typically used with make_rnd_suite
 #     skip N SKIP_REASON
 #         echo "ok $((++T)) # skip SKIP_REASON" N times.
 #     skip_all SKIP_REASON
@@ -119,6 +124,7 @@
 #         Install a reference suite using `install_suite`, run a validation
 #         test on the suite and run the reference suite with `suite_run_ok`.
 #         Expect 2 OK tests.
+#     
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for e.g. jinja2 shebang).
@@ -133,6 +139,7 @@
 #         Delete private/public workflow databases for a cold start.
 #-------------------------------------------------------------------------------
 set -eu
+shopt -s extglob
 
 FAILURES=0
 SIGNALS="EXIT INT"
@@ -197,7 +204,9 @@ fail() {
 dump_std() {
     local TEST_NAME="$1"
     mkdir -p "${TEST_LOG_DIR}"  # directory may not exist if run fails very early
-    cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+    if [[ -s "${TEST_NAME}.stdout" ]]; then
+        cp -p "${TEST_NAME}.stdout" "${TEST_LOG_DIR}/${TEST_NAME}.stdout"
+    fi
     cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
 }
 
@@ -277,26 +286,25 @@ cmp_ok() {
     else
         cat "${TEST_NAME}.stderr" >&2
     fi
-    mkdir -p "${TEST_LOG_DIR}"
-    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    dump_std "$TEST_NAME"
     fail "${TEST_NAME}"
 }
 
 cmp_json() {
     local TEST_NAME="$1"
-    local FILE1="$2"
-    shift; shift
+    local FILE_TEST="$2"
+    local FILE_CONTROL="${3:--}"
 
     if python3 "$CYLC_REPO_DIR/tests/f/lib/python/diffr.py" \
-        "$(cat "${FILE1}")" "$@" >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
+        "$(cat "$FILE_CONTROL")" "$(cat "$FILE_TEST")" \
+        >"${TEST_NAME}.stdout" 2>"${TEST_NAME}.stderr"
     then
         ok "${TEST_NAME}"
         return
     else
         cat "${TEST_NAME}.stderr" >&2
     fi
-    mkdir -p "${TEST_LOG_DIR}"
-    cp -p "${TEST_NAME}.stderr" "${TEST_LOG_DIR}/${TEST_NAME}.stderr"
+    dump_std "$TEST_NAME"
     fail "${TEST_NAME}"
 }
 
@@ -420,7 +428,7 @@ graph_suite() {
 init_suite() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/flow.cylc"
@@ -431,7 +439,7 @@ init_suite() {
 install_suite() {
     local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
-    SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     SUITE_RUN_DIR="${RUN_DIR}/${SUITE_NAME}"
     mkdir -p "${TEST_DIR}/${SUITE_NAME}/" # make source dir
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${SUITE_NAME}/"
@@ -490,6 +498,19 @@ log_scan () {
     done
 }
 
+make_rnd_suite() {
+    # Create a randomly-named suite source directory.
+    # Define its run directory.
+    RND_SUITE_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
+    RND_SUITE_SOURCE="$PWD/${RND_SUITE_NAME}"
+    mkdir -p "${RND_SUITE_SOURCE}"
+    touch "${RND_SUITE_SOURCE}/flow.cylc"
+    RND_SUITE_RUNDIR="${RUN_DIR}/${RND_SUITE_NAME}"
+    export RND_SUITE_NAME
+    export RND_SUITE_SOURCE
+    export RND_SUITE_RUNDIR
+}
+
 # shellcheck disable=2120
 # these arguments are intentionally optional
 purge () {
@@ -516,7 +537,7 @@ purge () {
         # NOTE: lsof can raise warnings with some filesystems so ignore stderr
         # shellcheck disable=SC2034
         for try in $(seq 1 5); do
-            if grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); then
+            if ! grep -q "${SUITE_RUN_DIR}" < <(timeout 5 lsof 2>/dev/null); then
                 break
             fi
             sleep 1
@@ -543,6 +564,12 @@ purge () {
     # remove the suite run directory tree locally - if empty
     # NOTE: do this after remote purge as this removes the test config too
     bash -c "$CMD" 2>/dev/null || true
+}
+purge_rnd_suite() {
+    # Remove the suite source created by make_rnd_suite().
+    # And remove its run-directory too.
+    rm -rf "${RND_SUITE_SOURCE}"
+    rm -rf "${RND_SUITE_RUNDIR}"
 }
 
 poll() {
@@ -730,6 +757,15 @@ create_test_global_config() {
     mkdir 'etc'
     # Scheduler host self-identification method.
     echo "$PRE" >'etc/global.cylc'
+    cat >>'etc/global.cylc' <<__HERE__
+    # set a default timeout for all flow runs to avoid hanging tests
+    [scheduler]
+        [[events]]
+            inactivity = PT5M
+            timeout = PT5M
+            abort on inactivity = true
+            abort on timeout = true
+__HERE__
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
     if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
@@ -743,7 +779,7 @@ _parse_platform_spec () {
     local requirement="$1"
 
     local locality='local'
-    local job_runner='background'
+    local job_runner='*'
     local file_system='*'
     local comms='*'
     for req in ${requirement}; do
@@ -780,7 +816,9 @@ _get_test_platform () {
         # we are purposfully allowing pattern matching here
         # shellcheck disable=SC2053
         if [[ "$platform" == $required_platform ]]; then
-            export CYLC_TEST_PLATFORM="$platform"
+            CYLC_TEST_PLATFORM="$platform"
+            CYLC_TEST_JOB_RUNNER="$(cut -d '_' -f 3 <<< "$platform")"
+            export CYLC_TEST_PLATFORM CYLC_TEST_JOB_RUNNER
             return 0
         fi
     done
@@ -909,7 +947,6 @@ delete_db() {
 }
 
 
-
 # tags
 
 PATH="${CYLC_REPO_DIR}/bin:${PATH}"
@@ -921,7 +958,8 @@ TEST_SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_DIR="$(mktemp -d)"
 cd "${TEST_DIR}"
 TEST_SOURCE_DIR_BASE="${TEST_SOURCE_DIR##*tests/}"
-TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/cylctb-${CYLC_TEST_TIME_INIT}"
+# this prevents test runs started at the same time from conflicting
+TEST_LOG_DIR_BASE="${TMPDIR:-/tmp}/${USER}/${CYLC_TEST_REG_BASE}"
 TEST_LOG_DIR="${TEST_LOG_DIR_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 SUITE_RUN_FAILS=false
 
@@ -956,6 +994,12 @@ _get_test_host
 # extract a test install target from the test platform
 # provides: CYLC_TEST_INSTALL_TARGET
 _get_test_install_target
+
+if ${CYLC_SHOW_TEST_EXECUTION:-false}; then
+    # write the name of tests as they are run
+    # (helpful for debugging hanging tests)
+    echo "# $TEST_NAME_BASE" >&2
+fi
 
 set +x
 set +e

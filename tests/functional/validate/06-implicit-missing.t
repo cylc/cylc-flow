@@ -15,24 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation of special tasks names with non-word characters
+# Test validation of workflow for tasks without runtime entries
+# (accidental implicit tasks)
 . "$(dirname "$0")/test_header"
-set_test_number 2
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
+#-------------------------------------------------------------------------------
+set_test_number 1
+#-------------------------------------------------------------------------------
+init_suite "${TEST_NAME_BASE}" << __FLOW__
 [scheduling]
-    initial cycle point = 20200101
-    [[special tasks]]
-        clock-trigger = foo(PT0M)
     [[graph]]
-        T00 = bar
+        R1 = "foo => bar"
 [runtime]
-    [[bar]]
-        script = true
-__FLOW_CONFIG__
-run_fail "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/flow.cylc"
-cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-WARNING - naked tasks detected (no entry under [runtime]):
-	+       foo
-SuiteConfigError: strict validation fails naked tasks
-__ERR__
-exit
+    [[foo]]
+__FLOW__
+#-------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}-val"
+run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+#-------------------------------------------------------------------------------
+purge

@@ -19,7 +19,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name || matrix.chunk }}
-    timeout-minutes: 40
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +30,7 @@ jobs:
         platform: ['_local_background* _local_at*']
         # NOTE: includes must define ALL of the matrix values
         include:
-          # tests/k
+          # tests/k
           - name: 'flaky'
             os: 'ubuntu-latest'
             python-version: '3.7'
@@ -61,10 +61,10 @@ jobs:
     env:
       # Use non-UTC time zone
       TZ: XXX-05:30
-      # these vars are used by etc/bin/run-functional-tests
-      CHUNK: ${{ matrix.chunk }}
+      # these vars are used by etc/bin/run-functional-tests
       CYLC_TEST_PLATFORMS: ${{ matrix.platform }}
       CYLC_COVERAGE: 1
+      REMOTE_PLATFORM: ${{ contains(matrix.platform, '_remote') }}
 
     steps:
       - name: Checkout
@@ -116,7 +116,7 @@ jobs:
         run: |
           pip install git+https://github.com/metomi/rose@master
           pip install -e ."[all]"
-          pip install --no-deps git+https://github.com/cylc/cylc-rose.git@master
+          # pip install --no-deps git+https://github.com/cylc/cylc-rose.git@master
           mkdir "$HOME/cylc-run"
 
       - name: Configure Atrun
@@ -136,7 +136,7 @@ jobs:
           etc/bin/swarm --yes --debug configure
 
       - name: Swarm Build
-        if: contains(matrix.platform, '_remote')
+        if: env.REMOTE_PLATFORM == 'true'
         run: |
           # `swarm configure` seems to get ignored so override the user config
           cp etc/conf/ssh_config $HOME/.ssh/config
@@ -146,6 +146,21 @@ jobs:
           # test that it's up and running before proceeding
           sleep 1
           ssh -vv _remote_background_indep_poll hostname
+
+      - name: Filter Tests
+        env:
+          # NOTE: we only want the CHUNK set in this step else we will
+          # re-chunk tests later when they run
+          CHUNK: ${{ matrix.chunk }}
+        run: |
+          etc/bin/run-functional-tests \
+            --dry \
+            ${{ matrix.test-base }} \
+            > test-file
+          if [[ $REMOTE_PLATFORM == 'true' ]]; then
+            # skip tests that don't configure platform requirements
+            grep -l --color=never REQUIRE_PLATFORM $(cat test-file) > test-file
+          fi
 
       - name: Test
         id: test
@@ -162,16 +177,16 @@ jobs:
           etc/bin/run-functional-tests \
               -j "${NPROC}" \
               --state=save \
-              ${{ matrix.test-base }} \
+              $(cat test-file) \
               || (echo "::set-output name=finished::true" && false)
 
       - name: Time Out
         if: steps.test.outcome == 'failure' && steps.test.outputs.finished != 'true'
         run: |
           echo '::error:: tests timed-out'
-          # help to identify the tests that were running at the time
+          # help to identify the tests that were running at the time
           cylc scan --state=all --format=rich --color-blind
-          # fail the workflow
+          # fail the workflow
           false
 
       - name: Re-run failed tests
@@ -179,14 +194,14 @@ jobs:
         if: steps.test.outcome == 'failure' && steps.test.outputs.finished == 'true'
         run: |
           # re-run failed tests providing that they didn't time out first time
-          # TODO: make the tests deterministic so we don't need to do this
+          # TODO: make the tests deterministic so we don't need to do this
           etc/bin/run-functional-tests \
               -j 1 \
               -v \
-              --state=save,failed ${{ matrix.test-base }}
+              --state=save,failed $(cat test-file)
 
       - name: Copy cylc-run out of container
-        if: failure() && steps.test.outcome == 'failure' && contains(matrix.platform, '_remote')
+        if: failure() && steps.test.outcome == 'failure' && env.REMOTE_PLATFORM == 'true'
         run: |
           # pick the first host in the list
           host="$(cut -d ' ' -f 1 <<< "${{ matrix.platform }}")"
@@ -222,7 +237,7 @@ jobs:
           path: ~/cylc-run/
 
       - name: Fetch Remote Coverage
-        if: contains(matrix.platform, '_remote')
+        if: env.REMOTE_PLATFORM == 'true'
         run: |
           # pick the first host in the list
           host="$(cut -d ' ' -f 1 <<< "${{ matrix.platform }}")"

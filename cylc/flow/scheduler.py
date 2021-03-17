@@ -21,6 +21,7 @@ from dataclasses import dataclass
 import logging
 from optparse import Values
 import os
+from pathlib import Path
 from queue import Empty, Queue
 from shlex import quote
 from subprocess import Popen, PIPE, DEVNULL
@@ -28,7 +29,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Optional
+from typing import Optional, List
 from uuid import uuid4
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
@@ -177,13 +178,13 @@ class Scheduler:
     options: Optional[Values] = None
 
     # suite params
-    stop_mode: StopMode = None
+    stop_mode: Optional[StopMode] = None
     stop_task: Optional[str] = None
     stop_clock_time: Optional[int] = None
 
     # configuration
-    config: SuiteConfig = None  # flow config
-    cylc_config: DictTree = None  # [scheduler] config
+    config: Optional[SuiteConfig] = None  # flow config
+    cylc_config: Optional[DictTree] = None  # [scheduler] config
     flow_file: Optional[str] = None
     flow_file_update_time: Optional[float] = None
 
@@ -201,35 +202,38 @@ class Scheduler:
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
     main_loop_plugins: Optional[dict] = None
-    auto_restart_mode: AutoRestartMode = None
+    auto_restart_mode: Optional[AutoRestartMode] = None
     auto_restart_time: Optional[float] = None
 
     # tcp / zmq
     zmq_context: zmq.Context = None
     port: Optional[int] = None
     pub_port: Optional[int] = None
-    server: SuiteRuntimeServer = None
-    publisher: WorkflowPublisher = None
+    server: Optional[SuiteRuntimeServer] = None
+    publisher: Optional[WorkflowPublisher] = None
     barrier: Optional[Barrier] = None
     curve_auth: ThreadAuthenticator = None
     client_pub_key_dir: Optional[str] = None
 
     # managers
-    profiler: Profiler = None
-    pool: TaskPool = None
-    proc_pool: SubProcPool = None
-    task_job_mgr: TaskJobManager = None
-    task_events_mgr: TaskEventsManager = None
-    suite_event_handler: SuiteEventHandler = None
-    data_store_mgr: DataStoreMgr = None
-    suite_db_mgr: SuiteDatabaseManager = None
-    broadcast_mgr: BroadcastMgr = None
-    xtrigger_mgr: XtriggerManager = None
+    profiler: Optional[Profiler] = None
+    pool: Optional[TaskPool] = None
+    proc_pool: Optional[SubProcPool] = None
+    task_job_mgr: Optional[TaskJobManager] = None
+    task_events_mgr: Optional[TaskEventsManager] = None
+    suite_event_handler: Optional[SuiteEventHandler] = None
+    data_store_mgr: Optional[DataStoreMgr] = None
+    suite_db_mgr: Optional[SuiteDatabaseManager] = None
+    broadcast_mgr: Optional[BroadcastMgr] = None
+    xtrigger_mgr: Optional[XtriggerManager] = None
 
     # queues
     command_queue: Optional[Queue] = None
     message_queue: Optional[Queue] = None
     ext_trigger_queue: Optional[Queue] = None
+
+    # queue-released tasks still in prep
+    pre_submit_tasks: Optional[List[TaskProxy]] = None
 
     # profiling
     _profile_amounts: Optional[dict] = None
@@ -261,6 +265,7 @@ class Scheduler:
         # mutable defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
+        self.pre_submit_tasks = []
 
         self.restored_stop_task_id = None
 
@@ -276,7 +281,7 @@ class Scheduler:
 
         """
         # Install
-        source = suite_files.get_suite_source_dir()
+        source = suite_files.get_workflow_source_dir(Path.cwd())
         if source is None:
             # register workflow
             rund = get_workflow_run_dir(self.suite)
@@ -358,7 +363,7 @@ class Scheduler:
 
         self.xtrigger_mgr = XtriggerManager(
             self.suite,
-            self.owner,
+            user=self.owner,
             broadcast_mgr=self.broadcast_mgr,
             data_store_mgr=self.data_store_mgr,
             proc_pool=self.proc_pool,
@@ -632,7 +637,7 @@ class Scheduler:
 
         (Later on, tasks with parents will be spawned on-demand, and tasks with
         no parents will be auto-spawned when their own previous instances are
-        released from the runhead pool.)
+        released from the runahead pool.)
 
         """
         if self.config.start_point is not None:
@@ -689,7 +694,6 @@ class Scheduler:
 
         """
         distinct_install_target_platforms = []
-
         for itask in self.pool.get_rh_tasks():
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
@@ -1187,28 +1191,42 @@ class Scheduler:
             self.host, self.server.port))
 
     def process_task_pool(self):
-        """Process ALL TASKS whenever something has changed that might
-        require renegotiation of dependencies, etc"""
+        """Queue and release tasks, and submit task jobs.
+
+        The task queue manages references to task proxies in the task pool.
+
+        Newly released tasks are passed to job submission multiple times until
+        associated asynchronous host select, remote init, and remote install
+        processes are done.
+
+        """
         LOG.debug("BEGIN TASK PROCESSING")
         time0 = time()
         if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.set_suite_inactivity_timer()
+
+        # Forget tasks that are no longer preparing for job submission.
+        self.pre_submit_tasks = [
+            itask for itask in self.pre_submit_tasks if
+            itask.waiting_on_job_prep
+        ]
+
         if self.stop_mode is None and self.auto_restart_time is None:
-            itasks = self.pool.get_ready_tasks()
-            if itasks:
+            # Add newly released tasks to those still preparing.
+            self.pre_submit_tasks += self.pool.queue_and_release()
+            if self.pre_submit_tasks:
                 self.is_updated = True
-            self.task_job_mgr.task_remote_mgr.rsync_includes = (
-                self.config.get_validated_rsync_includes())
-            for itask in self.task_job_mgr.submit_task_jobs(
-                    self.suite,
-                    itasks,
-                    self.curve_auth,
-                    self.client_pub_key_dir,
-                    self.config.run_mode('simulation')
-            ):
-                # TODO log itask.flow_label here (beware effect on ref tests)
-                LOG.info('[%s] -triggered off %s',
-                         itask, itask.state.get_resolved_dependencies())
+                self.task_job_mgr.task_remote_mgr.rsync_includes = (
+                    self.config.get_validated_rsync_includes())
+                for itask in self.task_job_mgr.submit_task_jobs(
+                        self.suite,
+                        self.pre_submit_tasks,
+                        self.curve_auth,
+                        self.client_pub_key_dir,
+                        self.config.run_mode('simulation')):
+                    # TODO log flow labels here (beware effect on ref tests)
+                    LOG.info('[%s] -triggered off %s',
+                             itask, itask.state.get_resolved_dependencies())
 
         self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
         self.xtrigger_mgr.housekeep()

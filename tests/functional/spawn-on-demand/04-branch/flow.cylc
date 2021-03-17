@@ -1,5 +1,7 @@
 # Check branching without SoS suicide triggers.
 # Scheduler should shut down normally even though one branch does not run.
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = """foo:out1 => fish

@@ -62,7 +62,9 @@ jobs:
 
       - name: typing
         run: |
-          mypy
+          mypy --explicit-package-bases
+        # Need --explicit-package-bases because we don't have __init__.py in
+        # top-level dir
 
       - name: Doctests
         run: |

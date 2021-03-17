@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Any, Dict, Optional, Tuple, Type
+from pathlib import Path
 import pytest
 import logging
 from unittest.mock import Mock
@@ -26,6 +27,7 @@ from cylc.flow.cycling import iso8601, loader
 from cylc.flow.exceptions import SuiteConfigError
 from cylc.flow.suite_files import SuiteFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
+from cylc.flow.xtrigger_mgr import XtriggerManager
 
 Fixture = Any
 
@@ -35,6 +37,8 @@ def get_test_inheritance_quotes():
     return [
         # first case, second family name surrounded by double quotes
         b'''
+[scheduler]
+    allow implicit tasks = True
 [task parameters]
     major = 1..5
     minor = 10..20
@@ -53,6 +57,8 @@ def get_test_inheritance_quotes():
         ''',
         # second case, second family surrounded by single quotes
         b'''
+[scheduler]
+    allow implicit tasks = True
 [task parameters]
     major = 1..5
     minor = 10..20
@@ -71,6 +77,8 @@ def get_test_inheritance_quotes():
         ''',
         # third case, second family name without quotes
         b'''
+[scheduler]
+    allow implicit tasks = True
 [task parameters]
     major = 1..5
     minor = 10..20
@@ -93,7 +101,9 @@ def get_test_inheritance_quotes():
 class TestSuiteConfig:
     """Test class for the Cylc SuiteConfig object."""
 
-    def test_xfunction_imports(self, mock_glbl_cfg, tmp_path):
+    def test_xfunction_imports(
+            self, mock_glbl_cfg: Fixture, tmp_path: Path,
+            xtrigger_mgr: XtriggerManager):
         """Test for a suite configuration with valid xtriggers"""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
@@ -110,6 +120,8 @@ class TestSuiteConfig:
         name_a_tree_file.write_text("""name_a_tree = lambda: 'jacaranda'""")
         flow_file = tmp_path / SuiteFiles.FLOW_FILE
         flow_config = """
+        [scheduler]
+            allow implicit tasks = True
         [scheduling]
             initial cycle point = 2018-01-01
             [[xtriggers]]
@@ -118,8 +130,10 @@ class TestSuiteConfig:
                 R1 = '@tree => qux'
         """
         flow_file.write_text(flow_config)
-        suite_config = SuiteConfig(suite="name_a_tree", fpath=flow_file,
-                                   options=Mock(spec=[]))
+        suite_config = SuiteConfig(
+            suite="name_a_tree", fpath=flow_file, options=Mock(spec=[]),
+            xtrigger_mgr=xtrigger_mgr
+        )
         assert 'tree' in suite_config.xtrigger_mgr.functx_map
 
     def test_xfunction_import_error(self, mock_glbl_cfg, tmp_path):
@@ -245,76 +259,6 @@ class TestSuiteConfig:
                         ['MAINFAM_major1_minor10'])
                 assert 'goodbye_0_major1_minor10' in \
                        config.runtime['descendants']['SOMEFAM']
-
-
-def test_queue_config_repeated(caplog, tmp_path):
-    """Test repeated assignment to same queue."""
-    flow_file_content = """
-[scheduling]
-   [[queues]]
-       [[[q1]]]
-           members = A, B
-       [[[q2]]]
-           members = x
-   [[dependencies]]
-       graph = "x => y"
-[runtime]
-   [[A]]
-   [[B]]
-   [[x]]
-       inherit = A, B
-   [[y]]
-    """
-    flow_file = tmp_path / SuiteFiles.FLOW_FILE
-    flow_file.write_text(flow_file_content)
-    SuiteConfig(suite="qtest", fpath=flow_file.absolute(),
-                options=Mock(spec=[]))
-    log = caplog.messages[0].split('\n')
-    assert log[0] == "Queue configuration warnings:"
-    assert log[1] == "+ q2: ignoring x (already assigned to a queue)"
-
-
-def test_queue_config_not_used_not_defined(caplog, tmp_path):
-    """Test task not defined vs no used, in queue config."""
-    flow_file_content = """
-[scheduling]
-   [[queues]]
-       [[[q1]]]
-           members = foo
-       [[[q2]]]
-           members = bar
-   [[dependencies]]
-       # foo and bar not used
-       graph = "beef => wellington"
-[runtime]
-   [[beef]]
-   [[wellington]]
-   [[foo]]
-   # bar not even defined
-    """
-    flow_file = tmp_path / SuiteFiles.FLOW_FILE
-    flow_file.write_text(flow_file_content)
-    SuiteConfig(suite="qtest", fpath=flow_file.absolute(),
-                options=Mock(spec=[]))
-    log = caplog.messages[0].split('\n')
-    assert log[0] == "Queue configuration warnings:"
-    assert log[1] == "+ q1: ignoring foo (task not used in the graph)"
-    assert log[2] == "+ q2: ignoring bar (task not defined)"
-
-
-def test_missing_initial_cycle_point():
-    """Test that validation fails when the initial cycle point is
-    missing for datetime cycling"""
-    mocked_config = Mock()
-    mocked_config.cfg = {
-        'scheduling': {
-            'cycling mode': None,
-            'initial cycle point': None
-        }
-    }
-    with pytest.raises(SuiteConfigError) as exc:
-        SuiteConfig.process_initial_cycle_point(mocked_config)
-    assert "This suite requires an initial cycle point" in str(exc.value)
 
 
 @pytest.mark.parametrize(
@@ -637,6 +581,80 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
         assert str(mocked_config.final_point) == str(expected_fcp)
 
 
+@pytest.mark.parametrize(
+    'scheduling_cfg, scheduling_expected, expected_err',
+    [
+        pytest.param(
+            {
+                'graph': {}
+            },
+            None,
+            (SuiteConfigError, "No suite dependency graph defined"),
+            id="Empty graph"
+        ),
+        pytest.param(
+            {
+                'graph': {'R1': 'foo'}
+            },
+            {
+                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'initial cycle point': '1',
+                'final cycle point': '1',
+                'graph': {'R1': 'foo'}
+            },
+            None,
+            id="Pure acyclic graph"
+        ),
+        pytest.param(
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'graph': {'R1': 'foo'}
+            },
+            {
+                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'graph': {'R1': 'foo'}
+            },
+            None,
+            id="Pure acyclic graph but datetime cycling"
+        ),
+        pytest.param(
+            {
+                'graph': {'R1': 'foo', 'R2': 'bar'}
+            },
+            {
+                'graph': {'R1': 'foo', 'R2': 'bar'}
+            },
+            None,
+            id="Acyclic graph with >1 recurrence"
+        ),
+    ]
+)
+def test_prelim_process_graph(
+        scheduling_cfg: Dict[str, Any],
+        scheduling_expected: Optional[Dict[str, Any]],
+        expected_err: Optional[Tuple[Type[Exception], str]]):
+    """Test SuiteConfig.prelim_process_graph().
+
+    Params:
+        scheduling_cfg: 'scheduling' section of workflow config.
+        scheduling_expected: The expected scheduling section after preliminary
+            processing.
+        expected_err: Exception class expected to be raised plus the message.
+    """
+    mock_config = Mock(cfg={
+        'scheduling': scheduling_cfg
+    })
+
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            SuiteConfig.prelim_process_graph(mock_config)
+        assert msg in str(exc.value)
+    else:
+        SuiteConfig.prelim_process_graph(mock_config)
+        assert mock_config.cfg['scheduling'] == scheduling_expected
+
+
 def test_utc_mode(caplog, mock_glbl_cfg):
     """Test that UTC mode is handled correctly."""
     caplog.set_level(logging.WARNING, CYLC_LOG)
@@ -779,6 +797,7 @@ def test_valid_rsync_includes_returns_correct_list(tmp_path):
             graph = "blah => deeblah"
     [scheduler]
         install = dir/, dir2/, file1, file2
+        allow implicit tasks = True
     """
     flow_cylc = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
     flow_cylc.write_text(flow_cylc_content)
@@ -821,7 +840,7 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
 
 
 @pytest.mark.parametrize(
-    'opt', [None, 'check_circular', 'strict']
+    'opt', [None, 'check_circular']
 )
 def test_check_circular(opt, monkeypatch, caplog, tmp_path):
     """Test SuiteConfig._check_circular()."""

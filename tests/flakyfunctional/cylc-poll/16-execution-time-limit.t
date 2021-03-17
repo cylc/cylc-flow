@@ -19,15 +19,15 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
-create_test_global_config '
+create_test_global_config '' "
 [platforms]
-   [[localhost]]
+   [[$CYLC_TEST_PLATFORM]]
         communication method = poll
         submission polling intervals = PT2S
         execution polling intervals = PT1M
         job runner = background
         execution time limit polling intervals = PT5S
-'
+"
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"

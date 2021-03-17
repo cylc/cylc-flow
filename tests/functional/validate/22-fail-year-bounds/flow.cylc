@@ -1,3 +1,5 @@
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = +10000-01-01T00
     [[graph]]

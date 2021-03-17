@@ -49,7 +49,7 @@ install_requires = [
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
     'metomi-isodatetime>=1!2.0.2, <1!2.1.0',
-    'protobuf==3.13.*',
+    'protobuf==3.15.*',
     'pyuv==1.4.*',
     'pyzmq==19.0.*',
     'psutil>=5.6.0',
@@ -110,7 +110,7 @@ setup(
     package_data={
         'cylc.flow': [
             'etc/*.yaml', 'etc/flow*.eg', 'etc/job.sh',
-            'etc/syntax/*', 'etc/cylc-bash-completion'
+            'etc/syntax/*', 'etc/cylc-bash-completion', 'py.typed'
         ]
     },
     install_requires=install_requires,

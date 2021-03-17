@@ -19,10 +19,24 @@
 # Test "cylc message" with multi-line messages. The RE to strip 'at <TIME>' off
 # task messages was assuming a single line string.
 
+export REQUIRE_PLATFORM='loc:* comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+init_suite "${TEST_NAME_BASE}" <<__FLOW__
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        platform = $CYLC_TEST_PLATFORM
+        script = """
+            cylc message -p CUSTOM "the quick brown fox
+            jumped over the lazy dog"
+        """
+        [[[events]]]
+            custom handler = echo %(message)s
+__FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
