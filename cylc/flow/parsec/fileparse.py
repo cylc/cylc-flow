@@ -334,6 +334,8 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
         extra_vars['template_variables'].update(template_vars)
         template_vars = extra_vars['template_variables']
 
+    template_vars['CYLC_TEMPLATE_VARS'] = template_vars
+
     # process with EmPy
     if do_empy:
         if (
