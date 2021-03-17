@@ -19,24 +19,19 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 3
+set_test_number 2
 
 cat > 'flow.cylc' <<__HEREDOC__
 #!jinja2
-{% from "cylc.flow" import LOG %} # cylc8
-{% do LOG.info(CYLC_TEMPLATE_VARS) %}
 [scheduling]
   initial cycle point = 2020
   [[graph]]
-    R1 = another => one_thing
+    R1 = foo
 
 [runtime]
-  [[root]]
-    script = true
-  [[another]]
-  [[one_thing]]
+  [[foo]]
 __HEREDOC__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate .
-grep_ok "CYLC_TEMPLATE_VARS" "${TEST_NAME_BASE}-validate.stderr"
-grep_ok "CYLC_VERSION" "${TEST_NAME_BASE}-validate.stderr"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate . --debug
+grep_ok "CYLC_TEMPLATE_VARS={'CYLC_VERSION': '.*', 'CYLC_TEMPLATE_VARS': {...}}" \
+    "${TEST_NAME_BASE}-validate.stderr"
