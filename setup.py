@@ -66,6 +66,7 @@ tests_require = [
     'pytest-asyncio>=0.14.0',
     'pytest-cov>=2.8.0',
     'pytest-xdist>=2',
+    'pytest-env>=0.6.2',
     'pytest>=6',
     'testfixtures>=6.11.0'
 ]
