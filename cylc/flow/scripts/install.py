@@ -173,13 +173,14 @@ def install(
 ) -> None:
     if opts.no_run_name and opts.run_name:
         parser.error(
-            """options --no-run-name and --run-name are mutually exclusive.
-            Use one or the other""")
+            "options --no-run-name and --run-name are mutually exclusive.")
 
     if flow_name is None:
         flow_name = opts.flow_name
         source = opts.source
     else:
+        if opts.source:
+            parser.error("REG and --directory are mutually exclusive.")
         source = search_install_source_dirs(flow_name)
 
     for entry_point in pkg_resources.iter_entry_points(
