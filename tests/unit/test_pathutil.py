@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for "cylc.flow.pathutil"."""
 
+import logging
+import os
+from pathlib import Path
+import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from unittest import TestCase
 from unittest.mock import patch, MagicMock, call
 
-import pytest
-import os
-import logging
-
 from cylc.flow.exceptions import WorkflowFilesError
-
 from cylc.flow.pathutil import (
+    expand_path,
     get_dirs_to_symlink,
     get_remote_suite_run_dir,
     get_remote_suite_run_job_dir,
@@ -42,6 +43,22 @@ from cylc.flow.pathutil import (
     make_suite_run_tree,
     remove_dir
 )
+
+
+HOME = Path.home()
+
+
+@pytest.mark.parametrize(
+    'path, expected',
+    [('~/moo', os.path.join(HOME, 'moo')),
+     ('$HOME/moo', os.path.join(HOME, 'moo')),
+     ('~/$FOO/moo', os.path.join(HOME, 'foo', 'bar', 'moo')),
+     ('$NON_EXIST/moo', '$NON_EXIST/moo')]
+)
+def test_expand_path(path: str, expected: str, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv('FOO', 'foo/bar')
+    monkeypatch.delenv('NON_EXIST', raising=False)
+    assert expand_path(path) == expected
 
 
 @pytest.mark.parametrize(

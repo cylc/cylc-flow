@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import sqlite3
 
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcSuiteDBChecker
+from cylc.flow.pathutil import expand_path
 from cylc.flow.platforms import get_platform
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -68,10 +68,8 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             to this xtrigger.
 
     """
-    cylc_run_dir = os.path.expandvars(
-        os.path.expanduser(
-            cylc_run_dir or get_platform()['run directory']
-        )
+    cylc_run_dir = expand_path(
+        cylc_run_dir or get_platform()['run directory']
     )
     if offset is not None:
         point = str(add_offset(point, offset))

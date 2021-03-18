@@ -39,6 +39,7 @@ from cylc.flow.exceptions import (
     WorkflowFilesError)
 import cylc.flow.flags
 from cylc.flow.pathutil import (
+    expand_path,
     get_workflow_run_dir,
     make_localhost_symlinks,
     remove_dir,
@@ -1116,7 +1117,7 @@ def install_workflow(
         source = Path.cwd()
     elif Path(source).name == SuiteFiles.FLOW_FILE:
         source = Path(source).parent
-    source = Path(source).expanduser()
+    source = Path(expand_path(source))
     if not flow_name:
         flow_name = Path.cwd().stem
     validate_flow_name(flow_name)
@@ -1124,7 +1125,7 @@ def install_workflow(
         raise WorkflowFilesError(
             f'Run name cannot be "{run_name}".')
     validate_source_dir(source, flow_name)
-    run_path_base = Path(get_workflow_run_dir(flow_name)).expanduser()
+    run_path_base = Path(get_workflow_run_dir(flow_name))
     relink, run_num, rundir = get_run_dir(run_path_base, run_name, no_run_name)
     if Path(rundir).exists():
         raise WorkflowFilesError(
@@ -1263,7 +1264,7 @@ def check_flow_file(
 
     Returns the path of the flow file if present.
     """
-    flow_file_path = Path(path, SuiteFiles.FLOW_FILE)
+    flow_file_path = Path(expand_path(path), SuiteFiles.FLOW_FILE)
     if flow_file_path.is_file():
         # Note: this includes if flow.cylc is a symlink
         return flow_file_path
@@ -1312,11 +1313,9 @@ def validate_source_dir(source, flow_name):
             raise WorkflowFilesError(
                 f'{flow_name} installation failed. - {dir_} exists in source '
                 'directory.')
-    cylc_run_dir = Path(
-        get_platform()['run directory'].replace('$HOME', '~')
-    ).expanduser()
-    if os.path.abspath(os.path.realpath(cylc_run_dir)
-                       ) in os.path.abspath(os.path.realpath(source)):
+    cylc_run_dir = Path(get_workflow_run_dir(''))
+    if (os.path.abspath(os.path.realpath(cylc_run_dir))
+            in os.path.abspath(os.path.realpath(source))):
         raise WorkflowFilesError(
             f'{flow_name} installation failed. Source directory should not be '
             f'in {cylc_run_dir}')
@@ -1346,9 +1345,8 @@ def search_install_source_dirs(flow_name: str) -> Optional[Path]:
     'global.cylc[install]source dirs' search path."""
     search_path: List[str] = glbl_cfg().get(['install', 'source dirs'])
     for path in search_path:
-        fpath = os.path.expandvars(Path(path, flow_name))
         try:
-            flow_file = check_flow_file(fpath)
+            flow_file = check_flow_file(Path(path, flow_name))
             return flow_file.parent
         except WorkflowFilesError:
             continue

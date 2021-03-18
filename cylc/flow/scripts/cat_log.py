@@ -69,6 +69,7 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import (
+    expand_path,
     get_remote_suite_run_job_dir,
     get_suite_run_job_dir,
     get_suite_run_log_name,
@@ -321,8 +322,8 @@ def main(parser, options, *args, color=False):
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands come from global config on suite host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
-        logpath = os.path.expandvars(logpath)
-        tail_tmpl = os.path.expandvars(tail_tmpl)
+        logpath = expand_path(logpath)
+        tail_tmpl = expand_path(tail_tmpl)
         try:
             batchview_cmd = options.remote_args[3]
         except IndexError:

@@ -119,9 +119,9 @@ def main(
         if source is None:
             raise WorkflowFilesError(
                 f'"{Path.cwd()}" is not a workflow run directory.')
-        base_run_dir = Path(get_workflow_run_dir('')).expanduser()
+        base_run_dir = Path(get_workflow_run_dir(''))
         named_run = str(Path.cwd().relative_to(base_run_dir.resolve()))
-    run_dir = Path(get_workflow_run_dir(named_run)).expanduser()
+    run_dir = Path(get_workflow_run_dir(named_run))
     if not run_dir.exists():
         raise WorkflowFilesError(
             f'"{named_run}" is not an installed workflow.')
