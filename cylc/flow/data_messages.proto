@@ -25,7 +25,7 @@ syntax = "proto3";
  * message modules.
  *
  * Command:
- * $ protoc --experimental_allow_proto3_optional -I=./ --python_out=./ data_messages.proto && sed -i '1i# type: ignore' data_messages_pb2.py
+ * $ protoc -I=./ --python_out=./ data_messages.proto && sed -i '1i# type: ignore' data_messages_pb2.py
  *
  * Pre-compiled protoc binary may be download from:
  * https://github.com/protocolbuffers/protobuf/releases
@@ -60,6 +60,10 @@ message PbTimeZone {
     optional int32 minutes = 2;
     optional string string_basic = 3;
     optional string string_extended = 4;
+}
+
+message PbTaskProxyRefs {
+    repeated string task_proxies = 1;
 }
 
 message PbWorkflow {
@@ -98,6 +102,7 @@ message PbWorkflow {
     optional int32 pub_port = 33;
     optional string broadcasts = 34;
     optional int32 is_queued_total = 35;
+    map<string, PbTaskProxyRefs> latest_state_tasks = 36;
 }
 
 message PbJob {

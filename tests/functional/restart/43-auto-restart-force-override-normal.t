@@ -42,6 +42,8 @@ init_suite "${TEST_NAME_BASE}" <<< '
     initial cycle point = 2000
     [[graph]]
         P1Y = foo[-P1Y] => foo
+[runtime]
+    [[foo]]
 '
 
 create_test_global_config '' "

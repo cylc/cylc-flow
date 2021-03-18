@@ -56,6 +56,7 @@ query {
     }
     nsDefOrder
     states
+    latestStateTasks (states: [\"waiting\"])
   }
 }",
   "variables": null
@@ -115,7 +116,8 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
                 "foo",
                 "root"
             ],
-            "states": []
+            "states": [],
+            "latestStateTasks": {}
         }
     ]
 }

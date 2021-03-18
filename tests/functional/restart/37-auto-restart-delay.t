@@ -48,6 +48,8 @@ init_suite "${TEST_NAME_BASE}" <<< '
     initial cycle point = 2000
     [[graph]]
         P1D = foo
+[runtime]
+    [[foo]]
 '
 
 MAX_RESTART_DELAY=30

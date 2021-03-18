@@ -15,34 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validating platforms in suite.
+# Test CYLC_TEMPLATE_VARS exported.
+
 . "$(dirname "$0")/test_header"
 
-set_test_number 1
+set_test_number 2
 
-TEST_NAME="${TEST_NAME_BASE}-val"
-
-create_test_global_config "" "
-    [platforms]
-        [[localhost, lewis]]
-            hosts = localhost
-            install target = localhost
-"
-
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[meta]
-    title = "Test validation of simple multiple inheritance"
-
-    description = """Bug identified at 5.1.1-314-g4960684."""
-
+cat > 'flow.cylc' <<__HEREDOC__
+#!jinja2
 [scheduling]
-[[graph]]
-R1 = """foo"""
+  initial cycle point = 2020
+  [[graph]]
+    R1 = foo
+
 [runtime]
-[[foo]]
-platform=lewis
+  [[foo]]
+__HEREDOC__
 
-
-__FLOW_CONFIG__
-
-run_ok "${TEST_NAME}" cylc validate flow.cylc
+run_ok "${TEST_NAME_BASE}-validate" cylc validate . --debug
+grep_ok "CYLC_TEMPLATE_VARS={'CYLC_VERSION': '.*', 'CYLC_TEMPLATE_VARS': {...}}" \
+    "${TEST_NAME_BASE}-validate.stderr"
