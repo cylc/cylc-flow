@@ -34,7 +34,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -111,7 +110,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -188,7 +186,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -267,7 +264,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -345,7 +341,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -423,7 +418,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -501,7 +495,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -579,7 +572,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -657,7 +649,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -735,7 +726,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -813,7 +803,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -891,7 +880,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 
@@ -969,7 +957,6 @@
     [[[remote]]]
         host = 
         owner = 
-        suite definition directory = 
         retrieve job logs = 
         retrieve job logs max size = 
         retrieve job logs retry delays = 

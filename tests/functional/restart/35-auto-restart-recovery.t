@@ -40,6 +40,8 @@ init_suite "${TEST_NAME}" <<< '
 [scheduling]
     [[graph]]
         R1 = foo
+[runtime]
+    [[foo]]
 '
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
