@@ -556,6 +556,14 @@ def resolve_state_totals(root, info, **args):
     return state_totals
 
 
+def resolve_state_tasks(root, info, **args):
+    data = dict(getattr(root, to_snake_case(info.field_name), {}))
+    return {
+        state: list(data[state].task_proxies)
+        for state in args['states']
+        if state in data}
+
+
 async def resolve_broadcasts(root, info, **args):
     """Resolve and parse broadcasts from JSON."""
     broadcasts = json.loads(
@@ -713,6 +721,12 @@ class Workflow(ObjectType):
     is_held_total = Int()
     is_queued_total = Int()
     state_totals = GenericScalar(resolver=resolve_state_totals)
+    latest_state_tasks = GenericScalar(
+        states=List(
+            String,
+            description="List of task states to show",
+            default_value=TASK_STATUSES_ORDERED),
+        resolver=resolve_state_tasks)
     workflow_log_dir = String()
     time_zone_info = Field(TimeZone)
     tree_depth = Int()
