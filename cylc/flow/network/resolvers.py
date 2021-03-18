@@ -36,6 +36,7 @@ from cylc.flow.network.schema import (
 )
 
 if TYPE_CHECKING:
+    from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
 
 
@@ -443,15 +444,11 @@ class BaseResolvers:
 class Resolvers(BaseResolvers):
     """Workflow Service context GraphQL query and mutation resolvers."""
 
-    schd: 'Scheduler' = None
+    schd: 'Scheduler'
 
-    def __init__(self, data, **kwargs):
+    def __init__(self, data: 'DataStoreMgr', schd: 'Scheduler') -> None:
         super().__init__(data)
-
-        # Set extra attributes
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+        self.schd = schd
 
     # Mutations
     async def mutator(self, *m_args):

@@ -43,7 +43,7 @@ from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
 from cylc.flow.exceptions import (
-    CylcError, SuiteConfigError, PlatformLookupError
+    CyclingError, CylcError, SuiteConfigError, PlatformLookupError
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_suite_host
@@ -164,6 +164,29 @@ class Scheduler:
         'reload_suite'
     )
 
+    # managers
+    profiler: Profiler
+    pool: TaskPool
+    proc_pool: SubProcPool
+    task_job_mgr: TaskJobManager
+    task_events_mgr: TaskEventsManager
+    suite_event_handler: SuiteEventHandler
+    data_store_mgr: DataStoreMgr
+    suite_db_mgr: SuiteDatabaseManager
+    broadcast_mgr: BroadcastMgr
+    xtrigger_mgr: XtriggerManager
+
+    # queues
+    command_queue: Queue
+    message_queue: Queue
+    ext_trigger_queue: Queue
+
+    # configuration
+    config: SuiteConfig  # flow config
+    cylc_config: DictTree  # [scheduler] config
+    flow_file: Optional[str] = None
+    flow_file_update_time: Optional[float] = None
+
     # flow information
     suite: Optional[str] = None
     owner: Optional[str] = None
@@ -181,12 +204,6 @@ class Scheduler:
     stop_mode: Optional[StopMode] = None
     stop_task: Optional[str] = None
     stop_clock_time: Optional[int] = None
-
-    # configuration
-    config: Optional[SuiteConfig] = None  # flow config
-    cylc_config: Optional[DictTree] = None  # [scheduler] config
-    flow_file: Optional[str] = None
-    flow_file_update_time: Optional[float] = None
 
     # directories
     suite_dir: Optional[str] = None
@@ -215,23 +232,6 @@ class Scheduler:
     barrier: Optional[Barrier] = None
     curve_auth: ThreadAuthenticator = None
     client_pub_key_dir: Optional[str] = None
-
-    # managers
-    profiler: Optional[Profiler] = None
-    pool: Optional[TaskPool] = None
-    proc_pool: Optional[SubProcPool] = None
-    task_job_mgr: Optional[TaskJobManager] = None
-    task_events_mgr: Optional[TaskEventsManager] = None
-    suite_event_handler: Optional[SuiteEventHandler] = None
-    data_store_mgr: Optional[DataStoreMgr] = None
-    suite_db_mgr: Optional[SuiteDatabaseManager] = None
-    broadcast_mgr: Optional[BroadcastMgr] = None
-    xtrigger_mgr: Optional[XtriggerManager] = None
-
-    # queues
-    command_queue: Optional[Queue] = None
-    message_queue: Optional[Queue] = None
-    ext_trigger_queue: Optional[Queue] = None
 
     # queue-released tasks still in prep
     pre_submit_tasks: Optional[List[TaskProxy]] = None
@@ -923,11 +923,13 @@ class Scheduler:
 
     def command_set_hold_point(self, point: str) -> None:
         """Hold all tasks after the specified cycle point."""
-        point = TaskID.get_standardised_point(point)
+        cycle_point = TaskID.get_standardised_point(point)
+        if cycle_point is None:
+            raise CyclingError("Cannot set hold point to None")
         LOG.info(
-            f"Setting hold cycle point: {point}\n"
+            f"Setting hold cycle point: {cycle_point}\n"
             "All tasks after this point will be held.")
-        self.pool.set_hold_point(point)
+        self.pool.set_hold_point(cycle_point)
 
     def command_pause(self) -> None:
         """Pause the workflow."""
@@ -1633,14 +1635,14 @@ class Scheduler:
             else:
                 LOG.critical('Suite shutting down')
 
-        if self.proc_pool:
+        if hasattr(self, 'proc_pool'):
             self.proc_pool.close()
             if self.proc_pool.is_not_done():
                 # e.g. KeyboardInterrupt
                 self.proc_pool.terminate()
             self.proc_pool.process()
 
-        if self.pool is not None:
+        if hasattr(self, 'pool'):
             if not self.is_stalled:
                 # (else already reported)
                 self.pool.report_unmet_deps()

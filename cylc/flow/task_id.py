@@ -17,7 +17,9 @@
 
 
 import re
+from typing import Optional
 
+from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 
@@ -87,7 +89,7 @@ class TaskID:
         return point_string
 
     @classmethod
-    def get_standardised_point(cls, point_string):
+    def get_standardised_point(cls, point_string: str) -> Optional[PointBase]:
         """Return a standardised point."""
         return get_point(cls.get_standardised_point_string(point_string))
 

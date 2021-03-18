@@ -978,10 +978,7 @@ class TaskPool:
             )
 
     def set_hold_point(self, point: 'PointBase') -> None:
-        """Set the point after which all tasks must be held.
-
-        If None, unset the hold point.
-        """
+        """Set the point after which all tasks must be held."""
         self.hold_point = point
         for itask in self.get_all_tasks():
             if itask.point > point:
