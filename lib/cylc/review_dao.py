@@ -205,10 +205,18 @@ class CylcReviewDAO(object):
         except sqlite3.Error:
             return ([], 0)
 
-        # Get entries
-        entries = []
-        entry_of = {}
-        stmt = ("SELECT" +
+        # Detemine Cylc version for a given suite: Database changes require
+        # A different database query for Cylc8.
+        suite_info = self._db_exec(
+            user_name, suite_name, 'SELECT * FROM suite_params',[]
+        )
+        for row in suite_info:
+            if row[0] == u'cylc_version':
+                cylc_version = row[1]
+
+        if cylc_version[0] == '7':
+            stmt = (
+                "SELECT" +
                 " task_states.time_updated AS time," +
                 " cycle, name," +
                 " task_jobs.submit_num AS submit_num," +
@@ -220,13 +228,37 @@ class CylcReviewDAO(object):
                 " FROM task_states LEFT JOIN task_jobs USING (cycle, name)" +
                 where_expr +
                 " ORDER BY " +
-                self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"]))
+                self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"])
+            )
+        else:
+            stmt = (
+                "SELECT" +
+                " task_states.time_updated AS time," +
+                " cycle, name," +
+                " task_jobs.submit_num AS submit_num," +
+                " task_states.submit_num AS submit_num_max," +
+                " task_states.status AS task_status," +
+                " time_submit, submit_status," +
+                " time_run, time_run_exit, run_signal, run_status," +
+                " platform_name, job_runner_name, job_id" +
+                " FROM task_states LEFT JOIN task_jobs USING (cycle, name)" +
+                where_expr +
+                " ORDER BY " +
+                self.JOB_ORDERS.get(order, self.JOB_ORDERS["time_desc"])
+            )
+        # Get entries
+        entries = []
+        entry_of = {}
+
         limit_args = []
         if limit:
             stmt += " LIMIT ? OFFSET ?"
             limit_args = [limit, offset]
-        for row in self._db_exec(
-                user_name, suite_name, stmt, where_args + limit_args):
+
+        db_data = self._db_exec(
+            user_name, suite_name, stmt, where_args + limit_args
+        )
+        for row in db_data:
             (
                 cycle, name, submit_num, submit_num_max, task_status,
                 time_submit, submit_status,
