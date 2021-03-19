@@ -68,7 +68,13 @@ class CylcReviewService(object):
     SEARCH_MODE_TEXT = "TEXT"
     SUITES_PER_PAGE = 100
     VIEW_SIZE_MAX = 10 * 1024 * 1024  # 10MB
-    WORKFLOW_FILES = ['suite.rc', 'suite.rc.processed', 'rose-suite.info', 'flow.cylc']
+    WORKFLOW_FILES = [
+        'suite.rc',
+        'suite.rc.processed',
+        'flow.cylc',
+        'flow.cylc.processed',
+        'rose-suite.info',
+    ]
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
@@ -834,9 +840,7 @@ class CylcReviewService(object):
             cherrypy.HTTPError(403)
 
         Whitelist paths:
-            * ``suite.rc``.
-            * ``suite.rc.processed``.
-            * ``log/``.
+            Paths in cls.WORKFLOW_FILES
 
         Blacklist non-normalised paths - see ``_check_path_normalised``.
 
