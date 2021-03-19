@@ -753,13 +753,20 @@ class CylcReviewService(object):
                                   "mtime": f_stat.st_mtime,
                                   "size": f_stat.st_size}
 
-        # Get cylc suite log files
-        for f_name in glob(os.path.join(dir_, "log/suite/log*")):
-            key = os.path.relpath(f_name, dir_)
-            f_stat = os.stat(f_name)
-            logs_info[key] = {"path": key,
-                              "mtime": f_stat.st_mtime,
-                              "size": f_stat.st_size}
+        # Get cylc suite log files and other files:
+        EXTRA_FILES = [
+            "log/suite/log*",
+            "log/install/*"
+        ]
+        for glob_pattern in EXTRA_FILES:
+            for f_name in glob(os.path.join(dir_, glob_pattern)):
+                key = os.path.relpath(f_name, dir_)
+                f_stat = os.stat(f_name)
+                logs_info[key] = {
+                    "path": key,
+                    "mtime": f_stat.st_mtime,
+                    "size": f_stat.st_size
+                }
 
         data["files"]["cylc"] = logs_info
         return data
