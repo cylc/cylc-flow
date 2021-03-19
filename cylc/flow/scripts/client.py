@@ -28,7 +28,6 @@ import json
 import sys
 
 from google.protobuf.json_format import MessageToDict
-
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function

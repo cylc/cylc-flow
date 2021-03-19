@@ -232,16 +232,14 @@ class SuiteRuntimeClient(ZMQSocketBase):
                 program and hostname.
         """
 
-        ssh_connection = os.getenv("SSH_CONNECTION")
         host = socket.gethostname()
-        if ssh_connection is None:
-            comms_method = 'local command'
-        elif self.host and (
-                socket.gethostbyname(host) ==
-                socket.gethostbyname(str(self.host))):
-            comms_method = CommsMeth.SSH
-        else:
-            comms_method = CommsMeth.ZMQ
+        # Identify communication method
+        comms_method = os.getenv("CLIENT_COMMS_METH", default=CommsMeth.ZMQ)
+        if (self.host and
+            (comms_method == CommsMeth.ZMQ) and
+            (socket.gethostbyname(
+                self.host) == socket.gethostbyname(socket.gethostname()))):
+            comms_method = CommsMeth.LOCAL
         if len(sys.argv) > 1:
             cmd = sys.argv[1]
         else:

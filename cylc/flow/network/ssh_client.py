@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from typing import Union
 
+from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.suite_files import load_contact_file, ContactFileFields
 from cylc.flow.network import (
     get_location,
@@ -35,18 +37,15 @@ class SuiteRuntimeClient():
             Name of the suite to connect to.
         timeout (float):
             Set the default timeout in seconds.
-            See: https://github.com/cylc/cylc-flow/issues/4112
         host (str):
             The host where the flow is running if known.
-
-            If host is provided it is not necessary to load
-            the contact file.
     """
+
     def __init__(
             self,
             suite: str,
-            timeout: Union[float, str] = None,
             host: str = None,
+            timeout: Union[float, str] = None
     ):
         self.suite = suite
 
@@ -68,15 +67,18 @@ class SuiteRuntimeClient():
             command (str): The name of the endpoint to call.
             args (dict): Arguments to pass to the endpoint function.
             timeout (float): Override the default timeout (seconds).
-            See: https://github.com/cylc/cylc-flow/issues/4112
-
         Raises:
             ClientError: Coverall, on error from function call
         Returns:
             object: Deserialized output from function called.
         """
-
-        command = ["client", self.suite, command]
+        # Set environment variable to determine the communication for use on
+        # the scheduler
+        os.environ["CLIENT_COMMS_METH"] = CommsMeth.SSH
+        cmd = ["client"]
+        if timeout:
+            cmd += [f'comms_timeout={timeout}']
+        cmd += [self.suite, command]
         contact = load_contact_file(self.suite)
         ssh_cmd = contact[ContactFileFields.SCHEDULER_SSH_COMMAND]
         login_shell = contact[ContactFileFields.SCHEDULER_USE_LOGIN_SHELL]
@@ -86,7 +88,7 @@ class SuiteRuntimeClient():
             args = {}
         message = json.dumps(args)
         proc = _remote_cylc_cmd(
-            command,
+            cmd,
             host=self.host,
             stdin_str=message,
             ssh_cmd=ssh_cmd,

@@ -22,6 +22,7 @@ class CommsMeth():
 
     SSH = 'ssh'
     ZMQ = 'zmq'
+    LOCAL = 'local'  # used for local commands
 
 
 def get_comms_method():
@@ -31,7 +32,7 @@ def get_comms_method():
 
 
 def get_runtime_client(comms_method, workflow, timeout=None):
-    """Return client for the provided commumication method.
+    """Return client for the provided communication method.
 
         Args:
             comm_method: communication method
