@@ -68,6 +68,7 @@ class CylcReviewService(object):
     SEARCH_MODE_TEXT = "TEXT"
     SUITES_PER_PAGE = 100
     VIEW_SIZE_MAX = 10 * 1024 * 1024  # 10MB
+    WORKFLOW_FILES = ['suite.rc', 'suite.rc.processed', 'rose-suite.info', 'flow.cylc']
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
@@ -737,8 +738,7 @@ class CylcReviewService(object):
         dir_ = os.path.expanduser(os.path.join(prefix, d_rel))
 
         # Get cylc files
-        cylc_files = ["cylc-suite-env", "suite.rc", "suite.rc.processed"]
-        for key in cylc_files:
+        for key in self.WORKFLOW_FILES:
             f_name = os.path.join(dir_, key)
             if os.path.isfile(f_name):
                 f_stat = os.stat(f_name)
@@ -849,8 +849,7 @@ class CylcReviewService(object):
             tail = os.path.join(tail1, tail)
         if not (
             head == 'log' or
-            (not head and tail in
-             ['suite.rc', 'suite.rc.processed', 'rose-suite.info'])
+            (not head and tail in cls.WORKFLOW_FILES)
         ):
             raise cherrypy.HTTPError(403)
 
