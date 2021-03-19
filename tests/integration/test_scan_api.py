@@ -40,7 +40,7 @@ from cylc.flow.suite_files import (
 async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     """Three workflows in different states.
 
-    One stopped, one held and one that thinks its running.
+    One stopped, one paused and one that thinks its running.
 
     TODO:
         Start one of the workflows with tasks in funny states
@@ -55,9 +55,9 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     # a simply hierarchically registered workflow we will leave stopped
     mod_flow(mod_one_conf, name='a/b/c')
 
-    # a simple workflow we will leave held
-    reg1 = mod_flow(mod_one_conf, name='-held-')
-    schd1 = mod_scheduler(reg1, hold_start=True)
+    # a simple workflow we will leave paused
+    reg1 = mod_flow(mod_one_conf, name='-paused-')
+    schd1 = mod_scheduler(reg1, paused_start=True)
 
     # a workflow with some metadata we will make look like it's running
     reg2 = mod_flow(
@@ -87,7 +87,7 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
         },
         name='-running-'
     )
-    schd2 = mod_scheduler(reg2, run_mode='simulation', hold_start=False)
+    schd2 = mod_scheduler(reg2, run_mode='simulation', paused_start=False)
 
     # run cylc run
     async with mod_run(schd1):
@@ -106,12 +106,12 @@ async def test_state_filter(flows, mod_test_dir):
     assert '-stopped-' in lines[0]
     assert 'a/b/c' in lines[1]
 
-    # one held flow
-    opts = ScanOptions(states='held')
+    # one paused flow
+    opts = ScanOptions(states='paused')
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
     assert len(lines) == 1
-    assert '-held-' in lines[0]
+    assert '-paused-' in lines[0]
 
     # one running flow
     opts = ScanOptions(states='running')
@@ -121,13 +121,13 @@ async def test_state_filter(flows, mod_test_dir):
     assert '-running-' in lines[0]
 
     # two active flows
-    opts = ScanOptions(states='held,running')
+    opts = ScanOptions(states='paused,running')
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
     assert len(lines) == 2
 
     # three registered flows
-    opts = ScanOptions(states='held,running,stopped')
+    opts = ScanOptions(states='paused,running,stopped')
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
     assert len(lines) == 4
@@ -137,11 +137,11 @@ async def test_state_filter(flows, mod_test_dir):
 async def test_name_filter(flows, mod_test_dir):
     """It should filter flows by name regex."""
     # one stopped flow
-    opts = ScanOptions(states='all', name=['.*held.*'])
+    opts = ScanOptions(states='all', name=['.*paused.*'])
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
     assert len(lines) == 1
-    assert '-held-' in lines[0]
+    assert '-paused-' in lines[0]
 
 
 @pytest.mark.asyncio
@@ -152,7 +152,7 @@ async def test_name_sort(flows, mod_test_dir):
     lines = []
     await main(opts, write=lines.append, scan_dir=mod_test_dir)
     assert len(lines) == 4
-    assert '-held-' in lines[0]
+    assert '-paused-' in lines[0]
     assert '-running-' in lines[1]
     assert '-stopped-' in lines[2]
     assert 'a/b/c' in lines[3]
@@ -279,7 +279,7 @@ async def test_scan_cleans_stuck_contact_files(
     dump_contact_file(reg, contact_info)
 
     # make sure this flow shows for a regular filesystem-only scan
-    opts = ScanOptions(states='running,held', format='name')
+    opts = ScanOptions(states='running,paused', format='name')
     flows = []
     await main(opts, write=flows.append, scan_dir=test_dir)
     assert len(flows) == 1
@@ -289,7 +289,7 @@ async def test_scan_cleans_stuck_contact_files(
     assert cont.exists()
 
     # make sure this flow shows for a regular filesystem-only scan
-    opts = ScanOptions(states='running,held', format='name', ping=True)
+    opts = ScanOptions(states='running,paused', format='name', ping=True)
     flows = []
     await main(opts, write=flows.append, scan_dir=test_dir)
     assert len(flows) == 0

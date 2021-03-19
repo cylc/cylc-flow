@@ -26,15 +26,11 @@ set_test_number 6
 init_suite "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduler]
     UTC mode = False
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = now
-    [[special tasks]]
-        clock-trigger = foo(PT0M)
     [[graph]]
-        T23 = foo
-[runtime]
-    [[foo]]
-        script = true
+        R1 = foo
 __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -42,7 +38,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 # Set time zone to +01:00
 export TZ=BST-1
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --hold
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --pause
 poll_suite_running
 cylc stop "${SUITE_NAME}"
 poll_suite_stopped
@@ -54,13 +50,13 @@ cmp_ok 'dump.out' <<< 'cycle_point_tz|+0100'
 # Simulate DST change
 export TZ=UTC
 
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc play "${SUITE_NAME}" --hold
+suite_run_ok "${TEST_NAME_BASE}-restart" cylc play "${SUITE_NAME}" --pause
 poll_suite_running
+
 cylc stop "${SUITE_NAME}"
-poll_suite_stopped
 
 log_scan "${TEST_NAME_BASE}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 1 0 \
-    'LOADING suite parameters' '+ cycle point time zone = +0100'
+    'LOADING suite parameters' \
+    '+ cycle point time zone = +0100'
 
 purge
-exit

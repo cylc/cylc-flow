@@ -1,0 +1,3 @@
+INFO - [foo.20140101T00] -triggered off []
+INFO - [pause_resume.20140101T00] -triggered off ['foo.20140101T00']
+INFO - [bar.20140101T00] -triggered off ['foo.20140101T00']

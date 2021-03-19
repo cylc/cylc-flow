@@ -66,9 +66,17 @@ queueing logic centralized.
 `cylc register` has been replaced by `cylc install`
 ([#4000](https://github.com/cylc/cylc-flow/pull/4000)).
 
+Added a new command: `cylc clean`, for removing stopped workflows on the local
+and any remote filesystems ([#3961](https://github.com/cylc/cylc-flow/pull/3961),
+[#4017](https://github.com/cylc/cylc-flow/pull/4017)).
+
 `cylc run` and `cylc restart` have been replaced by `cylc play`, simplifying
 how workflows are restarted
 ([#4040](https://github.com/cylc/cylc-flow/pull/4040)).
+
+`cylc pause` and `cylc play` are now used to pause and resume workflows,
+respectively. `cylc hold` and `cylc release` now only hold and release tasks,
+not the whole workflow. ([#4076](https://github.com/cylc/cylc-flow/pull/4076))
 
 "Implicit"/"naked" tasks (tasks that do not have an explicit definition in
 `flow.cylc[runtime]`) are now disallowed by default
@@ -166,11 +174,6 @@ hierarchy and ability to set site config directory.
 
 [#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
 config option `[scheduling]stop after cycle point`.
-
-[#3961](https://github.com/cylc/cylc-flow/pull/3961),
-[#4017](https://github.com/cylc/cylc-flow/pull/4017) - Added a new command:
-`cylc clean`, for removing stopped workflows on the local and any remote
-filesystems.
 
 [#3913](https://github.com/cylc/cylc-flow/pull/3913) - Added the ability to
 use plugins to parse suite templating variables and additional files to

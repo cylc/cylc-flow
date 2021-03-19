@@ -34,8 +34,11 @@ def cycling_mode(monkeypatch):
     """Set the Cylc cycling mode and return its value."""
     def _cycling_mode(integer=True):
         mode = INTEGER_CYCLING_TYPE if integer else ISO8601_CYCLING_TYPE
+
+        class _DefaultCycler:
+            TYPE = mode
         monkeypatch.setattr(
-            'cylc.flow.cycling.loader.DefaultCycler.TYPE', mode)
+            'cylc.flow.cycling.loader.DefaultCycler', _DefaultCycler)
         return mode
     return _cycling_mode
 

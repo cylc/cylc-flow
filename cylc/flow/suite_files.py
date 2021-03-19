@@ -16,6 +16,7 @@
 
 """Suite service files management."""
 
+from typing import Optional, Tuple, Union
 import aiofiles
 from enum import Enum
 import logging
@@ -370,29 +371,32 @@ def get_flow_file(reg):
         return flow_file
 
 
-def get_workflow_source_dir(dir_):
-    """Return the source directory path of the workflow in directory provided.
-        Args:
-            dir_ (path):
-                directory to check for an installed flow
-    """
+def get_workflow_source_dir(
+    run_dir: Union[Path, str]
+) -> Union[Tuple[str, Path], Tuple[None, None]]:
+    """Get the source directory path of the workflow in directory provided.
 
+    Args:
+        run_dir: directory to check for an installed flow inside.
+
+    Returns (source_dir, symlink) where the latter is the symlink to the source
+    dir that exists in the run dir.
+    """
     source_path = Path(
-        dir_,
-        SuiteFiles.Install.DIRNAME,
-        SuiteFiles.Install.SOURCE)
-    alt_source_path = Path(
-        dir_.parent,
+        run_dir,
         SuiteFiles.Install.DIRNAME,
         SuiteFiles.Install.SOURCE)
     try:
         source = os.readlink(source_path)
         return source, source_path
     except OSError:
+        alt_source_path = Path(
+            Path(run_dir).parent,
+            SuiteFiles.Install.DIRNAME,
+            SuiteFiles.Install.SOURCE)
         try:
             source = os.readlink(alt_source_path)
             return source, alt_source_path
-
         except OSError:
             return None, None
 
@@ -478,7 +482,9 @@ def parse_suite_arg(options, arg):
     return name, path
 
 
-def register(flow_name=None, source=None):
+def register(
+    flow_name: Optional[str] = None, source: Optional[str] = None
+) -> str:
     """Set up workflow.
     This completes some of the set up completed by cylc install.
     Called only if running workflow that has not been installed.
@@ -489,11 +495,11 @@ def register(flow_name=None, source=None):
     Creates the .service directory.
 
     Args:
-        flow_name (str): workflow name, default basename($PWD).
-        source (str): directory location of flow.cylc file, default $PWD.
+        flow_name: workflow name, default basename($PWD).
+        source: directory location of flow.cylc file, default $PWD.
 
     Return:
-        str: The installed suite name (which may be computed here).
+        The installed suite name (which may be computed here).
 
     Raise:
         WorkflowFilesError:
@@ -502,13 +508,8 @@ def register(flow_name=None, source=None):
            - Nested workflow run directories.
     """
     if flow_name is None:
-        flow_name = (Path.cwd().stem)
-    is_valid, message = SuiteNameValidator.validate(flow_name)
-    if not is_valid:
-        raise WorkflowFilesError(f'Invalid workflow name - {message}')
-    if Path.is_absolute(Path(flow_name)):
-        raise WorkflowFilesError(
-            f'Workflow name cannot be an absolute path: {flow_name}')
+        flow_name = Path.cwd().stem
+    validate_flow_name(flow_name)
     if source is not None:
         if os.path.basename(source) == SuiteFiles.FLOW_FILE:
             source = os.path.dirname(source)
@@ -531,8 +532,8 @@ def register(flow_name=None, source=None):
 def is_installed(path):
     """Check to see if the path sent contains installed flow.
 
-       Checks for valid _cylc-install directory in current folder and checks
-       source link exists.
+    Checks for valid _cylc-install directory in current folder and checks
+    source link exists.
     """
     cylc_install_folder = Path(path, SuiteFiles.Install.DIRNAME)
     source = Path(cylc_install_folder, SuiteFiles.Install.SOURCE)
@@ -548,7 +549,7 @@ def _clean_check(reg, run_dir):
         reg (str): Workflow name.
         run_dir (str): Path to the workflow run dir on the filesystem.
     """
-    _validate_reg(reg)
+    validate_flow_name(reg)
     reg = os.path.normpath(reg)
     if reg.startswith('.'):
         raise WorkflowFilesError(
@@ -839,22 +840,18 @@ def get_platforms_from_db(run_dir):
         pri_dao.close()
 
 
-def _validate_reg(reg):
-    """Check suite name is valid.
+def validate_flow_name(flow_name: str) -> None:
+    """Check workflow name is valid and not an absolute path.
 
-    Args:
-        reg (str): Suite name
-
-    Raise:
-        SuiteServiceFileError:
-            - reg has form of absolute path or is otherwise not valid
+    Raise WorkflowFilesError if not valid.
     """
-    is_valid, message = SuiteNameValidator.validate(reg)
+    is_valid, message = SuiteNameValidator.validate(flow_name)
     if not is_valid:
-        raise SuiteServiceFileError(f'invalid suite name "{reg}" - {message}')
-    if os.path.isabs(reg):
-        raise SuiteServiceFileError(
-            f'suite name cannot be an absolute path: {reg}')
+        raise WorkflowFilesError(
+            f"invalid workflow name '{flow_name}' - {message}")
+    if os.path.isabs(flow_name):
+        raise WorkflowFilesError(
+            f"workflow name cannot be an absolute path: {flow_name}")
 
 
 def check_nested_run_dirs(run_dir, flow_name):
@@ -1249,15 +1246,6 @@ def create_workflow_srv_dir(rundir=None, source=None):
 
     workflow_srv_d = rundir.joinpath(SuiteFiles.Service.DIRNAME)
     workflow_srv_d.mkdir(exist_ok=True, parents=True)
-
-
-def validate_flow_name(flow_name):
-    is_valid, message = SuiteNameValidator.validate(flow_name)
-    if not is_valid:
-        raise WorkflowFilesError(f'Invalid workflow name - {message}')
-    if Path.is_absolute(Path(flow_name)):
-        raise WorkflowFilesError(
-            f'Workflow name cannot be an absolute path: {flow_name}')
 
 
 def validate_source_dir(source, flow_name):

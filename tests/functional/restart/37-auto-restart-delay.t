@@ -62,7 +62,7 @@ ${BASE_GLOBAL_CONFIG}
 "
 
 # Run suite.
-cylc play "${SUITE_NAME}" --hold
+cylc play "${SUITE_NAME}" --pause
 poll_suite_running
 
 # Condemn host - trigger stop-restart.
@@ -111,7 +111,5 @@ else
 fi
 
 cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
-sleep 1
-purge
 
-exit
+purge

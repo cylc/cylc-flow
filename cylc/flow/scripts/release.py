@@ -18,11 +18,20 @@
 
 """cylc release [OPTIONS] ARGS
 
-Release a held workflow or tasks.
+Release held tasks.
 
 Examples:
-  $ cylc release REG  # release the workflow
-  $ cylc release REG TASK_GLOB ...  # release one or more tasks
+  # Release mytask at cycle 1234 in my_flow
+  $ cylc release my_flow mytask.1234
+
+  # Release all active tasks at cycle 1234 in my_flow
+  $ cylc release my_flow '*.1234'
+
+  # Release all active instances of mytask in my_flow
+  $ cylc release my_flow 'mytask.*'
+
+  # Release all held tasks and remove the hold point
+  $ cylc release my_flow --all
 
 Held tasks do not submit their jobs even if ready to run.
 
@@ -30,15 +39,21 @@ See also 'cylc hold'.
 """
 
 import os.path
+from typing import TYPE_CHECKING
 
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
-MUTATION = '''
+if TYPE_CHECKING:
+    from cylc.flow.option_parsers import Options
+
+
+RELEASE_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $tasks: [NamespaceIDGlob],
+  $tasks: [NamespaceIDGlob]!
 ) {
   release (
     workflows: $wFlows,
@@ -49,27 +64,69 @@ mutation (
 }
 '''
 
+RELEASE_HOLD_POINT_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!
+) {
+  releaseHoldPoint (
+    workflows: $wFlows
+  ) {
+    result
+  }
+}
+'''
 
-def get_option_parser():
+
+def get_option_parser() -> COP:
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ("REG", 'Suite name'),
-            ('[TASK_GLOB ...]', 'Task matching patterns')])
+            ('REG', "Workflow name"),
+            ('[TASK_GLOB ...]', "Task matching patterns")]
+    )
+
+    parser.add_option(
+        "--all",
+        help=(
+            "Release all held tasks and remove the 'hold after cycle point', "
+            "if set."),
+        action="store_true", dest="release_all")
 
     return parser
 
 
+def _validate(options: 'Options', *task_globs: str) -> None:
+    """Check combination of options and task globs is valid."""
+    if options.release_all:
+        if task_globs:
+            raise UserInputError("Cannot combine --all with TASK_GLOB(s).")
+    else:
+        if not task_globs:
+            raise UserInputError(
+                "Missing arguments: TASK_GLOB [...]. "
+                "See `cylc release --help`.")
+
+
 @cli_function(get_option_parser)
-def main(parser, options, suite, *task_globs):
-    suite = os.path.normpath(suite)
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+def main(parser: COP, options: 'Options', workflow: str, *task_globs: str):
+
+    _validate(options, *task_globs)
+
+    workflow = os.path.normpath(workflow)
+    pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
+
+    if options.release_all:
+        mutation = RELEASE_HOLD_POINT_MUTATION
+        args = {}
+    else:
+        mutation = RELEASE_MUTATION
+        args = {'tasks': list(task_globs)}
 
     mutation_kwargs = {
-        'request_string': MUTATION,
+        'request_string': mutation,
         'variables': {
-            'wFlows': [suite],
-            'tasks': list(task_globs),
+            'wFlows': [workflow],
+            **args
         }
     }
 

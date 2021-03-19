@@ -62,7 +62,7 @@ LOADING task run times
 + t1: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d
 __OUT__
 suite_run_ok "${TEST_NAME_BASE}-restart-3" \
-    cylc play "${SUITE_NAME}" --hold
+    cylc play "${SUITE_NAME}" --hold-after=1900
 # allow the task pool to settle before requesting a dump
 cylc suite-state "${SUITE_NAME}" \
     --task=t1 \

@@ -1532,23 +1532,33 @@ class Broadcast(Mutation):
     result = GenericScalar()
 
 
-class Hold(Mutation):
+class SetHoldPoint(Mutation):
     class Meta:
         description = sstrip('''
-            Hold a workflow or tasks within it.
+            Set workflow hold after cycle point. All tasks after this point
+            will be held.
         ''')
-        resolver = partial(mutator, command='hold')
+        resolver = partial(mutator, command='set_hold_point')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        tasks = List(
-            NamespaceIDGlob,
-            description='Hold the specified tasks rather than the workflow.'
+        point = CyclePoint(
+            description='Hold all tasks after the specified cycle point.',
+            required=True
         )
-        time = TimePoint(description=sstrip('''
-            Get the workflow to hold after the specified wallclock time
-            has passed.
-        '''))
+
+    result = GenericScalar()
+
+
+class Pause(Mutation):
+    class Meta:
+        description = sstrip('''
+            Pause a workflow.
+        ''')
+        resolver = partial(mutator, command='pause')
+
+    class Arguments:
+        workflows = List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1596,23 +1606,30 @@ class Message(Mutation):
     result = GenericScalar()
 
 
-class Release(Mutation):
+class ReleaseHoldPoint(Mutation):
     class Meta:
         description = sstrip('''
-            Release a held workflow or tasks within it.
-
-            See also the opposite command `hold`.
+            Release all tasks and unset the workflow hold point, if set.
         ''')
-        resolver = partial(mutator, command='release')
+        resolver = partial(mutator, command='release_hold_point')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
-        tasks = List(
-            NamespaceIDGlob,
-            description=sstrip('''
-                Release matching tasks rather than the workflow as whole.
-            ''')
-        )
+
+    result = GenericScalar()
+
+
+class Resume(Mutation):
+    class Meta:
+        description = sstrip('''
+            Resume a paused workflow.
+
+            See also the opposite command `pause`.
+        ''')
+        resolver = partial(mutator, command='resume')
+
+    class Arguments:
+        workflows = List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1763,6 +1780,24 @@ class TaskMutation:
     result = GenericScalar()
 
 
+class Hold(Mutation, TaskMutation):
+    class Meta:
+        description = sstrip('''
+            Hold tasks within a workflow.
+        ''')
+        resolver = partial(mutator, command='hold')
+
+
+class Release(Mutation, TaskMutation):
+    class Meta:
+        description = sstrip('''
+            Release held tasks within a workflow.
+
+            See also the opposite command `hold`.
+        ''')
+        resolver = partial(mutator, command='release')
+
+
 class Kill(Mutation, TaskMutation):
     # TODO: This should be a job mutation?
     class Meta:
@@ -1851,18 +1886,22 @@ class Mutations(ObjectType):
     # workflow actions
     broadcast = _mut_field(Broadcast)
     ext_trigger = _mut_field(ExtTrigger)
-    hold = _mut_field(Hold)
     message = _mut_field(Message)
+    pause = _mut_field(Pause)
     ping = _mut_field(Ping)
-    release = _mut_field(Release)
     reload = _mut_field(Reload)
+    resume = _mut_field(Resume)
     set_verbosity = _mut_field(SetVerbosity)
     set_graph_window_extent = _mut_field(SetGraphWindowExtent)
     stop = _mut_field(Stop)
+    set_hold_point = _mut_field(SetHoldPoint)
+    release_hold_point = _mut_field(ReleaseHoldPoint)
 
     # task actions
+    hold = _mut_field(Hold)
     kill = _mut_field(Kill)
     poll = _mut_field(Poll)
+    release = _mut_field(Release)
     remove = _mut_field(Remove)
     set_outputs = _mut_field(SetOutputs)
     trigger = _mut_field(Trigger)

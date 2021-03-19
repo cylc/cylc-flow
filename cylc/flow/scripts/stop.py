@@ -105,10 +105,9 @@ class StopPoller(Poller):
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[("REG", "Suite name"),
-                ("[STOP]", """a/ task POINT (cycle point), or
-                            b/ ISO 8601 date-time (clock time), or
-                            c/ TASK (task ID).""")])
+        argdoc=[("REG", "Workflow name"),
+                ("[STOP]", "task POINT (cycle point), or TASK (task ID).")]
+    )
 
     parser.add_option(
         "-k", "--kill",

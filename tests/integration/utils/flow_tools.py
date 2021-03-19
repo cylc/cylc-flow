@@ -53,8 +53,8 @@ def _make_flow(run_dir, test_dir, conf, name=None):
 
 def _make_scheduler(reg, **opts):
     """Return a scheduler object for a flow registration."""
-    # This allows hold_start to be overriden:
-    opts = {'hold_start': True, **opts}
+    # This allows paused_start to be overriden:
+    opts = {'paused_start': True, **opts}
     options = RunOptions(**opts)
     # create workflow
     return Scheduler(reg, options)

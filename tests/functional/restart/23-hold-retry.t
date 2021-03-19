@@ -21,19 +21,26 @@ set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${SUITE_NAME}"
+
 sqlite3 "${SUITE_RUN_DIR}/log/db" \
     'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name' >'task-pool.out'
 cmp_ok 'task-pool.out' <<__OUT__
 1|t1|waiting
 __OUT__
+
 # restart
 cylc play "${SUITE_NAME}" --debug --no-detach 1>'out' 2>&1 &
 SUITE_PID=$!
+
 poll_grep_suite_log -F 'INFO - + t1.1 waiting (held)'
-run_ok "${TEST_NAME_BASE}-release" cylc release "${SUITE_NAME}"
+
+run_ok "${TEST_NAME_BASE}-release" cylc release "${SUITE_NAME}" t1.1
+
 poll_grep_suite_log -F 'INFO - DONE'
+
 if ! wait "${SUITE_PID}"; then
     cat 'out' >&2
 fi
