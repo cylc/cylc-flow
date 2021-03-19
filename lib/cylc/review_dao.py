@@ -208,7 +208,7 @@ class CylcReviewDAO(object):
         # Detemine Cylc version for a given suite: Database changes require
         # A different database query for Cylc8.
         suite_info = self._db_exec(
-            user_name, suite_name, 'SELECT * FROM suite_params',[]
+            user_name, suite_name, 'SELECT * FROM suite_params', []
         )
         for row in suite_info:
             if row[0] == u'cylc_version':
