@@ -756,6 +756,7 @@ class CylcReviewService(object):
         # Get cylc suite log files and other files:
         EXTRA_FILES = [
             "log/suite/log*",
+            "log/suite/file-installation-log.*",
             "log/install/*"
         ]
         for glob_pattern in EXTRA_FILES:
