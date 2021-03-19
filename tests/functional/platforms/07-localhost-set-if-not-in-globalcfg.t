@@ -18,6 +18,7 @@
 # Check that ``[platforms][localhost]`` is only set automatically if it
 # not set in ``global.cylc``.
 
+export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
