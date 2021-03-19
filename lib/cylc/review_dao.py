@@ -205,16 +205,7 @@ class CylcReviewDAO(object):
         except sqlite3.Error:
             return ([], 0)
 
-        # Detemine Cylc version for a given suite: Database changes require
-        # A different database query for Cylc8.
-        suite_info = self._db_exec(
-            user_name, suite_name, 'SELECT * FROM suite_params', []
-        )
-        for row in suite_info:
-            if row[0] == u'cylc_version':
-                cylc_version = row[1]
-
-        if cylc_version[0] == '7':
+        if self.is_cylc8(user_name, suite_name):
             stmt = (
                 "SELECT" +
                 " task_states.time_updated AS time," +
@@ -224,7 +215,7 @@ class CylcReviewDAO(object):
                 " task_states.status AS task_status," +
                 " time_submit, submit_status," +
                 " time_run, time_run_exit, run_signal, run_status," +
-                " user_at_host, batch_sys_name, batch_sys_job_id" +
+                " platform_name, job_runner_name, job_id" +
                 " FROM task_states LEFT JOIN task_jobs USING (cycle, name)" +
                 where_expr +
                 " ORDER BY " +
@@ -240,7 +231,7 @@ class CylcReviewDAO(object):
                 " task_states.status AS task_status," +
                 " time_submit, submit_status," +
                 " time_run, time_run_exit, run_signal, run_status," +
-                " platform_name, job_runner_name, job_id" +
+                " user_at_host, batch_sys_name, batch_sys_job_id" +
                 " FROM task_states LEFT JOIN task_jobs USING (cycle, name)" +
                 where_expr +
                 " ORDER BY " +
@@ -286,6 +277,21 @@ class CylcReviewDAO(object):
         if entries:
             self._get_job_logs(user_name, suite_name, entries, entry_of)
         return (entries, of_n_entries)
+
+    def is_cylc8(self, user_name, suite_name):
+        # Detemine Cylc version for a given suite: Database changes require
+        # A different database query for Cylc8.
+        suite_info = self._db_exec(
+            user_name, suite_name, 'SELECT * FROM suite_params', []
+        )
+        for row in suite_info:
+            if row[0] == u'cylc_version':
+                cylc_version = row[1]
+
+        if cylc_version[0] == '8':
+            return True
+        else:
+            return False
 
     def _get_suite_job_entries_where(
             self, cycles, tasks, task_status, job_status):
