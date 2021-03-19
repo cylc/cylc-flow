@@ -74,6 +74,7 @@ class CylcReviewService(object):
         'flow.cylc',
         'flow.cylc.processed',
         'rose-suite.info',
+        'opt/rose-suite-cylc-install.conf'
     ]
 
     def __init__(self, *args, **kwargs):
@@ -853,7 +854,8 @@ class CylcReviewService(object):
             tail = os.path.join(tail1, tail)
         if not (
             head == 'log' or
-            (not head and tail in cls.WORKFLOW_FILES)
+            (not head and tail in cls.WORKFLOW_FILES) or
+            (head, tail) == (u'opt', u'rose-suite-cylc-install.conf')
         ):
             raise cherrypy.HTTPError(403)
 
