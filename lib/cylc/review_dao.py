@@ -284,11 +284,12 @@ class CylcReviewDAO(object):
         suite_info = self._db_exec(
             user_name, suite_name, 'SELECT * FROM suite_params', []
         )
+        cylc_version = None
         for row in suite_info:
             if row[0] == u'cylc_version':
                 cylc_version = row[1]
 
-        if cylc_version[0] == '8':
+        if cylc_version and cylc_version[0] == '8':
             return True
         else:
             return False
