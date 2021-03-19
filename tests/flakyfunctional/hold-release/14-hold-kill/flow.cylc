@@ -23,9 +23,8 @@
         """
     [[sleeper]]
         script = """
-        if ((CYLC_TASK_TRY_NUMBER == 1)); then
-            sleep 120
-        fi
+            if ((CYLC_TASK_TRY_NUMBER == 1)); then
+                sleep 120
+            fi
         """
-        [[[job]]]
-            execution retry delays = PT1S
+        execution retry delays = PT1S

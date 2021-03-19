@@ -21,19 +21,18 @@ import os
 import sys
 
 from ansimarkup import parse as cparse
-from pathlib import Path
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import SuiteServiceFileError
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
 from cylc.flow.pathutil import (
-    get_workflow_run_dir,
     get_suite_run_log_name,
     get_suite_file_install_log_name)
 from cylc.flow.remote import _remote_cylc_cmd
@@ -42,10 +41,10 @@ from cylc.flow.scripts import cylc_header
 from cylc.flow import suite_files
 from cylc.flow.terminal import cli_function
 
-PLAY_DOC = r"""cylc [control] play [OPTIONS] [ARGS]
+PLAY_DOC = r"""cylc play [OPTIONS] ARGS
 
 Start running a workflow, or restart a stopped workflow from its previous
-state/cycle point, or resume a paused workflow by releasing all tasks.
+state, or resume a paused workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
@@ -53,10 +52,10 @@ If the workflow is not already installed (by "cylc install" or a previous run)
 it will be installed on the fly before start up.
 
 Examples:
-    # Start/restart the workflow with name REG.
+    # Start, restart or resume the workflow with name REG.
     $ cylc play REG
 
-A "cold start" (the default for a freshly-installed workflow) starts from the
+A "(cold) start" (the default for a freshly-installed workflow) starts from the
 initial cycle point (specified in flow.cylc or on the command line). Any
 dependence on tasks prior to the initial cycle point is ignored.
 It is also possible to start from a point that is later than the initial cycle
@@ -66,10 +65,25 @@ through the graph (historically known as a "warm start").
 
 A "restart" continues on from the most recent recorded state of the workflow.
 Tasks recorded as submitted or running are polled at restart to determine what
-happened to them while the workflow was shut down."""
+happened to them while the workflow was shut down.
+
+A "resume" of a paused (but not stopped) workflow allows task jobs to be
+submitted once again."""
 
 
 FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
+
+RESUME_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!
+) {
+  resume (
+    workflows: $wFlows
+  ) {
+    result
+  }
+}
+'''
 
 
 @lru_cache()
@@ -79,6 +93,7 @@ def get_option_parser(add_std_opts=False):
         PLAY_DOC,
         icp=True,
         jset=True,
+        comms=True,
         argdoc=[FLOW_NAME_ARG_DOC])
 
     parser.add_option(
@@ -122,16 +137,13 @@ def get_option_parser(add_std_opts=False):
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
     parser.add_option(
-        "--hold",
-        help="Hold suite immediately on starting.",
-        action="store_true", dest="hold_start")
+        "--pause",
+        help="Pause the workflow immediately on start up.",
+        action="store_true", dest="paused_start")
 
     parser.add_option(
-        "--hold-point", "--hold-after",
-        help=(
-            "Set hold cycle point. "
-            "Hold suite AFTER all tasks have PASSED this cycle point."
-        ),
+        "--hold-after", "--hold-cycle-point", "--holdcp",
+        help="Hold all tasks after this cycle point.",
         metavar="CYCLE_POINT", action="store", dest="holdcp")
 
     parser.add_option(
@@ -207,19 +219,6 @@ RunOptions = Options(
     get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _auto_install():
-    """Register workflow installed in the cylc-run directory"""
-    try:
-        reg = suite_files.register()
-    except SuiteServiceFileError as exc:
-        sys.exit(exc)
-    # Replace this process with "cylc play REG ..." for 'ps -f'.
-    os.execv(
-        sys.argv[0],
-        [sys.argv[0]] + sys.argv[1:] + [reg]
-    )
-
-
 def _open_logs(reg, no_detach):
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
@@ -260,15 +259,21 @@ def scheduler_cli(parser, options, reg):
     functionality.
 
     """
+    suite_files.validate_flow_name(reg)
     reg = os.path.normpath(reg)
     try:
         suite_files.detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
-        # TODO: unpause
-        print(f"Workflow is already running\n\n{exc}")
+        print(f"Resuming already-running workflow\n\n{exc}")
+        pclient = SuiteRuntimeClient(reg, timeout=options.comms_timeout)
+        mutation_kwargs = {
+            'request_string': RESUME_MUTATION,
+            'variables': {
+                'wFlows': [reg]
+            }
+        }
+        pclient('graphql', mutation_kwargs)
         sys.exit(0)
-
-    _check_srvd(reg)
 
     # re-execute on another host if required
     _distribute(options.host)
@@ -311,16 +316,6 @@ def scheduler_cli(parser, options, reg):
     LOG.info("DONE")
     _close_logs()
     sys.exit(ret)
-
-
-def _check_srvd(reg):
-    """Check the run dir contains .service dir"""
-    workflow_run_dir = get_workflow_run_dir(reg)
-    if not Path(workflow_run_dir,
-                suite_files.SuiteFiles.Service.DIRNAME).exists:
-        sys.stderr.write(f'suite service directory not found '
-                         f'at: {workflow_run_dir}\n')
-        sys.exit(1)
 
 
 def _distribute(host):

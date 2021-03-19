@@ -53,7 +53,7 @@ class SuiteDatabaseManager:
     KEY_UUID_STR = 'uuid_str'
     KEY_CYLC_VERSION = 'cylc_version'
     KEY_UTC_MODE = 'UTC_mode'
-    KEY_HOLD = 'is_held'
+    KEY_PAUSED = 'is_paused'
     KEY_HOLD_CYCLE_POINT = 'holdcp'
     KEY_RUN_MODE = 'run_mode'
     KEY_STOP_CLOCK_TIME = 'stop_clock_time'
@@ -138,9 +138,13 @@ class SuiteDatabaseManager:
         for key in keys:
             self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({'key': key})
 
-    def delete_suite_hold(self):
-        """Delete suite hold flag and hold cycle point."""
-        self.delete_suite_params(self.KEY_HOLD, self.KEY_HOLD_CYCLE_POINT)
+    def delete_suite_paused(self):
+        """Delete paused status."""
+        self.delete_suite_params(self.KEY_PAUSED)
+
+    def delete_suite_hold_cycle_point(self):
+        """Delete suite hold cycle point."""
+        self.delete_suite_params(self.KEY_HOLD_CYCLE_POINT)
 
     def delete_suite_stop_clock_time(self):
         """Delete suite stop clock time from suite_params table."""
@@ -300,9 +304,9 @@ class SuiteDatabaseManager:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": self.KEY_CYCLE_POINT_FORMAT,
                 "value": schd.config.cycle_point_dump_format})
-        if schd.pool.is_held:
+        if schd.is_paused:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
-                "key": self.KEY_HOLD, "value": 1})
+                "key": self.KEY_PAUSED, "value": 1})
         for key in (
             self.KEY_INITIAL_CYCLE_POINT,
             self.KEY_FINAL_CYCLE_POINT,
@@ -326,9 +330,9 @@ class SuiteDatabaseManager:
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].append(
             {"key": key, "value": value})
 
-    def put_suite_hold(self):
-        """Put suite hold flag to suite_params table."""
-        self.put_suite_params_1(self.KEY_HOLD, 1)
+    def put_suite_paused(self):
+        """Put suite paused flag to suite_params table."""
+        self.put_suite_params_1(self.KEY_PAUSED, 1)
 
     def put_suite_hold_cycle_point(self, value):
         """Put suite hold cycle point to suite_params table."""

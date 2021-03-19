@@ -199,7 +199,8 @@ class TaskEventsManager():
         self.event_timers_updated = True
         # To be set by the task pool:
         self.spawn_func = None
-        # pflag was set to True to stimulate dependency negotiation in SoS.
+        # pflag was set to True to stimulate dependency negotiation in SoS
+        # (flag is turned on by commands that change task state)
         self.pflag = False
         self.timestamp = timestamp
 

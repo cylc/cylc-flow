@@ -313,6 +313,7 @@ def cli_help():
         commands=[
             'hold',
             'kill',
+            'pause',
             'play',
             'release',
             'scan',

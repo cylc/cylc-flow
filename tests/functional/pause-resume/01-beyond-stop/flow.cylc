@@ -1,0 +1,32 @@
+[meta]
+    title = "pause/resume a suite with tasks held beyond suite stop point"
+
+    description = """
+        Resuming a paused workflow should not release tasks
+        beyond the workflow stop point.
+    """
+
+# https://github.com/cylc/cylc-flow/pull/1144
+
+# See also tests/f/hold-release/01-beyond-stop
+
+[scheduler]
+    cycle point format = %Y%m%dT%H
+
+[scheduling]
+    initial cycle point = 20140101T00
+    stop after cycle point = 20140101T00
+    [[graph]]
+        R1 = foo => pause_resume
+        T00 = foo => bar
+[runtime]
+    [[pause_resume]]
+        # When this task runs foo will be held beyond the workflow stop point.
+        script = """
+            cylc pause $CYLC_SUITE_NAME
+            cylc play $CYLC_SUITE_NAME
+        """
+    [[foo]]
+        script = true
+    [[bar]]
+        script = true

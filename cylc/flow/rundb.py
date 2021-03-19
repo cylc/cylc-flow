@@ -438,6 +438,14 @@ class CylcSuiteDAO:
         success and False on failure. If this is the private database, return
         True on success, and raise on failure.
         """
+        # Filter out CYLC_TEMPLATE_VARS which breaks executemany because it's:
+        # - a dict
+        # - recursive (contains itself!)
+        if stmt_args_list and stmt_args_list[0]:
+            stmt_args_list = [
+                i for i in stmt_args_list if i[0] != 'CYLC_TEMPLATE_VARS'
+            ]
+
         try:
             self.connect()
             self.conn.executemany(stmt, stmt_args_list)

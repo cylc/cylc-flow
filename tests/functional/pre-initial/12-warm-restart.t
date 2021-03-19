@@ -25,12 +25,12 @@ install_suite "${TEST_NAME_BASE}" warm-start
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-run-hold
-suite_run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}" --startcp=20130101T12 --hold
+TEST_NAME=${TEST_NAME_BASE}-run-paused
+suite_run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}" --startcp=20130101T12 --pause
 #-------------------------------------------------------------------------------
 cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-run-hold-restart
+TEST_NAME=${TEST_NAME_BASE}-restart
 suite_run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}"
 # Ensure suite has started
 poll_suite_running

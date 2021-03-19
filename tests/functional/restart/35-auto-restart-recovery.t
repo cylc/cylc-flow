@@ -40,10 +40,12 @@ init_suite "${TEST_NAME}" <<< '
 [scheduling]
     [[graph]]
         R1 = foo
+[runtime]
+    [[foo]]
 '
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
 run_ok "${TEST_NAME}-suite-start" \
-    cylc play "${SUITE_NAME}" --host=localhost --hold
+    cylc play "${SUITE_NAME}" --host=localhost --pause
 poll_suite_running
 
 # corrupt suite
@@ -70,7 +72,5 @@ log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
     'Suite unable to automatically restart after 3 tries'
 
 # stop suite - suite should already by stopped but just to be safe
-cylc stop --max-polls=10 --interval=2 -kill "${SUITE_NAME}" 2>'/dev/null'
+cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}" 2>'/dev/null'
 purge
-
-exit

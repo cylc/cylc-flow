@@ -19,10 +19,10 @@
 
 List Cylc workflows.
 
-By default this shows only running or held workflows.
+By default this shows only running or paused workflows.
 
 Examples:
-  # list all "active" workflows (i.e. running or held)
+  # list all "active" workflows (i.e. running or paused)
   $ cylc scan
 
   # show more information about these workflows
@@ -35,7 +35,7 @@ Examples:
   $ cylc scan --state stopped
 
   # list all workflows (active or inactive)
-  $ cylc scan --state=running,held,stopped
+  $ cylc scan --state=running,paused,stopped
   $ cylc scan --state=all  # or using the shorthand
 
   # filter workflows by name
@@ -75,7 +75,7 @@ DIM = 'fg 248'
 # all supported suite states
 FLOW_STATES = {
     'running',
-    'held',
+    'paused',
     'stopping',
     'stopped'
 }
@@ -85,7 +85,7 @@ FLOW_STATES = {
 FLOW_STATE_CMAP = {
     # suite state: term colour
     'running': 'green',
-    'held': 'fg 172',
+    'paused': 'fg 172',
     'stopping': 'fg 201',
     'stopped': 'red'
 }
@@ -97,7 +97,7 @@ FLOW_STATE_SYMBOLS = {
     #       can appear wildly different font-depending and may not
     #       even be monospace
     'running': '▶',
-    'held': '‖',
+    'paused': '‖',
     'stopping': '◧',
     'stopped': '■'
 }
@@ -179,7 +179,7 @@ def get_option_parser():
             ' or "all" to show everything. See the full `cylc scan` help'
             ' for a list of supported states.'
         ),
-        default='running,held,stopping',
+        default='running,paused,stopping',
         action='store'
     )
 
@@ -334,7 +334,7 @@ def _format_rich(flow, opts):
 def sort_function(flow):
     if flow.get('status') == 'running':
         state = 0
-    elif flow.get('status') == 'held':
+    elif flow.get('status') == 'paused':
         state = 0
     elif flow.get('contact'):
         state = 2
@@ -401,9 +401,9 @@ def get_pipe(opts, formatter, scan_dir=None):
         pipe = scan
 
     show_running = 'running' in opts.states
-    show_held = 'held' in opts.states
-    show_active = show_running or show_held or 'stopping' in opts.states
-    # show_active = bool({'running', 'held'} & opts.states)
+    show_paused = 'paused' in opts.states
+    show_active = show_running or show_paused or 'stopping' in opts.states
+    # show_active = bool({'running', 'paused'} & opts.states)
     show_inactive = bool({'stopped'} & opts.states)
 
     # filter by flow name
@@ -423,8 +423,8 @@ def get_pipe(opts, formatter, scan_dir=None):
     graphql_fields = {}
     graphql_filters = set()
 
-    # filter held/running flows
-    if show_active and not (show_running and show_held):
+    # filter paused/running flows
+    if show_active and not (show_running and show_paused):
         graphql_fields['status'] = None
         graphql_filters.add((('status',), tuple(opts.states)))
 

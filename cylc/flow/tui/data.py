@@ -76,10 +76,10 @@ QUERY = '''
 
 MUTATIONS = {
     'workflow': [
-        'hold',
-        'release',
+        'pause',
+        'resume',
         'reload',
-        'stop'
+        'stop',
     ],
     'cycle_point': [
         'hold',
@@ -106,7 +106,7 @@ ARGUMENT_TYPES = {
 MUTATION_TEMPLATES = {
     'workflow': '''
         mutation($workflow: [WorkflowID]!) {
-            hold (workflows: $workflow) {
+            pause (workflows: $workflow) {
             result
           }
         }

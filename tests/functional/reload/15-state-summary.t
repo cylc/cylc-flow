@@ -18,7 +18,7 @@
 # Test that the state summary updates immediately when a reload finishes.
 # (SoD: the original test contrived to get a succeeded and a failed task in the
 # pool, and no active tasks. That's not possible under SoD, and it seems to me
-# a trivial held suite should do to test that the state summary updates after a
+# a trivial paused suite should do to test that the state summary updates after a
 # reload when nothing else is happening).
 # See https://github.com/cylc/cylc-flow/pull/1756
 . "$(dirname "$0")/test_header"
@@ -37,8 +37,7 @@ __FLOW_CONFIG__
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-# Suite runs and shuts down with a failed task.
-cylc play --hold "${SUITE_NAME}" > /dev/null 2>&1
+cylc play --pause "${SUITE_NAME}" > /dev/null 2>&1
 sleep 5
 cylc reload "${SUITE_NAME}"
 sleep 5
@@ -47,5 +46,5 @@ TEST_NAME=${TEST_NAME_BASE}-grep
 # State summary should not say "reloaded = True"
 grep_ok "reloaded=False" dump.out
 #-------------------------------------------------------------------------------
-cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
+cylc stop --now --now "${SUITE_NAME}"
 purge

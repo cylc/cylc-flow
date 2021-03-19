@@ -180,17 +180,18 @@ def test_rundir_children_that_contain_workflows_raise_error(
 @pytest.mark.parametrize(
     'reg, expected_err, expected_msg',
     [('foo/bar/', None, None),
-     ('/foo/bar', SuiteServiceFileError, "cannot be an absolute path"),
-     ('$HOME/alone', SuiteServiceFileError, "invalid suite name")]
+     ('/foo/bar', WorkflowFilesError, "cannot be an absolute path"),
+     ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
+     ('./foo', WorkflowFilesError, "invalid workflow name")]
 )
-def test_validate_reg(reg, expected_err, expected_msg):
+def test_validate_flow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            suite_files._validate_reg(reg)
+            suite_files.validate_flow_name(reg)
         if expected_msg:
             assert expected_msg in str(exc.value)
     else:
-        suite_files._validate_reg(reg)
+        suite_files.validate_flow_name(reg)
 
 
 @pytest.mark.parametrize(

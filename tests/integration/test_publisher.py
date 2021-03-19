@@ -26,7 +26,7 @@ from cylc.flow.network.subscriber import (
 async def test_publisher(flow, scheduler, run, one_conf, port_range):
     """It should publish deltas when the flow starts."""
     reg = flow(one_conf)
-    schd = scheduler(reg, hold_start=False)
+    schd = scheduler(reg, paused_start=False)
     async with run(schd):
         # create a subscriber
         subscriber = WorkflowSubscriber(

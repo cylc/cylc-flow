@@ -76,7 +76,7 @@ make_rnd_suite
 TEST_NAME="${TEST_NAME_BASE}-no-abs-path-flow-name"
 run_fail "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_SOURCE}" -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Workflow name cannot be an absolute path: ${RND_SUITE_SOURCE}
+WorkflowFilesError: workflow name cannot be an absolute path: ${RND_SUITE_SOURCE}
 __ERR__
 
 # Test cylc install fails when given forbidden run-name
@@ -92,7 +92,7 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-invalid-flow-name"
 run_fail "${TEST_NAME}" cylc install --flow-name=".invalid" -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Invalid workflow name - cannot start with: \`\`.\`\`, \`\`-\`\`
+WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`\`.\`\`, \`\`-\`\`
 __ERR__
 
 # Test --run-name and --no-run-name options are mutually exclusive

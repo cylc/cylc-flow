@@ -19,7 +19,9 @@ Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
 
-from . import integer
+from typing import Optional, Type
+
+from . import PointBase, integer
 from . import iso8601
 from metomi.isodatetime.data import Calendar
 
@@ -58,18 +60,19 @@ class DefaultCycler:
 
     """Store the default TYPE for Cyclers."""
 
-    TYPE = None
+    TYPE: str
 
 
-def get_point(*args, **kwargs):
+def get_point(
+    value: str, cycling_type: Optional[str] = None
+) -> Optional[PointBase]:
     """Return a cylc.flow.cycling.PointBase-derived object from a string."""
-    if args[0] is None:
+    if value is None:
         return None
-    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
-    return get_point_cls(cycling_type=cycling_type)(*args, **kwargs)
+    return get_point_cls(cycling_type=cycling_type)(value)
 
 
-def get_point_cls(cycling_type=None):
+def get_point_cls(cycling_type: Optional[str] = None) -> Type[PointBase]:
     """Return the cylc.flow.cycling.PointBase-derived class we're using."""
     if cycling_type is None:
         cycling_type = DefaultCycler.TYPE

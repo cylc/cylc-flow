@@ -44,9 +44,9 @@ jobs:
             tests/functional/cylc-poll/15-job-st-file-no-batch.t \
             tests/functional/events/28-inactivity.t \
             tests/functional/events/34-task-abort.t \
-            tests/functional/hold-release/12-hold-then-retry.t \
             tests/functional/job-file-trap/00-sigusr1.t \
             tests/functional/job-file-trap/02-pipefail.t \
+            tests/functional/pause-resume/12-pause-then-retry.t \
             tests/functional/shutdown/09-now2.t \
             tests/functional/shutdown/13-no-port-file-check.t \
             tests/functional/shutdown/14-no-dir-check.t
