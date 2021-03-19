@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common utilities for Tui."""
 
+from itertools import zip_longest
+import re
 from time import time
 
 from cylc.flow import ID_DELIM
@@ -161,11 +163,96 @@ def compute_tree(flow):
     # sort
     for (type_, _), node in nodes.items():
         if type_ != 'task':
+            # NOTE: jobs are sorted by submit-num in the GraphQL query
             node['children'].sort(
-                key=lambda x: x['id_']
+                key=lambda x: NaturalSort(x['id_'])
             )
 
     return flow_node
+
+
+class NaturalSort:
+    """An object to use as a sort key for sorting strings as a human would.
+
+    This recognises numerical patterns within strings.
+
+    Examples:
+        >>> N = NaturalSort
+
+        String comparisons work as normal:
+        >>> N('') < N('')
+        False
+        >>> N('a') < N('b')
+        True
+        >>> N('b') < N('a')
+        False
+
+        Integer comparisons work as normal:
+        >>> N('9') < N('10')
+        True
+        >>> N('10') < N('9')
+        False
+
+        Integers rank higher than strings:
+        >>> N('1') < N('a')
+        True
+        >>> N('a') < N('1')
+        False
+
+        Integers within strings are sorted numerically:
+        >>> N('a9b') < N('a10b')
+        True
+        >>> N('a10b') < N('a9b')
+        False
+
+        Lexicographical rules apply when substrings match:
+        >>> N('a1b2') < N('a1b2c3')
+        True
+        >>> N('a1b2c3') < N('a1b2')
+        False
+
+        Equality works as per regular string rules:
+        >>> N('a1b2c3') == N('a1b2c3')
+        True
+
+    """
+
+    PATTERN = re.compile(r'(\d+)')
+
+    def __init__(self, value):
+        self.value = tuple(
+            int(item) if item.isdigit() else item
+            for item in self.PATTERN.split(value)
+            # remove empty strings if value ends with a digit
+            if item
+        )
+
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __lt__(self, other):
+        for this, that in zip_longest(self.value, other.value):
+            if this is None:
+                return True
+            if that is None:
+                return False
+            this_isstr = isinstance(this, str)
+            that_isstr = isinstance(that, str)
+            if this_isstr and that_isstr:
+                if this == that:
+                    continue
+                return this < that
+            this_isint = isinstance(this, int)
+            that_isint = isinstance(that, int)
+            if this_isint and that_isint:
+                if this == that:
+                    continue
+                return this < that
+            if this_isint and that_isstr:
+                return True
+            if this_isstr and that_isint:
+                return False
+        return False
 
 
 def dummy_flow(data):
