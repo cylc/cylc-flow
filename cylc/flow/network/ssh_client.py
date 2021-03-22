@@ -14,17 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import os
 from typing import Union
 
-from cylc.flow.network.client_factory import CommsMeth
-from cylc.flow.suite_files import load_contact_file, ContactFileFields
-from cylc.flow.network import (
-    get_location,
-)
-import json
-from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.exceptions import ClientError
+from cylc.flow.network.client_factory import CommsMeth
+from cylc.flow.network import get_location
+from cylc.flow.remote import _remote_cylc_cmd
+from cylc.flow.suite_files import load_contact_file, ContactFileFields
 
 
 class SuiteRuntimeClient():
