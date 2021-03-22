@@ -212,9 +212,12 @@ These files should be handled by the cylc-rose plugin if you require them.
 [#4126](https://github.com/cylc/cylc-flow/pull/4126) - Make obselete the config
 ``flow.cylc:[runtime][__TASK__][remote]suite definition directory``.
 
-
 [#4098](https://github.com/cylc/cylc-flow/pull/4098) - Provide a dictionary called
 CYLC_TEMPLATE_VARS into the templating environment.
+
+[#4099](https://github.com/cylc/cylc-flow/pull/4099) - Unify `cylc get-suite-config`
+and `cylc get-site-config` commands as `cylc config`. Some options have been
+removed.
 
 ### Fixes
 
