@@ -164,31 +164,31 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, flow_name=None):
-    install(parser, opts, flow_name)
+def main(parser, opts, reg=None):
+    install(parser, opts, reg)
 
 
 def install(
-    parser: COP, opts: 'Options', flow_name: Optional[str] = None
+    parser: COP, opts: 'Options', reg: Optional[str] = None
 ) -> None:
     if opts.no_run_name and opts.run_name:
         parser.error(
             "options --no-run-name and --run-name are mutually exclusive.")
 
-    if flow_name is None:
-        flow_name = opts.flow_name
+    if reg is None:
         source = opts.source
     else:
         if opts.source:
             parser.error("REG and --directory are mutually exclusive.")
-        source = search_install_source_dirs(flow_name)
+        source = search_install_source_dirs(reg)
+    flow_name = opts.flow_name or reg
 
     for entry_point in pkg_resources.iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
-            if opts.source:
-                entry_point.resolve()(srcdir=opts.source, opts=opts)
+            if source:
+                entry_point.resolve()(srcdir=source, opts=opts)
             else:
                 from pathlib import Path
                 entry_point.resolve()(srcdir=Path().cwd(), opts=opts)
