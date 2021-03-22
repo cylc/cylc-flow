@@ -57,9 +57,6 @@ class TaskProxy:
         .late_time (float):
             Time in seconds since epoch, beyond which the task is considered
             late if it is never active.
-        .manual_trigger (boolean):
-            Has this task received a manual trigger command? This flag is reset
-            on trigger.
         .non_unique_events (collections.Counter):
             Count non-unique events (e.g. critical, warning, custom).
         .point (cylc.flow.cycling.PointBase):
@@ -161,7 +158,6 @@ class TaskProxy:
         'jobs',
         'late_time',
         'local_job_file_path',
-        'manual_trigger',
         'non_unique_events',
         'point',
         'point_as_seconds',
@@ -197,7 +193,6 @@ class TaskProxy:
         self.reload_successor = None
         self.point_as_seconds = None
 
-        self.manual_trigger = False
         self.is_manual_submit = False
         self.summary = {
             'latest_message': '',
@@ -251,7 +246,6 @@ class TaskProxy:
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
-        reload_successor.manual_trigger = self.manual_trigger
         reload_successor.is_manual_submit = self.is_manual_submit
         reload_successor.summary = self.summary
         reload_successor.local_job_file_path = self.local_job_file_path
@@ -262,6 +256,7 @@ class TaskProxy:
         reload_successor.timeout = self.timeout
         reload_successor.state.outputs = self.state.outputs
         reload_successor.state.is_held = self.state.is_held
+        reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
         reload_successor.state.prerequisites = self.state.prerequisites
         reload_successor.graph_children = self.graph_children
@@ -319,32 +314,27 @@ class TaskProxy:
             p_next = min(adjusted)
         return p_next
 
-    def is_ready(self):
-        """Am I in a pre-run state but ready to run?
+    def is_ready_to_run(self) -> bool:
+        """Is this task ready to run?
 
-        Queued tasks are not counted as they've already been deemed ready.
+        Takes account of all dependence: on other tasks, xtriggers, and
+        old-style ext- and clock-triggers. Or, manual triggering.
 
         """
-        if self.manual_trigger:
+        if self.is_manual_submit:
+            # Manually triggered, ignore unsatisified prerequisites.
             return (True,)
         if self.state.is_held:
+            # A held task is not ready to run.
             return (False,)
         if self.state.status in self.try_timers:
+            # A try timer is still active.
             return (self.try_timers[self.state.status].is_delay_done(),)
         return (
             self.state(TASK_STATUS_WAITING),
             self.is_waiting_clock_done(),
             self.is_waiting_prereqs_done()
         )
-
-    def reset_manual_trigger(self):
-        """This is called immediately after manual trigger flag used."""
-        if self.manual_trigger:
-            self.manual_trigger = False
-            self.is_manual_submit = True
-            # unset any retry delay timers
-            for timer in self.try_timers.values():
-                timer.timeout = None
 
     def set_summary_message(self, message):
         """Set `.summary['latest_message']` if necessary.
@@ -380,15 +370,25 @@ class TaskProxy:
         return time() >= self.clock_trigger_time
 
     def is_task_prereqs_not_done(self):
-        """Is this task waiting on other-task prerequisites?"""
-        return (len(self.state.prerequisites) > 0 and
-                not all(pre.is_satisfied()
+        """Are some task prerequisites not satisfied?"""
+        return (not all(pre.is_satisfied()
                 for pre in self.state.prerequisites))
 
     def is_waiting_prereqs_done(self):
-        """Is this task waiting for its prerequisites?"""
+        """Are ALL prerequisites satisfied?"""
         return (
             all(pre.is_satisfied() for pre in self.state.prerequisites)
             and all(tri for tri in self.state.external_triggers.values())
             and self.state.xtriggers_all_satisfied()
         )
+
+    def is_waiting_task_prereqs_done(self):
+        """Are all task prerequisites satisfied?"""
+        return (
+            all(pre.is_satisfied() for pre in self.state.prerequisites)
+        )
+
+    def reset_try_timers(self):
+        # unset any retry delay timers
+        for timer in self.try_timers.values():
+            timer.timeout = None

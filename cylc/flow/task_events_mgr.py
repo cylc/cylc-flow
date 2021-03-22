@@ -178,7 +178,8 @@ class TaskEventsManager():
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
     def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr,
-                 xtrigger_mgr, data_store_mgr, timestamp):
+                 xtrigger_mgr, data_store_mgr, timestamp,
+                 reset_inactivity_timer_func):
         self.suite = suite
         self.suite_url = None
         self.suite_cfg = {}
@@ -192,6 +193,7 @@ class TaskEventsManager():
         self.mail_smtp = None
         self.mail_footer = None
         self.next_mail_time = None
+        self.reset_inactivity_timer_func = reset_inactivity_timer_func
         # NOTE: do not mutate directly
         # use the {add,remove,unset_waiting}_event_timers methods
         self._event_timers = {}
@@ -199,9 +201,6 @@ class TaskEventsManager():
         self.event_timers_updated = True
         # To be set by the task pool:
         self.spawn_func = None
-        # pflag was set to True to stimulate dependency negotiation in SoS
-        # (flag is turned on by commands that change task state)
-        self.pflag = False
         self.timestamp = timestamp
 
     @staticmethod
@@ -499,7 +498,7 @@ class TaskEventsManager():
                 itask.try_timers[TimerFlags.SUBMISSION_RETRY].num = 0
             itask.job_vacated = True
             # Believe this and change state without polling (could poll?).
-            self.pflag = True
+            self.reset_inactivity_timer_func()
             if itask.state.reset(TASK_STATUS_SUBMITTED):
                 itask.state.reset(is_queued=False)
                 self.data_store_mgr.delta_task_state(itask)
@@ -837,7 +836,7 @@ class TaskEventsManager():
             "run_status": 1,
             "time_run_exit": event_time,
         })
-        self.pflag = True
+        self.reset_inactivity_timer_func()
         if (
                 TimerFlags.EXECUTION_RETRY not in itask.try_timers
                 or itask.try_timers[TimerFlags.EXECUTION_RETRY].next() is None
@@ -869,7 +868,7 @@ class TaskEventsManager():
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.warning(f"[{itask}] -Vacated job restarted")
-        self.pflag = True
+        self.reset_inactivity_timer_func()
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_RUNNING)
@@ -891,7 +890,7 @@ class TaskEventsManager():
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUCCEEDED)
-        self.pflag = True
+        self.reset_inactivity_timer_func()
         itask.set_summary_time('finished', event_time)
         self.suite_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
@@ -935,7 +934,7 @@ class TaskEventsManager():
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
         itask.summary['submit_method_id'] = None
-        self.pflag = True
+        self.reset_inactivity_timer_func()
         if (
                 TimerFlags.SUBMISSION_RETRY not in itask.try_timers
                 or itask.try_timers[TimerFlags.SUBMISSION_RETRY].next() is None
@@ -1000,7 +999,7 @@ class TaskEventsManager():
         itask.set_summary_time('finished')
         itask.set_summary_message(TASK_OUTPUT_SUBMITTED)
 
-        self.pflag = True
+        self.reset_inactivity_timer_func()
         if itask.state.status == TASK_STATUS_PREPARING:
             # The job started message can (rarely) come in before the submit
             # command returns - in which case do not go back to 'submitted'.

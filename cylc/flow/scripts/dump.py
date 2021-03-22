@@ -52,6 +52,7 @@ fragment tProxy on TaskProxy {
   state
   isHeld
   isQueued
+  isRunahead
   flowLabel
   firstParent {
     id
@@ -88,7 +89,6 @@ fragment wFlow on Workflow {
   name
   oldestActiveCyclePoint
   newestActiveCyclePoint
-  newestRunaheadCyclePoint
   timeZoneInfo {
     hours
     minutes
@@ -256,7 +256,9 @@ def main(_, options, suite):
                                 item['state']]
                         values.append('held' if item['isHeld'] else 'unheld')
                         values.append('queued' if item['isQueued']
-                                      else 'unqueued')
+                                      else 'not-queued')
+                        values.append('runahead' if item['isRunahead']
+                                      else 'not-runahead')
                         if options.flow:
                             values.append(item['flowLabel'])
                         print(', '.join(values))

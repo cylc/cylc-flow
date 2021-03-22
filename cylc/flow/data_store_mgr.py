@@ -1232,15 +1232,18 @@ class DataStoreMgr:
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
             tp_added = self.added[TASK_PROXIES]
-            # gather child family states for count, set is_held, is_queued
+            # gather child family states for count, set is_held, is_queued,
+            # is_runahead
             state_counter = Counter({})
             is_held_total = 0
             is_queued_total = 0
+            is_runahead_total = 0
             for child_id in fam_node.child_families:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
                 if child_node is not None:
                     is_held_total += child_node.is_held_total
                     is_queued_total += child_node.is_queued_total
+                    is_runahead_total += child_node.is_runahead_total
                     state_counter += Counter(dict(child_node.state_totals))
             # Gather all child task states
             task_states = []
@@ -1267,6 +1270,13 @@ class DataStoreMgr:
                 if tp_queued.is_queued:
                     is_queued_total += 1
 
+                tp_runahead = tp_delta
+                if (tp_runahead is None
+                        or not tp_runahead.HasField('is_runahead')):
+                    tp_runahead = tp_node
+                if tp_runahead.is_runahead:
+                    is_runahead_total += 1
+
             state_counter += Counter(task_states)
             # created delta data element
             fp_delta = PbFamilyProxy(
@@ -1276,7 +1286,9 @@ class DataStoreMgr:
                 is_held=(is_held_total > 0),
                 is_held_total=is_held_total,
                 is_queued=(is_queued_total > 0),
-                is_queued_total=is_queued_total
+                is_queued_total=is_queued_total,
+                is_runahead=(is_runahead_total > 0),
+                is_runahead_total=is_runahead_total
             )
             fp_delta.states[:] = state_counter.keys()
             # Use all states to clean up pruned counts
@@ -1315,6 +1327,7 @@ class DataStoreMgr:
             state_counter = Counter({})
             is_held_total = 0
             is_queued_total = 0
+            is_runahead_total = 0
             for root_id in set(
                     [n.id
                      for n in data[FAMILY_PROXIES].values()
@@ -1331,6 +1344,7 @@ class DataStoreMgr:
                 if root_node is not None:
                     is_held_total += root_node.is_held_total
                     is_queued_total += root_node.is_queued_total
+                    is_runahead_total += root_node.is_runahead_total
                     state_counter += Counter(dict(root_node.state_totals))
             w_delta.states[:] = state_counter.keys()
             for state, state_cnt in state_counter.items():
@@ -1338,6 +1352,7 @@ class DataStoreMgr:
 
             w_delta.is_held_total = is_held_total
             w_delta.is_queued_total = is_queued_total
+            w_delta.is_runahead_total = is_runahead_total
             delta_set = True
 
             for state, tp_queue in self.latest_state_tasks.items():
@@ -1351,8 +1366,8 @@ class DataStoreMgr:
             w_delta.status_msg = status_msg
             delta_set = True
 
-        if self.schd.pool.pool:
-            pool_points = set(self.schd.pool.pool)
+        if self.schd.pool.main_pool:
+            pool_points = set(self.schd.pool.main_pool)
             oldest_point = str(min(pool_points))
             if w_data.oldest_active_cycle_point != oldest_point:
                 w_delta.oldest_active_cycle_point = oldest_point
@@ -1360,11 +1375,6 @@ class DataStoreMgr:
             newest_point = str(max(pool_points))
             if w_data.newest_active_cycle_point != newest_point:
                 w_delta.newest_active_cycle_point = newest_point
-                delta_set = True
-        if self.schd.pool.runahead_pool:
-            newest_runahead_point = str(max(set(self.schd.pool.runahead_pool)))
-            if w_data.newest_runahead_cycle_point != newest_runahead_point:
-                w_delta.newest_runahead_cycle_point = newest_runahead_point
                 delta_set = True
 
         if delta_set:
@@ -1473,6 +1483,26 @@ class DataStoreMgr:
         tp_delta.is_queued = itask.state.is_queued
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
+
+    def delta_task_runahead(self, itask):
+        """Create delta for change in task proxy runahead state.
+
+        Args:
+            itask (cylc.flow.task_proxy.TaskProxy):
+                Update task-node from corresponding task proxy
+                objects from the workflow task pool.
+
+        """
+        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        if not tproxy:
+            return
+        if itask.state.is_runahead is not tproxy.is_runahead:
+            tp_delta = self.updated[TASK_PROXIES].setdefault(
+                tp_id, PbTaskProxy(id=tp_id))
+            tp_delta.stamp = f'{tp_id}@{time()}'
+            tp_delta.is_runahead = itask.state.is_runahead
+            self.state_update_families.add(tproxy.first_parent)
+            self.updates_pending = True
 
     def delta_task_output(self, itask, message):
         """Create delta for change in task proxy output.

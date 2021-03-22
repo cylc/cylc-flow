@@ -260,6 +260,7 @@ PROXY_ARGS = {
     'exstates': List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
+    'is_runahead': Boolean(),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
@@ -274,6 +275,7 @@ ALL_PROXY_ARGS = {
     'exstates': List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
+    'is_runahead': Boolean(),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
@@ -302,6 +304,7 @@ NODES_EDGES_ARGS = {
     'exstates': List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
+    'is_runahead': Boolean(),
     'distance': Int(default_value=1),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
@@ -317,6 +320,7 @@ NODES_EDGES_ARGS_ALL = {
     'exstates': List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
+    'is_runahead': Boolean(),
     'distance': Int(default_value=1),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
@@ -713,13 +717,13 @@ class Workflow(ObjectType):
     cylc_version = String()
     last_updated = Float()
     meta = Field(NodeMeta)
-    newest_runahead_cycle_point = String()
     newest_active_cycle_point = String()
     oldest_active_cycle_point = String()
     reloaded = Boolean()
     run_mode = String()
     is_held_total = Int()
     is_queued_total = Int()
+    is_runahead_total = Int()
     state_totals = GenericScalar(resolver=resolve_state_totals)
     latest_state_tasks = GenericScalar(
         states=List(
@@ -901,6 +905,7 @@ class TaskProxy(ObjectType):
     cycle_point = String()
     is_held = Boolean()
     is_queued = Boolean()
+    is_runahead = Boolean()
     flow_label = String()
     depth = Int()
     job_submits = Int()
@@ -1045,6 +1050,8 @@ class FamilyProxy(ObjectType):
     is_held_total = Int()
     is_queued = Boolean()
     is_queued_total = Int()
+    is_runahead = Boolean()
+    is_runahead_total = Int()
     depth = Int()
     child_tasks = List(
         TaskProxy,
@@ -1385,6 +1392,9 @@ class TaskState(InputObjectType):
     '''))
     is_queued = Boolean(description=sstrip('''
         Task is queued for job submission
+    '''))
+    is_runahead = Boolean(description=sstrip('''
+        Task is runahead limited
     '''))
 
 

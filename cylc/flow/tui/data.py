@@ -34,6 +34,7 @@ QUERY = '''
         state
         isHeld
         isQueued
+        isRunahead
         firstParent {
           id
           name
@@ -58,6 +59,7 @@ QUERY = '''
         state
         isHeld
         isQueued
+        isRunahead
         firstParent {
           id
           name
@@ -69,6 +71,7 @@ QUERY = '''
         state
         isHeld
         isQueued
+        isRunahead
       }
     }
   }

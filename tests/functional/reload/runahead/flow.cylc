@@ -19,6 +19,6 @@
     [[reloader]]
         script = """
 cylc__job__poll_grep_suite_log '\[foo.* (received)failed'
-perl -pi -e 's/(runahead limit = )P2( # marker)/\1 4\2/' $CYLC_SUITE_RUN_DIR/flow.cylc
+perl -pi -e 's/(runahead limit = )P2( # marker)/\1 P4\2/' $CYLC_SUITE_RUN_DIR/flow.cylc
 cylc reload $CYLC_SUITE_NAME
 """

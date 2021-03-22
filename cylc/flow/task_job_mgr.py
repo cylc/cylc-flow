@@ -1062,3 +1062,10 @@ class TaskJobManager:
             'uuid_str': self.task_remote_mgr.uuid_str,
             'work_d': rtconfig['work sub-directory'],
         }
+
+    def remote_mgr_ready(self):
+        if self.task_remote_mgr.ready:
+            self.task_remote_mgr.ready = False
+            return True
+        else:
+            return False

@@ -31,6 +31,6 @@ run_fail "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
 TEST_NAME=${TEST_NAME_BASE}-check-fail
 DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
 QUERY='SELECT COUNT(*) FROM task_states WHERE status == "failed"'
-cmp_ok <(sqlite3 "$DB_FILE" "$QUERY") <<< "2"
+cmp_ok <(sqlite3 "$DB_FILE" "$QUERY") <<< "4"
 #-------------------------------------------------------------------------------
 purge

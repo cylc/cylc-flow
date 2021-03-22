@@ -21,14 +21,10 @@
 . "$(dirname "$0")/test_header"
 
 set_test_number 7
-
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-
 suite_run_fail "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --stopcp=2 --no-detach
-
 
 DB_FILE="${SUITE_RUN_DIR}/log/db"
 
@@ -44,7 +40,6 @@ cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
 __EOF__
 
 suite_run_fail "${TEST_NAME_BASE}-restart" cylc play "${SUITE_NAME}" --stopcp=3 --no-detach
-poll_suite_stopped
 
 # Check bar.2 is still waiting (i.e. prereqs not satisfied):
 TEST_NAME="${TEST_NAME_BASE}-db-task-pool"

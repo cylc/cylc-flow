@@ -43,7 +43,6 @@ query {
       title
       description
     }
-    newestRunaheadCyclePoint
     newestActiveCyclePoint
     oldestActiveCyclePoint
     reloaded
@@ -75,8 +74,9 @@ SUITE_LOG_DIR="$( cylc cat-log -m p "${SUITE_NAME}" \
 # stop suite
 cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
 
-# compare to expectation
-# Note: Zero active cycle points when starting paused
+# Compare to expectation
+# Note: One active cycle point on starting paused
+#   (runahead tasks are now in the main scheduler task pool)
 cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
 {
     "workflows": [
@@ -92,13 +92,12 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
                 "title": "foo",
                 "description": "bar"
             },
-            "newestRunaheadCyclePoint": "1",
-            "newestActiveCyclePoint": "",
-            "oldestActiveCyclePoint": "",
+            "newestActiveCyclePoint": "1",
+            "oldestActiveCyclePoint": "1",
             "reloaded": false,
             "runMode": "live",
             "stateTotals": {
-                "waiting": 0,
+                "waiting": 1,
                 "expired": 0,
                 "preparing": 0,
                 "submit-failed": 0,
@@ -116,8 +115,10 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
                 "foo",
                 "root"
             ],
-            "states": [],
-            "latestStateTasks": {}
+            "states": ["waiting"],
+            "latestStateTasks": {
+                "waiting": ["foo.1"]
+            }
         }
     ]
 }

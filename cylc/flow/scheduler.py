@@ -96,6 +96,10 @@ from cylc.flow.task_remote_mgr import (
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_WAITING,
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.wallclock import (
@@ -153,16 +157,6 @@ class Scheduler:
     START_PUB_MESSAGE_TMPL = (
         START_PUB_MESSAGE_PREFIX +
         'url=%(comms_method)s://%(host)s:%(port)s')
-
-    # Dependency negotiation etc. will run after these commands
-    PROC_CMDS = (
-        'release_suite',
-        'release_tasks',
-        'kill_tasks',
-        'force_spawn_children',
-        'force_trigger_tasks',
-        'reload_suite'
-    )
 
     # managers
     profiler: Profiler
@@ -379,7 +373,8 @@ class Scheduler:
             self.broadcast_mgr,
             self.xtrigger_mgr,
             self.data_store_mgr,
-            self.options.log_timestamp
+            self.options.log_timestamp,
+            self.reset_inactivity_timer
         )
         self.task_events_mgr.uuid_str = self.uuid_str
 
@@ -484,7 +479,7 @@ class Scheduler:
                     180
                 )
         if self._get_events_conf(key):
-            self.set_suite_inactivity_timer()
+            self.reset_inactivity_timer()
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load(
@@ -634,8 +629,8 @@ class Scheduler:
         and add it to the pool if it has no parents.
 
         (Later on, tasks with parents will be spawned on-demand, and tasks with
-        no parents will be auto-spawned when their own previous instances are
-        released from the runahead pool.)
+        no parents will be auto-spawned when their previous instances are
+        released from runhead.)
 
         """
         if self.config.start_point is not None:
@@ -662,7 +657,7 @@ class Scheduler:
             parent_points = tdef.get_parent_points(point)
             if not parent_points or all(
                     x < self.config.start_point for x in parent_points):
-                self.pool.add_to_runahead_pool(
+                self.pool.add_to_pool(
                     TaskProxy(tdef, point, flow_label))
 
     def load_tasks_for_restart(self):
@@ -686,13 +681,9 @@ class Scheduler:
             self.pool.load_abs_outputs_for_restart)
 
     def restart_remote_init(self):
-        """Remote init for all submitted / running tasks in the pool.
-
-        Note: tasks should all be in the runahead pool at this point.
-
-        """
+        """Remote init for all submitted/running tasks in the pool."""
         distinct_install_target_platforms = []
-        for itask in self.pool.get_rh_tasks():
+        for itask in self.pool.get_tasks():
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
             if itask.state(*TASK_STATUSES_ACTIVE):
@@ -814,8 +805,6 @@ class Scheduler:
                 else:
                     LOG.info('Command succeeded: ' + cmdstr)
                 self.is_updated = True
-                if name in self.PROC_CMDS:
-                    self.task_events_mgr.pflag = True
             self.command_queue.task_done()
         LOG.info(log_msg)
 
@@ -986,15 +975,16 @@ class Scheduler:
             get_current_time_string())
         self.suite_timer_active = True
 
-    def set_suite_inactivity_timer(self):
-        """Set suite's inactivity timer."""
-        self.suite_inactivity_timeout = time() + (
-            self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
-        )
+    def reset_inactivity_timer(self):
+        """Reset suite's inactivity timer."""
+
+        timeout = self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
+        if timeout is None:
+            return
+        self.suite_inactivity_timeout = time() + timeout
         LOG.debug(
             "%s suite inactivity timer starts NOW: %s",
-            get_seconds_as_interval_string(
-                self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
+            get_seconds_as_interval_string(timeout),
             get_current_time_string())
 
     def _configure_contact(self):
@@ -1208,8 +1198,8 @@ class Scheduler:
             event, str(reason), self.suite, self.uuid_str, self.owner,
             self.host, self.server.port))
 
-    def process_task_pool(self):
-        """Queue and release tasks, and submit task jobs.
+    def release_queued_tasks(self):
+        """Release queued tasks, and submit task jobs.
 
         The task queue manages references to task proxies in the task pool.
 
@@ -1218,11 +1208,6 @@ class Scheduler:
         processes are done.
 
         """
-        LOG.debug("BEGIN TASK PROCESSING")
-        time0 = time()
-        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
-            self.set_suite_inactivity_timer()
-
         # Forget tasks that are no longer preparing for job submission.
         self.pre_submit_tasks = [
             itask for itask in self.pre_submit_tasks if
@@ -1232,7 +1217,7 @@ class Scheduler:
         if (not self.is_paused and
                 self.stop_mode is None and self.auto_restart_time is None):
             # Add newly released tasks to those still preparing.
-            self.pre_submit_tasks += self.pool.queue_and_release()
+            self.pre_submit_tasks += self.pool.release_queued_tasks()
             if self.pre_submit_tasks:
                 self.is_updated = True
                 self.task_job_mgr.task_remote_mgr.rsync_includes = (
@@ -1246,11 +1231,6 @@ class Scheduler:
                     # TODO log flow labels here (beware effect on ref tests)
                     LOG.info('[%s] -triggered off %s',
                              itask, itask.state.get_resolved_dependencies())
-
-        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
-        self.xtrigger_mgr.housekeep()
-        self.suite_db_mgr.put_xtriggers(self.xtrigger_mgr.sat_xtrig)
-        LOG.debug("END TASK PROCESSING (took %s seconds)" % (time() - time0))
 
     def process_suite_db_queue(self):
         """Update suite DB."""
@@ -1408,11 +1388,6 @@ class Scheduler:
                 self.count, get_current_time_string()))
         self.count += 1
 
-    def release_runahead_tasks(self) -> None:
-        if self.pool.release_runahead_tasks():
-            self.is_updated = True
-            self.task_events_mgr.pflag = True
-
     async def main_loop(self):
         """The scheduler main loop."""
         while True:  # MAIN LOOP
@@ -1427,12 +1402,69 @@ class Scheduler:
                     self.data_store_mgr.publish_deltas)
 
             self.process_command_queue()
+
             if not self.is_paused:
-                self.release_runahead_tasks()
+                if self.pool.release_runahead_tasks():
+                    self.is_updated = True
+                    self.reset_inactivity_timer()
+
             self.proc_pool.process()
 
-            if self.should_process_tasks():
-                self.process_task_pool()
+            # Get tasks with newly-satisfied external triggers.
+            check_if_ready = self.broadcast_mgr.check_ext_triggers(
+                [x for x in self.pool.get_tasks()
+                    if x.state(TASK_STATUS_WAITING)
+                    and not x.state.is_queued
+                    and not x.state.is_runahead
+                    and x.state.external_triggers
+                    and not x.state.external_triggers_all_satisfied()],
+                self.ext_trigger_queue
+            )
+
+            # Call unsatisfied xtrigger functions if needed.
+            self.xtrigger_mgr.call_xtriggers(
+                [
+                    itask for itask in self.pool.get_tasks()
+                    if (
+                        itask.state(TASK_STATUS_WAITING)
+                        and not itask.state.is_queued
+                        and not itask.state.is_runahead
+                        and itask.state.xtriggers
+                        and not itask.state.xtriggers_all_satisfied()
+                    )
+                ]
+            )
+
+            # Get tasks with satisfied xtriggers.
+            check_if_ready.update(
+                self.xtrigger_mgr.check_xtriggers(
+                    [itask for itask in self.pool.get_tasks()
+                        if itask.state(TASK_STATUS_WAITING)
+                        and not itask.state.is_queued
+                        and itask.state.xtriggers],
+                    self.suite_db_mgr.put_xtriggers
+                )
+            )
+
+            # Queue if these tasks are ready to run.
+            self.pool.queue_tasks(
+                [
+                    itask for itask in check_if_ready
+                    if all(itask.is_ready_to_run())
+                ]
+            )
+
+            self.pool.set_expired_tasks()
+
+            self.release_queued_tasks()
+
+            self.pool.dump()
+
+            if self.pool.sim_time_check(self.message_queue):
+                # A simulated task state change occurred.
+                self.reset_inactivity_timer()
+
+            self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
             self.late_tasks_check()
 
             self.process_queued_task_messages()
@@ -1493,7 +1525,7 @@ class Scheduler:
     async def update_data_structure(self):
         """Update DB, UIS, Summary data elements"""
         updated_tasks = [
-            t for t in self.pool.get_all_tasks() if t.state.is_updated]
+            t for t in self.pool.get_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
         # Add tasks that have moved moved from runahead to live pool.
         if has_updated or self.data_store_mgr.updates_pending:
@@ -1552,7 +1584,7 @@ class Scheduler:
     def check_suite_stalled(self):
         """Check if suite is stalled or not."""
         if self.is_stalled:  # already reported
-            return
+            return True
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
             self.run_event_handlers(self.EVENT_STALLED, 'suite stalled')
@@ -1562,52 +1594,7 @@ class Scheduler:
             # Start suite timeout timer
             if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.set_suite_timer()
-
-    def should_process_tasks(self) -> bool:
-        """Return True if waiting tasks are ready."""
-        # do we need to do a pass through the main task processing loop?
-        process = False
-
-        # New-style xtriggers.
-        self.xtrigger_mgr.check_xtriggers(self.pool.get_tasks())
-        if self.xtrigger_mgr.pflag:
-            process = True
-            self.xtrigger_mgr.pflag = False  # reset
-        # Old-style external triggers.
-        self.broadcast_mgr.add_ext_triggers(self.ext_trigger_queue)
-        for itask in self.pool.get_tasks():
-            if (itask.state.external_triggers and
-                    self.broadcast_mgr.match_ext_trigger(itask)):
-                process = True
-
-        if self.task_events_mgr.pflag:
-            # This flag is turned on by commands that change task state
-            process = True
-            self.task_events_mgr.pflag = False  # reset
-
-        if self.task_job_mgr.task_remote_mgr.ready:
-            # This flag is turned on when a host init/select command completes
-            process = True
-            self.task_job_mgr.task_remote_mgr.ready = False  # reset
-
-        broadcast_mgr = self.task_events_mgr.broadcast_mgr
-        broadcast_mgr.add_ext_triggers(self.ext_trigger_queue)
-        for itask in self.pool.get_tasks():
-            # External trigger matching and task expiry must be done
-            # regardless, so they need to be in separate "if ..." blocks.
-            if broadcast_mgr.match_ext_trigger(itask):
-                process = True
-            if self.pool.set_expired_task(itask, time()):
-                process = True
-            if all(itask.is_ready()):
-                process = True
-        if (
-            self.config.run_mode('simulation') and
-            self.pool.sim_time_check(self.message_queue)
-        ):
-            process = True
-
-        return process
+        return self.is_stalled
 
     async def shutdown(self, reason: Exception) -> None:
         """Gracefully shut down the scheduler."""
@@ -1738,17 +1725,38 @@ class Scheduler:
         return False
 
     def check_auto_shutdown(self):
-        """Check if we should do an automatic shutdown: main pool empty."""
+        """Check if we should do an automatic shutdown.
+
+        CRITERIA:
+        """
         if self.is_paused:
             return False
-        self.pool.release_runahead_tasks()
-        if self.pool.get_tasks():
+
+        if self.check_suite_stalled():
+            # Stay up if stalled (unless "abort on stalled" is set)
+            # (implies unhandled failed tasks)
             return False
-        # can shut down
+
+        self.pool.release_runahead_tasks()
+        if [
+                itask for itask in self.pool.get_tasks()
+                if itask.state(
+                    TASK_STATUS_PREPARING,
+                    TASK_STATUS_SUBMITTED,
+                    TASK_STATUS_RUNNING
+                )
+                or (itask.state(TASK_STATUS_WAITING)
+                    and not itask.state.is_runahead)
+        ]:
+            # There are more tasks to run.
+            # If waiting and not runahead: held, queued, or xtriggered)
+            return False
+        # Can shut down.
         if self.pool.stop_point:
             self.options.stopcp = None
             self.pool.stop_point = None
             self.suite_db_mgr.delete_suite_stop_cycle_point()
+        self.pool.dump()
         return True
 
     def pause_workflow(self) -> None:

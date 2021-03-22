@@ -25,7 +25,7 @@ from cylc.flow.xtrigger_mgr import RE_STR_TMPL
 
 
 def test_constructor(xtrigger_mgr):
-    """Test creating a XtriggerManager, and its initial state."""
+    """Test creating an XtriggerManager, and its initial state."""
     # the dict with normal xtriggers starts empty
     assert not xtrigger_mgr.functx_map
 
@@ -42,7 +42,7 @@ def test_extract_templates():
 
 
 def test_add_xtrigger(xtrigger_mgr):
-    """Test for adding a xtrigger."""
+    """Test for adding an xtrigger."""
     xtrig = SubFuncContext(
         label="echo",
         func_name="echo",
@@ -54,7 +54,7 @@ def test_add_xtrigger(xtrigger_mgr):
 
 
 def test_add_xtrigger_with_params(xtrigger_mgr):
-    """Test for adding a xtrigger."""
+    """Test for adding an xtrigger."""
     xtrig = SubFuncContext(
         label="echo",
         func_name="echo",
@@ -66,7 +66,7 @@ def test_add_xtrigger_with_params(xtrigger_mgr):
 
 
 def test_add_xtrigger_with_unknown_params(xtrigger_mgr):
-    """Test for adding a xtrigger with an unknown parameter.
+    """Test for adding an xtrigger with an unknown parameter.
 
     The XTriggerManager contains a list of specific parameters that are
     available in the function template.
@@ -88,7 +88,7 @@ def test_add_xtrigger_with_unknown_params(xtrigger_mgr):
 
 
 def test_load_xtrigger_for_restart(xtrigger_mgr):
-    """Test loading a xtrigger for restart.
+    """Test loading an xtrigger for restart.
 
     The function is loaded from database, where the value is formatted
     as JSON."""
@@ -114,7 +114,7 @@ def test_housekeeping_nothing_satisfied(xtrigger_mgr):
     # now XtriggerManager#sat_xtrigger will contain the get_name xtrigger
     xtrigger_mgr.load_xtrigger_for_restart(row_idx=0, row=row)
     assert xtrigger_mgr.sat_xtrig
-    xtrigger_mgr.housekeep()
+    xtrigger_mgr._housekeep([])
     assert not xtrigger_mgr.sat_xtrig
 
 
@@ -142,20 +142,18 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     start_point = ISO8601Point('2019')
     itask = TaskProxy(
         tdef, start_point, FlowLabelMgr().get_new_label())
-    xtrigger_mgr.collate([itask])
     # pretend the function has been activated
     xtrigger_mgr.active.append(xtrig.get_signature())
     xtrigger_mgr.callback(xtrig)
     assert xtrigger_mgr.sat_xtrig
-    xtrigger_mgr.housekeep()
+    xtrigger_mgr._housekeep([itask])
     # here we still have the same number as before
     assert xtrigger_mgr.sat_xtrig
 
 
-def test_satisfy_xtrigger(xtrigger_mgr):
-    """Test satisfy_xtriggers"""
+def test__call_xtriggers_async(xtrigger_mgr):
+    """Test _call_xtriggers_async"""
     xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
-
     # the echo1 xtrig (not satisfied)
     echo1_xtrig = SubFuncContext(
         label="echo1",
@@ -196,13 +194,13 @@ def test_satisfy_xtrigger(xtrigger_mgr):
     assert len(xtrigger_mgr.sat_xtrig) == 0
     assert len(xtrigger_mgr.active) == 0
 
-    # after calling satisfy_xtriggers the first time, we get two active
-    xtrigger_mgr.satisfy_xtriggers(itask)
+    # after calling the first time, we get two active
+    xtrigger_mgr._call_xtriggers_async(itask)
     assert len(xtrigger_mgr.sat_xtrig) == 0
     assert len(xtrigger_mgr.active) == 2
 
-    # calling satisfy_xtriggers again does not change anything
-    xtrigger_mgr.satisfy_xtriggers(itask)
+    # calling again does not change anything
+    xtrigger_mgr._call_xtriggers_async(itask)
     assert len(xtrigger_mgr.sat_xtrig) == 0
     assert len(xtrigger_mgr.active) == 2
 
@@ -215,70 +213,9 @@ def test_satisfy_xtrigger(xtrigger_mgr):
     assert len(xtrigger_mgr.active) == 0
 
     # calling satisfy_xtriggers again still does not change anything
-    xtrigger_mgr.satisfy_xtriggers(itask)
+    xtrigger_mgr._call_xtriggers_async(itask)
     assert len(xtrigger_mgr.sat_xtrig) == 2
     assert len(xtrigger_mgr.active) == 0
-
-
-def test_collate(xtrigger_mgr):
-    """Test that collate properly tallies the totals of current xtriggers."""
-    xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
-
-    xtrigger_mgr.collate(itasks=[])
-    assert not xtrigger_mgr.all_xtrig
-
-    # add a xtrigger
-    # that will cause all_xtrig to be populated
-    get_name = SubFuncContext(
-        label="get_name",
-        func_name="get_name",
-        func_args=[],
-        func_kwargs={}
-    )
-    xtrigger_mgr.add_trig("get_name", get_name, 'fdir')
-    get_name.out = "[\"True\", {\"name\": \"Yossarian\"}]"
-    tdef = TaskDef(
-        name="foo",
-        rtcfg=None,
-        run_mode="live",
-        start_point=1
-    )
-    init()
-    sequence = ISO8601Sequence('P1D', '20190101T00Z')
-    tdef.xtrig_labels[sequence] = ["get_name"]
-    start_point = ISO8601Point('2019')
-    itask = TaskProxy(
-        tdef, start_point, FlowLabelMgr().get_new_label())
-    itask.state.xtriggers["get_name"] = get_name
-
-    xtrigger_mgr.collate([itask])
-    assert xtrigger_mgr.all_xtrig
-
-    # add a clock xtrigger
-    # that will cause both all_xclock to be populated but not all_xtrig
-    wall_clock = SubFuncContext(
-        label="wall_clock",
-        func_name="wall_clock",
-        func_args=[],
-        func_kwargs={}
-    )
-    wall_clock.out = "[\"True\", \"1\"]"
-    xtrigger_mgr.add_trig("wall_clock", wall_clock, "fdir")
-    # create a task
-    tdef = TaskDef(
-        name="foo",
-        rtcfg=None,
-        run_mode="live",
-        start_point=1
-    )
-    tdef.xtrig_labels[sequence] = ["wall_clock"]
-    start_point = ISO8601Point('20000101T0000+05')
-    # create task proxy
-    itask = TaskProxy(
-        tdef, start_point, FlowLabelMgr().get_new_label())
-
-    xtrigger_mgr.collate([itask])
-    assert not xtrigger_mgr.all_xtrig
 
 
 def test_callback_not_active(xtrigger_mgr):
@@ -329,16 +266,10 @@ def test_callback(xtrigger_mgr):
 
 
 def test_check_xtriggers(xtrigger_mgr):
-    """Test check_xtriggers call.
+    """Test process_xtriggers call."""
 
-    check_xtriggers does pretty much the same as collate. The
-    difference is that besides tallying on all the xtriggers and
-    clock xtriggers available, it then proceeds to trying to
-    satisfy them."""
     xtrigger_mgr.validate_xtrigger = lambda *a, **k: True  # Ignore validation
-
-    # add a xtrigger
-    # that will cause all_xtrig to be populated, but not all_xclock
+    # add an xtrigger
     get_name = SubFuncContext(
         label="get_name",
         func_name="get_name",
@@ -362,7 +293,6 @@ def test_check_xtriggers(xtrigger_mgr):
     itask1.state.xtriggers["get_name"] = False  # satisfied?
 
     # add a clock xtrigger
-    # that will cause both all_xclock to be populated but not all_xtrig
     wall_clock = SubFuncContext(
         label="wall_clock",
         func_name="wall_clock",
@@ -385,7 +315,6 @@ def test_check_xtriggers(xtrigger_mgr):
     itask2 = TaskProxy(
         tdef2, start_point, FlowLabelMgr().get_new_label())
 
-    xtrigger_mgr.check_xtriggers([itask1, itask2])
+    xtrigger_mgr.check_xtriggers([itask1, itask2], lambda foo: None)
     # won't be satisfied, as it is async, we are are not calling callback
     assert not xtrigger_mgr.sat_xtrig
-    assert xtrigger_mgr.all_xtrig

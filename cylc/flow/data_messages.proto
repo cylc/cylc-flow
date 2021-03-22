@@ -81,7 +81,6 @@ message PbWorkflow {
     optional string cylc_version = 12;
     optional double last_updated = 13;
     optional PbMeta meta = 14;
-    optional string newest_runahead_cycle_point = 15;
     optional string newest_active_cycle_point = 16;
     optional string oldest_active_cycle_point = 17;
     optional bool reloaded = 18;
@@ -103,6 +102,7 @@ message PbWorkflow {
     optional string broadcasts = 34;
     optional int32 is_queued_total = 35;
     map<string, PbTaskProxyRefs> latest_state_tasks = 36;
+    optional int32 is_runahead_total = 37;
 }
 
 message PbJob {
@@ -218,6 +218,7 @@ message PbTaskProxy {
     map<string, PbTrigger> external_triggers = 23;
     map<string, PbTrigger> xtriggers = 24;
     optional bool is_queued = 25;
+    optional bool is_runahead = 26;
 }
 
 message PbFamily {
@@ -251,6 +252,8 @@ message PbFamilyProxy {
     optional int32 is_held_total = 16;
     optional bool is_queued = 17;
     optional int32 is_queued_total = 18;
+    optional bool is_runahead = 19;
+    optional int32 is_runahead_total = 20;
 }
 
 message PbEdge {

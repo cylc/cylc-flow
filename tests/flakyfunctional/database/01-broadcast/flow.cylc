@@ -7,8 +7,7 @@ t1:start => recover-t1
 [runtime]
     [[t1]]
         script=test -n "${HELLO}"
-        [[[job]]]
-            execution retry delays=PT10M  # prevent task failure
+        execution retry delays=PT10M  # prevent task failure
         [[[environment]]]
             HELLO=
     [[recover-t1]]

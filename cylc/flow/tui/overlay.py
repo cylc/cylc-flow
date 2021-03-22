@@ -176,6 +176,12 @@ def help_info(app):
             + [' ', 'queued']
         )
     )
+    items.append(
+        urwid.Text(
+            get_task_icon(TASK_STATUS_WAITING, is_runahead=True)
+            + [' ', 'runahead']
+        )
+    )
 
     # list job states
     items.append(urwid.Divider())

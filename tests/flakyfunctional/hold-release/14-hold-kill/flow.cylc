@@ -1,4 +1,3 @@
-#!Jinja2
 [meta]
     title = Test: task should be held from retrying after a job kill
 [scheduling]
@@ -10,14 +9,12 @@
             echo '# killing "sleeper"'
             cylc kill "${CYLC_SUITE_NAME}" "sleeper.1"
             cylc__job__poll_grep_suite_log -F \
-                '[sleeper.1] -running => running (held)'
-            cylc__job__poll_grep_suite_log -F \
-                '[sleeper.1] -running (held) => waiting (held)'
+                '[sleeper.1] -job(01) failed, held' 
             sleep 10  # sleep, should still be held after 10 seconds
             cylc dump -s -t "${CYLC_SUITE_NAME}" >'cylc-dump.out'
             diff -u 'cylc-dump.out' - <<'__OUT__'
-            1, killer, running, unheld, unqueued
-            1, sleeper, waiting, held, unqueued
+            1, killer, running, unheld, not-queued, not-runahead
+            1, sleeper, waiting, held, not-queued, runahead
             __OUT__
             cylc release "${CYLC_SUITE_NAME}" "sleeper.1"
         """

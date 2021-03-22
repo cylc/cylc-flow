@@ -34,7 +34,7 @@ def test_get_remote_conf(broadcast, remote, platforms, expected):
     """Test TaskEventsManager._get_remote_conf()."""
 
     task_events_mgr = TaskEventsManager(
-        None, None, None, None, None, None, None)
+        None, None, None, None, None, None, None, None)
 
     task_events_mgr.broadcast_mgr = Mock(
         get_broadcast=lambda x: {
@@ -77,7 +77,7 @@ def test_get_suite_platforms_conf(broadcast, suite, platforms, expected):
     """Test TaskEventsManager._get_polling_interval_conf()."""
 
     task_events_mgr = TaskEventsManager(
-        None, None, None, None, None, None, None)
+        None, None, None, None, None, None, None, None)
 
     KEY = "execution polling intervals"
 
