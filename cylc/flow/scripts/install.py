@@ -30,9 +30,9 @@ A .service directory will also be created and used for server authentication
 files at run time.
 
 If the argument REG is used, Cylc will search for the workflow in the list of
-directories given by `global.cylc[install]source dirs`, and install the first
+directories given by "global.cylc[install]source dirs", and install the first
 match. Otherwise, the workflow in the current working directory, or the one
-specified by --directory, will be installed.
+specified by the "--directory" option, will be installed.
 
 Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
 
