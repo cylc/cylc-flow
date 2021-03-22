@@ -16,7 +16,6 @@
 
 """Suite service files management."""
 
-from typing import Optional, Tuple, Union
 import aiofiles
 from enum import Enum
 import logging
@@ -1324,10 +1323,14 @@ def link_runN(latest_run):
         pass
 
 
-def search_install_source_dirs(flow_name: str) -> Optional[Path]:
+def search_install_source_dirs(flow_name: str) -> Path:
     """Return the path of a workflow source dir if it is present in the
     'global.cylc[install]source dirs' search path."""
     search_path: List[str] = glbl_cfg().get(['install', 'source dirs'])
+    if not search_path:
+        raise WorkflowFilesError(
+            "Cannot find workflow as 'global.cylc[install]source dirs' "
+            "does not contain any paths")
     for path in search_path:
         try:
             flow_file = check_flow_file(Path(path, flow_name))
