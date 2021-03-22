@@ -40,7 +40,6 @@ class SuiteRuntimeClient():
         host (str):
             The host where the flow is running if known.
     """
-
     def __init__(
             self,
             suite: str,

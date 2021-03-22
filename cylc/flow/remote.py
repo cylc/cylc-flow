@@ -372,7 +372,6 @@ def _remote_cylc_cmd(
         remote command.
 
     """
-
     return run_cmd(
         _construct_ssh_cmd(
             cmd,
