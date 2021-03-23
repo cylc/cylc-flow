@@ -1050,7 +1050,8 @@ class TaskPool:
         for itask in self.get_all_tasks():
             if itask.state.reset(is_held=False):
                 self.data_store_mgr.delta_task_held(itask)
-                to_queue.append(itask)
+                if all(itask.is_ready_to_run()):
+                    to_queue.append(itask)
         self.queue_tasks(to_queue)
         self.suite_db_mgr.delete_suite_hold_cycle_point()
 
