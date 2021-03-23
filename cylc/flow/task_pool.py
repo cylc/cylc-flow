@@ -229,7 +229,6 @@ class TaskPool:
 
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
-            print("ADD to HIDDEN", itask.identity, itask.state.is_runahead)
             self.hidden_pool.setdefault(itask.point, dict())
             self.hidden_pool[itask.point][itask.identity] = itask
             self.hidden_pool_changed = True
@@ -243,7 +242,6 @@ class TaskPool:
                 self.hidden_pool_changed = True
                 if not self.hidden_pool[itask.point]:
                     del self.hidden_pool[itask.point]
-            print("ADD to MAIN", itask.identity, itask.state.is_runahead)
             self.main_pool.setdefault(itask.point, dict())
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
@@ -705,7 +703,6 @@ class TaskPool:
             self.data_store_mgr.delta_task_state(itask)  # TODO needed?
             self.data_store_mgr.delta_task_queued(itask)
         self.task_queue_mgr.push_tasks(itasks)
-        self.task_queue_mgr.dump()
 
     def _queue_tasks(self):
         """Queue tasks that are ready to run. (After reload?)"""

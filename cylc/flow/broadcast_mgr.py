@@ -27,7 +27,6 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.task_id import TaskID
 
-
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
 
@@ -61,9 +60,11 @@ class BroadcastMgr:
         self.lock = RLock()
 
     def check_ext_triggers(self, itasks, ext_trigger_queue):
-        """Get queued ext trigger messages, try to satisfy itasks.
+        """Get queued ext trigger messages and try to satisfy itasks.
 
-        Return list of tasks with newly satisfied ext triggers.
+        Ext-triggers are pushed by the remote end, so we can check for 
+        new messages and satisfy dependendent tasks at the same time.
+        Return list of tasks with newly satisfied ext-triggers.
         """
         while not ext_trigger_queue.empty():
             ext_trigger = ext_trigger_queue.get_nowait()

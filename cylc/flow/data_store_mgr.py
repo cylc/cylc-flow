@@ -1232,8 +1232,7 @@ class DataStoreMgr:
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
             tp_added = self.added[TASK_PROXIES]
-            # gather child family states for count, set is_held, is_queued,
-            # is_runahead
+            # Count child family states, set is_held, is_queued, is_runahead
             state_counter = Counter({})
             is_held_total = 0
             is_queued_total = 0

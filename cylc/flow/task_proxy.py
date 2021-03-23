@@ -18,6 +18,7 @@
 
 from collections import Counter
 from time import time
+from typing import Tuple
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
@@ -314,7 +315,7 @@ class TaskProxy:
             p_next = min(adjusted)
         return p_next
 
-    def is_ready_to_run(self) -> bool:
+    def is_ready_to_run(self) -> Tuple[bool, ...]:
         """Is this task ready to run?
 
         Takes account of all dependence: on other tasks, xtriggers, and
