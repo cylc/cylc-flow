@@ -871,7 +871,7 @@ class Scheduler:
 
     def command_release(self, task_globs: Iterable[str]) -> int:
         """Release held tasks."""
-        return self.pool.release_tasks(task_globs)
+        return self.pool.release_held_tasks(task_globs)
 
     def command_release_hold_point(self) -> None:
         """Release all held tasks and unset workflow hold after cycle point,

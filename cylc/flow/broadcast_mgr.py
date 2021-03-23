@@ -62,7 +62,7 @@ class BroadcastMgr:
     def check_ext_triggers(self, itasks, ext_trigger_queue):
         """Get queued ext trigger messages and try to satisfy itasks.
 
-        Ext-triggers are pushed by the remote end, so we can check for 
+        Ext-triggers are pushed by the remote end, so we can check for
         new messages and satisfy dependendent tasks at the same time.
         Return list of tasks with newly satisfied ext-triggers.
         """

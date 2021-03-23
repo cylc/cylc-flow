@@ -304,7 +304,6 @@ class TaskPool:
                 ):
                     release.append(itask)
         for itask in release:
-            print("RELEASING", itask.identity, itask.state.is_runahead)
             self.release_runahead_task(itask)
             released = True
 
@@ -713,7 +712,7 @@ class TaskPool:
                 continue
             ready_check_items = itask.is_ready_to_run()
 
-            # TODO: PUT THIS SOMEWHERE ELSE:
+            # TODO: PUT THIS SOMEWHERE ELSE?:
             # Use this periodic checking point for data-store delta
             # creation, some items aren't event driven (i.e. clock).
             if itask.tdef.clocktrigger_offset is not None:
@@ -1028,14 +1027,17 @@ class TaskPool:
                 self.data_store_mgr.delta_task_held(itask)
         return len(bad_items)
 
-    def release_tasks(self, items: Iterable[str]) -> int:
+    def release_held_tasks(self, items: Iterable[str]) -> int:
         """Release held tasks with IDs matching any specified items."""
         itasks, bad_items = self.filter_task_proxies(items)
         to_queue = []
         for itask in itasks:
             if itask.state.reset(is_held=False):
                 self.data_store_mgr.delta_task_held(itask)
-                if all(itask.is_ready_to_run()):
+                if (
+                        all(itask.is_ready_to_run())
+                        and not itask.state.is_runahead
+                ):
                     to_queue.append(itask)
         self.queue_tasks(to_queue)
         return len(bad_items)
@@ -1047,7 +1049,10 @@ class TaskPool:
         for itask in self.get_all_tasks():
             if itask.state.reset(is_held=False):
                 self.data_store_mgr.delta_task_held(itask)
-                if all(itask.is_ready_to_run()):
+                if (
+                        all(itask.is_ready_to_run())
+                        and not itask.state.is_runahead
+                ):
                     to_queue.append(itask)
         self.queue_tasks(to_queue)
         self.suite_db_mgr.delete_suite_hold_cycle_point()

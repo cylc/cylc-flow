@@ -383,12 +383,6 @@ class TaskProxy:
             and self.state.xtriggers_all_satisfied()
         )
 
-    def is_waiting_task_prereqs_done(self):
-        """Are all task prerequisites satisfied?"""
-        return (
-            all(pre.is_satisfied() for pre in self.state.prerequisites)
-        )
-
     def reset_try_timers(self):
         # unset any retry delay timers
         for timer in self.try_timers.values():
