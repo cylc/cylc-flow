@@ -24,8 +24,8 @@ Remove task instances from the scheduler task pool.
 
 import os.path
 
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 MUTATION = '''
@@ -56,7 +56,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, suite, *task_globs):
     suite = os.path.normpath(suite)
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,

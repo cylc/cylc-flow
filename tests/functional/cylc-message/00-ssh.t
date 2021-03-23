@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "cylc message" in SSH mode, test needs to have compatible version
 # installed on the remote host.
-# TODO: Fix test once ssh task comms reinstated
+
 export REQUIRE_PLATFORM='loc:remote comms:ssh'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
@@ -29,9 +29,8 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
 
-run_fail "${TEST_NAME_BASE}-grep-DENIED-suite-log" \
-    grep -q "\\[client-connect\\] DENIED .*@${CYLC_TEST_HOST}:cylc-message" \
-    "$RUN_DIR/${SUITE_NAME}/log/suite/log"
+grep_ok "\[client-command\] graphql ssh" \
+    "$RUN_DIR/${SUITE_NAME}/log/suite/log" 
 
 purge
 exit

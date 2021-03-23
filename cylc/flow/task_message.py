@@ -28,7 +28,7 @@ import sys
 
 from cylc.flow.exceptions import SuiteStopped
 import cylc.flow.flags
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.pathutil import get_suite_run_job_dir
 from cylc.flow.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
@@ -93,7 +93,7 @@ def record_messages(suite, task_job, messages):
     # Send messages
     suite = os.path.normpath(suite)
     try:
-        pclient = SuiteRuntimeClient(suite)
+        pclient = get_client(suite)
     except SuiteStopped:
         # on a remote host this means the contact file is not present
         # either the suite is stopped or the contact file is not present

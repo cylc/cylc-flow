@@ -47,8 +47,8 @@ import os.path
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -120,7 +120,7 @@ def main(parser: COP, options: 'Options', workflow: str, *task_globs: str):
     _validate(options, *task_globs)
 
     workflow = os.path.normpath(workflow)
-    pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.hold_point_string:
         mutation = SET_HOLD_POINT_MUTATION

@@ -43,7 +43,7 @@ import sys
 
 from cylc.flow.command_polling import Poller
 from cylc.flow.exceptions import ClientError, ClientTimeout
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
@@ -152,7 +152,7 @@ def main(parser, options, suite, shutdown_arg=None):
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
     suite = os.path.normpath(suite)
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)

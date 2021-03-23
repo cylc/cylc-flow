@@ -26,7 +26,6 @@ Use the -n option if client function requires no keyword arguments.
 
 import json
 import sys
-
 from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP

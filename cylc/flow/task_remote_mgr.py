@@ -34,6 +34,7 @@ from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host
+from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.pathutil import (
     get_remote_suite_run_dir,
     get_dirs_to_symlink,
@@ -202,8 +203,6 @@ class TaskRemoteMgr:
         for key, value in dirs_to_symlink.items():
             if value is not None:
                 cmd.append(f"{key}={quote(value)} ")
-        if comm_meth in ['ssh']:
-            cmd.append('--indirect-comm=%s' % comm_meth)
         # Create the ssh command
         cmd = construct_ssh_cmd(cmd, platform)
         self.proc_pool.put_command(
@@ -402,7 +401,7 @@ class TaskRemoteMgr:
         """
         items = []
 
-        if comm_meth in ['ssh', 'zmq']:
+        if comm_meth in [CommsMeth.SSH, CommsMeth.ZMQ]:
             # Contact file
             items.append((
                 get_contact_file(self.suite),

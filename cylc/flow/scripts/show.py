@@ -34,8 +34,8 @@ import sys
 from ansimarkup import ansiprint
 
 from cylc.flow import ID_DELIM
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
 
@@ -156,7 +156,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options, suite, *task_args):
     """Implement "cylc show" CLI."""
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
     json_filter = {}
 
     if not task_args:

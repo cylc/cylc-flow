@@ -213,7 +213,10 @@ class JobFileWriter:
             '\n    export CYLC_SUITE_UUID="%s"' % job_conf['uuid_str'])
 
     def _write_task_environment(self, handle, job_conf):
+        comm_meth = job_conf['platform']['communication method']
+
         handle.write("\n\n    # CYLC TASK ENVIRONMENT:")
+        handle.write(f"\n    export CYLC_TASK_COMMS_METHOD={comm_meth}")
         handle.write('\n    export CYLC_TASK_JOB="%s"' % job_conf['job_d'])
         handle.write(
             '\n    export CYLC_TASK_NAMESPACE_HIERARCHY="%s"' %

@@ -1039,14 +1039,18 @@ class Scheduler:
                 process_str,
             fields.PUBLISH_PORT:
                 str(self.publisher.port),
-            fields.SSH_USE_LOGIN_SHELL:
-                str(get_platform()['use login shell']),
             fields.SUITE_RUN_DIR_ON_SUITE_HOST:
                 self.suite_run_dir,
             fields.UUID:
                 self.uuid_str.value,
             fields.VERSION:
-                CYLC_VERSION
+                CYLC_VERSION,
+            fields.SCHEDULER_SSH_COMMAND:
+                str(get_platform()['ssh command']),
+            fields.SCHEDULER_CYLC_PATH:
+                str(get_platform()['cylc path']),
+            fields.SCHEDULER_USE_LOGIN_SHELL:
+                str(get_platform()['use login shell'])
         }
         # fmt: on
         suite_files.dump_contact_file(self.suite, contact_data)

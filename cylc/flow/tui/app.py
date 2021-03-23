@@ -22,7 +22,7 @@ import urwid
 from urwid import html_fragment
 from urwid.wimp import SelectableIcon
 
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
@@ -294,10 +294,7 @@ class TuiApp:
         """
         try:
             if not self.client:
-                self.client = SuiteRuntimeClient(
-                    self.reg,
-                    timeout=self.CLIENT_TIMEOUT
-                )
+                self.client = get_client(self.reg, timeout=self.CLIENT_TIMEOUT)
             data = self.client(
                 'graphql',
                 {

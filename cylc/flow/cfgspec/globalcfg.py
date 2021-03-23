@@ -355,7 +355,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('suite definition directory', VDR.V_STRING)
             Conf('communication method',
-                 VDR.V_STRING, 'zmq', options=['zmq', 'poll'], desc='''
+                 VDR.V_STRING, 'zmq', options=['zmq', 'poll', 'ssh'], desc='''
                 The means by which task progress messages are reported back to
                 the running suite.
 
@@ -365,6 +365,8 @@ with Conf('global.cylc', desc='''
                    Direct client-server TCP communication via network ports
                 poll
                    The suite polls for the status of tasks (no task messaging)
+                ssh
+                   Use non-interactive ssh for task communications
             ''')
             # TODO ensure that it is possible to over-ride the following three
             # settings in suite config.
