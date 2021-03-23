@@ -31,7 +31,6 @@ from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.subprocpool import get_func
-from cylc.flow.task_state import TASK_STATUS_WAITING
 
 # Templates for string replacement in function arg values.
 TMPL_USER_NAME = 'user_name'

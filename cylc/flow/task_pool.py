@@ -23,8 +23,6 @@ import json
 from time import time
 from typing import Iterable, TYPE_CHECKING
 
-from cylc.flow.parsec.OrderedDict import OrderedDict
-
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval

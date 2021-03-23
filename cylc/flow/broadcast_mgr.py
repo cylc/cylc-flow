@@ -26,7 +26,6 @@ from cylc.flow.broadcast_report import (
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import TASK_STATUS_WAITING
 
 
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
