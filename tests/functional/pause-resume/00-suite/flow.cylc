@@ -1,0 +1,26 @@
+[meta]
+    title = "pause/resume test workflow"
+
+# https://github.com/cylc/cylc-flow/pull/843
+
+# See also tests/f/hold-release/00-suite
+
+[scheduler]
+    cycle point format = %Y%m%dT%H
+
+[scheduling]
+    initial cycle point = 20140101T00
+    final cycle point   = 20140101T00
+    [[graph]]
+        R1 = "pause_resume => foo & bar"
+        T00, T06 = "bar"
+[runtime]
+    [[pause_resume]]
+        script = """
+            wait
+            cylc pause "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log -F 'INFO - Command succeeded: pause()'
+            cylc play "${CYLC_SUITE_NAME}"
+        """
+    [[foo,bar]]
+        script = true

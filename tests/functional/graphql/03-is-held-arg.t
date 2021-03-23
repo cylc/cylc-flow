@@ -20,11 +20,23 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+init_suite "${TEST_NAME_BASE}" << __FLOW__
+[meta]
+    title = foo
+    description = bar
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[BAZ]]
+    [[foo]]
+        inherit = BAZ
+        script = sleep 20
+__FLOW__
 
 # run suite
 run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
-cylc hold "${SUITE_NAME}"
+cylc hold --after=0 "${SUITE_NAME}"
 sleep 1
 
 # query suite

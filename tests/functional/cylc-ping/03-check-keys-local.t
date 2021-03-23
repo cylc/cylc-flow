@@ -32,7 +32,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 
 SRVD="${SUITE_RUN_DIR}/.service"
 
-suite_run_ok "${TEST_NAME_BASE}-run-hold" cylc play --hold "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run-pause" cylc play --pause "${SUITE_NAME}"
 
 exists_ok "${SRVD}/client.key_secret"
 exists_ok "${SRVD}/server.key_secret"

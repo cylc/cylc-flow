@@ -80,15 +80,15 @@ async def test_scheduler_arguments(flow, scheduler, run, one_conf):
     Use the `dest` value specified in the option parser.
 
     """
-    # Ensure the hold_start option is obeyed by the scheduler.
+    # Ensure the paused_start option is obeyed by the scheduler.
     reg = flow(one_conf)
-    schd = scheduler(reg, hold_start=True)
+    schd = scheduler(reg, paused_start=True)
     async with run(schd):
-        assert schd.paused()
+        assert schd.is_paused
     reg = flow(one_conf)
-    schd = scheduler(reg, hold_start=False)
+    schd = scheduler(reg, paused_start=False)
     async with run(schd):
-        assert not schd.paused()
+        assert not schd.is_paused
 
 
 @pytest.mark.asyncio
@@ -140,7 +140,7 @@ async def test_task_pool(flow, scheduler, one_conf):
     await schd.configure()
 
     # pump the scheduler's heart manually
-    schd.release_tasks()
+    schd.release_runahead_tasks()
     assert len(schd.pool.pool) == 1
 
 
@@ -214,3 +214,22 @@ def test_module_one(myflow):
 def test_module_two(myflow):
     # Ensure the uuid is set on __init__
     assert myflow.uuid_str
+
+
+@pytest.mark.asyncio
+async def test_db_select(one, run, db_select):
+    """Demonstrate and test querying the workflow database."""
+    schd = one
+    async with run(schd):
+        # Note: can't query database here unfortunately
+        pass
+    # Now we can query the DB
+    # Select all from suite_params table:
+    assert ('UTC_mode', '0') in db_select(schd, 'suite_params')
+    # Select name & status columns from task_states table:
+    results = db_select(schd, 'task_states', 'name', 'status')
+    assert results[0] == ('one', 'waiting')
+    # Select all columns where name==one & status==waiting from
+    # task_states table:
+    results = db_select(schd, 'task_states', name='one', status='waiting')
+    assert len(results) == 1

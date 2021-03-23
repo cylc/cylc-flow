@@ -39,8 +39,8 @@ from time import sleep
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, ClientError
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
 from cylc.flow.terminal import cli_function
 
 
@@ -92,8 +92,7 @@ def get_option_parser():
 def main(parser, options, suite, event_msg, event_id):
     suite = os.path.normpath(suite)
     LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
-
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)

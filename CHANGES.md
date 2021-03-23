@@ -66,9 +66,17 @@ queueing logic centralized.
 `cylc register` has been replaced by `cylc install`
 ([#4000](https://github.com/cylc/cylc-flow/pull/4000)).
 
+Added a new command: `cylc clean`, for removing stopped workflows on the local
+and any remote filesystems ([#3961](https://github.com/cylc/cylc-flow/pull/3961),
+[#4017](https://github.com/cylc/cylc-flow/pull/4017)).
+
 `cylc run` and `cylc restart` have been replaced by `cylc play`, simplifying
 how workflows are restarted
 ([#4040](https://github.com/cylc/cylc-flow/pull/4040)).
+
+`cylc pause` and `cylc play` are now used to pause and resume workflows,
+respectively. `cylc hold` and `cylc release` now only hold and release tasks,
+not the whole workflow. ([#4076](https://github.com/cylc/cylc-flow/pull/4076))
 
 "Implicit"/"naked" tasks (tasks that do not have an explicit definition in
 `flow.cylc[runtime]`) are now disallowed by default
@@ -76,6 +84,9 @@ how workflows are restarted
 setting `flow.cylc[scheduler]allow implicit tasks` to `True`.
 
 ### Enhancements
+
+[#4119](https://github.com/cylc/cylc-flow/pull/4119) - Reimplement ssh task
+communications.
 
 [#4115](https://github.com/cylc/cylc-flow/pull/4115) - Raise an error when
 invalid sort keys are provided clients.
@@ -167,11 +178,6 @@ hierarchy and ability to set site config directory.
 [#3883](https://github.com/cylc/cylc-flow/pull/3883) - Added a new workflow
 config option `[scheduling]stop after cycle point`.
 
-[#3961](https://github.com/cylc/cylc-flow/pull/3961),
-[#4017](https://github.com/cylc/cylc-flow/pull/4017) - Added a new command:
-`cylc clean`, for removing stopped workflows on the local and any remote
-filesystems.
-
 [#3913](https://github.com/cylc/cylc-flow/pull/3913) - Added the ability to
 use plugins to parse suite templating variables and additional files to
 install. Only one such plugin exists at the time of writing, designed to
@@ -206,6 +212,12 @@ rsyncing the following files on install and reinstall:
 - `opt/rose-suite-cylc-install.conf`
 These files should be handled by the cylc-rose plugin if you require them.
 
+[#4126](https://github.com/cylc/cylc-flow/pull/4126) - Make obselete the config
+``flow.cylc:[runtime][__TASK__][remote]suite definition directory``.
+
+
+[#4098](https://github.com/cylc/cylc-flow/pull/4098) - Provide a dictionary called
+CYLC_TEMPLATE_VARS into the templating environment.
 
 ### Fixes
 

@@ -171,9 +171,7 @@ def platform_from_name(platform_name=None, platforms=None):
     platform_groups = glbl_cfg().get(['platform groups'])
 
     if platform_name is None:
-        platform_data = deepcopy(platforms['localhost'])
-        platform_data['name'] = 'localhost'
-        return platform_data
+        platform_name = 'localhost'
 
     platform_group = None
     for platform_name_re in reversed(list(platform_groups)):
@@ -187,7 +185,18 @@ def platform_from_name(platform_name=None, platforms=None):
     # later than site set platforms) to be matched first and override site
     # defined platforms.
     for platform_name_re in reversed(list(platforms)):
-        if re.fullmatch(platform_name_re, platform_name):
+        # We substitue commas with or without spaces to
+        # allow lists of platforms
+        if (
+            re.fullmatch(
+                re.sub(
+                    r'\s*(?!{[\s\d]*),(?![\s\d]*})\s*',
+                    '|',
+                    platform_name_re
+                ),
+                platform_name
+            )
+        ):
             # Deepcopy prevents contaminating platforms with data
             # from other platforms matching platform_name_re
             platform_data = deepcopy(platforms[platform_name_re])
@@ -480,7 +489,13 @@ def get_all_platforms_for_install_target(install_target):
 def get_random_platform_for_install_target(install_target):
     """Return a randomly selected platform (dict) for given install target."""
     platforms = get_all_platforms_for_install_target(install_target)
-    return random.choice(platforms)
+    try:
+        return random.choice(platforms)
+    except IndexError:
+        # No platforms to choose from
+        raise PlatformLookupError(
+            f'Could not select platform for install target: {install_target}'
+        ) from None
 
 
 def get_localhost_install_target():

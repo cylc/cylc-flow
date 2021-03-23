@@ -66,6 +66,7 @@ tests_require = [
     'pytest-asyncio>=0.14.0',
     'pytest-cov>=2.8.0',
     'pytest-xdist>=2',
+    'pytest-env>=0.6.2',
     'pytest>=6',
     'testfixtures>=6.11.0'
 ]
@@ -109,7 +110,7 @@ setup(
     package_data={
         'cylc.flow': [
             'etc/*.yaml', 'etc/flow*.eg', 'etc/job.sh',
-            'etc/syntax/*', 'etc/cylc-bash-completion'
+            'etc/syntax/*', 'etc/cylc-bash-completion', 'py.typed'
         ]
     },
     install_requires=install_requires,

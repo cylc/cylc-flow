@@ -17,16 +17,15 @@
 
 import os
 import re
-import zmq
-import tarfile
 import sys
+import tarfile
+import zmq
 
 import cylc.flow.flags
 from cylc.flow.suite_files import (
     KeyInfo,
     KeyOwner,
     KeyType,
-    ContactFileFields,
     SuiteFiles
 )
 from cylc.flow.pathutil import make_symlink
@@ -84,7 +83,7 @@ def create_client_keys(srvd, install_target):
     os.umask(old_umask)
 
 
-def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
+def remote_init(install_target, rund, *dirs_to_symlink):
     """cylc remote-init
 
     Arguments:
@@ -92,7 +91,6 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         rund (str): suite run directory
         dirs_to_symlink (list): directories to be symlinked in form
         [directory=symlink_location, ...]
-        *indirect_comm (str): use indirect communication via e.g. 'ssh'
     """
     rund = os.path.expandvars(rund)
     for item in dirs_to_symlink:
@@ -104,6 +102,8 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         src = os.path.expandvars(val)
         if '$' in src:
             print(REMOTE_INIT_FAILED)
+            print(f'Error occurred when symlinking.'
+                  f' {src} contains an invalid environment variable.')
             return
         make_symlink(src, dst)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
@@ -113,12 +113,25 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         KeyType.PUBLIC,
         KeyOwner.CLIENT,
         suite_srv_dir=srvd, install_target=install_target, server_held=False)
-
+    # Check for existence of client key dir (should only exist on server)
+    # Fail if one exists - this may occur on mis-configuration of install
+    # target in global.cylc
+    client_key_dir = os.path.join(
+        srvd, f"{KeyOwner.CLIENT.value}_{KeyType.PUBLIC.value}_keys")
+    if os.path.exists(client_key_dir):
+        print(REMOTE_INIT_FAILED)
+        print(f"Unexpected key directory exists: {client_key_dir}"
+              " Check global.cylc install target is configured correctly "
+              "for this platform.")
+        return
     pattern = re.compile(r"^client_\S*key$")
     for filepath in os.listdir(srvd):
         if pattern.match(filepath) and f"{install_target}" not in filepath:
             # client key for a different install target exists
             print(REMOTE_INIT_FAILED)
+            print(f"Unexpected authentication key \"{filepath}\" exists. "
+                  "Check global.cylc install target is configured correctly "
+                  "for this platform.")
             return
     try:
         remove_keys_on_client(srvd, install_target)
@@ -138,11 +151,6 @@ def remote_init(install_target, rund, *dirs_to_symlink, indirect_comm=None):
         tarhandle.close()
     finally:
         os.chdir(oldcwd)
-    if indirect_comm:
-        fname = os.path.join(srvd, SuiteFiles.Service.CONTACT)
-        with open(fname, 'a') as handle:
-            handle.write('%s=%s\n' % (
-                ContactFileFields.COMMS_PROTOCOL_2, indirect_comm))
     print("KEYSTART", end='')
     with open(client_pub_keyinfo.full_key_path) as keyfile:
         print(keyfile.read(), end='KEYEND')

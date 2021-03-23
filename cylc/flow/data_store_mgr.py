@@ -56,7 +56,7 @@ Packaging methods are included for dissemination of protobuf messages.
 
 """
 
-from collections import Counter
+from collections import Counter, deque
 from copy import deepcopy
 import json
 from time import time
@@ -64,7 +64,7 @@ import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG, ID_DELIM
 from cylc.flow.exceptions import SuiteConfigError
-from cylc.flow.data_messages_pb2 import (
+from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)
@@ -80,7 +80,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
-    TASK_STATUS_EXPIRED
+    TASK_STATUS_EXPIRED,
+    TASK_STATUSES_ORDERED
 )
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.taskdef import generate_graph_parents
@@ -104,6 +105,7 @@ ALL_DELTAS = 'all'
 DELTA_ADDED = 'added'
 DELTA_UPDATED = 'updated'
 DELTA_PRUNED = 'pruned'
+LATEST_STATE_TASKS_QUEUE_SIZE = 5
 
 MESSAGE_MAP = {
     EDGES: PbEdge,
@@ -161,7 +163,7 @@ CLEAR_FIELD_MAP = {
     JOBS: set(),
     TASKS: set(),
     TASK_PROXIES: {'prerequisites'},
-    WORKFLOW: {'state_totals', 'states'},
+    WORKFLOW: {'latest_state_tasks', 'state_totals', 'states'},
 }
 
 
@@ -392,6 +394,10 @@ class DataStoreMgr:
         self.updated_state_families = set()
         self.n_edge_distance = 1
         self.next_n_edge_distance = None
+        self.latest_state_tasks = {
+            state: deque(maxlen=LATEST_STATE_TASKS_QUEUE_SIZE)
+            for state in TASK_STATUSES_ORDERED
+        }
         self.xtrigger_tasks = {}
         # Managed data types
         self.data = {
@@ -408,8 +414,10 @@ class DataStoreMgr:
             TASK_PROXIES: TPDeltas(),
             WORKFLOW: WDeltas(),
         }
+        # internal delta
         self.delta_queues = {self.workflow_id: {}}
         self.publish_deltas = []
+        # internal n-window
         self.all_task_pool = set()
         self.n_window_nodes = {}
         self.n_window_edges = {}
@@ -852,6 +860,12 @@ class DataStoreMgr:
         ).proxies.append(tp_id)
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
+        if tproxy.state in self.latest_state_tasks:
+            tp_ref = f'{tproxy.name}.{tproxy.cycle_point}'
+            tp_queue = self.latest_state_tasks[tproxy.state]
+            if tp_ref in tp_queue:
+                tp_queue.remove(tp_ref)
+            self.latest_state_tasks[tproxy.state].appendleft(tp_ref)
         self.updates_pending = True
 
     def generate_ghost_family(self, fp_id, child_fam=None, child_task=None):
@@ -1335,6 +1349,9 @@ class DataStoreMgr:
             w_delta.is_queued_total = is_queued_total
             delta_set = True
 
+            for state, tp_queue in self.latest_state_tasks.items():
+                w_delta.latest_state_tasks[state].task_proxies[:] = tp_queue
+
         # Set status & msg if changed.
         status, status_msg = map(
             str, get_suite_status(self.schd))
@@ -1408,7 +1425,13 @@ class DataStoreMgr:
         tp_delta.stamp = f'{tp_id}@{update_time}'
         tp_delta.state = itask.state.status
         self.state_update_families.add(tproxy.first_parent)
-        # if state is final work our new task mean.
+        if tp_delta.state in self.latest_state_tasks:
+            tp_ref = f'{tproxy.name}.{tproxy.cycle_point}'
+            tp_queue = self.latest_state_tasks[tp_delta.state]
+            if tp_ref in tp_queue:
+                tp_queue.remove(tp_ref)
+            self.latest_state_tasks[tp_delta.state].appendleft(tp_ref)
+        # if state is final work out new task mean.
         if tp_delta.state in TASK_STATUSES_FINAL:
             elapsed_time = task_mean_elapsed_time(itask.tdef)
             if elapsed_time:

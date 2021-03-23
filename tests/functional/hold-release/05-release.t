@@ -32,20 +32,20 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[holdrelease]]
         script = """
-cylc__job__wait_cylc_message_started
-cylc hold $CYLC_SUITE_NAME
-cylc__job__poll_grep_suite_log 'Suite held.'
-cylc release ${CYLC_SUITE_NAME} '*FF.1'  # inexact fam
-cylc release ${CYLC_SUITE_NAME} 'TOAST.1'  # exact fam
-cylc release ${CYLC_SUITE_NAME} 'cat*.1'  # inexact tasks
-cylc release ${CYLC_SUITE_NAME} 'dog1.1'  # exact tasks
-cylc release ${CYLC_SUITE_NAME} 'stop.1'  # exact tasks
+            cylc__job__wait_cylc_message_started
+            cylc hold --after=0 ${CYLC_SUITE_NAME}
+            cylc__job__poll_grep_suite_log 'Command succeeded: set_hold_point'
+            cylc release ${CYLC_SUITE_NAME} '*FF.1'  # inexact fam
+            cylc release ${CYLC_SUITE_NAME} 'TOAST.1'  # exact fam
+            cylc release ${CYLC_SUITE_NAME} 'cat*.1'  # inexact tasks
+            cylc release ${CYLC_SUITE_NAME} 'dog1.1'  # exact tasks
+            cylc release ${CYLC_SUITE_NAME} 'stop.1'  # exact tasks
 
-# TODO: finished tasks are not removed if held: should this be the case?
-# (is this related to killed tasks being held to prevent retries?)
-cylc release ${CYLC_SUITE_NAME} 'spawner.1'
-cylc release ${CYLC_SUITE_NAME} 'holdrelease.1'
-"""
+            # TODO: finished tasks are not removed if held: should this be the case?
+            # (is this related to killed tasks being held to prevent retries?)
+            cylc release ${CYLC_SUITE_NAME} 'spawner.1'
+            cylc release ${CYLC_SUITE_NAME} 'holdrelease.1'
+        """
     [[STUFF]]
     [[TOAST]]
     [[STOP]]
@@ -63,8 +63,8 @@ cylc release ${CYLC_SUITE_NAME} 'holdrelease.1'
     [[stop]]
         inherit = STOP
         script = """
-        cylc__job__poll_grep_suite_log '\[dog1\.1\] -task proxy removed (finished)'
-        cylc stop "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_suite_log '\[dog1\.1\] -task proxy removed (finished)'
+            cylc stop "${CYLC_SUITE_NAME}"
         """
 __FLOW_CONFIG__
 

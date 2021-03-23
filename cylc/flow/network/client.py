@@ -38,6 +38,7 @@ from cylc.flow.network import (
     get_location,
     ZMQSocketBase
 )
+from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import detect_old_contact_file
 
@@ -223,15 +224,26 @@ class SuiteRuntimeClient(ZMQSocketBase):
         self.loop.run_until_complete(task)
         return task.result()
 
-    @staticmethod
-    def get_header() -> dict:
+    def get_header(self) -> dict:
         """Return "header" data to attach to each request for traceability.
 
         Returns:
             dict: dictionary with the header information, such as
                 program and hostname.
         """
-        cmd = sys.argv[0]
+
+        host = socket.gethostname()
+        # Identify communication method
+        comms_method = os.getenv("CLIENT_COMMS_METH", default=CommsMeth.ZMQ)
+        if (self.host and
+            (comms_method == CommsMeth.ZMQ) and
+            (socket.gethostbyname(
+                self.host) == socket.gethostbyname(socket.gethostname()))):
+            comms_method = CommsMeth.LOCAL
+        if len(sys.argv) > 1:
+            cmd = sys.argv[1]
+        else:
+            cmd = sys.argv[0]
 
         cylc_executable_location = which("cylc")
         if cylc_executable_location:
@@ -243,11 +255,11 @@ class SuiteRuntimeClient(ZMQSocketBase):
 
             if cmd.startswith(cylc_bin_dir):
                 cmd = cmd.replace(cylc_bin_dir, '')
-
         return {
             'meta': {
                 'prog': cmd,
-                'host': socket.gethostname()
+                'host': host,
+                'comms_method': comms_method,
             }
         }
 

@@ -1071,7 +1071,6 @@ with Conf(
             with Conf('remote', desc=DEPRECATION_WARN):
                 Conf('host', VDR.V_STRING)
                 Conf('owner', VDR.V_STRING)
-                Conf('suite definition directory', VDR.V_STRING)
                 Conf('retrieve job logs', VDR.V_BOOLEAN)
                 Conf('retrieve job logs max size', VDR.V_STRING)
                 Conf('retrieve job logs retry delays',
@@ -1424,6 +1423,10 @@ def upg(cfg, descr):
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'])
     u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+    u.obsolete(
+        '8.0.0',
+        ['runtime', '__MANY__', 'remote', 'suite definition directory']
+    )
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])

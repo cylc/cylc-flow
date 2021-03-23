@@ -90,7 +90,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.broadcast_report import (
     get_broadcast_bad_options_report, get_broadcast_change_report)
 from cylc.flow.cfgspec.suite import SPEC, upg
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 
@@ -296,7 +296,7 @@ def get_option_parser():
 def main(_, options, suite):
     """Implement cylc broadcast."""
     suite = os.path.normpath(suite)
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+    pclient = get_client(suite, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,

@@ -1,8 +1,6 @@
 #!Jinja2
 [scheduler]
-   UTC mode = True
-   [[events]]
-       startup handler = cylc release '%(suite)s'
+    UTC mode = True
 [scheduling]
     initial cycle point = 2016
     final cycle point = {{FINAL_CYCLE_POINT}}

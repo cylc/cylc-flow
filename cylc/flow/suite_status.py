@@ -40,7 +40,7 @@ SUITE_STATUS_RUNNING_TO_HOLD = "running to hold at %s"
 class SuiteStatus(Enum):
     """The possible statuses of a suite."""
 
-    HELD = "held"
+    PAUSED = "paused"
     """Suite will not submit any new jobs."""
 
     RUNNING = "running"
@@ -135,8 +135,8 @@ def get_suite_status(schd):
     status = SuiteStatus.RUNNING
     status_msg = ''
 
-    if schd.pool.is_held:
-        status = SuiteStatus.HELD
+    if schd.is_paused:
+        status = SuiteStatus.PAUSED
     elif schd.stop_mode is not None:
         status = SuiteStatus.STOPPING
         status_msg = f'Stopping: {schd.stop_mode.describe()}'

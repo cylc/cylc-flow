@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Standard pytest fixtures for unit tests."""
+from cylc.flow.data_store_mgr import DataStoreMgr
 import pytest
 from shutil import rmtree
+from unittest.mock import create_autospec, Mock
 
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.cycling.loader import (
@@ -23,6 +25,8 @@ from cylc.flow.cycling.loader import (
     INTEGER_CYCLING_TYPE
 )
 from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.xtrigger_mgr import XtriggerManager
 
 
 @pytest.fixture
@@ -30,8 +34,11 @@ def cycling_mode(monkeypatch):
     """Set the Cylc cycling mode and return its value."""
     def _cycling_mode(integer=True):
         mode = INTEGER_CYCLING_TYPE if integer else ISO8601_CYCLING_TYPE
+
+        class _DefaultCycler:
+            TYPE = mode
         monkeypatch.setattr(
-            'cylc.flow.cycling.loader.DefaultCycler.TYPE', mode)
+            'cylc.flow.cycling.loader.DefaultCycler', _DefaultCycler)
         return mode
     return _cycling_mode
 
@@ -83,3 +90,16 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
 
     yield _mock
     rmtree(tmp_path)
+
+
+@pytest.fixture
+def xtrigger_mgr() -> XtriggerManager:
+    """A fixture to build an XtriggerManager which uses a mocked proc_pool,
+    and uses a mocked broadcast_mgr."""
+    return XtriggerManager(
+        suite="sample_suite",
+        user="john-foo",
+        proc_pool=Mock(put_command=lambda *a, **k: True),
+        broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),
+        data_store_mgr=DataStoreMgr(create_autospec(Scheduler))
+    )

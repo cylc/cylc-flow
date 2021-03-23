@@ -42,11 +42,14 @@ def authorise():
                 meta = {}
             host = meta.get('host', '?')
             prog = meta.get('prog', '?')
+            comms_method = meta.get('comms_method', '?')
 
             # Hardcoded, for new - but much of this functionality can be
             # removed more swingingly.
             LOG.info(
-                '[client-command] %s %s@%s:%s', fcn.__name__, user, host, prog)
+                '[client-command] %s %s://%s@%s:%s',
+                fcn.__name__, comms_method, user, host, prog
+            )
             return fcn(self, *args, **kwargs)
 
         return _authorise

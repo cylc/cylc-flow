@@ -15,8 +15,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite hold => retry and submit-retry => suite release
+# Test resume paused workflow using the "cylc client" command.
 . "$(dirname "$0")/test_header"
-set_test_number 2
-reftest
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+cylc play --reference-test --pause --debug --no-detach "${SUITE_NAME}" \
+    1>"${TEST_NAME_BASE}.out" 2>&1 &
+CYLC_RUN_PID=$!
+poll_suite_running
+
+read -r -d '' resume <<_args_
+{"request_string": "
+mutation {
+  resume(workflows: [\"${SUITE_NAME}\"]){
+    result
+  }
+}
+",
+"variables": null}
+_args_
+
+# shellcheck disable=SC2086
+run_ok "${TEST_NAME_BASE}-client" \
+    cylc client "${SUITE_NAME}" 'graphql' < <(echo ${resume})
+run_ok "${TEST_NAME_BASE}-run" wait "${CYLC_RUN_PID}"
+purge
 exit

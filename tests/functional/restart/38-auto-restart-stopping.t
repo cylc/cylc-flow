@@ -44,6 +44,7 @@ init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
 [runtime]
     [[foo]]
         script = cylc stop "${CYLC_SUITE_NAME}"; sleep 15
+    [[bar]]
 __FLOW_CONFIG__
 
 create_test_global_config '' "

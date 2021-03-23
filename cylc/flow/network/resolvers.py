@@ -21,6 +21,7 @@ from fnmatch import fnmatchcase
 import logging
 import queue
 from time import time
+from typing import Iterable, Tuple, TYPE_CHECKING
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
@@ -33,6 +34,11 @@ from cylc.flow.data_store_mgr import (
 from cylc.flow.network.schema import (
     NodesEdges, PROXY_NODES, SUB_RESOLVERS, parse_node_id, sort_elements
 )
+
+if TYPE_CHECKING:
+    from cylc.flow.data_store_mgr import DataStoreMgr
+    from cylc.flow.scheduler import Scheduler
+
 
 logger = logging.getLogger(__name__)
 
@@ -438,15 +444,11 @@ class BaseResolvers:
 class Resolvers(BaseResolvers):
     """Workflow Service context GraphQL query and mutation resolvers."""
 
-    schd = None
+    schd: 'Scheduler'
 
-    def __init__(self, data, **kwargs):
+    def __init__(self, data: 'DataStoreMgr', schd: 'Scheduler') -> None:
         super().__init__(data)
-
-        # Set extra attributes
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+        self.schd = schd
 
     # Mutations
     async def mutator(self, *m_args):
@@ -520,16 +522,19 @@ class Resolvers(BaseResolvers):
                 cutoff)
         raise ValueError('Unsupported broadcast mode')
 
-    def hold(self, tasks=None, time=None):
-        """Hold the workflow."""
-        self.schd.command_queue.put((
-            'hold',
-            tuple(),
-            filter_none({
-                'tasks': tasks or None,
-                'time': time
-            })
-        ))
+    def hold(self, tasks: Iterable[str]) -> Tuple[bool, str]:
+        """Hold tasks."""
+        self.schd.command_queue.put(('hold', (tasks,), {}))
+        return (True, 'Command queued')
+
+    def set_hold_point(self, point: str) -> Tuple[bool, str]:
+        """Set workflow hold after cycle point."""
+        self.schd.command_queue.put(('set_hold_point', (point,), {}))
+        return (True, 'Command queued')
+
+    def pause(self) -> Tuple[bool, str]:
+        """Pause the workflow."""
+        self.schd.command_queue.put(('pause', tuple(), {}))
         return (True, 'Command queued')
 
     def kill_tasks(self, tasks):
@@ -649,15 +654,19 @@ class Resolvers(BaseResolvers):
         self.schd.command_queue.put(("reload_suite", (), {}))
         return (True, 'Command queued')
 
-    def release(self, tasks=None):
-        """Release (un-hold) the workflow."""
-        self.schd.command_queue.put((
-            "release",
-            (),
-            filter_none({
-                'ids': tasks
-            })
-        ))
+    def release(self, tasks: Iterable[str]) -> Tuple[bool, str]:
+        """Release held tasks."""
+        self.schd.command_queue.put(('release', (tasks,), {}))
+        return (True, 'Command queued')
+
+    def release_hold_point(self) -> Tuple[bool, str]:
+        """Release all tasks and unset workflow hold point."""
+        self.schd.command_queue.put(('release_hold_point', tuple(), {}))
+        return (True, 'Command queued')
+
+    def resume(self) -> Tuple[bool, str]:
+        """Resume the workflow."""
+        self.schd.command_queue.put(('resume', tuple(), {}))
         return (True, 'Command queued')
 
     def set_verbosity(self, level):

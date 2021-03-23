@@ -15,19 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that spawned children of tasks released in a held suite, are held.
+# Test that spawned children of released tasks are held when the workflow has
+# a hold point.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
-   [[dependencies]]
+    [[dependencies]]
         R1 = "foo => bar"
 [runtime]
    [[foo, bar]]
         script = cylc__job__wait_cylc_message_started; true
 __FLOW_CONFIG__
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --hold "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc play --hold-after=0 "${SUITE_NAME}"
 
 cylc release "${SUITE_NAME}" foo.1
 # foo.1 should run and spawn bar.1 as waiting and held
@@ -41,6 +42,6 @@ cmp_ok task-pool.out <<__OUT__
 1|bar|waiting|1
 __OUT__
 
-cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
+cylc stop --now --now "${SUITE_NAME}"
 
 purge

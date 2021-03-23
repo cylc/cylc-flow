@@ -14,7 +14,7 @@ $ etc/bin/run-functional-tests tests/f
 $ CHUNK='1/4' etc/bin/run-functional-tests tests/f
 
 # measure code coverage
-# (coverage files are not automatically transfered from remote platforms)
+# (coverage files are not automatically transferred from remote platforms)
 $ export CYLC_COVERAGE=1
 $ etc/bin/run-functional-tests tests/f
 $ coverage combine
@@ -78,7 +78,7 @@ Each platform is named using this convention:
   The name of the job runner the container is configured to use.
 
 `fs` "filesystem" - `{indep, shared}`:
-  What is the relationship between the filesystem in the contaier to
+  What is the relationship between the filesystem in the container to
   the filesystem on the host?
 
   * Independent (indep) - it is a completely different filesystem.
@@ -88,7 +88,7 @@ Each platform is named using this convention:
   absolute path to cylc-run on the host system may be different
   to that on the container, use ~/cylc-run for safety.
 
-`comms` "task communication method" - `{tcp, poll}`
+`comms` "task communication method" - `{tcp, ssh, poll}`
   The task communication method to use.
 
 ## How To Configure "Non-Generic" Tests?

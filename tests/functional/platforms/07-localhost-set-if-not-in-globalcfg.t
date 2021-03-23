@@ -15,31 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test release held suite using the "cylc client" command.
+# Check that ``[platforms][localhost]`` is only set automatically if it
+# not set in ``global.cylc``.
+
+export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
+
 set_test_number 3
+
+create_test_global_config "" "
+    [platforms]
+        [[localhost, nine_and_three_quarters]]
+            hosts = localhost
+            job runner = at
+"
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-cylc play --reference-test --hold --debug --no-detach "${SUITE_NAME}" \
-    1>"${TEST_NAME_BASE}.out" 2>&1 &
-CYLC_RUN_PID=$!
-poll_suite_running
 
-read -r -d '' release <<_args_
-{"request_string": "
-mutation {
-  release(workflows: [\"${SUITE_NAME}\"]){
-    result
-  }
-}
-",
-"variables": null}
-_args_
+# Run the suite
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${SUITE_NAME}"
 
-# shellcheck disable=SC2086
-run_ok "${TEST_NAME_BASE}-client" \
-    cylc client "${SUITE_NAME}" 'graphql' < <(echo ${release})
-run_ok "${TEST_NAME_BASE}-run" wait "${CYLC_RUN_PID}"
+grep_ok "Job submit method: at" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job"
+
 purge
 exit

@@ -44,6 +44,9 @@ init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = "task<foo> => task<foo+1>"
+[runtime]
+    [[task<foo>]]
+    [[task_26]]
 __FLOW_CONFIG__
 
 # run suite on localhost normally
