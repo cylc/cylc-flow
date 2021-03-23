@@ -351,7 +351,8 @@ async def _run(parser, options, reg, scheduler):
         ret = 1
     except (KeyboardInterrupt, asyncio.CancelledError):
         ret = 2
-    except Exception:
+    except Exception as exc:
+        LOG.exception(exc)
         ret = 3
 
     # kthxbye

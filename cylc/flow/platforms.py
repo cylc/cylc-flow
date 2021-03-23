@@ -489,7 +489,13 @@ def get_all_platforms_for_install_target(install_target):
 def get_random_platform_for_install_target(install_target):
     """Return a randomly selected platform (dict) for given install target."""
     platforms = get_all_platforms_for_install_target(install_target)
-    return random.choice(platforms)
+    try:
+        return random.choice(platforms)
+    except IndexError:
+        # No platforms to choose from
+        raise PlatformLookupError(
+            f'Could not select platform for install target: {install_target}'
+        ) from None
 
 
 def get_localhost_install_target():
