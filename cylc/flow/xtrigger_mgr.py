@@ -18,7 +18,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Set, List, Optional, Tuple, Callable
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -356,15 +356,16 @@ class XtriggerManager:
             self.sat_xtrig[sig] = results
 
     def check_xtriggers(
-            self, itasks: List[TaskProxy], db_update_func):
-        """
-        Check if any of itasks' xtriggers have become satisfied.
+            self,
+            itasks: List[TaskProxy],
+            db_update_func: Callable[[dict], None]) -> Set[TaskProxy]:
+        """Check if any of itasks' xtriggers have become satisfied.
 
         Return set of newly satisfied tasks.
 
         Args:
-            itasks ...
-            db_update_func ...
+            itasks: list of tasks to check
+            db_update_func: method to update xtriggers in the DB
 
         """
         satisfied = set(
