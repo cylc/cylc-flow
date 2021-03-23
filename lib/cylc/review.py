@@ -68,6 +68,14 @@ class CylcReviewService(object):
     SEARCH_MODE_TEXT = "TEXT"
     SUITES_PER_PAGE = 100
     VIEW_SIZE_MAX = 10 * 1024 * 1024  # 10MB
+    WORKFLOW_FILES = [
+        'suite.rc',
+        'suite.rc.processed',
+        'flow.cylc',
+        'flow.cylc.processed',
+        'rose-suite.info',
+        'opt/rose-suite-cylc-install.conf'
+    ]
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
@@ -737,8 +745,7 @@ class CylcReviewService(object):
         dir_ = os.path.expanduser(os.path.join(prefix, d_rel))
 
         # Get cylc files
-        cylc_files = ["cylc-suite-env", "suite.rc", "suite.rc.processed"]
-        for key in cylc_files:
+        for key in self.WORKFLOW_FILES:
             f_name = os.path.join(dir_, key)
             if os.path.isfile(f_name):
                 f_stat = os.stat(f_name)
@@ -746,13 +753,21 @@ class CylcReviewService(object):
                                   "mtime": f_stat.st_mtime,
                                   "size": f_stat.st_size}
 
-        # Get cylc suite log files
-        for f_name in glob(os.path.join(dir_, "log/suite/log*")):
-            key = os.path.relpath(f_name, dir_)
-            f_stat = os.stat(f_name)
-            logs_info[key] = {"path": key,
-                              "mtime": f_stat.st_mtime,
-                              "size": f_stat.st_size}
+        # Get cylc suite log files and other files:
+        EXTRA_FILES = [
+            "log/suite/log*",
+            "log/suite/file-installation-log.*",
+            "log/install/*"
+        ]
+        for glob_pattern in EXTRA_FILES:
+            for f_name in glob(os.path.join(dir_, glob_pattern)):
+                key = os.path.relpath(f_name, dir_)
+                f_stat = os.stat(f_name)
+                logs_info[key] = {
+                    "path": key,
+                    "mtime": f_stat.st_mtime,
+                    "size": f_stat.st_size
+                }
 
         data["files"]["cylc"] = logs_info
         return data
@@ -834,9 +849,7 @@ class CylcReviewService(object):
             cherrypy.HTTPError(403)
 
         Whitelist paths:
-            * ``suite.rc``.
-            * ``suite.rc.processed``.
-            * ``log/``.
+            Paths in cls.WORKFLOW_FILES
 
         Blacklist non-normalised paths - see ``_check_path_normalised``.
 
@@ -849,8 +862,8 @@ class CylcReviewService(object):
             tail = os.path.join(tail1, tail)
         if not (
             head == 'log' or
-            (not head and tail in
-             ['suite.rc', 'suite.rc.processed', 'rose-suite.info'])
+            (not head and tail in cls.WORKFLOW_FILES) or
+            (head, tail) == (u'opt', u'rose-suite-cylc-install.conf')
         ):
             raise cherrypy.HTTPError(403)
 
