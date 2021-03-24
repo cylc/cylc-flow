@@ -19,7 +19,6 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-from io import StringIO
 from copy import copy
 import sys
 
@@ -125,9 +124,11 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
 
     As returned by parse.config.get().
     """
-    # Note: default handle=sys.stdout, but explicitly setting this interferes
-    # with pytest capsys:
+    # Note: default handle=sys.stdout, but explicitly setting this as a kwarg
+    # interferes with pytest capsys:
     # https://github.com/pytest-dev/pytest/issues/1132#issuecomment-147506107
+    if handle is None:
+        handle = sys.stdout
     stack = [("", cfg, level, indent)]
     while stack:
         key_i, cfg_i, level_i, indent_i = stack.pop()
@@ -142,13 +143,9 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
                 # Print heading
                 msg = "%s%s%s%s%s\n" % (
                     prefix, spacer, '[' * level_i, str(key_i), ']' * level_i)
-                if (handle is not None and not isinstance(handle, StringIO)
-                        and 'b' in handle.mode):
+                if hasattr(handle, 'mode') and 'b' in handle.mode:
                     msg = msg.encode()
-                if handle is None:
-                    sys.stdout.write(msg)
-                else:
-                    handle.write(msg)
+                handle.write(msg)
 
             # Nested sections are printed after normal settings
             subsections = []
@@ -178,13 +175,9 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
                 value = str(cfg_i)
             if value is not None:
                 msg = "%s%s%s%s\n" % (prefix, spacer, key, value)
-                if (handle is not None and not isinstance(handle, StringIO)
-                        and 'b' in handle.mode):
+                if hasattr(handle, 'mode') and 'b' in handle.mode:
                     msg = msg.encode()
-                if handle is None:
-                    sys.stdout.write(msg)
-                else:
-                    handle.write(msg)
+                handle.write(msg)
 
 
 def replicate(target, source):

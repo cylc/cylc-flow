@@ -18,6 +18,8 @@
 
 """cylc config [OPTIONS] ARGS
 
+Parse and print Cylc configuration files.
+
 Print parsed configuration, after runtime inheritance. If REG is specified,
 print the workflow configuration, otherwise print the global configuration.
 
@@ -111,7 +113,9 @@ def main(parser, options, reg=None):
         return
 
     if reg is None:
-        glbl_cfg().idump(options.item, sparse=options.sparse)
+        glbl_cfg().idump(
+            options.item, sparse=options.sparse, oneline=options.oneline,
+            none_str=options.none_str)
         return
 
     suite, flow_file = parse_suite_arg(options, reg)
