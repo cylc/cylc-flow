@@ -1,5 +1,5 @@
 EVENT                TASK     MESSAGE
-critical             foo.1    failed/EXIT
+critical             foo.1    failed/ERR
 execution timeout    foo.1    execution timeout after PT3S
 failed               baz.1    job failed
 retry                foo.1    job failed, retrying in PT3S

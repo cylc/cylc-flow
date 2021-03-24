@@ -24,8 +24,8 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[dependencies]]
         R1 = "foo => bar"
 [runtime]
-    [[foo, bar]]
-        script = true
+   [[foo, bar]]
+        script = cylc__job__wait_cylc_message_started; true
 __FLOW_CONFIG__
 
 suite_run_ok "${TEST_NAME_BASE}-run" cylc play --hold-after=0 "${SUITE_NAME}"

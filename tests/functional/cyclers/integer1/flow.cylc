@@ -33,7 +33,7 @@
         script = true
     [[foo]]
         script = """
-            wait
+            cylc__job__wait_cylc_message_started
             cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "the cheese is ready"
         """
         [[[outputs]]]

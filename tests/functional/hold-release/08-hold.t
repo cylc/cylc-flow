@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[holdrelease]]
         script = """
-wait
+cylc__job__wait_cylc_message_started
 cylc__job__poll_grep_suite_log -F 'spawned foo.1'
 cylc__job__poll_grep_suite_log -F 'spawned bar.1'
 cylc__job__poll_grep_suite_log -F 'spawned cheese.1'

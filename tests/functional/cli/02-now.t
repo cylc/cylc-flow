@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = foo
 [runtime]
     [[foo]]
-        script = wait; cylc stop --now --now "${CYLC_SUITE_NAME}"
+        script = cylc__job__wait_cylc_message_started; cylc stop --now --now "${CYLC_SUITE_NAME}"
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate --icp='now' "${SUITE_NAME}"

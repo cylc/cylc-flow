@@ -10,11 +10,7 @@
         """
 [runtime]
     [[POLLABLE]]
-        pre-script = """
-            # Stop script from reporting anything back
-            trap '' 'EXIT'
-            trap '' 'ERR'
-        """
+        init-script = cylc__job__disable_fail_signals ERR EXIT
     [[FAIL]]
         inherit = POLLABLE
         script = """
@@ -34,7 +30,7 @@
                 echo 'CYLC_JOB_EXIT=SUCCEEDED'
                 echo "CYLC_JOB_EXIT_TIME=$(date +%FT%H:%M:%SZ)"
             } >>"${CYLC_TASK_LOG_ROOT}.status"
-            exit
+            exit 1
         """
     [[local-success-1]]
         inherit = SUCCESS

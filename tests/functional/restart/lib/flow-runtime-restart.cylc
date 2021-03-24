@@ -1,6 +1,6 @@
     [[OUTPUT]]
         script = """
-            wait
+            cylc__job__wait_cylc_message_started
             # Handle db locks.
             for i in {0..10}; do
                 ctb-select-task-states \
@@ -18,7 +18,7 @@
             OUTPUT_SUFFIX=pre-restart
     [[output_states]]
         inherit = OUTPUT
-        pre-script = wait
+        pre-script = cylc__job__wait_cylc_message_started
         [[[meta]]]
             description = "Wait for the restart to complete, then output states"
         [[[environment]]]

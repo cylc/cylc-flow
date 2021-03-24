@@ -10,11 +10,11 @@
 
 [runtime]
     [[t1]]
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
 sleep 1
 cylc stop --now --now "${CYLC_SUITE_NAME}"
-trap '' EXIT
-exit
+exit 1
 """
         [[[events]]]
             started handler = sleep 10 && echo 'Hello %(id)s %(event)s'

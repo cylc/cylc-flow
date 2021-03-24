@@ -21,7 +21,7 @@ FIXABLES:succeed-all & loser:fail => Z
         inherit = FIXABLE-3
     [[fixer]]
         script = """
-wait
+cylc__job__wait_cylc_message_started
 cylc__job__poll_grep_suite_log '\[fixable-1a\.1\].* (received)failed'
 cylc__job__poll_grep_suite_log '\[fixable-1b\.1\].* (received)failed'
 cylc__job__poll_grep_suite_log '\[fixable-2a\.1\].* (received)failed'

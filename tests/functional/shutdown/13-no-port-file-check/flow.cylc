@@ -16,10 +16,10 @@
 
 [runtime]
     [[t1]]
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc__job__wait_cylc_message_started
 # Remove contact file and don't report back to suite
 rm -f "${CYLC_SUITE_RUN_DIR}/.service/contact"
-trap '' EXIT
-exit
+exit 1
 """

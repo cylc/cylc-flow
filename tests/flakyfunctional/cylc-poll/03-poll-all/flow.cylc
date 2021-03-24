@@ -32,10 +32,8 @@ trigger, and the suite to shut down successfully."""
 
 [runtime]
     [[run_kill]]
-        script = """
-trap '' EXIT
-exit 0
-"""
+        init-script = cylc__job__disable_fail_signals ERR EXIT
+        script = exit 1
     [[poll_check_kill]]
         script = """
 cylc poll "${CYLC_SUITE_NAME}"

@@ -15,7 +15,7 @@
             fish = trout
     [[foo]]
         script = """
-wait
+cylc__job__wait_cylc_message_started
 # Output message for triggering, and custom event handler.
 cylc message -p CUSTOM "Data ready for barring"
 # Generic message, not for triggering or custom event handler.

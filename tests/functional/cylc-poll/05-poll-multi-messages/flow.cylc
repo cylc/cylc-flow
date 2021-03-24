@@ -11,7 +11,7 @@ speaker1:hello1 & speaker1:hello2 & speaker2:greet => finisher
     [[speaker1]]
         script="""
 # Wait for "cylc message started" command
-wait
+cylc__job__wait_cylc_message_started
 # Simulate "cylc message", messages written to status file but failed to
 # get sent back to the suite
 {
@@ -27,7 +27,7 @@ cylc__job__poll_grep_suite_log -F '[speaker1.1] status=running: (polled)hello2'
     [[speaker2]]
         script="""
 # Wait for "cylc message started" command
-wait
+cylc__job__wait_cylc_message_started
 # Simulate "cylc message", messages written to status file but failed to
 # get sent back to the suite
 echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|greet" \

@@ -7,15 +7,14 @@
         R1 = t1
 [runtime]
     [[t1]]
+        init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
-wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-trap '' EXIT
-trap '' ERR
+cylc__job__wait_cylc_message_started
 ST_FNAME="${CYLC_TASK_LOG_ROOT}.status"
 sed -i '/\(CYLC_JOB_RUNNER_NAME\|CYLC_JOB_ID\)/d' "${ST_FNAME}"
 #echo 'CYLC_JOB_EXIT=SUCCEEDED' >>"${ST_FNAME}"
 #echo "CYLC_JOB_EXIT_TIME=$(date -u +%FT%H:%M:%SZ)" >>"${ST_FNAME}"
-exit 0
+exit 1
 """
         [[[events]]]
             execution timeout = PT15S

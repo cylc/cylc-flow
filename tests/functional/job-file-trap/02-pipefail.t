@@ -18,7 +18,7 @@
 # Test pipefail cylc/cylc-flow#1783
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 6
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
@@ -26,12 +26,18 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --no-detach --reference-test "${SUITE_NAME}"
 
-# Make sure t1.1.1's status file is in place
+# Make sure status files are in place
 T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
 contains_ok "${T1_STATUS_FILE}" <<'__STATUS__'
-CYLC_JOB_EXIT=EXIT
+CYLC_JOB_EXIT=ERR
 __STATUS__
 grep_ok 'CYLC_JOB_EXIT_TIME=' "${T1_STATUS_FILE}"
+
+T2_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t2/01/job.status"
+contains_ok "${T2_STATUS_FILE}" <<'__STATUS__'
+CYLC_JOB_EXIT=EXIT
+__STATUS__
+grep_ok 'CYLC_JOB_EXIT_TIME=' "${T2_STATUS_FILE}"
 
 purge
 exit

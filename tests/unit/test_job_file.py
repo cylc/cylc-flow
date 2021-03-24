@@ -244,12 +244,7 @@ def test_traps_for_each_job_runner(job_runner: str):
     with io.StringIO() as fake_file:
         JobFileWriter()._write_prelude(fake_file, job_conf)
         output = fake_file.getvalue()
-        if job_runner == "slurm":
-            assert(
-                "CYLC_FAIL_SIGNALS='EXIT ERR XCPU" in output)
-        else:
-            assert(
-                "CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU" in output)
+        assert("CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU" in output)
 
 
 def test_write_prelude(monkeypatch, fixture_get_platform):

@@ -29,7 +29,7 @@ run_tests() {
     run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
     TEST_NAME="${TEST_NAME_BASE}-run"
     # Needs to be detaching:
-    suite_run_ok "${TEST_NAME}" cylc run --reference-test "${SUITE_NAME}"
+    suite_run_ok "${TEST_NAME}" cylc play --reference-test "${SUITE_NAME}"
 
     # Make sure t1.1.1's status file is in place
     T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
@@ -42,6 +42,7 @@ run_tests() {
     kill -s 'USR1' "${T1_PID}"
     poll_grep -E 'WARNING|vacated/USR1' "${T1_STATUS_FILE}"
     poll_grep_suite_log 'vacated/USR1'
+    sleep 1  # a bit of extra time for suite db update to complete
     sqlite3 "${SUITE_RUN_DIR}/log/db" \
         'SELECT status FROM task_states WHERE name=="t1";' \
         >"${TEST_NAME}-db-t1" 2>'/dev/null'
