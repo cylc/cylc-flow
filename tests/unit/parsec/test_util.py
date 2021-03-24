@@ -14,9 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from io import StringIO
 import unittest
 
-from cylc.flow.parsec.util import *
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.flow.parsec.util import (
+    itemstr, listjoin, m_override, pdeepcopy, poverride, printcfg,
+    replicate, un_many
+)
 
 
 class TestUtil(unittest.TestCase):

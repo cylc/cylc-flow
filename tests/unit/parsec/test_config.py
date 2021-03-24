@@ -270,7 +270,7 @@ def test_mdump_none(parse_config, sample_spec, capsys):
             value1 = abc
             value2 = def
     ''')
-    cfg.mdump(pnative=True)
+    cfg.mdump()
     std = capsys.readouterr()
     assert std.out == ''
     assert std.err == ''
@@ -286,8 +286,7 @@ def test_mdump_some(parse_config, sample_spec, capsys):
         [
             ['section1', 'value1'],
             ['section1', 'value2'],
-        ],
-        pnative=True
+        ]
     )
     std = capsys.readouterr()
     assert std.out == 'abc\ndef\n'
@@ -305,7 +304,6 @@ def test_mdump_oneline(parse_config, sample_spec, capsys):
             ['section1', 'value1'],
             ['section1', 'value2'],
         ],
-        pnative=True,
         oneline=True
     )
     std = capsys.readouterr()

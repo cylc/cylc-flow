@@ -15,24 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc-get-site-config
+# Test getting the global config
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 3
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-config"
-run_ok "${TEST_NAME}.validate" cylc get-site-config
-run_ok "${TEST_NAME}.print-run-dir" cylc get-site-config --print-run-dir
+run_ok "${TEST_NAME}.validate" cylc config
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-get-items"
 run_fail "${TEST_NAME}.non-existent" \
-    cylc get-site-config --item='[this][doesnt]exist'
+    cylc config --item='[this][doesnt]exist'
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run-dir"
-run_ok "${TEST_NAME}" cylc get-site-config --print-run-dir
-#-------------------------------------------------------------------------------
-VAL1="$(cylc get-site-config --item '[platforms][localhost]use login shell')"
-VAL2="$(cylc get-site-config | sed -n '/\[\[localhost\]\]/,$p' | \
+VAL1="$(cylc config --item '[platforms][localhost]use login shell')"
+VAL2="$(cylc config | sed -n '/\[\[localhost\]\]/,$p' | \
     sed -n "0,/use login shell/s/^[ \t]*\(use login shell =.*\)/\1/p")"
 run_ok "${TEST_NAME_BASE}-check-output" \
     test "use login shell = ${VAL1}" = "${VAL2}"

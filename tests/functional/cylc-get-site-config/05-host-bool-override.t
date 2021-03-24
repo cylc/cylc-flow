@@ -42,7 +42,7 @@ __hi__
 
 export CYLC_CONF_PATH="${PWD}/etc"
 
-run_ok "${TEST_NAME_BASE}"  cylc get-global-config
+run_ok "${TEST_NAME_BASE}"  cylc config
 
 cmp_ok "${TEST_NAME_BASE}.stderr" </dev/null
 
