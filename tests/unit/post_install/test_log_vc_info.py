@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-import subprocess
 import pytest
 from pytest import MonkeyPatch, TempPathFactory
+import shutil
+import subprocess
 from typing import Any, Tuple
 from unittest.mock import Mock
 
@@ -43,8 +44,7 @@ BASIC_FLOW_2 = """
 
 def skip_if_not_installed(command: str) -> None:
     """Skip test if command is not installed"""
-    proc = subprocess.run(['command', '-v', command])
-    if proc.returncode != 0:
+    if shutil.which(command) is None:
         pytest.skip(f"{command} is not installed")
 
 
@@ -65,7 +65,8 @@ def git_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str]:
     flow_file.write_text(BASIC_FLOW_1)
     subprocess.run(['git', 'add', '-A'], cwd=source_dir, check=True)
     subprocess.run(
-        ['git', 'commit', '-am', 'Initial commit'], cwd=source_dir, check=True)
+        ['git', 'commit', '-am', '"Initial commit"'],
+        cwd=source_dir, check=True, capture_output=True)
     # Overwrite file to introduce uncommitted changes:
     flow_file.write_text(BASIC_FLOW_2)
     commit_sha = subprocess.run(
@@ -98,7 +99,7 @@ def svn_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str, str]:
     project_dir.joinpath('flow.cylc').write_text(BASIC_FLOW_1)
     subprocess.run(
         ['svn', 'import', project_dir, f'file://{repo}/project/trunk',
-         '-m', 'Initial import'], check=True)
+         '-m', '"Initial import"'], check=True)
     source_dir = tmp_path.joinpath('svn_working_copy')
     subprocess.run(
         ['svn', 'checkout', f'file://{repo}/project/trunk', source_dir],
