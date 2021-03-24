@@ -59,24 +59,48 @@ with Conf('global.cylc', desc='''
     ``/etc/cylc/flow/``) and the user directory (``~/.cylc/flow/``). E.g. for
     Cylc version 8.0.1, the hierarchy would be, in order of ascending priority:
 
-    * ``${CYLC_SITE_CONF_PATH}/global.cylc``
-    * ``${CYLC_SITE_CONF_PATH}/8/global.cylc``
-    * ``${CYLC_SITE_CONF_PATH}/8.0/global.cylc``
-    * ``${CYLC_SITE_CONF_PATH}/8.0.1/global.cylc``
-    * ``~/.cylc/flow/global.cylc``
-    * ``~/.cylc/flow/8/global.cylc``
-    * ``~/.cylc/flow/8.0/global.cylc``
-    * ``~/.cylc/flow/8.0.1/global.cylc``
+    .. code-block:: sub
+
+       <site-conf-path>/flow/global.cylc
+       <site-conf-path>/flow/8/global.cylc
+       <site-conf-path>/flow/8.0/global.cylc
+       <site-conf-path>/flow/8.0.1/global.cylc
+       ~/.cylc/flow/global.cylc
+       ~/.cylc/flow/8/global.cylc
+       ~/.cylc/flow/8.0/global.cylc
+       ~/.cylc/flow/8.0.1/global.cylc
+
+    Where ``<site-conf-path>`` is ``/etc/cylc/flow/`` by default but can be
+    changed by :envvar:`CYLC_SITE_CONF_PATH`.
 
     A setting in a file lower down in the list will override the same setting
     from those higher up (but if a setting is present in a file higher up and
     not in any files lower down, it will not be overridden).
 
-    Setting the ``CYLC_SITE_CONF_PATH`` environment variable overrides the
-    default value of ``/etc/cylc/flow/``.
+    The following environment variables can change the files which are loaded:
 
-    To override the entire hierarchy, set the ``CYLC_CONF_PATH`` environment
-    variable to the directory containing your ``global.cylc`` file.
+    .. envvar:: CYLC_CONF_PATH
+
+       If set this bypasses the default site/user configuration hierarchy used
+       to load the Cylc Flow global configuration.
+
+       This should be set to a directory containing a :cylc:conf:`global.cylc`
+       file.
+
+    .. envvar:: CYLC_SITE_CONF_PATH
+
+       By default the site configuration is located in ``/etc/cylc/``. For
+       installations where this is not convenient this path can be overridden
+       by setting ``CYLC_SITE_CONF_PATH`` to point at another location.
+
+       Configuration for different Cylc components should be in sub-directories
+       within this location.
+
+       For example to configure Cylc Flow you could do the following::
+
+          $CYLC_SITE_CONF_PATH/
+          `-- flow/
+              `-- global.cylc
 
     .. note::
 
@@ -763,10 +787,7 @@ class GlobalConfig(ParsecConfig):
 
     _DEFAULT: Optional['GlobalConfig'] = None
     CONF_BASENAME: str = "global.cylc"
-    SITE_CONF_PATH: str = (
-        os.getenv('CYLC_SITE_CONF_PATH')
-        or os.path.join(os.sep, 'etc', 'cylc', 'flow')
-    )
+    DEFAULT_SITE_CONF_PATH: str = os.path.join(os.sep, 'etc', 'cylc')
     USER_CONF_PATH: str = os.path.join(
         os.getenv('HOME') or get_user_home(),
         '.cylc',
@@ -776,8 +797,20 @@ class GlobalConfig(ParsecConfig):
 
     def __init__(self, *args, **kwargs):
         self.conf_dir_hierarchy: List[Tuple[str, str]] = [
-            *[(upgrader.SITE_CONFIG, os.path.join(self.SITE_CONF_PATH, ver))
-              for ver in self.VERSION_HIERARCHY],
+            *[
+                (
+                    upgrader.SITE_CONFIG,
+                    os.path.join(
+                        (
+                            os.getenv('CYLC_SITE_CONF_PATH')
+                            or self.DEFAULT_SITE_CONF_PATH
+                        ),
+                        'flow',
+                        ver
+                    )
+                )
+                for ver in self.VERSION_HIERARCHY
+            ],
             *[(upgrader.USER_CONFIG, os.path.join(self.USER_CONF_PATH, ver))
               for ver in self.VERSION_HIERARCHY]
         ]
