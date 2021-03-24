@@ -256,7 +256,7 @@ cylc__job_finish_err() {
     # Propagate real signals to entire process group, if we are a group leader,
     # otherwise just to the backgrounded user script.
     if [[ -n "${CYLC_TASK_USER_SCRIPT_PID:-}" ]] &&
-       [[ ! "${signal}" =~ ^(ERR|EXIT)$ ]]; then
+       [[ "${signal}" != "ERR" ]] && [[ "${signal}" != "EXIT" ]]; then
         kill -s "${signal}" -- "-$$" 2>'/dev/null' ||
         kill -s "${signal}" -- "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
     fi
