@@ -209,8 +209,8 @@ class TaskPool:
         else:
             return False
 
-    def swap_out(self, itask):
-        """FOR RELOAD"""
+    def _swap_out(self, itask):
+        """Swap old task for new, during reload."""
         if itask.point in self.hidden_pool:
             if itask.identity in self.hidden_pool[itask.point]:
                 self.hidden_pool[itask.point][itask.identity] = itask
@@ -229,11 +229,13 @@ class TaskPool:
 
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
+            # Add to hidden pool if not satisfied.
             self.hidden_pool.setdefault(itask.point, dict())
             self.hidden_pool[itask.point][itask.identity] = itask
             self.hidden_pool_changed = True
         else:
-            # REMOVE from HIDDEN
+            # Add to main pool.
+            # First remove from hidden pool if necessary.
             try:
                 del self.hidden_pool[itask.point][itask.identity]
             except KeyError:
@@ -255,15 +257,14 @@ class TaskPool:
             self.data_store_mgr.delta_task_queued(itask)
             self.data_store_mgr.delta_task_runahead(itask)
 
-        # add row to "task_states" table
         if is_new:
-            # add row to "task_states" table:
+            # Add row to "task_states" table:
             self.suite_db_mgr.put_insert_task_states(itask, {
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
                 "status": itask.state.status,
                 "flow_label": itask.flow_label})
-            # add row to "task_outputs" table:
+            # Add row to "task_outputs" table:
             if itask.state.outputs.has_custom_triggers():
                 self.suite_db_mgr.put_insert_task_outputs(itask)
 
@@ -279,16 +280,17 @@ class TaskPool:
         Return True if any tasks released, else False.
 
         """
-        released = False
         if not self.main_pool:
-            # TODO: needed?
-            return released
+            # (At start-up, in case main pool doesn't exist yet)
+            return False
+
+        released = False
 
         # Any finished tasks can be released immediately (this can happen at
         # restart when all tasks are initially loaded into the runahead pool).
         # And any manually-triggered task.
 
-        # TODO: runahead should not be held back by unsatisfied hidden tasks?
+        # TODO: should runahead should not consider unsatisfied hidden tasks?
         release = []
         for itask_id_maps in (
                 list(self.main_pool.values())
@@ -394,7 +396,6 @@ class TaskPool:
                         continue
                     release.append(itask)
         for itask in release:
-            print("RELEASING", itask.identity, itask.state.is_runahead)
             self.release_runahead_task(itask)
             released = True
         return released
@@ -568,7 +569,7 @@ class TaskPool:
         if itask.state.reset(is_runahead=False):
             self.data_store_mgr.delta_task_runahead(itask)
 
-        LOG.info("[%s] -released to the task pool", itask)  # TODO change msg
+        LOG.info("[%s] -released from runahead", itask)
 
         # Queue if ready to run
         if all(itask.is_ready_to_run()):
@@ -637,7 +638,6 @@ class TaskPool:
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
             self.suite_db_mgr.put_update_task_state(itask)
-            # self.suite_db_mgr.process_queued_ops()
             LOG.debug("[%s] -%s", itask, msg)
             del itask
 
@@ -753,14 +753,6 @@ class TaskPool:
             minc = min(cycles)
         return minc
 
-    def get_max_point(self):
-        """Return the maximum cycle point currently in the pool."""
-        cycles = list(self.main_pool)
-        maxc = None
-        if cycles:
-            maxc = max(cycles)
-        return maxc
-
     def set_max_future_offset(self):
         """Calculate the latest required future trigger offset."""
         max_offset = None
@@ -839,16 +831,13 @@ class TaskPool:
                     itask.point,
                     itask.flow_label, itask.state.status)
                 itask.copy_to_reload_successor(new_task)
-                self.swap_out(new_task)
+                self._swap_out(new_task)
                 LOG.info('[%s] -reloaded task definition', itask)
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
                         "[%s] -job(%02d) active with pre-reload settings",
                         itask,
                         itask.submit_num)
-
-        # TODO CONSIDER QUEUE OF TASK-ID TO AVOID REFS TO PRE-RELOAD PROXIES
-        # (OR REQUEUE NEW PROXIES WILL BREAK ORDERING?)
 
         # Reassign live tasks to the internal queue
         del self.task_queue_mgr
@@ -857,8 +846,6 @@ class TaskPool:
             self.config.get_task_name_list(),
             self.config.runtime['descendants']
         )
-        # NOT NEEDED?
-        # self.task_queue_mgr.adopt_tasks(self.orphans)
         self._queue_tasks()
 
         LOG.info("Reload completed.")
@@ -947,8 +934,9 @@ class TaskPool:
     def is_stalled(self):
         """Return True if the workflow is stalled.
 
-        A suite is stalled if it is not held and the active pool contains only
-        unhandled failed tasks and un-released runahead tasks.
+        A workflow is stalled if it is not held and the active pool contains
+        only unhandled failed tasks and un-released runahead tasks.
+
         """
         self.release_runahead_tasks()
         unhandled_failed = []
@@ -1325,15 +1313,13 @@ class TaskPool:
             itask = self.get_task_main(name, point, flow_label)
             if itask is not None:
                 # Trigger existing task proxy
+                LOG.critical('setting %s ready to run', itask)
                 itask.is_manual_submit = True
                 itask.reset_try_timers()
                 # (If None, spawner reports cycle bounds errors).
                 if itask.state.reset(TASK_STATUS_WAITING):
                     self.data_store_mgr.delta_task_state(itask)
-                LOG.critical('setting %s ready to run', itask)
-                # itask.state.set_prerequisites_all_satisfied()
-                # self.data_store_mgr.delta_task_prerequisite(itask)
-                # self.data_store_mgr.delta_task_outputs(itask)
+                # (No need to set prerequisites satisfied here).
                 self.queue_tasks([itask])
             else:
                 # Spawn with new flow label.
@@ -1516,21 +1502,3 @@ class TaskPool:
         else:
             name_str, point_str = (head, None)
         return (point_str, name_str, state_str)
-
-    def dump(self):
-        print("\nTASK POOL:")
-        self.dump_pool("HIDDEN", self.get_hidden_tasks())
-        self.dump_pool("MAIN  ", self.get_tasks())
-
-    def dump_pool(self, name, pool):
-        print(f"  {name}:")
-        for itask in pool:
-            held = queued = runahead = ""
-            if itask.state.is_runahead:
-                runahead = "(runahead)"
-            if itask.state.is_held:
-                held = "(held)"
-            if itask.state.is_queued:
-                queued = "(queued)"
-            print(f"  *{itask.identity}: {itask.state.status}"
-                  f" {held}{queued}{runahead}")

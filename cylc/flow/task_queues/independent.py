@@ -157,9 +157,3 @@ class IndepQueueManager(TaskQueueManagerBase):
                     queues[qname]["members"].add(qmem)
                 seen[qmem] = qname
         return queues
-
-    def dump(self):
-        for name, q in self.queues.items():
-            print("QUEUE", name)
-            for i in q.deque:
-                print(' - ', i, i.state.is_queued)

@@ -1721,19 +1721,17 @@ class Scheduler:
         return False
 
     def check_auto_shutdown(self):
-        """Check if we should do an automatic shutdown.
-
-        CRITERIA:
-        """
+        """Check if we should shut down now."""
         if self.is_paused:
-            return False
-
-        if self.check_suite_stalled():
-            # Stay up if stalled (unless "abort on stalled" is set)
-            # (implies unhandled failed tasks)
+            # Don't if paused.
             return False
 
         self.pool.release_runahead_tasks()
+
+        if self.check_suite_stalled():
+            # Don't if stalled, unless "abort on stalled" is set.
+            return False
+
         if [
                 itask for itask in self.pool.get_tasks()
                 if itask.state(
@@ -1744,14 +1742,16 @@ class Scheduler:
                 or (itask.state(TASK_STATUS_WAITING)
                     and not itask.state.is_runahead)
         ]:
-            # There are more tasks to run.
-            # If waiting and not runahead: held, queued, or xtriggered)
+            # Don't if there are more tasks to run (if waiting and not
+            # runahead, then held, queued, or xtriggered).
             return False
+
         # Can shut down.
         if self.pool.stop_point:
             self.options.stopcp = None
             self.pool.stop_point = None
             self.suite_db_mgr.delete_suite_stop_cycle_point()
+
         return True
 
     def pause_workflow(self) -> None:
