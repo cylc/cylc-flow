@@ -110,7 +110,6 @@ ALIASES = {
     'cycletime': 'cycle-point',
     'datetime': 'cycle-point',
     'external-trigger': 'ext-trigger',
-    'get-config': 'config',
     'get-contact': 'get-suite-contact',
     'get-cylc-version': 'get-suite-version',
     'grep': 'search',
@@ -133,6 +132,14 @@ DEAD_ENDS = {
         'Cylc documentation is now at http://cylc.org',
     'get-directory':
         'cylc get-directory has been removed.',
+    'get-config':
+        'cylc get-config has been replaced by cylc config',
+    'get-site-config':
+        'cylc get-site-config has been replaced by cylc config',
+    'get-suite-config':
+        'cylc get-suite-config has been replaced by cylc config',
+    'get-global-config':
+        'cylc get-global-config has been replaced by cylc config',
     'graph-diff':
         'cylc graph-diff has been removed,'
         ' use cylc graph <flow1> --diff <flow2>',
