@@ -45,61 +45,69 @@ rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
 rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
 popd || exit
 
-
-# Test fail no suite source dir
-
-TEST_NAME="${TEST_NAME_BASE}-nodir"
-make_rnd_suite
-rm -rf "${RND_SUITE_SOURCE}"
-run_fail "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --no-run-name -C "${RND_SUITE_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
-__ERR__
-purge_rnd_suite
-
+# -----------------------------------------------------------------------------
 # Test fail no flow.cylc or suite.rc file
 
-TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 make_rnd_suite
+
+TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 rm -f "${RND_SUITE_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
 __ERR__
+
+# Test fail no suite source dir
+
+TEST_NAME="${TEST_NAME_BASE}-nodir"
+rm -rf "${RND_SUITE_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --no-run-name -C "${RND_SUITE_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: no flow.cylc or suite.rc in ${RND_SUITE_SOURCE}
+__ERR__
+
 purge_rnd_suite
 
-
+# -----------------------------------------------------------------------------
 # Test cylc install fails when given flow-name that is an absolute path
 
-TEST_NAME="${TEST_NAME_BASE}-no-abs-path-flow-name"
 make_rnd_suite
+
+TEST_NAME="${TEST_NAME_BASE}-no-abs-path-flow-name"
 run_fail "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_SOURCE}" -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: workflow name cannot be an absolute path: ${RND_SUITE_SOURCE}
 __ERR__
-purge_rnd_suite
 
-# Test cylc install fails when given run-name _cylc-install
+# Test cylc install fails when given forbidden run-name
 
-TEST_NAME="${TEST_NAME_BASE}-run-name-cylc-install-forbidden"
-make_rnd_suite
+TEST_NAME="${TEST_NAME_BASE}-run-name-forbidden"
 run_fail "${TEST_NAME}" cylc install --run-name=_cylc-install -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Run name cannot be "_cylc-install". Please choose another run name.
+WorkflowFilesError: Run name cannot be "_cylc-install".
 __ERR__
-purge_rnd_suite
 
 # Test cylc install invalid flow-name
 
-TEST_NAME="${TEST_NAME_BASE}--invalid-flow-name-cylc-install"
-make_rnd_suite
-run_fail "${TEST_NAME}" cylc install --flow-name=\.invalid -C "${RND_SUITE_SOURCE}"
+TEST_NAME="${TEST_NAME_BASE}-invalid-flow-name"
+run_fail "${TEST_NAME}" cylc install --flow-name=".invalid" -C "${RND_SUITE_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`\`.\`\`, \`\`-\`\`
 __ERR__
+
+# Test --run-name and --no-run-name options are mutually exclusive
+
+TEST_NAME="${TEST_NAME_BASE}--no-run-name-and--run-name-forbidden"
+pushd "${RND_SUITE_SOURCE}" || exit 1
+run_fail "${TEST_NAME}" cylc install --run-name="${RND_SUITE_NAME}" --no-run-name
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+cylc: error: options --no-run-name and --run-name are mutually exclusive.
+__ERR__
+popd || exit 1
+
 purge_rnd_suite
 
-
+# -----------------------------------------------------------------------------
 # Test source dir can not contain '_cylc-install, log, share, work' dirs
 
 for DIR in 'work' 'share' 'log' '_cylc-install'; do
@@ -115,69 +123,62 @@ __ERR__
     popd || exit 1
 done
 
-# Test --run-name and --no-run-name options are mutually exclusive
-
-TEST_NAME="${TEST_NAME_BASE}--no-run-name-and--run-name-forbidden"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
-run_fail "${TEST_NAME}" cylc install --run-name="${RND_SUITE_NAME}" --no-run-name
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-cylc: error: options --no-run-name and --run-name are mutually exclusive.
-__ERR__
-purge_rnd_suite
-popd || exit 1
-
+# -----------------------------------------------------------------------------
 # Test running cylc install twice, first using --run-name, followed by standard run results in error
 
-TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1"
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1-1st-install"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-1st-cylc-install" cylc install . --run-name=olaf
-contains_ok "${TEST_NAME}-1st-cylc-install.stdout" <<__OUT__
+run_ok "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME} from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/olaf
 __OUT__
-run_fail "${TEST_NAME}-2nd-cylc-install" cylc install "${RND_SUITE_NAME}"
-contains_ok "${TEST_NAME}-2nd-cylc-install.stderr" <<__ERR__
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1-2nd-install"
+run_fail "${TEST_NAME}" cylc install
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: This path: "${RND_SUITE_RUNDIR}" contains an installed workflow. Try again, using --run-name.
 __ERR__
-
 popd || exit 1
 purge_rnd_suite
 
+# -----------------------------------------------------------------------------
 # Test running cylc install twice, first using standard run, followed by --run-name results in error
 
-TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2"
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2-1st-install"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-1st-cylc-install" cylc install .
-contains_ok "${TEST_NAME}-1st-cylc-install.stdout" <<__OUT__
+run_ok "${TEST_NAME}" cylc install
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME} from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
 __OUT__
-run_fail "${TEST_NAME}-2nd-cylc-install" cylc install "${RND_SUITE_NAME}" --run-name=olaf
-contains_ok "${TEST_NAME}-2nd-cylc-install.stderr" <<__ERR__
+TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2-2nd-install"
+run_fail "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: This path: "${RND_SUITE_RUNDIR}" contains installed numbered runs. Try again, using cylc install without --run-name.
 __ERR__
-
 popd || exit 1
 purge_rnd_suite
 
+# -----------------------------------------------------------------------------
 # Test running cylc install twice, using the same --run-name results in error
 
-TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name"
+TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name-1st-install"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-1st-cylc-install" cylc install . --run-name=olaf
-contains_ok "${TEST_NAME}-1st-cylc-install.stdout" <<__OUT__
+run_ok "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_SUITE_NAME} from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/olaf
 __OUT__
-run_fail "${TEST_NAME}-2nd-cylc-install" cylc install --run-name=olaf
-contains_ok "${TEST_NAME}-2nd-cylc-install.stderr" <<__ERR__
+TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name-2nd-install"
+run_fail "${TEST_NAME}" cylc install --run-name=olaf
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: "${RND_SUITE_RUNDIR}/olaf" exists. \
 Try using cylc reinstall. Alternatively, install with another name, using the --run-name option.
 __ERR__
-
 popd || exit 1
 purge_rnd_suite
+
+# -----------------------------------------------------------------------------
 # Test cylc install can not be run from within the cylc-run directory
 
 TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"

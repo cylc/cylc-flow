@@ -283,6 +283,17 @@ with Conf('global.cylc', desc='''
                 file size.
             ''')
 
+    with Conf('install'):
+        Conf('source dirs', VDR.V_STRING_LIST, default=['~/cylc-src'], desc='''
+            A list of paths where ``cylc install <flow_name>`` will look for
+            a workflow of that name. All workflow source directories in these
+            locations will also show up in the GUI, ready for installation.
+
+            .. note::
+               If workflow source directories of the same name exist in more
+               than one of these paths, only the first one will be picked up.
+        ''')
+
     with Conf('editors', desc='''
         Choose your favourite text editor for editing suite configurations.
     '''):

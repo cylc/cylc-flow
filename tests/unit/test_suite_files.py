@@ -18,6 +18,7 @@ import logging
 import os.path
 from pathlib import Path
 import pytest
+from typing import Callable, Optional, Tuple, Type
 from unittest import mock
 
 from cylc.flow import CYLC_LOG
@@ -27,7 +28,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.suite_files import (
     check_nested_run_dirs,
     get_workflow_source_dir,
-    reinstall_workflow)
+    reinstall_workflow, search_install_source_dirs)
 
 
 @pytest.mark.parametrize(
@@ -680,3 +681,58 @@ def test_reinstall_workflow(tmp_path, capsys):
     reinstall_workflow("flow-name", run_dir, source_dir)
     assert capsys.readouterr().out == (
         f"REINSTALLED flow-name from {source_dir} -> {run_dir}\n")
+
+
+@pytest.mark.parametrize(
+    'filename, expected_err',
+    [('flow.cylc', None),
+     ('suite.rc', None),
+     ('fluff.txt', (WorkflowFilesError, "Could not find workflow 'baa/baa'"))]
+)
+def test_search_install_source_dirs(
+        filename: str, expected_err: Optional[Tuple[Type[Exception], str]],
+        tmp_path: Path, mock_glbl_cfg: Callable):
+    """Test search_install_source_dirs().
+
+    Params:
+        filename: A file to insert into one of the source dirs.
+        expected_err: Exception and message expected to be raised.
+    """
+    horse_dir = Path(tmp_path, 'horse')
+    horse_dir.mkdir()
+    sheep_dir = Path(tmp_path, 'sheep')
+    source_dir = sheep_dir.joinpath('baa', 'baa')
+    source_dir.mkdir(parents=True)
+    source_dir_file = source_dir.joinpath(filename)
+    source_dir_file.touch()
+    mock_glbl_cfg(
+        'cylc.flow.suite_files.glbl_cfg',
+        f'''
+        [install]
+            source dirs = {horse_dir}, {sheep_dir}
+        '''
+    )
+    if expected_err:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            search_install_source_dirs('baa/baa')
+        assert msg in str(exc.value)
+    else:
+        flow_file = search_install_source_dirs('baa/baa')
+        assert flow_file == source_dir
+
+
+def test_search_install_source_dirs_empty(mock_glbl_cfg: Callable):
+    """Test search_install_source_dirs() when no source dirs configured."""
+    mock_glbl_cfg(
+        'cylc.flow.suite_files.glbl_cfg',
+        '''
+        [install]
+            source dirs =
+        '''
+    )
+    with pytest.raises(WorkflowFilesError) as exc:
+        search_install_source_dirs('foo')
+    assert str(exc.value) == (
+        "Cannot find workflow as 'global.cylc[install]source dirs' "
+        "does not contain any paths")

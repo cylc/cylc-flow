@@ -37,26 +37,28 @@ Examples:
 
 """
 
-
 from pathlib import Path
 import pkg_resources
+from typing import Optional, TYPE_CHECKING
 
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
-from cylc.flow.platforms import get_platform
 from cylc.flow.suite_files import (
     get_workflow_source_dir,
     reinstall_workflow,
     SuiteFiles)
 from cylc.flow.terminal import cli_function
 
+if TYPE_CHECKING:
+    from cylc.flow.option_parsers import Options
+
 
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, prep=True,
-        argdoc=[("[NAMED_RUN]", "Named run. e.g. my-flow/run1")
-                ])
+        argdoc=[("[NAMED_RUN]", "Named run. e.g. my-flow/run1")]
+    )
 
     # If cylc-rose plugin is available ad the --option/-O config
     try:
@@ -64,8 +66,8 @@ def get_option_parser():
         parser.add_option(
             "--opt-conf-key", "-O",
             help=(
-                "Use optional Rose Config Setting"
-                "(If Cylc-Rose is installed)"
+                "Use optional Rose Config Setting "
+                "(if cylc-rose is installed)"
             ),
             action="append",
             default=[],
@@ -109,31 +111,31 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, named_run=None):
+def main(
+    parser: COP, opts: 'Options', named_run: Optional[str] = None
+) -> None:
     if not named_run:
         source, _ = get_workflow_source_dir(Path.cwd())
         if source is None:
             raise WorkflowFilesError(
                 f'"{Path.cwd()}" is not a workflow run directory.')
-        base_run_dir = Path(
-            get_platform()['run directory'].replace('$HOME', '~')).expanduser()
-        named_run = Path.cwd().relative_to(Path(base_run_dir).resolve())
-    run_dir = Path(get_workflow_run_dir(named_run)).expanduser()
+        base_run_dir = Path(get_workflow_run_dir(''))
+        named_run = str(Path.cwd().relative_to(base_run_dir.resolve()))
+    run_dir = Path(get_workflow_run_dir(named_run))
     if not run_dir.exists():
         raise WorkflowFilesError(
-            f'\"{named_run}\" is not an installed workflow.')
+            f'"{named_run}" is not an installed workflow.')
     if run_dir.name in [SuiteFiles.FLOW_FILE, SuiteFiles.SUITE_RC]:
         run_dir = run_dir.parent
         named_run = named_run.rsplit('/', 1)[0]
     source, source_path = get_workflow_source_dir(run_dir)
     if not source:
         raise WorkflowFilesError(
-            f'\"{named_run}\" was not installed with cylc install.')
-    source = Path(source)
-    if not source.exists():
+            f'"{named_run}" was not installed with cylc install.')
+    if not Path(source).exists():
         raise WorkflowFilesError(
-            f'Workflow source dir is not accessible: \"{source}\".\n'
-            f'Restore the source or modify the \"{source_path}\"'
+            f'Workflow source dir is not accessible: "{source}".\n'
+            f'Restore the source or modify the "{source_path}"'
             ' symlink to continue.'
         )
     for entry_point in pkg_resources.iter_entry_points(

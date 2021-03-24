@@ -27,29 +27,29 @@ set_test_number 6
 TEST_NAME="${TEST_NAME_BASE}-basic"
 make_rnd_suite
 pushd "${RND_SUITE_SOURCE}" || exit 1
-mkdir .git .svn dir1 dir2 
+mkdir .git .svn dir1 dir2
 touch .git/file1 .svn/file1 dir1/file1 dir2/file1 file1 file2
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
+run_ok "${TEST_NAME}" cylc install --no-run-name
 
 # If rose-cylc plugin is installed add install files to tree.
 export ROSE_FILES=''
 
-tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
+tree -a -v -I '*.log|03-file-transfer*' --charset=ascii --noreport "${RND_SUITE_RUNDIR}/" > 'basic-tree.out'
 
 cmp_ok 'basic-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
-├── .service
-├── _cylc-install
-│   └── source -> ${RND_SUITE_SOURCE}
-├── dir1
-│   └── file1
-├── dir2
-│   └── file1
-├── file1
-├── file2
-├── flow.cylc
-└── log
-    └── install
+|-- .service
+|-- _cylc-install
+|   \`-- source -> ${RND_SUITE_SOURCE}
+|-- dir1
+|   \`-- file1
+|-- dir2
+|   \`-- file1
+|-- file1
+|-- file2
+|-- flow.cylc
+\`-- log
+    \`-- install
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
@@ -71,19 +71,19 @@ extradir*
 file2
 __END__
 
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" --no-run-name
+run_ok "${TEST_NAME}" cylc install --no-run-name
 
-tree -a -v -I '*.log|03-file-transfer*' --charset UTF8 --noreport "${RND_SUITE_RUNDIR}/" > 'cylc-ignore-tree.out'
+tree -a -v -I '*.log|03-file-transfer*' --charset=ascii --noreport "${RND_SUITE_RUNDIR}/" > 'cylc-ignore-tree.out'
 
 cmp_ok 'cylc-ignore-tree.out'  <<__OUT__
 ${RND_SUITE_RUNDIR}/
-├── .service
-├── _cylc-install
-│   └── source -> ${RND_SUITE_SOURCE}
-├── file1
-├── flow.cylc
-└── log
-    └── install
+|-- .service
+|-- _cylc-install
+|   \`-- source -> ${RND_SUITE_SOURCE}
+|-- file1
+|-- flow.cylc
+\`-- log
+    \`-- install
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__

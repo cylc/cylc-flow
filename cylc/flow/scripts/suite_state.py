@@ -62,6 +62,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
+from cylc.flow.pathutil import expand_path
 from cylc.flow.platforms import get_platform
 
 from metomi.isodatetime.parsers import TimePointParser
@@ -219,10 +220,8 @@ def main(parser, options, suite):
         raise UserInputError("invalid status '" + options.status + "'")
 
     # this only runs locally
-    run_dir = os.path.expandvars(
-        os.path.expanduser(
-            options.run_dir or get_platform()['run directory']
-        )
+    run_dir = expand_path(
+        options.run_dir or get_platform()['run directory']
     )
 
     pollargs = {'suite': suite,
