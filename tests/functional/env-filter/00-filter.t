@@ -54,30 +54,30 @@ __FLOW_CONFIG__
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc val "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-# check that get-config retrieves only the filtered environment
-TEST_NAME=${TEST_NAME_BASE}-get-config
+# check that config retrieves only the filtered environment
+TEST_NAME=${TEST_NAME_BASE}-config
 
-run_ok "${TEST_NAME}" cylc get-config --item='[runtime][foo]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][foo]environment' "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 FOO = foo
 BAR = bar
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok "${TEST_NAME}" cylc get-config --item='[runtime][bar]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][bar]environment' "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 BAR = bar
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok "${TEST_NAME}" cylc get-config --item='[runtime][baz]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][baz]environment' "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 BAZ = baz
 QUX = qux
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok "${TEST_NAME}" cylc get-config --item='[runtime][qux]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][qux]environment' "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 FOO = foo
 BAR = bar

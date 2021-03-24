@@ -40,7 +40,7 @@ run_ok "${TEST_NAME}" \
 
 #-------------------------------------------------------------------------------
 # check auto-generated task script for lbad
-cylc get-config \
+cylc config \
     --set="UPSTREAM='${UPSTREAM}'" \
     -i '[runtime][lbad]script' "${SUITE_NAME}" >'lbad.script'
 cmp_ok 'lbad.script' << __END__
@@ -49,7 +49,7 @@ cylc suite-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-p
 __END__
 
 # check auto-generated task script for l-good
-cylc get-config \
+cylc config \
     --set="UPSTREAM='${UPSTREAM}'" \
     -i '[runtime][l-good]script' "${SUITE_NAME}" >'l-good.script'
 cmp_ok 'l-good.script' << __END__

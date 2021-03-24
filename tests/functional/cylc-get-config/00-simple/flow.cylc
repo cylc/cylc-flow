@@ -7,8 +7,8 @@
  % cylc graph -n SUITE # graph namespaces
  % cylc graph SUITE # dependencies, collapse on first-parent namespaces
 
-  % cylc get-config --sparse --item [runtime]ops_s1 SUITE
-  % cylc get-config --sparse --item [runtime]var_p2 foo"""
+  % cylc config --sparse --item [runtime]ops_s1 SUITE
+  % cylc config --sparse --item [runtime]var_p2 foo"""
 
 [scheduling]
     [[graph]]

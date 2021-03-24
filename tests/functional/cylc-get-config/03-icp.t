@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc get-config --icp=CYCLE_POINT".
+# Test for "cylc config --icp=CYCLE_POINT".
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
@@ -31,7 +31,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc get-config --icp=20200101T0000Z "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}" cylc config --icp=20200101T0000Z "${SUITE_NAME}"
 contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
     initial cycle point = 20200101T0000Z
 __OUT__

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc get-config with a suite with an explicitly empty final cycle point
+# Test cylc config with a suite with an explicitly empty final cycle point
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -23,7 +23,7 @@ set_test_number 2
 init_suite "${TEST_NAME_BASE}" "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/flow.cylc"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-all
-run_ok "${TEST_NAME}" cylc get-config "${SUITE_NAME}" --item='[scheduling]final cycle point'
+run_ok "${TEST_NAME}" cylc config "${SUITE_NAME}" --item='[scheduling]final cycle point'
 cmp_ok "${TEST_NAME}.stdout" - << __OUT__
 
 __OUT__

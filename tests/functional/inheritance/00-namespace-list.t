@@ -26,8 +26,8 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-get-config
-cylc get-config --sparse -i runtime "${SUITE_NAME}" > runtime.out
+TEST_NAME=${TEST_NAME_BASE}-config
+cylc config --sparse -i runtime "${SUITE_NAME}" > runtime.out
 cmp_ok runtime.out <<'__DONE__'
 [[root]]
 [[FAMILY]]
