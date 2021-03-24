@@ -45,7 +45,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate 'flow.cylc'
 run_ok "${TEST_NAME_BASE}-dependencies" \
-    cylc get-config --item='[scheduling][graph]' 'flow.cylc'
+    cylc config --item='[scheduling][graph]' 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}-dependencies.stdout" <<'__OUT__'
 R1 = """
     r1

@@ -26,7 +26,7 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-config"
 run_ok "${TEST_NAME}" \
-    cylc get-config -i "[runtime][foo_t1_right]environment" "${SUITE_NAME}"
+    cylc config -i "[runtime][foo_t1_right]environment" "${SUITE_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__END__
 PARAM1 = \$CYLC_TASK_PARAM_t
 PARAM2 = \$CYLC_TASK_PARAM_u

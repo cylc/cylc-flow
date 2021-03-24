@@ -84,7 +84,7 @@
     </context>
     <context id="cylc-options" style-ref="option">
       <!-- To regenerate this keyword list, create a minimal flow.cylc file and run something like:
-        cylc get-config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<keyword>\1<\/keyword>/g"
+        cylc config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<keyword>\1<\/keyword>/g"
         -->
         <!--TAG_FOR_AUTO_UPDATE-->
         <keyword>xtriggers</keyword>
