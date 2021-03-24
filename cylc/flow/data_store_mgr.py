@@ -1495,13 +1495,12 @@ class DataStoreMgr:
         tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
         if not tproxy:
             return
-        if itask.state.is_runahead is not tproxy.is_runahead:
-            tp_delta = self.updated[TASK_PROXIES].setdefault(
-                tp_id, PbTaskProxy(id=tp_id))
-            tp_delta.stamp = f'{tp_id}@{time()}'
-            tp_delta.is_runahead = itask.state.is_runahead
-            self.state_update_families.add(tproxy.first_parent)
-            self.updates_pending = True
+        tp_delta = self.updated[TASK_PROXIES].setdefault(
+            tp_id, PbTaskProxy(id=tp_id))
+        tp_delta.stamp = f'{tp_id}@{time()}'
+        tp_delta.is_runahead = itask.state.is_runahead
+        self.state_update_families.add(tproxy.first_parent)
+        self.updates_pending = True
 
     def delta_task_output(self, itask, message):
         """Create delta for change in task proxy output.
