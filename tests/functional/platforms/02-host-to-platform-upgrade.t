@@ -21,7 +21,7 @@
 #   - Task with a host setting that should match the test platform
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 5
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -30,14 +30,19 @@ run_fail "${TEST_NAME_BASE}-validate-fail" \
     cylc validate "flow2.cylc"
 
 # Ensure that you can validate suite
-run_ok "${TEST_NAME_BASE}-validate" \
+run_ok "${TEST_NAME_BASE}-run" \
     cylc validate "${SUITE_NAME}" \
         -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" \
         -s CYLC_TEST_HOST_FQDN="'$(ssh "$CYLC_TEST_HOST" hostname -f)'"
 
 # Check that the cfgspec/suite.py has issued a warning about upgrades.
-grep_ok "\[upgradeable_cylc7_settings\]\[remote\]host = ${CYLC_TEST_HOST}"\
-    "${TEST_NAME_BASE}-validate.stderr"
+grep_ok "\[t1\]\[remote\]host = ${CYLC_TEST_HOST}"\
+    "${TEST_NAME_BASE}-run.stderr"
+
+# the namespace with the host setting will be logged not the task that
+# inherits from it (because it happens in the cfgspec not the config)
+grep_ok "\[T2\]\[remote\]host = ${CYLC_TEST_HOST}"\
+    "${TEST_NAME_BASE}-run.stderr"
 
 # Run the suite
 suite_run_ok "${TEST_NAME_BASE}-run" \
