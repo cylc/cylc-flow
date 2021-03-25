@@ -30,7 +30,7 @@ HOME: str = str(Path('~').expanduser())
 
 @pytest.fixture
 def conf_env(monkeypatch):
-    """Clear any env vars that effect which conf files get loaded.
+    """Clear any env vars that affect which conf files get loaded.
 
     Return a convenience function for setting environment variables.
     """

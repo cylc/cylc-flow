@@ -90,7 +90,7 @@ with Conf('global.cylc', desc='''
     .. envvar:: CYLC_SITE_CONF_PATH
 
        By default the site configuration is located in ``/etc/cylc/``. For
-       installations where this is not convenient this path can be overridden
+       installations where this is not convenient, this path can be overridden
        by setting ``CYLC_SITE_CONF_PATH`` to point at another location.
 
        Configuration for different Cylc components should be in sub-directories
