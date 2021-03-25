@@ -49,12 +49,19 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-??-??</span>)__
 
+Third beta release of Cylc 8.
+
+(See note on cylc-8 backward-incompatible changes, above)
+
 ### Enhancements
 
 [#4177](https://github.com/cylc/cylc-flow/pull/4177) - Remove obsolete
 configuration items from `global.cylc[platforms][<platform name>]`:
 `run directory`, `work directory` and `suite definition directory`. This
 functionality is now provided by `[symlink dirs]`.
+
+[#4142](https://github.com/cylc/cylc-flow/pull/4142) - Record source directory
+version control information on installation of a workflow.
 
 ### Fixes
 
@@ -66,6 +73,10 @@ of other, small bugs.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b1 (<span actions:bind='release-date'>Released 2021-04-21</span>)__
+
+Second beta release of Cylc 8.
+
+(See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
 
