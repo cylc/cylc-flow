@@ -14,19 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Standard pytest fixtures for unit tests."""
-from pathlib import Path
-from shutil import rmtree
-from tempfile import TemporaryDirectory
-from unittest.mock import create_autospec, Mock
-
+from cylc.flow.data_store_mgr import DataStoreMgr
 import pytest
+from shutil import rmtree
+from unittest.mock import create_autospec, Mock
 
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.cycling.loader import (
     ISO8601_CYCLING_TYPE,
     INTEGER_CYCLING_TYPE
 )
-from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -106,12 +103,3 @@ def xtrigger_mgr() -> XtriggerManager:
         broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),
         data_store_mgr=DataStoreMgr(create_autospec(Scheduler))
     )
-
-
-@pytest.fixture(scope='module')
-def mod_tmp_path():
-    """A tmp_path fixture with module-level scope."""
-    path = Path(TemporaryDirectory().name)
-    path.mkdir()
-    yield path
-    rmtree(path)

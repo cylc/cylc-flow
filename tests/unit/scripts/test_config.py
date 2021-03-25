@@ -14,53 +14,91 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import os
 from pathlib import Path
 from typing import Any, Optional, List
 
 import pytest
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.scripts.config import get_config_file_hierarchy
-
-from cylc.flow import (
-    CYLC_LOG,
-    __version__ as VERSION,
-)
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 
 
 Fixture = Any
 HOME: str = str(Path('~').expanduser())
-MAJVER: str = VERSION[0]
 
 
 @pytest.fixture
-def clear_env(monkeypatch):
-    """Clear any env vars that effect which conf files get loaded."""
+def conf_env(monkeypatch):
+    """Clear any env vars that effect which conf files get loaded.
+
+    Return a convenience function for setting environment variables.
+    """
+    # wipe any cached config
+    monkeypatch.setattr(
+        GlobalConfig,
+        '_DEFAULT',
+        None,
+    )
+
     for envvar in ('CYLC_SITE_CONF_PATH', 'CYLC_CONF_PATH'):
         if envvar in os.environ:
             monkeypatch.delenv(envvar)
 
+    def _set_env(key, value):
+        if value:
+            monkeypatch.setenv(key, value)
+
+    return _set_env
+
+
+@pytest.fixture
+def dummy_version_hierarchy(monkeypatch):
+    """Set the config version hierarchy."""
+    monkeypatch.setattr(
+        'cylc.flow.cfgspec.globalcfg.GlobalConfig.VERSION_HIERARCHY',
+        ['', '1', '1.0']
+    )
+
+
+@pytest.fixture
+def capload(monkeypatch):
+    """Capture configuration load events.
+
+    This prevents actual file loading.
+
+    If the file name contains the string "invalid" it will not appear in the
+    results as if it diddn't exist on the filesystem.
+    """
+    files = []
+
+    def _capload(glblcfg, fname, _):
+        nonlocal files
+        if 'invalid' not in fname:
+            # if the file is called invalid skip it
+            # this is to replicate the behaviour of skipping files that
+            # don't exist
+            files.append(fname.replace(HOME, '~'))
+
+    monkeypatch.setattr(
+        GlobalConfig,
+        '_load',
+        _capload
+    )
+    return files
+
 
 def test_get_config_file_hierarchy_global(
     monkeypatch: Fixture,
-    clear_env: Fixture
+    conf_env: Fixture,
+    capload: Fixture,
+    dummy_version_hierarchy: Fixture
 ):
     """Test get_config_file_hierarchy() for the global hierarchy only."""
-    for cls_attr, val in [
-        ('USER_CONF_PATH', '~/.cylc/flow'),
-        ('VERSION_HIERARCHY', ['', '1', '1.0'])
-    ]:
-        monkeypatch.setattr(
-            f'cylc.flow.cfgspec.globalcfg.GlobalConfig.{cls_attr}', val)
-    # Prevent the cached global config from being used, as this can be
-    # affected by previous tests
-    monkeypatch.setattr('cylc.flow.scripts.config.glbl_cfg',
-                        lambda cached=False: glbl_cfg(cached))
-
-    assert get_config_file_hierarchy() == [
+    assert [
+        path.replace(HOME, '~')
+        for path in get_config_file_hierarchy()
+    ] == [
         '/etc/cylc/flow/global.cylc',
         '/etc/cylc/flow/1/global.cylc',
         '/etc/cylc/flow/1.0/global.cylc',
@@ -70,24 +108,6 @@ def test_get_config_file_hierarchy_global(
     ]
 
 
-@pytest.fixture(scope='module')
-def conf_dirs(mod_tmp_path):
-    """Directory with some dirs for testing global config loading."""
-    dirs = {
-        '<tmp1>': mod_tmp_path / 'a',
-        '<tmp1>/flow': Path(mod_tmp_path / 'a', 'flow'),
-        '<tmp2>': mod_tmp_path / 'b',
-        '<site>': mod_tmp_path / 'flow'
-    }
-    for dir_ in dirs.values():
-        dir_.mkdir(exist_ok=True)
-        (dir_ / 'global.cylc').touch()
-        flow_dir = dir_ / 'flow'
-        flow_dir.mkdir()
-        (flow_dir / 'global.cylc').touch()
-    return dirs
-
-
 @pytest.mark.parametrize(
     'conf_path,site_conf_path,files',
     [
@@ -95,61 +115,65 @@ def conf_dirs(mod_tmp_path):
             None,
             None,
             [
-                '<site>',
+                '/etc/cylc/flow/global.cylc',
+                '/etc/cylc/flow/1/global.cylc',
+                '/etc/cylc/flow/1.0/global.cylc',
                 '~/.cylc/flow/global.cylc',
-                f'~/.cylc/flow/{MAJVER}/global.cylc',
-                f'~/.cylc/flow/{VERSION}/global.cylc',
+                '~/.cylc/flow/1/global.cylc',
+                '~/.cylc/flow/1.0/global.cylc',
             ],
             id='(default)'
         ),
 
         pytest.param(
             None,
-            '<tmp1>',
+            '<path>',
             [
-                '<tmp1>/flow',
+                '<path>/flow/global.cylc',
+                '<path>/flow/1/global.cylc',
+                '<path>/flow/1.0/global.cylc',
                 '~/.cylc/flow/global.cylc',
-                f'~/.cylc/flow/{MAJVER}/global.cylc',
-                f'~/.cylc/flow/{VERSION}/global.cylc',
+                '~/.cylc/flow/1/global.cylc',
+                '~/.cylc/flow/1.0/global.cylc',
             ],
             id='CYLC_SITE_CONF_PATH=valid'
         ),
 
         pytest.param(
             None,
-            'elephant',
+            'invalid',
             [
                 '~/.cylc/flow/global.cylc',
-                f'~/.cylc/flow/{MAJVER}/global.cylc',
-                f'~/.cylc/flow/{VERSION}/global.cylc',
+                '~/.cylc/flow/1/global.cylc',
+                '~/.cylc/flow/1.0/global.cylc',
             ],
             id='CYLC_SITE_CONF_PATH=invalid'
         ),
 
         pytest.param(
-            '<tmp1>',
+            '<path>',
             None,
-            ['<tmp1>'],
+            ['<path>/global.cylc'],
             id='CYLC_CONF_PATH=valid'
         ),
 
         pytest.param(
-            'elephant',
+            'invalid',
             None,
             [],
             id='CYLC_CONF_PATH=invalid'
         ),
 
         pytest.param(
-            '<tmp1>',
-            '<tmp2>',
-            ['<tmp1>'],  # should ignore CYLC_SITE_CONF_PATH
+            '<path1>',
+            '<path2>',
+            ['<path1>/global.cylc'],  # should ignore CYLC_SITE_CONF_PATH
             id='CYLC_CONF_PATH=valid, CYLC_SITE_CONF_PATH=valid'
         ),
 
         pytest.param(
-            'elephant',
-            '<tmp1>',
+            'invalid',
+            '<path>',
             [],
             id='CYLC_CONF_PATH=invalid, CYLC_SITE_CONF_PATH=valid'
         ),
@@ -157,57 +181,19 @@ def conf_dirs(mod_tmp_path):
 )
 def test_cylc_site_conf_path_env_var(
     monkeypatch: Fixture,
-    caplog: Fixture,
-    clear_env: Fixture,
-    conf_dirs: Fixture,
+    conf_env: Fixture,
+    capload: Fixture,
+    dummy_version_hierarchy: Fixture,
     conf_path: Optional[str],
     site_conf_path: Optional[str],
     files: List[str],
 ):
     """Test that the right files are loaded according to env vars."""
-    # patch the default site config path
-    monkeypatch.setattr(
-        GlobalConfig,
-        'DEFAULT_SITE_CONF_PATH',
-        str(conf_dirs['<site>'].parent)
-    )
-
-    # del/set the relevant environment variables
-    for var, env_var in (
-        (conf_path, 'CYLC_CONF_PATH'),
-        (site_conf_path, 'CYLC_SITE_CONF_PATH')
-    ):
-        if var is None:
-            pass
-        elif var in conf_dirs:
-            monkeypatch.setenv(env_var, conf_dirs[var])
-        elif var:
-            monkeypatch.setenv(env_var, var)
-
-    # reset the global config
-    monkeypatch.setattr(
-        GlobalConfig,
-        '_DEFAULT',
-        None,
-    )
-
-    # capture logging
-    caplog.clear()
-    caplog.set_level(logging.DEBUG, logger=CYLC_LOG)
+    # set the relevant environment variables
+    conf_env('CYLC_CONF_PATH', conf_path)
+    conf_env('CYLC_SITE_CONF_PATH', site_conf_path)
 
     # load the global config
     GlobalConfig.get_inst()
 
-    # make sure the right files are loaded
-    assert [
-        msg
-        .replace('Reading file ', '')
-        .replace(HOME, '~')
-        for *_, msg in caplog.record_tuples
-        if msg.startswith('Reading file ')
-    ] == [
-        str(conf_dirs[file_] / 'global.cylc')
-        if file_ in conf_dirs
-        else file_
-        for file_ in files
-    ]
+    assert capload == files

@@ -836,6 +836,10 @@ class GlobalConfig(ParsecConfig):
             cls._DEFAULT.load()
         return cls._DEFAULT
 
+    def _load(self, fname, conf_type):
+        if os.access(fname, os.F_OK | os.R_OK):
+            self.loadcfg(fname, conf_type)
+
     def load(self):
         """Load or reload configuration from files."""
         self.sparse.clear()
@@ -845,16 +849,13 @@ class GlobalConfig(ParsecConfig):
         if conf_path_str:
             # Explicit config file override.
             fname = os.path.join(conf_path_str, self.CONF_BASENAME)
-            if os.access(fname, os.F_OK | os.R_OK):
-                self.loadcfg(fname, upgrader.USER_CONFIG)
+            self._load(fname, upgrader.USER_CONFIG)
         elif conf_path_str is None:
             # Use default locations.
             for conf_type, conf_dir in self.conf_dir_hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
-                if not os.access(fname, os.F_OK | os.R_OK):
-                    continue
                 try:
-                    self.loadcfg(fname, conf_type)
+                    self._load(fname, conf_type)
                 except ParsecError as exc:
                     if conf_type == upgrader.SITE_CONFIG:
                         # Warn on bad site file (users can't fix it).
