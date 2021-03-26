@@ -16,6 +16,6 @@ Currently in the source code repository:
 The first official Cylc-8 release (with a new web UI) is not expected until late 2019.
 Until then we recommend the latest cylc-7.8 release for production use.
 
-See INSTALL.md in the 7.8.x repository branch, or in your unpacked 7.8.x
+See [INSTALL.md in the 7.8.x repository branch](https://github.com/cylc/cylc-flow/blob/7.8.x/INSTALL.md), or in your unpacked 7.8.x
 release, for how to install Cylc 7. You can download the latest cylc-7 release
 tarball from [Cylc Releases](https://github.com/cylc/cylc-flow/releases).
