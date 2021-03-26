@@ -6,7 +6,7 @@
 [scheduling]
     [[graph]]
         R1 = """
-            no_settings & upgradeable_cylc7_settings => fin
+            no_settings & t1 & t2 => fin
         """
 
 [runtime]
@@ -15,7 +15,15 @@
 
     [[no_settings, fin]]
 
-    [[upgradeable_cylc7_settings]]
+    [[t1]]
         script = test {{CYLC_TEST_HOST_FQDN}} == "$(hostname -f)"
         [[[remote]]]
             host = {{CYLC_TEST_HOST}}
+
+    [[T2]]
+        script = test {{CYLC_TEST_HOST_FQDN}} == "$(hostname -f)"
+        [[[remote]]]
+            host = {{CYLC_TEST_HOST}}
+
+    [[t2]]
+        inherit = T2

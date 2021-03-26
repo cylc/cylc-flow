@@ -1522,12 +1522,12 @@ def upg(cfg, descr):
         ):
             if job_setting in cfg['runtime'][task]:
                 LOG.warning(
-                    "* (8.0.0) '[runtime][{task}]{job_setting}' - this "
-                    "setting is deprecated; use"
-                    "'global.cylc[platforms][<platform name>]{job_setting}' "
+                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this "
+                    "setting is deprecated; use "
+                    f"'global.cylc[platforms][<platform name>]{job_setting}' "
                     "instead. "
                     "Currently, this item will override the corresponding "
-                    "item in global.cylc,"
+                    "item in global.cylc, "
                     "but support for this will be removed in Cylc 9."
                 )
 

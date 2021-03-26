@@ -928,7 +928,11 @@ class TaskJobManager:
             if host_n is None and platform_n is None:
                 itask.set_summary_message(self.REMOTE_SELECT_MSG)
                 return
-            elif host_n is None and rtconfig['platform'] != platform_n:
+            elif (
+                host_n is None
+                and rtconfig['platform']
+                and rtconfig['platform'] != platform_n
+            ):
                 LOG.debug(
                     f"for task {itask.identity}: platform = "
                     f"{rtconfig['platform']} evaluated as {platform_n}"
