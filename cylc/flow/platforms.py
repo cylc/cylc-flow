@@ -19,7 +19,7 @@
 import random
 import re
 from copy import deepcopy
-from typing import Any, Dict, Iterable, List, TYPE_CHECKING
+from typing import Any, Dict, Iterable, List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from collections import OrderedDict
 
 
-FORBIDDEN_WITH_PLATFORM = (
+FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
     ('remote', 'host', ['localhost', None]),
     ('job', 'batch system', [None]),
     ('job', 'batch submit command template', [None])
@@ -48,7 +48,7 @@ PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
 #     Cylc9
 # remove at:
 #     Cylc9
-def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
+def get_platform(task_conf=None, task_id='unknown task'):
     """Get a platform.
 
     Looking at a task config this method decides whether to get platform from
@@ -61,89 +61,47 @@ def get_platform(task_conf=None, task_id='unknown task', warn_only=False):
         task_id (str):
             Task identification string - help produce more helpful error
             messages.
-        warn_only(bool):
-            If true, warnings about tasks requiring upgrade will be returned.
 
     Returns:
         platform (platform, or string):
             Actually it returns either get_platform() or
             platform_from_job_info(), but to the user these look the same.
-            When working in warn_only mode, warnings are returned as strings.
-
     """
-    if task_conf is None:
-        # Just a simple way of accessing localhost items.
-        output = platform_from_name()
-
-    elif isinstance(task_conf, str):
-        # If task_conf is str assume that it is a platform name.
-        output = platform_from_name(task_conf)
+    if task_conf is None or isinstance(task_conf, str):
+        # task_conf is a platform name, or get localhost if None
+        return platform_from_name(task_conf)
 
     elif 'platform' in task_conf and task_conf['platform']:
-        if PLATFORM_REC_COMMAND.match(task_conf['platform']) and warn_only:
-            # In warning mode this function might have been passed an
-            # un-expanded platform string - warn that they won't deal with
-            # with this until job submit.
+        if is_platform_definition_subshell(task_conf['platform']):
+            # Platform definition is using subshell e.g. platform = $(foo);
+            # won't be evaluated until job submit so cannot get or
+            # validate platform
             return None
-        if HOST_REC_COMMAND.match(task_conf['platform']) and warn_only:
-            raise PlatformLookupError(
-                f"platform = {task_conf['platform']}: "
-                "backticks are not supported; "
-                "please use $()"
-            )
 
         # Check whether task has conflicting Cylc7 items.
         fail_if_platform_and_host_conflict(task_conf, task_id)
 
         # If platform name exists and doesn't clash with Cylc7 Config items.
-        output = platform_from_name(task_conf['platform'])
+        return platform_from_name(task_conf['platform'])
 
     else:
-        # If forbidden items present calculate platform else platform is
-        # local
-        platform_is_localhost = True
-
-        warn_msgs = []
-        for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
-            # if section not in task_conf:
-            #     task_conf[section] = {}
-            if (
-                section in task_conf and
-                key in task_conf[section] and
-                task_conf[section][key] not in exceptions
-            ):
-                platform_is_localhost = False
-                if warn_only:
-                    warn_msgs.append(
-                        f"[runtime][{task_id}][{section}]{key} = "
-                        f"{task_conf[section][key]}\n"
-                    )
-
-        if platform_is_localhost:
-            output = platform_from_name()
-
-        elif warn_only:
-            output = (
-                f'Task {task_id} Deprecated "host" and "batch system" will be '
-                'removed at Cylc 9 - upgrade to platform:'
-                f'\n{"".join(warn_msgs)}'
-            )
-
+        if get_platform_deprecated_settings(task_conf) == []:
+            # No deprecated items; platform is localhost
+            return platform_from_name()
         else:
+            # Need to calculate platform
             task_job_section, task_remote_section = {}, {}
             if 'job' in task_conf:
                 task_job_section = task_conf['job']
             if 'remote' in task_conf:
                 task_remote_section = task_conf['remote']
-            output = platform_from_name(
+            return platform_from_name(
                 platform_from_job_info(
                     glbl_cfg(cached=False).get(['platforms']),
                     task_job_section,
                     task_remote_section
                 )
             )
-
-    return output
 
 
 def platform_from_name(platform_name=None, platforms=None):
@@ -428,6 +386,44 @@ def fail_if_platform_and_host_conflict(task_conf, task_name):
                 f"\"{task_name}\" has the following settings which "
                 f"are not compatible:\n{fail_items}"
             )
+
+
+def get_platform_deprecated_settings(
+    task_conf: Dict[str, Any], task_name: str = 'unknown task'
+) -> List[str]:
+    """Return deprecated [runtime][<task_name>] settings that should be
+    upgraded to platforms.
+
+    Args:
+        task_conf: Runtime configuration for the task.
+        task_name: The task name.
+    """
+    result: List[str] = []
+    for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+        if (
+            section in task_conf and
+            key in task_conf[section] and
+            task_conf[section][key] not in exceptions
+        ):
+            result.append(
+                f'[runtime][{task_name}][{section}]{key} = '
+                f'{task_conf[section][key]}'
+            )
+    return result
+
+
+def is_platform_definition_subshell(value: str) -> bool:
+    """Is the platform definition using subshell? E.g. platform = $(foo)
+
+    Raise PlatformLookupError if using backticks.
+    """
+    if PLATFORM_REC_COMMAND.match(value):
+        return True
+    if HOST_REC_COMMAND.match(value):
+        raise PlatformLookupError(
+            f"platform = {value}: backticks are not supported; please use $()"
+        )
+    return False
 
 
 def get_install_target_from_platform(platform: Dict[str, Any]) -> str:

@@ -17,16 +17,18 @@
 # Tests for the platform lookup.
 
 import pytest
+from typing import Any, Dict, List, Optional, Type
+
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
     get_all_platforms_for_install_target,
-    get_random_platform_for_install_target,
+    get_platform_deprecated_settings,
+    get_random_platform_for_install_target, is_platform_definition_subshell,
     platform_from_name, platform_from_job_info,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
     generic_items_match
 )
-
 from cylc.flow.exceptions import PlatformLookupError
 
 PLATFORMS = {
@@ -414,10 +416,12 @@ def test_get_install_target_from_platform(platform, expected):
     ]
 )
 def test_get_install_target_to_platforms_map(
-        platform_names, expected_map, expected_err, monkeypatch):
+        platform_names: List[str],
+        expected_map: Dict[str, Any],
+        expected_err: Type[Exception],
+        monkeypatch: pytest.MonkeyPatch):
     """Test that get_install_target_to_platforms_map works as expected."""
-
-    monkeypatch.setattr('cylc.flow.platforms.get_platform',
+    monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
                         lambda x: platform_from_name(x, PLATFORMS_TREK))
 
     if expected_err:
@@ -515,3 +519,54 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
         'arendelle')['name'] in arendelle_platforms
     assert get_random_platform_for_install_target(
         'forest')['name'] not in arendelle_platforms
+
+
+@pytest.mark.parametrize(
+    'task_conf, expected',
+    [
+        (
+            {
+                'remote': {'host': 'cylcdevbox'},
+                'job': {
+                    'batch system': 'pbs',
+                    'batch submit command template': 'meow'
+                }
+            },
+            [
+                '[runtime][task][job]batch submit command template = meow',
+                '[runtime][task][remote]host = cylcdevbox',
+                '[runtime][task][job]batch system = pbs'
+            ]
+        ),
+        (
+            {
+                'remote': {'host': 'localhost'},
+                'job': {
+                    'batch system': 'pbs',
+                    'batch submit command template': None
+                }
+            },
+            ['[runtime][task][job]batch system = pbs']
+        )
+    ]
+)
+def test_get_platform_deprecated_settings(
+        task_conf: Dict[str, Any], expected: List[str]):
+    output = get_platform_deprecated_settings(task_conf, task_name='task')
+    assert set(output) == set(expected)
+
+
+@pytest.mark.parametrize(
+    'plat_val, expected, err_msg',
+    [('normal', False, None),
+     ('$(yes)', True, None),
+     ('`echo ${chamber}`', None, "backticks are not supported")]
+)
+def test_is_platform_definition_subshell(
+        plat_val: str, expected: Optional[bool], err_msg: Optional[str]):
+    if err_msg:
+        with pytest.raises(PlatformLookupError) as exc:
+            is_platform_definition_subshell(plat_val)
+        assert err_msg in str(exc.value)
+    else:
+        assert is_platform_definition_subshell(plat_val) is expected

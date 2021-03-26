@@ -28,7 +28,9 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader, converter
 from cylc.flow.parsec.validate import (
     DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    fail_if_platform_and_host_conflict, get_platform_deprecated_settings,
+    is_platform_definition_subshell)
 from cylc.flow.task_events_mgr import EventData
 
 # Regex to check whether a string is a command
@@ -1605,11 +1607,21 @@ def upgrade_param_env_templates(cfg, descr):
 
 def warn_about_depr_platform(cfg):
     """Warn if deprecated host or batch system appear in config."""
-    if 'runtime' in cfg:
-        for task_name, task_cfg in cfg['runtime'].items():
-            platform = get_platform(task_cfg, task_name, warn_only=True)
-            if type(platform) == str:
-                LOG.warning(platform)
+    if 'runtime' not in cfg:
+        return
+    for task_name, task_cfg in cfg['runtime'].items():
+        if 'platform' in task_cfg and task_cfg['platform']:
+            if is_platform_definition_subshell(task_cfg['platform']):
+                continue  # e.g. platform = $(foo); cannot validate
+            fail_if_platform_and_host_conflict(task_cfg, task_name)
+        else:
+            depr = get_platform_deprecated_settings(task_cfg, task_name)
+            if depr:
+                msg = "\n".join(depr)
+                LOG.warning(
+                    f'Task {task_name}: deprecated "host" and "batch system" '
+                    f'will be removed at Cylc 9 - upgrade to platform:\n{msg}'
+                )
 
 
 def warn_about_depr_event_handler_tmpl(cfg):
