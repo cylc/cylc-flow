@@ -19,14 +19,12 @@
 import random
 import re
 from copy import deepcopy
-from typing import Any, Dict, Iterable, List, Optional, TYPE_CHECKING, Tuple
+from typing import (
+    Any, Dict, Iterable, List, Optional, Tuple, Union)
 
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
-
-if TYPE_CHECKING:
-    from collections import OrderedDict
 
 
 FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
@@ -48,23 +46,23 @@ PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
 #     Cylc9
 # remove at:
 #     Cylc9
-def get_platform(task_conf=None, task_id='unknown task'):
+def get_platform(
+    task_conf: Union[str, Dict[str, Any], None] = None,
+    task_id: str = 'unknown task'
+) -> Optional[Dict[str, Any]]:
     """Get a platform.
 
     Looking at a task config this method decides whether to get platform from
     name, or Cylc7 config items.
 
     Args:
-        task_conf (str, dict or dict-like such as OrderedDictWithDefaults):
-            If str this is assumed to be the platform name, otherwise this
-            should be a configuration for a task.
-        task_id (str):
-            Task identification string - help produce more helpful error
+        task_conf: If str this is assumed to be the platform name, otherwise
+            this should be a configuration for a task.
+        task_id: Task identification string - help produce more helpful error
             messages.
 
     Returns:
-        platform (platform, or string):
-            Actually it returns either get_platform() or
+        platform: Actually it returns either get_platform() or
             platform_from_job_info(), but to the user these look the same.
     """
     if task_conf is None or isinstance(task_conf, str):
@@ -104,7 +102,10 @@ def get_platform(task_conf=None, task_id='unknown task'):
             )
 
 
-def platform_from_name(platform_name=None, platforms=None):
+def platform_from_name(
+    platform_name: Optional[str] = None,
+    platforms: Optional[Dict[str, Dict[str, Any]]] = None
+) -> Dict[str, Any]:
     """
     Find out which job platform to use given a list of possible platforms and
     a task platform string.
@@ -114,14 +115,11 @@ def platform_from_name(platform_name=None, platforms=None):
     no platform is initially selected.
 
     Args:
-        platform_name (str):
-            name of platform to be retrieved.
-        platforms ():
-            global.cylc platforms given as a dict for logic testing purposes
+        platform_name: name of platform to be retrieved.
+        platforms: global.cylc platforms given as a dict.
 
     Returns:
-        platform (dict):
-            object containing settings for a platform, loaded from
+        platform: object containing settings for a platform, loaded from
             Global Config.
     """
     if platforms is None:
@@ -439,7 +437,7 @@ def get_install_target_from_platform(platform: Dict[str, Any]) -> str:
 
 def get_install_target_to_platforms_map(
         platform_names: Iterable[str]
-) -> Dict[str, List['OrderedDict[str, Any]']]:
+) -> Dict[str, List[Dict[str, Any]]]:
     """Get a dictionary of unique install targets and the platforms which use
     them.
 
@@ -449,7 +447,7 @@ def get_install_target_to_platforms_map(
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
     platform_names = set(platform_names)
-    platforms = [get_platform(p_name) for p_name in platform_names]
+    platforms = [platform_from_name(p_name) for p_name in platform_names]
     install_targets = set(get_install_target_from_platform(platform)
                           for platform in platforms)
     return {
@@ -470,9 +468,11 @@ def is_platform_with_target_in_list(
     return False
 
 
-def get_all_platforms_for_install_target(install_target):
+def get_all_platforms_for_install_target(
+    install_target: str
+) -> List[Dict[str, Any]]:
     """Return list of platform dictionaries for given install target."""
-    platforms = []
+    platforms: List[Dict[str, Any]] = []
     all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
     for k, v in all_platforms.iteritems():
         if (v.get('install target', k) == install_target):
@@ -482,7 +482,9 @@ def get_all_platforms_for_install_target(install_target):
     return platforms
 
 
-def get_random_platform_for_install_target(install_target):
+def get_random_platform_for_install_target(
+    install_target: str
+) -> Dict[str, Any]:
     """Return a randomly selected platform (dict) for given install target."""
     platforms = get_all_platforms_for_install_target(install_target)
     try:
@@ -494,7 +496,7 @@ def get_random_platform_for_install_target(install_target):
         ) from None
 
 
-def get_localhost_install_target():
+def get_localhost_install_target() -> str:
     """Returns the install target of localhost platform"""
-    localhost = get_platform()
+    localhost = platform_from_name()
     return get_install_target_from_platform(localhost)
