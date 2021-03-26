@@ -11,7 +11,7 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
 [![chat](https://img.shields.io/matrix/cylc-general:matrix.org)](https://matrix.to/#/#cylc-general:matrix.org)
 [![forum](https://img.shields.io/discourse/https/cylc.discourse.group/posts.svg)](https://cylc.discourse.group/)
-[![Documentation](https://img.shields.io/website/https/cylc.github.io/cylc-doc/current/html/index.html.svg?&label=documentation&up_message=live)](https://cylc.github.io/cylc-doc/current/html/index.html)
+[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Fstable%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/stable/html/index.html)
 
 </div>
 </center>
@@ -31,6 +31,7 @@ forecasting - which is notorious for the size and complexity of its workflows.
 ### Cylc 7 (production)
 
 ![python](https://img.shields.io/badge/python-2.6%20%7C%202.7-orange)
+[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Fstable%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/stable/html/index.html)
 
 * Production ready.
 * HTTPS network layer.
@@ -43,13 +44,14 @@ forecasting - which is notorious for the size and complexity of its workflows.
 [Website](https://cylc.github.io/) |
 [Documentation](https://cylc.github.io/documentation)
 
-### Cylc 8 (experimental)
+### Cylc 8 (pre-release)
 
 ![PyPI](https://img.shields.io/pypi/pyversions/cylc-flow.svg?color=green)
 [![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
+[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Flatest%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/latest/html/index.html)
 
-* Experimental alpha.
+* Beta pre-release.
 * ZMQ (TCP) network layer.
 * In-browser GUI
 * On the `master` branch in the source code.
@@ -57,8 +59,8 @@ forecasting - which is notorious for the size and complexity of its workflows.
 Cylc-8.0.0 will be released in 2021. Until then we recommend the latest
 Cylc 7 versions for production use.
 
-[Installation](https://cylc.github.io/cylc-doc/8.0a2/html/installation.html) |
-[Documentation - in development](https://cylc.github.io/cylc-doc/8.0a2/)
+[Installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) |
+[Documentation - in development](https://cylc.github.io/cylc-doc/latest/html/index.html)
 
 ### Copyright and Terms of Use
 
@@ -92,10 +94,3 @@ Contributions welcome:
   [admin pages](https://cylc.github.io/cylc-admin/#change-proposals).
 * Touch base in the
   [developers chat](https://matrix.to/#/#cylc-general:matrix.org).
-
-
-### Cylc Documentation
-
-[![Documentation](https://img.shields.io/website/https/cylc.github.io/cylc-doc/current/html/index.html.svg?&label=documentation&up_message=live)](https://cylc.github.io/cylc-doc/current/html/index.html)
-
-* See [The Cylc Website](https://cylc.github.io/)
