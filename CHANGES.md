@@ -47,7 +47,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
-## __cylc-8.0b0 (<span actions:bind='release-date'>Released 2021-03-26</span>)__
+## __cylc-8.0b0 (<span actions:bind='release-date'>Released 2021-03-29</span>)__
 
 First beta release of Cylc 8.
 
@@ -55,7 +55,7 @@ First beta release of Cylc 8.
 
 The filenames `suite.rc` and `global.rc` are now deprecated in favour of
 `flow.cylc` and `global.cylc` respectively
-([#3755](https://github.com/cylc/cylc-flow/pull/3755)). For backwards
+([#3755](https://github.com/cylc/cylc-flow/pull/3755)). For backward
 compatibility, the `cylc run` command will automatically symlink an existing
 `suite.rc` file to `flow.cylc`.
 
