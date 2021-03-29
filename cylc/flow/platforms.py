@@ -70,14 +70,14 @@ def get_platform(
         return platform_from_name(task_conf)
 
     elif 'platform' in task_conf and task_conf['platform']:
+        # Check whether task has conflicting Cylc7 items.
+        fail_if_platform_and_host_conflict(task_conf, task_id)
+
         if is_platform_definition_subshell(task_conf['platform']):
             # Platform definition is using subshell e.g. platform = $(foo);
             # won't be evaluated until job submit so cannot get or
             # validate platform
             return None
-
-        # Check whether task has conflicting Cylc7 items.
-        fail_if_platform_and_host_conflict(task_conf, task_id)
 
         # If platform name exists and doesn't clash with Cylc7 Config items.
         return platform_from_name(task_conf['platform'])

@@ -1606,14 +1606,19 @@ def upgrade_param_env_templates(cfg, descr):
 
 
 def warn_about_depr_platform(cfg):
-    """Warn if deprecated host or batch system appear in config."""
+    """Validate platforms config.
+
+    - Warn if deprecated host or batch system appear in config,
+    - Raise if platforms section is also present.
+    - Or raise if using invalid subshell syntax for platform def.
+    """
     if 'runtime' not in cfg:
         return
     for task_name, task_cfg in cfg['runtime'].items():
         if 'platform' in task_cfg and task_cfg['platform']:
-            if is_platform_definition_subshell(task_cfg['platform']):
-                continue  # e.g. platform = $(foo); cannot validate
             fail_if_platform_and_host_conflict(task_cfg, task_name)
+            # Fail if backticks subshell e.g. platform = `foo`:
+            is_platform_definition_subshell(task_cfg['platform'])
         else:
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:

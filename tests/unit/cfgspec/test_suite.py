@@ -52,7 +52,7 @@ from cylc.flow.exceptions import PlatformLookupError
             {
                 'foo': {'platform': 'fine'},
                 'bar': {
-                    'platform': 'six',
+                    'platform': '$(fine)',
                     'job': {'batch system': 'pbs'}
                 }
             },
