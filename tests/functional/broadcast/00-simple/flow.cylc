@@ -91,8 +91,8 @@ set +x
            # workaround for platforms affected by https://github.com/cylc/cylc-flow/issues/3585
            sed -i '/BASH_XTRACEFD/d' ${PREPLOG}.err
 
-           diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.out" ${PREPLOG}.out
-           diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" ${PREPLOG}.err
+           diff -u "${CYLC_SUITE_RUN_DIR}/expected-prep.out" ${PREPLOG}.out
+           diff -u "${CYLC_SUITE_RUN_DIR}/expected-prep.err" ${PREPLOG}.err
         """
     [[ENS]]
     [[ENS1]]
