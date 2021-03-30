@@ -334,10 +334,55 @@ def cli_help():
     sys.exit(0)
 
 
-def cli_version(long=False):
+def cli_version(long_fmt=False):
     """Wrapper for get_version."""
-    click.echo(get_version(long))
+    click.echo(get_version(long_fmt))
+    if long_fmt:
+        list_plugins()
     sys.exit(0)
+
+
+def list_plugins():
+    entry_point_names = [
+        entry_point_name
+        for entry_point_name
+        in pkg_resources.get_entry_map('cylc-flow').keys()
+        if entry_point_name.startswith('cylc.')
+    ]
+
+    entry_point_groups = {
+        entry_point_name: [
+            entry_point
+            for entry_point
+            in pkg_resources.iter_entry_points(entry_point_name)
+            if not entry_point.module_name.startswith('cylc.flow')
+        ]
+        for entry_point_name in entry_point_names
+    }
+
+    dists = {
+        entry_point.dist
+        for entry_points in entry_point_groups.values()
+        for entry_point in entry_points
+    }
+
+    if dists:
+        print('\nPlugins:')
+        maxlen1 = max(len(dist.project_name) for dist in dists) + 2
+        maxlen2 = max(len(dist.version) for dist in dists) + 2
+        for dist in dists:
+            print(
+                f'  {dist.project_name.ljust(maxlen1)}'
+                f' {dist.version.ljust(maxlen2)}'
+                f' {dist.module_path}'
+            )
+
+        print('\nEntry Points:')
+        for entry_point_name, entry_points in entry_point_groups.items():
+            if entry_points:
+                print(f'  {entry_point_name}:')
+                for entry_point in entry_points:
+                    print(f'    {entry_point}')
 
 
 @contextmanager
