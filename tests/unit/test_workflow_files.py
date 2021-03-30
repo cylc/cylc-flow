@@ -485,7 +485,7 @@ def test_remote_clean(install_targets_map, failed_platforms,
             proc_ret_code = 1
         return mock.Mock(
             poll=lambda: proc_ret_code,
-            communicate=lambda: (b"", b""),
+            communicate=lambda: ("", ""),
             args=[])
 
     mocked_remote_clean_cmd = mock.Mock(

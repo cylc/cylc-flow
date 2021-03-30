@@ -26,7 +26,9 @@ import re
 import shutil
 from subprocess import Popen, PIPE, DEVNULL
 import time
-from typing import List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Any, Dict, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
+)
 import zmq.auth
 
 from cylc.flow import LOG
@@ -580,12 +582,12 @@ def is_installed(path):
     return False
 
 
-def _clean_check(reg, run_dir):
+def _clean_check(reg: str, run_dir: Path) -> None:
     """Check whether a workflow can be cleaned.
 
     Args:
-        reg (str): Workflow name.
-        run_dir (str): Path to the workflow run dir on the filesystem.
+        reg: Workflow name.
+        run_dir: Path to the workflow run dir on the filesystem.
     """
     validate_flow_name(reg)
     reg = os.path.normpath(reg)
@@ -608,8 +610,8 @@ def init_clean(reg: str, opts: 'Values') -> None:
     scheduler filesystem and remote hosts.
 
     Args:
-        reg (str): Workflow name.
-        opts (optparse.Values): CLI options object for cylc clean.
+        reg: Workflow name.
+        opts: CLI options object for cylc clean.
     """
     local_run_dir = Path(get_workflow_run_dir(reg))
     try:
@@ -632,7 +634,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
     clean(reg)
 
 
-def clean(reg):
+def clean(reg: str) -> None:
     """Remove a stopped workflow from the local filesystem only.
 
     Deletes the workflow run directory and any symlink dirs. Note: if the
@@ -640,7 +642,7 @@ def clean(reg):
     clean the symlink dirs.
 
     Args:
-        reg (str): Workflow name.
+        reg: Workflow name.
     """
     run_dir = Path(get_workflow_run_dir(reg))
     try:
@@ -680,15 +682,17 @@ def clean(reg):
     _remove_empty_reg_parents(reg, run_dir)
 
 
-def remote_clean(reg, platform_names, timeout):
+def remote_clean(
+    reg: str, platform_names: Iterable[str], timeout: str
+) -> None:
     """Run subprocesses to clean workflows on remote install targets
     (skip localhost), given a set of platform names to look up.
 
     Args:
-        reg (str): Workflow name.
-        platform_names (list): List of platform names to look up in the global
+        reg: Workflow name.
+        platform_names: List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
-        timeout (str): Number of seconds to wait before cancelling.
+        timeout: Number of seconds to wait before cancelling.
     """
     try:
         install_targets_map = (
@@ -698,7 +702,7 @@ def remote_clean(reg, platform_names, timeout):
             "Cannot clean on remote platforms as the workflow database is "
             f"out of date/inconsistent with the global config - {exc}")
 
-    pool = []
+    pool: List[Tuple['Popen[str]', str, List[Dict[str, Any]]]] = []
     for target, platforms in install_targets_map.items():
         if target == get_localhost_install_target():
             continue
@@ -709,7 +713,7 @@ def remote_clean(reg, platform_names, timeout):
         pool.append(
             (_remote_clean_cmd(reg, platforms[0], timeout), target, platforms)
         )
-    failed_targets = []
+    failed_targets: List[str] = []
     # Handle subproc pool results almost concurrently:
     while pool:
         for proc, target, platforms in pool:
@@ -717,16 +721,16 @@ def remote_clean(reg, platform_names, timeout):
             if ret_code is None:  # proc still running
                 continue
             pool.remove((proc, target, platforms))
-            out, err = (f.decode() for f in proc.communicate())
+            out, err = proc.communicate()
             if out:
                 LOG.debug(out)
             if ret_code:
                 # Try again using the next platform for this install target:
                 this_platform = platforms.pop(0)
-                excn = TaskRemoteMgmtError(
+                excp = TaskRemoteMgmtError(
                     TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
-                    " ".join(proc.args), ret_code, out, err)
-                LOG.debug(excn)
+                    proc.args, ret_code, out, err)
+                LOG.debug(excp)
                 if platforms:
                     pool.append(
                         (_remote_clean_cmd(reg, platforms[0], timeout),
@@ -742,16 +746,18 @@ def remote_clean(reg, platform_names, timeout):
             f"Could not clean on install targets: {', '.join(failed_targets)}")
 
 
-def _remote_clean_cmd(reg, platform, timeout):
+def _remote_clean_cmd(
+    reg: str, platform: Dict[str, str], timeout: str
+) -> 'Popen[str]':
     """Remove a stopped workflow on a remote host.
 
     Call "cylc clean --local-only" over ssh and return the subprocess.
 
     Args:
-        reg (str): Workflow name.
-        platform (dict): Config for the platform on which to remove the
+        reg: Workflow name.
+        platform: Config for the platform on which to remove the
             workflow.
-        timeout (str): Number of seconds to wait before cancelling the command.
+        timeout: Number of seconds to wait before cancelling the command.
     """
     LOG.debug(
         f'Cleaning on install target: {platform["install target"]} '
@@ -764,24 +770,24 @@ def _remote_clean_cmd(reg, platform, timeout):
         set_verbosity=True
     )
     LOG.debug(" ".join(cmd))
-    return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+    return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
 
 
-def _remove_empty_reg_parents(reg, path):
+def _remove_empty_reg_parents(reg: str, path: Union[Path, str]) -> None:
     """If reg is nested e.g. a/b/c, work our way up the tree, removing empty
     parents only.
 
     Args:
-        reg (str): workflow name, e.g. a/b/c
-        path (str): path to this directory, e.g. /foo/bar/a/b/c
+        reg: workflow name, e.g. a/b/c
+        path: path to this directory, e.g. /foo/bar/a/b/c
 
     Example:
         _remove_empty_reg_parents('a/b/c', '/foo/bar/a/b/c') would remove
         /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
         empty).
     """
-    reg = Path(reg)
-    reg_depth = len(reg.parts) - 1
+    reg_parts = Path(reg).parts
+    reg_depth = len(reg_parts) - 1
     path = Path(path)
     if not path.is_absolute():
         raise ValueError('Path must be absolute')

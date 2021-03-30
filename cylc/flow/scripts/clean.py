@@ -34,14 +34,14 @@ Examples:
 
 """
 
+from typing import TYPE_CHECKING
+
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import clean, init_clean
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from optparse import Values

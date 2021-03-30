@@ -212,12 +212,12 @@ def make_symlink(src, dst):
         raise WorkflowFilesError(f"Error when symlinking\n{exc}")
 
 
-def remove_dir(path):
+def remove_dir(path: Union[Path, str]) -> None:
     """Delete a directory including contents, including the target directory
     if the specified path is a symlink.
 
     Args:
-        path (str): the absolute path of the directory to delete.
+        path: the absolute path of the directory to delete.
     """
     if not os.path.isabs(path):
         raise ValueError('Path must be absolute')
