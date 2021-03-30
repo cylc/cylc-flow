@@ -196,23 +196,6 @@ def test_get_platform_using_platform_from_job_info(
     assert get_platform(task_conf)['name'] == expected_platform_name
 
 
-def test_get_platform_warn_mode(caplog):
-    task_conf = {
-        'remote': {'host': 'cylcdevbox'},
-        'job': {
-            'batch system': 'pbs',
-            'batch submit command template': 'some template'
-        }
-    }
-    output = get_platform(task_conf, warn_only=True)
-    for forbidden_item in (
-        'batch submit command template = some template',
-        'host = cylcdevbox',
-        'batch system = pbs'
-    ):
-        assert forbidden_item in output
-
-
 def test_get_platform_groups_basic(mock_glbl_cfg):
     # get platform from group works.
     mock_glbl_cfg(
@@ -243,7 +226,7 @@ def test_get_platform_warn_mode_fail_if_backticks():
         'platform': '`echo ${chamber}`'
     }
     with pytest.raises(PlatformLookupError) as err:
-        get_platform(task_conf, warn_only=True)
+        get_platform(task_conf)
     assert err.match(
         r'platform = `echo \$\{chamber\}`: '
         r'backticks are not supported; please use \$\(\)'
