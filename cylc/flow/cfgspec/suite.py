@@ -1608,7 +1608,7 @@ def upgrade_param_env_templates(cfg, descr):
 def warn_about_depr_platform(cfg):
     """Validate platforms config.
 
-    - Warn if deprecated host or batch system appear in config,
+    - Warn if deprecated host or batch system appear in config.
     - Raise if platforms section is also present.
     - Or raise if using invalid subshell syntax for platform def.
     """

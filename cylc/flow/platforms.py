@@ -62,8 +62,9 @@ def get_platform(
             messages.
 
     Returns:
-        platform: Actually it returns either get_platform() or
-            platform_from_job_info(), but to the user these look the same.
+        platform: A platform definition dictionary. Uses either
+            get_platform() or platform_from_job_info(), but to the
+            user these look the same.
     """
     if task_conf is None or isinstance(task_conf, str):
         # task_conf is a platform name, or get localhost if None

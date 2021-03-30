@@ -16,6 +16,7 @@
 #
 # Tests for the platform lookup module's get_platform method.
 
+from typing import Dict, Optional
 import pytest
 import random
 from cylc.flow.platforms import (
@@ -220,17 +221,22 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
     assert get_platform('hebrew_letters')['name'] == 'bet'
 
 
-def test_get_platform_warn_mode_fail_if_backticks():
-    # Platform = `cmd in backticks` not allowed.
-    task_conf = {
-        'platform': '`echo ${chamber}`'
-    }
-    with pytest.raises(PlatformLookupError) as err:
-        get_platform(task_conf)
-    assert err.match(
-        r'platform = `echo \$\{chamber\}`: '
-        r'backticks are not supported; please use \$\(\)'
-    )
+@pytest.mark.parametrize(
+    'task_conf, expected_err_msg',
+    [
+        ({'platform': '$(host)'}, None),
+        ({'platform': '`echo ${chamber}`'}, "backticks are not supported")
+    ]
+)
+def test_get_platform_subshell(
+        task_conf: Dict[str, str], expected_err_msg: Optional[str]):
+    """Test get_platform() for subshell platform definition."""
+    if expected_err_msg:
+        with pytest.raises(PlatformLookupError) as err:
+            get_platform(task_conf)
+        assert expected_err_msg in str(err.value)
+    else:
+        assert get_platform(task_conf) is None
 
 
 def test_get_localhost_install_target():
