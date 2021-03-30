@@ -26,53 +26,54 @@ from typing import Dict, Iterable, List, Optional, TYPE_CHECKING, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
+from cylc.flow.suite_files import SuiteFiles
 
 if TYPE_CHECKING:
     from optparse import Values
 
 
-class VCInfo:
-    """Centralised commands etc for recording version control information."""
+SVN = 'svn'
+GIT = 'git'
 
-    SVN: str = 'svn'
-    GIT: str = 'git'
+INFO_COMMANDS: Dict[str, List[str]] = {
+    SVN: ['info', '--non-interactive'],
+    GIT: ['describe', '--always', '--dirty']
+}
 
-    INFO_COMMANDS: Dict[str, List[str]] = {
-        SVN: ['info', '--non-interactive'],
-        GIT: ['describe', '--always', '--dirty']
-    }
+# git ['show', '--quiet', '--format=short'],
 
-    # git ['show', '--quiet', '--format=short'],
+STATUS_COMMANDS: Dict[str, List[str]] = {
+    SVN: ['status', '--non-interactive'],
+    GIT: ['status', '--short']
+}
 
-    STATUS_COMMANDS: Dict[str, List[str]] = {
-        SVN: ['status', '--non-interactive'],
-        GIT: ['status', '--short']
-    }
+DIFF_COMMANDS: Dict[str, List[str]] = {
+    SVN: ['diff', '--internal-diff', '--non-interactive'],
+    GIT: ['diff', 'HEAD']
+    # ['diff', '--no-index', '/dev/null', '{0}']  # untracked files
+}
 
-    DIFF_COMMANDS: Dict[str, List[str]] = {
-        SVN: ['diff', '--internal-diff', '--non-interactive'],
-        GIT: ['diff', 'HEAD']
-        # ['diff', '--no-index', '/dev/null', '{0}']  # untracked files
-    }
+GIT_REV_PARSE_COMMAND: List[str] = ['rev-parse', 'HEAD']
 
-    GIT_REV_PARSE_COMMAND: List[str] = ['rev-parse', 'HEAD']
+NOT_REPO_ERRS: Dict[str, List[str]] = {
+    SVN: ['svn: e155007:',
+          'svn: warning: w155007:'],
+    GIT: ['fatal: not a git repository',
+          'warning: not a git repository']
+}
 
-    NOT_REPO_ERRS: Dict[str, List[str]] = {
-        SVN: ['svn: e155007:',
-              'svn: warning: w155007:'],
-        GIT: ['fatal: not a git repository',
-              'warning: not a git repository']
-    }
+NO_BASE_ERRS: Dict[str, List[str]] = {
+    SVN: [],  # Not possible for svn working copy to have no base commit?
+    GIT: ['fatal: bad revision \'head\'',
+          'fatal: ambiguous argument \'head\': unknown revision']
+}
 
-    NO_BASE_ERRS: Dict[str, List[str]] = {
-        SVN: [],  # Not possible for svn working copy to have no base commit?
-        GIT: ['fatal: bad revision \'head\'',
-              'fatal: ambiguous argument \'head\': unknown revision']
-    }
+SVN_INFO_KEYS: List[str] = [
+    'revision', 'url', 'working copy root path', 'repository uuid'
+]
 
-    SVN_INFO_KEYS: List[str] = [
-        'revision', 'url', 'working copy root path', 'repository uuid'
-    ]
+
+LOG_VERSION_DIR = Path(SuiteFiles.LOG_DIR, 'version')
 
 
 class VCSNotInstalledError(CylcError):
@@ -110,7 +111,7 @@ def get_vc_info(path: Union[Path, str]) -> Optional['OrderedDict[str, str]']:
     """
     info = OrderedDict()
     missing_base = False
-    for vcs, args in VCInfo.INFO_COMMANDS.items():
+    for vcs, args in INFO_COMMANDS.items():
         try:
             out = _run_cmd(vcs, args, cwd=path)
         except VCSNotInstalledError as exc:
@@ -121,16 +122,16 @@ def get_vc_info(path: Union[Path, str]) -> Optional['OrderedDict[str, str]']:
             LOG.debug(exc)
         except OSError as exc:
             if any(exc.strerror.lower().startswith(err)
-                   for err in VCInfo.NOT_REPO_ERRS[vcs]):
+                   for err in NOT_REPO_ERRS[vcs]):
                 LOG.debug(f"Source dir {path} is not a {vcs} repository")
                 continue
             else:
                 raise exc
 
         info['version control system'] = vcs
-        if vcs == VCInfo.SVN:
+        if vcs == SVN:
             info.update(_parse_svn_info(out))
-        elif vcs == VCInfo.GIT:
+        elif vcs == GIT:
             if not missing_base:
                 info['repository version'] = out.splitlines()[0]
                 info['commit'] = _get_git_commit(path)
@@ -166,7 +167,7 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
     out, err = proc.communicate()
     if ret_code:
         if any(err.lower().startswith(msg)
-               for msg in VCInfo.NO_BASE_ERRS[vcs]):
+               for msg in NO_BASE_ERRS[vcs]):
             # No base commit in repo
             raise VCSMissingBaseError(vcs, cwd)
         raise OSError(ret_code, err)
@@ -184,7 +185,7 @@ def write_vc_info(
     """
     if not info:
         raise ValueError("Nothing to write")
-    info_file = Path(run_dir, 'log', 'version', 'vcs.conf')
+    info_file = Path(run_dir, LOG_VERSION_DIR, 'vcs.conf')
     info_file.parent.mkdir(exist_ok=True)
     with open(info_file, 'w') as f:
         for key, value in info.items():
@@ -198,8 +199,8 @@ def write_vc_info(
 
 def _get_git_commit(path: Union[Path, str]) -> str:
     """Return the hash of the HEAD of the repo at path."""
-    args = VCInfo.GIT_REV_PARSE_COMMAND
-    return _run_cmd(VCInfo.GIT, args, cwd=path).splitlines()[0]
+    args = GIT_REV_PARSE_COMMAND
+    return _run_cmd(GIT, args, cwd=path).splitlines()[0]
 
 
 def get_status(vcs: str, path: Union[Path, str]) -> str:
@@ -209,7 +210,7 @@ def get_status(vcs: str, path: Union[Path, str]) -> str:
         vcs: The version control system.
         path: The path to the repository.
     """
-    args = VCInfo.STATUS_COMMANDS[vcs]
+    args = STATUS_COMMANDS[vcs]
     return _run_cmd(vcs, args, cwd=path).rstrip('\n')
 
 
@@ -220,7 +221,7 @@ def _parse_svn_info(info_text: str) -> 'OrderedDict[str, str]':
         if line:
             key, value = (ln.strip() for ln in line.split(':', 1))
             key = key.lower()
-            if key in VCInfo.SVN_INFO_KEYS:
+            if key in SVN_INFO_KEYS:
                 ret[key] = value
     return ret
 
@@ -232,7 +233,7 @@ def get_diff(vcs: str, path: Union[Path, str]) -> Optional[str]:
         vcs: The version control system.
         path: The path to the repo.
     """
-    args = VCInfo.DIFF_COMMANDS[vcs]
+    args = DIFF_COMMANDS[vcs]
     try:
         diff = _run_cmd(vcs, args, cwd=path)
     except (VCSNotInstalledError, VCSMissingBaseError):
@@ -251,9 +252,7 @@ def write_diff(diff: str, run_dir: Union[Path, str]) -> None:
         diff: The diff.
         run_dir: The workflow run directory.
     """
-    if not diff:
-        raise ValueError("Nothing to write")
-    diff_file = Path(run_dir, 'log', 'version', 'uncommitted.diff')
+    diff_file = Path(run_dir, LOG_VERSION_DIR, 'uncommitted.diff')
     diff_file.parent.mkdir(exist_ok=True)
     with open(diff_file, 'w') as f:
         f.write(diff)
