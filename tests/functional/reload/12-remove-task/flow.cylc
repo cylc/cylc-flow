@@ -8,7 +8,7 @@
 [runtime]
     [[reloader]]
         script = """
-            sed -i "s/remove_me =>//g" $CYLC_SUITE_DEF_PATH/flow.cylc
+            sed -i "s/remove_me =>//g" $CYLC_SUITE_RUN_DIR/flow.cylc
             cylc reload $CYLC_SUITE_NAME
             cylc__job__poll_grep_suite_log -F 'Reload completed'
         """

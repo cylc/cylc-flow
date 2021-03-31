@@ -43,35 +43,11 @@ ID_DELIM = '|'
 
 def environ_init():
     """Initialise cylc environment."""
-    if os.getenv('CYLC_SUITE_DEF_PATH', ''):
-        environ_path_add([os.getenv('CYLC_SUITE_DEF_PATH')])
-
     # Python output buffering delays appearance of stdout and stderr
     # when output is not directed to a terminal (this occurred when
     # running pre-5.0 cylc via the posix nohup command; is it still the
     # case in post-5.0 daemon-mode cylc?)
     os.environ['PYTHONUNBUFFERED'] = 'true'
-
-
-def environ_path_add(dirs, key='PATH'):
-    """For each dir_ in dirs, prepend dir_ to the PATH environment variable.
-
-    If key is specified, prepend dir_ to the named environment variable instead
-    of PATH.
-
-    """
-
-    paths_str = os.getenv(key, '')
-    # ''.split(os.pathsep) gives ['']
-    if paths_str.strip():
-        paths = paths_str.split(os.pathsep)
-    else:
-        paths = []
-    for dir_ in dirs:
-        while dir_ in paths:
-            paths.remove(dir_)
-        paths.insert(0, dir_)
-    os.environ[key] = os.pathsep.join(paths)
 
 
 environ_init()

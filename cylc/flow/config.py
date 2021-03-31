@@ -1429,14 +1429,17 @@ class SuiteConfig:
     def process_suite_env(self):
         """Suite context is exported to the local environment."""
         for var, val in [
-                ('CYLC_SUITE_NAME', self.suite),
-                ('CYLC_DEBUG', str(cylc.flow.flags.debug).lower()),
-                ('CYLC_VERBOSE', str(cylc.flow.flags.verbose).lower()),
-                ('CYLC_SUITE_DEF_PATH', self.fdir),
-                ('CYLC_SUITE_RUN_DIR', self.run_dir),
-                ('CYLC_SUITE_LOG_DIR', self.log_dir),
-                ('CYLC_SUITE_WORK_DIR', self.work_dir),
-                ('CYLC_SUITE_SHARE_DIR', self.share_dir)]:
+            ('CYLC_SUITE_NAME', self.suite),
+            ('CYLC_DEBUG', str(cylc.flow.flags.debug).lower()),
+            ('CYLC_VERBOSE', str(cylc.flow.flags.verbose).lower()),
+            ('CYLC_SUITE_RUN_DIR', self.run_dir),
+            ('CYLC_SUITE_LOG_DIR', self.log_dir),
+            ('CYLC_SUITE_WORK_DIR', self.work_dir),
+            ('CYLC_SUITE_SHARE_DIR', self.share_dir),
+            # BACK COMPAT: CYLC_SUITE_DEF_PATH
+            #   from: Cylc7
+            ('CYLC_SUITE_DEF_PATH', self.run_dir),
+        ]:
             os.environ[var] = val
 
     def process_config_env(self):

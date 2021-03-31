@@ -41,12 +41,21 @@ Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/p
 due to being a seldom-used feature. Workflows can still be restarted from the
 last run, or reflow can be used to achieve the same result.
 
--------------------------------------------------------------------------------
 <!-- The topmost release date is automatically updated by GitHub Actions. When
 creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
+-------------------------------------------------------------------------------
+## __cylc-8.0b1 (<span actions:bind='release-date'>Released 2021-04-??</span>)__
+
+### Enhancements
+
+[#4154](https://github.com/cylc/cylc-flow/pull/4154)
+Deprecate `CYLC_SUITE_DEF_PATH` with `CYLC_SUITE_RUN_DIR` (note the deprecated
+variable is still present in the job environment).
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0b0 (<span actions:bind='release-date'>Released 2021-03-29</span>)__
 
 First beta release of Cylc 8.

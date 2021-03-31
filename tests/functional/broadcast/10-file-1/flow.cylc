@@ -6,7 +6,7 @@
 [runtime]
     [[t1]]
         script = """
-cylc broadcast -n 't2' -F "${CYLC_SUITE_DEF_PATH}/broadcast.cylc" "${CYLC_SUITE_NAME}"
+cylc broadcast -n 't2' -F "${CYLC_SUITE_RUN_DIR}/broadcast.cylc" "${CYLC_SUITE_NAME}"
 """
     [[t2]]
         script = false
