@@ -620,21 +620,26 @@ def init_clean(reg: str, opts: 'Values') -> None:
         LOG.info(str(exc))
         return
 
-    platform_names = None
-    try:
-        platform_names = get_platforms_from_db(local_run_dir)
-    except FileNotFoundError:
-        LOG.info("No workflow database - will only clean locally")
-    except ServiceFileError as exc:
-        raise ServiceFileError(f"Cannot clean - {exc}")
+    if not opts.local_only:
+        platform_names = None
+        try:
+            platform_names = get_platforms_from_db(local_run_dir)
+        except FileNotFoundError:
+            if opts.remote_only:
+                raise ServiceFileError(
+                    "No workflow database - cannot perform remote clean")
+            LOG.info("No workflow database - will only clean locally")
+        except ServiceFileError as exc:
+            raise ServiceFileError(f"Cannot clean - {exc}")
 
-    if platform_names and platform_names != {'localhost'}:
-        remote_clean(reg, platform_names, opts.remote_timeout)
-    LOG.info("Cleaning on local filesystem")
-    clean(reg)
+        if platform_names and platform_names != {'localhost'}:
+            remote_clean(reg, platform_names, opts.remote_timeout)
+
+    if not opts.remote_only:
+        clean(reg, local_run_dir)
 
 
-def clean(reg: str) -> None:
+def clean(reg: str, run_dir: Path) -> None:
     """Remove a stopped workflow from the local filesystem only.
 
     Deletes the workflow run directory and any symlink dirs. Note: if the
@@ -643,14 +648,9 @@ def clean(reg: str) -> None:
 
     Args:
         reg: Workflow name.
+        run_dir: The workflow's run dir.
     """
-    run_dir = Path(get_workflow_run_dir(reg))
-    try:
-        _clean_check(reg, run_dir)
-    except FileNotFoundError as exc:
-        LOG.info(str(exc))
-        return
-
+    LOG.info("Cleaning on local filesystem")
     # Note: 'share/cycle' must come first, and '' must come last
     for possible_symlink in (
             WorkflowFiles.SHARE_CYCLE_DIR, WorkflowFiles.SHARE_DIR,

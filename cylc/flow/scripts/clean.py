@@ -38,10 +38,11 @@ from typing import TYPE_CHECKING
 
 import cylc.flow.flags
 from cylc.flow import LOG
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import clean, init_clean
+from cylc.flow.workflow_files import init_clean
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -57,6 +58,12 @@ def get_option_parser():
         '--local-only', '--local',
         help="Only clean on the local filesystem (not remote hosts).",
         action='store_true', dest='local_only'
+    )
+
+    parser.add_option(
+        '--remote-only', '--remote',
+        help="Only clean on remote hosts (not the local filesystem).",
+        action='store_true', dest='remote_only'
     )
 
     parser.add_option(
@@ -77,10 +84,12 @@ def main(parser: COP, opts: 'Values', reg: str):
             if isinstance(handler.formatter, CylcLogFormatter):
                 handler.formatter.configure(timestamp=False)
 
-    if opts.local_only:
-        clean(reg)
-    else:
-        init_clean(reg, opts)
+    if opts.local_only and opts.remote_only:
+        raise UserInputError(
+            "--local and --remote options are mutually exclusive"
+        )
+
+    init_clean(reg, opts)
 
 
 if __name__ == "__main__":
