@@ -25,10 +25,10 @@ This module provides the logic to:
 
 import json
 import os
-import packaging.version
 from shutil import copy, rmtree
 from tempfile import mkstemp
 
+from pkg_resources import parse_version
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -601,12 +601,10 @@ class WorkflowDatabaseManager:
             raise ServiceFileError(f"{incompat_msg}, or is corrupted")
         finally:
             pri_dao.close()
-        try:
-            last_run_ver = packaging.version.Version(last_run_ver)
-        except packaging.version.InvalidVersion:
-            last_run_ver = packaging.version.LegacyVersion(last_run_ver)
-        restart_incompat_ver = packaging.version.Version(
-            CylcWorkflowDAO.RESTART_INCOMPAT_VERSION)
+        last_run_ver = parse_version(last_run_ver)
+        restart_incompat_ver = parse_version(
+            CylcWorkflowDAO.RESTART_INCOMPAT_VERSION
+        )
         if last_run_ver <= restart_incompat_ver:
             raise ServiceFileError(
                 f"{incompat_msg} (workflow last run with Cylc {last_run_ver})")

@@ -17,7 +17,8 @@
 
 import os
 from typing import List, Optional, Tuple
-import packaging.version
+
+from pkg_resources import parse_version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
@@ -801,7 +802,7 @@ def get_version_hierarchy(version: str) -> List[str]:
         ['', '8', '8.0', '8.0.1', '8.0.1a2', '8.0.1a2.dev']
 
     """
-    smart_ver = packaging.version.Version(version)
+    smart_ver = parse_version(version)
     base = [str(i) for i in smart_ver.release]
     hierarchy = ['']
     hierarchy += ['.'.join(base[:i]) for i in range(1, len(base) + 1)]

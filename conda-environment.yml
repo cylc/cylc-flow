@@ -17,6 +17,7 @@ dependencies:
   - python
   - pyuv >=1.4.0,<1.5.0
   - pyzmq >=18.1.0,<18.2.0
+  - setuptools >=49
   - urwid >=2.0,<2.1
   #- rx >=1.6,<2 # TODO: https://github.com/conda-forge/cylc-feedstock/pull/3#issuecomment-660716268
 # optional dependencies
