@@ -19,7 +19,7 @@ import logging
 from pathlib import Path
 import pytest
 import shutil
-from typing import Callable, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from unittest import mock
 
 from cylc.flow import CYLC_LOG
@@ -37,6 +37,7 @@ from cylc.flow.workflow_files import (
     check_nested_run_dirs,
     get_workflow_source_dir,
     reinstall_workflow, search_install_source_dirs)
+from tests.unit.conftest import MonkeyMock
 
 
 CleanOpts = Options(_clean_GOP())
@@ -132,25 +133,32 @@ def test_validate_flow_name(reg, expected_err, expected_msg):
 
 
 @pytest.mark.parametrize(
-    'reg, not_stopped, err, err_msg',
-    [('foo/..', False, WorkflowFilesError,
+    'reg, stopped, err, err_msg',
+    [('foo/..', True, WorkflowFilesError,
       "cannot be a path that points to the cylc-run directory or above"),
-     ('foo/../..', False, WorkflowFilesError,
+     ('foo/../..', True, WorkflowFilesError,
       "cannot be a path that points to the cylc-run directory or above"),
-     ('foo', True, ServiceFileError, "Cannot remove running workflow")]
+     ('foo', False, ServiceFileError, "Cannot remove running workflow")]
 )
-def test_clean_check(reg, not_stopped, err, err_msg, monkeypatch):
+def test_clean_check_fail(
+    reg: str,
+    stopped: bool,
+    err: Type[Exception],
+    err_msg: str,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that _clean_check() fails appropriately.
 
     Params:
-        reg (str): Workflow name.
-        err (Exception): Expected error.
-        err_msg (str): Message that is expected to be in the exception.
+        reg: Workflow name.
+        stopped: Whether the workflow is stopped when _clean_check() is called.
+        err: Expected error class.
+        err_msg: Message that is expected to be in the exception.
     """
     run_dir = mock.Mock()
 
-    def mocked_detect_old_contact_file(reg):
-        if not_stopped:
+    def mocked_detect_old_contact_file(*a, **k):
+        if not stopped:
             raise ServiceFileError('Mocked error')
 
     monkeypatch.setattr('cylc.flow.workflow_files.detect_old_contact_file',
@@ -162,221 +170,225 @@ def test_clean_check(reg, not_stopped, err, err_msg, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    'reg, props, clean_called, remote_clean_called',
+    'db_platforms, opts, clean_called, remote_clean_called',
     [
-        ('foo/bar', {
-            'no dir': True,
-            'log': (logging.INFO, "No directory to clean")
-        }, False, False),
-        ('foo/bar', {
-            'no db': True,
-            'log': (logging.INFO,
-                    "No workflow database - will only clean locally")
-        }, True, False),
-        ('foo/bar', {
-            'db platforms': ['localhost', 'localhost']
-        }, True, False),
-        ('foo/bar', {
-            'db platforms': ['horse']
-        }, True, True)
+        pytest.param(
+            ['localhost', 'localhost'], {}, True, False,
+            id="Only platform in DB is localhost"
+        ),
+        pytest.param(
+            ['horse'], {}, True, True,
+            id="Remote platform in DB"
+        ),
+        pytest.param(
+            ['horse'], {'local_only': True}, True, False,
+            id="Local clean only"
+        ),
+        pytest.param(
+            ['horse'], {'remote_only': True}, False, True,
+            id="Remote clean only"
+        )
     ]
 )
-def test_init_clean_ok(
-        reg, props, clean_called, remote_clean_called,
-        monkeypatch, tmp_path, caplog):
+def test_init_clean(
+    db_platforms: List[str],
+    opts: Dict[str, Any],
+    clean_called: bool,
+    remote_clean_called: bool,
+    monkeypatch: pytest.MonkeyPatch, monkeymock: MonkeyMock,
+    tmp_run_dir: Callable
+) -> None:
     """Test the init_clean() function logic.
 
     Params:
-        reg (str): Workflow name.
-        props (dict): Possible values are (all optional):
-            'no dir' (bool): If True, do not create run dir for this test case.
-            'log' (tuple): Of form (severity, msg):
-                severity (logging level): Expected level e.g. logging.INFO.
-                msg (str): Message that is expected to be logged.
-            'db platforms' (list): Platform names that would be loaded from
-                the database.
-            'no db' (bool): If True, workflow database doesn't exist.
-        clean_called (bool): If a local clean is expected to go ahead.
-        remote_clean_called (bool): If a remote clean is expected to go ahead.
+        db_platforms: Platform names that would be loaded from the database.
+        opts: Any options passed to the cylc clean CLI.
+        clean_called: If a local clean is expected to go ahead.
+        remote_clean_called: If a remote clean is expected to go ahead.
     """
-    # --- Setup ---
-    expected_log = props.get('log')
-    if expected_log:
-        level, msg = expected_log
-        caplog.set_level(level, CYLC_LOG)
-
-    tmp_path.joinpath('cylc-run').mkdir()
-    run_dir = tmp_path.joinpath('cylc-run', reg)
-    if not props.get('no dir'):
-        run_dir.mkdir(parents=True)
-
-    mocked_clean = mock.Mock()
-    monkeypatch.setattr('cylc.flow.workflow_files.clean', mocked_clean)
-    mocked_remote_clean = mock.Mock()
-    monkeypatch.setattr('cylc.flow.workflow_files.remote_clean',
-                        mocked_remote_clean)
-    monkeypatch.setattr('cylc.flow.workflow_files.get_workflow_run_dir',
-                        lambda x: tmp_path.joinpath('cylc-run', x))
-
-    _get_platforms_from_db = workflow_files.get_platforms_from_db
-
-    def mocked_get_platforms_from_db(run_dir):
-        if props.get('no dir') or props.get('no db'):
-            return _get_platforms_from_db(run_dir)  # Handle as normal
-        return set(props.get('db platforms'))
-
+    reg = 'foo/bar/'
+    tmp_run_dir(reg)
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
-                        mocked_get_platforms_from_db)
+                        lambda x: set(db_platforms))
 
-    # --- The actual test ---
-    workflow_files.init_clean(reg, opts=mock.Mock())
-    if expected_log:
-        assert msg in caplog.text
-    if clean_called:
-        assert mocked_clean.called is True
-    else:
-        assert mocked_clean.called is False
-    if remote_clean_called:
-        assert mocked_remote_clean.called is True
-    else:
-        assert mocked_remote_clean.called is False
+    workflow_files.init_clean(reg, opts=CleanOpts(**opts))
+    assert mock_clean.called is clean_called
+    assert mock_remote_clean.called is remote_clean_called
+
+
+def test_init_clean_no_dir(
+    monkeymock: MonkeyMock, tmp_run_dir: Callable,
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test init_clean() when the run dir doesn't exist"""
+    caplog.set_level(logging.INFO, CYLC_LOG)
+    tmp_run_dir()
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+
+    workflow_files.init_clean('foo/bar', opts=CleanOpts())
+    assert "No directory to clean" in caplog.text
+    assert mock_clean.called is False
+    assert mock_remote_clean.called is False
+
+
+def test_init_clean_no_db(
+    monkeymock: MonkeyMock, tmp_run_dir: Callable,
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test init_clean() when the workflow database doesn't exist"""
+    caplog.set_level(logging.INFO, CYLC_LOG)
+    tmp_run_dir('bespin')
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+
+    workflow_files.init_clean('bespin', opts=CleanOpts())
+    assert "No workflow database - will only clean locally" in caplog.text
+    assert mock_clean.called is True
+    assert mock_remote_clean.called is False
+
+
+def test_init_clean_remote_only_no_db(
+    monkeymock: MonkeyMock, tmp_run_dir: Callable
+) -> None:
+    """Test remote-only init_clean() when the workflow DB doesn't exist"""
+    tmp_run_dir('hoth')
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+
+    with pytest.raises(ServiceFileError) as exc:
+        workflow_files.init_clean('hoth', opts=CleanOpts(remote_only=True))
+    assert ("No workflow database - cannot perform remote clean"
+            in str(exc.value))
+    assert mock_clean.called is False
+    assert mock_remote_clean.called is False
+
+
+def test_init_clean_running_workflow(
+    monkeypatch: pytest.MonkeyPatch, tmp_run_dir: Callable
+) -> None:
+    """Test init_clean() fails when workflow is still running"""
+    def mock_err(*args, **kwargs):
+        raise ServiceFileError("Mocked error")
+    monkeypatch.setattr('cylc.flow.workflow_files.detect_old_contact_file',
+                        mock_err)
+    tmp_run_dir('yavin')
+
+    with pytest.raises(ServiceFileError) as exc:
+        workflow_files.init_clean('yavin', opts=mock.Mock())
+    assert "Cannot remove running workflow" in str(exc.value)
 
 
 @pytest.mark.parametrize(
-    'reg, props',
+    'reg, symlink_dirs',
     [
-        ('foo/bar/', {}),  # Works ok
-        ('foo', {'no dir': True}),  # Nothing to clean
-        ('foo', {
-            'not stopped': True,
-            'err': ServiceFileError,
-            'err msg': 'Cannot remove running workflow'
-        }),
-        ('foo/bar', {
-            'symlink dirs': {
-                'log': 'sym-log',
-                'share': 'sym-share',
-                'share/cycle': 'sym-cycle',
-                'work': 'sym-work'
-            }
+        ('foo/bar', {}),
+        ('foo/bar/baz', {
+            'log': 'sym-log',
+            'share': 'sym-share',
+            'share/cycle': 'sym-cycle',
+            'work': 'sym-work'
         }),
         ('foo', {
-            'symlink dirs': {
-                'run': 'sym-run',
-                'log': 'sym-log',
-                'share': 'sym-share',
-                'share/cycle': 'sym-cycle',
-                'work': 'sym-work'
-            }
+            'run': 'sym-run',
+            'log': 'sym-log',
+            'share': 'sym-share',
+            'share/cycle': 'sym-cycle',
+            'work': 'sym-work'
         }),
-        ('foo', {
-            'bad symlink': {
-                'type': 'file',
-                'path': 'sym-log/cylc-run/foo/meow.txt'
-            },
-            'err': WorkflowFilesError,
-            'err msg': 'Target is not a directory'
-        }),
-        ('foo', {
-            'bad symlink': {
-                'type': 'dir',
-                'path': 'sym-log/bad/path'
-            },
-            'err': WorkflowFilesError,
-            'err msg': 'Expected target to end with "cylc-run/foo/log"'
-        })
     ]
 )
-def test_clean(reg, props, monkeypatch, tmp_path):
+def test_clean(
+    reg: str,
+    symlink_dirs: Dict[str, str],
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, tmp_run_dir: Callable
+) -> None:
     """Test the clean() function.
 
     Params:
-        reg (str): Workflow name.
-        props (dict): Possible values are (all optional):
-            'err' (Exception): Expected error.
-            'err msg' (str): Message that is expected to be in the exception.
-            'no dir' (bool): If True, do not create run dir for this test case.
-            'not stopped' (bool): If True, simulate that the workflow is
-                still running.
-            'symlink dirs' (dict): As you would find in the global config
-                under [symlink dirs][platform].
-            'bad symlink' (dict): Simulate an invalid log symlink dir:
-                'type' (str): 'file' or 'dir'.
-                'path' (str): Path of the symlink target relative to tmp_path.
+        reg: Workflow name.
+        symlink_dirs: As you would find in the global config
+            under [symlink dirs][platform].
     """
     # --- Setup ---
-    tmp_path.joinpath('cylc-run').mkdir()
-    run_dir = tmp_path.joinpath('cylc-run', reg)
+    run_dir: Path = tmp_run_dir(reg)
     run_dir_top_parent = tmp_path.joinpath('cylc-run', Path(reg).parts[0])
-    symlink_dirs = props.get('symlink dirs')
-    bad_symlink = props.get('bad symlink')
-    if not props.get('no dir') and (
-            not symlink_dirs or 'run' not in symlink_dirs):
-        run_dir.mkdir(parents=True)
 
     dirs_to_check = [run_dir_top_parent]
-    if symlink_dirs:
-        if 'run' in symlink_dirs:
-            dst = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
-            dst.mkdir(parents=True)
-            run_dir.symlink_to(dst)
-            dirs_to_check.append(dst)
-            symlink_dirs.pop('run')
-        for s, d in symlink_dirs.items():
-            dst = tmp_path.joinpath(d, 'cylc-run', reg, s)
-            dst.mkdir(parents=True)
-            src = run_dir.joinpath(s)
-            src.symlink_to(dst)
-            dirs_to_check.append(dst.parent)
-    if bad_symlink:
-        dst = tmp_path.joinpath(bad_symlink['path'])
-        if bad_symlink['type'] == 'file':
-            dst.parent.mkdir(parents=True)
-            dst.touch()
-        else:
-            dst.mkdir(parents=True)
-        src = run_dir.joinpath('log')
+    if 'run' in symlink_dirs:
+        dst = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
+        dst.mkdir(parents=True)
+        shutil.rmtree(run_dir)
+        run_dir.symlink_to(dst)
+        dirs_to_check.append(dst)
+        symlink_dirs.pop('run')
+    for src_name, dst_name in symlink_dirs.items():
+        dst = tmp_path.joinpath(dst_name, 'cylc-run', reg, src_name)
+        dst.mkdir(parents=True)
+        src = run_dir.joinpath(src_name)
         src.symlink_to(dst)
-
-    def mocked_detect_old_contact_file(reg):
-        if props.get('not stopped'):
-            raise ServiceFileError('Mocked error')
-
-    monkeypatch.setattr('cylc.flow.workflow_files.detect_old_contact_file',
-                        mocked_detect_old_contact_file)
-    monkeypatch.setattr('cylc.flow.workflow_files.get_workflow_run_dir',
-                        lambda x: tmp_path.joinpath('cylc-run', x))
+        dirs_to_check.append(dst.parent)
 
     # --- The actual test ---
-    expected_err = props.get('err')
-    if expected_err:
-        with pytest.raises(expected_err) as exc:
-            workflow_files.clean(reg)
-        expected_msg = props.get('err msg')
-        if expected_msg:
-            assert expected_msg in str(exc.value)
-    else:
-        workflow_files.clean(reg)
-        for d in dirs_to_check:
-            assert d.exists() is False
-            assert d.is_symlink() is False
+    workflow_files.clean(reg, run_dir)
+    for d in dirs_to_check:
+        assert d.exists() is False
+        assert d.is_symlink() is False
 
 
-def test_clean_broken_symlink_run_dir(monkeypatch, tmp_path):
-    """Test clean() for removing a run dir that is a broken symlink."""
+def test_clean_broken_symlink_run_dir(
+    tmp_path: Path, tmp_run_dir: Callable
+) -> None:
+    """Test clean() successfully remove a run dir that is a broken symlink."""
     reg = 'foo/bar'
-    run_dir = tmp_path.joinpath('cylc-run', reg)
-    run_dir.parent.mkdir(parents=True)
+    run_dir: Path = tmp_run_dir(reg)
     target = tmp_path.joinpath('rabbow/cylc-run', reg)
     target.mkdir(parents=True)
+    shutil.rmtree(run_dir)
     run_dir.symlink_to(target)
     target.rmdir()
 
-    monkeypatch.setattr('cylc.flow.workflow_files.get_workflow_run_dir',
-                        lambda x: tmp_path.joinpath('cylc-run', x))
+    assert run_dir.parent.exists() is True
+    workflow_files.clean(reg, run_dir)
+    assert run_dir.parent.exists() is False
 
-    workflow_files.clean(reg)
-    assert run_dir.parent.is_dir() is False
+
+def test_clean_bad_symlink_dir_wrong_type(
+    tmp_path: Path, tmp_run_dir: Callable
+) -> None:
+    """Test clean() raises error when a symlink dir actually points to a file
+    instead of a dir"""
+    reg = 'foo'
+    run_dir: Path = tmp_run_dir(reg)
+    src = run_dir.joinpath('log')
+    dst = tmp_path.joinpath('sym-log', 'cylc-run', reg, 'meow.txt')
+    dst.parent.mkdir(parents=True)
+    dst.touch()
+    src.symlink_to(dst)
+
+    with pytest.raises(WorkflowFilesError) as exc:
+        workflow_files.clean(reg, run_dir)
+    assert "Target is not a directory" in str(exc.value)
+    assert src.exists() is True
+
+
+def test_clean_bad_symlink_dir_wrong_form(
+    tmp_path: Path, tmp_run_dir: Callable
+) -> None:
+    """Test clean() raises error when a symlink dir points to an
+    unexpected dir"""
+    run_dir: Path = tmp_run_dir('foo')
+    src = run_dir.joinpath('log')
+    dst = tmp_path.joinpath('sym-log', 'oops', 'log')
+    dst.mkdir(parents=True)
+    src.symlink_to(dst)
+
+    with pytest.raises(WorkflowFilesError) as exc:
+        workflow_files.clean('foo', run_dir)
+    assert 'Expected target to end with "cylc-run/foo/log"' in str(exc.value)
+    assert src.exists() is True
 
 
 PLATFORMS = {
