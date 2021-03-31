@@ -60,6 +60,7 @@ from cylc.flow.unicode_rules import SuiteNameValidator
 from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
+    from optparse import Values
     from logging import Logger
 
 
@@ -592,7 +593,7 @@ def _clean_check(reg, run_dir):
             f"Cannot remove running workflow.\n\n{exc}")
 
 
-def init_clean(reg, opts):
+def init_clean(reg: str, opts: 'Values') -> None:
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 

@@ -79,7 +79,7 @@ from cylc.flow.suite_files import install_workflow, search_install_source_dirs
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
-    from cylc.flow.option_parsers import Options
+    from optparse import Values
 
 
 def get_option_parser():
@@ -173,7 +173,7 @@ def main(parser, opts, reg=None):
 
 
 def install(
-    parser: COP, opts: 'Options', reg: Optional[str] = None
+    parser: COP, opts: 'Values', reg: Optional[str] = None
 ) -> None:
     if opts.no_run_name and opts.run_name:
         parser.error(

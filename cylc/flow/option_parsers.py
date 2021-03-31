@@ -19,6 +19,7 @@ import logging
 from optparse import OptionParser, OptionConflictError, Values
 import os
 import sys
+from typing import Any, Dict, Optional
 
 from cylc.flow import LOG, RSYNC_LOG
 import cylc.flow.flags
@@ -273,7 +274,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         return (options, args)
 
 
-class Options(Values):
+class Options:
     """Wrapper to allow Python API access to optparse CLI functionality.
 
     Example:
@@ -315,12 +316,14 @@ class Options(Values):
 
     """
 
-    def __init__(self, parser, overrides=None):
+    def __init__(
+        self, parser: OptionParser, overrides: Optional[Dict[str, Any]] = None
+    ) -> None:
         if overrides is None:
             overrides = {}
         self.defaults = {**parser.defaults, **overrides}
 
-    def __call__(self, **kwargs):
+    def __call__(self, **kwargs) -> Values:
         opts = Values(self.defaults)
         for key, value in kwargs.items():
             if hasattr(opts, key):

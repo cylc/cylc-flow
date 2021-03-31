@@ -16,8 +16,9 @@
 
 """Test logic in cylc-hold script."""
 
+from optparse import Values
 import pytest
-from typing import Any, Iterable, Optional, Tuple, Type
+from typing import Iterable, Optional, Tuple, Type
 
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import Options
@@ -39,7 +40,7 @@ Opts = Options(get_option_parser())
     ]
 )
 def test_validate(
-        opts: Options,
+        opts: Values,
         task_globs: Iterable[str],
         expected_err: Optional[Tuple[Type[Exception], str]]):
 
