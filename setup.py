@@ -73,6 +73,7 @@ tests_require = [
 ]
 
 extra_requires = {
+    # these are optional dependencies which unlock extra functionality
     'empy': [
         'EmPy==3.3.*'
     ],
@@ -90,6 +91,13 @@ extra_requires = {
     'main_loop-log_memory': [
         'pympler',
         'matplotlib'
+    ],
+    # these are other cylc components within the cylc meta-package
+    'uiserver': [
+        'cylc-uiserver==0.3.0'
+    ],
+    'rose': [
+        'cylc-rose==0.1.1'
     ]
 }
 extra_requires['all'] = (
