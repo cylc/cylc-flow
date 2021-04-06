@@ -168,16 +168,69 @@ with Conf('global.cylc', desc='''
                 restarted (see:ref:`auto-stop-restart`).
             ''')
             Conf('ranking', VDR.V_STRING, desc='''
-                A multiline string containing Python expressions to filter
-                and/or rank hosts. For example:
+                Rank and filter run hosts based on system information.
 
-                .. code-block:: none
+                This can be used to provide load balancing to ensure no one run
+                host is overloaded and provide thresholds beyond which Cylc
+                will not attempt to start new schedulers on a host.
 
-                   cpu_percent() < 70
+                .. _psutil: https://psutil.readthedocs.io/en/latest/
+
+                This should be a multiline string containing Python expressions
+                to rank and/or filter hosts. All `psutil`_ attributes are
+                available for use in these expressions.
+
+                .. rubric:: Ranking
+
+                Rankings are expressions which return numerical values.
+                The host which returns the lowest value is chosen. Examples:
+
+                .. code-block:: python
+
+                   # rank hosts by cpu_percent
                    cpu_percent()
 
-                To filter by ``cpu_percent() < 70`` then to rank by
-                ``cpu_percent``.
+                   # rank hosts by 15min average of server load
+                   getloadavg()[2]
+
+                   # rank hosts by the number of cores
+                   # (multiple by -1 because the lowest value is chosen)
+                   -1 * cpu_count()
+
+                .. rubric:: Threshold
+
+                Thresholds are expressions which return boolean values.
+                If a host returns a ``False`` value is will not be considered
+                for host selection. Examples:
+
+                .. code-block:: python
+
+                   # filter out hosts with a CPU utilisation of 70% or above
+                   cpu_percent() < 70
+
+                   # filter out hosts with less than 1GB of RAM available
+                   virtual_memory.available < 1000000000
+
+                   # filter out hosts with less than 1GB of disk space
+                   # available on the "/" mount
+                   disk_usage('/').free < 1000000000
+
+                .. rubric:: Combining
+
+                Multiple rankings and thresholds can be combined in this
+                section e.g:
+
+                .. code-block:: python
+
+                   # filter hosts
+                   cpu_percent() < 70
+                   disk_usage('/').free < 1000000000
+
+                   # rank hosts by CPU count
+                   1 / cpu_count()
+                   # if two hosts have the same CPU count
+                   # then rank them by CPU usage
+                   cpu_percent()
             ''')
 
         with Conf('host self-identification', desc='''
