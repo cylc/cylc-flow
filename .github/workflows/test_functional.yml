@@ -127,6 +127,10 @@ jobs:
       - name: Install
         run: |
           pip install -e ."[all]"
+          # TEMP: remove any transient cylc-flow dependency
+          pip uninstall -y cylc-flow
+          # TEMP: reinstall to override the cylc executable
+          pip install -e . --no-deps
           mkdir "$HOME/cylc-run"
 
       - name: Configure Atrun
