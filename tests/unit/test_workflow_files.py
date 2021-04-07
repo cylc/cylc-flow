@@ -19,7 +19,7 @@ import logging
 from pathlib import Path
 import pytest
 import shutil
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 from unittest import mock
 
 from cylc.flow import CYLC_LOG
@@ -30,6 +30,7 @@ from cylc.flow.exceptions import (
     TaskRemoteMgmtError,
     WorkflowFilesError
 )
+from cylc.flow.pathutil import parse_dirs
 from cylc.flow.scripts.clean import get_option_parser as _clean_GOP
 from cylc.flow.workflow_files import (
     WorkflowFiles,
@@ -37,6 +38,7 @@ from cylc.flow.workflow_files import (
     check_nested_run_dirs,
     get_workflow_source_dir,
     reinstall_workflow, search_install_source_dirs)
+
 from tests.unit.conftest import MonkeyMock
 
 
@@ -282,28 +284,118 @@ def test_init_clean_running_workflow(
 
 
 @pytest.mark.parametrize(
-    'reg, symlink_dirs',
+    'rm_dirs, expected_clean, expected_remote_clean',
+    [(None, None, []),
+     (["r2d2:c3po"], {"r2d2", "c3po"}, ["r2d2:c3po"])]
+)
+def test_init_clean_rm_dirs(
+    rm_dirs: Optional[List[str]],
+    expected_clean: Set[str],
+    expected_remote_clean: List[str],
+    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
+    tmp_run_dir: Callable
+) -> None:
+    """Test init_clean() with the --rm option.
+
+    Params:
+        rm_dirs: Dirs given by --rm option.
+        expected_clean: The dirs that are expected to be passed to clean().
+        expected_remote_clean: The dirs that are expected to be passed to
+            remote_clean().
+    """
+    reg = 'dagobah'
+    run_dir: Path = tmp_run_dir(reg)
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+    platforms = {'platform_one'}
+    monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
+                        lambda x: platforms)
+    opts = CleanOpts(rm_dirs=rm_dirs) if rm_dirs else CleanOpts()
+
+    workflow_files.init_clean(reg, opts=opts)
+    mock_clean.assert_called_with(reg, run_dir, expected_clean)
+    mock_remote_clean.assert_called_with(
+        reg, platforms, expected_remote_clean, opts.remote_timeout)
+
+
+@pytest.mark.parametrize(
+    'reg, symlink_dirs, rm_dirs, expected_deleted, expected_remaining',
     [
-        ('foo/bar', {}),
-        ('foo/bar/baz', {
-            'log': 'sym-log',
-            'share': 'sym-share',
-            'share/cycle': 'sym-cycle',
-            'work': 'sym-work'
-        }),
-        ('foo', {
-            'run': 'sym-run',
-            'log': 'sym-log',
-            'share': 'sym-share',
-            'share/cycle': 'sym-cycle',
-            'work': 'sym-work'
-        }),
+        pytest.param(
+            'foo/bar',
+            {},
+            None,
+            ['cylc-run/foo'],
+            ['cylc-run'],
+            id="Basic clean"
+        ),
+        pytest.param(
+            'foo/bar/baz',
+            {
+                'log': 'sym-log',
+                'share': 'sym-share',
+                'share/cycle': 'sym-cycle',
+                'work': 'sym-work'
+            },
+            None,
+            ['cylc-run/foo', 'sym-log/cylc-run/foo', 'sym-share/cylc-run/foo',
+             'sym-cycle/cylc-run/foo', 'sym-work/cylc-run/foo'],
+            ['cylc-run', 'sym-log/cylc-run', 'sym-share/cylc-run',
+             'sym-cycle/cylc-run', 'sym-work/cylc-run'],
+            id="Symlink dirs"
+        ),
+        pytest.param(
+            'foo',
+            {
+                'run': 'sym-run',
+                'log': 'sym-log',
+                'share': 'sym-share',
+                'share/cycle': 'sym-cycle',
+                'work': 'sym-work'
+            },
+            None,
+            ['cylc-run/foo', 'sym-run/cylc-run/foo', 'sym-log/cylc-run/foo',
+             'sym-share/cylc-run/foo', 'sym-cycle/cylc-run/foo',
+             'sym-work/cylc-run/foo'],
+            ['cylc-run', 'sym-run/cylc-run', 'sym-log/cylc-run',
+             'sym-share/cylc-run', 'sym-cycle/cylc-run',
+             'sym-work'],
+            id="Symlink dirs including run dir"
+        ),
+        pytest.param(
+            'foo',
+            {},
+            {'log', 'share'},
+            ['cylc-run/foo/log', 'cylc-run/foo/share'],
+            ['cylc-run/foo/work'],
+            id="Targeted clean"
+        ),
+        pytest.param(
+            'foo',
+            {'log': 'sym-log'},
+            {'log'},
+            ['cylc-run/foo/log', 'sym-log/cylc-run/foo'],
+            ['cylc-run/foo/work', 'cylc-run/foo/share/cycle',
+             'sym-log/cylc-run'],
+            id="Targeted clean with symlink dirs"
+        ),
+        pytest.param(
+            'foo',
+            {},
+            {'share/cy*'},
+            ['cylc-run/foo/share/cycle'],
+            ['cylc-run/foo/log', 'cylc-run/foo/work', 'cylc-run/foo/share'],
+            id="Targeted clean with glob"
+        ),
     ]
 )
 def test_clean(
     reg: str,
     symlink_dirs: Dict[str, str],
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, tmp_run_dir: Callable
+    rm_dirs: Optional[Set[str]],
+    expected_deleted: List[str],
+    expected_remaining: List[str],
+    tmp_path: Path, tmp_run_dir: Callable
 ) -> None:
     """Test the clean() function.
 
@@ -311,31 +403,41 @@ def test_clean(
         reg: Workflow name.
         symlink_dirs: As you would find in the global config
             under [symlink dirs][platform].
+        rm_dirs: As passed to clean().
+        expected_deleted: Dirs (relative paths under tmp_path) that are
+            expected to be cleaned.
+        expected_remaining: Any dirs (relative paths under tmp_path) that are
+            not expected to be cleaned.
     """
     # --- Setup ---
     run_dir: Path = tmp_run_dir(reg)
-    run_dir_top_parent = tmp_path.joinpath('cylc-run', Path(reg).parts[0])
 
-    dirs_to_check = [run_dir_top_parent]
     if 'run' in symlink_dirs:
         dst = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
         dst.mkdir(parents=True)
         shutil.rmtree(run_dir)
         run_dir.symlink_to(dst)
-        dirs_to_check.append(dst)
         symlink_dirs.pop('run')
     for src_name, dst_name in symlink_dirs.items():
         dst = tmp_path.joinpath(dst_name, 'cylc-run', reg, src_name)
         dst.mkdir(parents=True)
         src = run_dir.joinpath(src_name)
         src.symlink_to(dst)
-        dirs_to_check.append(dst.parent)
+    for d_name in ('log', 'share', 'share/cycle', 'work'):
+        path = run_dir.joinpath(d_name)
+        if d_name not in symlink_dirs:
+            path.mkdir()
+
+    for rel_path in [*expected_deleted, *expected_remaining]:
+        assert tmp_path.joinpath(rel_path).exists()
 
     # --- The actual test ---
-    workflow_files.clean(reg, run_dir)
-    for d in dirs_to_check:
-        assert d.exists() is False
-        assert d.is_symlink() is False
+    workflow_files.clean(reg, run_dir, rm_dirs)
+    for rel_path in expected_deleted:
+        assert tmp_path.joinpath(rel_path).exists() is False
+        assert tmp_path.joinpath(rel_path).is_symlink() is False
+    for rel_path in expected_remaining:
+        assert tmp_path.joinpath(rel_path).exists()
 
 
 def test_clean_broken_symlink_run_dir(
@@ -389,6 +491,20 @@ def test_clean_bad_symlink_dir_wrong_form(
         workflow_files.clean('foo', run_dir)
     assert 'Expected target to end with "cylc-run/foo/log"' in str(exc.value)
     assert src.exists() is True
+
+
+@pytest.mark.parametrize('pattern', ['thing/', 'thing/*'])
+def test_clean_rm_dir_not_file(pattern: str, tmp_run_dir: Callable):
+    """Test clean() does not remove a file when the rm_dir glob pattern would
+    match a dir only."""
+    reg = 'foo'
+    run_dir: Path = tmp_run_dir(reg)
+    a_file = run_dir.joinpath('thing')
+    a_file.touch()
+    rm_dirs = parse_dirs([pattern])
+
+    workflow_files.clean(reg, run_dir, rm_dirs)
+    assert a_file.exists()
 
 
 PLATFORMS = {
@@ -468,18 +584,24 @@ PLATFORMS = {
         )
     ]
 )
-def test_remote_clean(install_targets_map, failed_platforms,
-                      expected_platforms, expected_err, monkeypatch, caplog):
+def test_remote_clean(
+    install_targets_map: Dict[str, Any],
+    failed_platforms: Optional[List[str]],
+    expected_platforms: Optional[List[str]],
+    expected_err: Optional[Tuple[Type[Exception], str]],
+    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture
+) -> None:
     """Test remote_clean() logic.
 
     Params:
-        install_targets_map (dict): The map that would be returned by
+        install_targets_map The map that would be returned by
             platforms.get_install_target_to_platforms_map()
-        failed_platforms (list): If specified, any platforms that clean will
+        failed_platforms: If specified, any platforms that clean will
             artificially fail on in this test case.
-        expected_platforms (list): If specified, all the platforms that the
+        expected_platforms: If specified, all the platforms that the
             remote clean cmd is expected to run on.
-        expected_err (tuple):  If specified, a tuple of the form
+        expected_err: If specified, a tuple of the form
             (Exception, str) giving an exception that is expected to be raised.
     """
     # ----- Setup -----
@@ -488,10 +610,9 @@ def test_remote_clean(install_targets_map, failed_platforms,
         'cylc.flow.workflow_files.get_install_target_to_platforms_map',
         lambda x: install_targets_map)
     # Remove randomness:
-    mocked_shuffle = mock.Mock()
-    monkeypatch.setattr('cylc.flow.workflow_files.shuffle', mocked_shuffle)
+    monkeymock('cylc.flow.workflow_files.shuffle')
 
-    def mocked_remote_clean_cmd_side_effect(reg, platform, timeout):
+    def mocked_remote_clean_cmd_side_effect(reg, platform, rm_dirs, timeout):
         proc_ret_code = 0
         if failed_platforms and platform['name'] in failed_platforms:
             proc_ret_code = 1
@@ -500,10 +621,10 @@ def test_remote_clean(install_targets_map, failed_platforms,
             communicate=lambda: ("", ""),
             args=[])
 
-    mocked_remote_clean_cmd = mock.Mock(
+    mocked_remote_clean_cmd = monkeymock(
+        'cylc.flow.workflow_files._remote_clean_cmd',
         side_effect=mocked_remote_clean_cmd_side_effect)
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files._remote_clean_cmd', mocked_remote_clean_cmd)
+    rm_dirs = ["whatever"]
     # ----- Test -----
     reg = 'foo'
     platform_names = (
@@ -512,19 +633,52 @@ def test_remote_clean(install_targets_map, failed_platforms,
         err, msg = expected_err
         with pytest.raises(err) as exc:
             workflow_files.remote_clean(
-                reg, platform_names, timeout='irrelevant')
+                reg, platform_names, rm_dirs, timeout='irrelevant')
         assert msg in str(exc.value)
     else:
-        workflow_files.remote_clean(reg, platform_names, timeout='irrelevant')
+        workflow_files.remote_clean(
+            reg, platform_names, rm_dirs, timeout='irrelevant')
     if expected_platforms:
         for p_name in expected_platforms:
             mocked_remote_clean_cmd.assert_any_call(
-                reg, PLATFORMS[p_name], 'irrelevant')
+                reg, PLATFORMS[p_name], rm_dirs, 'irrelevant')
     else:
         mocked_remote_clean_cmd.assert_not_called()
     if failed_platforms:
         for p_name in failed_platforms:
             assert f"{p_name}: {TaskRemoteMgmtError.MSG_TIDY}" in caplog.text
+
+
+@pytest.mark.parametrize(
+    'rm_dirs, expected_args',
+    [
+        (None, []),
+        (['holodeck', 'ten_forward'],
+         ['--rm', 'holodeck', '--rm', 'ten_forward'])
+    ]
+)
+def test_remote_clean_cmd(
+    rm_dirs: Optional[List[str]],
+    expected_args: List[str],
+    monkeymock: MonkeyMock
+) -> None:
+    """Test _remote_clean_cmd()
+
+    Params:
+        rm_dirs: Argument passed to _remote_clean_cmd().
+        expected_args: Expected CLI arguments of the cylc clean command that
+            gets constructed.
+    """
+    reg = 'jean/luc/picard'
+    platform = {'name': 'enterprise', 'install target': 'mars'}
+    mock_construct_ssh_cmd = monkeymock(
+        'cylc.flow.workflow_files.construct_ssh_cmd', return_value=['blah'])
+    monkeymock('cylc.flow.workflow_files.Popen')
+
+    workflow_files._remote_clean_cmd(reg, platform, rm_dirs, timeout='dunno')
+    args, kwargs = mock_construct_ssh_cmd.call_args
+    constructed_cmd = args[0]
+    assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
 
 
 def test_remove_empty_reg_parents(tmp_path):

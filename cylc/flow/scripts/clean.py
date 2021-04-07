@@ -55,6 +55,13 @@ def get_option_parser():
     )
 
     parser.add_option(
+        '--rm', metavar='DIR[:DIR:...]',
+        help="Only clean the specified subdirectories in the run directory, "
+             "rather than the whole run directory. Accepts quoted globs.",
+        action='append', dest='rm_dirs', default=[]
+    )
+
+    parser.add_option(
         '--local-only', '--local',
         help="Only clean on the local filesystem (not remote hosts).",
         action='store_true', dest='local_only'

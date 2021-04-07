@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Union
+from typing import Iterable, Set, Union
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -212,9 +212,9 @@ def make_symlink(src, dst):
         raise WorkflowFilesError(f"Error when symlinking\n{exc}")
 
 
-def remove_dir(path: Union[Path, str]) -> None:
-    """Delete a directory including contents, including the target directory
-    if the specified path is a symlink.
+def remove_dir_and_target(path: Union[Path, str]) -> None:
+    """Delete a directory tree (i.e. including contents), as well as the
+    target directory tree if the specified path is a symlink.
 
     Args:
         path: the absolute path of the directory to delete.
@@ -240,6 +240,26 @@ def remove_dir(path: Union[Path, str]) -> None:
         rmtree(path)
 
 
+def remove_dir_or_file(path: Union[Path, str]) -> None:
+    """Delete a directory tree, or a file, or a symlink.
+    Does not follow symlinks.
+
+    Args:
+        path: the absolute path of the directory/file/symlink to delete.
+    """
+    if not os.path.isabs(path):
+        raise ValueError("Path must be absolute")
+    if os.path.islink(path):
+        LOG.debug(f"Removing symlink: {path}")
+        os.remove(path)
+    elif os.path.isfile(path):
+        LOG.debug(f"Removing file: {path}")
+        os.remove(path)
+    else:
+        LOG.debug(f"Removing directory: {path}")
+        rmtree(path)
+
+
 def get_next_rundir_number(run_path):
     """Return the new run number"""
     run_n_path = os.path.expanduser(os.path.join(run_path, "runN"))
@@ -249,3 +269,26 @@ def get_next_rundir_number(run_path):
         return int(last_run_num) + 1
     except OSError:
         return 1
+
+
+def parse_dirs(rm_dirs: Iterable[str]) -> Set[str]:
+    """Parse a list of possibly colon-separated dirs, return the set of all
+    the dirs."""
+    result: Set[str] = set()
+    for item in rm_dirs:
+        for part in item.split(':'):
+            part = part.strip()
+            if not part:
+                continue
+            is_dir = part.endswith('/')
+            part = os.path.normpath(part)
+            if is_dir:
+                part += '/'
+            if os.path.isabs(part):
+                raise ValueError("dir cannot be an absolute path")
+            if part == '.' or part.startswith('../'):
+                raise ValueError(
+                    "dir cannot be a path that points to the run directory "
+                    "or above")
+            result.add(part)
+    return result

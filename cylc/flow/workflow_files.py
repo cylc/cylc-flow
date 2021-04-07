@@ -18,6 +18,7 @@
 
 import aiofiles
 from enum import Enum
+from glob import iglob
 import logging
 import os
 from pathlib import Path
@@ -27,7 +28,7 @@ import shutil
 from subprocess import Popen, PIPE, DEVNULL
 import time
 from typing import (
-    Any, Dict, Iterable, List, Optional, Tuple, TYPE_CHECKING, Union
+    Any, Dict, Iterable, List, Optional, Set, Tuple, TYPE_CHECKING, Union
 )
 import zmq.auth
 
@@ -43,8 +44,10 @@ from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir,
     make_localhost_symlinks,
-    remove_dir,
-    get_next_rundir_number)
+    parse_dirs,
+    remove_dir_and_target,
+    get_next_rundir_number,
+    remove_dir_or_file)
 from cylc.flow.platforms import (
     get_install_target_to_platforms_map,
     get_localhost_install_target,
@@ -595,6 +598,7 @@ def _clean_check(reg: str, run_dir: Path) -> None:
         raise WorkflowFilesError(
             "Workflow name cannot be a path that points to the cylc-run "
             "directory or above")
+    # Must be dir or broken symlink:
     if not run_dir.is_dir() and not run_dir.is_symlink():
         msg = f"No directory to clean at {run_dir}"
         raise FileNotFoundError(msg)
@@ -633,28 +637,38 @@ def init_clean(reg: str, opts: 'Values') -> None:
             raise ServiceFileError(f"Cannot clean - {exc}")
 
         if platform_names and platform_names != {'localhost'}:
-            remote_clean(reg, platform_names, opts.remote_timeout)
+            remote_clean(
+                reg, platform_names, opts.rm_dirs, opts.remote_timeout)
 
     if not opts.remote_only:
-        clean(reg, local_run_dir)
+        rm_dirs = None
+        if opts.rm_dirs:
+            rm_dirs = parse_dirs(opts.rm_dirs)
+        clean(reg, local_run_dir, rm_dirs)
 
 
-def clean(reg: str, run_dir: Path) -> None:
+def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
     """Remove a stopped workflow from the local filesystem only.
 
-    Deletes the workflow run directory and any symlink dirs. Note: if the
-    run dir has already been manually deleted, it will not be possible to
-    clean the symlink dirs.
+    Deletes the workflow run directory and any symlink dirs, or just the
+    specified sub dirs if rm_dirs is specified.
+
+    Note: if the run dir has already been manually deleted, it will not be
+    possible to clean any symlink dirs.
 
     Args:
         reg: Workflow name.
         run_dir: The workflow's run dir.
+        rm_dirs: Set of sub dirs to remove instead of the whole run dir.
     """
     LOG.info("Cleaning on local filesystem")
     # Note: 'share/cycle' must come first, and '' must come last
     for possible_symlink in (
             WorkflowFiles.SHARE_CYCLE_DIR, WorkflowFiles.SHARE_DIR,
             WorkflowFiles.LOG_DIR, WorkflowFiles.WORK_DIR, ''):
+        if rm_dirs is not None:
+            if possible_symlink not in rm_dirs or possible_symlink == '':
+                continue
         name = Path(possible_symlink)
         path = Path(run_dir, possible_symlink)
         if path.is_symlink():
@@ -673,17 +687,27 @@ def clean(reg: str, run_dir: Path) -> None:
             # Remove <symlink_dir>/cylc-run/<reg>
             target_cylc_run_dir = str(target).rsplit(str(reg), 1)[0]
             target_reg_dir = Path(target_cylc_run_dir, reg)
-            if target_reg_dir.is_dir():
-                remove_dir(target_reg_dir)
+            if target_reg_dir.exists():
+                remove_dir_or_file(target_reg_dir)
             # Remove empty parents
             _remove_empty_reg_parents(reg, target_reg_dir)
 
-    remove_dir(run_dir)
-    _remove_empty_reg_parents(reg, run_dir)
+    if rm_dirs is None:
+        remove_dir_and_target(run_dir)
+        _remove_empty_reg_parents(reg, run_dir)
+    else:
+        for pattern in rm_dirs:
+            for item in iglob(os.path.join(run_dir, pattern), recursive=True):
+                # N.B. Path.glob() with an exact filename instead of pattern
+                # doesn't work for a broken symlink
+                remove_dir_or_file(item)
 
 
 def remote_clean(
-    reg: str, platform_names: Iterable[str], timeout: str
+    reg: str,
+    platform_names: Iterable[str],
+    rm_dirs: Optional[List[str]] = None,
+    timeout: str = '120'
 ) -> None:
     """Run subprocesses to clean workflows on remote install targets
     (skip localhost), given a set of platform names to look up.
@@ -692,6 +716,7 @@ def remote_clean(
         reg: Workflow name.
         platform_names: List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
+        rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling.
     """
     try:
@@ -711,7 +736,8 @@ def remote_clean(
             f"Cleaning on install target: {platforms[0]['install target']}")
         # Issue ssh command:
         pool.append(
-            (_remote_clean_cmd(reg, platforms[0], timeout), target, platforms)
+            (_remote_clean_cmd(reg, platforms[0], rm_dirs, timeout),
+             target, platforms)
         )
     failed_targets: List[str] = []
     # Handle subproc pool results almost concurrently:
@@ -732,10 +758,10 @@ def remote_clean(
                     proc.args, ret_code, out, err)
                 LOG.debug(excp)
                 if platforms:
-                    pool.append(
-                        (_remote_clean_cmd(reg, platforms[0], timeout),
-                         target, platforms)
-                    )
+                    pool.append((
+                        _remote_clean_cmd(reg, platforms[0], rm_dirs, timeout),
+                        target, platforms
+                    ))
                 else:  # Exhausted list of platforms
                     failed_targets.append(target)
             elif err:
@@ -747,7 +773,10 @@ def remote_clean(
 
 
 def _remote_clean_cmd(
-    reg: str, platform: Dict[str, str], timeout: str
+    reg: str,
+    platform: Dict[str, str],
+    rm_dirs: Optional[List[str]],
+    timeout: str
 ) -> 'Popen[str]':
     """Remove a stopped workflow on a remote host.
 
@@ -755,20 +784,19 @@ def _remote_clean_cmd(
 
     Args:
         reg: Workflow name.
-        platform: Config for the platform on which to remove the
-            workflow.
+        platform: Config for the platform on which to remove the workflow.
+        rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling the command.
     """
     LOG.debug(
         f'Cleaning on install target: {platform["install target"]} '
         f'(using platform: {platform["name"]})'
     )
-    cmd = construct_ssh_cmd(
-        ['clean', '--local-only', reg],
-        platform,
-        timeout=timeout,
-        set_verbosity=True
-    )
+    cmd = ['clean', '--local-only', reg]
+    if rm_dirs is not None:
+        for item in rm_dirs:
+            cmd += ['--rm', item]
+    cmd = construct_ssh_cmd(cmd, platform, timeout=timeout, set_verbosity=True)
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
 

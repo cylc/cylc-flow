@@ -18,7 +18,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Callable, Iterable, List
+from typing import Callable, Iterable, List, Set
 import pytest
 from unittest.mock import patch, call
 
@@ -39,7 +39,9 @@ from cylc.flow.pathutil import (
     get_workflow_test_log_name,
     make_localhost_symlinks,
     make_workflow_run_tree,
-    remove_dir
+    parse_dirs,
+    remove_dir_and_target,
+    remove_dir_or_file
 )
 
 
@@ -271,8 +273,9 @@ def test_incorrect_environment_variables_raise_error(
      ('file', NotADirectoryError),
      (None, FileNotFoundError)]
 )
-def test_remove_dir(filetype, expected_err, tmp_path):
-    """Test that remove_dir() can delete nested dirs and handle bad paths."""
+def test_remove_dir_and_target(filetype, expected_err, tmp_path):
+    """Test that remove_dir_and_target() can delete nested dirs and handle
+    bad paths."""
     test_path = tmp_path.joinpath('foo/bar')
     if filetype == 'dir':
         # Test removal of sub directories too
@@ -286,9 +289,9 @@ def test_remove_dir(filetype, expected_err, tmp_path):
 
     if expected_err:
         with pytest.raises(expected_err):
-            remove_dir(test_path)
+            remove_dir_and_target(test_path)
     else:
-        remove_dir(test_path)
+        remove_dir_and_target(test_path)
         assert test_path.exists() is False
         assert test_path.is_symlink() is False
 
@@ -299,8 +302,9 @@ def test_remove_dir(filetype, expected_err, tmp_path):
      ('file', NotADirectoryError),
      (None, None)]
 )
-def test_remove_dir_symlinks(target, expected_err, tmp_path):
-    """Test that remove_dir() can delete symlinks, including the target."""
+def test_remove_dir_and_target_symlinks(target, expected_err, tmp_path):
+    """Test that remove_dir_and_target() can delete symlinks, including
+    the target."""
     target_path = tmp_path.joinpath('x/y')
     target_path.mkdir(parents=True)
 
@@ -322,21 +326,85 @@ def test_remove_dir_symlinks(target, expected_err, tmp_path):
 
     if expected_err:
         with pytest.raises(expected_err):
-            remove_dir(symlink_path)
+            remove_dir_and_target(symlink_path)
     else:
-        remove_dir(symlink_path)
+        remove_dir_and_target(symlink_path)
         for path in [symlink_path, target_path]:
             assert path.exists() is False
             assert path.is_symlink() is False
 
 
-def test_remove_dir_relative(tmp_path):
-    """Test that you cannot use remove_dir() on a relative path.
+@pytest.mark.parametrize(
+    'func', [remove_dir_and_target, remove_dir_or_file]
+)
+def test_remove_relative(func: Callable, tmp_path: Path):
+    """Test that you cannot use remove_dir_and_target() or remove_dir_or_file()
+    on relative paths.
 
     When removing a path, we want to be absolute-ly sure where it is!
     """
     # cd to temp dir in case we accidentally succeed in deleting the path
     os.chdir(tmp_path)
     with pytest.raises(ValueError) as cm:
-        remove_dir('foo/bar')
+        func('foo/bar')
     assert 'Path must be absolute' in str(cm.value)
+
+
+def test_remove_dir_or_file(tmp_path: Path):
+    """Test remove_dir_or_file()"""
+    a_file = tmp_path.joinpath('fyle')
+    a_file.touch()
+    assert a_file.exists()
+    remove_dir_or_file(a_file)
+    assert a_file.exists() is False
+
+    a_symlink = tmp_path.joinpath('simlynk')
+    a_file.touch()
+    a_symlink.symlink_to(a_file)
+    assert a_symlink.is_symlink()
+    remove_dir_or_file(a_symlink)
+    assert a_symlink.is_symlink() is False
+    assert a_file.exists()
+
+    a_dir = tmp_path.joinpath('der')
+    # Add contents to check whole tree is removed
+    sub_dir = a_dir.joinpath('sub_der')
+    sub_dir.mkdir(parents=True)
+    sub_dir.joinpath('fyle').touch()
+    assert a_dir.exists()
+    remove_dir_or_file(a_dir)
+    assert a_dir.exists() is False
+
+
+@pytest.mark.parametrize(
+    'dirs, expected',
+    [
+        ([" "], set()),
+        (["foo", "bar"], {"foo", "bar"}),
+        (["foo:bar", "baz/*"], {"foo", "bar", "baz/*"}),
+        ([" :foo :bar:"], {"foo", "bar"}),
+        (["foo/:bar//baz "], {"foo/", "bar/baz"}),
+        ([".foo", "..bar", " ./gah"], {".foo", "..bar", "gah"})
+    ]
+)
+def test_parse_dirs(dirs: List[str], expected: Set[str]):
+    """Test parse_dirs()"""
+    assert parse_dirs(dirs) == expected
+
+
+@pytest.mark.parametrize(
+    'dirs, err_msg',
+    [
+        (["foo:/bar"],
+         "dir cannot be an absolute path"),
+        (["foo:../bar"],
+         "dir cannot be a path that points to the run directory or above"),
+        (["foo:bar/../../gah"],
+         "dir cannot be a path that points to the run directory or above"),
+    ]
+)
+def test_parse_dirs_bad(dirs: List[str], err_msg: str):
+    """Test parse_dirs() with bad inputs"""
+    with pytest.raises(ValueError) as exc:
+        parse_dirs(dirs)
+    assert err_msg in str(exc.value)
