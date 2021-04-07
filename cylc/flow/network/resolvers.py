@@ -575,7 +575,7 @@ class Resolvers(BaseResolvers):
         return (True, 'Command queued')
 
     def poll_tasks(self, tasks=None):
-        """Request the suite to poll task jobs.
+        """Request the scheduler to poll task jobs.
 
         Args:
             tasks (list, optional):
@@ -640,7 +640,7 @@ class Resolvers(BaseResolvers):
         return (True, 'Messages queued: %d' % len(messages))
 
     def reload_suite(self):
-        """Tell suite to reload the suite definition.
+        """Tell scheduler to reload the workflow config.
 
         Returns:
             tuple: (outcome, message)
@@ -670,7 +670,7 @@ class Resolvers(BaseResolvers):
         return (True, 'Command queued')
 
     def set_verbosity(self, level):
-        """Set suite verbosity to new level (for suite logs).
+        """Set scheduler verbosity to new level (for logs).
 
         Args:
             level (str): A logging level e.g. ``INFO`` or ``ERROR``.

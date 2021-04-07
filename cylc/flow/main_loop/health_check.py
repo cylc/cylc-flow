@@ -13,12 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Checks the integrity of the suite run directory.
+"""Checks the integrity of the workflow run directory.
 
-* Ensures suite run directory is still present.
+* Ensures workflow run directory is still present.
 * Ensures contact file is present and consistent with the running suite.
 
-Shuts down the suite in the event of inconsistency or error.
+Shuts down the scheduler in the event of inconsistency or error.
 
 """
 import os
@@ -30,8 +30,8 @@ from cylc.flow.main_loop import periodic
 
 @periodic
 async def health_check(scheduler, _):
-    """Perform suite health checks."""
-    # 1. check if suite run dir still present - if not shutdown.
+    """Perform scheduler health checks."""
+    # 1. check if workflow run dir still present - if not shutdown.
     _check_suite_run_dir(scheduler)
     # 2. check if contact file consistent with current start - if not
     #    shutdown.

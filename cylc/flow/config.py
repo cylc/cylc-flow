@@ -13,12 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Parse and validate the suite definition file
+"""Parse and validate the workflow definition file
 
-Set local values of variables to give suite context before parsing
+Set local values of variables to give workflow context before parsing
 config, i.e for template filters (Jinja2, python ...etc) and possibly
 needed locally by event handlers. This is needed for both running and
-non-running suite parsing (obtaining config/graph info). Potentially
+non-running workflow parsing (obtaining config/graph info). Potentially
 task-specific due to different directory paths on different task hosts,
 however, they are overridden by tasks prior to job submission.
 
@@ -130,7 +130,7 @@ def interpolate_template(tmpl, params_dict):
 
 
 class SuiteConfig:
-    """Class for suite configuration items and derived quantities."""
+    """Class for workflow configuration items and derived quantities."""
 
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
 
@@ -154,8 +154,8 @@ class SuiteConfig:
         if mem_log_func is None:
             self.mem_log = lambda *a: False
         self.mem_log("config.py:config.py: start init config")
-        self.suite = suite  # suite name
-        self.fpath = fpath  # suite definition
+        self.suite = suite  # workflow name
+        self.fpath = fpath  # workflow config file path
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.suite)
         self.log_dir = log_dir or get_suite_run_log_dir(self.suite)
@@ -206,7 +206,7 @@ class SuiteConfig:
         # one up from root
         self.feet = []
 
-        # Export local environmental suite context before config parsing.
+        # Export local environmental workflow context before config parsing.
         self.process_suite_env()
 
         # parse, upgrade, validate the suite, but don't expand with default
@@ -234,7 +234,7 @@ class SuiteConfig:
             raise SuiteConfigError("missing [scheduling][[graph]] section.")
         # (The check that 'graph' is defined is below).
 
-        # Override the suite defn with an initial point from the CLI.
+        # Override the workflow config with an initial point from the CLI.
         icp_str = getattr(self.options, 'icp', None)
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
@@ -344,7 +344,7 @@ class SuiteConfig:
         self.cycling_type = get_interval_cls().get_null().TYPE
         self.cycle_point_dump_format = get_dump_format(self.cycling_type)
 
-        # Initial point from suite definition (or CLI override above).
+        # Initial point from workflow config (or CLI override above).
         self.process_initial_cycle_point()
         self.process_start_cycle_point()
         self.process_final_cycle_point()
@@ -566,7 +566,7 @@ class SuiteConfig:
             if vis_str:
                 self.cfg['visualization'][key + ' cycle point'] = vis_str
 
-        # For static visualization, start point defaults to suite initial
+        # For static visualization, start point defaults to initial
         # point; stop point must be explicit with initial point, or None.
         if self.cfg['visualization']['initial cycle point'] is None:
             self.cfg['visualization']['initial cycle point'] = (
@@ -592,13 +592,13 @@ class SuiteConfig:
         else:
             vfcp = None
 
-        # A viz final point can't be beyond the suite final point.
+        # A viz final point can't be beyond the final point.
         if vfcp is not None and self.final_point is not None:
             if vfcp > self.final_point:
                 self.cfg['visualization']['final cycle point'] = str(
                     self.final_point)
 
-        # Replace suite and task name in suite and task URLs.
+        # Replace workflow and task name in workflow and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
             'suite_name': self.suite}
         # BACK COMPAT: CYLC_SUITE_NAME
@@ -670,8 +670,8 @@ class SuiteConfig:
         elif cfg_utc_mode is not None and cfg_utc_mode != orig_utc_mode:
             LOG.warning(
                 "UTC mode = {0} specified in configuration, but it is stored "
-                "as {1} from the initial run. The suite will continue to use "
-                "UTC mode = {1}"
+                "as {1} from the initial run. The scheduler will continue to "
+                "use UTC mode = {1}"
                 .format(cfg_utc_mode, orig_utc_mode)
             )
         self.cfg['scheduler']['UTC mode'] = orig_utc_mode
@@ -689,7 +689,7 @@ class SuiteConfig:
             self.cfg['scheduler']['cycle point time zone']
         """
         cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
-        # Get the original suite run time zone if restart:
+        # Get the original run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
         if orig_cp_tz is None:
             # Not a restart
@@ -706,7 +706,7 @@ class SuiteConfig:
                 LOG.warning(
                     "cycle point time zone = {0} specified in configuration, "
                     "but there is a stored value of {1} from the initial run. "
-                    "The suite will continue to run in {1}"
+                    "The scheduler will continue to run in {1}"
                     .format(cfg_cp_tz, orig_cp_tz)
                 )
         self.cfg['scheduler']['cycle point time zone'] = orig_cp_tz
@@ -727,7 +727,7 @@ class SuiteConfig:
                 orig_icp = '1'
             else:
                 raise SuiteConfigError(
-                    "This suite requires an initial cycle point.")
+                    "This workflow requires an initial cycle point.")
         if orig_icp == "now":
             icp = get_current_time_string()
         else:
@@ -1215,7 +1215,7 @@ class SuiteConfig:
         return self.pcfg.get(args, sparse)
 
     def adopt_orphans(self, orphans):
-        # Called by the scheduler after reloading the suite definition
+        # Called by the scheduler after reloading the workflow config
         # at run time and finding any live task proxies whose
         # definitions have been removed from the suite. Keep them
         # in the default queue and under the root family, until they
@@ -1224,7 +1224,7 @@ class SuiteConfig:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
 
     def configure_suite_state_polling_tasks(self):
-        # Check custom script is not defined for automatic suite polling tasks.
+        # Check custom script not defined for automatic workflow polling tasks.
         for l_task in self.suite_polling_tasks:
             try:
                 cs = self.pcfg.get(sparse=True)['runtime'][l_task]['script']
@@ -1235,7 +1235,7 @@ class SuiteConfig:
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError(
                         "script cannot be defined for automatic" +
-                        " suite polling task '%s':\n%s" % (l_task, cs))
+                        " workflow polling task '%s':\n%s" % (l_task, cs))
         # Generate the automatic scripting.
         for name, tdef in list(self.taskdefs.items()):
             if name not in self.suite_polling_tasks:
@@ -1309,7 +1309,7 @@ class SuiteConfig:
             rtc['environment'] = {}
 
             if tdef.run_mode == 'dummy-local':
-                # Run all dummy tasks on the suite host.
+                # Run all dummy tasks on the scheduler host.
                 rtc['platform'] = 'localhost'
 
             # Simulation mode tasks should fail in which cycle points?
@@ -1449,7 +1449,7 @@ class SuiteConfig:
         os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
-        # Add suite bin directory to PATH for suite and event handlers
+        # Add workflow bin directory to PATH for workflow and event handlers
         os.environ['PATH'] = os.pathsep.join([
             os.path.join(self.fdir, 'bin'), os.environ['PATH']])
 
@@ -1854,7 +1854,7 @@ class SuiteConfig:
                     # Beyond requested final cycle point.
                     break
                 if suite_final_point is not None and point > suite_final_point:
-                    # Beyond suite final cycle point.
+                    # Beyond final cycle point.
                     break
                 if stop_point is None and len(new_points) > n_points:
                     # Take n_points cycles from each sequence.

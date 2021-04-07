@@ -53,7 +53,7 @@ class TaskProxy:
         .jobs (list):
             A list of job ids associated with the task proxy.
         .local_job_file_path (str):
-            Path on suite host to the latest job script for running the task.
+            Path on scheduler host to the latest job script for the task.
         .late_time (float):
             Time in seconds since epoch, beyond which the task is considered
             late if it is never active.

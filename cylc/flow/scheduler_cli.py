@@ -98,7 +98,7 @@ def get_option_parser(add_std_opts=False):
 
     parser.add_option(
         "-n", "--no-detach", "--non-daemon",
-        help="Do not daemonize the suite (infers --format=plain)",
+        help="Do not daemonize the scheduler (infers --format=plain)",
         action="store_true", dest="no_detach")
 
     parser.add_option(

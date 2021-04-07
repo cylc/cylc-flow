@@ -20,7 +20,7 @@
 
 (This command is for internal use.)
 
-Invoke suite subscriber to receive published workflow output.
+Invoke subscriber to receive published workflow output.
 """
 
 import json

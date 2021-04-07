@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Syntax highlighting for cylc suite definition files, for gedit
+ Syntax highlighting for Cylc workflow config, for gedit
  and other gtksourceview programs.
 
  = Instructions =

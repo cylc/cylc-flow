@@ -18,10 +18,10 @@
 
 """cylc cat-log [OPTIONS] ARGS
 
-View Cylc suite and job log files.
+View Cylc scheduler and task job log files.
 
 Print, view-in-editor, or tail-follow content, print path, or list directory,
-of local or remote task job and suite server logs. Job runner view commands
+of local or remote task job and scheduler logs. Job runner view commands
 (e.g. 'qcat') are used if defined in global config and the job is running.
 
 For standard log types use the short-cut option argument or full filename (e.g.
@@ -30,17 +30,18 @@ for job stdout "-f o" or "-f job.out" will do).
 To list the local job log directory of a remote task, choose "-m l" (directory
 list mode) and a local file, e.g. "-f a" (job-activity.log).
 
-If remote job logs are retrieved to the suite host on completion (global config
-'[JOB-HOST]retrieve job logs = True') and the job is not currently running, the
-local (retrieved) log will be accessed unless '-o/--force-remote' is used.
+If remote job logs are retrieved to the scheduler host on completion (global
+config '[JOB-HOST]retrieve job logs = True') and the job is not currently
+running, the local (retrieved) log will be accessed unless '-o/--force-remote'
+is used.
 
-The correct cycle point format of the suite must be used for task job logs,
+The correct cycle point format of the workflow must be used for task job logs,
 but can be discovered with '--mode=d' (print-dir).
 
 Examples:
-  # for a task "bar.2020" in suite "foo"
+  # for a task "bar.2020" in workflow "foo"
 
-  # Print suite log:
+  # Print scheduler log:
   $ cylc cat-log foo
 
   # Print task stdout:
@@ -159,7 +160,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
     """
     # The log file path may contain '$USER' to be evaluated on the job host.
     if mode == 'print':
-        # Print location even if the suite does not exist yet.
+        # Print location even if it does not exist yet.
         print(logpath)
         return 0
     elif not os.path.exists(logpath) and batchview_cmd is None:
@@ -239,7 +240,7 @@ def get_option_parser():
     parser.add_option(
         "-o", "--force-remote",
         help="View remote logs remotely even if they have been retrieved"
-        " to the suite host (default False).",
+        " to the scheduler host (default False).",
         action="store_true", default=False, dest="force_remote")
 
     parser.add_option(
@@ -320,7 +321,8 @@ def main(parser, options, *args, color=False):
     """
     if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
-        # Tail and batchview commands come from global config on suite host).
+        # Tail and batchview commands come from global config on scheduler
+        # host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
         logpath = expand_path(logpath)
         tail_tmpl = expand_path(tail_tmpl)
@@ -342,7 +344,7 @@ def main(parser, options, *args, color=False):
         mode = options.mode
 
     if len(args) == 1:
-        # Cat suite logs, local only.
+        # Cat logs, local only.
         if options.filename is not None:
             raise UserInputError("The '-f' option is for job logs only.")
 
@@ -366,10 +368,10 @@ def main(parser, options, *args, color=False):
         return
 
     if len(args) == 2:
-        # Cat task job logs, may be on suite or job host.
+        # Cat task job logs, may be on scheduler or job host.
         if options.rotation_num is not None:
             raise UserInputError(
-                "only suite (not job) logs get rotated")
+                "only scheduler (not job) logs get rotated")
         task_id = args[1]
         try:
             task, point = TaskID.split(task_id)

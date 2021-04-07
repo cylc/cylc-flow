@@ -154,7 +154,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         if self.prep:
             self.add_std_option(
                 "--suite-owner",
-                help="Specify suite owner",
+                help="Specify workflow owner",
                 metavar="OWNER", action="store", default=None,
                 dest="suite_owner")
 
@@ -174,7 +174,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 "-s", "--set", metavar="NAME=VALUE",
                 help=(
                     "Set the value of a Jinja2 template variable in the"
-                    " suite definition."
+                    " workflow config."
                     " Values should be valid Python literals so strings"
                     " must be quoted"
                     " e.g. 'STR=\"string\"', INT=43, BOOL=True."
@@ -255,8 +255,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         # 1. On choosing STDERR: Log messages are diagnostics, so STDERR is the
         #    better choice for the logging stream. This allows us to use STDOUT
         #    for verbosity agnostic outputs.
-        # 2. Suite server programs will remove this handler when it becomes a
-        #    daemon.
+        # 2. Scheduler will remove this handler when it becomes a daemon.
         if options.debug or options.verbose:
             LOG.setLevel(logging.DEBUG)
         else:

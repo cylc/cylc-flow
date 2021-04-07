@@ -17,21 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc edit [OPTIONS] ARGS
 
-Edit suite definitions.
+Edit workflow configurations.
 
-Edit suite definitions without having to move to their directory
+Edit workflow configurations without having to move to their directory
 locations, and with optional reversible inlining of include-files. Note
 that Jinja2 suites can only be edited in raw form but the processed
 version can be viewed with 'cylc view -p'.
 
 1/ cylc edit SUITE
-Change to the suite definition directory and edit the flow.cylc file.
+Change to the workflow source directory and edit the flow.cylc file.
 
 2/ cylc edit -i,--inline SUITE
-Edit the suite with include-files inlined between special markers. The
+Edit the workflow with include-files inlined between special markers. The
 original flow.cylc file is temporarily replaced so that the inlined
 version is "live" during editing (i.e. you can run suites during
-editing and cylc will pick up changes to the suite definition). The
+editing and cylc will pick up changes to the workflow config). The
 inlined file is then split into its constituent include-files
 again when you exit the editor. Include-files can be nested or
 multiply-included; in the latter case only the first inclusion is
@@ -119,7 +119,7 @@ def main(parser, options, *args):
 
     if not options.inline:
         # plain old editing.
-        # move to suite def dir
+        # move to source dir
         os.chdir(suitedir)
 
         # edit the flow.cylc file

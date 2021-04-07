@@ -1033,7 +1033,7 @@ class DataStoreMgr:
                 self.schd.suite, point_string, name, submit_num)
         except SuiteConfigError:
             LOG.exception((
-                'ignoring job %s from the suite run database\n'
+                'ignoring job %s from the workflow run database\n'
                 '(its task definition has probably been deleted).'
             ) % j_id)
         except Exception:

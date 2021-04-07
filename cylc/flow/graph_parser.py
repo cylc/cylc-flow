@@ -52,7 +52,7 @@ class GraphParser:
 
     This is currently intended to process a single multi-line graph string
     (i.e. the content of a single graph section). But it could be extended to
-    store dependencies for the whole suite (call parse_graph multiple times
+    store dependencies for the whole workflow (call parse_graph multiple times
     and key results by graph section).
 
     The general form of a dependency is "EXPRESSION => NODE", where:
@@ -66,7 +66,7 @@ class GraphParser:
         * A parameterized qualified node name looks like this:
             NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
         * The default trigger type is ':succeed'.
-        * A remote suite qualified node name looks like this:
+        * A remote workflow qualified node name looks like this:
             NODE(<REMOTE-SUITE-TRIGGER>)(:TRIGGER-TYPE)
         * Trigger qualifiers are ignored on the right to allow chaining:
                "foo => bar => baz & qux"
@@ -138,7 +138,7 @@ class GraphParser:
     # Detect presence of expansion parameters in a graph line.
     REC_PARAMS = re.compile(_RE_PARAMS)
 
-    # Detect and extract suite state polling task info.
+    # Detect and extract workflow state polling task info.
     REC_SUITE_STATE = re.compile(
         r'(' + TaskID.NAME_RE + r')(<([\w.\-/]+)::(' +
         TaskID.NAME_RE + r')(' + _RE_TRIG + r')?>)')

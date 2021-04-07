@@ -1467,7 +1467,7 @@ class Broadcast(Mutation):
             `all:root -> all:FAM -> all:task -> tag:root -> tag:FAM ->
             tag:task`
 
-            Broadcasts persist, even across suite restarts, until they expire
+            Broadcasts persist, even across restarts, until they expire
             when their target cycle point is older than the oldest current in
             the suite, or until they are explicitly cancelled with this
             command.  All-cycle broadcasts do not expire.
@@ -1584,7 +1584,7 @@ class Message(Mutation):
             Send task job messages to:
             - The job stdout/stderr.
             - The job status file, if there is one.
-            - The suite server program, if communication is possible.
+            - The scheduler, if communication is possible.
 
             Task jobs use this to record and report status such
             as success and failure. Applications run by task jobs can use
@@ -1637,19 +1637,19 @@ class Resume(Mutation):
 class Reload(Mutation):
     class Meta:
         description = sstrip('''
-            Tell a suite to reload its definition at run time.
+            Tell a scheduler to reload its definition at run time.
 
             All settings including task definitions, with the exception of
-            suite log configuration, can be changed on reload. Changes to task
+            log configuration, can be changed on reload. Changes to task
             definitions take effect immediately, unless a task is already
             running at reload time.
 
-            If the suite was started with Jinja2 template variables set on the
+            If the workflow was started with Jinja2 variables set on the
             command line (cylc play --set "FOO='bar'" REG) the same template
             settings apply to the reload (only changes to the flow.cylc
             file itself are reloaded).
 
-            If the modified suite definition does not parse, failure to reload
+            If the modified config does not parse, failure to reload
             will be reported but no harm will be done to the running suite.
         ''')
         resolver = partial(mutator, command='reload_suite')
@@ -1697,7 +1697,7 @@ class SetGraphWindowExtent(Mutation):
 class Stop(Mutation):
     class Meta:
         description = sstrip('''
-            Tell a suite server program to shut down,
+            Tell a scheduler to shut down,
             or stop a specified flow from spawning any further.
 
             By default stopping suites wait for all submitted and running tasks
@@ -1712,7 +1712,7 @@ class Stop(Mutation):
             default_value=StopMode.REQUEST_CLEAN
         )
         cycle_point = CyclePoint(
-            description='Stop after the suite reaches this cycle.'
+            description='Stop after the workflow reaches this cycle.'
         )
         clock_time = TimePoint(
             description='Stop after wall-clock time passes this point.'
@@ -1730,9 +1730,9 @@ class Stop(Mutation):
 class ExtTrigger(Mutation):
     class Meta:
         description = sstrip('''
-            Report an external event message to a suite server program.
+            Report an external event message to a scheduler.
 
-            It is expected that a task in the suite has registered the same
+            It is expected that a task in the workflow has registered the same
             message as an external trigger - a special prerequisite to be
             satisfied by an external system, via this command, rather than by
             triggering off other tasks.
@@ -1744,7 +1744,7 @@ class ExtTrigger(Mutation):
             use it - e.g. to identify a new data file that the external
             triggering system is responding to.
 
-            Use the retry options in case the target suite is down or out of
+            Use the retry options in case the target scheduler is down or out of
             contact.
 
             Note: To manually trigger a task use "Trigger" not

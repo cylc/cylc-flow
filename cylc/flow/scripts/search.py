@@ -18,16 +18,16 @@
 
 """cylc search [OPTIONS] ARGS
 
-Search for patterns in suite configurations.
+Search for patterns in workflow configurations.
 
-Search for pattern matches in suite definitions and any files in the
-suite bin directory. Matches are reported by line number and suite
+Search for pattern matches in workflow config and any files in the
+workflow bin directory. Matches are reported by line number and
 section. An unquoted list of PATTERNs will be converted to an OR'd
 pattern. Note that the order of command line arguments conforms to
 normal cylc command usage (suite name first) not that of the grep
 command.
 
-Note that this command performs a text search on the suite definition,
+Note that this command performs a text search on the config file,
 it does not search the data structure that results from parsing the
 suite definition - so it will not report implicit default settings.
 
@@ -68,7 +68,7 @@ def get_option_parser():
                 ('[PATTERN2...]', 'Additional search patterns')])
 
     parser.add_option(
-        "-x", help="Do not search in the suite bin directory",
+        "-x", help="Do not search in the workflow bin directory",
         action="store_false", default=True, dest="search_bin")
 
     return parser
@@ -78,7 +78,7 @@ def get_option_parser():
 def main(parser, options, reg, *patterns):
     suite, flow_file = parse_suite_arg(options, reg)
 
-    # cylc search SUITE PATTERN
+    # cylc search REG PATTERN
     pattern = '|'.join(patterns)
 
     suitedir = os.path.dirname(flow_file)
@@ -158,7 +158,7 @@ def main(parser, options, reg, *patterns):
     if not options.search_bin:
         sys.exit(0)
 
-    # search files in suite bin directory
+    # search files in workflow bin directory
     bin_ = os.path.join(suitedir, 'bin')
     if not os.path.isdir(bin_):
         print("\nSuite " + suite + " has no bin directory", file=sys.stderr)

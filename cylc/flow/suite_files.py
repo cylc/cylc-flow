@@ -150,7 +150,7 @@ class KeyInfo():
 
 
 class SuiteFiles:
-    """Files and directories located in the suite directory."""
+    """Files and directories located in the workflow run directory."""
 
     FLOW_FILE = 'flow.cylc'
     """The workflow configuration file."""
@@ -217,26 +217,26 @@ class ContactFileFields:
 
     .. note::
 
-       The presence of this file indicates that the suite is running as it is
-       removed when a suite shuts-down, however, in exceptional circumstances,
-       if a suite is not properly shut-down this file may be left behind.
+       The presence of this file indicates that the scheduler is running as it
+       is removed on shutdown. However, in exceptional circumstances, if a
+       scheduler is not properly shut down this file may be left behind.
 
     """
 
     API = 'CYLC_API'
-    """The Suite API version string."""
+    """The scheduler API version string."""
 
     HOST = 'CYLC_SUITE_HOST'
-    """The name of the host the suite server process is running on."""
+    """The name of the host the scheduler is running on."""
 
     NAME = 'CYLC_SUITE_NAME'
     """The name of the suite."""
 
     OWNER = 'CYLC_SUITE_OWNER'
-    """The user account under which the suite server process is running."""
+    """The user account under which the scheduler is running."""
 
     PROCESS = 'CYLC_SUITE_PROCESS'
-    """The process ID of the running suite on ``CYLC_SUITE_HOST``."""
+    """The process ID of the running workflow on ``CYLC_SUITE_HOST``."""
 
     PORT = 'CYLC_SUITE_PORT'
     """The port Cylc uses to communicate with this suite."""
@@ -245,13 +245,13 @@ class ContactFileFields:
     """The port Cylc uses to publish data."""
 
     SUITE_RUN_DIR_ON_SUITE_HOST = 'CYLC_SUITE_RUN_DIR_ON_SUITE_HOST'
-    """The path to the suite run directory as seen from ``HOST``."""
+    """The path to the workflow run directory as seen from ``HOST``."""
 
     UUID = 'CYLC_SUITE_UUID'
     """Unique ID for this run of the suite."""
 
     VERSION = 'CYLC_VERSION'
-    """The Cylc version under which the suite is running."""
+    """The Cylc version under which the scheduler is running."""
 
     SCHEDULER_SSH_COMMAND = 'SCHEDULER_SSH_COMMAND'
 
@@ -286,17 +286,17 @@ To start a new run, stop the old one first with one or more of these:
 
 
 def detect_old_contact_file(reg, check_host_port=None):
-    """Detect old suite contact file.
+    """Detect old scheduler contact file.
 
     If an old contact file does not exist, do nothing. If one does exist
-    but the suite process is definitely not alive, remove it. If one exists
-    and the suite process is still alive, raise SuiteServiceFileError.
+    but the scheduler process is definitely not alive, remove it. If one exists
+    and the process is still alive, raise SuiteServiceFileError.
 
     If check_host_port is specified and does not match the (host, port)
     value in the old contact file, raise AssertionError.
 
     Args:
-        reg (str): suite name
+        reg (str): workflow name
         check_host_port (tuple): (host, port) to check against
 
     Raise:
@@ -304,9 +304,9 @@ def detect_old_contact_file(reg, check_host_port=None):
             If old contact file exists but does not have matching
             (host, port) with value of check_host_port.
         SuiteServiceFileError:
-            If old contact file exists and the suite process still alive.
+            If old contact file exists and the scheduler process still alive.
     """
-    # An old suite of the same name may be running if a contact file exists
+    # An old workflow of the same name may be running if a contact file exists
     # and can be loaded.
     try:
         data = load_contact_file(reg)
@@ -320,7 +320,7 @@ def detect_old_contact_file(reg, check_host_port=None):
         raise AssertionError("%s != (%s, %s)" % (
             check_host_port, old_host, old_port))
     # Run the "ps" command to see if the process is still running or not.
-    # If the old suite process is still running, it should show up with the
+    # If the old process is still running, it should show up with the
     # same command line as before.
     # Terminate command after 10 seconds to prevent hanging, etc.
     old_pid_str = old_proc_str.split(None, 1)[0].strip()
@@ -344,11 +344,11 @@ def detect_old_contact_file(reg, check_host_port=None):
         LOG.debug("$ %s  # return %d\n%s", ' '.join(cmd), ret_code, err)
     for line in reversed(out.splitlines()):
         if line.strip() == old_proc_str:
-            # Suite definitely still running
+            # Scheduler definitely still running
             break
         elif line.split(None, 1)[0].strip() == "PID":
             # Only "ps" header - "ps" has run, but no matching results.
-            # Suite not running. Attempt to remove suite contact file.
+            # Scheduler not running. Attempt to remove contact file.
             try:
                 os.unlink(fname)
                 return
@@ -482,12 +482,12 @@ async def load_contact_file_async(reg, run_dir=None):
 
 
 def parse_suite_arg(options, arg):
-    """From CLI arg "SUITE", return suite name and flow.cylc path.
+    """From CLI arg "SUITE", return workflow name and flow.cylc path.
 
-    * If arg is an installed suite, suite name is the installed name.
-    * If arg is a directory, suite name is the base name of the
+    * If arg is an installed suite, workflow name is the installed name.
+    * If arg is a directory, workflow name is the base name of the
       directory.
-    * If arg is a file, suite name is the base name of its container
+    * If arg is a file, workflow name is the base name of its container
       directory.
     """
     if arg == '.':
@@ -527,7 +527,7 @@ def register(
         source: directory location of flow.cylc file, default $PWD.
 
     Return:
-        The installed suite name (which may be computed here).
+        The installed workflow name (which may be computed here).
 
     Raise:
         WorkflowFilesError:
@@ -796,7 +796,7 @@ def remove_keys_on_server(keys):
 
 
 def create_server_keys(keys, suite_srv_dir):
-    """Create or renew authentication keys for suite 'reg' in the .service
+    """Create or renew authentication keys for workflow 'reg' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
 
@@ -823,7 +823,7 @@ def create_server_keys(keys, suite_srv_dir):
 
 
 def get_suite_title(reg):
-    """Return the the suite title without a full file parse
+    """Return the the workflow title without a full file parse
 
     Limitations:
     * 1st line of title only.
@@ -1084,7 +1084,7 @@ def install_workflow(
     """Install a workflow, or renew its installation.
 
     Install workflow into new run directory.
-    Create symlink to suite source location, creating any symlinks for run,
+    Create symlink to workflow source location, creating any symlinks for run,
     work, log, share, share/cycle directories.
 
     Args:
@@ -1100,13 +1100,13 @@ def install_workflow(
     Return:
         source: The source directory.
         rundir: The directory the workflow has been installed into.
-        flow_name: The installed suite name (which may be computed here).
+        flow_name: The installed workflow name (which may be computed here).
 
     Raise:
         WorkflowFilesError:
             No flow.cylc file found in source location.
             Illegal name (can look like a relative path, but not absolute).
-            Another suite already has this name (unless --redirect).
+            Another workflow already has this name (unless --redirect).
             Trying to install a workflow that is nested inside of another.
     """
 
@@ -1274,7 +1274,7 @@ def check_flow_file(
 
 
 def create_workflow_srv_dir(rundir=None, source=None):
-    """Create suite service directory"""
+    """Create workflow service directory"""
 
     workflow_srv_d = rundir.joinpath(SuiteFiles.Service.DIRNAME)
     workflow_srv_d.mkdir(exist_ok=True, parents=True)

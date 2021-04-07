@@ -33,7 +33,7 @@ KEY_VERSION = "version"
 SUITE_STATUS_RUNNING_TO_STOP = "running to stop at %s"
 SUITE_STATUS_RUNNING_TO_HOLD = "running to hold at %s"
 
-# TODO - the suite status should be a property of the Scheduler instance
+# TODO - the workflow status should be a property of the Scheduler instance
 #        rather than derived from scheduler state?
 
 
@@ -54,7 +54,7 @@ class SuiteStatus(Enum):
 
 
 class StopMode(Enum):
-    """The possible modes of a suite shutdown"""
+    """The possible modes of a scheduler shutdown"""
 
     AUTO = 'AUTOMATIC'
     """Suite has reached a state where it can automatically stop"""
@@ -77,26 +77,26 @@ class StopMode(Enum):
     def describe(self):
         """Return a user-friendly description of this state."""
         if self == self.AUTO:
-            return 'Wait until suite has completed.'
+            return 'Wait until workflow has completed.'
         if self == self.AUTO_ON_TASK_FAILURE:
             return 'Wait until the first task fails.'
         if self == self.REQUEST_CLEAN:
             return (
                 'Regular shutdown:\n'
                 '* Wait for all active jobs to complete.\n'
-                '* Run suite event handlers and wait for them to complete.'
+                '* Run workflow event handlers and wait for them to complete.'
             )
         if self == self.REQUEST_KILL:
             return (
                 'Kill shutdown:\n'
                 '* Wait for all active jobs to be killed.\n'
-                '* Run suite event handlers and wait for them to complete.'
+                '* Run workflow event handlers and wait for them to complete.'
             )
         if self == self.REQUEST_NOW:
             return (
                 'Immediate shutdown\n'
                 "* Don't kill submitted or running jobs.\n"
-                '* Run suite event handlers and wait for them to complete.'
+                '* Run workflow event handlers and wait for them to complete.'
             )
         if self == self.REQUEST_NOW_NOW:
             return (
@@ -108,7 +108,7 @@ class StopMode(Enum):
 
 
 class AutoRestartMode(Enum):
-    """The possible modes of a suite auto-restart."""
+    """The possible modes of a scheduler auto-restart."""
 
     RESTART_NORMAL = 'stop and restart'
     """Suite will stop immediately and attempt to restart."""

@@ -60,7 +60,7 @@ TUI = """
 FORE = 'default'
 BACK = 'default'
 
-# suite state colour
+# workflow state colour
 SUITE_COLOURS = {
     'running': ('light blue', BACK),
     'paused': ('brown', BACK),

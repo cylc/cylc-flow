@@ -199,7 +199,7 @@ class TuiApp:
 
     Arguments:
         reg (str):
-            Suite registration
+            Workflow registration
 
     """
 
@@ -219,7 +219,7 @@ class TuiApp:
     ] + [  # job colours for help screen
         (f'overlay_job_{status}', colour, 'light gray')
         for status, colour in JOB_COLOURS.items()
-    ] + [  # suite state colours
+    ] + [  # workflow state colours
         (f'suite_{status}',) + spec
         for status, spec in SUITE_COLOURS.items()
     ]
@@ -285,7 +285,7 @@ class TuiApp:
     def get_snapshot(self):
         """Contact the workflow, return a tree structure
 
-        In the event of error contacting the suite the
+        In the event of error contacting the scheduler the
         message is written to this Widget's header.
 
         Returns:
@@ -394,7 +394,7 @@ class TuiApp:
             return False
         data = snapshot['data']
 
-        # update the suite status message
+        # update the workflow status message
         header = [get_workflow_status_str(data)]
         status_summary = get_task_status_summary(snapshot['data'])
         if status_summary:

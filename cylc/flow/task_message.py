@@ -18,7 +18,7 @@
 Send task job messages to:
 - The stdout/stderr.
 - The job status file, if there is one.
-- The suite server program, if communication is possible.
+- The scheduler, if communication is possible.
 """
 
 from logging import getLevelName, WARNING, ERROR, CRITICAL
@@ -73,7 +73,7 @@ def record_messages(suite, task_job, messages):
     Send the messages to the suite, if possible.
 
     Arguments:
-        suite (str): Suite name.
+        suite (str): Workflow name.
         task_job (str): Task job identifier "CYCLE/TASK_NAME/SUBMIT_NUM".
         messages (list): List of messages "[[severity, message], ...]".
     """
@@ -96,7 +96,7 @@ def record_messages(suite, task_job, messages):
         pclient = get_client(suite)
     except SuiteStopped:
         # on a remote host this means the contact file is not present
-        # either the suite is stopped or the contact file is not present
+        # either the scheduler stopped or the contact file is not present
         # on the job host (i.e. comms method is polling)
         # eitherway don't try messaging
         pass

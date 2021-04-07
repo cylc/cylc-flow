@@ -53,7 +53,7 @@ These are written to the top of the task job script like this:
 If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``-l h_rt`` directive. Do not specify the ``-l h_rt`` directive explicitly if
 :cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
-limit known by the suite may be out of sync with what is submitted to the
+limit known by the scheduler may be out of sync with what is submitted to the
 job runner.
 
 .. cylc-scope::

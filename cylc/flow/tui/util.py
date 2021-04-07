@@ -333,7 +333,7 @@ def get_task_status_summary(flow):
 
 
 def get_workflow_status_str(flow):
-    """Return a suite status string for the header.
+    """Return a workflow status string for the header.
 
     Arguments:
         flow (dict):

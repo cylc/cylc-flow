@@ -399,13 +399,13 @@ async def graphql_query(flow, fields, filters=None):
 
 @pipe
 async def title(flow):
-    """Attempt to parse the suite title out of the flow config file.
+    """Attempt to parse the workflow title out of the config file.
 
     .. warning::
        This uses a fast but dumb method which may fail to extract the suite
        title.
 
-       Obtaining the suite title via :py:func:`graphql_query` is preferable
+       Obtaining the title via :py:func:`graphql_query` is preferable
        for running flows.
 
     """

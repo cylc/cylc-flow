@@ -200,7 +200,7 @@ class Scheduler:
     template_vars: Optional[dict] = None
     options: Optional[Values] = None
 
-    # suite params
+    # workflow params
     stop_mode: Optional[StopMode] = None
     stop_task: Optional[str] = None
     stop_clock_time: Optional[int] = None
@@ -398,7 +398,7 @@ class Scheduler:
         """Configure the scheduler.
 
         * Load the flow configuration.
-        * Load/write suite parameters from the DB.
+        * Load/write workflow parameters from the DB.
         * Get the data store rolling.
 
         """
@@ -429,7 +429,7 @@ class Scheduler:
         self.suite_db_mgr.on_suite_start(self.is_restart)
 
         if not self.is_restart:
-            # Set suite params that would otherwise be loaded from database:
+            # Set workflow params that would otherwise be loaded from database:
             self.options.utc_mode = get_utc_mode()
             self.options.cycle_point_tz = (
                 self.config.cfg['scheduler']['cycle point time zone'])
@@ -552,7 +552,7 @@ class Scheduler:
             'Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
         LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
         # Note that the following lines must be present at the top of
-        # the suite log file for use in reference test runs:
+        # the workflow log file for use in reference test runs:
         LOG.info('Run mode: %s', self.config.run_mode(), extra=log_extra)
         LOG.info(
             'Initial point: %s', self.config.initial_point, extra=log_extra)
@@ -805,7 +805,7 @@ class Scheduler:
                 LOG.info('Command succeeded: ' + cmdstr)
                 raise
             except Exception as exc:
-                # Don't let a bad command bring the suite down.
+                # Don't let a bad command bring the scheduler down.
                 LOG.warning(traceback.format_exc())
                 LOG.warning(str(exc))
                 LOG.warning('Command failed: ' + cmdstr)
@@ -937,7 +937,7 @@ class Scheduler:
 
     @staticmethod
     def command_set_verbosity(lvl):
-        """Set suite verbosity."""
+        """Set scheduler verbosity."""
         try:
             LOG.setLevel(int(lvl))
         except (TypeError, ValueError):
@@ -951,10 +951,10 @@ class Scheduler:
         return self.pool.remove_tasks(items)
 
     def command_reload_suite(self):
-        """Reload suite configuration."""
+        """Reload workflow configuration."""
         LOG.info("Reloading the suite definition.")
         old_tasks = set(self.config.get_task_name_list())
-        # Things that can't change on suite reload:
+        # Things that can't change on reload:
         pri_dao = self.suite_db_mgr.get_pri_dao()
         pri_dao.select_suite_params(self._load_suite_params)
 
@@ -1002,8 +1002,8 @@ class Scheduler:
 
     def _configure_contact(self):
         """Create contact file."""
-        # Make sure another suite of the same name has not started while this
-        # one is starting
+        # Make sure another workflow of the same name has not started while
+        # this one is starting
         suite_files.detect_old_contact_file(self.suite)
         # Get "pid,args" process string with "ps"
         pid_str = str(os.getpid())
@@ -1020,7 +1020,7 @@ class Scheduler:
         if ret_code or not process_str:
             raise RuntimeError(
                 'cannot get process "args" from "ps": %s' % err)
-        # Write suite contact file.
+        # Write scheduler contact file.
         # Preserve contact data in memory, for regular health check.
         fields = suite_files.ContactFileFields
         # fmt: off
@@ -1057,8 +1057,8 @@ class Scheduler:
         self.contact_data = contact_data
 
     def load_flow_file(self, is_reload=False):
-        """Load, and log the suite definition."""
-        # Local suite environment set therein.
+        """Load, and log the workflow config."""
+        # Local workflow environment set therein.
         self.config = SuiteConfig(
             self.suite,
             self.flow_file,
@@ -1101,7 +1101,7 @@ class Scheduler:
             LOG.warning('No initial cycle point provided - no cycling tasks '
                         'will be loaded.')
 
-        # Pass static cylc and suite variables to job script generation code
+        # Pass static Cylc and workflow variables to job script generation code
         self.task_job_mgr.job_file_writer.set_suite_env({
             'CYLC_UTC': str(get_utc_mode()),
             'CYLC_DEBUG': str(cylc.flow.flags.debug).lower(),
@@ -1120,9 +1120,9 @@ class Scheduler:
         * Initial/Final cycle points.
         * Start/Stop Cycle points.
         * Stop task.
-        * Suite UUID.
-        * A flag to indicate if the suite should be paused or not.
-        * Original suite run time zone.
+        * Scheduler UUID.
+        * A flag to indicate if the workflow should be paused or not.
+        * Original run time zone.
         """
         if row_idx == 0:
             LOG.info('LOADING suite parameters')
@@ -1188,16 +1188,16 @@ class Scheduler:
             LOG.info(f"+ cycle point time zone = {value}")
 
     def _load_template_vars(self, _, row):
-        """Load suite start up template variables."""
+        """Load start up template variables."""
         key, value = row
         # Command line argument takes precedence
         if key not in self.template_vars:
             self.template_vars[key] = value
 
     def run_event_handlers(self, event, reason):
-        """Run a suite event handler.
+        """Run a workflow event handler.
 
-        Run suite events in simulation and dummy mode ONLY if enabled.
+        Run workflow events in simulation and dummy mode ONLY if enabled.
         """
         conf = self.config
         try:
@@ -1256,7 +1256,7 @@ class Scheduler:
         LOG.debug("END TASK PROCESSING (took %s seconds)" % (time() - time0))
 
     def process_suite_db_queue(self):
-        """Update suite DB."""
+        """Update workflow run DB."""
         self.suite_db_mgr.process_queued_ops()
 
     def database_health_check(self):
@@ -1284,7 +1284,7 @@ class Scheduler:
                 self.suite_db_mgr.put_insert_task_late_flags(itask)
 
     def timeout_check(self):
-        """Check suite and task timers."""
+        """Check workflow and task timers."""
         self.check_suite_timer()
         if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.check_suite_inactive()
@@ -1293,11 +1293,11 @@ class Scheduler:
             self.task_job_mgr.check_task_jobs(self.suite, self.pool)
 
     async def suite_shutdown(self):
-        """Determines if the suite can be shutdown yet."""
+        """Determines if the scheduler can be shutdown yet."""
         if self.pool.check_abort_on_task_fails():
             self._set_stop(StopMode.AUTO_ON_TASK_FAILURE)
 
-        # Can suite shut down automatically?
+        # Can scheduler shut down automatically?
         if self.stop_mode is None and (
             self.stop_clock_done() or
             self.pool.stop_task_done() or
@@ -1305,7 +1305,7 @@ class Scheduler:
         ):
             self._set_stop(StopMode.AUTO)
 
-        # Is the suite ready to shut down now?
+        # Is the scheduler ready to shut down now?
         if self.pool.can_stop(self.stop_mode):
             await self.update_data_structure()
             self.proc_pool.close()
@@ -1336,7 +1336,7 @@ class Scheduler:
             self.command_kill_tasks()
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
-        # Is the suite set to auto stop [+restart] now ...
+        # Is the scheduler set to auto stop [+restart] now ...
         if self.auto_restart_time is None or time() < self.auto_restart_time:
             # ... no
             pass
@@ -1344,7 +1344,7 @@ class Scheduler:
             # ... yes - wait for local jobs to complete before restarting
             #           * Avoid polling issues see #2843
             #           * Ensure the host can be safely taken down once the
-            #             suite has stopped running.
+            #             scheduler has stopped running.
             for itask in self.pool.get_tasks():
                 if (
                         itask.state(*TASK_STATUSES_ACTIVE)
@@ -1368,7 +1368,7 @@ class Scheduler:
                 'Invalid auto_restart_mode=%s' % self.auto_restart_mode)
 
     def suite_auto_restart(self, max_retries=3):
-        """Attempt to restart the suite assuming it has already stopped."""
+        """Attempt to restart the scheduler assuming it has already stopped."""
         cmd = ['cylc', 'play', quote(self.suite)]
         if self.options.abort_if_any_task_fails:
             cmd.append('--abort-if-any-task-fails')
@@ -1452,10 +1452,10 @@ class Scheduler:
             # of the private database into it.
             self.database_health_check()
 
-            # Shutdown suite if timeouts have occurred
+            # Shutdown if timeouts have occurred
             self.timeout_check()
 
-            # Does the suite need to shutdown on task failure?
+            # Does the scheduler need to shutdown on task failure?
             await self.suite_shutdown()
 
             if self.options.profile_mode:
@@ -1471,7 +1471,7 @@ class Scheduler:
             )
 
             if not has_updated and not self.stop_mode:
-                # Has the suite stalled?
+                # Has the workflow stalled?
                 self.check_suite_stalled()
 
             # Sleep a bit for things to catch up.
@@ -1507,12 +1507,12 @@ class Scheduler:
         if has_updated:
             # Database update
             self.suite_db_mgr.put_task_pool(self.pool)
-            # Reset suite and task updated flags.
+            # Reset and task updated flags.
             self.is_updated = False
             self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
-            # Suite can't be stalled, so stop the suite timer.
+            # Can't be stalled, so stop the suite timer.
             if self.suite_timer_active:
                 self.suite_timer_active = False
                 LOG.debug(
@@ -1523,7 +1523,7 @@ class Scheduler:
         return has_updated
 
     def check_suite_timer(self):
-        """Check if suite has timed out or not."""
+        """Check if workflow has timed out or not."""
         if (self._get_events_conf(self.EVENT_TIMEOUT) is None or
                 self.already_timed_out or not self.is_stalled):
             return
@@ -1539,7 +1539,7 @@ class Scheduler:
                 raise SchedulerError('Abort on suite timeout is set')
 
     def check_suite_inactive(self):
-        """Check if suite is inactive or not."""
+        """Check if workflow is inactive or not."""
         if self.already_inactive:
             return
         if time() > self.suite_inactivity_timeout:
@@ -1553,7 +1553,7 @@ class Scheduler:
                 raise SchedulerError('Abort on suite inactivity is set')
 
     def check_suite_stalled(self):
-        """Check if suite is stalled or not."""
+        """Check if workflow is stalled or not."""
         if self.is_stalled:  # already reported
             return
         self.is_stalled = self.pool.is_stalled()
@@ -1562,7 +1562,7 @@ class Scheduler:
             self.pool.report_unmet_deps()
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
-            # Start suite timeout timer
+            # Start workflow timeout timer
             if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.set_suite_timer()
 
@@ -1666,7 +1666,7 @@ class Scheduler:
             self.publisher.stop()
         self.curve_auth.stop()  # stop the authentication thread
 
-        # Flush errors and info before removing suite contact file
+        # Flush errors and info before removing scheduler contact file
         sys.stdout.flush()
         sys.stderr.flush()
 
@@ -1697,7 +1697,7 @@ class Scheduler:
                 self.task_job_mgr.task_remote_mgr.remote_tidy()
 
         # The getattr() calls and if tests below are used in case the
-        # suite is not fully configured before the shutdown is called.
+        # scheduler is not fully configured before the shutdown is called.
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
             if isinstance(reason, CylcError):

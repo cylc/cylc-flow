@@ -22,7 +22,7 @@ Record task job messages.
 Send task job messages to:
 - The job stdout/stderr.
 - The job status file, if there is one.
-- The suite server program, if communication is possible.
+- The scheduler program, if communication is possible.
 
 Task jobs use this command to record and report status such as success and
 failure. Applications run by task jobs can use this command to report messages
@@ -65,8 +65,8 @@ Note: to abort a job script with a custom error message, use cylc__job_abort:
 
 For backward compatibility, if number of arguments is less than or equal to 2,
 the command assumes the classic interface, where all arguments are messages.
-Otherwise, the first 2 arguments are assumed to be the suite name and the task
-job identifier.
+Otherwise, the first 2 arguments are assumed to be the workflow name and the
+task job identifier.
 """
 
 

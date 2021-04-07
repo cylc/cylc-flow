@@ -183,7 +183,7 @@ class UnicodeRuleChecker():
 
 
 class SuiteNameValidator(UnicodeRuleChecker):
-    """The rules for valid suite names:"""
+    """The rules for valid workflow names:"""
 
     RULES = [
         length(1, 254),

@@ -26,7 +26,8 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --debug "${SUITE_NAME}"
 
-# Live mode run: outputs not received, suite shuts down early without running baz
+# Live mode run: outputs not received, scheduler shuts down early without
+# running baz
 suite_run_ok "${TEST_NAME_BASE}-run-live" \
     cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 LOG="$(cylc log -m p "$SUITE_NAME")"

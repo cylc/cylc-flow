@@ -69,7 +69,7 @@ R1 = """
 
     # SYNTAX: 2.4
     # text inside <> should be highlighted
-    # optionally suite / task could be highlighted
+    # optionally workflow / task could be highlighted
     <other.suite::foo> => foo
     foo & <other.suite::task_bar> => baz
 

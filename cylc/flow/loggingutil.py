@@ -16,7 +16,7 @@
 """Logging utilities.
 
 This module provides:
-- A custom rolling file handler for suite logs with date-time names.
+- A custom rolling file handler for scheduler logs with date-time names.
 - A formatter with ISO date time and indented multi-line messages.
   Note: The ISO date time bit is redundant in Python 3,
   because "time.strftime" will handle time zone from "localtime" properly.
@@ -105,10 +105,10 @@ class CylcLogFormatter(logging.Formatter):
 
 
 class TimestampRotatingFileHandler(logging.FileHandler):
-    """Rotating suite logs using creation time stamps for names.
+    """Rotating scheduler logs using creation time stamps for names.
 
     Argument:
-        suite (str): suite name
+        suite (str): workflow name
         no_detach (bool): non-detach mode? (Default=False)
     """
 

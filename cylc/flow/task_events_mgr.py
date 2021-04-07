@@ -100,7 +100,7 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
     except IOError as exc:
         # This happens when there is no job directory, e.g. if job host
         # selection command causes an submission failure, there will be no job
-        # directory. In this case, just send the information to the suite log.
+        # directory. In this case, just send the info to the scheduler log.
         LOG.exception(exc)
         LOG.info(ctx_str)
     if ctx.cmd and ctx.ret_code:
@@ -134,14 +134,14 @@ class EventData(Enum):
 
 
 def get_event_handler_data(task_cfg, suite_cfg):
-    """Extract event handler data from suite and task metadata."""
+    """Extract event handler data from workflow and task metadata."""
     handler_data = {}
     # task metadata
     for key, value in task_cfg['meta'].items():
         if key == "URL":
             handler_data[EventData.TaskURL.value] = quote(value)
         handler_data[key] = quote(value)
-    # suite metadata
+    # workflow metadata
     for key, value in suite_cfg['meta'].items():
         if key == "URL":
             handler_data[EventData.SuiteURL.value] = quote(value)
@@ -401,7 +401,7 @@ class TaskEventsManager():
                 itask, severity, message, event_time, flag, submit_num):
             return None
 
-        # always update the suite state summary for latest message
+        # always update the workflow state summary for latest message
         if flag == self.FLAG_POLLED:
             new_msg = f'{message} {self.FLAG_POLLED}'
         else:
@@ -648,7 +648,7 @@ class TaskEventsManager():
         for id_key in sorted(id_keys):
             (_, event), point, name, submit_num = id_key
             stdin_str += "%s: %s/%s/%02d\n" % (event, point, name, submit_num)
-        # STDIN for mail, event info + suite detail
+        # STDIN for mail, event info + workflow detail
         stdin_str += "\n"
         for label, value in [
                 ('suite', schd_ctx.suite),
@@ -690,7 +690,7 @@ class TaskEventsManager():
                 LOG.exception(exc)
 
     def _get_events_conf(self, itask, key, default=None):
-        """Return an events setting from suite then global configuration."""
+        """Return an events setting from workflow then global configuration."""
         for getter in [
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["mail"],
@@ -1156,7 +1156,7 @@ class TaskEventsManager():
                         quote(str(itask.summary['submit_method_id'])),
                     EventData.JobRunnerName_old.value:
                         quote(str(itask.summary['job_runner_name'])),
-                    # task and suite metadata
+                    # task and workflow metadata
                     **get_event_handler_data(
                         itask.tdef.rtconfig, self.suite_cfg)
                 }

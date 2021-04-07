@@ -32,7 +32,8 @@ This should specify test platforms under the [platforms] section. Additional
 global config items can be added on the fly using the create_test_global_config
 shell function defined in the test_header.
 
-Suite run directories are only cleaned up for passing tests on the suite host.
+Workflow run directories are only cleaned up for passing tests on the scheduler
+host.
 
 Set "export CYLC_TEST_DEBUG=true" to print failed-test stderr to the terminal.
 

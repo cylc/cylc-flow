@@ -17,8 +17,8 @@
 
 This module provides logic to:
 - Set up the directory structure on remote job hosts.
-  - Copy suite service files to remote job hosts for communication clients.
-  - Clean up of service files on suite shutdown.
+  - Copy scheduler service files to remote job hosts for communication clients.
+  - Clean up of service files on scheduler shutdown.
 - Implement basic host select functionality.
 """
 
@@ -161,7 +161,7 @@ class TaskRemoteMgr:
             client_pub_key_dir: str) -> None:
         """Initialise a remote host if necessary.
 
-        Call "cylc remote-init" to install suite items to remote:
+        Call "cylc remote-init" to install workflow items to remote:
             ".service/contact": For TCP task communication
             "python/": if source exists
 
@@ -215,10 +215,10 @@ class TaskRemoteMgr:
              curve_auth, client_pub_key_dir])
 
     def remote_tidy(self):
-        """Remove suite contact files and keys from initialised remotes.
+        """Remove scheduler contact files and keys from initialised remotes.
 
         Call "cylc remote-tidy".
-        This method is called on suite shutdown, so we want nothing to hang.
+        Called on scheduler shutdown, so we want nothing to hang.
         Timeout any incomplete commands after 10 seconds.
         """
         # Issue all SSH commands in parallel
@@ -396,7 +396,7 @@ class TaskRemoteMgr:
         Return (list):
             Each item is (source_path, dest_path) where:
             - source_path is the path to the source file to install.
-            - dest_path is relative path under suite run directory
+            - dest_path is relative path under workflow run directory
               at target remote.
         """
         items = []

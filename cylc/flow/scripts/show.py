@@ -18,7 +18,7 @@
 
 """cylc show [OPTIONS] ARGS
 
-Display suite and task information.
+Display workflow and task information.
 
 Query a running workflow for:
   $ cylc show REG  # workflow metadata
@@ -165,7 +165,7 @@ def main(_, options, suite, *task_args):
             'request_string': query,
             'variables': {'wFlows': [suite]}
         }
-        # Print suite info.
+        # Print workflow info.
         results = pclient('graphql', query_kwargs)
         for workflow in results['workflows']:
             flat_data = flatten_data(workflow)
@@ -185,7 +185,7 @@ def main(_, options, suite, *task_args):
             'request_string': tasks_query,
             'variables': {'wFlows': [suite], 'taskIds': task_names}
         }
-        # Print suite info.
+        # Print workflow info.
         results = pclient('graphql', tasks_kwargs)
         multi = len(results['tasks']) > 1
         for task in results['tasks']:

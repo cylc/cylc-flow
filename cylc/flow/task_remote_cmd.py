@@ -60,7 +60,7 @@ def remove_keys_on_client(srvd, install_target, full_clean=False):
 
 
 def create_client_keys(srvd, install_target):
-    """Create or renew authentication keys for suite 'reg' in the .service
+    """Create or renew authentication keys for workflow 'reg' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
 
@@ -88,7 +88,7 @@ def remote_init(install_target, rund, *dirs_to_symlink):
 
     Arguments:
         install_target (str): target to be initialised
-        rund (str): suite run directory
+        rund (str): workflow run directory
         dirs_to_symlink (list): directories to be symlinked in form
         [directory=symlink_location, ...]
     """
@@ -163,7 +163,7 @@ def remote_tidy(install_target, rund):
 
     Arguments:
         install_target (str): install target name
-        rund (str): suite run directory
+        rund (str): workflow run directory
     """
     rund = os.path.expandvars(rund)
     srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)

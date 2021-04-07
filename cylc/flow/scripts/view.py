@@ -18,13 +18,13 @@
 
 """cylc view [OPTIONS] ARGS
 
-View a processed suite configuration.
+View a processed workflow configuration.
 
 Note:
   This is different to `cylc config` which displays the parsed
   configuration (as Cylc would see it).
 
-View a read-only temporary copy of suite NAME's flow.cylc file, in your
+View a read-only temporary copy of a workflow config file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
 
 The edit process is spawned in the foreground as follows:
@@ -103,7 +103,7 @@ def get_option_parser():
         action="store_true", default=False, dest="geditor")
 
     parser.add_option(
-        "--stdout", help="Print the suite definition to stdout.",
+        "--stdout", help="Print the workflow config to stdout.",
         action="store_true", default=False, dest="stdout")
 
     parser.add_option(

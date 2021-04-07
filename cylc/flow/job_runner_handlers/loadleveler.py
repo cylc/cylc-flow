@@ -50,7 +50,7 @@ These are written to the top of the task job script like this:
 
 If ``restart=yes`` is specified as a directive for loadleveler, the job will
 automatically trap SIGUSR1, which loadleveler may use to preempt the job. On
-trapping SIGUSR1, the job will inform the suite that it has been vacated by
+trapping SIGUSR1, the job will inform the scheduler that it has been vacated by
 loadleveler. This will put it back to the submitted state, until it starts
 running again.
 

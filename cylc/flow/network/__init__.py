@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Package for network interfaces to cylc suite server objects."""
+"""Package for network interfaces to Cylc scheduler objects."""
 
 import asyncio
 import getpass
@@ -63,14 +63,14 @@ def decode_(message):
 def get_location(suite: str):
     """Extract host and port from a suite's contact file.
 
-    NB: if it fails to load the suite contact file, it will exit.
+    NB: if it fails to load the scheduler contact file, it will exit.
 
     Args:
-        suite (str): suite name
+        suite (str): workflow name
     Returns:
         Tuple[str, int, int]: tuple with the host name and port numbers.
     Raises:
-        ClientError: if the suite is not running.
+        ClientError: if the scheduler is not running.
     """
     try:
         contact = load_contact_file(suite)

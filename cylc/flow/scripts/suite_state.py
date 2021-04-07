@@ -18,13 +18,13 @@
 
 r"""cylc suite-state REG [OPTIONS]
 
-Retrieve task states from the suite database.
+Retrieve task states from the workflow run database.
 
-Print task states retrieved from a suite database; or (with --task,
+Print task states retrieved from a workflow database; or (with --task,
 --point, and --status) poll until a given task reaches a given state; or (with
 --task, --point, and --message) poll until a task receives a given message.
 Polling is configurable with --interval and --max-polls; for a one-off
-check use --max-polls=1. The suite database does not need to exist at
+check use --max-polls=1. The database does not need to exist at
 the time polling commences but allocated polls are consumed waiting for
 it (consider max-polls*interval as an overall timeout).
 
@@ -32,7 +32,7 @@ Note for non-cycling tasks --point=1 must be provided.
 
 For your own suites the database location is determined by your
 site/user config. For other suites, e.g. those owned by others, or
-mirrored suite databases, use --run-dir=DIR to specify the location.
+mirrored databases, use --run-dir=DIR to specify the location.
 
 Examples:
   $ cylc suite-state REG --task=TASK --point=POINT --status=STATUS
@@ -69,11 +69,11 @@ from metomi.isodatetime.parsers import TimePointParser
 
 
 class SuitePoller(Poller):
-    """A polling object that checks suite state."""
+    """A polling object that checks workflow state."""
 
     def connect(self):
-        """Connect to the suite db, polling if necessary in case the
-        suite has not been started up yet."""
+        """Connect to the workflow run db, polling if necessary in case the
+        scheduler has not been started up yet."""
 
         # Returns True if connected, otherwise (one-off failed to
         # connect, or max number of polls exhausted) False
@@ -115,7 +115,7 @@ class SuitePoller(Poller):
         return connected, self.args['cycle']
 
     def check(self):
-        """Return True if desired suite state achieved, else False"""
+        """Return True if desired workflow state achieved, else False"""
         return self.checker.task_state_met(
             self.args['task'], self.args['cycle'],
             self.args['status'], self.args['message'])

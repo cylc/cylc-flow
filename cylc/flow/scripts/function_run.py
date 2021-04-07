@@ -20,7 +20,7 @@
 
 Run a Python function "<name>(*args, **kwargs)" in the process pool. It must be
 defined in a module of the same name. Positional and keyword arguments must be
-passed in as JSON strings. <src-dir> is the suite source dir, needed to find
+passed in as JSON strings. <src-dir> is the workflow source dir, needed to find
 local xtrigger modules.
 """
 import sys

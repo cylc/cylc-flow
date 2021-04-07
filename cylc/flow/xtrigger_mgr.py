@@ -88,12 +88,12 @@ class XtriggerManager:
     call.
 
     Args:
-        suite: suite name
-        user: suite owner
+        suite: workflow name
+        user: workflow owner
         broadcast_mgr: the Broadcast Manager
         proc_pool: pool of Subprocesses
-        suite_run_dir: suite run directory
-        suite_share_dir: suite share directory
+        suite_run_dir: workflow run directory
+        suite_share_dir: workflow share directory
 
     """
 
@@ -107,7 +107,7 @@ class XtriggerManager:
         suite_run_dir: Optional[str] = None,
         suite_share_dir: Optional[str] = None,
     ):
-        # Suite function and clock triggers by label.
+        # Workflow function and clock triggers by label.
         self.functx_map: Dict[str, SubFuncContext] = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
@@ -193,7 +193,7 @@ class XtriggerManager:
         self.functx_map[label].func_kwargs.update(kwargs)
 
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
-        """Load satisfied xtrigger results from suite DB.
+        """Load satisfied xtrigger results from workflow run DB.
 
         Args:
             row_idx (int): row index (used for logging)

@@ -18,9 +18,9 @@
 
 """cylc report-timings [OPTIONS] REG
 
-Display suite timing information.
+Display workflow timing information.
 
-Retrieve suite timing information for wait and run time performance analysis.
+Retrieve timing information for wait and run time performance analysis.
 Raw output and summary output (in text or HTML format) are available.  Output
 is sent to standard output, unless an output filename is supplied.
 

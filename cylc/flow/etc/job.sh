@@ -25,7 +25,7 @@
 ###############################################################################
 # The main function for a cylc task job.
 cylc__job__main() {
-    # Export CYLC_ suite and task environment variables
+    # Export CYLC_ workflow and task job environment variables
     cylc__job__inst__cylc_env
     # Turn on xtrace in debug mode
     if "${CYLC_DEBUG:-false}"; then
@@ -113,7 +113,7 @@ cylc__job__main() {
     cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
     # System paths:
-    # * suite directory (installed run-dir first).
+    # * workflow directory (installed run-dir first).
     export PATH="${CYLC_SUITE_RUN_DIR}/bin:${PATH}"
     export PYTHONPATH="${CYLC_SUITE_RUN_DIR}/lib/python:${PYTHONPATH:-}"
     # Create share and work directories
@@ -199,7 +199,7 @@ cylc__job__wait_cylc_message_started() {
 }
 
 ###############################################################################
-# Poll existence of pattern from suite log for up to a minute.
+# Poll existence of pattern from scheduler log for up to a minute.
 cylc__job__poll_grep_suite_log() {
     local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
     while ! grep -s "$@" "${CYLC_SUITE_LOG_DIR}/log"; do
@@ -238,7 +238,7 @@ cylc__job__run_inst_func() {
 #   signal: trapped or given signal
 #   run_err_script (boolean): run job err script or not
 #   messages (remaining arguments):
-#     messages to send back to the suite server program,
+#     messages to send back to the scheduler,
 #     see "cylc help message" for format of messages.
 # Returns:
 #   exit ${CYLC_TASK_USER_SCRIPT_EXITCODE}

@@ -55,7 +55,7 @@ These are written to the top of the task job script like this:
 If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``--time`` directive. Do not specify the ``--time`` directive explicitly if
 :cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
-limit known by the suite may be out of sync with what is submitted to the
+limit known by the scheduler may be out of sync with what is submitted to the
 job runner.
 
 Cylc supports heterogeneous Slurm jobs via special numbered directive prefixes

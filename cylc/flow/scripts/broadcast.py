@@ -31,7 +31,7 @@ by normal [runtime] inheritance. In other words, it follows this order:
 
 all:root -> all:FAM -> all:task -> tag:root -> tag:FAM -> tag:task
 
-Broadcasts persist, even across suite restarts, until they expire when
+Broadcasts persist, even across restarts, until they expire when
 their target cycle point is older than the oldest current in the suite,
 or until they are explicitly cancelled with this command.  All-cycle
 broadcasts do not expire.
@@ -73,7 +73,7 @@ from standard input.
 
 Broadcast cannot change [runtime] inheritance.
 
-See also 'cylc reload' - reload a modified suite definition at run time."""
+See also 'cylc reload' - reload a modified workflow config at run time."""
 
 import os.path
 import sys

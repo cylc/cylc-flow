@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Client for suite runtime API."""
+"""Client for workflow runtime API."""
 
 from functools import partial
 import os
@@ -58,7 +58,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
 
     Args:
         suite (str):
-            Name of the suite to connect to.
+            Name of the workflow to connect to.
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
@@ -76,9 +76,9 @@ class SuiteRuntimeClient(ZMQSocketBase):
 
     Attributes:
         host (str):
-            Suite host name.
+            Scheduler host name.
         port (int):
-            Suite host port.
+            Scheduler host port.
         timeout_handler (function):
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
@@ -96,7 +96,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
           "args": {...}}
 
     Raises:
-        ClientError: if the suite is not running.
+        ClientError: if the workflow is not running.
 
     Call server "endpoints" using:
         ``__call__``, ``serial_request``
@@ -185,7 +185,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
             raise ClientTimeout(
                 'Timeout waiting for server response.'
                 ' This could be due to network or server issues.'
-                ' Check the suite log.'
+                ' Check the scheduler log.'
             )
 
         if msg['command'] in PB_METHOD_MAP:
@@ -268,24 +268,24 @@ class SuiteRuntimeClient(ZMQSocketBase):
         """Handle the eventuality of a communication timeout with the suite.
 
         Args:
-            suite (str): suite name
+            suite (str): workflow name
             host (str): host name
             port (Union[int, str]): port number
         Raises:
-            ClientError: if the suite has already stopped.
+            ClientError: if the scheduler has already stopped.
         """
         if suite is None:
             return
-        # Cannot connect, perhaps suite is no longer running and is leaving
+        # Cannot connect, perhaps scheduler is no longer running and is leaving
         # behind a contact file?
         try:
             detect_old_contact_file(suite, (host, port))
         except (AssertionError, SuiteServiceFileError):
-            # * contact file not have matching (host, port) to suite proc
-            # * old contact file exists and the suite process still alive
+            # * contact file not matching (host, port) to scheduler process
+            # * old contact file exists and the scheduler process still alive
             return
         else:
-            # the suite has stopped
+            # the scheduler has stopped
             raise SuiteStopped(suite)
 
     __call__ = serial_request

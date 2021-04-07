@@ -74,7 +74,7 @@ class SuiteEventHandler():
         return default
 
     def handle(self, config, ctx):
-        """Handle a suite event."""
+        """Handle a workflow event."""
         self._run_event_mail(config, ctx)
         self._run_event_custom_handlers(config, ctx)
         if config.options.reftest and ctx.event == self.EVENT_SHUTDOWN:
@@ -183,7 +183,7 @@ class SuiteEventHandler():
 
     @staticmethod
     def _run_event_handlers_callback(proc_ctx, abort_on_error=False):
-        """Callback on completion of a suite event handler."""
+        """Callback on completion of a workflow event handler."""
         if proc_ctx.ret_code:
             msg = '%s EVENT HANDLER FAILED' % proc_ctx.cmd_key[1]
             LOG.error(str(proc_ctx))
@@ -195,7 +195,7 @@ class SuiteEventHandler():
 
     @staticmethod
     def _run_event_mail_callback(proc_ctx):
-        """Callback the mail command for notification of a suite event."""
+        """Callback the mail command for notification of a workflow event."""
         if proc_ctx.ret_code:
             LOG.warning(str(proc_ctx))
         else:

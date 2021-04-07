@@ -694,7 +694,7 @@ class CylcConfigValidator(ParsecValidator):
             return None
         value = cls.strip_and_unquote(keys, value)
         if value == 'now':
-            # Handle this later in config.py when the suite UTC mode is known.
+            # Handle later in config.py when the scheduler UTC mode is known.
             return value
         if "next" in value or "previous" in value:
             # Handle this later, as for "now".

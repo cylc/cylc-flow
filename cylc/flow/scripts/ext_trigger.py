@@ -18,10 +18,10 @@
 
 """cylc ext-trigger [OPTIONS] ARGS
 
-Report an external event message to a suite server program.
+Report an external event message to a workflow scheduler.
 
-It is expected that a task in the suite has registered the same message as an
-external trigger - a special prerequisite to be satisfied by an external
+It is expected that a task in the workflow has registered the same message as
+an external trigger - a special prerequisite to be satisfied by an external
 system, via this command, rather than by triggering off other tasks.
 
 The ID argument should uniquely distinguish one external trigger event from the
@@ -30,7 +30,7 @@ message ID is broadcast to all downstream tasks in the cycle point as
 $CYLC_EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file
 that the external triggering system is responding to.
 
-Use the retry options in case the target suite is down or out of contact.
+Use the retry options in case the target scheduler is down or out of contact.
 
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 

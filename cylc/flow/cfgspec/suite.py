@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Define all legal items and values for cylc suite definition files."""
+"""Define all legal items and values for Cylc workflow config files."""
 
 import re
 
@@ -52,7 +52,7 @@ DEPRECATION_WARN = '''
 with Conf(
     'flow.cylc',
     desc='''
-        Defines a cylc suite configuration.
+        Defines a Cylc workflow configuration.
 
         Embedded Jinja2 code (see :ref:`Jinja`) must process to a valid
         raw flow.cylc file. See also :ref:`FlowConfigFile` for a descriptive
@@ -69,7 +69,7 @@ with Conf(
     with Conf('meta', desc='''
         Section containing metadata items for this suite. Several items (title,
         description, URL) are pre-defined and are used by Cylc. Others can be
-        user-defined and passed to suite event handlers to be interpreted
+        user-defined and passed to workflow event handlers to be interpreted
         according to your needs. For example, the value of a "suite-priority"
         item could determine how an event handler responds to failure events.
     '''):
@@ -82,9 +82,8 @@ with Conf(
             time with the ``cylc show`` command.
         ''')
         Conf('URL', VDR.V_STRING, '', desc='''
-            A web URL to suite documentation.  If present it can be browsed
-            with the ``cylc doc`` command. The string template
-            ``%(suite_name)s`` will be replaced with the actual suite name.
+            A web URL to workflow documentation. The string template
+            ``%(suite_name)s`` will be replaced with the actual workflow name.
             See also :cylc:conf:`flow.cylc[runtime][<namespace>][meta]URL`.
 
             Example:
@@ -93,9 +92,9 @@ with Conf(
         ''')
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
             Any user-defined metadata item. These,
-            like title, URL, etc. can be passed to suite event handlers to be
-            interpreted according to your needs. For example,
-            "suite-priority".
+            like title, URL, etc. can be passed to workflow event handlers to
+            be interpreted according to your needs. For example,
+            "workflow-priority".
         ''')
     with Conf('scheduler'):
         Conf('UTC mode', VDR.V_BOOLEAN)
@@ -210,7 +209,7 @@ with Conf(
             If this isn't set (and :cylc:conf:`flow.cylc[scheduler]UTC mode`
             is also not set), then it will default to the local time zone at
             the time of running the suite. This will persist over local time
-            zone changes (e.g. if the suite is run during winter time, then
+            zone changes (e.g. if the workflow is run during winter time, then
             stopped, then restarted after summer time has begun, the cycle
             points will remain in winter time).
 
@@ -268,15 +267,15 @@ with Conf(
         with Conf('mail'):
             Conf('footer', VDR.V_STRING, desc='''
                 Specify a string or string template for footers of
-                emails sent for both suite and task events.
+                emails sent for both workflow and task events.
 
                 ================ ======================
                 Syntax           Description
                 ================ ======================
-                ``%(host)s``     Suite host name.
-                ``%(port)s``     Suite port number.
-                ``%(owner)s``    Suite owner name.
-                ``%(suite)s``    Suite name
+                ``%(host)s``     Scheduler host name.
+                ``%(port)s``     Scheduler port number.
+                ``%(owner)s``    Workflow owner name.
+                ``%(suite)s``    Workflow name
                 ================ ======================
 
                 Example:
@@ -289,8 +288,8 @@ with Conf(
                 by the ``mail`` command.
             ''')
             Conf('from', VDR.V_STRING, desc='''
-                Specify an alternative ``from`` email address for suite event
-                notifications.
+                Specify an alternative ``from`` email address for workflow
+                event notifications.
             ''')
             Conf('task event batch interval', VDR.V_INTERVAL, desc='''
                 Gather all task event notifications in the given interval
@@ -343,11 +342,9 @@ with Conf(
         This section allows cylc to determine when tasks are ready to run.
     '''):
         Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
-            In a cold start each cycling task (unless specifically excluded
-            under :cylc:conf:`[..][special tasks]`) will be loaded into the
-            suite with this cycle point, or with the closest subsequent valid
-            cycle point for the task. This item can be overridden on the
-            command line.
+            At start-up each cycling task will be loaded with this cycle point,
+            or with the closest subsequent valid cycle point for the task. This
+            item can be overridden on the command line.
 
             In integer cycling, the default is ``1``.
 
@@ -358,8 +355,8 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
 
             The string ``now`` converts to the current date-time on the suite
-            host (adjusted to UTC if the suite is in UTC mode but the host is
-            not) to minute resolution.  Minutes (or hours, etc.) may be
+            host (adjusted to UTC if the scheduler is in UTC mode but the host
+            is not) to minute resolution.  Minutes (or hours, etc.) may be
             ignored depending on the value of
 
             :cylc:conf:`flow.cylc[scheduler]cycle point format`.
@@ -370,8 +367,8 @@ with Conf(
         Conf('final cycle point', VDR.V_STRING, desc='''
             Cycling tasks are held once they pass the final cycle point, if
             one is specified. Once all tasks have achieved this state the
-            suite will shut down. If this item is provided you can override it
-            on the command line.
+            scheduler will shut down. If this item is provided you can override
+            it on the command line.
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
@@ -380,20 +377,20 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
-            in a cycling suite it is possible to restrict the initial cycle
+            in a cycling workflow it is possible to restrict the initial cycle
             point by defining a list of truncated time points under the
             initial cycle point constraints.
 
             Examples: T00, T06, T-30).
         ''')
         Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
-            In a cycling suite it is possible to restrict the final cycle
+            In a cycling workflow it is possible to restrict the final cycle
             point by defining a list of truncated time points under the final
             cycle point constraints.
         ''')
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
             Cycling tasks are held once they pass this cycle point, if
-            specified. Unlike for the final cycle point, the suite will not
+            specified. Unlike for the final cycle point, the scheduler will not
             shut down once all tasks have passed this point. If this item
             is provided you can override it on the command line.
         ''')
@@ -412,13 +409,13 @@ with Conf(
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
             Cylc runs using the proleptic Gregorian calendar by default. This
-            item allows you to either run the suite using the 360 day calendar
-            (12 months of 30 days in a year) or using integer cycling. It also
-            supports use of the 365 (never a leap year) and 366 (always a leap
-            year) calendars.
+            item allows you to either run the workflow using the 360 day
+            calendar (12 months of 30 days in a year) or using integer cycling.
+            It also supports use of the 365 (never a leap year) and 366 (always
+            a leap year) calendars.
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
-            Runahead limiting prevents the fastest tasks in a suite from
+            Runahead limiting prevents the fastest tasks in a workflow from
             getting too far ahead of the slowest ones, as documented in
             :ref:`RunaheadLimit`.
 
@@ -434,17 +431,17 @@ with Conf(
 
                The integer limit format is irrespective of the labelling of
                cycle points. For example, if the runahead limit is ``P3`` and
-               you have a suite *solely* consisting of a task that repeats
+               you have a workflow *solely* consisting of a task that repeats
                "every four cycles", it would still spawn three consecutive
                cycle points at a time (starting with 1, 5 and 9). This is
-               because the suite is functionally equivalent to one where the
+               because the workflow is functionally equivalent to one where the
                task repeats every cycle.
 
             .. note::
 
                The runahead limit may be automatically raised if this is
                necessary to allow a future task to be triggered, preventing
-               the suite from stalling.
+               the scheduler from stalling.
         ''')
 
         with Conf('queues', desc='''
@@ -452,7 +449,7 @@ with Conf(
             simultaneously active tasks (submitted or running) can be limited,
             per queue. By default a single queue called *default* is defined,
             with all tasks assigned to it and no limit. To use a single queue
-            for the whole suite just set the limit on the *default* queue as
+            for the whole workflow just set the limit on the *default* queue as
             required. See also :ref:`InternalQueues`.
         '''):
             with Conf('default'):
@@ -548,10 +545,10 @@ with Conf(
             ''')
 
         with Conf('graph', desc='''
-            The suite dependency graph is defined under this section.  You can
-            plot the dependency graph as you work on it, with ``cylc graph``
-            or by right clicking on the suite in the db viewer.  See also
-            :ref:`User Guide Scheduling`.
+            The workflow dependency graph is defined under this section. You
+            can plot the dependency graph as you work on it, with 
+            ``cylc graph`` or by right clicking on the suite in the db viewer.
+            See also :ref:`User Guide Scheduling`.
         '''):
             Conf('<recurrence>', VDR.V_STRING, desc='''
                 The recurrence defines the sequence of cycle points
@@ -688,7 +685,7 @@ with Conf(
             Conf('init-script', VDR.V_STRING, desc='''
                 Custom script invoked by the task job script before the task
                 execution environment is configured - so it does not have
-                access to any suite or task environment variables. It can be
+                access to any workflow or task environment variables. It can be
                 an external command or script, or inlined scripting. The
                 original intention for this item was to allow remote tasks to
                 source login scripts to configure their access to cylc, but
@@ -803,7 +800,7 @@ with Conf(
 
                 Example::
 
-                   echo "Hello from suite ${CYLC_SUITE_NAME}!"
+                   echo "Hello from workflow ${CYLC_SUITE_NAME}!"
             ''')
             Conf('script', VDR.V_STRING, desc='''
                 The main custom script invoked from the task job script. It
@@ -843,7 +840,7 @@ with Conf(
 
             Conf('work sub-directory', VDR.V_STRING, desc='''
                 Task job scripts are executed from within *work directories*
-                created automatically under the suite run directory. A task
+                created automatically under the workflow run directory. A task
                 can get its own work directory from ``$CYLC_TASK_WORK_DIR``
                 (or simply ``$PWD`` if it does not ``cd`` elsewhere at
                 runtime). The default directory path contains task name and
@@ -933,7 +930,7 @@ with Conf(
                 could determine how an event handler responds to task failure
                 events.
 
-                Any suite meta item can now be passed to task event handlers
+                Any workflow meta item can now be passed to task event handlers
                 by prefixing the string template item name with ``suite_``,
                 for example:
 
@@ -965,7 +962,7 @@ with Conf(
                         present it can be browsed with the ``cylc doc``
                         command.  The string templates ``%(suite_name)s`` and
                         ``%(task_name)s`` will be replaced with the actual
-                        suite and task names.
+                        workflow name and task name.
 
                         See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
@@ -982,7 +979,7 @@ with Conf(
                 ''')
 
             with Conf('simulation', desc='''
-                Task configuration for the suite *simulation* and *dummy* run
+                Task configuration for the *simulation* and *dummy* run
                 modes described in :ref:`SimulationMode`.
             '''):
                 Conf('default run length', VDR.V_INTERVAL, DurationFloat(10),
@@ -1082,13 +1079,12 @@ with Conf(
                 Cylc can call nominated event handlers when certain task
                 events occur. This section configures specific task event
                 handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
-                suite event handlers.
+                workflow event handlers.
 
-                Event handlers can be located in the suite ``bin/`` directory,
-                otherwise it is up to you to ensure their location is in
-                ``$PATH`` (in the shell in which the suite server program
-                runs). They should require little resource to run and return
-                quickly.
+                Event handlers can be located in the workflow ``bin/``
+                directory, otherwise it is up to you to ensure their location
+                is in ``$PATH`` (in the shell in which the scheduler runs).
+                They should require little resource to run and return quickly.
 
                 Each task event handler can be specified as a list of command
                 lines or command line templates. They can contain any or all
@@ -1098,9 +1094,9 @@ with Conf(
                 ``%(event)s``
                    Event name
                 ``%(suite)s``
-                   Suite name
+                   Workflow name
                 ``%(suite_uuid)s``
-                   Suite UUID string
+                   Workflow UUID string
                 ``%(point)s``
                    Cycle point
                 ``%(name)s``
@@ -1133,13 +1129,13 @@ with Conf(
                       Task URL
                    ``%(importance)s``
                       Example custom task metadata
-                any suite ``[meta]`` item, prefixed with ``suite_``
+                any workflow ``[meta]`` item, prefixed with ``suite_``
                    ``%(suite_title)s``
-                      Suite title
+                      Workflow title
                    ``%(suite_URL)s``
-                      Suite URL.
+                      Workflow URL.
                    ``%(suite_rating)s``
-                      Example custom suite metadata.
+                      Example custom workflow metadata.
 
                 Otherwise, the command line will be called with the following
                 default
@@ -1236,17 +1232,17 @@ with Conf(
                 ''')
 
             with Conf('suite state polling', desc='''
-                Configure automatic suite polling tasks as described in
+                Configure automatic workflow-polling tasks as described in
                 :ref:`SuiteStatePolling`. The items in this section reflect
                 the options and defaults of the ``cylc suite-state`` command,
-                except that the target suite name and the
+                except that the target workflow name and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
             '''):
                 Conf('user', VDR.V_STRING, desc='''
-                    Username of an account on the suite host to which you have
-                    access. The polling ``cylc suite-state`` command will be
-                    invoked on the remote account.
+                    Username of an account on the scheduler host to which you
+                    have access. The polling ``cylc suite-state`` command will
+                    be invoked on the remote account.
                 ''')
                 Conf('host', VDR.V_STRING, desc='''
                     The hostname of the target suite. The polling
@@ -1262,13 +1258,13 @@ with Conf(
                     the "failed" state.
                 ''')
                 Conf('message', VDR.V_STRING, desc='''
-                    Wait for the target task in the target suite to receive a
-                    specified message rather than achieve a state.
+                    Wait for the target task in the target workflow to receive
+                    a specified message rather than achieve a state.
                 ''')
                 Conf('run-dir', VDR.V_STRING, desc='''
                     For your own suites the run database location is
                     determined by your site/user config. For other suites,
-                    e.g. those owned by others, or mirrored suite databases,
+                    e.g. those owned by others, or mirrored workflow databases,
                     use this item to specify the location of the top level
                     cylc run directory (the database should be a suite-name
                     sub-directory of this location).
@@ -1280,7 +1276,7 @@ with Conf(
 
             with Conf('environment', desc='''
                 The user defined task execution environment. Variables
-                defined here can refer to cylc suite and task identity
+                defined here can refer to Cylc workflow and task identity
                 variables, which are exported earlier in the task job
                 script, and variable assignment expressions can use cylc
                 utility commands because access to cylc is also configured
@@ -1405,7 +1401,7 @@ with Conf(
 
 
 def upg(cfg, descr):
-    """Upgrade old suite configuration."""
+    """Upgrade old workflow configuration."""
     u = upgrader(cfg, descr)
     u.obsolete(
         '7.8.0',
@@ -1653,7 +1649,7 @@ def warn_about_depr_event_handler_tmpl(cfg):
 
 
 class RawSuiteConfig(ParsecConfig):
-    """Raw suite configuration."""
+    """Raw workflow configuration."""
 
     def __init__(self, fpath, output_fname, tvars):
         """Return the default instance."""

@@ -241,7 +241,7 @@ def _debounce(interval, timings):
 
 
 def startup(fcn):
-    """Decorates a coroutine which is run at suite startup.
+    """Decorates a coroutine which is run at scheduler startup.
 
     The decorated coroutine should have the signature:
 
@@ -259,9 +259,9 @@ def startup(fcn):
 
 
 def shutdown(fcn):
-    """Decorates a coroutine which is run at suite shutdown.
+    """Decorates a coroutine which is run at scheduler shutdown.
 
-    Note shutdown refers to "clean" shutdown as opposed to suite abort.
+    Note shutdown refers to "clean" shutdown as opposed to abort.
 
     The decorated coroutine should have the signature:
 

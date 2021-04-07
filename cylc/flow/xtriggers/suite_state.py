@@ -25,14 +25,14 @@ from metomi.isodatetime.parsers import TimePointParser
 
 def suite_state(suite, task, point, offset=None, status='succeeded',
                 message=None, cylc_run_dir=None):
-    """Connect to a suite DB and query the requested task state.
+    """Connect to a workflow DB and query the requested task state.
 
-    * Reports satisfied only if the remote suite state has been achieved.
-    * Returns all suite state args to pass on to triggering tasks.
+    * Reports satisfied only if the remote workflow state has been achieved.
+    * Returns all workflow state args to pass on to triggering tasks.
 
     Arguments:
         suite (str):
-            The suite to interrogate.
+            The workflow to interrogate.
         task (str):
             The name of the task to query.
         point (str):
@@ -50,11 +50,11 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
                This cannot be specified in conjunction with ``status``.
 
         cylc_run_dir (str):
-            The directory in which the suite to interrogate.
+            The directory in which the workflow to interrogate.
 
             .. note::
 
-               This only needs to be supplied if the suite is running in a
+               This only needs to be supplied if the workflow is running in a
                different location to what is specified in the global
                configuration (usually ``~/cylc-run``).
 
@@ -76,7 +76,7 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
     try:
         checker = CylcSuiteDBChecker(cylc_run_dir, suite)
     except (OSError, sqlite3.Error):
-        # Failed to connect to DB; target suite may not be started.
+        # Failed to connect to DB; target workflow may not be started.
         return (False, None)
     fmt = checker.get_remote_point_format()
     if fmt:

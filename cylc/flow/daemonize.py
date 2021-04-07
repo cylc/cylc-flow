@@ -65,7 +65,7 @@ def daemonize(schd):
     try:
         pid = os.fork()
         if pid > 0:
-            # Poll for suite log to be populated
+            # Poll for scheduler log to be populated
             suite_pid = None
             suite_url = None
             pub_url = None
@@ -76,10 +76,10 @@ def daemonize(schd):
                     pub_url is None):
                 sleep(0.1)
                 try:
-                    # First INFO line of suite log should contain
+                    # First INFO line of scheduler log should contain
                     # start up message, URL and PID. Format is:
-                    #  LOG-PREFIX Suite schd program: url=URL, pid=PID
-                    # Otherwise, something has gone wrong, print the suite log
+                    #  LOG-PREFIX Scheduler: url=URL, pid=PID
+                    # Otherwise, something has gone wrong, print the log
                     # and exit with an error.
                     log_stat = os.stat(logfname)
                     if (log_stat.st_mtime == old_log_mtime or
@@ -95,7 +95,7 @@ def daemonize(schd):
                         if suite_url and pub_url:
                             break
                         elif ' ERROR -' in line or ' CRITICAL -' in line:
-                            # ERROR and CRITICAL before suite starts
+                            # ERROR and CRITICAL before scheduler starts
                             try:
                                 sys.stderr.write(open(logfname).read())
                                 sys.exit(1)
@@ -105,7 +105,7 @@ def daemonize(schd):
                     pass
             if suite_pid is None or suite_url is None:
                 sys.exit("Suite not started after %ds" % _TIMEOUT)
-            # Print suite information
+            # Print scheduler information
             info = {
                 "suite": schd.suite,
                 "host": schd.host,

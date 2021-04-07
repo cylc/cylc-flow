@@ -543,7 +543,7 @@ class IntegerSequence(SequenceBase):
 
     def get_first_point(self, point):
         """Return the first point >= to point, or None if out of bounds."""
-        # Used to find the first point >= suite initial cycle point.
+        # Used to find the first point >= initial cycle point.
         if point <= self.p_start:
             point = self._get_point_in_bounds(self.p_start)
         elif self.is_on_sequence(point):

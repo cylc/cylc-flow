@@ -32,7 +32,7 @@ class SuiteRuntimeClient():
 
     Args:
         suite (str):
-            Name of the suite to connect to.
+            Name of the workflow to connect to.
         timeout (float):
             Set the default timeout in seconds.
         host (str):

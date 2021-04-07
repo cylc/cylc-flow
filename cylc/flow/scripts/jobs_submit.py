@@ -46,7 +46,7 @@ def get_option_parser():
     )
     parser.add_option(
         "--utc-mode",
-        help="(for remote mode) is the suite running in UTC mode?",
+        help="(for remote mode) is the scheduler running in UTC mode?",
         action="store_true",
         dest="utc_mode",
         default=False,

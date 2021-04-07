@@ -20,7 +20,7 @@
 
 Test communication with a running suite.
 
-If suite REG is running or TASK in suite REG is currently running,
+If workflow REG is running or TASK in workflow REG is currently running,
 exit with success status, else exit with error status."""
 
 import sys
@@ -91,7 +91,7 @@ def main(parser, options, suite, task_id=None):
                 f'{w_name} running on '
                 f'{pclient.host}:{w_port} {w_pub_port}\n'
             )
-        # cylc ping SUITE TASKID
+        # cylc ping workflow TASKID
         if task_id:
             task, point = TaskID.split(task_id)
             w_id = flow['id']

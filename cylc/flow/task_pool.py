@@ -220,7 +220,7 @@ class TaskPool:
 
         Tasks whose recurrences allow them to spawn beyond the suite
         stop point are added to the pool in the held state, ready to be
-        released if the suite stop point is changed.
+        released if the workflow stop point is changed.
 
         """
         # add to the runahead pool
@@ -343,7 +343,7 @@ class TaskPool:
                     LOG.warning(
                         f'runahead limit "{runahead_time_limit}" '
                         'is less than future triggering offset '
-                        f'"{self.max_future_offset}"; suite may stall.')
+                        f'"{self.max_future_offset}"; workflow may stall.')
             self._prev_runahead_base_point = runahead_base_point
         if self.stop_point and latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point
@@ -385,7 +385,7 @@ class TaskPool:
                 is_late=bool(is_late))
         except SuiteConfigError:
             LOG.exception(
-                f'ignoring task {name} from the suite run database\n'
+                f'ignoring task {name} from the workflow run database\n'
                 '(its task definition has probably been deleted).')
         except Exception:
             LOG.exception(f'could not load task {name}')
@@ -555,7 +555,7 @@ class TaskPool:
             if (not parent_points or
                     all(x < self.config.start_point for x in parent_points)):
                 # Auto-spawn next instance of tasks with no parents at the next
-                # point (or with all parents before the suite start point).
+                # point (or with all parents before the workflow start point).
                 self.get_or_spawn_task(
                     itask.tdef.name, next_point, flow_label=itask.flow_label,
                     parent_id=itask.identity)
@@ -763,7 +763,7 @@ class TaskPool:
         for name in self.task_name_list:
             if name in self.orphans:
                 self.orphans.remove(name)
-        # adjust the new suite config to handle the orphans
+        # adjust the new workflow config to handle the orphans
         self.config.adopt_orphans(self.orphans)
 
     def reload_taskdefs(self):
@@ -834,7 +834,7 @@ class TaskPool:
         self.do_reload = False
 
     def set_stop_point(self, stop_point):
-        """Set the global suite stop point."""
+        """Set the global stop point."""
         if self.stop_point == stop_point:
             return
         LOG.info("Setting stop cycle point: %s", stop_point)
@@ -851,7 +851,7 @@ class TaskPool:
                     )
             ):
                 LOG.warning(
-                    "[%s] -not running (beyond suite stop cycle) %s",
+                    "[%s] -not running (beyond stop cycle) %s",
                     itask,
                     self.stop_point)
                 if itask.state.reset(is_held=True):
@@ -859,7 +859,7 @@ class TaskPool:
         return self.stop_point
 
     def can_stop(self, stop_mode):
-        """Return True if suite can stop.
+        """Return True if scheduler can stop.
 
         A task is considered active if:
         * It is in the active state and not marked with a kill failure.
@@ -881,7 +881,7 @@ class TaskPool:
         return True
 
     def warn_stop_orphans(self):
-        """Log (warning) orphaned tasks on suite stop."""
+        """Log (warning) orphaned tasks on stop."""
         orphans = []
         orphans_kill_failed = []
         for itask in self.get_tasks():
@@ -1011,7 +1011,7 @@ class TaskPool:
         self.suite_db_mgr.delete_suite_hold_cycle_point()
 
     def check_abort_on_task_fails(self):
-        """Check whether suite should abort on task failure.
+        """Check whether scheduler should abort on task failure.
 
         Return True if a task failed and `--abort-if-any-task-fails` was given.
         """
@@ -1122,7 +1122,7 @@ class TaskPool:
         return itask
 
     def can_spawn(self, name, point):
-        """Return True if name.point is within various suite limits."""
+        """Return True if name.point is within various workflow limits."""
 
         if name not in self.config.get_task_name_list():
             LOG.debug('No task definition %s', name)
@@ -1178,7 +1178,7 @@ class TaskPool:
             point, flow_label,
             submit_num=submit_num, reflow=reflow)
         if self.hold_point and itask.point > self.hold_point:
-            # Hold if beyond the suite hold point
+            # Hold if beyond the hold point
             LOG.info("[%s] -holding (beyond suite hold point) %s",
                      itask, self.hold_point)
             if itask.state.reset(is_held=True):

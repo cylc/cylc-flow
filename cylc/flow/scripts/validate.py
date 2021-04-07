@@ -18,11 +18,11 @@
 
 """cylc validate [OPTIONS] ARGS
 
-Validate a suite configuration.
+Validate a workflow configuration.
 
-If the suite definition uses include-files reported line numbers
+If the config file uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
-'cylc view -i,--inline SUITE' for comparison."""
+'cylc view -i,--inline' for comparison."""
 from ansimarkup import parse as cparse
 import sys
 import textwrap

@@ -35,7 +35,7 @@ Other examples:
   $ cylc cycle-point --offset-hours=6 20100823T1800Z
   20100824T0000Z
 
-  # print offset from $CYLC_TASK_CYCLE_POINT (as in suite tasks):
+  # print offset from $CYLC_TASK_CYCLE_POINT:
   $ export CYLC_TASK_CYCLE_POINT=20100823T1800Z
   $ cylc cycle-point --offset-hours=-6
   20100823T1200Z

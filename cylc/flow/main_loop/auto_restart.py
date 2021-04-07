@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Automatically restart suites if they are running on bad servers.
 
-Loads in the global configuration to check if the server a suite is running
+Loads in the global configuration to check if the server a scheduler is running
 on is listed in :cylc:conf:`global.cylc[scheduler][run hosts]condemned`.
 
 This is useful if a host needs to be taken off-line e.g. for scheduled
@@ -40,7 +40,7 @@ Normal Mode
    running on that host will automatically shutdown then restart selecting a
    new host from :cylc:conf:`[scheduler][run hosts]available`.
 
-   For safety, before attempting to stop the suite Cylc will first wait
+   For safety, before attempting to stop the scheduler Cylc will first wait
    for any jobs running locally (under background or at) to complete.
 
    In order for Cylc to be able to restart suites the
@@ -67,7 +67,7 @@ running on ``bar`` will stop immediately, making no attempt to restart.
    Cylc will reject hosts with ambiguous names such as ``localhost`` or
    ``127.0.0.1`` for this configuration as
    :cylc:conf:`[scheduler][run hosts]condemned`
-   are evaluated on the suite host server.
+   are evaluated on the scheduler host.
 
 To prevent large numbers of suites attempting to restart simultaneously the
 :cylc:conf:`[scheduler]auto restart delay` setting defines a period

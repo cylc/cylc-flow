@@ -25,9 +25,9 @@ CYLC_VERSION is set to *the version running this command line tool*.
 
 It is recommended that cylc versions be installed in parallel and access
 configured via the cylc version wrapper as described in the cylc INSTALL
-file and User Guide. This must be done on suite and task hosts. Users then get
-the latest installed version by default, or (like tasks) a particular version
-if $CYLC_VERSION is defined.
+file and User Guide. This must be done on scheduler and task hosts. Users then
+get the latest installed version by default, or (like tasks) a particular
+version if $CYLC_VERSION is defined.
 
 Use -v/--verbose to see the command invoked to determine the remote version
 (all remote cylc command invocations will be of the same form, which may be
@@ -60,7 +60,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, *args):
-    # suite name or file path
+    # workflow name or file path
     suite, flow_file = parse_suite_arg(options, args[0])
 
     # extract task host platforms from the suite

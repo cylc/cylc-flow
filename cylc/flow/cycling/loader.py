@@ -121,7 +121,7 @@ def get_sequence_cls(cycling_type=None):
 
 
 def init_cyclers(cfg):
-    """Initialise cycling specifics using the suite configuration (cfg)."""
+    """Initialise cycling specifics using the workflow configuration (cfg)."""
     DefaultCycler.TYPE = cfg['scheduling']['cycling mode']
     if DefaultCycler.TYPE in Calendar.MODES:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE

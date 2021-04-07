@@ -20,7 +20,7 @@
 
 (This command is for internal use.)
 
-Invoke suite runtime client, expect JSON from STDIN for keyword arguments.
+Invoke scheduler runtime client, expect JSON from STDIN for keyword arguments.
 Use the -n option if client function requires no keyword arguments.
 """
 

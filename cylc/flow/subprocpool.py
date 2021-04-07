@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Manage queueing and pooling of subprocesses for the suite server program."""
+"""Manage queueing and pooling of subprocesses for the scheduler."""
 
 from collections import deque
 import json
@@ -38,8 +38,9 @@ def get_func(func_name, src_dir):
     """Find and return an xtrigger function from a module of the same name.
 
     Can be in <src_dir>/lib/python, CYLC_MOD_LOC, or in Python path.
-    Suite source directory passed in because this is executed in an independent
-    process in the command pool - and therefore doesn't know about the suite.
+    Workflow source directory passed in because this is executed in an
+    independent process in the command pool - and therefore doesn't know about
+    the workflow.
 
     """
     if func_name in _XTRIG_FUNCS:
@@ -69,7 +70,7 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
 
     func_name(*func_args, **func_kwargs)
 
-    Redirect any function stdout to stderr (and suite log in debug mode).
+    Redirect any function stdout to stderr (and scheduler log in debug mode).
     Return value printed to stdout as a JSON string - allows use of the
     existing process pool machinery as-is. src_dir is for local modules.
 
@@ -91,7 +92,7 @@ def run_function(func_name, json_args, json_kwargs, src_dir):
 class SubProcPool:
     """Manage queueing and pooling of subprocesses.
 
-    This is mainly used by the main loop of the suite server program, although
+    This is mainly used by the main loop of the scheduler, although
     the SubProcPool.run_command can be used as a standalone utility function
     to run the command in a cylc.flow.subprocctx.SubProcContext.
 
@@ -109,7 +110,7 @@ class SubProcPool:
     Note: For a cylc command that uses
     `cylc.flow.option_parsers.CylcOptionParser`, the default logging handler
     writes to the STDERR via a StreamHandler. Therefore, log messages will
-    only be written to the suite log by the callback function when the
+    only be written to the scheduler log by the callback function when the
     command exits (and only if the callback function has the logic to do so).
 
     """

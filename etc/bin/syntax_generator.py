@@ -14,7 +14,7 @@ PRIVATE_NAMES = ['__MANY__', 'cylc.flow']
 
 
 def get_keywords_from_suite_cfg():
-    """Extract a list of keywords from suite SPEC.
+    """Extract a list of keywords from workflow config SPEC.
     """
     keywords = []
     for item in SPEC.walk():

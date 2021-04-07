@@ -18,7 +18,7 @@
 
 """cylc get-suite-version [OPTIONS] ARGS
 
-Find out what version of Cylc a running suite is using.
+Find out what version of Cylc a running scheduler is using.
 
 To find the version you've invoked at the command line see "cylc version".
 """

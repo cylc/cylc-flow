@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc graph SUITE [START] [STOP]
+"""cylc graph REG [START] [STOP]
 
 A text-based graph representation of workflow dependencies.
 
@@ -206,7 +206,7 @@ def get_option_parser():
 
     parser.add_option(
         '-n', '--namespaces',
-        help='Plot the suite namespace inheritance hierarchy '
+        help='Plot the workflow namespace inheritance hierarchy '
              '(task run time properties).',
         action='store_true', default=False, dest='namespaces')
 

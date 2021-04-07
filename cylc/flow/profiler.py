@@ -53,7 +53,7 @@ class Profiler:
         stats.print_stats()
         # dump to stdout
         print(string_stream.getvalue())
-        # write data file to suite log dir
+        # write data file to workflow log dir
         if not self.schd:
             # if no scheduler present (e.g. validate) dump to PWD
             loc = Path()

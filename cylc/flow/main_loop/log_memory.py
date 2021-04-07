@@ -37,13 +37,13 @@
 
 .. warning::
 
-   This plugin can slow down a suite significantly due to the
+   This plugin can slow down a scheduler significantly due to the
    complexity of memory calculations.
 
    Set a sensible interval before running suites.
 
 If ``matplotlib`` is installed this plugin will plot results as a PDF in
-the run directory when the suite is shut down (cleanly).
+the run directory when the scheduler is shut down (cleanly).
 
 """
 

@@ -60,7 +60,7 @@ def select_suite_host(cached=True):
     global_config = glbl_cfg(cached=cached)
 
     return select_host(
-        # list of suite hosts
+        # list of scheduler hosts
         global_config.get([
             'scheduler', 'run hosts', 'available'
         ]) or ['localhost'],

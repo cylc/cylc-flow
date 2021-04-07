@@ -284,7 +284,7 @@ class JobRunnerManager():
             sys.stdout.write("%s%s|%s|%d\n" % (
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code))
             # Note: Print STDERR to STDOUT may look a bit strange, but it
-            # requires less logic for the suite to parse the output.
+            # requires less logic to parse the output.
             if err.strip():
                 for line in err.splitlines(True):
                     if not line.endswith("\n"):
@@ -355,7 +355,7 @@ class JobRunnerManager():
         job_log_root -- The log/job/ sub-directory of the suite.
         job_log_dirs -- A list containing point/name/submit_num for task jobs.
         remote_mode -- am I running on the remote job host?
-        utc_mode -- is the suite running in UTC mode?
+        utc_mode -- is the scheduler running in UTC mode?
 
         """
         if "$" in job_log_root:

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Suite database content, a basic non-cycling suite of 3 tasks
+# Workflow database content, a basic non-cycling workflow of 3 tasks
 . "$(dirname "$0")/test_header"
 if ! command -v 'sqlite3' >'/dev/null'; then
     skip_all "sqlite3 not installed?"

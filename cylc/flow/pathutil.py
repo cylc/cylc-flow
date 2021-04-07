@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Functions to return paths to common suite files and directories."""
+"""Functions to return paths to common workflow files and directories."""
 
 import os
 from pathlib import Path
@@ -38,19 +38,19 @@ def expand_path(*args: Union[Path, str]) -> str:
 
 
 def get_remote_suite_run_dir(platform, suite, *args):
-    """Return remote suite run directory, join any extra args."""
+    """Return remote workflow run directory, join any extra args."""
     return os.path.join(
         platform['run directory'], suite, *args)
 
 
 def get_remote_suite_run_job_dir(platform, suite, *args):
-    """Return remote suite run directory, join any extra args."""
+    """Return remote workflow run directory, join any extra args."""
     return get_remote_suite_run_dir(
         platform, suite, 'log', 'job', *args)
 
 
 def get_remote_suite_work_dir(platform, suite, *args):
-    """Return remote suite work directory root, join any extra args."""
+    """Return remote workflow work directory root, join any extra args."""
     return os.path.join(
         platform['work directory'], suite, *args
     )
@@ -72,56 +72,56 @@ def get_workflow_run_dir(
 
 
 def get_suite_run_job_dir(suite, *args):
-    """Return suite run job (log) directory, join any extra args."""
+    """Return workflow run job (log) directory, join any extra args."""
     return get_workflow_run_dir(suite, 'log', 'job', *args)
 
 
 def get_suite_run_log_dir(suite, *args):
-    """Return suite run log directory, join any extra args."""
+    """Return workflow run log directory, join any extra args."""
     return get_workflow_run_dir(suite, 'log', 'suite', *args)
 
 
 def get_suite_run_log_name(suite):
-    """Return suite run log file path."""
+    """Return workflow run log file path."""
     return get_workflow_run_dir(suite, 'log', 'suite', 'log')
 
 
 def get_suite_file_install_log_name(suite):
-    """Return suite file install log file path."""
+    """Return workflow file install log file path."""
     return get_workflow_run_dir(suite, 'log', 'suite', 'file-installation-log')
 
 
 def get_suite_run_config_log_dir(suite, *args):
-    """Return suite run flow.cylc log directory, join any extra args."""
+    """Return workflow run flow.cylc log directory, join any extra args."""
     return get_workflow_run_dir(suite, 'log', 'flow-config', *args)
 
 
 def get_suite_run_pub_db_name(suite):
-    """Return suite run public database file path."""
+    """Return workflow run public database file path."""
     return get_workflow_run_dir(suite, 'log', 'db')
 
 
 def get_suite_run_share_dir(suite, *args):
-    """Return local suite work/share directory, join any extra args."""
+    """Return local workflow work/share directory, join any extra args."""
     return expand_path(os.path.join(
         platform_from_name()['work directory'], suite, 'share', *args
     ))
 
 
 def get_suite_run_work_dir(suite, *args):
-    """Return local suite work/work directory, join any extra args."""
+    """Return local workflow work/work directory, join any extra args."""
     return expand_path(os.path.join(
         platform_from_name()['work directory'], suite, 'work', *args
     ))
 
 
 def get_suite_test_log_name(suite):
-    """Return suite run ref test log file path."""
+    """Return workflow run ref test log file path."""
     return get_workflow_run_dir(suite, 'log', 'suite', 'reftest.log')
 
 
 def make_suite_run_tree(suite):
-    """Create all top-level cylc-run output dirs on the suite host."""
+    """Create all top-level cylc-run output dirs on the scheduler host."""
     dir_ = get_workflow_run_dir(suite)
     # Create
     for dir_ in (

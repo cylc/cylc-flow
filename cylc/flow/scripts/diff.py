@@ -18,14 +18,14 @@
 
 """cylc diff [OPTIONS] SUITE1 SUITE2
 
-Compare two suite configurations and display any differences.
+Compare two workflow configurations and display any differences.
 
 Differencing is done after parsing the flow.cylc files so it takes
 account of default values that are not explicitly defined, it disregards
 the order of configuration items, and it sees any include-file content
 after inlining has occurred.
 
-Files in the suite bin directory and other sub-directories of the
+Files in the workflow bin directory and other sub-directories of the
 suite definition directory are not currently differenced."""
 
 import sys

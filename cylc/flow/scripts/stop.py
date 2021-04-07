@@ -31,12 +31,12 @@ There are several shutdown methods:
      CCYYMMDDThh:mm, CCYY-MM-DDThh, etc).
 
 Tasks that become ready after the shutdown is ordered will be submitted
-immediately if the suite is restarted.  Remaining task event handlers and job
-poll and kill commands, however, will be executed prior to shutdown, unless
---now is used.
+immediately if the workflow is restarted.  Remaining task event handlers and
+job poll and kill commands, however, will be executed prior to shutdown,
+unless --now is used.
 
 This command exits immediately unless --max-polls is greater than zero, in
-which case it polls to wait for suite shutdown."""
+which case it polls to wait for scheduler shutdown."""
 
 import os.path
 import sys
@@ -80,7 +80,7 @@ query ($wFlows: [ID]) {
 
 
 class StopPoller(Poller):
-    """A polling object that checks if a suite has stopped yet."""
+    """A polling object that checks if a workflow has stopped yet."""
 
     def __init__(self, pclient, condition, interval, max_polls):
         Poller.__init__(self, condition, interval, max_polls, None)
@@ -91,14 +91,14 @@ class StopPoller(Poller):
         }
 
     def check(self):
-        """Return True if suite has stopped (success) else False"""
+        """Return True if workflow has stopped (success) else False"""
         try:
             self.pclient('graphql', self.query)
         except (ClientError, ClientTimeout):
-            # failed to ping - suite stopped
+            # failed to ping - scheduler stopped
             return True
         else:
-            # pinged - suite must be alive
+            # pinged - scheduler must be alive
             return False
 
 
@@ -127,7 +127,7 @@ def get_option_parser():
             " If this option is specified once," +
             " wait for task event handler, job poll/kill to complete." +
             " If this option is specified more than once," +
-            " tell the suite to terminate immediately."),
+            " tell the scheduler to terminate immediately."),
         action="count", default=0, dest="now")
 
     parser.add_option(

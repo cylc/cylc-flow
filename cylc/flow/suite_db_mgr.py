@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Manage the suite runtime private and public databases.
+"""Manage the scheduler workflow runtime private and public databases.
 
 This module provides the logic to:
 * Create or initialise database file on start up.
@@ -39,7 +39,7 @@ from cylc.flow.exceptions import SuiteServiceFileError
 
 
 class SuiteDatabaseManager:
-    """Manage the suite runtime private and public databases."""
+    """Manage the runtime private and public databases."""
 
     KEY_INITIAL_CYCLE_POINT = 'icp'
     KEY_INITIAL_CYCLE_POINT_COMPATS = (
@@ -143,19 +143,19 @@ class SuiteDatabaseManager:
         self.delete_suite_params(self.KEY_PAUSED)
 
     def delete_suite_hold_cycle_point(self):
-        """Delete suite hold cycle point."""
+        """Delete hold cycle point."""
         self.delete_suite_params(self.KEY_HOLD_CYCLE_POINT)
 
     def delete_suite_stop_clock_time(self):
-        """Delete suite stop clock time from suite_params table."""
+        """Delete stop clock time from suite_params table."""
         self.delete_suite_params(self.KEY_STOP_CLOCK_TIME)
 
     def delete_suite_stop_cycle_point(self):
-        """Delete suite stop cycle point from suite_params table."""
+        """Delete stop cycle point from suite_params table."""
         self.delete_suite_params(self.KEY_STOP_CYCLE_POINT)
 
     def delete_suite_stop_task(self):
-        """Delete suite stop task from suite_params table."""
+        """Delete stop task from suite_params table."""
         self.delete_suite_params(self.KEY_STOP_TASK)
 
     def get_pri_dao(self):
@@ -208,7 +208,7 @@ class SuiteDatabaseManager:
         """Handle queued db operations for each task proxy."""
         if self.pri_dao is None:
             return
-        # Record suite parameters and tasks in pool
+        # Record workflow parameters and tasks in pool
         # Record any broadcast settings to be dumped out
         if any(self.db_deletes_map.values()):
             for table_name, db_deletes in sorted(
@@ -287,7 +287,7 @@ class SuiteDatabaseManager:
                 "inheritance": json.dumps(value)})
 
     def put_suite_params(self, schd):
-        """Put various suite parameters from schd in runtime database.
+        """Put various workflow parameters from schd in runtime database.
 
         This method queues the relevant insert statements.
 
@@ -331,23 +331,23 @@ class SuiteDatabaseManager:
             {"key": key, "value": value})
 
     def put_suite_paused(self):
-        """Put suite paused flag to suite_params table."""
+        """Put workflow paused flag to suite_params table."""
         self.put_suite_params_1(self.KEY_PAUSED, 1)
 
     def put_suite_hold_cycle_point(self, value):
-        """Put suite hold cycle point to suite_params table."""
+        """Put hold cycle point to suite_params table."""
         self.put_suite_params_1(self.KEY_HOLD_CYCLE_POINT, str(value))
 
     def put_suite_stop_clock_time(self, value):
-        """Put suite stop clock time to suite_params table."""
+        """Put stop clock time to suite_params table."""
         self.put_suite_params_1(self.KEY_STOP_CLOCK_TIME, value)
 
     def put_suite_stop_cycle_point(self, value):
-        """Put suite stop cycle point to suite_params table."""
+        """Put stop cycle point to suite_params table."""
         self.put_suite_params_1(self.KEY_STOP_CYCLE_POINT, value)
 
     def put_suite_stop_task(self, value):
-        """Put suite stop task to suite_params table."""
+        """Put stop task to suite_params table."""
         self.put_suite_params_1(self.KEY_STOP_TASK, value)
 
     def put_suite_template_vars(self, template_vars):
@@ -583,7 +583,7 @@ class SuiteDatabaseManager:
         return True
 
     def check_suite_db_compatibility(self):
-        """Raises SuiteServiceFileError if the existing suite database is
+        """Raises SuiteServiceFileError if the existing database is
         incompatible with the current version of Cylc."""
         if not os.path.isfile(self.pri_path):
             raise FileNotFoundError(self.pri_path)

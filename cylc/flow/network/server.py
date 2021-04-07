@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Server for suite runtime API."""
+"""Server for scheduler runtime API."""
 
 import getpass  # noqa: F401
 from queue import Queue
@@ -341,7 +341,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
-        """Return a textural representation of the suite graph.
+        """Return a textural representation of the workflow graph.
 
         .. warning::
 
@@ -357,10 +357,10 @@ class SuiteRuntimeServer(ZMQSocketBase):
         Args:
             start_point_string (str):
                 Cycle point as a string to define the window of view of the
-                suite graph.
+                graph.
             stop_point_string (str):
                 Cycle point as a string to define the window of view of the
-                suite graph.
+                graph.
             group_nodes (list, optional):
                 List of (graph nodes) family names to group (collapse according
                 to inheritance) in the output graph.

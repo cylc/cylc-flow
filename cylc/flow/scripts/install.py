@@ -65,7 +65,7 @@ Examples:
   $ cylc install --run-name=paws
 
 The same workflow can be installed with multiple names; this results in
-multiple workflow run directories that link to the same suite definition.
+multiple workflow run directories that link to the same workflow config.
 
 """
 

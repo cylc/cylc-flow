@@ -72,7 +72,7 @@ from cylc.flow.terminal import cli_function
 # default grey colour (do not use "dim", it is not sufficiently portable)
 DIM = 'fg 248'
 
-# all supported suite states
+# all supported states
 FLOW_STATES = {
     'running',
     'paused',
@@ -81,9 +81,9 @@ FLOW_STATES = {
 }
 
 
-# suite status colours
+# status colours
 FLOW_STATE_CMAP = {
-    # suite state: term colour
+    # state: term colour
     'running': 'green',
     'paused': 'fg 172',
     'stopping': 'fg 201',
@@ -91,7 +91,7 @@ FLOW_STATE_CMAP = {
 }
 
 
-# suite status symbols
+# status symbols
 FLOW_STATE_SYMBOLS = {
     # NOTE: the standard media control characters ▶️,, ⏸️,, ⏹️
     #       can appear wildly different font-depending and may not

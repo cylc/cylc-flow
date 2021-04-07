@@ -29,7 +29,7 @@ from cylc.flow.task_state import (
 
 
 class CylcSuiteDBChecker:
-    """Object for querying a suite database"""
+    """Object for querying a workflow run database"""
     STATE_ALIASES = {
         'finish': [
             TASK_STATUS_FAILED,
@@ -71,7 +71,7 @@ class CylcSuiteDBChecker:
                 sys.stdout.write((", ").join(row) + "\n")
 
     def get_remote_point_format(self):
-        """Query a remote suite database for a 'cycle point format' entry"""
+        """Query a remote run database for a 'cycle point format' entry"""
         for row in self.conn.execute(
                 r"SELECT value FROM " + CylcSuiteDAO.TABLE_SUITE_PARAMS +
                 r" WHERE key==?",
@@ -87,7 +87,7 @@ class CylcSuiteDBChecker:
 
     def suite_state_query(
             self, task, cycle, status=None, message=None, mask=None):
-        """run a query on the suite database"""
+        """run a query on the workflow database"""
         stmt_args = []
         stmt_wheres = []
 

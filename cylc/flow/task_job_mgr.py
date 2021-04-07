@@ -17,8 +17,8 @@
 
 This module provides logic to:
 * Set up the directory structure on remote job hosts.
-  * Copy suite service files to remote job hosts for communication clients.
-  * Clean up of service files on suite shutdown.
+  * Copy scheduler service files to remote job hosts for communication clients.
+  * Clean up of service files on scheduler shutdown.
 * Prepare task job files.
 * Prepare task jobs submission, and manage the callbacks.
 * Prepare task jobs poll/kill, and manage the callbacks.
@@ -115,8 +115,8 @@ class TaskJobManager:
     * Poll task jobs.
     * Kill task jobs.
     * Set up the directory structure on job hosts.
-    * Install suite communicate client files on job hosts.
-    * Remove suite contact files on job hosts.
+    * Install scheduler communicate client files on job hosts.
+    * Remove scheduler contact files on job hosts.
     """
 
     JOBS_KILL = 'jobs-kill'
@@ -293,11 +293,11 @@ class TaskJobManager:
                     continue
 
             # Ensure that localhost background/at jobs are recorded as running
-            # on the host name of the current suite host, rather than just
-            # "localhost". On suite restart on a different suite host, this
+            # on the host name of the current scheduler host, rather than just
+            # "localhost". On restart on a different host, this
             # allows the restart logic to correctly poll the status of the
             # background/at jobs that may still be running on the previous
-            # suite host.
+            # host.
             host = get_host_from_platform(platform)
             if (
                 self.job_runner_mgr.is_job_local_to_host(
@@ -478,7 +478,7 @@ class TaskJobManager:
         pre_script = rtconfig['pre-script']
         post_script = rtconfig['post-script']
         if itask.tdef.suite_polling_cfg:
-            # Automatic suite state polling script
+            # Automatic workflow state polling script
             comstr = "cylc suite-state " + \
                      " --task=" + itask.tdef.suite_polling_cfg['task'] + \
                      " --point=" + str(itask.point)
@@ -590,7 +590,7 @@ class TaskJobManager:
         # link(s) for us to get to the latest replacement.
         #
         # Note for "kill": It is possible for a job to trigger its trap and
-        # report back to the suite back this logic is called. If so, the task
+        # report back to the scheduler this logic is called. If so, the task
         # will no longer be TASK_STATUS_SUBMITTED or TASK_STATUS_RUNNING, and
         # its output line will be ignored here.
         tasks = {}

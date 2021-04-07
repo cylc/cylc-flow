@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Provide data access object for the suite runtime database."""
+"""Provide data access object for the workflow runtime database."""
 
 import sqlite3
 import traceback
@@ -35,7 +35,7 @@ class CylcSuiteDAOTableColumn:
 
 
 class CylcSuiteDAOTable:
-    """Represent a table in the suite runtime database."""
+    """Represent a table in the workflow runtime database."""
 
     FMT_CREATE = "CREATE TABLE %(name)s(%(columns_str)s%(primary_keys_str)s)"
     FMT_DELETE = "DELETE FROM %(name)s%(where_str)s"
@@ -162,12 +162,12 @@ class CylcSuiteDAOTable:
 
 
 class CylcSuiteDAO:
-    """Data access object for the suite runtime database."""
+    """Data access object for the workflow runtime database."""
 
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
-    RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart suite if <= this vers
+    RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart if <= this vers
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
@@ -426,9 +426,9 @@ class CylcSuiteDAO:
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
         finally:
-            # Note: This is not strictly necessary. However, if the suite run
+            # Note: This is not strictly necessary. However, if the run
             # directory is removed, a forced reconnection to the private
-            # database will ensure that the suite dies.
+            # database will ensure that the scheduler dies.
             self.close()
 
     def _execute_stmt(self, stmt, stmt_args_list):

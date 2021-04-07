@@ -101,7 +101,7 @@ class NameExpander:
         self.param_cfg, self.param_tmpl_cfg = parameters
 
     def expand(self, runtime_heading):
-        """Expand runtime namespace names for a subset of suite parameters.
+        """Expand runtime namespace names for a subset of parameters.
 
         Input runtime_heading is a string that may contain comma-separated
         parameterized namespace names, e.g. for "foo<m,n>, bar<m,n>".
@@ -274,7 +274,7 @@ class GraphExpander:
             self.param_cfg, self.param_tmpl_cfg = ({}, {})
 
     def expand(self, line):
-        """Expand a graph line for subset of suite parameters.
+        """Expand a graph line for subset of parameters.
 
         Input line is a string that may contain multiple parameterized node
         names, e.g. "pre=>init<m>=>sim<m,n>=>post<m,n>=>done".

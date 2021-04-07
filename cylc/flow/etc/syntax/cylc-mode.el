@@ -1,7 +1,7 @@
 ;; ____________________________________________________________________________
 ;;
 ;; = cylc-mode.el =
-;;    Emacs syntax highlighting mode for Cylc suite definition (flow.cylc)
+;;    Emacs syntax highlighting mode for Cylc workflow config (flow.cylc)
 ;;    files
 ;; ____________________________________________________________________________
 ;;
@@ -37,7 +37,7 @@
 
 ;; Define the mode and the syntax highlighting for it
 (define-derived-mode cylc-mode fundamental-mode
-  "flow.cylc" "Major mode for editing Cylc suite definition files"
+  "flow.cylc" "Major mode for editing Cylc workflow config files"
 
   ;; Note: ordered according to reverse application precedence, where
   ;; specification order for faces changes resultant highlighting

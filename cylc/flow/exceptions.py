@@ -61,11 +61,11 @@ class CylcConfigError(CylcError):
 
 
 class SuiteConfigError(CylcConfigError):
-    """Exception for configuration errors in a Cylc suite configuration."""
+    """Exception for configuration errors in a Cylc workflow configuration."""
 
 
 class GraphParseError(SuiteConfigError):
-    """Exception for errors in Cylc suite graphing."""
+    """Exception for errors in Cylc workflow graphing."""
 
 
 class TriggerExpressionError(GraphParseError):
@@ -89,7 +89,7 @@ class SuiteEventError(CylcError):
 
 
 class SuiteServiceFileError(CylcError):
-    """Exception for errors related to suite service files."""
+    """Exception for errors related to scheduler service files."""
 
 
 class WorkflowFilesError(CylcError):
@@ -97,7 +97,7 @@ class WorkflowFilesError(CylcError):
 
 
 class TaskRemoteMgmtError(CylcError):
-    """Exceptions initialising suite run directory of remote job host."""
+    """Exceptions initialising workflow run directory of remote job host."""
 
     MSG_INIT = "initialisation did not complete"
     MSG_SELECT = "host selection failed"

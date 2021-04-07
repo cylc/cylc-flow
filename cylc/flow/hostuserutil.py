@@ -128,10 +128,10 @@ class HostUtil:
         return glbl_cfg().get(['scheduler', 'host self-identification', key])
 
     def get_host(self):
-        """Return the preferred identifier for the suite (or current) host.
+        """Return the preferred identifier for the scheduler (or current) host.
 
         As specified by the "[scheduler][host self-identification]" settings in
-        the site/user global.cylc files. This is mainly used for suite host
+        the site/user global.cylc files. This is mainly used for scheduler host
         identification by task jobs.
 
         """
