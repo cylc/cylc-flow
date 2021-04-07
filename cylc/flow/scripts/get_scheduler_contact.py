@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc get-suite-contact [OPTIONS] ARGS
+"""cylc get-scheduler-contact [OPTIONS] ARGS
 
-Print contact information of a running suite."""
+Print contact information of a running scheduler."""
 
 from cylc.flow.exceptions import CylcError, SuiteServiceFileError
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -32,7 +32,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    """CLI for "cylc get-suite-contact"."""
+    """CLI for "cylc get-scheduler-contact"."""
     try:
         data = load_contact_file(reg)
     except SuiteServiceFileError:

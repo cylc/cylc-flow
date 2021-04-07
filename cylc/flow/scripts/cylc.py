@@ -110,7 +110,7 @@ ALIASES = {
     'cycletime': 'cycle-point',
     'datetime': 'cycle-point',
     'external-trigger': 'ext-trigger',
-    'get-contact': 'get-suite-contact',
+    'get-contact': 'get-scheduler-contact',
     'get-cylc-version': 'get-suite-version',
     'grep': 'search',
     'log': 'cat-log',
@@ -140,6 +140,9 @@ DEAD_ENDS = {
         'cylc get-suite-config has been replaced by cylc config',
     'get-global-config':
         'cylc get-global-config has been replaced by cylc config',
+    'get-suite-contact':
+        ('cylc get-suite-contact has been replaced by'
+         ' cylc get-scheduler-contact'),
     'graph-diff':
         'cylc graph-diff has been removed,'
         ' use cylc graph <flow1> --diff <flow2>',

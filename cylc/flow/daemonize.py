@@ -27,10 +27,10 @@ from cylc.flow.suite_files import PS_OPTS
 
 SUITE_SCAN_INFO_TMPL = r"""
 
-To view suite server program contact information:
- $ cylc get-suite-contact %(suite)s
+To view scheduler contact information:
+ $ cylc get-scheduler-contact %(suite)s
 
-Other ways to see if the suite is still running:
+Other ways to see if the workflow is still running:
  $ cylc scan -n '%(suite)s'
  $ cylc ping -v %(suite)s
  $ ssh %(host)s ps %(ps_opts)s %(pid)s

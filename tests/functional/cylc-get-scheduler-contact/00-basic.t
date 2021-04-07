@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc get-suite-contact" basic usage.
+# Test "cylc get-scheduler-contact" basic usage.
 . "$(dirname "$0")/test_header"
 set_test_number 6
 init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
@@ -31,15 +31,15 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_fail "${TEST_NAME_BASE}-get-suite-contact-1" \
-    cylc get-suite-contact "${SUITE_NAME}"
-cmp_ok "${TEST_NAME_BASE}-get-suite-contact-1.stderr" <<__ERR__
+run_fail "${TEST_NAME_BASE}-get-scheduler-contact-1" \
+    cylc get-scheduler-contact "${SUITE_NAME}"
+cmp_ok "${TEST_NAME_BASE}-get-scheduler-contact-1.stderr" <<__ERR__
 CylcError: ${SUITE_NAME}: cannot get contact info, suite not running?
 __ERR__
 run_ok "${TEST_NAME_BASE}-run-pause" cylc play --pause "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-get-suite-contact-2" \
-    cylc get-suite-contact "${SUITE_NAME}"
-contains_ok "${TEST_NAME_BASE}-get-suite-contact-2.stdout" \
+run_ok "${TEST_NAME_BASE}-get-scheduler-contact-2" \
+    cylc get-scheduler-contact "${SUITE_NAME}"
+contains_ok "${TEST_NAME_BASE}-get-scheduler-contact-2.stdout" \
     "${SUITE_RUN_DIR}/.service/contact"
 
 cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
