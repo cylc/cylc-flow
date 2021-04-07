@@ -209,11 +209,11 @@ with Conf('global.cylc', desc='''
                    cpu_percent() < 70
 
                    # filter out hosts with less than 1GB of RAM available
-                   virtual_memory.available < 1000000000
+                   virtual_memory.available > 1000000000
 
                    # filter out hosts with less than 1GB of disk space
                    # available on the "/" mount
-                   disk_usage('/').free < 1000000000
+                   disk_usage('/').free > 1000000000
 
                 .. rubric:: Combining
 
@@ -224,7 +224,7 @@ with Conf('global.cylc', desc='''
 
                    # filter hosts
                    cpu_percent() < 70
-                   disk_usage('/').free < 1000000000
+                   disk_usage('/').free > 1000000000
 
                    # rank hosts by CPU count
                    1 / cpu_count()
