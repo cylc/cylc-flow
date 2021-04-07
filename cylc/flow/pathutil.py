@@ -115,22 +115,7 @@ def get_suite_test_log_name(suite):
 
 def make_suite_run_tree(suite):
     """Create all top-level cylc-run output dirs on the suite host."""
-    cfg = glbl_cfg().get()
-    # Roll archive
-    archlen = cfg['scheduler']['run directory rolling archive length']
     dir_ = get_workflow_run_dir(suite)
-    for i in range(archlen, -1, -1):  # archlen...0
-        if i > 0:
-            dpath = f'{dir_}.{i}'
-        else:
-            dpath = dir_
-        if os.path.exists(dpath):
-            if i >= archlen:
-                # remove oldest backup
-                rmtree(dpath)
-            else:
-                # roll others over
-                os.rename(dpath, f'{dir_}.{i + 1}')
     # Create
     for dir_ in (
         get_workflow_run_dir(suite),
