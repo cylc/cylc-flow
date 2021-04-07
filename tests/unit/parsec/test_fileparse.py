@@ -532,3 +532,31 @@ def test_parse_with_sections_error_wrong_level():
             exc = cm.value
             assert exc.line_num == 4
             assert exc.line == '[[[subsection1]]]'
+
+
+def test_unclosed_multiline():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write(('''
+        [scheduling]
+            [[graph]]
+                R1 = """
+                    foo
+
+        [runtime]
+            [[foo]]
+                script = """
+                    echo hello world
+                """
+        ''').encode())
+        tf.flush()
+        with pytest.raises(FileParseError) as cm:
+            parse(fpath=fpath, output_fname="",
+                  template_vars=template_vars)
+        exc = cm.value
+        assert exc.reason == 'Invalid line'
+        assert 'echo hello world' in exc.line
+        assert 'Did you forget to close [scheduling][graph]R1?' in str(exc)
