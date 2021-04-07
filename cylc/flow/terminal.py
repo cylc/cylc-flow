@@ -246,26 +246,34 @@ def cli_function(parser_function=None, **parser_kwargs):
                 # run the command
                 wrapped_function(*wrapped_args, **wrapped_kwargs)
             except (CylcError, ParsecError) as exc:
-                if is_terminal() or not cylc.flow.flags.debug:
-                    # catch "known" CylcErrors which should have sensible short
-                    # summations of the issue, full traceback not necessary
-                    sys.exit(EXC_EXIT.format(
-                        name=exc.__class__.__name__,
-                        exc=exc
-                    ))
-                else:
+                if cylc.flow.flags.debug or not is_terminal():
                     # if command is running non-interactively just raise the
                     # full traceback
                     raise
+                else:
+                    # catch "known" CylcErrors which should have sensible short
+                    # summations of the issue, full traceback not necessary
+                    print(
+                        EXC_EXIT.format(
+                            name=exc.__class__.__name__,
+                            exc=exc
+                        ),
+                        file=sys.stderr
+                    )
+                    sys.exit(1)
             except SystemExit as exc:
                 if exc.args and isinstance(exc.args[0], str):
                     # catch and reformat sys.exit(<str>)
                     # NOTE: sys.exit(a) is equivalent to:
                     #       print(a, file=sys.stderr); sys.exit(1)
-                    sys.exit(EXC_EXIT.format(
-                        name='ERROR',
-                        exc=exc.args[0]
-                    ))
+                    print(
+                        EXC_EXIT.format(
+                            name='ERROR',
+                            exc=exc.args[0]
+                        ),
+                        file=sys.stderr
+                    )
+                    sys.exit(1)
                 raise
         return wrapper
     return inner
