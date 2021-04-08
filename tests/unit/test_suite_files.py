@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.flow.option_parsers import Options
 import logging
 import os.path
 from pathlib import Path
@@ -25,10 +26,34 @@ from cylc.flow import CYLC_LOG
 from cylc.flow import suite_files
 from cylc.flow.exceptions import (
     CylcError, SuiteServiceFileError, TaskRemoteMgmtError, WorkflowFilesError)
+from cylc.flow.scripts.clean import get_option_parser as _clean_GOP
 from cylc.flow.suite_files import (
     check_nested_run_dirs,
     get_workflow_source_dir,
     reinstall_workflow, search_install_source_dirs)
+
+
+CleanOpts = Options(_clean_GOP())
+
+
+@pytest.fixture
+def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Fixture that patches the cylc-run dir to the tests's {tmp_path}/cylc-run
+    and optionally creates a workflow run dir inside.
+
+    Args:
+        reg: Workflow name.
+    """
+    def inner(reg: Optional[str] = None) -> Optional[Path]:
+        tmp_path.joinpath('cylc-run').mkdir()
+        monkeypatch.setattr('cylc.flow.suite_files.get_workflow_run_dir',
+                            lambda *a: tmp_path.joinpath('cylc-run', *a))
+        if reg:
+            run_dir = tmp_path.joinpath('cylc-run', reg)
+            run_dir.mkdir(parents=True)
+            return run_dir
+        return None
+    return inner
 
 
 @pytest.mark.parametrize(
