@@ -51,9 +51,12 @@ ones in. -->
 
 ### Enhancements
 
-[#4154](https://github.com/cylc/cylc-flow/pull/4154)
+[#4154](https://github.com/cylc/cylc-flow/pull/4154) -
 Deprecate `CYLC_SUITE_DEF_PATH` with `CYLC_SUITE_RUN_DIR` (note the deprecated
 variable is still present in the job environment).
+
+[#4164](https://github.com/cylc/cylc-flow/pull/4164) -
+Replace the job "host" field with "platform" in the GraphQL schema.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b0 (<span actions:bind='release-date'>Released 2021-03-29</span>)__

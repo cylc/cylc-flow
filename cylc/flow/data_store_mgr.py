@@ -69,7 +69,6 @@ from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)
 from cylc.flow.network import API
-from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.suite_status import get_suite_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
@@ -969,7 +968,7 @@ class DataStoreMgr:
             err_script=job_conf['err-script'],
             exit_script=job_conf['exit-script'],
             execution_time_limit=job_conf['execution_time_limit'],
-            host=job_conf['platform']['name'],
+            platform=job_conf['platform']['name'],
             init_script=job_conf['init-script'],
             post_script=job_conf['post-script'],
             pre_script=job_conf['pre-script'],
@@ -1013,12 +1012,6 @@ class DataStoreMgr:
             return
         j_id = f'{tp_id}{ID_DELIM}{submit_num}'
         try:
-            if platform_name:
-                j_host = get_host_from_platform(
-                    get_platform(platform_name)
-                )
-            else:
-                j_host = self.schd.host
             update_time = time()
             j_buf = PbJob(
                 stamp=f'{j_id}@{update_time}',
@@ -1031,7 +1024,7 @@ class DataStoreMgr:
                 finished_time=time_run_exit,
                 job_runner_name=job_runner_name,
                 job_id=job_id,
-                host=j_host,
+                platform=platform_name,
                 name=name,
                 cycle_point=tproxy.cycle_point,
             )

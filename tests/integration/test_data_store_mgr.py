@@ -42,7 +42,6 @@ if TYPE_CHECKING:
 def job_config(schd):
     return {
         'owner': schd.owner,
-        'host': 'commet',
         'submit_num': 3,
         'task_id': 'foo.1',
         'job_runner_name': 'background',

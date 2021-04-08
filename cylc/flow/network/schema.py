@@ -769,7 +769,7 @@ class Job(ObjectType):
     err_script = String()
     exit_script = String()
     execution_time_limit = Float()
-    host = String()
+    platform = String()
     init_script = String()
     job_log_dir = String()
     post_script = String()

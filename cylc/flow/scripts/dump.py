@@ -66,7 +66,7 @@ fragment tProxy on TaskProxy {
     finishedTime
     jobLogDir
     extraLogs
-    host
+    platform
     executionTimeLimit
     jobRunnerName
     jobId
