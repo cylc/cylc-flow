@@ -184,8 +184,6 @@ class TestPathutil(TestCase):
 )
 def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
     glbl_conf_str = f'''
-        [scheduler]
-            run directory rolling archive length = 1
         [platforms]
             [[localhost]]
                 run directory = {tmpdir}
@@ -196,17 +194,11 @@ def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
     mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', glbl_conf_str)
 
     caplog.set_level(logging.DEBUG)
-    # running the logic three times to ensure that the rolling
-    # archive logic is covered.
-    for i in range(3):
-        make_suite_run_tree('my-workflow')
+
+    make_suite_run_tree('my-workflow')
 
     # Check that directories have been created
     assert (tmpdir / 'my-workflow' / subdir).isdir() is True
-    # ...and 1 rolling archive ...
-    assert (tmpdir / 'my-workflow.1' / subdir).isdir() is True
-    # ... but not 2.
-    assert (tmpdir / 'my-workflow.2' / subdir).isdir() is False
 
 
 @pytest.mark.parametrize(

@@ -134,10 +134,6 @@ with Conf('global.cylc', desc='''
                The default is set quite high to avoid killing important
                processes when the system is under load.
         ''')
-        Conf('run directory rolling archive length', VDR.V_INTEGER, -1,
-             desc='''
-            The number of old run directory trees to retain at start-up.
-        ''')
         Conf('auto restart delay', VDR.V_INTERVAL, desc='''
             Relates to Cylc's auto stop-restart mechanism (see
             :ref:`auto-stop-restart`).  When a host is set to automatically
