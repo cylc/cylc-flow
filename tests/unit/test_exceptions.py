@@ -14,17 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
-
 from cylc.flow.exceptions import CylcError
 
 
-class TestExceptions(unittest.TestCase):
-
-    def test_cylc_error(self):
-        error = CylcError("abcd")
-        self.assertEqual("abcd", str(error))
-
-
-if __name__ == '__main__':
-    unittest.main()
+def test_cylc_error_str():
+    error = CylcError("abcd")
+    assert str(error) == "abcd"
