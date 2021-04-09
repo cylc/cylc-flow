@@ -26,13 +26,15 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import WorkflowFilesError
 from cylc.flow.platforms import (
     get_localhost_install_target,
-    get_platform
+    platform_from_name
 )
 
 
-def expand_path(path: Union[Path, str]) -> str:
-    """Expand both vars and user in path."""
-    return os.path.expanduser(os.path.expandvars(path))
+def expand_path(*args: Union[Path, str]) -> str:
+    """Expand both vars and user in path, joining any extra args."""
+    return os.path.expanduser(os.path.expandvars(
+        os.path.join(*args)
+    ))
 
 
 def get_remote_suite_run_dir(platform, suite, *args):
@@ -54,12 +56,17 @@ def get_remote_suite_work_dir(platform, suite, *args):
     )
 
 
-def get_workflow_run_dir(flow_name, *args):
+def get_workflow_run_dir(
+    flow_name: Union[Path, str], *args: Union[Path, str]
+) -> str:
     """Return local workflow run directory, joining any extra args, and
-    expanding vars and user."""
+    expanding vars and user.
+
+    Does not check that the directory exists.
+    """
     return expand_path(
         os.path.join(
-            get_platform()['run directory'], flow_name, *args
+            platform_from_name()['run directory'], flow_name, *args
         )
     )
 
@@ -97,14 +104,14 @@ def get_suite_run_pub_db_name(suite):
 def get_suite_run_share_dir(suite, *args):
     """Return local suite work/share directory, join any extra args."""
     return expand_path(os.path.join(
-        get_platform()['work directory'], suite, 'share', *args
+        platform_from_name()['work directory'], suite, 'share', *args
     ))
 
 
 def get_suite_run_work_dir(suite, *args):
     """Return local suite work/work directory, join any extra args."""
     return expand_path(os.path.join(
-        get_platform()['work directory'], suite, 'work', *args
+        platform_from_name()['work directory'], suite, 'work', *args
     ))
 
 
