@@ -25,6 +25,9 @@ import asyncio
 from async_timeout import timeout
 from async_generator import asynccontextmanager
 import logging
+from pathlib import Path
+import pytest
+from typing import Optional
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
@@ -61,7 +64,12 @@ def _make_scheduler(reg, **opts):
 
 
 @asynccontextmanager
-async def _run_flow(run_dir, caplog, scheduler, level=logging.INFO):
+async def _run_flow(
+    run_dir: Path,
+    caplog: Optional[pytest.LogCaptureFixture],
+    scheduler: Scheduler,
+    level: int = logging.INFO
+):
     """Start a scheduler."""
     contact = (run_dir / scheduler.suite / SuiteFiles.Service.DIRNAME /
                SuiteFiles.Service.CONTACT)

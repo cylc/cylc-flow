@@ -59,11 +59,10 @@ async def test_is_paused_after_crash(
     schd.suite_shutdown = ctrl_c
 
     # Run
-    with pytest.raises(asyncio.CancelledError) as exc:
+    with pytest.raises(asyncio.CancelledError):
         async with run(schd):
             assert not schd.is_restart
             assert schd.is_paused
-        assert "Mock keyboard interrupt" in str(exc.value)
     # Stopped
     assert ('is_paused', '1') in db_select(schd, 'suite_params')
     # Reset patched method
