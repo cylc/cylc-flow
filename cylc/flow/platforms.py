@@ -278,6 +278,7 @@ def platform_from_job_info(platforms, job, remote):
     # Riffle through the platforms looking for a match to our task settings.
     # reverse dict order so that user config platforms added last are examined
     # before site config platforms.
+    output = None
     for platform_name, platform_spec in reversed(list(platforms.items())):
         # Handle all the items requiring an exact match.
         # All items other than batch system and host must be an exact match
@@ -289,7 +290,7 @@ def platform_from_job_info(platforms, job, remote):
                 not is_remote_host(task_host) and
                 task_job_runner == 'background'
         ):
-            return 'localhost'
+            output = 'localhost'
 
         elif (
             'hosts' in platform_spec.keys() and
@@ -298,13 +299,21 @@ def platform_from_job_info(platforms, job, remote):
         ):
             # If we have localhost with a non-background batch system we
             # use the batch system to give a sensible guess at the platform
-            return platform_name
+            output = platform_name
 
         elif (
                 re.fullmatch(platform_name, task_host) and
                 task_job_runner == platform_spec['job runner']
         ):
-            return task_host
+            output = task_host
+
+    if task_host:
+        remote['host'] = task_host
+    if task_job_runner:
+        job['batch system'] = task_job_runner
+
+    if output is not None:
+        return output
 
     raise PlatformLookupError('No platform found matching your task')
 

@@ -55,6 +55,10 @@ ones in. -->
 Deprecate `CYLC_SUITE_DEF_PATH` with `CYLC_SUITE_RUN_DIR` (note the deprecated
 variable is still present in the job environment).
 
+[#4169](https://github.com/cylc/cylc-flow/pull/4169)
+Fix a host ⇒ platform upgrade bug where host names were being popped from task
+configs causing subsequent tasks to run on localhost.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b0 (<span actions:bind='release-date'>Released 2021-03-29</span>)__
 

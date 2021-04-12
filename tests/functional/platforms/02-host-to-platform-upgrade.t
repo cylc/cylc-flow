@@ -21,7 +21,7 @@
 #   - Task with a host setting that should match the test platform
 export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 6
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -50,6 +50,10 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     -s CYLC_TEST_HOST="'$CYLC_TEST_HOST'" \
     -s CYLC_TEST_HOST_FQDN="'$(ssh "$CYLC_TEST_HOST" hostname -f)'" \
     "${SUITE_NAME}"
+
+grep "host=" "${SUITE_RUN_DIR}/log/suite/log" > hosts.log
+
+grep_ok "\[t2\.2021.*\].*host=${CYLC_TEST_HOST}" hosts.log
 
 purge
 exit
