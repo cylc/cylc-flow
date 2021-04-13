@@ -178,12 +178,17 @@ def platform_from_name(
         f"No matching platform \"{platform_name}\" found")
 
 
-def platform_from_job_info(platforms, job, remote):
+def platform_from_job_info(
+    platforms: Dict[str, Any],
+    job: Dict[str, Any],
+    remote: Dict[str, Any]
+) -> str:
     """
     Find out which job platform to use given a list of possible platforms
     and the task dictionary with cylc 7 definitions in it.
 
-    (Note: "batch system" and "job runner" mean the same thing)
+    (Note: "batch system" (Cylc 7) and "job runner" (Cylc 8)
+    mean the same thing)
 
           +------------+ Yes    +-----------------------+
     +-----> Tried all  +------->+ RAISE                 |
@@ -228,16 +233,12 @@ def platform_from_job_info(platforms, job, remote):
     +<---------------------------------+
 
     Args:
-        job (dict):
-            Suite config [runtime][TASK][job] section
-        remote (dict):
-            Suite config [runtime][TASK][remote] section
-        platforms (dict):
-            Dictionary containing platform definitions.
+        job: Suite config [runtime][TASK][job] section.
+        remote: Suite config [runtime][TASK][remote] section.
+        platforms: Dictionary containing platform definitions.
 
     Returns:
-        platform (str):
-            string representing a platform from the global config.
+        platform: string representing a platform from the global config.
 
     Raises:
         PlatformLookupError:
@@ -317,7 +318,11 @@ def platform_from_job_info(platforms, job, remote):
     raise PlatformLookupError('No platform found matching your task')
 
 
-def generic_items_match(platform_spec: Dict, job: Dict, remote: Dict) -> bool:
+def generic_items_match(
+    platform_spec: Dict[str, Any],
+    job: Dict[str, Any],
+    remote: Dict[str, Any]
+) -> bool:
     """Checks generic items from job/remote against a platform.
 
     We carry out extra checks on ``[remote]host`` and ``[job]batch system``
