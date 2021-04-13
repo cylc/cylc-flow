@@ -18,7 +18,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Callable, Iterable, List, Set
+from typing import Callable, Dict, Iterable, List, Set
 import pytest
 from unittest.mock import Mock, patch, call
 
@@ -170,58 +170,84 @@ def test_make_workflow_run_tree(
 
 
 @pytest.mark.parametrize(
-    'workflow, install_target, mocked_glbl_cfg, output',
+    'mocked_glbl_cfg, output',
     [
-        (  # basic
-            'workflow1', 'install_target_1',
-            '''[symlink dirs]
-            [[install_target_1]]
-                run = $DEE
-                work = $DAH
-                log = $DUH
-                share = $DOH
-                share/cycle = $DAH''', {
-                'run': '$DEE/cylc-run/workflow1',
-                'work': '$DAH/cylc-run/workflow1/work',
-                'log': '$DUH/cylc-run/workflow1/log',
-                'share': '$DOH/cylc-run/workflow1/share',
-                'share/cycle': '$DAH/cylc-run/workflow1/share/cycle'
-            }),
-        (  # remove nested run symlinks
-            'workflow2', 'install_target_2',
+        pytest.param(  # basic
             '''
-        [symlink dirs]
-            [[install_target_2]]
-                run = $DEE
-                work = $DAH
-                log = $DEE
-                share = $DOH
-                share/cycle = $DAH
-
-        ''', {
-                'run': '$DEE/cylc-run/workflow2',
-                'work': '$DAH/cylc-run/workflow2/work',
-                'share': '$DOH/cylc-run/workflow2/share',
-                'share/cycle': '$DAH/cylc-run/workflow2/share/cycle'
-            }),
-        (  # remove only nested run symlinks
-            'workflow3', 'install_target_3', '''
-        [symlink dirs]
-            [[install_target_3]]
-                run = $DOH
-                log = $DEE
-                share = $DEE
-        ''', {
-                'run': '$DOH/cylc-run/workflow3',
-                'log': '$DEE/cylc-run/workflow3/log',
-                'share': '$DEE/cylc-run/workflow3/share'})
-    ], ids=["1", "2", "3"])
-def test_get_dirs_to_symlink(workflow, install_target, mocked_glbl_cfg,
-                             output, mock_glbl_cfg, tmp_path, monkeypatch):
-    # Using env variable 'DEE' to ensure dirs returned are unexpanded
-    monkeypatch.setenv('DEE', str(tmp_path))
+            [symlink dirs]
+                [[the_matrix]]
+                    run = $DEE
+                    work = $DAH
+                    log = $DUH
+                    share = $DOH
+                    share/cycle = $DAH
+            ''',
+            {
+                'run': '$DEE/cylc-run/morpheus',
+                'work': '$DAH/cylc-run/morpheus/work',
+                'log': '$DUH/cylc-run/morpheus/log',
+                'share': '$DOH/cylc-run/morpheus/share',
+                'share/cycle': '$DAH/cylc-run/morpheus/share/cycle'
+            },
+            id="basic"
+        ),
+        pytest.param(  # remove nested run symlinks
+            '''
+            [symlink dirs]
+                [[the_matrix]]
+                    run = $DEE
+                    work = $DAH
+                    log = $DEE
+                    share = $DOH
+                    share/cycle = $DAH
+            ''',
+            {
+                'run': '$DEE/cylc-run/morpheus',
+                'work': '$DAH/cylc-run/morpheus/work',
+                'share': '$DOH/cylc-run/morpheus/share',
+                'share/cycle': '$DAH/cylc-run/morpheus/share/cycle'
+            },
+            id="remove nested run symlinks"
+        ),
+        pytest.param(  # remove only nested run symlinks
+            '''
+            [symlink dirs]
+                [[the_matrix]]
+                    run = $DOH
+                    log = $DEE
+                    share = $DEE
+            ''',
+            {
+                'run': '$DOH/cylc-run/morpheus',
+                'log': '$DEE/cylc-run/morpheus/log',
+                'share': '$DEE/cylc-run/morpheus/share'
+            },
+            id="remove only nested run symlinks"
+        ),
+        pytest.param(  # blank entries
+            '''
+            [symlink dirs]
+                [[the_matrix]]
+                    run =
+                    log = ""
+                    share =
+                    work = " "
+            ''',
+            {},
+            id="blank entries"
+        )
+    ]
+)
+def test_get_dirs_to_symlink(
+    mocked_glbl_cfg: str,
+    output: Dict[str, str],
+    mock_glbl_cfg: Callable,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Set env var 'DEE', but we expect it to be unexpanded
+    monkeypatch.setenv('DEE', 'poiuytrewq')
     mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', mocked_glbl_cfg)
-    dirs = get_dirs_to_symlink(install_target, workflow)
+    dirs = get_dirs_to_symlink('the_matrix', 'morpheus')
     assert dirs == output
 
 

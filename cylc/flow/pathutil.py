@@ -174,11 +174,11 @@ def get_dirs_to_symlink(install_target: str, flow_name: str) -> Dict[str, str]:
     if install_target not in symlink_conf.keys():
         return dirs_to_symlink
     base_dir = symlink_conf[install_target]['run']
-    if base_dir is not None:
+    if base_dir:
         dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', flow_name)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target][dir_]
-        if link is None or link == base_dir:
+        if (not link) or link == base_dir:
             continue
         dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', flow_name, dir_)
     return dirs_to_symlink
