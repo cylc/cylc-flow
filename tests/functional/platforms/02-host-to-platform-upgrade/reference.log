@@ -1,6 +1,10 @@
 Initial point: 1
 Final point: 1
-[no_settings.1] -triggered off []
-[t1.1] -triggered off []
-[t2.1] -triggered off []
 [fin.1] -triggered off ['no_settings.1', 't1.1', 't2.1']
+[fin.2] -triggered off ['no_settings.2', 't1.2', 't2.2']
+[no_settings.1] -triggered off []
+[no_settings.2] -triggered off []
+[t1.1] -triggered off []
+[t1.2] -triggered off []
+[t2.1] -triggered off []
+[t2.2] -triggered off []

@@ -178,12 +178,17 @@ def platform_from_name(
         f"No matching platform \"{platform_name}\" found")
 
 
-def platform_from_job_info(platforms, job, remote):
+def platform_from_job_info(
+    platforms: Dict[str, Any],
+    job: Dict[str, Any],
+    remote: Dict[str, Any]
+) -> str:
     """
     Find out which job platform to use given a list of possible platforms
     and the task dictionary with cylc 7 definitions in it.
 
-    (Note: "batch system" and "job runner" mean the same thing)
+    (Note: "batch system" (Cylc 7) and "job runner" (Cylc 8)
+    mean the same thing)
 
           +------------+ Yes    +-----------------------+
     +-----> Tried all  +------->+ RAISE                 |
@@ -228,16 +233,12 @@ def platform_from_job_info(platforms, job, remote):
     +<---------------------------------+
 
     Args:
-        job (dict):
-            Suite config [runtime][TASK][job] section
-        remote (dict):
-            Suite config [runtime][TASK][remote] section
-        platforms (dict):
-            Dictionary containing platform definitions.
+        job: Suite config [runtime][TASK][job] section.
+        remote: Suite config [runtime][TASK][remote] section.
+        platforms: Dictionary containing platform definitions.
 
     Returns:
-        platform (str):
-            string representing a platform from the global config.
+        platform: string representing a platform from the global config.
 
     Raises:
         PlatformLookupError:
@@ -252,12 +253,16 @@ def platform_from_job_info(platforms, job, remote):
         ...         }
         ... }
         >>> job = {'batch system': 'slurm'}
-        >>> remote = {'host': 'sugar'}
+        >>> remote = {'host': 'localhost'}
         >>> platform_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote = {}
         >>> platform_from_job_info(platforms, job, remote)
-        'localhost'
+        'sugar'
+        >>> remote ={'host': 'desktop92'}
+        >>> job = {}
+        >>> platform_from_job_info(platforms, job, remote)
+        'desktop92'
     """
 
     # These settings are removed from the incoming dictionaries for special
@@ -266,15 +271,14 @@ def platform_from_job_info(platforms, job, remote):
     #   - In the case of "batch system" we want to match the name of the
     #     system/job runner to a platform when host is localhost.
     if 'host' in remote.keys() and remote['host']:
-        task_host = remote.pop('host')
+        task_host = remote['host']
     else:
         task_host = 'localhost'
     if 'batch system' in job.keys() and job['batch system']:
-        task_job_runner = job.pop('batch system')
+        task_job_runner = job['batch system']
     else:
         # Necessary? Perhaps not if batch system default is 'background'
         task_job_runner = 'background'
-
     # Riffle through the platforms looking for a match to our task settings.
     # reverse dict order so that user config platforms added last are examined
     # before site config platforms.
@@ -301,19 +305,59 @@ def platform_from_job_info(platforms, job, remote):
             return platform_name
 
         elif (
-                re.fullmatch(platform_name, task_host) and
+            re.fullmatch(platform_name, task_host) and (
+                (
+                    task_job_runner == 'background' and
+                    'job runner' not in platform_spec
+                ) or
                 task_job_runner == platform_spec['job runner']
+            )
         ):
             return task_host
 
     raise PlatformLookupError('No platform found matching your task')
 
 
-def generic_items_match(platform_spec, job, remote):
+def generic_items_match(
+    platform_spec: Dict[str, Any],
+    job: Dict[str, Any],
+    remote: Dict[str, Any]
+) -> bool:
     """Checks generic items from job/remote against a platform.
+
+    We carry out extra checks on ``[remote]host`` and ``[job]batch system``
+    but all other set config items must match between a platform and old
+    settings for that platform to match the legacy settings.
+
+    Args:
+        platform_spec: Dictionary of platform spec.
+        job: Dictionary of config spec section ``[runtime][TASK][job]``
+        remote: Dictionary of config spec section ``[runtime][TASK][remote]``
+
+    Returns:
+        Does this platform have generic items (not ``[job]batch system``
+        or ``[remote]host`` which are treated specially) that are the same.
     """
-    for task_section in [job, remote]:
+    # Don't check Host and batch system - they have their own logic.
+    if 'host' in remote:
+        remote_generic = {
+            k: v for k, v in remote.items()
+            if k != 'host' and v is not None
+        }
+    else:
+        remote_generic = remote
+    if 'batch system' in job:
+        job_generic = {
+            k: v for k, v in job.items()
+            if k != 'batch system' and v is not None
+        }
+    else:
+        job_generic = job
+
+    for task_section in [job_generic, remote_generic]:
+        # Get a set of items actually set in both platform and task_section.
         shared_items = set(task_section).intersection(set(platform_spec))
+        # If any set items do not match, we can't use this platform.
         if not all([
             platform_spec[item] == task_section[item]
             for item in shared_items
