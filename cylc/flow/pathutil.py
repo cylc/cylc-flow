@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Iterable, Set, Union
+from typing import Dict, Iterable, Set, Union
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -128,15 +128,17 @@ def make_workflow_run_tree(workflow):
             LOG.debug(f'{dir_}: directory created')
 
 
-def make_localhost_symlinks(rund, named_sub_dir):
+def make_localhost_symlinks(
+    rund: Union[Path, str], named_sub_dir: str
+) -> Dict[str, Union[Path, str]]:
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
         rund: the entire run directory path
         named_sub_dir: e.g flow_name/run1
 
     Returns:
-         dict - A dictionary of Symlinks with sources as keys and
-         destinations as values: ``{source: destination}``
+        Dictionary of symlinks with sources as keys and
+        destinations as values: ``{source: destination}``
 
     """
     dirs_to_symlink = get_dirs_to_symlink(
@@ -144,28 +146,29 @@ def make_localhost_symlinks(rund, named_sub_dir):
     symlinks_created = {}
     for key, value in dirs_to_symlink.items():
         if key == 'run':
-            dst = rund
+            symlink_path = rund
         else:
-            dst = os.path.join(rund, key)
-        src = expand_path(value)
-        if '$' in src:
+            symlink_path = os.path.join(rund, key)
+        target = expand_path(value)
+        if '$' in target:
             raise WorkflowFilesError(
-                f'Unable to create symlink to {src}.'
+                f'Unable to create symlink to {target}.'
                 f' \'{value}\' contains an invalid environment variable.'
                 ' Please check configuration.')
-        symlink_success = make_symlink(src, dst)
-        # symlink info returned for logging purposes, symlinks created
-        # before logs as this dir may be a symlink.
+        symlink_success = make_symlink(symlink_path, target)
+        # Symlink info returned for logging purposes. Symlinks should be
+        # created before logs as the log dir may be a symlink.
         if symlink_success:
-            symlinks_created[src] = dst
+            symlinks_created[target] = symlink_path
     return symlinks_created
 
 
-def get_dirs_to_symlink(install_target, flow_name):
+def get_dirs_to_symlink(install_target: str, flow_name: str) -> Dict[str, str]:
     """Returns dictionary of directories to symlink from glbcfg.
-       Note the paths should remain unexpanded, to be expanded on the remote.
+
+    Note the paths should remain unexpanded, to be expanded on the remote.
     """
-    dirs_to_symlink = {}
+    dirs_to_symlink: Dict[str, str] = {}
     symlink_conf = glbl_cfg().get(['symlink dirs'])
 
     if install_target not in symlink_conf.keys():
@@ -181,34 +184,42 @@ def get_dirs_to_symlink(install_target, flow_name):
     return dirs_to_symlink
 
 
-def make_symlink(src, dst):
+def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
     """Makes symlinks for directories.
+
     Args:
-        src (str): target path, where the files are to be stored.
-        dst (str): full path of link that will point to src.
+        path: Absolute path of the desired symlink.
+        target: Absolute path of the symlink's target directory.
     """
-    if os.path.exists(dst):
-        if os.path.islink(dst) and os.path.samefile(dst, src):
+    path = Path(path)
+    target = Path(target)
+    if path.exists():
+        if path.is_symlink() and path.samefile(target):
             # correct symlink already exists
             return False
         # symlink name is in use by a physical file or directory
         # log and return
         LOG.debug(
-            f"Unable to create {src} symlink. The path {dst} already exists.")
+            f"Unable to create symlink to {target}. "
+            f"The path {path} already exists.")
         return False
-    elif os.path.islink(dst):
+    elif path.is_symlink():
         # remove a bad symlink.
         try:
-            os.unlink(dst)
-        except Exception:
+            path.unlink()
+        except OSError:
             raise WorkflowFilesError(
-                f"Error when symlinking. Failed to unlink bad symlink {dst}.")
-    os.makedirs(src, exist_ok=True)
-    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                f"Error when symlinking. Failed to unlink bad symlink {path}.")
+    target.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        # Trying to link to itself; no symlink needed
+        # (e.g. path's parent is symlink to target's parent)
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        os.symlink(src, dst, target_is_directory=True)
+        path.symlink_to(target)
         return True
-    except Exception as exc:
+    except OSError as exc:
         raise WorkflowFilesError(f"Error when symlinking\n{exc}")
 
 

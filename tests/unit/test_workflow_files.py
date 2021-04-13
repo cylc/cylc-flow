@@ -413,16 +413,16 @@ def test_clean(
     run_dir: Path = tmp_run_dir(reg)
 
     if 'run' in symlink_dirs:
-        dst = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
-        dst.mkdir(parents=True)
+        target = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
+        target.mkdir(parents=True)
         shutil.rmtree(run_dir)
-        run_dir.symlink_to(dst)
+        run_dir.symlink_to(target)
         symlink_dirs.pop('run')
-    for src_name, dst_name in symlink_dirs.items():
-        dst = tmp_path.joinpath(dst_name, 'cylc-run', reg, src_name)
-        dst.mkdir(parents=True)
-        src = run_dir.joinpath(src_name)
-        src.symlink_to(dst)
+    for symlink_name, target_name in symlink_dirs.items():
+        target = tmp_path.joinpath(target_name, 'cylc-run', reg, symlink_name)
+        target.mkdir(parents=True)
+        symlink = run_dir.joinpath(symlink_name)
+        symlink.symlink_to(target)
     for d_name in ('log', 'share', 'share/cycle', 'work'):
         path = run_dir.joinpath(d_name)
         if d_name not in symlink_dirs:
@@ -464,16 +464,16 @@ def test_clean_bad_symlink_dir_wrong_type(
     instead of a dir"""
     reg = 'foo'
     run_dir: Path = tmp_run_dir(reg)
-    src = run_dir.joinpath('log')
-    dst = tmp_path.joinpath('sym-log', 'cylc-run', reg, 'meow.txt')
-    dst.parent.mkdir(parents=True)
-    dst.touch()
-    src.symlink_to(dst)
+    symlink = run_dir.joinpath('log')
+    target = tmp_path.joinpath('sym-log', 'cylc-run', reg, 'meow.txt')
+    target.parent.mkdir(parents=True)
+    target.touch()
+    symlink.symlink_to(target)
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean(reg, run_dir)
     assert "Target is not a directory" in str(exc.value)
-    assert src.exists() is True
+    assert symlink.exists() is True
 
 
 def test_clean_bad_symlink_dir_wrong_form(
@@ -482,15 +482,15 @@ def test_clean_bad_symlink_dir_wrong_form(
     """Test clean() raises error when a symlink dir points to an
     unexpected dir"""
     run_dir: Path = tmp_run_dir('foo')
-    src = run_dir.joinpath('log')
-    dst = tmp_path.joinpath('sym-log', 'oops', 'log')
-    dst.mkdir(parents=True)
-    src.symlink_to(dst)
+    symlink = run_dir.joinpath('log')
+    target = tmp_path.joinpath('sym-log', 'oops', 'log')
+    target.mkdir(parents=True)
+    symlink.symlink_to(target)
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean('foo', run_dir)
     assert 'Expected target to end with "cylc-run/foo/log"' in str(exc.value)
-    assert src.exists() is True
+    assert symlink.exists() is True
 
 
 @pytest.mark.parametrize('pattern', ['thing/', 'thing/*'])

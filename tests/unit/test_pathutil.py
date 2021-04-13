@@ -20,7 +20,7 @@ import os
 from pathlib import Path
 from typing import Callable, Iterable, List, Set
 import pytest
-from unittest.mock import patch, call
+from unittest.mock import Mock, patch, call
 
 from cylc.flow.exceptions import WorkflowFilesError
 from cylc.flow.pathutil import (
@@ -43,6 +43,8 @@ from cylc.flow.pathutil import (
     remove_dir_and_target,
     remove_dir_or_file
 )
+
+from tests.unit.conftest import MonkeyMock
 
 
 HOME = Path.home()
@@ -223,27 +225,28 @@ def test_get_dirs_to_symlink(workflow, install_target, mocked_glbl_cfg,
     assert dirs == output
 
 
-@patch('os.path.expandvars')
 @patch('cylc.flow.pathutil.get_workflow_run_dir')
-@patch('cylc.flow.pathutil.make_symlink')
 @patch('cylc.flow.pathutil.get_dirs_to_symlink')
 def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
-        mocked_dirs_to_symlink,
-        mocked_make_symlink,
-        mocked_get_workflow_run_dir, mocked_expandvars):
-
+    mocked_dirs_to_symlink: Mock,
+    mocked_get_workflow_run_dir: Mock,
+    monkeypatch: pytest.MonkeyPatch, monkeymock: MonkeyMock
+) -> None:
     mocked_dirs_to_symlink.return_value = {
-        'run': '$DOH/workflow3',
-        'log': '$DEE/workflow3/log',
-        'share': '$DEE/workflow3/share'}
+        'run': '$DOH/trinity',
+        'log': '$DEE/trinity/log',
+        'share': '$DEE/trinity/share'
+    }
     mocked_get_workflow_run_dir.return_value = "rund"
-    mocked_expandvars.return_value = "expanded"
-    mocked_make_symlink.return_value = True
+    for v in ('DOH', 'DEE'):
+        monkeypatch.setenv(v, 'expanded')
+    mocked_make_symlink = monkeymock('cylc.flow.pathutil.make_symlink')
+
     make_localhost_symlinks('rund', 'workflow')
     mocked_make_symlink.assert_has_calls([
-        call('expanded', 'rund'),
-        call('expanded', 'rund/log'),
-        call('expanded', 'rund/share')
+        call('rund', 'expanded/trinity'),
+        call('rund/log', 'expanded/trinity/log'),
+        call('rund/share', 'expanded/trinity/share')
     ])
 
 
