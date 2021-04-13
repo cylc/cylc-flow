@@ -53,7 +53,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 grep "host=" "${SUITE_RUN_DIR}/log/suite/log" > hosts.log
 
-grep_ok "\[t2\.2021.*\].*host=${CYLC_TEST_HOST}" hosts.log
+grep_ok "\[t2\.2.*\].*host=${CYLC_TEST_HOST}" hosts.log
 
 purge
 exit

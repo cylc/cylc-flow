@@ -4,10 +4,11 @@
     UTC mode = True
 
 [scheduling]
-    initial cycle point = 2020
-    final cycle point = 2021
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
     [[graph]]
-        P1Y = """
+        P1 = """
             no_settings & t1 & t2 => fin
         """
 
