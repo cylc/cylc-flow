@@ -4,8 +4,13 @@
     UTC mode = True
 
 [scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    # Note: we check the upgrade persists over > 1 cycle
+    # https://github.com/cylc/cylc-flow/issues/4167
     [[graph]]
-        R1 = """
+        P1 = """
             no_settings & t1 & t2 => fin
         """
 
