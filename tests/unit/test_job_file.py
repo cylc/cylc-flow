@@ -20,7 +20,7 @@
 import io
 import os
 import pytest
-from tempfile import TemporaryFile, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 from unittest import mock
 
 from cylc.flow import __version__
@@ -280,11 +280,6 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
 def test_write_suite_environment(fixture_get_platform, monkeypatch):
     """Test suite environment is correctly written in jobscript"""
     # set some suite environment conditions
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_suite_work_dir",
-        lambda a, b: "work/dir"
-    )
     cylc.flow.flags.debug = True
     cylc.flow.flags.verbose = True
     suite_env = {'CYLC_UTC': 'True',
@@ -296,7 +291,6 @@ def test_write_suite_environment(fixture_get_platform, monkeypatch):
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
                 '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
                 ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n   '
-                ' export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
                 ' export CYLC_SUITE_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
@@ -317,12 +311,6 @@ def test_write_suite_environment_no_remote_suite_d(
         fixture_get_platform, monkeypatch
 ):
     """Test suite environment is correctly written in jobscript"""
-
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_suite_work_dir",
-        lambda a, b: "work/dir"
-    )
     cylc.flow.flags.debug = True
     cylc.flow.flags.verbose = True
     suite_env = {'CYLC_UTC': 'True',
@@ -333,8 +321,7 @@ def test_write_suite_environment_no_remote_suite_d(
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n    '
                 'export CYLC_UTC="True"\n    export TZ="UTC"\n\n    export '
                 'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    '
-                'export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
-                ' export CYLC_SUITE_UUID="neigh"')
+                'export CYLC_SUITE_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",

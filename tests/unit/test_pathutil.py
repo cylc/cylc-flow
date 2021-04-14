@@ -18,9 +18,9 @@
 import logging
 import os
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, Iterable, List
 import pytest
-from unittest.mock import Mock, patch, call
+from unittest.mock import patch, call
 
 from cylc.flow.exceptions import WorkflowFilesError
 from cylc.flow.pathutil import (
@@ -28,7 +28,6 @@ from cylc.flow.pathutil import (
     get_dirs_to_symlink,
     get_remote_suite_run_dir,
     get_remote_suite_run_job_dir,
-    get_remote_suite_work_dir,
     get_workflow_run_dir,
     get_suite_run_job_dir,
     get_suite_run_log_dir,
@@ -66,46 +65,31 @@ def test_expand_path(
 @pytest.mark.parametrize(
     'func, extra_args, expected',
     [
-        (get_remote_suite_run_dir, (), "$HOME/annapurna/foo"),
+        (get_remote_suite_run_dir, (), "$HOME/cylc-run/foo"),
         (
             get_remote_suite_run_dir,
             ("comes", "true"),
-            "$HOME/annapurna/foo/comes/true",
+            "$HOME/cylc-run/foo/comes/true",
         ),
         (
             get_remote_suite_run_job_dir,
             (),
-            "$HOME/annapurna/foo/log/job"),
+            "$HOME/cylc-run/foo/log/job"),
         (
             get_remote_suite_run_job_dir,
             ("comes", "true"),
-            "$HOME/annapurna/foo/log/job/comes/true",
-        ),
-        (get_remote_suite_work_dir, (), "$HOME/K2/foo"),
-        (
-            get_remote_suite_work_dir,
-            ("comes", "true"),
-            "$HOME/K2/foo/comes/true",
-        ),
+            "$HOME/cylc-run/foo/log/job/comes/true",
+        )
     ]
 )
 def test_get_remote_suite_run_dirs(
-    func, extra_args, expected
-):
-    """
-    Tests for get_remote_suite_run_[|job|work]_dir
-    Pick a unusual cylc dir names to ensure not picking up system settings
-    Pick different names for run and work dir to ensure that the test
-    isn't passing by accident.
-    """
-    platform = {
-        'run directory': '$HOME/annapurna',
-        'work directory': '$HOME/K2',
-    }
+    func: Callable, extra_args: Iterable[str], expected: str,
+) -> None:
+    """Tests for get_remote_suite_run_[|job|work]_dir"""
     if extra_args:
-        result = func(platform, 'foo', *extra_args)
+        result = func('foo', *extra_args)
     else:
-        result = func(platform, 'foo')
+        result = func('foo')
     assert result == expected
 
 
@@ -123,9 +107,7 @@ def test_get_remote_suite_run_dirs(
     [([], ''),
      (['comes', 'true'], '/comes/true')]
 )
-@patch('cylc.flow.pathutil.platform_from_name')
 def test_get_workflow_run_dirs(
-    mocked_platform: Mock,
     func: Callable, tail1: str, args: List[str], tail2: str
 ) -> None:
     """Usage of get_suite_run_*dir.
@@ -137,14 +119,9 @@ def test_get_workflow_run_dirs(
         tail2: expected tail of return value from extra args
     """
     homedir = os.getenv("HOME")
-    mocked_platform.return_value = {
-        'run directory': '$HOME/cylc-run',
-        'work directory': '$HOME/cylc-run'
-    }
 
     expected_result = f'{homedir}/cylc-run/my-workflow/dream{tail1}{tail2}'
     assert func('my-workflow/dream', *args) == expected_result
-    mocked_platform.assert_called_with()
 
 
 @pytest.mark.parametrize(
@@ -153,11 +130,7 @@ def test_get_workflow_run_dirs(
      (get_suite_run_pub_db_name, '/log/db'),
      (get_suite_test_log_name, '/log/suite/reftest.log')]
 )
-@patch('cylc.flow.pathutil.platform_from_name')
-def test_get_suite_run_names(
-    mocked_platform: Mock,
-    func: Callable, tail: str
-) -> None:
+def test_get_suite_run_names(func: Callable, tail: str) -> None:
     """Usage of get_suite_run_*name.
 
     Params:
@@ -166,45 +139,29 @@ def test_get_suite_run_names(
         tail: expected tail of return value from configuration
     """
     homedir = os.getenv("HOME")
-    mocked_platform.return_value = {
-        'run directory': '$HOME/cylc-run',
-        'work directory': '$HOME/cylc-run'
-    }
 
     assert (
         func('my-suite/dream') == f'{homedir}/cylc-run/my-suite/dream{tail}'
     )
-    mocked_platform.assert_called_with()
 
 
-@pytest.mark.parametrize(
-    'subdir',
-    [
-        '',
-        '/log/suite',
-        '/log/job',
-        '/log/flow-config',
-        '/share',
-        '/work'
-    ]
-)
-def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
-    glbl_conf_str = f'''
-        [platforms]
-            [[localhost]]
-                run directory = {tmpdir}
-                work directory = {tmpdir}
-        '''
-
-    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glbl_conf_str)
-    mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', glbl_conf_str)
-
-    caplog.set_level(logging.DEBUG)
+def test_make_suite_run_tree(
+    tmp_run_dir: Callable, caplog: pytest.LogCaptureFixture
+) -> None:
+    run_dir: Path = tmp_run_dir('my-workflow')
+    caplog.set_level(logging.DEBUG)  # Only used for debugging test
 
     make_suite_run_tree('my-workflow')
-
     # Check that directories have been created
-    assert (tmpdir / 'my-workflow' / subdir).isdir() is True
+    for subdir in [
+        '',
+        'log/suite',
+        'log/job',
+        'log/flow-config',
+        'share',
+        'work'
+    ]:
+        assert (run_dir / subdir).is_dir() is True
 
 
 @pytest.mark.parametrize(

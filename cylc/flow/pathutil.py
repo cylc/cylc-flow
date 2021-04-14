@@ -24,10 +24,12 @@ from typing import Union
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import WorkflowFilesError
-from cylc.flow.platforms import (
-    get_localhost_install_target,
-    platform_from_name
-)
+from cylc.flow.platforms import get_localhost_install_target
+
+
+# Note: do not import this elsewhere, as it might bypass unit test
+# monkeypatching:
+_CYLC_RUN_DIR = '$HOME/cylc-run'
 
 
 def expand_path(*args: Union[Path, str]) -> str:
@@ -37,23 +39,20 @@ def expand_path(*args: Union[Path, str]) -> str:
     ))
 
 
-def get_remote_suite_run_dir(platform, suite, *args):
-    """Return remote suite run directory, join any extra args."""
-    return os.path.join(
-        platform['run directory'], suite, *args)
+def get_remote_suite_run_dir(
+    flow_name: Union[Path, str], *args: Union[Path, str]
+) -> str:
+    """Return remote workflow run directory, joining any extra args,
+    NOT expanding vars or user."""
+    return os.path.join(_CYLC_RUN_DIR, flow_name, *args)
 
 
-def get_remote_suite_run_job_dir(platform, suite, *args):
-    """Return remote suite run directory, join any extra args."""
-    return get_remote_suite_run_dir(
-        platform, suite, 'log', 'job', *args)
-
-
-def get_remote_suite_work_dir(platform, suite, *args):
-    """Return remote suite work directory root, join any extra args."""
-    return os.path.join(
-        platform['work directory'], suite, *args
-    )
+def get_remote_suite_run_job_dir(
+    flow_name: Union[Path, str], *args: Union[Path, str]
+) -> str:
+    """Return remote workflow job log directory, joining any extra args,
+    NOT expanding vars or user."""
+    return get_remote_suite_run_dir(flow_name, 'log', 'job', *args)
 
 
 def get_workflow_run_dir(
@@ -64,11 +63,7 @@ def get_workflow_run_dir(
 
     Does not check that the directory exists.
     """
-    return expand_path(
-        os.path.join(
-            platform_from_name()['run directory'], flow_name, *args
-        )
-    )
+    return expand_path(_CYLC_RUN_DIR, flow_name, *args)
 
 
 def get_suite_run_job_dir(suite, *args):
@@ -103,16 +98,12 @@ def get_suite_run_pub_db_name(suite):
 
 def get_suite_run_share_dir(suite, *args):
     """Return local suite work/share directory, join any extra args."""
-    return expand_path(os.path.join(
-        platform_from_name()['work directory'], suite, 'share', *args
-    ))
+    return get_workflow_run_dir(suite, 'share', *args)
 
 
 def get_suite_run_work_dir(suite, *args):
     """Return local suite work/work directory, join any extra args."""
-    return expand_path(os.path.join(
-        platform_from_name()['work directory'], suite, 'work', *args
-    ))
+    return get_workflow_run_dir(suite, 'work', *args)
 
 
 def get_suite_test_log_name(suite):
@@ -122,8 +113,6 @@ def get_suite_test_log_name(suite):
 
 def make_suite_run_tree(suite):
     """Create all top-level cylc-run output dirs on the suite host."""
-    dir_ = get_workflow_run_dir(suite)
-    # Create
     for dir_ in (
         get_workflow_run_dir(suite),
         get_suite_run_log_dir(suite),
@@ -156,7 +145,7 @@ def make_localhost_symlinks(rund, named_sub_dir):
             dst = rund
         else:
             dst = os.path.join(rund, key)
-        src = os.path.expandvars(value)
+        src = expand_path(value)
         if '$' in src:
             raise WorkflowFilesError(
                 f'Unable to create symlink to {src}.'

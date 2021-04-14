@@ -62,8 +62,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.pathutil import expand_path
-from cylc.flow.platforms import get_platform
+from cylc.flow.pathutil import expand_path, get_workflow_run_dir
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -169,7 +168,7 @@ def get_option_parser():
     parser.add_option(
         "-S", "--status",
         help="Specify a particular status or triggering condition to "
-             "check for. " + conds + states,
+             f"check for. {conds}{states}",
         action="store", dest="status", default=None)
 
     parser.add_option(
@@ -217,20 +216,22 @@ def main(parser, options, suite):
     if (options.status and
             options.status not in TASK_STATUSES_ORDERED and
             options.status not in CylcSuiteDBChecker.STATE_ALIASES):
-        raise UserInputError("invalid status '" + options.status + "'")
+        raise UserInputError(f"invalid status '{options.status}'")
 
     # this only runs locally
-    run_dir = expand_path(
-        options.run_dir or get_platform()['run directory']
-    )
+    if options.run_dir:
+        run_dir = expand_path(options.run_dir)
+    else:
+        run_dir = get_workflow_run_dir('')
 
-    pollargs = {'suite': suite,
-                'run_dir': run_dir,
-                'task': options.task,
-                'cycle': options.cycle,
-                'status': options.status,
-                'message': options.msg,
-                }
+    pollargs = {
+        'suite': suite,
+        'run_dir': run_dir,
+        'task': options.task,
+        'cycle': options.cycle,
+        'status': options.status,
+        'message': options.msg,
+    }
 
     spoller = SuitePoller("requested state",
                           options.interval,

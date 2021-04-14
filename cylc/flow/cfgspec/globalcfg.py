@@ -423,21 +423,6 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('job runner command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
-            Conf('run directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
-                The directory in which to install workflows.
-            ''')
-            Conf('work directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
-                The top level for suite work and share directories. Can contain
-                ``$HOME`` or ``$USER`` but not other environment variables (the
-                item cannot actually be evaluated by the shell on HOST before
-                use, but the remote home directory is where ``rsync`` and
-                ``ssh`` naturally land, and the remote username is known by the
-                suite server program).
-
-                Example::
-
-                   /nfs/data/$USER/cylc-run
-            ''')
             Conf('suite definition directory', VDR.V_STRING)
             Conf('communication method',
                  VDR.V_STRING, 'zmq', options=['zmq', 'poll', 'ssh'], desc='''
