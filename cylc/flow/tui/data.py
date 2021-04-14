@@ -42,7 +42,7 @@ QUERY = '''
           id
           submitNum
           state
-          host
+          platform
           jobRunnerName
           jobId
           startedTime

@@ -51,9 +51,12 @@ ones in. -->
 
 ### Enhancements
 
-[#4154](https://github.com/cylc/cylc-flow/pull/4154)
+[#4154](https://github.com/cylc/cylc-flow/pull/4154) -
 Deprecate `CYLC_SUITE_DEF_PATH` with `CYLC_SUITE_RUN_DIR` (note the deprecated
 variable is still present in the job environment).
+
+[#4164](https://github.com/cylc/cylc-flow/pull/4164) -
+Replace the job "host" field with "platform" in the GraphQL schema.
 
 [#4169](https://github.com/cylc/cylc-flow/pull/4169)
 Fix a host ⇒ platform upgrade bug where host names were being popped from task

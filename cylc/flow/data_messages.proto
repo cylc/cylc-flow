@@ -120,7 +120,7 @@ message PbJob {
     optional string err_script = 12;
     optional string exit_script = 13;
     optional float execution_time_limit = 14;
-    optional string host = 15;
+    optional string platform = 15;
     optional string init_script = 16;
     optional string job_log_dir = 17;
     optional string post_script = 19;
