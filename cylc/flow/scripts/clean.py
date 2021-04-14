@@ -41,6 +41,11 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.suite_files import clean, init_clean
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 def get_option_parser():
     parser = COP(
@@ -65,7 +70,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, reg):
+def main(parser: COP, opts: 'Values', reg: str):
     if not cylc.flow.flags.debug:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:

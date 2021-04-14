@@ -60,6 +60,7 @@ from cylc.flow.unicode_rules import SuiteNameValidator
 from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
+    from optparse import Values
     from logging import Logger
 
 
@@ -592,7 +593,7 @@ def _clean_check(reg, run_dir):
             f"Cannot remove running workflow.\n\n{exc}")
 
 
-def init_clean(reg, opts):
+def init_clean(reg: str, opts: 'Values') -> None:
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 
@@ -883,13 +884,13 @@ def validate_flow_name(flow_name: str) -> None:
             f"workflow name cannot be an absolute path: {flow_name}")
 
 
-def check_nested_run_dirs(run_dir, flow_name):
+def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
     """Disallow nested run dirs e.g. trying to install foo/bar where foo is
     already a valid workflow directory.
 
     Args:
-        run_dir (path): run directory path
-        flow_name (str): workflow name
+        run_dir: Absolute workflow run directory path.
+        flow_name: Workflow name.
 
     Raise:
         WorkflowFilesError:
@@ -899,24 +900,25 @@ def check_nested_run_dirs(run_dir, flow_name):
     """
     exc_msg = (
         'Nested run directories not allowed - cannot install workflow name '
-        '"%s" as "%s" is already a valid run directory.')
+        '"{0}" as "{1}" is already a valid run directory.')
 
-    def _check_child_dirs(path, depth_count=1):
+    def _check_child_dirs(path: Union[Path, str], depth_count: int = 1):
         for result in os.scandir(path):
             if result.is_dir() and not result.is_symlink():
                 if is_valid_run_dir(result.path):
                     raise WorkflowFilesError(
-                        exc_msg %
-                        (flow_name, result.path))
+                        exc_msg.format(flow_name, result.path)
+                    )
                 if depth_count < MAX_SCAN_DEPTH:
                     _check_child_dirs(result.path, depth_count + 1)
 
-    reg_path = os.path.normpath(run_dir)
+    reg_path: Union[Path, str] = os.path.normpath(run_dir)
     parent_dir = os.path.dirname(reg_path)
     while parent_dir not in ['', '/']:
         if is_valid_run_dir(parent_dir):
             raise WorkflowFilesError(
-                exc_msg % (parent_dir, get_cylc_run_abs_path(parent_dir)))
+                exc_msg.format(parent_dir, get_cylc_run_abs_path(parent_dir))
+            )
         parent_dir = os.path.dirname(parent_dir)
 
     reg_path = get_cylc_run_abs_path(reg_path)
@@ -937,7 +939,7 @@ def is_valid_run_dir(path):
     return False
 
 
-def get_cylc_run_abs_path(path):
+def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
     """Return the absolute path under the cylc-run directory for the specified
     relative path.
 
@@ -1117,11 +1119,11 @@ def install_workflow(
         flow_name = Path.cwd().stem
     validate_flow_name(flow_name)
     if run_name in SuiteFiles.RESERVED_NAMES:
-        raise WorkflowFilesError(
-            f'Run name cannot be "{run_name}".')
+        raise WorkflowFilesError(f'Run name cannot be "{run_name}".')
     validate_source_dir(source, flow_name)
     run_path_base = Path(get_workflow_run_dir(flow_name))
-    relink, run_num, rundir = get_run_dir(run_path_base, run_name, no_run_name)
+    relink, run_num, rundir = get_run_dir_info(
+        run_path_base, run_name, no_run_name)
     if Path(rundir).exists():
         raise WorkflowFilesError(
             f"\"{rundir}\" exists."
@@ -1132,7 +1134,7 @@ def install_workflow(
     if not no_symlinks:
         sub_dir = flow_name
         if run_num:
-            sub_dir += '/' + f'run{run_num}'
+            sub_dir = os.path.join(sub_dir, f'run{run_num}')
         symlinks_created = make_localhost_symlinks(rundir, sub_dir)
     INSTALL_LOG = _get_logger(rundir, 'cylc-install')
     if not no_symlinks and bool(symlinks_created) is True:
@@ -1177,28 +1179,24 @@ def install_workflow(
     return source, rundir, flow_name
 
 
-def get_run_dir(run_path_base, run_name, no_run_name):
-    """ Build run directory for current install.
+def get_run_dir_info(
+    run_path_base: Path, run_name: Optional[str], no_run_name: bool
+) -> Tuple[bool, Optional[int], Path]:
+    """Get (numbered, named or unnamed) run directory info for current install.
 
     Args:
-        run_path_base (Path):
-            The workflow directory.
-        run_name (str):
-            Name of the run.
-        no_run_name (bool):
-            Flag as True to indicate no run name - workflow installed into
-            ~/cylc-run/<run_path_base>.
+        run_path_base: The workflow directory absolute path.
+        run_name: Name of the run.
+        no_run_name: Flag as True to indicate no run name - workflow installed
+            into ~/cylc-run/<run_path_base>.
 
     Returns:
-        relink (bool):
-            True if runN symlink needs updating.
-        run_num (int):
-            Run number of the current install.
-        rundir (Path):
-            Run directory.
+        relink: True if runN symlink needs updating.
+        run_num: Run number of the current install, if using numbered runs.
+        rundir: Run directory absolute path.
     """
     relink = False
-    run_num = 0
+    run_num = None
     if no_run_name:
         rundir = run_path_base
     elif run_name:
@@ -1209,14 +1207,13 @@ def get_run_dir(run_path_base, run_name, no_run_name):
                 f"This path: \"{run_path_base}\" contains installed numbered"
                 " runs. Try again, using cylc install without --run-name.")
     else:
-        run_n = Path(run_path_base, SuiteFiles.RUN_N).expanduser()
         run_num = get_next_rundir_number(run_path_base)
         rundir = Path(run_path_base, f'run{run_num}')
         if run_path_base.exists() and detect_flow_exists(run_path_base, False):
             raise WorkflowFilesError(
                 f"This path: \"{run_path_base}\" contains an installed"
                 " workflow. Try again, using --run-name.")
-        unlink_runN(run_n)
+        unlink_runN(run_path_base)
         relink = True
     return relink, run_num, rundir
 
@@ -1246,7 +1243,8 @@ def detect_flow_exists(run_path_base, numbered):
 
 
 def check_flow_file(
-    path: Union[Path, str], symlink_suiterc: bool = False,
+    path: Union[Path, str],
+    symlink_suiterc: bool = False,
     logger: 'Logger' = LOG
 ) -> Path:
     """Raises WorkflowFilesError if no flow file in path sent.
@@ -1308,15 +1306,20 @@ def validate_source_dir(source, flow_name):
     check_flow_file(source)
 
 
-def unlink_runN(run_n):
-    """Remove symlink runN"""
+def unlink_runN(path: Union[Path, str]) -> bool:
+    """Remove symlink runN if it exists.
+
+    Args:
+        path: Absolute path to workflow dir containing runN.
+    """
     try:
-        Path(run_n).unlink()
+        Path(expand_path(path, SuiteFiles.RUN_N)).unlink()
     except OSError:
-        pass
+        return False
+    return True
 
 
-def link_runN(latest_run):
+def link_runN(latest_run: Union[Path, str]):
     """Create symlink runN, pointing at the latest run"""
     latest_run = Path(latest_run).expanduser()
     run_n = Path(latest_run.parent, SuiteFiles.RUN_N)

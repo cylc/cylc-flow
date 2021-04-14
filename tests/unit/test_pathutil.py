@@ -18,10 +18,9 @@
 import logging
 import os
 from pathlib import Path
+from typing import Callable, List
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
-from unittest import TestCase
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import Mock, patch, call
 
 from cylc.flow.exceptions import WorkflowFilesError
 from cylc.flow.pathutil import (
@@ -55,7 +54,10 @@ HOME = Path.home()
      ('~/$FOO/moo', os.path.join(HOME, 'foo', 'bar', 'moo')),
      ('$NON_EXIST/moo', '$NON_EXIST/moo')]
 )
-def test_expand_path(path: str, expected: str, monkeypatch: MonkeyPatch):
+def test_expand_path(
+    path: str, expected: str,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv('FOO', 'foo/bar')
     monkeypatch.delenv('NON_EXIST', raising=False)
     assert expand_path(path) == expected
@@ -107,68 +109,72 @@ def test_get_remote_suite_run_dirs(
     assert result == expected
 
 
-class TestPathutil(TestCase):
-    """Tests for functions in "cylc.flow.pathutil".
+@pytest.mark.parametrize(
+    'func, tail1',
+    [(get_workflow_run_dir, ''),
+     (get_suite_run_job_dir, '/log/job'),
+     (get_suite_run_log_dir, '/log/suite'),
+     (get_suite_run_config_log_dir, '/log/flow-config'),
+     (get_suite_run_share_dir, '/share'),
+     (get_suite_run_work_dir, '/work')]
+)
+@pytest.mark.parametrize(
+    'args, tail2',
+    [([], ''),
+     (['comes', 'true'], '/comes/true')]
+)
+@patch('cylc.flow.pathutil.platform_from_name')
+def test_get_workflow_run_dirs(
+    mocked_platform: Mock,
+    func: Callable, tail1: str, args: List[str], tail2: str
+) -> None:
+    """Usage of get_suite_run_*dir.
 
-    TODO: Refactor these tests using `pytest.mark.parametrize` so
-          that the tester can more easily see which function ha
-          failed.
+    Params:
+        func: get_remote_* function to test
+        tail1: expected tail of return value from configuration
+        args: extra *args
+        tail2: expected tail of return value from extra args
     """
-    @patch('cylc.flow.pathutil.get_platform')
-    def test_get_workflow_run_dirs(self, mocked_platform):
-        """Usage of get_suite_run_*dir."""
-        homedir = os.getenv("HOME")
-        mocked = MagicMock()
-        mocked_platform.return_value = {
-            'run directory': '$HOME/cylc-run',
-            'work directory': '$HOME/cylc-run'
-        }
-        # func = get_remote_* function to test
-        # tail1 = expected tail of return value from configuration
-        # args = extra *args
-        # tail2 = expected tail of return value from extra args
-        for func, tail1 in (
-            (get_workflow_run_dir, ''),
-            (get_suite_run_job_dir, '/log/job'),
-            (get_suite_run_log_dir, '/log/suite'),
-            (get_suite_run_config_log_dir, '/log/flow-config'),
-            (get_suite_run_share_dir, '/share'),
-            (get_suite_run_work_dir, '/work'),
-        ):
-            for args, tail2 in (
-                ((), ''),
-                (('comes', 'true'), '/comes/true'),
-            ):
-                expected_result =\
-                    f'{homedir}/cylc-run/my-workflow/dream{tail1}{tail2}'
-                assert func('my-workflow/dream', *args) == expected_result
-                mocked_platform.assert_called_with()
-                mocked.get_host_item.reset_mock()
+    homedir = os.getenv("HOME")
+    mocked_platform.return_value = {
+        'run directory': '$HOME/cylc-run',
+        'work directory': '$HOME/cylc-run'
+    }
 
-    @patch('cylc.flow.pathutil.get_platform')
-    def test_get_suite_run_names(self, mocked_platform):
-        """Usage of get_suite_run_*name."""
-        homedir = os.getenv("HOME")
-        mocked = MagicMock()
-        mocked_platform.return_value = {
-            'run directory': '$HOME/cylc-run',
-            'work directory': '$HOME/cylc-run'
-        }
-        # func = get_remote_* function to test
-        # cfg = configuration used in mocked global configuration
-        # tail1 = expected tail of return value from configuration
-        for func, cfg, tail1 in (
-            (get_suite_run_log_name, 'run directory', '/log/suite/log'),
-            (get_suite_run_pub_db_name, 'run directory', '/log/db'),
-            (get_suite_test_log_name, 'run directory',
-             '/log/suite/reftest.log'),
-        ):
-            assert (
-                func('my-suite/dream') ==
-                f'{homedir}/cylc-run/my-suite/dream{tail1}'
-            )
-            mocked_platform.assert_called_with()
-            mocked.get_host_item.reset_mock()
+    expected_result = f'{homedir}/cylc-run/my-workflow/dream{tail1}{tail2}'
+    assert func('my-workflow/dream', *args) == expected_result
+    mocked_platform.assert_called_with()
+
+
+@pytest.mark.parametrize(
+    'func, tail',
+    [(get_suite_run_log_name, '/log/suite/log'),
+     (get_suite_run_pub_db_name, '/log/db'),
+     (get_suite_test_log_name, '/log/suite/reftest.log')]
+)
+@patch('cylc.flow.pathutil.platform_from_name')
+def test_get_suite_run_names(
+    mocked_platform: Mock,
+    func: Callable, tail: str
+) -> None:
+    """Usage of get_suite_run_*name.
+
+    Params:
+        func: get_remote_* function to test
+        cfg: configuration used in mocked global configuration
+        tail: expected tail of return value from configuration
+    """
+    homedir = os.getenv("HOME")
+    mocked_platform.return_value = {
+        'run directory': '$HOME/cylc-run',
+        'work directory': '$HOME/cylc-run'
+    }
+
+    assert (
+        func('my-suite/dream') == f'{homedir}/cylc-run/my-suite/dream{tail}'
+    )
+    mocked_platform.assert_called_with()
 
 
 @pytest.mark.parametrize(
@@ -373,8 +379,3 @@ def test_remove_dir_relative(tmp_path):
     with pytest.raises(ValueError) as cm:
         remove_dir('foo/bar')
     assert 'Path must be absolute' in str(cm.value)
-
-
-if __name__ == '__main__':
-    from unittest import main
-    main()

@@ -47,7 +47,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
-    from cylc.flow.option_parsers import Options
+    from optparse import Values
 
 
 RELEASE_MUTATION = '''
@@ -95,7 +95,7 @@ def get_option_parser() -> COP:
     return parser
 
 
-def _validate(options: 'Options', *task_globs: str) -> None:
+def _validate(options: 'Values', *task_globs: str) -> None:
     """Check combination of options and task globs is valid."""
     if options.release_all:
         if task_globs:
@@ -108,7 +108,7 @@ def _validate(options: 'Options', *task_globs: str) -> None:
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Options', workflow: str, *task_globs: str):
+def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
 
     _validate(options, *task_globs)
 

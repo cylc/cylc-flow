@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cylc.flow.option_parsers import Options
 import logging
-import os.path
 from pathlib import Path
 import pytest
+import shutil
 from typing import Callable, Optional, Tuple, Type
 from unittest import mock
 
@@ -25,10 +26,39 @@ from cylc.flow import CYLC_LOG
 from cylc.flow import suite_files
 from cylc.flow.exceptions import (
     CylcError, SuiteServiceFileError, TaskRemoteMgmtError, WorkflowFilesError)
+from cylc.flow.scripts.clean import get_option_parser as _clean_GOP
 from cylc.flow.suite_files import (
+    SuiteFiles,
     check_nested_run_dirs,
     get_workflow_source_dir,
     reinstall_workflow, search_install_source_dirs)
+
+
+CleanOpts = Options(_clean_GOP())
+
+
+@pytest.fixture
+def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Fixture that patches the cylc-run dir to the tests's {tmp_path}/cylc-run
+    and optionally creates a workflow run dir inside.
+
+    Args:
+        reg: Workflow name.
+    """
+    def inner(reg: Optional[str] = None) -> Path:
+        cylc_run_dir = tmp_path.joinpath('cylc-run')
+        cylc_run_dir.mkdir(exist_ok=True)
+        for module in ('suite_files', 'pathutil'):
+            monkeypatch.setattr(f'cylc.flow.{module}.get_workflow_run_dir',
+                                lambda *a: cylc_run_dir.joinpath(*a))
+        if reg:
+            run_dir = cylc_run_dir.joinpath(reg)
+            run_dir.mkdir(parents=True, exist_ok=True)
+            run_dir.joinpath(SuiteFiles.FLOW_FILE).touch(exist_ok=True)
+            run_dir.joinpath(SuiteFiles.Service.DIRNAME).mkdir(exist_ok=True)
+            return run_dir
+        return cylc_run_dir
+    return inner
 
 
 @pytest.mark.parametrize(
@@ -37,142 +67,67 @@ from cylc.flow.suite_files import (
      ('/a/b/c', '/a/b/c')]
 )
 def test_get_cylc_run_abs_path(path, expected, monkeypatch):
-    monkeypatch.setattr('cylc.flow.pathutil.get_platform',
+    monkeypatch.setattr('cylc.flow.pathutil.platform_from_name',
                         lambda: {'run directory': '/mock_cylc_dir'})
     assert suite_files.get_cylc_run_abs_path(path) == expected
 
 
-@pytest.mark.parametrize(
-    'path, expected',
-    [('service/dir/exists', True),
-     ('flow/file/exists', False),  # Non-run dirs can still contain flow.cylc
-     ('nothing/exists', False)]
-)
 @pytest.mark.parametrize('is_abs_path', [False, True])
-def test_is_valid_run_dir(path, expected, is_abs_path, monkeypatch):
+def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     """Test that a directory is correctly identified as a valid run dir when
     it contains a service dir.
     """
-    prefix = os.sep if is_abs_path is True else 'mock_cylc_dir'
-    flow_file = os.path.join(prefix, 'flow', 'file', 'exists', 'flow.cylc')
-    serv_dir = os.path.join(prefix, 'service', 'dir', 'exists', '.service')
-    monkeypatch.setattr('os.path.isfile', lambda x: x == flow_file)
-    monkeypatch.setattr('os.path.isdir', lambda x: x == serv_dir)
-    monkeypatch.setattr('cylc.flow.pathutil.get_platform',
-                        lambda: {'run directory': 'mock_cylc_dir'})
-    path = os.path.normpath(path)
-    if is_abs_path:
-        path = os.path.join(os.sep, path)
-
-    assert suite_files.is_valid_run_dir(path) is expected, (
-        f'Is "{path}" a valid run dir?')
-
-
-@pytest.mark.parametrize(
-    'run_dir',
-    [
-        ('bright/falls/light'),
-        ('bright/falls/light/dark')
-    ]
-)
-def test_rundir_parent_that_does_not_contain_workflow_no_error(
-        run_dir, monkeypatch):
-    """Test that a workflow raises no error when a parent directory is not also
-        a workflow directory."""
-
-    monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
-                        lambda x: False if x.find('.service') > 0
-                        else True)
-    monkeypatch.setattr(
-        'cylc.flow.suite_files.get_cylc_run_abs_path', lambda x: x)
-    monkeypatch.setattr(
-        'cylc.flow.suite_files.os.scandir', lambda x: [])
-
-    try:
-        suite_files.check_nested_run_dirs(run_dir, 'placeholder_flow')
-    except Exception:
-        pytest.fail("check_nested_run_dirs raised exception unexpectedly.")
+    cylc_run_dir: Path = tmp_run_dir()
+    prefix = str(cylc_run_dir) if is_abs_path else ''
+    # What if no dir there?
+    assert suite_files.is_valid_run_dir(Path(prefix, 'nothing/here')) is False
+    # What if only flow.cylc exists but no service dir?
+    # (Non-run dirs can still contain flow.cylc)
+    run_dir = cylc_run_dir.joinpath('foo/bar')
+    run_dir.mkdir(parents=True)
+    run_dir.joinpath(SuiteFiles.FLOW_FILE).touch()
+    assert suite_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is False
+    # What if service dir exists?
+    run_dir.joinpath(SuiteFiles.Service.DIRNAME).mkdir()
+    assert suite_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-@pytest.mark.parametrize(
-    'run_dir, srv_dir',
-    [
-        ('bright/falls/light', 'bright/falls/.service'),
-        ('bright/falls/light/dark', 'bright/falls/light/.service')
-    ]
-)
-def test_rundir_parent_that_contains_workflow_raises_error(
-        run_dir, srv_dir, monkeypatch):
-    """Test that a workflow that contains another worfkflow raises error."""
-
-    monkeypatch.setattr(
-        'cylc.flow.suite_files.os.path.isdir', lambda x: x == srv_dir)
-    monkeypatch.setattr(
-        'cylc.flow.suite_files.get_cylc_run_abs_path', lambda x: x)
-    monkeypatch.setattr(
-        'cylc.flow.suite_files.os.scandir', lambda x: [])
-
+def test_check_nested_run_dirs_parents(tmp_run_dir: Callable):
+    """Test that check_nested_run_dirs() raises when a parent dir is a
+    workflow directory."""
+    cylc_run_dir: Path = tmp_run_dir()
+    test_dir = cylc_run_dir.joinpath('a/b/c/d/e')
+    test_dir.mkdir(parents=True)
+    # Parents are not run dirs - ok:
+    suite_files.check_nested_run_dirs(test_dir, 'e')
+    # Parent contains a run dir but that run dir is not direct ancestor
+    # of our test dir - ok:
+    tmp_run_dir('a/Z')
+    suite_files.check_nested_run_dirs(test_dir, 'e')
+    # Now make run dir out of parent - not ok:
+    tmp_run_dir('a')
     with pytest.raises(WorkflowFilesError) as exc:
-        suite_files.check_nested_run_dirs(run_dir, 'placeholder_flow')
-    assert 'Nested run directories not allowed' in str(exc.value)
+        suite_files.check_nested_run_dirs(test_dir, 'e')
+    assert "Nested run directories not allowed" in str(exc.value)
 
 
-@pytest.mark.parametrize(
-    'run_dir',
-    [
-        ('a'),
-        ('d/a'),
-        ('z/d/a/a')
-    ]
-)
-def test_rundir_children_that_do_not_contain_workflows_no_error(
-        run_dir, monkeypatch):
-    """Test that a run directory that contains no other workflows does not
-    raise an error."""
-
-    monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
-                        lambda x: False if x.find('.service')
-                        else True)
-    monkeypatch.setattr(
-        'cylc.flow.suite_files.get_cylc_run_abs_path',
-        lambda x: x)
-    monkeypatch.setattr('cylc.flow.suite_files.os.scandir',
-                        lambda x: [
-                            mock.Mock(path=run_dir[0:len(x) + 2],
-                                      is_symlink=lambda: False)])
-    try:
-        suite_files.check_nested_run_dirs(run_dir, 'placeholder_flow')
-    except Exception:
-        pytest.fail("check_nested_run_dirs raised exception unexpectedly.")
-
-
-@pytest.mark.parametrize(
-    'run_dir, srv_dir',
-    [
-        ('a', 'a/R/.service'),
-        ('d/a', 'd/a/a/R/.service'),
-        ('z/d/a/a', 'z/d/a/a/R/.service')
-    ]
-)
-def test_rundir_children_that_contain_workflows_raise_error(
-        run_dir, srv_dir, monkeypatch):
-    """Test that a workflow cannot be contained in a subdir of another
-    workflow."""
-    monkeypatch.setattr('cylc.flow.suite_files.os.path.isdir',
-                        lambda x: False if (
-                            x.find('.service') > 0 and x != srv_dir)
-                        else True)
-    monkeypatch.setattr(
-        'cylc.flow.suite_files.get_cylc_run_abs_path',
-        lambda x: x)
-    monkeypatch.setattr('cylc.flow.suite_files.os.scandir',
-                        lambda x: [
-                            mock.Mock(path=srv_dir[0:len(x) + 2],
-                                      is_symlink=lambda: False)])
-
+def test_check_nested_run_dirs_children(tmp_run_dir: Callable):
+    """Test that check_nested_run_dirs() raises when a child dir is a
+    workflow directory."""
+    cylc_run_dir: Path = tmp_run_dir()
+    cylc_run_dir.joinpath('a/b/c/d/e').mkdir(parents=True)
+    test_dir = cylc_run_dir.joinpath('a')
+    # No run dir in children - ok:
+    suite_files.check_nested_run_dirs(test_dir, 'a')
+    # Run dir in child - not ok:
+    d: Path = tmp_run_dir('a/b/c/d/e')
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(run_dir, 'placeholder_flow')
-    assert 'Nested run directories not allowed' in str(exc.value)
+        suite_files.check_nested_run_dirs(test_dir, 'a')
+    assert "Nested run directories not allowed" in str(exc.value)
+    shutil.rmtree(d)
+    # Run dir in child but below max scan depth - not ideal but passes:
+    tmp_run_dir('a/b/c/d/e/f')
+    suite_files.check_nested_run_dirs(test_dir, 'a')
 
 
 @pytest.mark.parametrize(

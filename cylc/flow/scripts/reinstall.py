@@ -51,7 +51,7 @@ from cylc.flow.suite_files import (
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
-    from cylc.flow.option_parsers import Options
+    from optparse import Values
 
 
 def get_option_parser():
@@ -112,7 +112,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(
-    parser: COP, opts: 'Options', named_run: Optional[str] = None
+    parser: COP, opts: 'Values', named_run: Optional[str] = None
 ) -> None:
     if not named_run:
         source, _ = get_workflow_source_dir(Path.cwd())
