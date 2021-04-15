@@ -46,7 +46,7 @@ class Poller:
 
     def __init__(self, condition, interval, max_polls, args):
 
-        self.condition = condition  # e.g. "suite stopped"
+        self.condition = condition  # e.g. "scheduler stopped"
 
         # check max_polls is an int
         try:

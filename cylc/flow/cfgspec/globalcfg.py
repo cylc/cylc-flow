@@ -140,7 +140,7 @@ with Conf('global.cylc', desc='''
             shutdown/restart it will first wait a random period of time
             between zero and ``auto restart delay`` seconds before
             beginning the process. This is to prevent large numbers of
-            suites from restarting simultaneously.
+            schedulers from restarting simultaneously.
         ''')
         with Conf('run hosts', desc='''
             Configure hosts and ports for starting up schedulers. Additionally
@@ -154,7 +154,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
                  desc='''
-                A list of allowed ports for Cylc to use to run suites.
+                A list of allowed ports for Cylc schedulers to use.
             ''')
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc='''
                 Hosts specified in ``condemned hosts`` will not be considered
@@ -319,7 +319,7 @@ with Conf('global.cylc', desc='''
             Conf('plugins', VDR.V_STRING_LIST,
                  ['health check', 'prune flow labels'], desc='''
                 Configure the default main loop plugins to use when
-                starting up new suites.
+                starting up new schedulers.
             ''')
 
             with Conf('<plugin name>', desc='''
@@ -437,11 +437,11 @@ with Conf('global.cylc', desc='''
 
                    /nfs/data/$USER/cylc-run
             ''')
-            Conf('suite definition directory', VDR.V_STRING)
+            Conf('workflow definition directory', VDR.V_STRING)
             Conf('communication method',
                  VDR.V_STRING, 'zmq', options=['zmq', 'poll', 'ssh'], desc='''
                 The means by which task progress messages are reported back to
-                the running suite.
+                the running scheduler.
 
                 Options:
 
@@ -460,7 +460,7 @@ with Conf('global.cylc', desc='''
                 prevent the submitted job from executing at all, such as
                 deletion from an external job runner queue. Routine
                 polling is done only for the polling ``task communication
-                method`` unless suite-specific polling is configured in
+                method`` unless polling is configured in
                 the workflow configuration. A list of interval values can be
                 specified as for execution polling but a single value
                 is probably sufficient for job submission polling.
@@ -472,10 +472,10 @@ with Conf('global.cylc', desc='''
             Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST, desc='''
                 Cylc can poll running jobs to catch problems that prevent task
-                messages from being sent back to the suite, such as hard job
-                kills, network outages, or unplanned task host shutdown.
+                messages from being sent back to the scheduler, such as hard
+                job kills, network outages, or unplanned task host shutdown.
                 Routine polling is done only for the polling *task
-                communication method* (below) unless suite-specific polling is
+                communication method* (below) unless polling is
                 configured in the workflow configuration.  A list of interval
                 values can be specified, with the last value used repeatedly
                 until the task is finished - this allows more frequent polling
@@ -829,7 +829,7 @@ def get_version_hierarchy(version: str) -> List[str]:
 
 class GlobalConfig(ParsecConfig):
     """
-    Handle global (all suites) site and user configuration for cylc.
+    Handle site and user configuration for cylc.
     User file values override site file values.
     """
 

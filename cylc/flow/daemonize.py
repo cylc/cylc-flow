@@ -21,20 +21,20 @@ import os
 import sys
 from time import sleep, time
 
-from cylc.flow.pathutil import get_suite_run_log_name
-from cylc.flow.suite_files import PS_OPTS
+from cylc.flow.pathutil import get_workflow_run_log_name
+from cylc.flow.scheduler_files import PS_OPTS
 
 
 SUITE_SCAN_INFO_TMPL = r"""
 
 To view scheduler contact information:
- $ cylc get-scheduler-contact %(suite)s
+ $ cylc get-scheduler-contact %(workflow)s
 
 Other ways to see if the workflow is still running:
- $ cylc scan -n '%(suite)s'
- $ cylc ping -v %(suite)s
+ $ cylc scan -n '%(workflow)s'
+ $ cylc ping -v %(workflow)s
  $ ssh %(host)s ps %(ps_opts)s %(pid)s
- $ cylc tui %(suite)s    # A terminal graphic UI
+ $ cylc tui %(workflow)s    # A terminal graphic UI
 
 """
 
@@ -56,7 +56,7 @@ def daemonize(schd):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-    logfname = get_suite_run_log_name(schd.suite)
+    logfname = get_workflow_run_log_name(schd.workflow)
     try:
         old_log_mtime = os.stat(logfname).st_mtime
     except OSError:
@@ -66,13 +66,13 @@ def daemonize(schd):
         pid = os.fork()
         if pid > 0:
             # Poll for scheduler log to be populated
-            suite_pid = None
-            suite_url = None
+            workflow_pid = None
+            workflow_url = None
             pub_url = None
             timeout = time() + _TIMEOUT
             while time() <= timeout and (
-                    suite_pid is None or
-                    suite_url is None or
+                    workflow_pid is None or
+                    workflow_url is None or
                     pub_url is None):
                 sleep(0.1)
                 try:
@@ -87,12 +87,12 @@ def daemonize(schd):
                         continue
                     for line in open(logfname):
                         if schd.START_MESSAGE_PREFIX in line:
-                            suite_url, suite_pid = (
+                            workflow_url, workflow_pid = (
                                 item.rsplit("=", 1)[-1]
                                 for item in line.rsplit()[-2:])
                         if schd.START_PUB_MESSAGE_PREFIX in line:
                             pub_url = line.rsplit("=", 1)[-1].rstrip()
-                        if suite_url and pub_url:
+                        if workflow_url and pub_url:
                             break
                         elif ' ERROR -' in line or ' CRITICAL -' in line:
                             # ERROR and CRITICAL before scheduler starts
@@ -100,19 +100,19 @@ def daemonize(schd):
                                 sys.stderr.write(open(logfname).read())
                                 sys.exit(1)
                             except IOError:
-                                sys.exit("Suite schd program exited")
+                                sys.exit("Workflow schd program exited")
                 except (IOError, OSError, ValueError):
                     pass
-            if suite_pid is None or suite_url is None:
-                sys.exit("Suite not started after %ds" % _TIMEOUT)
+            if workflow_pid is None or workflow_url is None:
+                sys.exit("Workflow not started after %ds" % _TIMEOUT)
             # Print scheduler information
             info = {
-                "suite": schd.suite,
+                "workflow": schd.workflow,
                 "host": schd.host,
-                "url": suite_url,
+                "url": workflow_url,
                 "pub_url": pub_url,
                 "ps_opts": PS_OPTS,
-                "pid": suite_pid
+                "pid": workflow_pid
             }
             if schd.options.format == 'json':
                 sys.stdout.write(json.dumps(info, indent=4))

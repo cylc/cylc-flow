@@ -54,9 +54,9 @@ WARNING_PARSE_EXPANDED_YEAR_DIGITS = (
     "(incompatible with [cylc]cycle point num expanded year digits = %s ?)")
 
 
-class SuiteSpecifics:
+class WorkflowSpecifics:
 
-    """Store suite-setup-specific constants and utilities here."""
+    """Store workflow-setup-specific constants and utilities here."""
     ASSUMED_TIME_ZONE: Optional[Tuple[int, int]] = None
     DUMP_FORMAT: Optional[str] = None
     NUM_EXPANDED_YEAR_DIGITS: int = 0
@@ -104,7 +104,7 @@ class ISO8601Point(PointBase):
         except IsodatetimeError as exc:
             if self.value.startswith("+") or self.value.startswith("-"):
                 message = WARNING_PARSE_EXPANDED_YEAR_DIGITS % (
-                    SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS)
+                    WorkflowSpecifics.NUM_EXPANDED_YEAR_DIGITS)
             else:
                 message = str(exc)
             raise PointParsingError(type(self), self.value, message)
@@ -358,7 +358,7 @@ class ISO8601Sequence(SequenceBase):
         self.spec = dep_section
         self.abbrev_util = CylcTimeParser(self.context_start_point,
                                           self.context_end_point,
-                                          SuiteSpecifics.iso8601_parsers)
+                                          WorkflowSpecifics.iso8601_parsers)
         # Parse_recurrence returns an isodatetime TimeRecurrence object
         # and a list of exclusion strings.
         self.recurrence, excl_points = self.abbrev_util.parse_recurrence(
@@ -459,7 +459,7 @@ class ISO8601Sequence(SequenceBase):
             res = ISO8601Point(str(prev_point))
             if res == point:
                 raise SequenceDegenerateError(self.recurrence,
-                                              SuiteSpecifics.DUMP_FORMAT,
+                                              WorkflowSpecifics.DUMP_FORMAT,
                                               res, point)
             # Check if res point is in the list of exclusions
             # If so, check the previous point by recursion.
@@ -490,7 +490,7 @@ class ISO8601Sequence(SequenceBase):
             return None
         if prev_cycle_point == point:
             raise SequenceDegenerateError(
-                self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                self.recurrence, WorkflowSpecifics.DUMP_FORMAT,
                 prev_cycle_point, point
             )
         # Check all exclusions
@@ -534,7 +534,7 @@ class ISO8601Sequence(SequenceBase):
         # Verify next_point != point.
         if next_point == point:
             raise SequenceDegenerateError(
-                self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                self.recurrence, WorkflowSpecifics.DUMP_FORMAT,
                 next_point, point
             )
 
@@ -559,7 +559,7 @@ class ISO8601Sequence(SequenceBase):
             result = ISO8601Point(str(next_point))
             if result == point:
                 raise SequenceDegenerateError(
-                    self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                    self.recurrence, WorkflowSpecifics.DUMP_FORMAT,
                     point, result
                 )
         # Check it is in the exclusions list now
@@ -653,7 +653,7 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
     """
     # remove extraneous whitespace from cycle point
     value = value.replace(" ", "")
-    parser = SuiteSpecifics.point_parser
+    parser = WorkflowSpecifics.point_parser
 
     # integer point or old-style date-time cycle point format
     is_integer = bool(re.match(r"\d+$", value))
@@ -714,7 +714,7 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
 
     if offset is not None:
         # add/subtract offset duration to/from chosen timepoint
-        duration_parser = SuiteSpecifics.interval_parser
+        duration_parser = WorkflowSpecifics.interval_parser
 
         offset = offset.replace('+', '')
         offset = duration_parser.parse(offset)
@@ -779,7 +779,7 @@ def prev_next(
             # for 'previous' determine next largest unit,
             # from go_back dict (defined outside 'for' loop), and
             # subtract 1 of it from each timepoint
-            duration_parser = SuiteSpecifics.interval_parser
+            duration_parser = WorkflowSpecifics.interval_parser
             next_unit = parsed_point.get_smallest_missing_property_name()
 
             timepoints[-1] -= duration_parser.parse(go_back[next_unit])
@@ -830,7 +830,7 @@ def init_from_cfg(cfg):
 
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
          assume_utc=False, cycling_mode=None):
-    """Initialise suite-setup-specific information."""
+    """Initialise workflow-setup-specific information."""
     if cycling_mode in Calendar.default().MODES:
         Calendar.default().set_mode(cycling_mode)
 
@@ -843,40 +843,40 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             time_zone_hours_minutes = get_local_time_zone()
     else:
         time_zone_hours_minutes = TimePointDumper().get_time_zone(time_zone)
-    SuiteSpecifics.ASSUMED_TIME_ZONE = time_zone_hours_minutes
-    SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
+    WorkflowSpecifics.ASSUMED_TIME_ZONE = time_zone_hours_minutes
+    WorkflowSpecifics.NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
     if custom_dump_format is None:
         if num_expanded_year_digits > 0:
-            SuiteSpecifics.DUMP_FORMAT = EXPANDED_DATE_TIME_FORMAT + time_zone
+            WorkflowSpecifics.DUMP_FORMAT = EXPANDED_DATE_TIME_FORMAT + time_zone
         else:
-            SuiteSpecifics.DUMP_FORMAT = DATE_TIME_FORMAT + time_zone
+            WorkflowSpecifics.DUMP_FORMAT = DATE_TIME_FORMAT + time_zone
     else:
-        SuiteSpecifics.DUMP_FORMAT = custom_dump_format
+        WorkflowSpecifics.DUMP_FORMAT = custom_dump_format
         if "+X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
                 'cycle point format',
                 ('cylc', 'cycle point format'),
-                SuiteSpecifics.DUMP_FORMAT
+                WorkflowSpecifics.DUMP_FORMAT
             )
 
-    SuiteSpecifics.iso8601_parsers = CylcTimeParser.initiate_parsers(
-        dump_format=SuiteSpecifics.DUMP_FORMAT,
+    WorkflowSpecifics.iso8601_parsers = CylcTimeParser.initiate_parsers(
+        dump_format=WorkflowSpecifics.DUMP_FORMAT,
         num_expanded_year_digits=num_expanded_year_digits,
-        assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
+        assumed_time_zone=WorkflowSpecifics.ASSUMED_TIME_ZONE
     )
 
-    (SuiteSpecifics.point_parser,
-     SuiteSpecifics.interval_parser,
-     SuiteSpecifics.recurrence_parser) = SuiteSpecifics.iso8601_parsers
+    (WorkflowSpecifics.point_parser,
+     WorkflowSpecifics.interval_parser,
+     WorkflowSpecifics.recurrence_parser) = WorkflowSpecifics.iso8601_parsers
 
-    SuiteSpecifics.abbrev_util = CylcTimeParser(
-        None, None, SuiteSpecifics.iso8601_parsers
+    WorkflowSpecifics.abbrev_util = CylcTimeParser(
+        None, None, WorkflowSpecifics.iso8601_parsers
     )
 
 
 def get_dump_format():
     """Return cycle point string dump format."""
-    return SuiteSpecifics.DUMP_FORMAT
+    return WorkflowSpecifics.DUMP_FORMAT
 
 
 def get_point_relative(offset_string, base_point):
@@ -885,7 +885,7 @@ def get_point_relative(offset_string, base_point):
         interval = ISO8601Interval(str(interval_parse(offset_string)))
     except IsodatetimeError:
         return ISO8601Point(str(
-            SuiteSpecifics.abbrev_util.parse_timepoint(
+            WorkflowSpecifics.abbrev_util.parse_timepoint(
                 offset_string, context_point=_point_parse(base_point.value))
         ))
     else:
@@ -918,7 +918,7 @@ def is_offset_absolute(offset_string):
 @lru_cache(10000)
 def _interval_parse(interval_string):
     """Parse an interval_string into a proper Duration object."""
-    return SuiteSpecifics.interval_parser.parse(interval_string)
+    return WorkflowSpecifics.interval_parser.parse(interval_string)
 
 
 def point_parse(point_string):
@@ -929,12 +929,12 @@ def point_parse(point_string):
 @lru_cache(10000)
 def _point_parse(point_string):
     """Parse a point_string into a proper TimePoint object."""
-    if "%" in SuiteSpecifics.DUMP_FORMAT:
+    if "%" in WorkflowSpecifics.DUMP_FORMAT:
         # May be a custom not-quite ISO 8601 dump format.
         try:
-            return SuiteSpecifics.point_parser.strptime(
-                point_string, SuiteSpecifics.DUMP_FORMAT)
+            return WorkflowSpecifics.point_parser.strptime(
+                point_string, WorkflowSpecifics.DUMP_FORMAT)
         except IsodatetimeError:
             pass
     # Attempt to parse it in ISO 8601 format.
-    return SuiteSpecifics.point_parser.parse(point_string)
+    return WorkflowSpecifics.point_parser.parse(point_string)
