@@ -31,7 +31,6 @@
         <RegExpr attribute='Keyword' String=' task parameters '/>
         <RegExpr attribute='Keyword' String=' task event batch interval '/>
         <RegExpr attribute='Keyword' String=' suite state polling '/>
-        <RegExpr attribute='Keyword' String=' suite definition directory '/>
         <RegExpr attribute='Keyword' String=' succeeded handler '/>
         <RegExpr attribute='Keyword' String=' submitted handler '/>
         <RegExpr attribute='Keyword' String=' submission timeout handler '/>

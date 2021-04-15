@@ -1047,7 +1047,6 @@ class TaskJobManager:
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],
-            'remote_suite_d': itask.platform['suite definition directory'],
             'script': scripts[1],
             'submit_num': itask.submit_num,
             'flow_label': itask.flow_label,

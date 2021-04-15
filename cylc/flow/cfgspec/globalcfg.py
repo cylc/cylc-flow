@@ -423,7 +423,6 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('job runner command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
-            Conf('suite definition directory', VDR.V_STRING)
             Conf('communication method',
                  VDR.V_STRING, 'zmq', options=['zmq', 'poll', 'ssh'], desc='''
                 The means by which task progress messages are reported back to
