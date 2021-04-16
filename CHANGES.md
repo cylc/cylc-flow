@@ -64,6 +64,10 @@ Replace the job "host" field with "platform" in the GraphQL schema.
 Fix a host ⇒ platform upgrade bug where host names were being popped from task
 configs causing subsequent tasks to run on localhost.
 
+[#4173](https://github.com/cylc/cylc-flow/pull/4173)
+Fix the state totals shown in both the UI and TUI, including incorrect counts
+during workflow run and post pause.
+
 [#4168](https://github.com/cylc/cylc-flow/pull/4168) - Fix bug where any
 errors during workflow shutdown were not logged.
 

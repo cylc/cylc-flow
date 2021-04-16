@@ -421,9 +421,9 @@ class DataStoreMgr:
         self.n_window_nodes = {}
         self.n_window_edges = {}
         self.n_window_boundary_nodes = {}
+        self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
-        self.prune_pending = False
         self.updates_pending = False
 
     def initiate_data_model(self, reloaded=False):
@@ -646,7 +646,6 @@ class DataStoreMgr:
                 self.prune_flagged_nodes.update(
                     self.prune_trigger_nodes[active_id])
                 del self.prune_trigger_nodes[active_id]
-                self.prune_pending = True
 
         # This part is vital to constructing a set of boundary nodes
         # associated with the current Active node.
@@ -753,7 +752,6 @@ class DataStoreMgr:
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
             del self.prune_trigger_nodes[tp_id]
-            self.prune_pending = True
 
     def add_pool_node(self, name, point):
         """Add external ID reference for internal task pool node."""
@@ -1054,37 +1052,32 @@ class DataStoreMgr:
 
     def update_data_structure(self):
         """Workflow batch updates in the data structure."""
-        # update states and other dynamic fields
-        # TODO: Event driven task proxy updates (non-Batch)
-        self.update_family_proxies()
 
         # Avoids changing window edge distance during edge/node creation
         if self.next_n_edge_distance is not None:
             self.n_edge_distance = self.next_n_edge_distance
             self.next_n_edge_distance = None
 
-        # Update workflow statuses and totals if needed
-        if self.prune_pending:
-            self.prune_data_store()
-        if self.updates_pending:
-            self.update_workflow()
+        self.prune_data_store()
+        if self.state_update_families:
+            self.update_family_proxies()
 
         if self.updates_pending:
+            # Update workflow statuses and totals if needed
+            self.update_workflow()
+            self.updates_pending = False
+
             # Apply current deltas
             self.apply_deltas()
-            self.updates_pending = False
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
             # Clear deltas
             self.clear_deltas()
 
-        if self.state_update_families:
-            self.updates_pending = True
-
     def prune_data_store(self):
         """Remove flagged nodes and edges not in the set of active paths."""
 
-        self.prune_pending = False
+        self.family_pruned_ids.clear()
 
         if not self.prune_flagged_nodes:
             return
@@ -1131,14 +1124,13 @@ class DataStoreMgr:
             self.deltas[EDGES].pruned.extend(node.edges)
             parent_ids.add(node.first_parent)
 
-        prune_ids = set()
         checked_ids = set()
         while parent_ids:
             self._family_ascent_point_prune(
                 next(iter(parent_ids)),
-                node_ids, parent_ids, checked_ids, prune_ids)
-        if prune_ids:
-            self.deltas[FAMILY_PROXIES].pruned.extend(prune_ids)
+                node_ids, parent_ids, checked_ids, self.family_pruned_ids)
+        if self.family_pruned_ids:
+            self.deltas[FAMILY_PROXIES].pruned.extend(self.family_pruned_ids)
         if node_ids:
             self.updates_pending = True
 
@@ -1202,6 +1194,8 @@ class DataStoreMgr:
         while self.state_update_families:
             self._family_ascent_point_update(
                 next(iter(self.state_update_families)))
+        if self.updated_state_families:
+            self.updates_pending = True
 
     def _family_ascent_point_update(self, fp_id):
         """Updates the given family and children recursively.
@@ -1285,8 +1279,9 @@ class DataStoreMgr:
                 is_queued_total=is_queued_total
             )
             fp_delta.states[:] = state_counter.keys()
-            for state, state_cnt in state_counter.items():
-                fp_delta.state_totals[state] = state_cnt
+            # Use all states to clean up pruned counts
+            for state in TASK_STATUSES_ORDERED:
+                fp_delta.state_totals[state] = state_counter.get(state, 0)
             fp_updated.setdefault(fp_id, PbFamilyProxy()).MergeFrom(fp_delta)
             # mark as updated in case parent family is updated next
             self.updated_state_families.add(fp_id)
@@ -1328,9 +1323,12 @@ class DataStoreMgr:
                      for n in self.added[FAMILY_PROXIES].values()
                      if n.name == 'root']
             ):
-                root_node = self.updated[FAMILY_PROXIES].get(
-                    root_id, data.get(root_id))
-                if root_node is not None and root_node.state:
+                root_node_updated = self.updated[FAMILY_PROXIES].get(root_id)
+                if root_node_updated is not None and root_node_updated.state:
+                    root_node = root_node_updated
+                else:
+                    root_node = data[FAMILY_PROXIES].get(root_id)
+                if root_node is not None:
                     is_held_total += root_node.is_held_total
                     is_queued_total += root_node.is_queued_total
                     state_counter += Counter(dict(root_node.state_totals))
