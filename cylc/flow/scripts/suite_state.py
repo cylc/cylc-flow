@@ -53,6 +53,7 @@ import os
 import sqlite3
 import sys
 from time import sleep
+from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, UserInputError
 import cylc.flow.flags
@@ -65,6 +66,9 @@ from cylc.flow.cycling.util import add_offset
 from cylc.flow.pathutil import expand_path, get_workflow_run_dir
 
 from metomi.isodatetime.parsers import TimePointParser
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 class SuitePoller(Poller):
@@ -120,7 +124,7 @@ class SuitePoller(Poller):
             self.args['status'], self.args['message'])
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(__doc__)
 
     parser.add_option(
@@ -138,11 +142,6 @@ def get_option_parser():
              "cycle point to check task states for. "
              "Shorthand for --point=$CYLC_TASK_CYCLE_POINT",
         action="store_true", dest="use_task_point", default=False)
-
-    parser.add_option(
-        "--template", metavar="TEMPLATE",
-        help="Remote cyclepoint template (IGNORED - this is now determined "
-             "automatically).", action="store", dest="template")
 
     parser.add_option(
         "-d", "--run-dir",
@@ -182,7 +181,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser, remove_opts=["--db"])
-def main(parser, options, suite):
+def main(parser: COP, options: 'Values', suite: str) -> None:
     if options.use_task_point and options.cycle:
         raise UserInputError(
             "cannot specify a cycle point and use environment variable")
@@ -196,10 +195,6 @@ def main(parser, options, suite):
     if options.offset and not options.cycle:
         raise UserInputError(
             "You must target a cycle point to use an offset")
-
-    if options.template:
-        print("WARNING: ignoring --template (no longer needed)",
-              file=sys.stderr)
 
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:
