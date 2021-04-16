@@ -15,11 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import logging
 import pytest
-from typing import Any, TYPE_CHECKING
+from typing import Any, Callable
 
-if TYPE_CHECKING:
-    from cylc.flow.scheduler import Scheduler
+from cylc.flow.exceptions import CylcError
+from cylc.flow.scheduler import Scheduler
 
 Fixture = Any
 
@@ -56,18 +57,17 @@ async def test_is_paused_after_crash(
         raise asyncio.CancelledError("Mock keyboard interrupt")
     # Patch this part of the main loop
     _schd_suite_shutdown = schd.suite_shutdown
-    schd.suite_shutdown = ctrl_c
+    setattr(schd, 'suite_shutdown', ctrl_c)
 
     # Run
-    with pytest.raises(asyncio.CancelledError) as exc:
+    with pytest.raises(asyncio.CancelledError):
         async with run(schd):
             assert not schd.is_restart
             assert schd.is_paused
-        assert "Mock keyboard interrupt" in str(exc.value)
     # Stopped
     assert ('is_paused', '1') in db_select(schd, 'suite_params')
     # Reset patched method
-    schd.suite_shutdown = _schd_suite_shutdown
+    setattr(schd, 'suite_shutdown', _schd_suite_shutdown)
     # Restart
     schd = scheduler(reg, paused_start=None)
     async with run(schd):
@@ -76,9 +76,9 @@ async def test_is_paused_after_crash(
 
 
 @pytest.mark.asyncio
-async def test_resume_does_not_release_tasks(one: Fixture, run: Fixture):
+async def test_resume_does_not_release_tasks(one: Scheduler, run: Callable):
     """Test that resuming a workflow does not release any held tasks."""
-    schd: 'Scheduler' = one
+    schd: Scheduler = one
     async with run(schd):
         assert schd.is_paused
         itasks = schd.pool.get_all_tasks()
@@ -90,3 +90,47 @@ async def test_resume_does_not_release_tasks(one: Fixture, run: Fixture):
         schd.resume_workflow()
         assert not schd.is_paused
         assert itask.state.is_held
+
+
+@pytest.mark.asyncio
+async def test_shutdown_CylcError_log(one: Scheduler, run: Callable):
+    """Test that if a CylcError occurs during shutdown, it is
+    logged in one line."""
+    schd = one
+
+    async def mock_shutdown(*a, **k):
+        raise CylcError("Error on shutdown")
+    setattr(schd, '_shutdown', mock_shutdown)
+
+    log: pytest.LogCaptureFixture
+    with pytest.raises(CylcError) as exc:
+        async with run(schd) as log:
+            pass
+    assert str(exc.value) == "Error on shutdown"
+    last_record = log.records[-1]
+    assert last_record.message == "CylcError: Error on shutdown"
+    assert last_record.levelno == logging.ERROR
+
+
+@pytest.mark.asyncio
+async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
+    """Test that if a non-CylcError occurs during shutdown, it is
+    logged with traceback (but not excessive)."""
+    schd = one
+
+    async def mock_shutdown(*a, **k):
+        raise ValueError("Error on shutdown")
+    setattr(schd, '_shutdown', mock_shutdown)
+
+    log: pytest.LogCaptureFixture
+    with pytest.raises(ValueError) as exc:
+        async with run(schd) as log:
+            pass
+    assert str(exc.value) == "Error on shutdown"
+    last_record = log.records[-1]
+    assert last_record.message == "Error on shutdown"
+    assert last_record.levelno == logging.ERROR
+    assert last_record.exc_text is not None
+    assert last_record.exc_text.startswith("Traceback (most recent call last)")
+    assert ("During handling of the above exception, "
+            "another exception occurred") not in last_record.exc_text

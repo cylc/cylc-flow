@@ -29,7 +29,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, Optional, List
+from typing import Iterable, NoReturn, Optional, List
 from uuid import uuid4
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
@@ -593,11 +593,8 @@ class Scheduler:
                 )
             )
 
-        except SchedulerError as exc:
-            await self.shutdown(exc)
-            raise exc from None
-
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
+            # Includes SchedulerError
             await self.handle_exception(exc)
 
         else:
@@ -1612,15 +1609,27 @@ class Scheduler:
 
         return process
 
-    async def shutdown(self, reason):
-        """Shutdown the suite.
+    async def shutdown(self, reason: Exception) -> None:
+        """Gracefully shut down the scheduler."""
+        # At the moment this method must be called from the main_loop.
+        # In the future it should shutdown the main_loop itself but
+        # we're not quite there yet.
+        try:
+            await self._shutdown(reason)
+        except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
+            # In case of exception in the shutdown method itself.
+            LOG.error("Error during shutdown")
+            if isinstance(exc, CylcError):
+                LOG.error(f"{exc.__class__.__name__}: {exc}")
+            else:
+                # Suppress the reason for shutdown, which is logged separately
+                exc.__suppress_context__ = True
+                LOG.exception(exc)
+            # Re-raise exception to be caught higher up (sets the exit code)
+            raise exc from None
 
-        Warning:
-            At the moment this method must be called from the main_loop.
-            In the future it should shutdown the main_loop itself but
-            we're not quite there yet.
-
-        """
+    async def _shutdown(self, reason: Exception) -> None:
+        """Shutdown the suite."""
         if isinstance(reason, SchedulerStop):
             LOG.info(f'Suite shutting down - {reason.args[0]}')
             # Unset the "paused" status of the workflow if not auto-restarting
@@ -1869,17 +1878,13 @@ class Scheduler:
             self.options.stopcp = str(stoppoint)
             self.pool.set_stop_point(get_point(self.options.stopcp))
 
-    async def handle_exception(self, exc):
-        """Gracefully shut down the scheduler.
+    async def handle_exception(self, exc: Exception) -> NoReturn:
+        """Gracefully shut down the scheduler given a caught exception.
 
-        This re-raises the caught exception, to be caught higher up.
+        Re-raises the exception to be caught higher up (sets the exit code).
 
         Args:
             exc: The caught exception to be logged during the shutdown.
         """
-        try:
-            await self.shutdown(exc)
-        except Exception as exc2:
-            # In case of exceptions in the shutdown method itself
-            LOG.exception(exc2)
+        await self.shutdown(exc)
         raise exc from None
