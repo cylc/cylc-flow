@@ -155,13 +155,13 @@ def scheduler():
 
 
 @pytest.fixture(scope='module')
-def mod_run(run_dir):
+def mod_run(run_dir: Path):
     """Run a module-level flow."""
     return partial(_run_flow, run_dir, None)
 
 
 @pytest.fixture
-def run(run_dir, caplog):
+def run(run_dir: Path, caplog: pytest.LogCaptureFixture):
     """Run a function-level flow."""
     return partial(_run_flow, run_dir, caplog)
 

@@ -16,6 +16,9 @@
 """Exceptions for "expected" errors."""
 
 
+from typing import Iterable
+
+
 class CylcError(Exception):
     """Generic exception for Cylc errors.
 
@@ -103,11 +106,23 @@ class TaskRemoteMgmtError(CylcError):
     MSG_SELECT = "host selection failed"
     MSG_TIDY = "clean up did not complete"
 
+    def __init__(
+        self, message: str, platform_name: str, cmd: Iterable,
+        ret_code: int, out: str, err: str
+    ) -> None:
+        self.msg = message
+        self.platform_n = platform_name
+        self.ret_code = ret_code
+        self.out = out
+        self.err = err
+        self.cmd = cmd
+        if isinstance(cmd, list):
+            self.cmd = " ".join(cmd)
+
     def __str__(self):
-        msg, platform_n, cmd_str, ret_code, out, err = self.args
-        ret = (f"{platform_n}: {msg}:\n"
-               f"COMMAND FAILED ({ret_code}): {cmd_str}\n")
-        for label, item in ('STDOUT', out), ('STDERR', err):
+        ret = (f"{self.platform_n}: {self.msg}:\n"
+               f"COMMAND FAILED ({self.ret_code}): {self.cmd}\n")
+        for label, item in ('STDOUT', self.out), ('STDERR', self.err):
             if item:
                 for line in item.splitlines(True):  # keep newline chars
                     ret += f"COMMAND {label}: {line}"
