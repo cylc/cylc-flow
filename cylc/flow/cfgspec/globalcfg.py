@@ -822,30 +822,25 @@ class GlobalConfig(ParsecConfig):
     CONF_BASENAME: str = "global.cylc"
     DEFAULT_SITE_CONF_PATH: str = os.path.join(os.sep, 'etc', 'cylc')
     USER_CONF_PATH: str = os.path.join(
-        os.getenv('HOME') or get_user_home(),
-        '.cylc',
-        'flow'
+        os.getenv('HOME') or get_user_home(), '.cylc', 'flow'
     )
     VERSION_HIERARCHY: List[str] = get_version_hierarchy(CYLC_VERSION)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
+        site_conf_root = (
+            os.getenv('CYLC_SITE_CONF_PATH') or self.DEFAULT_SITE_CONF_PATH
+        )
         self.conf_dir_hierarchy: List[Tuple[str, str]] = [
             *[
-                (
-                    upgrader.SITE_CONFIG,
-                    os.path.join(
-                        (
-                            os.getenv('CYLC_SITE_CONF_PATH')
-                            or self.DEFAULT_SITE_CONF_PATH
-                        ),
-                        'flow',
-                        ver
-                    )
-                )
+                (upgrader.SITE_CONFIG,
+                 os.path.join(site_conf_root, 'flow', ver))
                 for ver in self.VERSION_HIERARCHY
             ],
-            *[(upgrader.USER_CONFIG, os.path.join(self.USER_CONF_PATH, ver))
-              for ver in self.VERSION_HIERARCHY]
+            *[
+                (upgrader.USER_CONFIG,
+                 os.path.join(self.USER_CONF_PATH, ver))
+                for ver in self.VERSION_HIERARCHY
+            ]
         ]
         super().__init__(*args, **kwargs)
 
