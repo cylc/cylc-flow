@@ -22,6 +22,7 @@ import packaging.version
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.hostuserutil import get_user_home
+from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
@@ -440,7 +441,8 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('suite definition directory', VDR.V_STRING)
             Conf('communication method',
-                 VDR.V_STRING, 'zmq', options=['zmq', 'poll', 'ssh'], desc='''
+                 VDR.V_STRING, 'zmq',
+                 options=[meth.value for meth in CommsMeth], desc='''
                 The means by which task progress messages are reported back to
                 the running suite.
 

@@ -18,6 +18,7 @@ import pytest
 from typing import Any
 from unittest.mock import MagicMock, Mock
 
+from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE, REMOTE_INIT_IN_PROGRESS, TaskRemoteMgr)
 
@@ -42,7 +43,7 @@ def test_remote_init_skip(
     """
     platform = {
         'install target': install_target,
-        'communication method': 'whatever'
+        'communication method': CommsMeth.POLL
     }
     mock_task_remote_mgr = MagicMock(remote_init_map={})
     mock_construct_ssh_cmd = Mock()
