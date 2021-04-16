@@ -9,7 +9,7 @@ on:
 
 jobs:
   bash-docker:
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-18.04'
     strategy:
       matrix:
         bash-version:

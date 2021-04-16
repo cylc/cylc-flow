@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        os: ['ubuntu-latest']
+        os: ['ubuntu-18.04']
         python-version: ['3.7', '3.8', '3.9']
         include:
           - os: 'macos-latest'

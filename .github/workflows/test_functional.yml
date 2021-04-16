@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest']
+        os: ['ubuntu-18.04']
         python-version: ['3.7']
         test-base: ['tests/f']
         chunk: ['1/4', '2/4', '3/4', '4/4']
