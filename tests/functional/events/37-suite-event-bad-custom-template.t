@@ -35,8 +35,8 @@ suite_run_fail "${TEST_NAME_BASE}-run2" \
     cylc play --reference-test --debug --no-detach \
         -s 'ABORT="True"' "${SUITE_NAME}"
 
-run_ok "${TEST_NAME_BASE}-run2-err" \
-    grep -q -F "Suite shutting down - ${MESSAGE}" \
+run_ok "${TEST_NAME_BASE}-run2-grep" \
+    grep -q -F "Suite shutting down - SuiteEventError: ${MESSAGE}" \
     "${TEST_NAME_BASE}-run2.stderr"
 
 purge
