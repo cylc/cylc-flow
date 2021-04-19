@@ -616,7 +616,6 @@ class Scheduler:
 
         """
         try:
-            await self.install()
             await self.initialise()
             await self.configure()
             await self.start_servers()
