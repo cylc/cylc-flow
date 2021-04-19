@@ -16,16 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test execution time limit polling.
+export REQUIRE_PLATFORM='loc:* comms:poll runner:background'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 create_test_global_config '' "
 [platforms]
    [[$CYLC_TEST_PLATFORM]]
-        communication method = poll
         submission polling intervals = PT2S
         execution polling intervals = PT1M
-        job runner = background
         execution time limit polling intervals = PT5S
 "
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
