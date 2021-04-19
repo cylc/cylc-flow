@@ -34,8 +34,9 @@
 
     initial cycle point = 20150808T00
     final cycle point = 20150808T00
-    [[graph]]
-        P1D = foo => cat & dog
+    [[dependencies]]
+        [[[P1D]]]
+            graph = foo => cat & dog
 
 [runtime]
     [[foo, cat, dog]]
