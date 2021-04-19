@@ -1142,9 +1142,8 @@ def install_workflow(
             INSTALL_LOG.info(f"Symlink created from {src} to {dst}")
     try:
         rundir.mkdir(exist_ok=True)
-    except OSError as e:
-        if e.strerror == "File exists":
-            raise WorkflowFilesError(f"Run directory already exists : {e}")
+    except FileExistsError:
+        raise WorkflowFilesError("Run directory already exists")
     if relink:
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
@@ -1153,7 +1152,7 @@ def install_workflow(
     stdout, stderr = proc.communicate()
     INSTALL_LOG.info(f"Copying files from {source} to {rundir}")
     INSTALL_LOG.info(f"{stdout}")
-    if not proc.returncode == 0:
+    if proc.returncode != 0:
         INSTALL_LOG.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         INSTALL_LOG.warning(f" Error: {stderr}")
