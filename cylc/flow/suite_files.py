@@ -1250,24 +1250,31 @@ def check_flow_file(
 
     Args:
         path: Path to check for a flow.cylc and/or suite.rc file.
-        symlink_suiterc: If True and suite.rc exists but not flow.cylc, create
-            flow.cylc as a symlink to suite.rc.
+        symlink_suiterc: If True and suite.rc exists, create flow.cylc as a
+            symlink to suite.rc. If a flow.cylc symlink already exists but
+            points elsewhere, it will be replaced.
         logger: A custom logger to use to log warnings.
 
     Returns the path of the flow file if present.
     """
     flow_file_path = Path(expand_path(path), SuiteFiles.FLOW_FILE)
-    if flow_file_path.is_file():
-        # Note: this includes if flow.cylc is a symlink
-        return flow_file_path
     suite_rc_path = Path(path, SuiteFiles.SUITE_RC)
+    if flow_file_path.is_file():
+        if (not flow_file_path.is_symlink() or
+                flow_file_path.resolve() == suite_rc_path):
+            # Normal file, or a symlink that points to *existing* suite.rc
+            return flow_file_path
     if suite_rc_path.is_file():
-        if symlink_suiterc:
-            flow_file_path.symlink_to(suite_rc_path)
-            logger.warning(
-                f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in '
-                f'favour of "{SuiteFiles.FLOW_FILE}". Symlink created.')
-        return suite_rc_path
+        if not symlink_suiterc:
+            return suite_rc_path
+        if flow_file_path.is_symlink():
+            # Symlink broken or points elsewhere - replace
+            flow_file_path.unlink()
+        flow_file_path.symlink_to(suite_rc_path)
+        logger.warning(
+            f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in '
+            f'favour of "{SuiteFiles.FLOW_FILE}". Symlink created.')
+        return flow_file_path
     raise WorkflowFilesError(
         f"no {SuiteFiles.FLOW_FILE} or {SuiteFiles.SUITE_RC} in {path}")
 
