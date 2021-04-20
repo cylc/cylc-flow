@@ -759,9 +759,9 @@ def test_check_flow_file_symlink(
     err: Optional[Type[Exception]],
     expected_file: Optional[str],
     symlink_suiterc_arg: bool,
-    tmp_path: Path
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Test check_flow_file() when flow.cylc is a symlink.
+    """Test check_flow_file() when flow.cylc is a symlink or doesn't exist.
 
     Params:
         flow_file_target: Relative path of the flow.cylc symlink's target, or
@@ -781,6 +781,10 @@ def test_check_flow_file_symlink(
         suiterc.touch()
     if flow_file_target:
         flow_file.symlink_to(flow_file_target)
+    log_msg = (
+        f'The filename "{SuiteFiles.SUITE_RC}" is deprecated '
+        f'in favour of "{SuiteFiles.FLOW_FILE}"')
+    caplog.set_level(logging.WARNING, CYLC_LOG)
 
     if err:
         with pytest.raises(err):
@@ -791,4 +795,7 @@ def test_check_flow_file_symlink(
         if symlink_suiterc_arg is True:
             assert flow_file.samefile(suiterc)
             expected_file = SuiteFiles.FLOW_FILE
+            if flow_file_target != SuiteFiles.SUITE_RC:
+                log_msg = f'{log_msg}. Symlink created.'
         assert result == tmp_path.joinpath(expected_file)
+        assert caplog.messages == [log_msg]

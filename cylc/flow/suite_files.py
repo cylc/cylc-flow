@@ -503,7 +503,7 @@ def parse_suite_arg(options, arg):
             if os.path.isdir(arg):
                 path = os.path.join(arg, SuiteFiles.FLOW_FILE)
                 name = os.path.basename(arg)
-                check_flow_file(arg)
+                check_flow_file(arg, logger=None)
             else:
                 path = arg
                 name = os.path.basename(os.path.dirname(arg))
@@ -545,7 +545,7 @@ def register(
         source = os.getcwd()
     # flow.cylc must exist so we can detect accidentally reversed args.
     source = os.path.abspath(source)
-    check_flow_file(source, symlink_suiterc=True)
+    check_flow_file(source, symlink_suiterc=True, logger=None)
     symlinks_created = make_localhost_symlinks(
         get_workflow_run_dir(flow_name), flow_name)
     if bool(symlinks_created):
@@ -1244,7 +1244,7 @@ def detect_flow_exists(run_path_base, numbered):
 def check_flow_file(
     path: Union[Path, str],
     symlink_suiterc: bool = False,
-    logger: 'Logger' = LOG
+    logger: Optional['Logger'] = LOG
 ) -> Path:
     """Raises WorkflowFilesError if no flow file in path sent.
 
@@ -1258,22 +1258,29 @@ def check_flow_file(
     Returns the path of the flow file if present.
     """
     flow_file_path = Path(expand_path(path), SuiteFiles.FLOW_FILE)
-    suite_rc_path = Path(path, SuiteFiles.SUITE_RC)
+    suite_rc_path = Path(expand_path(path), SuiteFiles.SUITE_RC)
+    depr_msg = (
+        f'The filename "{SuiteFiles.SUITE_RC}" is deprecated '
+        f'in favour of "{SuiteFiles.FLOW_FILE}"')
     if flow_file_path.is_file():
-        if (not flow_file_path.is_symlink() or
-                flow_file_path.resolve() == suite_rc_path):
-            # Normal file, or a symlink that points to *existing* suite.rc
+        if not flow_file_path.is_symlink():
+            return flow_file_path
+        if flow_file_path.resolve() == suite_rc_path.resolve():
+            # A symlink that points to *existing* suite.rc
+            if logger:
+                logger.warning(depr_msg)
             return flow_file_path
     if suite_rc_path.is_file():
         if not symlink_suiterc:
+            if logger:
+                logger.warning(depr_msg)
             return suite_rc_path
         if flow_file_path.is_symlink():
             # Symlink broken or points elsewhere - replace
             flow_file_path.unlink()
         flow_file_path.symlink_to(suite_rc_path)
-        logger.warning(
-            f'The filename "{SuiteFiles.SUITE_RC}" is deprecated in '
-            f'favour of "{SuiteFiles.FLOW_FILE}". Symlink created.')
+        if logger:
+            logger.warning(f'{depr_msg}. Symlink created.')
         return flow_file_path
     raise WorkflowFilesError(
         f"no {SuiteFiles.FLOW_FILE} or {SuiteFiles.SUITE_RC} in {path}")
@@ -1309,7 +1316,7 @@ def validate_source_dir(source, flow_name):
         raise WorkflowFilesError(
             f'{flow_name} installation failed. Source directory should not be '
             f'in {cylc_run_dir}')
-    check_flow_file(source)
+    check_flow_file(source, logger=None)
 
 
 def unlink_runN(path: Union[Path, str]) -> bool:
@@ -1345,7 +1352,7 @@ def search_install_source_dirs(flow_name: str) -> Path:
             "does not contain any paths")
     for path in search_path:
         try:
-            flow_file = check_flow_file(Path(path, flow_name))
+            flow_file = check_flow_file(Path(path, flow_name), logger=None)
             return flow_file.parent
         except WorkflowFilesError:
             continue
