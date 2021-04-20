@@ -1616,11 +1616,13 @@ class Scheduler:
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             # In case of exception in the shutdown method itself.
             LOG.error("Error during shutdown")
+            # Suppress the reason for shutdown, which is logged separately
+            exc.__suppress_context__ = True
             if isinstance(exc, CylcError):
                 LOG.error(f"{exc.__class__.__name__}: {exc}")
+                if cylc.flow.flags.debug:
+                    LOG.exception(exc)
             else:
-                # Suppress the reason for shutdown, which is logged separately
-                exc.__suppress_context__ = True
                 LOG.exception(exc)
             # Re-raise exception to be caught higher up (sets the exit code)
             raise exc from None
@@ -1637,6 +1639,8 @@ class Scheduler:
         elif isinstance(reason, CylcError):
             LOG.error(
                 f"Suite shutting down - {reason.__class__.__name__}: {reason}")
+            if cylc.flow.flags.debug:
+                LOG.exception(reason)
         else:
             LOG.exception(reason)
             if str(reason):
