@@ -1116,7 +1116,7 @@ def install_workflow(
         source = Path(source).parent
     source = Path(expand_path(source))
     if not flow_name:
-        flow_name = Path.cwd().stem
+        flow_name = source.stem
     validate_flow_name(flow_name)
     if run_name in SuiteFiles.RESERVED_NAMES:
         raise WorkflowFilesError(f'Run name cannot be "{run_name}".')
