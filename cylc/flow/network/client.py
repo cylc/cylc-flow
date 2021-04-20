@@ -38,7 +38,7 @@ from cylc.flow.network import (
     get_location,
     ZMQSocketBase
 )
-from cylc.flow.network.client_factory import get_comms_method
+from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.suite_files import detect_old_contact_file
 
@@ -251,7 +251,11 @@ class SuiteRuntimeClient(ZMQSocketBase):
             'meta': {
                 'prog': cmd,
                 'host': host,
-                'comms_method': get_comms_method().value,
+                'comms_method':
+                    os.getenv(
+                        "CLIENT_COMMS_METH",
+                        default=CommsMeth.ZMQ.value
+                    )
             }
         }
 
