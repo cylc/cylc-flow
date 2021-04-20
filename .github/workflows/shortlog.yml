@@ -1,0 +1,23 @@
+name: check contributor list
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '**'
+      - '!CONTRIBUTING.md'  # e.g. when new contributor adds themselves
+      - '!cylc/flow/__init__.py'  # e.g. when __version__ is changed for a new release
+
+jobs:
+  test:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # need to fetch all commits to check contributors
+
+      - name: Check CONTRIBUTING.md
+        uses: cylc/release-actions/check-shortlog@c8205dcfb0df1661b99e2c240b75787c4fa02aa3
