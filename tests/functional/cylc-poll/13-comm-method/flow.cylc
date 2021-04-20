@@ -1,10 +1,19 @@
+#!Jinja2
+
 [scheduling]
     [[graph]]
         R1 = t1 & t2
 
 [runtime]
     [[root]]
-        script = true
+        script = """
+            wait
+            # sleep for twice the polling interval to make sure
+            # the started message gets picked up before the succeeded
+            # message is issued
+            sleep 12
+        """
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[t1]]
     [[t2]]
         [[[job]]]

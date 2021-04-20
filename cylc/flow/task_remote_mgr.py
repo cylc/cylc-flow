@@ -182,8 +182,8 @@ class TaskRemoteMgr:
         self.remote_init_map[install_target] = REMOTE_INIT_IN_PROGRESS
 
         # Determine what items to install
-        comm_meth = platform['communication method']
-        items = self._remote_init_items(comm_meth)
+        comms_meth: CommsMeth = CommsMeth(platform['communication method'])
+        items = self._remote_init_items(comms_meth)
 
         # Create a TAR archive with the service files,
         # so they can be sent later via SSH's STDIN to the task remote.
@@ -390,7 +390,7 @@ class TaskRemoteMgr:
             LOG.error(ctx)
             self.ready = True
 
-    def _remote_init_items(self, comm_meth):
+    def _remote_init_items(self, comms_meth: CommsMeth):
         """Return list of items to install based on communication method.
 
         Return (list):
@@ -401,7 +401,7 @@ class TaskRemoteMgr:
         """
         items = []
 
-        if comm_meth in [CommsMeth.SSH, CommsMeth.ZMQ]:
+        if comms_meth in [CommsMeth.SSH, CommsMeth.ZMQ]:
             # Contact file
             items.append((
                 get_contact_file(self.suite),

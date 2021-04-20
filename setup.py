@@ -63,7 +63,8 @@ tests_require = [
     'flake8>=3.0.0',
     'mypy>=0.800',
     'pycodestyle>=2.5.0',
-    'pytest-asyncio>=0.14.0',
+    # TODO: https://github.com/pytest-dev/pytest-asyncio/issues/ 209
+    'pytest-asyncio==0.14.0',
     'pytest-cov>=2.8.0',
     'pytest-xdist>=2',
     'pytest-env>=0.6.2',
