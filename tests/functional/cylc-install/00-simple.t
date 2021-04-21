@@ -34,7 +34,7 @@ pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 popd || exit 1
 purge_rnd_workflow
@@ -59,7 +59,7 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-REG-install-ok"
 run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 popd || exit 1
 purge_rnd_workflow
@@ -74,7 +74,7 @@ touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 # test symlink not made in source dir
 exists_fail "flow.cylc"
@@ -111,7 +111,7 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}-olaf"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME}-olaf from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}-olaf/run1
+INSTALLED ${RND_WORKFLOW_NAME}-olaf/run1 from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}-olaf/run1
 __OUT__
 popd || exit 1
 rm -rf "${RUN_DIR}/${RND_WORKFLOW_NAME}-olaf"
@@ -136,7 +136,7 @@ TEST_NAME="${TEST_NAME_BASE}-option--directory"
 make_rnd_workflow
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --directory="${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 purge_rnd_workflow
 
@@ -147,12 +147,12 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-2"
 run_ok "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run2
+INSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run2
 __OUT__
 popd || exit 1
 purge_rnd_workflow

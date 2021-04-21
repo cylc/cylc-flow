@@ -1143,10 +1143,10 @@ def install_workflow(
             " name, using the --run-name option.")
     check_nested_run_dirs(rundir, flow_name)
     symlinks_created = {}
+    sub_dir = flow_name
+    if run_num:
+        sub_dir = os.path.join(sub_dir, f'run{run_num}')
     if not no_symlinks:
-        sub_dir = flow_name
-        if run_num:
-            sub_dir = os.path.join(sub_dir, f'run{run_num}')
         symlinks_created = make_localhost_symlinks(rundir, sub_dir)
     install_log = _get_logger(rundir, 'cylc-install')
     if not no_symlinks and bool(symlinks_created) is True:
@@ -1186,8 +1186,8 @@ def install_workflow(
         raise WorkflowFilesError(
             "Source directory between runs are not consistent.")
     # check source link matches the source symlink from workflow dir.
-    install_log.info(f'INSTALLED {flow_name} from {source} -> {rundir}')
-    print(f'INSTALLED {flow_name} from {source} -> {rundir}')
+    install_log.info(f'INSTALLED {sub_dir} from {source} -> {rundir}')
+    print(f'INSTALLED {sub_dir} from {source} -> {rundir}')
     _close_install_log(install_log)
     return source, rundir, flow_name
 

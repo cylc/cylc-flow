@@ -49,7 +49,7 @@ ${RND_WORKFLOW_RUNDIR}/run1
     \`-- install
 __OUT__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 run_ok "${TEST_NAME}" cylc install
 mkdir new_dir

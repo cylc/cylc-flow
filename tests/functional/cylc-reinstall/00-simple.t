@@ -26,7 +26,7 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 run_ok "basic-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
@@ -42,7 +42,7 @@ pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1/flow.cylc"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
 grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1" "${REINSTALL_LOG}"
@@ -58,7 +58,7 @@ touch suite.rc
 run_ok "${TEST_NAME}" cylc install
 run_ok "${TEST_NAME}-reinstall-suite.rc" cylc reinstall "${RND_WORKFLOW_NAME}/run1/suite.rc"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
 grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1" "${REINSTALL_LOG}"
@@ -71,7 +71,7 @@ make_rnd_workflow
 pushd "${TMPDIR}" || exit 1
 run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}/run1
+INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}/run1
 __OUT__
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 contains_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
@@ -88,7 +88,7 @@ rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 # test symlink not made in source dir
 exists_fail "flow.cylc"
@@ -121,7 +121,7 @@ TEST_NAME="${TEST_NAME_BASE}-no-args"
 make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}/run1
+INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}/run1
 __OUT__
 pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
 touch "${RND_WORKFLOW_SOURCE}/new_file"

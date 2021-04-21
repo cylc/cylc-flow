@@ -161,7 +161,9 @@ def make_localhost_symlinks(rund, named_sub_dir):
 
 
 def get_dirs_to_symlink(install_target, flow_name):
-    """Returns dictionary of directories to symlink from glbcfg."""
+    """Returns dictionary of directories to symlink from glbcfg.
+        Note the paths should remain unexpanded, to be expanded on the remote.
+    """
     dirs_to_symlink = {}
     symlink_conf = glbl_cfg().get(['symlink dirs'])
 
@@ -169,14 +171,12 @@ def get_dirs_to_symlink(install_target, flow_name):
         return dirs_to_symlink
     base_dir = symlink_conf[install_target]['run']
     if base_dir is not None:
-        dirs_to_symlink['run'] = os.path.join(
-            expand_path(base_dir), 'cylc-run', flow_name)
+        dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', flow_name)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target][dir_]
         if link is None or link == base_dir:
             continue
-        dirs_to_symlink[dir_] = os.path.join(
-            expand_path(link), 'cylc-run', flow_name, dir_)
+        dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', flow_name, dir_)
     return dirs_to_symlink
 
 
