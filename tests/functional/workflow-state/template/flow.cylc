@@ -9,5 +9,5 @@
 
 [runtime]
     [[poll_foo]]
-        [[[workflow state polling]]]
+        [[[suite state polling]]]
             template = %Y

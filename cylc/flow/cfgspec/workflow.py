@@ -1405,11 +1405,9 @@ with Conf(
 def upg(cfg, descr):
     """Upgrade old workflow configuration."""
     u = upgrader(cfg, descr)
-    # "[suite state polling]template" was deprecated, but the section now gets
-    # upgraded to [workflow state polling] before obsoletion.
     u.obsolete(
         '7.8.0',
-        ['runtime', '__MANY__', 'workflow state polling', 'template'])
+        ['runtime', '__MANY__', 'suite state polling', 'template'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
