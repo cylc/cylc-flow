@@ -220,6 +220,7 @@ def test_get_dirs_to_symlink(workflow, install_target, mocked_glbl_cfg,
     assert dirs == output
     os.environ.pop('DEE')
 
+
 @patch('os.path.expandvars')
 @patch('cylc.flow.pathutil.get_workflow_run_dir')
 @patch('cylc.flow.pathutil.make_symlink')

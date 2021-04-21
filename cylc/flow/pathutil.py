@@ -153,10 +153,11 @@ def make_localhost_symlinks(rund, named_sub_dir):
                 f'Unable to create symlink to {src}.'
                 f' \'{value}\' contains an invalid environment variable.'
                 ' Please check configuration.')
-        make_symlink(src, dst)
+        symlink_success = make_symlink(src, dst)
         # symlink info returned for logging purposes, symlinks created
         # before logs as this dir may be a symlink.
-        symlinks_created[src] = dst
+        if symlink_success:
+            symlinks_created[src] = dst
     return symlinks_created
 
 
@@ -189,10 +190,12 @@ def make_symlink(src, dst):
     if os.path.exists(dst):
         if os.path.islink(dst) and os.path.samefile(dst, src):
             # correct symlink already exists
-            return
+            return False
         # symlink name is in use by a physical file or directory
-        raise WorkflowFilesError(
-            f"Error when symlinking. The path {dst} already exists.")
+        # log and return
+        LOG.debug(
+            f"Unable to create {src} symlink. The path {dst} already exists.")
+        return False
     elif os.path.islink(dst):
         # remove a bad symlink.
         try:
@@ -204,6 +207,7 @@ def make_symlink(src, dst):
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     try:
         os.symlink(src, dst, target_is_directory=True)
+        return True
     except Exception as exc:
         raise WorkflowFilesError(f"Error when symlinking\n{exc}")
 

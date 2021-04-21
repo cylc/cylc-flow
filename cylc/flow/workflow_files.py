@@ -523,14 +523,15 @@ def parse_workflow_arg(options, arg):
 
 
 def register(
-    flow_name: Optional[str] = None, source: Optional[str] = None
+    flow_name: str, source: Optional[str] = None
 ) -> str:
     """Set up workflow.
     This completes some of the set up completed by cylc install.
-    Called only if running workflow that has not been installed.
+    Called only if running a workflow that has not been installed.
 
     Validates workflow name.
     Validates run directory structure.
+    Creates symlinks for localhost symlink dirs.
     Symlinks flow.cylc -> suite.rc.
     Creates the .service directory.
 
@@ -547,8 +548,6 @@ def register(
            - Illegal name (can look like a relative path, but not absolute).
            - Nested workflow run directories.
     """
-    if flow_name is None:
-        flow_name = Path.cwd().stem
     validate_flow_name(flow_name)
     if source is not None:
         if os.path.basename(source) == WorkflowFiles.FLOW_FILE:
@@ -1128,7 +1127,7 @@ def install_workflow(
         source = Path(source).parent
     source = Path(expand_path(source))
     if not flow_name:
-        flow_name = source.stem
+        flow_name = source.name
     validate_flow_name(flow_name)
     if run_name in WorkflowFiles.RESERVED_NAMES:
         raise WorkflowFilesError(f'Run name cannot be "{run_name}".')
@@ -1352,10 +1351,10 @@ def unlink_runN(path: Union[Path, str]) -> bool:
 
 def link_runN(latest_run: Union[Path, str]):
     """Create symlink runN, pointing at the latest run"""
-    latest_run = Path(latest_run).expanduser()
+    latest_run = Path(latest_run)
     run_n = Path(latest_run.parent, WorkflowFiles.RUN_N)
     try:
-        run_n.symlink_to(latest_run)
+        run_n.symlink_to(latest_run.relative_to(run_n.parent))
     except OSError:
         pass
 
