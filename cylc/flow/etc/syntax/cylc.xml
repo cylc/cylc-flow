@@ -123,8 +123,6 @@
         <RegExpr attribute='Keyword' String=' env-script '/>
         <RegExpr attribute='Keyword' String=' edge penwidth '/>
         <RegExpr attribute='Keyword' String=' disable task event handlers '/>
-        <RegExpr attribute='Keyword' String=' disable workflow event handlers '/>
-        <RegExpr attribute='Keyword' String=' disable suite event handlers '/>
         <RegExpr attribute='Keyword' String=' directives '/>
         <RegExpr attribute='Keyword' String=' description '/>
         <RegExpr attribute='Keyword' String=' default run length '/>

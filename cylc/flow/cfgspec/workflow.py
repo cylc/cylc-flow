@@ -231,9 +231,6 @@ with Conf(
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
-        with Conf('simulation'):
-            Conf('disable workflow event handlers', VDR.V_BOOLEAN, True)
-
         with Conf('environment'):
             Conf('<variable>', VDR.V_STRING)
 

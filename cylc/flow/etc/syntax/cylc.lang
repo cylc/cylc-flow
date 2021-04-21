@@ -197,8 +197,6 @@
         <keyword>env-script</keyword>
         <keyword>edge penwidth</keyword>
         <keyword>disable task event handlers</keyword>
-        <keyword>disable suite event handlers</keyword>
-        <keyword>disable workflow event handlers</keyword>
         <keyword>directives</keyword>
         <keyword>description</keyword>
         <keyword>default run length</keyword>
