@@ -52,4 +52,4 @@ def environ_init():
 
 environ_init()
 
-__version__ = '8.0b1.dev'
+__version__ = '8.0b1'
