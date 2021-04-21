@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -575,7 +575,7 @@ class Resolvers(BaseResolvers):
         return (True, 'Command queued')
 
     def poll_tasks(self, tasks=None):
-        """Request the suite to poll task jobs.
+        """Request the workflow to poll task jobs.
 
         Args:
             tasks (list, optional):
@@ -639,8 +639,8 @@ class Resolvers(BaseResolvers):
                 (task_job, event_time, severity, message))
         return (True, 'Messages queued: %d' % len(messages))
 
-    def reload_suite(self):
-        """Tell suite to reload the suite definition.
+    def reload_workflow(self):
+        """Tell workflow to reload the workflow definition.
 
         Returns:
             tuple: (outcome, message)
@@ -651,7 +651,7 @@ class Resolvers(BaseResolvers):
                 Information about outcome.
 
         """
-        self.schd.command_queue.put(("reload_suite", (), {}))
+        self.schd.command_queue.put(("reload_workflow", (), {}))
         return (True, 'Command queued')
 
     def release(self, tasks: Iterable[str]) -> Tuple[bool, str]:
@@ -670,7 +670,7 @@ class Resolvers(BaseResolvers):
         return (True, 'Command queued')
 
     def set_verbosity(self, level):
-        """Set suite verbosity to new level (for suite logs).
+        """Set workflow verbosity to new level (for workflow logs).
 
         Args:
             level (str): A logging level e.g. ``INFO`` or ``ERROR``.

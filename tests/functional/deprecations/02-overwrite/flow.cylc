@@ -1,5 +1,5 @@
 # Test automatic deprecation and deletion of config items as specified
-# in lib/cylc/cfgspec/suite.py.
+# in lib/cylc/cfgspec/workflow.py.
 
 [scheduling]
     initial cycle point = 20150808T00

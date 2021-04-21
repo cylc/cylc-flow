@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,24 +20,24 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-CHOSEN_SUITE="$(basename "$0" | sed "s/^.*-\(.*\)\.t/\1/g")"
-install_suite "${TEST_NAME_BASE}" "${CHOSEN_SUITE}"
+CHOSEN_WORKFLOW="$(basename "$0" | sed "s/^.*-\(.*\)\.t/\1/g")"
+install_workflow "${TEST_NAME_BASE}" "${CHOSEN_WORKFLOW}"
 CURRENT_TZ_UTC_OFFSET="$(date +%z)"
 if [[ $CURRENT_TZ_UTC_OFFSET == '+0000' ]]; then
     CURRENT_TZ_UTC_OFFSET="Z"
 fi
-sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" "${SUITE_RUN_DIR}/reference.log"
+sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" "${WORKFLOW_RUN_DIR}/reference.log"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-graph"
-graph_suite "${SUITE_NAME}" "${SUITE_NAME}.graph.plain"
+graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain"
 sed "s/Z/$CURRENT_TZ_UTC_OFFSET/g" \
-    "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref" > 'graph.plain.local.ref'
-cmp_ok "${SUITE_NAME}.graph.plain" 'graph.plain.local.ref'
+    "$TEST_SOURCE_DIR/$CHOSEN_WORKFLOW/graph.plain.ref" > 'graph.plain.local.ref'
+cmp_ok "${WORKFLOW_NAME}.graph.plain" 'graph.plain.local.ref'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,13 +26,13 @@ from cylc.flow.network.scan import (
     is_active,
     scan
 )
-from cylc.flow.suite_files import SuiteFiles
+from cylc.flow.workflow_files import WorkflowFiles
 
 
-SRV_DIR = Path(SuiteFiles.Service.DIRNAME)
-CONTACT = Path(SuiteFiles.Service.CONTACT)
-RUN_N = Path(SuiteFiles.RUN_N)
-INSTALL = Path(SuiteFiles.Install.DIRNAME)
+SRV_DIR = Path(WorkflowFiles.Service.DIRNAME)
+CONTACT = Path(WorkflowFiles.Service.CONTACT)
+RUN_N = Path(WorkflowFiles.RUN_N)
+INSTALL = Path(WorkflowFiles.Install.DIRNAME)
 
 
 def init_flows(tmp_path, running=None, registered=None, un_registered=None):
@@ -188,7 +188,7 @@ async def test_scan_horrible_mess(badly_messed_up_run_dir):
     """It shouldn't be affected by erroneous cylc files/dirs.
 
     How could you end up with a .service dir in cylc-run, well misuse of
-    Cylc7 can result in this situation so this test ensures Cylc7 suites
+    Cylc7 can result in this situation so this test ensures Cylc7 workflows
     can't mess up a Cylc8 scan.
 
     """

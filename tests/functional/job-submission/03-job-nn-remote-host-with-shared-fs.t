@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,12 @@
 export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
 set_test_number 2
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/.service/db" <'db.sqlite3'
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" <'db.sqlite3'
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 purge
 exit

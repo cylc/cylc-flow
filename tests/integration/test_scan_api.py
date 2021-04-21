@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,9 +28,9 @@ from cylc.flow.scripts.scan import (
     main,
     ScanOptions
 )
-from cylc.flow.suite_files import (
+from cylc.flow.workflow_files import (
     ContactFileFields,
-    SuiteFiles,
+    WorkflowFiles,
     dump_contact_file,
     load_contact_file
 )
@@ -258,9 +258,9 @@ async def test_scan_cleans_stuck_contact_files(
     # create a flow
     reg = flow(one_conf, name='-crashed-')
     schd = scheduler(reg)
-    srv_dir = Path(run_dir, reg, SuiteFiles.Service.DIRNAME)
+    srv_dir = Path(run_dir, reg, WorkflowFiles.Service.DIRNAME)
     tmp_dir = test_dir / 'srv'
-    cont = srv_dir / SuiteFiles.Service.CONTACT
+    cont = srv_dir / WorkflowFiles.Service.CONTACT
 
     # run the flow, copy the contact, stop the flow, copy back the contact
     async with run(schd):

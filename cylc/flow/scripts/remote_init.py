@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -48,7 +48,7 @@ def get_option_parser():
         __doc__,
         argdoc=[
             ("INSTALL_TARGET", "Target to be initialised"),
-            ("RUND", "The run directory of the suite"),
+            ("RUND", "The run directory of the workflow"),
             ('[DIRS_TO_BE_SYMLINKED ...]', "Directories to be symlinked")
         ],
         color=False

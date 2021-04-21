@@ -5,9 +5,9 @@
 settings if changes to cylc re-order the job script sections badly: e.g.
 "cylc task started" must be called after the CYLC_ environment variables
 are exported. Additionally, users may rely on the order of variable
-definition in each environment and script section: e.g. suite
+definition in each environment and script section: e.g. workflow
 bin directory must go in PATH before the task runtime environment is
-defined because suite bin commands could be used in variable assignment
+defined because workflow bin commands could be used in variable assignment
 expressions."""
 
 [scheduling]
@@ -71,7 +71,7 @@ export VAR_PostCS=postcs"""
             # init-script must be done:
             E_TWO = $VAR_IS
             # cylc-defined variables must be done:
-            E_THR = $CYLC_SUITE_SHARE_PATH
+            E_THR = $CYLC_WORKFLOW_SHARE_DIR
             E_FOU = $CYLC_TASK_NAME
-            # the suite bin must be in $PATH already:
+            # the workflow bin must be in $PATH already:
             E_FIV = $( foo.sh )

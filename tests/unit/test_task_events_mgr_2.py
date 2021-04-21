@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -65,7 +65,7 @@ DEFAULT = [900]
 
 
 @pytest.mark.parametrize(
-    "broadcast, suite, platforms, expected",
+    "broadcast, workflow, platforms, expected",
     [
         ([800], [700], [600], [800]),
         (None, [700], [600], [700]),
@@ -73,7 +73,7 @@ DEFAULT = [900]
         (None, None, None, DEFAULT),
     ]
 )
-def test_get_suite_platforms_conf(broadcast, suite, platforms, expected):
+def test_get_workflow_platforms_conf(broadcast, workflow, platforms, expected):
     """Test TaskEventsManager._get_polling_interval_conf()."""
 
     task_events_mgr = TaskEventsManager(
@@ -91,7 +91,7 @@ def test_get_suite_platforms_conf(broadcast, suite, platforms, expected):
         identity='foo.1',
         tdef=Mock(
             rtconfig={
-                KEY: suite
+                KEY: workflow
             }
         ),
         platform={
@@ -100,6 +100,6 @@ def test_get_suite_platforms_conf(broadcast, suite, platforms, expected):
     )
 
     assert (
-        task_events_mgr._get_suite_platforms_conf(itask, KEY, DEFAULT) ==
+        task_events_mgr._get_workflow_platforms_conf(itask, KEY, DEFAULT) ==
         expected
     )

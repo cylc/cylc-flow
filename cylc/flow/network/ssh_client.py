@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,17 +22,17 @@ from cylc.flow.exceptions import ClientError
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network import get_location
 from cylc.flow.remote import _remote_cylc_cmd
-from cylc.flow.suite_files import load_contact_file, ContactFileFields
+from cylc.flow.workflow_files import load_contact_file, ContactFileFields
 
 
-class SuiteRuntimeClient():
-    """Client to the workflow server communication using ssh.
+class WorkflowRuntimeClient():
+    """Client to scheduler communication using ssh.
 
     Determines host from the contact file unless provided.
 
     Args:
-        suite (str):
-            Name of the suite to connect to.
+        workflow (str):
+            Name of the workflow to connect to.
         timeout (float):
             Set the default timeout in seconds.
         host (str):
@@ -40,14 +40,14 @@ class SuiteRuntimeClient():
     """
     def __init__(
             self,
-            suite: str,
+            workflow: str,
             host: str = None,
             timeout: Union[float, str] = None
     ):
-        self.suite = suite
+        self.workflow = workflow
 
         if not host:
-            self.host, _, _ = get_location(suite)
+            self.host, _, _ = get_location(workflow)
 
     def send_request(self, command, args=None, timeout=None):
         """Send a request, using ssh.
@@ -75,8 +75,8 @@ class SuiteRuntimeClient():
         cmd = ["client"]
         if timeout:
             cmd += [f'comms_timeout={timeout}']
-        cmd += [self.suite, command]
-        contact = load_contact_file(self.suite)
+        cmd += [self.workflow, command]
+        contact = load_contact_file(self.workflow)
         ssh_cmd = contact[ContactFileFields.SCHEDULER_SSH_COMMAND]
         login_shell = contact[ContactFileFields.SCHEDULER_USE_LOGIN_SHELL]
         cylc_path = contact[ContactFileFields.SCHEDULER_CYLC_PATH]

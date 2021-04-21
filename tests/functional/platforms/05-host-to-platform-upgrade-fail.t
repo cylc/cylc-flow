@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,25 +27,25 @@ create_test_global_config '' "
         retrieve job logs = True
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" \
+    cylc validate "${WORKFLOW_NAME}" \
          -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'"
 
-# Check that the cfgspec/suite.py has issued a warning about upgrades.
+# Check that the cfgspec/workflow.py has issued a warning about upgrades.
 grep_ok "\[not_upgradable_cylc7_settings\]\[remote\]host = parasite"\
     "${TEST_NAME_BASE}-validate.stderr"
 
-# Run the suite
-suite_run_fail "${TEST_NAME_BASE}-run" \
+# Run the workflow
+workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach \
-    -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
+    -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" "${WORKFLOW_NAME}"
 
-# Check that the suite failed because no matching platform could be found.
+# Check that the workflow failed because no matching platform could be found.
 grep_ok "\[jobs-submit err\] No platform found matching your task"\
-    "${SUITE_RUN_DIR}/log/suite/log"
+    "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 purge
 exit

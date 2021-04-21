@@ -1,5 +1,5 @@
 # Test automatic deprecation and deletion of config items as specified
-# in cylc/flow/cfgspec/suite.py.
+# in cylc/flow/cfgspec/workflow.py.
 
 [cylc]
     log resolved dependencies =
@@ -36,7 +36,6 @@
     final cycle point = 20150808T00
     [[graph]]
         P1D = foo => cat & dog
-
 [runtime]
     [[foo, cat, dog]]
         extra log files =
@@ -52,3 +51,6 @@
             mail to =
             mail smtp =
             mail retry delays =
+        [[[suite state polling]]]
+            interval = PT10S
+            message = "pork scratchings"

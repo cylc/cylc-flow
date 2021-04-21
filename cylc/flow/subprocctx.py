@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -142,12 +142,12 @@ class SubFuncContext(SubProcContext):
         super(SubFuncContext, self).__init__(
             'xtrigger-func', cmd=[], shell=False)
 
-    def update_command(self, suite_run_dir):
+    def update_command(self, workflow_run_dir):
         """Update the function wrap command after changes."""
         self.cmd = ['cylc', 'function-run', self.func_name,
                     json.dumps(self.func_args),
                     json.dumps(self.func_kwargs),
-                    suite_run_dir]
+                    workflow_run_dir]
 
     def get_signature(self):
         """Return the function call signature (as a string)."""

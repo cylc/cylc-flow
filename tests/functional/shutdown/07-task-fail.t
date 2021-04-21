@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,13 @@
 
 set_test_number 5
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
-LOGD="$RUN_DIR/${SUITE_NAME}/log"
-grep_ok "ERROR - Suite shutting down - AUTOMATIC(ON-TASK-FAILURE)" \
-    "${LOGD}/suite/log"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
+LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
+grep_ok "ERROR - Workflow shutting down - AUTOMATIC(ON-TASK-FAILURE)" \
+    "${LOGD}/workflow/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that t1.1 event handler runs
 run_ok "${TEST_NAME_BASE}-activity-log" \

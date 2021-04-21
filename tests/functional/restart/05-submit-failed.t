@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a simple suite with a submit-failed task
+# Test restarting a simple workflow with a submit-failed task
 export REQUIRE_PLATFORM='runner:at'
 if [[ -z ${TEST_DIR:-} ]]; then
     . "$(dirname "$0")/test_header"
@@ -30,25 +30,25 @@ create_test_global_config "
         job runner command template = at oh-no
 "
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" 'submit-failed'
-cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$RUN_DIR/${SUITE_NAME}/"
+install_workflow "${TEST_NAME_BASE}" 'submit-failed'
+cp "$TEST_SOURCE_DIR/lib/flow-runtime-restart.cylc" "$RUN_DIR/${WORKFLOW_NAME}/"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-restart"
-suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 grep_ok "submit_failed_task|20130923T0000Z|1|1|submit-failed" \
-    "${SUITE_RUN_DIR}/pre-restart-db"
-contains_ok "${SUITE_RUN_DIR}/post-restart-db" <<'__DB_DUMP__'
+    "${WORKFLOW_RUN_DIR}/pre-restart-db"
+contains_ok "${WORKFLOW_RUN_DIR}/post-restart-db" <<'__DB_DUMP__'
 submit_failed_task|20130923T0000Z|1|1|submit-failed
 __DB_DUMP__
-"${SUITE_RUN_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
+"${WORKFLOW_RUN_DIR}/bin/ctb-select-task-states" "${WORKFLOW_RUN_DIR}" \
     > "${TEST_DIR}/db"
 contains_ok "${TEST_DIR}/db" <<'__DB_DUMP__'
 submit_failed_task|20130923T0000Z|1|1|submit-failed

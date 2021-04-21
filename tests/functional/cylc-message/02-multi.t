@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ export REQUIRE_PLATFORM='loc:* comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
-init_suite "${TEST_NAME_BASE}" <<__FLOW__
+init_workflow "${TEST_NAME_BASE}" <<__FLOW__
 [scheduling]
     [[graph]]
         R1 = foo
@@ -31,7 +31,7 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW__
         platform = $CYLC_TEST_PLATFORM
         script = """
             cylc__job__wait_cylc_message_started
-            cylc message -p WARNING "\${CYLC_SUITE_NAME}" "\${CYLC_TASK_JOB}" \
+            cylc message -p WARNING "\${CYLC_WORKFLOW_NAME}" "\${CYLC_TASK_JOB}" \
                 "Warn this" "INFO: Greeting" - <<'__MESSAGES__'
             Warn that
 
@@ -45,10 +45,10 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW__
         """
 __FLOW__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-LOG="${SUITE_RUN_DIR}/log/suite/log"
+LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 sed -n -e 's/^.* \([A-Z]* - \[foo.1\] status=running: (received).*$\)/\1/p' \
        -e '/\tbadness\|\tslowness\|\tand other incorrectness/p' \
     "${LOG}" >'sed.out'

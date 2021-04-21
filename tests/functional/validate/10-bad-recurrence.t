@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 set_test_number 10
 
 TEST_NAME="${TEST_NAME_BASE}-interval"
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [scheduler]
     cycle point time zone = +01
 [scheduling]
@@ -33,14 +33,14 @@ cat >'flow.cylc' <<'__SUITE__'
 [runtime]
     [[foo]]
         script = true
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-SuiteConfigError: Cannot process recurrence R/T00/PT5D (initial cycle point=20140101T0000+01) (final cycle point=20140201T0000+01)
+WorkflowConfigError: Cannot process recurrence R/T00/PT5D (initial cycle point=20140101T0000+01) (final cycle point=20140201T0000+01)
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-icp"
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [scheduler]
     UTC mode = True
 [scheduling]
@@ -50,14 +50,14 @@ cat >'flow.cylc' <<'__SUITE__'
 [runtime]
     [[root]]
         script = true
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-SuiteConfigError: Cannot process recurrence R1/P0D (initial cycle point=20140101T0000Z) (final cycle point=None) This suite requires a final cycle point.
+WorkflowConfigError: Cannot process recurrence R1/P0D (initial cycle point=20140101T0000Z) (final cycle point=None) This workflow requires a final cycle point.
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-2-digit-century"
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [scheduler]
     cycle point time zone = +01
 [scheduling]
@@ -70,38 +70,38 @@ cat >'flow.cylc' <<'__SUITE__'
 [runtime]
     [[foo]]
         script = true
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-SuiteConfigError: Cannot process recurrence R/00/P5D (initial cycle point=20140101T0000+01) (final cycle point=20140201T0000+01) '00': 2 digit centuries not allowed. Did you mean T-digit-digit e.g. 'T00'?
+WorkflowConfigError: Cannot process recurrence R/00/P5D (initial cycle point=20140101T0000+01) (final cycle point=20140201T0000+01) '00': 2 digit centuries not allowed. Did you mean T-digit-digit e.g. 'T00'?
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-recurrences"
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [scheduler]
     cycle point time zone = +01
 [scheduling]
     initial cycle point = 20100101T00
     [[graph]]
         0,6,12 = "foo"
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-SuiteConfigError: Cannot process recurrence 0 (initial cycle point=20100101T0000+01) (final cycle point=None) '0': not a valid cylc-shorthand or full ISO 8601 date representation
+WorkflowConfigError: Cannot process recurrence 0 (initial cycle point=20100101T0000+01) (final cycle point=None) '0': not a valid cylc-shorthand or full ISO 8601 date representation
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-old-cycle-point-format"
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [scheduler]
     cycle point format = %Y%m%d%H
 [scheduling]
     initial cycle point = 2010010101
     [[graph]]
         R1 = foo
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-SuiteConfigError: Cannot process recurrence R1 (initial cycle point=2010010101) (final cycle point=None) '2010010101': not a valid cylc-shorthand or full ISO 8601 date representation
+WorkflowConfigError: Cannot process recurrence R1 (initial cycle point=2010010101) (final cycle point=None) '2010010101': not a valid cylc-shorthand or full ISO 8601 date representation
 __ERR__
 
 exit

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -20,19 +20,19 @@
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"-pass
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}" \
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}" \
     -s 'FOO="True"' \
     -s 'ANSWER="42"'
 TEST_NAME="${TEST_NAME_BASE}"-fail-assert
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" \
+run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}" \
     -s 'FOO="True"' \
     -s 'ANSWER="43"'
 grep_ok 'Jinja2 Assertion Error: Universal' "${TEST_NAME}.stderr"
 TEST_NAME="${TEST_NAME_BASE}"-fail-raise
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}" -s 'ANSWER="42"'
+run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}" -s 'ANSWER="42"'
 grep_ok 'Jinja2 Error: FOO must be defined' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge

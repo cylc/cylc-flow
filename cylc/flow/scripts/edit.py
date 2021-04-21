@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,27 +17,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc edit [OPTIONS] ARGS
 
-Edit suite definitions.
+Edit workflow definitions.
 
-Edit suite definitions without having to move to their directory
+Edit workflow definitions without having to move to their directory
 locations, and with optional reversible inlining of include-files. Note
-that Jinja2 suites can only be edited in raw form but the processed
+that Jinja2 workflows can only be edited in raw form but the processed
 version can be viewed with 'cylc view -p'.
 
-1/ cylc edit SUITE
-Change to the suite definition directory and edit the flow.cylc file.
+1/ cylc edit WORKFLOW
+Change to the workflow definition directory and edit the flow.cylc file.
 
-2/ cylc edit -i,--inline SUITE
-Edit the suite with include-files inlined between special markers. The
+2/ cylc edit -i,--inline WORKFLOW
+Edit the workflow with include-files inlined between special markers. The
 original flow.cylc file is temporarily replaced so that the inlined
-version is "live" during editing (i.e. you can run suites during
-editing and cylc will pick up changes to the suite definition). The
+version is "live" during editing (i.e. you can run workflows during
+editing and cylc will pick up changes to the workflow definition). The
 inlined file is then split into its constituent include-files
 again when you exit the editor. Include-files can be nested or
 multiply-included; in the latter case only the first inclusion is
 inlined (this prevents conflicting changes made to the same file).
 
-3/ cylc edit --cleanup SUITE
+3/ cylc edit --cleanup WORKFLOW
 Remove backup files left by previous INLINED edit sessions.
 
 INLINED EDITING SAFETY: The flow.cylc file and its include-files are
@@ -76,7 +76,7 @@ from cylc.flow.parsec.include import (
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import parse_suite_arg
+from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.terminal import cli_function
 from cylc.flow.wallclock import get_current_time_string
 
@@ -103,24 +103,24 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, *args):
-    flow_file = parse_suite_arg(options, args[0])[1]
+    flow_file = parse_workflow_arg(options, args[0])[1]
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
     else:
         editor = glbl_cfg().get(['editors', 'terminal'])
 
-    suitedir = os.path.dirname(flow_file)
+    workflowdir = os.path.dirname(flow_file)
 
     if options.cleanup:
         # remove backup files left by inlined editing sessions
-        cleanup(suitedir)
+        cleanup(workflowdir)
         sys.exit(0)
 
     if not options.inline:
         # plain old editing.
-        # move to suite def dir
-        os.chdir(suitedir)
+        # move to workflow def dir
+        os.chdir(workflowdir)
 
         # edit the flow.cylc file
         if not os.path.isfile(flow_file):
@@ -155,7 +155,7 @@ def main(parser, options, *args):
             lines = lines0
         else:
             recovery = False
-            lines = inline(lines0, suitedir, flow_file, for_edit=True)
+            lines = inline(lines0, workflowdir, flow_file, for_edit=True)
     else:
         parser.error(f"File not found: {flow_file}")
 
@@ -169,8 +169,8 @@ def main(parser, options, *args):
 
     print('PRE-EDIT BACKUPS:')
     for file in backups:
-        src = re.sub(suitedir + '/', '', file)
-        dst = re.sub(suitedir + '/', '', backups[file])
+        src = re.sub(workflowdir + '/', '', file)
+        dst = re.sub(workflowdir + '/', '', backups[file])
         print(' + ' + src + ' ---> ' + dst)
 
     # in case editor has options, e.g. 'emacs -nw':
@@ -187,7 +187,7 @@ def main(parser, options, *args):
     # Now back up the inlined file in case of absolute disaster, so as the
     # user or his editor corrupting the inlined-include-file marker lines.
     inlined_flow_file_backup = (
-        suitedir + '/flow.cylc.INLINED.EDIT.' +
+        workflowdir + '/flow.cylc.INLINED.EDIT.' +
         get_current_time_string(override_use_utc=True, use_basic_format=True)
     )
     copy(flow_file, inlined_flow_file_backup)
@@ -198,13 +198,13 @@ def main(parser, options, *args):
     h.close()
 
     # split it back into separate files
-    split_file(suitedir, lines, flow_file, recovery)
+    split_file(workflowdir, lines, flow_file, recovery)
 
     print(f' + edited: {flow_file}')
     print(f' + backup: {inlined_flow_file_backup}')
     print('INCLUDE-FILES WRITTEN:')
     for file in newfiles:
-        f = re.sub(suitedir + '/', '', file)
+        f = re.sub(workflowdir + '/', '', file)
         if re.search(r'\.EDIT\.NEW\.', f):
             print(' + ' + f + ' (!!! WARNING: original changed on disk !!!)')
         else:

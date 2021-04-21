@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,17 +20,17 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" clock-triggered
+install_workflow "${TEST_NAME_BASE}" clock-triggered
 #-------------------------------------------------------------------------------
 TEST_SHOW_OUTPUT_PATH="$PWD/${TEST_NAME_BASE}-show.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
-    --set="TEST_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'" "${SUITE_NAME}"
+    --set="TEST_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
-    --set="TEST_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'" "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
+    --set="TEST_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-show
 contains_ok "${TEST_NAME}.stdout" <<__SHOW_OUTPUT__

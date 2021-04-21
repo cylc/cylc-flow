@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Test cylc.flow.client.SuiteRuntimeClient."""
+"""Test cylc.flow.client.WorkflowRuntimeClient."""
 import pytest
 
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.server import PB_METHOD_MAP
 
 
@@ -27,7 +27,7 @@ async def harness(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     reg = mod_flow(mod_one_conf)
     schd = mod_scheduler(reg)
     async with mod_run(schd):
-        client = SuiteRuntimeClient(reg)
+        client = WorkflowRuntimeClient(reg)
         yield schd, client
 
 
@@ -42,7 +42,7 @@ async def test_graphql(harness):
     workflows = ret['workflows']
     assert len(workflows) == 1
     workflow = workflows[0]
-    assert schd.suite in workflow['id']
+    assert schd.workflow in workflow['id']
 
 
 @pytest.mark.asyncio
@@ -52,4 +52,4 @@ async def test_protobuf(harness):
     ret = await client.async_request('pb_entire_workflow')
     pb_data = PB_METHOD_MAP['pb_entire_workflow']()
     pb_data.ParseFromString(ret)
-    assert schd.suite in pb_data.workflow.id
+    assert schd.workflow in pb_data.workflow.id

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,13 +18,13 @@
 # Test intercycle dependencies.
 . "$(dirname "$0")/test_header"
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" 'integer_exclusions_advanced'
+install_workflow "${TEST_NAME_BASE}" 'integer_exclusions_advanced'
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-graph_suite "${SUITE_NAME}" "${SUITE_NAME}.graph.plain"
-cmp_ok "${SUITE_NAME}.graph.plain" 'graph.plain.ref'
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain"
+cmp_ok "${WORKFLOW_NAME}.graph.plain" 'graph.plain.ref'
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge
 exit

@@ -34,12 +34,18 @@ namespace, under `cylc.jinja.filters`.
 
 Cylc Review was also removed in this version.
 
-Cylc 7 suites cannot be restarted in Cylc 8 using `cylc restart`, but they
-can still be run using `cylc run` ([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
+Cylc 7 suites cannot be *restarted* (from previous state) with Cylc 8, but they
+can still be started from scratch
+([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
 
 Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/pull/3906))
 due to being a seldom-used feature. Workflows can still be restarted from the
 last run, or reflow can be used to achieve the same result.
+
+## 8.0b2 (REPLACE THIS LINE WITH THE CORRECT RELEASE HEADER)
+
+[#4174](https://github.com/cylc/cylc-flow/pull/4174) - terminology: replace
+"suite" with "workflow".
 
 <!-- The topmost release date is automatically updated by GitHub Actions. When
 creating a new release entry be sure to copy & paste the span tag with the

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@ These are written to the top of the task job script like this:
 
 If ``restart=yes`` is specified as a directive for loadleveler, the job will
 automatically trap SIGUSR1, which loadleveler may use to preempt the job. On
-trapping SIGUSR1, the job will inform the suite that it has been vacated by
+trapping SIGUSR1, the job will inform the workflow that it has been vacated by
 loadleveler. This will put it back to the submitted state, until it starts
 running again.
 
@@ -59,7 +59,7 @@ If :cylc:conf:`execution time limit` is specified, it is used to generate the
 The hard limit will be set by adding an extra minute to the soft limit.  Do not
 specify the ``wall_clock_limit`` directive explicitly if :cylc:conf:`execution
 time limit` is specified. Otherwise, the execution time limit known by the
-suite may be out of sync with what is submitted to the job runner.
+workflow may be out of sync with what is submitted to the job runner.
 
 .. cylc-scope::
 
@@ -87,7 +87,7 @@ class LoadlevelerHandler():
         job_file_path = re.sub(r"\$HOME/", "", job_conf["job_file_path"])
         directives = job_conf["directives"].__class__()
         directives["job_name"] = (
-            job_conf["suite_name"] + "." + job_conf["task_id"])
+            job_conf["workflow_name"] + "." + job_conf["task_id"])
         directives["output"] = job_file_path + ".out"
         directives["error"] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and

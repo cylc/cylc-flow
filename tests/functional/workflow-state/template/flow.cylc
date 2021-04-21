@@ -1,0 +1,13 @@
+#!jinja2
+[scheduler]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20100101T0000Z
+    final cycle point   = 20110101T0000Z
+    [[graph]]
+        P1Y = poll_foo<{{REF_WORKFLOW}}::foo>
+
+[runtime]
+    [[poll_foo]]
+        [[[workflow state polling]]]
+            template = %Y

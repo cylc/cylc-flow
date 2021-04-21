@@ -1,0 +1,9 @@
+#!Jinja2
+[scheduling]
+    [[graph]]
+        R1 = t1
+[runtime]
+    [[t1]]
+        script = """
+grep -F -q "CYLC_WORKFLOW_HOST={{MY_HOST_IP}}" "${CYLC_WORKFLOW_RUN_DIR}/.service/contact"
+"""

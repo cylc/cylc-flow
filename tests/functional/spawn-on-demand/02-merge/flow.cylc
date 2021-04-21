@@ -13,13 +13,13 @@
     [[foo]]
          script = """
 if (( CYLC_TASK_CYCLE_POINT == 3 )); then
-    cylc trigger --reflow ${CYLC_SUITE_NAME} foo.1
-    cylc__job__poll_grep_suite_log 'merged flow'
+    cylc trigger --reflow ${CYLC_WORKFLOW_NAME} foo.1
+    cylc__job__poll_grep_workflow_log 'merged flow'
 fi
          """
     [[bar]]
          script = """
 if (( CYLC_TASK_CYCLE_POINT == 3 )); then
-    cylc__job__poll_grep_suite_log 'returning flow label(s)'
+    cylc__job__poll_grep_workflow_log 'returning flow label(s)'
 fi
          """

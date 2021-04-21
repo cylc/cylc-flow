@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,37 +15,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check that suite does not run beyond stopcp whether set in flow.cylc or
+# Check that workflow does not run beyond stopcp whether set in flow.cylc or
 # on the command line.
 
 . "$(dirname "$0")/test_header"
 set_test_number 9
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 # Check that the config stop point works.
-suite_run_ok "${TEST_NAME_BASE}-no-cmd-line-opts" \
-    cylc play --no-detach "${SUITE_NAME}"
-SUITELOG="${SUITE_RUN_DIR}/log/suite/log"
+workflow_run_ok "${TEST_NAME_BASE}-no-cmd-line-opts" \
+    cylc play --no-detach "${WORKFLOW_NAME}"
+WORKFLOWLOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 # Check task hello@stopped cylc point is spawned but never submitted
-grep_fail "\[hello.19700101T0100Z\] -submit-num=01" "${SUITELOG}"
+grep_fail "\[hello.19700101T0100Z\] -submit-num=01" "${WORKFLOWLOG}"
 
 delete_db
 
 # Check that the command line stop point works.
-suite_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
-    cylc play --no-detach --stopcp=19700101T0100Z "${SUITE_NAME}"
-grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${SUITELOG}"
+workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
+    cylc play --no-detach --stopcp=19700101T0100Z "${WORKFLOW_NAME}"
+grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
 
 # Check that stop is preserved on restart ...
-suite_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
-    cylc play --no-detach "${SUITE_NAME}"
-grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${SUITELOG}"
+workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
+    cylc play --no-detach "${WORKFLOW_NAME}"
+grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
 
 # ... unless we say otherwise.
-suite_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
-    cylc play --no-detach --stopcp=ignore "${SUITE_NAME}"
-grep_ok "\[hello.19700101T0200Z\] -submit-num=01" "${SUITELOG}"
+workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
+    cylc play --no-detach --stopcp=ignore "${WORKFLOW_NAME}"
+grep_ok "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
 
 purge

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,16 +22,16 @@ set_test_number 4
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config '' ''
 fi
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_fail "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_fail "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
-SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
+WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 grep_ok \
-    'SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
-    "${SUITE_RUN_DIR}/log/suite/log"
+    'WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
+    "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 purge
 exit

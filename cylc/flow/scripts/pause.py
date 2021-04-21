@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ Not to be confused with `cylc hold`.
 import os.path
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.terminal import cli_function
 
 MUTATION = '''
@@ -61,7 +61,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, workflow):
     workflow = os.path.normpath(workflow)
-    pclient = SuiteRuntimeClient(workflow, timeout=options.comms_timeout)
+    pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,

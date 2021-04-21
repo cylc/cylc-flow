@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 set_test_number 23
 
 #------------------------------------------------------------------------------
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
         i = cat, dog, fish
         j = 1..5
@@ -37,23 +37,23 @@ cat >'flow.cylc' <<'__SUITE__'
         inherit = "FAM<i,j>"
     [[bar<i=cat,j=3>]]
         inherit = "FAM<i,j>"  # implicit values here (takes i=cat,j=3)
-__SUITE__
+__WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-1
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_suite "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_suite "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
-graph_suite "flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.ref"
 
 #------------------------------------------------------------------------------
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -69,24 +69,24 @@ cat >'flow.cylc' <<'__SUITE__'
         inherit = "FAM<i,j>"
     [[bar<i=cat,j=3>]]
         inherit = "FAM<i=cat,j=3>"  # same with explicit values
-__SUITE__
+__WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-2
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_suite "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_suite "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
-graph_suite "flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.ref"
 
 #------------------------------------------------------------------------------
 # Same, with white space in the parameter syntax.
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -102,23 +102,23 @@ cat >'flow.cylc' <<'__SUITE__'
         inherit = "FAM< i, j>"
     [[bar<i=cat,j=3>]]
         inherit = "FAM<i = cat ,j=3>"
-__SUITE__
+__WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-3
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_suite "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_suite "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
-graph_suite "flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.ref"
 
 #------------------------------------------------------------------------------
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -134,23 +134,23 @@ cat >'flow.cylc' <<'__SUITE__'
         inherit = "FAM<i,j>"
     [[bar<i=cat,j=3>]]
         inherit = "FAM<i=dog,j=1>"  # different explicit values are legal
-__SUITE__
+__WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-4
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_suite "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-b.ref"
 # task graph
-graph_suite "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-b.ref"
 # inheritance graph
-graph_suite "flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-b.ref"
 
 #------------------------------------------------------------------------------
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -168,12 +168,12 @@ cat >'flow.cylc' <<'__SUITE__'
         inherit = "FAM<i=dog,j=1>"
     [[boo]]
         inherit = "FAM<i=dog,j=1>"  # OK (plain task can inherit from specific params)
-__SUITE__
+__WORKFLOW__
 
 run_ok "${TEST_NAME_BASE}-5" cylc validate "flow.cylc"
 
 #------------------------------------------------------------------------------
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -187,14 +187,14 @@ cat >'flow.cylc' <<'__SUITE__'
     [[BAZ<j>]]
     [[bar<i>_baz<j>]]  # OK params separate
         inherit = BAR<i>, BAZ<j>
-__SUITE__
+__WORKFLOW__
 
 run_ok "${TEST_NAME_BASE}-6" cylc validate 'flow.cylc'
 cylc graph --reference -u 'flow.cylc' 1>'06.graph'
 cmp_ok '06.graph' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/06.graph.ref"
 
 #------------------------------------------------------------------------------
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -210,7 +210,7 @@ cat >'flow.cylc' <<'__SUITE__'
         inherit = "FAM<i=frog,j>"  # ERROR: no frog
     [[bar<i=cat,j=3>]]
         inherit = "FAM<i=dog,j=1>"
-__SUITE__
+__WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-err-1
 run_fail "${TNAME}" cylc validate "flow.cylc"
@@ -219,7 +219,7 @@ ParamExpandError: illegal value 'i=frog' in 'inherit = FAM<i=frog,j>'
 __ERR__
 
 #------------------------------------------------------------------------------
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -237,7 +237,7 @@ cat >'flow.cylc' <<'__SUITE__'
         inherit = "FAM<i=dog,j=1>"
     [[boo]]
         inherit = "FAM<i,j=1>"  # ERROR: i undefined here.
-__SUITE__
+__WORKFLOW__
 
 TNAME="${TEST_NAME_BASE}-err-2"
 run_fail "${TNAME}" cylc validate "flow.cylc"

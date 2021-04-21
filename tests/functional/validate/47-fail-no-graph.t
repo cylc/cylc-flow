@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ cat > flow.cylc <<__END__
         R1 = ""
 __END__
 run_fail "${TEST_NAME}" cylc validate -v flow.cylc
-grep_ok "No suite dependency graph defined." "${TEST_NAME}.stderr"
+grep_ok "No workflow dependency graph defined." "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-no-graph
 cat > flow.cylc <<__END__
@@ -36,4 +36,4 @@ cat > flow.cylc <<__END__
     [[graph]]
 __END__
 run_fail "${TEST_NAME}" cylc validate -v flow.cylc
-grep_ok "No suite dependency graph defined." "${TEST_NAME}.stderr"
+grep_ok "No workflow dependency graph defined." "${TEST_NAME}.stderr"

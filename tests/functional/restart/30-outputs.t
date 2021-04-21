@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,15 +22,15 @@
 . "$(dirname "$0")/test_header"
 
 set_test_number 4
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT outputs FROM task_outputs' \
     >'sqlite3.out'
 cmp_json 'sqlite3.out' 'sqlite3.out' <<<'{"hello": "hello"}'
 
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'SELECT * FROM task_pool' >'task-pool.out'
 cmp_ok 'task-pool.out' <'/dev/null'
 

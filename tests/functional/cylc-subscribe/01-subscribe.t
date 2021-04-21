@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 6
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo => bar => wiq => qux
@@ -29,17 +29,17 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = sleep 2
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-subscribe-1"
-run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${WORKFLOW_NAME}"
 grep_ok "lastUpdated" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}-subscribe-2"
-run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc subscribe --once --topics="workflow" "${WORKFLOW_NAME}"
 grep_ok "lastUpdated" "${TEST_NAME}.stdout"
 
-cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
+cylc stop --kill --max-polls=20 --interval=1 "${WORKFLOW_NAME}"
 purge
 exit

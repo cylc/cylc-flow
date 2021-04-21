@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,9 @@
 
 """Creates authentication keys for use in testing"""
 
-from cylc.flow.suite_files import (
+from cylc.flow.workflow_files import (
     create_server_keys,
-    get_suite_srv_dir,
+    get_workflow_srv_dir,
     KeyInfo,
     KeyOwner,
     KeyType,
@@ -27,27 +27,27 @@ from cylc.flow.task_remote_cmd import (
     remove_keys_on_client, create_client_keys)
 
 
-def setup_keys(suite_name):
-    suite_srv_dir = get_suite_srv_dir(suite_name)
+def setup_keys(workflow_name):
+    workflow_srv_dir = get_workflow_srv_dir(workflow_name)
     server_keys = {
         "client_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.CLIENT,
-            suite_srv_dir=suite_srv_dir),
+            workflow_srv_dir=workflow_srv_dir),
         "client_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.CLIENT,
-            suite_srv_dir=suite_srv_dir),
+            workflow_srv_dir=workflow_srv_dir),
         "server_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.SERVER,
-            suite_srv_dir=suite_srv_dir),
+            workflow_srv_dir=workflow_srv_dir),
         "server_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.SERVER,
-            suite_srv_dir=suite_srv_dir)
+            workflow_srv_dir=workflow_srv_dir)
     }
     remove_keys_on_server(server_keys)
-    remove_keys_on_client(suite_srv_dir, None, full_clean=True)
-    create_server_keys(server_keys, suite_srv_dir)
-    create_client_keys(suite_srv_dir, None)
+    remove_keys_on_client(workflow_srv_dir, None, full_clean=True)
+    create_server_keys(server_keys, workflow_srv_dir)
+    create_client_keys(workflow_srv_dir, None)

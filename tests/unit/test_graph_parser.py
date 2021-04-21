@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -142,15 +142,15 @@ class TestGraphParser(unittest.TestCase):
             # no state in the parameters list
             parameterized_parser.parse_graph('a => b<state>')
 
-    # --- inter-suite dependence
+    # --- inter-workflow dependence
 
-    def test_inter_suite_dependence_simple(self):
-        """Test invalid inter-suite dependence"""
-        self.parser.parse_graph('a<SUITE::TASK:fail> => b')
+    def test_inter_workflow_dependence_simple(self):
+        """Test invalid inter-workflow dependence"""
+        self.parser.parse_graph('a<WORKFLOW::TASK:fail> => b')
         original = self.parser.original
         triggers = self.parser.triggers
         families = self.parser.family_map
-        suite_state_polling_tasks = self.parser.suite_state_polling_tasks
+        workflow_state_polling_tasks = self.parser.workflow_state_polling_tasks
         self.assertEqual(
             {'a': {'': ''}, 'b': {'a:succeed': 'a:succeed'}},
             original
@@ -161,8 +161,8 @@ class TestGraphParser(unittest.TestCase):
             triggers
         )
         self.assertEqual({}, families)
-        self.assertEqual(('SUITE', 'TASK', 'fail', '<SUITE::TASK:fail>'),
-                         suite_state_polling_tasks['a'])
+        self.assertEqual(('WORKFLOW', 'TASK', 'fail', '<WORKFLOW::TASK:fail>'),
+                         workflow_state_polling_tasks['a'])
 
     def test_line_continuation(self):
         """Test syntax-driven line continuation."""

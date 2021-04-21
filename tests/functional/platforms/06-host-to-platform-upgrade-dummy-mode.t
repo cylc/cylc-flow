@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,19 +21,19 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-# Ensure that you can validate suite
+# Ensure that you can validate workflow
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}"
+    cylc validate "${WORKFLOW_NAME}"
 
 run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${SUITE_NAME}" --no-detach --mode=dummy-local
+    cylc play "${WORKFLOW_NAME}" --no-detach --mode=dummy-local
 
 # Check that the upgradeable config has been run on a sensible host.
 grep_ok \
     "(dummy job succeed)"\
-    "${SUITE_RUN_DIR}/log/job/1/upgradeable_cylc7_settings/NN/job.out"
+    "${WORKFLOW_RUN_DIR}/log/job/1/upgradeable_cylc7_settings/NN/job.out"
 
 purge
 exit

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,11 +22,11 @@
 
 set_test_number 2
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-config"
 run_ok "${TEST_NAME}" \
-    cylc config -i "[runtime][foo_t1_right]environment" "${SUITE_NAME}"
+    cylc config -i "[runtime][foo_t1_right]environment" "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__END__
 PARAM1 = \$CYLC_TASK_PARAM_t
 PARAM2 = \$CYLC_TASK_PARAM_u

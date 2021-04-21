@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -37,13 +37,13 @@
 
 .. warning::
 
-   This plugin can slow down a suite significantly due to the
+   This plugin can slow down a workflow significantly due to the
    complexity of memory calculations.
 
-   Set a sensible interval before running suites.
+   Set a sensible interval before running workflows.
 
 If ``matplotlib`` is installed this plugin will plot results as a PDF in
-the run directory when the suite is shut down (cleanly).
+the run directory when the workflow is shut down (cleanly).
 
 """
 
@@ -88,12 +88,12 @@ async def take_snapshot(scheduler, state):
 async def report(scheduler, state):
     """Take a final memory snapshot and dump the results."""
     await take_snapshot(scheduler, state)
-    _dump(state['data'], scheduler.suite_run_dir)
+    _dump(state['data'], scheduler.workflow_run_dir)
     fields, times = _transpose(state['data'])
     _plot(
         fields,
         times,
-        scheduler.suite_run_dir,
+        scheduler.workflow_run_dir,
         f'cylc.flow.scheduler.Scheduler attrs > {MIN_SIZE / 1000}kb'
     )
 

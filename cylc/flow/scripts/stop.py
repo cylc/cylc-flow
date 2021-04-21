@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 """cylc stop [OPTIONS] ARGS
 
-Stop a running suite.
+Stop a running workflow.
 
 There are several shutdown methods:
 
@@ -31,12 +31,12 @@ There are several shutdown methods:
      CCYYMMDDThh:mm, CCYY-MM-DDThh, etc).
 
 Tasks that become ready after the shutdown is ordered will be submitted
-immediately if the suite is restarted.  Remaining task event handlers and job
-poll and kill commands, however, will be executed prior to shutdown, unless
+immediately if the workflow is restarted.  Remaining task event handlers and
+job poll and kill commands, however, will be executed prior to shutdown, unless
 --now is used.
 
 This command exits immediately unless --max-polls is greater than zero, in
-which case it polls to wait for suite shutdown."""
+which case it polls to wait for workflow shutdown."""
 
 import os.path
 import sys
@@ -51,7 +51,7 @@ from cylc.flow.terminal import cli_function
 MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
-  $stopMode: SuiteStopMode,
+  $stopMode: WorkflowStopMode,
   $cyclePoint: CyclePoint,
   $clockTime: TimePoint,
   $task: TaskID,
@@ -80,25 +80,25 @@ query ($wFlows: [ID]) {
 
 
 class StopPoller(Poller):
-    """A polling object that checks if a suite has stopped yet."""
+    """A polling object that checks if a workflow has stopped yet."""
 
     def __init__(self, pclient, condition, interval, max_polls):
         Poller.__init__(self, condition, interval, max_polls, None)
         self.pclient = pclient
         self.query = {
             'request_string': POLLER_QUERY,
-            'variables': {'wFlows': [self.pclient.suite]}
+            'variables': {'wFlows': [self.pclient.workflow]}
         }
 
     def check(self):
-        """Return True if suite has stopped (success) else False"""
+        """Return True if workflow has stopped (success) else False"""
         try:
             self.pclient('graphql', self.query)
         except (ClientError, ClientTimeout):
-            # failed to ping - suite stopped
+            # failed to ping - workflow stopped
             return True
         else:
-            # pinged - suite must be alive
+            # pinged - workflow must be alive
             return False
 
 
@@ -127,7 +127,7 @@ def get_option_parser():
             " If this option is specified once," +
             " wait for task event handler, job poll/kill to complete." +
             " If this option is specified more than once," +
-            " tell the suite to terminate immediately."),
+            " tell the workflow to terminate immediately."),
         action="count", default=0, dest="now")
 
     parser.add_option(
@@ -141,7 +141,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite, shutdown_arg=None):
+def main(parser, options, workflow, shutdown_arg=None):
     if shutdown_arg is not None and options.kill:
         parser.error("ERROR: --kill is not compatible with [STOP]")
 
@@ -151,13 +151,13 @@ def main(parser, options, suite, shutdown_arg=None):
     if options.flow_label and int(options.max_polls) > 0:
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
-    suite = os.path.normpath(suite)
-    pclient = get_client(suite, timeout=options.comms_timeout)
+    workflow = os.path.normpath(workflow)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
         spoller = StopPoller(
-            pclient, "suite stopped", options.interval, options.max_polls)
+            pclient, "workflow stopped", options.interval, options.max_polls)
 
     # mode defaults to 'Clean'
     mode = None
@@ -179,7 +179,7 @@ def main(parser, options, suite, shutdown_arg=None):
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
             'stopMode': mode,
             'cyclePoint': cycle_point,
             'clockTime': options.wall_clock,

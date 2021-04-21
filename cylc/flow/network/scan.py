@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ For further functionality construct a pipe::
 
     pipe = scan | is_active(True) | contact_info
     async for flow in pipe:
-        print(f'{flow["name"]} {flow["CYLC_SUITE_HOST"]}')
+        print(f'{flow["name"]} {flow["CYLC_WORKFLOW_HOST"]}')
 
 There are filters which you can you to omit workflows e.g.
 :py:func:`cylc_version` and transformers which acquire more information
@@ -60,32 +60,32 @@ from cylc.flow.async_util import (
     scandir
 )
 from cylc.flow.network.client import (
-    SuiteRuntimeClient, ClientError, ClientTimeout)
+    WorkflowRuntimeClient, ClientError, ClientTimeout)
 from cylc.flow.pathutil import get_workflow_run_dir
-from cylc.flow.exceptions import SuiteStopped
-from cylc.flow.suite_files import (
+from cylc.flow.exceptions import WorkflowStopped
+from cylc.flow.workflow_files import (
     ContactFileFields,
-    SuiteFiles,
-    get_suite_title,
+    WorkflowFiles,
+    get_workflow_title,
     load_contact_file_async,
     MAX_SCAN_DEPTH
 )
 
 
-SERVICE = Path(SuiteFiles.Service.DIRNAME)
-CONTACT = Path(SuiteFiles.Service.CONTACT)
+SERVICE = Path(WorkflowFiles.Service.DIRNAME)
+CONTACT = Path(WorkflowFiles.Service.CONTACT)
 
 FLOW_FILES = {
     # marker files/dirs which we use to determine if something is a flow
-    SuiteFiles.Service.DIRNAME,
-    SuiteFiles.SUITE_RC,   # cylc7 flow definition file name
-    SuiteFiles.FLOW_FILE,  # cylc8 flow definition file name
+    WorkflowFiles.Service.DIRNAME,
+    WorkflowFiles.SUITE_RC,   # cylc7 flow definition file name
+    WorkflowFiles.FLOW_FILE,  # cylc8 flow definition file name
     'log'
 }
 
 EXCLUDE_FILES = {
-    SuiteFiles.RUN_N,
-    SuiteFiles.Install.SOURCE
+    WorkflowFiles.RUN_N,
+    WorkflowFiles.Install.SOURCE
 }
 
 
@@ -125,8 +125,8 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
         max_depth (int):
             The maximum number of levels to descend before bailing.
 
-            * ``max_depth=1`` will pick up top-level suites (e.g. ``foo``).
-            * ``max_depth=2`` will pick up nested suites (e.g. ``foo/bar``).
+            * ``max_depth=1`` will pick up top-level workflows (e.g. ``foo``).
+            * ``max_depth=2`` will pick up nested workflows (e.g. ``foo/bar``).
 
     Yields:
         dict - Dictionary containing information about the flow.
@@ -347,13 +347,13 @@ async def graphql_query(flow, fields, filters=None):
     """
     query = f'query {{ workflows(ids: ["{flow["name"]}"]) {{ {fields} }} }}'
     try:
-        client = SuiteRuntimeClient(
+        client = WorkflowRuntimeClient(
             flow['name'],
             # use contact_info data if present for efficiency
-            host=flow.get('CYLC_SUITE_HOST'),
-            port=flow.get('CYLC_SUITE_PORT')
+            host=flow.get('CYLC_WORKFLOW_HOST'),
+            port=flow.get('CYLC_WORKFLOW_PORT')
         )
-    except SuiteStopped:
+    except WorkflowStopped:
         LOG.warning(f'Workflow not running: {flow["name"]}')
         return False
     try:
@@ -399,15 +399,15 @@ async def graphql_query(flow, fields, filters=None):
 
 @pipe
 async def title(flow):
-    """Attempt to parse the suite title out of the flow config file.
+    """Attempt to parse the workflow title out of the flow config file.
 
     .. warning::
-       This uses a fast but dumb method which may fail to extract the suite
+       This uses a fast but dumb method which may fail to extract the workflow
        title.
 
-       Obtaining the suite title via :py:func:`graphql_query` is preferable
+       Obtaining the workflow title via :py:func:`graphql_query` is preferable
        for running flows.
 
     """
-    flow['title'] = get_suite_title(flow['name'])
+    flow['title'] = get_workflow_title(flow['name'])
     return flow

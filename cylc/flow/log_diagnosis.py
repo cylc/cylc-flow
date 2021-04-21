@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,21 +21,21 @@ import os
 
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import SuiteEventError
-from cylc.flow.pathutil import get_suite_test_log_name
+from cylc.flow.exceptions import WorkflowEventError
+from cylc.flow.pathutil import get_workflow_test_log_name
 
 
 def run_reftest(config, ctx):
     """Run reference test at shutdown."""
     reffilename = config.get_ref_log_name()
-    curfilename = get_suite_test_log_name(ctx.suite)
+    curfilename = get_workflow_test_log_name(ctx.workflow)
     ref = _load_reflog(reffilename)
     cur = _load_reflog(curfilename)
     if ref == cur:
-        LOG.info('SUITE REFERENCE TEST PASSED')
+        LOG.info('WORKFLOW REFERENCE TEST PASSED')
     else:
-        exc = SuiteEventError(
-            'SUITE REFERENCE TEST FAILED\n'
+        exc = WorkflowEventError(
+            'WORKFLOW REFERENCE TEST FAILED\n'
             'triggering is NOT consistent with the reference log:\n%s\n'
             % '\n'.join(unified_diff(ref, cur, 'reference', 'this run'))
         )

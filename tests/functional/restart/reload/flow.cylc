@@ -1,6 +1,6 @@
 [meta]
-    title = "Suite to test that restart after reload works."
-    description = """First task reloads and stops the suite,
+    title = "Workflow to test that restart after reload works."
+    description = """First task reloads and stops the workflow,
 which should run to completion on restarting."""
 
 # The restart can be run as a reference test.
@@ -19,8 +19,8 @@ which should run to completion on restarting."""
         script = true
     [[foo]]
         script = """
-if [[ "$CYLC_TASK_CYCLE_POINT" == "$CYLC_SUITE_INITIAL_CYCLE_POINT" ]]; then
-    cylc reload "${CYLC_SUITE_NAME}"
-    cylc__job__poll_grep_suite_log -F 'Reload completed'
-    cylc stop "${CYLC_SUITE_NAME}"
+if [[ "$CYLC_TASK_CYCLE_POINT" == "$CYLC_WORKFLOW_INITIAL_CYCLE_POINT" ]]; then
+    cylc reload "${CYLC_WORKFLOW_NAME}"
+    cylc__job__poll_grep_workflow_log -F 'Reload completed'
+    cylc stop "${CYLC_WORKFLOW_NAME}"
 fi"""

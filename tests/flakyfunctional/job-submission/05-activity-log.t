@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,18 +20,18 @@
 #-------------------------------------------------------------------------------
 set_test_number 7
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
-T1_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
+T1_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
 grep_ok '\[jobs-submit ret_code\] 0' "${T1_ACTIVITY_LOG}"
 grep_ok '\[jobs-kill ret_code\] 1' "${T1_ACTIVITY_LOG}"
 grep_ok '\[jobs-kill out\] [^|]*|1/t1/01|1' "${T1_ACTIVITY_LOG}"
 grep_ok '\[jobs-poll out\] [^|]*|1/t1/01|{"job_runner_name": "background", "job_id": "[^\"]*", "job_runner_exit_polled": 1, "time_submit_exit": "[^\"]*", "time_run": "[^\"]*"}' "${T1_ACTIVITY_LOG}"
-grep_ok "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${SUITE_NAME} \
+grep_ok "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${WORKFLOW_NAME} \
 t1\\.1 job failed" "${T1_ACTIVITY_LOG}"
 #-------------------------------------------------------------------------------
 purge

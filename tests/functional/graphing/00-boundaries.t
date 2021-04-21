@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -15,21 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "[visualization]number of cycles" for a suite with two different cycling
+# Test "[visualization]number of cycles" for a workflow with two different cycling
 # intervals.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # Two tests:
 for POINT in 20140808T00 20140808T06; do
     TEST_NAME="${TEST_NAME_BASE}-graph-${POINT}"
-    graph_suite "${SUITE_NAME}" "${POINT}.graph.plain" "${POINT}"
+    graph_workflow "${WORKFLOW_NAME}" "${POINT}.graph.plain" "${POINT}"
     cmp_ok "${POINT}.graph.plain" \
         "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${POINT}.graph.plain.ref"
 done

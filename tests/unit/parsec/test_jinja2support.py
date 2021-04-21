@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -44,7 +44,7 @@ def test_assert_helper():
 
 def test_jinja2environment(tmp_path):
     # create a temp directory, in the temp directory, to prevent
-    # issues running multiple test suites in parallel
+    # issues running multiple test workflows in parallel
     filters_dir = tmp_path / 'Jinja2Filters'
     filters_dir.mkdir()
     with open(filters_dir / "min.py", "w") as tf:

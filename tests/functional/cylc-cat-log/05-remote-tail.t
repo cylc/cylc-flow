@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@ export REQUIRE_PLATFORM='loc:remote comms:tcp runner:background'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
@@ -32,26 +32,26 @@ create_test_global_config "" "
         tail command template = \$HOME/cylc-run/.bin/my-tailer.sh %(filename)s"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 $SCP "${PWD}/bin/my-tailer.sh" \
     "${CYLC_TEST_HOST}:cylc-run/.bin/my-tailer.sh
 "
 #-------------------------------------------------------------------------------
 # Run detached.
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-poll_grep_suite_log -F '[foo.1] status=submitted'
+poll_grep_workflow_log -F '[foo.1] status=submitted'
 # cylc cat-log -m 't' tail-follows a file, so needs to be killed.
 # Send interrupt signal to tail command after 15 seconds.
 TEST_NAME="${TEST_NAME_BASE}-cat-log"
 timeout -s 'INT' 15 \
-    cylc cat-log "${SUITE_NAME}" -f 'o' -m 't' 'foo.1' --force-remote \
+    cylc cat-log "${WORKFLOW_NAME}" -f 'o' -m 't' 'foo.1' --force-remote \
     >"${TEST_NAME}.out" 2>"${TEST_NAME}.err" || true
 grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-stop
-run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 $SSH -n "${CYLC_TEST_HOST}" "rm -rf cylc-run/.bin/"
 purge

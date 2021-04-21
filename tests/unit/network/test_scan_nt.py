@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,14 +28,14 @@ from cylc.flow.network.scan import (
     filter_name,
     graphql_query,
 )
-from cylc.flow.suite_files import (
+from cylc.flow.workflow_files import (
     ContactFileFields,
-    SuiteFiles
+    WorkflowFiles
 )
 
 
-SRV_DIR = Path(SuiteFiles.Service.DIRNAME)
-CONTACT = Path(SuiteFiles.Service.CONTACT)
+SRV_DIR = Path(WorkflowFiles.Service.DIRNAME)
+CONTACT = Path(WorkflowFiles.Service.CONTACT)
 
 
 def test_filter_name_preprocess():

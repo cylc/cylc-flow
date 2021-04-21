@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -124,14 +124,14 @@ class HostUtil:
 
     @staticmethod
     def _get_identification_cfg(key):
-        """Return the [suite host self-identification]key global conf."""
+        """Return the [workflow host self-identification]key global conf."""
         return glbl_cfg().get(['scheduler', 'host self-identification', key])
 
     def get_host(self):
-        """Return the preferred identifier for the suite (or current) host.
+        """Return the preferred identifier for the workflow (or current) host.
 
         As specified by the "[scheduler][host self-identification]" settings in
-        the site/user global.cylc files. This is mainly used for suite host
+        the site/user global.cylc files. This is mainly used for workflow host
         identification by task jobs.
 
         """

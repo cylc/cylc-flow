@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -20,19 +20,19 @@
 #-------------------------------------------------------------------------------
 set_test_number 7
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" one
+install_workflow "${TEST_NAME_BASE}" one
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-a
-cylc config -i [meta]title "${SUITE_NAME}" >a.txt 2>/dev/null
+cylc config -i [meta]title "${WORKFLOW_NAME}" >a.txt 2>/dev/null
 cmp_ok a.txt <<'__END'
 the quick brown fox
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-b"
-cylc config -i '[scheduling][graph]R1' "${SUITE_NAME}" | sort \
+cylc config -i '[scheduling][graph]R1' "${WORKFLOW_NAME}" | sort \
     >'b.txt' 2>'/dev/null'
 cmp_ok 'b.txt' <<'__END'
 bar => baz
@@ -40,7 +40,7 @@ foo => bar
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-c"
-cylc config -i '[scheduling][graph]T00' "${SUITE_NAME}" | sort \
+cylc config -i '[scheduling][graph]T00' "${WORKFLOW_NAME}" | sort \
     >'c.txt' 2>'/dev/null'
 cmp_ok 'c.txt' <<'__END'
 cbar => cbaz
@@ -50,19 +50,19 @@ dfoo => dbar
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-d
-cylc config -i '[runtime][FOO][meta]title' "${SUITE_NAME}" >d.txt 2>/dev/null
+cylc config -i '[runtime][FOO][meta]title' "${WORKFLOW_NAME}" >d.txt 2>/dev/null
 cmp_ok d.txt <<'__END'
 the quick brown fox
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-e
-cylc config -i '[runtime][FOO][meta]description' "${SUITE_NAME}" >e.txt 2>/dev/null
+cylc config -i '[runtime][FOO][meta]description' "${WORKFLOW_NAME}" >e.txt 2>/dev/null
 cmp_ok e.txt <<'__END'
 jumped over the lazy dog
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-f
-cylc config -i '[runtime][FOO][environment]' "${SUITE_NAME}" >f.txt 2>/dev/null
+cylc config -i '[runtime][FOO][environment]' "${WORKFLOW_NAME}" >f.txt 2>/dev/null
 cmp_ok f.txt <<'__END'
 VAR1 = the quick brown fox
 __END

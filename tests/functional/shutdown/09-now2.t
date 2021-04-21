@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,13 @@
 
 set_test_number 9
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
-LOGD="$RUN_DIR/${SUITE_NAME}/log"
-grep_ok 'INFO - Suite shutting down - REQUEST(NOW-NOW)' "${LOGD}/suite/log"
-grep_ok 'WARNING - Orphaned task jobs' "${LOGD}/suite/log"
-grep_ok '\* t1.1 (running)' "${LOGD}/suite/log"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
+LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
+grep_ok 'INFO - Workflow shutting down - REQUEST(NOW-NOW)' "${LOGD}/workflow/log"
+grep_ok 'WARNING - Orphaned task jobs' "${LOGD}/workflow/log"
+grep_ok '\* t1.1 (running)' "${LOGD}/workflow/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that t1.1 event handler runs
 run_fail "${TEST_NAME_BASE}-activity-log-succeeded" \
@@ -41,6 +41,6 @@ run_fail "${TEST_NAME_BASE}-activity-log-started" \
 exists_fail "${LOGD}/job/1/t2"
 # In SoD the restart does not stall and abort, because t1.1:failed can be removed
 # as handled.
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc play --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play --no-detach "${WORKFLOW_NAME}"
 purge
 exit

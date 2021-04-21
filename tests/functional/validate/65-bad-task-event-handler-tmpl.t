@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-SuiteConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
+WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-bad-value"
@@ -49,7 +49,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
-SuiteConfigError: bad task event handler template t1: echo %(ids: ValueError('incomplete format key')
+WorkflowConfigError: bad task event handler template t1: echo %(ids: ValueError('incomplete format key')
 __ERR__
 
 exit

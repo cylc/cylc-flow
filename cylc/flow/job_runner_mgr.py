@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -210,13 +210,13 @@ class JobRunnerManager():
     _INSTANCES: dict = {}
 
     @classmethod
-    def configure_suite_run_dir(cls, suite_run_dir):
+    def configure_workflow_run_dir(cls, workflow_run_dir):
         """Add local python module paths if not already done."""
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
-            suite_py = os.path.join(suite_run_dir, sub_dir)
-            if os.path.isdir(suite_py) and suite_py not in sys.path:
-                sys.path.append(suite_py)
+            workflow_py = os.path.join(workflow_run_dir, sub_dir)
+            if os.path.isdir(workflow_py) and workflow_py not in sys.path:
+                sys.path.append(workflow_py)
 
     def __init__(self, clean_env=False, env=None, path=None):
         """Initialise JobRunnerManager."""
@@ -266,7 +266,7 @@ class JobRunnerManager():
     def jobs_kill(self, job_log_root, job_log_dirs):
         """Kill multiple jobs.
 
-        job_log_root -- The log/job/ sub-directory of the suite.
+        job_log_root -- The log/job/ sub-directory of the workflow.
         job_log_dirs -- A list containing point/name/submit_num for task jobs.
 
         """
@@ -276,7 +276,7 @@ class JobRunnerManager():
         # command for a particular job is successful or not.
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
-        self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
+        self.configure_workflow_run_dir(job_log_root.rsplit(os.sep, 2)[0])
         now = get_current_time_string()
         for job_log_dir in job_log_dirs:
             ret_code, err = self.job_kill(
@@ -284,7 +284,7 @@ class JobRunnerManager():
             sys.stdout.write("%s%s|%s|%d\n" % (
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code))
             # Note: Print STDERR to STDOUT may look a bit strange, but it
-            # requires less logic for the suite to parse the output.
+            # requires less logic for the workflow to parse the output.
             if err.strip():
                 for line in err.splitlines(True):
                     if not line.endswith("\n"):
@@ -295,13 +295,13 @@ class JobRunnerManager():
     def jobs_poll(self, job_log_root, job_log_dirs):
         """Poll multiple jobs.
 
-        job_log_root -- The log/job/ sub-directory of the suite.
+        job_log_root -- The log/job/ sub-directory of the workflow.
         job_log_dirs -- A list containing point/name/submit_num for task jobs.
 
         """
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
-        self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
+        self.configure_workflow_run_dir(job_log_root.rsplit(os.sep, 2)[0])
 
         ctx_list = []  # Contexts for all relevant jobs
         ctx_list_by_job_runner = {}  # {job_runner_name1: [ctx1, ...], ...}
@@ -352,15 +352,15 @@ class JobRunnerManager():
                     utc_mode=False):
         """Submit multiple jobs.
 
-        job_log_root -- The log/job/ sub-directory of the suite.
+        job_log_root -- The log/job/ sub-directory of the workflow.
         job_log_dirs -- A list containing point/name/submit_num for task jobs.
         remote_mode -- am I running on the remote job host?
-        utc_mode -- is the suite running in UTC mode?
+        utc_mode -- is the workflow running in UTC mode?
 
         """
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
-        self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
+        self.configure_workflow_run_dir(job_log_root.rsplit(os.sep, 2)[0])
         if remote_mode:
             items = self._jobs_submit_prep_by_stdin(job_log_root, job_log_dirs)
         else:
@@ -392,8 +392,8 @@ class JobRunnerManager():
         Return 0 on success, non-zero integer on failure.
 
         """
-        # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
-        self.configure_suite_run_dir(st_file_path.rsplit(os.sep, 6)[0])
+        # WORKFLOW_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
+        self.configure_workflow_run_dir(st_file_path.rsplit(os.sep, 6)[0])
         try:
             st_file = open(st_file_path)
             for line in st_file:

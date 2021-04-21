@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -29,19 +29,19 @@ create_test_global_config "" "
 "
 OPT_SET='-s GLOBALCFG=True'
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} \
-    -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
+    -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 # shellcheck disable=SC2086
-suite_run_ok "${TEST_NAME_BASE}-run" \
+workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach ${OPT_SET} \
-       -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
+       -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
-    "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
+    "${WORKFLOW_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<'__LOG__'
 [(('job-logs-retrieve', 'retry'), 1) ret_code] 0
@@ -49,7 +49,7 @@ cmp_ok 'edited-activities.log' <<'__LOG__'
 [(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
 __LOG__
 
-grep -F 'will run after' "${SUITE_RUN_DIR}/log/suite/log" \
+grep -F 'will run after' "${WORKFLOW_RUN_DIR}/log/workflow/log" \
     | cut -d' ' -f 4-10 | sort >"edited-log"
 cmp_ok 'edited-log' <<'__LOG__'
 1/t1/01 ('job-logs-retrieve', 'retry') will run after PT5S

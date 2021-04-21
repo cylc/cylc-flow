@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -97,7 +97,7 @@ def xtrigger_mgr() -> XtriggerManager:
     """A fixture to build an XtriggerManager which uses a mocked proc_pool,
     and uses a mocked broadcast_mgr."""
     return XtriggerManager(
-        suite="sample_suite",
+        workflow="sample_workflow",
         user="john-foo",
         proc_pool=Mock(put_command=lambda *a, **k: True),
         broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -39,8 +39,8 @@ from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import get_host, get_user, is_remote_host
 from cylc.flow.pathutil import (
-    get_remote_suite_run_job_dir,
-    get_suite_run_job_dir)
+    get_remote_workflow_run_job_dir,
+    get_workflow_run_job_dir)
 from cylc.flow.subprocctx import SubFuncContext, SubProcContext
 from cylc.flow.task_action_timer import (
     TaskActionTimer,
@@ -85,7 +85,7 @@ TaskJobLogsRetrieveContext = namedtuple(
     ["key", "ctx_type", "platform_n", "max_size"])
 
 
-def log_task_job_activity(ctx, suite, point, name, submit_num=None):
+def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
     """Log an activity for a task job."""
     ctx_str = str(ctx)
     if not ctx_str:
@@ -93,14 +93,14 @@ def log_task_job_activity(ctx, suite, point, name, submit_num=None):
     if isinstance(ctx.cmd_key, tuple):  # An event handler
         submit_num = ctx.cmd_key[-1]
     job_activity_log = get_task_job_activity_log(
-        suite, point, name, submit_num)
+        workflow, point, name, submit_num)
     try:
         with open(os.path.expandvars(job_activity_log), "ab") as handle:
             handle.write((ctx_str + '\n').encode())
     except IOError as exc:
         # This happens when there is no job directory, e.g. if job host
         # selection command causes an submission failure, there will be no job
-        # directory. In this case, just send the information to the suite log.
+        # directory. In this case, just send the information to the log.
         LOG.exception(exc)
         LOG.info(ctx_str)
     if ctx.cmd and ctx.ret_code:
@@ -113,8 +113,8 @@ class EventData(Enum):
     """Template variables which are available to event handlers."""
 
     Event = 'event'
-    Suite = 'suite'
-    SuiteUUID = 'suite_uuid'
+    Workflow = 'workflow'
+    WorkflowUUID = 'workflow_uuid'
     CyclePoint = 'point'
     SubmitNum = 'submit_num'
     TryNum = 'try_num'
@@ -130,22 +130,22 @@ class EventData(Enum):
     PlatformName = 'platform_name'
     TaskName = 'name'
     TaskURL = 'task_url'  # deprecated
-    SuiteURL = 'suite_url'  # deprecated
+    WorkflowURL = 'workflow_url'  # deprecated
 
 
-def get_event_handler_data(task_cfg, suite_cfg):
-    """Extract event handler data from suite and task metadata."""
+def get_event_handler_data(task_cfg, workflow_cfg):
+    """Extract event handler data from workflow and task metadata."""
     handler_data = {}
     # task metadata
     for key, value in task_cfg['meta'].items():
         if key == "URL":
             handler_data[EventData.TaskURL.value] = quote(value)
         handler_data[key] = quote(value)
-    # suite metadata
-    for key, value in suite_cfg['meta'].items():
+    # workflow metadata
+    for key, value in workflow_cfg['meta'].items():
         if key == "URL":
-            handler_data[EventData.SuiteURL.value] = quote(value)
-        handler_data["suite_" + key] = quote(value)
+            handler_data[EventData.WorkflowURL.value] = quote(value)
+        handler_data["workflow_" + key] = quote(value)
     return handler_data
 
 
@@ -177,14 +177,14 @@ class TaskEventsManager():
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
-    def __init__(self, suite, proc_pool, suite_db_mgr, broadcast_mgr,
+    def __init__(self, workflow, proc_pool, workflow_db_mgr, broadcast_mgr,
                  xtrigger_mgr, data_store_mgr, timestamp):
-        self.suite = suite
-        self.suite_url = None
-        self.suite_cfg = {}
+        self.workflow = workflow
+        self.workflow_url = None
+        self.workflow_cfg = {}
         self.uuid_str = None
         self.proc_pool = proc_pool
-        self.suite_db_mgr = suite_db_mgr
+        self.workflow_db_mgr = workflow_db_mgr
         self.broadcast_mgr = broadcast_mgr
         self.xtrigger_mgr = xtrigger_mgr
         self.data_store_mgr = data_store_mgr
@@ -267,7 +267,7 @@ class TaskEventsManager():
             itask.platform[key]
         )
 
-    def _get_suite_platforms_conf(self, itask, key, default):
+    def _get_workflow_platforms_conf(self, itask, key, default):
         """Return top level [runtime] items that default to platforms."""
         overrides = self.broadcast_mgr.get_broadcast(itask.identity)
         return (
@@ -401,7 +401,7 @@ class TaskEventsManager():
                 itask, severity, message, event_time, flag, submit_num):
             return None
 
-        # always update the suite state summary for latest message
+        # always update the workflow state summary for latest message
         if flag == self.FLAG_POLLED:
             new_msg = f'{message} {self.FLAG_POLLED}'
         else:
@@ -473,7 +473,7 @@ class TaskEventsManager():
                 return True
             signal = message[len(FAIL_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "signaled", signal)
-            self.suite_db_mgr.put_update_task_jobs(
+            self.workflow_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": signal})
             if self._process_message_failed(
                     itask, event_time, self.JOB_FAILED):
@@ -487,7 +487,7 @@ class TaskEventsManager():
                 return True
             aborted_with = message[len(ABORT_MESSAGE_PREFIX):]
             self._db_events_insert(itask, "aborted", message)
-            self.suite_db_mgr.put_update_task_jobs(
+            self.workflow_db_mgr.put_update_task_jobs(
                 itask, {"run_signal": aborted_with})
             if self._process_message_failed(itask, event_time, aborted_with):
                 self.spawn_func(itask, TASK_OUTPUT_FAILED)
@@ -513,7 +513,7 @@ class TaskEventsManager():
         elif completed_trigger:
             # Message of an as-yet unreported custom task output.
             # No state change.
-            self.suite_db_mgr.put_update_task_outputs(itask)
+            self.workflow_db_mgr.put_update_task_outputs(itask)
             self.setup_event_handlers(itask, completed_trigger, message)
             self.spawn_func(itask, msg0)
         else:
@@ -608,7 +608,7 @@ class TaskEventsManager():
     def _custom_handler_callback(self, ctx, schd_ctx, id_key):
         """Callback when a custom event handler is done."""
         _, point, name, submit_num = id_key
-        log_task_job_activity(ctx, schd_ctx.suite, point, name, submit_num)
+        log_task_job_activity(ctx, schd_ctx.workflow, point, name, submit_num)
         if ctx.ret_code == 0:
             self.remove_event_timer(id_key)
         else:
@@ -616,7 +616,7 @@ class TaskEventsManager():
 
     def _db_events_insert(self, itask, event="", message=""):
         """Record an event to the DB."""
-        self.suite_db_mgr.put_insert_task_events(itask, {
+        self.workflow_db_mgr.put_insert_task_events(itask, {
             "time": get_current_time_string(),
             "event": event,
             "message": message})
@@ -627,17 +627,17 @@ class TaskEventsManager():
             # 1 event from 1 task
             (_, event), point, name, submit_num = id_keys[0]
             subject = "[%s/%s/%02d %s] %s" % (
-                point, name, submit_num, event, schd_ctx.suite)
+                point, name, submit_num, event, schd_ctx.workflow)
         else:
             event_set = set(id_key[0][1] for id_key in id_keys)
             if len(event_set) == 1:
                 # 1 event from n tasks
                 subject = "[%d tasks %s] %s" % (
-                    len(id_keys), event_set.pop(), schd_ctx.suite)
+                    len(id_keys), event_set.pop(), schd_ctx.workflow)
             else:
                 # n events from n tasks
                 subject = "[%d task events] %s" % (
-                    len(id_keys), schd_ctx.suite)
+                    len(id_keys), schd_ctx.workflow)
         cmd = ["mail", "-s", subject]
         # From: and To:
         cmd.append("-r")
@@ -648,10 +648,10 @@ class TaskEventsManager():
         for id_key in sorted(id_keys):
             (_, event), point, name, submit_num = id_key
             stdin_str += "%s: %s/%s/%02d\n" % (event, point, name, submit_num)
-        # STDIN for mail, event info + suite detail
+        # STDIN for mail, event info + workflow detail
         stdin_str += "\n"
         for label, value in [
-                ('suite', schd_ctx.suite),
+                ('workflow', schd_ctx.workflow),
                 ("host", schd_ctx.host),
                 ("port", schd_ctx.port),
                 ("owner", schd_ctx.owner)]:
@@ -662,7 +662,7 @@ class TaskEventsManager():
                 "host": schd_ctx.host,
                 "port": schd_ctx.port,
                 "owner": schd_ctx.owner,
-                "suite": schd_ctx.suite}
+                "workflow": schd_ctx.workflow}
         # SMTP server
         env = dict(os.environ)
         if self.mail_smtp:
@@ -683,14 +683,14 @@ class TaskEventsManager():
                     log_ctx = SubProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     log_task_job_activity(
-                        log_ctx, schd_ctx.suite, point, name, submit_num)
+                        log_ctx, schd_ctx.workflow, point, name, submit_num)
                 else:
                     self.unset_waiting_event_timer(id_key)
             except KeyError as exc:
                 LOG.exception(exc)
 
     def _get_events_conf(self, itask, key, default=None):
-        """Return an events setting from suite then global configuration."""
+        """Return an events setting from workflow then global configuration."""
         for getter in [
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["mail"],
@@ -731,9 +731,9 @@ class TaskEventsManager():
         # Remote source
         cmd.append("%s:%s/" % (
             get_host_from_platform(platform),
-            get_remote_suite_run_job_dir(platform, schd_ctx.suite)))
+            get_remote_workflow_run_job_dir(platform, schd_ctx.workflow)))
         # Local target
-        cmd.append(get_suite_run_job_dir(schd_ctx.suite) + "/")
+        cmd.append(get_workflow_run_job_dir(schd_ctx.workflow) + "/")
         self.proc_pool.put_command(
             SubProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
             self._job_logs_retrieval_callback, [schd_ctx])
@@ -757,7 +757,7 @@ class TaskEventsManager():
                 fname_oks = {}
                 for fname in fnames:
                     fname_oks[fname] = os.path.exists(get_task_job_log(
-                        schd_ctx.suite, point, name, submit_num, fname))
+                        schd_ctx.workflow, point, name, submit_num, fname))
                 # All expected paths must exist to record a good attempt
                 log_ctx = SubProcContext((key1, submit_num), None)
                 if all(fname_oks.values()):
@@ -771,7 +771,7 @@ class TaskEventsManager():
                             log_ctx.err += " %s" % fname
                     self.unset_waiting_event_timer(id_key)
                 log_task_job_activity(
-                    log_ctx, schd_ctx.suite, point, name, submit_num)
+                    log_ctx, schd_ctx.workflow, point, name, submit_num)
             except KeyError as exc:
                 LOG.exception(exc)
 
@@ -814,7 +814,7 @@ class TaskEventsManager():
             self.xtrigger_mgr.add_trig(
                 label,
                 xtrig,
-                os.getenv("CYLC_SUITE_RUN_DIR")
+                os.getenv("CYLC_WORKFLOW_RUN_DIR")
             )
             itask.state.add_xtrigger(label)
         if itask.state.reset(TASK_STATUS_WAITING):
@@ -833,7 +833,7 @@ class TaskEventsManager():
             itask.point, itask.tdef.name, itask.submit_num)
         self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_FAILED)
-        self.suite_db_mgr.put_update_task_jobs(itask, {
+        self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 1,
             "time_run_exit": event_time,
         })
@@ -874,7 +874,7 @@ class TaskEventsManager():
         self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
-        self.suite_db_mgr.put_update_task_jobs(itask, {
+        self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_run": itask.summary['started_time_string']})
         if itask.state.reset(TASK_STATUS_RUNNING):
             self.setup_event_handlers(
@@ -893,7 +893,7 @@ class TaskEventsManager():
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUCCEEDED)
         self.pflag = True
         itask.set_summary_time('finished', event_time)
-        self.suite_db_mgr.put_update_task_jobs(itask, {
+        self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
             "time_run_exit": event_time,
         })
@@ -928,7 +928,7 @@ class TaskEventsManager():
         LOG.error('[%s] -%s', itask, self.EVENT_SUBMIT_FAILED)
         if event_time is None:
             event_time = get_current_time_string()
-        self.suite_db_mgr.put_update_task_jobs(itask, {
+        self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": event_time,
             "submit_status": 1,
         })
@@ -976,7 +976,7 @@ class TaskEventsManager():
                 itask.summary['submit_method_id'])
         except KeyError:
             pass
-        self.suite_db_mgr.put_update_task_jobs(itask, {
+        self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": event_time,
             "submit_status": 0,
             "job_id": itask.summary.get('submit_method_id')})
@@ -1138,9 +1138,9 @@ class TaskEventsManager():
                         itask.submit_num,
                     EventData.SubmitTime.value:
                         quote(str(itask.summary['submitted_time_string'])),
-                    EventData.Suite.value:
-                        quote(self.suite),
-                    EventData.SuiteUUID.value:
+                    EventData.Workflow.value:
+                        quote(self.workflow),
+                    EventData.WorkflowUUID.value:
                         quote(str(self.uuid_str)),
                     EventData.TryNum.value:
                         itask.get_try_num(),
@@ -1156,9 +1156,9 @@ class TaskEventsManager():
                         quote(str(itask.summary['submit_method_id'])),
                     EventData.JobRunnerName_old.value:
                         quote(str(itask.summary['job_runner_name'])),
-                    # task and suite metadata
+                    # task and workflow metadata
                     **get_event_handler_data(
-                        itask.tdef.rtconfig, self.suite_cfg)
+                        itask.tdef.rtconfig, self.workflow_cfg)
                 }
                 # fmt: on
                 cmd = handler % (handler_data)
@@ -1170,7 +1170,7 @@ class TaskEventsManager():
 
             if cmd == handler:
                 # Nothing substituted, assume classic interface
-                cmd = (f"{handler} '{event}' '{self.suite}' "
+                cmd = (f"{handler} '{event}' '{self.workflow}' "
                        f"'{itask.identity}' '{message}'")
             LOG.debug(f"[{itask}] -Queueing {event} handler: {cmd}")
             self.add_event_timer(
@@ -1203,7 +1203,7 @@ class TaskEventsManager():
             timeref = itask.summary['started_time']
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = list(self._get_suite_platforms_conf(
+            delays = list(self._get_workflow_platforms_conf(
                 itask, 'execution polling intervals',
                 default=[900]))  # default 15 minute intervals
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
@@ -1226,7 +1226,7 @@ class TaskEventsManager():
             timeref = itask.summary['submitted_time']
             timeout_key = 'submission timeout'
             timeout = self._get_events_conf(itask, timeout_key)
-            delays = list(self._get_suite_platforms_conf(
+            delays = list(self._get_workflow_platforms_conf(
                 itask, 'submission polling intervals',
                 default=[900]))
         try:

@@ -8,8 +8,8 @@
 [runtime]
     [[one]]
         script = """
-# Tell the suite to stop after I've finished.
-cylc stop $CYLC_SUITE_NAME
+# Tell the workflow to stop after I've finished.
+cylc stop $CYLC_WORKFLOW_NAME
 sleep 10"""
     [[two]]
         script = true

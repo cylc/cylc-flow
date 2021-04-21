@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,15 +20,15 @@
 
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
-LOGD="$RUN_DIR/${SUITE_NAME}/log/job"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
+LOGD="$RUN_DIR/${WORKFLOW_NAME}/log/job"
 JLOGD="${LOGD}/1/t1/01"
 poll_grep 'CYLC_JOB_INIT_TIME' "${JLOGD}/job.status"
 mv "${JLOGD}/job.status" "${JLOGD}/job.status.old"
 run_ok "${TEST_NAME_BASE}-shutdown" \
-    cylc shutdown --kill --max-polls=10 --interval=2 "${SUITE_NAME}"
+    cylc shutdown --kill --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 mv "${JLOGD}/job.status.old" "${JLOGD}/job.status"
 cylc jobs-kill "${LOGD}" '1/t1/01' 1>'/dev/null' 2>&1
 purge

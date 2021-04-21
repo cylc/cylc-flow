@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -43,8 +43,8 @@ __STDERR__
 run_fail "${TEST_NAME_BASE}-get" cylc get
 cmp_ok "${TEST_NAME_BASE}-get.stderr" <<'__STDERR__'
 cylc get: is ambiguous for:
-    cylc get-suite-contact
-    cylc get-suite-version
+    cylc get-workflow-contact
+    cylc get-workflow-version
 __STDERR__
 
 # Sub-command help

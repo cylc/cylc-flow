@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -34,5 +34,5 @@ __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 
 contains_ok "${TEST_NAME_BASE}-val.stderr" <<'__END__'
-SuiteConfigError: clock xtriggers need date-time cycling: c1 = wall_clock(offset=P0Y)
+WorkflowConfigError: clock xtriggers need date-time cycling: c1 = wall_clock(offset=P0Y)
 __END__

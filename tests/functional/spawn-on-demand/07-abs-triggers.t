@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,16 +22,16 @@
 
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${SUITE_NAME}" --reference-test --no-detach --stopcp=3
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play "${WORKFLOW_NAME}" --reference-test --no-detach --stopcp=3
 
 # Restart will hang if abs triggers not remembered.
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play "${WORKFLOW_NAME}" --no-detach
 
 purge
 exit

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" << __FLOW__
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -33,10 +33,10 @@ init_suite "${TEST_NAME_BASE}" << __FLOW__
 __FLOW__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-graph-check
-run_ok "${TEST_NAME}" cylc graph --reference "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc graph --reference "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
 edge "bar.1" "baz.1"
 edge "foo.1" "bar.1"

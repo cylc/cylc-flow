@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -35,16 +35,18 @@ from cylc.flow.subprocpool import get_func
 
 # Templates for string replacement in function arg values.
 TMPL_USER_NAME = 'user_name'
-TMPL_SUITE_NAME = 'suite_name'
+TMPL_WORKFLOW_NAME = 'workflow_name'
 TMPL_TASK_CYCLE_POINT = 'point'
 TMPL_TASK_IDENT = 'id'
 TMPL_TASK_NAME = 'name'
-TMPL_SUITE_RUN_DIR = 'suite_run_dir'
-TMPL_SUITE_SHARE_DIR = 'suite_share_dir'
+TMPL_WORKFLOW_RUN_DIR = 'workflow_run_dir'
+TMPL_WORKFLOW_SHARE_DIR = 'workflow_share_dir'
 TMPL_DEBUG_MODE = 'debug'
 ARG_VAL_TEMPLATES: List[str] = [
-    TMPL_TASK_CYCLE_POINT, TMPL_TASK_IDENT, TMPL_TASK_NAME, TMPL_SUITE_RUN_DIR,
-    TMPL_SUITE_SHARE_DIR, TMPL_USER_NAME, TMPL_SUITE_NAME, TMPL_DEBUG_MODE]
+    TMPL_TASK_CYCLE_POINT, TMPL_TASK_IDENT, TMPL_TASK_NAME,
+    TMPL_WORKFLOW_RUN_DIR, TMPL_WORKFLOW_SHARE_DIR, TMPL_USER_NAME,
+    TMPL_WORKFLOW_NAME, TMPL_DEBUG_MODE
+]
 
 # Extract 'foo' from string templates '%(foo)s', avoiding '%%' escaping
 # ('%%(foo)s` is not a string template).
@@ -60,21 +62,21 @@ class XtriggerManager:
             clock_0 = wall_clock()  # offset PT0H
             clock_1 = wall_clock(offset=PT1H)
                  # or wall_clock(PT1H)
-            suite_x = suite_state(suite=other,
+            workflow_x = workflow_state(workflow=other,
                                   point=%(task_cycle_point)s):PT30S
         [[graph]]
             PT1H = '''
-                @clock_1 & @suite_x => foo & bar
+                @clock_1 & @workflow_x => foo & bar
                 @wall_clock = baz  # pre-defined zero-offset clock
             '''
 
-    Task proxies only store xtriggers labels: clock_0, suite_x, etc. above.
+    Task proxies only store xtriggers labels: clock_0, workflow_x, etc. above.
     These are mapped to the defined function calls. Dependence on xtriggers
     is satisfied by calling these functions asynchronously in the task pool
     (except clock triggers which are called synchronously as they're quick).
 
     A unique call is defined by a unique function call signature, i.e. the
-    function name and all arguments. So suite_x above defines a different
+    function name and all arguments. So workflow_x above defines a different
     xtrigger for each cycle point. A new call will not be made before the
     previous one has returned via the xtrigger callback. The interval (in
     "name(args):INTVL") determines frequency of calls (default PT10S).
@@ -88,26 +90,26 @@ class XtriggerManager:
     call.
 
     Args:
-        suite: suite name
-        user: suite owner
+        workflow: workflow name
+        user: workflow owner
         broadcast_mgr: the Broadcast Manager
         proc_pool: pool of Subprocesses
-        suite_run_dir: suite run directory
-        suite_share_dir: suite share directory
+        workflow_run_dir: workflow run directory
+        workflow_share_dir: workflow share directory
 
     """
 
     def __init__(
         self,
-        suite: str,
+        workflow: str,
         broadcast_mgr: BroadcastMgr,
         data_store_mgr: DataStoreMgr,
         proc_pool: SubProcPool,
         user: Optional[str] = None,
-        suite_run_dir: Optional[str] = None,
-        suite_share_dir: Optional[str] = None,
+        workflow_run_dir: Optional[str] = None,
+        workflow_share_dir: Optional[str] = None,
     ):
-        # Suite function and clock triggers by label.
+        # Workflow function and clock triggers by label.
         self.functx_map: Dict[str, SubFuncContext] = {}
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
@@ -118,7 +120,7 @@ class XtriggerManager:
         # All trigger and clock signatures in the current task pool.
         self.all_xtrig: list = []
 
-        self.suite_run_dir = suite_run_dir
+        self.workflow_run_dir = workflow_run_dir
 
         self.pflag = False
 
@@ -126,10 +128,10 @@ class XtriggerManager:
         if not user:
             user = get_user()
         self.farg_templ: Dict[str, Any] = {
-            TMPL_SUITE_NAME: suite,
+            TMPL_WORKFLOW_NAME: workflow,
             TMPL_USER_NAME: user,
-            TMPL_SUITE_RUN_DIR: suite_run_dir,
-            TMPL_SUITE_SHARE_DIR: suite_share_dir,
+            TMPL_WORKFLOW_RUN_DIR: workflow_run_dir,
+            TMPL_WORKFLOW_SHARE_DIR: workflow_share_dir,
             TMPL_DEBUG_MODE: cylc.flow.flags.debug
         }
 
@@ -193,7 +195,7 @@ class XtriggerManager:
         self.functx_map[label].func_kwargs.update(kwargs)
 
     def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
-        """Load satisfied xtrigger results from suite DB.
+        """Load satisfied xtrigger results from workflow DB.
 
         Args:
             row_idx (int): row index (used for logging)
@@ -271,7 +273,7 @@ class XtriggerManager:
             kwargs[key] = val
         ctx.func_args = args
         ctx.func_kwargs = kwargs
-        ctx.update_command(self.suite_run_dir)
+        ctx.update_command(self.workflow_run_dir)
         return ctx
 
     def satisfy_xtriggers(self, itask: TaskProxy):

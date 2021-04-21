@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,20 +20,20 @@
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" runahead
+install_workflow "${TEST_NAME_BASE}" runahead
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_fail "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-max-cycle"
-DB="${SUITE_RUN_DIR}/log/db"
+DB="${WORKFLOW_RUN_DIR}/log/db"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" \
     "select max(cycle) from task_states where status!='waiting'"
 cmp_ok "${TEST_NAME}.stdout" <<< "4"
 #-------------------------------------------------------------------------------
-grep_ok 'Suite shutting down - Abort on suite stalled is set' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok 'Workflow shutting down - Abort on workflow stalled is set' "${WORKFLOW_RUN_DIR}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

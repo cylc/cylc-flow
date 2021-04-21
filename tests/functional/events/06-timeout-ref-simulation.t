@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,21 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Validate and run the suite reference test simulation timeout suite
+# Validate and run the workflow reference test simulation timeout workflow
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" 'timeout-ref'
+install_workflow "${TEST_NAME_BASE}" 'timeout-ref'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 RUN_MODE="$(basename "$0" | sed "s/.*-ref-\(.*\).t/\1/g")"
-suite_run_fail "${TEST_NAME}" \
+workflow_run_fail "${TEST_NAME}" \
     cylc play --reference-test --mode="${RUN_MODE}" --debug --no-detach \
-    "${SUITE_NAME}"
-grep_ok "WARNING - suite timed out after PT1S" "${TEST_NAME}.stderr"
+    "${WORKFLOW_NAME}"
+grep_ok "WARNING - workflow timed out after PT1S" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge

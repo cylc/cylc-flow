@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Parse and validate the suite definition file
+"""Parse and validate the workflow definition file
 
-Set local values of variables to give suite context before parsing
+Set local values of variables to give workflow context before parsing
 config, i.e for template filters (Jinja2, python ...etc) and possibly
 needed locally by event handlers. This is needed for both running and
-non-running suite parsing (obtaining config/graph info). Potentially
+non-running workflow parsing (obtaining config/graph info). Potentially
 task-specific due to different directory paths on different task hosts,
 however, they are overridden by tasks prior to job submission.
 
@@ -46,12 +46,12 @@ from cylc.flow import LOG
 from cylc.flow.c3mro import C3
 from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.exceptions import (
-    CylcError, SuiteConfigError, IntervalParsingError, TaskDefError,
+    CylcError, WorkflowConfigError, IntervalParsingError, TaskDefError,
     ParamExpandError)
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.cfgspec.suite import RawSuiteConfig
+from cylc.flow.cfgspec.workflow import RawWorkflowConfig
 from cylc.flow.cycling.loader import (
     get_point, get_point_relative, get_interval, get_interval_cls,
     get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
@@ -62,14 +62,14 @@ import cylc.flow.flags
 from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
-    get_suite_run_log_dir,
-    get_suite_run_share_dir,
-    get_suite_run_work_dir,
+    get_workflow_run_log_dir,
+    get_workflow_run_share_dir,
+    get_workflow_run_work_dir,
 )
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.suite_files import NO_TITLE
+from cylc.flow.workflow_files import NO_TITLE
 from cylc.flow.task_events_mgr import (
     EventData,
     get_event_handler_data
@@ -88,7 +88,7 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
 RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
-RE_SUITE_NAME_VAR = re.compile(r'\${?CYLC_SUITE_(REG_)?NAME}?')
+RE_WORKFLOW_NAME_VAR = re.compile(r'\${?CYLC_WORKFLOW_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
 RE_VARNAME = re.compile(r'^[a-zA-Z_][\w]*$')
 
@@ -129,14 +129,14 @@ def interpolate_template(tmpl, params_dict):
 # TODO: separate config for run and non-run purposes?
 
 
-class SuiteConfig:
-    """Class for suite configuration items and derived quantities."""
+class WorkflowConfig:
+    """Class for workflow configuration items and derived quantities."""
 
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
 
     def __init__(
         self,
-        suite,
+        workflow,
         fpath,
         options=None,
         template_vars=None,
@@ -154,13 +154,13 @@ class SuiteConfig:
         if mem_log_func is None:
             self.mem_log = lambda *a: False
         self.mem_log("config.py:config.py: start init config")
-        self.suite = suite  # suite name
-        self.fpath = fpath  # suite definition
+        self.workflow = workflow  # workflow name
+        self.fpath = fpath  # workflow definition
         self.fdir = os.path.dirname(fpath)
-        self.run_dir = run_dir or get_workflow_run_dir(self.suite)
-        self.log_dir = log_dir or get_suite_run_log_dir(self.suite)
-        self.share_dir = share_dir or get_suite_run_share_dir(self.suite)
-        self.work_dir = work_dir or get_suite_run_work_dir(self.suite)
+        self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
+        self.log_dir = log_dir or get_workflow_run_log_dir(self.workflow)
+        self.share_dir = share_dir or get_workflow_run_share_dir(self.workflow)
+        self.work_dir = work_dir or get_workflow_run_work_dir(self.workflow)
         self.options = options
         self.implicit_tasks: Set[str] = set()
         self.edges = {}
@@ -173,7 +173,7 @@ class SuiteConfig:
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
         self.xtrigger_mgr = xtrigger_mgr
-        self.suite_polling_tasks = {}
+        self.workflow_polling_tasks = {}
         self._last_graph_raw_id = None
         self._last_graph_raw_edges = []
 
@@ -197,7 +197,7 @@ class SuiteConfig:
             # (not including the final tasks)
             'descendants': {},
             # lists of all descendant namespaces from the first-parent
-            # hierarchy (first parents are collapsible in suite
+            # hierarchy (first parents are collapsible in workflow
             # visualization)
             'first-parent descendants': {},
         }
@@ -206,20 +206,20 @@ class SuiteConfig:
         # one up from root
         self.feet = []
 
-        # Export local environmental suite context before config parsing.
-        self.process_suite_env()
+        # Export local environmental workflow context before config parsing.
+        self.process_workflow_env()
 
-        # parse, upgrade, validate the suite, but don't expand with default
+        # parse, upgrade, validate the workflow, but don't expand with default
         # items
-        self.mem_log("config.py: before RawSuiteConfig init")
+        self.mem_log("config.py: before RawWorkflowConfig init")
         if output_fname:
             output_fname = os.path.expandvars(output_fname)
-        self.pcfg = RawSuiteConfig(
+        self.pcfg = RawWorkflowConfig(
             fpath,
             output_fname,
             template_vars
         )
-        self.mem_log("config.py: after RawSuiteConfig init")
+        self.mem_log("config.py: after RawWorkflowConfig init")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")
@@ -229,19 +229,19 @@ class SuiteConfig:
 
         # First check for the essential scheduling section.
         if 'scheduling' not in self.cfg:
-            raise SuiteConfigError("missing [scheduling] section.")
+            raise WorkflowConfigError("missing [scheduling] section.")
         if 'graph' not in self.cfg['scheduling']:
-            raise SuiteConfigError("missing [scheduling][[graph]] section.")
+            raise WorkflowConfigError("missing [scheduling][[graph]] section.")
         # (The check that 'graph' is defined is below).
 
-        # Override the suite defn with an initial point from the CLI.
+        # Override the workflow defn with an initial point from the CLI.
         icp_str = getattr(self.options, 'icp', None)
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
 
         self.prelim_process_graph()
 
-        # allow test suites with no [runtime]:
+        # allow test workflows with no [runtime]:
         if 'runtime' not in self.cfg:
             self.cfg['runtime'] = OrderedDictWithDefaults()
 
@@ -256,7 +256,7 @@ class SuiteConfig:
                 if key != 'templates'
             }
         except KeyError:
-            # (Suite config defaults not put in yet.)
+            # (Workflow config defaults not put in yet.)
             parameter_values = {}
         try:
             parameter_templates = self.cfg['task parameters']['templates']
@@ -266,7 +266,7 @@ class SuiteConfig:
 
         # Check that parameter templates are a section
         if not hasattr(parameter_templates, 'update'):
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 '[task parameters][templates] is a section. Don\'t use it '
                 'as a parameter.'
             )
@@ -344,7 +344,7 @@ class SuiteConfig:
         self.cycling_type = get_interval_cls().get_null().TYPE
         self.cycle_point_dump_format = get_dump_format(self.cycling_type)
 
-        # Initial point from suite definition (or CLI override above).
+        # Initial point from workflow definition (or CLI override above).
         self.process_initial_cycle_point()
         self.process_start_cycle_point()
         self.process_final_cycle_point()
@@ -359,7 +359,7 @@ class SuiteConfig:
                 if s_type == 'external-trigger':
                     match = RE_EXT_TRIGGER.match(item)
                     if match is None:
-                        raise SuiteConfigError(
+                        raise WorkflowConfigError(
                             "Illegal %s spec: %s" % (s_type, item)
                         )
                     name, ext_trigger_msg = match.groups()
@@ -368,14 +368,14 @@ class SuiteConfig:
                 elif s_type in ['clock-trigger', 'clock-expire']:
                     match = RE_CLOCK_OFFSET.match(item)
                     if match is None:
-                        raise SuiteConfigError(
+                        raise WorkflowConfigError(
                             "Illegal %s spec: %s" % (s_type, item)
                         )
                     if (
                         self.cfg['scheduling']['cycling mode'] !=
                         Calendar.MODE_GREGORIAN
                     ):
-                        raise SuiteConfigError(
+                        raise WorkflowConfigError(
                             "%s tasks require "
                             "[scheduling]cycling mode=%s" % (
                                 s_type, Calendar.MODE_GREGORIAN)
@@ -392,7 +392,7 @@ class SuiteConfig:
                         offset_interval = (
                             get_interval(offset_string).standardise())
                     except IntervalParsingError:
-                        raise SuiteConfigError(
+                        raise WorkflowConfigError(
                             "Illegal %s spec: %s" % (
                                 s_type, offset_string))
                     extn = "(" + offset_string + ")"
@@ -424,7 +424,7 @@ class SuiteConfig:
             self.cfg['visualization']['collapsed families'])
         for fam in self.collapsed_families_config:
             if fam not in self.runtime['first-parent descendants']:
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     '[visualization]collapsed families: '
                     '%s is not a first parent' % fam)
 
@@ -454,7 +454,7 @@ class SuiteConfig:
         if self.run_mode('simulation', 'dummy', 'dummy-local'):
             self.configure_sim_modes()
 
-        self.configure_suite_state_polling_tasks()
+        self.configure_workflow_state_polling_tasks()
 
         self._check_task_event_handlers()
         self._check_special_tasks()  # adds to self.implicit_tasks
@@ -474,7 +474,7 @@ class SuiteConfig:
                     LOG.error(
                         "External trigger '%s'\n  used in tasks %s and %s." % (
                             msg, name, seen[msg]))
-                    raise SuiteConfigError(
+                    raise WorkflowConfigError(
                         "external triggers must be used only once.")
 
         ngs = self.cfg['visualization']['node groups']
@@ -538,8 +538,10 @@ class SuiteConfig:
                         "[visualization][node attributes]%s = %s" % (
                             node, attr))
         if fail:
-            raise SuiteConfigError("Node attributes must be of the form "
-                                   "'key1=value1', 'key2=value2', etc.")
+            raise WorkflowConfigError(
+                "Node attributes must be of the form "
+                "'key1=value1', 'key2=value2', etc."
+            )
 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
@@ -566,7 +568,7 @@ class SuiteConfig:
             if vis_str:
                 self.cfg['visualization'][key + ' cycle point'] = vis_str
 
-        # For static visualization, start point defaults to suite initial
+        # For static visualization, start point defaults to workflow initial
         # point; stop point must be explicit with initial point, or None.
         if self.cfg['visualization']['initial cycle point'] is None:
             self.cfg['visualization']['initial cycle point'] = (
@@ -592,36 +594,36 @@ class SuiteConfig:
         else:
             vfcp = None
 
-        # A viz final point can't be beyond the suite final point.
+        # A viz final point can't be beyond the workflow final point.
         if vfcp is not None and self.final_point is not None:
             if vfcp > self.final_point:
                 self.cfg['visualization']['final cycle point'] = str(
                     self.final_point)
 
-        # Replace suite and task name in suite and task URLs.
+        # Replace workflow and task name in workflow and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
-            'suite_name': self.suite}
-        # BACK COMPAT: CYLC_SUITE_NAME
+            'workflow_name': self.workflow}
+        # BACK COMPAT: CYLC_WORKFLOW_NAME
         # from:
         #     Cylc7
         # to:
         #     Cylc8
         # remove at:
         #     Cylc9
-        self.cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
-            self.suite, self.cfg['meta']['URL'])
+        self.cfg['meta']['URL'] = RE_WORKFLOW_NAME_VAR.sub(
+            self.workflow, self.cfg['meta']['URL'])
         for name, cfg in self.cfg['runtime'].items():
             cfg['meta']['URL'] = cfg['meta']['URL'] % {
-                'suite_name': self.suite, 'task_name': name}
-            # BACK COMPAT: CYLC_SUITE_NAME, CYLC_TASK_NAME
+                'workflow_name': self.workflow, 'task_name': name}
+            # BACK COMPAT: CYLC_WORKFLOW_NAME, CYLC_TASK_NAME
             # from:
             #     Cylc7
             # to:
             #     Cylc8
             # remove at:
             #     Cylc9
-            cfg['meta']['URL'] = RE_SUITE_NAME_VAR.sub(
-                self.suite, cfg['meta']['URL'])
+            cfg['meta']['URL'] = RE_WORKFLOW_NAME_VAR.sub(
+                self.workflow, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
 
@@ -638,7 +640,7 @@ class SuiteConfig:
         """
         graphdict = self.cfg['scheduling']['graph']
         if not any(graphdict.values()):
-            raise SuiteConfigError('No suite dependency graph defined.')
+            raise WorkflowConfigError('No workflow dependency graph defined.')
 
         if (
             'cycling mode' not in self.cfg['scheduling'] and
@@ -669,8 +671,8 @@ class SuiteConfig:
                 orig_utc_mode = glbl_cfg().get(['scheduler', 'UTC mode'])
         elif cfg_utc_mode is not None and cfg_utc_mode != orig_utc_mode:
             LOG.warning(
-                "UTC mode = {0} specified in configuration, but it is stored "
-                "as {1} from the initial run. The suite will continue to use "
+                "UTC mode = {0} specified in configuration, but is stored as "
+                "{1} from the initial run. The workflow will continue to use "
                 "UTC mode = {1}"
                 .format(cfg_utc_mode, orig_utc_mode)
             )
@@ -681,7 +683,7 @@ class SuiteConfig:
         """Set the cycle point time zone from config or from stored value
         on restart.
 
-        Ensure suites restart with the same cycle point time zone even after
+        Ensure workflows restart with the same cycle point time zone even after
         system time zone changes e.g. DST (the value is put in db by
         Scheduler).
 
@@ -689,7 +691,7 @@ class SuiteConfig:
             self.cfg['scheduler']['cycle point time zone']
         """
         cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
-        # Get the original suite run time zone if restart:
+        # Get the original workflow run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
         if orig_cp_tz is None:
             # Not a restart
@@ -706,7 +708,7 @@ class SuiteConfig:
                 LOG.warning(
                     "cycle point time zone = {0} specified in configuration, "
                     "but there is a stored value of {1} from the initial run. "
-                    "The suite will continue to run in {1}"
+                    "The workflow will continue to run in {1}"
                     .format(cfg_cp_tz, orig_cp_tz)
                 )
         self.cfg['scheduler']['cycle point time zone'] = orig_cp_tz
@@ -719,15 +721,15 @@ class SuiteConfig:
             self.cfg['scheduling']['initial cycle point']
             self.options.icp
         Raises:
-            SuiteConfigError - if it fails to validate
+            WorkflowConfigError - if it fails to validate
         """
         orig_icp = self.cfg['scheduling']['initial cycle point']
         if orig_icp is None:
             if self.cfg['scheduling']['cycling mode'] == INTEGER_CYCLING_TYPE:
                 orig_icp = '1'
             else:
-                raise SuiteConfigError(
-                    "This suite requires an initial cycle point.")
+                raise WorkflowConfigError(
+                    "This workflow requires an initial cycle point.")
         if orig_icp == "now":
             icp = get_current_time_string()
         else:
@@ -735,7 +737,7 @@ class SuiteConfig:
                 my_now = get_current_time_string()
                 icp = ingest_time(orig_icp, my_now)
             except IsodatetimeError as exc:
-                raise SuiteConfigError(str(exc))
+                raise WorkflowConfigError(str(exc))
         if orig_icp != icp:
             # now/next()/prev() was used, need to store evaluated point in DB
             self.options.icp = icp
@@ -754,7 +756,7 @@ class SuiteConfig:
                     valid_icp = True
                     break
             if not valid_icp:
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     f"Initial cycle point {self.initial_point} does not meet "
                     f"the constraints {constraints}")
 
@@ -781,7 +783,7 @@ class SuiteConfig:
             self.final_point
             self.cfg['scheduling']['final cycle point']
         Raises:
-            SuiteConfigError - if it fails to validate
+            WorkflowConfigError - if it fails to validate
         """
         if (
             self.cfg['scheduling']['final cycle point'] is not None and
@@ -817,7 +819,7 @@ class SuiteConfig:
 
         if (self.final_point is not None and
                 self.initial_point > self.final_point):
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 f"The initial cycle point:{self.initial_point} is after the "
                 f"final cycle point:{self.final_point}.")
 
@@ -832,12 +834,12 @@ class SuiteConfig:
                     valid_fcp = True
                     break
             if not valid_fcp:
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     f"Final cycle point {self.final_point} does not "
                     f"meet the constraints {constraints}")
 
     def _check_implicit_tasks(self) -> None:
-        """Raise SuiteConfigError if implicit tasks are found in graph or
+        """Raise WorkflowConfigError if implicit tasks are found in graph or
         queue config, unless allowed by config."""
         if self.implicit_tasks:
             print_limit = 10
@@ -853,7 +855,7 @@ class SuiteConfig:
             if self.cfg['scheduler']['allow implicit tasks']:
                 LOG.debug(err_msg)
             else:
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     f"{err_msg}\n\n"
                     "To allow implicit tasks, use "
                     "'flow.cylc[scheduler]allow implicit tasks'")
@@ -888,7 +890,7 @@ class SuiteConfig:
                     err_msg += '  %s => %s' % (
                         TaskID.get(*lhs), TaskID.get(*rhs))
             if err_msg:
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     'circular edges detected:' + err_msg)
 
     @staticmethod
@@ -937,7 +939,7 @@ class SuiteConfig:
         OrderedDict - we can't just stick expanded names on the end because the
         order matters (for add-or-override by repeated namespaces).
 
-        TODO - this will have an impact on memory footprint for large suites
+        TODO - this will have an impact on memory footprint for large workflows
         with a lot of runtime config. We should consider ditching OrderedDict
         and instead using an ordinary dict
 
@@ -1010,7 +1012,7 @@ class SuiteConfig:
                 for name in names:
                     err_msg += "\n\t\t%s" % name
             LOG.error(err_msg)
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 "Illegal environment variable name(s) detected")
 
     def check_param_env_tmpls(self):
@@ -1085,11 +1087,11 @@ class SuiteConfig:
                     # see just below
                     continue
                 if p not in self.cfg['runtime']:
-                    raise SuiteConfigError(
+                    raise WorkflowConfigError(
                         "undefined parent for " + name + ": " + p)
             if pts[0] == "None":
                 if len(pts) < 2:
-                    raise SuiteConfigError(
+                    raise WorkflowConfigError(
                         "null parentage for " + name)
                 demoted[name] = pts[1]
                 pts = pts[1:]
@@ -1113,12 +1115,12 @@ class SuiteConfig:
                 self.runtime['first-parent ancestors'][name] = (
                     c3_single.mro(name))
             except RecursionError:
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     "circular [runtime] inheritance?")
             except Exception as exc:
                 # catch inheritance errors
                 # TODO - specialise MRO exceptions
-                raise SuiteConfigError(str(exc))
+                raise WorkflowConfigError(str(exc))
 
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
@@ -1199,7 +1201,7 @@ class SuiteConfig:
               any(tlr.fullmatch(limit) for tlr in time_limit_regexes)):
             self.custom_runahead_limit = ISO8601Interval(limit)
         else:
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 f'bad runahead limit "{limit}" for {self.cycling_type} '
                 'cycling type')
 
@@ -1215,17 +1217,17 @@ class SuiteConfig:
         return self.pcfg.get(args, sparse)
 
     def adopt_orphans(self, orphans):
-        # Called by the scheduler after reloading the suite definition
+        # Called by the scheduler after reloading the workflow definition
         # at run time and finding any live task proxies whose
-        # definitions have been removed from the suite. Keep them
+        # definitions have been removed from the workflow. Keep them
         # in the default queue and under the root family, until they
         # run their course and disappear.
         for orphan in orphans:
             self.runtime['linearized ancestors'][orphan] = [orphan, 'root']
 
-    def configure_suite_state_polling_tasks(self):
-        # Check custom script is not defined for automatic suite polling tasks.
-        for l_task in self.suite_polling_tasks:
+    def configure_workflow_state_polling_tasks(self):
+        # Check custom script not defined for automatic workflow polling tasks.
+        for l_task in self.workflow_polling_tasks:
             try:
                 cs = self.pcfg.get(sparse=True)['runtime'][l_task]['script']
             except KeyError:
@@ -1233,16 +1235,16 @@ class SuiteConfig:
             else:
                 if cs:
                     # (allow explicit blanking of inherited script)
-                    raise SuiteConfigError(
+                    raise WorkflowConfigError(
                         "script cannot be defined for automatic" +
-                        " suite polling task '%s':\n%s" % (l_task, cs))
+                        " workflow polling task '%s':\n%s" % (l_task, cs))
         # Generate the automatic scripting.
         for name, tdef in list(self.taskdefs.items()):
-            if name not in self.suite_polling_tasks:
+            if name not in self.workflow_polling_tasks:
                 continue
             rtc = tdef.rtconfig
-            comstr = "cylc suite-state" + \
-                     " --task=" + tdef.suite_polling_cfg['task'] + \
+            comstr = "cylc workflow-state" + \
+                     " --task=" + tdef.workflow_polling_cfg['task'] + \
                      " --point=$CYLC_TASK_CYCLE_POINT"
             for key, fmt in [
                     ('user', ' --%s=%s'),
@@ -1250,14 +1252,14 @@ class SuiteConfig:
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
                     ('run-dir', ' --%s=%s')]:
-                if rtc['suite state polling'][key]:
-                    comstr += fmt % (key, rtc['suite state polling'][key])
-            if rtc['suite state polling']['message']:
+                if rtc['workflow state polling'][key]:
+                    comstr += fmt % (key, rtc['workflow state polling'][key])
+            if rtc['workflow state polling']['message']:
                 comstr += " --message='%s'" % (
-                    rtc['suite state polling']['message'])
+                    rtc['workflow state polling']['message'])
             else:
-                comstr += " --status=" + tdef.suite_polling_cfg['status']
-            comstr += " " + tdef.suite_polling_cfg['suite']
+                comstr += " --status=" + tdef.workflow_polling_cfg['status']
+            comstr += " " + tdef.workflow_polling_cfg['workflow']
             script = "echo " + comstr + "\n" + comstr
             rtc['script'] = script
 
@@ -1309,7 +1311,7 @@ class SuiteConfig:
             rtc['environment'] = {}
 
             if tdef.run_mode == 'dummy-local':
-                # Run all dummy tasks on the suite host.
+                # Run all dummy tasks on the workflow host.
                 rtc['platform'] = 'localhost'
 
             # Simulation mode tasks should fail in which cycle points?
@@ -1426,30 +1428,32 @@ class SuiteConfig:
 
         print_tree(tree, padding=padding, use_unicode=pretty)
 
-    def process_suite_env(self):
-        """Suite context is exported to the local environment."""
+    def process_workflow_env(self):
+        """Workflow context is exported to the local environment."""
         for var, val in [
-            ('CYLC_SUITE_NAME', self.suite),
+            ('CYLC_WORKFLOW_NAME', self.workflow),
             ('CYLC_DEBUG', str(cylc.flow.flags.debug).lower()),
             ('CYLC_VERBOSE', str(cylc.flow.flags.verbose).lower()),
-            ('CYLC_SUITE_RUN_DIR', self.run_dir),
-            ('CYLC_SUITE_LOG_DIR', self.log_dir),
-            ('CYLC_SUITE_WORK_DIR', self.work_dir),
-            ('CYLC_SUITE_SHARE_DIR', self.share_dir),
-            # BACK COMPAT: CYLC_SUITE_DEF_PATH
+            ('CYLC_WORKFLOW_RUN_DIR', self.run_dir),
+            ('CYLC_WORKFLOW_LOG_DIR', self.log_dir),
+            ('CYLC_WORKFLOW_WORK_DIR', self.work_dir),
+            ('CYLC_WORKFLOW_SHARE_DIR', self.share_dir),
+            # BACK COMPAT: CYLC_WORKFLOW_DEF_PATH
             #   from: Cylc7
-            ('CYLC_SUITE_DEF_PATH', self.run_dir),
+            ('CYLC_WORKFLOW_DEF_PATH', self.run_dir),
         ]:
             os.environ[var] = val
 
     def process_config_env(self):
         """Set local config derived environment."""
         os.environ['CYLC_UTC'] = str(get_utc_mode())
-        os.environ['CYLC_SUITE_INITIAL_CYCLE_POINT'] = str(self.initial_point)
-        os.environ['CYLC_SUITE_FINAL_CYCLE_POINT'] = str(self.final_point)
+        os.environ['CYLC_WORKFLOW_INITIAL_CYCLE_POINT'] = str(
+            self.initial_point
+        )
+        os.environ['CYLC_WORKFLOW_FINAL_CYCLE_POINT'] = str(self.final_point)
         os.environ['CYLC_CYCLING_MODE'] = self.cfg['scheduling'][
             'cycling mode']
-        # Add suite bin directory to PATH for suite and event handlers
+        # Add workflow bin directory to PATH for workflow and event handlers
         os.environ['PATH'] = os.pathsep.join([
             os.path.join(self.fdir, 'bin'), os.environ['PATH']])
 
@@ -1491,7 +1495,7 @@ class SuiteConfig:
                             try:
                                 handler_template % handler_data
                             except (KeyError, ValueError) as exc:
-                                raise SuiteConfigError(
+                                raise WorkflowConfigError(
                                     f'bad task event handler template'
                                     f' {taskdef.name}:'
                                     f' {handler_template}:'
@@ -1507,7 +1511,7 @@ class SuiteConfig:
                                  'external-trigger']:
                     name = name.split('(', 1)[0]
                 if not TaskID.is_valid_name(name):
-                    raise SuiteConfigError(
+                    raise WorkflowConfigError(
                         f'Illegal {task_type} task name: {name}')
                 if (name not in self.taskdefs and
                         name not in self.cfg['runtime']):
@@ -1557,7 +1561,7 @@ class SuiteConfig:
                     continue
                 if orig_lexpr != lexpr:
                     LOG.error(f"{orig_lexpr} => {right}")
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     f"self-edge detected: {left} => {right}")
             self.edges[seq].add((left, right, suicide, conditional))
 
@@ -1596,11 +1600,11 @@ class SuiteConfig:
             # check task name legality and create the taskdef
             taskdef = self.get_taskdef(name, orig_expr)
 
-            if name in self.suite_polling_tasks:
-                taskdef.suite_polling_cfg = {
-                    'suite': self.suite_polling_tasks[name][0],
-                    'task': self.suite_polling_tasks[name][1],
-                    'status': self.suite_polling_tasks[name][2]}
+            if name in self.workflow_polling_tasks:
+                taskdef.workflow_polling_cfg = {
+                    'workflow': self.workflow_polling_tasks[name][0],
+                    'task': self.workflow_polling_tasks[name][1],
+                    'status': self.workflow_polling_tasks[name][2]}
 
             # Only add sequence to taskdef if explicit (not an offset).
             if offset:
@@ -1616,7 +1620,7 @@ class SuiteConfig:
                 output, task_message = item
                 valid, msg = TaskOutputValidator.validate(task_message)
                 if not valid:
-                    raise SuiteConfigError(
+                    raise WorkflowConfigError(
                         f'Invalid message trigger "[runtime][{name}][outputs]'
                         f'{output} = {task_message}" - {msg}'
                     )
@@ -1637,7 +1641,7 @@ class SuiteConfig:
         try:
             expr_list = ConditionalSimplifier.listify(lexpression)
         except SyntaxError:
-            raise SuiteConfigError('Error in expression "%s"' % lexpression)
+            raise WorkflowConfigError('Error in expression "%s"' % lexpression)
 
         triggers = {}
         xtrig_labels = set()
@@ -1698,7 +1702,7 @@ class SuiteConfig:
         for label in self.cfg['scheduling']['xtriggers']:
             valid, msg = validator(label)
             if not valid:
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     f'Invalid xtrigger name "{label}" - {msg}'
                 )
 
@@ -1712,12 +1716,12 @@ class SuiteConfig:
                     xtrig = SubFuncContext(
                         'wall_clock', 'wall_clock', [], {})
                 else:
-                    raise SuiteConfigError(f"xtrigger not defined: {label}")
+                    raise WorkflowConfigError(f"xtrigger not defined: {label}")
             if (xtrig.func_name == 'wall_clock' and
                     self.cfg['scheduling']['cycling mode'] == (
                         INTEGER_CYCLING_TYPE)):
                 sig = xtrig.get_signature()
-                raise SuiteConfigError(
+                raise WorkflowConfigError(
                     f"clock xtriggers need date-time cycling: {label} = {sig}")
             if self.xtrigger_mgr is None:
                 XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
@@ -1726,7 +1730,7 @@ class SuiteConfig:
             self.taskdefs[right].add_xtrig_label(label, seq)
 
     def get_actual_first_point(self, start_point):
-        """Get actual first cycle point for the suite
+        """Get actual first cycle point for the workflow
 
         Get all sequences to adjust the putative start time upward.
         """
@@ -1823,7 +1827,7 @@ class SuiteConfig:
         start_point = get_point(start_point_string)
         actual_first_point = self.get_actual_first_point(start_point)
 
-        suite_final_point = get_point(
+        workflow_final_point = get_point(
             self.cfg['scheduling']['final cycle point'])
 
         # For the computed stop point, we store n_points of each sequence,
@@ -1853,8 +1857,9 @@ class SuiteConfig:
                 if stop_point is not None and point > stop_point:
                     # Beyond requested final cycle point.
                     break
-                if suite_final_point is not None and point > suite_final_point:
-                    # Beyond suite final cycle point.
+                if (workflow_final_point is not None
+                        and point > workflow_final_point):
+                    # Beyond workflow final cycle point.
                     break
                 if stop_point is None and len(new_points) > n_points:
                     # Take n_points cycles from each sequence.
@@ -2019,13 +2024,13 @@ class SuiteConfig:
             if icp:
                 section = section.replace("^", icp)
             elif "^" in section:
-                raise SuiteConfigError("Initial cycle point referenced"
-                                       " (^) but not defined.")
+                raise WorkflowConfigError("Initial cycle point referenced"
+                                          " (^) but not defined.")
             if fcp:
                 section = section.replace("$", fcp)
             elif "$" in section:
-                raise SuiteConfigError("Final cycle point referenced"
-                                       " ($) but not defined.")
+                raise WorkflowConfigError("Final cycle point referenced"
+                                          " ($) but not defined.")
             # If the section consists of more than one sequence, split it up.
             new_sections = RE_SEC_MULTI_SEQ.split(section)
             if len(new_sections) > 1:
@@ -2047,11 +2052,12 @@ class SuiteConfig:
                 msg += ' (final cycle point=%s)' % fcp
                 if isinstance(exc, CylcError):
                     msg += ' %s' % exc.args[0]
-                raise SuiteConfigError(msg)
+                raise WorkflowConfigError(msg)
             self.sequences.append(seq)
             parser = GraphParser(family_map, self.parameters)
             parser.parse_graph(graph)
-            self.suite_polling_tasks.update(parser.suite_state_polling_tasks)
+            self.workflow_polling_tasks.update(
+                parser.workflow_state_polling_tasks)
             self._proc_triggers(
                 parser.triggers, parser.original, seq, task_triggers)
 
@@ -2060,7 +2066,7 @@ class SuiteConfig:
             list(self.cfg['scheduling']['xtriggers']))
         if overlap:
             LOG.error(', '.join(overlap))
-            raise SuiteConfigError('task and @xtrigger names clash')
+            raise WorkflowConfigError('task and @xtrigger names clash')
 
     def _proc_triggers(self, triggers, original, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
@@ -2112,7 +2118,7 @@ class SuiteConfig:
             except TaskDefError as exc:
                 if orig_expr:
                     LOG.error(orig_expr)
-                raise SuiteConfigError(str(exc))
+                raise WorkflowConfigError(str(exc))
         return self.taskdefs[name]
 
     def _get_taskdef(self, name):
@@ -2122,7 +2128,7 @@ class SuiteConfig:
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
-            raise SuiteConfigError("Task not defined: %s" % name)
+            raise WorkflowConfigError("Task not defined: %s" % name)
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
@@ -2182,7 +2188,7 @@ class SuiteConfig:
             if include.count("/") > 1:
                 illegal_includes.append(f"{include}")
         if len(illegal_includes) > 0:
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 "Error in [scheduler] install. "
                 "Directories can only be from the top level, please "
                 "reconfigure:" + str(illegal_includes)[1:-1])

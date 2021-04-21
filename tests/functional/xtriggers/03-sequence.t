@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,8 +22,8 @@
 
 set_test_number 3
 
-# Test suite uses built-in 'echo' xtrigger.
-init_suite "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
+# Test workflow uses built-in 'echo' xtrigger.
+init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
 [scheduler]
    cycle point format = %Y
 [scheduling]
@@ -46,13 +46,13 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 
-# Run suite; it will stall waiting on the never-satisfied xtriggers.
-cylc play "${SUITE_NAME}"
+# Run workflow; it will stall waiting on the never-satisfied xtriggers.
+cylc play "${WORKFLOW_NAME}"
 
-poll_grep_suite_log 'start.2025.*succeeded'
+poll_grep_workflow_log 'start.2025.*succeeded'
 
-cylc show "${SUITE_NAME}" foo.2025 | grep -E '^  - xtrigger' > foo.2025.log
-cylc show "${SUITE_NAME}" foo.2026 | grep -E '^  - xtrigger' > foo.2026.log
+cylc show "${WORKFLOW_NAME}" foo.2025 | grep -E '^  - xtrigger' > foo.2025.log
+cylc show "${WORKFLOW_NAME}" foo.2026 | grep -E '^  - xtrigger' > foo.2026.log
 
 # foo.2025 should get only xtrigger e1.
 cmp_ok foo.2025.log - <<__END__
@@ -64,6 +64,6 @@ cmp_ok foo.2026.log - <<__END__
   - xtrigger "e2 = echo(name=alice)"
 __END__
 
-cylc stop --now --max-polls=10 --interval=2 "${SUITE_NAME}"
+cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 purge
 exit

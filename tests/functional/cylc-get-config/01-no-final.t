@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,15 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc config with a suite with an explicitly empty final cycle point
+# Test cylc config with a workflow with an explicitly empty final cycle point
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/flow.cylc"
+init_workflow "${TEST_NAME_BASE}" "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/flow.cylc"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-all
-run_ok "${TEST_NAME}" cylc config "${SUITE_NAME}" --item='[scheduling]final cycle point'
+run_ok "${TEST_NAME}" cylc config "${WORKFLOW_NAME}" --item='[scheduling]final cycle point'
 cmp_ok "${TEST_NAME}.stdout" - << __OUT__
 
 __OUT__

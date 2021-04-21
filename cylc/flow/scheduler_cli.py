@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,22 +23,22 @@ import sys
 from ansimarkup import parse as cparse
 
 from cylc.flow import LOG, RSYNC_LOG
-from cylc.flow.exceptions import SuiteServiceFileError
-from cylc.flow.host_select import select_suite_host
+from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.loggingutil import TimestampRotatingFileHandler
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
 from cylc.flow.pathutil import (
-    get_suite_run_log_name,
-    get_suite_file_install_log_name)
+    get_workflow_run_log_name,
+    get_workflow_file_install_log_name)
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
-from cylc.flow import suite_files
+from cylc.flow import workflow_files
 from cylc.flow.terminal import cli_function
 
 PLAY_DOC = r"""cylc play [OPTIONS] ARGS
@@ -98,7 +98,7 @@ def get_option_parser(add_std_opts=False):
 
     parser.add_option(
         "-n", "--no-detach", "--non-daemon",
-        help="Do not daemonize the suite (infers --format=plain)",
+        help="Do not daemonize the scheduler (infers --format=plain)",
         action="store_true", dest="no_detach")
 
     parser.add_option(
@@ -166,7 +166,7 @@ def get_option_parser(add_std_opts=False):
     parser.add_option(
         "--host",
         help=(
-            "Specify the host on which to start-up the suite. "
+            "Specify the host on which to start-up the workflow. "
             "If not specified, a host will be selected using "
             "the '[scheduler]run hosts' global config."
         ),
@@ -225,14 +225,14 @@ def _open_logs(reg, no_detach):
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    suite_log_handler = get_suite_run_log_name(reg)
+    workflow_log_handler = get_workflow_run_log_name(reg)
     LOG.addHandler(
         TimestampRotatingFileHandler(
-            suite_log_handler,
+            workflow_log_handler,
             no_detach))
 
     # Add file installation log
-    file_install_log_path = get_suite_file_install_log_name(reg)
+    file_install_log_path = get_workflow_file_install_log_name(reg)
     handler = TimestampRotatingFileHandler(file_install_log_path, no_detach)
     RSYNC_LOG.addHandler(handler)
 
@@ -259,13 +259,13 @@ def scheduler_cli(parser, options, reg):
     functionality.
 
     """
-    suite_files.validate_flow_name(reg)
+    workflow_files.validate_flow_name(reg)
     reg = os.path.normpath(reg)
     try:
-        suite_files.detect_old_contact_file(reg)
-    except SuiteServiceFileError as exc:
+        workflow_files.detect_old_contact_file(reg)
+    except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
-        pclient = SuiteRuntimeClient(reg, timeout=options.comms_timeout)
+        pclient = WorkflowRuntimeClient(reg, timeout=options.comms_timeout)
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
             'variables': {
@@ -322,7 +322,7 @@ def _distribute(host):
     """Re-invoke this command on a different host if requested."""
     # Check whether a run host is explicitly specified, else select one.
     if not host:
-        host = select_suite_host()[0]
+        host = select_workflow_host()[0]
     if is_remote_host(host):
         # Prevent recursive host selection
         cmd = sys.argv[1:]
@@ -335,7 +335,7 @@ async def _setup(parser, options, reg, scheduler):
     """Initialise the scheduler."""
     try:
         await scheduler.install()
-    except SuiteServiceFileError as exc:
+    except ServiceFileError as exc:
         sys.exit(exc)
 
 

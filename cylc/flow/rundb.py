@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Provide data access object for the suite runtime database."""
+"""Provide data access object for the workflow runtime database."""
 
 import sqlite3
 import traceback
@@ -23,7 +23,7 @@ from cylc.flow import LOG
 import cylc.flow.flags
 
 
-class CylcSuiteDAOTableColumn:
+class CylcWorkflowDAOTableColumn:
     """Represent a column in a table."""
 
     __slots__ = ('name', 'datatype', 'is_primary_key')
@@ -34,8 +34,8 @@ class CylcSuiteDAOTableColumn:
         self.is_primary_key = is_primary_key
 
 
-class CylcSuiteDAOTable:
-    """Represent a table in the suite runtime database."""
+class CylcWorkflowDAOTable:
+    """Represent a table in the workflow runtime database."""
 
     FMT_CREATE = "CREATE TABLE %(name)s(%(columns_str)s%(primary_keys_str)s)"
     FMT_DELETE = "DELETE FROM %(name)s%(where_str)s"
@@ -53,7 +53,7 @@ class CylcSuiteDAOTable:
             attrs = {}
             if len(column_item) > 1:
                 attrs = column_item[1]
-            self.columns.append(CylcSuiteDAOTableColumn(
+            self.columns.append(CylcWorkflowDAOTableColumn(
                 name,
                 attrs.get("datatype", "TEXT"),
                 attrs.get("is_primary_key", False)))
@@ -161,18 +161,18 @@ class CylcSuiteDAOTable:
         self.update_queues[stmt].append(stmt_args)
 
 
-class CylcSuiteDAO:
-    """Data access object for the suite runtime database."""
+class CylcWorkflowDAO:
+    """Data access object for the workflow runtime database."""
 
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
-    RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart suite if <= this vers
+    RESTART_INCOMPAT_VERSION = "8.0a2"  # Can't restart if <= this version
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
-    TABLE_SUITE_PARAMS = "suite_params"
-    TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
+    TABLE_WORKFLOW_PARAMS = "workflow_params"
+    TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_ACTION_TIMERS = "task_action_timers"
@@ -204,11 +204,11 @@ class CylcSuiteDAO:
             ["namespace", {"is_primary_key": True}],
             ["inheritance"],
         ],
-        TABLE_SUITE_PARAMS: [
+        TABLE_WORKFLOW_PARAMS: [
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
-        TABLE_SUITE_TEMPLATE_VARS: [
+        TABLE_WORKFLOW_TEMPLATE_VARS: [
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
@@ -312,7 +312,7 @@ class CylcSuiteDAO:
 
         self.tables = {}
         for name, attrs in sorted(self.TABLES_ATTRS.items()):
-            self.tables[name] = CylcSuiteDAOTable(name, attrs)
+            self.tables[name] = CylcWorkflowDAOTable(name, attrs)
 
         if not self.is_public:
             self.create_tables()
@@ -426,9 +426,9 @@ class CylcSuiteDAO:
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
         finally:
-            # Note: This is not strictly necessary. However, if the suite run
+            # Note: This is not strictly necessary. But if the workflow run
             # directory is removed, a forced reconnection to the private
-            # database will ensure that the suite dies.
+            # database will ensure that the workflow dies.
             self.close()
 
     def _execute_stmt(self, stmt, stmt_args_list):
@@ -482,35 +482,36 @@ class CylcSuiteDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_suite_params(self, callback):
-        """Select from suite_params.
+    def select_workflow_params(self, callback):
+        """Select from workflow_params.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [key, value]
 
         E.g. a row might be ['UTC mode', '1']
         """
-        stmt = f"SELECT key, value FROM {self.TABLE_SUITE_PARAMS}"
+        stmt = f"SELECT key, value FROM {self.TABLE_WORKFLOW_PARAMS}"
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_suite_params_restart_count(self):
-        """Return number of restarts in suite_params table."""
+    def select_workflow_params_restart_count(self):
+        """Return number of restarts in workflow_params table."""
         stmt = f"""
-            SELECT value FROM {self.TABLE_SUITE_PARAMS}
+            SELECT value FROM {self.TABLE_WORKFLOW_PARAMS}
             WHERE key == 'n_restart';
         """
         result = self.connect().execute(stmt).fetchone()
         return int(result[0]) if result else 0
 
-    def select_suite_template_vars(self, callback):
-        """Select from suite_template_vars.
+    def select_workflow_template_vars(self, callback):
+        """Select from workflow_template_vars.
 
         Invoke callback(row_idx, row) on each row, where each row contains:
             [key,value]
         """
         for row_idx, row in enumerate(self.connect().execute(
-                r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
+                r"SELECT key,value FROM %s" % (
+                    self.TABLE_WORKFLOW_TEMPLATE_VARS))):
             callback(row_idx, list(row))
 
     def select_task_action_timers(self, callback):

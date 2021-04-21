@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,8 +25,8 @@ from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
 from cylc.flow.pathutil import (
-    get_remote_suite_run_dir,
-    get_remote_suite_work_dir)
+    get_remote_workflow_run_dir,
+    get_remote_workflow_work_dir)
 from cylc.flow.config import interpolate_template, ParamExpandError
 
 
@@ -35,13 +35,13 @@ class JobFileWriter:
     """Write task job files."""
 
     def __init__(self):
-        self.suite_env = {}
+        self.workflow_env = {}
         self.job_runner_mgr = JobRunnerManager()
 
-    def set_suite_env(self, suite_env):
-        """Configure suite environment for all job files."""
-        self.suite_env.clear()
-        self.suite_env.update(suite_env)
+    def set_workflow_env(self, workflow_env):
+        """Configure workflow environment for all job files."""
+        self.workflow_env.clear()
+        self.workflow_env.update(workflow_env)
 
     def write(self, local_job_file_path, job_conf, check_syntax=True):
         """Write each job script section in turn."""
@@ -49,7 +49,7 @@ class JobFileWriter:
         # ########### !!!!!!!! WARNING !!!!!!!!!!! #####################
         # BE EXTREMELY WARY OF CHANGING THE ORDER OF JOB SCRIPT SECTIONS
         # Users may be relying on the existing order (see for example
-        # the comment below on suite bin path being required before
+        # the comment below on workflow bin path being required before
         # task runtime environment setup).
         # ##############################################################
 
@@ -58,18 +58,20 @@ class JobFileWriter:
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
         platform = job_conf['platform']
         tmp_name = os.path.expandvars(local_job_file_path + '.tmp')
-        run_d = get_remote_suite_run_dir(platform, job_conf['suite_name'])
+        run_d = get_remote_workflow_run_dir(
+            platform, job_conf['workflow_name']
+        )
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
                 self._write_reinvocation(handle)
                 self._write_prelude(handle, job_conf)
-                self._write_suite_environment(handle, job_conf, run_d)
+                self._write_workflow_environment(handle, job_conf, run_d)
                 self._write_task_environment(handle, job_conf)
                 self._write_global_init_script(handle, job_conf)
-                # suite bin access must be before runtime environment
-                # because suite bin commands may be used in variable
+                # workflow bin access must be before runtime environment
+                # because workflow bin commands may be used in variable
                 # assignment expressions: FOO=$(command args).
                 self._write_runtime_environment(handle, job_conf)
                 self._write_script(handle, job_conf)
@@ -125,7 +127,7 @@ class JobFileWriter:
         handle.write("#!/bin/bash -l\n")
         handle.write("#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
         for prefix, value in [
-                ("# Suite: ", job_conf['suite_name']),
+                ("# Workflow: ", job_conf['workflow_name']),
                 ("# Task: ", job_conf['task_id']),
                 (JobRunnerManager.LINE_PREFIX_JOB_LOG_DIR, job_conf['job_d']),
                 (JobRunnerManager.LINE_PREFIX_JOB_RUNNER_NAME,
@@ -187,30 +189,30 @@ class JobFileWriter:
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
 
-    def _write_suite_environment(self, handle, job_conf, run_d):
-        """Suite and task environment."""
+    def _write_workflow_environment(self, handle, job_conf, run_d):
+        """Workflow and task environment."""
         handle.write("\n\ncylc__job__inst__cylc_env() {")
-        handle.write("\n    # CYLC SUITE ENVIRONMENT:")
-        # write the static suite variables
-        for var, val in sorted(self.suite_env.items()):
+        handle.write("\n    # CYLC WORKFLOW ENVIRONMENT:")
+        # write the static workflow variables
+        for var, val in sorted(self.workflow_env.items()):
             if var != 'CYLC_DEBUG':
                 handle.write('\n    export %s="%s"' % (var, val))
 
-        if str(self.suite_env.get('CYLC_UTC')) == 'True':
+        if str(self.workflow_env.get('CYLC_UTC')) == 'True':
             handle.write('\n    export TZ="UTC"')
 
         handle.write('\n')
-        # override and write task-host-specific suite variables
-        work_d = get_remote_suite_work_dir(
-            job_conf["platform"], job_conf['suite_name'])
-        handle.write('\n    export CYLC_SUITE_RUN_DIR="%s"' % run_d)
+        # override and write task-host-specific workflow variables
+        work_d = get_remote_workflow_work_dir(
+            job_conf["platform"], job_conf['workflow_name'])
+        handle.write('\n    export CYLC_WORKFLOW_RUN_DIR="%s"' % run_d)
         if work_d != run_d:
             # Note: not an environment variable, but used by job.sh
             handle.write(
-                '\n    export CYLC_SUITE_WORK_DIR_ROOT="%s"' % work_d
+                '\n    export CYLC_WORKFLOW_WORK_DIR_ROOT="%s"' % work_d
             )
         handle.write(
-            '\n    export CYLC_SUITE_UUID="%s"' % job_conf['uuid_str'])
+            '\n    export CYLC_WORKFLOW_UUID="%s"' % job_conf['uuid_str'])
 
     def _write_task_environment(self, handle, job_conf):
         comm_meth = job_conf['platform']['communication method']
@@ -280,7 +282,7 @@ class JobFileWriter:
                 value = interpolate_template(value, param_vars)
             except ParamExpandError:
                 # Already logged warnings in
-                # cylc.flow.config.SuiteConfig.check_param_env_tmpls()
+                # cylc.flow.config.WorkflowConfig.check_param_env_tmpls()
                 pass
 
         # Handle '~':

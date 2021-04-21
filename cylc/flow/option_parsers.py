@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -76,9 +76,9 @@ TASK_GLOB matches task or family names at a given cycle point.
         self.auto_add = auto_add
         if argdoc is None:
             if prep:
-                argdoc = [('SUITE', 'Suite name or path')]
+                argdoc = [('WORKFLOW', 'Workflow name or path')]
             else:
-                argdoc = [('REG', 'Suite name')]
+                argdoc = [('REG', 'Workflow name')]
 
         # make comments grey in usage for readability
         usage = format_shell_examples(usage)
@@ -95,7 +95,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         self.jset = jset
         self.prep = prep
         self.icp = icp
-        self.suite_info = []
+        self.workflow_info = []
         self.color = color
 
         maxlen = 0
@@ -153,17 +153,17 @@ TASK_GLOB matches task or family names at a given cycle point.
 
         if self.prep:
             self.add_std_option(
-                "--suite-owner",
-                help="Specify suite owner",
+                "--workflow-owner",
+                help="Specify workflow owner",
                 metavar="OWNER", action="store", default=None,
-                dest="suite_owner")
+                dest="workflow_owner")
 
         if self.comms:
             self.add_std_option(
                 "--comms-timeout", metavar='SEC',
                 help=(
                     "Set a timeout for network connections "
-                    "to the running suite. The default is no timeout. "
+                    "to the running workflow. The default is no timeout. "
                     "For task messaging connections see "
                     "site/user config file documentation."
                 ),
@@ -174,7 +174,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 "-s", "--set", metavar="NAME=VALUE",
                 help=(
                     "Set the value of a Jinja2 template variable in the"
-                    " suite definition."
+                    " workflow definition."
                     " Values should be valid Python literals so strings"
                     " must be quoted"
                     " e.g. 'STR=\"string\"', INT=43, BOOL=True."
@@ -190,7 +190,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 "--set-file", metavar="FILE",
                 help=(
                     "Set the value of Jinja2 template variables in the "
-                    "suite definition from a file containing NAME=VALUE "
+                    "workflow definition from a file containing NAME=VALUE "
                     "pairs (one per line). "
                     "As with --set values should be valid Python literals "
                     "so strings must be quoted e.g. STR='string'. "
@@ -255,8 +255,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         # 1. On choosing STDERR: Log messages are diagnostics, so STDERR is the
         #    better choice for the logging stream. This allows us to use STDOUT
         #    for verbosity agnostic outputs.
-        # 2. Suite server programs will remove this handler when it becomes a
-        #    daemon.
+        # 2. Scheduler will remove this handler when it becomes a daemon.
         if options.debug or options.verbose:
             LOG.setLevel(logging.DEBUG)
         else:

@@ -2,7 +2,7 @@ Stepped Daily, Monthly, and Yearly cycling tests:
 
 Cycler(<anchor>,<step>)
 
-Each test suite defines a single task on a 3-unit cycle:
+Each test workflow defines a single task on a 3-unit cycle:
 
 Daily(20100110,3): 20100110, 20100113, 20100116, ...
 Monthly(201001,3): 201001,   201004,   201007,   ...

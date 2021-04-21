@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -60,8 +60,8 @@ TUI = """
 FORE = 'default'
 BACK = 'default'
 
-# suite state colour
-SUITE_COLOURS = {
+# workflow state colour
+WORKFLOW_COLOURS = {
     'running': ('light blue', BACK),
     'paused': ('brown', BACK),
     'stopping': ('light magenta', BACK),

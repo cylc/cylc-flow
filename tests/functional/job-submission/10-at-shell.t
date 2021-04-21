@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,13 +19,13 @@
 export REQUIRE_PLATFORM='runner:at'
 . "$(dirname "$0")/test_header"
 set_test_number 2
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}"
+    cylc validate "${WORKFLOW_NAME}"
 # By setting "SHELL=/bin/tcsh", "at" would run its command under "/bin/tcsh",
 # which would cause a failure of this test without the fix in #1749.
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    env 'SHELL=/bin/tcsh' cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    env 'SHELL=/bin/tcsh' cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 purge
 exit

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,24 +20,24 @@
 . "$(dirname "$0")/test_header"
 
 dumpdbtables() {
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM suite_params WHERE key=="fcp";' >'fcp.out'
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
+        'SELECT * FROM workflow_params WHERE key=="fcp";' >'fcp.out'
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
         'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
 
 set_test_number 13
 
 # Event should look like this:
-# Start suite with final point = 2018
-# Request suite stop while at 2015
+# Start workflow with final point = 2018
+# Request workflow stop while at 2015
 # Restart
-# Suite runs to final cycle point == 2018
+# Workflow runs to final cycle point == 2018
 # Restart
-# Suite stop immediately
+# Workflow stop immediately
 # Restart, ignore final cycle point
-# Suite runs to final cycle point == 2020
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+# Workflow runs to final cycle point == 2020
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     UTC mode=True
     cycle point format = %Y
@@ -55,36 +55,36 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
             case "${CYLC_TASK_CYCLE_POINT}" in
             2015)
-                cylc stop "${CYLC_SUITE_NAME}"
+                cylc stop "${CYLC_WORKFLOW_NAME}"
                 :;;
             esac
         """
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${SUITE_NAME}" --no-detach --fcp=2017
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play "${WORKFLOW_NAME}" --no-detach --fcp=2017
 dumpdbtables
 cmp_ok 'fcp.out' <<<'fcp|2017'
 cmp_ok 'taskpool.out' <<'__OUT__'
 2016|t1|waiting
 __OUT__
 
-suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-restart-1" \
+    cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'fcp.out' <<<'fcp|2017'
 cmp_ok 'taskpool.out' <'/dev/null'
 
-suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-restart-2" \
+    cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'fcp.out' <<<'fcp|2017'
 cmp_ok 'taskpool.out' <'/dev/null'
 
-suite_run_ok "${TEST_NAME_BASE}-restart-3" \
-    cylc play "${SUITE_NAME}" --no-detach --fcp=ignore
+workflow_run_ok "${TEST_NAME_BASE}-restart-3" \
+    cylc play "${WORKFLOW_NAME}" --no-detach --fcp=ignore
 dumpdbtables
 cmp_ok 'fcp.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'

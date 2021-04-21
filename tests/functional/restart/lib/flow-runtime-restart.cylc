@@ -4,16 +4,16 @@
             # Handle db locks.
             for i in {0..10}; do
                 ctb-select-task-states \
-                    "${CYLC_SUITE_RUN_DIR}" "${CYLC_TASK_NAME}" \
-                    > "${CYLC_SUITE_RUN_DIR}/$OUTPUT_SUFFIX-db" && break
+                    "${CYLC_WORKFLOW_RUN_DIR}" "${CYLC_TASK_NAME}" \
+                    > "${CYLC_WORKFLOW_RUN_DIR}/$OUTPUT_SUFFIX-db" && break
                 sleep 1
             done
         """
     [[shutdown]]
         inherit = OUTPUT
-        post-script = cylc shutdown "${CYLC_SUITE_NAME}"
+        post-script = cylc shutdown "${CYLC_WORKFLOW_NAME}"
         [[[meta]]]
-            description = "Force a shutdown of the suite"
+            description = "Force a shutdown of the workflow"
         [[[environment]]]
             OUTPUT_SUFFIX=pre-restart
     [[output_states]]

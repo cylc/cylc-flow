@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -43,10 +43,10 @@ async def test_create_flow(flow, run_dir):
             }
         }
     })
-    suite_dir = run_dir / reg
-    flow_file = suite_dir / 'flow.cylc'
+    workflow_dir = run_dir / reg
+    flow_file = workflow_dir / 'flow.cylc'
 
-    assert suite_dir.exists()
+    assert workflow_dir.exists()
     assert flow_file.exists()
 
 
@@ -121,7 +121,7 @@ async def test_install(flow, scheduler, one_conf, run_dir):
     schd = scheduler(reg)
     await schd.install()
     assert Path(
-        run_dir, schd.suite, '.service', 'etc', 'job.sh'
+        run_dir, schd.workflow, '.service', 'etc', 'job.sh'
     ).exists()
 
 
@@ -224,8 +224,8 @@ async def test_db_select(one, run, db_select):
         # Note: can't query database here unfortunately
         pass
     # Now we can query the DB
-    # Select all from suite_params table:
-    assert ('UTC_mode', '0') in db_select(schd, 'suite_params')
+    # Select all from workflow_params table:
+    assert ('UTC_mode', '0') in db_select(schd, 'workflow_params')
     # Select name & status columns from task_states table:
     results = db_select(schd, 'task_states', 'name', 'status')
     assert results[0] == ('one', 'waiting')

@@ -1,6 +1,6 @@
 #!jinja2
-# simple generic handler in the suite bin dir:
-{% set EVNTLOG = "$CYLC_SUITE_LOG_DIR/events.log" %}
+# simple generic handler in the workflow bin dir:
+{% set EVNTLOG = "$CYLC_WORKFLOW_LOG_DIR/events.log" %}
 {% set HANDLER = "EVNTLOG={0} handler.sh".format(EVNTLOG) %}
 
 [meta]
@@ -31,7 +31,7 @@
         # timeout, retry, warning, succeeded
         script = """
             test "${CYLC_TASK_TRY_NUMBER}" -gt 1
-            while ! grep -q 'execution timeout *foo\.1' "${CYLC_SUITE_LOG_DIR}/events.log"
+            while ! grep -q 'execution timeout *foo\.1' "${CYLC_WORKFLOW_LOG_DIR}/events.log"
             do
                 sleep 1
             done
@@ -58,9 +58,9 @@
      [[baz]]
         # submitted, submission timeout, started, failed
         # Delay in init-script to cause submission timeout.
-        # (Note CYLC_SUITE_LOG_DIR is not defined at this point!)
+        # (Note CYLC_WORKFLOW_LOG_DIR is not defined at this point!)
         init-script = """
-            while ! grep -q 'submission timeout *baz\.1' "${CYLC_SUITE_LOG_DIR}/events.log"
+            while ! grep -q 'submission timeout *baz\.1' "${CYLC_WORKFLOW_LOG_DIR}/events.log"
             do
                 sleep 1
             done

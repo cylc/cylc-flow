@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc config" on a cycling suite, result should validate.
+# Test "cylc config" on a cycling workflow, result should validate.
 . "$(dirname "$0")/test_header"
 
 set_test_number 2
 
-init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
+init_workflow "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
 
-run_ok "${TEST_NAME_BASE}" cylc config "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}" cylc config "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate --check-circular "${TEST_NAME_BASE}.stdout"
 purge
