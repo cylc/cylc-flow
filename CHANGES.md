@@ -71,6 +71,12 @@ during workflow run and post pause.
 [#4168](https://github.com/cylc/cylc-flow/pull/4168) - Fix bug where any
 errors during workflow shutdown were not logged.
 
+[#4161](https://github.com/cylc/cylc-flow/pull/4161) - Fix bug in in `cylc install`
+where a workflow would be installed with the wrong name.
+
+[#4188](https://github.com/cylc/cylc-flow/pull/4188) - Fix incorrect usage
+examples for `cylc install`.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b0 (<span actions:bind='release-date'>Released 2021-03-29</span>)__
 
