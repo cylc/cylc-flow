@@ -454,6 +454,8 @@ def load_contact_file(reg):
         data = {}
         for line in file_content.splitlines():
             key, value = [item.strip() for item in line.split("=", 1)]
+            # BACK COMPAT: contact pre "suite" to "workflow" conversion.
+            key = key.replace('SUITE', 'WORKFLOW')
             data[key] = value
         return data
     else:
@@ -477,6 +479,8 @@ async def load_contact_file_async(reg, run_dir=None):
             data = {}
             async for line in cont:
                 key, value = [item.strip() for item in line.split("=", 1)]
+                # BACK COMPAT: contact pre "suite" to "workflow" conversion.
+                key = key.replace('SUITE', 'WORKFLOW')
                 data[key] = value
             return data
     except IOError:
