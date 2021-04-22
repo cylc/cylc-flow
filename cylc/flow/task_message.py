@@ -25,10 +25,13 @@ from logging import getLevelName, WARNING, ERROR, CRITICAL
 import os
 import sys
 
-
 from cylc.flow.exceptions import SuiteStopped
 import cylc.flow.flags
-from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.client_factory import (
+    CommsMeth,
+    get_client,
+    get_comms_method
+)
 from cylc.flow.pathutil import get_suite_run_job_dir
 from cylc.flow.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
@@ -80,6 +83,12 @@ def record_messages(suite, task_job, messages):
     # Record the event time, in case the message is delayed in some way.
     event_time = get_current_time_string(
         override_use_utc=(os.getenv('CYLC_UTC') == 'True'))
+    write_messages(suite, task_job, messages, event_time)
+    if get_comms_method() != CommsMeth.POLL:
+        send_messages(suite, task_job, messages, event_time)
+
+
+def write_messages(suite, task_job, messages, event_time):
     # Print to stdout/stderr
     for severity, message in messages:
         if severity in STDERR_LEVELS:
@@ -91,6 +100,9 @@ def record_messages(suite, task_job, messages):
     # Write to job.status
     _append_job_status_file(suite, task_job, event_time, messages)
     # Send messages
+
+
+def send_messages(suite, task_job, messages, event_time):
     suite = os.path.normpath(suite)
     try:
         pclient = get_client(suite)

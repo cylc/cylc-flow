@@ -10,6 +10,7 @@ on:
 jobs:
   bash-docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         bash-version:
