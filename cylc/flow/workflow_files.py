@@ -53,7 +53,7 @@ from cylc.flow.hostuserutil import (
     get_user,
     is_remote_host
 )
-from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.remote import construct_ssh_cmd, DEFAULT_RSYNC_OPTS
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.unicode_rules import WorkflowNameValidator
@@ -1022,14 +1022,12 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         list: command to use for rsync.
 
     """
-
-    rsync_cmd = ["rsync"]
-    rsync_cmd.append("-av")
+    rsync_cmd = ["rsync"] + DEFAULT_RSYNC_OPTS
     if dry_run:
         rsync_cmd.append("--dry-run")
     if reinstall:
         rsync_cmd.append('--delete')
-    ignore_dirs = [
+    for exclude in [
         '.git',
         '.svn',
         '.cylcignore',
@@ -1037,8 +1035,8 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         'opt/rose-suite-cylc-install.conf',
         WorkflowFiles.LOG_DIR,
         WorkflowFiles.Install.DIRNAME,
-        WorkflowFiles.Service.DIRNAME]
-    for exclude in ignore_dirs:
+        WorkflowFiles.Service.DIRNAME
+    ]:
         if (Path(src).joinpath(exclude).exists() or
                 Path(dst).joinpath(exclude).exists()):
             rsync_cmd.append(f"--exclude={exclude}")

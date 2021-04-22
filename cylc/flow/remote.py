@@ -152,6 +152,14 @@ def get_includes_to_rsync(rsync_includes=None):
     return configured_includes
 
 
+DEFAULT_RSYNC_OPTS = [
+    '-a',
+    '--checksum',
+    '--out-format=%o %n%L',
+    '--no-t'
+]
+
+
 def construct_rsync_over_ssh_cmd(
         src_path, dst_path, platform, rsync_includes=None):
     """Constructs the rsync command used for remote file installation.
@@ -167,20 +175,14 @@ def construct_rsync_over_ssh_cmd(
 
     """
     dst_host = get_host_from_platform(platform)
-    rsync_cmd = ["rsync"]
     ssh_cmd = platform['ssh command']
-    rsync_options = [
-        "-v",
-        "--perms",
-        "--recursive",
-        "--links",
-        "--checksum",
+    rsync_cmd = [
+        "rsync",
         "--delete",
         "--rsh=" + ssh_cmd,
         "--include=/.service/",
         "--include=/.service/server.key"
-    ]
-    rsync_cmd.extend(rsync_options)
+    ] + DEFAULT_RSYNC_OPTS
     # Note to future devs - be wary of changing the order of the following
     # rsync options, rsync is very particular about order of in/ex-cludes.
 
