@@ -23,7 +23,7 @@ from typing import Dict, Iterable, Set, Union
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import WorkflowFilesError
+from cylc.flow.exceptions import WorkflowFilesError, handle_rmtree_err
 from cylc.flow.platforms import get_localhost_install_target
 
 
@@ -239,7 +239,7 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
             target = os.path.realpath(path)
             LOG.debug(
                 f'Removing symlink target directory: ({path} ->) {target}')
-            rmtree(target)
+            rmtree(target, onerror=handle_rmtree_err)
             LOG.debug(f'Removing symlink: {path}')
         else:
             LOG.debug(f'Removing broken symlink: {path}')
@@ -248,7 +248,7 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
         raise FileNotFoundError(path)
     else:
         LOG.debug(f'Removing directory: {path}')
-        rmtree(path)
+        rmtree(path, onerror=handle_rmtree_err)
 
 
 def remove_dir_or_file(path: Union[Path, str]) -> None:
@@ -268,7 +268,7 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
         os.remove(path)
     else:
         LOG.debug(f"Removing directory: {path}")
-        rmtree(path)
+        rmtree(path, onerror=handle_rmtree_err)
 
 
 def get_next_rundir_number(run_path):

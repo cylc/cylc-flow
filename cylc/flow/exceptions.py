@@ -16,7 +16,7 @@
 """Exceptions for "expected" errors."""
 
 
-from typing import Iterable
+from typing import Callable, Iterable, NoReturn, Tuple, Type
 
 
 class CylcError(Exception):
@@ -97,6 +97,31 @@ class ServiceFileError(CylcError):
 
 class WorkflowFilesError(CylcError):
     """Exception for errors related to workflow files/directories."""
+
+
+def handle_rmtree_err(
+    function: Callable,
+    path: str,
+    excinfo: Tuple[Type[Exception], Exception, object]
+) -> NoReturn:
+    """Error handler for shutil.rmtree."""
+    exc = excinfo[1]
+    if isinstance(exc, OSError) and exc.errno == 39:
+        # "Directory not empty", likely due to filesystem lag
+        raise FileRemovalError(exc)
+    raise exc
+
+
+class FileRemovalError(CylcError):
+    """Exception for errors during deletion of files/directories, which are
+    probably the filesystem's fault, not Cylc's."""
+
+    def __init__(self, exc: Exception) -> None:
+        CylcError.__init__(
+            self,
+            f"{exc}. This is probably a temporary issue with the filesystem, "
+            "not a problem with Cylc."
+        )
 
 
 class TaskRemoteMgmtError(CylcError):

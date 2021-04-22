@@ -39,7 +39,9 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     ServiceFileError,
     TaskRemoteMgmtError,
-    WorkflowFilesError)
+    WorkflowFilesError,
+    handle_rmtree_err
+)
 from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir,
@@ -47,7 +49,8 @@ from cylc.flow.pathutil import (
     parse_dirs,
     remove_dir_and_target,
     get_next_rundir_number,
-    remove_dir_or_file)
+    remove_dir_or_file
+)
 from cylc.flow.platforms import (
     get_install_target_to_platforms_map,
     get_localhost_install_target,
@@ -839,7 +842,7 @@ def remove_keys_on_server(keys):
     # Remove client public key folder
     client_public_key_dir = keys["client_public_key"].key_path
     if os.path.exists(client_public_key_dir):
-        shutil.rmtree(client_public_key_dir)
+        shutil.rmtree(client_public_key_dir, onerror=handle_rmtree_err)
 
 
 def create_server_keys(keys, workflow_srv_dir):
