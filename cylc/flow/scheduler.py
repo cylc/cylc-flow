@@ -1634,7 +1634,7 @@ class Scheduler:
             raise exc from None
 
     async def _shutdown(self, reason: Exception) -> None:
-        """Shutdown the suite."""
+        """Shutdown the workflow."""
         if isinstance(reason, SchedulerStop):
             LOG.info(f'Workflow shutting down - {reason.args[0]}')
             # Unset the "paused" status of the workflow if not auto-restarting
