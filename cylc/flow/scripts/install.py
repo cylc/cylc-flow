@@ -56,12 +56,12 @@ Examples:
   # run directory ~/cylc-run/fido/run1
   $ cylc install --flow-name=fido
 
-  # Install $PWD/bunny/rabbit/flow.cylc as "bunny/rabbit", with run directory
-  # ~/cylc-run/bunny/rabbit/run1
+  # Install $PWD/bunny/rabbit/flow.cylc as "rabbit", with run directory
+  # ~/cylc-run/rabbit/run1
   $ cylc install --directory=bunny/rabbit
 
-  # Install $PWD/cats/flow.cylc as "cats", overriding the run1, run2, run3 etc
-  # structure with run directory ~/cylc-run/cats/paws
+  # Install $PWD/flow.cylc as "cats", if $PWD is ~/cats, overriding the
+  # run1, run2, run3 etc. structure with run directory ~/cylc-run/cats/paws
   $ cylc install --run-name=paws
 
 The same workflow can be installed with multiple names; this results in
