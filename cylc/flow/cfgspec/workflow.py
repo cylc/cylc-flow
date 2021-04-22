@@ -231,9 +231,6 @@ with Conf(
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
-        with Conf('environment'):
-            Conf('<variable>', VDR.V_STRING)
-
         with Conf('events'):
             # Note: default of None for V_STRING_LIST is used to differentiate
             # between: value not set vs value set to empty
