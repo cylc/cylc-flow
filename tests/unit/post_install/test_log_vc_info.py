@@ -42,10 +42,15 @@ BASIC_FLOW_2 = """
 """
 
 
-def skip_if_not_installed(command: str) -> None:
-    """Skip test if command is not installed"""
-    if shutil.which(command) is None:
-        pytest.skip(f"{command} is not installed")
+require_git = pytest.mark.skipif(
+    shutil.which('git') is None,
+    reason="git is not installed"
+)
+
+require_svn = pytest.mark.skipif(
+    shutil.which('svn') is None,
+    reason="svn is not installed"
+)
 
 
 @pytest.fixture(scope='module')
@@ -57,7 +62,6 @@ def git_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str]:
 
     Returns (source_dir_path, commit_hash)
     """
-    skip_if_not_installed('git')
     source_dir: Path = tmp_path_factory.getbasetemp().joinpath('git_repo')
     source_dir.mkdir()
     subprocess.run(['git', 'init'], cwd=source_dir, check=True)
@@ -85,7 +89,6 @@ def svn_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str, str]:
 
     Returns (source_dir_path, repository_UUID, repository_path)
     """
-    skip_if_not_installed('svn')
     tmp_path: Path = tmp_path_factory.getbasetemp()
     repo = tmp_path.joinpath('svn_repo')
     subprocess.run(
@@ -112,18 +115,21 @@ def svn_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str, str]:
     return (str(source_dir), uuid, str(repo))
 
 
+@require_git
 def test_get_git_commit(git_source_repo: Tuple[str, str]):
     """Test get_git_commit()"""
     source_dir, commit_sha = git_source_repo
     assert _get_git_commit(source_dir) == commit_sha
 
 
+@require_git
 def test_get_status_git(git_source_repo: Tuple[str, str]):
     """Test get_status() for a git repo"""
     source_dir, commit_sha = git_source_repo
     assert get_status('git', source_dir) == " M flow.cylc"
 
 
+@require_git
 def test_get_vc_info_git(git_source_repo: Tuple[str, str]):
     """Test get_vc_info() for a git repo"""
     source_dir, commit_sha = git_source_repo
@@ -139,6 +145,7 @@ def test_get_vc_info_git(git_source_repo: Tuple[str, str]):
     assert list(vc_info.items()) == expected
 
 
+@require_git
 def test_get_diff_git(git_source_repo: Tuple[str, str]):
     """Test get_diff() for a git repo"""
     source_dir, commit_sha = git_source_repo
@@ -151,6 +158,7 @@ def test_get_diff_git(git_source_repo: Tuple[str, str]):
         assert line in diff_lines
 
 
+@require_svn
 def test_get_vc_info_svn(svn_source_repo: Tuple[str, str, str]):
     """Test get_vc_info() for an svn working copy"""
     source_dir, uuid, repo_path = svn_source_repo
@@ -167,6 +175,7 @@ def test_get_vc_info_svn(svn_source_repo: Tuple[str, str, str]):
     assert list(vc_info.items()) == expected
 
 
+@require_svn
 def test_get_diff_svn(svn_source_repo: Tuple[str, str, str]):
     """Test get_diff() for an svn working copy"""
     source_dir, uuid, repo_path = svn_source_repo
@@ -199,10 +208,10 @@ def test_not_repo(tmp_path: Path, monkeypatch: MonkeyPatch):
     assert mock_write_diff.called is False
 
 
+@require_git
 def test_no_base_commit_git(tmp_path: Path):
     """Test get_vc_info() and get_diff() for a recently init'd git source dir
     that does not have a base commit yet."""
-    skip_if_not_installed('git')
     source_dir = Path(tmp_path, 'new_git_repo')
     source_dir.mkdir()
     subprocess.run(['git', 'init'], cwd=source_dir, check=True)

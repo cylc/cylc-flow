@@ -14,9 +14,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Record version control information on workflow install.
+"""Record version control information to the workflow log directory on
+installation.
 
-The supported version control systems are git and svn.
+If the workflow source directory is a supported repository/working copy
+(git or svn), information about the working copy will be saved in
+``<run-dir>/log/version/vcs.conf``.
+
+An example of this information for a git repo:
+
+.. code-block:: cylc
+
+   version control system = "git"
+   repository version = "2.8.0-dirty"
+   commit = "e5dc6573dd70cabd8f973d1535c17c29c026d553"
+   working copy root path = "~/cylc-src/my-workflow-git"
+   status = \"\"\"
+   M flow.cylc
+   \"\"\"
+
+And for an svn working copy:
+
+.. code-block:: cylc
+
+   version control system = "svn"
+   working copy root path = "~/cylc-src/my-workflow-svn"
+   url = "file:///home/my-workflow-svn/trunk"
+   repository uuid = "219f5687-8eb8-44b1-beb6-e8220fa964d3"
+   revision = "14"
+   status = \"\"\"
+   M       flow.cylc
+   \"\"\"
+
+
+Any uncommitted changes will also be saved as a diff in
+``<run-dir>/log/version/uncommitted.diff``. (Note that git does not include
+untracked files in the diff.)
 """
 
 from collections import OrderedDict
