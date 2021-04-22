@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
-# Test that restarting a Cylc 7 workflow does not work due to database
-# incompatibility, and that suitable error message is given
+# Test that restarting a Cylc 7 workflow fails due to database incompatibility,
+# and that suitable error message is given.
 
 . "$(dirname "$0")/test_header"
 set_test_number 3
@@ -34,8 +34,8 @@ grep_ok 'Workflow database is incompatible' "${TEST_NAME}.stderr"
 
 purge
 
-# Note: The test for "trying to restart a workflow without a database gives
+# Note: The test for "trying to restart a workflow without a database gives.
 # suitable error message" was removed with the change from cylc run/restart to
-# cylc play, as if the database is not present it will simply do a cold start
+# cylc play, as if the database is not present it will simply do a cold start.
 
 exit
