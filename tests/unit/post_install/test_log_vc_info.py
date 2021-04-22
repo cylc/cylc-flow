@@ -22,7 +22,7 @@ import subprocess
 from typing import Any, Tuple
 from unittest.mock import Mock
 
-from cylc.flow.post_install.log_vc_info import (
+from cylc.flow.install_plugins.log_vc_info import (
     get_diff, _get_git_commit, get_status, get_vc_info, main
 )
 
@@ -187,10 +187,10 @@ def test_not_repo(tmp_path: Path, monkeypatch: MonkeyPatch):
     flow_file = source_dir.joinpath('flow.cylc')
     flow_file.write_text(BASIC_FLOW_1)
     mock_write_vc_info = Mock()
-    monkeypatch.setattr('cylc.flow.post_install.log_vc_info.write_vc_info',
+    monkeypatch.setattr('cylc.flow.install_plugins.log_vc_info.write_vc_info',
                         mock_write_vc_info)
     mock_write_diff = Mock()
-    monkeypatch.setattr('cylc.flow.post_install.log_vc_info.write_diff',
+    monkeypatch.setattr('cylc.flow.install_plugins.log_vc_info.write_diff',
                         mock_write_diff)
 
     assert get_vc_info(source_dir) is None
