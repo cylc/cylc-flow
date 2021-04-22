@@ -231,15 +231,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
             dict: dictionary with the header information, such as
                 program and hostname.
         """
-
         host = socket.gethostname()
-        # Identify communication method
-        comms_method = os.getenv("CLIENT_COMMS_METH", default=CommsMeth.ZMQ)
-        if (self.host and
-            (comms_method == CommsMeth.ZMQ) and
-            (socket.gethostbyname(
-                self.host) == socket.gethostbyname(socket.gethostname()))):
-            comms_method = CommsMeth.LOCAL
         if len(sys.argv) > 1:
             cmd = sys.argv[1]
         else:
@@ -259,7 +251,11 @@ class SuiteRuntimeClient(ZMQSocketBase):
             'meta': {
                 'prog': cmd,
                 'host': host,
-                'comms_method': comms_method,
+                'comms_method':
+                    os.getenv(
+                        "CLIENT_COMMS_METH",
+                        default=CommsMeth.ZMQ.value
+                    )
             }
         }
 

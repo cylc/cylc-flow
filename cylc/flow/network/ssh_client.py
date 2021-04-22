@@ -71,7 +71,7 @@ class SuiteRuntimeClient():
         """
         # Set environment variable to determine the communication for use on
         # the scheduler
-        os.environ["CLIENT_COMMS_METH"] = CommsMeth.SSH
+        os.environ["CLIENT_COMMS_METH"] = CommsMeth.SSH.value
         cmd = ["client"]
         if timeout:
             cmd += [f'comms_timeout={timeout}']

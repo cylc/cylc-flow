@@ -1,4 +1,3 @@
-<center>
 <div
   align="center"
 >
@@ -14,7 +13,6 @@
 [![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Fstable%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/stable/html/index.html)
 
 </div>
-</center>
 
 Cylc (pronounced silk) is a general purpose workflow engine
 that specialises in cycling workflows and has strong scaling characteristics.

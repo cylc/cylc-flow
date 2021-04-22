@@ -15,33 +15,45 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test poll intervals is used from both global.cylc and flow.cylc
-. "$(dirname "${0}")/test_header"
+# Test remote host settings.
+export REQUIRE_PLATFORM='loc:remote comms:poll'
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 6
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-create_test_global_config "
+set_test_number 4
+create_test_global_config "" "
 [platforms]
-   [[$CYLC_TEST_PLATFORM]]
-        communication method = poll
-        execution polling intervals = 10*PT6S
-        submission polling intervals = 10*PT6S
+    [[$CYLC_TEST_PLATFORM]]
+        retrieve job logs = True
 "
-
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-LOG_FILE="${SUITE_RUN_DIR}/log/suite/log"
-
-PRE_MSG='-health check settings:'
-POST_MSG='.*, polling intervals=10\*PT6S...'
-for INDEX in 1 2; do
-    for STAGE in 'submission' 'execution'; do
-        grep_ok "\[t${INDEX}\.1\] ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}"
-    done
-done
+init_suite "${TEST_NAME_BASE}" <<__HERE__
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        script = cylc message -- foo
+        platform = $CYLC_TEST_PLATFORM
+        [[[outputs]]]
+            foo = foo
+__HERE__
 #-------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+
+TEST_NAME="${TEST_NAME_BASE}-run"
+suite_run_ok "${TEST_NAME}" \
+    cylc play "${SUITE_NAME}" \
+    --debug \
+    --no-detach
+
+log_scan \
+    "${TEST_NAME_BASE}-poll" \
+    "$(cylc cat-log -m p "$SUITE_NAME")" \
+    10 \
+    1 \
+    '\[foo.1\] status=submitted: (polled)foo' \
+    '\[foo.1\] status=succeeded: (polled)succeeded'
+
 purge
 exit

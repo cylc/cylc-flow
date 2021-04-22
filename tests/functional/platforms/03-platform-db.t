@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Check db stores correct platform
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
