@@ -15,10 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import tempfile
-import unittest
 
-from cylc.flow.parsec.exceptions import IncludeFileNotFoundError, Jinja2Error
-from cylc.flow.parsec.fileparse import *
+import pytest
+
+from cylc.flow.parsec.exceptions import (
+    FileParseError,
+    IncludeFileNotFoundError,
+    Jinja2Error,
+)
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.flow.parsec.fileparse import (
+    addict,
+    addsect,
+    multiline,
+    parse,
+    read_and_proc,
+)
 
 
 def get_multiline():
@@ -109,395 +121,442 @@ def get_multiline():
     return r
 
 
-class TestFileparse(unittest.TestCase):
+def test_file_parse_error():
+    error = FileParseError(reason="No reason")
+    assert str(error) == "No reason"
 
-    def test_file_parse_error(self):
-        error = FileParseError(reason="No reason")
-        self.assertEqual("No reason", str(error))
+    error = FileParseError("", index=2)
+    assert str(error) == (
+        " (line 3)\n"
+        "(line numbers match 'cylc view -p')"
+    )
 
-        error = FileParseError("", index=2)
-        self.assertEqual(" (line 3)\n"
-                         "(line numbers match 'cylc view -p')", str(error))
+    error = FileParseError("", line="test")
+    assert str(error) == ":\n   test"
 
-        error = FileParseError("", line="test")
-        self.assertEqual(":\n   test", str(error))
+    error = FileParseError("", lines=["a", "b"])
+    assert str(error) == (
+        "\nContext lines:\n"
+        "a\nb\t<--"
+    )
 
-        error = FileParseError("", lines=["a", "b"])
-        self.assertEqual("\nContext lines:\n"
-                         "a\nb\t<--", str(error))
 
-    def test_addsect(self):
+def test_addsect():
+    cfg = OrderedDictWithDefaults()
+    cfg["section1"] = OrderedDictWithDefaults()
+    cfg["section1"]["subsection"] = OrderedDictWithDefaults()
+    new_section_name = "test"
+    existing_section_name = "section1"
+    parents = ["section1"]
+
+    empty_cfg = OrderedDictWithDefaults()
+
+    addsect(empty_cfg, "", [])
+    assert len(empty_cfg) == 1
+    assert "" in empty_cfg
+
+    assert len(cfg) == 1
+    addsect(cfg, existing_section_name, [])
+    assert len(cfg) == 1
+
+    assert "test" not in cfg["section1"]
+    addsect(cfg, new_section_name, parents)
+    assert len(cfg) == 1
+    assert "test" in cfg["section1"]
+
+
+def test_addict_error_line_already_encountered():
+    with pytest.raises(FileParseError):
+        addict({"title": "a"}, "title", None, ["title"], 1)
+
+
+def test_addict_new_value_added():
+    for key, val in [
+        ('a', '1'),
+        ('b', '2'),
+        ('c', '3')
+    ]:
         cfg = OrderedDictWithDefaults()
-        cfg["section1"] = OrderedDictWithDefaults()
-        cfg["section1"]["subsection"] = OrderedDictWithDefaults()
-        new_section_name = "test"
-        existing_section_name = "section1"
-        parents = ["section1"]
+        addict(cfg, key, val, [], 0)
+        assert key in cfg
 
-        empty_cfg = OrderedDictWithDefaults()
 
-        addsect(empty_cfg, "", [])
-        self.assertTrue(len(empty_cfg) == 1)
-        self.assertTrue("" in empty_cfg)
+def test_addict_replace_value():
+    cfg = OrderedDictWithDefaults()
+    cfg['country'] = 'ABC'
+    addict(cfg, 'country', 'test', [], 0)
+    assert cfg['country'] == 'test'
 
-        self.assertTrue(len(cfg) == 1)
-        addsect(cfg, existing_section_name, [])
-        self.assertTrue(len(cfg) == 1)
 
-        self.assertTrue("test" not in cfg["section1"])
-        addsect(cfg, new_section_name, parents)
-        self.assertTrue(len(cfg) == 1)
-        self.assertTrue("test" in cfg["section1"])
+def test_addict_replace_value_1():
+    """"Special case depending on key and parents, for
 
-    def test_addict_error_line_already_encountered(self):
-        with self.assertRaises(FileParseError):
-            addict({"title": "a"}, "title", None, ["title"], 1)
+    - key is 'graph' AND parents['scheduling']['graph'] OR
+    - len(parents)==3 AND parents['scheduling']['graph'][?]
+    """
 
-    def test_addict_new_value_added(self):
-        for key, val in [
-            ('a', '1'),
-            ('b', '2'),
-            ('c', '3')
-        ]:
-            cfg = OrderedDictWithDefaults()
-            addict(cfg, key, val, [], 0)
-            self.assertTrue(key in cfg)
+    # set 1 key is graph, parents is wrong (T, F)
+    cfg = OrderedDictWithDefaults()
+    cfg['graph'] = 'ABC'
+    addict(cfg, 'graph', 'test', [], 0)
+    assert cfg['graph'] == 'test'
 
-    def test_addict_replace_value(self):
-        cfg = OrderedDictWithDefaults()
-        cfg['country'] = 'ABC'
-        addict(cfg, 'country', 'test', [], 0)
-        self.assertEqual('test', cfg['country'])
+    # set 2 key is graph, parents right (T, T)
+    cfg = {
+        'scheduling': {
+            'graph': {
+                'graph': 'ABC'
+            }
+        }
+    }
+    addict(cfg, 'graph', 'test', ['scheduling', 'graph'], 0)
+    assert (
+        cfg['scheduling']['graph']['graph']
+    ) == ['ABC', 'test']
 
-    def test_addict_replace_value_1(self):
-        """"Special case depending on key and parents, for
+    # other side of boolean expression
 
-        - key is 'graph' AND parents['scheduling']['graph'] OR
-        - len(parents)==3 AND parents['scheduling']['graph'][?]
-        """
+    # set 3 len(parents) is 3, parents is wrong (T, F)
+    cfg = {
+        'scheduling': {
+            'graph': {
+                'team': {
+                    'graph': 'ABC'
+                }
+            },
+            'notme': {
+                'team': {
+                    'graph': '1'
+                }
+            }
+        }
+    }
+    addict(cfg, 'graph', 'test', ['scheduling', 'notme', 'team'], 0)
+    assert (
+        cfg['scheduling']['notme']['team']['graph']
+    ) == 'test'
 
-        # set 1 key is graph, parents is wrong (T, F)
-        cfg = OrderedDictWithDefaults()
-        cfg['graph'] = 'ABC'
-        addict(cfg, 'graph', 'test', [], 0)
-        self.assertEqual('test', cfg['graph'])
-
-        # set 2 key is graph, parents right (T, T)
-        cfg = {
-            'scheduling': {
-                'graph': {
+    # set 3 len(parents) is 3, parents is right (T, T)
+    cfg = {
+        'scheduling': {
+            'graph': {
+                'team': {
                     'graph': 'ABC'
                 }
             }
         }
-        addict(cfg, 'graph', 'test', ['scheduling', 'graph'], 0)
-        self.assertEqual(['ABC', 'test'],
-                         cfg['scheduling']['graph']['graph'])
+    }
+    addict(cfg, 'graph', 'test', ['scheduling', 'graph', 'team'], 0)
+    assert cfg['scheduling']['graph']['team']['graph'] == ['ABC', 'test']
 
-        # other side of boolean expression
 
-        # set 3 len(parents) is 3, parents is wrong (T, F)
-        cfg = {
-            'scheduling': {
-                'graph': {
-                    'team': {
-                        'graph': 'ABC'
-                    }
-                },
-                'notme': {
-                    'team': {
-                        'graph': '1'
-                    }
-                }
-            }
+def test_multiline():
+    for flines, value, index, maxline, exc, expected in get_multiline():
+        if exc is not None:
+            with pytest.raises(exc) as cm:
+                multiline(flines, value, index, maxline)
+            if isinstance(cm.value, FileParseError):
+                exc = cm.value
+                for key, attr in expected.items():
+                    assert getattr(exc, key) == attr
+        else:
+            r = multiline(flines, value, index, maxline)
+            assert r == expected
+
+
+def test_read_and_proc_no_template_engine():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = None
+        viewcfg = {
+            'empy': False, 'jinja2': False,
+            'contin': False, 'inline': False
         }
-        addict(cfg, 'graph', 'test', ['scheduling', 'notme', 'team'], 0)
-        self.assertEqual('test',
-                         cfg['scheduling']['notme']['team']['graph'])
+        asedit = None
+        tf.write("a=b\n".encode())
+        tf.flush()
+        r = read_and_proc(fpath=fpath, template_vars=template_vars,
+                          viewcfg=viewcfg, asedit=asedit)
+        assert r == ['a=b']
 
-        # set 3 len(parents) is 3, parents is right (T, T)
-        cfg = {
-            'scheduling': {
-                'graph': {
-                    'team': {
-                        'graph': 'ABC'
-                    }
-                }
-            }
+        # last \\ is ignored, becoming just ''
+        tf.write("c=\\\nd\n\\".encode())
+        tf.flush()
+
+        viewcfg = {
+            'empy': False, 'jinja2': False,
+            'contin': True, 'inline': False
         }
-        addict(cfg, 'graph', 'test', ['scheduling', 'graph', 'team'], 0)
-        self.assertEqual(['ABC', 'test'],
-                         cfg['scheduling']['graph']['team']['graph'])
+        r = read_and_proc(fpath=fpath, template_vars=template_vars,
+                          viewcfg=viewcfg, asedit=asedit)
+        assert r == ['a=b', 'c=d', '']
 
-    def test_multiline(self):
-        for flines, value, index, maxline, exc, expected in get_multiline():
-            if exc is not None:
-                with self.assertRaises(exc) as cm:
-                    multiline(flines, value, index, maxline)
-                if isinstance(cm.exception, FileParseError):
-                    exc = cm.exception
-                    for key, attr in expected.items():
-                        assert getattr(exc, key) == attr
-            else:
-                r = multiline(flines, value, index, maxline)
-                self.assertEqual(expected, r)
 
-    def test_read_and_proc_no_template_engine(self):
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = None
-            viewcfg = {
-                'empy': False, 'jinja2': False,
-                'contin': False, 'inline': False
-            }
-            asedit = None
-            tf.write("a=b\n".encode())
+def test_inline():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = None
+        viewcfg = {
+            'empy': False, 'jinja2': False,
+            'contin': False, 'inline': True,
+            'mark': None, 'single': None, 'label': None
+        }
+        asedit = None
+        with tempfile.NamedTemporaryFile() as include_file:
+            include_file.write("c=d".encode())
+            include_file.flush()
+            tf.write(("a=b\n%include \"{0}\""
+                      .format(include_file.name)).encode())
             tf.flush()
             r = read_and_proc(fpath=fpath, template_vars=template_vars,
                               viewcfg=viewcfg, asedit=asedit)
-            self.assertEqual(['a=b'], r)
+            assert r == ['a=b', 'c=d']
 
-            # last \\ is ignored, becoming just ''
-            tf.write("c=\\\nd\n\\".encode())
-            tf.flush()
 
-            viewcfg = {
-                'empy': False, 'jinja2': False,
-                'contin': True, 'inline': False
-            }
-            r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
-            self.assertEqual(['a=b', 'c=d', ''], r)
+def test_inline_error():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = None
+        viewcfg = {
+            'empy': False, 'jinja2': False,
+            'contin': False, 'inline': True,
+            'mark': None, 'single': None, 'label': None
+        }
+        asedit = None
+        tf.write("a=b\n%include \"404.txt\"".encode())
+        tf.flush()
+        with pytest.raises(IncludeFileNotFoundError) as cm:
+            read_and_proc(fpath=fpath, template_vars=template_vars,
+                          viewcfg=viewcfg, asedit=asedit)
+        assert "404.txt" in str(cm.value)
 
-    def test_inline(self):
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = None
-            viewcfg = {
-                'empy': False, 'jinja2': False,
-                'contin': False, 'inline': True,
-                'mark': None, 'single': None, 'label': None
-            }
-            asedit = None
-            with tempfile.NamedTemporaryFile() as include_file:
-                include_file.write("c=d".encode())
-                include_file.flush()
-                tf.write(("a=b\n%include \"{0}\""
-                          .format(include_file.name)).encode())
-                tf.flush()
-                r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                                  viewcfg=viewcfg, asedit=asedit)
-                self.assertEqual(['a=b', 'c=d'], r)
 
-    def test_inline_error(self):
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = None
-            viewcfg = {
-                'empy': False, 'jinja2': False,
-                'contin': False, 'inline': True,
-                'mark': None, 'single': None, 'label': None
-            }
-            asedit = None
-            tf.write("a=b\n%include \"404.txt\"".encode())
-            tf.flush()
-            with self.assertRaises(IncludeFileNotFoundError) as cm:
-                read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
-            self.assertIn("404.txt", str(cm.exception))
+def test_read_and_proc_jinja2():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        viewcfg = {
+            'empy': False, 'jinja2': True,
+            'contin': False, 'inline': False
+        }
+        asedit = None
+        tf.write("#!jinja2\na={{ name }}\n".encode())
+        tf.flush()
+        r = read_and_proc(fpath=fpath, template_vars=template_vars,
+                          viewcfg=viewcfg, asedit=asedit)
+        assert r == ['a=Cylc']
 
-    def test_read_and_proc_jinja2(self):
+
+def test_read_and_proc_jinja2_error():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        viewcfg = {
+            'empy': False, 'jinja2': True,
+            'contin': False, 'inline': False
+        }
+        asedit = None
+        tf.write("#!jinja2\na={{ name \n".encode())
+        tf.flush()
+        with pytest.raises(Jinja2Error) as cm:
+            read_and_proc(fpath=fpath, template_vars=template_vars,
+                          viewcfg=viewcfg, asedit=asedit)
+        assert (
+            "unexpected end of template, expected "
+            "'end of print statement'."
+        ) in str(cm.value)
+
+
+def test_read_and_proc_jinja2_error_missing_shebang():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        viewcfg = {
+            'empy': False, 'jinja2': True,
+            'contin': False, 'inline': False
+        }
+        asedit = None
+        # first line is missing shebang!
+        tf.write("a={{ name }}\n".encode())
+        tf.flush()
+        r = read_and_proc(fpath=fpath, template_vars=template_vars,
+                          viewcfg=viewcfg, asedit=asedit)
+        assert r == ['a={{ name }}']
+
+
+# --- originally we had a test for empy here, moved to test_empysupport
+
+def test_parse_keys_only_singleline():
+    with tempfile.NamedTemporaryFile() as of:
         with tempfile.NamedTemporaryFile() as tf:
             fpath = tf.name
             template_vars = {
                 'name': 'Cylc'
             }
-            viewcfg = {
-                'empy': False, 'jinja2': True,
-                'contin': False, 'inline': False
-            }
-            asedit = None
             tf.write("#!jinja2\na={{ name }}\n".encode())
             tf.flush()
-            r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
-            self.assertEqual(['a=Cylc'], r)
+            r = parse(fpath=fpath, output_fname=of.name,
+                      template_vars=template_vars)
+            expected = OrderedDictWithDefaults()
+            expected['a'] = 'Cylc'
+            assert r == expected
+            of.flush()
+            output_file_contents = of.read().decode()
+            assert output_file_contents == 'a=Cylc\n'
 
-    def test_read_and_proc_jinja2_error(self):
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            viewcfg = {
-                'empy': False, 'jinja2': True,
-                'contin': False, 'inline': False
-            }
-            asedit = None
-            tf.write("#!jinja2\na={{ name \n".encode())
-            tf.flush()
-            with self.assertRaises(Jinja2Error) as cm:
-                read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
-            self.assertIn(
-                "unexpected end of template, expected "
-                "'end of print statement'.",
-                str(cm.exception))
 
-    def test_read_and_proc_jinja2_error_missing_shebang(self):
-        with tempfile.NamedTemporaryFile() as tf:
-            fpath = tf.name
-            template_vars = {
-                'name': 'Cylc'
-            }
-            viewcfg = {
-                'empy': False, 'jinja2': True,
-                'contin': False, 'inline': False
-            }
-            asedit = None
-            # first line is missing shebang!
-            tf.write("a={{ name }}\n".encode())
-            tf.flush()
-            r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
-            self.assertEqual(['a={{ name }}'], r)
-
-    # --- originally we had a test for empy here, moved to test_empysupport
-
-    def test_parse_keys_only_singleline(self):
-        with tempfile.NamedTemporaryFile() as of:
-            with tempfile.NamedTemporaryFile() as tf:
-                fpath = tf.name
-                template_vars = {
-                    'name': 'Cylc'
-                }
-                tf.write("#!jinja2\na={{ name }}\n".encode())
-                tf.flush()
-                r = parse(fpath=fpath, output_fname=of.name,
-                          template_vars=template_vars)
-                expected = OrderedDictWithDefaults()
-                expected['a'] = 'Cylc'
-                self.assertEqual(expected, r)
-                of.flush()
-                output_file_contents = of.read().decode()
-                self.assertEqual('a=Cylc\n', output_file_contents)
-
-    def test_parse_keys_only_multiline(self):
-        with tempfile.NamedTemporaryFile() as of:
-            with tempfile.NamedTemporaryFile() as tf:
-                fpath = tf.name
-                template_vars = {
-                    'name': 'Cylc'
-                }
-                tf.write(
-                    "#!jinja2\na='''value is \\\n{{ name }}'''\n".encode())
-                tf.flush()
-                r = parse(fpath=fpath, output_fname=of.name,
-                          template_vars=template_vars)
-                expected = OrderedDictWithDefaults()
-                expected['a'] = "'''value is Cylc'''"
-                self.assertEqual(expected, r)
-
-    def test_parse_invalid_line(self):
-        with tempfile.NamedTemporaryFile() as of:
-            with tempfile.NamedTemporaryFile() as tf:
-                fpath = tf.name
-                template_vars = {
-                    'name': 'Cylc'
-                }
-                tf.write("#!jinja2\n{{ name }}\n".encode())
-                tf.flush()
-                with self.assertRaises(FileParseError) as cm:
-                    parse(fpath=fpath, output_fname=of.name,
-                          template_vars=template_vars)
-                exc = cm.exception
-                assert exc.reason == 'Invalid line'
-                assert exc.line_num == 1
-                assert exc.line == 'Cylc'
-
-    def test_parse_comments(self):
-        with tempfile.NamedTemporaryFile() as of:
-            with tempfile.NamedTemporaryFile() as tf:
-                fpath = tf.name
-                template_vars = {
-                    'name': 'Cylc'
-                }
-                tf.write("#!jinja2\na={{ name }}\n# comment!".encode())
-                tf.flush()
-                r = parse(fpath=fpath, output_fname=of.name,
-                          template_vars=template_vars)
-                expected = OrderedDictWithDefaults()
-                expected['a'] = 'Cylc'
-                self.assertEqual(expected, r)
-                of.flush()
-                output_file_contents = of.read().decode()
-                self.assertEqual('a=Cylc\n# comment!\n', output_file_contents)
-
-    def test_parse_with_sections(self):
-        with tempfile.NamedTemporaryFile() as of:
-            with tempfile.NamedTemporaryFile() as tf:
-                fpath = tf.name
-                template_vars = {
-                    'name': 'Cylc'
-                }
-                tf.write(("#!jinja2\n[section1]\n"
-                          "a={{ name }}\n# comment!\n"
-                          "[[subsection1]]\n"
-                          "[[subsection2]]\n"
-                          "[section2]").encode())
-                tf.flush()
-                r = parse(fpath=fpath, output_fname=of.name,
-                          template_vars=template_vars)
-                expected = OrderedDictWithDefaults()
-                expected['section1'] = OrderedDictWithDefaults()
-                expected['section1']['a'] = 'Cylc'
-                expected['section1']['subsection1'] = OrderedDictWithDefaults()
-                expected['section1']['subsection2'] = OrderedDictWithDefaults()
-                expected['section2'] = OrderedDictWithDefaults()
-                self.assertEqual(expected, r)
-                of.flush()
-                output_file_contents = of.read().decode()
-                self.assertEqual('[section1]\na=Cylc\n# comment!\n'
-                                 '[[subsection1]]\n'
-                                 '[[subsection2]]\n'
-                                 '[section2]\n',
-                                 output_file_contents)
-
-    def test_parse_with_sections_missing_bracket(self):
+def test_parse_keys_only_multiline():
+    with tempfile.NamedTemporaryFile() as of:
         with tempfile.NamedTemporaryFile() as tf:
             fpath = tf.name
             template_vars = {
                 'name': 'Cylc'
             }
             tf.write(
-                "#!jinja2\n[[section1]\na={{ name }}\n# comment!".encode())
+                "#!jinja2\na='''value is \\\n{{ name }}'''\n".encode())
             tf.flush()
-            with self.assertRaises(FileParseError) as cm:
-                parse(fpath=fpath, output_fname="",
+            r = parse(fpath=fpath, output_fname=of.name,
                       template_vars=template_vars)
-            exc = cm.exception
-            assert exc.reason == 'bracket mismatch'
-            assert exc.line == '[[section1]'
-
-    def test_parse_with_sections_error_wrong_level(self):
-        with tempfile.NamedTemporaryFile() as of:
-            with tempfile.NamedTemporaryFile() as tf:
-                fpath = tf.name
-                template_vars = {
-                    'name': 'Cylc'
-                }
-                tf.write(("#!jinja2\n[section1]\n"
-                          "a={{ name }}\n# comment!\n"
-                          "[[[subsection1]]]\n")  # expected [[]] instead!
-                         .encode())
-                tf.flush()
-                with self.assertRaises(FileParseError) as cm:
-                    parse(fpath=fpath, output_fname=of.name,
-                          template_vars=template_vars)
-                exc = cm.exception
-                assert exc.line_num == 4
-                assert exc.line == '[[[subsection1]]]'
+            expected = OrderedDictWithDefaults()
+            expected['a'] = "'''value is Cylc'''"
+            assert r == expected
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_parse_invalid_line():
+    with tempfile.NamedTemporaryFile() as of:
+        with tempfile.NamedTemporaryFile() as tf:
+            fpath = tf.name
+            template_vars = {
+                'name': 'Cylc'
+            }
+            tf.write("#!jinja2\n{{ name }}\n".encode())
+            tf.flush()
+            with pytest.raises(FileParseError) as cm:
+                parse(fpath=fpath, output_fname=of.name,
+                      template_vars=template_vars)
+            exc = cm.value
+            assert exc.reason == 'Invalid line'
+            assert exc.line_num == 1
+            assert exc.line == 'Cylc'
+
+
+def test_parse_comments():
+    with tempfile.NamedTemporaryFile() as of:
+        with tempfile.NamedTemporaryFile() as tf:
+            fpath = tf.name
+            template_vars = {
+                'name': 'Cylc'
+            }
+            tf.write("#!jinja2\na={{ name }}\n# comment!".encode())
+            tf.flush()
+            r = parse(fpath=fpath, output_fname=of.name,
+                      template_vars=template_vars)
+            expected = OrderedDictWithDefaults()
+            expected['a'] = 'Cylc'
+            assert r == expected
+            of.flush()
+            output_file_contents = of.read().decode()
+            assert output_file_contents == 'a=Cylc\n# comment!\n'
+
+
+def test_parse_with_sections():
+    with tempfile.NamedTemporaryFile() as of:
+        with tempfile.NamedTemporaryFile() as tf:
+            fpath = tf.name
+            template_vars = {
+                'name': 'Cylc'
+            }
+            tf.write(("#!jinja2\n[section1]\n"
+                      "a={{ name }}\n# comment!\n"
+                      "[[subsection1]]\n"
+                      "[[subsection2]]\n"
+                      "[section2]").encode())
+            tf.flush()
+            r = parse(fpath=fpath, output_fname=of.name,
+                      template_vars=template_vars)
+            expected = OrderedDictWithDefaults()
+            expected['section1'] = OrderedDictWithDefaults()
+            expected['section1']['a'] = 'Cylc'
+            expected['section1']['subsection1'] = OrderedDictWithDefaults()
+            expected['section1']['subsection2'] = OrderedDictWithDefaults()
+            expected['section2'] = OrderedDictWithDefaults()
+            assert r == expected
+            of.flush()
+            output_file_contents = of.read().decode()
+            assert output_file_contents == (
+                '[section1]\na=Cylc\n# comment!\n'
+                '[[subsection1]]\n'
+                '[[subsection2]]\n'
+                '[section2]\n'
+            )
+
+
+def test_parse_with_sections_missing_bracket():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write(
+            "#!jinja2\n[[section1]\na={{ name }}\n# comment!".encode())
+        tf.flush()
+        with pytest.raises(FileParseError) as cm:
+            parse(fpath=fpath, output_fname="",
+                  template_vars=template_vars)
+        exc = cm.value
+        assert exc.reason == 'bracket mismatch'
+        assert exc.line == '[[section1]'
+
+
+def test_parse_with_sections_error_wrong_level():
+    with tempfile.NamedTemporaryFile() as of:
+        with tempfile.NamedTemporaryFile() as tf:
+            fpath = tf.name
+            template_vars = {
+                'name': 'Cylc'
+            }
+            tf.write(("#!jinja2\n[section1]\n"
+                      "a={{ name }}\n# comment!\n"
+                      "[[[subsection1]]]\n")  # expected [[]] instead!
+                     .encode())
+            tf.flush()
+            with pytest.raises(FileParseError) as cm:
+                parse(fpath=fpath, output_fname=of.name,
+                      template_vars=template_vars)
+            exc = cm.value
+            assert exc.line_num == 4
+            assert exc.line == '[[[subsection1]]]'
+
+
+def test_unclosed_multiline():
+    with tempfile.NamedTemporaryFile() as tf:
+        fpath = tf.name
+        template_vars = {
+            'name': 'Cylc'
+        }
+        tf.write(('''
+        [scheduling]
+            [[graph]]
+                R1 = """
+                    foo
+
+        [runtime]
+            [[foo]]
+                script = """
+                    echo hello world
+                """
+        ''').encode())
+        tf.flush()
+        with pytest.raises(FileParseError) as cm:
+            parse(fpath=fpath, output_fname="",
+                  template_vars=template_vars)
+        exc = cm.value
+        assert exc.reason == 'Invalid line'
+        assert 'echo hello world' in exc.line
+        assert 'Did you forget to close [scheduling][graph]R1?' in str(exc)
