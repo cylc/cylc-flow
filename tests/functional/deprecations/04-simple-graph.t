@@ -15,29 +15,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite event handler, flexible interface
+# Test deprecation notice for Cylc 7 simple graph (no recurrence section)
+
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 2
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}"
+init_suite "${TEST_NAME_BASE}" << __FLOW__
+[scheduler]
+    allow implicit tasks = True
+[scheduling]
+    [[dependencies]]
+        graph = foo
+__FLOW__
 
-suite_run_ok "${TEST_NAME_BASE}-run1" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "$TEST_NAME" cylc validate -v "$SUITE_NAME"
 
-LOG="${SUITE_RUN_DIR}/log/suite/log"
-MESSAGE="('suite-event-handler-00', 'startup') bad template: 'rubbish'"
-run_ok "${TEST_NAME_BASE}-run1-log" grep -q -F "ERROR - ${MESSAGE}" "${LOG}"
-
-delete_db
-suite_run_fail "${TEST_NAME_BASE}-run2" \
-    cylc play --reference-test --debug --no-detach \
-        -s 'ABORT="True"' "${SUITE_NAME}"
-
-run_ok "${TEST_NAME_BASE}-run2-grep" \
-    grep -q -F "Suite shutting down - SuiteEventError: ${MESSAGE}" \
-    "${TEST_NAME_BASE}-run2.stderr"
+TEST_NAME="${TEST_NAME_BASE}-cmp"
+cylc validate "$SUITE_NAME" 2> 'val.out'
+cmp_ok val.out <<__END__
+WARNING - deprecated graph items were automatically upgraded in "suite definition":
+	 * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
+	       graph
+__END__
 
 purge
-exit

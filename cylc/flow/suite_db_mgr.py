@@ -559,7 +559,7 @@ class SuiteDatabaseManager:
                 f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def restart_check(self):
+    def restart_check(self) -> bool:
         """Check & vacuum the runtime DB for a restart.
 
         Raises SuiteServiceFileError if DB is incompatible.
@@ -571,8 +571,7 @@ class SuiteDatabaseManager:
         except FileNotFoundError:
             return False
         except SuiteServiceFileError as exc:
-            raise SuiteServiceFileError(
-                f"Cannot restart - {exc}")
+            raise SuiteServiceFileError(f"Cannot restart - {exc}")
         pri_dao = self.get_pri_dao()
         try:
             pri_dao.vacuum()
@@ -582,7 +581,7 @@ class SuiteDatabaseManager:
             pri_dao.close()
         return True
 
-    def check_suite_db_compatibility(self):
+    def check_suite_db_compatibility(self) -> None:
         """Raises SuiteServiceFileError if the existing suite database is
         incompatible with the current version of Cylc."""
         if not os.path.isfile(self.pri_path):
