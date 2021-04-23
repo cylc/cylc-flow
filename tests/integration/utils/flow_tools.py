@@ -77,6 +77,7 @@ async def _run_flow(
         caplog.set_level(level, CYLC_LOG)
     task = None
     started = False
+    await scheduler.install()
     try:
         task = asyncio.get_event_loop().create_task(scheduler.run())
         started = await _poll_file(contact)

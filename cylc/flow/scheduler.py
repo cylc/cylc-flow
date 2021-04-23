@@ -42,9 +42,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import SuiteConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
-from cylc.flow.exceptions import (
-    CyclingError, CylcError, SuiteConfigError, PlatformLookupError
-)
+from cylc.flow.exceptions import CyclingError, CylcError
 import cylc.flow.flags
 from cylc.flow.host_select import select_suite_host
 from cylc.flow.hostuserutil import (
@@ -616,7 +614,6 @@ class Scheduler:
 
         """
         try:
-            await self.install()
             await self.initialise()
             await self.configure()
             await self.start_servers()
@@ -1619,11 +1616,13 @@ class Scheduler:
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             # In case of exception in the shutdown method itself.
             LOG.error("Error during shutdown")
+            # Suppress the reason for shutdown, which is logged separately
+            exc.__suppress_context__ = True
             if isinstance(exc, CylcError):
                 LOG.error(f"{exc.__class__.__name__}: {exc}")
+                if cylc.flow.flags.debug:
+                    LOG.exception(exc)
             else:
-                # Suppress the reason for shutdown, which is logged separately
-                exc.__suppress_context__ = True
                 LOG.exception(exc)
             # Re-raise exception to be caught higher up (sets the exit code)
             raise exc from None
@@ -1637,10 +1636,11 @@ class Scheduler:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
             LOG.error(f'Suite shutting down - {reason}')
-        elif isinstance(reason, SuiteConfigError):
-            LOG.error(f'{SuiteConfigError.__name__}: {reason}')
-        elif isinstance(reason, PlatformLookupError):
-            LOG.error(f'{PlatformLookupError.__name__}: {reason}')
+        elif isinstance(reason, CylcError):
+            LOG.error(
+                f"Suite shutting down - {reason.__class__.__name__}: {reason}")
+            if cylc.flow.flags.debug:
+                LOG.exception(reason)
         else:
             LOG.exception(reason)
             if str(reason):
