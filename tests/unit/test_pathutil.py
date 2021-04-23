@@ -213,12 +213,12 @@ def test_make_workflow_run_tree(
                 'share': '$DEE/cylc-run/workflow3/share'})
     ], ids=["1", "2", "3"])
 def test_get_dirs_to_symlink(workflow, install_target, mocked_glbl_cfg,
-        output, mock_glbl_cfg, tmp_path):
-    os.environ['DEE'] = f"{tmp_path}"  # Ensures dirs returned are unexpanded
+                             output, mock_glbl_cfg, tmp_path, monkeypatch):
+    # Using env variable 'DEE' to ensure dirs returned are unexpanded
+    monkeypatch.setenv('DEE', str(tmp_path))
     mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', mocked_glbl_cfg)
     dirs = get_dirs_to_symlink(install_target, workflow)
     assert dirs == output
-    os.environ.pop('DEE')
 
 
 @patch('os.path.expandvars')
@@ -236,6 +236,7 @@ def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
         'share': '$DEE/workflow3/share'}
     mocked_get_workflow_run_dir.return_value = "rund"
     mocked_expandvars.return_value = "expanded"
+    mocked_make_symlink.return_value = True
     make_localhost_symlinks('rund', 'workflow')
     mocked_make_symlink.assert_has_calls([
         call('expanded', 'rund'),

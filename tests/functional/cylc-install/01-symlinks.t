@@ -41,7 +41,7 @@ TEST_NAME="${TEST_NAME_BASE}-symlinks-created"
 make_rnd_workflow
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --directory="${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 
 TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
@@ -82,7 +82,7 @@ TEST_NAME="${TEST_NAME_BASE}-no-symlinks-created"
 make_rnd_workflow
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --no-symlink-dirs --directory="${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 
 

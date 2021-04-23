@@ -53,7 +53,7 @@ ${RND_WORKFLOW_RUNDIR}/
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE}
 __OUT__
 popd || exit 1
 purge_rnd_workflow
@@ -87,7 +87,7 @@ ${RND_WORKFLOW_RUNDIR}/
 __OUT__
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE}
 __OUT__
 popd || exit 1
 purge_rnd_workflow

@@ -69,6 +69,11 @@ version control information on installation of a workflow.
 
 ### Fixes
 
+[#4193](https://github.com/cylc/cylc-flow/pull/4193) - Standard `cylc install`
+now correctly installs from directories with a `.` in the name. Symlink dirs
+now correctly expands environment variables on the remote. Fixes minor cosmetic
+bugs.
+
 [#4199](https://github.com/cylc/cylc-flow/pull/4199) -
 `cylc validate` and `cylc run` now check task/family names in the `[runtime]`
 section for validity.
@@ -77,7 +82,6 @@ section for validity.
 a workflow that uses the deprecated `suite.rc` filename would symlink `flow.cylc`
 to the `suite.rc` in the source dir instead of the run dir. Also fixes a couple
 of other, small bugs.
-
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b1 (<span actions:bind='release-date'>Released 2021-04-21</span>)__

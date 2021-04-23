@@ -1079,8 +1079,8 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
             f"An error occurred when copying files from {source} to {rundir}")
         reinstall_log.warning(f" Error: {stderr}")
     check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
-    reinstall_log.info(f'REINSTALLED {named_run} from {source} -> {rundir}')
-    print(f'REINSTALLED {named_run} from {source} -> {rundir}')
+    reinstall_log.info(f'REINSTALLED {named_run} from {source}')
+    print(f'REINSTALLED {named_run} from {source}')
     _close_install_log(reinstall_log)
     return
 
@@ -1142,11 +1142,11 @@ def install_workflow(
             " name, using the --run-name option.")
     check_nested_run_dirs(rundir, flow_name)
     symlinks_created = {}
-    sub_dir = flow_name
+    named_run = flow_name
     if run_num:
-        sub_dir = os.path.join(sub_dir, f'run{run_num}')
+        named_run = os.path.join(named_run, f'run{run_num}')
     if not no_symlinks:
-        symlinks_created = make_localhost_symlinks(rundir, sub_dir)
+        symlinks_created = make_localhost_symlinks(rundir, named_run)
     install_log = _get_logger(rundir, 'cylc-install')
     if not no_symlinks and bool(symlinks_created) is True:
         for src, dst in symlinks_created.items():
@@ -1185,8 +1185,8 @@ def install_workflow(
         raise WorkflowFilesError(
             "Source directory between runs are not consistent.")
     # check source link matches the source symlink from workflow dir.
-    install_log.info(f'INSTALLED {sub_dir} from {source} -> {rundir}')
-    print(f'INSTALLED {sub_dir} from {source} -> {rundir}')
+    install_log.info(f'INSTALLED {named_run} from {source}')
+    print(f'INSTALLED {named_run} from {source}')
     _close_install_log(install_log)
     return source, rundir, flow_name
 
@@ -1295,7 +1295,7 @@ def check_flow_file(
         if flow_file_path.is_symlink():
             # Symlink broken or points elsewhere - replace
             flow_file_path.unlink()
-        flow_file_path.symlink_to(suite_rc_path)
+        flow_file_path.symlink_to(WorkflowFiles.SUITE_RC)
         if logger:
             logger.warning(f'{depr_msg}. Symlink created.')
         return flow_file_path
@@ -1354,7 +1354,7 @@ def link_runN(latest_run: Union[Path, str]):
     latest_run = Path(latest_run)
     run_n = Path(latest_run.parent, WorkflowFiles.RUN_N)
     try:
-        run_n.symlink_to(latest_run.relative_to(run_n.parent))
+        run_n.symlink_to(latest_run.name)
     except OSError:
         pass
 

@@ -163,7 +163,7 @@ def make_localhost_symlinks(rund, named_sub_dir):
 
 def get_dirs_to_symlink(install_target, flow_name):
     """Returns dictionary of directories to symlink from glbcfg.
-        Note the paths should remain unexpanded, to be expanded on the remote.
+       Note the paths should remain unexpanded, to be expanded on the remote.
     """
     dirs_to_symlink = {}
     symlink_conf = glbl_cfg().get(['symlink dirs'])

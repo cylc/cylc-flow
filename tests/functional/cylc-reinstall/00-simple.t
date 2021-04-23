@@ -26,11 +26,11 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 run_ok "basic-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1" "${REINSTALL_LOG}"
+grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
 
 popd || exit 1
 purge_rnd_workflow
@@ -42,10 +42,10 @@ pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1/flow.cylc"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1" "${REINSTALL_LOG}"
+grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
 popd || exit 1
 purge_rnd_workflow
 
@@ -58,10 +58,10 @@ touch suite.rc
 run_ok "${TEST_NAME}" cylc install
 run_ok "${TEST_NAME}-reinstall-suite.rc" cylc reinstall "${RND_WORKFLOW_NAME}/run1/suite.rc"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1" "${REINSTALL_LOG}"
+grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
 popd || exit 1
 purge_rnd_workflow
 
@@ -71,11 +71,11 @@ make_rnd_workflow
 pushd "${TMPDIR}" || exit 1
 run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}/run1
+INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 contains_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
-REINSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}/run1
+REINSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 popd || exit 1
 purge_rnd_workflow
@@ -88,14 +88,14 @@ rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 # test symlink not made in source dir
 exists_fail "flow.cylc"
 # test symlink correctly made in run dir
 pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
 exists_ok "flow.cylc"
-if [[ $(readlink "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc") == "${RND_WORKFLOW_RUNDIR}/run1/suite.rc" ]] ; then
+if [[ $(readlink "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc") == "suite.rc" ]] ; then
     ok "symlink.suite.rc"
 else
     fail "symlink.suite.rc"
@@ -106,7 +106,7 @@ grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Sym
 rm -rf flow.cylc
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 exists_ok "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc"
-if [[ $(readlink "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc") == "${RND_WORKFLOW_RUNDIR}/run1/suite.rc" ]] ; then
+if [[ $(readlink "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc") == "suite.rc" ]] ; then
     ok "symlink.suite.rc"
 else
     fail "symlink.suite.rc"
@@ -121,13 +121,13 @@ TEST_NAME="${TEST_NAME_BASE}-no-args"
 make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}/run1
+INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
 touch "${RND_WORKFLOW_SOURCE}/new_file"
 run_ok "${TEST_NAME}-reinstall" cylc reinstall
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1" "${REINSTALL_LOG}"
+grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
 exists_ok new_file
 popd || exit 1
 purge_rnd_workflow
@@ -138,13 +138,13 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}-install" cylc install --no-run-name -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}
+INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE}
 __OUT__
 pushd "${RND_WORKFLOW_RUNDIR}" || exit 1
 touch "${RND_WORKFLOW_SOURCE}/new_file"
 run_ok "${TEST_NAME}-reinstall" cylc reinstall
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}" "${REINSTALL_LOG}"
+grep_ok "REINSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
 exists_ok new_file
 popd || exit 1
 popd || exit 1
