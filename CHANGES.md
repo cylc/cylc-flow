@@ -42,11 +42,6 @@ Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/p
 due to being a seldom-used feature. Workflows can still be restarted from the
 last run, or reflow can be used to achieve the same result.
 
-## 8.0b2 (REPLACE THIS LINE WITH THE CORRECT RELEASE HEADER)
-
-[#4174](https://github.com/cylc/cylc-flow/pull/4174) - terminology: replace
-"suite" with "workflow".
-
 <!-- The topmost release date is automatically updated by GitHub Actions. When
 creating a new release entry be sure to copy & paste the span tag with the
 `actions:bind` attribute, which is used by a regex to find the text to be
@@ -56,6 +51,9 @@ ones in. -->
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-??-??</span>)__
 
 ### Enhancements
+
+[#4174](https://github.com/cylc/cylc-flow/pull/4174) - Terminology: replace
+"suite" with "workflow".
 
 [#4177](https://github.com/cylc/cylc-flow/pull/4177) - Remove obsolete
 configuration items from `global.cylc[platforms][<platform name>]`:
