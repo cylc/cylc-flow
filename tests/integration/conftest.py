@@ -25,14 +25,11 @@ from typing import List, TYPE_CHECKING
 import pytest
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import platform_from_name
 from cylc.flow.rundb import CylcWorkflowDAO
 
-from .utils import (
-    _expanduser,
-    _rm_if_empty
-)
+from .utils import _rm_if_empty
 from .utils.flow_tools import (
     _make_flow,
     _make_scheduler,
@@ -82,11 +79,9 @@ def _pytest_passed(request):
 
 
 @pytest.fixture(scope='session')
-def run_dir(request):
+def run_dir():
     """The cylc run directory for this host."""
-    path = _expanduser(
-        platform_from_name()['run directory']
-    )
+    path = Path(get_workflow_run_dir(''))
     path.mkdir(exist_ok=True)
     yield path
 

@@ -18,6 +18,7 @@
 import re
 
 from itertools import product
+from typing import Any, Dict, Set
 
 from metomi.isodatetime.data import Calendar
 
@@ -848,8 +849,7 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :cylc:conf:`global.cylc
-                [platforms][<platform name>]work directory`).
+                :cylc:conf:`global.cylc[symlink dirs]`).
 
                 .. note::
 
@@ -1534,7 +1534,7 @@ def upg(cfg, descr):
                 )
 
 
-def upgrade_graph_section(cfg, descr):
+def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     """Upgrade Cylc 7 `[scheduling][dependencies][X]graph` format to
     `[scheduling][graph]X`."""
     # Parsec upgrader cannot do this type of move
@@ -1548,23 +1548,25 @@ def upgrade_graph_section(cfg, descr):
                     f'because {msg_new[:-1]} already exists.'
                 )
             else:
-                keys = set()
+                keys: Set[str] = set()
                 cfg['scheduling'].setdefault('graph', {})
                 cfg['scheduling']['graph'].update(
                     cfg['scheduling'].pop('dependencies')
                 )
-                graphdict = cfg['scheduling']['graph']
+                graphdict: Dict[str, Any] = cfg['scheduling']['graph']
                 for key, value in graphdict.copy().items():
                     if isinstance(value, dict) and 'graph' in value:
                         graphdict[key] = value['graph']
                         keys.add(key)
+                    elif key == 'graph' and isinstance(value, str):
+                        graphdict[key] = value
+                        keys.add(key)
                 if keys:
-                    keys = ', '.join(sorted(keys))
                     LOG.warning(
                         'deprecated graph items were automatically upgraded '
                         f'in "{descr}":\n'
                         f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
-                        f'       {keys}'
+                        f"       {', '.join(sorted(keys))}"
                     )
     except KeyError:
         pass

@@ -66,7 +66,8 @@ purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test cylc install succeeds if suite.rc file in source dir
-TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
+# See also tests/functional/deprecations/03-suiterc.t
+TEST_NAME="${TEST_NAME_BASE}-suite.rc"
 make_rnd_workflow
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
@@ -80,11 +81,10 @@ exists_fail "flow.cylc"
 # test symlink correctly made in run dir
 pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
 exists_ok "flow.cylc"
-if [[ $(readlink "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc") == "${RND_WORKFLOW_RUNDIR}/run1/suite.rc" ]] ; then
-    ok "symlink.suite.rc"
-else
-    fail "symlink.suite.rc"
-fi
+
+TEST_NAME="${TEST_NAME_BASE}-suite.rc-flow.cylc-readlink"
+readlink "flow.cylc" > "${TEST_NAME}.out"
+cmp_ok "${TEST_NAME}.out" <<< "${RND_WORKFLOW_RUNDIR}/run1/suite.rc"
 
 INSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*.log')"
 grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${INSTALL_LOG}"

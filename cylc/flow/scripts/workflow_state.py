@@ -53,6 +53,7 @@ import os
 import sqlite3
 import sys
 from time import sleep
+from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, UserInputError
 import cylc.flow.flags
@@ -62,10 +63,12 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.pathutil import expand_path
-from cylc.flow.platforms import get_platform
+from cylc.flow.pathutil import expand_path, get_workflow_run_dir
 
 from metomi.isodatetime.parsers import TimePointParser
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 class WorkflowPoller(Poller):
@@ -121,7 +124,7 @@ class WorkflowPoller(Poller):
             self.args['status'], self.args['message'])
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(__doc__)
 
     parser.add_option(
@@ -139,11 +142,6 @@ def get_option_parser():
              "cycle point to check task states for. "
              "Shorthand for --point=$CYLC_TASK_CYCLE_POINT",
         action="store_true", dest="use_task_point", default=False)
-
-    parser.add_option(
-        "--template", metavar="TEMPLATE",
-        help="Remote cyclepoint template (IGNORED - this is now determined "
-             "automatically).", action="store", dest="template")
 
     parser.add_option(
         "-d", "--run-dir",
@@ -169,7 +167,7 @@ def get_option_parser():
     parser.add_option(
         "-S", "--status",
         help="Specify a particular status or triggering condition to "
-             "check for. " + conds + states,
+             f"check for. {conds}{states}",
         action="store", dest="status", default=None)
 
     parser.add_option(
@@ -183,7 +181,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser, remove_opts=["--db"])
-def main(parser, options, workflow):
+def main(parser: COP, options: 'Values', workflow: str) -> None:
     if options.use_task_point and options.cycle:
         raise UserInputError(
             "cannot specify a cycle point and use environment variable")
@@ -197,10 +195,6 @@ def main(parser, options, workflow):
     if options.offset and not options.cycle:
         raise UserInputError(
             "You must target a cycle point to use an offset")
-
-    if options.template:
-        print("WARNING: ignoring --template (no longer needed)",
-              file=sys.stderr)
 
     # Attempt to apply specified offset to the targeted cycle
     if options.offset:
@@ -217,20 +211,22 @@ def main(parser, options, workflow):
     if (options.status and
             options.status not in TASK_STATUSES_ORDERED and
             options.status not in CylcWorkflowDBChecker.STATE_ALIASES):
-        raise UserInputError("invalid status '" + options.status + "'")
+        raise UserInputError(f"invalid status '{options.status}'")
 
     # this only runs locally
-    run_dir = expand_path(
-        options.run_dir or get_platform()['run directory']
-    )
+    if options.run_dir:
+        run_dir = expand_path(options.run_dir)
+    else:
+        run_dir = get_workflow_run_dir('')
 
-    pollargs = {'workflow': workflow,
-                'run_dir': run_dir,
-                'task': options.task,
-                'cycle': options.cycle,
-                'status': options.status,
-                'message': options.msg,
-                }
+    pollargs = {
+        'workflow': workflow,
+        'run_dir': run_dir,
+        'task': options.task,
+        'cycle': options.cycle,
+        'status': options.status,
+        'message': options.msg,
+    }
 
     spoller = WorkflowPoller("requested state",
                              options.interval,

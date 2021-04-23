@@ -20,7 +20,7 @@
 import io
 import os
 import pytest
-from tempfile import TemporaryFile, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 from unittest import mock
 
 from cylc.flow import __version__
@@ -82,7 +82,6 @@ def test_write(mocked_get_remote_workflow_run_dir, fixture_get_platform):
             "task_id": "baa",
             "workflow_name": "farm_noises",
             "work_d": "farm_noises/work_d",
-            "remote_workflow_d": "remote/workflow/dir",
             "uuid_str": "neigh",
             'environment': {'cow': '~/moo',
                             'sheep': '~baa/baa',
@@ -251,7 +250,7 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
     """Test the prelude section of job script file is correctly
     written.
     """
-    cylc.flow.flags.debug = True
+    monkeypatch.setattr('cylc.flow.flags.debug', True)
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
                 '\nexport CYLC_DEBUG=true'
@@ -277,16 +276,13 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
         assert(fake_file.getvalue() == expected)
 
 
-def test_write_workflow_environment(fixture_get_platform, monkeypatch):
+def test_write_workflow_environment(fixture_get_platform):
     """Test workflow environment is correctly written in jobscript"""
     # set some workflow environment conditions
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_workflow_work_dir",
-        lambda a, b: "work/dir"
-    )
+
     cylc.flow.flags.debug = True
     cylc.flow.flags.verbose = True
+
     workflow_env = {'CYLC_UTC': 'True',
                     'CYLC_CYCLING_MODE': 'integer'}
     job_file_writer = JobFileWriter()
@@ -296,52 +292,13 @@ def test_write_workflow_environment(fixture_get_platform, monkeypatch):
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
                 '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
                 ' export CYLC_WORKFLOW_RUN_DIR="cylc-run/farm_noises"\n   '
-                ' export CYLC_WORKFLOW_WORK_DIR_ROOT="work/dir"\n   '
                 ' export CYLC_WORKFLOW_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",
         }),
         "workflow_name": "farm_noises",
-        "remote_workflow_d": "remote/workflow/dir",
         "uuid_str": "neigh"
-    }
-    rund = "cylc-run/farm_noises"
-    with io.StringIO() as fake_file:
-        job_file_writer._write_workflow_environment(fake_file, job_conf, rund)
-        result = fake_file.getvalue()
-        assert result == expected
-
-
-def test_write_workflow_environment_no_remote_workflow_d(
-        fixture_get_platform, monkeypatch
-):
-    """Test workflow environment is correctly written in jobscript"""
-
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_workflow_work_dir",
-        lambda a, b: "work/dir"
-    )
-    cylc.flow.flags.debug = True
-    cylc.flow.flags.verbose = True
-    workflow_env = {'CYLC_UTC': 'True',
-                    'CYLC_CYCLING_MODE': 'integer'}
-    job_file_writer = JobFileWriter()
-    job_file_writer.set_workflow_env(workflow_env)
-    expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC WORKFLOW '
-                'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n    '
-                'export CYLC_UTC="True"\n    export TZ="UTC"\n\n    export '
-                'CYLC_WORKFLOW_RUN_DIR="cylc-run/farm_noises"\n    '
-                'export CYLC_WORKFLOW_WORK_DIR_ROOT="work/dir"\n   '
-                ' export CYLC_WORKFLOW_UUID="neigh"')
-    job_conf = {
-        "platform": fixture_get_platform({
-            "host": "localhost",
-        }),
-        "workflow_name": "farm_noises",
-        "uuid_str": "neigh",
-        "remote_workflow_d": ""
     }
     rund = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:

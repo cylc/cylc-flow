@@ -367,11 +367,7 @@ class TaskJobManager:
                     'job submission executable paths'] + SYSPATH:
                 cmd.append(f"--path={path}")
             cmd.append('--')
-            cmd.append(
-                get_remote_workflow_run_job_dir(
-                    platform, workflow
-                )
-            )
+            cmd.append(get_remote_workflow_run_job_dir(workflow))
             # Chop itasks into a series of shorter lists if it's very big
             # to prevent overloading of stdout and stderr pipes.
             itasks = sorted(itasks, key=lambda itask: itask.identity)
@@ -758,7 +754,7 @@ class TaskJobManager:
             if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
             cmd.append("--")
-            cmd.append(get_remote_workflow_run_job_dir(platform, workflow))
+            cmd.append(get_remote_workflow_run_job_dir(workflow))
             job_log_dirs = []
             if remote_mode:
                 cmd = construct_ssh_cmd(cmd, platform)
@@ -1036,7 +1032,7 @@ class TaskJobManager:
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
         job_file_path = get_remote_workflow_run_job_dir(
-            itask.platform, workflow, job_d, JOB_LOG_JOB)
+            workflow, job_d, JOB_LOG_JOB)
         return {
             'job_runner_name': itask.platform['job runner'],
             'job_runner_command_template': (
@@ -1057,8 +1053,6 @@ class TaskJobManager:
             'param_var': itask.tdef.param_var,
             'post-script': scripts[2],
             'pre-script': scripts[0],
-            'remote_workflow_d': itask.platform[
-                'workflow definition directory'],
             'script': scripts[1],
             'submit_num': itask.submit_num,
             'flow_label': itask.flow_label,

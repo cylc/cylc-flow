@@ -33,6 +33,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.scripts.clean import get_option_parser as _clean_GOP
 from cylc.flow.workflow_files import (
     WorkflowFiles,
+    check_flow_file,
     check_nested_run_dirs,
     get_workflow_source_dir,
     reinstall_workflow, search_install_source_dirs)
@@ -41,39 +42,16 @@ from cylc.flow.workflow_files import (
 CleanOpts = Options(_clean_GOP())
 
 
-@pytest.fixture
-def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """Fixture that patches the cylc-run dir to the tests's {tmp_path}/cylc-run
-    and optionally creates a workflow run dir inside.
-
-    Args:
-        reg: Workflow name.
-    """
-    def inner(reg: Optional[str] = None) -> Path:
-        cylc_run_dir = tmp_path.joinpath('cylc-run')
-        cylc_run_dir.mkdir(exist_ok=True)
-        for module in ('workflow_files', 'pathutil'):
-            monkeypatch.setattr(f'cylc.flow.{module}.get_workflow_run_dir',
-                                lambda *a: cylc_run_dir.joinpath(*a))
-        if reg:
-            run_dir = cylc_run_dir.joinpath(reg)
-            run_dir.mkdir(parents=True, exist_ok=True)
-            run_dir.joinpath(WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
-            run_dir.joinpath(
-                WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
-            return run_dir
-        return cylc_run_dir
-    return inner
-
-
 @pytest.mark.parametrize(
     'path, expected',
     [('a/b/c', '/mock_cylc_dir/a/b/c'),
      ('/a/b/c', '/a/b/c')]
 )
-def test_get_cylc_run_abs_path(path, expected, monkeypatch):
-    monkeypatch.setattr('cylc.flow.pathutil.platform_from_name',
-                        lambda: {'run directory': '/mock_cylc_dir'})
+def test_get_cylc_run_abs_path(
+    path: str, expected: str,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', '/mock_cylc_dir')
     assert workflow_files.get_cylc_run_abs_path(path) == expected
 
 
@@ -700,3 +678,110 @@ def test_search_install_source_dirs_empty(mock_glbl_cfg: Callable):
     assert str(exc.value) == (
         "Cannot find workflow as 'global.cylc[install]source dirs' "
         "does not contain any paths")
+
+
+@pytest.mark.parametrize(
+    'flow_file_exists, suiterc_exists, expected_file',
+    [(True, False, WorkflowFiles.FLOW_FILE),
+     (True, True, WorkflowFiles.FLOW_FILE),
+     (False, True, WorkflowFiles.SUITE_RC)]
+)
+def test_check_flow_file(
+    flow_file_exists: bool, suiterc_exists: bool, expected_file: str,
+    tmp_path: Path
+) -> None:
+    """Test check_flow_file() returns the expected path.
+
+    Params:
+        flow_file_exists: Whether a flow.cylc file is found in the dir.
+        suiterc_exists: Whether a suite.rc file is found in the dir.
+        expected_file: Which file's path should get returned.
+    """
+    if flow_file_exists:
+        tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
+    if suiterc_exists:
+        tmp_path.joinpath(WorkflowFiles.SUITE_RC).touch()
+
+    assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
+
+
+@pytest.mark.parametrize(
+    'flow_file_target, suiterc_exists, err, expected_file',
+    [
+        pytest.param(
+            WorkflowFiles.SUITE_RC, True, None, WorkflowFiles.FLOW_FILE,
+            id="flow.cylc symlinked to suite.rc"
+        ),
+        pytest.param(
+            WorkflowFiles.SUITE_RC, False, WorkflowFilesError, None,
+            id="flow.cylc symlinked to non-existent suite.rc"
+        ),
+        pytest.param(
+            'other-path', True, None, WorkflowFiles.SUITE_RC,
+            id="flow.cylc symlinked to other file, suite.rc exists"
+        ),
+        pytest.param(
+            'other-path', False, WorkflowFilesError, None,
+            id="flow.cylc symlinked to other file, no suite.rc"
+        ),
+        pytest.param(
+            None, True, None, WorkflowFiles.SUITE_RC,
+            id="no flow.cylc, suite.rc exists"
+        ),
+        pytest.param(
+            None, False, WorkflowFilesError, None,
+            id="no flow.cylc, no suite.rc"
+        ),
+    ]
+)
+@pytest.mark.parametrize(
+    'symlink_suiterc_arg',
+    [pytest.param(False, id="symlink_suiterc=False "),
+     pytest.param(True, id="symlink_suiterc=True ")]
+)
+def test_check_flow_file_symlink(
+    flow_file_target: Optional[str],
+    suiterc_exists: bool,
+    err: Optional[Type[Exception]],
+    expected_file: Optional[str],
+    symlink_suiterc_arg: bool,
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test check_flow_file() when flow.cylc is a symlink or doesn't exist.
+
+    Params:
+        flow_file_target: Relative path of the flow.cylc symlink's target, or
+            None if the symlink doesn't exist.
+        suiterc_exists: Whether there is a suite.rc file in the dir.
+        err: Type of exception if expected to get raised.
+        expected_file: Which file's path should get returned, when
+            symlink_suiterc_arg is FALSE (otherwise it will always be
+            flow.cylc, assuming no exception occurred).
+        symlink_suiterc_arg: Value of the symlink_suiterc arg passed to
+            check_flow_file().
+    """
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
+    suiterc = tmp_path.joinpath(WorkflowFiles.SUITE_RC)
+    tmp_path.joinpath('other-path').touch()
+    if suiterc_exists:
+        suiterc.touch()
+    if flow_file_target:
+        flow_file.symlink_to(flow_file_target)
+    log_msg = (
+        f'The filename "{WorkflowFiles.SUITE_RC}" is deprecated '
+        f'in favour of "{WorkflowFiles.FLOW_FILE}"')
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+
+    if err:
+        with pytest.raises(err):
+            check_flow_file(tmp_path, symlink_suiterc_arg)
+    else:
+        assert expected_file is not None  # otherwise test is wrong
+        result = check_flow_file(tmp_path, symlink_suiterc_arg)
+        if symlink_suiterc_arg is True:
+            assert flow_file.samefile(suiterc)
+            expected_file = WorkflowFiles.FLOW_FILE
+            if flow_file_target != WorkflowFiles.SUITE_RC:
+                log_msg = f'{log_msg}. Symlink created.'
+        assert result == tmp_path.joinpath(expected_file)
+        assert caplog.messages == [log_msg]

@@ -26,7 +26,7 @@ the order of configuration items, and it sees any include-file content
 after inlining has occurred.
 
 Files in the workflow bin directory and other sub-directories of the
-workflow definition directory are not currently differenced."""
+run directory are not currently differenced."""
 
 import sys
 

@@ -22,7 +22,6 @@ Use the fixtures provided in the conftest instead.
 """
 
 import asyncio
-from pathlib import Path
 
 
 def _rm_if_empty(path):
@@ -57,17 +56,3 @@ async def _poll_file(path, timeout=2, step=0.1, exists=True):
         if elapsed > timeout:
             raise Exception(f'Timeout waiting for file creation: {path}')
     return True
-
-
-def _expanduser(path):
-    """Expand $HOME and ~ in paths.
-
-    This code may well become obsolete after job platforms work has been
-    merged.
-
-    """
-    path = str(path)
-    path = path.replace('$HOME', '~')
-    path = path.replace('${HOME}', '~')
-    path = Path(path).expanduser()
-    return path

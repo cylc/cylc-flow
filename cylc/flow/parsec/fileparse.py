@@ -95,6 +95,10 @@ _TRIPLE_QUOTE = {
     '"""': (_SINGLE_LINE_DOUBLE, _MULTI_LINE_DOUBLE),
 }
 
+_UNCLOSED_MULTILINE = re.compile(
+    r'(?<![\w>])\[.*\]'
+)
+
 
 def _concatenate(lines):
     """concatenate continuation lines"""
@@ -460,7 +464,19 @@ def parse(fpath, output_fname=None, template_vars=None):
                 addict(config, key, val, parents, index)
             else:
                 # no match
+                help_lines = None
+                if 'val' in locals() and _UNCLOSED_MULTILINE.search(val):
+                    # this might be an unclosed multiline string
+                    # provide a helpful error message
+                    key_name = ''.join(
+                        [f'[{parent}]' for parent in parents]
+                    ) + key
+                    help_lines = [f'Did you forget to close {key_name}?']
                 raise FileParseError(
-                    'Invalid line', index=index, line=line)
+                    'Invalid line',
+                    index=index,
+                    line=line,
+                    help_lines=help_lines
+                )
 
     return config

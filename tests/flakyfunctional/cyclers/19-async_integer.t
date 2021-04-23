@@ -41,10 +41,9 @@ workflow_run_ok "${TEST_NAME}" \
 if [[ -f "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out" ]]; then
     TEST_NAME="${TEST_NAME_BASE}-find"
     WORKFLOW_RUN_DIR="${HOME}/cylc-run/${WORKFLOW_NAME}"
-    WORKFLOW_WRK_DIR="$(cylc config -i '[platforms][localhost]work directory')/${WORKFLOW_NAME}"
     {
         (cd "${WORKFLOW_RUN_DIR}" && find 'log/job' -type f)
-        (cd "${WORKFLOW_WRK_DIR}" && find 'work' -type f)
+        (cd "${WORKFLOW_RUN_DIR}" && find 'work' -type f)
     } | sort -V >"${TEST_NAME}"
     cmp_ok "${TEST_NAME}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out"
 fi

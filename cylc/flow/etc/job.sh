@@ -71,9 +71,8 @@ cylc__job__main() {
     echo
     # Derived environment variables
     export CYLC_WORKFLOW_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/workflow"
-    CYLC_WORKFLOW_WORK_DIR_ROOT="${CYLC_WORKFLOW_WORK_DIR_ROOT:-${CYLC_WORKFLOW_RUN_DIR}}"
-    export CYLC_WORKFLOW_SHARE_DIR="${CYLC_WORKFLOW_WORK_DIR_ROOT}/share"
-    export CYLC_WORKFLOW_WORK_DIR="${CYLC_WORKFLOW_WORK_DIR_ROOT}/work"
+    export CYLC_WORKFLOW_SHARE_DIR="${CYLC_WORKFLOW_RUN_DIR}/share"
+    export CYLC_WORKFLOW_WORK_DIR="${CYLC_WORKFLOW_RUN_DIR}/work"
     CYLC_TASK_CYCLE_POINT="$(cut -d '/' -f 1 <<<"${CYLC_TASK_JOB}")"
     CYLC_TASK_NAME="$(cut -d '/' -f 2 <<<"${CYLC_TASK_JOB}")"
     export CYLC_TASK_NAME CYLC_TASK_CYCLE_POINT ISODATETIMEREF

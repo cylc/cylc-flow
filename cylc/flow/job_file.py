@@ -24,9 +24,7 @@ from textwrap import dedent
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
-from cylc.flow.pathutil import (
-    get_remote_workflow_run_dir,
-    get_remote_workflow_work_dir)
+from cylc.flow.pathutil import get_remote_workflow_run_dir
 from cylc.flow.config import interpolate_template, ParamExpandError
 
 
@@ -56,11 +54,8 @@ class JobFileWriter:
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
-        platform = job_conf['platform']
         tmp_name = os.path.expandvars(local_job_file_path + '.tmp')
-        run_d = get_remote_workflow_run_dir(
-            platform, job_conf['workflow_name']
-        )
+        run_d = get_remote_workflow_run_dir(job_conf['workflow_name'])
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
@@ -203,14 +198,7 @@ class JobFileWriter:
 
         handle.write('\n')
         # override and write task-host-specific workflow variables
-        work_d = get_remote_workflow_work_dir(
-            job_conf["platform"], job_conf['workflow_name'])
         handle.write('\n    export CYLC_WORKFLOW_RUN_DIR="%s"' % run_d)
-        if work_d != run_d:
-            # Note: not an environment variable, but used by job.sh
-            handle.write(
-                '\n    export CYLC_WORKFLOW_WORK_DIR_ROOT="%s"' % work_d
-            )
         handle.write(
             '\n    export CYLC_WORKFLOW_UUID="%s"' % job_conf['uuid_str'])
 

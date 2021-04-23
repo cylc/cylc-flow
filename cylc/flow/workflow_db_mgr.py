@@ -563,7 +563,7 @@ class WorkflowDatabaseManager:
                 f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def restart_check(self):
+    def restart_check(self) -> bool:
         """Check & vacuum the runtime DB for a restart.
 
         Raises ServiceFileError if DB is incompatible.
@@ -575,8 +575,7 @@ class WorkflowDatabaseManager:
         except FileNotFoundError:
             return False
         except ServiceFileError as exc:
-            raise ServiceFileError(
-                f"Cannot restart - {exc}")
+            raise ServiceFileError(f"Cannot restart - {exc}")
         pri_dao = self.get_pri_dao()
         try:
             pri_dao.vacuum()

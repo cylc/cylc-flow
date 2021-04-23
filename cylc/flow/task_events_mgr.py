@@ -731,7 +731,7 @@ class TaskEventsManager():
         # Remote source
         cmd.append("%s:%s/" % (
             get_host_from_platform(platform),
-            get_remote_workflow_run_job_dir(platform, schd_ctx.workflow)))
+            get_remote_workflow_run_job_dir(schd_ctx.workflow)))
         # Local target
         cmd.append(get_workflow_run_job_dir(schd_ctx.workflow) + "/")
         self.proc_pool.put_command(

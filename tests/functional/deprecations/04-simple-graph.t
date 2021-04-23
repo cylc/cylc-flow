@@ -14,22 +14,29 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Test absence of HOME env var (https://github.com/cylc/cylc-flow/pull/2895)
+#-------------------------------------------------------------------------------
+# Test deprecation notice for Cylc 7 simple graph (no recurrence section)
 
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 2
 
-# shellcheck disable=SC2016
-create_test_global_config '' '
-[symlink dirs]
-    [[localhost]]
-        run = $HOME/dr-malcolm
-'
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
+[scheduler]
+    allow implicit tasks = True
+[scheduling]
+    [[dependencies]]
+        graph = foo
+__FLOW__
 
-run_ok "${TEST_NAME_BASE}" \
-    env -u HOME \
-    cylc config --item='[symlink dirs][localhost]run'
-cmp_ok "${TEST_NAME_BASE}.stdout" <<<"\$HOME/dr-malcolm"
-cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
-exit
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_ok "$TEST_NAME" cylc validate -v "$WORKFLOW_NAME"
+
+TEST_NAME="${TEST_NAME_BASE}-cmp"
+cylc validate "$WORKFLOW_NAME" 2> 'val.out'
+cmp_ok val.out <<__END__
+WARNING - deprecated graph items were automatically upgraded in "workflow definition":
+	 * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
+	       graph
+__END__
+
+purge

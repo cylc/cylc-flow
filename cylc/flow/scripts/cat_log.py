@@ -425,7 +425,7 @@ def main(parser, options, *args, color=False):
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
             logpath = os.path.normpath(get_remote_workflow_run_job_dir(
-                platform, workflow_name, point, task, options.submit_num,
+                workflow_name, point, task, options.submit_num,
                 options.filename))
             tail_tmpl = platform["tail command template"]
             # Reinvoke the cat-log command on the remote account.

@@ -291,7 +291,7 @@ def scheduler_cli(parser, options, reg):
     #       then shutdown async generators and closes the event loop
     scheduler = Scheduler(reg, options)
     asyncio.run(
-        _setup(parser, options, reg, scheduler)
+        _setup(scheduler)
     )
 
     # daemonize if requested
@@ -306,7 +306,7 @@ def scheduler_cli(parser, options, reg):
 
     # run the workflow
     ret = asyncio.run(
-        _run(parser, options, reg, scheduler)
+        _run(scheduler)
     )
 
     # exit
@@ -331,7 +331,7 @@ def _distribute(host):
         sys.exit(0)
 
 
-async def _setup(parser, options, reg, scheduler):
+async def _setup(scheduler: Scheduler) -> None:
     """Initialise the scheduler."""
     try:
         await scheduler.install()
@@ -339,7 +339,7 @@ async def _setup(parser, options, reg, scheduler):
         sys.exit(exc)
 
 
-async def _run(parser, options, reg, scheduler):
+async def _run(scheduler: Scheduler) -> int:
     """Run the workflow and handle exceptions."""
     # run cylc run
     ret = 0
