@@ -31,7 +31,7 @@ mkdir .git .svn dir1 dir2-be-removed
 touch .git/file1 .svn/file1 dir1/file1 dir2-be-removed/file1 file1 file2
 run_ok "${TEST_NAME}" cylc install
 
-tree_excludes='*.log|01-file-transfer*|rose-workflow*.conf|opt'
+tree_excludes='*.log|01-file-transfer*|rose-suite*.conf|opt'
 
 tree -a -v -I "${tree_excludes}" --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/run1" > '01-file-transfer-basic-tree.out'
 
