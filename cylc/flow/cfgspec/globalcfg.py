@@ -424,22 +424,6 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('job runner command template', VDR.V_STRING)
             Conf('shell', VDR.V_STRING, '/bin/bash')
-            Conf('run directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
-                The directory in which to install workflows.
-            ''')
-            Conf('work directory', VDR.V_STRING, '$HOME/cylc-run', desc='''
-                The top level for suite work and share directories. Can contain
-                ``$HOME`` or ``$USER`` but not other environment variables (the
-                item cannot actually be evaluated by the shell on HOST before
-                use, but the remote home directory is where ``rsync`` and
-                ``ssh`` naturally land, and the remote username is known by the
-                suite server program).
-
-                Example::
-
-                   /nfs/data/$USER/cylc-run
-            ''')
-            Conf('suite definition directory', VDR.V_STRING)
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
                  options=[meth.value for meth in CommsMeth], desc='''
@@ -840,30 +824,25 @@ class GlobalConfig(ParsecConfig):
     CONF_BASENAME: str = "global.cylc"
     DEFAULT_SITE_CONF_PATH: str = os.path.join(os.sep, 'etc', 'cylc')
     USER_CONF_PATH: str = os.path.join(
-        os.getenv('HOME') or get_user_home(),
-        '.cylc',
-        'flow'
+        os.getenv('HOME') or get_user_home(), '.cylc', 'flow'
     )
     VERSION_HIERARCHY: List[str] = get_version_hierarchy(CYLC_VERSION)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
+        site_conf_root = (
+            os.getenv('CYLC_SITE_CONF_PATH') or self.DEFAULT_SITE_CONF_PATH
+        )
         self.conf_dir_hierarchy: List[Tuple[str, str]] = [
             *[
-                (
-                    upgrader.SITE_CONFIG,
-                    os.path.join(
-                        (
-                            os.getenv('CYLC_SITE_CONF_PATH')
-                            or self.DEFAULT_SITE_CONF_PATH
-                        ),
-                        'flow',
-                        ver
-                    )
-                )
+                (upgrader.SITE_CONFIG,
+                 os.path.join(site_conf_root, 'flow', ver))
                 for ver in self.VERSION_HIERARCHY
             ],
-            *[(upgrader.USER_CONFIG, os.path.join(self.USER_CONF_PATH, ver))
-              for ver in self.VERSION_HIERARCHY]
+            *[
+                (upgrader.USER_CONFIG,
+                 os.path.join(self.USER_CONF_PATH, ver))
+                for ver in self.VERSION_HIERARCHY
+            ]
         ]
         super().__init__(*args, **kwargs)
 

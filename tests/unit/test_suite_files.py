@@ -38,38 +38,16 @@ from cylc.flow.suite_files import (
 CleanOpts = Options(_clean_GOP())
 
 
-@pytest.fixture
-def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """Fixture that patches the cylc-run dir to the tests's {tmp_path}/cylc-run
-    and optionally creates a workflow run dir inside.
-
-    Args:
-        reg: Workflow name.
-    """
-    def inner(reg: Optional[str] = None) -> Path:
-        cylc_run_dir = tmp_path.joinpath('cylc-run')
-        cylc_run_dir.mkdir(exist_ok=True)
-        for module in ('suite_files', 'pathutil'):
-            monkeypatch.setattr(f'cylc.flow.{module}.get_workflow_run_dir',
-                                lambda *a: cylc_run_dir.joinpath(*a))
-        if reg:
-            run_dir = cylc_run_dir.joinpath(reg)
-            run_dir.mkdir(parents=True, exist_ok=True)
-            run_dir.joinpath(SuiteFiles.FLOW_FILE).touch(exist_ok=True)
-            run_dir.joinpath(SuiteFiles.Service.DIRNAME).mkdir(exist_ok=True)
-            return run_dir
-        return cylc_run_dir
-    return inner
-
-
 @pytest.mark.parametrize(
     'path, expected',
     [('a/b/c', '/mock_cylc_dir/a/b/c'),
      ('/a/b/c', '/a/b/c')]
 )
-def test_get_cylc_run_abs_path(path, expected, monkeypatch):
-    monkeypatch.setattr('cylc.flow.pathutil.platform_from_name',
-                        lambda: {'run directory': '/mock_cylc_dir'})
+def test_get_cylc_run_abs_path(
+    path: str, expected: str,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', '/mock_cylc_dir')
     assert suite_files.get_cylc_run_abs_path(path) == expected
 
 

@@ -49,12 +49,20 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-??-??</span>)__
 
+### Enhancements
+
+[#4177](https://github.com/cylc/cylc-flow/pull/4177) - Remove obsolete
+configuration items from `global.cylc[platforms][<platform name>]`:
+`run directory`, `work directory` and `suite definition directory`. This
+functionality is now provided by `[symlink dirs]`.
+
 ### Fixes
 
 [#4180](https://github.com/cylc/cylc-flow/pull/4180) - Fix bug where installing
 a workflow that uses the deprecated `suite.rc` filename would symlink `flow.cylc`
 to the `suite.rc` in the source dir instead of the run dir. Also fixes a couple
 of other, small bugs.
+
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b1 (<span actions:bind='release-date'>Released 2021-04-21</span>)__

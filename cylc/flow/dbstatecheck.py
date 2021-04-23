@@ -19,6 +19,8 @@ import json
 import os
 import sqlite3
 import sys
+
+from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcSuiteDAO
 from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
@@ -55,9 +57,9 @@ class CylcSuiteDBChecker:
     }
 
     def __init__(self, rund, suite):
-        db_path = os.path.join(
-            os.path.expanduser(rund), suite, "log",
-            CylcSuiteDAO.DB_FILE_BASE_NAME)
+        db_path = expand_path(
+            rund, suite, "log", CylcSuiteDAO.DB_FILE_BASE_NAME
+        )
         if not os.path.exists(db_path):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
         self.conn = sqlite3.connect(db_path, timeout=10.0)

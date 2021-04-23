@@ -20,7 +20,7 @@
 import io
 import os
 import pytest
-from tempfile import TemporaryFile, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 from unittest import mock
 
 from cylc.flow import __version__
@@ -82,7 +82,6 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             "task_id": "baa",
             "suite_name": "farm_noises",
             "work_d": "farm_noises/work_d",
-            "remote_suite_d": "remote/suite/dir",
             "uuid_str": "neigh",
             'environment': {'cow': '~/moo',
                             'sheep': '~baa/baa',
@@ -277,16 +276,13 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
         assert(fake_file.getvalue() == expected)
 
 
-def test_write_suite_environment(fixture_get_platform, monkeypatch):
+def test_write_suite_environment(fixture_get_platform):
     """Test suite environment is correctly written in jobscript"""
     # set some suite environment conditions
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_suite_work_dir",
-        lambda a, b: "work/dir"
-    )
-    monkeypatch.setattr('cylc.flow.flags.debug', True)
-    monkeypatch.setattr('cylc.flow.flags.verbose', True)
+
+    cylc.flow.flags.debug = True
+    cylc.flow.flags.verbose = True
+
     suite_env = {'CYLC_UTC': 'True',
                  'CYLC_CYCLING_MODE': 'integer'}
     job_file_writer = JobFileWriter()
@@ -296,52 +292,13 @@ def test_write_suite_environment(fixture_get_platform, monkeypatch):
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
                 '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
                 ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n   '
-                ' export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
                 ' export CYLC_SUITE_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",
         }),
         "suite_name": "farm_noises",
-        "remote_suite_d": "remote/suite/dir",
         "uuid_str": "neigh"
-    }
-    rund = "cylc-run/farm_noises"
-    with io.StringIO() as fake_file:
-        job_file_writer._write_suite_environment(fake_file, job_conf, rund)
-        result = fake_file.getvalue()
-        assert result == expected
-
-
-def test_write_suite_environment_no_remote_suite_d(
-        fixture_get_platform, monkeypatch
-):
-    """Test suite environment is correctly written in jobscript"""
-
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_suite_work_dir",
-        lambda a, b: "work/dir"
-    )
-    monkeypatch.setattr('cylc.flow.flags.debug', True)
-    monkeypatch.setattr('cylc.flow.flags.verbose', True)
-    suite_env = {'CYLC_UTC': 'True',
-                 'CYLC_CYCLING_MODE': 'integer'}
-    job_file_writer = JobFileWriter()
-    job_file_writer.set_suite_env(suite_env)
-    expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC SUITE '
-                'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n    '
-                'export CYLC_UTC="True"\n    export TZ="UTC"\n\n    export '
-                'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    '
-                'export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
-                ' export CYLC_SUITE_UUID="neigh"')
-    job_conf = {
-        "platform": fixture_get_platform({
-            "host": "localhost",
-        }),
-        "suite_name": "farm_noises",
-        "uuid_str": "neigh",
-        "remote_suite_d": ""
     }
     rund = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:

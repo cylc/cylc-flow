@@ -198,7 +198,7 @@ class TaskRemoteMgr:
         if cylc.flow.flags.debug:
             cmd.append('--debug')
         cmd.append(str(install_target))
-        cmd.append(get_remote_suite_run_dir(platform, self.suite))
+        cmd.append(get_remote_suite_run_dir(self.suite))
         dirs_to_symlink = get_dirs_to_symlink(install_target, self.suite)
         for key, value in dirs_to_symlink.items():
             if value is not None:
@@ -234,7 +234,7 @@ class TaskRemoteMgr:
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
             cmd.append(install_target)
-            cmd.append(get_remote_suite_run_dir(platform, self.suite))
+            cmd.append(get_remote_suite_run_dir(self.suite))
             cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
             LOG.debug(
                 "Removing authentication keys and contact file "
@@ -348,7 +348,7 @@ class TaskRemoteMgr:
         install_target = platform['install target']
         self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_IN_PROGRESS
         src_path = get_workflow_run_dir(self.suite)
-        dst_path = get_remote_suite_run_dir(platform, self.suite)
+        dst_path = get_remote_suite_run_dir(self.suite)
         install_target = platform['install target']
         ctx = SubProcContext(
             'file-install',

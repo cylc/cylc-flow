@@ -28,7 +28,6 @@ import pytest
 from . import (
     _rm_if_empty,
     _poll_file,
-    _expanduser
 )
 
 
@@ -52,10 +51,3 @@ async def test_poll_file(tmp_path):
     await _poll_file(path, exists=False)
     path.touch()
     await _poll_file(path, exists=True)
-
-
-def test_expanduser():
-    """It should expand ~ and $HOME."""
-    assert _expanduser('a/~/b') == Path('a/~/b').expanduser()
-    assert _expanduser('a/$HOME/b') == Path('a/~/b').expanduser()
-    assert _expanduser('a/${HOME}/b') == Path('a/~/b').expanduser()

@@ -105,7 +105,6 @@
         <keyword>task parameters</keyword>
         <keyword>task event batch interval</keyword>
         <keyword>suite state polling</keyword>
-        <keyword>suite definition directory</keyword>
         <keyword>succeeded handler</keyword>
         <keyword>submitted handler</keyword>
         <keyword>submission timeout handler</keyword>

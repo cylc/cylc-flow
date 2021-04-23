@@ -731,7 +731,7 @@ class TaskEventsManager():
         # Remote source
         cmd.append("%s:%s/" % (
             get_host_from_platform(platform),
-            get_remote_suite_run_job_dir(platform, schd_ctx.suite)))
+            get_remote_suite_run_job_dir(schd_ctx.suite)))
         # Local target
         cmd.append(get_suite_run_job_dir(schd_ctx.suite) + "/")
         self.proc_pool.put_command(
