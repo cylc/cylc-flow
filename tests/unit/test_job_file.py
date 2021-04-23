@@ -24,7 +24,6 @@ from tempfile import NamedTemporaryFile
 from unittest import mock
 
 from cylc.flow import __version__
-import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.platforms import platform_from_name
 
@@ -276,13 +275,11 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
         assert(fake_file.getvalue() == expected)
 
 
-def test_write_workflow_environment(fixture_get_platform):
+def test_write_workflow_environment(fixture_get_platform, monkeypatch):
     """Test workflow environment is correctly written in jobscript"""
     # set some workflow environment conditions
-
-    cylc.flow.flags.debug = True
-    cylc.flow.flags.verbose = True
-
+    monkeypatch.setattr('cylc.flow.flags.debug', True)
+    monkeypatch.setattr('cylc.flow.flags.verbose', True)
     workflow_env = {'CYLC_UTC': 'True',
                     'CYLC_CYCLING_MODE': 'integer'}
     job_file_writer = JobFileWriter()

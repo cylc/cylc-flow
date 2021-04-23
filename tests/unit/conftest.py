@@ -41,14 +41,14 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         reg: Workflow name.
     """
     def inner(reg: Optional[str] = None) -> Path:
-        cylc_run_dir = tmp_path.joinpath('cylc-run')
+        cylc_run_dir = tmp_path / 'cylc-run'
         cylc_run_dir.mkdir(exist_ok=True)
         monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)
         if reg:
             run_dir = cylc_run_dir.joinpath(reg)
             run_dir.mkdir(parents=True, exist_ok=True)
-            run_dir.joinpath(WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
-            run_dir.joinpath(WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
+            (run_dir / WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
+            (run_dir / WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
             return run_dir
         return cylc_run_dir
     return inner
