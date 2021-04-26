@@ -687,17 +687,15 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
                 raise WorkflowFilesError(
                     f'Invalid Cylc symlink directory {path} -> {target}\n'
                     f'Expected target to end with "{expected_end}"')
-            # Remove <symlink_dir>/cylc-run/<reg>
-            target_cylc_run_dir = str(target).rsplit(str(reg), 1)[0]
-            target_reg_dir = Path(target_cylc_run_dir, reg)
-            if target_reg_dir.exists():
-                remove_dir_or_file(target_reg_dir)
-            # Remove empty parents
-            _remove_empty_reg_parents(reg, target_reg_dir)
+            # Remove <symlink_dir>/cylc-run/<reg>/<symlink>
+            if target.exists():
+                remove_dir_or_file(target)
+            # Remove empty parents of symlink up to <symlink_dir>/cylc-run/
+            _remove_empty_parents(target, Path(reg, name))
 
     if rm_dirs is None:
         remove_dir_and_target(run_dir)
-        _remove_empty_reg_parents(reg, run_dir)
+        _remove_empty_parents(run_dir, reg)
     else:
         for pattern in rm_dirs:
             for item in iglob(os.path.join(run_dir, pattern), recursive=True):
@@ -804,25 +802,30 @@ def _remote_clean_cmd(
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
 
 
-def _remove_empty_reg_parents(reg: str, path: Union[Path, str]) -> None:
-    """If reg is nested e.g. a/b/c, work our way up the tree, removing empty
-    parents only.
+def _remove_empty_parents(
+    path: Union[Path, str], tail: Union[Path, str]
+) -> None:
+    """Work our way up the tail of path, removing empty dirs only.
 
     Args:
-        reg: workflow name, e.g. a/b/c
-        path: path to this directory, e.g. /foo/bar/a/b/c
+        path: Absolute path to the directory, e.g. /foo/bar/a/b/c
+        tail: The tail of the path to work our way up, e.g. a/b/c
 
     Example:
-        _remove_empty_reg_parents('a/b/c', '/foo/bar/a/b/c') would remove
+        _remove_empty_parents('/foo/bar/a/b/c', 'a/b/c') would remove
         /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
         empty).
     """
-    reg_parts = Path(reg).parts
-    reg_depth = len(reg_parts) - 1
     path = Path(path)
     if not path.is_absolute():
-        raise ValueError('Path must be absolute')
-    for i in range(reg_depth):
+        raise ValueError('path must be absolute')
+    tail = Path(tail)
+    if tail.is_absolute():
+        raise ValueError('tail must not be an absolute path')
+    if not str(path).endswith(str(tail)):
+        raise ValueError(f"path '{path}' does not end with '{tail}'")
+    depth = len(tail.parts) - 1
+    for i in range(depth):
         parent = path.parents[i]
         if not parent.is_dir():
             continue

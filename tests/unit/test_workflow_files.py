@@ -440,6 +440,7 @@ def test_clean_broken_symlink_run_dir(
     tmp_path: Path, tmp_run_dir: Callable
 ) -> None:
     """Test clean() successfully remove a run dir that is a broken symlink."""
+    # Setup
     reg = 'foo/bar'
     run_dir: Path = tmp_run_dir(reg)
     target = tmp_path.joinpath('rabbow/cylc-run', reg)
@@ -447,10 +448,10 @@ def test_clean_broken_symlink_run_dir(
     shutil.rmtree(run_dir)
     run_dir.symlink_to(target)
     target.rmdir()
-
-    assert run_dir.parent.exists() is True
+    assert run_dir.parent.exists() is True  # cylc-run/foo should exist
+    # Test
     workflow_files.clean(reg, run_dir)
-    assert run_dir.parent.exists() is False
+    assert run_dir.parent.exists() is False  # cylc-run/foo should be gone
 
 
 def test_clean_bad_symlink_dir_wrong_type(
@@ -677,29 +678,53 @@ def test_remote_clean_cmd(
     assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
 
 
-def test_remove_empty_reg_parents(tmp_path):
+def test_remove_empty_parents(tmp_path: Path):
     """Test that _remove_empty_parents() doesn't remove parents containing a
     sibling."""
+    # -- Setup --
     reg = 'foo/bar/baz/qux'
     path = tmp_path.joinpath(reg)
     tmp_path.joinpath('foo/bar/baz').mkdir(parents=True)
+    # Note qux does not exist, but that shouldn't matter
     sibling_reg = 'foo/darmok'
     sibling_path = tmp_path.joinpath(sibling_reg)
     sibling_path.mkdir()
-    workflow_files._remove_empty_reg_parents(reg, path)
+    # -- Test --
+    workflow_files._remove_empty_parents(path, reg)
     assert tmp_path.joinpath('foo/bar').exists() is False
     assert tmp_path.joinpath('foo').exists() is True
-    # Also path must be absolute
-    with pytest.raises(ValueError) as exc:
-        workflow_files._remove_empty_reg_parents(
-            'foo/darmok', 'meow/foo/darmok')
-    assert 'Path must be absolute' in str(exc.value)
     # Check it skips non-existent dirs, and stops at the right place too
     tmp_path.joinpath('foo/bar').mkdir()
     sibling_path.rmdir()
-    workflow_files._remove_empty_reg_parents(reg, path)
+    workflow_files._remove_empty_parents(path, reg)
     assert tmp_path.joinpath('foo').exists() is False
     assert tmp_path.exists() is True
+
+
+@pytest.mark.parametrize(
+    'path, tail, exc_msg',
+    [
+        pytest.param(
+            'meow/foo/darmok', 'foo/darmok', "path must be absolute",
+            id="relative path"
+        ),
+        pytest.param(
+            '/meow/foo/darmok', '/foo/darmok',
+            "tail must not be an absolute path",
+            id="absolute tail"
+        ),
+        pytest.param(
+            '/meow/foo/darmok', 'foo/jalad',
+            "path '/meow/foo/darmok' does not end with 'foo/jalad'",
+            id="tail not in path"
+        )
+    ]
+)
+def test_remove_empty_parents_bad(path: str, tail: str, exc_msg: str):
+    """Test that _remove_empty_parents() fails appropriately with bad args."""
+    with pytest.raises(ValueError) as exc:
+        workflow_files._remove_empty_parents(path, tail)
+    assert exc_msg in str(exc.value)
 
 
 @pytest.mark.parametrize(
