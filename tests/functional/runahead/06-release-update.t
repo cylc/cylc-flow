@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,20 +19,20 @@
 # GitHub #1981
 . "$(dirname "$0")/test_header"
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" 'release-update'
+install_workflow "${TEST_NAME_BASE}" 'release-update'
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-cylc play --debug --no-detach "${SUITE_NAME}" 1>'out' 2>&1 &
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+cylc play --debug --no-detach "${WORKFLOW_NAME}" 1>'out' 2>&1 &
 CYLC_RUN_PID="$!"
-poll_suite_running
+poll_workflow_running
 YYYY="$(date +%Y)"
 NEXT1=$(( YYYY + 1 ))
-poll_grep_suite_log -F "spawned bar.${NEXT1}"
+poll_grep_workflow_log -F "spawned bar.${NEXT1}"
 
 # sleep a little to allow the datastore to update (`cylc dump` sees the
 # datastore) TODO can we avoid this flaky sleep somehow?
 sleep 10
-cylc dump -t "${SUITE_NAME}" | awk '{print $1 $2 $3}' >'log'
+cylc dump -t "${WORKFLOW_NAME}" | awk '{print $1 $2 $3}' >'log'
 cmp_ok 'log' - <<__END__
 bar,$YYYY,succeeded,
 bar,$NEXT1,waiting,
@@ -41,7 +41,7 @@ foo,$NEXT1,waiting,
 __END__
 
 run_ok "${TEST_NAME_BASE}-stop" \
-    cylc stop --max-polls=10 --interval=6 "${SUITE_NAME}"
+    cylc stop --max-polls=10 --interval=6 "${WORKFLOW_NAME}"
 if ! wait "${CYLC_RUN_PID}" 1>'/dev/null' 2>&1; then
     cat 'out' >&2
 fi

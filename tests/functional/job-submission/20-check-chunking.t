@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,22 +28,22 @@ create_test_global_config '' "
         max batch submit size = 2
 "
 
-install_suite
+install_workflow
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate \
     -s "CYLC_TEST_PLATFORM='$CYLC_TEST_PLATFORM'" \
-    "${SUITE_NAME}"
+    "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play \
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play \
     -s "CYLC_TEST_PLATFORM='$CYLC_TEST_PLATFORM'" \
     --debug \
     --no-detach \
     --reference-test \
-    "${SUITE_NAME}"
+    "${WORKFLOW_NAME}"
 
 grep_ok \
     "# will invoke in batches, sizes=\[2, 2, 1\]" \
-    "${SUITE_RUN_DIR}/log/suite/log"
+    "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # tidy up
 purge

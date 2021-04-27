@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,11 +19,11 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
-cd "${SUITE_RUN_DIR}" || exit 1
-run_ok "${TEST_NAME}" cylc search "${SUITE_NAME}" 'initial cycle point'
+cd "${WORKFLOW_RUN_DIR}" || exit 1
+run_ok "${TEST_NAME}" cylc search "${WORKFLOW_NAME}" 'initial cycle point'
 cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 
 FILE: ${PWD}/include/flow-scheduling.cylc

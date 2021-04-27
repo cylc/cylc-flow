@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -105,7 +105,7 @@ class TaskDef:
         "run_mode", "rtconfig", "start_point", "sequences",
         "used_in_offset_trigger", "max_future_prereq_offset",
         "sequential", "is_coldstart",
-        "suite_polling_cfg", "clocktrigger_offset", "expiration_offset",
+        "workflow_polling_cfg", "clocktrigger_offset", "expiration_offset",
         "namespace_hierarchy", "dependencies", "outputs", "param_var",
         "graph_children", "graph_parents",
         "external_triggers", "xtrig_labels", "name", "elapsed_times"]
@@ -128,7 +128,7 @@ class TaskDef:
         # some defaults
         self.max_future_prereq_offset = None
         self.sequential = False
-        self.suite_polling_cfg = {}
+        self.workflow_polling_cfg = {}
 
         self.clocktrigger_offset = None
         self.expiration_offset = None

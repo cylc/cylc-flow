@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,26 +21,26 @@ import os
 import sys
 from time import sleep, time
 
-from cylc.flow.pathutil import get_suite_run_log_name
-from cylc.flow.suite_files import PS_OPTS
+from cylc.flow.pathutil import get_workflow_run_log_name
+from cylc.flow.workflow_files import PS_OPTS
 
 
-SUITE_SCAN_INFO_TMPL = r"""
+WORKFLOW_SCAN_INFO_TMPL = r"""
 
-To view suite server program contact information:
- $ cylc get-suite-contact %(suite)s
+To view scheduler contact information:
+ $ cylc get-workflow-contact %(workflow)s
 
-Other ways to see if the suite is still running:
- $ cylc scan -n '%(suite)s'
- $ cylc ping -v %(suite)s
+Other ways to see if the workflow is still running:
+ $ cylc scan -n '%(workflow)s'
+ $ cylc ping -v %(workflow)s
  $ ssh %(host)s ps %(ps_opts)s %(pid)s
- $ cylc tui %(suite)s    # A terminal graphic UI
+ $ cylc tui %(workflow)s    # A terminal graphic UI
 
 """
 
 _INFO_TMPL = r"""
 *** listening on %(url)s ***
-*** publishing on %(pub_url)s ***""" + SUITE_SCAN_INFO_TMPL
+*** publishing on %(pub_url)s ***""" + WORKFLOW_SCAN_INFO_TMPL
 
 
 _TIMEOUT = 300.0  # 5 minutes
@@ -56,7 +56,7 @@ def daemonize(schd):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-    logfname = get_suite_run_log_name(schd.suite)
+    logfname = get_workflow_run_log_name(schd.workflow)
     try:
         old_log_mtime = os.stat(logfname).st_mtime
     except OSError:
@@ -65,21 +65,21 @@ def daemonize(schd):
     try:
         pid = os.fork()
         if pid > 0:
-            # Poll for suite log to be populated
-            suite_pid = None
-            suite_url = None
+            # Poll for workflow log to be populated
+            workflow_pid = None
+            workflow_url = None
             pub_url = None
             timeout = time() + _TIMEOUT
             while time() <= timeout and (
-                    suite_pid is None or
-                    suite_url is None or
+                    workflow_pid is None or
+                    workflow_url is None or
                     pub_url is None):
                 sleep(0.1)
                 try:
-                    # First INFO line of suite log should contain
+                    # First INFO line of workflow log should contain
                     # start up message, URL and PID. Format is:
-                    #  LOG-PREFIX Suite schd program: url=URL, pid=PID
-                    # Otherwise, something has gone wrong, print the suite log
+                    #  LOG-PREFIX Workflow schd program: url=URL, pid=PID
+                    # Otherwise, something is wrong, print the workflow log
                     # and exit with an error.
                     log_stat = os.stat(logfname)
                     if (log_stat.st_mtime == old_log_mtime or
@@ -87,32 +87,32 @@ def daemonize(schd):
                         continue
                     for line in open(logfname):
                         if schd.START_MESSAGE_PREFIX in line:
-                            suite_url, suite_pid = (
+                            workflow_url, workflow_pid = (
                                 item.rsplit("=", 1)[-1]
                                 for item in line.rsplit()[-2:])
                         if schd.START_PUB_MESSAGE_PREFIX in line:
                             pub_url = line.rsplit("=", 1)[-1].rstrip()
-                        if suite_url and pub_url:
+                        if workflow_url and pub_url:
                             break
                         elif ' ERROR -' in line or ' CRITICAL -' in line:
-                            # ERROR and CRITICAL before suite starts
+                            # ERROR and CRITICAL before workflow starts
                             try:
                                 sys.stderr.write(open(logfname).read())
                                 sys.exit(1)
                             except IOError:
-                                sys.exit("Suite schd program exited")
+                                sys.exit("Workflow schd program exited")
                 except (IOError, OSError, ValueError):
                     pass
-            if suite_pid is None or suite_url is None:
-                sys.exit("Suite not started after %ds" % _TIMEOUT)
-            # Print suite information
+            if workflow_pid is None or workflow_url is None:
+                sys.exit("Workflow not started after %ds" % _TIMEOUT)
+            # Print workflow information
             info = {
-                "suite": schd.suite,
+                "workflow": schd.workflow,
                 "host": schd.host,
-                "url": suite_url,
+                "url": workflow_url,
                 "pub_url": pub_url,
                 "ps_opts": PS_OPTS,
-                "pid": suite_pid
+                "pid": workflow_pid
             }
             if schd.options.format == 'json':
                 sys.stdout.write(json.dumps(info, indent=4))

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,15 +23,15 @@
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" test3
+install_workflow "${TEST_NAME_BASE}" test3
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
-    --set="TEST_OUTPUT_PATH='${PWD}'" "${SUITE_NAME}"
+    --set="TEST_OUTPUT_PATH='${PWD}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
-    --set="TEST_OUTPUT_PATH='${PWD}'" "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
+    --set="TEST_OUTPUT_PATH='${PWD}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-check-a"
 cmp_ok "${TEST_SOURCE_DIR}/splitline_refs/a-ref" 'a-prereqs'

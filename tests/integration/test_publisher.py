@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ async def test_publisher(flow, scheduler, run, one_conf, port_range):
     async with run(schd):
         # create a subscriber
         subscriber = WorkflowSubscriber(
-            schd.suite,
+            schd.workflow,
             host=schd.host,
             port=schd.publisher.port,
             topics=[b'workflow']

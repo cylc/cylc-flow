@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -233,8 +233,8 @@ def platform_from_job_info(
     +<---------------------------------+
 
     Args:
-        job: Suite config [runtime][TASK][job] section.
-        remote: Suite config [runtime][TASK][remote] section.
+        job: Workflow config [runtime][TASK][job] section.
+        remote: Workflow config [runtime][TASK][remote] section.
         platforms: Dictionary containing platform definitions.
 
     Returns:

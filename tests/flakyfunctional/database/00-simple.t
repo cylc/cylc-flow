@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,19 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Suite database content, a basic non-cycling suite of 3 tasks
+# Workflow database content, a basic non-cycling workflow of 3 tasks
 . "$(dirname "$0")/test_header"
 if ! command -v 'sqlite3' >'/dev/null'; then
     skip_all "sqlite3 not installed?"
 fi
 set_test_number 21
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-DB_FILE="${RUN_DIR}/${SUITE_NAME}/log/db"
+DB_FILE="${RUN_DIR}/${WORKFLOW_NAME}/log/db"
 
 NAME='schema.out'
 ORIG="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}"
@@ -36,9 +36,9 @@ sqlite3 "${DB_FILE}" ".schema" | env LANG='C' sort >"${NAME}"
 env LANG='C' sort "${ORIG}" > "${SORTED_ORIG}"
 cmp_ok "${NAME}" "${SORTED_ORIG}"
 
-NAME='select-suite-params.out'
+NAME='select-workflow-params.out'
 sqlite3 "${DB_FILE}" \
-    'SELECT key, value FROM suite_params
+    'SELECT key, value FROM workflow_params
     WHERE key != "uuid_str" AND key != "cycle_point_tz" ORDER BY key' \
     >"${NAME}"
 sed -i "s/$(cylc --version)/<SOME-VERSION>/g" "${NAME}"

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -50,11 +50,11 @@ class WorkflowPublisher(ZMQSocketBase):
 
     """
 
-    def __init__(self, suite, context=None, barrier=None,
+    def __init__(self, workflow, context=None, barrier=None,
                  threaded=True, daemon=False):
         super().__init__(zmq.PUB, bind=True, context=context,
                          barrier=barrier, threaded=threaded, daemon=daemon)
-        self.suite = suite
+        self.workflow = workflow
         self.topics = set()
 
     def _socket_options(self):

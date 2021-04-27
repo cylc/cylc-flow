@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -41,13 +41,13 @@ def empyprocess(flines, dir_, template_vars=None):
         raise EmPyError(str(exc), lines=flines[max(lineno - 4, 0): lineno])
     finally:
         interpreter.shutdown()
-        xsuite = xtempl.getvalue()
+        xworkflow = xtempl.getvalue()
         os.chdir(cwd)
         ftempl.close()
         xtempl.close()
 
     flow_config = []
-    for line in xsuite.splitlines():
+    for line in xworkflow.splitlines():
         # EmPy leaves blank lines where source lines contain
         # only EmPy code; this matters if line continuation
         # markers are involved, so we remove blank lines here.

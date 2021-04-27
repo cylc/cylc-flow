@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,16 +19,16 @@ import pytest
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.main_loop.health_check import (
-    _check_suite_run_dir,
+    _check_workflow_run_dir,
     _check_contact_file
 )
 
 
-def test_check_suite_run_dir():
-    """Ensure a missing suite run dir raises an CylcError."""
-    sched = Mock(suite_run_dir='/a/b/c/d/e')
+def test_check_workflow_run_dir():
+    """Ensure a missing workflow run dir raises an CylcError."""
+    sched = Mock(workflow_run_dir='/a/b/c/d/e')
     with pytest.raises(CylcError):
-        _check_suite_run_dir(sched)
+        _check_workflow_run_dir(sched)
 
 
 def test_check_contact_file_data(monkeypatch):
@@ -38,11 +38,11 @@ def test_check_contact_file_data(monkeypatch):
         'b': 2
     }
     sched = Mock(
-        suite='foo',
+        workflow='foo',
         contact_data=dict(contact_data)
     )
     monkeypatch.setattr(
-        'cylc.flow.main_loop.health_check.suite_files.load_contact_file',
+        'cylc.flow.main_loop.health_check.workflow_files.load_contact_file',
         lambda x: dict(contact_data)
     )
     # pass
@@ -56,13 +56,13 @@ def test_check_contact_file_data(monkeypatch):
 
 def test_check_contact_file_io(monkeypatch):
     """Ensure IOError retrieving the contact file raises CylcError."""
-    sched = Mock(suite='foo')
+    sched = Mock(workflow='foo')
 
     def whoopsie(*_):
         raise IOError('')
 
     monkeypatch.setattr(
-        'cylc.flow.main_loop.health_check.suite_files.load_contact_file',
+        'cylc.flow.main_loop.health_check.workflow_files.load_contact_file',
         whoopsie
     )
     with pytest.raises(CylcError):

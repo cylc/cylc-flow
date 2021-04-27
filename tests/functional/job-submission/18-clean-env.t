@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,16 +28,16 @@ create_test_global_config "" "
 "
 
 set_test_number 4
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 # Export a variable and try to access from a task job.
 export BEEF=wellington
 export CHEESE=melted
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-cylc cat-log "${SUITE_NAME}" foo.1 > job.out
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+cylc cat-log "${WORKFLOW_NAME}" foo.1 > job.out
 
 grep_ok "BEEF wellington" job.out
 grep_ok "CHEESE undefined" job.out

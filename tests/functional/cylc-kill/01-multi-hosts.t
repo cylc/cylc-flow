@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,24 +20,24 @@ export REQUIRE_PLATFORM='loc:remote comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
+    cylc validate "${WORKFLOW_NAME}" -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}" \
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
-RUN_DIR="$RUN_DIR/${SUITE_NAME}"
-LOG="${RUN_DIR}/log/suite/log"
-sed -n 's/^.*\(cylc jobs-kill\)/\1/p' "${LOG}" | sort -u >'edited-suite-log'
+RUN_DIR="$RUN_DIR/${WORKFLOW_NAME}"
+LOG="${RUN_DIR}/log/workflow/log"
+sed -n 's/^.*\(cylc jobs-kill\)/\1/p' "${LOG}" | sort -u >'edited-workflow-log'
 
-sort >'edited-suite-log-ref' <<__LOG__
-cylc jobs-kill --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-1/01 1/remote-2/01
-cylc jobs-kill --debug -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/local-1/01 1/local-2/01 1/local-3/01
+sort >'edited-workflow-log-ref' <<__LOG__
+cylc jobs-kill --debug -- '\$HOME/cylc-run/${WORKFLOW_NAME}/log/job' 1/remote-1/01 1/remote-2/01
+cylc jobs-kill --debug -- '\$HOME/cylc-run/${WORKFLOW_NAME}/log/job' 1/local-1/01 1/local-2/01 1/local-3/01
 __LOG__
-cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
+cmp_ok 'edited-workflow-log' 'edited-workflow-log-ref'
 
 purge
 exit

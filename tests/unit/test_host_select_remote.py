@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import HostSelectException
 from cylc.flow.host_select import (
     select_host,
-    select_suite_host
+    select_workflow_host
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 
@@ -129,7 +129,7 @@ def test_remote_exclude(monkeypatch):
     ) == (local_host, local_host_fqdn)
 
 
-def test_remote_suite_host_select(mock_glbl_cfg):
+def test_remote_workflow_host_select(mock_glbl_cfg):
     """test [scheduler][run hosts]available"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -139,10 +139,10 @@ def test_remote_suite_host_select(mock_glbl_cfg):
                     available = {remote_platform}
         '''
     )
-    assert select_suite_host() == (remote_platform, remote_platform_fqdn)
+    assert select_workflow_host() == (remote_platform, remote_platform_fqdn)
 
 
-def test_remote_suite_host_condemned(mock_glbl_cfg):
+def test_remote_workflow_host_condemned(mock_glbl_cfg):
     """test [scheduler][run hosts]condemned hosts"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -154,10 +154,10 @@ def test_remote_suite_host_condemned(mock_glbl_cfg):
         '''
     )
     for _ in range(10):
-        assert select_suite_host() == (local_host, local_host_fqdn)
+        assert select_workflow_host() == (local_host, local_host_fqdn)
 
 
-def test_remote_suite_host_rankings(mock_glbl_cfg):
+def test_remote_workflow_host_rankings(mock_glbl_cfg):
     """test [scheduler][run hosts]rankings"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -175,7 +175,7 @@ def test_remote_suite_host_rankings(mock_glbl_cfg):
         '''
     )
     with pytest.raises(HostSelectException) as excinfo:
-        select_suite_host()
+        select_workflow_host()
     # ensure that host selection actually evaluated rankings
     assert set(excinfo.value.data[remote_platform_fqdn]) == {
         'virtual_memory().available > 123456789123456789',

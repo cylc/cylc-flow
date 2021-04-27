@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,13 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite shuts down with reference log, specifically that there is no
+# Test workflow shuts down with reference log, specifically that there is no
 # issue in the shutdown method when the --reference-log option is used.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
         abort on inactivity = True
@@ -34,14 +34,14 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
-suite_run_ok "${TEST_NAME_BASE}-run-reflog" \
-    cylc play --debug --no-detach --reference-log "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run-reflog" \
+    cylc play --debug --no-detach --reference-log "${WORKFLOW_NAME}"
 
-exists_ok "${HOME}/cylc-run/${SUITE_NAME}/reference.log"
+exists_ok "${HOME}/cylc-run/${WORKFLOW_NAME}/reference.log"
 
 delete_db
-suite_run_ok "${TEST_NAME_BASE}-run-reftest" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run-reftest" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge
 exit

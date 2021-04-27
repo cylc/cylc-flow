@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 set_test_number 2
 
 # shellcheck disable=SC2016
-init_suite "${TEST_NAME_BASE}" <<< '
+init_workflow "${TEST_NAME_BASE}" <<< '
 # A total non-entity workflow - just something to run.
 [scheduling]
     initial cycle point = 2020
@@ -32,9 +32,9 @@ init_suite "${TEST_NAME_BASE}" <<< '
     [[Aleph]]
 '
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
 
-grep_ok "Suite server:.*${CYLC_TEST_HOST}" "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok "Scheduler:.*${CYLC_TEST_HOST}" "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 purge
 exit

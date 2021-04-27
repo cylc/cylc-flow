@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 """cylc set-verbosity [OPTIONS] ARGS
 
-Change the logging severity level of a running suite.
+Change the logging severity level of a running workflow.
 
 Only messages at or above the chosen severity level will be logged; for
 example, if you choose WARNING, only warnings and critical messages will be
@@ -51,7 +51,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
-            ('REG', 'Suite name'),
+            ('REG', 'Workflow name'),
             ('LEVEL', ', '.join(LOG_LEVELS.keys()))
         ]
     )
@@ -60,19 +60,19 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite, severity_str):
+def main(parser, options, workflow, severity_str):
     try:
         severity = LOG_LEVELS[severity_str]
     except KeyError:
         parser.error("Illegal logging level, %s" % severity_str)
 
-    suite = os.path.normpath(suite)
-    pclient = get_client(suite, timeout=options.comms_timeout)
+    workflow = os.path.normpath(workflow)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
             'level': severity,
         }
     }

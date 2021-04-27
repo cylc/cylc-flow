@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 """Logging utilities.
 
 This module provides:
-- A custom rolling file handler for suite logs with date-time names.
+- A custom rolling file handler for workflow logs with date-time names.
 - A formatter with ISO date time and indented multi-line messages.
   Note: The ISO date time bit is redundant in Python 3,
   because "time.strftime" will handle time zone from "localtime" properly.
@@ -105,10 +105,10 @@ class CylcLogFormatter(logging.Formatter):
 
 
 class TimestampRotatingFileHandler(logging.FileHandler):
-    """Rotating suite logs using creation time stamps for names.
+    """Rotating workflow logs using creation time stamps for names.
 
     Argument:
-        suite (str): suite name
+        workflow (str): workflow name
         no_detach (bool): non-detach mode? (Default=False)
     """
 

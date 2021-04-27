@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,21 +18,21 @@
 
 """cylc dump [OPTIONS] ARGS
 
-Print information about a running suite.
+Print information about a running workflow.
 
 For command line monitoring:
 * `cylc tui`
-* `watch cylc dump SUITE` works for small simple suites
+* `watch cylc dump WORKFLOW` works for small simple workflows
 
 For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc show'.
 
 Examples:
   # Display the state of all running tasks, sorted by cycle point:
-  $ cylc dump --tasks --sort SUITE | grep running
+  $ cylc dump --tasks --sort WORKFLOW | grep running
 
   # Display the state of all tasks in a particular cycle point:
-  $ cylc dump -t SUITE | grep 2010082406"""
+  $ cylc dump -t WORKFLOW | grep 2010082406"""
 
 from cylc.flow.network.client_factory import get_client
 import sys
@@ -166,8 +166,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite):
-    pclient = get_client(suite, timeout=options.comms_timeout)
+def main(_, options, workflow):
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.sort_by_cycle:
         sort_args = {'keys': ['cyclePoint', 'name']}
@@ -211,7 +211,7 @@ def main(_, options, suite):
 
     query_kwargs = {
         'request_string': query,
-        'variables': {'wFlows': [suite], 'sortBy': sort_args}
+        'variables': {'wFlows': [workflow], 'sortBy': sort_args}
     }
 
     workflows = pclient('graphql', query_kwargs)

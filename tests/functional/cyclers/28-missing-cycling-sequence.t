@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" << __FLOW__
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduling]
    initial cycle point = 20140808T00
    [[graph]]
@@ -30,7 +30,7 @@ init_suite "${TEST_NAME_BASE}" << __FLOW__
 __FLOW__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-cmp"
 cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<__ERR__

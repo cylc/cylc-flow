@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
 
-ERR='SuiteConfigError: \[visualization\]collapsed families: BAR is not a first parent'
+ERR='WorkflowConfigError: \[visualization\]collapsed families: BAR is not a first parent'
 grep_ok "$ERR" "${TEST_NAME_BASE}.stderr"
 
 exit

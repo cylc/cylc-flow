@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 set_test_number 7
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW__'
 [scheduling]
     cycling mode = integer
     runahead limit = P2
@@ -34,24 +34,24 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW__'
     [[foo]]
         script = """
             if [[ "$CYLC_TASK_CYCLE_POINT" == 2 ]]; then
-                cylc stop "$SUITE_NAME"
+                cylc stop "$WORKFLOW_NAME"
             fi
         """
 __FLOW__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 # Cannot use 'ignore' on first start:
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "$TEST_NAME" cylc play "${SUITE_NAME}" --no-detach --fcp=ignore
-log_scan "${TEST_NAME}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 20 2 \
+workflow_run_ok "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --fcp=ignore
+log_scan "${TEST_NAME}-log-scan" "${WORKFLOW_RUN_DIR}/log/workflow/log" 20 2 \
     "WARNING - Ignoring option: --fcp=ignore" \
     "INFO - Final point: 3"
 
 # Cannot use --icp or --startcp on restart:
 TEST_NAME="${TEST_NAME_BASE}-restart"
-suite_run_ok "$TEST_NAME" cylc play "${SUITE_NAME}" --no-detach --icp=2
-log_scan "${TEST_NAME}-log-scan" "${SUITE_RUN_DIR}/log/suite/log" 20 2 \
+workflow_run_ok "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --icp=2
+log_scan "${TEST_NAME}-log-scan" "${WORKFLOW_RUN_DIR}/log/workflow/log" 20 2 \
     "WARNING - Ignoring option: --icp=2" \
     "INFO - Initial point: 1"
 

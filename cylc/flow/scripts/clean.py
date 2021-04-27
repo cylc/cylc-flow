@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ not backed up elsewhere, it will be lost.
 
 It will also remove any symlink directory targets.
 
-Suite names can be hierarchical, corresponding to the path under ~/cylc-run.
+Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
 
 Examples:
   # Remove the workflow at ~/cylc-run/foo/bar
@@ -39,7 +39,7 @@ from cylc.flow import LOG
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.suite_files import clean, init_clean
+from cylc.flow.workflow_files import clean, init_clean
 
 from typing import TYPE_CHECKING
 

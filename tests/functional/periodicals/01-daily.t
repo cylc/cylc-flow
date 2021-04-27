@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,10 +20,10 @@
 #-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" Daily
+install_workflow "${TEST_NAME_BASE}" Daily
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-perl -pi -e 's/(Initial point: ).*$/${1}20140106T06/' "${TEST_DIR}/${SUITE_NAME}/reference.log"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+perl -pi -e 's/(Initial point: ).*$/${1}20140106T06/' "${TEST_DIR}/${WORKFLOW_NAME}/reference.log"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

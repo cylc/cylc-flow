@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -19,13 +19,13 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 SRCD="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}"
-graph_suite "${SUITE_NAME}" 'graph.plain'
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain'
 cmp_ok 'graph.plain' "${SRCD}/graph.plain.ref"
-graph_suite "${SUITE_NAME}" 'graph.plain.ungrouped' --ungrouped
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain.ungrouped' --ungrouped
 cmp_ok 'graph.plain.ungrouped' "${SRCD}/graph.plain.ungrouped.ref"
 
 purge

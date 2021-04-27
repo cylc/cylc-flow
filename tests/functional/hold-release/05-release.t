@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     allow implicit tasks = True
     [[events]]
@@ -33,18 +33,18 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[holdrelease]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc hold --after=0 ${CYLC_SUITE_NAME}
-            cylc__job__poll_grep_suite_log 'Command succeeded: set_hold_point'
-            cylc release ${CYLC_SUITE_NAME} '*FF.1'  # inexact fam
-            cylc release ${CYLC_SUITE_NAME} 'TOAST.1'  # exact fam
-            cylc release ${CYLC_SUITE_NAME} 'cat*.1'  # inexact tasks
-            cylc release ${CYLC_SUITE_NAME} 'dog1.1'  # exact tasks
-            cylc release ${CYLC_SUITE_NAME} 'stop.1'  # exact tasks
+            cylc hold --after=0 ${CYLC_WORKFLOW_NAME}
+            cylc__job__poll_grep_workflow_log 'Command succeeded: set_hold_point'
+            cylc release ${CYLC_WORKFLOW_NAME} '*FF.1'  # inexact fam
+            cylc release ${CYLC_WORKFLOW_NAME} 'TOAST.1'  # exact fam
+            cylc release ${CYLC_WORKFLOW_NAME} 'cat*.1'  # inexact tasks
+            cylc release ${CYLC_WORKFLOW_NAME} 'dog1.1'  # exact tasks
+            cylc release ${CYLC_WORKFLOW_NAME} 'stop.1'  # exact tasks
 
             # TODO: finished tasks are not removed if held: should this be the case?
             # (is this related to killed tasks being held to prevent retries?)
-            cylc release ${CYLC_SUITE_NAME} 'spawner.1'
-            cylc release ${CYLC_SUITE_NAME} 'holdrelease.1'
+            cylc release ${CYLC_WORKFLOW_NAME} 'spawner.1'
+            cylc release ${CYLC_WORKFLOW_NAME} 'holdrelease.1'
         """
     [[STUFF]]
     [[TOAST]]
@@ -63,20 +63,20 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[stop]]
         inherit = STOP
         script = """
-            cylc__job__poll_grep_suite_log '\[dog1\.1\] -task proxy removed (finished)'
-            cylc stop "${CYLC_SUITE_NAME}"
+            cylc__job__poll_grep_workflow_log '\[dog1\.1\] -task proxy removed (finished)'
+            cylc stop "${CYLC_WORKFLOW_NAME}"
         """
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 
 # Should shut down with all non-released tasks in the held state, and dog1.1
 # finished and gone from the task pool.
 
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'SELECT cycle, name, status, is_held FROM task_pool' > task-pool.out
 cmp_ok task-pool.out <<__OUT__
 1|dog2|waiting|1

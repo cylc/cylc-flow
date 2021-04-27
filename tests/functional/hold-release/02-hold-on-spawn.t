@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 # a hold point.
 . "$(dirname "$0")/test_header"
 set_test_number 2
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[dependencies]]
         R1 = "foo => bar"
@@ -28,20 +28,20 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = cylc__job__wait_cylc_message_started; true
 __FLOW_CONFIG__
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --hold-after=0 "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --hold-after=0 "${WORKFLOW_NAME}"
 
-cylc release "${SUITE_NAME}" foo.1
+cylc release "${WORKFLOW_NAME}" foo.1
 # foo.1 should run and spawn bar.1 as waiting and held
 
-poll_grep_suite_log 'spawned bar\.1'
+poll_grep_workflow_log 'spawned bar\.1'
 
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'SELECT cycle, name, status, is_held FROM task_pool' > task-pool.out
 
 cmp_ok task-pool.out <<__OUT__
 1|bar|waiting|1
 __OUT__
 
-cylc stop --now --now "${SUITE_NAME}"
+cylc stop --now --now "${WORKFLOW_NAME}"
 
 purge

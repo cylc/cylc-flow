@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 Run a Python function "<name>(*args, **kwargs)" in the process pool. It must be
 defined in a module of the same name. Positional and keyword arguments must be
-passed in as JSON strings. <src-dir> is the suite source dir, needed to find
+passed in as JSON strings. <src-dir> is the workflow source dir, needed to find
 local xtrigger modules.
 """
 import sys

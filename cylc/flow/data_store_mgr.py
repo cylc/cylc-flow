@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -63,13 +63,13 @@ from time import time
 import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG, ID_DELIM
-from cylc.flow.exceptions import SuiteConfigError
+from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)
 from cylc.flow.network import API
-from cylc.flow.suite_status import get_suite_status
+from cylc.flow.workflow_status import get_workflow_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
@@ -385,7 +385,7 @@ class DataStoreMgr:
 
     def __init__(self, schd):
         self.schd = schd
-        self.workflow_id = f'{self.schd.owner}{ID_DELIM}{self.schd.suite}'
+        self.workflow_id = f'{self.schd.owner}{ID_DELIM}{self.schd.workflow}'
         self.ancestors = {}
         self.descendants = {}
         self.parents = {}
@@ -473,7 +473,7 @@ class DataStoreMgr:
         graph = workflow.edges
         graph.leaves[:] = config.leaves
         graph.feet[:] = config.feet
-        for key, info in config.suite_polling_tasks.items():
+        for key, info in config.workflow_polling_tasks.items():
             graph.workflow_polling_tasks.add(
                 local_proxy=key,
                 workflow=info[0],
@@ -564,7 +564,7 @@ class DataStoreMgr:
         # Populate static fields of workflow
         workflow.api_version = API
         workflow.cylc_version = CYLC_VERSION
-        workflow.name = self.schd.suite
+        workflow.name = self.schd.workflow
         workflow.owner = self.schd.owner
         workflow.host = self.schd.host
         workflow.port = self.schd.port or -1
@@ -590,7 +590,7 @@ class DataStoreMgr:
 
         workflow.run_mode = config.run_mode()
         workflow.cycling_mode = config.cfg['scheduling']['cycling mode']
-        workflow.workflow_log_dir = self.schd.suite_log_dir
+        workflow.workflow_log_dir = self.schd.workflow_log_dir
         workflow.job_log_names.extend(list(JOB_LOG_OPTS.values()))
         workflow.ns_def_order.extend(config.ns_defn_order)
 
@@ -667,7 +667,7 @@ class DataStoreMgr:
 
         edge_distance += 1
 
-        # TODO: xtrigger is suite_state edges too
+        # TODO: xtrigger is workflow_state edges too
         # Reference set for workflow relations
         for items in itask.graph_children.values():
             if edge_distance == 1:
@@ -981,7 +981,7 @@ class DataStoreMgr:
 
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
-            self.schd.suite, tproxy.cycle_point, tproxy.name, sub_num)
+            self.schd.workflow, tproxy.cycle_point, tproxy.name, sub_num)
         j_buf.extra_logs.extend(job_conf['logfiles'])
 
         self.added[JOBS][j_id] = j_buf
@@ -1028,10 +1028,10 @@ class DataStoreMgr:
             )
             # Add in log files.
             j_buf.job_log_dir = get_task_job_log(
-                self.schd.suite, point_string, name, submit_num)
-        except SuiteConfigError:
+                self.schd.workflow, point_string, name, submit_num)
+        except WorkflowConfigError:
             LOG.exception((
-                'ignoring job %s from the suite run database\n'
+                'ignoring job %s from the workflow run database\n'
                 '(its task definition has probably been deleted).'
             ) % j_id)
         except Exception:
@@ -1345,7 +1345,7 @@ class DataStoreMgr:
 
         # Set status & msg if changed.
         status, status_msg = map(
-            str, get_suite_status(self.schd))
+            str, get_workflow_status(self.schd))
         if w_data.status != status or w_data.status_msg != status_msg:
             w_delta.status = status
             w_delta.status_msg = status_msg

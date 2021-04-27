@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,17 +18,17 @@
 # Test restart with held (waiting) task
 . "$(dirname "$0")/test_header"
 set_test_number 6
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --debug --no-detach
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --debug --no-detach
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
   'SELECT status,is_held FROM task_pool WHERE cycle=="2016" AND name=="t2"' \
       >'t2-status.out'
 cmp_ok 't2-status.out' <<<'waiting|1'
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc play "${SUITE_NAME}" --debug --no-detach
-grep_ok 'INFO - + t2\.2016 waiting (held)' "${SUITE_RUN_DIR}/log/suite/log"
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name' \
+workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --debug --no-detach
+grep_ok 'INFO - + t2\.2016 waiting (held)' "${WORKFLOW_RUN_DIR}/log/workflow/log"
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name' \
     >'task-pool.out'
 cmp_ok 'task-pool.out' </dev/null
 purge

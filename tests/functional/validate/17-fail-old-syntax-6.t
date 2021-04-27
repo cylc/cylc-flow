@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,6 +30,6 @@ __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 run_fail "${TEST_NAME}" cylc validate -v 'flow.cylc'
-grep_ok 'SuiteConfigError: Cannot process recurrence 12' "${TEST_NAME}.stderr"
+grep_ok 'WorkflowConfigError: Cannot process recurrence 12' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 exit

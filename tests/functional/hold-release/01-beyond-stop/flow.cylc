@@ -1,9 +1,9 @@
 [meta]
-    title = "test hold point and release, with tasks beyond suite stop point"
+    title = "test hold point and release, with tasks beyond workflow stop point"
 
     description = """
         Releasing all tasks should not release tasks that are held because they're
-        beyond the suite stop point.
+        beyond the workflow stop point.
     """
 
 # https://github.com/cylc/cylc-flow/pull/1144
@@ -23,8 +23,8 @@
     [[holdrelease]]
         # When this task runs foo will be held beyond the stop point.
         script = """
-            cylc hold --after=1900 $CYLC_SUITE_NAME
-            cylc release --all $CYLC_SUITE_NAME
+            cylc hold --after=1900 $CYLC_WORKFLOW_NAME
+            cylc release --all $CYLC_WORKFLOW_NAME
         """
     [[foo]]
         script = true

@@ -1,5 +1,5 @@
 # Test automatic deprecation and deletion of config items as specified
-# in cylc/flow/cfgspec/suite.py.
+# in cylc/flow/cfgspec/workflow.py.
 
 [cylc]
     [[events]]

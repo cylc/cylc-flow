@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@
 #-------------------------------------------------------------------------------
 set_test_number 13
 #-------------------------------------------------------------------------------
-# a test suite that uses environment filtering:
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+# a test workflow that uses environment filtering:
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = "foo & bar & baz & qux"
@@ -52,32 +52,32 @@ __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 # check validation
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc val "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc val "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # check that config retrieves only the filtered environment
 TEST_NAME=${TEST_NAME_BASE}-config
 
-run_ok "${TEST_NAME}" cylc config --item='[runtime][foo]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][foo]environment' "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 FOO = foo
 BAR = bar
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok "${TEST_NAME}" cylc config --item='[runtime][bar]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][bar]environment' "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 BAR = bar
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok "${TEST_NAME}" cylc config --item='[runtime][baz]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][baz]environment' "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 BAZ = baz
 QUX = qux
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 
-run_ok "${TEST_NAME}" cylc config --item='[runtime][qux]environment' "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc config --item='[runtime][qux]environment' "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 FOO = foo
 BAR = bar

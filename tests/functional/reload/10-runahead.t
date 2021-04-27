@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,16 +20,16 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" runahead
+install_workflow "${TEST_NAME_BASE}" runahead
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_fail "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-fail
-DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
+DB_FILE="$RUN_DIR/${WORKFLOW_NAME}/log/db"
 QUERY='SELECT COUNT(*) FROM task_states WHERE status == "failed"'
 cmp_ok <(sqlite3 "$DB_FILE" "$QUERY") <<< "2"
 #-------------------------------------------------------------------------------

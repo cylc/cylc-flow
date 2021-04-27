@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,26 +20,26 @@ export REQUIRE_PLATFORM='loc:remote fs:shared'
 . "$(dirname "$0")/test_header"
 set_test_number 7
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" \
+    cylc validate "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}" \
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
-LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
-LOGD2="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/02"
+LOGD1="$RUN_DIR/${WORKFLOW_NAME}/log/job/1/t1/01"
+LOGD2="$RUN_DIR/${WORKFLOW_NAME}/log/job/1/t1/02"
 exists_ok "${LOGD1}"
 exists_ok "${LOGD2}"
-sed -i 's/script =.*$/script = true/' "${SUITE_RUN_DIR}/flow.cylc"
-sed -i -n '1,/triggered off/p' "${SUITE_RUN_DIR}/reference.log"
+sed -i 's/script =.*$/script = true/' "${WORKFLOW_RUN_DIR}/flow.cylc"
+sed -i -n '1,/triggered off/p' "${WORKFLOW_RUN_DIR}/reference.log"
 
 delete_db
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}" \
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
 exists_ok "${LOGD1}"

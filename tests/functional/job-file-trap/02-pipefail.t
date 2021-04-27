@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,21 +19,21 @@
 . "$(dirname "$0")/test_header"
 
 set_test_number 6
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --reference-test "${SUITE_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --no-detach --reference-test "${WORKFLOW_NAME}"
 
 # Make sure status files are in place
-T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
+T1_STATUS_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.status"
 contains_ok "${T1_STATUS_FILE}" <<'__STATUS__'
 CYLC_JOB_EXIT=ERR
 __STATUS__
 grep_ok 'CYLC_JOB_EXIT_TIME=' "${T1_STATUS_FILE}"
 
-T2_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t2/01/job.status"
+T2_STATUS_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t2/01/job.status"
 contains_ok "${T2_STATUS_FILE}" <<'__STATUS__'
 CYLC_JOB_EXIT=EXIT
 __STATUS__

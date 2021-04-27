@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 cat >'template-vars.list' <<'__LIST__'
 COMMAND="true"
@@ -28,14 +28,14 @@ FINAL_CYCLE_POINT="2020"
 __LIST__
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" --set-file="${PWD}/template-vars.list"
+    cylc validate "${WORKFLOW_NAME}" --set-file="${PWD}/template-vars.list"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${SUITE_NAME}" --set-file="${PWD}/template-vars.list" \
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play "${WORKFLOW_NAME}" --set-file="${PWD}/template-vars.list" \
     --stopcp=2018 --debug --no-detach
 
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play "${SUITE_NAME}" --debug --no-detach --reference-test
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play "${WORKFLOW_NAME}" --debug --no-detach --reference-test
 
 purge
 exit

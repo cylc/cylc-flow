@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" clock-triggered-non-utc-mode
+install_workflow "${TEST_NAME_BASE}" clock-triggered-non-utc-mode
 #-------------------------------------------------------------------------------
-cd "${SUITE_RUN_DIR}" || exit 1
+cd "${WORKFLOW_RUN_DIR}" || exit 1
 TEST_SHOW_OUTPUT_PATH="$PWD/${TEST_NAME_BASE}-show.stdout"
 TZ_OFFSET_EXTENDED=$(date +%:z | sed "/^%/d")
 if [[ -z "${TZ_OFFSET_EXTENDED}" ]]; then
@@ -38,13 +38,13 @@ fi
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
     --set="TEST_SHOW_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'" \
-    --set="TZ_OFFSET_BASIC='$TZ_OFFSET_BASIC'" "${SUITE_NAME}"
+    --set="TZ_OFFSET_BASIC='$TZ_OFFSET_BASIC'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 sed "s/\$TZ_OFFSET_BASIC/$TZ_OFFSET_BASIC/g" reference-untz.log >reference.log
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
     --set="TEST_SHOW_OUTPUT_PATH='$TEST_SHOW_OUTPUT_PATH'" \
-    --set="TZ_OFFSET_BASIC='$TZ_OFFSET_BASIC'" "${SUITE_NAME}"
+    --set="TZ_OFFSET_BASIC='$TZ_OFFSET_BASIC'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-show
 contains_ok "${TEST_NAME}.stdout" <<__SHOW_OUTPUT__

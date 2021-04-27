@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 # Tests that configs can be upgraded from earlier versions of Cylc.
 
 import pytest
-from cylc.flow.cfgspec.suite import upg, upgrade_param_env_templates
+from cylc.flow.cfgspec.workflow import upg, upgrade_param_env_templates
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults as ord_dict
 
 

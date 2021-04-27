@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -53,7 +53,7 @@ These are written to the top of the task job script like this:
 If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``-l h_rt`` directive. Do not specify the ``-l h_rt`` directive explicitly if
 :cylc:conf:`execution time limit` is specified.  Otherwise, the execution time
-limit known by the suite may be out of sync with what is submitted to the
+limit known by the workflow may be out of sync with what is submitted to the
 job runner.
 
 .. cylc-scope::
@@ -79,7 +79,9 @@ class SGEHandler:
         """Format the job directives for a job file."""
         job_file_path = re.sub(r'\$HOME/', '', job_conf['job_file_path'])
         directives = job_conf['directives'].__class__()
-        directives['-N'] = job_conf['suite_name'] + '.' + job_conf['task_id']
+        directives['-N'] = (
+            job_conf['workflow_name'] + '.' + job_conf['task_id']
+        )
         directives['-o'] = job_file_path + ".out"
         directives['-e'] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,13 +25,13 @@ create_test_global_config '
     [[badhost]]
 '
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
 sqlite3 \
-    "$RUN_DIR/${SUITE_NAME}/log/db" \
+    "$RUN_DIR/${WORKFLOW_NAME}/log/db" \
     'SELECT submit_num,submit_status FROM task_jobs WHERE name=="t1"' \
     >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<'__OUT__'

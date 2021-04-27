@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -24,16 +24,16 @@ create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
        retrieve job logs = True"
-install_suite "${TEST_NAME_BASE}" remote-simple
+install_workflow "${TEST_NAME_BASE}" remote-simple
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # Local job.out should exist (retrieved).
-LOCAL_JOB_OUT=$(cylc cat-log -f a -m d "${SUITE_NAME}" a-task.1)/job.out
+LOCAL_JOB_OUT=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}" a-task.1)/job.out
 exists_ok "${LOCAL_JOB_OUT}"
 
 # Distinguish local from remote job.out.
@@ -41,12 +41,12 @@ perl -pi -e 's/fox/FOX/' "${LOCAL_JOB_OUT}"
 
 # Cat the remote one.
 TEST_NAME=${TEST_NAME_BASE}-out-rem
-run_ok "${TEST_NAME}" cylc cat-log --force-remote -f o "${SUITE_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log --force-remote -f o "${WORKFLOW_NAME}" a-task.1
 grep_ok '^the quick brown fox$' "${TEST_NAME}.stdout"
 
 # Cat the local one.
 TEST_NAME=${TEST_NAME_BASE}-out-loc
-run_ok "${TEST_NAME}" cylc cat-log -f o "${SUITE_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f o "${WORKFLOW_NAME}" a-task.1
 grep_ok '^the quick brown FOX$' "${TEST_NAME}.stdout"
 
 purge

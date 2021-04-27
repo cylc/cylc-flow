@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,19 +25,19 @@ create_files () {
     # dump some files into the run dir
     for DIR in "bin" "app" "etc" "lib" "dir1" "dir2"
     do
-        mkdir -p "${SUITE_RUN_DIR}/${DIR}"
-        touch "${SUITE_RUN_DIR}/${DIR}/moo"
+        mkdir -p "${WORKFLOW_RUN_DIR}/${DIR}"
+        touch "${WORKFLOW_RUN_DIR}/${DIR}/moo"
     done
     for FILE in "file1" "file2"
     do
-        touch "${SUITE_RUN_DIR}/${FILE}"
+        touch "${WORKFLOW_RUN_DIR}/${FILE}"
     done
 }
 
 # Test configured files/directories along with default files/directories
 # (app, bin, etc, lib) are correctly installed on the remote platform.
 TEST_NAME="${TEST_NAME_BASE}-default-paths"
-init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
+init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
 [scheduling]
     [[graph]]
         R1 = foo
@@ -45,14 +45,14 @@ init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
     [[foo]]
         platform = $CYLC_TEST_PLATFORM
 __FLOW_CONFIG__
-RUN_DIR_REL="${SUITE_RUN_DIR#$HOME/}"
+RUN_DIR_REL="${WORKFLOW_RUN_DIR#$HOME/}"
 
 create_files
 
 # run the flow
-run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}" \
+run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME}-run1" cylc play "${SUITE_NAME}" \
+workflow_run_ok "${TEST_NAME}-run1" cylc play "${WORKFLOW_NAME}" \
     --no-detach \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
@@ -72,7 +72,7 @@ purge
 
 # Test the [scheduler]install configuration
 TEST_NAME="${TEST_NAME_BASE}-configured-paths"
-init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
+init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
 [scheduler]
     install = dir1/, dir2/, file1, file2
 [scheduling]
@@ -82,13 +82,13 @@ init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
     [[foo]]
         platform = $CYLC_TEST_PLATFORM
 __FLOW_CONFIG__
-RUN_DIR_REL="${SUITE_RUN_DIR#$HOME/}"
+RUN_DIR_REL="${WORKFLOW_RUN_DIR#$HOME/}"
 
 create_files
 
-run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}" \
+run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME}-run2" cylc play "${SUITE_NAME}" \
+workflow_run_ok "${TEST_NAME}-run2" cylc play "${WORKFLOW_NAME}" \
     --no-detach \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
@@ -115,7 +115,7 @@ fi
 
 # Test file install completes before dependent tasks are executed
 TEST_NAME="${TEST_NAME_BASE}-installation-timing"
-init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
+init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
 [scheduler]
     install = dir1/, dir2/
     [[events]]
@@ -129,12 +129,12 @@ init_suite "${TEST_NAME}" <<__FLOW_CONFIG__
 [runtime]
     [[olaf]]
         # task dependent on file install already being complete
-        script = cat \${CYLC_SUITE_RUN_DIR}/dir1/moo
+        script = cat \${CYLC_WORKFLOW_RUN_DIR}/dir1/moo
         platform = $CYLC_TEST_PLATFORM
 
     [[sven]]
         # task dependent on file install already being complete
-        script = rm -r \${CYLC_SUITE_RUN_DIR}/dir1 \${CYLC_SUITE_RUN_DIR}/dir2
+        script = rm -r \${CYLC_WORKFLOW_RUN_DIR}/dir1 \${CYLC_WORKFLOW_RUN_DIR}/dir2
         platform = $CYLC_TEST_PLATFORM
 
 __FLOW_CONFIG__
@@ -143,13 +143,13 @@ __FLOW_CONFIG__
 # to slow rsync and ensure tasks do not start until file install has
 # completed.
 for DIR in "dir1" "dir2"; do
-    mkdir -p "${SUITE_RUN_DIR}/${DIR}"
-    xfs_mkfile 1024m "${SUITE_RUN_DIR}/${DIR}/moo"
+    mkdir -p "${WORKFLOW_RUN_DIR}/${DIR}"
+    xfs_mkfile 1024m "${WORKFLOW_RUN_DIR}/${DIR}/moo"
 done
 
-run_ok "${TEST_NAME}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 purge
 exit

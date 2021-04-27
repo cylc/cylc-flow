@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) 2008-2019 NIWA
 #
 # This program is free software: you can redistribute it and/or modify
@@ -48,7 +48,7 @@ def duration_as(iso8601_duration, units):
     - Weeks - "w" or "weeks"
 
     While the filtered value is a floating-point number, it is often required
-    to supply an integer to suite entities (e.g. environment variables) that
+    to supply an integer to workflow entities (e.g. environment variables) that
     require it.  This is accomplished by chaining filters:
 
     - ``{{CYCLE_INTERVAL | duration_as('h') | int}}`` - 24

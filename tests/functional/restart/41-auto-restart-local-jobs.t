@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ BASE_GLOBAL_CONFIG="
         timeout = PT2M
 "
 
-init_suite "${TEST_NAME_BASE}" <<< '
+init_workflow "${TEST_NAME_BASE}" <<< '
 [scheduling]
     [[graph]]
         R1 = foo => bar
@@ -47,7 +47,7 @@ init_suite "${TEST_NAME_BASE}" <<< '
     [[bar]]
         script = sleep 60
 '
-cd "${SUITE_RUN_DIR}" || exit 1
+cd "${WORKFLOW_RUN_DIR}" || exit 1
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
@@ -56,13 +56,13 @@ ${BASE_GLOBAL_CONFIG}
         available = ${CYLC_TEST_HOST1}
 "
 
-cylc play "${SUITE_NAME}"
+cylc play "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # auto stop-restart - normal mode:
-#     ensure the suite WAITS for local jobs to complete before restarting
+#     ensure the workflow WAITS for local jobs to complete before restarting
 TEST_NAME="${TEST_NAME_BASE}-normal-mode"
 
-cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
+cylc workflow-state "${WORKFLOW_NAME}" --task='foo' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
 create_test_global_config '' "
@@ -73,27 +73,27 @@ ${BASE_GLOBAL_CONFIG}
         condemned = ${CYLC_TEST_HOST1}
 "
 
-FILE="$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)"
+FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
 log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
-    'The Cylc suite host will soon become un-available' \
+    'The Cylc workflow host will soon become un-available' \
     'Waiting for jobs running on localhost to complete' \
     'Waiting for jobs running on localhost to complete' \
-    'Suite shutting down - REQUEST(NOW-NOW)' \
+    'Workflow shutting down - REQUEST(NOW-NOW)' \
     "Attempting to restart on \"${CYLC_TEST_HOST2}\"" \
-    "Suite now running on \"${CYLC_TEST_HOST2}\"" \
+    "Workflow now running on \"${CYLC_TEST_HOST2}\"" \
 
 # we shouldn't have any orphaned tasks because we should
 # have waited for them to complete
 grep_fail 'orphaned task' "${FILE}"
 
-poll_suite_restart
+poll_workflow_restart
 #-------------------------------------------------------------------------------
 # auto stop-restart - force mode:
-#     ensure the suite DOESN'T WAIT for local jobs to complete before stopping
+#     ensure the workflow DOESN'T WAIT for local jobs to complete before stopping
 TEST_NAME="${TEST_NAME_BASE}-force-mode"
 
-cylc trigger "${SUITE_NAME}" bar.1
-cylc suite-state "${SUITE_NAME}" --task='bar' --status='running' --point=1 \
+cylc trigger "${WORKFLOW_NAME}" bar.1
+cylc workflow-state "${WORKFLOW_NAME}" --task='bar' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
 create_test_global_config '' "
@@ -104,16 +104,16 @@ ${BASE_GLOBAL_CONFIG}
         condemned = ${CYLC_TEST_HOST2}!
 "
 
-FILE="$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)"
+FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
 log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
-    'The Cylc suite host will soon become un-available' \
-    'This suite will be shutdown as the suite host is unable to continue' \
-    'Suite shutting down - REQUEST(NOW)' \
+    'The Cylc workflow host will soon become un-available' \
+    'This workflow will be shutdown as the workflow host is unable to continue' \
+    'Workflow shutting down - REQUEST(NOW)' \
     'Orphaned task jobs:' \
     '* bar.1 (running)'
 
-cylc stop "${SUITE_NAME}" --now --now 2>/dev/null || true
-poll_suite_stopped
+cylc stop "${WORKFLOW_NAME}" --now --now 2>/dev/null || true
+poll_workflow_stopped
 sleep 1
 purge
 exit

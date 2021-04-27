@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,10 +22,10 @@ from unittest.mock import Mock
 from tempfile import NamedTemporaryFile
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.config import SuiteConfig
+from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import iso8601, loader
-from cylc.flow.exceptions import SuiteConfigError
-from cylc.flow.suite_files import SuiteFiles
+from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
@@ -98,13 +98,13 @@ def get_test_inheritance_quotes():
     ]
 
 
-class TestSuiteConfig:
-    """Test class for the Cylc SuiteConfig object."""
+class TestWorkflowConfig:
+    """Test class for the Cylc WorkflowConfig object."""
 
     def test_xfunction_imports(
             self, mock_glbl_cfg: Fixture, tmp_path: Path,
             xtrigger_mgr: XtriggerManager):
-        """Test for a suite configuration with valid xtriggers"""
+        """Test for a workflow configuration with valid xtriggers"""
         mock_glbl_cfg(
             'cylc.flow.platforms.glbl_cfg',
             '''
@@ -118,7 +118,7 @@ class TestSuiteConfig:
         name_a_tree_file = python_dir / "name_a_tree.py"
         # NB: we are not returning a lambda, instead we have a scalar
         name_a_tree_file.write_text("""name_a_tree = lambda: 'jacaranda'""")
-        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_file = tmp_path / WorkflowFiles.FLOW_FILE
         flow_config = """
         [scheduler]
             allow implicit tasks = True
@@ -130,11 +130,11 @@ class TestSuiteConfig:
                 R1 = '@tree => qux'
         """
         flow_file.write_text(flow_config)
-        suite_config = SuiteConfig(
-            suite="name_a_tree", fpath=flow_file, options=Mock(spec=[]),
+        workflow_config = WorkflowConfig(
+            workflow="name_a_tree", fpath=flow_file, options=Mock(spec=[]),
             xtrigger_mgr=xtrigger_mgr
         )
-        assert 'tree' in suite_config.xtrigger_mgr.functx_map
+        assert 'tree' in workflow_config.xtrigger_mgr.functx_map
 
     def test_xfunction_import_error(self, mock_glbl_cfg, tmp_path):
         """Test for error when a xtrigger function cannot be imported."""
@@ -151,7 +151,7 @@ class TestSuiteConfig:
         caiman_file = python_dir / "caiman.py"
         # NB: we are not returning a lambda, instead we have a scalar
         caiman_file.write_text("""caiman = lambda: True""")
-        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_file = tmp_path / WorkflowFiles.FLOW_FILE
         flow_config = """
         [scheduling]
             initial cycle point = 2018-01-01
@@ -162,8 +162,11 @@ class TestSuiteConfig:
         """
         flow_file.write_text(flow_config)
         with pytest.raises(ImportError) as excinfo:
-            SuiteConfig(suite="caiman_suite", fpath=flow_file,
-                        options=Mock(spec=[]))
+            WorkflowConfig(
+                workflow="caiman_workflow",
+                fpath=flow_file,
+                options=Mock(spec=[])
+            )
         assert "not found" in str(excinfo.value)
 
     def test_xfunction_attribute_error(self, mock_glbl_cfg, tmp_path):
@@ -181,7 +184,7 @@ class TestSuiteConfig:
         capybara_file = python_dir / "capybara.py"
         # NB: we are not returning a lambda, instead we have a scalar
         capybara_file.write_text("""toucan = lambda: True""")
-        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_file = tmp_path / WorkflowFiles.FLOW_FILE
         flow_config = """
         [scheduling]
             initial cycle point = 2018-01-01
@@ -192,8 +195,8 @@ class TestSuiteConfig:
         """
         flow_file.write_text(flow_config)
         with pytest.raises(AttributeError) as excinfo:
-            SuiteConfig(suite="capybara_suite", fpath=flow_file,
-                        options=Mock(spec=[]))
+            WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
+                           options=Mock(spec=[]))
         assert "not found" in str(excinfo.value)
 
     def test_xfunction_not_callable(self, mock_glbl_cfg, tmp_path):
@@ -211,7 +214,7 @@ class TestSuiteConfig:
         not_callable_file = python_dir / "not_callable.py"
         # NB: we are not returning a lambda, instead we have a scalar
         not_callable_file.write_text("""not_callable = 42""")
-        flow_file = tmp_path / SuiteFiles.FLOW_FILE
+        flow_file = tmp_path / WorkflowFiles.FLOW_FILE
         flow_config = """
         [scheduling]
             initial cycle point = 2018-01-01
@@ -222,8 +225,11 @@ class TestSuiteConfig:
         """
         flow_file.write_text(flow_config)
         with pytest.raises(ValueError) as excinfo:
-            SuiteConfig(suite="suite_with_not_callable", fpath=flow_file,
-                        options=Mock(spec=[]))
+            WorkflowConfig(
+                workflow="workflow_with_not_callable",
+                fpath=flow_file,
+                options=Mock(spec=[])
+            )
         assert "callable" in str(excinfo.value)
 
     def test_family_inheritance_and_quotes(self, mock_glbl_cfg):
@@ -249,7 +255,7 @@ class TestSuiteConfig:
             with NamedTemporaryFile() as tf:
                 tf.write(content)
                 tf.flush()
-                config = SuiteConfig(
+                config = WorkflowConfig(
                     'test',
                     tf.name,
                     template_vars=template_vars,
@@ -272,7 +278,7 @@ class TestSuiteConfig:
             },
             None,
             None,
-            (SuiteConfigError, "requires an initial cycle point")
+            (WorkflowConfigError, "requires an initial cycle point")
         ),
         (  # Default icp for integer cycling mode
             {
@@ -312,7 +318,7 @@ class TestSuiteConfig:
             },
             None,
             None,
-            (SuiteConfigError, "does not meet the constraints")
+            (WorkflowConfigError, "does not meet the constraints")
         ),
     ]
 )
@@ -321,7 +327,7 @@ def test_process_icp(
         expected_opt_icp: Optional[str],
         expected_err: Optional[Tuple[Type[Exception], str]],
         monkeypatch: Fixture, cycling_mode: Fixture):
-    """Test SuiteConfig.process_initial_cycle_point().
+    """Test WorkflowConfig.process_initial_cycle_point().
 
     "now" is assumed to be 2005-01-02T06:15+0530
 
@@ -348,10 +354,10 @@ def test_process_icp(
     if expected_err:
         err, msg = expected_err
         with pytest.raises(err) as exc:
-            SuiteConfig.process_initial_cycle_point(mocked_config)
+            WorkflowConfig.process_initial_cycle_point(mocked_config)
         assert msg in str(exc.value)
     else:
-        SuiteConfig.process_initial_cycle_point(mocked_config)
+        WorkflowConfig.process_initial_cycle_point(mocked_config)
         assert mocked_config.cfg[
             'scheduling']['initial cycle point'] == expected_icp
         assert str(mocked_config.initial_point) == expected_icp
@@ -369,7 +375,7 @@ def test_process_icp(
 )
 def test_process_startcp(startcp: Optional[str], expected: str,
                          monkeypatch: Fixture, cycling_mode: Fixture):
-    """Test SuiteConfig.process_start_cycle_point().
+    """Test WorkflowConfig.process_start_cycle_point().
 
     An icp of 1899-05-01T00+0530 is assumed, and "now" is assumed to be
     2005-01-02T06:15+0530
@@ -385,7 +391,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
                         lambda: '20050102T0615+0530')
 
-    SuiteConfig.process_start_cycle_point(mocked_config)
+    WorkflowConfig.process_start_cycle_point(mocked_config)
     assert str(mocked_config.start_point) == expected
 
 
@@ -486,7 +492,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
             },
             None,
             None,
-            (SuiteConfigError,
+            (WorkflowConfigError,
              "initial cycle point:20130101T0000+0530 is after the "
              "final cycle point"),
             id="fcp before icp"
@@ -500,7 +506,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
             },
             None,
             None,
-            (SuiteConfigError,
+            (WorkflowConfigError,
              "initial cycle point:20130101T0000+0530 is after the "
              "final cycle point"),
             id="Negative relative fcp"
@@ -526,7 +532,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
             },
             '2021-01-20',
             None,
-            (SuiteConfigError, "does not meet the constraints"),
+            (WorkflowConfigError, "does not meet the constraints"),
             id="Violated constraints"
         ),
         pytest.param(
@@ -547,7 +553,7 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
                      expected_fcp: Optional[str],
                      expected_err: Optional[Tuple[Type[Exception], str]],
                      cycling_mode: Fixture):
-    """Test SuiteConfig.process_final_cycle_point().
+    """Test WorkflowConfig.process_final_cycle_point().
 
     Params:
         scheduling_cfg: 'scheduling' section of workflow config.
@@ -572,10 +578,10 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
     if expected_err:
         err, msg = expected_err
         with pytest.raises(err) as exc:
-            SuiteConfig.process_final_cycle_point(mocked_config)
+            WorkflowConfig.process_final_cycle_point(mocked_config)
         assert msg in str(exc.value)
     else:
-        SuiteConfig.process_final_cycle_point(mocked_config)
+        WorkflowConfig.process_final_cycle_point(mocked_config)
         assert mocked_config.cfg[
             'scheduling']['final cycle point'] == expected_fcp
         assert str(mocked_config.final_point) == str(expected_fcp)
@@ -589,7 +595,7 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
                 'graph': {}
             },
             None,
-            (SuiteConfigError, "No suite dependency graph defined"),
+            (WorkflowConfigError, "No workflow dependency graph defined"),
             id="Empty graph"
         ),
         pytest.param(
@@ -633,7 +639,7 @@ def test_prelim_process_graph(
         scheduling_cfg: Dict[str, Any],
         scheduling_expected: Optional[Dict[str, Any]],
         expected_err: Optional[Tuple[Type[Exception], str]]):
-    """Test SuiteConfig.prelim_process_graph().
+    """Test WorkflowConfig.prelim_process_graph().
 
     Params:
         scheduling_cfg: 'scheduling' section of workflow config.
@@ -648,10 +654,10 @@ def test_prelim_process_graph(
     if expected_err:
         err, msg = expected_err
         with pytest.raises(err) as exc:
-            SuiteConfig.prelim_process_graph(mock_config)
+            WorkflowConfig.prelim_process_graph(mock_config)
         assert msg in str(exc.value)
     else:
-        SuiteConfig.prelim_process_graph(mock_config)
+        WorkflowConfig.prelim_process_graph(mock_config)
         assert mock_config.cfg['scheduling'] == scheduling_expected
 
 
@@ -670,11 +676,11 @@ def test_utc_mode(caplog, mock_glbl_cfg):
         mock_config = Mock()
         mock_config.cfg = {
             'scheduler': {
-                'UTC mode': utc_mode['suite']
+                'UTC mode': utc_mode['workflow']
             }
         }
         mock_config.options.utc_mode = utc_mode['stored']
-        SuiteConfig.process_utc_mode(mock_config)
+        WorkflowConfig.process_utc_mode(mock_config)
         assert mock_config.cfg['scheduler']['UTC mode'] is expected
         assert get_utc_mode() is expected
         assert len(caplog.record_tuples) == expected_warnings
@@ -682,21 +688,21 @@ def test_utc_mode(caplog, mock_glbl_cfg):
 
     tests = [
         {
-            'utc_mode': {'glbl': True, 'suite': None, 'stored': None},
+            'utc_mode': {'glbl': True, 'workflow': None, 'stored': None},
             'expected': True
         },
         {
-            'utc_mode': {'glbl': True, 'suite': False, 'stored': None},
+            'utc_mode': {'glbl': True, 'workflow': False, 'stored': None},
             'expected': False
         },
         {
             # On restart
-            'utc_mode': {'glbl': False, 'suite': None, 'stored': True},
+            'utc_mode': {'glbl': False, 'workflow': None, 'stored': True},
             'expected': True
         },
         {
             # Changed config value between restarts
-            'utc_mode': {'glbl': False, 'suite': False, 'stored': True},
+            'utc_mode': {'glbl': False, 'workflow': False, 'stored': True},
             'expected': True,
             'expected_warnings': 1
         }
@@ -720,11 +726,11 @@ def test_cycle_point_tz(caplog, monkeypatch):
         mock_config = Mock()
         mock_config.cfg = {
             'scheduler': {
-                'cycle point time zone': cp_tz['suite']
+                'cycle point time zone': cp_tz['workflow']
             }
         }
         mock_config.options.cycle_point_tz = cp_tz['stored']
-        SuiteConfig.process_cycle_point_tz(mock_config)
+        WorkflowConfig.process_cycle_point_tz(mock_config)
         assert mock_config.cfg['scheduler'][
             'cycle point time zone'] == expected
         assert len(caplog.record_tuples) == expected_warnings
@@ -732,35 +738,35 @@ def test_cycle_point_tz(caplog, monkeypatch):
 
     tests = [
         {
-            'cp_tz': {'suite': None, 'stored': None},
+            'cp_tz': {'workflow': None, 'stored': None},
             'utc_mode': True,
             'expected': 'Z'
         },
         {
-            'cp_tz': {'suite': None, 'stored': None},
+            'cp_tz': {'workflow': None, 'stored': None},
             'utc_mode': False,
             'expected': local_tz
         },
         {
-            'cp_tz': {'suite': '+0530', 'stored': None},
+            'cp_tz': {'workflow': '+0530', 'stored': None},
             'utc_mode': True,
             'expected': '+0530'
         },
         {
             # On restart
-            'cp_tz': {'suite': None, 'stored': '+0530'},
+            'cp_tz': {'workflow': None, 'stored': '+0530'},
             'utc_mode': True,
             'expected': '+0530'
         },
         {
             # Changed config value between restarts
-            'cp_tz': {'suite': '+0530', 'stored': '-0030'},
+            'cp_tz': {'workflow': '+0530', 'stored': '-0030'},
             'utc_mode': True,
             'expected': '-0030',
             'expected_warnings': 1
         },
         {
-            'cp_tz': {'suite': 'Z', 'stored': 'Z'},
+            'cp_tz': {'workflow': 'Z', 'stored': 'Z'},
             'utc_mode': False,
             'expected': 'Z'
         }
@@ -779,11 +785,15 @@ def test_rsync_includes_will_not_accept_sub_directories(tmp_path):
     [scheduler]
         install = dir/, dir2/subdir2/, file1, file2
     """
-    flow_cylc = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
+    flow_cylc = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
     flow_cylc.write_text(flow_cylc_content)
 
-    with pytest.raises(SuiteConfigError) as exc:
-        SuiteConfig(suite="rsynctest", fpath=flow_cylc, options=Mock(spec=[]))
+    with pytest.raises(WorkflowConfigError) as exc:
+        WorkflowConfig(
+            workflow="rsynctest",
+            fpath=flow_cylc,
+            options=Mock(spec=[])
+        )
     assert "Directories can only be from the top level" in str(exc.value)
 
 
@@ -799,13 +809,13 @@ def test_valid_rsync_includes_returns_correct_list(tmp_path):
         install = dir/, dir2/, file1, file2
         allow implicit tasks = True
     """
-    flow_cylc = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
+    flow_cylc = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
     flow_cylc.write_text(flow_cylc_content)
 
-    config = SuiteConfig(suite="rsynctest", fpath=flow_cylc,
-                         options=Mock(spec=[]))
+    config = WorkflowConfig(workflow="rsynctest", fpath=flow_cylc,
+                            options=Mock(spec=[]))
 
-    rsync_includes = SuiteConfig.get_validated_rsync_includes(config)
+    rsync_includes = WorkflowConfig.get_validated_rsync_includes(config)
     assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']
 
 
@@ -832,10 +842,10 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
     mock_config.cycling_type = cycling_mode(integer=is_integer_mode)
     mock_config.cfg = {'scheduling': cfg_scheduling}
     if valid:
-        SuiteConfig.process_runahead_limit(mock_config)
+        WorkflowConfig.process_runahead_limit(mock_config)
     else:
-        with pytest.raises(SuiteConfigError) as exc:
-            SuiteConfig.process_runahead_limit(mock_config)
+        with pytest.raises(WorkflowConfigError) as exc:
+            WorkflowConfig.process_runahead_limit(mock_config)
         assert "bad runahead limit" in str(exc.value).lower()
 
 
@@ -843,7 +853,7 @@ def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
     'opt', [None, 'check_circular']
 )
 def test_check_circular(opt, monkeypatch, caplog, tmp_path):
-    """Test SuiteConfig._check_circular()."""
+    """Test WorkflowConfig._check_circular()."""
     # ----- Setup -----
     caplog.set_level(logging.WARNING, CYLC_LOG)
 
@@ -860,22 +870,24 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_path):
         [[a, b, c, d, e]]
             script = True
     """
-    flow_file = tmp_path.joinpath(SuiteFiles.FLOW_FILE)
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
     flow_file.write_text(flow_config)
 
-    def SuiteConfig__assert_err_raised():
-        with pytest.raises(SuiteConfigError) as exc:
-            SuiteConfig(suite='circular', fpath=flow_file, options=options)
+    def WorkflowConfig__assert_err_raised():
+        with pytest.raises(WorkflowConfigError) as exc:
+            WorkflowConfig(
+                workflow='circular', fpath=flow_file, options=options)
         assert "circular edges detected" in str(exc.value)
 
     # ----- The actual test -----
-    SuiteConfig__assert_err_raised()
+    WorkflowConfig__assert_err_raised()
     # Now artificially lower the limit and re-test:
-    monkeypatch.setattr('cylc.flow.config.SuiteConfig.CHECK_CIRCULAR_LIMIT', 4)
+    monkeypatch.setattr(
+        'cylc.flow.config.WorkflowConfig.CHECK_CIRCULAR_LIMIT', 4)
     if opt != 'check_circular':
         # Will no longer raise
-        SuiteConfig(suite='circular', fpath=flow_file, options=options)
+        WorkflowConfig(workflow='circular', fpath=flow_file, options=options)
         msg = "will not check graph for circular dependencies"
         assert msg in caplog.text
     else:
-        SuiteConfig__assert_err_raised()
+        WorkflowConfig__assert_err_raised()

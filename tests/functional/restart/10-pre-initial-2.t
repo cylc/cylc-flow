@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,22 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a suite with pre-initial cycle dependencies and no
-# initial cycle point in suite definition, ref. github #957.
+# Test restarting a workflow with pre-initial cycle dependencies and no
+# initial cycle point in workflow definition, ref. github #957.
 . "$(dirname "$0")/test_header"
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" 'pre-init-2'
+install_workflow "${TEST_NAME_BASE}" 'pre-init-2'
 #-------------------------------------------------------------------------------
 ICP='20100808T00'
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --initial-cycle-point="${ICP}" "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc validate --initial-cycle-point="${ICP}" "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach \
     --initial-cycle-point="${ICP}" \
     --stop-cycle-point="${ICP}" \
-    "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+    "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge
 exit

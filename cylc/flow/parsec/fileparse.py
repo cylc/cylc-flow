@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -286,9 +286,12 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     fdir = os.path.dirname(fpath)
 
     # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).
-    suite_lib_python = os.path.join(fdir, "lib", "python")
-    if os.path.isdir(suite_lib_python) and suite_lib_python not in sys.path:
-        sys.path.append(suite_lib_python)
+    workflow_lib_python = os.path.join(fdir, "lib", "python")
+    if (
+        os.path.isdir(workflow_lib_python)
+        and workflow_lib_python not in sys.path
+    ):
+        sys.path.append(workflow_lib_python)
 
     LOG.debug('Reading file %s', fpath)
 

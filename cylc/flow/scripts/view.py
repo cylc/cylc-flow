@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,13 +18,13 @@
 
 """cylc view [OPTIONS] ARGS
 
-View a processed suite configuration.
+View a processed workflow configuration.
 
 Note:
   This is different to `cylc config` which displays the parsed
   configuration (as Cylc would see it).
 
-View a read-only temporary copy of suite NAME's flow.cylc file, in your
+View a read-only temporary copy of workflow NAME's flow.cylc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
 
 The edit process is spawned in the foreground as follows:
@@ -44,7 +44,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.fileparse import read_and_proc
-from cylc.flow.suite_files import parse_suite_arg
+from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -103,7 +103,7 @@ def get_option_parser():
         action="store_true", default=False, dest="geditor")
 
     parser.add_option(
-        "--stdout", help="Print the suite definition to stdout.",
+        "--stdout", help="Print the workflow definition to stdout.",
         action="store_true", default=False, dest="stdout")
 
     parser.add_option(
@@ -117,7 +117,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    suite, flow_file = parse_suite_arg(options, reg)
+    workflow, flow_file = parse_workflow_arg(options, reg)
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
@@ -146,7 +146,7 @@ def main(parser, options, reg):
 
     # write to a temporary file
     viewfile = NamedTemporaryFile(
-        suffix=".flow.cylc", prefix=suite.replace('/', '_') + '.',
+        suffix=".flow.cylc", prefix=workflow.replace('/', '_') + '.',
     )
     for line in lines:
         viewfile.write((line + '\n').encode())
@@ -176,10 +176,10 @@ def main(parser, options, reg):
 
     if modtime2 > modtime1:
         print()
-        print('WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY SUITE COPY:',
+        print('WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY WORKFLOW COPY:',
               file=sys.stderr)
         print(viewfile.name, file=sys.stderr)
-        print('In future use \'cylc edit\' to edit a suite.',
+        print('In future use \'cylc edit\' to edit a workflow.',
               file=sys.stderr)
         print()
     # DONE

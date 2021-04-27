@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,20 +21,20 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-# Suite runs and shuts down with a failed task.
-cylc play --no-detach "${SUITE_NAME}" > /dev/null 2>&1
+# Workflow runs and shuts down with a failed task.
+cylc play --no-detach "${WORKFLOW_NAME}" > /dev/null 2>&1
 # Restart with a failed task and a succeeded task.
-cylc play "${SUITE_NAME}"
-poll_grep_suite_log -F '[foo.1] status=failed: (polled)failed'
-cylc dump "${SUITE_NAME}" > dump.out
+cylc play "${WORKFLOW_NAME}"
+poll_grep_workflow_log -F '[foo.1] status=failed: (polled)failed'
+cylc dump "${WORKFLOW_NAME}" > dump.out
 TEST_NAME=${TEST_NAME_BASE}-grep
 # State summary should not just say "Initializing..."
 grep_ok "state totals={'waiting': 0, 'expired': 0, 'preparing': 0, 'submit-failed': 0, 'submitted': 0, 'running': 0, 'failed': 1, 'succeeded': 0}" dump.out
 #-------------------------------------------------------------------------------
-cylc stop --max-polls=10 --interval=2 "${SUITE_NAME}"
+cylc stop --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 purge

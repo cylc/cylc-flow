@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -31,10 +31,10 @@ from typing import Optional
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.suite_files import SuiteFiles
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import RunOptions
-from cylc.flow.suite_status import StopMode
+from cylc.flow.workflow_status import StopMode
 
 from .flow_writer import flow_config_str
 from . import _poll_file
@@ -49,7 +49,7 @@ def _make_flow(run_dir, test_dir, conf, name=None):
     reg = str(flow_run_dir.relative_to(run_dir))
     if isinstance(conf, dict):
         conf = flow_config_str(conf)
-    with open((flow_run_dir / SuiteFiles.FLOW_FILE), 'w+') as flow_file:
+    with open((flow_run_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
         flow_file.write(conf)
     return reg
 
@@ -71,8 +71,8 @@ async def _run_flow(
     level: int = logging.INFO
 ):
     """Start a scheduler."""
-    contact = (run_dir / scheduler.suite / SuiteFiles.Service.DIRNAME /
-               SuiteFiles.Service.CONTACT)
+    contact = (run_dir / scheduler.workflow / WorkflowFiles.Service.DIRNAME /
+               WorkflowFiles.Service.CONTACT)
     if caplog:
         caplog.set_level(level, CYLC_LOG)
     task = None

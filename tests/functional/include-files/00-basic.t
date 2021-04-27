@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,19 +20,19 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" suite
+install_workflow "${TEST_NAME_BASE}" workflow
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-# test raw suite validates
-run_ok "${TEST_NAME}.1" cylc val "${SUITE_NAME}"
-# test suite validates as inlined during editing
-cylc view --inline --mark-for-edit --stdout "${SUITE_NAME}" > inlined-for-edit.cylc
+# test raw workflow validates
+run_ok "${TEST_NAME}.1" cylc val "${WORKFLOW_NAME}"
+# test workflow validates as inlined during editing
+cylc view --inline --mark-for-edit --stdout "${WORKFLOW_NAME}" > inlined-for-edit.cylc
 run_ok "${TEST_NAME}.2" cylc val inlined-for-edit.cylc
 #-------------------------------------------------------------------------------
-# compare inlined suite def with reference copy
+# compare inlined workflow def with reference copy
 TEST_NAME=${TEST_NAME_BASE}-compare
-cylc view --inline --stdout "${SUITE_NAME}" > inlined.cylc
-cmp_ok inlined.cylc "${TEST_SOURCE_DIR}/suite/ref-inlined.cylc"
+cylc view --inline --stdout "${WORKFLOW_NAME}" > inlined.cylc
+cmp_ok inlined.cylc "${TEST_SOURCE_DIR}/workflow/ref-inlined.cylc"
 #-------------------------------------------------------------------------------
 purge
 #-------------------------------------------------------------------------------

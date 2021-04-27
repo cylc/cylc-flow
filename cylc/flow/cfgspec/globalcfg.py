@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -141,26 +141,26 @@ with Conf('global.cylc', desc='''
             shutdown/restart it will first wait a random period of time
             between zero and ``auto restart delay`` seconds before
             beginning the process. This is to prevent large numbers of
-            suites from restarting simultaneously.
+            workflows from restarting simultaneously.
         ''')
         with Conf('run hosts', desc='''
-            Configure allowed suite hosts and ports for starting up (running or
-            restarting) suites. Additionally configure host selection settings
-            specifying how to determine the most suitable run host at any given
-            time from those configured.
+            Configure workflow hosts and ports for starting workflows.
+            Additionally configure host selection settings specifying how to
+            determine the most suitable run host at any given time from those
+            configured.
         '''):
             Conf('available', VDR.V_SPACELESS_STRING_LIST, desc='''
-                A list of allowed suite run hosts. One of these hosts will be
-                appointed for a suite to start up on if an explicit host is not
+                A list of workflow run hosts. One of these hosts will be
+                appointed for a workflow to start on if an explicit host is not
                 provided as an option to a ``run`` or ``restart`` command.
             ''')
             Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
                  desc='''
-                A list of allowed ports for Cylc to use to run suites.
+                A list of allowed ports for Cylc to use to run workflows.
             ''')
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc='''
                 Hosts specified in ``condemned hosts`` will not be considered
-                as suite run hosts. If suites are already running on
+                as workflow run hosts. If workflows are already running on
                 ``condemned hosts`` they will be automatically shutdown and
                 restarted (see:ref:`auto-stop-restart`).
             ''')
@@ -231,29 +231,29 @@ with Conf('global.cylc', desc='''
             ''')
 
         with Conf('host self-identification', desc='''
-            The suite host's identity must be determined locally by cylc and
-            passed to running tasks (via ``$CYLC_SUITE_HOST``) so that task
-            messages can target the right suite on the right host.
+            The workflow host's identity must be determined locally by cylc and
+            passed to running tasks (via ``$CYLC_WORKFLOW_HOST``) so that task
+            messages can target the right workflow on the right host.
         '''):
             # TODO
             # Is it conceivable that different remote task hosts at the same
-            # site might see the suite host differently? If so we would need to
-            # be able to override the target in suite configurations.
+            # site might see the workflow host differently? If so we'd need to
+            # be able to override the target in workflow configurations.
             Conf(
                 'method', VDR.V_STRING, 'name',
                 options=['name', 'address', 'hardwired'],
                 desc='''
                     This item determines how cylc finds the identity of the
-                    suite host.For the default *name* method cylc asks the
-                    suite host for its host name. This should resolve on remote
-                    task hosts to the IP address of the suite host; if it
+                    workflow host. For the default *name* method cylc asks the
+                    workflow host for its host name. This should resolve on
+                    task hosts to the IP address of the workflow host; if it
                     doesn't, adjust network settings or use one of the other
                     methods. For the *address* method, cylc attempts to use a
                     special external "target address" to determine the IP
-                    address of the suite host as seen by remote task hosts.
+                    address of the workflow host as seen by remote task hosts.
                     And finally, as a last resort, you can choose the
                     *hardwired* method and manually specify the host name or IP
-                    address of the suite host.
+                    address of the workflow host.
 
                     Options:
 
@@ -267,13 +267,13 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('target', VDR.V_STRING, 'google.com', desc='''
                 This item is required for the *address* self-identification
-                method. If your suite host sees the internet, a common address
-                such as ``google.com`` will do; otherwise choose a host
+                method. If your workflow host sees the internet, a common
+                address such as ``google.com`` will do; otherwise choose a host
                 visible on your intranet.
             ''')
             Conf('host', VDR.V_STRING, desc='''
                 Use this item to explicitly set the name or IP address of the
-                suite host if you have to use the *hardwired*
+                workflow host if you have to use the *hardwired*
                 self-identification method.
             ''')
 
@@ -321,7 +321,7 @@ with Conf('global.cylc', desc='''
             Conf('plugins', VDR.V_STRING_LIST,
                  ['health check', 'prune flow labels'], desc='''
                 Configure the default main loop plugins to use when
-                starting up new suites.
+                starting up new workflows.
             ''')
 
             with Conf('<plugin name>', desc='''
@@ -332,7 +332,7 @@ with Conf('global.cylc', desc='''
                 ''')
 
             with Conf('health check', meta=MainLoopPlugin, desc='''
-                Checks the integrity of the suite run directory.
+                Checks the integrity of the workflow run directory.
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     The interval with which this plugin is run.
@@ -346,7 +346,7 @@ with Conf('global.cylc', desc='''
                 ''')
 
         with Conf('logging', desc='''
-            The workflow event log, held under the suite run directory, is
+            The workflow event log, held under the workflow run directory, is
             maintained as a rolling archive. Logs are rolled over (backed up
             and started anew) when they reach a configurable limit size.
         '''):
@@ -354,7 +354,7 @@ with Conf('global.cylc', desc='''
                 How many rolled logs to retain in the archive.
             ''')
             Conf('maximum size in bytes', VDR.V_INTEGER, 1000000, desc='''
-                Suite event logs are rolled over when they reach this
+                Workflow event logs are rolled over when they reach this
                 file size.
             ''')
 
@@ -370,7 +370,7 @@ with Conf('global.cylc', desc='''
         ''')
 
     with Conf('editors', desc='''
-        Choose your favourite text editor for editing suite configurations.
+        Choose your favourite text editor for editing workflow configurations.
     '''):
         Conf('terminal', VDR.V_STRING, desc='''
             An in-terminal text editor to be used by the cylc command line.
@@ -428,26 +428,26 @@ with Conf('global.cylc', desc='''
                  VDR.V_STRING, 'zmq',
                  options=[meth.value for meth in CommsMeth], desc='''
                 The means by which task progress messages are reported back to
-                the running suite.
+                the running workflow.
 
                 Options:
 
                 zmq
                    Direct client-server TCP communication via network ports
                 poll
-                   The suite polls for the status of tasks (no task messaging)
+                   The workflow polls for task status (no task messaging)
                 ssh
                    Use non-interactive ssh for task communications
             ''')
             # TODO ensure that it is possible to over-ride the following three
-            # settings in suite config.
+            # settings in workflow config.
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST, desc='''
                 Cylc can also poll submitted jobs to catch problems that
                 prevent the submitted job from executing at all, such as
                 deletion from an external job runner queue. Routine
                 polling is done only for the polling ``task communication
-                method`` unless suite-specific polling is configured in
-                the suite configuration. A list of interval values can be
+                method`` unless workflow-specific polling is configured in
+                the workflow configuration. A list of interval values can be
                 specified as for execution polling but a single value
                 is probably sufficient for job submission polling.
 
@@ -458,11 +458,11 @@ with Conf('global.cylc', desc='''
             Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST, desc='''
                 Cylc can poll running jobs to catch problems that prevent task
-                messages from being sent back to the suite, such as hard job
+                messages from being sent back to the workflow, such as hard job
                 kills, network outages, or unplanned task host shutdown.
                 Routine polling is done only for the polling *task
-                communication method* (below) unless suite-specific polling is
-                configured in the suite configuration.  A list of interval
+                communication method* (below) unless polling is
+                configured in the workflow configuration.  A list of interval
                 values can be specified, with the last value used repeatedly
                 until the task is finished - this allows more frequent polling
                 near the beginning and end of the anticipated task run time.
@@ -486,7 +486,7 @@ with Conf('global.cylc', desc='''
                  'ssh -oBatchMode=yes -oConnectTimeout=10',
                  desc='''
                 A string for the command used to invoke commands on this host.
-                This is not used on the suite host unless you run local tasks
+                Not used on the workflow host unless you run local tasks
                 under another user account.  The value is assumed to be ``ssh``
                 with some initial options or a command that implements a
                 similar interface to ``ssh``.
@@ -560,9 +560,8 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('copyable environment variables', VDR.V_STRING_LIST, '',
                  desc='''
-                A list containing the names of the environment variables that
-                can and/or need to be copied from the suite server program to a
-                job.
+                A list containing the names of the environment variables to
+                be copied from the scheduler to a job.
             ''')
             Conf('retrieve job logs', VDR.V_BOOLEAN, desc='''
                 Global default for
@@ -816,7 +815,7 @@ def get_version_hierarchy(version: str) -> List[str]:
 
 class GlobalConfig(ParsecConfig):
     """
-    Handle global (all suites) site and user configuration for cylc.
+    Handle global (all workflows) site and user configuration for cylc.
     User file values override site file values.
     """
 

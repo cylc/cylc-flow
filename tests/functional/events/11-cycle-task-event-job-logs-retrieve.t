@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,18 +21,18 @@ export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST='${CYLC_TEST_HOST}'" "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+    cylc validate -s "HOST='${CYLC_TEST_HOST}'" "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 # There are 2 remote tasks. One with "retrieve job logs = True", one without.
 # Only t1 should have job.err and job.out retrieved.
 
 sed "/'job-logs-retrieve'/!d" \
-    "${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \
+    "${WORKFLOW_RUN_DIR}/log/job/2020-02-02T02:02Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<__LOG__
 [(('job-logs-retrieve', 'retry'), 1) ret_code] 0

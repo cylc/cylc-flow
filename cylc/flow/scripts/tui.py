@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc tui REG
 
-View and control running suites in the terminal.
+View and control running workflows in the terminal.
 
 (Tui = Terminal User Interface)
 
@@ -50,7 +50,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('REG', 'Suite name')
+            ('REG', 'Workflow name')
         ],
         # auto_add=False,  NOTE: at present auto_add can not be turned off
         color=False

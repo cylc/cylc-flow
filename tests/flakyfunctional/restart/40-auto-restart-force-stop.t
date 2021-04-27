@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ BASE_GLOBAL_CONFIG="
 "
 #-------------------------------------------------------------------------------
 # test the force shutdown option (auto stop, no restart) in condemned hosts
-init_suite "${TEST_NAME_BASE}" <<< '
+init_workflow "${TEST_NAME_BASE}" <<< '
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -47,8 +47,8 @@ ${BASE_GLOBAL_CONFIG}
         available = localhost
 "
 
-cylc play "${SUITE_NAME}" --pause
-poll_suite_running
+cylc play "${WORKFLOW_NAME}" --pause
+poll_workflow_running
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
@@ -58,13 +58,13 @@ ${BASE_GLOBAL_CONFIG}
         condemned = $(localhost_fqdn)!
 "
 
-FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
+FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
-    'The Cylc suite host will soon become un-available' \
-    'This suite will be shutdown as the suite host is' \
-    'When another suite host becomes available the suite can' \
-    'Suite shutting down - REQUEST(NOW)'
+    'The Cylc workflow host will soon become un-available' \
+    'This workflow will be shutdown as the workflow host is' \
+    'When another workflow host becomes available the workflow can' \
+    'Workflow shutting down - REQUEST(NOW)'
 
-cylc stop --kill --max-polls=10 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
+cylc stop --kill --max-polls=10 --interval=2 "${WORKFLOW_NAME}" 2>'/dev/null'
 purge
 exit

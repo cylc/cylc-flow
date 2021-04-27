@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ Record task job messages.
 Send task job messages to:
 - The job stdout/stderr.
 - The job status file, if there is one.
-- The suite server program, if communication is possible.
+- The scheduler, if communication is possible.
 
 Task jobs use this command to record and report status such as success and
 failure. Applications run by task jobs can use this command to report messages
@@ -34,14 +34,14 @@ separated by empty lines.
 
 Examples:
   # Single message as an argument:
-  $ cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'Hello world!'
+  $ cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'Hello world!'
 
   # Multiple messages as arguments:
-  $ cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" \
+  $ cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" \
   >     'Hello world!' 'Hi' 'WARNING:Hey!'
 
   # Multiple messages on STDIN:
-  $ cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
+  $ cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
   > Hello
   > world!
   >
@@ -50,7 +50,7 @@ Examples:
   > WARNING:Hey!
   >__STDIN__
 
-Note "${CYLC_SUITE_NAME}" and "${CYLC_TASK_JOB}" are made available in task job
+Note "${CYLC_WORKFLOW_NAME}" and "${CYLC_TASK_JOB}" are available in task job
 environments - you do not need to write their actual values in task scripting.
 
 Each message can be prefixed with a severity level using the syntax 'SEVERITY:
@@ -65,8 +65,8 @@ Note: to abort a job script with a custom error message, use cylc__job_abort:
 
 For backward compatibility, if number of arguments is less than or equal to 2,
 the command assumes the classic interface, where all arguments are messages.
-Otherwise, the first 2 arguments are assumed to be the suite name and the task
-job identifier.
+Otherwise, the first 2 arguments are assumed to be workflow name and task job
+identifier.
 """
 
 
@@ -86,7 +86,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
-            ('[REG]', 'Suite name'),
+            ('[REG]', 'Workflow name'),
             ('[TASK-JOB]', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM'),
             ('[[SEVERITY:]MESSAGE ...]', 'Messages')])
     parser.add_option(
@@ -113,11 +113,11 @@ def main(parser, options, *args):
         #     9.0?
         # (As of Dec 2020 some functional tests still use the classic
         # two arg interface)
-        suite = os.getenv('CYLC_SUITE_NAME')
+        workflow = os.getenv('CYLC_WORKFLOW_NAME')
         task_job = os.getenv('CYLC_TASK_JOB')
         message_strs = list(args)
     else:
-        suite, task_job, *message_strs = args
+        workflow, task_job, *message_strs = args
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''
@@ -152,7 +152,7 @@ def main(parser, options, *args):
             messages.append([options.severity, message_str.strip()])
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
-    record_messages(suite, task_job, messages)
+    record_messages(workflow, task_job, messages)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 [meta]
     title = "Test insertion of a task added by a reload."
-# Don't run this suite in-place: it modifies itself.
+# Don't run this workflow in-place: it modifies itself.
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -12,7 +12,7 @@
         script = true
     [[reloader]]
         script = """
-sed -i "s/\(R1 = reloader => foo\)\s*$/\1 => add_me/" $CYLC_SUITE_RUN_DIR/flow.cylc
-cylc reload $CYLC_SUITE_NAME
+sed -i "s/\(R1 = reloader => foo\)\s*$/\1 => add_me/" $CYLC_WORKFLOW_RUN_DIR/flow.cylc
+cylc reload $CYLC_WORKFLOW_NAME
 sleep 10
         """

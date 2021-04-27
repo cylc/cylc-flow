@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,14 +27,14 @@ create_test_global_config "" "
     process pool timeout = PT10S
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-sed -e 's/^.* \([EW]\)/\1/' "${SUITE_RUN_DIR}/log/suite/log" >'log'
+sed -e 's/^.* \([EW]\)/\1/' "${WORKFLOW_RUN_DIR}/log/workflow/log" >'log'
 
 contains_ok 'log' <<__END__
 ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh foo.1
@@ -43,9 +43,9 @@ ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh foo.1
 WARNING - 1/foo/01 ('event-handler-00', 'started') failed
 __END__
 
-cylc suite-state "${SUITE_NAME}" >'suite-state.log'
+cylc workflow-state "${WORKFLOW_NAME}" >'workflow-state.log'
 
-contains_ok 'suite-state.log' << __END__
+contains_ok 'workflow-state.log' << __END__
 stopper, 1, succeeded
 foo, 1, succeeded
 __END__

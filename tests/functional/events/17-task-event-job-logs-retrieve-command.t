@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -29,30 +29,30 @@ create_test_global_config "" "
 "
 OPT_SET='-s GLOBALCFG=True'
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-mkdir -p "${RUN_DIR}/${SUITE_NAME}/bin"
-cat >"${RUN_DIR}/${SUITE_NAME}/bin/my-rsync" <<'__BASH__'
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+mkdir -p "${RUN_DIR}/${WORKFLOW_NAME}/bin"
+cat >"${RUN_DIR}/${WORKFLOW_NAME}/bin/my-rsync" <<'__BASH__'
 #!/usr/bin/env bash
 set -eu
-echo "$@" >>"${CYLC_SUITE_LOG_DIR}/my-rsync.log"
+echo "$@" >>"${CYLC_WORKFLOW_LOG_DIR}/my-rsync.log"
 exec rsync -a "$@"
 __BASH__
-chmod +x "${RUN_DIR}/${SUITE_NAME}/bin/my-rsync"
+chmod +x "${RUN_DIR}/${WORKFLOW_NAME}/bin/my-rsync"
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate ${OPT_SET} -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 # shellcheck disable=SC2086
-suite_run_ok "${TEST_NAME_BASE}-run" \
+workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach ${OPT_SET} \
-       -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
+       -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 
-SUITE_LOG_D="${RUN_DIR}/${SUITE_NAME}/log"
-sed 's/^.* -v //' "${SUITE_LOG_D}/suite/my-rsync.log" >'my-rsync.log.edited'
+WORKFLOW_LOG_D="${RUN_DIR}/${WORKFLOW_NAME}/log"
+sed 's/^.* -v //' "${WORKFLOW_LOG_D}/workflow/my-rsync.log" >'my-rsync.log.edited'
 
 OPT_HEAD='--include=/1 --include=/1/t1'
 OPT_TAIL='--exclude=/**'
-ARGS="${CYLC_TEST_HOST}:\$HOME/cylc-run/${SUITE_NAME}/log/job/ ${SUITE_LOG_D}/job/"
+ARGS="${CYLC_TEST_HOST}:\$HOME/cylc-run/${WORKFLOW_NAME}/log/job/ ${WORKFLOW_LOG_D}/job/"
 cmp_ok 'my-rsync.log.edited' <<__LOG__
 ${OPT_HEAD} --include=/1/t1/01 --include=/1/t1/01/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/02 --include=/1/t1/02/** ${OPT_TAIL} ${ARGS}

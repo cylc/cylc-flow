@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     allow implicit tasks = True
     [[events]]
@@ -33,18 +33,18 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[holdrelease]]
         script = """
 cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_suite_log -F 'spawned foo.1'
-cylc__job__poll_grep_suite_log -F 'spawned bar.1'
-cylc__job__poll_grep_suite_log -F 'spawned cheese.1'
-cylc__job__poll_grep_suite_log -F 'spawned jam.1'
-cylc__job__poll_grep_suite_log -F 'spawned cat1.1'
-cylc__job__poll_grep_suite_log -F 'spawned cat2.1'
-cylc__job__poll_grep_suite_log -F 'spawned dog1.1'
-cylc__job__poll_grep_suite_log -F 'spawned dog2.1'
-cylc hold ${CYLC_SUITE_NAME} '*FF.1'  # inexact fam
-cylc hold ${CYLC_SUITE_NAME} 'TOAST.1'  # exact fam
-cylc hold ${CYLC_SUITE_NAME} 'cat*.1'  # inexact tasks
-cylc hold ${CYLC_SUITE_NAME} 'dog1.1'  # exact tasks
+cylc__job__poll_grep_workflow_log -F 'spawned foo.1'
+cylc__job__poll_grep_workflow_log -F 'spawned bar.1'
+cylc__job__poll_grep_workflow_log -F 'spawned cheese.1'
+cylc__job__poll_grep_workflow_log -F 'spawned jam.1'
+cylc__job__poll_grep_workflow_log -F 'spawned cat1.1'
+cylc__job__poll_grep_workflow_log -F 'spawned cat2.1'
+cylc__job__poll_grep_workflow_log -F 'spawned dog1.1'
+cylc__job__poll_grep_workflow_log -F 'spawned dog2.1'
+cylc hold ${CYLC_WORKFLOW_NAME} '*FF.1'  # inexact fam
+cylc hold ${CYLC_WORKFLOW_NAME} 'TOAST.1'  # exact fam
+cylc hold ${CYLC_WORKFLOW_NAME} 'cat*.1'  # inexact tasks
+cylc hold ${CYLC_WORKFLOW_NAME} 'dog1.1'  # exact tasks
 """
     [[STUFF]]
     [[TOAST]]
@@ -64,19 +64,19 @@ cylc hold ${CYLC_SUITE_NAME} 'dog1.1'  # exact tasks
         inherit = STOP
         script = """
         sleep 5
-        cylc stop "${CYLC_SUITE_NAME}"
+        cylc stop "${CYLC_WORKFLOW_NAME}"
         """
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 
 # Should shut down with all the held tasks in the held state, and dog.2
 # finished and gone from the task pool.
 
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'SELECT cycle, name, status, is_held FROM task_pool' > task-pool.out
 cmp_ok task-pool.out <<__OUT__
 1|foo|waiting|1

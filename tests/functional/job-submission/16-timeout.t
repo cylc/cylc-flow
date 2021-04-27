@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,21 +28,21 @@ create_test_global_config "" "
         job runner command template = sleep 30
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-suite-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-workflow-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # egrep -m <num> is stop matching after <num> matches
 #       -A <num> is number of lines of context after match
-cylc cat-log "${SUITE_NAME}" \
+cylc cat-log "${WORKFLOW_NAME}" \
     | grep -E -m 1 -A 2 "ERROR - \[jobs-submit cmd\]" \
        | sed -e 's/^.* \(ERROR\)/\1/' > log
 
-SUITE_LOG_DIR=$(cylc cat-log -m p "${SUITE_NAME}")
-JOB_LOG_DIR="${SUITE_LOG_DIR%suite/log}"
+WORKFLOW_LOG_DIR=$(cylc cat-log -m p "${WORKFLOW_NAME}")
+JOB_LOG_DIR="${WORKFLOW_LOG_DIR%workflow/log}"
 JOB_LOG_DIR="${JOB_LOG_DIR/$HOME/\$HOME}"
 
 DEFAULT_PATHS='--path=/bin --path=/usr/bin --path=/usr/local/bin --path=/sbin --path=/usr/sbin --path=/usr/local/sbin'
@@ -52,9 +52,9 @@ ERROR - [jobs-submit cmd] cylc jobs-submit --debug ${DEFAULT_PATHS} -- '${JOB_LO
 	[jobs-submit err] killed on timeout (PT10S)
 __END__
 
-cylc suite-state "${SUITE_NAME}" > suite-state.log
+cylc workflow-state "${WORKFLOW_NAME}" > workflow-state.log
 
-contains_ok suite-state.log << __END__
+contains_ok workflow-state.log << __END__
 stopper, 1, succeeded
 foo, 1, submit-failed
 __END__

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,17 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test ${CYLC_SUITE_DIR} in task PYTHONPATH.
+# Test ${CYLC_WORKFLOW_DIR} in task PYTHONPATH.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 #-------------------------------------------------------------------------------
-CHOSEN_SUITE="$(basename "$0" | sed 's/\..*//')"
-install_suite "${TEST_NAME_BASE}" "$CHOSEN_SUITE"
+CHOSEN_WORKFLOW="$(basename "$0" | sed 's/\..*//')"
+install_workflow "${TEST_NAME_BASE}" "$CHOSEN_WORKFLOW"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

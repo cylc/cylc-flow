@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,23 +20,23 @@
 . "$(dirname "$0")/test_header"
 
 dumpdbtables() {
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM suite_params WHERE key=="stop_task";' >'stoptask.out'
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
+        'SELECT * FROM workflow_params WHERE key=="stop_task";' >'stoptask.out'
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
         'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' >'taskpool.out'
 }
 
 set_test_number 10
 
 # Event should look like this:
-# Start suite
+# Start workflow
 # At t1.1, set stop task to t5.1
-# At t2.1, stop suite at t2.1
+# At t2.1, stop workflow at t2.1
 # Restart
-# Suite runs to stop task t5.1, reset stop task.
+# Workflow runs to stop task t5.1, reset stop task.
 # Restart
-# Suite stops normally at t8.1
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+# Workflow stops normally at t8.1
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [task parameters]
     i = 1..8
 [scheduler]
@@ -51,30 +51,30 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t<i>]]
         script = true
     [[t<i=1>]]
-        script = cylc stop "${CYLC_SUITE_NAME}" 't_i5.1'
+        script = cylc stop "${CYLC_WORKFLOW_NAME}" 't_i5.1'
     [[t<i=2>]]
-        script = cylc stop "${CYLC_SUITE_NAME}"
+        script = cylc stop "${CYLC_WORKFLOW_NAME}"
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stoptask.out' <<<'stop_task|t_i5.1'
 cmp_ok 'taskpool.out' <<'__OUT__'
 1|t_i3|waiting
 __OUT__
 
-suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-restart-1" \
+    cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stoptask.out' <'/dev/null'
 cmp_ok 'taskpool.out' <<'__OUT__'
 1|t_i6|waiting
 __OUT__
 
-suite_run_ok "${TEST_NAME_BASE}-restart-2" \
-    cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-restart-2" \
+    cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stoptask.out' <'/dev/null'
 cmp_ok 'taskpool.out' <'/dev/null'

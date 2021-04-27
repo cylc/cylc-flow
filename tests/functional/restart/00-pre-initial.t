@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,23 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a suite with pre-initial cycle dependencies
+# Test restarting a workflow with pre-initial cycle dependencies
 . "$(dirname "$0")/test_header"
 set_test_number 5
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${SUITE_NAME}"
-sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLOW_NAME}"
+sqlite3 "${RUN_DIR}/${WORKFLOW_NAME}/log/db" \
     'SELECT name, cycle, status FROM task_pool ORDER BY name, cycle' \
     >'mid-state'
 cmp_ok 'mid-state' <<"__OUT__"
 p1|20100808T0000Z|running
 __OUT__
 
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc play --debug --no-detach "${SUITE_NAME}"
-sqlite3 "${RUN_DIR}/${SUITE_NAME}/log/db" \
+workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play --debug --no-detach "${WORKFLOW_NAME}"
+sqlite3 "${RUN_DIR}/${WORKFLOW_NAME}/log/db" \
     'SELECT name, cycle, status FROM task_states ORDER BY name, cycle' \
     >'final-state'
 contains_ok 'final-state' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/ref-state"

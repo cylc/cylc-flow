@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,11 +27,11 @@ create_test_global_config '' "
         execution polling intervals = PT1M
         execution time limit polling intervals = PT5S
 "
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 cmp_times () {
     # Test if the times $1 and $2 are within $3 seconds of each other.
@@ -55,7 +55,7 @@ print(
 __PYTHON__
 }
 #-------------------------------------------------------------------------------
-LOG="${SUITE_RUN_DIR}/log/suite/log"
+LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 # Test logging of the "next job poll" message when task starts.
 TEST_NAME="${TEST_NAME_BASE}-log-entry"
 LINE="$(grep -F '[foo.1] -health check settings: execution timeout=PT10S' "${LOG}")"

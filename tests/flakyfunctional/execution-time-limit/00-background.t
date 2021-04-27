@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,14 +21,14 @@ export REQUIRE_PLATFORM="runner:${JOB_RUNNER%%.t}"
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach --abort-if-any-task-fails "${SUITE_NAME}"
+    cylc validate "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 
-LOGD="${RUN_DIR}/${SUITE_NAME}/log/job/1/foo"
+LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/job/1/foo"
 grep_ok '# Execution time limit: 5.0' "${LOGD}/01/job"
 grep_ok 'CYLC_JOB_EXIT=XCPU' "${LOGD}/01/job.status"
 

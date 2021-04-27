@@ -7,6 +7,6 @@
     [[t01]]
         script = true
         [[[events]]]
-            handlers = my-handler "%(suite)s"
+            handlers = my-handler "%(workflow)s"
             handler events = succeeded
             handler retry delays = PT0S, PT10S

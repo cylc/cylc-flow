@@ -9,7 +9,7 @@
     [[foo]]
         script = """
             # check PYTHONPATH is set correctly
-            grep -q "${CYLC_SUITE_RUN_DIR}/lib/python" <<< "${PYTHONPATH}"
+            grep -q "${CYLC_WORKFLOW_RUN_DIR}/lib/python" <<< "${PYTHONPATH}"
 
             # run a toy example
             python3 -c '

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,32 +21,32 @@
 
 set_test_number 10
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --debug "${SUITE_NAME}"
+    cylc validate --debug "${WORKFLOW_NAME}"
 
-# Live mode run: outputs not received, suite shuts down early without running baz
-suite_run_ok "${TEST_NAME_BASE}-run-live" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
-LOG="$(cylc log -m p "$SUITE_NAME")"
+# Live mode run: outputs not received, workflow shuts down early without running baz
+workflow_run_ok "${TEST_NAME_BASE}-run-live" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+LOG="$(cylc log -m p "$WORKFLOW_NAME")"
 count_ok '(received)meet' "${LOG}" 0
 count_ok '(received)greet' "${LOG}" 0
 
 delete_db
 
 # Dummy and sim mode: outputs auto-completed, baz runs
-suite_run_ok "${TEST_NAME_BASE}-run-dummy" \
-    cylc play -m 'dummy' --reference-test --debug --no-detach "${SUITE_NAME}"
-LOG="$(cylc log -m p "$SUITE_NAME")"
+workflow_run_ok "${TEST_NAME_BASE}-run-dummy" \
+    cylc play -m 'dummy' --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+LOG="$(cylc log -m p "$WORKFLOW_NAME")"
 count_ok '(received)meet' "${LOG}" 1
 count_ok '(received)greet' "${LOG}" 1
 
 delete_db
 
-suite_run_ok "${TEST_NAME_BASE}-run-simulation" \
-    cylc play -m 'simulation' --reference-test --debug --no-detach "${SUITE_NAME}"
-LOG="$(cylc log -m p "$SUITE_NAME")"
+workflow_run_ok "${TEST_NAME_BASE}-run-simulation" \
+    cylc play -m 'simulation' --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+LOG="$(cylc log -m p "$WORKFLOW_NAME")"
 count_ok '(received)meet' "${LOG}" 1
 count_ok '(received)greet' "${LOG}" 1
 

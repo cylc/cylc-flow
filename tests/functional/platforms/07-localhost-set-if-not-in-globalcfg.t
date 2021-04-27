@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,15 +30,15 @@ create_test_global_config "" "
             job runner = at
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-# Run the suite
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+# Run the workflow
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-grep_ok "Job submit method: at" "${SUITE_RUN_DIR}/log/job/1/foo/NN/job"
+grep_ok "Job submit method: at" "${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job"
 
 purge
 exit

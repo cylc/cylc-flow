@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
     -s "START='$(date -u '+%Y%m%dT%H00')Z'" \
     -s "HOUR='$(date -u '+%H')'" \
     -s 'UTC_MODE="True"' \
@@ -30,7 +30,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
     -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-run-now" \
-    cylc play --debug --no-detach "${SUITE_NAME}" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}" \
     -s "START='$(date -u '+%Y%m%dT%H00')Z'" \
     -s "HOUR='$(date -u '+%H')'" \
     -s 'UTC_MODE="True"' \
@@ -40,7 +40,7 @@ run_ok "${TEST_NAME_BASE}-run-now" \
 delete_db
 NOW="$(date -u '+%Y%m%dT%H00')Z"
 run_ok "${TEST_NAME_BASE}-run-past" \
-    cylc play --debug --no-detach "${SUITE_NAME}" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}" \
     -s "START='$(cylc cycle-point "${NOW}" --offset-hour='-10')'" \
     -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='-10' --print-hour)'" \
     -s 'UTC_MODE="True"' \
@@ -50,7 +50,7 @@ run_ok "${TEST_NAME_BASE}-run-past" \
 delete_db
 NOW="$(date -u '+%Y%m%dT%H00')Z"
 run_fail "${TEST_NAME_BASE}-run-later" \
-    cylc play --debug --no-detach "${SUITE_NAME}" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}" \
     -s "START='$(cylc cycle-point "${NOW}" --offset-hour='10')'" \
     -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='10' --print-hour)'" \
     -s 'UTC_MODE="True"' \

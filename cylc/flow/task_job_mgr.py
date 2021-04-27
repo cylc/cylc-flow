@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 
 This module provides logic to:
 * Set up the directory structure on remote job hosts.
-  * Copy suite service files to remote job hosts for communication clients.
-  * Clean up of service files on suite shutdown.
+  * Copy workflow service files to remote job hosts for communication clients.
+  * Clean up of service files on workflow shutdown.
 * Prepare task job files.
 * Prepare task jobs submission, and manage the callbacks.
 * Prepare task jobs poll/kill, and manage the callbacks.
@@ -40,7 +40,7 @@ from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.exceptions import (
     PlatformLookupError,
-    SuiteConfigError,
+    WorkflowConfigError,
     TaskRemoteMgmtError
 )
 from cylc.flow.hostuserutil import (
@@ -52,7 +52,7 @@ from cylc.flow.parsec.util import (
     pdeepcopy,
     poverride
 )
-from cylc.flow.pathutil import get_remote_suite_run_job_dir
+from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     HOST_REC_COMMAND,
     PLATFORM_REC_COMMAND,
@@ -115,8 +115,8 @@ class TaskJobManager:
     * Poll task jobs.
     * Kill task jobs.
     * Set up the directory structure on job hosts.
-    * Install suite communicate client files on job hosts.
-    * Remove suite contact files on job hosts.
+    * Install workflow communicate client files on job hosts.
+    * Remove workflow contact files on job hosts.
     """
 
     JOBS_KILL = 'jobs-kill'
@@ -133,18 +133,18 @@ class TaskJobManager:
         REMOTE_INIT_IN_PROGRESS: REMOTE_INIT_MSG
     }
 
-    def __init__(self, suite, proc_pool, suite_db_mgr,
+    def __init__(self, workflow, proc_pool, workflow_db_mgr,
                  task_events_mgr, data_store_mgr):
-        self.suite = suite
+        self.workflow = workflow
         self.proc_pool = proc_pool
-        self.suite_db_mgr = suite_db_mgr
+        self.workflow_db_mgr = workflow_db_mgr
         self.task_events_mgr = task_events_mgr
         self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
-        self.task_remote_mgr = TaskRemoteMgr(suite, proc_pool)
+        self.task_remote_mgr = TaskRemoteMgr(workflow, proc_pool)
 
-    def check_task_jobs(self, suite, task_pool):
+    def check_task_jobs(self, workflow, task_pool):
         """Check submission and execution timeout and polling timers.
 
         Poll tasks that have timed out and/or have reached next polling time.
@@ -159,9 +159,9 @@ class TaskJobManager:
                         '[%s] -poll now, (next in %s)',
                         itask, itask.poll_timer.delay_timeout_as_str())
         if poll_tasks:
-            self.poll_task_jobs(suite, poll_tasks)
+            self.poll_task_jobs(workflow, poll_tasks)
 
-    def kill_task_jobs(self, suite, itasks):
+    def kill_task_jobs(self, workflow, itasks):
         """Kill jobs of active tasks, and hold the tasks.
 
         If items is specified, kill active tasks matching given IDs.
@@ -176,10 +176,10 @@ class TaskJobManager:
             else:
                 LOG.warning('skipping %s: task not killable' % itask.identity)
         self._run_job_cmd(
-            self.JOBS_KILL, suite, to_kill_tasks,
+            self.JOBS_KILL, workflow, to_kill_tasks,
             self._kill_task_jobs_callback)
 
-    def poll_task_jobs(self, suite, itasks, msg=None):
+    def poll_task_jobs(self, workflow, itasks, msg=None):
         """Poll jobs of specified tasks.
 
         This method uses _poll_task_jobs_callback() and
@@ -191,10 +191,10 @@ class TaskJobManager:
             if msg is not None:
                 LOG.info(msg)
             self._run_job_cmd(
-                self.JOBS_POLL, suite, itasks,
+                self.JOBS_POLL, workflow, itasks,
                 self._poll_task_jobs_callback)
 
-    def prep_submit_task_jobs(self, suite, itasks, check_syntax=True):
+    def prep_submit_task_jobs(self, workflow, itasks, check_syntax=True):
         """Prepare task jobs for submit.
 
         Prepare tasks where possible. Ignore tasks that are waiting for host
@@ -206,7 +206,7 @@ class TaskJobManager:
         prepared_tasks = []
         bad_tasks = []
         for itask in itasks:
-            prep_task = self._prep_submit_task_job(suite, itask,
+            prep_task = self._prep_submit_task_job(workflow, itask,
                                                    check_syntax=check_syntax)
             if prep_task:
                 prepared_tasks.append(itask)
@@ -214,7 +214,7 @@ class TaskJobManager:
                 bad_tasks.append(itask)
         return [prepared_tasks, bad_tasks]
 
-    def submit_task_jobs(self, suite, itasks, curve_auth,
+    def submit_task_jobs(self, workflow, itasks, curve_auth,
                          client_pub_key_dir, is_simulation=False):
         """Prepare for job submission and submit task jobs.
 
@@ -234,7 +234,8 @@ class TaskJobManager:
             return self._simulation_submit_task_jobs(itasks)
 
         # Prepare tasks for job submission
-        prepared_tasks, bad_tasks = self.prep_submit_task_jobs(suite, itasks)
+        prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
+            workflow, itasks)
 
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
@@ -293,11 +294,11 @@ class TaskJobManager:
                     continue
 
             # Ensure that localhost background/at jobs are recorded as running
-            # on the host name of the current suite host, rather than just
-            # "localhost". On suite restart on a different suite host, this
+            # on the host name of the current workflow host, rather than just
+            # "localhost". On restart on a different workflow host, this
             # allows the restart logic to correctly poll the status of the
             # background/at jobs that may still be running on the previous
-            # suite host.
+            # workflow host.
             host = get_host_from_platform(platform)
             if (
                 self.job_runner_mgr.is_job_local_to_host(
@@ -314,7 +315,7 @@ class TaskJobManager:
                 LOG.info(
                     '[%s] -submit-num=%02d, host=%s',
                     itask, itask.submit_num, host)
-                self.suite_db_mgr.put_insert_task_jobs(itask, {
+                self.workflow_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
                     'time_submit': now_str,
@@ -339,9 +340,9 @@ class TaskJobManager:
                             '(init %s)' % host,
                             err=init_error,
                             ret_code=1),
-                        suite, itask.point, itask.tdef.name)
+                        workflow, itask.point, itask.tdef.name)
                     self._prep_submit_task_job_error(
-                        suite, itask, '(remote init)', ''
+                        workflow, itask, '(remote init)', ''
                     )
 
                 continue
@@ -366,7 +367,7 @@ class TaskJobManager:
                     'job submission executable paths'] + SYSPATH:
                 cmd.append(f"--path={path}")
             cmd.append('--')
-            cmd.append(get_remote_suite_run_job_dir(suite))
+            cmd.append(get_remote_workflow_run_job_dir(workflow))
             # Chop itasks into a series of shorter lists if it's very big
             # to prevent overloading of stdout and stderr pipes.
             itasks = sorted(itasks, key=lambda itask: itask.identity)
@@ -396,7 +397,7 @@ class TaskJobManager:
                         stdin_files.append(
                             os.path.expandvars(
                                 get_task_job_job_log(
-                                    suite, itask.point, itask.tdef.name,
+                                    workflow, itask.point, itask.tdef.name,
                                     itask.submit_num
                                 )
                             )
@@ -408,7 +409,7 @@ class TaskJobManager:
                     # generate a new job file.
                     itask.local_job_file_path = None
                     if itask.state.outputs.has_custom_triggers():
-                        self.suite_db_mgr.put_update_task_outputs(itask)
+                        self.workflow_db_mgr.put_update_task_outputs(itask)
 
                     itask.waiting_on_job_prep = False
                 self.proc_pool.put_command(
@@ -418,11 +419,11 @@ class TaskJobManager:
                         stdin_files=stdin_files,
                         job_log_dirs=job_log_dirs,
                     ),
-                    self._submit_task_jobs_callback, [suite, itasks_batch])
+                    self._submit_task_jobs_callback, [workflow, itasks_batch])
         return done_tasks
 
     @staticmethod
-    def _create_job_log_path(suite, itask):
+    def _create_job_log_path(workflow, itask):
         """Create job log directory for a task job, etc.
 
         Create local job directory, and NN symbolic link.
@@ -432,7 +433,7 @@ class TaskJobManager:
 
         """
         job_file_dir = get_task_job_log(
-            suite, itask.point, itask.tdef.name, itask.submit_num)
+            workflow, itask.point, itask.tdef.name, itask.submit_num)
         job_file_dir = os.path.expandvars(job_file_dir)
         task_log_dir = os.path.dirname(job_file_dir)
         if itask.submit_num == 1:
@@ -473,10 +474,10 @@ class TaskJobManager:
         script = rtconfig['script']
         pre_script = rtconfig['pre-script']
         post_script = rtconfig['post-script']
-        if itask.tdef.suite_polling_cfg:
-            # Automatic suite state polling script
-            comstr = "cylc suite-state " + \
-                     " --task=" + itask.tdef.suite_polling_cfg['task'] + \
+        if itask.tdef.workflow_polling_cfg:
+            # Automatic workflow state polling script
+            comstr = "cylc workflow-state " + \
+                     " --task=" + itask.tdef.workflow_polling_cfg['task'] + \
                      " --point=" + str(itask.point)
             if LOG.isEnabledFor(DEBUG):
                 comstr += ' --debug'
@@ -486,19 +487,21 @@ class TaskJobManager:
                     ('interval', ' --%s=%d'),
                     ('max-polls', ' --%s=%s'),
                     ('run-dir', ' --%s=%s')]:
-                if rtconfig['suite state polling'][key]:
-                    comstr += fmt % (key, rtconfig['suite state polling'][key])
-            if rtconfig['suite state polling']['message']:
+                if rtconfig['workflow state polling'][key]:
+                    comstr += fmt % (key,
+                                     rtconfig['workflow state polling'][key])
+            if rtconfig['workflow state polling']['message']:
                 comstr += " --message='%s'" % (
-                    rtconfig['suite state polling']['message'])
+                    rtconfig['workflow state polling']['message'])
             else:
-                comstr += " --status=" + itask.tdef.suite_polling_cfg['status']
-            comstr += " " + itask.tdef.suite_polling_cfg['suite']
+                comstr += (" --status=" +
+                           itask.tdef.workflow_polling_cfg['status'])
+            comstr += " " + itask.tdef.workflow_polling_cfg['workflow']
             script = "echo " + comstr + "\n" + comstr
         return pre_script, script, post_script
 
     @staticmethod
-    def _job_cmd_out_callback(suite, itask, cmd_ctx, line):
+    def _job_cmd_out_callback(workflow, itask, cmd_ctx, line):
         """Callback on job command STDOUT/STDERR."""
         if cmd_ctx.cmd_kwargs.get("host"):
             host = "(%(host)s) " % cmd_ctx.cmd_kwargs
@@ -511,7 +514,7 @@ class TaskJobManager:
         else:
             line = "%s %s" % (timestamp, content)
         job_activity_log = get_task_job_activity_log(
-            suite, itask.point, itask.tdef.name)
+            workflow, itask.point, itask.tdef.name)
         try:
             with open(os.path.expandvars(job_activity_log), "ab") as handle:
                 if not line.endswith("\n"):
@@ -521,18 +524,18 @@ class TaskJobManager:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
             LOG.warning("[%s] -%s%s", itask, host, line)
 
-    def _kill_task_jobs_callback(self, ctx, suite, itasks):
+    def _kill_task_jobs_callback(self, ctx, workflow, itasks):
         """Callback when kill tasks command exits."""
         self._manip_task_jobs_callback(
             ctx,
-            suite,
+            workflow,
             itasks,
             self._kill_task_job_callback,
             {self.job_runner_mgr.OUT_PREFIX_COMMAND:
                 self._job_cmd_out_callback}
         )
 
-    def _kill_task_job_callback(self, suite, itask, cmd_ctx, line):
+    def _kill_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_KILL, None)
         ctx.out = line
@@ -545,7 +548,7 @@ class TaskJobManager:
             ctx.ret_code = int(ctx.ret_code)
             if ctx.ret_code:
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
+        log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
         log_lvl = INFO
         log_msg = 'killed'
         if ctx.ret_code:  # non-zero exit status
@@ -572,7 +575,8 @@ class TaskJobManager:
             itask.identity, itask.submit_num, log_msg))
 
     def _manip_task_jobs_callback(
-            self, ctx, suite, itasks, summary_callback, more_callbacks=None):
+            self, ctx, workflow, itasks, summary_callback,
+            more_callbacks=None):
         """Callback when submit/poll/kill tasks command exits."""
         if ctx.ret_code:
             LOG.error(ctx)
@@ -586,8 +590,8 @@ class TaskJobManager:
         # link(s) for us to get to the latest replacement.
         #
         # Note for "kill": It is possible for a job to trigger its trap and
-        # report back to the suite back this logic is called. If so, the task
-        # will no longer be TASK_STATUS_SUBMITTED or TASK_STATUS_RUNNING, and
+        # report back to the workflow before (or after?) this logic is called.
+        # If so, it will no longer be status SUBMITTED or RUNNING, and
         # its output line will be ignored here.
         tasks = {}
         for itask in itasks:
@@ -614,7 +618,7 @@ class TaskJobManager:
                         if prefix == self.job_runner_mgr.OUT_PREFIX_SUMMARY:
                             del bad_tasks[(point, name, submit_num)]
                         itask = tasks[(point, name, submit_num)]
-                        callback(suite, itask, ctx, line)
+                        callback(workflow, itask, ctx, line)
                     except (LookupError, ValueError, KeyError) as exc:
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
@@ -624,19 +628,19 @@ class TaskJobManager:
         for key, itask in sorted(bad_tasks.items()):
             line = (
                 "|".join([ctx.timestamp, os.sep.join(key), "1"]) + "\n")
-            summary_callback(suite, itask, ctx, line)
+            summary_callback(workflow, itask, ctx, line)
 
-    def _poll_task_jobs_callback(self, ctx, suite, itasks):
+    def _poll_task_jobs_callback(self, ctx, workflow, itasks):
         """Callback when poll tasks command exits."""
         self._manip_task_jobs_callback(
             ctx,
-            suite,
+            workflow,
             itasks,
             self._poll_task_job_callback,
             {self.job_runner_mgr.OUT_PREFIX_MESSAGE:
              self._poll_task_job_message_callback})
 
-    def _poll_task_job_callback(self, suite, itask, cmd_ctx, line):
+    def _poll_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
@@ -659,7 +663,7 @@ class TaskJobManager:
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         finally:
-            log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
+            log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
 
         flag = self.task_events_mgr.FLAG_POLLED
         if jp_ctx.run_status == 1 and jp_ctx.run_signal in ["ERR", "EXIT"]:
@@ -705,7 +709,7 @@ class TaskJobManager:
                 itask, INFO, TASK_STATUS_SUBMITTED, jp_ctx.time_submit_exit,
                 flag)
 
-    def _poll_task_job_message_callback(self, suite, itask, cmd_ctx, line):
+    def _poll_task_job_message_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on message of one task job."""
         ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
@@ -719,9 +723,9 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, severity, message, event_time,
                 self.task_events_mgr.FLAG_POLLED)
-        log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
+        log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
 
-    def _run_job_cmd(self, cmd_key, suite, itasks, callback):
+    def _run_job_cmd(self, cmd_key, workflow, itasks, callback):
         """Run job commands, e.g. poll, kill, etc.
 
         Group itasks with their platform_name and host.
@@ -750,7 +754,7 @@ class TaskJobManager:
             if LOG.isEnabledFor(DEBUG):
                 cmd.append("--debug")
             cmd.append("--")
-            cmd.append(get_remote_suite_run_job_dir(suite))
+            cmd.append(get_remote_workflow_run_job_dir(workflow))
             job_log_dirs = []
             if remote_mode:
                 cmd = construct_ssh_cmd(cmd, platform)
@@ -759,7 +763,7 @@ class TaskJobManager:
                     itask.point, itask.tdef.name, itask.submit_num))
             cmd += job_log_dirs
             self.proc_pool.put_command(
-                SubProcContext(cmd_key, cmd), callback, [suite, itasks])
+                SubProcContext(cmd_key, cmd), callback, [workflow, itasks])
 
     @staticmethod
     def _set_retry_timers(itask, rtconfig=None, retry=True):
@@ -809,18 +813,18 @@ class TaskJobManager:
                 itask, INFO, TASK_OUTPUT_SUBMITTED)
         return itasks
 
-    def _submit_task_jobs_callback(self, ctx, suite, itasks):
+    def _submit_task_jobs_callback(self, ctx, workflow, itasks):
         """Callback when submit task jobs command exits."""
         self._manip_task_jobs_callback(
             ctx,
-            suite,
+            workflow,
             itasks,
             self._submit_task_job_callback,
             {self.job_runner_mgr.OUT_PREFIX_COMMAND:
                 self._job_cmd_out_callback}
         )
 
-    def _submit_task_job_callback(self, suite, itask, cmd_ctx, line):
+    def _submit_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _submit_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_SUBMIT, None)
         ctx.out = line
@@ -834,9 +838,9 @@ class TaskJobManager:
             ctx.ret_code = int(ctx.ret_code)
             if ctx.ret_code:
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        log_task_job_activity(ctx, suite, itask.point, itask.tdef.name)
+        log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
 
-        if ctx.ret_code == SubProcPool.RET_CODE_SUITE_STOPPING:
+        if ctx.ret_code == SubProcPool.RET_CODE_WORKFLOW_STOPPING:
             return
 
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
@@ -855,7 +859,7 @@ class TaskJobManager:
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
 
-    def _prep_submit_task_job(self, suite, itask, check_syntax=True):
+    def _prep_submit_task_job(self, workflow, itask, check_syntax=True):
         """Prepare a task job submission.
 
         Return itask on a good preparation.
@@ -892,7 +896,7 @@ class TaskJobManager:
             rtconfig['platform'] is not None and
             rtconfig['remote']['host'] is not None
         ):
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 "A mixture of Cylc 7 (host) and Cylc 8 (platform) "
                 "logic should not be used. In this case for the task "
                 f"\"{itask.identity}\" the following are not compatible:\n"
@@ -914,10 +918,10 @@ class TaskJobManager:
             itask.submit_num += 1
             itask.summary['platforms_used'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
-            self._create_job_log_path(suite, itask)
+            self._create_job_log_path(workflow, itask)
             self._set_retry_timers(itask, rtconfig)
             self._prep_submit_task_job_error(
-                suite, itask, '(remote host select)', exc)
+                workflow, itask, '(remote host select)', exc)
             return False
         else:
             # host/platform select not ready
@@ -949,10 +953,10 @@ class TaskJobManager:
                 itask.submit_num += 1
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
-                self._create_job_log_path(suite, itask)
+                self._create_job_log_path(workflow, itask)
                 self._set_retry_timers(itask, rtconfig, False)
                 self._prep_submit_task_job_error(
-                    suite, itask, '(platform not defined)', exc
+                    workflow, itask, '(platform not defined)', exc
                 )
                 return False
             else:
@@ -963,7 +967,8 @@ class TaskJobManager:
                 self._set_retry_timers(itask, rtconfig)
 
         try:
-            job_conf = self._prep_submit_task_job_impl(suite, itask, rtconfig)
+            job_conf = self._prep_submit_task_job_impl(
+                workflow, itask, rtconfig)
 
             # Job pool insertion
             job_config = deepcopy(job_conf)
@@ -973,31 +978,31 @@ class TaskJobManager:
                 itask.tdef.name, itask.point, job_config)
 
             local_job_file_path = get_task_job_job_log(
-                suite, itask.point, itask.tdef.name, itask.submit_num)
+                workflow, itask.point, itask.tdef.name, itask.submit_num)
             self.job_file_writer.write(local_job_file_path, job_conf,
                                        check_syntax=check_syntax)
         except Exception as exc:
             # Could be a bad command template, IOError, etc
             itask.waiting_on_job_prep = False
             self._prep_submit_task_job_error(
-                suite, itask, '(prepare job file)', exc)
+                workflow, itask, '(prepare job file)', exc)
             return False
 
         itask.local_job_file_path = local_job_file_path
         return itask
 
-    def _prep_submit_task_job_error(self, suite, itask, action, exc):
+    def _prep_submit_task_job_error(self, workflow, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
         LOG.debug("submit_num %s" % itask.submit_num)
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
-            suite,
+            workflow,
             itask.point,
             itask.tdef.name,
             submit_num=itask.submit_num
         )
         # Persist
-        self.suite_db_mgr.put_insert_task_jobs(itask, {
+        self.workflow_db_mgr.put_insert_task_jobs(itask, {
             'is_manual_submit': itask.is_manual_submit,
             'try_num': itask.get_try_num(),
             'time_submit': get_current_time_string(),
@@ -1007,7 +1012,7 @@ class TaskJobManager:
         self.task_events_mgr.process_message(
             itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
 
-    def _prep_submit_task_job_impl(self, suite, itask, rtconfig):
+    def _prep_submit_task_job_impl(self, workflow, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
 
         itask.summary['platforms_used'][
@@ -1023,10 +1028,11 @@ class TaskJobManager:
         scripts = self._get_job_scripts(itask, rtconfig)
 
         # Location of job file, etc
-        self._create_job_log_path(suite, itask)
+        self._create_job_log_path(workflow, itask)
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
-        job_file_path = get_remote_suite_run_job_dir(suite, job_d, JOB_LOG_JOB)
+        job_file_path = get_remote_workflow_run_job_dir(
+            workflow, job_d, JOB_LOG_JOB)
         return {
             'job_runner_name': itask.platform['job runner'],
             'job_runner_command_template': (
@@ -1050,7 +1056,7 @@ class TaskJobManager:
             'script': scripts[1],
             'submit_num': itask.submit_num,
             'flow_label': itask.flow_label,
-            'suite_name': suite,
+            'workflow_name': workflow,
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_remote_mgr.uuid_str,

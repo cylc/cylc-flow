@@ -8,18 +8,18 @@
     [[killer]]
         script = """
             echo '# killing "sleeper"'
-            cylc kill "${CYLC_SUITE_NAME}" "sleeper.1"
-            cylc__job__poll_grep_suite_log -F \
+            cylc kill "${CYLC_WORKFLOW_NAME}" "sleeper.1"
+            cylc__job__poll_grep_workflow_log -F \
                 '[sleeper.1] -running => running (held)'
-            cylc__job__poll_grep_suite_log -F \
+            cylc__job__poll_grep_workflow_log -F \
                 '[sleeper.1] -running (held) => waiting (held)'
             sleep 10  # sleep, should still be held after 10 seconds
-            cylc dump -s -t "${CYLC_SUITE_NAME}" >'cylc-dump.out'
+            cylc dump -s -t "${CYLC_WORKFLOW_NAME}" >'cylc-dump.out'
             diff -u 'cylc-dump.out' - <<'__OUT__'
             1, killer, running, unheld, unqueued
             1, sleeper, waiting, held, unqueued
             __OUT__
-            cylc release "${CYLC_SUITE_NAME}" "sleeper.1"
+            cylc release "${CYLC_WORKFLOW_NAME}" "sleeper.1"
         """
     [[sleeper]]
         script = """

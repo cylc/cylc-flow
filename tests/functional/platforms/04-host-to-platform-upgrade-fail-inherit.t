@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,18 +27,18 @@ create_test_global_config '' "
     [[_wibble]]
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Both of these cases should validate ok.
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}"
+    cylc validate "${WORKFLOW_NAME}"
 
-# Run the suite
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+# Run the workflow
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # Grep for inherit-fail to fail later at submit time
-grep_ok "SuiteConfigError:.*non-valid-child.1" \
+grep_ok "WorkflowConfigError:.*non-valid-child.1" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge

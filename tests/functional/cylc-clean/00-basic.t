@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ create_test_global_config "" "
         share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
         work = ${TEST_DIR}/${SYM_NAME}/work
 "
-init_suite "${TEST_NAME_BASE}" << '__FLOW__'
+init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -44,7 +44,7 @@ init_suite "${TEST_NAME_BASE}" << '__FLOW__'
         R1 = darmok
 __FLOW__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate "$SUITE_NAME"
+run_ok "${TEST_NAME_BASE}-val" cylc validate "$WORKFLOW_NAME"
 
 # Create a fake sibling workflow dir in the ${SYM_NAME}/log dir:
 mkdir "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}/leave-me-alone"
@@ -52,12 +52,12 @@ mkdir "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${CYLC_TEST_REG_BASE}/leave-me-alone
 FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 # -----------------------------------------------------------------------------
 TEST_NAME="run-dir-readlink-pre-clean"
-readlink "$SUITE_RUN_DIR" > "${TEST_NAME}.stdout"
+readlink "$WORKFLOW_RUN_DIR" > "${TEST_NAME}.stdout"
 
-cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${SUITE_NAME}"
+cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${WORKFLOW_NAME}"
 
 
-INSTALL_LOG_FILE=$(ls "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${SUITE_NAME}/log/install")
+INSTALL_LOG_FILE=$(ls "${TEST_DIR}/${SYM_NAME}/log/cylc-run/${WORKFLOW_NAME}/log/install")
 TEST_NAME="test-dir-tree-pre-clean"
 run_ok "${TEST_NAME}" tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}/"*"/cylc-run/${CYLC_TEST_REG_BASE}"
 # Note: backticks need to be escaped in the heredoc
@@ -81,17 +81,17 @@ ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
     \`-- cylc-clean
         \`-- ${TEST_NAME_BASE}
             |-- _cylc-install
-            |   \`-- source -> ${TEST_DIR}/${SUITE_NAME}
+            |   \`-- source -> ${TEST_DIR}/${WORKFLOW_NAME}
             |-- flow.cylc
-            |-- log -> ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${SUITE_NAME}/log
-            |-- share -> ${TEST_DIR}/${SYM_NAME}/share/cylc-run/${SUITE_NAME}/share
-            \`-- work -> ${TEST_DIR}/${SYM_NAME}/work/cylc-run/${SUITE_NAME}/work
+            |-- log -> ${TEST_DIR}/${SYM_NAME}/log/cylc-run/${WORKFLOW_NAME}/log
+            |-- share -> ${TEST_DIR}/${SYM_NAME}/share/cylc-run/${WORKFLOW_NAME}/share
+            \`-- work -> ${TEST_DIR}/${SYM_NAME}/work/cylc-run/${WORKFLOW_NAME}/work
 ${TEST_DIR}/${SYM_NAME}/share/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
     \`-- cylc-clean
         \`-- ${TEST_NAME_BASE}
             \`-- share
-                \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${SUITE_NAME}/share/cycle
+                \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${WORKFLOW_NAME}/share/cycle
 ${TEST_DIR}/${SYM_NAME}/work/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
     \`-- cylc-clean
@@ -100,11 +100,11 @@ ${TEST_DIR}/${SYM_NAME}/work/cylc-run/${CYLC_TEST_REG_BASE}
 __TREE__
 # -----------------------------------------------------------------------------
 TEST_NAME="cylc-clean"
-run_ok "$TEST_NAME" cylc clean "$SUITE_NAME"
+run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
 dump_std "$TEST_NAME"
 # -----------------------------------------------------------------------------
 TEST_NAME="run-dir-not-exist-post-clean"
-exists_fail "$SUITE_RUN_DIR"
+exists_fail "$WORKFLOW_RUN_DIR"
 
 TEST_NAME="test-dir-tree-post-clean"
 run_ok "${TEST_NAME}" tree --noreport --charset=ascii "${TEST_DIR}/${SYM_NAME}/"*"/cylc-run/${CYLC_TEST_REG_BASE}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,17 +18,17 @@
 # Test custom severity event handling.
 . "$(dirname "$0")/test_header"
 set_test_number 6
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
-FOO_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
-SUITE_LOG="${SUITE_RUN_DIR}/log/suite/log"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
+FOO_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
+WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 grep_ok \
 "\[(('event-handler-00', 'custom-1'), 1) out\] !!CUSTOM!! foo.1 fugu Data ready for barring" \
     "${FOO_ACTIVITY_LOG}"
-grep_ok "\[foo.1\].*Data ready for barring" "${SUITE_LOG}"
-grep_ok "\[foo.1\].*Data ready for bazzing" "${SUITE_LOG}"
-grep_ok "\[foo.1\].*Aren't the hydrangeas nice?" "${SUITE_LOG}"
+grep_ok "\[foo.1\].*Data ready for barring" "${WORKFLOW_LOG}"
+grep_ok "\[foo.1\].*Data ready for bazzing" "${WORKFLOW_LOG}"
+grep_ok "\[foo.1\].*Aren't the hydrangeas nice?" "${WORKFLOW_LOG}"
 purge

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 1
-# Run Jinja2 custom filters suite.
+# Run Jinja2 custom filters workflow.
 TEST_NAME="${TEST_NAME_BASE}"-run-filters
-install_suite "${TEST_NAME_BASE}-install-filter-suite" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}" --reference-test --debug --no-detach
+install_workflow "${TEST_NAME_BASE}-install-filter-workflow" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" --reference-test --debug --no-detach
 #-------------------------------------------------------------------------------
 purge

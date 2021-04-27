@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,12 +23,12 @@
 set_test_number 2
 
 
-init_suite "${TEST_NAME_BASE}" << __FLOW__
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]
     [[events]]
         abort on inactivity = False
         abort on stalled = True
-        inactivity handler = cylc play '%(suite)s'
+        inactivity handler = cylc play '%(workflow)s'
         inactivity = PT5S
 [scheduling]
     [[graph]]
@@ -38,7 +38,7 @@ init_suite "${TEST_NAME_BASE}" << __FLOW__
         script = true
 __FLOW__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --pause --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --pause --no-detach "${WORKFLOW_NAME}"
 
 purge

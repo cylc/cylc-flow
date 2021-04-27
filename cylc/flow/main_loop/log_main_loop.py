@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
    This plugin is for Cylc developers debugging main loop operations.
 
 If ``matplotlib`` is installed this plugin will plot results as a PDF in
-the run directory when the suite is shut down (cleanly).
+the run directory when the workflow is shut down (cleanly).
 
 """
 from collections import deque
@@ -50,7 +50,7 @@ async def report(scheduler, _):
     """Extract plugin function timings."""
     data = _transpose(scheduler.main_loop_plugins['state'])
     data = _normalise(data)
-    _plot(data, scheduler.suite_run_dir)
+    _plot(data, scheduler.workflow_run_dir)
 
 
 def _transpose(all_states):

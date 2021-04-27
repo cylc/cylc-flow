@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -59,7 +59,7 @@ from typing import Dict, Iterable, List, Optional, TYPE_CHECKING, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
-from cylc.flow.suite_files import SuiteFiles
+from cylc.flow.workflow_files import WorkflowFiles
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -106,7 +106,7 @@ SVN_INFO_KEYS: List[str] = [
 ]
 
 
-LOG_VERSION_DIR = Path(SuiteFiles.LOG_DIR, 'version')
+LOG_VERSION_DIR = Path(WorkflowFiles.LOG_DIR, 'version')
 
 
 class VCSNotInstalledError(CylcError):

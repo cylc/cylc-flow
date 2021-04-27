@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ from cylc.flow.network.client_factory import get_client
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
-    SuiteStopped
+    WorkflowStopped
 )
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
@@ -43,7 +43,7 @@ from cylc.flow.tui import (
     FORE,
     BACK,
     JOB_COLOURS,
-    SUITE_COLOURS,
+    WORKFLOW_COLOURS,
 )
 from cylc.flow.tui.tree import (
     find_closest_focus,
@@ -194,12 +194,12 @@ class TuiApp:
 
     This is a single workflow view component (purposefully).
 
-    Multi-suite functionality can be achieved via a GScan-esque
+    Multi-workflow functionality can be achieved via a GScan-esque
     tab/selection panel.
 
     Arguments:
         reg (str):
-            Suite registration
+            Workflow registration
 
     """
 
@@ -219,9 +219,9 @@ class TuiApp:
     ] + [  # job colours for help screen
         (f'overlay_job_{status}', colour, 'light gray')
         for status, colour in JOB_COLOURS.items()
-    ] + [  # suite state colours
-        (f'suite_{status}',) + spec
-        for status, spec in SUITE_COLOURS.items()
+    ] + [  # workflow state colours
+        (f'workflow_{status}',) + spec
+        for status, spec in WORKFLOW_COLOURS.items()
     ]
 
     def __init__(self, reg, screen=None):
@@ -285,7 +285,7 @@ class TuiApp:
     def get_snapshot(self):
         """Contact the workflow, return a tree structure
 
-        In the event of error contacting the suite the
+        In the event of error contacting the workflow the
         message is written to this Widget's header.
 
         Returns:
@@ -309,7 +309,7 @@ class TuiApp:
                     }
                 }
             )
-        except SuiteStopped:
+        except WorkflowStopped:
             self.client = None
             return dummy_flow({
                 'name': self.reg,
@@ -319,7 +319,7 @@ class TuiApp:
             })
         except (ClientError, ClientTimeout) as exc:
             # catch network / client errors
-            self.set_header([('suite_error', str(exc))])
+            self.set_header([('workflow_error', str(exc))])
             return False
 
         if isinstance(data, list):
@@ -328,7 +328,7 @@ class TuiApp:
                 message = data[0]['error']['message']
             except (IndexError, KeyError):
                 message = str(data)
-            self.set_header([('suite_error', message)])
+            self.set_header([('workflow_error', message)])
             return False
 
         if len(data['workflows']) != 1:
@@ -366,7 +366,7 @@ class TuiApp:
         # https://github.com/cylc/cylc-flow/issues/3527
         message.extend([
             (
-                'suite_error',
+                'workflow_error',
                 'TUI is experimental and may break with large flows'
             ),
             '\n'
@@ -394,7 +394,7 @@ class TuiApp:
             return False
         data = snapshot['data']
 
-        # update the suite status message
+        # update the workflow status message
         header = [get_workflow_status_str(data)]
         status_summary = get_task_status_summary(snapshot['data'])
         if status_summary:

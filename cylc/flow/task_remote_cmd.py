@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,11 +22,11 @@ import tarfile
 import zmq
 
 import cylc.flow.flags
-from cylc.flow.suite_files import (
+from cylc.flow.workflow_files import (
     KeyInfo,
     KeyOwner,
     KeyType,
-    SuiteFiles
+    WorkflowFiles
 )
 from cylc.flow.pathutil import make_symlink
 from cylc.flow.resources import extract_resources
@@ -42,32 +42,32 @@ def remove_keys_on_client(srvd, install_target, full_clean=False):
         "client_private_key": KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.CLIENT,
-            suite_srv_dir=srvd),
+            workflow_srv_dir=srvd),
         "client_public_key": KeyInfo(
             KeyType.PUBLIC,
             KeyOwner.CLIENT,
-            suite_srv_dir=srvd,
+            workflow_srv_dir=srvd,
             install_target=install_target,
             server_held=False),
     }
     # WARNING, DESTRUCTIVE. Removes old keys if they already exist.
     if full_clean:
         keys.update({"server_public_key": KeyInfo(
-            KeyType.PUBLIC, KeyOwner.SERVER, suite_srv_dir=srvd)})
+            KeyType.PUBLIC, KeyOwner.SERVER, workflow_srv_dir=srvd)})
     for k in keys.values():
         if os.path.exists(k.full_key_path):
             os.remove(k.full_key_path)
 
 
 def create_client_keys(srvd, install_target):
-    """Create or renew authentication keys for suite 'reg' in the .service
+    """Create or renew authentication keys for workflow 'reg' in the .service
      directory.
      Generate a pair of ZMQ authentication keys"""
 
     cli_pub_key = KeyInfo(
         KeyType.PUBLIC,
         KeyOwner.CLIENT,
-        suite_srv_dir=srvd,
+        workflow_srv_dir=srvd,
         install_target=install_target,
         server_held=False)
     # ZMQ keys generated in .service directory.
@@ -88,7 +88,7 @@ def remote_init(install_target, rund, *dirs_to_symlink):
 
     Arguments:
         install_target (str): target to be initialised
-        rund (str): suite run directory
+        rund (str): workflow run directory
         dirs_to_symlink (list): directories to be symlinked in form
         [directory=symlink_location, ...]
     """
@@ -106,13 +106,16 @@ def remote_init(install_target, rund, *dirs_to_symlink):
                   f' {src} contains an invalid environment variable.')
             return
         make_symlink(src, dst)
-    srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
+    srvd = os.path.join(rund, WorkflowFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
 
     client_pub_keyinfo = KeyInfo(
         KeyType.PUBLIC,
         KeyOwner.CLIENT,
-        suite_srv_dir=srvd, install_target=install_target, server_held=False)
+        workflow_srv_dir=srvd,
+        install_target=install_target,
+        server_held=False
+    )
     # Check for existence of client key dir (should only exist on server)
     # Fail if one exists - this may occur on mis-configuration of install
     # target in global.cylc
@@ -144,7 +147,7 @@ def remote_init(install_target, rund, *dirs_to_symlink):
     oldcwd = os.getcwd()
     os.chdir(rund)
     # Extract job.sh from library, for use in job scripts.
-    extract_resources(SuiteFiles.Service.DIRNAME, ['etc/job.sh'])
+    extract_resources(WorkflowFiles.Service.DIRNAME, ['etc/job.sh'])
     try:
         tarhandle = tarfile.open(fileobj=sys.stdin.buffer, mode='r|')
         tarhandle.extractall()
@@ -163,11 +166,11 @@ def remote_tidy(install_target, rund):
 
     Arguments:
         install_target (str): install target name
-        rund (str): suite run directory
+        rund (str): workflow run directory
     """
     rund = os.path.expandvars(rund)
-    srvd = os.path.join(rund, SuiteFiles.Service.DIRNAME)
-    fname = os.path.join(srvd, SuiteFiles.Service.CONTACT)
+    srvd = os.path.join(rund, WorkflowFiles.Service.DIRNAME)
+    fname = os.path.join(srvd, WorkflowFiles.Service.CONTACT)
     try:
         os.unlink(fname)
     except OSError:

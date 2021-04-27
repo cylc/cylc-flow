@@ -1,0 +1,23 @@
+#!jinja2
+[meta]
+    title=Workflow Event Mail
+
+[scheduler]
+{% if GLOBALCFG is not defined %}
+    [[mail]]
+        footer = see: http://localhost/stuff/%(owner)s/%(workflow)s/
+    [[events]]
+        mail events = startup, shutdown
+{% endif %}{# not GLOBALCFG is not defined #}
+    [[events]]
+        abort on stalled = True
+        abort on inactivity = True
+        inactivity = PT3M
+
+[scheduling]
+    [[graph]]
+        R1=t1
+
+[runtime]
+    [[t1]]
+        script=true

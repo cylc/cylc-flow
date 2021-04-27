@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,14 +20,14 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # Just inline
 TEST_NAME=${TEST_NAME_BASE}-inline
-cylc view -i --stdout "${SUITE_NAME}" > tmp.stdout
+cylc view -i --stdout "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
 [meta]
@@ -37,7 +37,7 @@ cmp_ok tmp.stdout << EOF
 [scheduler]
     allow implicit tasks = True
 
-# Note that depending on the structure of the suite you may be able to
+# Note that depending on the structure of the workflow you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
 
@@ -56,14 +56,14 @@ EOF
 #-------------------------------------------------------------------------------
 # "cylc view -j/--jinja2" should imply "-i/inline" too:
 TEST_NAME=${TEST_NAME_BASE}-jinja2
-cylc view -j --stdout "${SUITE_NAME}" > tmp.stdout
+cylc view -j --stdout "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"
     description = "Auto-generation of dependencies for related tasks."
 [scheduler]
     allow implicit tasks = True
-# Note that depending on the structure of the suite you may be able to
+# Note that depending on the structure of the workflow you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
 # line \\
@@ -80,7 +80,7 @@ EOF
 #-------------------------------------------------------------------------------
 # line continuation joining
 TEST_NAME=${TEST_NAME_BASE}-continuation
-cylc view -c --stdout "${SUITE_NAME}" > tmp.stdout
+cylc view -c --stdout "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 #!jinja2
 [meta]
@@ -90,7 +90,7 @@ cmp_ok tmp.stdout << EOF
 [scheduler]
     allow implicit tasks = True
 
-# Note that depending on the structure of the suite you may be able to
+# Note that depending on the structure of the workflow you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
 
@@ -108,14 +108,14 @@ EOF
 #-------------------------------------------------------------------------------
 # all processing
 TEST_NAME=${TEST_NAME_BASE}-process
-cylc view -p --stdout "${SUITE_NAME}" > tmp.stdout
+cylc view -p --stdout "${WORKFLOW_NAME}" > tmp.stdout
 cmp_ok tmp.stdout << EOF
 [meta]
     title = "Jinja2 simple ensemble example"
     description = "Auto-generation of dependencies for related tasks."
 [scheduler]
     allow implicit tasks = True
-# Note that depending on the structure of the suite you may be able to
+# Note that depending on the structure of the workflow you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
 # line continuation

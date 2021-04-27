@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,13 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation order, installed suites before current working directory.
+# Test validation order, installed workflows before current working directory.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
-SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
+WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
-mkdir -p 'good' "${SUITE_NAME}"
+mkdir -p 'good' "${WORKFLOW_NAME}"
 cat >'good/flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
@@ -30,7 +30,7 @@ cat >'good/flow.cylc' <<'__FLOW_CONFIG__'
     [[t0]]
         script = true
 __FLOW_CONFIG__
-cat >"${SUITE_NAME}/flow.cylc" <<'__FLOW_CONFIG__'
+cat >"${WORKFLOW_NAME}/flow.cylc" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = t0
@@ -39,12 +39,12 @@ cat >"${SUITE_NAME}/flow.cylc" <<'__FLOW_CONFIG__'
         scribble = true
 __FLOW_CONFIG__
 
-# This should validate bad suite under current directory
-run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
+# This should validate bad workflow under current directory
+run_fail "${TEST_NAME_BASE}" cylc validate "${WORKFLOW_NAME}"
 
-# This should validate installed good suite
-cylc install --flow-name="${SUITE_NAME}" -C "${PWD}/good" --no-run-name
-run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
+# This should validate installed good workflow
+cylc install --flow-name="${WORKFLOW_NAME}" -C "${PWD}/good" --no-run-name
+run_ok "${TEST_NAME_BASE}" cylc validate "${WORKFLOW_NAME}"
 
 purge
 exit

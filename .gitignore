@@ -11,7 +11,7 @@ __pycache__/
 # vscode
 .vscode
 
-# processed suite definitions
+# processed workflow configs
 *.rc.processed
 *.cylc.processed
 

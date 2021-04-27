@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 (This command is for internal use.)
 
-Invoke suite runtime client, expect JSON from STDIN for keyword arguments.
+Invoke workflow runtime client, expect JSON from STDIN for keyword arguments.
 Use the -n option if client function requires no keyword arguments.
 """
 
@@ -29,7 +29,7 @@ import sys
 from google.protobuf.json_format import MessageToDict
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client import SuiteRuntimeClient
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.terminal import cli_function
 from cylc.flow.network.server import PB_METHOD_MAP
 
@@ -38,7 +38,7 @@ INTERNAL = True
 
 def get_option_parser():
     parser = COP(__doc__, comms=True, argdoc=[
-        ('REG', 'Suite name'),
+        ('REG', 'Workflow name'),
         ('METHOD', 'Network API function name')])
 
     parser.add_option(
@@ -50,8 +50,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite, func):
-    pclient = SuiteRuntimeClient(suite, timeout=options.comms_timeout)
+def main(_, options, workflow, func):
+    pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
     if options.no_input:
         kwargs = {}
     else:

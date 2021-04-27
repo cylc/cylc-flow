@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,22 +28,22 @@ create_test_global_config "" "
     hosts = ${CYLC_TEST_BATCH_TASK_HOST}
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
     # shellcheck disable=SC2029
-    ssh -n "${CYLC_TEST_HOST}" "mkdir -p 'cylc-run/${SUITE_NAME}/'"
-    rsync -a 'lib' "${CYLC_TEST_HOST}:cylc-run/${SUITE_NAME}/"
+    ssh -n "${CYLC_TEST_HOST}" "mkdir -p 'cylc-run/${WORKFLOW_NAME}/'"
+    rsync -a 'lib' "${CYLC_TEST_HOST}:cylc-run/${WORKFLOW_NAME}/"
 fi
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 # ssh security warnings may appear between outputs => check separately too.
 sed -n 's/^.*\(\[jobs-poll err\]\) \(Connection refused\).*$/\1\n\2/p;
         s/^.*\(\[jobs-poll err\]\).*$/\1/p;
         s/^.*\(Connection refused\).*$/\1/p;
         s/^.*\(INFO - \[t1.1\] status=running: (polled)started\).*$/\1/p' \
-    "${SUITE_RUN_DIR}/log/suite/log" >'sed-log.out'
+    "${WORKFLOW_RUN_DIR}/log/workflow/log" >'sed-log.out'
 contains_ok 'sed-log.out' <<'__LOG__'
 [jobs-poll err]
 Connection refused

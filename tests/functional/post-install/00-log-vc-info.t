@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,8 @@ if ! command -v 'git' > /dev/null; then
 fi
 set_test_number 4
 
-make_rnd_suite
-cd "${RND_SUITE_SOURCE}" || exit 1
+make_rnd_workflow
+cd "${RND_WORKFLOW_SOURCE}" || exit 1
 cat > 'flow.cylc' << __FLOW__
 [scheduling]
     [[graph]]
@@ -37,12 +37,12 @@ git commit -am 'Initial commit'
 
 run_ok "${TEST_NAME_BASE}-install" cylc install
 
-VCS_INFO_FILE="${RND_SUITE_RUNDIR}/runN/log/version/vcs.conf"
+VCS_INFO_FILE="${RND_WORKFLOW_RUNDIR}/runN/log/version/vcs.conf"
 exists_ok "$VCS_INFO_FILE"
 # Basic check, unit tests cover this in more detail:
 contains_ok "$VCS_INFO_FILE" <<< 'version control system = "git"'
 
-DIFF_FILE="${RND_SUITE_RUNDIR}/runN/log/version/uncommitted.diff"
+DIFF_FILE="${RND_WORKFLOW_RUNDIR}/runN/log/version/uncommitted.diff"
 exists_ok "$DIFF_FILE"  # Expected to be empty but should exist
 
-purge_rnd_suite
+purge_rnd_workflow

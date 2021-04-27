@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,15 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite event handler, abort on inactivity
+# Test workflow event handler, abort on inactivity
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-grep_ok "suite timed out after inactivity" "${TEST_NAME_BASE}-run.stderr"
+    cylc validate "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+grep_ok "workflow timed out after inactivity" "${TEST_NAME_BASE}-run.stderr"
 purge
 exit

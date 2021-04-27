@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 set -eu
-CYLC_SUITE_RUN_DIR="$1"
+CYLC_WORKFLOW_RUN_DIR="$1"
 CYLC_TASK_NAME="${2:-}"
-sqlite3 "${CYLC_SUITE_RUN_DIR}/log/db" "
+sqlite3 "${CYLC_WORKFLOW_RUN_DIR}/log/db" "
 SELECT
     task_states.name,
     task_states.cycle,

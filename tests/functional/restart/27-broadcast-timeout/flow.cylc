@@ -7,8 +7,8 @@
 [runtime]
     [[foo]]
         script="""
-cylc broadcast "${CYLC_SUITE_NAME}" --set='[events]submission timeout=PT1M'
-cylc stop "${CYLC_SUITE_NAME}"
+cylc broadcast "${CYLC_WORKFLOW_NAME}" --set='[events]submission timeout=PT1M'
+cylc stop "${CYLC_WORKFLOW_NAME}"
 """
     [[bar]]
         script=true

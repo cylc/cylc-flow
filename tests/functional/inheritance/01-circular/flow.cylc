@@ -1,5 +1,5 @@
 [meta]
-    title = a suite with circular inheritance
+    title = a workflow with circular inheritance
     description = should fail validation
 
 [scheduling]

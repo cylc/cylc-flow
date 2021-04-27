@@ -1,5 +1,5 @@
 [meta]
-    title = a suite with a task that multiply inherits from the same family
+    title = a workflow with a task that multiply inherits from the same family
     description = should fail validation
 
 [scheduling]

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,12 @@
 . "$(dirname "${0}")/test_header"
 
 set_test_number 4
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
-LOG="${SUITE_RUN_DIR}/log/suite/log"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 run_ok "${TEST_NAME_BASE}-log-1" \
     grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete job runner info' \
     "${LOG}"

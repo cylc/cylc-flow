@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" << '__ERR__'
-SuiteConfigError: implicit tasks detected (no entry under [runtime]):
+WorkflowConfigError: implicit tasks detected (no entry under [runtime]):
     * foo
 
 To allow implicit tasks, use 'flow.cylc[scheduler]allow implicit tasks'

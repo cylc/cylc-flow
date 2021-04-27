@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -42,7 +42,7 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${PWD}/flow.cylc"
 
-graph_suite "${PWD}/flow.cylc" 'graph.plain'
+graph_workflow "${PWD}/flow.cylc" 'graph.plain'
 cmp_ok 'graph.plain' - <<'__GRAPH__'
 edge "A.20000101T0000Z" "c.20000102T0000Z"
 edge "A.20000102T0000Z" "c.20000103T0000Z"

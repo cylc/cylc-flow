@@ -6,15 +6,15 @@ import re
 
 from pathlib import Path
 
-from cylc.flow.cfgspec.suite import SPEC
+from cylc.flow.cfgspec.workflow import SPEC
 
 
 LANG_FILE_PATH = Path(__file__).parent.parent.parent / 'cylc/flow/etc/syntax'
 PRIVATE_NAMES = ['__MANY__', 'cylc.flow']
 
 
-def get_keywords_from_suite_cfg():
-    """Extract a list of keywords from suite SPEC.
+def get_keywords_from_workflow_cfg():
+    """Extract a list of keywords from workflow SPEC.
     """
     keywords = []
     for item in SPEC.walk():
@@ -57,7 +57,7 @@ def update_cylc_lang(keywords, file_, template):
 
 
 def main():
-    keywords = get_keywords_from_suite_cfg()
+    keywords = get_keywords_from_workflow_cfg()
     update_cylc_lang(
         keywords,
         'cylc.lang',
