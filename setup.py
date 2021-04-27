@@ -44,17 +44,17 @@ def find_version(*file_paths):
 install_requires = [
     'aiofiles==0.5.*',
     'ansimarkup>=1.0.0',
-    'colorama>=0.4,<=1',
     'click>=7.0',
+    'colorama>=0.4,<=1',
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
     'metomi-isodatetime>=1!2.0.2, <1!2.1.0',
     'protobuf==3.15.*',
+    'psutil>=5.6.0',
     'pyuv==1.4.*',
     'pyzmq==19.0.*',
-    'psutil>=5.6.0',
-    'urwid==2.*',
-    'packaging'
+    'setuptools>=49',
+    'urwid==2.*'
 ]
 tests_require = [
     'async-timeout>=3.0.0',
