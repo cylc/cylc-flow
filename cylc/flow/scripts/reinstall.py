@@ -86,14 +86,14 @@ def get_option_parser():
             dest="defines"
         )
         parser.add_option(
-            "--define-workflow", "--define-flow", '-S',
+            "--rose-template-variable", '-S',
             help=(
                 "As `--define`, but with an implicit `[SECTION]` for "
                 "workflow variables."
             ),
             action="append",
             default=[],
-            dest="define_workflows"
+            dest="rose_template_var"
         )
         parser.add_option(
             "--clear-rose-install-options",
