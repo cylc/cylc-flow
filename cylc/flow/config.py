@@ -318,7 +318,6 @@ class WorkflowConfig:
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
-        self.validate_namespace_names()
 
         self.ns_defn_order = list(self.cfg['runtime'])
 
@@ -465,6 +464,7 @@ class WorkflowConfig:
         self._check_explicit_cycling()
 
         self._check_implicit_tasks()
+        self.validate_namespace_names()
 
         # Check that external trigger messages are only used once (they have to
         # be discarded immediately to avoid triggering the next instance of the
@@ -992,11 +992,10 @@ class WorkflowConfig:
             for name, _ in name_expander.expand(node):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
-        self.validate_namespace_names()
 
     def validate_namespace_names(self):
         """Validate task and family names."""
-        for name, config in self.cfg['runtime'].items():
+        for name in self.cfg['runtime']:
             success, message = TaskNameValidator.validate(name)
             if not success:
                 raise WorkflowConfigError(
