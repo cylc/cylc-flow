@@ -102,11 +102,26 @@ class WorkflowEventHandler():
                     stdin_str += '%s: %s\n' % (name, value)
             mail_footer_tmpl = self.get_events_conf(config, 'footer')
             if mail_footer_tmpl:
-                stdin_str += (mail_footer_tmpl + '\n') % {
-                    'host': ctx.host,
-                    'port': ctx.port,
-                    'owner': ctx.owner,
-                    'workflow': ctx.workflow}
+                # BACK COMPAT: "suite" deprecated
+                # url:
+                #     https://github.com/cylc/cylc-flow/pull/4174
+                # from:
+                #     Cylc 8
+                # remove at:
+                #     Cylc 9
+                try:
+                    stdin_str_footer = (mail_footer_tmpl + '\n') % {
+                        'host': ctx.host,
+                        'port': ctx.port,
+                        'owner': ctx.owner,
+                        'suite': ctx.workflow,  # deprecated
+                        'workflow': ctx.workflow}
+                except KeyError:
+                    LOG.warning(
+                        "Ignoring bad mail footer template: %s" % (
+                            mail_footer_tmpl))
+                else:
+                    stdin_str += stdin_str_footer
             proc_ctx = SubProcContext(
                 (self.WORKFLOW_EVENT_HANDLER, ctx.event),
                 [
@@ -145,7 +160,7 @@ class WorkflowEventHandler():
             # Handler command may be a string for substitution
             abort_on_error = self.get_events_conf(
                 config, 'abort if %s handler fails' % ctx.event)
-            # BACK COMPAT: suite, suiteUUID are deprecated
+            # BACK COMPAT: suite, suite_uuid are deprecated
             # url:
             #     https://github.com/cylc/cylc-flow/pull/4174
             # from:
