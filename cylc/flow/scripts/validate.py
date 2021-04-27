@@ -39,7 +39,10 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.templatevars import load_template_vars
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options
+)
 from cylc.flow.workflow_files import parse_workflow_arg
 
 
@@ -71,6 +74,17 @@ def get_option_parser():
     parser.set_defaults(is_validate=True)
 
     return parser
+
+
+ValidateOptions = Options(
+    get_option_parser(),
+    # defaults
+    {
+        'check_circular': False,
+        'profile_mode': False,
+        'run_mode': 'live'
+    }
+)
 
 
 @cli_function(get_option_parser)

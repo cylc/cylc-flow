@@ -79,7 +79,10 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.unicode_rules import (
-    XtriggerNameValidator, TaskOutputValidator)
+    TaskNameValidator,
+    TaskOutputValidator,
+    XtriggerNameValidator,
+)
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -315,6 +318,7 @@ class WorkflowConfig:
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
+        self.validate_namespace_names()
 
         self.ns_defn_order = list(self.cfg['runtime'])
 
@@ -988,6 +992,16 @@ class WorkflowConfig:
             for name, _ in name_expander.expand(node):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
+        self.validate_namespace_names()
+
+    def validate_namespace_names(self):
+        """Validate task and family names."""
+        for name, config in self.cfg['runtime'].items():
+            success, message = TaskNameValidator.validate(name)
+            if not success:
+                raise WorkflowConfigError(
+                    f'task/family name {message}\n[runtime][[{name}]]'
+                )
 
     @staticmethod
     def dequote(s):

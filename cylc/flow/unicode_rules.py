@@ -18,6 +18,10 @@
 
 import re
 
+from cylc.flow.task_id import (
+    _TASK_NAME_CHARACTERS,
+    _TASK_NAME_PREFIX,
+)
 
 ENGLISH_REGEX_MAP = {
     r'\w': 'alphanumeric',
@@ -102,6 +106,25 @@ def disallowed_characters(*chars):
     return (
         re.compile(r'^[^%s]*$' % ''.join(chars)),
         f'cannot contain: {", ".join(regex_chars_to_text(chars))}'
+    )
+
+
+def starts_with(*chars):
+    """Restrict first character.
+
+    Example:
+        >>> regex, message = starts_with('a', 'b', 'c')
+        >>> message
+        'must start with: ``a``, ``b``, ``c``'
+        >>> bool(regex.match('def'))
+        False
+        >>> bool(regex.match('adef'))
+        True
+
+    """
+    return (
+        re.compile(r'^[%s]' % ''.join(chars)),
+        f'must start with: {", ".join(regex_chars_to_text(chars))}'
     )
 
 
@@ -213,4 +236,13 @@ class TaskOutputValidator(UnicodeRuleChecker):
 
     RULES = [
         disallowed_characters(':')
+    ]
+
+
+class TaskNameValidator(UnicodeRuleChecker):
+    """The rules for valid task and family names:"""
+
+    RULES = [
+        starts_with(_TASK_NAME_PREFIX),
+        allowed_characters(*_TASK_NAME_CHARACTERS)
     ]

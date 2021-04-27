@@ -62,6 +62,10 @@ functionality is now provided by `[symlink dirs]`.
 
 ### Fixes
 
+[#4199](https://github.com/cylc/cylc-flow/pull/4199) -
+`cylc validate` and `cylc run` now check task/family names in the `[runtime]`
+section for validity.
+
 [#4180](https://github.com/cylc/cylc-flow/pull/4180) - Fix bug where installing
 a workflow that uses the deprecated `suite.rc` filename would symlink `flow.cylc`
 to the `suite.rc` in the source dir instead of the run dir. Also fixes a couple
