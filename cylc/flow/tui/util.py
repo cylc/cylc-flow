@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -333,7 +333,7 @@ def get_task_status_summary(flow):
 
 
 def get_workflow_status_str(flow):
-    """Return a suite status string for the header.
+    """Return a workflow status string for the header.
 
     Arguments:
         flow (dict):
@@ -351,7 +351,7 @@ def get_workflow_status_str(flow):
         ),
         ' - ',
         (
-            f'suite_{status}',
+            f'workflow_{status}',
             status
         )
     ]

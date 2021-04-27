@@ -4,7 +4,7 @@
 
 [scheduler]
     [[mail]]
-        footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+        footer = see: http://localhost/stuff/%(owner)s/%(workflow)s/
 
 [scheduling]
     [[graph]]

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 create_test_global_config "" "
 [platforms]
    [[localhost]]
@@ -27,19 +27,19 @@ create_test_global_config "" "
 "
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # Run detached.
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-cylc suite-state "${SUITE_NAME}" -t 'foo' -p '1' -S 'start' --interval=1
+cylc workflow-state "${WORKFLOW_NAME}" -t 'foo' -p '1' -S 'start' --interval=1
 sleep 1
 TEST_NAME=${TEST_NAME_BASE}-cat-log
-cylc cat-log "${SUITE_NAME}" -f o -m t foo.1 > "${TEST_NAME}.out"
+cylc cat-log "${WORKFLOW_NAME}" -f o -m t foo.1 > "${TEST_NAME}.out"
 grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
-cylc stop --kill --max-polls=20 --interval=1 "${SUITE_NAME}"
+cylc stop --kill --max-polls=20 --interval=1 "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

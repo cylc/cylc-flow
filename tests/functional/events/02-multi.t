@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
    [[graph]]
       R1 = t1
@@ -29,21 +29,21 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t1]]
         script=true
         [[[events]]]
-            started handler = echo %(suite)s, echo %(name)s, echo %(start_time)s
+            started handler = echo %(workflow)s, echo %(name)s, echo %(start_time)s
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-JOB_STFILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+JOB_STFILE="${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.status"
 JOB_START_TIME="$(sed -n 's/^CYLC_JOB_INIT_TIME=//p' "${JOB_STFILE}")"
-cylc cat-log "${SUITE_NAME}" \
+cylc cat-log "${WORKFLOW_NAME}" \
     | sed -n -e 's/^.*\(\[(('"'"'event-handler-0.'"'"'.*$\)/\1/p' | sort >'log'
 
 cmp_ok log <<__END__
-[(('event-handler-00', 'started'), 1) cmd] echo ${SUITE_NAME}
-[(('event-handler-00', 'started'), 1) out] ${SUITE_NAME}
+[(('event-handler-00', 'started'), 1) cmd] echo ${WORKFLOW_NAME}
+[(('event-handler-00', 'started'), 1) out] ${WORKFLOW_NAME}
 [(('event-handler-00', 'started'), 1) ret_code] 0
 [(('event-handler-01', 'started'), 1) cmd] echo t1
 [(('event-handler-01', 'started'), 1) out] t1

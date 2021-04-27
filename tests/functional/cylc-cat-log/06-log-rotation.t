@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
 # Tests that cylc cat-log correctly handles log rotation.
 . "$(dirname "$0")/test_header"
 set_test_number 1
-init_suite "${TEST_NAME_BASE}" '/dev/null'
+init_workflow "${TEST_NAME_BASE}" '/dev/null'
 
 # Populate its cylc-run dir with empty log files.
-LOG_DIR="$(dirname "$(cylc cat-log -m p "${SUITE_NAME}")")"
+LOG_DIR="$(dirname "$(cylc cat-log -m p "${WORKFLOW_NAME}")")"
 mkdir -p "${LOG_DIR}"
 # Note: .0 .1 .2: back compatibility to old log rotation system
 touch -t '201001011200.00' "${LOG_DIR}/log.20000103T00Z"
@@ -33,7 +33,7 @@ touch -t '201001011200.05' "${LOG_DIR}/log.2"
 
 # Test log rotation.
 for I in {0..5}; do
-    basename "$(cylc cat-log "${SUITE_NAME}" -m p -r "${I}")"
+    basename "$(cylc cat-log "${WORKFLOW_NAME}" -m p -r "${I}")"
 done >'result'
 
 cmp_ok 'result' <<'__CMP__'

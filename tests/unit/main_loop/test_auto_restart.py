@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ from cylc.flow.main_loop.auto_restart import (
     _can_auto_restart,
     _set_auto_restart
 )
-from cylc.flow.suite_status import (
+from cylc.flow.workflow_status import (
     AutoRestartMode,
     StopMode
 )
@@ -35,11 +35,11 @@ from cylc.flow.suite_status import (
 
 def test_can_auto_restart_pass(monkeypatch, caplog):
     """Test can_auto_restart for successful host selection."""
-    def select_suite_host(**_):
+    def select_workflow_host(**_):
         return ('localhost', 'localhost')
     monkeypatch.setattr(
-        'cylc.flow.main_loop.auto_restart.select_suite_host',
-        select_suite_host
+        'cylc.flow.main_loop.auto_restart.select_workflow_host',
+        select_workflow_host
     )
     assert _can_auto_restart()
     assert caplog.record_tuples == []
@@ -47,26 +47,26 @@ def test_can_auto_restart_pass(monkeypatch, caplog):
 
 def test_can_auto_restart_fail(monkeypatch, caplog):
     """Test can_auto_restart for unsuccessful host selection."""
-    def select_suite_host(**_):
+    def select_workflow_host(**_):
         raise HostSelectException({})
     monkeypatch.setattr(
-        'cylc.flow.main_loop.auto_restart.select_suite_host',
-        select_suite_host
+        'cylc.flow.main_loop.auto_restart.select_workflow_host',
+        select_workflow_host
     )
     with caplog.at_level(level=logging.DEBUG, logger=CYLC_LOG):
         assert not _can_auto_restart()
         [(_, level, msg)] = caplog.record_tuples
         assert level == logging.CRITICAL
-        assert 'No alternative host to restart suite on' in msg
+        assert 'No alternative host to restart workflow on' in msg
 
 
 def test_can_auto_restart_fail_horribly(monkeypatch, caplog):
     """Test can_auto_restart for really unsuccessful host selection."""
-    def select_suite_host(**_):
+    def select_workflow_host(**_):
         raise Exception('Unexpected error in host selection')
     monkeypatch.setattr(
-        'cylc.flow.main_loop.auto_restart.select_suite_host',
-        select_suite_host
+        'cylc.flow.main_loop.auto_restart.select_workflow_host',
+        select_workflow_host
     )
     with caplog.at_level(level=logging.DEBUG, logger=CYLC_LOG):
         assert not _can_auto_restart()
@@ -124,7 +124,7 @@ def test_should_auto_restart(
         should_auto_restart,
         monkeypatch
 ):
-    """Ensure the suite only auto-restarts when appropriate."""
+    """Ensure the workflow only auto-restarts when appropriate."""
     # factor out networking and FQDNs for testing purposes
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart.get_fqdn_by_host',
@@ -169,7 +169,7 @@ def test_set_auto_restart_force_oveeride(caplog):
             (*_, msg1),
             (*_, msg2)
         ] = caplog.record_tuples
-        assert 'This suite will be shutdown' in msg1
+        assert 'This workflow will be shutdown' in msg1
         assert 'Scheduled automatic restart canceled' in msg2
 
 
@@ -198,17 +198,17 @@ def test_set_auto_restart_no_detach(caplog):
 
 
 def test_set_auto_restart_unable_to_restart(monkeypatch):
-    """Ensure returns False if suite is unable to restart"""
+    """Ensure returns False if workflow is unable to restart"""
     called = False
 
-    def suite_select_fail(**_):
+    def workflow_select_fail(**_):
         nonlocal called
         called = True  # prevent this becoming a placebo
         return False
 
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart._can_auto_restart',
-        suite_select_fail
+        workflow_select_fail
     )
     scheduler = Mock(
         stop_mode=None,
@@ -222,17 +222,17 @@ def test_set_auto_restart_unable_to_restart(monkeypatch):
 
 
 def test_set_auto_restart_with_delay(monkeypatch, caplog):
-    """Ensure suites wait for a period before auto-restarting."""
+    """Ensure workflows wait for a period before auto-restarting."""
     called = False
 
-    def suite_select_pass(**_):
+    def workflow_select_pass(**_):
         nonlocal called
         called = True  # prevent this becoming a placebo
         return True
 
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart._can_auto_restart',
-        suite_select_pass
+        workflow_select_pass
     )
     monkeypatch.setattr(
         # remove the random element of the restart delay
@@ -256,17 +256,17 @@ def test_set_auto_restart_with_delay(monkeypatch, caplog):
 
 
 def test_set_auto_restart_without_delay(monkeypatch, caplog):
-    """Ensure suites auto-restart when no delay is provided."""
+    """Ensure workflows auto-restart when no delay is provided."""
     called = False
 
-    def suite_select_pass(**_):
+    def workflow_select_pass(**_):
         nonlocal called
         called = True  # prevent this becoming a placebo
         return True
 
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart._can_auto_restart',
-        suite_select_pass
+        workflow_select_pass
     )
     scheduler = Mock(
         stop_mode=None,

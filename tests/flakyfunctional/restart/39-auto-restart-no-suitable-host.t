@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -31,9 +31,9 @@ BASE_GLOBAL_CONFIG="
         timeout = PT2M
 "
 #-------------------------------------------------------------------------------
-# test that suites will not attempt to auto stop-restart if there is no
+# test that workflows will not attempt to auto stop-restart if there is no
 # available host to restart on
-init_suite "${TEST_NAME_BASE}" <<< '
+init_workflow "${TEST_NAME_BASE}" <<< '
 [scheduler]
     UTC mode = True
     allow implicit tasks = True
@@ -50,8 +50,8 @@ ${BASE_GLOBAL_CONFIG}
         available = localhost
 "
 
-cylc play "${SUITE_NAME}" --debug
-poll_suite_running
+cylc play "${WORKFLOW_NAME}" --debug
+poll_workflow_running
 
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
@@ -61,14 +61,14 @@ ${BASE_GLOBAL_CONFIG}
         condemned = $(localhost_fqdn)
 "
 
-FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
+FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME_BASE}-no-auto-restart" "${FILE}" 20 1 \
-    'The Cylc suite host will soon become un-available' \
-    'Suite cannot automatically restart because:' \
-    'No alternative host to restart suite on.' \
-    'Suite cannot automatically restart because:' \
-    'No alternative host to restart suite on.'
+    'The Cylc workflow host will soon become un-available' \
+    'Workflow cannot automatically restart because:' \
+    'No alternative host to restart workflow on.' \
+    'Workflow cannot automatically restart because:' \
+    'No alternative host to restart workflow on.'
 
-cylc stop --kill --max-polls=10 --interval=2 "${SUITE_NAME}"
+cylc stop --kill --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 purge
 exit

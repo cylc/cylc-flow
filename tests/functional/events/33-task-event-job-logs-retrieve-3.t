@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,16 +20,16 @@ export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 set_test_number 5
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" \
+    cylc validate -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach \
-    -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${SUITE_NAME}"
+    -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
-    "${SUITE_RUN_DIR}/log/job/1/t1/01/job-activity.log" \
+    "${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job-activity.log" \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<'__LOG__'
 [(('job-logs-retrieve', 'failed'), 1) ret_code] 1
@@ -37,8 +37,8 @@ cmp_ok 'edited-activities.log' <<'__LOG__'
 [(('job-logs-retrieve', 'failed'), 1) ret_code] 1
 [(('job-logs-retrieve', 'failed'), 1) err] File(s) not retrieved: job.err
 __LOG__
-exists_ok "${SUITE_RUN_DIR}/log/job/1/t1/01/job.out"
-exists_fail "${SUITE_RUN_DIR}/log/job/1/t1/01/job.err"
+exists_ok "${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.out"
+exists_fail "${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.err"
 
 purge
 exit

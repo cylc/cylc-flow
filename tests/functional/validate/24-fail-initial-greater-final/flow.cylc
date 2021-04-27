@@ -1,7 +1,7 @@
 [meta]
-    title = "Test suite for initial cycle point less than final."
+    title = "Test workflow for initial cycle point less than final."
     description = """Task are not important here but the cycl points are.
-Initial is set to greater than the final and the suite should report the
+Initial is set to greater than the final and the workflow should report the
 error."""
 
 [scheduler]

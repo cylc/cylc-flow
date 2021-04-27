@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -42,24 +42,24 @@ create_test_global_config "" "
         work = \$TMPDIR/\$USER/test_cylc_symlink/
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}" \
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-suite_run_ok "${TEST_NAME_BASE}-run-ok" cylc play "${SUITE_NAME}" \
+workflow_run_ok "${TEST_NAME_BASE}-run-ok" cylc play "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" --debug
-poll_grep_suite_log 'File installation complete'
+poll_grep_workflow_log 'File installation complete'
 TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
-if [[ $(readlink "$HOME/cylc-run/${SUITE_NAME}") == \
-    "$TMPDIR/$USER/cylctb_tmp_run_dir/cylc-run/${SUITE_NAME}" ]]; then
+if [[ $(readlink "$HOME/cylc-run/${WORKFLOW_NAME}") == \
+    "$TMPDIR/$USER/cylctb_tmp_run_dir/cylc-run/${WORKFLOW_NAME}" ]]; then
         ok "$TEST_SYM.localhost"
 else
     fail "$TEST_SYM.localhost"
 fi
 
 TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-exists-ok"
-if [[ $(readlink "$HOME/cylc-run/${SUITE_NAME}/share/cycle") == \
-"$TMPDIR/$USER/cylctb_tmp_share_dir/cylc-run/${SUITE_NAME}/share/cycle" ]]; then
+if [[ $(readlink "$HOME/cylc-run/${WORKFLOW_NAME}/share/cycle") == \
+"$TMPDIR/$USER/cylctb_tmp_share_dir/cylc-run/${WORKFLOW_NAME}/share/cycle" ]]; then
     ok "$TEST_SYM.localhost"
 else
     fail "$TEST_SYM.localhost"
@@ -67,8 +67,8 @@ fi
 
 for DIR in 'work' 'share' 'log'; do
     TEST_SYM="${TEST_NAME_BASE}-${DIR}-symlink-exists-ok"
-    if [[ $(readlink "$HOME/cylc-run/${SUITE_NAME}/${DIR}") == \
-   "$TMPDIR/$USER/cylc-run/${SUITE_NAME}/${DIR}" ]]; then
+    if [[ $(readlink "$HOME/cylc-run/${WORKFLOW_NAME}/${DIR}") == \
+   "$TMPDIR/$USER/cylc-run/${WORKFLOW_NAME}/${DIR}" ]]; then
         ok "$TEST_SYM.localhost"
     else
         fail "$TEST_SYM.localhost"
@@ -78,16 +78,16 @@ done
 SSH="$(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
 
 # shellcheck disable=SC2016
-LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$SUITE_NAME"'"')"
-if [[ "$LINK" == *"/test_cylc_symlink/ctb_tmp_run_dir/cylc-run/${SUITE_NAME}" ]]; then
+LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$WORKFLOW_NAME"'"')"
+if [[ "$LINK" == *"/test_cylc_symlink/ctb_tmp_run_dir/cylc-run/${WORKFLOW_NAME}" ]]; then
     ok "${TEST_NAME_BASE}-run-symlink-exists-ok.remotehost"
 else
     fail "${TEST_NAME_BASE}-run-symlink-exists-ok.remotehost"
 fi
 
 # shellcheck disable=SC2016
-LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$SUITE_NAME"/share/cycle'"')"
-if [[ "$LINK" == *"/test_cylc_symlink/ctb_tmp_share_dir/cylc-run/${SUITE_NAME}/share/cycle" ]]; then
+LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$WORKFLOW_NAME"/share/cycle'"')"
+if [[ "$LINK" == *"/test_cylc_symlink/ctb_tmp_share_dir/cylc-run/${WORKFLOW_NAME}/share/cycle" ]]; then
     ok "${TEST_NAME_BASE}-share/cycle-symlink-exists-ok.remotehost"
 else
     fail "${TEST_NAME_BASE}-share/cycle-symlink-exists-ok.remotehost"
@@ -95,8 +95,8 @@ fi
 
 for DIR in 'work' 'share' 'log'; do
 # shellcheck disable=SC2016
-    LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$SUITE_NAME"/$DIR'"')"
-    if [[ "$LINK" == *"/test_cylc_symlink/cylc-run/${SUITE_NAME}/${DIR}" ]]; then
+    LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$WORKFLOW_NAME"/$DIR'"')"
+    if [[ "$LINK" == *"/test_cylc_symlink/cylc-run/${WORKFLOW_NAME}/${DIR}" ]]; then
         ok "${TEST_NAME_BASE}-${DIR}-symlink-exists-ok.remotehost"
     else
         fail "${TEST_NAME_BASE}-${DIR}-symlink-exists-ok.remotehost"

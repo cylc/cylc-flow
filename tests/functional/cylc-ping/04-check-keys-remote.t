@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ create_test_global_config '' "
         retrieve job logs = True
 "
 
-init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
+init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduling]
     [[graph]]
         R1 = keys
@@ -36,7 +36,7 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
         platform = $CYLC_TEST_PLATFORM
         script = """
             find \
-                "\${CYLC_SUITE_RUN_DIR}" \
+                "\${CYLC_WORKFLOW_RUN_DIR}" \
                 -type f \
                 -name "*key*" \
                 | awk -F/ '{print \$NF}'|sort > "\${CYLC_TASK_LOG_ROOT}-find-out"
@@ -46,13 +46,13 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate \
-    "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play \
-    "${SUITE_NAME}" \
+    "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play \
+    "${WORKFLOW_NAME}" \
     --no-detach \
     --debug
 
-KEYS_FILE="$(cylc cat-log -m p "$SUITE_NAME" 'keys.1' -f job-find-out)"
+KEYS_FILE="$(cylc cat-log -m p "$WORKFLOW_NAME" 'keys.1' -f job-find-out)"
 if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
     cmp_ok "$KEYS_FILE" <<__OUT__
 client.key_secret
@@ -71,13 +71,13 @@ fi
 if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
     skip 1
 else
-    grep_ok "Removing authentication keys and contact file from remote: \"${CYLC_TEST_INSTALL_TARGET}\"" "${SUITE_RUN_DIR}/log/suite/log"
+    grep_ok "Removing authentication keys and contact file from remote: \"${CYLC_TEST_INSTALL_TARGET}\"" "${WORKFLOW_RUN_DIR}/log/workflow/log"
 fi
 
 # ensure the keys got removed again afterwards
 SSH='ssh -n -oBatchMode=yes -oConnectTimeout=5'
 ${SSH} "${CYLC_TEST_HOST}" \
-    LANG=C find "cylc-run/${SUITE_NAME}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
+    LANG=C find "cylc-run/${WORKFLOW_NAME}" -type f -name "*key*"|awk -F/ '{print $NF}'|sort >'find.out'
 cmp_ok 'find.out' </dev/null
 
 purge

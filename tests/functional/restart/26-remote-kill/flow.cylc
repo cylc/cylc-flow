@@ -14,4 +14,4 @@
         script = sleep 300
         platform = {{environ["CYLC_TEST_PLATFORM"]}}
         [[[events]]]
-            started handler = cylc stop --now --now '%(suite)s'
+            started handler = cylc stop --now --now '%(workflow)s'

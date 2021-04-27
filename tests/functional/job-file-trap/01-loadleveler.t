@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -24,22 +24,22 @@ export REQUIRE_PLATFORM="runner:loadleveler"
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 6
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 sleep 5
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-t1.1"
-T1_JOB_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job"
+T1_JOB_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job"
 exists_ok "${T1_JOB_FILE}"
 run_fail "${TEST_NAME}" grep -q -e '^CYLC_VACATION_SIGNALS' "${T1_JOB_FILE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-t2.1"
-T2_JOB_FILE="${SUITE_RUN_DIR}/log/job/1/t2/01/job"
+T2_JOB_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t2/01/job"
 exists_ok "${T2_JOB_FILE}"
 grep_ok '^CYLC_VACATION_SIGNALS' "${T2_JOB_FILE}"
 #-------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 
 set_test_number 5
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -34,13 +34,13 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = foo
 __FLOW_CONFIG__
 
-pri_db="${SUITE_RUN_DIR}/.service/db"
-pub_db="${SUITE_RUN_DIR}/log/db"
+pri_db="${WORKFLOW_RUN_DIR}/.service/db"
+pub_db="${WORKFLOW_RUN_DIR}/log/db"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}"
 
-poll_suite_stopped  # This waits for contact file to be removed
+poll_workflow_stopped  # This waits for contact file to be removed
 # Delete the DB without delay
 rm -f "$pri_db" "$pub_db"
 # Check if DB exists without delay

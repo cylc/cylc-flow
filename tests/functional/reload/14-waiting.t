@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,12 @@
 # cylc/cylc-flow#1221
 . "$(dirname "$0")/test_header"
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 run_fail "${TEST_NAME_BASE}-database-integrity-error" \
    grep -q 'Database Integrity Error' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------

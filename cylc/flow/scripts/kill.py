@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -50,22 +50,22 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ('REG', 'Suite name'),
+            ('REG', 'Workflow name'),
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite, *task_globs):
+def main(parser, options, workflow, *task_globs):
     """CLI of "cylc kill"."""
-    suite = os.path.normpath(suite)
-    pclient = get_client(suite, timeout=options.comms_timeout)
+    workflow = os.path.normpath(workflow)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
             'tasks': list(task_globs),
         }
     }

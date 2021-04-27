@@ -11,5 +11,5 @@
     [[delay]]
          script = """
          # Ensure that bar does not start until baz has gone.
-         cylc__job__poll_grep_suite_log 'qux.*started'
+         cylc__job__poll_grep_workflow_log 'qux.*started'
          """

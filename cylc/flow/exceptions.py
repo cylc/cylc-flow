@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -63,12 +63,12 @@ class CylcConfigError(CylcError):
     """
 
 
-class SuiteConfigError(CylcConfigError):
-    """Exception for configuration errors in a Cylc suite configuration."""
+class WorkflowConfigError(CylcConfigError):
+    """Exception for configuration errors in a Cylc workflow configuration."""
 
 
-class GraphParseError(SuiteConfigError):
-    """Exception for errors in Cylc suite graphing."""
+class GraphParseError(WorkflowConfigError):
+    """Exception for errors in Cylc workflow graphing."""
 
 
 class TriggerExpressionError(GraphParseError):
@@ -83,16 +83,16 @@ class TaskProxySequenceBoundsError(CylcError):
             self, 'Not loading %s (out of sequence bounds)' % msg)
 
 
-class ParamExpandError(SuiteConfigError):
+class ParamExpandError(WorkflowConfigError):
     """Exception for errors in Cylc parameter expansion."""
 
 
-class SuiteEventError(CylcError):
+class WorkflowEventError(CylcError):
     """Exception for errors in Cylc event handlers."""
 
 
-class SuiteServiceFileError(CylcError):
-    """Exception for errors related to suite service files."""
+class ServiceFileError(CylcError):
+    """Exception for errors related to workflow service files."""
 
 
 class WorkflowFilesError(CylcError):
@@ -100,7 +100,7 @@ class WorkflowFilesError(CylcError):
 
 
 class TaskRemoteMgmtError(CylcError):
-    """Exceptions initialising suite run directory of remote job host."""
+    """Exceptions initialising workflow run directory of remote job host."""
 
     MSG_INIT = "initialisation did not complete"
     MSG_SELECT = "host selection failed"
@@ -129,7 +129,7 @@ class TaskRemoteMgmtError(CylcError):
         return ret
 
 
-class TaskDefError(SuiteConfigError):
+class TaskDefError(WorkflowConfigError):
     """Exception raise for errors in TaskDef initialization."""
 
 
@@ -143,14 +143,14 @@ class ClientError(CylcError):
         return ret
 
 
-class SuiteStopped(ClientError):
-    """Special case of ClientError for a stopped suite."""
+class WorkflowStopped(ClientError):
+    """Special case of ClientError for a stopped workflow."""
 
-    def __init__(self, suite):
-        self.suite = suite
+    def __init__(self, workflow):
+        self.workflow = workflow
 
     def __str__(self):
-        return f'{self.suite} is not running'
+        return f'{self.workflow} is not running'
 
 
 class ClientTimeout(CylcError):

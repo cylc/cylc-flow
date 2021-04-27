@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 
 (This command is for internal use.)
 
-Invoke suite subscriber to receive published workflow output.
+Invoke workflow subscriber to receive published workflow output.
 """
 
 import json
@@ -57,7 +57,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('REG', 'Suite name')
+            ('REG', 'Workflow name')
         ],
         comms=True
     )
@@ -82,12 +82,12 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, *args):
-    suite = args[0]
+    workflow = args[0]
 
     try:
         while True:
             try:
-                host, _, port = get_location(suite)
+                host, _, port = get_location(workflow)
             except (ClientError, IOError, TypeError, ValueError) as exc:
                 print(exc)
                 time.sleep(3)
@@ -103,7 +103,7 @@ def main(_, options, *args):
         topic_set.add(topic.encode('utf-8'))
 
     subscriber = WorkflowSubscriber(
-        suite,
+        workflow,
         host=host,
         port=port,
         topics=topic_set

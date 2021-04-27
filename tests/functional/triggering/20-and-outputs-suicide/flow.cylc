@@ -28,11 +28,11 @@
     [[showdown]]
         script = """
 if ((${CYLC_TASK_CYCLE_POINT} == 1)); then
-    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'bad' 'ugly'
+    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'bad' 'ugly'
 elif ((${CYLC_TASK_CYCLE_POINT} == 2)); then
-    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'good' 'ugly'
+    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'good' 'ugly'
 else
-    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'good' 'bad'
+    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'good' 'bad'
 fi
 """
         [[[outputs]]]

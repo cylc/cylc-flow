@@ -1,0 +1,30 @@
+[meta]
+    title = "hold/release test"
+
+    description = """
+        One task that sets hold point then releases all tasks.
+    """
+
+# https://github.com/cylc/cylc-flow/pull/843
+
+# See also tests/f/pause-resume/00-workflow
+
+[scheduler]
+    cycle point format = %Y%m%dT%H
+
+[scheduling]
+    initial cycle point = 20140101T00
+    final cycle point   = 20140101T00
+    [[graph]]
+        R1 = "holdrelease => foo & bar"
+        T00, T06 = "bar"
+[runtime]
+    [[holdrelease]]
+        script = """
+            cylc__job__wait_cylc_message_started
+            cylc hold --after=1900 "${CYLC_WORKFLOW_NAME}"
+            cylc__job__poll_grep_workflow_log -F 'INFO - Command succeeded: set_hold_point'
+            cylc release --all "${CYLC_WORKFLOW_NAME}"
+        """
+    [[foo,bar]]
+        script = true

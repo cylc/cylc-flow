@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 1
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
+init_workflow "${TEST_NAME_BASE}" <<'__WORKFLOW__'
 [scheduler]
     cycle point time zone = Z
     [[events]]
@@ -33,8 +33,8 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITE__'
 [runtime]
     [[foo, qux]]
         script = true
-__SUITE__
-run_ok "${TEST_NAME_BASE}" cylc play "${SUITE_NAME}" --no-detach
+__WORKFLOW__
+run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach
 
 purge
 exit

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------
-# Test orphaned tasks do not stall the suite after reload - GitHub #3306.
+# Test orphaned tasks do not stall the workflow after reload - GitHub #3306.
 
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
 
-# A suite designed to orphan a single copy of a task 'bar' on self-reload,
+# A workflow designed to orphan a single copy of a task 'bar' on self-reload,
 # or stall and abort if the orphaned task triggers the #3306 bug.
 
-init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
+init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduler]
    [[events]]
       inactivity = PT25S
@@ -49,12 +49,12 @@ $(declare -f poll)
 $(declare -f poll_grep)
 
 # Remove bar and tell the server to reload.
-if (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_INITIAL_CYCLE_POINT )); then
-   sed -i 's/^.*remove*$//g' "\${CYLC_SUITE_RUN_DIR}/flow.cylc"
-   cylc reload "\${CYLC_SUITE_NAME}"
-   poll_grep -F 'Reload complete' "\${CYLC_SUITE_RUN_DIR}/log/suite/log"
+if (( CYLC_TASK_CYCLE_POINT == CYLC_WORKFLOW_INITIAL_CYCLE_POINT )); then
+   sed -i 's/^.*remove*$//g' "\${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
+   cylc reload "\${CYLC_WORKFLOW_NAME}"
+   poll_grep -F 'Reload complete' "\${CYLC_WORKFLOW_RUN_DIR}/log/workflow/log"
    # kill the long-running orphaned bar task.
-   kill "\$(cat "\${CYLC_SUITE_RUN_DIR}/work/1/bar/pid")"
+   kill "\$(cat "\${CYLC_WORKFLOW_RUN_DIR}/work/1/bar/pid")"
 fi
 """
    [[bar]]
@@ -67,14 +67,14 @@ wait"""
 __FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-result"
-cylc suite-state "${SUITE_NAME}" > suite-state.log
-contains_ok suite-state.log << __END__
+cylc workflow-state "${WORKFLOW_NAME}" > workflow-state.log
+contains_ok workflow-state.log << __END__
 foo, 1, succeeded
 bar, 1, succeeded
 foo, 2, succeeded

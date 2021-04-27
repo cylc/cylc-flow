@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,11 +23,11 @@ set_test_number 6
 init_suiterc() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
-    SUITE_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
-    SUITE_RUN_DIR="$RUN_DIR/$SUITE_NAME"
-    mkdir -p "${TEST_DIR}/${SUITE_NAME}/"
-    cat "${FLOW_CONFIG}" >"${TEST_DIR}/${SUITE_NAME}/suite.rc"
-    cd "${TEST_DIR}/${SUITE_NAME}" || exit
+    WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    WORKFLOW_RUN_DIR="$RUN_DIR/$WORKFLOW_NAME"
+    mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}/"
+    cat "${FLOW_CONFIG}" >"${TEST_DIR}/${WORKFLOW_NAME}/suite.rc"
+    cd "${TEST_DIR}/${WORKFLOW_NAME}" || exit
 }
 
 init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
@@ -47,18 +47,18 @@ grep_ok "$MSG" "${TEST_NAME_BASE}-validate.stderr"
 # Test install upgrades suite.rc and logs deprecation notification, even after validation
 # See also tests/functional/cylc-install/00-simple.t
 TEST_NAME="${TEST_NAME_BASE}-install-after-validate"
-run_ok "${TEST_NAME}" cylc install --flow-name="${SUITE_NAME}" --no-run-name
+run_ok "${TEST_NAME}" cylc install --flow-name="${WORKFLOW_NAME}" --no-run-name
 
-cd "${SUITE_RUN_DIR}" || exit 1
+cd "${WORKFLOW_RUN_DIR}" || exit 1
 exists_ok "flow.cylc"
 
 TEST_NAME="flow.cylc-readlink"
 readlink "flow.cylc" > "${TEST_NAME}.out"
-cmp_ok "${TEST_NAME}.out" <<< "${SUITE_RUN_DIR}/suite.rc"
+cmp_ok "${TEST_NAME}.out" <<< "${WORKFLOW_RUN_DIR}/suite.rc"
 
-INSTALL_LOG="$(find "${SUITE_RUN_DIR}/log/install" -type f -name '*.log')"
+INSTALL_LOG="$(find "${WORKFLOW_RUN_DIR}/log/install" -type f -name '*.log')"
 grep_ok "$MSG" "${INSTALL_LOG}"
 
 cd "${TEST_DIR}" || exit 1
-rm -rf "${TEST_DIR:?}/${SUITE_NAME}/"
+rm -rf "${TEST_DIR:?}/${WORKFLOW_NAME}/"
 purge

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,21 +18,21 @@
 Send task job messages to:
 - The stdout/stderr.
 - The job status file, if there is one.
-- The suite server program, if communication is possible.
+- The scheduler, if communication is possible.
 """
 
 from logging import getLevelName, WARNING, ERROR, CRITICAL
 import os
 import sys
 
-from cylc.flow.exceptions import SuiteStopped
+from cylc.flow.exceptions import WorkflowStopped
 import cylc.flow.flags
+from cylc.flow.pathutil import get_workflow_run_job_dir
 from cylc.flow.network.client_factory import (
     CommsMeth,
     get_client,
     get_comms_method
 )
-from cylc.flow.pathutil import get_suite_run_job_dir
 from cylc.flow.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
 from cylc.flow.wallclock import get_current_time_string
 
@@ -68,27 +68,27 @@ mutation (
 '''
 
 
-def record_messages(suite, task_job, messages):
+def record_messages(workflow, task_job, messages):
     """Record task job messages.
 
     Print the messages according to their severity.
     Write the messages in the job status file.
-    Send the messages to the suite, if possible.
+    Send the messages to the workflow, if possible.
 
     Arguments:
-        suite (str): Suite name.
+        workflow (str): Workflow name.
         task_job (str): Task job identifier "CYCLE/TASK_NAME/SUBMIT_NUM".
         messages (list): List of messages "[[severity, message], ...]".
     """
     # Record the event time, in case the message is delayed in some way.
     event_time = get_current_time_string(
         override_use_utc=(os.getenv('CYLC_UTC') == 'True'))
-    write_messages(suite, task_job, messages, event_time)
+    write_messages(workflow, task_job, messages, event_time)
     if get_comms_method() != CommsMeth.POLL:
-        send_messages(suite, task_job, messages, event_time)
+        send_messages(workflow, task_job, messages, event_time)
 
 
-def write_messages(suite, task_job, messages, event_time):
+def write_messages(workflow, task_job, messages, event_time):
     # Print to stdout/stderr
     for severity, message in messages:
         if severity in STDERR_LEVELS:
@@ -98,17 +98,16 @@ def write_messages(suite, task_job, messages, event_time):
         handle.write('%s %s - %s\n' % (event_time, severity, message))
         handle.flush()
     # Write to job.status
-    _append_job_status_file(suite, task_job, event_time, messages)
-    # Send messages
+    _append_job_status_file(workflow, task_job, event_time, messages)
 
 
-def send_messages(suite, task_job, messages, event_time):
-    suite = os.path.normpath(suite)
+def send_messages(workflow, task_job, messages, event_time):
+    workflow = os.path.normpath(workflow)
     try:
-        pclient = get_client(suite)
-    except SuiteStopped:
+        pclient = get_client(workflow)
+    except WorkflowStopped:
         # on a remote host this means the contact file is not present
-        # either the suite is stopped or the contact file is not present
+        # either the workflow is stopped or the contact file is not present
         # on the job host (i.e. comms method is polling)
         # eitherway don't try messaging
         pass
@@ -121,7 +120,7 @@ def send_messages(suite, task_job, messages, event_time):
         mutation_kwargs = {
             'request_string': MUTATION,
             'variables': {
-                'wFlows': [suite],
+                'wFlows': [workflow],
                 'taskJob': task_job,
                 'eventTime': event_time,
                 'messages': messages,
@@ -130,11 +129,11 @@ def send_messages(suite, task_job, messages, event_time):
         pclient('graphql', mutation_kwargs)
 
 
-def _append_job_status_file(suite, task_job, event_time, messages):
+def _append_job_status_file(workflow, task_job, event_time, messages):
     """Write messages to job status file."""
     job_log_name = os.getenv('CYLC_TASK_LOG_ROOT')
     if not job_log_name:
-        job_log_name = get_suite_run_job_dir(suite, task_job, 'job')
+        job_log_name = get_workflow_run_job_dir(workflow, task_job, 'job')
     try:
         job_status_file = open(job_log_name + '.status', 'a')
     except IOError:

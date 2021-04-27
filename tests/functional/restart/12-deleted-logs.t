@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,27 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a suite after its log directory tree has been removed.
-# (the suite run tree should be created if necessary on restart).
+# Test restarting a workflow after its log directory tree has been removed.
+# (the workflow run tree should be created if necessary on restart).
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" 'deleted-logs'
+install_workflow "${TEST_NAME_BASE}" 'deleted-logs'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-restart"
-if [[ -z "${SUITE_NAME}" ]]; then
+if [[ -z "${WORKFLOW_NAME}" ]]; then
     # For safety, abort before attempting log tree removal.
-    echo "ERROR: \${SUITE_NAME} does not exist" >&2
+    echo "ERROR: \${WORKFLOW_NAME} does not exist" >&2
     exit 1
 fi
-rm -r "${SUITE_RUN_DIR}/log"
-suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+rm -r "${WORKFLOW_RUN_DIR}/log"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

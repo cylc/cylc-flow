@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -694,7 +694,7 @@ class CylcConfigValidator(ParsecValidator):
             return None
         value = cls.strip_and_unquote(keys, value)
         if value == 'now':
-            # Handle this later in config.py when the suite UTC mode is known.
+            # Handle this later in config.py when workflow UTC mode is known.
             return value
         if "next" in value or "previous" in value:
             # Handle this later, as for "now".

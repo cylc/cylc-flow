@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -44,10 +44,10 @@ from typing import Optional, TYPE_CHECKING
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
-from cylc.flow.suite_files import (
+from cylc.flow.workflow_files import (
     get_workflow_source_dir,
     reinstall_workflow,
-    SuiteFiles)
+    WorkflowFiles)
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -86,14 +86,14 @@ def get_option_parser():
             dest="defines"
         )
         parser.add_option(
-            "--define-suite", "--define-flow", '-S',
+            "--define-workflow", "--define-flow", '-S',
             help=(
                 "As `--define`, but with an implicit `[SECTION]` for "
                 "workflow variables."
             ),
             action="append",
             default=[],
-            dest="define_suites"
+            dest="define_workflows"
         )
         parser.add_option(
             "--clear-rose-install-options",
@@ -125,7 +125,7 @@ def main(
     if not run_dir.exists():
         raise WorkflowFilesError(
             f'"{named_run}" is not an installed workflow.')
-    if run_dir.name in [SuiteFiles.FLOW_FILE, SuiteFiles.SUITE_RC]:
+    if run_dir.name in [WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC]:
         run_dir = run_dir.parent
         named_run = named_run.rsplit('/', 1)[0]
     source, source_path = get_workflow_source_dir(run_dir)

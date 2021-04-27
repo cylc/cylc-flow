@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 # Test restarting with a task waiting to retry (was retrying state).
 . "$(dirname "$0")/test_header"
 set_test_number 5
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
         abort on stalled = True
@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
             cylc__job__wait_cylc_message_started
             if ((CYLC_TASK_TRY_NUMBER == 1)); then
-                cylc stop "${CYLC_SUITE_NAME}"
+                cylc stop "${CYLC_WORKFLOW_NAME}"
                 exit 1
             fi
         """
@@ -40,16 +40,16 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
             execution retry delays = PT0S
 __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'sqlite3.out'
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<'__DB_DUMP__'
 1|t1|waiting
 __DB_DUMP__
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'sqlite3.out'
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' </dev/null
 #-------------------------------------------------------------------------------
 purge

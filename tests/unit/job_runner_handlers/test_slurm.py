@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ home = os.path.expandvars('$HOME/')
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
-                'suite_name': 'chop',
+                'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },
             [
@@ -53,7 +53,7 @@ home = os.path.expandvars('$HOME/')
                 'job_file_path': (
                     '$HOME/cylc-run/chop/log/job/1/axe%40HEAD/01/job'
                 ),
-                'suite_name': 'chop',
+                'workflow_name': 'chop',
                 'task_id': 'axe%40HEAD.1',
             },
             [
@@ -78,7 +78,7 @@ home = os.path.expandvars('$HOME/')
                 },
                 'execution_time_limit': 200,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
-                'suite_name': 'chop',
+                'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },
             [
@@ -106,7 +106,7 @@ home = os.path.expandvars('$HOME/')
                 },
                 'execution_time_limit': 200,
                 'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
-                'suite_name': 'chop',
+                'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },
             [

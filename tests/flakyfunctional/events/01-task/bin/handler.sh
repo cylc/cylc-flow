@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 EVENT="$1"
-#SUITE="$2"
+#WORKFLOW="$2"
 TASK="$3"
 MSG="$4"
 

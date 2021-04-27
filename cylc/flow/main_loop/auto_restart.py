@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Automatically restart suites if they are running on bad servers.
+"""Automatically restart workflows if they are running on bad servers.
 
-Loads in the global configuration to check if the server a suite is running
+Loads in the global configuration to check if the server a workflow is running
 on is listed in :cylc:conf:`global.cylc[scheduler][run hosts]condemned`.
 
 This is useful if a host needs to be taken off-line e.g. for scheduled
@@ -36,14 +36,14 @@ The auto stop-restart feature has two modes:
 
 Normal Mode
    When a host is added to the
-   :cylc:conf:`[scheduler][run hosts]condemned` list, any suites
+   :cylc:conf:`[scheduler][run hosts]condemned` list, any workflows
    running on that host will automatically shutdown then restart selecting a
    new host from :cylc:conf:`[scheduler][run hosts]available`.
 
-   For safety, before attempting to stop the suite Cylc will first wait
+   For safety, before attempting to stop the workflow Cylc will first wait
    for any jobs running locally (under background or at) to complete.
 
-   In order for Cylc to be able to restart suites the
+   In order for Cylc to be able to restart workflows the
    :cylc:conf:`[scheduler][run hosts]available` hosts must all be on a
    shared filesystem.
 Force Mode
@@ -51,8 +51,8 @@ Force Mode
    to automatically restart the workflow and any local jobs (running under
    background or at) will be left running.
 
-For example in the following configuration any suites running on
-``foo`` will attempt to restart on ``pub`` whereas any suites
+For example in the following configuration any workflows running on
+``foo`` will attempt to restart on ``pub`` whereas any workflows
 running on ``bar`` will stop immediately, making no attempt to restart.
 
 .. code-block:: cylc
@@ -67,20 +67,20 @@ running on ``bar`` will stop immediately, making no attempt to restart.
    Cylc will reject hosts with ambiguous names such as ``localhost`` or
    ``127.0.0.1`` for this configuration as
    :cylc:conf:`[scheduler][run hosts]condemned`
-   are evaluated on the suite host server.
+   are evaluated on the workflow host server.
 
-To prevent large numbers of suites attempting to restart simultaneously the
+To prevent large numbers of workflows attempting to restart simultaneously the
 :cylc:conf:`[scheduler]auto restart delay` setting defines a period
 of time in seconds.
-Suites will wait for a random period of time between zero and
+Workflows will wait for a random period of time between zero and
 :cylc:conf:`[scheduler]auto restart delay` seconds before
 attempting to stop and restart.
 
-Suites that are started up in no-detach mode cannot auto stop-restart on a
+Workflows that are started up in no-detach mode cannot auto stop-restart on a
 different host - as it will still end up attached to the condemned host.
-Therefore, a suite in no-detach mode running on a condemned host will abort
+Therefore, a workflow in no-detach mode running on a condemned host will abort
 with a non-zero return code. The parent process should manually handle the
-restart of the suite if desired.
+restart of the workflow if desired.
 
 .. cylc-scope::
 
@@ -92,10 +92,10 @@ import traceback
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import HostSelectException
-from cylc.flow.host_select import select_suite_host
+from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.main_loop import periodic
-from cylc.flow.suite_status import AutoRestartMode
+from cylc.flow.workflow_status import AutoRestartMode
 from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str
 )
@@ -103,12 +103,12 @@ from cylc.flow.wallclock import (
 
 @periodic
 async def auto_restart(scheduler, _):
-    """Automatically restart the suite if configured to do so."""
+    """Automatically restart the workflow if configured to do so."""
     current_glbl_cfg = glbl_cfg(cached=False)
     mode = _should_auto_restart(scheduler, current_glbl_cfg)
 
     if mode:
-        LOG.info('The Cylc suite host will soon become un-available.')
+        LOG.info('The Cylc workflow host will soon become un-available.')
         _set_auto_restart(
             scheduler,
             restart_delay=current_glbl_cfg.get(
@@ -119,7 +119,7 @@ async def auto_restart(scheduler, _):
 
 
 def _should_auto_restart(scheduler, current_glbl_cfg):
-    # check if suite host is condemned - if so auto restart
+    # check if workflow host is condemned - if so auto restart
     if scheduler.stop_mode is None:
         for host in current_glbl_cfg.get(
                 ['scheduler', 'run hosts', 'condemned']
@@ -129,10 +129,10 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
                 mode = AutoRestartMode.FORCE_STOP
                 host = host[:-1]
             else:
-                # normal mode (stop and restart the suite)
+                # normal mode (stop and restart the workflow)
                 mode = AutoRestartMode.RESTART_NORMAL
                 if scheduler.auto_restart_time is not None:
-                    # suite is already scheduled to stop-restart only
+                    # workflow is already scheduled to stop-restart only
                     # AutoRestartMode.FORCE_STOP can override this.
                     continue
 
@@ -144,20 +144,20 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
 
 
 def _can_auto_restart():
-    """Determine whether this suite can safely auto stop-restart."""
+    """Determine whether this workflow can safely auto stop-restart."""
     # Check whether there is currently an available host to restart on.
     try:
-        select_suite_host(cached=False)
+        select_workflow_host(cached=False)
     except HostSelectException:
         LOG.critical(
-            'Suite cannot automatically restart because:\n' +
-            'No alternative host to restart suite on.')
+            'Workflow cannot automatically restart because:\n' +
+            'No alternative host to restart workflow on.')
         return False
     except Exception:
         # Any unexpected error in host selection shouldn't be able to take
-        # down the suite.
+        # down the workflow.
         LOG.critical(
-            'Suite cannot automatically restart because:\n' +
+            'Workflow cannot automatically restart because:\n' +
             'Error in host selection:\n' +
             traceback.format_exc())
         return False
@@ -170,68 +170,68 @@ def _set_auto_restart(
         restart_delay=None,
         mode=AutoRestartMode.RESTART_NORMAL
 ):
-    """Configure the suite to automatically stop and restart.
+    """Configure the workflow to automatically stop and restart.
 
-    Restart handled by `suite_auto_restart`.
+    Restart handled by `workflow_auto_restart`.
 
     Args:
         scheduler (cylc.flow.scheduler.Scheduler):
-            Scheduler instance of the running suite.
+            Scheduler instance of the running workflow.
         restart_delay (cylc.flow.parsec.DurationFloat):
-            Suite will wait a random period between 0 and
+            Workflow will wait a random period between 0 and
             `restart_delay` seconds before attempting to stop/restart in
-            order to avoid multiple suites restarting simultaneously.
+            order to avoid multiple workflows restarting simultaneously.
         mode (str): Auto stop-restart mode.
 
     Return:
         bool: False if it is not possible to automatically stop/restart
-        the suite due to its configuration/runtime state.
+        the workflow due to its configuration/runtime state.
     """
-    # Check that the suite isn't already shutting down.
+    # Check that the workflow isn't already shutting down.
     if scheduler.stop_mode:
         return True
 
-    # Force mode, stop the suite now, don't restart it.
+    # Force mode, stop the workflow now, don't restart it.
     if mode == AutoRestartMode.FORCE_STOP:
         LOG.critical(
-            'This suite will be shutdown as the suite '
+            'This workflow will be shutdown as the workflow '
             'host is unable to continue running it.\n'
-            'When another suite host becomes available '
-            'the suite can be restarted by:\n'
-            f'    $ cylc play {scheduler.suite}')
+            'When another workflow host becomes available '
+            'the workflow can be restarted by:\n'
+            f'    $ cylc play {scheduler.workflow}')
         if scheduler.auto_restart_time:
             LOG.info('Scheduled automatic restart canceled')
         scheduler.auto_restart_time = time()
         scheduler.auto_restart_mode = mode
         return True
 
-    # Check suite isn't already scheduled to auto-stop.
+    # Check workflow isn't already scheduled to auto-stop.
     if scheduler.auto_restart_time is not None:
         return True
 
-    # Suite host is condemned and suite running in no detach mode.
-    # Raise an error to cause the suite to abort.
+    # Workflow host is condemned and workflow running in no detach mode.
+    # Raise an error to cause the workflow to abort.
     # This should raise an "abort" event and return a non-zero code to the
-    # caller still attached to the suite process.
+    # caller still attached to the workflow process.
     if scheduler.options.no_detach:
-        raise RuntimeError('Suite host condemned in no detach mode')
+        raise RuntimeError('Workflow host condemned in no detach mode')
 
-    # Check suite is able to be safely restarted.
+    # Check workflow is able to be safely restarted.
     if not _can_auto_restart():
         return False
 
-    LOG.info('Suite will automatically restart on a new host.')
+    LOG.info('Workflow will automatically restart on a new host.')
     if restart_delay is not None and restart_delay != 0:
         if restart_delay > 0:
             # Delay shutdown by a random interval to avoid many
-            # suites restarting simultaneously.
+            # workflows restarting simultaneously.
             shutdown_delay = int(random() * restart_delay)  # nosec
         else:
             # Un-documented feature, schedule exact restart interval for
             # testing purposes.
             shutdown_delay = abs(int(restart_delay))
         shutdown_time = time() + shutdown_delay
-        LOG.info('Suite will restart in %ss (at %s)', shutdown_delay,
+        LOG.info('Workflow will restart in %ss (at %s)', shutdown_delay,
                  time2str(shutdown_time))
         scheduler.auto_restart_time = shutdown_time
     else:

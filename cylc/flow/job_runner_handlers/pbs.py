@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -52,7 +52,7 @@ These are written to the top of the task job script like this:
 If :cylc:conf:`execution time limit` is specified, it is used to generate the
 ``-l walltime`` directive. Do not specify the ``-l walltime`` directive
 explicitly if :cylc:conf:`execution time limit` is specified.  Otherwise, the
-execution time limit known by the suite may be out of sync with what is
+execution time limit known by the workflow may be out of sync with what is
 submitted to the job runner.
 
 .. cylc-scope::
@@ -87,8 +87,9 @@ class PBSHandler:
         """Format the job directives for a job file."""
         job_file_path = job_conf["job_file_path"].replace(r"$HOME/", "")
         directives = job_conf["directives"].__class__()  # an ordereddict
-
-        directives["-N"] = job_conf["task_id"] + "." + job_conf["suite_name"]
+        directives["-N"] = (
+            job_conf["task_id"] + "." + job_conf["workflow_name"]
+        )
         job_name_len_max = job_conf['platform']["job name length maximum"]
         if job_name_len_max:
             directives["-N"] = directives["-N"][0:job_name_len_max]

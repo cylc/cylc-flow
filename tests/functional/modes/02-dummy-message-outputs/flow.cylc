@@ -1,5 +1,5 @@
 [meta]
-    title = A suite that should only succeed in dummy mode.
+    title = A workflow that should only succeed in dummy mode.
 [scheduler]
     [[events]]
         abort on stalled = True

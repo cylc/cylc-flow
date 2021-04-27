@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc diff" with identical suite definitions.
+# Test for "cylc diff" with identical workflow definitions.
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo => bar
@@ -29,8 +29,8 @@ init_suite "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 # shellcheck disable=SC2153
-SUITE_NAME1="${SUITE_NAME}"
-init_suite "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
+WORKFLOW_NAME1="${WORKFLOW_NAME}"
+init_workflow "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo => bar
@@ -39,16 +39,16 @@ init_suite "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 # shellcheck disable=SC2153
-SUITE_NAME2="${SUITE_NAME}"
+WORKFLOW_NAME2="${WORKFLOW_NAME}"
 
-run_ok "${TEST_NAME_BASE}" cylc diff "${SUITE_NAME1}" "${SUITE_NAME2}"
+run_ok "${TEST_NAME_BASE}" cylc diff "${WORKFLOW_NAME1}" "${WORKFLOW_NAME2}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-Parsing ${SUITE_NAME1} (${RUN_DIR}/${SUITE_NAME1}/flow.cylc)
-Parsing ${SUITE_NAME2} (${RUN_DIR}/${SUITE_NAME2}/flow.cylc)
-Suite definitions ${SUITE_NAME1} and ${SUITE_NAME2} are identical
+Parsing ${WORKFLOW_NAME1} (${RUN_DIR}/${WORKFLOW_NAME1}/flow.cylc)
+Parsing ${WORKFLOW_NAME2} (${RUN_DIR}/${WORKFLOW_NAME2}/flow.cylc)
+Workflow definitions ${WORKFLOW_NAME1} and ${WORKFLOW_NAME2} are identical
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 
-purge "${SUITE_NAME1}"
-purge "${SUITE_NAME2}"
+purge "${WORKFLOW_NAME1}"
+purge "${WORKFLOW_NAME2}"
 exit

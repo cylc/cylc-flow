@@ -20,7 +20,7 @@
         script = """
 cylc__job__wait_cylc_message_started
 sleep 5
-# Remove suite run directory and don't report back to suite
-rm -f "${CYLC_SUITE_RUN_DIR}"
+# Remove workflow run directory and don't report back to workflow
+rm -f "${CYLC_WORKFLOW_RUN_DIR}"
 exit 1
 """

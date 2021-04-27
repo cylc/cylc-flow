@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,10 @@ def test_remote_init_skip(
     mock_construct_ssh_cmd = Mock()
     monkeypatch.setattr('cylc.flow.task_remote_mgr.construct_ssh_cmd',
                         mock_construct_ssh_cmd)
-    for item in ('tarfile', 'get_remote_suite_run_dir', 'get_dirs_to_symlink'):
+    for item in (
+            'tarfile',
+            'get_remote_workflow_run_dir',
+            'get_dirs_to_symlink'):
         monkeypatch.setattr(f'cylc.flow.task_remote_mgr.{item}', MagicMock())
 
     TaskRemoteMgr.remote_init(mock_task_remote_mgr, platform, None, None)

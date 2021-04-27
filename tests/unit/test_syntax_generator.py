@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,13 +27,13 @@ loader = importlib.machinery.SourceFileLoader(
 syntax = loader.load_module()
 
 
-def test_get_keywords_from_suite_cfg():
+def test_get_keywords_from_workflow_cfg():
     """It gets a list of config items.
 
     Not a thorough check, but ensure type is sensible and some unlikely-to
     change items are present.
     """
-    result = syntax.get_keywords_from_suite_cfg()
+    result = syntax.get_keywords_from_workflow_cfg()
     assert isinstance(result, list)
     assert 'meta' in result
     assert 'scheduling' in result

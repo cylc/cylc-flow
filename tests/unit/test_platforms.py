@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -335,7 +335,7 @@ def test_platform_from_job_info_two_spices(
             {
                 'host': 'desktop01',
                 'owner': '',
-                'suite definition directory': '',
+                'workflow definition directory': '',
                 'retrieve job logs': '',
                 'retrieve job logs max size': '',
                 'retrieve job logs retry delays': 'None'

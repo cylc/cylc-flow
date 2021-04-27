@@ -1,6 +1,6 @@
 #!jinja2
 [meta]
-    title = a test suite
+    title = a test workflow
     description = the quick brown fox
     custom = custard
 [scheduler]
@@ -31,25 +31,25 @@ done
     [[end]]
         script = rm -f '../foo/foot'
     [[SHOW]]
-    [[show-suite]]
+    [[show-workflow]]
         inherit = SHOW
-        script = cylc show "$CYLC_SUITE_NAME" >>{{ TEST_OUTPUT_PATH }}-suite
+        script = cylc show "$CYLC_WORKFLOW_NAME" >>{{ TEST_OUTPUT_PATH }}-workflow
     [[show-task]]
         inherit = SHOW
-        script = cylc show "$CYLC_SUITE_NAME" foo >>{{ TEST_OUTPUT_PATH }}-task
+        script = cylc show "$CYLC_WORKFLOW_NAME" foo >>{{ TEST_OUTPUT_PATH }}-task
     [[show-taskinstance]]
         inherit = SHOW
-        script = cylc show "$CYLC_SUITE_NAME" foo.20141106T0900Z \
+        script = cylc show "$CYLC_WORKFLOW_NAME" foo.20141106T0900Z \
             >>{{ TEST_OUTPUT_PATH }}-taskinstance
-    [[show-suite-json]]
+    [[show-workflow-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_SUITE_NAME" \
-            >>{{ TEST_OUTPUT_PATH }}-json-suite
+        script = cylc show --json "$CYLC_WORKFLOW_NAME" \
+            >>{{ TEST_OUTPUT_PATH }}-json-workflow
     [[show-task-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_SUITE_NAME" foo \
+        script = cylc show --json "$CYLC_WORKFLOW_NAME" foo \
             >>{{ TEST_OUTPUT_PATH }}-json-task
     [[show-taskinstance-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_SUITE_NAME" foo.20141106T0900Z \
+        script = cylc show --json "$CYLC_WORKFLOW_NAME" foo.20141106T0900Z \
             >>{{ TEST_OUTPUT_PATH }}-json-taskinstance

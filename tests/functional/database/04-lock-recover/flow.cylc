@@ -17,5 +17,5 @@ TRUES:succeed-all => done
         inherit = TRUES
     [[done]]
         script = """
-cylc__job__poll_grep_suite_log -F 'db: recovered'
+cylc__job__poll_grep_workflow_log -F 'db: recovered'
 """

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ import sqlite3
 import sys
 
 from cylc.flow.pathutil import expand_path
-from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
@@ -30,8 +30,8 @@ from cylc.flow.task_state import (
 )
 
 
-class CylcSuiteDBChecker:
-    """Object for querying a suite database"""
+class CylcWorkflowDBChecker:
+    """Object for querying a workflow database"""
     STATE_ALIASES = {
         'finish': [
             TASK_STATUS_FAILED,
@@ -56,9 +56,9 @@ class CylcSuiteDBChecker:
         ],
     }
 
-    def __init__(self, rund, suite):
+    def __init__(self, rund, workflow):
         db_path = expand_path(
-            rund, suite, "log", CylcSuiteDAO.DB_FILE_BASE_NAME
+            rund, workflow, "log", CylcWorkflowDAO.DB_FILE_BASE_NAME
         )
         if not os.path.exists(db_path):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), db_path)
@@ -73,9 +73,9 @@ class CylcSuiteDBChecker:
                 sys.stdout.write((", ").join(row) + "\n")
 
     def get_remote_point_format(self):
-        """Query a remote suite database for a 'cycle point format' entry"""
+        """Query a remote workflow database for a 'cycle point format' entry"""
         for row in self.conn.execute(
-                r"SELECT value FROM " + CylcSuiteDAO.TABLE_SUITE_PARAMS +
+                r"SELECT value FROM " + CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS +
                 r" WHERE key==?",
                 ['cycle_point_format']):
             return row[0]
@@ -87,9 +87,9 @@ class CylcSuiteDBChecker:
         else:
             return [state]
 
-    def suite_state_query(
+    def workflow_state_query(
             self, task, cycle, status=None, message=None, mask=None):
-        """run a query on the suite database"""
+        """run a query on the workflow database"""
         stmt_args = []
         stmt_wheres = []
 
@@ -97,10 +97,10 @@ class CylcSuiteDBChecker:
             mask = "name, cycle, status"
 
         if message:
-            target_table = CylcSuiteDAO.TABLE_TASK_OUTPUTS
+            target_table = CylcWorkflowDAO.TABLE_TASK_OUTPUTS
             mask = "outputs"
         else:
-            target_table = CylcSuiteDAO.TABLE_TASK_STATES
+            target_table = CylcWorkflowDAO.TABLE_TASK_STATES
 
         stmt = "select {0} from {1}".format(mask, target_table)
         if task is not None:
@@ -128,11 +128,11 @@ class CylcSuiteDBChecker:
 
     def task_state_getter(self, task, cycle):
         """used to get the state of a particular task at a particular cycle"""
-        return self.suite_state_query(task, cycle, mask="status")[0]
+        return self.workflow_state_query(task, cycle, mask="status")[0]
 
     def task_state_met(self, task, cycle, status=None, message=None):
         """used to check if a task is in a particular state"""
-        res = self.suite_state_query(task, cycle, status, message)
+        res = self.workflow_state_query(task, cycle, status, message)
         if status:
             return bool(res)
         elif message:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,11 @@
 
 """cylc report-timings [OPTIONS] REG
 
-Display suite timing information.
+Display workflow timing information.
 
-Retrieve suite timing information for wait and run time performance analysis.
-Raw output and summary output (in text or HTML format) are available.  Output
-is sent to standard output, unless an output filename is supplied.
+Retrieve workflow timing information for wait and run time performance
+analysis. Raw output and summary output (in text or HTML format) are available.
+Output is sent to standard output, unless an output filename is supplied.
 
 Summary Output (the default):
   Data stratified by host and job runner that provides a statistical
@@ -44,7 +44,7 @@ Raw Output:
 
 Timings are shown only for succeeded tasks.
 
-For long-running and/or large suites (i.e. for suites with many task events),
+For long-running or large workflows (i.e. workflows with many task events),
 the database query to obtain the timing information may take some time.
 
 """
@@ -56,8 +56,8 @@ import sys
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.pathutil import get_suite_run_pub_db_name
-from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.pathutil import get_workflow_run_pub_db_name
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import cli_function
 
 
@@ -84,7 +84,7 @@ def smart_open(filename=None):
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[('REG', 'Suite name')]
+        argdoc=[('REG', 'Workflow name')]
     )
     parser.add_option(
         "-r", "--raw",
@@ -110,7 +110,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite):
+def main(parser, options, workflow):
     output_options = [
         options.show_raw, options.show_summary, options.html_summary
     ]
@@ -120,7 +120,7 @@ def main(parser, options, suite):
         # No output specified - choose summary by default
         options.show_summary = True
 
-    run_db = _get_dao(suite)
+    run_db = _get_dao(workflow)
     row_buf = format_rows(*run_db.select_task_times())
 
     with smart_open(options.output_filename) as output:
@@ -157,9 +157,10 @@ def format_rows(header, rows):
     return sio
 
 
-def _get_dao(suite):
-    """Return the DAO (public) for suite."""
-    return CylcSuiteDAO(get_suite_run_pub_db_name(suite), is_public=True)
+def _get_dao(workflow):
+    """Return the DAO (public) for workflow."""
+    return CylcWorkflowDAO(
+        get_workflow_run_pub_db_name(workflow), is_public=True)
 
 
 class TimingSummary:

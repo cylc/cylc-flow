@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,19 +23,19 @@ export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 set_test_number 6
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Ensure that a mix of syntax will fail.
 run_fail "${TEST_NAME_BASE}-validate-fail" \
     cylc validate "flow2.cylc"
 
-# Ensure that you can validate suite
+# Ensure that you can validate workflow
 run_ok "${TEST_NAME_BASE}-run" \
-    cylc validate "${SUITE_NAME}" \
+    cylc validate "${WORKFLOW_NAME}" \
         -s "CYLC_TEST_HOST='${CYLC_TEST_HOST}'" \
         -s CYLC_TEST_HOST_FQDN="'$(ssh "$CYLC_TEST_HOST" hostname -f)'"
 
-# Check that the cfgspec/suite.py has issued a warning about upgrades.
+# Check that the cfgspec/workflow.py has issued a warning about upgrades.
 grep_ok "\[t1\]\[remote\]host = ${CYLC_TEST_HOST}"\
     "${TEST_NAME_BASE}-run.stderr"
 
@@ -44,14 +44,14 @@ grep_ok "\[t1\]\[remote\]host = ${CYLC_TEST_HOST}"\
 grep_ok "\[T2\]\[remote\]host = ${CYLC_TEST_HOST}"\
     "${TEST_NAME_BASE}-run.stderr"
 
-# Run the suite
-suite_run_ok "${TEST_NAME_BASE}-run" \
+# Run the workflow
+workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --reference-test \
     -s CYLC_TEST_HOST="'$CYLC_TEST_HOST'" \
     -s CYLC_TEST_HOST_FQDN="'$(ssh "$CYLC_TEST_HOST" hostname -f)'" \
-    "${SUITE_NAME}"
+    "${WORKFLOW_NAME}"
 
-grep "host=" "${SUITE_RUN_DIR}/log/suite/log" > hosts.log
+grep "host=" "${WORKFLOW_RUN_DIR}/log/workflow/log" > hosts.log
 
 grep_ok "\[t2\.2.*\].*host=${CYLC_TEST_HOST}" hosts.log
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,9 +22,9 @@ set_test_number 1
 
 # write a flow in the cylc-run dir
 # (rather than using cylc-install to transfer it)
-SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
-mkdir -p "${RUN_DIR}/${SUITE_NAME}"
-cat > "${RUN_DIR}/${SUITE_NAME}/flow.cylc" <<__HERE__
+WORKFLOW_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
+mkdir -p "${RUN_DIR}/${WORKFLOW_NAME}"
+cat > "${RUN_DIR}/${WORKFLOW_NAME}/flow.cylc" <<__HERE__
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -33,7 +33,7 @@ cat > "${RUN_DIR}/${SUITE_NAME}/flow.cylc" <<__HERE__
 __HERE__
 
 # ensure it can be run with no further meddling
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
 
 purge
 exit

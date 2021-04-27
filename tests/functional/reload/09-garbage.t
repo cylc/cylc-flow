@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,15 +20,15 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" 'garbage'
+install_workflow "${TEST_NAME_BASE}" 'garbage'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-grep_ok 'Command failed: reload_suite' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok 'Command failed: reload_workflow' "${WORKFLOW_RUN_DIR}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

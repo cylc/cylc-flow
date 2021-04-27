@@ -62,7 +62,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -138,7 +138,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -214,7 +214,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -292,7 +292,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -369,7 +369,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -446,7 +446,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -523,7 +523,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -600,7 +600,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -677,7 +677,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -754,7 +754,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -831,7 +831,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -908,7 +908,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 
@@ -985,7 +985,7 @@
     [[[mail]]]
         from = 
         to = 
-    [[[suite state polling]]]
+    [[[workflow state polling]]]
         user = 
         host = 
         interval = 

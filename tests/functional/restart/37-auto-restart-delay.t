@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -41,7 +41,7 @@ BASE_GLOBAL_CONFIG="
 "
 #-------------------------------------------------------------------------------
 # Test the delayed restart feature
-init_suite "${TEST_NAME_BASE}" <<< '
+init_workflow "${TEST_NAME_BASE}" <<< '
 [scheduler]
     UTC mode = True
 [scheduling]
@@ -61,9 +61,9 @@ ${BASE_GLOBAL_CONFIG}
         available = localhost
 "
 
-# Run suite.
-cylc play "${SUITE_NAME}" --pause
-poll_suite_running
+# Run workflow.
+cylc play "${WORKFLOW_NAME}" --pause
+poll_workflow_running
 
 # Condemn host - trigger stop-restart.
 create_test_global_config '' "
@@ -76,15 +76,15 @@ ${BASE_GLOBAL_CONFIG}
 "
 
 # Check stop-restart working.
-FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
+FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME_BASE}-auto-restart" "${FILE}" 60 1 \
-    'The Cylc suite host will soon become un-available' \
-    'Suite will restart in' \
+    'The Cylc workflow host will soon become un-available' \
+    'Workflow will restart in' \
     "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
-    "Suite now running on \"${CYLC_TEST_HOST}\""
+    "Workflow now running on \"${CYLC_TEST_HOST}\""
 
 # Extract scheduled restart time from the log.
-TIMES=$(grep --color=never 'Suite will restart in' "${FILE}" | \
+TIMES=$(grep --color=never 'Workflow will restart in' "${FILE}" | \
     sed 's/.*will restart in \(.*\)s (at \(.*\))/\1|\2/')
 RESTART_DELAY=$(cut -d '|' -f 1 <<< "${TIMES}")
 RESTART_SCHEDULED_TIME=$(cut -d '|' -f 2 <<< "${TIMES}")
@@ -110,6 +110,6 @@ else
     fail "${TEST_NAME}"
 fi
 
-cylc stop "${SUITE_NAME}" --now --now 2>/dev/null
+cylc stop "${WORKFLOW_NAME}" --now --now 2>/dev/null
 
 purge

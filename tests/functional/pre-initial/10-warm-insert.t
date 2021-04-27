@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,13 +22,13 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" warm-insert
+install_workflow "${TEST_NAME_BASE}" warm-insert
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
-    "${SUITE_NAME}" --startcp=20100101T1800Z
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
+    "${WORKFLOW_NAME}" --startcp=20100101T1800Z
 #-------------------------------------------------------------------------------
 purge

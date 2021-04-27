@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Server for suite runtime API."""
+"""Server for workflow runtime API."""
 
 import getpass  # noqa: F401
 from queue import Queue
@@ -66,8 +66,8 @@ def filter_none(dictionary):
     }
 
 
-class SuiteRuntimeServer(ZMQSocketBase):
-    """Suite runtime service API facade exposed via zmq.
+class WorkflowRuntimeServer(ZMQSocketBase):
+    """Workflow runtime service API facade exposed via zmq.
 
     This class contains the Cylc endpoints.
 
@@ -114,7 +114,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
     """
 
     RECV_TIMEOUT = 1
-    """Max time the SuiteRuntimeServer will wait for an incoming
+    """Max time the WorkflowRuntimeServer will wait for an incoming
     message in seconds.
 
     We use a timeout here so as to give the _listener a chance to respond to
@@ -130,7 +130,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
         super().__init__(zmq.REP, bind=True, context=context,
                          barrier=barrier, threaded=threaded, daemon=daemon)
         self.schd = schd
-        self.suite = schd.suite
+        self.workflow = schd.workflow
         self.public_priv = None  # update in get_public_priv()
         self.endpoints = None
         self.queue = None
@@ -341,7 +341,7 @@ class SuiteRuntimeServer(ZMQSocketBase):
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
-        """Return a textural representation of the suite graph.
+        """Return a textural representation of the workflow graph.
 
         .. warning::
 
@@ -357,10 +357,10 @@ class SuiteRuntimeServer(ZMQSocketBase):
         Args:
             start_point_string (str):
                 Cycle point as a string to define the window of view of the
-                suite graph.
+                workflow graph.
             stop_point_string (str):
                 Cycle point as a string to define the window of view of the
-                suite graph.
+                workflow graph.
             group_nodes (list, optional):
                 List of (graph nodes) family names to group (collapse according
                 to inheritance) in the output graph.

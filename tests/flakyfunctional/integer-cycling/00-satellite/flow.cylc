@@ -1,6 +1,6 @@
 #!Jinja2
 [meta]
-    title = Test suite based on the satellite data processing example
+    title = Test workflow based on the satellite data processing example
     description = """
         Each successive integer cycle retrieves and processes the next
         arbitrarily timed and arbitrarily labelled dataset, in parallel
@@ -9,13 +9,13 @@
 
 # you can monitor output processing with:
 # $ watch -n 1 \
-#    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/<SUITE>/work"
+#    "find ~/cylc-run/<WORKFLOW>/share; find ~/cylc-run/<WORKFLOW>/work"
 
 {% set N_DATASETS = 3 %}
 
 # define shared directories (could use runtime namespaces for this)
-{% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}
-{% set PRODUCT_DIR = "$CYLC_SUITE_SHARE_DIR/products" %}
+{% set DATA_IN_DIR = "$CYLC_WORKFLOW_SHARE_DIR/incoming" %}
+{% set PRODUCT_DIR = "$CYLC_WORKFLOW_SHARE_DIR/products" %}
 
 [scheduling]
     cycling mode = integer
@@ -34,9 +34,9 @@
 
 [runtime]
     [[prep]]
-        script = rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
+        script = rm -rf $CYLC_WORKFLOW_SHARE_DIR $CYLC_WORKFLOW_WORK_DIR
         [[[meta]]]
-            title = clean the suite output directories
+            title = clean the workflow output directories
 
     [[satsim]]
         pre-script = mkdir -p {{DATA_IN_DIR}}
@@ -105,11 +105,11 @@
             title = generate products from .proc2 processed dataset
 
     [[collate]]
-        # Note you might want to use "cylc suite-state" to check that
+        # Note you might want to use "cylc workflow-state" to check that
         # _all_ product tasks have finished before collating results.
         script = ls {{PRODUCT_DIR}}
         [[[meta]]]
-            title = collate all products from the suite run
+            title = collate all products from the workflow run
 
 [visualization]
     default node attributes = "style=filled", "shape=box"

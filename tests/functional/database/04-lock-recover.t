@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Suite database content, "task_jobs" table after a task retries.
+# Workflow database content, "task_jobs" table after a task retries.
 . "$(dirname "$0")/test_header"
 set_test_number 4
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
 # Ensure that DB statement and its args are printed to STDERR
 grep -A 3 -F 'WARNING - cannot execute database statement:' \
@@ -33,7 +33,7 @@ sed -i "s/, '[^T']*T[^Z']*Z',/, '?',/" "${TEST_NAME_BASE}-run.stderr.grep"
 grep_ok "WARNING - cannot execute database statement:" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 
-DB_FILE="$RUN_DIR/${SUITE_NAME}/log/db"
+DB_FILE="$RUN_DIR/${WORKFLOW_NAME}/log/db"
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" \

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 """cylc show [OPTIONS] ARGS
 
-Display suite and task information.
+Display workflow and task information.
 
 Query a running workflow for:
   $ cylc show REG  # workflow metadata
@@ -141,7 +141,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ('REG', 'Suite name'),
+            ('REG', 'Workflow name'),
             ('[TASK_NAME or TASK_GLOB ...]', 'Task names or match patterns')])
 
     parser.add_option('--list-prereqs', action="store_true", default=False,
@@ -154,18 +154,18 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite, *task_args):
+def main(_, options, workflow, *task_args):
     """Implement "cylc show" CLI."""
-    pclient = get_client(suite, timeout=options.comms_timeout)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
     json_filter = {}
 
     if not task_args:
         query = WORKFLOW_META_QUERY
         query_kwargs = {
             'request_string': query,
-            'variables': {'wFlows': [suite]}
+            'variables': {'wFlows': [workflow]}
         }
-        # Print suite info.
+        # Print workflow info.
         results = pclient('graphql', query_kwargs)
         for workflow in results['workflows']:
             flat_data = flatten_data(workflow)
@@ -183,9 +183,9 @@ def main(_, options, suite, *task_args):
         tasks_query = TASK_META_QUERY
         tasks_kwargs = {
             'request_string': tasks_query,
-            'variables': {'wFlows': [suite], 'taskIds': task_names}
+            'variables': {'wFlows': [workflow], 'taskIds': task_names}
         }
-        # Print suite info.
+        # Print workflow info.
         results = pclient('graphql', tasks_kwargs)
         multi = len(results['tasks']) > 1
         for task in results['tasks']:
@@ -204,7 +204,7 @@ def main(_, options, suite, *task_args):
         tp_kwargs = {
             'request_string': tp_query,
             'variables': {
-                'wFlows': [suite],
+                'wFlows': [workflow],
                 'taskIds': [
                     f'{c}{ID_DELIM}{n}'
                     for n, c in [

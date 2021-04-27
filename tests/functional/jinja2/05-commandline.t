@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,17 +20,17 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" commandline-set
+install_workflow "${TEST_NAME_BASE}" commandline-set
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-validate1
-run_ok "${TEST_NAME}" cylc validate --set="TASKNAME='foo'" --set="STEP='2'" "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate --set="TASKNAME='foo'" --set="STEP='2'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-validate2
 run_ok "${TEST_NAME}" cylc validate \
-    --set-file="${TEST_DIR}/${SUITE_NAME}/vars.txt" "${SUITE_NAME}"
+    --set-file="${TEST_DIR}/${WORKFLOW_NAME}/vars.txt" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --no-detach --reference-test \
-    --set-file="${TEST_DIR}/${SUITE_NAME}/vars.txt" "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --no-detach --reference-test \
+    --set-file="${TEST_DIR}/${WORKFLOW_NAME}/vars.txt" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

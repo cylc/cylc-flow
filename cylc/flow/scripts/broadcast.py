@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 """cylc broadcast [OPTIONS] REG
 
-Override [runtime] configuration items in a running suite.
+Override [runtime] configuration items in a running workflow.
 
 Uses for broadcast include making temporary changes to task behaviour,
 and task-to-downstream-task communication via environment variables.
@@ -31,8 +31,8 @@ by normal [runtime] inheritance. In other words, it follows this order:
 
 all:root -> all:FAM -> all:task -> tag:root -> tag:FAM -> tag:task
 
-Broadcasts persist, even across suite restarts, until they expire when
-their target cycle point is older than the oldest current in the suite,
+Broadcasts persist, even across workflow restarts, until they expire when
+their target cycle point is older than the oldest current in the workflow,
 or until they are explicitly cancelled with this command.  All-cycle
 broadcasts do not expire.
 
@@ -73,7 +73,7 @@ from standard input.
 
 Broadcast cannot change [runtime] inheritance.
 
-See also 'cylc reload' - reload a modified suite definition at run time."""
+See also 'cylc reload' - reload a modified workflow definition at run time."""
 
 import os.path
 import sys
@@ -89,7 +89,7 @@ from cylc.flow.print_tree import print_tree
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.broadcast_report import (
     get_broadcast_bad_options_report, get_broadcast_change_report)
-from cylc.flow.cfgspec.suite import SPEC, upg
+from cylc.flow.cfgspec.workflow import SPEC, upg
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
@@ -293,15 +293,15 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, suite):
+def main(_, options, workflow):
     """Implement cylc broadcast."""
-    suite = os.path.normpath(suite)
-    pclient = get_client(suite, timeout=options.comms_timeout)
+    workflow = os.path.normpath(workflow)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
             'bMode': 'Set',
             'cPoints': options.point_strings,
             'nSpaces': options.namespaces,
@@ -313,7 +313,7 @@ def main(_, options, suite):
     query_kwargs = {
         'request_string': QUERY,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
             'nIds': []
         }
 

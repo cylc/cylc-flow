@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ BASE_GLOBAL_CONFIG='
         timeout = PT2M
 '
 
-init_suite "${TEST_NAME_BASE}" <<< '
+init_workflow "${TEST_NAME_BASE}" <<< '
 [scheduler]
     [[events]]
 [scheduling]
@@ -55,15 +55,15 @@ ${BASE_GLOBAL_CONFIG}
 
 set_test_number 8
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-# run suite
-cylc play "${SUITE_NAME}" --abort-if-any-task-fails
-poll_suite_running
+# run workflow
+cylc play "${WORKFLOW_NAME}" --abort-if-any-task-fails
+poll_workflow_running
 sleep 1
-FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
+FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 
-# condemn the host, the suite will schedule restart in PT60S
+# condemn the host, the workflow will schedule restart in PT60S
 create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 [scheduler]
@@ -73,8 +73,8 @@ ${BASE_GLOBAL_CONFIG}
         condemned = ${CYLC_TEST_HOST_1}
 "
 log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
-    'The Cylc suite host will soon become un-available' \
-    'Suite will restart in 60s'
+    'The Cylc workflow host will soon become un-available' \
+    'Workflow will restart in 60s'
 
 # condemn the host in "Force Mode", this should cancel the scheduled restart
 create_test_global_config '' "
@@ -84,13 +84,13 @@ ${BASE_GLOBAL_CONFIG}
         condemned = ${CYLC_TEST_HOST_1}!
 "
 log_scan "${TEST_NAME_BASE}-stop" "${FILE}" 40 1 \
-    'This suite will be shutdown as the suite host is' \
-    'When another suite host becomes available the suite can' \
+    'This workflow will be shutdown as the workflow host is' \
+    'When another workflow host becomes available the workflow can' \
     'Scheduled automatic restart canceled' \
-    'Suite shutting down - REQUEST(NOW)' \
+    'Workflow shutting down - REQUEST(NOW)' \
     'DONE'
 
-cylc stop --now --now--max-polls=20 --interval=2 "${SUITE_NAME}" 2>'/dev/null'
+cylc stop --now --now--max-polls=20 --interval=2 "${WORKFLOW_NAME}" 2>'/dev/null'
 purge
 
 exit

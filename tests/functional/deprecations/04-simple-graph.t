@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
-init_suite "${TEST_NAME_BASE}" << __FLOW__
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -29,12 +29,12 @@ init_suite "${TEST_NAME_BASE}" << __FLOW__
 __FLOW__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "$TEST_NAME" cylc validate -v "$SUITE_NAME"
+run_ok "$TEST_NAME" cylc validate -v "$WORKFLOW_NAME"
 
 TEST_NAME="${TEST_NAME_BASE}-cmp"
-cylc validate "$SUITE_NAME" 2> 'val.out'
+cylc validate "$WORKFLOW_NAME" 2> 'val.out'
 cmp_ok val.out <<__END__
-WARNING - deprecated graph items were automatically upgraded in "suite definition":
+WARNING - deprecated graph items were automatically upgraded in "workflow definition":
 	 * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
 	       graph
 __END__

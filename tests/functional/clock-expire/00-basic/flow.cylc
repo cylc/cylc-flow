@@ -1,5 +1,5 @@
 [meta]
-    title = task expire example suite
+    title = task expire example workflow
     description = """
 Skip a daily post-processing workflow if the 'copy' task has expired."""
 
@@ -29,7 +29,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
     [[copy]]
         script = """
 # Abort if I run in either of the first two cycle points.
-test "${CYLC_TASK_CYCLE_POINT}" != "${CYLC_SUITE_INITIAL_CYCLE_POINT}"
-P2D="$(cylc cyclepoint --offset='P1D' "${CYLC_SUITE_INITIAL_CYCLE_POINT}")"
+test "${CYLC_TASK_CYCLE_POINT}" != "${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}"
+P2D="$(cylc cyclepoint --offset='P1D' "${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}")"
 test "${CYLC_TASK_CYCLE_POINT}" != "${P2D}"
 """

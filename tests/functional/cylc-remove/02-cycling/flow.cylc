@@ -15,13 +15,13 @@
 [runtime]
     [[remover]]
         script = """
-cylc__job__poll_grep_suite_log '\[bar\.2020\].* (received)failed'
-cylc__job__poll_grep_suite_log '\[baz\.2021\].* (received)failed'
+cylc__job__poll_grep_workflow_log '\[bar\.2020\].* (received)failed'
+cylc__job__poll_grep_workflow_log '\[baz\.2021\].* (received)failed'
 # Remove the two unhandled failed tasks.
-cylc remove $CYLC_SUITE_NAME */ba*:failed
+cylc remove $CYLC_WORKFLOW_NAME */ba*:failed
 # Remove the two unsatisfied waiting tasks.
-cylc remove $CYLC_SUITE_NAME */waz
-# Exit so suite can shut down.
+cylc remove $CYLC_WORKFLOW_NAME */waz
+# Exit so workflow can shut down.
 """
     [[foo, waz]]
         script = true

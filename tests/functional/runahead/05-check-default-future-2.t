@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,20 +20,20 @@
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" default-future
+install_workflow "${TEST_NAME_BASE}" default-future
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate -v \
     --set="FUTURE_TRIGGER_START_POINT='T02'" \
-    "${SUITE_NAME}"
+    "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_fail "${TEST_NAME}" cylc play --debug --no-detach \
     --set="FUTURE_TRIGGER_START_POINT='T02'" \
-    "${SUITE_NAME}"
+    "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-max-cycle
-DB="$RUN_DIR/${SUITE_NAME}/log/db"
+DB="$RUN_DIR/${WORKFLOW_NAME}/log/db"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 "select max(cycle) from task_states where name=='foo' and status=='failed'"
 cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1000Z"
@@ -41,7 +41,7 @@ cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1000Z"
 # this by PT6H due to fact that wibble spawned.
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-aborted
-LOG="$RUN_DIR/${SUITE_NAME}/log/suite/log"
-grep_ok 'Suite shutting down - Abort on suite inactivity is set' "${LOG}"
+LOG="$RUN_DIR/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok 'Workflow shutting down - Abort on workflow inactivity is set' "${LOG}"
 #-------------------------------------------------------------------------------
 purge

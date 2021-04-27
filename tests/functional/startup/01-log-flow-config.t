@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "log/flow-config/*-<mode>.cylc" files that are generated on suite start up.
+# Test "log/flow-config/*-<mode>.cylc" files that are generated on workflow start up.
 . "$(dirname "$0")/test_header"
 set_test_number 9
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!Jinja2
 [meta]
-    title = a suite that logs run, reload, and restart configs
+    title = a workflow that logs run, reload, and restart configs
     description = the weather is {{WEATHER | default("bad")}}
 [scheduler]
     [[events]]
@@ -32,21 +32,21 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = reloader => whatever
 [runtime]
     [[reloader]]
-        script = cylc reload "${CYLC_SUITE_NAME}"
+        script = cylc reload "${CYLC_WORKFLOW_NAME}"
     [[whatever]]
         script = true
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val-1" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-val-1" cylc validate "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}-val-2" \
-    cylc validate --set 'WEATHER="good"' "${SUITE_NAME}"
+    cylc validate --set 'WEATHER="good"' "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --set 'WEATHER="good"' --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --set 'WEATHER="good"' --no-detach "${WORKFLOW_NAME}"
 
 # Check for 3 generated *.cylc files
-LOGD="${RUN_DIR}/${SUITE_NAME}/log/flow-config"
+LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
@@ -55,7 +55,7 @@ restart.cylc
 run.cylc
 __OUT__
 
-LOGD="${RUN_DIR}/${SUITE_NAME}/log/flow-config"
+LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
 RUN_CONFIG="$(ls "${LOGD}/"*-run.cylc)"
 REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
 RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"

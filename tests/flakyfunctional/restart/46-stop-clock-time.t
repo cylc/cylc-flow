@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,20 +20,20 @@
 . "$(dirname "$0")/test_header"
 
 dumpdbtables() {
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
-        'SELECT * FROM suite_params WHERE key=="stop_clock_time";' \
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
+        'SELECT * FROM workflow_params WHERE key=="stop_clock_time";' \
         >'stopclocktime.out'
 }
 
 set_test_number 6
 
 # Event should look like this:
-# Start suite
+# Start workflow
 # At t1.1, set stop clock time to 60 seconds ahead
-# At t2.1, stop suite
+# At t2.1, stop workflow
 # Restart
-# Suite runs to stop clock time, reset stop clock time
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+# Workflow runs to stop clock time, reset stop clock time
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [task parameters]
     i = 1..10
 [scheduler]
@@ -50,25 +50,25 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t<i=1>]]
         script = """
 CLOCKTIME="$(($(date +%s) + 60))"
-echo "${CLOCKTIME}" >"${CYLC_SUITE_RUN_DIR}/clocktime"
-cylc stop -w "$(date --date="@${CLOCKTIME}" +%FT%T%:z)" "${CYLC_SUITE_NAME}"
+echo "${CLOCKTIME}" >"${CYLC_WORKFLOW_RUN_DIR}/clocktime"
+cylc stop -w "$(date --date="@${CLOCKTIME}" +%FT%T%:z)" "${CYLC_WORKFLOW_NAME}"
 """
     [[t<i=2>]]
-        script = cylc stop "${CYLC_SUITE_NAME}"
+        script = cylc stop "${CYLC_WORKFLOW_NAME}"
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --no-detach
-read -r CLOCKTIME <"${SUITE_RUN_DIR}/clocktime"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
+read -r CLOCKTIME <"${WORKFLOW_RUN_DIR}/clocktime"
 dumpdbtables
 cmp_ok 'stopclocktime.out' <<<"stop_clock_time|${CLOCKTIME}"
 
-suite_run_ok "${TEST_NAME_BASE}-restart-1" \
-    cylc play "${SUITE_NAME}" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-restart-1" \
+    cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopclocktime.out' <'/dev/null'
-cut -d ' ' -f 4- "${SUITE_RUN_DIR}/log/suite/log" >'log.edited'
+cut -d ' ' -f 4- "${WORKFLOW_RUN_DIR}/log/workflow/log" >'log.edited'
 if [[ "$(date +%:z)" == '+00:00' ]]; then
     CLOCKTIMESTR="$(date --date="@${CLOCKTIME}" +%FT%TZ)"
 else
@@ -80,7 +80,7 @@ Wall clock stop time reached: ${CLOCKTIMESTR}
 __LOG__
 
 for i in {01..10}; do
-    ST_FILE="${SUITE_RUN_DIR}/log/job/1/t_i${i}/01/job.status"
+    ST_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t_i${i}/01/job.status"
     if [[ -e "${ST_FILE}" ]]; then
         JOB_ID="$(awk -F= '$1 == "CYLC_JOB_ID" {print $2}' "${ST_FILE}")"
         poll_pid_done "${JOB_ID}"

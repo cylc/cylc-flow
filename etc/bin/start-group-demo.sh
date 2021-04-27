@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -87,11 +87,11 @@ for GROUP in nwp tst opr; do
       SKIP=$(( SKIP - 1))
       break
     fi
-    SUITE=${GROUP}-$N
-    mkdir -p $DEST/$SUITE
-    cp -r flow.cylc $DEST/$SUITE
-    cylc reg $DEST/$SUITE $DEST/$SUITE
-    cylc play $DEST/$SUITE > /dev/null &
+    WORKFLOW=${GROUP}-$N
+    mkdir -p $DEST/$WORKFLOW
+    cp -r flow.cylc $DEST/$WORKFLOW
+    cylc reg $DEST/$WORKFLOW $DEST/$WORKFLOW
+    cylc play $DEST/$WORKFLOW > /dev/null &
   done
 done
 

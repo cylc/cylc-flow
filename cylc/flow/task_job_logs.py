@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 """Define task job log filenames and option names."""
 
 import os
-from cylc.flow.pathutil import get_suite_run_job_dir
+from cylc.flow.pathutil import get_workflow_run_job_dir
 
 # Task job log filenames.
 JOB_LOG_JOB = "job"
@@ -47,21 +47,22 @@ def get_task_job_id(point, name, submit_num=None):
     return os.path.join(str(point), name, submit_num)
 
 
-def get_task_job_log(suite, point, name, submit_num=None, suffix=None):
+def get_task_job_log(workflow, point, name, submit_num=None, suffix=None):
     """Return the full job log path."""
     args = [
-        get_suite_run_job_dir(suite),
+        get_workflow_run_job_dir(workflow),
         get_task_job_id(point, name, submit_num)]
     if suffix is not None:
         args.append(suffix)
     return os.path.join(*args)
 
 
-def get_task_job_activity_log(suite, point, name, submit_num=None):
+def get_task_job_activity_log(workflow, point, name, submit_num=None):
     """Shorthand for get_task_job_log(..., suffix="job-activity.log")."""
-    return get_task_job_log(suite, point, name, submit_num, JOB_LOG_ACTIVITY)
+    return get_task_job_log(
+        workflow, point, name, submit_num, JOB_LOG_ACTIVITY)
 
 
-def get_task_job_job_log(suite, point, name, submit_num=None):
+def get_task_job_job_log(workflow, point, name, submit_num=None):
     """Shorthand for get_task_job_log(..., suffix="job")."""
-    return get_task_job_log(suite, point, name, submit_num, JOB_LOG_JOB)
+    return get_task_job_log(workflow, point, name, submit_num, JOB_LOG_JOB)

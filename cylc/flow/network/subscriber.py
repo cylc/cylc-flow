@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Subscriber for published suite output."""
+"""Subscriber for published workflow output."""
 
 import asyncio
 import json
@@ -61,7 +61,7 @@ class WorkflowSubscriber(ZMQSocketBase):
 
     def __init__(
             self,
-            suite: str,
+            workflow: str,
             host: str = None,
             port: Union[int, str] = None,
             context: object = None,
@@ -69,11 +69,11 @@ class WorkflowSubscriber(ZMQSocketBase):
             topics: Iterable[bytes] = None
     ):
         super().__init__(zmq.SUB, context=context)
-        self.suite = suite
+        self.workflow = workflow
         if port:
             port = int(port)
         if not (host and port):
-            host, _, port = get_location(suite)
+            host, _, port = get_location(workflow)
         if topics is None:
             topics = [b'']
         self.topics: Iterable[bytes] = topics

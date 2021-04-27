@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ INTERNAL = True
 def get_option_parser():
     parser = COP(
         __doc__, argdoc=[("INSTALL_TARGET", "target platform to be tidied"),
-                         ("RUND", "The run directory of the suite")]
+                         ("RUND", "The run directory of the workflow")]
     )
 
     return parser

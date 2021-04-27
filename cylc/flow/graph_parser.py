@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -52,7 +52,7 @@ class GraphParser:
 
     This is currently intended to process a single multi-line graph string
     (i.e. the content of a single graph section). But it could be extended to
-    store dependencies for the whole suite (call parse_graph multiple times
+    store dependencies for the whole workflow (call parse_graph multiple times
     and key results by graph section).
 
     The general form of a dependency is "EXPRESSION => NODE", where:
@@ -66,8 +66,8 @@ class GraphParser:
         * A parameterized qualified node name looks like this:
             NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
         * The default trigger type is ':succeed'.
-        * A remote suite qualified node name looks like this:
-            NODE(<REMOTE-SUITE-TRIGGER>)(:TRIGGER-TYPE)
+        * A remote workflow qualified node name looks like this:
+            NODE(<REMOTE-WORKFLOW-TRIGGER>)(:TRIGGER-TYPE)
         * Trigger qualifiers are ignored on the right to allow chaining:
                "foo => bar => baz & qux"
           Think of this as describing the graph structure first, then
@@ -138,8 +138,8 @@ class GraphParser:
     # Detect presence of expansion parameters in a graph line.
     REC_PARAMS = re.compile(_RE_PARAMS)
 
-    # Detect and extract suite state polling task info.
-    REC_SUITE_STATE = re.compile(
+    # Detect and extract workflow state polling task info.
+    REC_WORKFLOW_STATE = re.compile(
         r'(' + TaskID.NAME_RE + r')(<([\w.\-/]+)::(' +
         TaskID.NAME_RE + r')(' + _RE_TRIG + r')?>)')
 
@@ -172,7 +172,7 @@ class GraphParser:
         self.parameters = parameters
         self.triggers = {}
         self.original = {}
-        self.suite_state_polling_tasks = {}
+        self.workflow_state_polling_tasks = {}
 
     def parse_graph(self, graph_string):
         """Parse the graph string for a single graph section.
@@ -234,18 +234,18 @@ class GraphParser:
                 continue
             full_line = ''.join(part_lines)
 
-            # Record inter-suite dependence and remove the marker notation.
-            # ("foo<SUITE::TASK:fail> => bar" becomes:fail "foo => bar").
+            # Record inter-workflow dependence and remove the marker notation.
+            # ("foo<WORKFLOW::TASK:fail> => bar" becomes:fail "foo => bar").
             repl = Replacement('\\1')
-            full_line = self.__class__.REC_SUITE_STATE.sub(repl, full_line)
+            full_line = self.__class__.REC_WORKFLOW_STATE.sub(repl, full_line)
             for item in repl.match_groups:
-                l_task, r_all, r_suite, r_task, r_status = item
+                l_task, r_all, r_workflow, r_task, r_status = item
                 if r_status:
                     r_status = r_status[1:]
                 else:
                     r_status = self.__class__.TRIG_SUCCEED[1:]
-                self.suite_state_polling_tasks[l_task] = (
-                    r_suite, r_task, r_status, r_all)
+                self.workflow_state_polling_tasks[l_task] = (
+                    r_workflow, r_task, r_status, r_all)
             full_lines.append(full_line)
             part_lines = []
 
@@ -344,7 +344,7 @@ class GraphParser:
             " {NAME(<PARAMS>) can also be: "
             "<PARAMS>NAME or NAME<PARAMS>NAME_CONTINUED}\n"
             " or\n"
-            " NAME(<REMOTE-SUITE-TRIGGER>)(:TRIGGER-TYPE)")
+            " NAME(<REMOTE-WORKFLOW-TRIGGER>)(:TRIGGER-TYPE)")
 
     def _proc_dep_pair(self, left, right):
         """Process a single dependency pair 'left => right'.

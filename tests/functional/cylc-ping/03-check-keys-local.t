@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 # Checks ZMQ keys are created and deleted on shutdown - local.
 . "$(dirname "$0")/test_header"
 set_test_number 10
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     cycle point format = %Y
     allow implicit tasks = True
@@ -28,18 +28,18 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = t1
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-SRVD="${SUITE_RUN_DIR}/.service"
+SRVD="${WORKFLOW_RUN_DIR}/.service"
 
-suite_run_ok "${TEST_NAME_BASE}-run-pause" cylc play --pause "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run-pause" cylc play --pause "${WORKFLOW_NAME}"
 
 exists_ok "${SRVD}/client.key_secret"
 exists_ok "${SRVD}/server.key_secret"
 exists_ok "${SRVD}/server.key"
 exists_ok "${SRVD}/client_public_keys/client_localhost.key"
 
-cylc stop --max-polls=60 --interval=1 "${SUITE_NAME}"
+cylc stop --max-polls=60 --interval=1 "${WORKFLOW_NAME}"
 exists_fail "${SRVD}/client.key_secret"
 exists_fail "${SRVD}/server.key_secret"
 exists_fail "${SRVD}/server.key"

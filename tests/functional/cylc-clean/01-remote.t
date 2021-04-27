@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -40,7 +40,7 @@ create_test_global_config "" "
         share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
         work = ${TEST_DIR}/${SYM_NAME}/other
 "
-init_suite "${TEST_NAME_BASE}" << __FLOW__
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -53,9 +53,9 @@ __FLOW__
 
 FUNCTIONAL_DIR="${TEST_SOURCE_DIR_BASE%/*}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "$SUITE_NAME"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "$WORKFLOW_NAME"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "$SUITE_NAME" --no-detach
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "$WORKFLOW_NAME" --no-detach
 
 # Create a fake sibling workflow dir:
 $SSH_CMD mkdir "${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}/leave-me-alone"
@@ -63,8 +63,8 @@ $SSH_CMD mkdir "${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${CYLC_TEST_REG_BASE}/lea
 # -----------------------------------------------------------------------------
 
 TEST_NAME="run-dir-readlink-pre-clean.remote"
-$SSH_CMD readlink "\$HOME/cylc-run/${SUITE_NAME}" > "${TEST_NAME}.stdout"
-cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${SUITE_NAME}"
+$SSH_CMD readlink "\$HOME/cylc-run/${WORKFLOW_NAME}" > "${TEST_NAME}.stdout"
+cmp_ok "${TEST_NAME}.stdout" <<< "${TEST_DIR}/${SYM_NAME}/run/cylc-run/${WORKFLOW_NAME}"
 
 TEST_NAME="test-dir-tree-pre-clean.remote"
 # shellcheck disable=SC2086
@@ -90,34 +90,34 @@ ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${CYLC_TEST_REG_BASE}
             |               |-- 01
             |               \`-- NN -> 01
             |-- share
-            |   \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${SUITE_NAME}/share/cycle
+            |   \`-- cycle -> ${TEST_DIR}/${SYM_NAME}/cycle/cylc-run/${WORKFLOW_NAME}/share/cycle
             \`-- work
                 \`-- 1
 ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
     \`-- cylc-clean
         \`-- ${TEST_NAME_BASE}
-            |-- log -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${SUITE_NAME}/log
-            |-- share -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${SUITE_NAME}/share
-            \`-- work -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${SUITE_NAME}/work
+            |-- log -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${WORKFLOW_NAME}/log
+            |-- share -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${WORKFLOW_NAME}/share
+            \`-- work -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${WORKFLOW_NAME}/work
 __TREE__
 
 # -----------------------------------------------------------------------------
 
 TEST_NAME="cylc-clean"
-run_ok "$TEST_NAME" cylc clean "$SUITE_NAME"
+run_ok "$TEST_NAME" cylc clean "$WORKFLOW_NAME"
 dump_std "$TEST_NAME"
 
 TEST_NAME="run-dir-not-exist-post-clean.local"
 # (Could use the function `exists_ok` here instead, but this keeps it consistent with the remote test below)
-if [[ ! -a "$SUITE_RUN_DIR" ]]; then
+if [[ ! -a "$WORKFLOW_RUN_DIR" ]]; then
     ok "$TEST_NAME"
 else
     fail "$TEST_NAME"
 fi
 
 TEST_NAME="run-dir-not-exist-post-clean.remote"
-if $SSH_CMD [[ ! -a "\$HOME/cylc-run/${SUITE_NAME}" ]]; then
+if $SSH_CMD [[ ! -a "\$HOME/cylc-run/${WORKFLOW_NAME}" ]]; then
     ok "$TEST_NAME"
 else
     fail "$TEST_NAME"

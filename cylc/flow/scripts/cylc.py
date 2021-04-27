@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -71,9 +71,9 @@ Usage:
 Command Abbreviation:
   # Commands can be abbreviated as long as there is no ambiguity in
   # the abbreviated command:
-  $ cylc trigger SUITE TASK       # trigger TASK in SUITE
-  $ cylc trig SUITE TASK          # ditto
-  $ cylc tr SUITE TASK            # ditto
+  $ cylc trigger WORKFLOW TASK       # trigger TASK in WORKFLOW
+  $ cylc trig WORKFLOW TASK          # ditto
+  $ cylc tr WORKFLOW TASK            # ditto
   $ cylc t                        # Error: ambiguous command
 
 Task Identification:
@@ -83,8 +83,8 @@ Task Identification:
   Date-time cycle points are in an ISO 8601 date-time format, typically
   CCYYMMDDThhmm followed by a time zone - e.g. 20101225T0600Z.
 
-  Integer cycle points (including those for one-off suites) are integers
-  - just '1' for one-off suites.
+  Integer cycle points (including those for one-off workflows) are integers
+  - just '1' for one-off workflows.
 """
 
 # because this command is not served from behind cli_function like the
@@ -110,8 +110,8 @@ ALIASES = {
     'cycletime': 'cycle-point',
     'datetime': 'cycle-point',
     'external-trigger': 'ext-trigger',
-    'get-contact': 'get-suite-contact',
-    'get-cylc-version': 'get-suite-version',
+    'get-contact': 'get-workflow-contact',
+    'get-cylc-version': 'get-workflow-version',
     'grep': 'search',
     'log': 'cat-log',
     'ls': 'list',
@@ -157,6 +157,8 @@ DEAD_ENDS = {
         'cylc reset has been replaced by cylc set-outputs',
     'restart':
         'cylc run & cylc restart have been replaced by cylc play',
+    'suite-state':
+        'cylc suite-state has been replaced by cylc workflow-state',
     'run':
         'cylc run & cylc restart have been replaced by cylc play',
     'submit':

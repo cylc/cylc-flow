@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
    This plugin is for Cylc developers debugging the data store.
 
 If ``matplotlib`` is installed this plugin will plot results as a PDF in
-the run directory when the suite is shut down (cleanly).
+the run directory when the workflow is shut down (cleanly).
 
 """
 import json
@@ -68,8 +68,8 @@ async def log_data_store(scheduler, state):
 @shutdown
 async def report(scheduler, state):
     """Dump data to JSON, attempt to plot results."""
-    _dump(state, scheduler.suite_run_dir)
-    _plot(state, scheduler.suite_run_dir)
+    _dump(state, scheduler.workflow_run_dir)
+    _plot(state, scheduler.workflow_run_dir)
 
 
 def _iter_data_store(data_store):

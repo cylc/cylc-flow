@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -154,10 +154,10 @@ def jinja2environment(dir_=None):
         for fname, module in extensions.items():
             getattr(env, scope)[fname] = getattr(module, fname)
 
-    # Load any custom Jinja2 filters, tests or globals in the suite
+    # Load any custom Jinja2 filters, tests or globals in the workflow
     # definition directory
     # Example: a filter to pad integer values some fill character:
-    # |(file SUITE_DEFINITION_DIRECTORY/Jinja2/foo.py)
+    # |(file WORKFLOW_DEFINITION_DIRECTORY/Jinja2/foo.py)
     # |  #!/usr/bin/env python3
     # |  def foo( value, length, fillchar ):
     # |     return str(value).rjust( int(length), str(fillchar) )
@@ -177,7 +177,7 @@ def jinja2environment(dir_=None):
                     envnsp = getattr(env, namespace)
                     envnsp[fname] = getattr(module, fname)
 
-    # Import SUITE HOST USER ENVIRONMENT into template:
+    # Import WORKFLOW HOST USER ENVIRONMENT into template:
     # (usage e.g.: {{environ['HOME']}}).
     env.globals['environ'] = os.environ
     env.globals['raise'] = raise_helper

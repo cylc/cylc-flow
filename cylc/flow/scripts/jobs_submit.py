@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -33,7 +33,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
+            ("JOB-LOG-ROOT", "The log/job sub-directory for the workflow"),
             ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory"),
         ],
     )
@@ -46,7 +46,7 @@ def get_option_parser():
     )
     parser.add_option(
         "--utc-mode",
-        help="(for remote mode) is the suite running in UTC mode?",
+        help="(for remote mode) is the workflow running in UTC mode?",
         action="store_true",
         dest="utc_mode",
         default=False,

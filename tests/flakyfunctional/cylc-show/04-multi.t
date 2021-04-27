@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,13 @@
 
 set_test_number 4
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate  "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate  "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-RUND="${RUN_DIR}/${SUITE_NAME}"
+RUND="${RUN_DIR}/${WORKFLOW_NAME}"
 for FILE in "${RUND}/show1.txt" "${RUND}/show2.txt"; do
     contains_ok "${FILE}" <<'__TXT__'
 ----

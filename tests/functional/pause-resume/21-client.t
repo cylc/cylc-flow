@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,18 +18,18 @@
 # Test resume paused workflow using the "cylc client" command.
 . "$(dirname "$0")/test_header"
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-cylc play --reference-test --pause --debug --no-detach "${SUITE_NAME}" \
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+cylc play --reference-test --pause --debug --no-detach "${WORKFLOW_NAME}" \
     1>"${TEST_NAME_BASE}.out" 2>&1 &
 CYLC_RUN_PID=$!
-poll_suite_running
+poll_workflow_running
 
 read -r -d '' resume <<_args_
 {"request_string": "
 mutation {
-  resume(workflows: [\"${SUITE_NAME}\"]){
+  resume(workflows: [\"${WORKFLOW_NAME}\"]){
     result
   }
 }
@@ -39,7 +39,7 @@ _args_
 
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-client" \
-    cylc client "${SUITE_NAME}" 'graphql' < <(echo ${resume})
+    cylc client "${WORKFLOW_NAME}" 'graphql' < <(echo ${resume})
 run_ok "${TEST_NAME_BASE}-run" wait "${CYLC_RUN_PID}"
 purge
 exit

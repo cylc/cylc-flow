@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,10 +21,10 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}
-run_fail "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc validate -v "${WORKFLOW_NAME}"
 grep_ok "GraphParseError: parenthesis mismatch in: " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge

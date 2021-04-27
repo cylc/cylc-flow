@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ from pathlib import Path
 from unittest.mock import patch
 from pytest import CaptureFixture
 
-from cylc.flow.suite_files import SuiteFiles
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.task_remote_cmd import remote_init
 
 
@@ -27,7 +27,7 @@ def test_existing_key_raises_error(tmp_path: Path, capsys: CaptureFixture):
     """Test .service directory that contains existing incorrect key,
     results in REMOTE INIT FAILED"""
     rundir = tmp_path / 'some_rund'
-    srvdir = rundir / SuiteFiles.Service.DIRNAME
+    srvdir = rundir / WorkflowFiles.Service.DIRNAME
     srvdir.mkdir(parents=True)
     (srvdir / 'client_wrong.key').touch()
 
@@ -56,7 +56,7 @@ def test_existing_client_key_dir_raises_error(
        results in REMOTE INIT FAILED
     """
     rundir = tmp_path / 'some_rund'
-    keydir = rundir / SuiteFiles.Service.DIRNAME / "client_public_keys"
+    keydir = rundir / WorkflowFiles.Service.DIRNAME / "client_public_keys"
     keydir.mkdir(parents=True)
 
     remote_init('test_install_target', rundir)

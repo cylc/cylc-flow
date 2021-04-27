@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite shuts down with error on missing port file
+# Test workflow shuts down with error on missing port file
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
@@ -30,16 +30,16 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     OPT_SET='-s GLOBALCFG=True'
 fi
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # shellcheck disable=SC2086
-run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${WORKFLOW_NAME}"
 # shellcheck disable=SC2086
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --abort-if-any-task-fails ${OPT_SET} "${SUITE_NAME}"
-SRVD="$RUN_DIR/${SUITE_NAME}/.service"
-LOGD="$RUN_DIR/${SUITE_NAME}/log"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --no-detach --abort-if-any-task-fails ${OPT_SET} "${WORKFLOW_NAME}"
+SRVD="$RUN_DIR/${WORKFLOW_NAME}/.service"
+LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 grep_ok \
     "${SRVD}/contact: contact file corrupted/modified and may be left" \
-    "${LOGD}/suite/log"
+    "${LOGD}/workflow/log"
 purge
 exit

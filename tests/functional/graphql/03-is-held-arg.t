@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite graphql interface
+# Test workflow graphql interface
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" << __FLOW__
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [meta]
     title = foo
     description = bar
@@ -34,12 +34,12 @@ init_suite "${TEST_NAME_BASE}" << __FLOW__
         script = sleep 20
 __FLOW__
 
-# run suite
-run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
-cylc hold --after=0 "${SUITE_NAME}"
+# run workflow
+run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
+cylc hold --after=0 "${WORKFLOW_NAME}"
 sleep 1
 
-# query suite
+# query workflow
 TEST_NAME="${TEST_NAME_BASE}-is-held-arg"
 ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 read -r -d '' isHeld <<_args_
@@ -60,26 +60,26 @@ query {
   "variables": null
 }
 _args_
-run_graphql_ok "${TEST_NAME}" "${SUITE_NAME}" "${isHeld}"
+run_graphql_ok "${TEST_NAME}" "${WORKFLOW_NAME}" "${isHeld}"
 
-# scrape suite info from contact file
+# scrape workflow info from contact file
 TEST_NAME="${TEST_NAME_BASE}-contact"
-run_ok "${TEST_NAME_BASE}-contact" cylc get-contact "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-contact" cylc get-contact "${WORKFLOW_NAME}"
 
-# stop suite
-cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}"
+# stop workflow
+cylc stop --max-polls=10 --interval=2 --kill "${WORKFLOW_NAME}"
 
 # compare to expectation
 cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-is-held-arg.stdout" << __HERE__
 {
     "workflows": [
         {
-            "name": "${SUITE_NAME}",
+            "name": "${WORKFLOW_NAME}",
             "isHeldTotal": 1,
             "taskProxies": [],
             "familyProxies": [
                 {
-                    "id": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}1${ID_DELIM}BAZ"
+                    "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}1${ID_DELIM}BAZ"
                 }
             ]
         }

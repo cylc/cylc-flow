@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Validate and run the task events suite.
+# Validate and run the task events workflow.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 create_test_global_config '
 [platforms]
     [[test platform]]
@@ -28,14 +28,14 @@ create_test_global_config '
 '
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate \
-    --set=SUITE_LOG_DIR=\""${SUITE_RUN_DIR}/log/suite"\" \
-    "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
+    --set=WORKFLOW_LOG_DIR=\""${WORKFLOW_RUN_DIR}/log/workflow"\" \
+    "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach \
-    --set=SUITE_LOG_DIR=\""${SUITE_RUN_DIR}/log/suite"\" \
-    "${SUITE_NAME}"
+    --set=WORKFLOW_LOG_DIR=\""${WORKFLOW_RUN_DIR}/log/workflow"\" \
+    "${WORKFLOW_NAME}"
 sort -u 'events.log' >'expected.events.log'
-sed 's/ (after .*)$//' "${SUITE_RUN_DIR}/log/suite/events.log" | sort -u \
+sed 's/ (after .*)$//' "${WORKFLOW_RUN_DIR}/log/workflow/events.log" | sort -u \
     >'actual.events.log'
 cmp_ok 'actual.events.log' 'expected.events.log'
 #-------------------------------------------------------------------------------

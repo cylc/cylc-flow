@@ -1,5 +1,5 @@
 #!/bin/bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,17 +21,17 @@ export REQUIRE_PLATFORM='loc:remote comms:poll'
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
-install_suite
+install_workflow
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "$SUITE_NAME"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "$WORKFLOW_NAME"
 
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --reference-test --no-detach "$SUITE_NAME"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --reference-test --no-detach "$WORKFLOW_NAME"
 
 # Check 'started' event handlers ran
-PICARD_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/picard/01/job-activity.log"
+PICARD_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/picard/01/job-activity.log"
 grep_ok "[(('event-handler-00', 'started'), 1) out] THERE ARE FOUR LIGHTS" "$PICARD_ACTIVITY_LOG" -F
 
-JANEWAY_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/janeway/01/job-activity.log"
+JANEWAY_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/janeway/01/job-activity.log"
 grep_ok "[(('event-handler-00', 'started'), 1) out] THERE'S COFFEE IN THAT NEBULA" "$JANEWAY_ACTIVITY_LOG" -F
 
 purge

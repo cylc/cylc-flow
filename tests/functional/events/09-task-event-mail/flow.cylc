@@ -5,7 +5,7 @@
 [scheduler]
 {% if GLOBALCFG is not defined %}
     [[mail]]
-        footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+        footer = see: http://localhost/stuff/%(owner)s/%(workflow)s/
 {% endif %}{# not GLOBALCFG is not defined #}
 
 [scheduling]

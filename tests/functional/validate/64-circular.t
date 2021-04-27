@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation of a suite with self-edges fails.
+# Test validation of a workflow with self-edges fails.
 . "$(dirname "$0")/test_header"
 
 set_test_number 13
@@ -30,7 +30,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-simple-1" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-simple-1.stderr" <<'__ERR__'
-SuiteConfigError: self-edge detected: a:succeed => a
+WorkflowConfigError: self-edge detected: a:succeed => a
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -43,7 +43,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-simple-2" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-simple-2.stderr" <<'__ERR__'
-SuiteConfigError: circular edges detected:  d.1 => a.1  a.1 => b.1  b.1 => c.1  c.1 => d.1
+WorkflowConfigError: circular edges detected:  d.1 => a.1  a.1 => b.1  b.1 => c.1  c.1 => d.1
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -60,7 +60,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-simple-fam" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-simple-fam.stderr" <<'__ERR__'
-SuiteConfigError: self-edge detected: f:succeed => f
+WorkflowConfigError: self-edge detected: f:succeed => f
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -79,7 +79,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-intercycle-1" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-intercycle-1.stderr" <<'__ERR__'
-SuiteConfigError: circular edges detected:  a.2002 => a.2001  a.2001 => a.2002  a.2003 => a.2002  a.2002 => a.2003
+WorkflowConfigError: circular edges detected:  a.2002 => a.2001  a.2001 => a.2002  a.2003 => a.2002  a.2002 => a.2003
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -95,7 +95,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-intercycle-2" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-intercycle-2.stderr" <<'__ERR__'
-SuiteConfigError: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.8 => foo.8
+WorkflowConfigError: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.8 => foo.8
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -113,7 +113,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-param-1" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-param-1.stderr" <<'__ERR__'
-SuiteConfigError: circular edges detected:  fool_foo2.1 => fool_foo1.1  fool_foo1.1 => fool_foo2.1
+WorkflowConfigError: circular edges detected:  fool_foo2.1 => fool_foo1.1  fool_foo1.1 => fool_foo2.1
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'

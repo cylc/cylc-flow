@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Syntax highlighting for cylc suite definition files, for gedit
+ Syntax highlighting for Cylc workflow config files, for gedit
  and other gtksourceview programs.
 
  = Instructions =
@@ -84,7 +84,7 @@
     </context>
     <context id="cylc-options" style-ref="option">
       <!-- To regenerate this keyword list, create a minimal flow.cylc file and run something like:
-        cylc config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<keyword>\1<\/keyword>/g"
+        cylc config my-minimal-workflow | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<keyword>\1<\/keyword>/g"
         -->
         <!--TAG_FOR_AUTO_UPDATE-->
         <keyword>xtriggers</keyword>
@@ -105,6 +105,7 @@
         <keyword>task parameters</keyword>
         <keyword>task event batch interval</keyword>
         <keyword>suite state polling</keyword>
+        <keyword>workflow state polling</keyword>
         <keyword>succeeded handler</keyword>
         <keyword>submitted handler</keyword>
         <keyword>submission timeout handler</keyword>
@@ -195,7 +196,6 @@
         <keyword>env-script</keyword>
         <keyword>edge penwidth</keyword>
         <keyword>disable task event handlers</keyword>
-        <keyword>disable suite event handlers</keyword>
         <keyword>directives</keyword>
         <keyword>description</keyword>
         <keyword>default run length</keyword>

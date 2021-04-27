@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,16 +26,16 @@ create_test_global_config "" "
         retrieve job logs = True
 "
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" basic
+install_workflow "${TEST_NAME_BASE}" basic
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-platform
-sqlite3 "${SUITE_RUN_DIR}/log/db" \
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'select platform_name from task_jobs where name=="foo"' >'foo-host.txt'
 cmp_ok 'foo-host.txt' <<<"${CYLC_TEST_PLATFORM}"
 #-------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ REMOTE_HOST_FQDN="$(ssh "${CYLC_TEST_HOST}" hostname -f)"
 TEST_NAME=${TEST_NAME_BASE}-ensure-remote-run
 grep_ok \
     "^$REMOTE_HOST_FQDN" \
-    "${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
+    "${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job.out"
 #-------------------------------------------------------------------------------
 purge
 exit

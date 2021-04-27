@@ -1,6 +1,6 @@
 [meta]
     title = "Test reloading of a task removed then added by a reload."
-# Don't run this suite in-place: it modifies itself.
+# Don't run this workflow in-place: it modifies itself.
 
 [scheduler]
     UTC mode = True
@@ -16,18 +16,18 @@
    [[reloader]]
       script = """
 do_reload() {
-    cylc reload "${CYLC_SUITE_NAME}"
-    while test "$(grep -cF 'Reload completed' "${CYLC_SUITE_LOG_DIR}/log")" -ne "$1"
+    cylc reload "${CYLC_WORKFLOW_NAME}"
+    while test "$(grep -cF 'Reload completed' "${CYLC_WORKFLOW_LOG_DIR}/log")" -ne "$1"
     do
         sleep 1
     done
 }
-sed -i "s/\(R1 = reloader => inter\).*/\1/" "${CYLC_SUITE_RUN_DIR}/flow.cylc"
+sed -i "s/\(R1 = reloader => inter\).*/\1/" "${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
 do_reload 1
 sed -i "s/\(R1 = reloader => inter\)/\1 => remove_add_alter_me/" \
-    "${CYLC_SUITE_RUN_DIR}/flow.cylc"
+    "${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
 do_reload 2
-cat >>"${CYLC_SUITE_RUN_DIR}/flow.cylc" <<'__RUNTIME__'
+cat >>"${CYLC_WORKFLOW_RUN_DIR}/flow.cylc" <<'__RUNTIME__'
 [[remove_add_alter_me]]
     script = true
 __RUNTIME__

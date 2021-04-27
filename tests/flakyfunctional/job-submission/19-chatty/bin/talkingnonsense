@@ -4,5 +4,5 @@ cat "${CYLC_REPO_DIR}/COPYING"
 sleep 1
 tac "${CYLC_REPO_DIR}/COPYING" >&2
 sleep 1
-echo "$@" >>"${CYLC_SUITE_RUN_DIR}/talkingnonsense.out"
+echo "$@" >>"${CYLC_WORKFLOW_RUN_DIR}/talkingnonsense.out"
 exit 1

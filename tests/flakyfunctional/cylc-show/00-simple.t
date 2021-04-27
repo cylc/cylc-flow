@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,21 +21,21 @@
 #-------------------------------------------------------------------------------
 set_test_number 8
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_SHOW_OUTPUT_PATH="${PWD}/${TEST_NAME_BASE}-show"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate \
-    --set="TEST_OUTPUT_PATH='${TEST_SHOW_OUTPUT_PATH}'" "${SUITE_NAME}"
+    --set="TEST_OUTPUT_PATH='${TEST_SHOW_OUTPUT_PATH}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
-    --set="TEST_OUTPUT_PATH='${TEST_SHOW_OUTPUT_PATH}'" "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach \
+    --set="TEST_OUTPUT_PATH='${TEST_SHOW_OUTPUT_PATH}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show"
-cmp_ok "${TEST_NAME}-suite" <<'__SHOW_OUTPUT__'
-title: a test suite
+cmp_ok "${TEST_NAME}-workflow" <<'__SHOW_OUTPUT__'
+title: a test workflow
 description: the quick brown fox
 custom: custard
 URL: (not given)
@@ -67,9 +67,9 @@ outputs (- => not completed):
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show-json"
-cmp_json "${TEST_NAME}-suite" "${TEST_NAME}-suite" <<'__SHOW_OUTPUT__'
+cmp_json "${TEST_NAME}-workflow" "${TEST_NAME}-workflow" <<'__SHOW_OUTPUT__'
 {
-    "title": "a test suite",
+    "title": "a test workflow",
     "description": "the quick brown fox",
     "URL": "",
     "custom": "custard"
@@ -110,7 +110,7 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
                 "conditions": [
                     {
                         "exprAlias": "c0",
-                        "taskId": "${USER}${ID_DELIM}${SUITE_NAME}${ID_DELIM}20141106T0900Z${ID_DELIM}bar",
+                        "taskId": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20141106T0900Z${ID_DELIM}bar",
                         "reqState": "succeeded",
                         "message": "satisfied naturally",
                         "satisfied": true

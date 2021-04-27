@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -65,7 +65,7 @@ Examples:
   $ cylc install --run-name=paws
 
 The same workflow can be installed with multiple names; this results in
-multiple workflow run directories that link to the same suite definition.
+multiple workflow run directories that link to the same workflow definition.
 
 """
 
@@ -75,7 +75,9 @@ from typing import Optional, TYPE_CHECKING
 
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import install_workflow, search_install_source_dirs
+from cylc.flow.workflow_files import (
+    install_workflow, search_install_source_dirs
+)
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -152,14 +154,14 @@ def get_option_parser():
             dest="defines"
         )
         parser.add_option(
-            "--define-suite", "--define-flow", '-S',
+            "--define-workflow", "--define-flow", '-S',
             help=(
                 "As `--define`, but with an implicit `[SECTION]` for "
                 "workflow variables."
             ),
             action="append",
             default=[],
-            dest="define_suites"
+            dest="define_workflows"
         )
     except ImportError:
         pass

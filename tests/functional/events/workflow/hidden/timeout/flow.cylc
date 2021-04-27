@@ -1,0 +1,18 @@
+[meta]
+    description = """
+This workflow is supposed to time out and abort when the timeout handler
+deliberately fails."""
+
+[scheduler]
+    [[events]]
+        timeout = PT5S
+        timeout handler = "false"
+        abort if timeout handler fails = True
+
+[scheduling]
+    [[graph]]
+        R1 = "foo"
+
+[runtime]
+    [[foo]]
+        script = false

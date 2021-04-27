@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ import pytest
 from cylc.flow.exceptions import HostSelectException
 from cylc.flow.host_select import (
     select_host,
-    select_suite_host
+    select_workflow_host
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.parsec.exceptions import ListValueError
@@ -133,8 +133,8 @@ def test_metric_command_failure():
     )
 
 
-def test_suite_host_select(mock_glbl_cfg):
-    """Run the suite_host_select mechanism."""
+def test_workflow_host_select(mock_glbl_cfg):
+    """Run the workflow_host_select mechanism."""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
         f'''
@@ -143,10 +143,10 @@ def test_suite_host_select(mock_glbl_cfg):
                     available= {localhost}
         '''
     )
-    assert select_suite_host() == (localhost, localhost_fqdn)
+    assert select_workflow_host() == (localhost, localhost_fqdn)
 
 
-def test_suite_host_select_default(mock_glbl_cfg):
+def test_workflow_host_select_default(mock_glbl_cfg):
     """Ensure "localhost" is provided as a default host."""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -156,7 +156,7 @@ def test_suite_host_select_default(mock_glbl_cfg):
                     available =
         '''
     )
-    hostname, host_fqdn = select_suite_host()
+    hostname, host_fqdn = select_workflow_host()
     assert hostname in localhost_aliases + [localhost]
     assert host_fqdn == localhost_fqdn
 
@@ -166,7 +166,7 @@ def test_suite_host_select_default(mock_glbl_cfg):
     localhost == localhost_fqdn,
     reason='Cannot condemn a host unless is has a safe unique fqdn.'
 )
-def test_suite_host_select_condemned(mock_glbl_cfg):
+def test_workflow_host_select_condemned(mock_glbl_cfg):
     """Ensure condemned hosts are filtered out."""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -178,7 +178,7 @@ def test_suite_host_select_condemned(mock_glbl_cfg):
         '''
     )
     with pytest.raises(HostSelectException) as excinfo:
-        select_suite_host()
+        select_workflow_host()
     assert 'blacklisted' in str(excinfo.value)
     assert 'condemned host' in str(excinfo.value)
 

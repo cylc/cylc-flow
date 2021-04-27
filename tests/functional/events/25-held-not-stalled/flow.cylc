@@ -2,7 +2,7 @@
     [[events]]
         abort on inactivity = False
         abort on stalled = True
-        inactivity handler = cylc release --all '%(suite)s'
+        inactivity handler = cylc release --all '%(workflow)s'
         inactivity = PT5S
 [scheduling]
     [[graph]]

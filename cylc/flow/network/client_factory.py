@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -41,12 +41,15 @@ def get_runtime_client(comms_method: CommsMeth, workflow, timeout=None):
             workflow: workflow name
     """
     if comms_method == CommsMeth.SSH:
-        from cylc.flow.network.ssh_client import SuiteRuntimeClient
+        from cylc.flow.network.ssh_client import WorkflowRuntimeClient
     else:
-        from cylc.flow.network.client import SuiteRuntimeClient  # type: ignore
-    return SuiteRuntimeClient(workflow, timeout=timeout)
+        from cylc.flow.network.client import (   # type: ignore
+            WorkflowRuntimeClient
+        )
+    return WorkflowRuntimeClient(workflow, timeout=timeout)
 
 
 def get_client(workflow, timeout=None):
-    """Get communication method and return correct SuiteRuntimeClient"""
+    """Get communication method and return correct WorkflowRuntimeClient"""
+
     return get_runtime_client(get_comms_method(), workflow, timeout=timeout)
