@@ -114,7 +114,9 @@ class EventData(Enum):
 
     Event = 'event'
     Workflow = 'workflow'
+    Suite = 'suite'  # deprecated
     WorkflowUUID = 'workflow_uuid'
+    SuiteUUID = 'suite_uuid'  # deprecated
     CyclePoint = 'point'
     SubmitNum = 'submit_num'
     TryNum = 'try_num'
@@ -1141,6 +1143,17 @@ class TaskEventsManager():
                     EventData.Workflow.value:
                         quote(self.workflow),
                     EventData.WorkflowUUID.value:
+                        quote(str(self.uuid_str)),
+                    # BACK COMPAT: Suite, SuiteUUID deprecated
+                    # url:
+                    #     https://github.com/cylc/cylc-flow/pull/4174
+                    # from:
+                    #     Cylc 8
+                    # remove at:
+                    #     Cylc 9
+                    EventData.Suite.value:  # deprecated
+                        quote(self.workflow),
+                    EventData.SuiteUUID.value:  # deprecated
                         quote(str(self.uuid_str)),
                     EventData.TryNum.value:
                         itask.get_try_num(),

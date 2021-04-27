@@ -19,7 +19,7 @@
 # - they should still work but give a validation warning
 
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 7
 
 init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduling]
@@ -28,7 +28,8 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [runtime]
     [[foo]]
         [[[events]]]
-            started handler = echo "job_id = %(batch_sys_job_id)s ; job_runner_name = %(batch_sys_name)s"
+            started handler = \
+               echo "job_id = %(batch_sys_job_id)s; job_runner_name = %(batch_sys_name)s; workflow = %(suite)s; workflow_uuid = %(suite_uuid)s"
 __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
@@ -37,12 +38,16 @@ grep_ok 'WARNING - The event handler template variable "%(batch_sys_job_id)s" is
     "${TEST_NAME_BASE}-validate.stderr" -F
 grep_ok 'WARNING - The event handler template variable "%(batch_sys_name)s" is deprecated - use "%(job_runner_name)s" instead' \
     "${TEST_NAME_BASE}-validate.stderr" -F
+grep_ok 'WARNING - The event handler template variable "%(suite)s" is deprecated - use "%(workflow)s" instead' \
+    "${TEST_NAME_BASE}-validate.stderr" -F
+grep_ok 'WARNING - The event handler template variable "%(suite_uuid)s" is deprecated - use "%(workflow_uuid)s" instead' \
+    "${TEST_NAME_BASE}-validate.stderr" -F
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 poll_workflow_stopped
 
 FOO_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
-grep_ok "\[(('event-handler-00', 'started'), 1) out\] job_id = [0-9]\+ ; job_runner_name = background" "$FOO_ACTIVITY_LOG"
+grep_ok "\[(('event-handler-00', 'started'), 1) out\] job_id = [0-9]\+; job_runner_name = background; workflow = ${WORKFLOW_NAME}; workflow_uuid = [a-f0-9\-]\+" "$FOO_ACTIVITY_LOG"
 
 purge
 exit

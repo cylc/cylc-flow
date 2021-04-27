@@ -145,17 +145,27 @@ class WorkflowEventHandler():
             # Handler command may be a string for substitution
             abort_on_error = self.get_events_conf(
                 config, 'abort if %s handler fails' % ctx.event)
+            # BACK COMPAT: suite, suiteUUID are deprecated
+            # url:
+            #     https://github.com/cylc/cylc-flow/pull/4174
+            # from:
+            #     Cylc 8
+            # remove at:
+            #     Cylc 9
             try:
                 handler_data = {
                     'event': quote(ctx.event),
                     'message': quote(ctx.reason),
                     'workflow': quote(ctx.workflow),
                     'workflow_uuid': quote(str(ctx.uuid_str)),
+                    'suite': quote(ctx.workflow),  # deprecated
+                    'suite_uuid': quote(str(ctx.uuid_str)),  # deprecated
                 }
                 if config.cfg['meta']:
                     for key, value in config.cfg['meta'].items():
                         if key == "URL":
                             handler_data["workflow_url"] = quote(value)
+                            handler_data["suite_url"] = quote(value)
                         handler_data[key] = quote(value)
                 cmd = handler % (handler_data)
             except KeyError as exc:

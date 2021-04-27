@@ -1652,6 +1652,16 @@ def warn_about_depr_event_handler_tmpl(cfg):
                     deprecation_msg.format(EventData.JobRunnerName_old.value,
                                            EventData.JobRunnerName.value)
                 )
+            if f'%({EventData.Suite.value})' in handler:
+                LOG.warning(
+                    deprecation_msg.format(EventData.Suite.value,
+                                           EventData.Workflow.value)
+                )
+            if f'%({EventData.SuiteUUID.value})' in handler:
+                LOG.warning(
+                    deprecation_msg.format(EventData.SuiteUUID.value,
+                                           EventData.WorkflowUUID.value)
+                )
 
 
 class RawWorkflowConfig(ParsecConfig):
