@@ -315,6 +315,9 @@ class Options:
         False
 
     """
+    opt_conf_keys: list
+    defines: list
+    define_suites: list
 
     def __init__(
         self, parser: OptionParser, overrides: Optional[Dict[str, Any]] = None
