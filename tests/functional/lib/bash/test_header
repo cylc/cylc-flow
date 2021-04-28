@@ -124,7 +124,7 @@
 #         Install a reference workflow using `install_workflow`, run a validation
 #         test on the workflow and run the reference workflow with `workflow_run_ok`.
 #         Expect 2 OK tests.
-#     
+#
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for e.g. jinja2 shebang).
@@ -501,7 +501,7 @@ log_scan () {
 make_rnd_workflow() {
     # Create a randomly-named workflow source directory.
     # Define its run directory.
-    RND_WORKFLOW_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
+    RND_WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
     RND_WORKFLOW_SOURCE="$PWD/${RND_WORKFLOW_NAME}"
     mkdir -p "${RND_WORKFLOW_SOURCE}"
     touch "${RND_WORKFLOW_SOURCE}/flow.cylc"
@@ -566,6 +566,10 @@ purge () {
     bash -c "$CMD" 2>/dev/null || true
 }
 purge_rnd_workflow() {
+    if ((FAILURES != 0)); then
+        # if tests have failed then don't clean up
+        return 0
+    fi
     # Remove the workflow source created by make_rnd_workflow().
     # And remove its run-directory too.
     rm -rf "${RND_WORKFLOW_SOURCE}"
