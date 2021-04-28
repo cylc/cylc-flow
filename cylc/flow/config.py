@@ -79,7 +79,10 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.unicode_rules import (
-    XtriggerNameValidator, TaskOutputValidator)
+    TaskNameValidator,
+    TaskOutputValidator,
+    XtriggerNameValidator,
+)
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -461,6 +464,7 @@ class WorkflowConfig:
         self._check_explicit_cycling()
 
         self._check_implicit_tasks()
+        self.validate_namespace_names()
 
         # Check that external trigger messages are only used once (they have to
         # be discarded immediately to avoid triggering the next instance of the
@@ -988,6 +992,15 @@ class WorkflowConfig:
             for name, _ in name_expander.expand(node):
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
+
+    def validate_namespace_names(self):
+        """Validate task and family names."""
+        for name in self.cfg['runtime']:
+            success, message = TaskNameValidator.validate(name)
+            if not success:
+                raise WorkflowConfigError(
+                    f'task/family name {message}\n[runtime][[{name}]]'
+                )
 
     @staticmethod
     def dequote(s):
