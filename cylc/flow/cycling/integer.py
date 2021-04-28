@@ -131,7 +131,7 @@ class IntegerPoint(PointBase):
         """Add other.value to self.value as integers."""
         return IntegerPoint(int(self) + int(other))
 
-    def cmp_(self, other):
+    def _cmp(self, other: 'IntegerPoint') -> int:
         """Compare self.value to self.other as integers with 'cmp'."""
         return cmp(int(self), int(other))
 
@@ -204,7 +204,7 @@ class IntegerInterval(IntervalBase):
             return IntegerInterval.from_integer(int(self) + int(other))
         return IntegerPoint(int(self) + int(other))
 
-    def cmp_(self, other):
+    def _cmp(self, other: 'IntegerInterval') -> int:
         """Compare other to self as integers."""
         return cmp(int(self), int(other))
 

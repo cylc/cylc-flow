@@ -785,7 +785,7 @@ class Scheduler:
         self.task_job_mgr.poll_task_jobs(
             self.workflow, to_poll_tasks)
 
-    def process_command_queue(self):
+    def process_command_queue(self) -> None:
         """Process queued commands."""
         qsize = self.command_queue.qsize()
         if qsize <= 0:
@@ -803,7 +803,7 @@ class Scheduler:
             sep = ', ' if kwargs_string and args_string else ''
             cmdstr = f"{name}({args_string}{sep}{kwargs_string})"
             try:
-                n_warnings = getattr(self, "command_%s" % name)(
+                n_warnings: Optional[int] = getattr(self, f'command_{name}')(
                     *args, **kwargs)
             except SchedulerStop:
                 LOG.info(f"Command succeeded: {cmdstr}")
