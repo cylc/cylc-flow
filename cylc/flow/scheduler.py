@@ -1445,7 +1445,7 @@ class Scheduler:
                         if itask.state(TASK_STATUS_WAITING)
                         and not itask.state.is_queued
                         and itask.state.xtriggers],
-                    self.suite_db_mgr.put_xtriggers
+                    self.workflow_db_mgr.put_xtriggers
                 )
             )
 
@@ -1738,7 +1738,7 @@ class Scheduler:
 
         self.pool.release_runahead_tasks()
 
-        if self.check_suite_stalled():
+        if self.check_workflow_stalled():
             # Don't if stalled, unless "abort on stalled" is set.
             return False
 
