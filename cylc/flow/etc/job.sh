@@ -102,12 +102,16 @@ cylc__job__main() {
         CYLC_WORKFLOW_HOST="$(sed -n 's/^CYLC_WORKFLOW_HOST=//p' "${contact}")"
         CYLC_WORKFLOW_OWNER="$(sed -n 's/^CYLC_WORKFLOW_OWNER=//p' "${contact}")"
         export CYLC_WORKFLOW_HOST CYLC_WORKFLOW_OWNER
-        # Deprecated
+        # BACK COMPAT: DEPRECATED environment variables
+        # remove at:
+        #     Cylc9
         export CYLC_SUITE_HOST="${CYLC_WORKFLOW_HOST}"
         export CYLC_SUITE_OWNER="${CYLC_WORKFLOW_OWNER}"
     fi
 
-    # DEPRECATED environment variables
+    # BACK COMPAT: DEPRECATED environment variables
+    # remove at:
+    #     Cylc9
     export CYLC_SUITE_SHARE_DIR="${CYLC_WORKFLOW_SHARE_DIR}"
     export CYLC_SUITE_SHARE_PATH="${CYLC_WORKFLOW_SHARE_DIR}"
     export CYLC_SUITE_NAME="${CYLC_WORKFLOW_NAME}"
