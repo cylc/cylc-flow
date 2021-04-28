@@ -93,7 +93,7 @@ def get_option_parser():
             ),
             action="append",
             default=[],
-            dest="rose_template_var"
+            dest="rose_template_vars"
         )
         parser.add_option(
             "--clear-rose-install-options",
