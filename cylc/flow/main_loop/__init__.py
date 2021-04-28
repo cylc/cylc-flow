@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -87,8 +87,8 @@ Here is the "hello world" of main loop plugins:
 
    @startup
    async def my_startup_coroutine(schd, state):
-      # write Hello <suite name> to the Cylc log.
-      LOG.info(f'Hello {schd.suite}')
+      # write Hello <workflow name> to the Cylc log.
+      LOG.info(f'Hello {schd.workflow}')
 
 Plugins are registered by registering them with the `cylc.main_loop`
 entry point:
@@ -241,7 +241,7 @@ def _debounce(interval, timings):
 
 
 def startup(fcn):
-    """Decorates a coroutine which is run at suite startup.
+    """Decorates a coroutine which is run at workflow startup.
 
     The decorated coroutine should have the signature:
 
@@ -259,9 +259,9 @@ def startup(fcn):
 
 
 def shutdown(fcn):
-    """Decorates a coroutine which is run at suite shutdown.
+    """Decorates a coroutine which is run at workflow shutdown.
 
-    Note shutdown refers to "clean" shutdown as opposed to suite abort.
+    Note shutdown refers to "clean" shutdown as opposed to workflow abort.
 
     The decorated coroutine should have the signature:
 

@@ -1,6 +1,6 @@
 [meta]
     title = BAZ
-    description = Some suite baz
+    description = Some workflow baz
     URL = 'tcp://localhost:<port>/graphql'
     group = round table
     importance = critical

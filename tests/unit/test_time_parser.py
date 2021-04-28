@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ import unittest
 from cylc.flow.time_parser import CylcTimeParser, UTC_UTC_OFFSET_HOURS_MINUTES
 
 
-class TestRecurrenceSuite(unittest.TestCase):
+class TestRecurrenceWorkflow(unittest.TestCase):
     """Test Cylc recurring date/time syntax parsing."""
 
     def setUp(self):

@@ -4,10 +4,10 @@
 [runtime]
     [[a]]
         script = """
-while ! grep -qF 'CYLC_JOB_EXIT' "${CYLC_SUITE_RUN_DIR}/log/job/1/b/NN/job.status"
+while ! grep -qF 'CYLC_JOB_EXIT' "${CYLC_WORKFLOW_RUN_DIR}/log/job/1/b/NN/job.status"
 do
     sleep 1
 done
 """
     [[b]]
-        script = cylc poll "$CYLC_SUITE_NAME" 'a.1'
+        script = cylc poll "$CYLC_WORKFLOW_NAME" 'a.1'

@@ -17,28 +17,28 @@
 [runtime]
     [[t-pause]]
         script = """
-            cylc pause "${CYLC_SUITE_NAME}"
-            cylc__job__poll_grep_suite_log -F 'Command succeeded: pause'
+            cylc pause "${CYLC_WORKFLOW_NAME}"
+            cylc__job__poll_grep_workflow_log -F 'Command succeeded: pause'
             # Poll t-submit-retry-able, should return submit-fail
-            cylc poll "${CYLC_SUITE_NAME}" 't-submit-retry-able'
+            cylc poll "${CYLC_WORKFLOW_NAME}" 't-submit-retry-able'
             # Allow t-retry-able to continue
-            rm -f "${CYLC_SUITE_RUN_DIR}/file"
-            cylc__job__poll_grep_suite_log -F \
+            rm -f "${CYLC_WORKFLOW_RUN_DIR}/file"
+            cylc__job__poll_grep_workflow_log -F \
                 '[t-retry-able.1] -running => waiting'
-            cylc__job__poll_grep_suite_log -F \
+            cylc__job__poll_grep_workflow_log -F \
                 '[t-submit-retry-able.1] -submitted => waiting'
-            # Resume the suite
-            cylc play "${CYLC_SUITE_NAME}"
-            cylc__job__poll_grep_suite_log -F \
+            # Resume the workflow
+            cylc play "${CYLC_WORKFLOW_NAME}"
+            cylc__job__poll_grep_workflow_log -F \
                 '[t-retry-able.1] -waiting => waiting (queued)'
-            cylc__job__poll_grep_suite_log -F \
+            cylc__job__poll_grep_workflow_log -F \
                 '[t-submit-retry-able.1] -waiting => waiting (queued)'
         """
     [[t-retry-able]]
         script = """
             if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
-                touch "${CYLC_SUITE_RUN_DIR}/file"
-                while [[ -e "${CYLC_SUITE_RUN_DIR}/file" ]]; do
+                touch "${CYLC_WORKFLOW_RUN_DIR}/file"
+                while [[ -e "${CYLC_WORKFLOW_RUN_DIR}/file" ]]; do
                     sleep 1
                 done
                 false

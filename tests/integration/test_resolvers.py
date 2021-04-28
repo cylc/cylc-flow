@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -69,7 +69,7 @@ async def flow(mod_flow, mod_scheduler, mod_run):
     ret.schd.data_store_mgr.initiate_data_model()
 
     ret.owner = ret.schd.owner
-    ret.name = ret.schd.suite
+    ret.name = ret.schd.workflow
     ret.id = list(ret.schd.data_store_mgr.data.keys())[0]
     ret.resolvers = Resolvers(
         ret.schd.data_store_mgr,

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 
 This module provides logic to:
 - Set up the directory structure on remote job hosts.
-  - Copy suite service files to remote job hosts for communication clients.
-  - Clean up of service files on suite shutdown.
+  - Copy workflow service files to remote job hosts for communication clients.
+  - Clean up of service files on workflow shutdown.
 - Implement basic host select functionality.
 """
 
@@ -36,17 +36,17 @@ import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.pathutil import (
-    get_remote_suite_run_dir,
+    get_remote_workflow_run_dir,
     get_dirs_to_symlink,
     get_workflow_run_dir)
 from cylc.flow.remote import construct_rsync_over_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
-from cylc.flow.suite_files import (
-    SuiteFiles,
+from cylc.flow.workflow_files import (
+    WorkflowFiles,
     KeyInfo,
     KeyOwner,
     KeyType,
-    get_suite_srv_dir,
+    get_workflow_srv_dir,
     get_contact_file)
 from cylc.flow.platforms import (
     get_localhost_install_target,
@@ -69,8 +69,8 @@ REMOTE_FILE_INSTALL_FAILED = 'REMOTE FILE INSTALL FAILED'
 class TaskRemoteMgr:
     """Manage task job remote initialisation, tidy, selection."""
 
-    def __init__(self, suite, proc_pool):
-        self.suite = suite
+    def __init__(self, workflow, proc_pool):
+        self.workflow = workflow
         self.proc_pool = proc_pool
         # self.remote_command_map = {command: host|TaskRemoteMgmtError|None}
         self.remote_command_map = {}
@@ -161,7 +161,7 @@ class TaskRemoteMgr:
             client_pub_key_dir: str) -> None:
         """Initialise a remote host if necessary.
 
-        Call "cylc remote-init" to install suite items to remote:
+        Call "cylc remote-init" to install workflow items to remote:
             ".service/contact": For TCP task communication
             "python/": if source exists
 
@@ -198,8 +198,8 @@ class TaskRemoteMgr:
         if cylc.flow.flags.debug:
             cmd.append('--debug')
         cmd.append(str(install_target))
-        cmd.append(get_remote_suite_run_dir(platform, self.suite))
-        dirs_to_symlink = get_dirs_to_symlink(install_target, self.suite)
+        cmd.append(get_remote_workflow_run_dir(self.workflow))
+        dirs_to_symlink = get_dirs_to_symlink(install_target, self.workflow)
         for key, value in dirs_to_symlink.items():
             if value is not None:
                 cmd.append(f"{key}={quote(value)} ")
@@ -215,10 +215,10 @@ class TaskRemoteMgr:
              curve_auth, client_pub_key_dir])
 
     def remote_tidy(self):
-        """Remove suite contact files and keys from initialised remotes.
+        """Remove workflow contact files and keys from initialised remotes.
 
         Call "cylc remote-tidy".
-        This method is called on suite shutdown, so we want nothing to hang.
+        This method is called on workflow shutdown, so we want nothing to hang.
         Timeout any incomplete commands after 10 seconds.
         """
         # Issue all SSH commands in parallel
@@ -234,7 +234,7 @@ class TaskRemoteMgr:
             if cylc.flow.flags.debug:
                 cmd.append('--debug')
             cmd.append(install_target)
-            cmd.append(get_remote_suite_run_dir(platform, self.suite))
+            cmd.append(get_remote_workflow_run_dir(self.workflow))
             cmd = construct_ssh_cmd(cmd, platform, timeout='10s')
             LOG.debug(
                 "Removing authentication keys and contact file "
@@ -302,11 +302,11 @@ class TaskRemoteMgr:
                 regex_result = re.search(
                     'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
                 key = regex_result.group(1)
-                suite_srv_dir = get_suite_srv_dir(self.suite)
+                workflow_srv_dir = get_workflow_srv_dir(self.workflow)
                 public_key = KeyInfo(
                     KeyType.PUBLIC,
                     KeyOwner.CLIENT,
-                    suite_srv_dir=suite_srv_dir,
+                    workflow_srv_dir=workflow_srv_dir,
                     install_target=install_target
                 )
                 old_umask = os.umask(0o177)
@@ -347,8 +347,8 @@ class TaskRemoteMgr:
         """
         install_target = platform['install target']
         self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_IN_PROGRESS
-        src_path = get_workflow_run_dir(self.suite)
-        dst_path = get_remote_suite_run_dir(platform, self.suite)
+        src_path = get_workflow_run_dir(self.workflow)
+        dst_path = get_remote_workflow_run_dir(self.workflow)
         install_target = platform['install target']
         ctx = SubProcContext(
             'file-install',
@@ -396,7 +396,7 @@ class TaskRemoteMgr:
         Return (list):
             Each item is (source_path, dest_path) where:
             - source_path is the path to the source file to install.
-            - dest_path is relative path under suite run directory
+            - dest_path is relative path under workflow run directory
               at target remote.
         """
         items = []
@@ -404,9 +404,9 @@ class TaskRemoteMgr:
         if comms_meth in [CommsMeth.SSH, CommsMeth.ZMQ]:
             # Contact file
             items.append((
-                get_contact_file(self.suite),
+                get_contact_file(self.workflow),
                 os.path.join(
-                    SuiteFiles.Service.DIRNAME,
-                    SuiteFiles.Service.CONTACT)))
+                    WorkflowFiles.Service.DIRNAME,
+                    WorkflowFiles.Service.CONTACT)))
 
         return items

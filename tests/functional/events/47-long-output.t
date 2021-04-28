@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ create_test_global_config "" "
 
 # Long STDOUT output
 
-init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
+init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduling]
     [[graph]]
         R1 = t1
@@ -41,18 +41,18 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" && echo
 __FLOW_CONFIG__
-cd "$SUITE_RUN_DIR" || exit 1
+cd "$WORKFLOW_RUN_DIR" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
 [t1.1] -triggered off []
 __REFLOG__
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
-cylc cat-log "${SUITE_NAME}" >'catlog'
+cylc cat-log "${WORKFLOW_NAME}" >'catlog'
 sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'catlog' >'log-1'
 contains_ok 'log-1' <<'__LOG__'
 GNU GENERAL PUBLIC LICENSE
@@ -67,7 +67,7 @@ run_ok "log-event-handler-ret-code" \
 purge
 
 # REPEAT: Long STDERR output
-init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
+init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduling]
     [[graph]]
         R1 = t1
@@ -77,19 +77,19 @@ init_suite "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
         [[[events]]]
             succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" >&2 && echo
 __FLOW_CONFIG__
-cd "${SUITE_RUN_DIR}" || exit 1
+cd "${WORKFLOW_RUN_DIR}" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
 [t1.1] -triggered off []
 __REFLOG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
-cylc cat-log "${SUITE_NAME}" >'catlog'
+cylc cat-log "${WORKFLOW_NAME}" >'catlog'
 sed -n 's/^.*\(GNU GENERAL PUBLIC LICENSE\)/\1/p' 'catlog' >'log-1'
 contains_ok 'log-1' <<'__LOG__'
 GNU GENERAL PUBLIC LICENSE

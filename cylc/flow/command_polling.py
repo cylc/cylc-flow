@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,7 @@ class Poller:
 
     def __init__(self, condition, interval, max_polls, args):
 
-        self.condition = condition  # e.g. "suite stopped"
+        self.condition = condition  # e.g. "workflow stopped"
 
         # check max_polls is an int
         try:

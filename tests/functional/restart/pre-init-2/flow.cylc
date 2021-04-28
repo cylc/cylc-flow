@@ -1,11 +1,11 @@
 # Test restart with an inter-cycle trigger and no initial cycle point in
-# the suite definition. See github #957.
+# the workflow definition. See github #957.
 
 # INSTRUCTIONS:
 # 1) first run to set up the restart:
-#      cylc play --fcp=20100808T00 SUITE 20100808T00
+#      cylc play --fcp=20100808T00 WORKFLOW 20100808T00
 # 2) the restart as reference test:
-#      cylc play --debug --reference-test SUITE
+#      cylc play --debug --reference-test WORKFLOW
 
 [scheduler]
     cycle point format = %Y%m%dT%H

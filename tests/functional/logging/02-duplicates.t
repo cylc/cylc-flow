@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,14 +19,14 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --no-detach "${SUITE_NAME}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --no-detach "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}-check" \
-    test -e "${SUITE_RUN_DIR}/work/2/pub/log-duplication"
+    test -e "${WORKFLOW_RUN_DIR}/work/2/pub/log-duplication"
 run_fail "${TEST_NAME_BASE}-check" \
-    test -s "${SUITE_RUN_DIR}/work/2/pub/log-duplication"
+    test -s "${WORKFLOW_RUN_DIR}/work/2/pub/log-duplication"
 #-------------------------------------------------------------------------------
 purge
 exit

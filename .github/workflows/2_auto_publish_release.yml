@@ -58,7 +58,7 @@ jobs:
         body: |
           See [${{ env.CHANGELOG_FILE }}](https://github.com/${{ github.repository }}/blob/master/${{ env.CHANGELOG_FILE }}) for detail.
 
-          [Cylc-8 is installed by conda - you don't need to download this cylc-flow release directly.](https://github.com/cylc/cylc-conda#cylc-8-conda-installation-instructions)
+          The Cylc-8 system can be installed by Conda - you don't need to download this release directly.
         # TODO: Get topmost changelog section somehow and use that as the body?
 
     - name: Comment on the release PR with the results & next steps

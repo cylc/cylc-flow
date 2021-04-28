@@ -6,7 +6,7 @@
 [scheduler]
     allow implicit tasks = True
 
-# Note that depending on the structure of the suite you may be able to
+# Note that depending on the structure of the workflow you may be able to
 # SIMPLY use a task family name in the graph to represent the entire
 # ensemble (which would be defined by inheritance under [runtime]).
 

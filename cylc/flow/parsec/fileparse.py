@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -94,6 +94,10 @@ _TRIPLE_QUOTE = {
     "'''": (_SINGLE_LINE_SINGLE, _MULTI_LINE_SINGLE),
     '"""': (_SINGLE_LINE_DOUBLE, _MULTI_LINE_DOUBLE),
 }
+
+_UNCLOSED_MULTILINE = re.compile(
+    r'(?<![\w>])\[.*\]'
+)
 
 
 def _concatenate(lines):
@@ -282,9 +286,12 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     fdir = os.path.dirname(fpath)
 
     # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).
-    suite_lib_python = os.path.join(fdir, "lib", "python")
-    if os.path.isdir(suite_lib_python) and suite_lib_python not in sys.path:
-        sys.path.append(suite_lib_python)
+    workflow_lib_python = os.path.join(fdir, "lib", "python")
+    if (
+        os.path.isdir(workflow_lib_python)
+        and workflow_lib_python not in sys.path
+    ):
+        sys.path.append(workflow_lib_python)
 
     LOG.debug('Reading file %s', fpath)
 
@@ -457,7 +464,19 @@ def parse(fpath, output_fname=None, template_vars=None):
                 addict(config, key, val, parents, index)
             else:
                 # no match
+                help_lines = None
+                if 'val' in locals() and _UNCLOSED_MULTILINE.search(val):
+                    # this might be an unclosed multiline string
+                    # provide a helpful error message
+                    key_name = ''.join(
+                        [f'[{parent}]' for parent in parents]
+                    ) + key
+                    help_lines = [f'Did you forget to close {key_name}?']
                 raise FileParseError(
-                    'Invalid line', index=index, line=line)
+                    'Invalid line',
+                    index=index,
+                    line=line,
+                    help_lines=help_lines
+                )
 
     return config

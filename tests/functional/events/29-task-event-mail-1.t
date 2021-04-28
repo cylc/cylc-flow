@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -29,20 +29,20 @@ create_test_global_config "
         smtp = ${TEST_SMTPD_HOST}
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "$SUITE_NAME"
+    cylc validate "$WORKFLOW_NAME"
 # shellcheck disable=SC2086
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "$SUITE_NAME"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "$WORKFLOW_NAME"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
 b'retry: 1/t1/01'
-b'see: http://localhost/stuff/${USER}/${SUITE_NAME}/'
+b'see: http://localhost/stuff/${USER}/${WORKFLOW_NAME}/'
 __LOG__
 run_ok "${TEST_NAME_BASE}-grep-log" \
-    grep -q "Subject: \\[1/t1/01 retry\\].* ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
+    grep -q "Subject: \\[1/t1/01 retry\\].* ${WORKFLOW_NAME}" "${TEST_SMTPD_LOG}"
 
 purge
 mock_smtpd_kill

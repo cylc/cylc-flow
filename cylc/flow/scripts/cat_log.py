@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
 
 """cylc cat-log [OPTIONS] ARGS
 
-View Cylc suite and job log files.
+View Cylc workflow and job log files.
 
 Print, view-in-editor, or tail-follow content, print path, or list directory,
-of local or remote task job and suite server logs. Job runner view commands
+of local or remote task job and scheduler logs. Job runner view commands
 (e.g. 'qcat') are used if defined in global config and the job is running.
 
 For standard log types use the short-cut option argument or full filename (e.g.
@@ -30,17 +30,18 @@ for job stdout "-f o" or "-f job.out" will do).
 To list the local job log directory of a remote task, choose "-m l" (directory
 list mode) and a local file, e.g. "-f a" (job-activity.log).
 
-If remote job logs are retrieved to the suite host on completion (global config
-'[JOB-HOST]retrieve job logs = True') and the job is not currently running, the
-local (retrieved) log will be accessed unless '-o/--force-remote' is used.
+If remote job logs are retrieved to the workflow host on completion (global
+config '[JOB-HOST]retrieve job logs = True') and the job is not currently
+running, the local (retrieved) log will be accessed unless '-o/--force-remote'
+is used.
 
-The correct cycle point format of the suite must be used for task job logs,
+The correct cycle point format of the workflow must be used for task job logs,
 but can be discovered with '--mode=d' (print-dir).
 
 Examples:
-  # for a task "bar.2020" in suite "foo"
+  # for a task "bar.2020" in workflow "foo"
 
-  # Print suite log:
+  # Print workflow log:
   $ cylc cat-log foo
 
   # Print task stdout:
@@ -70,11 +71,11 @@ from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import (
     expand_path,
-    get_remote_suite_run_job_dir,
-    get_suite_run_job_dir,
-    get_suite_run_log_name,
-    get_suite_run_pub_db_name)
-from cylc.flow.rundb import CylcSuiteDAO
+    get_remote_workflow_run_job_dir,
+    get_workflow_run_job_dir,
+    get_workflow_run_log_name,
+    get_workflow_run_pub_db_name)
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
@@ -89,11 +90,11 @@ from cylc.flow.platforms import get_platform
 # exec <remote-command> (affects whether my parent process or I get inherited
 # by init).
 #
-# Example: On host A: cylc cat-log --host=B <suite> <task-on-C>
+# Example: On host A: cylc cat-log --host=B <workflow> <task-on-C>
 #    => on host A: cat-log spawns subprocess
-#                     ssh B "cylc cat-log <suite> <task-on-C>"
+#                     ssh B "cylc cat-log <workflow> <task-on-C>"
 #      => on host B: cat-log spawns subprocess
-#                     ssh C "cylc cat-log --remote <suite> <task-on-C>"
+#                     ssh C "cylc cat-log --remote <workflow> <task-on-C>"
 #        => on host C: cat-log spawns subprocess
 #                       tail -f <task-on-C>.out
 #
@@ -159,7 +160,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
     """
     # The log file path may contain '$USER' to be evaluated on the job host.
     if mode == 'print':
-        # Print location even if the suite does not exist yet.
+        # Print location even if the workflow does not exist yet.
         print(logpath)
         return 0
     elif not os.path.exists(logpath) and batchview_cmd is None:
@@ -213,7 +214,8 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
 def get_option_parser():
     """Set up the CLI option parser."""
     parser = COP(
-        __doc__, argdoc=[("REG", "Suite name"), ("[TASK-ID]", """Task ID""")])
+        __doc__, argdoc=[
+            ("REG", "Workflow name"), ("[TASK-ID]", """Task ID""")])
 
     parser.add_option(
         "-f", "--file",
@@ -232,14 +234,14 @@ def get_option_parser():
 
     parser.add_option(
         "-r", "--rotation",
-        help="Suite log integer rotation number. 0 for current, 1 for "
+        help="Workflow log integer rotation number. 0 for current, 1 for "
         "next oldest, etc.",
         metavar="INT", action="store", dest="rotation_num")
 
     parser.add_option(
         "-o", "--force-remote",
         help="View remote logs remotely even if they have been retrieved"
-        " to the suite host (default False).",
+        " to the workflow host (default False).",
         action="store_true", default=False, dest="force_remote")
 
     parser.add_option(
@@ -260,16 +262,16 @@ def get_option_parser():
     return parser
 
 
-def get_task_job_attrs(suite_name, point, task, submit_num):
+def get_task_job_attrs(workflow_name, point, task, submit_num):
     """Return job (platform, job_runner_name, live_job_id).
 
     live_job_id is the job ID if job is running, else None.
 
     """
-    suite_dao = CylcSuiteDAO(
-        get_suite_run_pub_db_name(suite_name), is_public=True)
-    task_job_data = suite_dao.select_task_job(point, task, submit_num)
-    suite_dao.close()
+    workflow_dao = CylcWorkflowDAO(
+        get_workflow_run_pub_db_name(workflow_name), is_public=True)
+    task_job_data = workflow_dao.select_task_job(point, task, submit_num)
+    workflow_dao.close()
     if task_job_data is None:
         return (None, None, None)
     job_runner_name = task_job_data["job_runner_name"]
@@ -320,7 +322,7 @@ def main(parser, options, *args, color=False):
     """
     if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
-        # Tail and batchview commands come from global config on suite host).
+        # Tail and batchview commands from global config on workflow host).
         logpath, mode, tail_tmpl = options.remote_args[0:3]
         logpath = expand_path(logpath)
         tail_tmpl = expand_path(tail_tmpl)
@@ -334,7 +336,7 @@ def main(parser, options, *args, color=False):
             sys.exit(res)
         return
 
-    suite_name = args[0]
+    workflow_name = args[0]
     # Get long-format mode.
     try:
         mode = MODES[options.mode]
@@ -342,11 +344,11 @@ def main(parser, options, *args, color=False):
         mode = options.mode
 
     if len(args) == 1:
-        # Cat suite logs, local only.
+        # Cat workflow logs, local only.
         if options.filename is not None:
             raise UserInputError("The '-f' option is for job logs only.")
 
-        logpath = get_suite_run_log_name(suite_name)
+        logpath = get_workflow_run_log_name(workflow_name)
         if options.rotation_num:
             logs = glob('%s.*' % logpath)
             logs.sort(key=os.path.getmtime, reverse=True)
@@ -366,10 +368,10 @@ def main(parser, options, *args, color=False):
         return
 
     if len(args) == 2:
-        # Cat task job logs, may be on suite or job host.
+        # Cat task job logs, may be on workflow or job host.
         if options.rotation_num is not None:
             raise UserInputError(
-                "only suite (not job) logs get rotated")
+                "only workflow (not job) logs get rotated")
         task_id = args[1]
         try:
             task, point = TaskID.split(task_id)
@@ -390,7 +392,7 @@ def main(parser, options, *args, color=False):
                 # Is already long form (standard log, or custom).
                 pass
         platform_name, job_runner_name, live_job_id = get_task_job_attrs(
-            suite_name, point, task, options.submit_num)
+            workflow_name, point, task, options.submit_num)
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
@@ -422,9 +424,9 @@ def main(parser, options, *args, color=False):
         log_is_retrieved = (platform['retrieve job logs']
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
-            logpath = os.path.normpath(get_remote_suite_run_job_dir(
-                platform,
-                suite_name, point, task, options.submit_num, options.filename))
+            logpath = os.path.normpath(get_remote_workflow_run_job_dir(
+                workflow_name, point, task, options.submit_num,
+                options.filename))
             tail_tmpl = platform["tail command template"]
             # Reinvoke the cat-log command on the remote account.
             cmd = ['cat-log']
@@ -434,7 +436,7 @@ def main(parser, options, *args, color=False):
                 cmd.append('--remote-arg=%s' % quote(item))
             if batchview_cmd:
                 cmd.append('--remote-arg=%s' % quote(batchview_cmd))
-            cmd.append(suite_name)
+            cmd.append(workflow_name)
             is_edit_mode = (mode == 'edit')
             try:
                 proc = remote_cylc_cmd(
@@ -459,8 +461,9 @@ def main(parser, options, *args, color=False):
                     out.seek(0, 0)
         else:
             # Local task job or local job log.
-            logpath = os.path.normpath(get_suite_run_job_dir(
-                suite_name, point, task, options.submit_num, options.filename))
+            logpath = os.path.normpath(get_workflow_run_job_dir(
+                workflow_name, point, task, options.submit_num,
+                options.filename))
             tail_tmpl = os.path.expandvars(platform["tail command template"])
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
                            color=color)

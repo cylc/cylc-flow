@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,29 +23,29 @@
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
    [[graph]]
       R1 = foo
 [runtime]
    [[foo]]
       script = """
-cylc message -s WARNING -- ${CYLC_SUITE_NAME} ${CYLC_TASK_JOB} "cat"
-cylc message -s WARNING -- ${CYLC_SUITE_NAME} ${CYLC_TASK_JOB} "dog"
-cylc message -s WARNING -- ${CYLC_SUITE_NAME} ${CYLC_TASK_JOB} "fish"
-cylc message -s WARNING -- ${CYLC_SUITE_NAME} ${CYLC_TASK_JOB} "guinea pig"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "cat"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "dog"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "fish"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "guinea pig"
 """
       [[[events]]]
         handler events = warning
         handlers = echo "HANDLED %(message)s"
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-cylc cat-log "${SUITE_NAME}" \
+cylc cat-log "${WORKFLOW_NAME}" \
     | sed -n -e 's/^.*\(\[(('"'"'event-handler-00'"'"'.*$\)/\1/p' >'log'
 
 contains_ok log <<__END__

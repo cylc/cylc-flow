@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 set_test_number 2
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!Jinja2
 
 {% from "cylc.flow" import LOG %}
@@ -32,7 +32,7 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}" --debug
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}" --debug
 grep_ok 'Hello World!' "${TEST_NAME}.stderr"  # debug lines go to stderr
 
 exit

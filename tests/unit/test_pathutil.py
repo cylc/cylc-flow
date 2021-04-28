@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,28 +18,27 @@
 import logging
 import os
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable, Iterable, List
 import pytest
-from unittest.mock import Mock, patch, call
+from unittest.mock import patch, call
 
 from cylc.flow.exceptions import WorkflowFilesError
 from cylc.flow.pathutil import (
     expand_path,
     get_dirs_to_symlink,
-    get_remote_suite_run_dir,
-    get_remote_suite_run_job_dir,
-    get_remote_suite_work_dir,
+    get_remote_workflow_run_dir,
+    get_remote_workflow_run_job_dir,
     get_workflow_run_dir,
-    get_suite_run_job_dir,
-    get_suite_run_log_dir,
-    get_suite_run_log_name,
-    get_suite_run_pub_db_name,
-    get_suite_run_config_log_dir,
-    get_suite_run_share_dir,
-    get_suite_run_work_dir,
-    get_suite_test_log_name,
+    get_workflow_run_job_dir,
+    get_workflow_run_log_dir,
+    get_workflow_run_log_name,
+    get_workflow_run_pub_db_name,
+    get_workflow_run_config_log_dir,
+    get_workflow_run_share_dir,
+    get_workflow_run_work_dir,
+    get_workflow_test_log_name,
     make_localhost_symlinks,
-    make_suite_run_tree,
+    make_workflow_run_tree,
     remove_dir
 )
 
@@ -66,69 +65,52 @@ def test_expand_path(
 @pytest.mark.parametrize(
     'func, extra_args, expected',
     [
-        (get_remote_suite_run_dir, (), "$HOME/annapurna/foo"),
+        (get_remote_workflow_run_dir, (), "$HOME/cylc-run/foo"),
         (
-            get_remote_suite_run_dir,
+            get_remote_workflow_run_dir,
             ("comes", "true"),
-            "$HOME/annapurna/foo/comes/true",
+            "$HOME/cylc-run/foo/comes/true",
         ),
         (
-            get_remote_suite_run_job_dir,
+            get_remote_workflow_run_job_dir,
             (),
-            "$HOME/annapurna/foo/log/job"),
+            "$HOME/cylc-run/foo/log/job"),
         (
-            get_remote_suite_run_job_dir,
+            get_remote_workflow_run_job_dir,
             ("comes", "true"),
-            "$HOME/annapurna/foo/log/job/comes/true",
-        ),
-        (get_remote_suite_work_dir, (), "$HOME/K2/foo"),
-        (
-            get_remote_suite_work_dir,
-            ("comes", "true"),
-            "$HOME/K2/foo/comes/true",
-        ),
+            "$HOME/cylc-run/foo/log/job/comes/true",
+        )
     ]
 )
-def test_get_remote_suite_run_dirs(
-    func, extra_args, expected
-):
-    """
-    Tests for get_remote_suite_run_[|job|work]_dir
-    Pick a unusual cylc dir names to ensure not picking up system settings
-    Pick different names for run and work dir to ensure that the test
-    isn't passing by accident.
-    """
-    platform = {
-        'run directory': '$HOME/annapurna',
-        'work directory': '$HOME/K2',
-    }
+def test_get_remote_workflow_run_dirs(
+    func: Callable, extra_args: Iterable[str], expected: str,
+) -> None:
+    """Tests for get_remote_workflow_run_[|job|work]_dir"""
     if extra_args:
-        result = func(platform, 'foo', *extra_args)
+        result = func('foo', *extra_args)
     else:
-        result = func(platform, 'foo')
+        result = func('foo')
     assert result == expected
 
 
 @pytest.mark.parametrize(
     'func, tail1',
     [(get_workflow_run_dir, ''),
-     (get_suite_run_job_dir, '/log/job'),
-     (get_suite_run_log_dir, '/log/suite'),
-     (get_suite_run_config_log_dir, '/log/flow-config'),
-     (get_suite_run_share_dir, '/share'),
-     (get_suite_run_work_dir, '/work')]
+     (get_workflow_run_job_dir, '/log/job'),
+     (get_workflow_run_log_dir, '/log/workflow'),
+     (get_workflow_run_config_log_dir, '/log/flow-config'),
+     (get_workflow_run_share_dir, '/share'),
+     (get_workflow_run_work_dir, '/work')]
 )
 @pytest.mark.parametrize(
     'args, tail2',
     [([], ''),
      (['comes', 'true'], '/comes/true')]
 )
-@patch('cylc.flow.pathutil.platform_from_name')
 def test_get_workflow_run_dirs(
-    mocked_platform: Mock,
     func: Callable, tail1: str, args: List[str], tail2: str
 ) -> None:
-    """Usage of get_suite_run_*dir.
+    """Usage of get_workflow_run_*dir.
 
     Params:
         func: get_remote_* function to test
@@ -137,28 +119,19 @@ def test_get_workflow_run_dirs(
         tail2: expected tail of return value from extra args
     """
     homedir = os.getenv("HOME")
-    mocked_platform.return_value = {
-        'run directory': '$HOME/cylc-run',
-        'work directory': '$HOME/cylc-run'
-    }
 
     expected_result = f'{homedir}/cylc-run/my-workflow/dream{tail1}{tail2}'
     assert func('my-workflow/dream', *args) == expected_result
-    mocked_platform.assert_called_with()
 
 
 @pytest.mark.parametrize(
     'func, tail',
-    [(get_suite_run_log_name, '/log/suite/log'),
-     (get_suite_run_pub_db_name, '/log/db'),
-     (get_suite_test_log_name, '/log/suite/reftest.log')]
+    [(get_workflow_run_log_name, '/log/workflow/log'),
+     (get_workflow_run_pub_db_name, '/log/db'),
+     (get_workflow_test_log_name, '/log/workflow/reftest.log')]
 )
-@patch('cylc.flow.pathutil.platform_from_name')
-def test_get_suite_run_names(
-    mocked_platform: Mock,
-    func: Callable, tail: str
-) -> None:
-    """Usage of get_suite_run_*name.
+def test_get_workflow_run_names(func: Callable, tail: str) -> None:
+    """Usage of get_workflow_run_*name.
 
     Params:
         func: get_remote_* function to test
@@ -166,52 +139,37 @@ def test_get_suite_run_names(
         tail: expected tail of return value from configuration
     """
     homedir = os.getenv("HOME")
-    mocked_platform.return_value = {
-        'run directory': '$HOME/cylc-run',
-        'work directory': '$HOME/cylc-run'
-    }
 
     assert (
-        func('my-suite/dream') == f'{homedir}/cylc-run/my-suite/dream{tail}'
+        func('my-workflow/dream') ==
+        f'{homedir}/cylc-run/my-workflow/dream{tail}'
     )
-    mocked_platform.assert_called_with()
 
 
-@pytest.mark.parametrize(
-    'subdir',
-    [
-        '',
-        '/log/suite',
-        '/log/job',
-        '/log/flow-config',
-        '/share',
-        '/work'
-    ]
-)
-def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
-    glbl_conf_str = f'''
-        [platforms]
-            [[localhost]]
-                run directory = {tmpdir}
-                work directory = {tmpdir}
-        '''
+def test_make_workflow_run_tree(
+    tmp_run_dir: Callable, caplog: pytest.LogCaptureFixture
+) -> None:
+    run_dir: Path = tmp_run_dir('my-workflow')
+    caplog.set_level(logging.DEBUG)  # Only used for debugging test
 
-    mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', glbl_conf_str)
-    mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', glbl_conf_str)
-
-    caplog.set_level(logging.DEBUG)
-
-    make_suite_run_tree('my-workflow')
-
+    make_workflow_run_tree('my-workflow')
     # Check that directories have been created
-    assert (tmpdir / 'my-workflow' / subdir).isdir() is True
+    for subdir in [
+        '',
+        'log/workflow',
+        'log/job',
+        'log/flow-config',
+        'share',
+        'work'
+    ]:
+        assert (run_dir / subdir).is_dir() is True
 
 
 @pytest.mark.parametrize(
-    'suite, install_target, mocked_glbl_cfg, output',
+    'workflow, install_target, mocked_glbl_cfg, output',
     [
         (  # basic
-            'suite1', 'install_target_1',
+            'workflow1', 'install_target_1',
             '''[symlink dirs]
             [[install_target_1]]
                 run = $DEE
@@ -219,14 +177,14 @@ def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
                 log = $DUH
                 share = $DOH
                 share/cycle = $DAH''', {
-                'run': '$DEE/cylc-run/suite1',
-                'work': '$DAH/cylc-run/suite1/work',
-                'log': '$DUH/cylc-run/suite1/log',
-                'share': '$DOH/cylc-run/suite1/share',
-                'share/cycle': '$DAH/cylc-run/suite1/share/cycle'
+                'run': '$DEE/cylc-run/workflow1',
+                'work': '$DAH/cylc-run/workflow1/work',
+                'log': '$DUH/cylc-run/workflow1/log',
+                'share': '$DOH/cylc-run/workflow1/share',
+                'share/cycle': '$DAH/cylc-run/workflow1/share/cycle'
             }),
         (  # remove nested run symlinks
-            'suite2', 'install_target_2',
+            'workflow2', 'install_target_2',
             '''
         [symlink dirs]
             [[install_target_2]]
@@ -237,27 +195,27 @@ def test_make_suite_run_tree(caplog, tmpdir, mock_glbl_cfg, subdir):
                 share/cycle = $DAH
 
         ''', {
-                'run': '$DEE/cylc-run/suite2',
-                'work': '$DAH/cylc-run/suite2/work',
-                'share': '$DOH/cylc-run/suite2/share',
-                'share/cycle': '$DAH/cylc-run/suite2/share/cycle'
+                'run': '$DEE/cylc-run/workflow2',
+                'work': '$DAH/cylc-run/workflow2/work',
+                'share': '$DOH/cylc-run/workflow2/share',
+                'share/cycle': '$DAH/cylc-run/workflow2/share/cycle'
             }),
         (  # remove only nested run symlinks
-            'suite3', 'install_target_3', '''
+            'workflow3', 'install_target_3', '''
         [symlink dirs]
             [[install_target_3]]
                 run = $DOH
                 log = $DEE
                 share = $DEE
         ''', {
-                'run': '$DOH/cylc-run/suite3',
-                'log': '$DEE/cylc-run/suite3/log',
-                'share': '$DEE/cylc-run/suite3/share'})
+                'run': '$DOH/cylc-run/workflow3',
+                'log': '$DEE/cylc-run/workflow3/log',
+                'share': '$DEE/cylc-run/workflow3/share'})
     ], ids=["1", "2", "3"])
 def test_get_dirs_to_symlink(
-        suite, install_target, mocked_glbl_cfg, output, mock_glbl_cfg):
+        workflow, install_target, mocked_glbl_cfg, output, mock_glbl_cfg):
     mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', mocked_glbl_cfg)
-    dirs = get_dirs_to_symlink(install_target, suite)
+    dirs = get_dirs_to_symlink(install_target, workflow)
     assert dirs == output
 
 
@@ -271,12 +229,12 @@ def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
         mocked_get_workflow_run_dir, mocked_expandvars):
 
     mocked_dirs_to_symlink.return_value = {
-        'run': '$DOH/suite3',
-        'log': '$DEE/suite3/log',
-        'share': '$DEE/suite3/share'}
+        'run': '$DOH/workflow3',
+        'log': '$DEE/workflow3/log',
+        'share': '$DEE/workflow3/share'}
     mocked_get_workflow_run_dir.return_value = "rund"
     mocked_expandvars.return_value = "expanded"
-    make_localhost_symlinks('rund', 'suite')
+    make_localhost_symlinks('rund', 'workflow')
     mocked_make_symlink.assert_has_calls([
         call('expanded', 'rund'),
         call('expanded', 'rund/log'),

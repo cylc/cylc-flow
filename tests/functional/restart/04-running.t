@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a simple suite with a task still running (orphaned)
+# Test restarting a simple workflow with a task still running (orphaned)
 . "$(dirname "$0")/test_header"
 set_test_number 5
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
         abort on stalled = True
@@ -31,22 +31,22 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t1]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc stop --now "${CYLC_SUITE_NAME}"
-            cylc__job__poll_grep_suite_log -F 'Run: (re)start=1'
+            cylc stop --now "${CYLC_WORKFLOW_NAME}"
+            cylc__job__poll_grep_workflow_log -F 'Run: (re)start=1'
             # Should be good to send succeeded message at this point
         """
 __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'sqlite3.out'
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT cycle, name, status FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <<'__DB_DUMP__'
 1|t1|running
 __DB_DUMP__
-suite_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'sqlite3.out'
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT * FROM task_pool' >'sqlite3.out'
 cmp_ok 'sqlite3.out' <'/dev/null'
 #-------------------------------------------------------------------------------
 purge

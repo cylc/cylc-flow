@@ -34,8 +34,9 @@ namespace, under `cylc.jinja.filters`.
 
 Cylc Review was also removed in this version.
 
-Cylc 7 suites cannot be restarted in Cylc 8 using `cylc restart`, but they
-can still be run using `cylc run` ([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
+Cylc 7 suites cannot be *restarted* (from previous state) with Cylc 8, but they
+can still be started from scratch
+([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
 
 Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/pull/3906))
 due to being a seldom-used feature. Workflows can still be restarted from the
@@ -47,7 +48,28 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0b1 (<span actions:bind='release-date'>Released 2021-04-??</span>)__
+## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-??-??</span>)__
+
+### Enhancements
+
+[#4174](https://github.com/cylc/cylc-flow/pull/4174) - Terminology: replace
+"suite" with "workflow".
+
+[#4177](https://github.com/cylc/cylc-flow/pull/4177) - Remove obsolete
+configuration items from `global.cylc[platforms][<platform name>]`:
+`run directory`, `work directory` and `suite definition directory`. This
+functionality is now provided by `[symlink dirs]`.
+
+### Fixes
+
+[#4180](https://github.com/cylc/cylc-flow/pull/4180) - Fix bug where installing
+a workflow that uses the deprecated `suite.rc` filename would symlink `flow.cylc`
+to the `suite.rc` in the source dir instead of the run dir. Also fixes a couple
+of other, small bugs.
+
+
+-------------------------------------------------------------------------------
+## __cylc-8.0b1 (<span actions:bind='release-date'>Released 2021-04-21</span>)__
 
 ### Enhancements
 
@@ -64,12 +86,18 @@ Replace the job "host" field with "platform" in the GraphQL schema.
 Fix a host ⇒ platform upgrade bug where host names were being popped from task
 configs causing subsequent tasks to run on localhost.
 
-[#4173](https://github.com/cylc/cylc-flow/pull/4173)
+[#4173](https://github.com/cylc/cylc-flow/pull/4173) -
 Fix the state totals shown in both the UI and TUI, including incorrect counts
 during workflow run and post pause.
 
 [#4168](https://github.com/cylc/cylc-flow/pull/4168) - Fix bug where any
 errors during workflow shutdown were not logged.
+
+[#4161](https://github.com/cylc/cylc-flow/pull/4161) - Fix bug in in `cylc install`
+where a workflow would be installed with the wrong name.
+
+[#4188](https://github.com/cylc/cylc-flow/pull/4188) - Fix incorrect usage
+examples for `cylc install`.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b0 (<span actions:bind='release-date'>Released 2021-03-29</span>)__

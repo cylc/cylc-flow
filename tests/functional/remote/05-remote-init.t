@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 # Test remote initialisation - when remote init fails for an install target,
 # check other platforms with same install target can be initialised.
 
-export REQUIRE_PLATFORM='loc:remote fs:indep'
+export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
@@ -34,15 +34,15 @@ create_test_global_config "" "
     "
 
 #-------------------------------------------------------------------------------
-install_suite
+install_workflow
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 NAME='select-task-jobs.out'
-DB_FILE="${SUITE_RUN_DIR}/log/db"
+DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
 sqlite3 "${DB_FILE}" \
     'SELECT name, submit_status, run_status, platform_name
      FROM task_jobs ORDER BY name' \
@@ -55,7 +55,7 @@ f|0|0|ariel
 g|0|0|localhost
 __SELECT__
 
-grep_ok "WARNING - Suite stalled with unhandled failed tasks:" \
+grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
     "${TEST_NAME_BASE}-run.stderr"
 grep_ok "* b.1 (submit-failed)
 	* a.1 (submit-failed)" \

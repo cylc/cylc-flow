@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,7 +28,6 @@ import pytest
 from . import (
     _rm_if_empty,
     _poll_file,
-    _expanduser
 )
 
 
@@ -52,10 +51,3 @@ async def test_poll_file(tmp_path):
     await _poll_file(path, exists=False)
     path.touch()
     await _poll_file(path, exists=True)
-
-
-def test_expanduser():
-    """It should expand ~ and $HOME."""
-    assert _expanduser('a/~/b') == Path('a/~/b').expanduser()
-    assert _expanduser('a/$HOME/b') == Path('a/~/b').expanduser()
-    assert _expanduser('a/${HOME}/b') == Path('a/~/b').expanduser()

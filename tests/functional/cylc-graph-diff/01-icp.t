@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test for "cylc graph-diff SUITE1 SUITE2 -- ICP".
+# Test for "cylc graph-diff WORKFLOW1 WORKFLOW2 -- ICP".
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
 
-init_suite "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
 [scheduler]
     UTC mode = True
 [scheduling]
@@ -31,8 +31,8 @@ init_suite "${TEST_NAME_BASE}-1" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 # shellcheck disable=SC2153
-SUITE_NAME1="${SUITE_NAME}"
-init_suite "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
+WORKFLOW_NAME1="${WORKFLOW_NAME}"
+init_workflow "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
 [scheduler]
     UTC mode = True
 [scheduling]
@@ -43,10 +43,10 @@ init_suite "${TEST_NAME_BASE}-2" <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 # shellcheck disable=SC2153
-SUITE_NAME2="${SUITE_NAME}"
+WORKFLOW_NAME2="${WORKFLOW_NAME}"
 
 run_fail "${TEST_NAME_BASE}" \
-    cylc graph "${SUITE_NAME1}" --diff "${SUITE_NAME2}" --icp='20200101T0000Z'
+    cylc graph "${WORKFLOW_NAME1}" --diff "${WORKFLOW_NAME2}" --icp='20200101T0000Z'
 contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 -edge "foo.20200101T0000Z" "bar.20200101T0000Z"
 +edge "food.20200101T0000Z" "barley.20200101T0000Z"
@@ -58,6 +58,6 @@ contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 
-purge "${SUITE_NAME1}"
-purge "${SUITE_NAME2}"
+purge "${WORKFLOW_NAME1}"
+purge "${WORKFLOW_NAME2}"
 exit

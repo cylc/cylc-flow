@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ set_test_number 15
 
 # This test relies on jobs inheriting the scheduler environment: the job
 # submission command bin/talkingnonsense reads COPYING from $CYLC_REPO_DIR
-# and writes to $CYLC_SUITE_RUN_DIR.
+# and writes to $CYLC_WORKFLOW_RUN_DIR.
 
 create_test_global_config "
 [scheduler]
@@ -36,15 +36,15 @@ create_test_global_config "
         clean job submission environment = False
 "
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-suite-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-workflow-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # Logged killed jobs-submit command
-cylc cat-log "${SUITE_NAME}" | sed -n '
+cylc cat-log "${WORKFLOW_NAME}" | sed -n '
 /\[jobs-submit \(cmd\|ret_code\|out\|err\)\]/,+2{
     s/^.*\(\[jobs-submit\)/\1/p
 }' >'log'
@@ -57,11 +57,11 @@ __OUT__
 sed -n 's/\(\[jobs-submit out\]\) .*\(|1\/\)/\1 \2/p' 'log' >'log2'
 N=0
 while read -r; do
-    TAIL="${REPLY#${SUITE_RUN_DIR}/log/job/}"
+    TAIL="${REPLY#${WORKFLOW_RUN_DIR}/log/job/}"
     TASK_JOB="${TAIL%/job}"
     contains_ok 'log2' <<<"[jobs-submit out] |${TASK_JOB}|1|None"
     ((N += 1))
-done <"${SUITE_RUN_DIR}/talkingnonsense.out"
+done <"${WORKFLOW_RUN_DIR}/talkingnonsense.out"
 # Logged jobs that did not call talkingnonsense
 for I in $(eval echo "{$N..9}"); do
     contains_ok 'log2' <<<"[jobs-submit out] |1/nh${I}/01|1"
@@ -69,7 +69,7 @@ done
 
 # Task pool in database contains the correct states
 TEST_NAME="${TEST_NAME_BASE}-db-task-pool"
-DB_FILE="${SUITE_RUN_DIR}/log/db"
+DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
 QUERY='SELECT cycle, name, status, is_held FROM task_pool'
 run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
 cmp_ok "${TEST_NAME}.stdout" << '__OUT__'

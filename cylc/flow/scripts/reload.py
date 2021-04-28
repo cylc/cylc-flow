@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,19 +18,19 @@
 
 """cylc reload [OPTIONS] ARGS
 
-Reload the configuration of a running suite.
+Reload the configuration of a running workflow.
 
-Tell a suite to reload its definition at run time. All settings including task
-definitions, with the exception of suite log configuration, can be changed on
-reload. Changes to task definitions take effect immediately, unless a task is
-already running at reload time.
+Tell a workflow to reload its definition at run time. All settings including
+task definitions, with the exception of workflow log configuration, can be
+changed on reload. Changes to task definitions take effect immediately, unless
+a task is already running at reload time.
 
-If the suite was started with Jinja2 template variables set on the command line
-(cylc play --set 'FOO="bar"' REG) the same template settings apply to the
+If the workflow was started with Jinja2 template variables set on the command
+line (cylc play --set 'FOO="bar"' REG) the same template settings apply to the
 reload (only changes to the flow.cylc file itself are reloaded).
 
-If the modified suite definition does not parse, failure to reload will
-be reported but no harm will be done to the running suite."""
+If the modified workflow definition does not parse, failure to reload will
+be reported but no harm will be done to the running workflow."""
 
 import os.path
 
@@ -58,14 +58,14 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite):
-    suite = os.path.normpath(suite)
-    pclient = get_client(suite, timeout=options.comms_timeout)
+def main(parser, options, workflow):
+    workflow = os.path.normpath(workflow)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
         }
     }
 

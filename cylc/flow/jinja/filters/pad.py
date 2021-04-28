@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 def pad(value, length, fillchar=' '):
     """Pads a string to some length with a fill character
 
-    Useful for generating task names and related values in ensemble suites.
+    Useful for generating task names and related values in ensemble workflows.
 
     Args:
         value (str):

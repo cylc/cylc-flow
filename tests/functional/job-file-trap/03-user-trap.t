@@ -1,5 +1,5 @@
 #!/bin/bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 5
 
-init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
+init_workflow "${TEST_NAME_BASE}" <<'__WORKFLOW__'
 [cylc]
     [[events]]
         abort on inactivity = True
@@ -35,7 +35,7 @@ init_suite "${TEST_NAME_BASE}" <<'__SUITERC__'
 # ignore TERM signal for the next child
 trap "" TERM
 (
-    cylc__job__poll_grep_suite_log "Suite shutting down"
+    cylc__job__poll_grep_workflow_log "Workflow shutting down"
     sleep 5
     echo "The undead child shall speak" >>"${CYLC_TASK_LOG_ROOT}.testout"
 ) &
@@ -53,22 +53,22 @@ wait
 echo "Exit with code ${CYLC_TASK_USER_SCRIPT_EXITCODE:-unknown}" \
     >>"${CYLC_TASK_LOG_ROOT}.testout"
 """
-__SUITERC__
+__WORKFLOW__
 
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 # Needs to be detaching:
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 
-JOB_LOG_ROOT="${SUITE_RUN_DIR}/log/job/1/foo/01/job"
+JOB_LOG_ROOT="${WORKFLOW_RUN_DIR}/log/job/1/foo/01/job"
 
 # Kill the job and see what happened
 poll_grep "CYLC_JOB_PID=" "${JOB_LOG_ROOT}.status"
 JOB_PID=$(awk -F= '/CYLC_JOB_PID=/{print $2}' "${JOB_LOG_ROOT}.status")
 kill -s "TERM" "${JOB_PID}"
-poll_suite_stopped
+poll_workflow_stopped
 
-# Suite is down after failed message
+# Workflow is down after failed message
 grep_ok "CYLC_JOB_EXIT=TERM" "${JOB_LOG_ROOT}.status"
 
 # The job should be still running and waiting for the user script

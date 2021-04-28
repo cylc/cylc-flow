@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -24,23 +24,23 @@ else
     set_test_number 3
 fi
 #-------------------------------------------------------------------------------
-CHOSEN_SUITE="$(basename "$0" | sed "s/^.*-\(.*\)\.t/\1/g")"
-install_suite "${TEST_NAME_BASE}" "${CHOSEN_SUITE}"
+CHOSEN_WORKFLOW="$(basename "$0" | sed "s/^.*-\(.*\)\.t/\1/g")"
+install_workflow "${TEST_NAME_BASE}" "${CHOSEN_WORKFLOW}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-graph"
-graph_suite "${SUITE_NAME}" "${SUITE_NAME}.graph.plain" "20000101T00" "20010102T12"
-cmp_ok "${SUITE_NAME}.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref"
+graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain" "20000101T00" "20010102T12"
+cmp_ok "${WORKFLOW_NAME}.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_WORKFLOW/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 if [[ -f "$TEST_SOURCE_DIR/${TEST_NAME_BASE}-find.out" ]]; then
     TEST_NAME="${TEST_NAME_BASE}-find"
-    SUITE_DIR="$RUN_DIR/${SUITE_NAME}"
-    (cd "${SUITE_DIR}" && find 'log/job' 'work' -type f) | sort -V >"${TEST_NAME}"
+    WORKFLOW_DIR="$RUN_DIR/${WORKFLOW_NAME}"
+    (cd "${WORKFLOW_DIR}" && find 'log/job' 'work' -type f) | sort -V >"${TEST_NAME}"
     cmp_ok "${TEST_NAME}" "$TEST_SOURCE_DIR/${TEST_NAME_BASE}-find.out"
 fi
 #-------------------------------------------------------------------------------

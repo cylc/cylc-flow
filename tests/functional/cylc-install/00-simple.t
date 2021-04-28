@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -29,132 +29,132 @@ mkdir "cylc-src"
 # -----------------------------------------------------------------------------
 # Test default name: "cylc install" (flow in $PWD, no args)
 TEST_NAME="${TEST_NAME_BASE}-basic"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
+make_rnd_workflow
+pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 popd || exit 1
-purge_rnd_suite
+purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test default name: "cylc install REG" (flow in confgured source dir)
-make_rnd_suite
+make_rnd_workflow
 # Before adding workflow to ~/cylc-src/, check install fails:
 TEST_NAME="${TEST_NAME_BASE}-REG-fail-no-src-dir"
-run_fail "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}"
 # Now add workflow to ~/cylc-src/
-RND_SUITE_SOURCE="${PWD}/cylc-src/${RND_SUITE_NAME}"
-mv "$RND_SUITE_NAME" "${PWD}/cylc-src/"
-pushd "${RND_SUITE_SOURCE}" || exit 1
+RND_WORKFLOW_SOURCE="${PWD}/cylc-src/${RND_WORKFLOW_NAME}"
+mv "$RND_WORKFLOW_NAME" "${PWD}/cylc-src/"
+pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 # Test REG and --directory are mutually exclusive
 TEST_NAME="${TEST_NAME_BASE}-REG-and--directory-forbidden"
-run_fail "${TEST_NAME}" cylc install "${RND_SUITE_NAME}" -C "${RND_SUITE_SOURCE}"
+run_fail "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 cylc: error: REG and --directory are mutually exclusive.
 __ERR__
 # Finally test normal case
 TEST_NAME="${TEST_NAME_BASE}-REG-install-ok"
-run_ok "${TEST_NAME}" cylc install "${RND_SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 popd || exit 1
-purge_rnd_suite
+purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test cylc install succeeds if suite.rc file in source dir
-TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
-make_rnd_suite
-rm -f "${RND_SUITE_SOURCE}/flow.cylc"
-touch "${RND_SUITE_SOURCE}/suite.rc"
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" -C "${RND_SUITE_SOURCE}"
+# See also tests/functional/deprecations/03-suiterc.t
+TEST_NAME="${TEST_NAME_BASE}-suite.rc"
+make_rnd_workflow
+rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
+touch "${RND_WORKFLOW_SOURCE}/suite.rc"
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 # test symlink not made in source dir
 exists_fail "flow.cylc"
 # test symlink correctly made in run dir
-pushd "${RND_SUITE_RUNDIR}/run1" || exit 1
+pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
 exists_ok "flow.cylc"
-if [[ $(readlink "${RND_SUITE_RUNDIR}/run1/flow.cylc") == "${RND_SUITE_RUNDIR}/run1/suite.rc" ]] ; then
-    ok "symlink.suite.rc"
-else
-    fail "symlink.suite.rc"
-fi
 
-INSTALL_LOG="$(find "${RND_SUITE_RUNDIR}/run1/log/install" -type f -name '*.log')"
+TEST_NAME="${TEST_NAME_BASE}-suite.rc-flow.cylc-readlink"
+readlink "flow.cylc" > "${TEST_NAME}.out"
+cmp_ok "${TEST_NAME}.out" <<< "${RND_WORKFLOW_RUNDIR}/run1/suite.rc"
+
+INSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*.log')"
 grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${INSTALL_LOG}"
 popd || exit 1
 
-purge_rnd_suite
+purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test default path: "cylc install" --no-run-name (flow in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-pwd-no-run-name"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
+make_rnd_workflow
+pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install --no-run-name
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}
 __OUT__
 popd || exit 1
-purge_rnd_suite
+purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test "cylc install" flow-name given (flow in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-flow-name"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}-olaf"
+make_rnd_workflow
+pushd "${RND_WORKFLOW_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}-olaf"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED ${RND_SUITE_NAME}-olaf from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf/run1
+INSTALLED ${RND_WORKFLOW_NAME}-olaf from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}-olaf/run1
 __OUT__
 popd || exit 1
-rm -rf "${RUN_DIR}/${RND_SUITE_NAME}-olaf"
-purge_rnd_suite
+rm -rf "${RUN_DIR}/${RND_WORKFLOW_NAME}-olaf"
+purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test "cylc install" flow-name given, no run name (flow in $PWD)
 TEST_NAME="${TEST_NAME_BASE}-flow-name-no-run-name"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}-olaf" --no-run-name
+make_rnd_workflow
+pushd "${RND_WORKFLOW_SOURCE}" || exit 1
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}-olaf" --no-run-name
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED ${RND_SUITE_NAME}-olaf from ${RND_SUITE_SOURCE} -> ${RUN_DIR}/${RND_SUITE_NAME}-olaf
+INSTALLED ${RND_WORKFLOW_NAME}-olaf from ${RND_WORKFLOW_SOURCE} -> ${RUN_DIR}/${RND_WORKFLOW_NAME}-olaf
 __OUT__
 popd || exit 1
-rm -rf "${RUN_DIR}/${RND_SUITE_NAME}-olaf"
-purge_rnd_suite
+rm -rf "${RUN_DIR}/${RND_WORKFLOW_NAME}-olaf"
+purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test "cylc install" --directory given (flow in --directory)
 TEST_NAME="${TEST_NAME_BASE}-option--directory"
-make_rnd_suite
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --directory="${RND_SUITE_SOURCE}"
+make_rnd_workflow
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --directory="${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
-purge_rnd_suite
+purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
 # Test running cylc install twice increments run dirs correctly
 TEST_NAME="${TEST_NAME_BASE}-install-twice-1"
-make_rnd_suite
-pushd "${RND_SUITE_SOURCE}" || exit 1
+make_rnd_workflow
+pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-2"
 run_ok "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run2
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run2
 __OUT__
 popd || exit 1
-purge_rnd_suite
+purge_rnd_workflow
 
 exit

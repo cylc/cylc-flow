@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,23 +20,23 @@
 
 set_test_number 7
 
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
-LOGD1="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/01"
-LOGD2="$RUN_DIR/${SUITE_NAME}/log/job/1/t1/02"
+LOGD1="$RUN_DIR/${WORKFLOW_NAME}/log/job/1/t1/01"
+LOGD2="$RUN_DIR/${WORKFLOW_NAME}/log/job/1/t1/02"
 exists_ok "${LOGD1}"
 exists_ok "${LOGD2}"
 
-sed -i 's/script =.*$/script = true/' "$RUN_DIR/$SUITE_NAME/flow.cylc"
-sed -i -n '1,/triggered off/p' "$RUN_DIR/$SUITE_NAME/reference.log"
+sed -i 's/script =.*$/script = true/' "$RUN_DIR/$WORKFLOW_NAME/flow.cylc"
+sed -i -n '1,/triggered off/p' "$RUN_DIR/$WORKFLOW_NAME/reference.log"
 delete_db
 
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach --reference-test "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
 exists_ok "${LOGD1}"
 exists_fail "${LOGD2}"

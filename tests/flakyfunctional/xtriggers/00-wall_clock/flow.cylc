@@ -1,6 +1,6 @@
 #!Jinja2
 
-# Test wall_clock xtrigger: suite will run to completion and exit if the
+# Test wall_clock xtrigger: workflow will run to completion and exit if the
 # clock trigger is not satisfied, else stall and abort.
 
 [scheduler]

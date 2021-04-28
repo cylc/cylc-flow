@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,18 +18,18 @@
 
 """cylc search [OPTIONS] ARGS
 
-Search for patterns in suite configurations.
+Search for patterns in workflow configurations.
 
-Search for pattern matches in suite definitions and any files in the
-suite bin directory. Matches are reported by line number and suite
+Search for pattern matches in workflow definitions and any files in the
+workflow bin directory. Matches are reported by line number and workflow
 section. An unquoted list of PATTERNs will be converted to an OR'd
 pattern. Note that the order of command line arguments conforms to
-normal cylc command usage (suite name first) not that of the grep
+normal cylc command usage (workflow name first) not that of the grep
 command.
 
-Note that this command performs a text search on the suite definition,
+Note that this command performs a text search on the workflow definition,
 it does not search the data structure that results from parsing the
-suite definition - so it will not report implicit default settings.
+workflow definition - so it will not report implicit default settings.
 
 For case insensitive matching use '(?i)PATTERN'."""
 
@@ -39,7 +39,7 @@ import re
 import sys
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import parse_suite_arg
+from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.terminal import cli_function
 from cylc.flow.parsec.include import inline
 
@@ -63,12 +63,12 @@ def print_heading(heading):
 def get_option_parser():
     parser = COP(
         __doc__, prep=True,
-        argdoc=[('SUITE', 'Suite name or path'),
+        argdoc=[('WORKFLOW', 'Workflow name or path'),
                 ('PATTERN', 'Python-style regular expression'),
                 ('[PATTERN2...]', 'Additional search patterns')])
 
     parser.add_option(
-        "-x", help="Do not search in the suite bin directory",
+        "-x", help="Do not search in the workflow bin directory",
         action="store_false", default=True, dest="search_bin")
 
     return parser
@@ -76,18 +76,18 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg, *patterns):
-    suite, flow_file = parse_suite_arg(options, reg)
+    workflow, flow_file = parse_workflow_arg(options, reg)
 
-    # cylc search SUITE PATTERN
+    # cylc search WORKFLOW PATTERN
     pattern = '|'.join(patterns)
 
-    suitedir = os.path.dirname(flow_file)
+    workflowdir = os.path.dirname(flow_file)
 
     if os.path.isfile(flow_file):
         h = open(flow_file, 'r')
         lines = h.readlines()
         h.close()
-        lines = inline(lines, suitedir, flow_file, for_grep=True)
+        lines = inline(lines, workflowdir, flow_file, for_grep=True)
     else:
         parser.error(f"File not found: {flow_file}")
 
@@ -136,7 +136,7 @@ def main(parser, options, reg, *patterns):
 
             # Print the file name
             if in_include_file:
-                curr_file = os.path.join(suitedir, inc_file)
+                curr_file = os.path.join(workflowdir, inc_file)
                 line_no = inc_line_count
             else:
                 curr_file = flow_file
@@ -158,10 +158,11 @@ def main(parser, options, reg, *patterns):
     if not options.search_bin:
         sys.exit(0)
 
-    # search files in suite bin directory
-    bin_ = os.path.join(suitedir, 'bin')
+    # search files in workflow bin directory
+    bin_ = os.path.join(workflowdir, 'bin')
     if not os.path.isdir(bin_):
-        print("\nSuite " + suite + " has no bin directory", file=sys.stderr)
+        print("\nWorkflow " + workflow + " has no bin directory",
+              file=sys.stderr)
         sys.exit(0)
 
     for name in os.listdir(bin_):

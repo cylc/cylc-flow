@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -38,16 +38,16 @@ create_test_global_config "" "
 
 # Test "cylc install" ensure symlinks are created
 TEST_NAME="${TEST_NAME_BASE}-symlinks-created"
-make_rnd_suite
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --directory="${RND_SUITE_SOURCE}"
+make_rnd_workflow
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --directory="${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 
 TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
 
-if [[ $(readlink "$HOME/cylc-run/${RND_SUITE_NAME}/run1") == \
-    "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_SUITE_NAME}/run1" ]]; then
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1") == \
+    "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_WORKFLOW_NAME}/run1" ]]; then
         ok "$TEST_SYM"
 else
     fail "$TEST_SYM"
@@ -56,8 +56,8 @@ fi
 
 
 TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-exists-ok"
-if [[ $(readlink "$HOME/cylc-run/${RND_SUITE_NAME}/run1/share/cycle") == \
-"$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_SUITE_NAME}/run1/share/cycle" ]]; then
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle") == \
+"$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle" ]]; then
     ok "$TEST_SYM"
 else
     fail "$TEST_SYM"
@@ -65,31 +65,31 @@ fi
 
 for DIR in 'work' 'share' 'log'; do
     TEST_SYM="${TEST_NAME_BASE}-${DIR}-symlink-exists-ok"
-    if [[ $(readlink "$HOME/cylc-run/${RND_SUITE_NAME}/run1/${DIR}") == \
-   "$TMPDIR/${USER}/test_cylc_symlink/cylc-run/${RND_SUITE_NAME}/run1/${DIR}" ]]; then
+    if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/${DIR}") == \
+   "$TMPDIR/${USER}/test_cylc_symlink/cylc-run/${RND_WORKFLOW_NAME}/run1/${DIR}" ]]; then
         ok "$TEST_SYM"
     else
         fail "$TEST_SYM"
     fi
 done
 rm -rf "${TMPDIR}/${USER}/test_cylc_symlink/"
-purge_rnd_suite
+purge_rnd_workflow
 
 
 
 # Test "cylc install" --no-symlink-dirs
 TEST_NAME="${TEST_NAME_BASE}-no-symlinks-created"
-make_rnd_suite
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_SUITE_NAME}" --no-symlink-dirs --directory="${RND_SUITE_SOURCE}"
+make_rnd_workflow
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --no-symlink-dirs --directory="${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_SUITE_NAME from ${RND_SUITE_SOURCE} -> ${RND_SUITE_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
 __OUT__
 
 
 TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
 
-if [[ $(readlink "$HOME/cylc-run/${RND_SUITE_NAME}/run1") == \
-    "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_SUITE_NAME}/run1" ]]; then
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1") == \
+    "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_WORKFLOW_NAME}/run1" ]]; then
         fail "$TEST_SYM"
 else
     ok "$TEST_SYM"
@@ -98,8 +98,8 @@ fi
 
 
 TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-not-exists-ok"
-if [[ $(readlink "$HOME/cylc-run/${RND_SUITE_NAME}/run1/share/cycle") == \
-"$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_SUITE_NAME}/share/cycle" ]]; then
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle") == \
+"$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/share/cycle" ]]; then
     fail "$TEST_SYM"
 else
     ok "$TEST_SYM"
@@ -107,12 +107,12 @@ fi
 
 for DIR in 'work' 'share' 'log'; do
     TEST_SYM="${TEST_NAME_BASE}-${DIR}-symlink-not-exists-ok"
-    if [[ $(readlink "$HOME/cylc-run/${RND_SUITE_NAME}/run1/${DIR}") == \
-   "$TMPDIR/${USER}/test_cylc_symlink/cylc-run/${RND_SUITE_NAME}/${DIR}" ]]; then
+    if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/${DIR}") == \
+   "$TMPDIR/${USER}/test_cylc_symlink/cylc-run/${RND_WORKFLOW_NAME}/${DIR}" ]]; then
         fail "$TEST_SYM"
     else
         ok "$TEST_SYM"
     fi
 done
 rm -rf "${TMPDIR}/${USER}/test_cylc_symlink/"
-purge_rnd_suite
+purge_rnd_workflow

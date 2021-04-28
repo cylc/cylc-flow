@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -80,7 +80,7 @@ def job_db_row():
 
 def ext_id(schd):
     return (
-        f'{schd.owner}{ID_DELIM}{schd.suite}{ID_DELIM}'
+        f'{schd.owner}{ID_DELIM}{schd.workflow}{ID_DELIM}'
         f'1{ID_DELIM}foo{ID_DELIM}3'
     )
 

@@ -4,7 +4,7 @@
 more detailed information.**  Cylc documentation is now maintained in the
 cylc/cylc-doc repository on GitHub.
 
-Cylc must be installed on suite and task job hosts. Third-party dependencies
+Cylc must be installed on workflow and task job hosts. Third-party dependencies
 (below) are not required on job hosts.
 
 ### Python 2 or Python 3 ?

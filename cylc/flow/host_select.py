@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -33,8 +33,8 @@ from cylc.flow.remote import _remote_cylc_cmd, run_cmd
 from cylc.flow.terminal import parse_dirty_json
 
 
-def select_suite_host(cached=True):
-    """Return a host as specified in `[suite hosts]`.
+def select_workflow_host(cached=True):
+    """Return a host as specified in `[workflow hosts]`.
 
     * Condemned hosts are filtered out.
     * Filters out hosts excluded by ranking (if defined).
@@ -60,7 +60,7 @@ def select_suite_host(cached=True):
     global_config = glbl_cfg(cached=cached)
 
     return select_host(
-        # list of suite hosts
+        # list of workflow hosts
         global_config.get([
             'scheduler', 'run hosts', 'available'
         ]) or ['localhost'],

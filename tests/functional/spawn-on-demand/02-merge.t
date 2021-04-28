@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,13 @@
 # labels get merged.
 
 . "$(dirname "$0")/test_header"
-install_suite "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}"
 
 set_test_number 6
 
 # validate
 TEST_NAME="${TEST_NAME_BASE}"-validate
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 # Set frequent pruning of merged flow labels.
 create_test_global_config "" "
@@ -37,27 +37,27 @@ create_test_global_config "" "
 
 # reference test
 TEST_NAME="${TEST_NAME_BASE}"-run
-suite_run_ok "${TEST_NAME}" cylc play --reference-test --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test --no-detach "${WORKFLOW_NAME}"
 
 # extract flow labels from job files
 # shellcheck disable=SC2046
-eval $(cylc cat-log -s 1 -f j "${SUITE_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
+eval $(cylc cat-log -s 1 -f j "${WORKFLOW_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
 FLOW_ONE="${CYLC_TASK_FLOW_LABEL}"
 
 # shellcheck disable=SC2046
-eval $(cylc cat-log -s 2 -f j "${SUITE_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
+eval $(cylc cat-log -s 2 -f j "${WORKFLOW_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
 FLOW_TWO="${CYLC_TASK_FLOW_LABEL}"
 
 # shellcheck disable=SC2046
-eval $(cylc cat-log -s 1 -f j "${SUITE_NAME}" bar.3 | grep CYLC_TASK_FLOW_LABEL)
+eval $(cylc cat-log -s 1 -f j "${WORKFLOW_NAME}" bar.3 | grep CYLC_TASK_FLOW_LABEL)
 FLOW_MERGED="${CYLC_TASK_FLOW_LABEL}"
 
 # shellcheck disable=SC2046
-eval $(cylc cat-log -s 1 -f j "${SUITE_NAME}" baz.3 | grep CYLC_TASK_FLOW_LABEL)
+eval $(cylc cat-log -s 1 -f j "${WORKFLOW_NAME}" baz.3 | grep CYLC_TASK_FLOW_LABEL)
 FLOW_PRUNED="${CYLC_TASK_FLOW_LABEL}"
 
 # compare with expected tasks in each flow (original, reflow, merged, pruned)
-sqlite3 ~/cylc-run/"${SUITE_NAME}"/log/db \
+sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
    "SELECT name, cycle, flow_label FROM task_states \
        WHERE submit_num is 1 order by cycle" \
           > flow-one.db
@@ -81,7 +81,7 @@ bar|3|${FLOW_MERGED}
 baz|3|${FLOW_PRUNED}
 __OUT__
 
-sqlite3 ~/cylc-run/"${SUITE_NAME}"/log/db \
+sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
    "SELECT name, cycle, flow_label FROM task_states \
        WHERE submit_num is 2 order by cycle" \
           > flow-two.db

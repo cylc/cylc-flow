@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -24,15 +24,15 @@ skip_all "TODO decide whether to re-instate this"
 
 run_tests() {
     set_test_number 5
-    install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+    install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
     TEST_NAME="${TEST_NAME_BASE}-validate"
-    run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+    run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
     TEST_NAME="${TEST_NAME_BASE}-run"
     # Needs to be detaching:
-    suite_run_ok "${TEST_NAME}" cylc play --reference-test "${SUITE_NAME}"
+    workflow_run_ok "${TEST_NAME}" cylc play --reference-test "${WORKFLOW_NAME}"
 
     # Make sure t1.1.1's status file is in place
-    T1_STATUS_FILE="${SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
+    T1_STATUS_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.status"
 
     poll_grep -E 'CYLC_JOB_ID=' "${T1_STATUS_FILE}"
     poll_grep -E 'CYLC_JOB_INIT_TIME=' "${T1_STATUS_FILE}"
@@ -41,24 +41,24 @@ run_tests() {
     T1_PID="$(awk -F= '$1=="CYLC_JOB_ID" {print $2}' "${T1_STATUS_FILE}")"
     kill -s 'USR1' "${T1_PID}"
     poll_grep -E 'WARNING|vacated/USR1' "${T1_STATUS_FILE}"
-    poll_grep_suite_log 'vacated/USR1'
-    sleep 1  # a bit of extra time for suite db update to complete
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    poll_grep_workflow_log 'vacated/USR1'
+    sleep 1  # a bit of extra time for workflow db update to complete
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
         'SELECT status FROM task_states WHERE name=="t1";' \
         >"${TEST_NAME}-db-t1" 2>'/dev/null'
     grep_ok "^\(submitted\|running\)$" "${TEST_NAME}-db-t1"
     # Start the job again and see what happens
-    mkdir -p "${SUITE_RUN_DIR}/work/1/t1/"
-    touch "${SUITE_RUN_DIR}/work/1/t1/file"  # Allow t1 to complete
-    "${SUITE_RUN_DIR}/log/job/1/t1/01/job" <'/dev/null' >'/dev/null' 2>&1 &
-    # Wait for suite to complete
-    poll_suite_stopped
+    mkdir -p "${WORKFLOW_RUN_DIR}/work/1/t1/"
+    touch "${WORKFLOW_RUN_DIR}/work/1/t1/file"  # Allow t1 to complete
+    "${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job" <'/dev/null' >'/dev/null' 2>&1 &
+    # Wait for workflow to complete
+    poll_workflow_stopped
     # Test t1 status in DB
-    sqlite3 "${SUITE_RUN_DIR}/log/db" \
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
         'SELECT status FROM task_states WHERE name=="t1";' >"${TEST_NAME}-db-t1"
     cmp_ok "${TEST_NAME}-db-t1" - <<<'succeeded'
     # Test reference
-    grep_ok 'SUITE REFERENCE TEST PASSED' "${SUITE_RUN_DIR}/log/suite/log"
+    grep_ok 'WORKFLOW REFERENCE TEST PASSED' "${WORKFLOW_RUN_DIR}/log/workflow/log"
     purge
     exit
 }

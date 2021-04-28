@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,21 +18,21 @@
 
 """cylc validate [OPTIONS] ARGS
 
-Validate a suite configuration.
+Validate a workflow configuration.
 
-If the suite definition uses include-files reported line numbers
+If the workflow definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
-'cylc view -i,--inline SUITE' for comparison."""
+'cylc view -i,--inline WORKFLOW' for comparison."""
 from ansimarkup import parse as cparse
 import sys
 import textwrap
 
 from cylc.flow import LOG, __version__ as CYLC_VERSION
-from cylc.flow.config import SuiteConfig
+from cylc.flow.config import WorkflowConfig
 import cylc.flow.flags
 from cylc.flow.profiler import Profiler
 from cylc.flow.terminal import cli_function
-from cylc.flow.exceptions import (SuiteConfigError,
+from cylc.flow.exceptions import (WorkflowConfigError,
                                   TaskProxySequenceBoundsError,
                                   TriggerExpressionError)
 from cylc.flow.task_proxy import TaskProxy
@@ -40,7 +40,7 @@ from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import parse_suite_arg
+from cylc.flow.workflow_files import parse_workflow_arg
 
 
 def get_option_parser():
@@ -85,9 +85,9 @@ def main(_, options, reg):
             if isinstance(handler.formatter, CylcLogFormatter):
                 handler.formatter.configure(timestamp=False)
 
-    suite, flow_file = parse_suite_arg(options, reg)
-    cfg = SuiteConfig(
-        suite,
+    workflow, flow_file = parse_workflow_arg(options, reg)
+    cfg = WorkflowConfig(
+        workflow,
         flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file),
@@ -126,7 +126,7 @@ def main(_, options, reg):
                 sys.stderr.write(' + %s\n' % mesg)
             continue
         except Exception as exc:
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 'failed to instantiate task %s: %s' % (name, exc))
 
         # force trigger evaluation now
@@ -141,10 +141,10 @@ def main(_, options, reg):
             else:
                 print('ERROR, %s: bad trigger: %s' % (name, err),
                       file=sys.stderr)
-            raise SuiteConfigError("ERROR: bad trigger")
+            raise WorkflowConfigError("ERROR: bad trigger")
         except Exception as exc:
             print(str(exc), file=sys.stderr)
-            raise SuiteConfigError(
+            raise WorkflowConfigError(
                 '%s: failed to evaluate triggers.' % name)
         if cylc.flow.flags.verbose:
             print('  + %s ok' % itask.identity)

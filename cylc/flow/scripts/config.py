@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -52,10 +52,10 @@ import os.path
 from typing import List, Optional
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.config import SuiteConfig
+from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
-from cylc.flow.suite_files import SuiteFiles, parse_suite_arg
+from cylc.flow.workflow_files import WorkflowFiles, parse_workflow_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -102,7 +102,7 @@ def get_config_file_hierarchy(reg: Optional[str] = None) -> List[str]:
     filepaths = [os.path.join(path, glbl_cfg().CONF_BASENAME)
                  for _, path in glbl_cfg().conf_dir_hierarchy]
     if reg is not None:
-        filepaths.append(get_workflow_run_dir(reg, SuiteFiles.FLOW_FILE))
+        filepaths.append(get_workflow_run_dir(reg, WorkflowFiles.FLOW_FILE))
     return filepaths
 
 
@@ -118,10 +118,10 @@ def main(parser, options, reg=None):
             none_str=options.none_str)
         return
 
-    suite, flow_file = parse_suite_arg(options, reg)
+    workflow, flow_file = parse_workflow_arg(options, reg)
 
-    config = SuiteConfig(
-        suite,
+    config = WorkflowConfig(
+        workflow,
         flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file))

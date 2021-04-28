@@ -1,5 +1,5 @@
 #!/bin/bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,13 @@
 . "$(dirname "$0")/test_header"
 
 set_test_number 7
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --stopcp=2 --no-detach
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-DB_FILE="${SUITE_RUN_DIR}/log/db"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --stopcp=2 --no-detach
+
+DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
 
 # Check task_prerequisites table:
 TEST_NAME="${TEST_NAME_BASE}-db-task-prereq"
@@ -39,7 +40,7 @@ cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
 3|bar|apollo|3|The Eagle has landed|0
 __EOF__
 
-suite_run_fail "${TEST_NAME_BASE}-restart" cylc play "${SUITE_NAME}" --stopcp=3 --no-detach
+workflow_run_fail "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --stopcp=3 --no-detach
 
 # Check bar.2 is still waiting (i.e. prereqs not satisfied):
 TEST_NAME="${TEST_NAME_BASE}-db-task-pool"

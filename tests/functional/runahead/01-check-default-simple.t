@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,24 +20,24 @@
 #-------------------------------------------------------------------------------
 set_test_number 5
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" default-simple
+install_workflow "${TEST_NAME_BASE}" default-simple
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate -v "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_fail "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # Testing runahead by counting tasks after a stall is tricky, so this test
 # might not be optimal. For instance, abort-on-stall aborts even if tasks
 # could immediately be released from the runahead pool.
 TEST_NAME="${TEST_NAME_BASE}-max-cycle"
-DB="${SUITE_RUN_DIR}/log/db"
+DB="${WORKFLOW_RUN_DIR}/log/db"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" \
     "select max(cycle) from task_states where status!='waiting'"
 cmp_ok "${TEST_NAME}.stdout" <<< "20100102T0000Z"
 # i.e. should have spawned 5 cycle points from initial 01T00
 #-------------------------------------------------------------------------------
-grep_ok 'Suite shutting down - Abort on suite stalled is set' "${SUITE_RUN_DIR}/log/suite/log"
+grep_ok 'Workflow shutting down - Abort on workflow stalled is set' "${WORKFLOW_RUN_DIR}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

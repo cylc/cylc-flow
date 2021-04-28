@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 39
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = cat, dog, fish
     j = 1..5
@@ -37,12 +37,12 @@ qux<j> => waz<k>
     [[bar<j>]]
     [[qux<j>]]
     [[waz<k>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-01" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'01.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/01.graph.ref" '01.graph'
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = 25, 30..35, 1..5, 110
 [scheduling]
@@ -55,12 +55,12 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-02" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'02.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/02.graph.ref" '02.graph'
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = a-t, c-g
 [scheduling]
@@ -73,12 +73,12 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-03" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'03.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/03.graph.ref" '03.graph'
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = 100, hundred, one-hundred, 99+1
 [scheduling]
@@ -91,12 +91,12 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-04" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'04.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/04.graph.ref" '04.graph'
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = space is dangerous
 [scheduling]
@@ -109,13 +109,13 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME_BASE}-05" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-05.stderr" <<'__ERR__'
 IllegalValueError: (type=parameter) [task parameters]i = space is dangerous - (space is dangerous: bad value)
 __ERR__
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = mix, 1..10
 [scheduling]
@@ -128,13 +128,13 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME_BASE}-06" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-06.stderr" <<'__ERR__'
 IllegalValueError: (type=parameter) [task parameters]i = mix, 1..10 - (mixing int range and str)
 __ERR__
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = a, b #, c, d, e  # comment
 [scheduling]
@@ -147,12 +147,12 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-07" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'07.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/07.graph.ref" '07.graph'
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = 1..2 3..4
 [scheduling]
@@ -165,13 +165,13 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME_BASE}-08" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-08.stderr" <<'__ERR__'
 IllegalValueError: (type=parameter) [task parameters]i = 1..2 3..4 - (1..2 3..4: bad value)
 __ERR__
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i =
 [scheduling]
@@ -184,13 +184,13 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME_BASE}-09" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-09.stderr" <<'__ERR__'
 ParamExpandError: parameter i is not defined in foo<i>
 __ERR__
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [scheduling]
     [[graph]]
         R1 = """
@@ -201,13 +201,13 @@ foo<i> => bar<i>
         script = true
     [[foo<i>]]
     [[bar<i>]]
-__SUITE__
+__WORKFLOW__
 run_fail "${TEST_NAME_BASE}-10" cylc validate "flow.cylc"
 cmp_ok "${TEST_NAME_BASE}-10.stderr" <<'__ERR__'
 ParamExpandError: parameter i is not defined in <i>: foo<i>=>bar<i>
 __ERR__
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     j = +1..+5
     [[templates]]
@@ -220,12 +220,12 @@ cat >'flow.cylc' <<'__SUITE__'
         script = true
     [[foo<j>]]
     [[bar<j>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-11" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'11.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/11.graph.ref" '11.graph'
 
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     j = 1..5
     [[templates]]
@@ -238,13 +238,13 @@ cat >'flow.cylc' <<'__SUITE__'
         script = true
     [[foo<j>]]
     [[bar<j>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-12" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'12.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/12.graph.ref" '12.graph'
 
 # Parameter with various meta characters
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     p = -minus, +plus, @at, %percent
     [[templates]]
@@ -257,13 +257,13 @@ cat >'flow.cylc' <<'__SUITE__'
         script = true
     [[foo<p>]]
     [[bar<p>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-13" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'13.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/13.graph.ref" '13.graph'
 
 # Parameter as task name
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     i = 0..2
     s = mercury, venus, earth, mars
@@ -279,13 +279,13 @@ foo => <s> => bar
 [runtime]
     [[foo, bar, <i>, <s>]]
         script = true
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-14" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'14.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/14.graph.ref" '14.graph'
 
 # Parameter in middle of family name
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     s = mercury, venus, earth, mars
 [scheduling]
@@ -296,13 +296,13 @@ cat >'flow.cylc' <<'__SUITE__'
         script = true
     [[x<s>y]]
         inherit = X<s>Y
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-15" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'15.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/15.graph.ref" '15.graph'
 
 # -ve offset on RHS
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     m = cat, dog
 [scheduling]
@@ -312,13 +312,13 @@ cat >'flow.cylc' <<'__SUITE__'
     [[root]]
         script = true
     [[foo<m>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-16" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'16.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/16.graph.ref" '16.graph'
 
 # +ve offset
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     m = cat, dog
 [scheduling]
@@ -328,13 +328,13 @@ cat >'flow.cylc' <<'__SUITE__'
     [[root]]
         script = true
     [[foo<m>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-17" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'17.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/17.graph.ref" '17.graph'
 
 # Negative integers
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     m = -12..12..6
 [scheduling]
@@ -344,13 +344,13 @@ cat >'flow.cylc' <<'__SUITE__'
     [[root]]
         script = true
     [[foo<m>]]
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-18" cylc validate "flow.cylc"
 cylc graph --reference 'flow.cylc' >'18.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/18.graph.ref" '18.graph'
 
 # Reference by value, with -+ meta characters
-cat >'flow.cylc' <<'__SUITE__'
+cat >'flow.cylc' <<'__WORKFLOW__'
 [task parameters]
     lang = c++, fortran-2008
     [[templates]]
@@ -367,7 +367,7 @@ cat >'flow.cylc' <<'__SUITE__'
     [[<lang = fortran-2008>]]
         [[[environment]]]
             FC = gfortran
-__SUITE__
+__WORKFLOW__
 run_ok "${TEST_NAME_BASE}-19" cylc validate --debug "flow.cylc"
 cylc graph --reference 'flow.cylc' >'19.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/19.graph.ref" '19.graph'

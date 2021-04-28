@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ create_test_global_config "" "
         retrieve job logs = True
 "
 #-------------------------------------------------------------------------------
-init_suite "${TEST_NAME_BASE}" <<__HERE__
+init_workflow "${TEST_NAME_BASE}" <<__HERE__
 [scheduling]
     [[graph]]
         R1 = foo
@@ -39,17 +39,17 @@ init_suite "${TEST_NAME_BASE}" <<__HERE__
 __HERE__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" \
-    cylc play "${SUITE_NAME}" \
+workflow_run_ok "${TEST_NAME}" \
+    cylc play "${WORKFLOW_NAME}" \
     --debug \
     --no-detach
 
 log_scan \
     "${TEST_NAME_BASE}-poll" \
-    "$(cylc cat-log -m p "$SUITE_NAME")" \
+    "$(cylc cat-log -m p "$WORKFLOW_NAME")" \
     10 \
     1 \
     '\[foo.1\] status=submitted: (polled)foo' \

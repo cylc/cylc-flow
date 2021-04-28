@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -52,13 +52,14 @@ class FileParseError(ParsecError):
     """Error raised when attempting to read in the config file(s)."""
 
     def __init__(self, reason, index=None, line=None, lines=None,
-                 err_type=None, fpath=None):
+                 err_type=None, fpath=None, help_lines=None):
         self.reason = reason
         self.line_num = index + 1 if index is not None else None
         self.line = line
         self.lines = lines
         self.err_type = err_type
         self.fpath = fpath
+        self.help_lines = help_lines or []
 
     def __str__(self):
         msg = ''
@@ -78,9 +79,12 @@ class FileParseError(ParsecError):
             msg += "\t<--"
             if self.err_type:
                 msg += ' %s' % self.err_type
+        help_lines = list(self.help_lines)
         if self.line_num:
             # TODO - make 'view' function independent of cylc:
-            msg += "\n(line numbers match 'cylc view -p')"
+            help_lines.append("line numbers match 'cylc view -p'")
+        for help_line in help_lines:
+            msg += f'\n({help_line})'
         return msg
 
 

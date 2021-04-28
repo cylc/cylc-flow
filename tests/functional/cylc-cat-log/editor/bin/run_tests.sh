@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,14 +28,14 @@ function run_tests {
 
     TEST_NAME="${TEST_NAME_BASE}-validate"
     run_ok "${TEST_NAME}" cylc validate --set="PLATFORM='$PLATFORM'" \
-        "${SUITE_NAME}"
+        "${WORKFLOW_NAME}"
 
-    # Run the suite to generate some log files.
-    TEST_NAME="${TEST_NAME_BASE}-suite-run"
+    # Run the workflow to generate some log files.
+    TEST_NAME="${TEST_NAME_BASE}-workflow-run"
     run_ok "${TEST_NAME}" cylc play --set="PLATFORM='$PLATFORM'" \
-        --no-detach "${SUITE_NAME}"
+        --no-detach "${WORKFLOW_NAME}"
 
-    LOG_DIR="$RUN_DIR/${SUITE_NAME}"
+    LOG_DIR="$RUN_DIR/${WORKFLOW_NAME}"
     JOB_LOG_DIR="${LOG_DIR}/log/job/1/foo/01"
 
     for JOBFILE in "job" "job.out" "job.err" "job.status" "job-activity.log" \
@@ -44,10 +44,10 @@ function run_tests {
         export ORIGFILE="${JOBFILE}.orig"
         # Check we can view the job log file in the "editor".
         TEST_NAME="${TEST_NAME_BASE}-${JOBFILE}"
-        run_ok "${TEST_NAME}" cylc cat-log -f "${JOBFILE}" -m e "${SUITE_NAME}" foo.1
+        run_ok "${TEST_NAME}" cylc cat-log -f "${JOBFILE}" -m e "${WORKFLOW_NAME}" foo.1
         # Compare viewed (i.e. copied by the fake editor) file with the original.
         # (The original must be catted as it could be a remote log file).
-        cylc cat-log -f "${JOBFILE}" -m c "${SUITE_NAME}" foo.1 > "${ORIGFILE}"
+        cylc cat-log -f "${JOBFILE}" -m c "${WORKFLOW_NAME}" foo.1 > "${ORIGFILE}"
         cmp_ok "${DESTFILE}" "${ORIGFILE}"
     done
 
@@ -55,6 +55,6 @@ function run_tests {
     TEST_NAME="${TEST_NAME_BASE}-job"
     JOBFILE="job"
     export DESTFILE="${JOBFILE}.edit"
-    run_ok "${TEST_NAME}" cylc cat-log -m e --geditor -f j "${SUITE_NAME}" foo.1
+    run_ok "${TEST_NAME}" cylc cat-log -m e --geditor -f j "${WORKFLOW_NAME}" foo.1
     cmp_ok "${DESTFILE}" "${JOB_LOG_DIR}/${JOBFILE}"
 }

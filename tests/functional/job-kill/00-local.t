@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,21 +20,21 @@
 #-------------------------------------------------------------------------------
 set_test_number 10
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-ps
-for DIR in "${SUITE_RUN_DIR}"/work/*/t*; do
+for DIR in "${WORKFLOW_RUN_DIR}"/work/*/t*; do
     run_fail "${TEST_NAME}.$(basename "$DIR")" ps "$(cat "${DIR}/file")"
 done
 N=0
-for FILE in "${SUITE_RUN_DIR}"/log/job/*/t*/01/job.status; do
+for FILE in "${WORKFLOW_RUN_DIR}"/log/job/*/t*/01/job.status; do
     run_fail "${TEST_NAME}-status-$((++N))" \
         ps "$(awk -F= '$1 == "CYLC_JOB_PID" {print $2}' "$FILE")"
 done

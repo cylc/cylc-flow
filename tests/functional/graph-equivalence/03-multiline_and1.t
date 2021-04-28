@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,21 +23,21 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" 'multiline_and1'
+install_workflow "${TEST_NAME_BASE}" 'multiline_and1'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 delete_db
 TEST_NAME="${TEST_NAME_BASE}-check-c"
-cylc play "${SUITE_NAME}" --hold-after=1 1>'out' 2>&1
-poll_grep_suite_log 'Setting hold cycle point'
-cylc show "${SUITE_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
+cylc play "${WORKFLOW_NAME}" --hold-after=1 1>'out' 2>&1
+poll_grep_workflow_log 'Setting hold cycle point'
+cylc show "${WORKFLOW_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
 contains_ok "${TEST_SOURCE_DIR}/multiline_and_refs/c-ref" 'c-prereqs'
-cylc shutdown "${SUITE_NAME}" --now
+cylc shutdown "${WORKFLOW_NAME}" --now
 #-------------------------------------------------------------------------------
 purge

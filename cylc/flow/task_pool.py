@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,8 +27,8 @@ from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ISO8601Interval
-from cylc.flow.exceptions import SuiteConfigError, PointParsingError
-from cylc.flow.suite_status import StopMode
+from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
     CustomTaskEventHandlerContext, TaskEventMailContext,
@@ -141,14 +141,15 @@ class FlowLabelMgr:
 
 
 class TaskPool:
-    """Task pool of a suite."""
+    """Task pool of a workflow."""
 
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
 
-    def __init__(self, config, suite_db_mgr, task_events_mgr, data_store_mgr):
+    def __init__(
+            self, config, workflow_db_mgr, task_events_mgr, data_store_mgr):
         self.config = config
         self.stop_point = config.final_point
-        self.suite_db_mgr = suite_db_mgr
+        self.workflow_db_mgr = workflow_db_mgr
         self.task_events_mgr = task_events_mgr
         # TODO this is ugly:
         self.task_events_mgr.spawn_func = self.spawn_on_output
@@ -194,7 +195,7 @@ class TaskPool:
             LOG.info("Setting stop task: " + task_id)
             self.stop_task_id = task_id
             self.stop_task_finished = False
-            self.suite_db_mgr.put_suite_stop_task(task_id)
+            self.workflow_db_mgr.put_workflow_stop_task(task_id)
         else:
             LOG.warning("Requested stop task name does not exist: %s" % name)
 
@@ -204,7 +205,7 @@ class TaskPool:
             LOG.info("Stop task %s finished" % self.stop_task_id)
             self.stop_task_id = None
             self.stop_task_finished = False
-            self.suite_db_mgr.delete_suite_stop_task()
+            self.workflow_db_mgr.delete_workflow_stop_task()
             return True
         else:
             return False
@@ -223,9 +224,9 @@ class TaskPool:
     def add_to_pool(self, itask, is_new=True):
         """Add a new task to the hidden or main pool.
 
-        Tasks whose recurrences allow them to spawn beyond the suite
+        Tasks whose recurrences allow them to spawn beyond the workflow
         stop point are added to the pool in the held state, ready to be
-        released if the suite stop point is changed.
+        released if the workflow stop point is changed.
 
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
@@ -259,15 +260,14 @@ class TaskPool:
 
         if is_new:
             # Add row to "task_states" table:
-            self.suite_db_mgr.put_insert_task_states(itask, {
+            self.workflow_db_mgr.put_insert_task_states(itask, {
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
                 "status": itask.state.status,
                 "flow_label": itask.flow_label})
             # Add row to "task_outputs" table:
             if itask.state.outputs.has_custom_triggers():
-                self.suite_db_mgr.put_insert_task_outputs(itask)
-
+                self.workflow_db_mgr.put_insert_task_outputs(itask)
         return itask
 
     def release_runahead_tasks(self):
@@ -382,7 +382,7 @@ class TaskPool:
                     LOG.warning(
                         f'runahead limit "{runahead_time_limit}" '
                         'is less than future triggering offset '
-                        f'"{self.max_future_offset}"; suite may stall.')
+                        f'"{self.max_future_offset}"; workflow may stall.')
             self._prev_runahead_base_point = runahead_base_point
 
         if self.stop_point and latest_allowed_point > self.stop_point:
@@ -425,9 +425,9 @@ class TaskPool:
                 is_held=is_held,
                 submit_num=submit_num,
                 is_late=bool(is_late))
-        except SuiteConfigError:
+        except WorkflowConfigError:
             LOG.exception(
-                f'ignoring task {name} from the suite run database\n'
+                f'ignoring task {name} from the workflow run database\n'
                 '(its task definition has probably been deleted).')
         except Exception:
             LOG.exception(f'could not load task {name}')
@@ -468,7 +468,7 @@ class TaskPool:
             # Update prerequisite satisfaction status from DB
             sat = {}
             for prereq_name, prereq_cycle, prereq_output, satisfied in (
-                    self.suite_db_mgr.pri_dao.select_task_prerequisites(
+                    self.workflow_db_mgr.pri_dao.select_task_prerequisites(
                         cycle, name)):
                 key = (prereq_name, prereq_cycle, prereq_output)
                 sat[key] = satisfied if satisfied != '0' else False
@@ -590,7 +590,7 @@ class TaskPool:
             if (not parent_points or
                     all(x < self.config.start_point for x in parent_points)):
                 # Auto-spawn next instance of tasks with no parents at the next
-                # point (or with all parents before the suite start point).
+                # point (or with all parents before the workflow start point).
                 n_task = self.get_or_spawn_task(
                     itask.tdef.name, next_point, flow_label=itask.flow_label,
                     parent_id=itask.identity)
@@ -637,7 +637,7 @@ class TaskPool:
             self.data_store_mgr.remove_pool_node(itask.tdef.name, itask.point)
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
-            self.suite_db_mgr.put_update_task_state(itask)
+            self.workflow_db_mgr.put_update_task_state(itask)
             LOG.debug("[%s] -%s", itask, msg)
             del itask
 
@@ -776,7 +776,7 @@ class TaskPool:
         self.max_num_active_cycle_points = (
             self.config.get_max_num_active_cycle_points())
 
-        # find any old tasks that have been removed from the suite
+        # find any old tasks that have been removed from the workflow
         old_task_name_list = self.task_name_list
         self.task_name_list = self.config.get_task_name_list()
         for name in old_task_name_list:
@@ -785,13 +785,13 @@ class TaskPool:
         for name in self.task_name_list:
             if name in self.orphans:
                 self.orphans.remove(name)
-        # adjust the new suite config to handle the orphans
+        # adjust the new workflow config to handle the orphans
         self.config.adopt_orphans(self.orphans)
 
     def reload_taskdefs(self):
         """Reload the definitions of task proxies in the pool.
 
-        Orphaned tasks (proxies whose definitions were removed from the suite):
+        Orphaned tasks (whose definitions were removed from the workflow):
         - remove if not active yet
         - if active, leave them but prevent them from spawning children on
           subsequent outputs
@@ -852,7 +852,7 @@ class TaskPool:
         self.do_reload = False
 
     def set_stop_point(self, stop_point):
-        """Set the global suite stop point."""
+        """Set the global workflow stop point."""
         if self.stop_point == stop_point:
             return
         LOG.info("Setting stop cycle point: %s", stop_point)
@@ -869,7 +869,7 @@ class TaskPool:
                     )
             ):
                 LOG.warning(
-                    "[%s] -not running (beyond suite stop cycle) %s",
+                    "[%s] -not running (beyond workflow stop cycle) %s",
                     itask,
                     self.stop_point)
                 if itask.state.reset(is_held=True):
@@ -877,7 +877,7 @@ class TaskPool:
         return self.stop_point
 
     def can_stop(self, stop_mode):
-        """Return True if suite can stop.
+        """Return True if workflow can stop.
 
         A task is considered active if:
         * It is in the active state and not marked with a kill failure.
@@ -899,7 +899,7 @@ class TaskPool:
         return True
 
     def warn_stop_orphans(self):
-        """Log (warning) orphaned tasks on suite stop."""
+        """Log (warning) orphaned tasks on workflow stop."""
         orphans = []
         orphans_kill_failed = []
         for itask in self.get_tasks():
@@ -949,7 +949,7 @@ class TaskPool:
                 return False
         if unhandled_failed:
             LOG.warning(
-                "Suite stalled with unhandled failed tasks:\n"
+                "Workflow stalled with unhandled failed tasks:\n"
                 + "\n".join(
                     f"* {itask.identity} ({itask.state.status})"
                     for itask in unhandled_failed
@@ -1005,7 +1005,7 @@ class TaskPool:
             if itask.point > point:
                 if itask.state.reset(is_held=True):
                     self.data_store_mgr.delta_task_held(itask)
-        self.suite_db_mgr.put_suite_hold_cycle_point(point)
+        self.workflow_db_mgr.put_workflow_hold_cycle_point(point)
 
     def hold_tasks(self, items: Iterable[str]) -> int:
         """Hold tasks with IDs matching the specified items."""
@@ -1043,10 +1043,10 @@ class TaskPool:
                 ):
                     to_queue.append(itask)
         self.queue_tasks(to_queue)
-        self.suite_db_mgr.delete_suite_hold_cycle_point()
+        self.workflow_db_mgr.delete_workflow_hold_cycle_point()
 
     def check_abort_on_task_fails(self):
-        """Check whether suite should abort on task failure.
+        """Check whether workflow should abort on task failure.
 
         Return True if a task failed and `--abort-if-any-task-fails` was given.
         """
@@ -1080,9 +1080,9 @@ class TaskPool:
             if is_abs:
                 self.abs_outputs_done.add((itask.tdef.name,
                                           str(itask.point), output))
-                self.suite_db_mgr.put_insert_abs_output(
+                self.workflow_db_mgr.put_insert_abs_output(
                     str(itask.point), itask.tdef.name, output)
-                self.suite_db_mgr.process_queued_ops()
+                self.workflow_db_mgr.process_queued_ops()
             if itask.reflow:
                 c_task = self.get_or_spawn_task(
                     c_name, c_point, flow_label=itask.flow_label,
@@ -1135,16 +1135,16 @@ class TaskPool:
 
         # TODO can we do a more minimal (flow-label only) update of the
         # existing row? (flow label is a primary key so need new insert).
-        # ? self.suite_db_mgr.put_update_task_state(itask)
+        # ? self.workflow_db_mgr.put_update_task_state(itask)
 
         if flab2 is None or flab2 == itask.flow_label:
             return
         itask.flow_label = self.flow_label_mgr.merge_labels(
             itask.flow_label, flab2)
-        self.suite_db_mgr.put_insert_task_states(itask, {
+        self.workflow_db_mgr.put_insert_task_states(itask, {
             "status": itask.state.status,
             "flow_label": itask.flow_label})
-        self.suite_db_mgr.process_queued_ops()  # TODO is this needed here?
+        self.workflow_db_mgr.process_queued_ops()  # TODO is this needed here?
         LOG.info('%s merged flow(%s)', itask.identity, itask.flow_label)
 
     def get_task_main(self, name, point, flow_label=None):
@@ -1167,7 +1167,7 @@ class TaskPool:
         return itask
 
     def can_spawn(self, name, point):
-        """Return True if name.point is within various suite limits."""
+        """Return True if name.point is within various workflow limits."""
 
         if name not in self.config.get_task_name_list():
             LOG.debug('No task definition %s', name)
@@ -1197,7 +1197,9 @@ class TaskPool:
             return None
 
         # Get submit number by flow label {flow_label: submit_num, ...}
-        snums = self.suite_db_mgr.pri_dao.select_submit_nums(name, str(point))
+        snums = self.workflow_db_mgr.pri_dao.select_submit_nums(
+            name, str(point)
+        )
         try:
             submit_num = max(snums.values())
         except ValueError:
@@ -1223,8 +1225,8 @@ class TaskPool:
             point, flow_label,
             submit_num=submit_num, reflow=reflow)
         if self.hold_point and itask.point > self.hold_point:
-            # Hold if beyond the suite hold point
-            LOG.info("[%s] -holding (beyond suite hold point) %s",
+            # Hold if beyond the workflow hold point
+            LOG.info("[%s] -holding (beyond workflow hold point) %s",
                      itask, self.hold_point)
             if itask.state.reset(is_held=True):
                 self.data_store_mgr.delta_task_held(itask)

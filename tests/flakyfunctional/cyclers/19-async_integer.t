@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -24,27 +24,26 @@ else
     set_test_number 3
 fi
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-validate
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-graph"
-graph_suite "${SUITE_NAME}" "${SUITE_NAME}.graph.plain"
-cmp_ok "${SUITE_NAME}.graph.plain" \
+graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain"
+cmp_ok "${WORKFLOW_NAME}.graph.plain" \
     "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 if [[ -f "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out" ]]; then
     TEST_NAME="${TEST_NAME_BASE}-find"
-    SUITE_RUN_DIR="${HOME}/cylc-run/${SUITE_NAME}"
-    SUITE_WRK_DIR="$(cylc config -i '[platforms][localhost]work directory')/${SUITE_NAME}"
+    WORKFLOW_RUN_DIR="${HOME}/cylc-run/${WORKFLOW_NAME}"
     {
-        (cd "${SUITE_RUN_DIR}" && find 'log/job' -type f)
-        (cd "${SUITE_WRK_DIR}" && find 'work' -type f)
+        (cd "${WORKFLOW_RUN_DIR}" && find 'log/job' -type f)
+        (cd "${WORKFLOW_RUN_DIR}" && find 'work' -type f)
     } | sort -V >"${TEST_NAME}"
     cmp_ok "${TEST_NAME}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out"
 fi

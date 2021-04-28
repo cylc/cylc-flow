@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,10 @@
 
 """cylc ext-trigger [OPTIONS] ARGS
 
-Report an external event message to a suite server program.
+Report an external event message to a scheduler.
 
-It is expected that a task in the suite has registered the same message as an
-external trigger - a special prerequisite to be satisfied by an external
+It is expected that a task in the workflow has registered the same message as
+an external trigger - a special prerequisite to be satisfied by an external
 system, via this command, rather than by triggering off other tasks.
 
 The ID argument should uniquely distinguish one external trigger event from the
@@ -30,7 +30,7 @@ message ID is broadcast to all downstream tasks in the cycle point as
 $CYLC_EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file
 that the external triggering system is responding to.
 
-Use the retry options in case the target suite is down or out of contact.
+Use the retry options in case the target workflow is down or out of contact.
 
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
@@ -71,7 +71,7 @@ mutation (
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[("REG", "Suite name"),
+        argdoc=[("REG", "Workflow name"),
                 ("MSG", "External trigger message"),
                 ("ID", "Unique trigger ID")])
 
@@ -89,10 +89,10 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite, event_msg, event_id):
-    suite = os.path.normpath(suite)
-    LOG.info('Send to suite %s: "%s" (%s)', suite, event_msg, event_id)
-    pclient = get_client(suite, timeout=options.comms_timeout)
+def main(parser, options, workflow, event_msg, event_id):
+    workflow = os.path.normpath(workflow)
+    LOG.info('Send to workflow %s: "%s" (%s)', workflow, event_msg, event_id)
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)
@@ -100,7 +100,7 @@ def main(parser, options, suite, event_msg, event_id):
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [suite],
+            'wFlows': [workflow],
             'eventMsg': event_msg,
             'eventId': event_id,
         }

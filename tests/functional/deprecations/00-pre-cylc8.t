@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -15,24 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test all current non-silent suite obsoletions and deprecations.
+# Test all current non-silent workflow obsoletions and deprecations.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_ok "${TEST_NAME}" cylc validate -v "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate -v "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cmp
-cylc validate -v "${SUITE_NAME}" 2>&1 \
+cylc validate -v "${WORKFLOW_NAME}" 2>&1 \
     | sed  -n -e 's/^WARNING - \( \* (.*$\)/\1/p' > 'val.out'
 cmp_ok val.out <<__END__
  * (7.8.0) [runtime][foo, cat, dog][suite state polling][template] - DELETED (OBSOLETE)
  * (7.8.1) [cylc][events][reset timer] - DELETED (OBSOLETE)
  * (7.8.1) [cylc][events][reset inactivity timer] - DELETED (OBSOLETE)
  * (7.8.1) [runtime][foo, cat, dog][events][reset timer] - DELETED (OBSOLETE)
+ * (8.0.0) [runtime][foo, cat, dog][suite state polling] -> [runtime][foo, cat, dog][workflow state polling] - value unchanged
  * (8.0.0) [cylc] -> [scheduler] - value unchanged
 __END__
 

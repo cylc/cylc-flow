@@ -2,7 +2,7 @@
 # ^ NOTE: this script is not invoked directly so the shell is decided by
 #         the calling script, this just helps shellcheck lint the file
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,13 +25,13 @@
 ###############################################################################
 # The main function for a cylc task job.
 cylc__job__main() {
-    # Export CYLC_ suite and task environment variables
+    # Export CYLC_ workflow and task environment variables
     cylc__job__inst__cylc_env
     # Turn on xtrace in debug mode
     if "${CYLC_DEBUG:-false}"; then
         if [[ -n "${BASH:-}" ]]; then
             PS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '
-            exec 19>>"${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.xtrace"
+            exec 19>>"${CYLC_WORKFLOW_RUN_DIR}/log/job/${CYLC_TASK_JOB}/job.xtrace"
             export BASH_XTRACEFD=19
             >&2 echo "Sending DEBUG MODE xtrace to job.xtrace"
         fi
@@ -65,15 +65,14 @@ cylc__job__main() {
     # Developer Note:
     # We were using a HERE document for writing info here until we notice that
     # Bash uses temporary files for HERE documents, which can be inefficient.
-    echo "Suite    : ${CYLC_SUITE_NAME}"
+    echo "Workflow : ${CYLC_WORKFLOW_NAME}"
     echo "Task Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})"
     echo "User@Host: ${USER}@${host}"
     echo
     # Derived environment variables
-    export CYLC_SUITE_LOG_DIR="${CYLC_SUITE_RUN_DIR}/log/suite"
-    CYLC_SUITE_WORK_DIR_ROOT="${CYLC_SUITE_WORK_DIR_ROOT:-${CYLC_SUITE_RUN_DIR}}"
-    export CYLC_SUITE_SHARE_DIR="${CYLC_SUITE_WORK_DIR_ROOT}/share"
-    export CYLC_SUITE_WORK_DIR="${CYLC_SUITE_WORK_DIR_ROOT}/work"
+    export CYLC_WORKFLOW_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/workflow"
+    export CYLC_WORKFLOW_SHARE_DIR="${CYLC_WORKFLOW_RUN_DIR}/share"
+    export CYLC_WORKFLOW_WORK_DIR="${CYLC_WORKFLOW_RUN_DIR}/work"
     CYLC_TASK_CYCLE_POINT="$(cut -d '/' -f 1 <<<"${CYLC_TASK_JOB}")"
     CYLC_TASK_NAME="$(cut -d '/' -f 2 <<<"${CYLC_TASK_JOB}")"
     export CYLC_TASK_NAME CYLC_TASK_CYCLE_POINT ISODATETIMEREF
@@ -86,7 +85,7 @@ cylc__job__main() {
     # Otherwise, a zero padded number will be interpreted as an octal.
     export CYLC_TASK_SUBMIT_NUMBER=$((10#$(cut -d '/' -f 3 <<<"${CYLC_TASK_JOB}")))
     export CYLC_TASK_ID="${CYLC_TASK_NAME}.${CYLC_TASK_CYCLE_POINT}"
-    export CYLC_TASK_LOG_DIR="${CYLC_SUITE_RUN_DIR}/log/job/${CYLC_TASK_JOB}"
+    export CYLC_TASK_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/job/${CYLC_TASK_JOB}"
     export CYLC_TASK_LOG_ROOT="${CYLC_TASK_LOG_DIR}/job"
     if [[ -n "${CYLC_TASK_WORK_DIR_BASE:-}" ]]; then
         # Note: value of CYLC_TASK_WORK_DIR_BASE may contain variable
@@ -96,28 +95,44 @@ cylc__job__main() {
     else
         CYLC_TASK_WORK_DIR_BASE="${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}"
     fi
-    export CYLC_TASK_WORK_DIR="${CYLC_SUITE_WORK_DIR}/${CYLC_TASK_WORK_DIR_BASE}"
-    typeset contact="${CYLC_SUITE_RUN_DIR}/.service/contact"
+    export CYLC_TASK_WORK_DIR="${CYLC_WORKFLOW_WORK_DIR}/${CYLC_TASK_WORK_DIR_BASE}"
+    typeset contact="${CYLC_WORKFLOW_RUN_DIR}/.service/contact"
     if [[ -f "${contact}" ]]; then
-        CYLC_SUITE_HOST="$(sed -n 's/^CYLC_SUITE_HOST=//p' "${contact}")"
-        CYLC_SUITE_OWNER="$(sed -n 's/^CYLC_SUITE_OWNER=//p' "${contact}")"
-        export CYLC_SUITE_HOST CYLC_SUITE_OWNER
+        # (contact file not present for polled platforms)
+        CYLC_WORKFLOW_HOST="$(sed -n 's/^CYLC_WORKFLOW_HOST=//p' "${contact}")"
+        CYLC_WORKFLOW_OWNER="$(sed -n 's/^CYLC_WORKFLOW_OWNER=//p' "${contact}")"
+        export CYLC_WORKFLOW_HOST CYLC_WORKFLOW_OWNER
+        # Deprecated
+        export CYLC_SUITE_HOST="${CYLC_WORKFLOW_HOST}"
+        export CYLC_SUITE_OWNER="${CYLC_WORKFLOW_OWNER}"
     fi
+
     # DEPRECATED environment variables
-    export CYLC_SUITE_SHARE_PATH="${CYLC_SUITE_SHARE_DIR}"
-    export CYLC_SUITE_INITIAL_CYCLE_TIME="${CYLC_SUITE_INITIAL_CYCLE_POINT}"
-    export CYLC_SUITE_FINAL_CYCLE_TIME="${CYLC_SUITE_FINAL_CYCLE_POINT}"
+    export CYLC_SUITE_SHARE_DIR="${CYLC_WORKFLOW_SHARE_DIR}"
+    export CYLC_SUITE_SHARE_PATH="${CYLC_WORKFLOW_SHARE_DIR}"
+    export CYLC_SUITE_NAME="${CYLC_WORKFLOW_NAME}"
+    export CYLC_SUITE_LOG_DIR="${CYLC_WORKFLOW_LOG_DIR}"
+    export CYLC_SUITE_INITIAL_CYCLE_POINT="${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}"
+    export CYLC_SUITE_INITIAL_CYCLE_TIME="${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}"
+    export CYLC_SUITE_FINAL_CYCLE_POINT="${CYLC_WORKFLOW_FINAL_CYCLE_POINT}"
+    export CYLC_SUITE_FINAL_CYCLE_TIME="${CYLC_WORKFLOW_FINAL_CYCLE_POINT}"
+    export CYLC_SUITE_WORK_DIR="${CYLC_WORKFLOW_WORK_DIR}"
+    export CYLC_SUITE_UUID="${CYLC_WORKFLOW_UUID}"
+    export CYLC_SUITE_RUN_DIR="${CYLC_WORKFLOW_RUN_DIR}"
+    export CYLC_SUITE_DEF_PATH="${CYLC_WORKFLOW_RUN_DIR}"
+    export CYLC_WORKFLOW_DEF_PATH="${CYLC_WORKFLOW_RUN_DIR}"
     export CYLC_TASK_CYCLE_TIME="${CYLC_TASK_CYCLE_POINT}"
     export CYLC_TASK_WORK_PATH="${CYLC_TASK_WORK_DIR}"
+
     # Send task started message
-    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'started' &
+    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
     # System paths:
-    # * suite directory (installed run-dir first).
-    export PATH="${CYLC_SUITE_RUN_DIR}/bin:${PATH}"
-    export PYTHONPATH="${CYLC_SUITE_RUN_DIR}/lib/python:${PYTHONPATH:-}"
+    # * workflow directory (installed run-dir first).
+    export PATH="${CYLC_WORKFLOW_RUN_DIR}/bin:${PATH}"
+    export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/lib/python:${PYTHONPATH:-}"
     # Create share and work directories
-    mkdir -p "${CYLC_SUITE_SHARE_DIR}" || true
+    mkdir -p "${CYLC_WORKFLOW_SHARE_DIR}" || true
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
@@ -144,7 +159,7 @@ cylc__job__main() {
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
+    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
@@ -199,13 +214,13 @@ cylc__job__wait_cylc_message_started() {
 }
 
 ###############################################################################
-# Poll existence of pattern from suite log for up to a minute.
-cylc__job__poll_grep_suite_log() {
+# Poll existence of pattern from workflow log for up to a minute.
+cylc__job__poll_grep_workflow_log() {
     local TIMEOUT="$(($(date +%s) + 60))" # wait 1 minute
-    while ! grep -s "$@" "${CYLC_SUITE_LOG_DIR}/log"; do
+    while ! grep -s "$@" "${CYLC_WORKFLOW_LOG_DIR}/log"; do
         sleep 1
         if (($(date +%s) > TIMEOUT)); then
-            echo "ERROR: poll timed out: grep -s $* ${CYLC_SUITE_LOG_DIR}/log" >&2
+            echo "ERROR: poll timed out: grep -s $* ${CYLC_WORKFLOW_LOG_DIR}/log" >&2
             exit 1
         fi
     done
@@ -238,7 +253,7 @@ cylc__job__run_inst_func() {
 #   signal: trapped or given signal
 #   run_err_script (boolean): run job err script or not
 #   messages (remaining arguments):
-#     messages to send back to the suite server program,
+#     messages to send back to the scheduler,
 #     see "cylc help message" for format of messages.
 # Returns:
 #   exit ${CYLC_TASK_USER_SCRIPT_EXITCODE}
@@ -261,7 +276,7 @@ cylc__job_finish_err() {
         kill -s "${signal}" -- "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
     fi
     grep -q "^CYLC_JOB_EXIT=" "${CYLC_TASK_LOG_ROOT}.status" ||
-    cylc message -- "${CYLC_SUITE_NAME}" "${CYLC_TASK_JOB}" "$@" &
+    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" "$@" &
     CYLC_TASK_MESSAGE_FINISHED_PID=$!
     if "${run_err_script}"; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2

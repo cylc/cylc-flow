@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -52,4 +52,4 @@ def environ_init():
 
 environ_init()
 
-__version__ = '8.0b1.dev'
+__version__ = '8.0b2.dev'

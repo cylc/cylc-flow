@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Standard pytest fixtures for unit tests."""
 from cylc.flow.data_store_mgr import DataStoreMgr
+from pathlib import Path
 import pytest
 from shutil import rmtree
+from typing import Optional
 from unittest.mock import create_autospec, Mock
 
 from cylc.flow.cfgspec.globalcfg import SPEC
@@ -26,7 +28,30 @@ from cylc.flow.cycling.loader import (
 )
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtrigger_mgr import XtriggerManager
+
+
+@pytest.fixture
+def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Fixture that patches the cylc-run dir to the tests's {tmp_path}/cylc-run
+    and optionally creates a workflow run dir inside.
+
+    Args:
+        reg: Workflow name.
+    """
+    def inner(reg: Optional[str] = None) -> Path:
+        cylc_run_dir = tmp_path / 'cylc-run'
+        cylc_run_dir.mkdir(exist_ok=True)
+        monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)
+        if reg:
+            run_dir = cylc_run_dir.joinpath(reg)
+            run_dir.mkdir(parents=True, exist_ok=True)
+            (run_dir / WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
+            (run_dir / WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
+            return run_dir
+        return cylc_run_dir
+    return inner
 
 
 @pytest.fixture
@@ -97,7 +122,7 @@ def xtrigger_mgr() -> XtriggerManager:
     """A fixture to build an XtriggerManager which uses a mocked proc_pool,
     and uses a mocked broadcast_mgr."""
     return XtriggerManager(
-        suite="sample_suite",
+        workflow="sample_workflow",
         user="john-foo",
         proc_pool=Mock(put_command=lambda *a, **k: True),
         broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),

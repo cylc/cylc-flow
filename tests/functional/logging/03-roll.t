@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 set_test_number 11
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
         abort on stalled = True
@@ -41,10 +41,10 @@ create_test_global_config '' '
         maximum size in bytes = 2048
 '
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
-FILES="$(ls "${HOME}/cylc-run/${SUITE_NAME}/log/suite/log."*)"
+    cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+FILES="$(ls "${HOME}/cylc-run/${WORKFLOW_NAME}/log/workflow/log."*)"
 run_ok "${TEST_NAME_BASE}-n-logs" test 8 -eq "$(wc -l <<<"${FILES}")"
 for FILE in ${FILES}; do
     run_ok "${TEST_NAME_BASE}-log-size" test "$(stat -c'%s' "${FILE}")" -le 2048

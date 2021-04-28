@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -29,11 +29,11 @@ create_test_global_config "
         install target = localhost
 "
 
-install_suite "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${SUITE_NAME}"
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 declare -A GREP_TESTS
 
@@ -70,7 +70,7 @@ GREP_TESTS["${errname}"]="""
 
 for testname in "${!GREP_TESTS[@]}"; do
     # Symlink to get a better test name from grep_ok
-    ln -s "${SUITE_RUN_DIR}/log/suite/log" "$testname"
+    ln -s "${WORKFLOW_RUN_DIR}/log/workflow/log" "$testname"
     grep_ok "${GREP_TESTS[$testname]}" "$testname"
 done
 

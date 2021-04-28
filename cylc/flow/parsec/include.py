@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -133,12 +133,12 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
     return outf
 
 
-def cleanup(suitedir):
+def cleanup(workflowdir):
     print('CLEANUP REQUESTED, deleting:')
-    for root, _, files in os.walk(suitedir):
+    for root, _, files in os.walk(workflowdir):
         for filename in files:
             if '.EDIT.' in filename:
-                print(' + %s' % filename.replace(suitedir + '/', ''))
+                print(' + %s' % filename.replace(workflowdir + '/', ''))
                 os.unlink(os.path.join(root, filename))
 
 

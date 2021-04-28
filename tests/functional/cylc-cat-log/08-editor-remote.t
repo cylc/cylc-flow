@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,6 @@ export REQUIRE_PLATFORM='loc:remote'
 . "${TEST_SOURCE_DIR}/editor/bin/run_tests.sh"
 export PATH="${TEST_SOURCE_DIR}/editor/bin/:${PATH}"
 
-install_suite "${TEST_NAME_BASE}" "editor"
+install_workflow "${TEST_NAME_BASE}" "editor"
 run_tests "${CYLC_TEST_PLATFORM}"
 purge

@@ -3,11 +3,11 @@
 
     description = """To see how multiple inheritance works:
 
- % cylc list -tb[m] SUITE # list namespaces
- % cylc graph -n SUITE # graph namespaces
- % cylc graph SUITE # dependencies, collapse on first-parent namespaces
+ % cylc list -tb[m] WORKFLOW # list namespaces
+ % cylc graph -n WORKFLOW # graph namespaces
+ % cylc graph WORKFLOW # dependencies, collapse on first-parent namespaces
 
-  % cylc config --sparse --item [runtime]ops_s1 SUITE
+  % cylc config --sparse --item [runtime]ops_s1 WORKFLOW
   % cylc config --sparse --item [runtime]var_p2 foo"""
 
 [scheduling]

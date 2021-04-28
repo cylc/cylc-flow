@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 set_test_number 4
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -33,13 +33,13 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${SUITE_NAME}" --profile
+    cylc validate "${WORKFLOW_NAME}" --profile
 
 exists_ok 'profile.prof'
 
 run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${SUITE_NAME}" --profile --no-detach
+    cylc play "${WORKFLOW_NAME}" --profile --no-detach
 
-exists_ok "${RUN_DIR}/${SUITE_NAME}/log/suite/profile.prof"
+exists_ok "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/profile.prof"
 
 purge

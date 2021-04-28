@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,14 +25,11 @@ from typing import List, TYPE_CHECKING
 import pytest
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.platforms import platform_from_name
-from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.rundb import CylcWorkflowDAO
 
-from .utils import (
-    _expanduser,
-    _rm_if_empty
-)
+from .utils import _rm_if_empty
 from .utils.flow_tools import (
     _make_flow,
     _make_scheduler,
@@ -82,11 +79,9 @@ def _pytest_passed(request):
 
 
 @pytest.fixture(scope='session')
-def run_dir(request):
+def run_dir():
     """The cylc run directory for this host."""
-    path = _expanduser(
-        platform_from_name()['run directory']
-    )
+    path = Path(get_workflow_run_dir(''))
     path.mkdir(exist_ok=True)
     yield path
 
@@ -268,7 +263,7 @@ def db_select():
     """
 
     def _check_columns(table: str, *columns: str) -> None:
-        all_columns = [x[0] for x in CylcSuiteDAO.TABLES_ATTRS[table]]
+        all_columns = [x[0] for x in CylcWorkflowDAO.TABLES_ATTRS[table]]
         if not all(col in all_columns for col in columns):
             raise ValueError(
                 f"One or more unrecognised column names for table {table} "
@@ -278,7 +273,7 @@ def db_select():
         schd: 'Scheduler', table: str, *columns: str, **where: str
     ) -> List[str]:
 
-        if table not in CylcSuiteDAO.TABLES_ATTRS:
+        if table not in CylcWorkflowDAO.TABLES_ATTRS:
             raise ValueError(f"Table name '{table}' not recognised")
         if not columns:
             columns = ('*',)
@@ -295,7 +290,7 @@ def db_select():
             stmt += f' WHERE {where_stmt}'
             stmt_args = list(where.values())
 
-        dao = schd.suite_db_mgr.get_pri_dao()
+        dao = schd.workflow_db_mgr.get_pri_dao()
         try:
             return [i for i in dao.connect().execute(stmt, stmt_args)]
         finally:

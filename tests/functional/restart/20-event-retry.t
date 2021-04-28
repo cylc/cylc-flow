@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,22 +18,22 @@
 # Test re-run event handler on restart.
 . "$(dirname "$0")/test_header"
 set_test_number 7
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-SUITED="$RUN_DIR/${SUITE_NAME}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" cylc play "${SUITE_NAME}" --debug --no-detach
-sqlite3 "${SUITED}/log/db" \
+WORKFLOWD="$RUN_DIR/${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --debug --no-detach
+sqlite3 "${WORKFLOWD}/log/db" \
     'SELECT COUNT(*) FROM task_action_timers WHERE ctx_key GLOB "*event-handler-00*"' \
     >"${TEST_NAME_BASE}-db-n-entries"
 cmp_ok "${TEST_NAME_BASE}-db-n-entries" <<<'1'
-suite_run_ok "${TEST_NAME_BASE}-restart" cylc play "${SUITE_NAME}" --debug --no-detach
-cmp_ok "${SUITED}/file" <<'__TEXT__'
+workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --debug --no-detach
+cmp_ok "${WORKFLOWD}/file" <<'__TEXT__'
 1
 2
 __TEXT__
-grep_ok 'LOADING task action timers' "${SUITED}/log/suite/log"
-grep_ok "+ t01\\.1 \[\['event-handler-00', 'succeeded'\], 1\]" "${SUITED}/log/suite/log"
+grep_ok 'LOADING task action timers' "${WORKFLOWD}/log/workflow/log"
+grep_ok "+ t01\\.1 \[\['event-handler-00', 'succeeded'\], 1\]" "${WORKFLOWD}/log/workflow/log"
 
 purge
 exit

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc diff [OPTIONS] SUITE1 SUITE2
+"""cylc diff [OPTIONS] WORKFLOW1 WORKFLOW2
 
-Compare two suite configurations and display any differences.
+Compare two workflow configurations and display any differences.
 
 Differencing is done after parsing the flow.cylc files so it takes
 account of default values that are not explicitly defined, it disregards
 the order of configuration items, and it sees any include-file content
 after inlining has occurred.
 
-Files in the suite bin directory and other sub-directories of the
-suite definition directory are not currently differenced."""
+Files in the workflow bin directory and other sub-directories of the
+run directory are not currently differenced."""
 
 import sys
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.config import SuiteConfig
-from cylc.flow.suite_files import parse_suite_arg
+from cylc.flow.config import WorkflowConfig
+from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -112,8 +112,8 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
 def get_option_parser():
     parser = COP(
         __doc__, jset=True, prep=True, icp=True,
-        argdoc=[('SUITE1', 'Suite name or path'),
-                ('SUITE2', 'Suite name or path')])
+        argdoc=[('WORKFLOW1', 'Workflow name or path'),
+                ('WORKFLOW2', 'Workflow name or path')])
 
     parser.add_option(
         "-n", "--nested",
@@ -125,43 +125,46 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, *args):
-    suite1_name, suite1_config = parse_suite_arg(options, args[0])
-    suite2_name, suite2_config = parse_suite_arg(options, args[1])
-    if suite1_name == suite2_name:
-        parser.error("You can't diff a single suite.")
-    print(f"Parsing {suite1_name} ({suite1_config})")
+    workflow1_name, workflow1_config = parse_workflow_arg(options, args[0])
+    workflow2_name, workflow2_config = parse_workflow_arg(options, args[1])
+    if workflow1_name == workflow2_name:
+        parser.error("You can't diff a single workflow.")
+    print(f"Parsing {workflow1_name} ({workflow1_config})")
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file)
-    config1 = SuiteConfig(
-        suite1_name, suite1_config, options, template_vars).cfg
-    print(f"Parsing {suite2_name} ({suite2_config})")
-    config2 = SuiteConfig(
-        suite2_name, suite2_config, options, template_vars, is_reload=True).cfg
+    config1 = WorkflowConfig(
+        workflow1_name, workflow1_config, options, template_vars).cfg
+    print(f"Parsing {workflow2_name} ({workflow2_config})")
+    config2 = WorkflowConfig(
+        workflow2_name, workflow2_config, options, template_vars,
+        is_reload=True).cfg
 
     if config1 == config2:
-        print(f"Suite definitions {suite1_name} and {suite2_name} are "
-              f"identical")
+        print(
+            f"Workflow definitions {workflow1_name} and {workflow2_name} are "
+            f"identical"
+        )
         sys.exit(0)
 
-    print(f"Suite definitions {suite1_name} and {suite2_name} differ")
+    print(f"Workflow definitions {workflow1_name} and {workflow2_name} differ")
 
-    suite1_only = {}
-    suite2_only = {}
+    workflow1_only = {}
+    workflow2_only = {}
     diff_1_2 = {}
 
-    diffdict(config1, config2, suite1_only, suite2_only, diff_1_2)
+    diffdict(config1, config2, workflow1_only, workflow2_only, diff_1_2)
 
     if n_oone > 0:
-        print(f'\n{n_oone} items only in {suite1_name} (<)')
-        prdict(suite1_only, '<', nested=options.nested)
+        print(f'\n{n_oone} items only in {workflow1_name} (<)')
+        prdict(workflow1_only, '<', nested=options.nested)
 
     if n_otwo > 0:
-        print(f'\n{n_otwo} items only in {suite2_name} (>)')
-        prdict(suite2_only, '>', nested=options.nested)
+        print(f'\n{n_otwo} items only in {workflow2_name} (>)')
+        prdict(workflow2_only, '>', nested=options.nested)
 
     if n_diff > 0:
-        print(f'\n{n_diff} common items differ {suite1_name}(<) '
-              f'{suite2_name}(>)')
+        print(f'\n{n_diff} common items differ {workflow1_name}(<) '
+              f'{workflow2_name}(>)')
         prdict(diff_1_2, '', diff=True, nested=options.nested)
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,16 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test on absence HOME (cylc/cylc-flow#2895)
+# Test absence of HOME env var (https://github.com/cylc/cylc-flow/pull/2895)
 
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-create_test_global_config '' ''
+# shellcheck disable=SC2016
+create_test_global_config '' '
+[symlink dirs]
+    [[localhost]]
+        run = $HOME/dr-malcolm
+'
 
 run_ok "${TEST_NAME_BASE}" \
     env -u HOME \
-    cylc config --item='[platforms][localhost]work directory'
-cmp_ok "${TEST_NAME_BASE}.stdout" <<<"\$HOME/cylc-run"
+    cylc config --item='[symlink dirs][localhost]run'
+cmp_ok "${TEST_NAME_BASE}.stdout" <<<"\$HOME/dr-malcolm"
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit

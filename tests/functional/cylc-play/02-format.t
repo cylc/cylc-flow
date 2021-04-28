@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 set_test_number 8
 
-init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     allow implicit tasks = True
 [scheduling]
@@ -31,32 +31,32 @@ init_suite "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 # format=plain
 TEST_NAME="${TEST_NAME_BASE}-run-format-plain"
-suite_run_ok "${TEST_NAME}" cylc play --format plain "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --format plain "${WORKFLOW_NAME}"
 grep_ok 'listening on tcp:' "${TEST_NAME}.stdout"
 grep_ok 'publishing on tcp:' "${TEST_NAME}.stdout"
-grep_ok 'To view suite server program contact information:' \
+grep_ok 'To view scheduler contact information:' \
     "${TEST_NAME}.stdout"
-grep_ok 'Other ways to see if the suite is still running:' \
+grep_ok 'Other ways to see if the workflow is still running:' \
     "${TEST_NAME}.stdout"
-poll_suite_stopped
+poll_workflow_stopped
 
 delete_db
 
 # format=json
 TEST_NAME="${TEST_NAME_BASE}-run-format-json"
-suite_run_ok "${TEST_NAME}" cylc play --format json "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --format json "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME}-fields" python3 -c '
 import json
 import sys
 data = json.load(open(sys.argv[1], "r"))
 print(list(sorted(data)), file=sys.stderr)
 assert list(sorted(data)) == [
-    "host", "pid", "ps_opts", "pub_url", "suite", "url"]
+    "host", "pid", "ps_opts", "pub_url", "url", "workflow"]
 ' "${TEST_NAME}.stdout"
-poll_suite_stopped
+poll_workflow_stopped
 
 purge

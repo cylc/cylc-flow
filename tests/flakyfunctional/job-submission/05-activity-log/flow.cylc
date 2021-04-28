@@ -19,11 +19,11 @@
             failed handler = echo
     [[t2]]
         script = """
-            cylc kill "${CYLC_SUITE_NAME}" 't1'
+            cylc kill "${CYLC_WORKFLOW_NAME}" 't1'
             sleep 1
-            cylc poll "${CYLC_SUITE_NAME}" 't1'
+            cylc poll "${CYLC_WORKFLOW_NAME}" 't1'
             sleep 1
-            cylc shutdown "${CYLC_SUITE_NAME}"
+            cylc shutdown "${CYLC_WORKFLOW_NAME}"
         """
         [[[job]]]
             execution time limit = PT1M

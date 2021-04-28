@@ -19,8 +19,8 @@
         init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
 cylc__job__wait_cylc_message_started
-# Corrupt port file and don't report back to suite
-SRVD="${CYLC_SUITE_RUN_DIR}/.service"
+# Corrupt port file and don't report back to workflow
+SRVD="${CYLC_WORKFLOW_RUN_DIR}/.service"
 echo 'Haha! I have corrupted the port file!' >"${SRVD}/contact"
 exit 1
 """

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -65,14 +65,14 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.print_tree import get_tree
-from cylc.flow.suite_files import ContactFileFields as Cont
+from cylc.flow.workflow_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
 
 
 # default grey colour (do not use "dim", it is not sufficiently portable)
 DIM = 'fg 248'
 
-# all supported suite states
+# all supported workflow states
 FLOW_STATES = {
     'running',
     'paused',
@@ -81,9 +81,9 @@ FLOW_STATES = {
 }
 
 
-# suite status colours
+# workflow status colours
 FLOW_STATE_CMAP = {
-    # suite state: term colour
+    # workflow state: term colour
     'running': 'green',
     'paused': 'fg 172',
     'stopping': 'fg 201',
@@ -91,7 +91,7 @@ FLOW_STATE_CMAP = {
 }
 
 
-# suite status symbols
+# workflow status symbols
 FLOW_STATE_SYMBOLS = {
     # NOTE: the standard media control characters ▶️,, ⏸️,, ⏹️
     #       can appear wildly different font-depending and may not
@@ -228,7 +228,7 @@ def get_option_parser():
 
 
 def state_totals(totals, colour_blind=False):
-    """Return a string with a visual representation of a suite's state totals.
+    """Return a string with a visual representation of workflow state totals.
 
     Args:
         totals (dict):

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,11 +20,10 @@
 import io
 import os
 import pytest
-from tempfile import TemporaryFile, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 from unittest import mock
 
 from cylc.flow import __version__
-import cylc.flow.flags
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.platforms import platform_from_name
 
@@ -67,8 +66,8 @@ def fixture_get_platform():
     yield inner_func
 
 
-@mock.patch("cylc.flow.job_file.get_remote_suite_run_dir")
-def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
+@mock.patch("cylc.flow.job_file.get_remote_workflow_run_dir")
+def test_write(mocked_get_remote_workflow_run_dir, fixture_get_platform):
     """Test write function outputs jobscript file correctly."""
     with NamedTemporaryFile() as local_job_file_path:
         local_job_file_path = local_job_file_path.name
@@ -80,9 +79,8 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         job_conf = {
             "platform": platform,
             "task_id": "baa",
-            "suite_name": "farm_noises",
+            "workflow_name": "farm_noises",
             "work_d": "farm_noises/work_d",
-            "remote_suite_d": "remote/suite/dir",
             "uuid_str": "neigh",
             'environment': {'cow': '~/moo',
                             'sheep': '~baa/baa',
@@ -104,7 +102,7 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             "post-script": "This is the post script",
             "exit-script": "This is the exit script",
         }
-        mocked_get_remote_suite_run_dir.return_value = "run/dir"
+        mocked_get_remote_workflow_run_dir.return_value = "run/dir"
         JobFileWriter().write(local_job_file_path, job_conf)
 
         assert (os.path.exists(local_job_file_path))
@@ -116,7 +114,7 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
     """Test the header is correctly written"""
 
     expected = ('#!/bin/bash -l\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT '
-                '++++\n# Suite: farm_noises\n# Task: baa\n# Job '
+                '++++\n# Workflow: farm_noises\n# Task: baa\n# Job '
                 'log directory: 1/baa/01\n# Job submit method: '
                 'background\n# Job submit command template: woof\n#'
                 ' Execution time limit: moo')
@@ -128,7 +126,7 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
         "platform": platform,
         "job runner": "background",
         "execution_time_limit": "moo",
-        "suite_name": "farm_noises",
+        "workflow_name": "farm_noises",
         "task_id": "baa",
         "job_d": "1/baa/01"
     }
@@ -145,11 +143,11 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             {
                 "platform": {
                     "job runner": "loadleveler",
-                    "job runner command template": "test_suite",
+                    "job runner command template": "test_workflow",
                 },
                 "directives": {"moo": "foo",
                                "cluck": "bar"},
-                "suite_name": "farm_noises",
+                "workflow_name": "farm_noises",
                 "task_id": "baa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "directory/job",
@@ -165,10 +163,10 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             {
                 "platform": {
                     "job runner": "slurm",
-                    "job runner command template": "test_suite"
+                    "job runner command template": "test_workflow"
                 },
                 "directives": {},
-                "suite_name": "farm_noises",
+                "workflow_name": "farm_noises",
                 "task_id": "baa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "directory/job",
@@ -183,11 +181,11 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             {
                 "platform": {
                     "job runner": "pbs",
-                    "job runner command template": "test_suite",
+                    "job runner command template": "test_workflow",
                     "job name length maximum": 15
                 },
                 "directives": {},
-                "suite_name": "farm_noises",
+                "workflow_name": "farm_noises",
                 "task_id": "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "directory/job",
@@ -201,12 +199,12 @@ def test_write(mocked_get_remote_suite_run_dir, fixture_get_platform):
             {
                 "platform": {
                     "job runner": "sge",
-                    "job runner command template": "test_suite",
+                    "job runner command template": "test_workflow",
                 },
                 "directives": {"-V": "",
                                "-q": "queuename",
                                "-l": "s_vmem=1G,s_cpu=60"},
-                "suite_name": "farm_noises",
+                "workflow_name": "farm_noises",
                 "task_id": "baa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "$HOME/directory/job",
@@ -251,25 +249,25 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
     """Test the prelude section of job script file is correctly
     written.
     """
-    cylc.flow.flags.debug = True
+    monkeypatch.setattr('cylc.flow.flags.debug', True)
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
                 '\nexport CYLC_DEBUG=true'
                 '\nexport CYLC_VERSION=\'%s\'\nexport ' % __version__
-                + 'CYLC_SUITE_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
+                + 'CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
     job_conf = {
         "platform": fixture_get_platform({
             "job runner": "loadleveler",
-            "job runner command template": "test_suite",
+            "job runner command template": "test_workflow",
             "host": "localhost",
             "copyable environment variables": [
-                "CYLC_SUITE_INITIAL_CYCLE_POINT"
+                "CYLC_WORKFLOW_INITIAL_CYCLE_POINT"
             ],
             "cylc path": "moo/baa"
         }),
         "directives": {"restart": "yes"},
     }
-    monkeypatch.setenv("CYLC_SUITE_INITIAL_CYCLE_POINT", "20200101T0000Z")
+    monkeypatch.setenv("CYLC_WORKFLOW_INITIAL_CYCLE_POINT", "20200101T0000Z")
 
     with io.StringIO() as fake_file:
         # copyable environment variables
@@ -277,75 +275,31 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
         assert(fake_file.getvalue() == expected)
 
 
-def test_write_suite_environment(fixture_get_platform, monkeypatch):
-    """Test suite environment is correctly written in jobscript"""
-    # set some suite environment conditions
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_suite_work_dir",
-        lambda a, b: "work/dir"
-    )
-    cylc.flow.flags.debug = True
-    cylc.flow.flags.verbose = True
-    suite_env = {'CYLC_UTC': 'True',
-                 'CYLC_CYCLING_MODE': 'integer'}
+def test_write_workflow_environment(fixture_get_platform, monkeypatch):
+    """Test workflow environment is correctly written in jobscript"""
+    # set some workflow environment conditions
+    monkeypatch.setattr('cylc.flow.flags.debug', True)
+    monkeypatch.setattr('cylc.flow.flags.verbose', True)
+    workflow_env = {'CYLC_UTC': 'True',
+                    'CYLC_CYCLING_MODE': 'integer'}
     job_file_writer = JobFileWriter()
-    job_file_writer.set_suite_env(suite_env)
-    # suite env not correctly setting...check this
-    expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC SUITE '
+    job_file_writer.set_workflow_env(workflow_env)
+    # workflow env not correctly setting...check this
+    expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC WORKFLOW '
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
                 '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
-                ' export CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n   '
-                ' export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
-                ' export CYLC_SUITE_UUID="neigh"')
+                ' export CYLC_WORKFLOW_RUN_DIR="cylc-run/farm_noises"\n   '
+                ' export CYLC_WORKFLOW_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",
         }),
-        "suite_name": "farm_noises",
-        "remote_suite_d": "remote/suite/dir",
+        "workflow_name": "farm_noises",
         "uuid_str": "neigh"
     }
     rund = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:
-        job_file_writer._write_suite_environment(fake_file, job_conf, rund)
-        result = fake_file.getvalue()
-        assert result == expected
-
-
-def test_write_suite_environment_no_remote_suite_d(
-        fixture_get_platform, monkeypatch
-):
-    """Test suite environment is correctly written in jobscript"""
-
-    monkeypatch.setattr(
-        cylc.flow.job_file,
-        "get_remote_suite_work_dir",
-        lambda a, b: "work/dir"
-    )
-    cylc.flow.flags.debug = True
-    cylc.flow.flags.verbose = True
-    suite_env = {'CYLC_UTC': 'True',
-                 'CYLC_CYCLING_MODE': 'integer'}
-    job_file_writer = JobFileWriter()
-    job_file_writer.set_suite_env(suite_env)
-    expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC SUITE '
-                'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n    '
-                'export CYLC_UTC="True"\n    export TZ="UTC"\n\n    export '
-                'CYLC_SUITE_RUN_DIR="cylc-run/farm_noises"\n    '
-                'export CYLC_SUITE_WORK_DIR_ROOT="work/dir"\n   '
-                ' export CYLC_SUITE_UUID="neigh"')
-    job_conf = {
-        "platform": fixture_get_platform({
-            "host": "localhost",
-        }),
-        "suite_name": "farm_noises",
-        "uuid_str": "neigh",
-        "remote_suite_d": ""
-    }
-    rund = "cylc-run/farm_noises"
-    with io.StringIO() as fake_file:
-        job_file_writer._write_suite_environment(fake_file, job_conf, rund)
+        job_file_writer._write_workflow_environment(fake_file, job_conf, rund)
         result = fake_file.getvalue()
         assert result == expected
 

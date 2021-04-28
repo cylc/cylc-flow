@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,22 +22,22 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 delete_db
 TEST_NAME=${TEST_NAME_BASE}-run-override
-# This will fail if the in-suite final cycle point does not get overridden.
-suite_run_ok "${TEST_NAME}" cylc play --fcp=2015-04 --icp=2015-04 --debug --no-detach "${SUITE_NAME}"
+# This will fail if the in-workflow final cycle point does not get overridden.
+workflow_run_ok "${TEST_NAME}" cylc play --fcp=2015-04 --icp=2015-04 --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 delete_db
 TEST_NAME=${TEST_NAME_BASE}-run-fail
 # This should fail as the final cycle point  is < the initial one.
-suite_run_fail "${TEST_NAME}" cylc play --fcp=2015-03 --icp=2015-04 --debug --no-detach "${SUITE_NAME}"
+workflow_run_fail "${TEST_NAME}" cylc play --fcp=2015-03 --icp=2015-04 --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

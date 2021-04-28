@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -37,7 +37,7 @@ async def test_is_paused_after_stop(
         assert not schd.is_restart
         assert schd.is_paused
     # Stopped
-    assert ('is_paused', '1') not in db_select(schd, 'suite_params')
+    assert ('is_paused', '1') not in db_select(schd, 'workflow_params')
     # Restart
     schd = scheduler(reg, paused_start=None)
     async with run(schd):
@@ -56,8 +56,8 @@ async def test_is_paused_after_crash(
     def ctrl_c():
         raise asyncio.CancelledError("Mock keyboard interrupt")
     # Patch this part of the main loop
-    _schd_suite_shutdown = schd.suite_shutdown
-    setattr(schd, 'suite_shutdown', ctrl_c)
+    _schd_workflow_shutdown = schd.workflow_shutdown
+    setattr(schd, 'workflow_shutdown', ctrl_c)
 
     # Run
     with pytest.raises(asyncio.CancelledError):
@@ -65,9 +65,9 @@ async def test_is_paused_after_crash(
             assert not schd.is_restart
             assert schd.is_paused
     # Stopped
-    assert ('is_paused', '1') in db_select(schd, 'suite_params')
+    assert ('is_paused', '1') in db_select(schd, 'workflow_params')
     # Reset patched method
-    setattr(schd, 'suite_shutdown', _schd_suite_shutdown)
+    setattr(schd, 'workflow_shutdown', _schd_workflow_shutdown)
     # Restart
     schd = scheduler(reg, paused_start=None)
     async with run(schd):

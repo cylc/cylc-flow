@@ -1,29 +1,29 @@
 #!Jinja2
 
-# TEST SUITE ADAPTED FROM examples/satellite/ext-trigger/
+# TEST WORKFLOW ADAPTED FROM examples/satellite/ext-trigger/
 
 [meta]
     title = Real time satellite data processing demo, variant 3 of 3
     description = """
         Successive cycle points retrieve and processes the next arbitrarily
         timed and labelled dataset, in parallel if the data comes in quickly.
-        This variant of the suite has initial get_data tasks with external
+        This variant of the workflow has initial get_data tasks with external
         triggers: they do not submit until triggered by an external system.
     """
 
 # Note that the satellite simulator task here that supplies the external event
-# trigger happens to be a suite task - i.e. it is not really "external" - but
-# this is only a convenience - an easy route to a self-contained example suite.
+# trigger happens to be a workflow task - i.e. it is not really "external" - but
+# this is only a convenience - an easy route to a self-contained example workflow.
 
 # you can monitor output processing with:
 # $ watch -n 1 \
-#    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/<SUITE>/work"
+#    "find ~/cylc-run/<WORKFLOW>/share; find ~/cylc-run/<WORKFLOW>/work"
 
 {% set N_DATASETS = 5 %}
 
 # define shared directories (could use runtime namespaces for this)
-{% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}
-{% set PRODUCT_DIR = "$CYLC_SUITE_SHARE_DIR/products" %}
+{% set DATA_IN_DIR = "$CYLC_WORKFLOW_SHARE_DIR/incoming" %}
+{% set PRODUCT_DIR = "$CYLC_WORKFLOW_SHARE_DIR/products" %}
 
 [scheduler]
     UTC mode = True
@@ -47,9 +47,9 @@
 
 [runtime]
     [[prep]]
-        script = rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
+        script = rm -rf $CYLC_WORKFLOW_SHARE_DIR $CYLC_WORKFLOW_WORK_DIR
         [[[meta]]]
-            title = clean the suite output directories
+            title = clean the workflow output directories
 
     [[satsim]]
         pre-script = mkdir -p {{DATA_IN_DIR}}
@@ -63,8 +63,8 @@
                 touch {{DATA_IN_DIR}}/$DATA_FILE
                 ((COUNT += 1))
                 # (required to distinguish fast-arriving messages).
-                # Trigger downstream processing in the suite.
-                cylc ext-trigger $CYLC_SUITE_NAME \
+                # Trigger downstream processing in the workflow.
+                cylc ext-trigger $CYLC_WORKFLOW_NAME \
                    "new dataset ready for processing" $DATA_ID
             done
         """
@@ -111,14 +111,14 @@
             title = generate products from .proc2 processed dataset
 
     [[collate]]
-        # Note you might want to use "cylc suite-state" to check that
+        # Note you might want to use "cylc workflow-state" to check that
         # _all_ product tasks have finished before collating results.
         script = """
             echo PRODUCTS:
             ls {{PRODUCT_DIR}}
         """
         [[[meta]]]
-            title = collate all products from the suite run
+            title = collate all products from the workflow run
 
 [visualization]
     default node attributes = "style=filled", "shape=box"

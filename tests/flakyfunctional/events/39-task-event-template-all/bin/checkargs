@@ -8,8 +8,8 @@ from subprocess import Popen, PIPE
 
 args = dict([arg.split('=', 1) for arg in sys.argv[1:]])
 
-suite = os.environ['CYLC_SUITE_NAME']
-proc = Popen(['cylc', 'cat-log', '-m', 'p', '-f', 'a', suite, 'foo.1'],
+workflow = os.environ['CYLC_WORKFLOW_NAME']
+proc = Popen(['cylc', 'cat-log', '-m', 'p', '-f', 'a', workflow, 'foo.1'],
              stdout=PIPE, stdin=open(os.devnull))
 alog = proc.communicate()[0].decode().strip()
 proc.wait()
@@ -21,7 +21,7 @@ for line in open(alog):
 del args['start_time']  # must exist, but value unreliable
 
 desired_args = {
-    'suite_title': 'a test suite',
+    'workflow_title': 'a test workflow',
     'job_id': job_id.strip(),
     'point': '1',
     'URL': 'http://cheesy.peas',
@@ -32,8 +32,8 @@ desired_args = {
     'job_runner_name': 'background',
     'id': 'foo.1',
     'finish_time': 'None',
-    'suite_size': 'large',
-    'suite': suite,
+    'workflow_size': 'large',
+    'workflow': workflow,
     'message': 'cheesy peas',
     'platform_name': 'localhost',
     'event': 'custom',

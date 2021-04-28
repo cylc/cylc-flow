@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ import unittest
 from tempfile import mktemp
 from unittest import mock
 
-from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.rundb import CylcWorkflowDAO
 
 
 GLOBAL_CONFIG = """
@@ -52,7 +52,7 @@ GLOBAL_CONFIG = """
 class TestRunDb(unittest.TestCase):
 
     def setUp(self):
-        self.dao = CylcSuiteDAO(':memory:')
+        self.dao = CylcWorkflowDAO(':memory:')
         self.mocked_connection = mock.Mock()
         self.dao.connect = mock.MagicMock(return_value=self.mocked_connection)
 
@@ -63,8 +63,8 @@ class TestRunDb(unittest.TestCase):
     ]
 
     def test_select_task_job(self):
-        """Test the rundb CylcSuiteDAO select_task_job method"""
-        columns = self.dao.tables[CylcSuiteDAO.TABLE_TASK_JOBS].columns[3:]
+        """Test the rundb CylcWorkflowDAO select_task_job method"""
+        columns = self.dao.tables[CylcWorkflowDAO.TABLE_TASK_JOBS].columns[3:]
         expected_values = [[2 for _ in columns]]
 
         self.mocked_connection.execute.return_value = expected_values
@@ -77,7 +77,7 @@ class TestRunDb(unittest.TestCase):
                 self.assertEqual(2, returned_values[column.name])
 
     def test_select_task_job_sqlite_error(self):
-        """Test that when the rundb CylcSuiteDAO select_task_job method raises
+        """Test when the rundb CylcWorkflowDAO select_task_job method raises
         a SQLite exception, the method returns None"""
 
         self.mocked_connection.execute.side_effect = sqlite3.DatabaseError
@@ -118,7 +118,7 @@ def test_remove_columns():
         conn.commit()
         conn.close()
 
-        dao = CylcSuiteDAO(temp_db)
+        dao = CylcWorkflowDAO(temp_db)
         dao.remove_columns('foo', ['bar', 'baz'])
 
         conn = dao.connect()

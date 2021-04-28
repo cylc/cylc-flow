@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ BASE_GLOBAL_CONFIG="
         available = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
-init_suite "${TEST_NAME}" <<< '
+init_workflow "${TEST_NAME}" <<< '
 [scheduling]
     [[graph]]
         R1 = foo
@@ -44,12 +44,12 @@ init_suite "${TEST_NAME}" <<< '
     [[foo]]
 '
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
-run_ok "${TEST_NAME}-suite-start" \
-    cylc play "${SUITE_NAME}" --host=localhost --pause
-poll_suite_running
+run_ok "${TEST_NAME}-workflow-start" \
+    cylc play "${WORKFLOW_NAME}" --host=localhost --pause
+poll_workflow_running
 
-# corrupt suite
-rm "${SUITE_RUN_DIR}/flow.cylc"
+# corrupt workflow
+rm "${WORKFLOW_RUN_DIR}/flow.cylc"
 
 # condemn localhost
 create_test_global_config '' "
@@ -59,18 +59,18 @@ ${BASE_GLOBAL_CONFIG}
         condemned = $(hostname)
 "
 
-FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
+FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
-    'The Cylc suite host will soon become un-available' \
-    'Suite shutting down - REQUEST(NOW-NOW)' \
+    'The Cylc workflow host will soon become un-available' \
+    'Workflow shutting down - REQUEST(NOW-NOW)' \
     "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
-    'Could not restart suite will retry in 5s' \
+    'Could not restart workflow will retry in 5s' \
     "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
-    'Could not restart suite will retry in 5s' \
+    'Could not restart workflow will retry in 5s' \
     "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
-    'Could not restart suite will retry in 5s' \
-    'Suite unable to automatically restart after 3 tries'
+    'Could not restart workflow will retry in 5s' \
+    'Workflow unable to automatically restart after 3 tries'
 
-# stop suite - suite should already by stopped but just to be safe
-cylc stop --max-polls=10 --interval=2 --kill "${SUITE_NAME}" 2>'/dev/null'
+# stop workflow - workflow should already by stopped but just to be safe
+cylc stop --max-polls=10 --interval=2 --kill "${WORKFLOW_NAME}" 2>'/dev/null'
 purge

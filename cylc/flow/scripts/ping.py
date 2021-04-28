@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
 
 """cylc ping [OPTIONS] ARGS
 
-Test communication with a running suite.
+Test communication with a running workflow.
 
-If suite REG is running or TASK in suite REG is currently running,
+If workflow REG is running or TASK in workflow REG is currently running,
 exit with success status, else exit with error status."""
 
 import sys
@@ -60,26 +60,26 @@ query ($tProxy: ID!) {
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[('REG', 'Suite name'), ('[TASK]', 'Task ' + TaskID.SYNTAX)])
+        argdoc=[('REG', 'Workflow name'), ('[TASK]', 'Task ' + TaskID.SYNTAX)])
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, suite, task_id=None):
-    pclient = get_client(suite, timeout=options.comms_timeout)
+def main(parser, options, workflow, task_id=None):
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if task_id and not TaskID.is_valid_id(task_id):
         raise UserInputError("Invalid task ID: %s" % task_id)
 
     flow_kwargs = {
         'request_string': FLOW_QUERY,
-        'variables': {'wFlows': [suite]}
+        'variables': {'wFlows': [workflow]}
     }
     task_kwargs = {
         'request_string': TASK_QUERY,
     }
-    # cylc ping SUITE
+    # cylc ping WORKFLOW
     result = pclient('graphql', flow_kwargs)
     msg = ""
     for flow in result['workflows']:
@@ -91,7 +91,7 @@ def main(parser, options, suite, task_id=None):
                 f'{w_name} running on '
                 f'{pclient.host}:{w_port} {w_pub_port}\n'
             )
-        # cylc ping SUITE TASKID
+        # cylc ping WORKFLOW TASKID
         if task_id:
             task, point = TaskID.split(task_id)
             w_id = flow['id']

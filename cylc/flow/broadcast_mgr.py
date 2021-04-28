@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -51,8 +51,8 @@ class BroadcastMgr:
 
     REC_SECTION = re.compile(r"\[([^\]]+)\]")
 
-    def __init__(self, suite_db_mgr, data_store_mgr):
-        self.suite_db_mgr = suite_db_mgr
+    def __init__(self, workflow_db_mgr, data_store_mgr):
+        self.workflow_db_mgr = workflow_db_mgr
         self.data_store_mgr = data_store_mgr
         self.linearized_ancestors = {}
         self.broadcasts = {}
@@ -126,7 +126,7 @@ class BroadcastMgr:
             self._prune(), point_strings, namespaces, cancel_keys_list)
 
         # Log the broadcast
-        self.suite_db_mgr.put_broadcast(modified_settings, is_cancel=True)
+        self.workflow_db_mgr.put_broadcast(modified_settings, is_cancel=True)
         LOG.info(
             get_broadcast_change_report(modified_settings, is_cancel=True))
         if bad_options:
@@ -269,7 +269,7 @@ class BroadcastMgr:
                                 (point_string, namespace, setting))
 
         # Log the broadcast
-        self.suite_db_mgr.put_broadcast(modified_settings)
+        self.workflow_db_mgr.put_broadcast(modified_settings)
         LOG.info(get_broadcast_change_report(modified_settings))
 
         bad_options = {}

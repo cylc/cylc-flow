@@ -2,7 +2,7 @@
     title = "automated failure recovery example"
     description = """
         Model task failure triggers diagnosis and recovery tasks, which
-        otherwise take themselves out of the suite if model succeeds.
+        otherwise take themselves out of the workflow if model succeeds.
         Model post processing triggers off model or recovery tasks.
     """
 
@@ -21,7 +21,7 @@
            model:fail => diagnose => recover # fail trigger
            model => !diagnose & !recover  # explicit success trigger
            model:succeed | recover => post  # conditional and explicit success
-           post => !model  # removes failed model to allow suite to auto finish
+           post => !model  # removes failed model to allow workflow to auto finish
         """
 
 [runtime]

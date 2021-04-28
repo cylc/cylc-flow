@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -53,12 +53,12 @@ class Profiler:
         stats.print_stats()
         # dump to stdout
         print(string_stream.getvalue())
-        # write data file to suite log dir
+        # write data file to workflow log dir
         if not self.schd:
             # if no scheduler present (e.g. validate) dump to PWD
             loc = Path()
         else:
-            loc = Path(self.schd.suite_log_dir)
+            loc = Path(self.schd.workflow_log_dir)
         self.prof.dump_stats(
             Path(loc, 'profile.prof')
         )

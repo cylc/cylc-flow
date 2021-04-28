@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -182,8 +182,8 @@ class UnicodeRuleChecker():
         return (True, None)
 
 
-class SuiteNameValidator(UnicodeRuleChecker):
-    """The rules for valid suite names:"""
+class WorkflowNameValidator(UnicodeRuleChecker):
+    """The rules for valid workflow names:"""
 
     RULES = [
         length(1, 254),

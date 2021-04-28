@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@ export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 set_test_number 2
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
-# ensure that suites don't get auto stop-restarted if they are already stopping
+# ensure that workflows don't get auto stop-restarted if they are already stopping
 BASE_GLOBAL_CONFIG="
 [scheduler]
     [[main loop]]
@@ -37,13 +37,13 @@ BASE_GLOBAL_CONFIG="
 
 TEST_NAME="${TEST_NAME_BASE}"
 
-init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME}" - <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
         R1 = foo => bar
 [runtime]
     [[foo]]
-        script = cylc stop "${CYLC_SUITE_NAME}"; sleep 15
+        script = cylc stop "${CYLC_WORKFLOW_NAME}"; sleep 15
     [[bar]]
 __FLOW_CONFIG__
 
@@ -51,8 +51,8 @@ create_test_global_config '' "
 ${BASE_GLOBAL_CONFIG}
 "
 
-run_ok "${TEST_NAME}-suite-start" cylc play "${SUITE_NAME}" --host=localhost
-cylc suite-state "${SUITE_NAME}" --task='foo' --status='running' --point=1 \
+run_ok "${TEST_NAME}-workflow-start" cylc play "${WORKFLOW_NAME}" --host=localhost
+cylc workflow-state "${WORKFLOW_NAME}" --task='foo' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
@@ -63,10 +63,10 @@ ${BASE_GLOBAL_CONFIG}
         condemned = $(hostname)
 "
 
-# wait for suite to die of natural causes
-poll_suite_stopped
-grep_ok 'Suite shutting down - REQUEST(CLEAN)' \
-    "$(cylc cat-log "${SUITE_NAME}" -m p)"
+# wait for workflow to die of natural causes
+poll_workflow_stopped
+grep_ok 'Workflow shutting down - REQUEST(CLEAN)' \
+    "$(cylc cat-log "${WORKFLOW_NAME}" -m p)"
 
 purge
 

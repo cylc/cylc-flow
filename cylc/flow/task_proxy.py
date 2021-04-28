@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Provide a class to represent a task proxy in a running suite."""
+"""Provide a class to represent a task proxy in a running workflow."""
 
 from collections import Counter
 from time import time
@@ -36,7 +36,7 @@ from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
 
 class TaskProxy:
-    """Represent an instance of a cycling task in a running suite.
+    """Represent an instance of a cycling task in a running workflow.
 
     Attributes:
         .clock_trigger_time (float):
@@ -54,7 +54,7 @@ class TaskProxy:
         .jobs (list):
             A list of job ids associated with the task proxy.
         .local_job_file_path (str):
-            Path on suite host to the latest job script for running the task.
+            Path on workflow host to the latest job script for the task.
         .late_time (float):
             Time in seconds since epoch, beyond which the task is considered
             late if it is never active.

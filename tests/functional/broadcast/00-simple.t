@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,16 +19,16 @@
 . "$(dirname "$0")/test_header"
 
 set_test_number 5
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 # Debug mode not needed here (and set-x w/ XTRACEFD broken some bash versions)
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --reference-test "${SUITE_NAME}"
-sort "${SUITE_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --no-detach --reference-test "${WORKFLOW_NAME}"
+sort "${WORKFLOW_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'
 cmp_ok 'broadcast.ref' 'broadcast.log.sorted'
 
-DB_FILE="${SUITE_RUN_DIR}/log/db"
+DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
 NAME='select-broadcast-events.out'
 sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events

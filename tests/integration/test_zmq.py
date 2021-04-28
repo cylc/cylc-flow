@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -36,9 +36,9 @@ def test_single_port(myflow, port_range):
     context = zmq.Context()
     setup_keys(myflow)  # auth keys are required for comms
     serv1 = ZMQSocketBase(
-        zmq.REP, context=context, suite=myflow, bind=True)
+        zmq.REP, context=context, workflow=myflow, bind=True)
     serv2 = ZMQSocketBase(
-        zmq.REP, context=context, suite=myflow, bind=True)
+        zmq.REP, context=context, workflow=myflow, bind=True)
 
     serv1._socket_bind(*port_range)
     port = serv1.port
@@ -55,7 +55,7 @@ def test_start(myflow, port_range):
     """Test socket start."""
     setup_keys(myflow)  # auth keys are required for comms
     barrier = Barrier(2, timeout=20)
-    publisher = ZMQSocketBase(zmq.PUB, suite=myflow, bind=True,
+    publisher = ZMQSocketBase(zmq.PUB, workflow=myflow, bind=True,
                               barrier=barrier, threaded=True, daemon=True)
     assert publisher.barrier.n_waiting == 0
     assert publisher.loop is None
@@ -75,7 +75,7 @@ def test_stop(myflow, port_range):
     """Test socket/thread stop."""
     setup_keys(myflow)  # auth keys are required for comms
     barrier = Barrier(2, timeout=20)
-    publisher = ZMQSocketBase(zmq.PUB, suite=myflow, bind=True,
+    publisher = ZMQSocketBase(zmq.PUB, workflow=myflow, bind=True,
                               barrier=barrier, threaded=True, daemon=True)
     publisher.start(*port_range)
     # barrier.wait() doesn't seem to work properly here

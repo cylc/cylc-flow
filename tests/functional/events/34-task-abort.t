@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,15 +18,15 @@
 # Test job abort-with-message and interaction with failed handler.
 . "$(dirname "$0")/test_header"
 set_test_number 6
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${SUITE_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 # Check failed handler only call on last try.
-LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
+LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 grep "event-handler" "${LOG}" > 'edited-job-activity.log'
 cmp_ok 'edited-job-activity.log' <<'__LOG__'
 [(('event-handler-00', 'failed'), 2) cmd] echo "!!!FAILED!!!" failed foo.1 2 '"ERROR: rust never sleeps"'
@@ -35,14 +35,14 @@ cmp_ok 'edited-job-activity.log' <<'__LOG__'
 __LOG__
 #-------------------------------------------------------------------------------
 # Check job stdout stops at the abort call.
-LOG="${SUITE_RUN_DIR}/log/job/1/foo/NN/job.out"
+LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job.out"
 # ...before abort
 grep_ok 'ONE' "${LOG}"
 # ...after abort
 grep_fail 'TWO' "${LOG}"
 #-------------------------------------------------------------------------------
 # Check only one CYLC_JOB_EXIT message written.
-JOB_STATUS="${SUITE_RUN_DIR}/log/job/1/foo/NN/job.status"
+JOB_STATUS="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job.status"
 run_ok "${TEST_NAME_BASE}-message-count" \
     test "$(grep -c '^CYLC_JOB_EXIT=' "$JOB_STATUS")" -eq '1'
 #-------------------------------------------------------------------------------

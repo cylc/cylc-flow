@@ -10,7 +10,7 @@
     <contexts>
       <context name="File" attribute="Normal Text" lineEndContext="#stay">
         <!-- To regenerate this keyword list, create a minimal flow.cylc file and run something like:
-        cylc config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<RegExpr attribute='Keyword' String=' \1 '\/>/g"
+        cylc config my-minimal-workflow | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<RegExpr attribute='Keyword' String=' \1 '\/>/g"
         The sort is in reverse order to allow longer keywords to take precedence over sub-sets. -->
         <!--TAG_FOR_AUTO_UPDATE-->
         <RegExpr attribute='Keyword' String=' xtriggers '/>
@@ -31,7 +31,7 @@
         <RegExpr attribute='Keyword' String=' task parameters '/>
         <RegExpr attribute='Keyword' String=' task event batch interval '/>
         <RegExpr attribute='Keyword' String=' suite state polling '/>
-        <RegExpr attribute='Keyword' String=' suite definition directory '/>
+        <RegExpr attribute='Keyword' String=' workflow state polling '/>
         <RegExpr attribute='Keyword' String=' succeeded handler '/>
         <RegExpr attribute='Keyword' String=' submitted handler '/>
         <RegExpr attribute='Keyword' String=' submission timeout handler '/>
@@ -122,7 +122,6 @@
         <RegExpr attribute='Keyword' String=' env-script '/>
         <RegExpr attribute='Keyword' String=' edge penwidth '/>
         <RegExpr attribute='Keyword' String=' disable task event handlers '/>
-        <RegExpr attribute='Keyword' String=' disable suite event handlers '/>
         <RegExpr attribute='Keyword' String=' directives '/>
         <RegExpr attribute='Keyword' String=' description '/>
         <RegExpr attribute='Keyword' String=' default run length '/>

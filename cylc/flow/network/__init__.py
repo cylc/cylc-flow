@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Package for network interfaces to cylc suite server objects."""
+"""Package for network interfaces to Cylc scheduler objects."""
 
 import asyncio
 import getpass
@@ -28,17 +28,17 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     CylcError,
-    SuiteServiceFileError,
-    SuiteStopped
+    ServiceFileError,
+    WorkflowStopped
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
-from cylc.flow.suite_files import (
+from cylc.flow.workflow_files import (
     ContactFileFields,
     KeyType,
     KeyOwner,
     KeyInfo,
     load_contact_file,
-    get_suite_srv_dir
+    get_workflow_srv_dir
 )
 
 API = 5  # cylc API version
@@ -60,22 +60,22 @@ def decode_(message):
     return msg
 
 
-def get_location(suite: str):
-    """Extract host and port from a suite's contact file.
+def get_location(workflow: str):
+    """Extract host and port from a workflow's contact file.
 
-    NB: if it fails to load the suite contact file, it will exit.
+    NB: if it fails to load the workflow contact file, it will exit.
 
     Args:
-        suite (str): suite name
+        workflow (str): workflow name
     Returns:
         Tuple[str, int, int]: tuple with the host name and port numbers.
     Raises:
-        ClientError: if the suite is not running.
+        ClientError: if the workflow is not running.
     """
     try:
-        contact = load_contact_file(suite)
-    except SuiteServiceFileError:
-        raise SuiteStopped(suite)
+        contact = load_contact_file(workflow)
+    except ServiceFileError:
+        raise WorkflowStopped(workflow)
 
     host = contact[ContactFileFields.HOST]
     host = get_fqdn_by_host(host)
@@ -110,7 +110,7 @@ class ZMQSocketBase:
 
     """
 
-    def __init__(self, pattern, suite=None, bind=False, context=None,
+    def __init__(self, pattern, workflow=None, bind=False, context=None,
                  barrier=None, threaded=False, daemon=False):
         self.bind = bind
         if context is None:
@@ -120,7 +120,7 @@ class ZMQSocketBase:
         self.barrier = barrier
         self.pattern = pattern
         self.daemon = daemon
-        self.suite = suite
+        self.workflow = workflow
         self.host = None
         self.port = None
         self.socket = None
@@ -171,11 +171,11 @@ class ZMQSocketBase:
         """
         if srv_prv_key_loc is None:
             # Create new KeyInfo object for the server private key
-            suite_srv_dir = get_suite_srv_dir(self.suite)
+            workflow_srv_dir = get_workflow_srv_dir(self.workflow)
             srv_prv_key_info = KeyInfo(
                 KeyType.PRIVATE,
                 KeyOwner.SERVER,
-                suite_srv_dir=suite_srv_dir)
+                workflow_srv_dir=workflow_srv_dir)
         else:
             srv_prv_key_info = KeyInfo(
                 KeyType.PRIVATE,
@@ -190,19 +190,23 @@ class ZMQSocketBase:
             server_public_key, server_private_key = zmq.auth.load_certificate(
                 srv_prv_key_info.full_key_path)
         except (ValueError):
-            raise SuiteServiceFileError(f"Failed to find server's public "
-                                        f"key in "
-                                        f"{srv_prv_key_info.full_key_path}.")
+            raise ServiceFileError(
+                f"Failed to find server's public "
+                f"key in "
+                f"{srv_prv_key_info.full_key_path}."
+            )
         except(OSError):
-            raise SuiteServiceFileError(f"IO error opening server's private "
-                                        f"key from "
-                                        f"{srv_prv_key_info.full_key_path}.")
-
+            raise ServiceFileError(
+                f"IO error opening server's private "
+                f"key from "
+                f"{srv_prv_key_info.full_key_path}."
+            )
         if server_private_key is None:  # this can't be caught by exception
-            raise SuiteServiceFileError(f"Failed to find server's private "
-                                        f"key in "
-                                        f"{srv_prv_key_info.full_key_path}.")
-
+            raise ServiceFileError(
+                f"Failed to find server's private "
+                f"key in "
+                f"{srv_prv_key_info.full_key_path}."
+            )
         self.socket.curve_publickey = server_public_key
         self.socket.curve_secretkey = server_private_key
         self.socket.curve_server = True
@@ -223,13 +227,13 @@ class ZMQSocketBase:
     # Keeping srv_public_key_loc as optional arg so as to not break interface
     def _socket_connect(self, host, port, srv_public_key_loc=None):
         """Connect socket to stub."""
-        suite_srv_dir = get_suite_srv_dir(self.suite)
+        workflow_srv_dir = get_workflow_srv_dir(self.workflow)
         if srv_public_key_loc is None:
             # Create new KeyInfo object for the server public key
             srv_pub_key_info = KeyInfo(
                 KeyType.PUBLIC,
                 KeyOwner.SERVER,
-                suite_srv_dir=suite_srv_dir)
+                workflow_srv_dir=workflow_srv_dir)
 
         else:
             srv_pub_key_info = KeyInfo(
@@ -245,7 +249,7 @@ class ZMQSocketBase:
         client_priv_key_info = KeyInfo(
             KeyType.PRIVATE,
             KeyOwner.CLIENT,
-            suite_srv_dir=suite_srv_dir)
+            workflow_srv_dir=workflow_srv_dir)
         error_msg = "Failed to find user's private key, so cannot connect."
         try:
             client_public_key, client_priv_key = zmq.auth.load_certificate(
@@ -270,7 +274,7 @@ class ZMQSocketBase:
             self.socket.curve_serverkey = server_public_key
         except (OSError, ValueError):  # ValueError raised w/ no public key
             raise ClientError(
-                "Failed to load the suite's public key, so cannot connect.")
+                "Failed to load the workflow's public key, so cannot connect.")
 
         self.socket.connect(f'tcp://{host}:{port}')
 

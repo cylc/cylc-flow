@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,12 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc graph SUITE [START] [STOP]
+"""cylc graph WORKFLOW [START] [STOP]
 
 A text-based graph representation of workflow dependencies.
 
 Implements the old ``cylc graph --reference command`` for producing a textural
-graph of a suite.
+graph of a workflow.
 
 Examples:
     # print a textural representation of the graph of the flow one
@@ -34,11 +34,11 @@ Examples:
 from difflib import unified_diff
 import sys
 
-from cylc.flow.config import SuiteConfig
+from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.suite_files import parse_suite_arg
+from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -84,7 +84,7 @@ def sort_datetime_edge(item):
 
 
 def get_cycling_bounds(config, start_point=None, stop_point=None):
-    """Determine the start and stop points for graphing a suite."""
+    """Determine the start and stop points for graphing a workflow."""
     # default start and stop points to values in the visualization section
     if not start_point:
         start_point = config.cfg['visualization']['initial cycle point']
@@ -183,9 +183,9 @@ def graph_inheritance(config, write=print):
 
 
 def get_config(flow, opts, template_vars=None):
-    """Return a SuiteConfig object for the provided reg / path."""
-    flow, flow_file = parse_suite_arg(opts, flow)
-    return SuiteConfig(flow, flow_file, opts, template_vars=template_vars)
+    """Return a WorkflowConfig object for the provided reg / path."""
+    flow, flow_file = parse_workflow_arg(opts, flow)
+    return WorkflowConfig(flow, flow_file, opts, template_vars=template_vars)
 
 
 def get_option_parser():
@@ -193,9 +193,9 @@ def get_option_parser():
     parser = COP(
         __doc__, jset=True, prep=True,
         argdoc=[
-            ('[SUITE]', 'Suite name or path'),
+            ('[WORKFLOW]', 'Workflow name or path'),
             ('[START]', 'Initial cycle point '
-             '(default: suite initial point)'),
+             '(default: workflow initial point)'),
             ('[STOP]', 'Final cycle point '
              '(default: initial + 3 points)')])
 
@@ -206,7 +206,7 @@ def get_option_parser():
 
     parser.add_option(
         '-n', '--namespaces',
-        help='Plot the suite namespace inheritance hierarchy '
+        help='Plot the workflow namespace inheritance hierarchy '
              '(task run time properties).',
         action='store_true', default=False, dest='namespaces')
 
@@ -228,7 +228,7 @@ def get_option_parser():
 
     parser.add_option(
         '--diff',
-        help='Show the difference between two suites (implies --reference)',
+        help='Show the difference between two workflows (implies --reference)',
         action='store',
     )
 
@@ -236,7 +236,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, suite=None, start=None, stop=None):
+def main(parser, opts, workflow=None, start=None, stop=None):
     """Implement ``cylc graph``."""
     if opts.ungrouped and opts.namespaces:
         raise UserInputError('Cannot combine --ungrouped and --namespaces.')
@@ -249,7 +249,7 @@ def main(parser, opts, suite=None, start=None, stop=None):
         opts.templatevars, opts.templatevars_file)
 
     write = print
-    flows = [(suite, [])]
+    flows = [(workflow, [])]
     if opts.diff:
         flows.append((opts.diff, []))
 

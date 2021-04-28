@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@ BASE_GLOBAL_CONFIG="
         available = localhost, ${CYLC_TEST_HOST}"
 
 TEST_NAME="${TEST_NAME_BASE}"
-init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
+init_workflow "${TEST_NAME}" - <<'__FLOW_CONFIG__'
 [task parameters]
     foo = 1..25
 [scheduling]
@@ -49,11 +49,11 @@ init_suite "${TEST_NAME}" - <<'__FLOW_CONFIG__'
     [[task_26]]
 __FLOW_CONFIG__
 
-# run suite on localhost normally
+# run workflow on localhost normally
 create_test_global_config '' "${BASE_GLOBAL_CONFIG}"
-run_ok "${TEST_NAME}-suite-start" \
-    cylc play "${SUITE_NAME}" --host=localhost -s 'FOO="foo"' -v
-cylc suite-state "${SUITE_NAME}" --task='task_foo01' \
+run_ok "${TEST_NAME}-workflow-start" \
+    cylc play "${WORKFLOW_NAME}" --host=localhost -s 'FOO="foo"' -v
+cylc workflow-state "${WORKFLOW_NAME}" --task='task_foo01' \
     --status='succeeded' --point=1 --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
@@ -64,31 +64,31 @@ ${BASE_GLOBAL_CONFIG}
         condemned = $(hostname)
 "
 # test shutdown procedure - scan the first log file
-FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
+FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-shutdown" "${FILE}" 20 1 \
-    'The Cylc suite host will soon become un-available' \
-    'Suite shutting down - REQUEST(NOW-NOW)' \
+    'The Cylc workflow host will soon become un-available' \
+    'Workflow shutting down - REQUEST(NOW-NOW)' \
     "Attempting to restart on \"${CYLC_TEST_HOST}\"" \
-    "Suite now running on \"${CYLC_TEST_HOST}\""
-LATEST_TASK=$(cylc suite-state "${SUITE_NAME}" -S succeeded \
+    "Workflow now running on \"${CYLC_TEST_HOST}\""
+LATEST_TASK=$(cylc workflow-state "${WORKFLOW_NAME}" -S succeeded \
     | cut -d ',' -f 1 | sort | tail -n 1 | sed 's/task_foo//')
 
 # test restart procedure  - scan the second log file created on restart
-poll_suite_restart
-FILE=$(cylc cat-log "${SUITE_NAME}" -m p |xargs readlink -f)
+poll_workflow_restart
+FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
 log_scan "${TEST_NAME}-restart" "${FILE}" 20 1 \
-    "Suite server: url=tcp://$(get_fqdn "${CYLC_TEST_HOST}")"
-run_ok "${TEST_NAME}-restart-success" cylc suite-state "${SUITE_NAME}" \
+    "Scheduler: url=tcp://$(get_fqdn "${CYLC_TEST_HOST}")"
+run_ok "${TEST_NAME}-restart-success" cylc workflow-state "${WORKFLOW_NAME}" \
     --task="$(printf 'task_foo%02d' $(( LATEST_TASK + 3 )))" \
     --status='succeeded' --point=1 --interval=1 --max-polls=60
 
-# check the command the suite has been restarted with
-run_ok "${TEST_NAME}-contact" cylc get-contact "${SUITE_NAME}"
-grep_ok "cylc play ${SUITE_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
+# check the command the workflow has been restarted with
+run_ok "${TEST_NAME}-contact" cylc get-contact "${WORKFLOW_NAME}"
+grep_ok "cylc play ${WORKFLOW_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
     "${TEST_NAME}-contact.stdout"
 
-# stop suite
-cylc stop "${SUITE_NAME}" --kill --max-polls=10 --interval=2 2>'/dev/null'
+# stop workflow
+cylc stop "${WORKFLOW_NAME}" --kill --max-polls=10 --interval=2 2>'/dev/null'
 purge
 
 exit

@@ -2,10 +2,10 @@
     title = "Test for Github Issue 1543"
     description = """
         External trigger events should stimulate task processing even when
-        nothing else is happening in the suite. Here, long-running task bar
+        nothing else is happening in the workflow. Here, long-running task bar
         ext-triggers foo when nothing else is happening. If task processing
-        occurs foo will submit and kill bar, allowing the suite to shutdown.
-        Otherwise, foo won't submit, bar will keep running, and the suite will
+        occurs foo will submit and kill bar, allowing the workflow to shutdown.
+        Otherwise, foo won't submit, bar will keep running, and the workflow will
         time out.
     """
 
@@ -27,14 +27,14 @@
 [runtime]
     [[foo]]
         script = """
-           cylc kill "$CYLC_SUITE_NAME" 'bar.1'
-           cylc__job__poll_grep_suite_log '\[bar\.1\].* (internal)failed'
-           cylc release "$CYLC_SUITE_NAME" 'bar.1'
+           cylc kill "$CYLC_WORKFLOW_NAME" 'bar.1'
+           cylc__job__poll_grep_workflow_log '\[bar\.1\].* (internal)failed'
+           cylc release "$CYLC_WORKFLOW_NAME" 'bar.1'
            """
     [[bar]]
         script = """
 sleep 5
-cylc ext-trigger $CYLC_SUITE_NAME "drugs and money" 12345
+cylc ext-trigger $CYLC_WORKFLOW_NAME "drugs and money" 12345
 sleep 60"""
     [[handler]]
          script = true

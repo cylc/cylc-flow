@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,13 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" 9999_rollover
+install_workflow "${TEST_NAME_BASE}" 9999_rollover
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate --debug "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc validate --debug "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-suite_run_fail "${TEST_NAME}" cylc play --debug --no-detach "${SUITE_NAME}"
+workflow_run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 grep_ok "Cannot dump TimePoint year: 10000 not in bounds 0 to 9999" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge

@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Client for suite runtime API."""
+"""Client for workflow runtime API."""
 
 from functools import partial
 import os
@@ -29,8 +29,8 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
-    SuiteServiceFileError,
-    SuiteStopped
+    ServiceFileError,
+    WorkflowStopped
 )
 from cylc.flow.network import (
     encode_,
@@ -40,11 +40,11 @@ from cylc.flow.network import (
 )
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
-from cylc.flow.suite_files import detect_old_contact_file
+from cylc.flow.workflow_files import detect_old_contact_file
 
 
-class SuiteRuntimeClient(ZMQSocketBase):
-    """Initiate a client to the workflow server API.
+class WorkflowRuntimeClient(ZMQSocketBase):
+    """Initiate a client to the scheduler API.
 
     Initiates the REQ part of a ZMQ REQ-REP pair.
 
@@ -57,8 +57,8 @@ class SuiteRuntimeClient(ZMQSocketBase):
     bail after ``timeout`` seconds.
 
     Args:
-        suite (str):
-            Name of the suite to connect to.
+        workflow (str):
+            Name of the workflow to connect to.
         timeout (float):
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
@@ -76,9 +76,9 @@ class SuiteRuntimeClient(ZMQSocketBase):
 
     Attributes:
         host (str):
-            Suite host name.
+            Workflow host name.
         port (int):
-            Suite host port.
+            Workflow host port.
         timeout_handler (function):
             Optional function which runs before ClientTimeout is raised.
             This provides an interface for raising more specific exceptions in
@@ -96,16 +96,16 @@ class SuiteRuntimeClient(ZMQSocketBase):
           "args": {...}}
 
     Raises:
-        ClientError: if the suite is not running.
+        ClientError: if the workflow is not running.
 
     Call server "endpoints" using:
         ``__call__``, ``serial_request``
             .. automethod::
-                cylc.flow.network.client.SuiteRuntimeClient.serial_request
+                cylc.flow.network.client.WorkflowRuntimeClient.serial_request
 
         ``async_request``
             .. automethod::
-                cylc.flow.network.client.SuiteRuntimeClient.async_request
+                cylc.flow.network.client.WorkflowRuntimeClient.async_request
 
     """
 
@@ -113,7 +113,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
 
     def __init__(
             self,
-            suite: str,
+            workflow: str,
             host: str = None,
             port: int = None,
             context: object = None,
@@ -121,9 +121,9 @@ class SuiteRuntimeClient(ZMQSocketBase):
             srv_public_key_loc: str = None
     ):
         super().__init__(zmq.REQ, context=context)
-        self.suite = suite
+        self.workflow = workflow
         if not host or not port:
-            host, port, _ = get_location(suite)
+            host, port, _ = get_location(workflow)
         else:
             port = int(port)
         self.host = host
@@ -134,7 +134,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
             timeout = float(timeout)
         self.timeout = timeout * 1000
         self.timeout_handler = partial(
-            self._timeout_handler, suite, host, port)
+            self._timeout_handler, workflow, host, port)
         self.poller = None
         # Connect the ZMQ socket on instantiation
         self.start(self.host, self.port, srv_public_key_loc)
@@ -185,7 +185,7 @@ class SuiteRuntimeClient(ZMQSocketBase):
             raise ClientTimeout(
                 'Timeout waiting for server response.'
                 ' This could be due to network or server issues.'
-                ' Check the suite log.'
+                ' Check the workflow log.'
             )
 
         if msg['command'] in PB_METHOD_MAP:
@@ -260,28 +260,28 @@ class SuiteRuntimeClient(ZMQSocketBase):
         }
 
     @staticmethod
-    def _timeout_handler(suite: str, host: str, port: Union[int, str]):
-        """Handle the eventuality of a communication timeout with the suite.
+    def _timeout_handler(workflow: str, host: str, port: Union[int, str]):
+        """Handle the eventuality of a communication timeout with the workflow.
 
         Args:
-            suite (str): suite name
+            workflow (str): workflow name
             host (str): host name
             port (Union[int, str]): port number
         Raises:
-            ClientError: if the suite has already stopped.
+            ClientError: if the workflow has already stopped.
         """
-        if suite is None:
+        if workflow is None:
             return
-        # Cannot connect, perhaps suite is no longer running and is leaving
+        # Cannot connect, perhaps workflow is no longer running and is leaving
         # behind a contact file?
         try:
-            detect_old_contact_file(suite, (host, port))
-        except (AssertionError, SuiteServiceFileError):
-            # * contact file not have matching (host, port) to suite proc
-            # * old contact file exists and the suite process still alive
+            detect_old_contact_file(workflow, (host, port))
+        except (AssertionError, ServiceFileError):
+            # * contact file not have matching (host, port) to workflow proc
+            # * old contact file exists and the workflow process still alive
             return
         else:
-            # the suite has stopped
-            raise SuiteStopped(suite)
+            # the workflow has stopped
+            raise WorkflowStopped(workflow)
 
     __call__ = serial_request
