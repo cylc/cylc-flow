@@ -108,10 +108,9 @@ def _validate(options: 'Values', *task_globs: str) -> None:
                 "Cannot combine --after with TASK_GLOB(s).\n"
                 "`cylc hold --after` holds all tasks after the given "
                 "cycle point.")
-    else:
-        if not task_globs:
-            raise UserInputError(
-                "Missing arguments: TASK_GLOB [...]. See `cylc hold --help`.")
+    elif not task_globs:
+        raise UserInputError(
+            "Missing arguments: TASK_GLOB [...]. See `cylc hold --help`.")
 
 
 @cli_function(get_option_parser)
