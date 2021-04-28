@@ -1,6 +1,6 @@
 # Change queue limit by reload and check number of running tasks to confirm
 # that the new limit is being applied. This test is potentially flaky because
-# it checks task status using the "cylc suite-state" DB command, and DB task
+# it checks task status using the "cylc workflow-state" DB command, and DB task
 # states (like the datastore too) only get updated once per main loop.
 
 [scheduling]
@@ -28,7 +28,7 @@ cylc__job__poll_grep_workflow_log 'Reload completed'
         script = """
         cylc__job__wait_cylc_message_started
         while true; do
-            RUNNING=$(cylc suite-state $CYLC_WORKFLOW_NAME -S running | wc -l)
+            RUNNING=$(cylc workflow-state $CYLC_WORKFLOW_NAME -S running | wc -l)
             # Should be max of: monitor plus 3 members of q1
             if ((RUNNING > 4)); then
                 break
