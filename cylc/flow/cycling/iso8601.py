@@ -108,9 +108,6 @@ class ISO8601Point(PointBase):
         return ISO8601Point(
             self._iso_point_sub_interval(self.value, other.value))
 
-    def __hash__(self):
-        return hash(self.value)
-
     @staticmethod
     @lru_cache(10000)
     def _iso_point_add(point_string, interval_string):
@@ -619,7 +616,7 @@ class ISO8601Sequence(SequenceBase):
     def __str__(self):
         return self.value
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.value)
 
 

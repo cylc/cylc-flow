@@ -139,6 +139,9 @@ class PointBase(metaclass=ABCMeta):
     def __ge__(self, other: 'PointBase') -> bool:
         return self.__cmp__(other) >= 0
 
+    def __hash__(self) -> int:
+        return hash(self.value)
+
     def __sub__(self, other):
         # Subtract other (point or interval) from self.
         if self.TYPE != other.TYPE:
@@ -289,6 +292,9 @@ class IntervalBase(metaclass=ABCMeta):
     def __ge__(self, other: 'IntervalBase') -> bool:
         return self.__cmp__(other) >= 0
 
+    def __hash__(self) -> int:
+        return hash(self.value)
+
     def __sub__(self, other):
         # Subtract other (interval or point) from self.
         if self.TYPE != other.TYPE:
@@ -402,8 +408,12 @@ class SequenceBase(object, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         # Return True if other (sequence) is equal to self.
+        pass
+
+    @abstractmethod
+    def __hash__(self) -> int:
         pass
 
 
