@@ -14,12 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 from pathlib import Path
 import pytest
 import logging
 from unittest.mock import Mock
-from tempfile import NamedTemporaryFile
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
@@ -30,72 +29,6 @@ from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 Fixture = Any
-
-
-def get_test_inheritance_quotes():
-    """Provide test data for test_family_inheritance_and_quotes."""
-    return [
-        # first case, second family name surrounded by double quotes
-        b'''
-[scheduler]
-    allow implicit tasks = True
-[task parameters]
-    major = 1..5
-    minor = 10..20
-[scheduling]
-    [[graph]]
-        R1 = """hello => MAINFAM<major, minor>
-                hello => SOMEFAM
-        """
-[runtime]
-    [[root]]
-        script = true
-    [[MAINFAM<major, minor>]]
-    [[SOMEFAM]]
-    [[ goodbye_0<major, minor> ]]
-        inherit = 'MAINFAM<major, minor>', "SOMEFAM"
-        ''',
-        # second case, second family surrounded by single quotes
-        b'''
-[scheduler]
-    allow implicit tasks = True
-[task parameters]
-    major = 1..5
-    minor = 10..20
-[scheduling]
-    [[graph]]
-        R1 = """hello => MAINFAM<major, minor>
-                hello => SOMEFAM
-        """
-[runtime]
-    [[root]]
-        script = true
-    [[MAINFAM<major, minor>]]
-    [[SOMEFAM]]
-    [[ goodbye_0<major, minor> ]]
-        inherit = 'MAINFAM<major, minor>', 'SOMEFAM'
-        ''',
-        # third case, second family name without quotes
-        b'''
-[scheduler]
-    allow implicit tasks = True
-[task parameters]
-    major = 1..5
-    minor = 10..20
-[scheduling]
-    [[graph]]
-        R1 = """hello => MAINFAM<major, minor>
-                hello => SOMEFAM
-        """
-[runtime]
-    [[root]]
-        script = true
-    [[MAINFAM<major, minor>]]
-    [[SOMEFAM]]
-    [[ goodbye_0<major, minor> ]]
-        inherit = 'MAINFAM<major, minor>', SOMEFAM
-        '''
-    ]
 
 
 class TestWorkflowConfig:
@@ -232,39 +165,64 @@ class TestWorkflowConfig:
             )
         assert "callable" in str(excinfo.value)
 
-    def test_family_inheritance_and_quotes(self, mock_glbl_cfg):
-        """Test that inheritance does not ignore items, if not all quoted.
 
-        For example:
+@pytest.mark.parametrize(
+    'fam_txt',
+    [pytest.param('"SOMEFAM"', id="double quoted"),
+     pytest.param('\'SOMEFAM\'', id="single quoted"),
+     pytest.param('SOMEFAM', id="unquoted")]
+)
+def test_family_inheritance_and_quotes(
+    fam_txt: str,
+    mock_glbl_cfg: Callable, tmp_path: Path
+) -> None:
+    """Test that inheritance does not ignore items, if not all quoted.
 
-            inherit = 'MAINFAM<major, minor>', SOMEFAM
-            inherit = 'BIGFAM', SOMEFAM
+    For example:
 
-        See bug #2700 for more/
-        """
-        mock_glbl_cfg(
-            'cylc.flow.platforms.glbl_cfg',
-            '''
-            [platforms]
-                [[localhost]]
-                    hosts = localhost
-            '''
-        )
-        template_vars = {}
-        for content in get_test_inheritance_quotes():
-            with NamedTemporaryFile() as tf:
-                tf.write(content)
-                tf.flush()
-                config = WorkflowConfig(
-                    'test',
-                    tf.name,
-                    template_vars=template_vars,
-                    options=Mock(spec=[]))
-                assert 'goodbye_0_major1_minor10' in \
-                       (config.runtime['descendants']
-                        ['MAINFAM_major1_minor10'])
-                assert 'goodbye_0_major1_minor10' in \
-                       config.runtime['descendants']['SOMEFAM']
+        inherit = 'MAINFAM<major, minor>', SOMEFAM
+        inherit = 'BIGFAM', SOMEFAM
+
+    See bug #2700 for more/
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[localhost]]
+                hosts = localhost
+        '''
+    )
+    cfg = f'''
+        [scheduler]
+            allow implicit tasks = True
+        [task parameters]
+            major = 1..5
+            minor = 10..20
+        [scheduling]
+            [[graph]]
+                R1 = """hello => MAINFAM<major, minor>
+                        hello => SOMEFAM"""
+        [runtime]
+            [[root]]
+                script = true
+            [[MAINFAM<major, minor>]]
+            [[SOMEFAM]]
+            [[ goodbye_0<major, minor> ]]
+                inherit = 'MAINFAM<major, minor>', {fam_txt}
+    '''
+    file_path = tmp_path / 'thing.cylc'
+    file_path.write_text(cfg)
+    config = WorkflowConfig(
+        'test',
+        str(file_path),
+        template_vars={},
+        options=Mock(spec=[])
+    )
+    assert ('goodbye_0_major1_minor10' in
+            config.runtime['descendants']['MAINFAM_major1_minor10'])
+    assert ('goodbye_0_major1_minor10' in
+            config.runtime['descendants']['SOMEFAM'])
 
 
 @pytest.mark.parametrize(
