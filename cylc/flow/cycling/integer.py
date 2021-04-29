@@ -153,9 +153,6 @@ class IntegerPoint(PointBase):
         # Provide a nice way to use the string self.value in calculations.
         return int(self.value)
 
-    def __hash__(self):
-        return hash(self.value)
-
 
 class IntegerInterval(IntervalBase):
 
@@ -578,7 +575,7 @@ class IntegerSequence(SequenceBase):
                 self.exclusions == other.exclusions
 
     def __hash__(self):
-        return hash(tuple((getattr(self, attr) for attr in self.__slots__)))
+        return hash(tuple(getattr(self, attr) for attr in self.__slots__))
 
     def __lt__(self, other: 'IntegerSequence') -> bool:
         for attr in self.__slots__:
