@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.option_parsers import Options
 import logging
 from pathlib import Path
 import pytest
@@ -30,8 +29,8 @@ from cylc.flow.exceptions import (
     TaskRemoteMgmtError,
     WorkflowFilesError
 )
-from cylc.flow.pathutil import parse_dirs
-from cylc.flow.scripts.clean import get_option_parser as _clean_GOP
+from cylc.flow.pathutil import parse_rm_dirs
+from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     WorkflowFiles,
     check_flow_file,
@@ -40,9 +39,6 @@ from cylc.flow.workflow_files import (
     reinstall_workflow, search_install_source_dirs)
 
 from tests.unit.conftest import MonkeyMock
-
-
-CleanOpts = Options(_clean_GOP())
 
 
 @pytest.mark.parametrize(
@@ -215,7 +211,7 @@ def test_init_clean(
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
                         lambda x: set(db_platforms))
 
-    workflow_files.init_clean(reg, opts=CleanOpts(**opts))
+    workflow_files.init_clean(reg, opts=CleanOptions(**opts))
     assert mock_clean.called is clean_called
     assert mock_remote_clean.called is remote_clean_called
 
@@ -230,7 +226,7 @@ def test_init_clean_no_dir(
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
-    workflow_files.init_clean('foo/bar', opts=CleanOpts())
+    workflow_files.init_clean('foo/bar', opts=CleanOptions())
     assert "No directory to clean" in caplog.text
     assert mock_clean.called is False
     assert mock_remote_clean.called is False
@@ -246,7 +242,7 @@ def test_init_clean_no_db(
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
-    workflow_files.init_clean('bespin', opts=CleanOpts())
+    workflow_files.init_clean('bespin', opts=CleanOptions())
     assert "No workflow database - will only clean locally" in caplog.text
     assert mock_clean.called is True
     assert mock_remote_clean.called is False
@@ -261,7 +257,7 @@ def test_init_clean_remote_only_no_db(
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
     with pytest.raises(ServiceFileError) as exc:
-        workflow_files.init_clean('hoth', opts=CleanOpts(remote_only=True))
+        workflow_files.init_clean('hoth', opts=CleanOptions(remote_only=True))
     assert ("No workflow database - cannot perform remote clean"
             in str(exc.value))
     assert mock_clean.called is False
@@ -310,7 +306,7 @@ def test_init_clean_rm_dirs(
     platforms = {'platform_one'}
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
                         lambda x: platforms)
-    opts = CleanOpts(rm_dirs=rm_dirs) if rm_dirs else CleanOpts()
+    opts = CleanOptions(rm_dirs=rm_dirs) if rm_dirs else CleanOptions()
 
     workflow_files.init_clean(reg, opts=opts)
     mock_clean.assert_called_with(reg, run_dir, expected_clean)
@@ -501,7 +497,7 @@ def test_clean_rm_dir_not_file(pattern: str, tmp_run_dir: Callable):
     run_dir: Path = tmp_run_dir(reg)
     a_file = run_dir.joinpath('thing')
     a_file.touch()
-    rm_dirs = parse_dirs([pattern])
+    rm_dirs = parse_rm_dirs([pattern])
 
     workflow_files.clean(reg, run_dir, rm_dirs)
     assert a_file.exists()

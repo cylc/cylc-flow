@@ -40,7 +40,7 @@ import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import CylcOptionParser as COP, Options
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import init_clean
 
@@ -56,8 +56,9 @@ def get_option_parser():
 
     parser.add_option(
         '--rm', metavar='DIR[:DIR:...]',
-        help="Only clean the specified subdirectories in the run directory, "
-             "rather than the whole run directory. Accepts quoted globs.",
+        help="Only clean the specified subdirectories (or files) in the "
+             "run directory, rather than the whole run directory. "
+             "Accepts quoted globs.",
         action='append', dest='rm_dirs', default=[]
     )
 
@@ -81,6 +82,9 @@ def get_option_parser():
     )
 
     return parser
+
+
+CleanOptions = Options(get_option_parser())
 
 
 @cli_function(get_option_parser)

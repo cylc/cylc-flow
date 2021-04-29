@@ -46,7 +46,7 @@ from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir,
     make_localhost_symlinks,
-    parse_dirs,
+    parse_rm_dirs,
     remove_dir_and_target,
     get_next_rundir_number,
     remove_dir_or_file
@@ -646,7 +646,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
     if not opts.remote_only:
         rm_dirs = None
         if opts.rm_dirs:
-            rm_dirs = parse_dirs(opts.rm_dirs)
+            rm_dirs = parse_rm_dirs(opts.rm_dirs)
         clean(reg, local_run_dir, rm_dirs)
 
 
@@ -661,7 +661,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
 
     Args:
         reg: Workflow name.
-        run_dir: The workflow's run dir.
+        run_dir: Absolute path of the workflow's run dir.
         rm_dirs: Set of sub dirs to remove instead of the whole run dir.
     """
     LOG.info("Cleaning on local filesystem")
@@ -702,7 +702,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         for pattern in rm_dirs:
             for item in iglob(os.path.join(run_dir, pattern), recursive=True):
                 # N.B. Path.glob() with an exact filename instead of pattern
-                # doesn't work for a broken symlink
+                # doesn't detect broken symlinks
                 remove_dir_or_file(item)
 
 

@@ -22,7 +22,7 @@ from typing import Callable, Dict, Iterable, List, Set
 import pytest
 from unittest.mock import Mock, patch, call
 
-from cylc.flow.exceptions import WorkflowFilesError
+from cylc.flow.exceptions import UserInputError, WorkflowFilesError
 from cylc.flow.pathutil import (
     expand_path,
     get_dirs_to_symlink,
@@ -39,7 +39,7 @@ from cylc.flow.pathutil import (
     get_workflow_test_log_name,
     make_localhost_symlinks,
     make_workflow_run_tree,
-    parse_dirs,
+    parse_rm_dirs,
     remove_dir_and_target,
     remove_dir_or_file
 )
@@ -416,24 +416,24 @@ def test_remove_dir_or_file(tmp_path: Path):
         ([".foo", "..bar", " ./gah"], {".foo", "..bar", "gah"})
     ]
 )
-def test_parse_dirs(dirs: List[str], expected: Set[str]):
+def test_parse_rm_dirs(dirs: List[str], expected: Set[str]):
     """Test parse_dirs()"""
-    assert parse_dirs(dirs) == expected
+    assert parse_rm_dirs(dirs) == expected
 
 
 @pytest.mark.parametrize(
     'dirs, err_msg',
     [
         (["foo:/bar"],
-         "dir cannot be an absolute path"),
+         "--rm option cannot take absolute paths"),
         (["foo:../bar"],
-         "dir cannot be a path that points to the run directory or above"),
+         "cannot take paths that point to the run directory or above"),
         (["foo:bar/../../gah"],
-         "dir cannot be a path that points to the run directory or above"),
+         "cannot take paths that point to the run directory or above"),
     ]
 )
-def test_parse_dirs_bad(dirs: List[str], err_msg: str):
+def test_parse_rm_dirs_bad(dirs: List[str], err_msg: str):
     """Test parse_dirs() with bad inputs"""
-    with pytest.raises(ValueError) as exc:
-        parse_dirs(dirs)
+    with pytest.raises(UserInputError) as exc:
+        parse_rm_dirs(dirs)
     assert err_msg in str(exc.value)

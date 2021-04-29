@@ -23,7 +23,9 @@ from typing import Dict, Iterable, Set, Union
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import WorkflowFilesError, handle_rmtree_err
+from cylc.flow.exceptions import (
+    UserInputError, WorkflowFilesError, handle_rmtree_err
+)
 from cylc.flow.platforms import get_localhost_install_target
 
 
@@ -282,9 +284,12 @@ def get_next_rundir_number(run_path):
         return 1
 
 
-def parse_dirs(rm_dirs: Iterable[str]) -> Set[str]:
-    """Parse a list of possibly colon-separated dirs, return the set of all
-    the dirs."""
+def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
+    """Parse a list of possibly colon-separated dirs (or files or globs).
+    Return the set of all the dirs.
+
+    Used by cylc clean with the --rm option.
+    """
     result: Set[str] = set()
     for item in rm_dirs:
         for part in item.split(':'):
@@ -293,13 +298,16 @@ def parse_dirs(rm_dirs: Iterable[str]) -> Set[str]:
                 continue
             is_dir = part.endswith('/')
             part = os.path.normpath(part)
-            if is_dir:
-                part += '/'
             if os.path.isabs(part):
-                raise ValueError("dir cannot be an absolute path")
+                raise UserInputError("--rm option cannot take absolute paths")
             if part == '.' or part.startswith('../'):
-                raise ValueError(
-                    "dir cannot be a path that points to the run directory "
-                    "or above")
+                raise UserInputError(
+                    "--rm option cannot take paths that point to the "
+                    "run directory or above"
+                )
+            if is_dir:
+                # Preserve trailing slash to ensure it only matches dirs,
+                # not files, when globbing
+                part += '/'
             result.add(part)
     return result
