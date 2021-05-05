@@ -65,7 +65,7 @@ def pre_configure_error(*_, **__):
 def test_pre_configure(monkeypatch):
     """It should call the plugin."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.pkg_resources.iter_entry_points',
+        'cylc.flow.parsec.fileparse.iter_entry_points',
         lambda x: [pre_configure_basic]
     )
     extra_vars = process_plugins(None)
@@ -83,7 +83,7 @@ def test_pre_configure(monkeypatch):
 def test_pre_configure_duplicate(monkeypatch):
     """It should error when plugins clash."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.pkg_resources.iter_entry_points',
+        'cylc.flow.parsec.fileparse.iter_entry_points',
         lambda x: [
             pre_configure_basic,
             pre_configure_basic
@@ -96,7 +96,7 @@ def test_pre_configure_duplicate(monkeypatch):
 def test_pre_configure_templating_detected(monkeypatch):
     """It should error when plugins clash (for templating)."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.pkg_resources.iter_entry_points',
+        'cylc.flow.parsec.fileparse.iter_entry_points',
         lambda x: [
             pre_configure_templating_detected,
             pre_configure_templating_detected
@@ -109,7 +109,7 @@ def test_pre_configure_templating_detected(monkeypatch):
 def test_pre_configure_exception(monkeypatch):
     """It should wrap plugin errors."""
     monkeypatch.setattr(
-        'cylc.flow.parsec.fileparse.pkg_resources.iter_entry_points',
+        'cylc.flow.parsec.fileparse.iter_entry_points',
         lambda x: [pre_configure_error]
     )
     with pytest.raises(PluginError) as exc_ctx:
