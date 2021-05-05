@@ -26,7 +26,7 @@ import click
 from colorama import init as color_init
 import pkg_resources
 
-from cylc.flow import __version__
+from cylc.flow import __version__, iter_entry_points
 from cylc.flow.scripts import cylc_header
 from cylc.flow.terminal import (
     centered,
@@ -97,7 +97,7 @@ USAGE = cparse(USAGE)
 COMMANDS: dict = {
     entry_point.name: entry_point
     for entry_point
-    in pkg_resources.iter_entry_points('cylc.command')
+    in iter_entry_points('cylc.command')
 }
 
 
@@ -356,7 +356,7 @@ def list_plugins():
         entry_point_name: [
             entry_point
             for entry_point
-            in pkg_resources.iter_entry_points(entry_point_name)
+            in iter_entry_points(entry_point_name)
             if not entry_point.module_name.startswith('cylc.flow')
         ]
         for entry_point_name in entry_point_names

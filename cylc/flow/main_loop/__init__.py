@@ -159,9 +159,7 @@ from inspect import (
 from textwrap import indent
 from time import time
 
-import pkg_resources
-
-from cylc.flow import LOG
+from cylc.flow import LOG, iter_entry_points
 from cylc.flow.exceptions import CylcError, UserInputError
 
 
@@ -314,7 +312,7 @@ def load(config, additional_plugins=None):
     entry_points = {
         entry_point.name: entry_point
         for entry_point in
-        pkg_resources.iter_entry_points('cylc.main_loop')
+        iter_entry_points('cylc.main_loop')
     }
     plugins = {
         'state': {},

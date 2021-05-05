@@ -69,10 +69,9 @@ multiple workflow run directories that link to the same workflow definition.
 
 """
 
-
-import pkg_resources
 from typing import Optional, TYPE_CHECKING
 
+from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import (
@@ -189,7 +188,7 @@ def install(
         source = search_install_source_dirs(reg)
     flow_name = opts.flow_name or reg
 
-    for entry_point in pkg_resources.iter_entry_points(
+    for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
@@ -215,7 +214,7 @@ def install(
         no_symlinks=opts.no_symlinks
     )
 
-    for entry_point in pkg_resources.iter_entry_points(
+    for entry_point in iter_entry_points(
         'cylc.post_install'
     ):
         try:

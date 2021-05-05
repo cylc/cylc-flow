@@ -34,10 +34,9 @@ import os
 import re
 import sys
 
-import pkg_resources
 from pathlib import Path
 
-from cylc.flow import __version__
+from cylc.flow import __version__, iter_entry_points
 from cylc.flow import LOG
 from cylc.flow.exceptions import PluginError
 from cylc.flow.parsec.exceptions import FileParseError, ParsecError
@@ -225,7 +224,7 @@ def process_plugins(fpath):
         'template_variables': {},
         'templating_detected': None
     }
-    for entry_point in pkg_resources.iter_entry_points(
+    for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
