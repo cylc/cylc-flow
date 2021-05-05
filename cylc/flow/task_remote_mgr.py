@@ -372,7 +372,7 @@ class TaskRemoteMgr:
         if ctx.out:
             RSYNC_LOG.info(
                 'File installation information for '
-                f'{install_target}:\n {ctx.out}')
+                f'{install_target}:\n{ctx.out}')
         if ctx.ret_code == 0:
             # Both file installation and remote init success
             LOG.debug(ctx)

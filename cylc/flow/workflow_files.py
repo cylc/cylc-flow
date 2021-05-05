@@ -53,7 +53,7 @@ from cylc.flow.hostuserutil import (
     get_user,
     is_remote_host
 )
-from cylc.flow.remote import construct_ssh_cmd
+from cylc.flow.remote import construct_ssh_cmd, DEFAULT_RSYNC_OPTS
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.unicode_rules import WorkflowNameValidator
@@ -1022,14 +1022,12 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         list: command to use for rsync.
 
     """
-
-    rsync_cmd = ["rsync"]
-    rsync_cmd.append("-av")
+    rsync_cmd = ["rsync"] + DEFAULT_RSYNC_OPTS
     if dry_run:
         rsync_cmd.append("--dry-run")
     if reinstall:
         rsync_cmd.append('--delete')
-    ignore_dirs = [
+    for exclude in [
         '.git',
         '.svn',
         '.cylcignore',
@@ -1037,8 +1035,8 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         'opt/rose-suite-cylc-install.conf',
         WorkflowFiles.LOG_DIR,
         WorkflowFiles.Install.DIRNAME,
-        WorkflowFiles.Service.DIRNAME]
-    for exclude in ignore_dirs:
+        WorkflowFiles.Service.DIRNAME
+    ]:
         if (Path(src).joinpath(exclude).exists() or
                 Path(dst).joinpath(exclude).exists()):
             rsync_cmd.append(f"--exclude={exclude}")
@@ -1066,23 +1064,25 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
     """
     validate_source_dir(source, named_run)
     check_nested_run_dirs(rundir, named_run)
-    REINSTALL_LOG = _get_logger(rundir, 'cylc-reinstall')
-    REINSTALL_LOG.info(f"Reinstalling \"{named_run}\", from "
+    reinstall_log = _get_logger(rundir, 'cylc-reinstall')
+    reinstall_log.info(f"Reinstalling \"{named_run}\", from "
                        f"\"{source}\" to \"{rundir}\"")
     rsync_cmd = get_rsync_rund_cmd(
         source, rundir, reinstall=True, dry_run=dry_run)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
     stdout, stderr = proc.communicate()
-    REINSTALL_LOG.info(f"Copying files from {source} to {rundir}")
-    REINSTALL_LOG.info(f"{stdout}")
+    reinstall_log.info(
+        f"Copying files from {source} to {rundir}"
+        f'\n{stdout}'
+    )
     if not proc.returncode == 0:
-        REINSTALL_LOG.warning(
+        reinstall_log.warning(
             f"An error occurred when copying files from {source} to {rundir}")
-        REINSTALL_LOG.warning(f" Error: {stderr}")
-    check_flow_file(rundir, symlink_suiterc=True, logger=REINSTALL_LOG)
-    REINSTALL_LOG.info(f'REINSTALLED {named_run} from {source} -> {rundir}')
+        reinstall_log.warning(f" Error: {stderr}")
+    check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
+    reinstall_log.info(f'REINSTALLED {named_run} from {source} -> {rundir}')
     print(f'REINSTALLED {named_run} from {source} -> {rundir}')
-    _close_install_log(REINSTALL_LOG)
+    _close_install_log(reinstall_log)
     return
 
 
@@ -1148,10 +1148,10 @@ def install_workflow(
         if run_num:
             sub_dir = os.path.join(sub_dir, f'run{run_num}')
         symlinks_created = make_localhost_symlinks(rundir, sub_dir)
-    INSTALL_LOG = _get_logger(rundir, 'cylc-install')
+    install_log = _get_logger(rundir, 'cylc-install')
     if not no_symlinks and bool(symlinks_created) is True:
         for src, dst in symlinks_created.items():
-            INSTALL_LOG.info(f"Symlink created from {src} to {dst}")
+            install_log.info(f"Symlink created from {src} to {dst}")
     try:
         rundir.mkdir(exist_ok=True)
     except FileExistsError:
@@ -1162,31 +1162,33 @@ def install_workflow(
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
     stdout, stderr = proc.communicate()
-    INSTALL_LOG.info(f"Copying files from {source} to {rundir}")
-    INSTALL_LOG.info(f"{stdout}")
+    install_log.info(
+        f"Copying files from {source} to {rundir}"
+        f"\n{stdout}"
+    )
     if proc.returncode != 0:
-        INSTALL_LOG.warning(
+        install_log.warning(
             f"An error occurred when copying files from {source} to {rundir}")
-        INSTALL_LOG.warning(f" Error: {stderr}")
+        install_log.warning(f" Error: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
-    check_flow_file(rundir, symlink_suiterc=True, logger=INSTALL_LOG)
+    check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
     if no_run_name:
         cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
     cylc_install.mkdir(parents=True, exist_ok=True)
     if not source_link.exists():
-        INSTALL_LOG.info(f"Creating symlink from {source_link}")
+        install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source)
     elif source_link.exists() and (os.readlink(source_link) == str(source)):
-        INSTALL_LOG.info(
+        install_log.info(
             f"Symlink from \"{source_link}\" to \"{source}\" in place.")
     else:
         raise WorkflowFilesError(
             "Source directory between runs are not consistent.")
     # check source link matches the source symlink from workflow dir.
-    INSTALL_LOG.info(f'INSTALLED {flow_name} from {source} -> {rundir}')
+    install_log.info(f'INSTALLED {flow_name} from {source} -> {rundir}')
     print(f'INSTALLED {flow_name} from {source} -> {rundir}')
-    _close_install_log(INSTALL_LOG)
+    _close_install_log(install_log)
     return source, rundir, flow_name
 
 
