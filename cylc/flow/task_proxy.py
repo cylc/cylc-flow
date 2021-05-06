@@ -17,6 +17,7 @@
 """Provide a class to represent a task proxy in a running workflow."""
 
 from collections import Counter
+from fnmatch import fnmatchcase
 from time import time
 from typing import Any, Dict, List, Tuple, Optional, TYPE_CHECKING
 
@@ -393,3 +394,26 @@ class TaskProxy:
         # unset any retry delay timers
         for timer in self.try_timers.values():
             timer.timeout = None
+
+    def point_match(self, point: Optional[str]) -> bool:
+        """Return whether a string/glob matches the task's point.
+
+        None is treated as '*'.
+        """
+        return (point is None) or fnmatchcase(str(self.point), point)
+
+    def status_match(self, status: Optional[str]) -> bool:
+        """Return whether a string matches the task's status.
+
+        None/an empty string is treated as a match.
+        """
+        return (not status) or self.state.status == status
+
+    def name_match(self, name: str) -> bool:
+        """Return whether a string/glob matches the task's name."""
+        if fnmatchcase(self.tdef.name, name):
+            return True
+        for ns in self.tdef.namespace_hierarchy:
+            if fnmatchcase(ns, name):
+                return True
+        return False

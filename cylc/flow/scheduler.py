@@ -1449,7 +1449,7 @@ class Scheduler:
                             itask, self.workflow_db_mgr.put_xtriggers):
                         housekeep_xtriggers = True
                         if all(itask.is_ready_to_run()):
-                            self.pool.queue_tasks([itask])
+                            self.pool.queue_task(itask)
 
                 # Check for satisfied ext_triggers, and queue if ready.
                 if (
@@ -1459,7 +1459,7 @@ class Scheduler:
                         itask, self.ext_trigger_queue)
                     and all(itask.is_ready_to_run())
                 ):
-                    self.pool.queue_tasks([itask])
+                    self.pool.queue_task(itask)
 
             if housekeep_xtriggers:
                 # (Could do this periodically?)

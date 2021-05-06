@@ -42,8 +42,8 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def push_tasks(self, itasks: List[TaskProxy]) -> None:
-        """Queue given tasks."""
+    def push_task(self, itask: TaskProxy) -> None:
+        """Queue the given task."""
         pass
 
     @abstractmethod

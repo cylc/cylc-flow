@@ -79,13 +79,11 @@ def test_queue_and_release(
     queue_mgr = IndepQueueManager(QCONFIG, ALL_TASK_NAMES, DESCENDANTS)
 
     # add newly ready tasks to the queue
-    queue_me = []
     for name in READY_TASK_NAMES:
         itask = Mock()
         itask.tdef.name = name
         itask.state.is_held = False
-        queue_me.append(itask)
-    queue_mgr.push_tasks(queue_me)
+        queue_mgr.push_task(itask)
 
     # release tasks, given current active task counter
     released = queue_mgr.release_tasks(active)
