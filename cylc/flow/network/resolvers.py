@@ -383,10 +383,6 @@ class BaseResolvers:
                     for remove_id in old_ids.difference(w_ids):
                         if remove_id in self.delta_store[sub_id]:
                             del self.delta_store[sub_id][remove_id]
-                            if sub_resolver is None:
-                                yield create_delta_store(workflow_id=remove_id)
-                            else:
-                                yield await sub_resolver(root, info, **args)
                 for w_id in w_ids:
                     if w_id in self.data_store_mgr.data:
                         if sub_id not in delta_queues[w_id]:
