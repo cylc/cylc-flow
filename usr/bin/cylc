@@ -17,22 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Wrapper script to support multiple installed Cylc versions. Handles Conda and
-# Python virtual environments, and legacy plain Cylc 7 installations.
+# Wrapper script to support multiple installed Cylc & Rose versions. Handles
+# Conda and Python virtual environments, and legacy plain installations.
 #
 # WRAPPER INSTALLATION AND CONFIGURATION
 #---------------------------------------
 # - Copy this script as "cylc" into default $PATH, on scheduler and job hosts
+# - If using Rose, create a "rose" symlink (ln -s cylc rose)
 # - Set CYLC_HOME_ROOT ("EDIT ME" below) to default to the parent directory of
-#   installed versions
+#   installed versions and set the global config locations if necessary
 #
 # HOW IT WORKS
 #-------------
-# Intercept "cylc" commands and re-invoke them with the cylc-flow version
-# selected, in order of priority, by:
-#  1) $CYLC_HOME if defined, or
-#  2) $CYLC_HOME_ROOT/$CYLC_VERSION if found, or
-#  3) $CYLC_HOME_ROOT_ALT/$CYLC_VERSION, if found
+# Intercept "cylc" and "rose" commands and re-invoke them with the version
+# selected. If $CYLC_HOME is defined it is used as the installation location.
+# Otherwise, the script looks for a directory named "cylc-$CYLC_VERSION"
+# (or just "cylc" if $CYLC_VERSION is not defined) in $CYLC_HOME_ROOT and
+# $CYLC_HOME_ROOT_ALT.
+# Additional legacy logic is used when calling rose with Cylc 7.
 #
 # CYLC_HOME_ROOT should default to the central release location, in this
 # wrapper (see "EDIT ME" below). This must also be done on job hosts.
@@ -115,9 +117,33 @@
 # Centrally installed Cylc releases:
 CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
 
+# Global config locations for Cylc 8 & Rose 2 (defaults: /etc/cylc & /etc/rose)
+# export CYLC_SITE_CONF_PATH="${CYLC_SITE_CONF_PATH:-/etc/cylc}"
+# export ROSE_SITE_CONF_PATH="${ROSE_SITE_CONF_PATH:-/etc/rose}"
+
 # Note users can set CYLC_HOME_ROOT_ALT as well (see above), e.g.:
 # CYLC_HOME_ROOT_ALT=${HOME}/miniconda3/envs
 ###############################################################################
+
+# Prior to Cylc 8, Rose used a standalone installation
+# Note: assumes Cylc 7 is the default version - once Cylc 8 becomes the default
+# the if test below needs to change to
+# if [[ ${CYLC_VERSION:-} =~ ^7 && ${0##*/} =~ ^rose ]]; then
+if [[ ! ${CYLC_VERSION:-} =~ ^8 && ${0##*/} =~ ^rose ]]; then
+    if [[ -z "${ROSE_HOME:-}" ]]; then
+        ROSE_HOME_ROOT="${ROSE_HOME_ROOT:-$CYLC_HOME_ROOT}"
+        if [[ -n "${ROSE_VERSION:-}" ]]; then
+            CYLC_HOME="${ROSE_HOME_ROOT}/rose-${ROSE_VERSION}"
+        else
+            # Default version symlink
+            CYLC_HOME="${ROSE_HOME_ROOT}/rose"
+        fi
+    else
+        CYLC_HOME="${ROSE_HOME}"
+    fi
+fi
+# Note: the code above is only needed if still using standalone Rose 2019
+# versions
 
 if [[ -z "${CYLC_HOME}" ]]; then
     # Look for specified or default version under the root locations
@@ -159,8 +185,8 @@ elif [[ -d "${CYLC_HOME}/conda-meta" && \
     . "${CYLC_HOME%/*/*}/etc/profile.d/conda.sh"
     conda activate "${CYLC_HOME##*/}" || exit 1
 fi
-if [[ ! -x "${CYLC_HOME}/bin/cylc" ]]; then
-    echo 1>&2 "ERROR: cylc not found in ${CYLC_HOME}"
+if [[ ! -x "${CYLC_HOME}/bin/${0##*/}" ]]; then
+    echo 1>&2 "ERROR: ${0##*/} not found in ${CYLC_HOME}"
     exit 1
 fi
 # Execute the command in the selected installation.
