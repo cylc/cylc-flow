@@ -57,18 +57,18 @@ class PointBase(metaclass=ABCMeta):
 
     """
 
-    _TYPE = None
-    _TYPE_SORT_KEY = None
-
     __slots__ = ('value')
 
+    @property
     @abstractmethod
-    def TYPE(self):
-        return self._TYPE
+    def TYPE(self) -> str:
+        """Cycling type of this point."""
 
+    @property
     @abstractmethod
-    def TYPE_SORT_KEY(self):
-        return self._TYPE_SORT_KEY
+    def TYPE_SORT_KEY(self) -> int:
+        """Used for comparison operations between different PointBase-derived
+        class instances."""
 
     def __init__(self, value):
         if not isinstance(value, str):
@@ -182,18 +182,18 @@ class IntervalBase(metaclass=ABCMeta):
 
     """
 
-    _TYPE = None
-    _TYPE_SORT_KEY = None
-
     __slots__ = ('value')
 
+    @property
     @abstractmethod
-    def TYPE(self):
-        return self._TYPE
+    def TYPE(self) -> str:
+        """Cycling type of this interval."""
 
+    @property
     @abstractmethod
-    def TYPE_SORT_KEY(self):
-        return self._TYPE_SORT_KEY
+    def TYPE_SORT_KEY(self) -> int:
+        """Used for comparison operations between different
+        IntervalBase-derived class instances."""
 
     @classmethod
     @abstractmethod
@@ -306,7 +306,7 @@ class IntervalBase(metaclass=ABCMeta):
         return self * -1
 
 
-class SequenceBase(object, metaclass=ABCMeta):
+class SequenceBase(metaclass=ABCMeta):
 
     """The abstract base class for cycler sequences.
 
@@ -327,18 +327,18 @@ class SequenceBase(object, metaclass=ABCMeta):
 
     """
 
-    _TYPE = None
-    _TYPE_SORT_KEY = None
-
     __slots__ = ()
 
+    @property
     @abstractmethod
-    def TYPE(self):
-        return self._TYPE
+    def TYPE(self) -> str:
+        """Cycling type of this sequence."""
 
+    @property
     @abstractmethod
-    def TYPE_SORT_KEY(self):
-        return self._TYPE_SORT_KEY
+    def TYPE_SORT_KEY(self) -> int:
+        """Used for comparison operations between different
+        SequenceBase-derived class instances."""
 
     @classmethod
     @abstractmethod  # Note: stacked decorator not strictly enforced in Py2.x
