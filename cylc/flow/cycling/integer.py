@@ -27,7 +27,7 @@ from cylc.flow.exceptions import (
 )
 
 CYCLER_TYPE_INTEGER = "integer"
-CYCLER_TYPE_SORT_KEY_INTEGER = "a"
+CYCLER_TYPE_SORT_KEY_INTEGER = 0
 
 # TODO - abbreviated integer recurrences?
 
