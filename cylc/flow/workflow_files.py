@@ -549,8 +549,6 @@ def register(
            - Nested workflow run directories.
     """
     validate_flow_name(flow_name)
-    import mdb
-    mdb.debug()
     if source is not None:
         if os.path.basename(source) == WorkflowFiles.FLOW_FILE:
             source = os.path.dirname(source)
