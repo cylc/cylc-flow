@@ -131,7 +131,7 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install --run-name=olaf
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE}
+INSTALLED ${RND_WORKFLOW_NAME}/olaf from ${RND_WORKFLOW_SOURCE}
 __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1-2nd-install"
 run_fail "${TEST_NAME}" cylc install
@@ -167,7 +167,7 @@ make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install --run-name=olaf
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE}
+INSTALLED ${RND_WORKFLOW_NAME}/olaf from ${RND_WORKFLOW_SOURCE}
 __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name-2nd-install"
 run_fail "${TEST_NAME}" cylc install --run-name=olaf

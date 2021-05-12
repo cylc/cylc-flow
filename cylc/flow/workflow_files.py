@@ -536,7 +536,7 @@ def register(
     Creates the .service directory.
 
     Args:
-        flow_name: workflow name, default basename($PWD).
+        flow_name: workflow name.
         source: directory location of flow.cylc file, default $PWD.
 
     Return:
@@ -549,6 +549,8 @@ def register(
            - Nested workflow run directories.
     """
     validate_flow_name(flow_name)
+    import mdb
+    mdb.debug()
     if source is not None:
         if os.path.basename(source) == WorkflowFiles.FLOW_FILE:
             source = os.path.dirname(source)
@@ -1143,7 +1145,9 @@ def install_workflow(
     check_nested_run_dirs(rundir, flow_name)
     symlinks_created = {}
     named_run = flow_name
-    if run_num:
+    if run_name:
+        named_run = os.path.join(named_run, run_name)
+    elif run_num:
         named_run = os.path.join(named_run, f'run{run_num}')
     if not no_symlinks:
         symlinks_created = make_localhost_symlinks(rundir, named_run)
@@ -1174,6 +1178,7 @@ def install_workflow(
     if no_run_name:
         cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
+    # check source link matches the source symlink from workflow dir.
     cylc_install.mkdir(parents=True, exist_ok=True)
     if not source_link.exists():
         install_log.info(f"Creating symlink from {source_link}")
@@ -1184,7 +1189,6 @@ def install_workflow(
     else:
         raise WorkflowFilesError(
             "Source directory between runs are not consistent.")
-    # check source link matches the source symlink from workflow dir.
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
     _close_install_log(install_log)
