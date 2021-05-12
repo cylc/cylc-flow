@@ -39,7 +39,9 @@ from pathlib import Path
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow import LOG
 from cylc.flow.exceptions import PluginError
-from cylc.flow.parsec.exceptions import FileParseError, ParsecError
+from cylc.flow.parsec.exceptions import (
+    FileParseError, ParsecError, TemplateVarLanguageClash
+)
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
@@ -351,7 +353,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             if not re.match(r'^#!', flines[0]):
                 flines.insert(0, '#!empy')
             else:
-                raise FileParseError(
+                raise TemplateVarLanguageClash(
                     "Plugins set templating engine = "
                     f"{extra_vars['templating_detected']}"
                     f" which does not match {flines[0]} set in flow.cylc."
@@ -376,7 +378,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             if not re.match(r'^#!', flines[0]):
                 flines.insert(0, '#!jinja2')
             else:
-                raise FileParseError(
+                raise TemplateVarLanguageClash(
                     "Plugins set templating engine = "
                     f"{extra_vars['templating_detected']}"
                     f" which does not match {flines[0]} set in flow.cylc."
