@@ -196,7 +196,7 @@ def get_option_parser(add_std_opts=False):
     )
 
     parser.add_option(
-        "--quiet",
+        "-q", "--quiet",
         help="Don't print the Cylc header to stdout.",
         action="store_true", default=False, dest="quiet"
     )

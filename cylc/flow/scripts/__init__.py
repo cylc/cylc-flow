@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from re import sub
 from itertools import zip_longest
-from textwrap import dedent
-import re
 from ansimarkup import strip
 
 from cylc.flow import __version__
@@ -52,7 +51,7 @@ LOGO_LETTERS = (
 
 LOGO = [
     ''.join(
-        re.sub('o', f'<white,{tag}> </white,{tag}>', letter[ind])
+        sub('o', f'<white,{tag}> </white,{tag}>', letter[ind])
         for tag, letter in zip(
             ('red', 'yellow', 'green', 'blue'),
             LOGO_LETTERS
@@ -87,7 +86,7 @@ def cylc_header(width=None):
         len(strip(LOGO[0]))
     )
     if width >= lmax + 1:
-        header = f'\n'.join(
+        header = '\n'.join(
             ('{0} {1}').format(*x)
             for x in zip_longest(
                 LOGO,

@@ -99,7 +99,6 @@ def daemonize(schd):
                 "ps_opts": PS_OPTS,
                 "pid": workflow_pid
             }
-
             if schd.options.format == 'json':
                 sys.stdout.write(json.dumps(info, indent=4))
             else:
