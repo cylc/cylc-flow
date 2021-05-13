@@ -24,24 +24,9 @@ from time import sleep, time
 from cylc.flow.pathutil import get_workflow_run_log_name
 from cylc.flow.workflow_files import PS_OPTS
 
-
-WORKFLOW_SCAN_INFO_TMPL = r"""
-
-To view scheduler contact information:
- $ cylc get-workflow-contact %(workflow)s
-
-Other ways to see if the workflow is still running:
- $ cylc scan -n '%(workflow)s'
- $ cylc ping -v %(workflow)s
- $ ssh %(host)s ps %(ps_opts)s %(pid)s
- $ cylc tui %(workflow)s    # A terminal graphic UI
-
-"""
-
-_INFO_TMPL = r"""
-*** listening on %(url)s ***
-*** publishing on %(pub_url)s ***""" + WORKFLOW_SCAN_INFO_TMPL
-
+WORKFLOW_INFO_TMPL = (
+    "%(workflow)s: %(host)s PID=%(pid)s\n"
+)
 
 _TIMEOUT = 300.0  # 5 minutes
 
@@ -114,10 +99,11 @@ def daemonize(schd):
                 "ps_opts": PS_OPTS,
                 "pid": workflow_pid
             }
+
             if schd.options.format == 'json':
                 sys.stdout.write(json.dumps(info, indent=4))
             else:
-                sys.stdout.write(_INFO_TMPL % info)
+                sys.stdout.write(WORKFLOW_INFO_TMPL % info)
             # exit parent 1
             sys.exit(0)
     except OSError as exc:

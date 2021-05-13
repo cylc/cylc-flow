@@ -50,7 +50,7 @@ LOGO_LETTERS = (
 )
 # fmt: on
 
-LOGO_LINES = [
+LOGO = [
     ''.join(
         re.sub('o', f'<white,{tag}> </white,{tag}>', letter[ind])
         for tag, letter in zip(
@@ -61,12 +61,6 @@ LOGO_LINES = [
     for ind in range(len(LOGO_LETTERS[0]))
 ]
 
-LICENSE = dedent(f"""
-    The Cylc Workflow Engine [{__version__}]
-    Copyright (C) 2008-{_copyright_year} NIWA &
-    British Crown (Met Office) & Contributors
-""")
-
 CYLC = (
     "<b>"
     "<red>C</red>"
@@ -76,26 +70,30 @@ CYLC = (
     "</b>"
 )
 
+VERSION = f"<b><yellow>{__version__}</yellow></b>"
+
+LICENSE = [
+    f"{CYLC} Workflow Engine {VERSION}",
+    f"Copyright (C) 2008-{_copyright_year} NIWA",
+    "& British Crown (Met Office) & Contributors"
+]
+
 
 def cylc_header(width=None):
     """Print copyright and license information."""
-    if not width:
-        width = get_width()
-    # center license lines
-    llines = LICENSE.strip().splitlines()
-    lmax = max(len(line) for line in llines)
-    llines = [
-        line.center(lmax)
-        for line in llines
-        if line
-    ]
-    llines[0] = re.sub('Cylc', CYLC, llines[0])
-    tlmax = lmax + len(strip(LOGO_LINES[0]))
-    lpad = int((width - tlmax) / 2) * ' '
-    return '\n' + lpad + f'\n{lpad}'.join(
-        ('{0}  {1}').format(*x)
-        for x in zip_longest(
-            LOGO_LINES,
-            llines
-        )
+    width = width or get_width()
+    lmax = (
+        max(len(strip(line)) for line in LICENSE) +
+        len(strip(LOGO[0]))
     )
+    if width >= lmax + 1:
+        header = f'\n'.join(
+            ('{0} {1}').format(*x)
+            for x in zip_longest(
+                LOGO,
+                LICENSE
+            )
+        )
+    else:
+        header = '\n'.join(LOGO) + '\n' + '\n'.join(LICENSE)
+    return f"\n{header}\n"
