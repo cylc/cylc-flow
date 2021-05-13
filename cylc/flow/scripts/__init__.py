@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from re import sub
 from itertools import zip_longest
-from textwrap import dedent
-
 from ansimarkup import strip
 
 from cylc.flow import __version__
@@ -28,82 +27,72 @@ _copyright_year = 2021  # This is set by GH Actions update_copyright workflow
 # fmt: off
 LOGO_LETTERS = (
     (
-        "      ",
-        "      ",
-        "._____",
-        "| .___",
-        "| !___",
-        "!_____",
-        "      ",
-        "      "
+        "oooo",
+        "oo  ",
+        "oooo",
     ),
     (
-        "      ",
-        "      ",
-        "._. ._",
-        "| | | ",
-        "| !_! ",
-        "!___. ",
-        ".___! ",
-        "!_____"
+        "oo oo",
+        "ooooo",
+        "   oo",
     ),
     (
-        "._.",
-        "| |",
-        "| |",
-        "| |",
-        "| |",
-        "|_!",
-        "|  ",
-        "!  "
+        "oo",
+        "oo",
+        "oo",
     ),
     (
-        "        ",
-        "        ",
-        "_____.  ",
-        " .___|  ",
-        " !___.  ",
-        "_____!  ",
-        "        ",
-        "        "
+        "oooo",
+        "oo  ",
+        "oooo",
     )
 )
 # fmt: on
 
-LOGO_LINES = [
+LOGO = [
     ''.join(
-        f'<{tag}>{letter[ind]}</{tag}>'
+        sub('o', f'<white,{tag}> </white,{tag}>', letter[ind])
         for tag, letter in zip(
-            ('red', 'green', 'yellow', 'blue'),
+            ('red', 'yellow', 'green', 'blue'),
             LOGO_LETTERS
         )
     )
     for ind in range(len(LOGO_LETTERS[0]))
 ]
 
-LICENCE = dedent(f"""
-    The Cylc Workflow Engine [{__version__}]
-    Copyright (C) 2008-{_copyright_year} NIWA
-    & British Crown (Met Office) & Contributors.
-""")
+CYLC = (
+    "<b>"
+    "<red>C</red>"
+    "<yellow>y</yellow>"
+    "<green>l</green>"
+    "<blue>c</blue>"
+    "</b>"
+)
+
+VERSION = f"<b><yellow>{__version__}</yellow></b>"
+
+LICENSE = [
+    f"{CYLC} Workflow Engine {VERSION}",
+    f"Copyright (C) 2008-{_copyright_year} NIWA",
+    "& British Crown (Met Office) & Contributors"
+]
 
 
 def cylc_header(width=None):
     """Print copyright and license information."""
-    if not width:
-        width = get_width()
-    cylc_license = '\n\n' + LICENCE + '\n\n'
-    license_lines = cylc_license.splitlines()
-    lmax = max(len(line) for line in license_lines)
-    tlmax = lmax + len(strip(LOGO_LINES[0]))
-    lpad = int((width - tlmax) / 2) * ' '
-    return lpad + f'\n{lpad}'.join(
-        ('{0} {1: ^%s}' % lmax).format(*x)
-        for x in zip_longest(
-            LOGO_LINES,
-            license_lines,
-            fillvalue=' ' * (
-                len(LOGO_LINES[-1]) + 1
+    width = width or get_width()
+    lmax = (
+        max(len(strip(line)) for line in LICENSE) +
+        len(strip(LOGO[0]))
+    )
+    if width >= lmax + 1:
+        header = '\n'.join(
+            ('{0} {1}').format(*x)
+            for x in zip_longest(
+                LOGO,
+                LICENSE
             )
         )
-    )
+    else:
+        header = '\n'.join(LOGO) + '\n' + '\n'.join(LICENSE)
+    return f"\n{header}\n"

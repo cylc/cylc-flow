@@ -36,12 +36,8 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 # format=plain
 TEST_NAME="${TEST_NAME_BASE}-run-format-plain"
 workflow_run_ok "${TEST_NAME}" cylc play --format plain "${WORKFLOW_NAME}"
-grep_ok 'listening on tcp:' "${TEST_NAME}.stdout"
-grep_ok 'publishing on tcp:' "${TEST_NAME}.stdout"
-grep_ok 'To view scheduler contact information:' \
-    "${TEST_NAME}.stdout"
-grep_ok 'Other ways to see if the workflow is still running:' \
-    "${TEST_NAME}.stdout"
+grep_ok "Copyright" "${TEST_NAME}.stdout"
+grep_ok "${WORKFLOW_NAME}:" "${TEST_NAME}.stdout"
 poll_workflow_stopped
 
 delete_db
@@ -57,6 +53,13 @@ print(list(sorted(data)), file=sys.stderr)
 assert list(sorted(data)) == [
     "host", "pid", "ps_opts", "pub_url", "url", "workflow"]
 ' "${TEST_NAME}.stdout"
+poll_workflow_stopped
+
+delete_db
+# quiet
+TEST_NAME="${TEST_NAME_BASE}-run-quiet"
+workflow_run_ok "${TEST_NAME}" cylc play --quiet "${WORKFLOW_NAME}"
+grep_ok "${WORKFLOW_NAME}:" "${TEST_NAME}.stdout"
 poll_workflow_stopped
 
 purge

@@ -195,6 +195,12 @@ def get_option_parser(add_std_opts=False):
         action="store_true", default=False, dest="abort_if_any_task_fails"
     )
 
+    parser.add_option(
+        "-q", "--quiet",
+        help="Don't print the Cylc header to stdout.",
+        action="store_true", default=False, dest="quiet"
+    )
+
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI
         # use) "standard options" are added later in options.parse_args().
@@ -279,7 +285,7 @@ def scheduler_cli(parser, options, reg):
     _distribute(options.host)
 
     # print the start message
-    if options.no_detach or options.format == 'plain':
+    if not options.quiet and (options.no_detach or options.format == 'plain'):
         print(
             cparse(
                 cylc_header()
