@@ -1120,7 +1120,6 @@ def install_workflow(
             Another workflow already has this name (unless --redirect).
             Trying to install a workflow that is nested inside of another.
     """
-
     if not source:
         source = Path.cwd()
     elif Path(source).name == WorkflowFiles.FLOW_FILE:
@@ -1181,7 +1180,9 @@ def install_workflow(
     if not source_link.exists():
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source)
-    elif source_link.exists() and (os.readlink(source_link) == str(source)):
+    elif source_link.exists() and (
+        source_link.resolve() == source.resolve()
+    ):
         install_log.info(
             f"Symlink from \"{source_link}\" to \"{source}\" in place.")
     else:
