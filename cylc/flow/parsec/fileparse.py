@@ -347,7 +347,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # Fail if templating_detected ≠ hashbang
     hashbang = hashbang_and_plugin_templating_clash(
-        extra_vars['templating_detected'], flines[0]
+        extra_vars['templating_detected'], flines
     )
 
     # process with EmPy
