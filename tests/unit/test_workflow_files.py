@@ -31,6 +31,7 @@ from cylc.flow.exceptions import (
     TaskRemoteMgmtError,
     WorkflowFilesError
 )
+from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
@@ -39,6 +40,7 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
+    get_sym_dirs,
     get_symlink_dirs,
     get_workflow_source_dir,
     glob_in_run_dir,
@@ -1441,3 +1443,38 @@ def test_check_flow_file_symlink(
                 log_msg = f'{log_msg}. Symlink created.'
         assert result == tmp_path.joinpath(expected_file)
         assert caplog.messages == [log_msg]
+
+
+@pytest.mark.parametrize(
+    'symlink_dirs, err_msg, expected',
+    [
+        ('log=$shortbread, share= $bourbon,share/cycle= $digestive, ', 'None',
+            {'localhost': {
+                'log': "$shortbread",
+                'share': '$bourbon',
+                'share/cycle': '$digestive'
+            }}
+         ),
+        ('run=$NICE, log= $Garibaldi, share/cycle=$RichTea', 'None',
+            {'localhost': {
+                'run': '$NICE',
+                'log': '$Garibaldi',
+                'share/cycle': '$RichTea'
+            }}
+         ),
+        ('some_other_dir=$bourbon',
+         'some_other_dir not a valid entry for --symlink-dirs',
+            {'some_other_dir': '£bourbon'}
+         ),
+    ]
+)
+def test_get_sym_dirs(symlink_dirs, err_msg, expected):
+    """Test get_sym_dirs raises errors on cli symlink options"""
+    if err_msg != 'None':
+        with pytest.raises(WorkflowFilesError):
+            get_sym_dirs(symlink_dirs)
+
+    else:
+        actual = get_sym_dirs(symlink_dirs)
+
+        assert actual == expected

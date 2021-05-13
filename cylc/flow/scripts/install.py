@@ -75,7 +75,7 @@ from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import (
-    install_workflow, search_install_source_dirs
+    install_workflow, search_install_source_dirs, get_sym_dirs
 )
 from cylc.flow.terminal import cli_function
 
@@ -151,6 +151,17 @@ def get_option_parser():
         dest="source")
 
     parser.add_option(
+        "--symlink-dirs",
+        help=(
+            "Enter a list, in the form ['log'= 'path/to/store', share = '$...'"
+            "]. Use this option to override creating default local symlinks"
+            ", for directories run, log, work, share, share/cycle, as"
+            " configured in global.cylc."),
+        action="store",
+        default=None,
+        dest="symlink_dirs")
+
+    parser.add_option(
         "--run-name",
         help="Name the run.",
         action="store",
@@ -164,13 +175,6 @@ def get_option_parser():
         action="store_true",
         default=False,
         dest="no_run_name")
-
-    parser.add_option(
-        "--no-symlink-dirs",
-        help="Use this option to override creating default local symlinks.",
-        action="store_true",
-        default=False,
-        dest="no_symlinks")
 
     parser = add_cylc_rose_options(parser)
 
@@ -214,13 +218,17 @@ def install(
                 entry_point.name,
                 exc
             ) from None
+    if opts.symlink_dirs:
+        symdirs = get_sym_dirs(opts.symlink_dirs)
+    else:
+        symdirs = None
 
     source_dir, rundir, _flow_name = install_workflow(
         flow_name=flow_name,
         source=source,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,
-        no_symlinks=opts.no_symlinks
+        symlink_dirs=symdirs
     )
 
     for entry_point in iter_entry_points(

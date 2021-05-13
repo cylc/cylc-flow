@@ -28,7 +28,6 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.platforms import get_localhost_install_target
 
-
 # Note: do not import this elsewhere, as it might bypass unit test
 # monkeypatching:
 _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
@@ -131,7 +130,7 @@ def make_workflow_run_tree(workflow):
 
 
 def make_localhost_symlinks(
-    rund: Union[Path, str], named_sub_dir: str
+    rund: Union[Path, str], named_sub_dir: str, symlink_conf=None
 ) -> Dict[str, Union[Path, str]]:
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
@@ -144,7 +143,9 @@ def make_localhost_symlinks(
 
     """
     dirs_to_symlink = get_dirs_to_symlink(
-        get_localhost_install_target(), named_sub_dir)
+        get_localhost_install_target(),
+        named_sub_dir, symlink_conf=symlink_conf
+    )
     symlinks_created = {}
     for key, value in dirs_to_symlink.items():
         if key == 'run':
@@ -165,14 +166,14 @@ def make_localhost_symlinks(
     return symlinks_created
 
 
-def get_dirs_to_symlink(install_target: str, flow_name: str) -> Dict[str, str]:
+def get_dirs_to_symlink(install_target: str, flow_name: str, symlink_conf=None) -> Dict[str, str]:
     """Returns dictionary of directories to symlink from glbcfg.
 
     Note the paths should remain unexpanded, to be expanded on the remote.
     """
     dirs_to_symlink: Dict[str, str] = {}
-    symlink_conf = glbl_cfg().get(['symlink dirs'])
-
+    if not symlink_conf:
+        symlink_conf = glbl_cfg().get(['install', 'symlink dirs'])
     if install_target not in symlink_conf.keys():
         return dirs_to_symlink
     base_dir = symlink_conf[install_target]['run']
@@ -213,10 +214,6 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
             raise WorkflowFilesError(
                 f"Error when symlinking. Failed to unlink bad symlink {path}.")
     target.mkdir(parents=True, exist_ok=True)
-    if path.exists():
-        # Trying to link to itself; no symlink needed
-        # (e.g. path's parent is symlink to target's parent)
-        return False
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         path.symlink_to(target)

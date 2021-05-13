@@ -24,11 +24,12 @@ if [[ -z ${TMPDIR:-} || -z ${USER:-} || $TMPDIR/$USER == "$HOME" ]]; then
     skip_all '"TMPDIR" or "USER" not defined or "TMPDIR"/"USER" is "HOME"'
 fi
 
-set_test_number 14
+set_test_number 17
 
 create_test_global_config "" "
-[symlink dirs]
-    [[localhost]]
+[install]
+[[symlink dirs]]
+    [[[localhost]]]
         run = \$TMPDIR/\$USER/test_cylc_symlink/cylctb_tmp_run_dir
         share = \$TMPDIR/\$USER/test_cylc_symlink/
         log = \$TMPDIR/\$USER/test_cylc_symlink/
@@ -53,14 +54,37 @@ else
     fail "$TEST_SYM"
 fi
 
-
-
 TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-exists-ok"
 if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle") == \
 "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle" ]]; then
     ok "$TEST_SYM"
 else
     fail "$TEST_SYM"
+# # Test "cylc install" ensure symlinks are created
+TEST_NAME="${TEST_NAME_BASE}-symlinks-created"
+make_rnd_workflow
+
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1") == \
+    "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_WORKFLOW_NAME}/run1" ]]; then
+        ok "$TEST_SYM"
+else
+    fail "$TEST_SYM"
+fi
+
+TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-exists-ok"
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle") == \
+"$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle" ]]; then
+fi
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1") == \
+    "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_WORKFLOW_NAME}/run1" ]]; then
+        ok "$TEST_SYM"
+else
+    fail "$TEST_SYM"
+fi
+
+TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-exists-ok"
+if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle") == \
+"$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle" ]]; then
 fi
 
 for DIR in 'work' 'share' 'log'; do
@@ -75,29 +99,19 @@ done
 rm -rf "${TMPDIR}/${USER}/test_cylc_symlink/"
 purge_rnd_workflow
 
+# test cli --symlink-dirs overrides the glblcfg
+VAR=$TMPDIR/$USER/test_cylc_cli_symlink/
 
-
-# Test "cylc install" --no-symlink-dirs
-TEST_NAME="${TEST_NAME_BASE}-no-symlinks-created"
+TEST_NAME="${TEST_NAME_BASE}-symlinks-cli-opt"
 make_rnd_workflow
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --no-symlink-dirs --directory="${RND_WORKFLOW_SOURCE}"
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" \
+--directory="${RND_WORKFLOW_SOURCE}" \
+--symlink-dirs="run= ${VAR}run, log=${VAR}, share=${VAR}, work = ${VAR}, share/cycle=${VAR}cylctb_tmp_share_dir"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 
-
-TEST_SYM="${TEST_NAME_BASE}-run-symlink-exists-ok"
-
-if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1") == \
-    "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_WORKFLOW_NAME}/run1" ]]; then
-        fail "$TEST_SYM"
-else
-    ok "$TEST_SYM"
-fi
-
-
-
-TEST_SYM="${TEST_NAME_BASE}-share/cycle-symlink-not-exists-ok"
+TEST_SYM="${TEST_NAME_BASE}-share-cycle-symlink-cli-ok"
 if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/share/cycle") == \
 "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_share_dir/cylc-run/${RND_WORKFLOW_NAME}/share/cycle" ]]; then
     fail "$TEST_SYM"
@@ -106,13 +120,13 @@ else
 fi
 
 for DIR in 'work' 'share' 'log'; do
-    TEST_SYM="${TEST_NAME_BASE}-${DIR}-symlink-not-exists-ok"
+    TEST_SYM="${TEST_NAME_BASE}-${DIR}-symlink-cli-ok"
     if [[ $(readlink "$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1/${DIR}") == \
-   "$TMPDIR/${USER}/test_cylc_symlink/cylc-run/${RND_WORKFLOW_NAME}/${DIR}" ]]; then
-        fail "$TEST_SYM"
-    else
+   "$TMPDIR/${USER}/test_cylc_cli_symlink/cylc-run/${RND_WORKFLOW_NAME}/run1/${DIR}" ]]; then
         ok "$TEST_SYM"
+    else
+        fail "$TEST_SYM"
     fi
 done
-rm -rf "${TMPDIR}/${USER}/test_cylc_symlink/"
+rm -rf "${TMPDIR}/${USER}/test_cylc_cli_symlink/"
 purge_rnd_workflow
