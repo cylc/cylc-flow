@@ -452,7 +452,7 @@ class CylcWorkflowDAO:
         except sqlite3.Error:
             if not self.is_public:
                 raise
-            if cylc.flow.flags.debug:
+            if cylc.flow.flags.verbosity > 1:
                 traceback.print_exc()
             err_log = (
                 "cannot execute database statement:\n"

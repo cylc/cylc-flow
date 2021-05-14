@@ -31,6 +31,7 @@ from time import sleep
 
 import cylc.flow.flags
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.option_parsers import verbosity_to_opts
 from cylc.flow.platforms import get_platform, get_host_from_platform
 
 
@@ -230,7 +231,7 @@ def _construct_ssh_cmd(
         ssh_login_shell=None,
         remote_cylc_path=None,
         set_UTC=False,
-        allow_flag_opts=False,
+        set_verbosity=False,
         timeout=None
 ):
     """Build an SSH command for execution on a remote platform hosts.
@@ -253,9 +254,8 @@ def _construct_ssh_cmd(
             This is required if the remote executable is not in $PATH.
         set_UTC (boolean):
             If True, check UTC mode and specify if set to True (non-default).
-        allow_flag_opts (boolean):
-            If True, check CYLC_DEBUG and CYLC_VERBOSE and if non-default,
-            specify debug and/or verbosity as options to the 'raw cmd'.
+        set_verbosity (boolean):
+            If True apply -q, -v opts to match cylc.flow.flags.verbosity.
         timeout (str):
             String for bash timeout command.
 
@@ -325,13 +325,8 @@ def _construct_ssh_cmd(
     # Insert core raw command after ssh, but before its own, command options.
     command += raw_cmd
 
-    if allow_flag_opts:
-        if (cylc.flow.flags.verbose or os.getenv('CYLC_VERBOSE') in
-                ["True", "true"]):
-            command.append(r'--verbose')
-        if (cylc.flow.flags.debug or os.getenv('CYLC_DEBUG') in
-                ["True", "true"]):
-            command.append(r'--debug')
+    if set_verbosity:
+        command.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
 
     return command
 

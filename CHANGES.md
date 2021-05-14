@@ -56,6 +56,9 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4214](https://github.com/cylc/cylc-flow/pull/4214)
+- Unify `-v --verbose`, `-q --quiet` and `--debug` options.
+
 [#4174](https://github.com/cylc/cylc-flow/pull/4174) - Terminology: replace
 "suite" with "workflow".
 

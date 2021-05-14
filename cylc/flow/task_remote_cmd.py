@@ -177,7 +177,7 @@ def remote_tidy(install_target, rund):
         if os.path.exists(fname):
             raise
     else:
-        if cylc.flow.flags.debug:
+        if cylc.flow.flags.verbosity > 1:
             print('Deleted: %s' % fname)
     remove_keys_on_client(srvd, install_target, full_clean=True)
     try:
@@ -185,5 +185,5 @@ def remote_tidy(install_target, rund):
     except OSError:
         pass
     else:
-        if cylc.flow.flags.debug:
+        if cylc.flow.flags.verbosity > 1:
             print('Deleted: %s' % srvd)

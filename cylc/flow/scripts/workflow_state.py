@@ -82,7 +82,7 @@ class WorkflowPoller(Poller):
         # connect, or max number of polls exhausted) False
         connected = False
 
-        if cylc.flow.flags.verbose:
+        if cylc.flow.flags.verbosity > 0:
             sys.stdout.write(
                 "connecting to workflow db for " +
                 self.args['run_dir'] + "/" + self.args['workflow'])
@@ -103,10 +103,10 @@ class WorkflowPoller(Poller):
             except (OSError, sqlite3.Error):
                 if self.n_polls >= max_polls:
                     raise
-                if cylc.flow.flags.verbose:
+                if cylc.flow.flags.verbosity > 0:
                     sys.stdout.write('.')
                 sleep(self.interval)
-        if cylc.flow.flags.verbose:
+        if cylc.flow.flags.verbosity > 0:
             sys.stdout.write('\n')
 
         if connected and self.args['cycle']:

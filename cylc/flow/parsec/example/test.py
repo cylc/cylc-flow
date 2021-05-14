@@ -29,7 +29,7 @@ sys.path.append(
 sys.path.append(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..'))
 
-cylc.flow.flags.verbose = True
+cylc.flow.flags.verbosity = 1
 
 
 class Testcfg(ParsecConfig):

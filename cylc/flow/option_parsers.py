@@ -16,15 +16,88 @@
 """Common options for all cylc commands."""
 
 import logging
-from optparse import OptionParser, OptionConflictError, Values
+from optparse import OptionParser, OptionConflictError, Values, Option
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from cylc.flow import LOG, RSYNC_LOG
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.terminal import format_shell_examples
+
+
+def verbosity_to_opts(verb: int) -> List[str]:
+    """Convert Cylc verbosity to the CLI opts required to replicate it.
+
+    Examples:
+        >>> verbosity_to_opts(0)
+        []
+        >>> verbosity_to_opts(-2)
+        ['-q', '-q']
+        >>> verbosity_to_opts(2)
+        ['-v', '-v']
+
+    """
+    return [
+        '-q'
+        for _ in range(verb, 0)
+    ] + [
+        '-v'
+        for _ in range(0, verb)
+    ]
+
+
+def verbosity_to_env(verb: int) -> Dict[str, str]:
+    """Convert Cylc verbosity to the env vars required to replicate it.
+
+    Examples:
+        >>> verbosity_to_env(0)
+        {'CYLC_VERBOSE': 'false', 'CYLC_DEBUG': 'false'}
+        >>> verbosity_to_env(1)
+        {'CYLC_VERBOSE': 'true', 'CYLC_DEBUG': 'false'}
+        >>> verbosity_to_env(2)
+        {'CYLC_VERBOSE': 'true', 'CYLC_DEBUG': 'true'}
+
+    """
+    return {
+        'CYLC_VERBOSE': str((verb > 0)).lower(),
+        'CYLC_DEBUG': str((verb > 1)).lower(),
+    }
+
+
+def env_to_verbosity(env: dict) -> int:
+    """Extract verbosity from environment variables.
+
+    Examples:
+        >>> env_to_verbosity({})
+        0
+        >>> env_to_verbosity({'CYLC_VERBOSE': 'true'})
+        1
+        >>> env_to_verbosity({'CYLC_DEBUG': 'true'})
+        2
+        >>> env_to_verbosity({'CYLC_DEBUG': 'TRUE'})
+        2
+
+    """
+    return (
+        2 if env.get('CYLC_DEBUG', '').lower() == 'true'
+        else 1 if env.get('CYLC_VERBOSE', '').lower() == 'true'
+        else 0
+    )
+
+
+class CylcOption(Option):
+    """Optparse option which adds a decrement action."""
+
+    ACTIONS = Option.ACTIONS + ('decrement',)
+    STORE_ACTIONS = Option.STORE_ACTIONS + ('decrement',)
+
+    def take_action(self, action, dest, opt, value, values, parser):
+        if action == 'decrement':
+            setattr(values, dest, values.ensure_value(dest, 0) - 1)
+        else:
+            Option.take_action(self, action, dest, opt, value, values, parser)
 
 
 class CylcOptionParser(OptionParser):
@@ -119,7 +192,7 @@ TASK_GLOB matches task or family names at a given cycle point.
                 usage += "\n   " + arg[0] + pad + arg[1]
             usage = usage.replace('ARGS', args)
 
-        OptionParser.__init__(self, usage)
+        OptionParser.__init__(self, usage, option_class=CylcOption)
 
     def add_std_option(self, *args, **kwargs):
         """Add a standard option, ignoring override."""
@@ -131,15 +204,25 @@ TASK_GLOB matches task or family names at a given cycle point.
     def add_std_options(self):
         """Add standard options if they have not been overridden."""
         self.add_std_option(
+            "-q", "--quiet",
+            help="Decrease verbosity.",
+            action='decrement',
+            dest='verbosity',
+        )
+        self.add_std_option(
             "-v", "--verbose",
-            help="Verbose output mode.",
-            action="store_true", dest="verbose",
-            default=(os.getenv("CYLC_VERBOSE", "false").lower() == "true"))
+            help="Increase verbosity.",
+            dest='verbosity',
+            action='count',
+            default=env_to_verbosity(os.environ)
+        )
         self.add_std_option(
             "--debug",
-            help="Output developer information and show exception tracebacks.",
-            action="store_true", dest="debug",
-            default=(os.getenv("CYLC_DEBUG", "false").lower() == "true"))
+            help="Equivalent to -v -v",
+            dest="verbosity",
+            action='store_const',
+            const=2
+        )
         self.add_std_option(
             "--no-timestamp",
             help="Don't timestamp logged messages.",
@@ -248,15 +331,14 @@ TASK_GLOB matches task or family names at a given cycle point.
                 options.templatevars_file = os.path.abspath(os.path.expanduser(
                     options.templatevars_file))
 
-        cylc.flow.flags.verbose = options.verbose
-        cylc.flow.flags.debug = options.debug
+        cylc.flow.flags.verbosity = options.verbosity
 
         # Set up stream logging for CLI. Note:
         # 1. On choosing STDERR: Log messages are diagnostics, so STDERR is the
         #    better choice for the logging stream. This allows us to use STDOUT
         #    for verbosity agnostic outputs.
         # 2. Scheduler will remove this handler when it becomes a daemon.
-        if options.debug or options.verbose:
+        if options.verbosity > 1:
             LOG.setLevel(logging.DEBUG)
         else:
             LOG.setLevel(logging.INFO)

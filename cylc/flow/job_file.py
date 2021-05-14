@@ -24,6 +24,7 @@ from textwrap import dedent
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
+from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.pathutil import get_remote_workflow_run_dir
 from cylc.flow.config import interpolate_template, ParamExpandError
 
@@ -172,8 +173,8 @@ class JobFileWriter:
         if cylc_path:
             handle.write(f"\nexport PATH={cylc_path}:$PATH")
         # Environment variables for prelude
-        if cylc.flow.flags.debug:
-            handle.write("\nexport CYLC_DEBUG=true")
+        for key, value in verbosity_to_env(cylc.flow.flags.verbosity).items():
+            handle.write(f'\nexport {key}={value}')
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
         env_vars = (
             (job_conf['platform']['copyable environment variables'] or [])
@@ -190,7 +191,7 @@ class JobFileWriter:
         handle.write("\n    # CYLC WORKFLOW ENVIRONMENT:")
         # write the static workflow variables
         for var, val in sorted(self.workflow_env.items()):
-            if var != 'CYLC_DEBUG':
+            if var not in ('CYLC_DEBUG', 'CYLC_VERBOSE'):
                 handle.write('\n    export %s="%s"' % (var, val))
 
         if str(self.workflow_env.get('CYLC_UTC')) == 'True':

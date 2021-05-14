@@ -82,7 +82,7 @@ def main(_, options, *args):
     if not platforms:
         sys.exit(0)
 
-    verbose = cylc.flow.flags.verbose
+    verbose = cylc.flow.flags.verbosity > 0
 
     # get the cylc version on each platform
     versions = {}

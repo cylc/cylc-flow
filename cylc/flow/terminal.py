@@ -246,7 +246,7 @@ def cli_function(parser_function=None, **parser_kwargs):
                 # run the command
                 wrapped_function(*wrapped_args, **wrapped_kwargs)
             except (CylcError, ParsecError) as exc:
-                if is_terminal() or not cylc.flow.flags.debug:
+                if is_terminal() or not cylc.flow.flags.verbosity > 1:
                     # catch "known" CylcErrors which should have sensible short
                     # summations of the issue, full traceback not necessary
                     sys.exit(EXC_EXIT.format(

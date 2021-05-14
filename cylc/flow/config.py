@@ -59,6 +59,7 @@ from cylc.flow.cycling.loader import (
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 import cylc.flow.flags
+from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
@@ -386,7 +387,7 @@ class WorkflowConfig:
                     name, offset_string = match.groups()
                     if not offset_string:
                         offset_string = "PT0M"
-                    if cylc.flow.flags.verbose:
+                    if cylc.flow.flags.verbosity > 0:
                         if offset_string.startswith("-"):
                             LOG.warning(
                                 "%s offsets are normally positive: %s" % (
@@ -441,7 +442,7 @@ class WorkflowConfig:
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
-                if not is_reload and cylc.flow.flags.verbose:
+                if not is_reload and cylc.flow.flags.verbosity > 0:
                     LOG.warning(
                         '[visualization][collapsed families]: ' +
                         'family ' + cfam + ' not defined')
@@ -500,7 +501,7 @@ class WorkflowConfig:
             if fam not in ngs:
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
 
-        if cylc.flow.flags.verbose:
+        if cylc.flow.flags.verbosity > 0:
             LOG.debug("Checking [visualization] node attributes")
             # TODO - these should probably be done in non-verbose mode too.
             # 1. node groups should contain valid namespace names
@@ -579,7 +580,7 @@ class WorkflowConfig:
                 self.cfg['scheduling']['initial cycle point'])
             # If viz initial point is None don't accept a final point.
             if self.cfg['visualization']['final cycle point'] is not None:
-                if cylc.flow.flags.verbose:
+                if cylc.flow.flags.verbosity > 0:
                     LOG.warning(
                         "ignoring [visualization]final cycle point\n"
                         "(it must be defined with an initial cycle point)")
@@ -1113,7 +1114,7 @@ class WorkflowConfig:
                 first_parents[name] = [pts[0]]
             self.runtime['parents'][name] = pts
 
-        if cylc.flow.flags.verbose and demoted:
+        if cylc.flow.flags.verbosity > 0 and demoted:
             log_msg = "First parent(s) demoted to secondary:"
             for n, p in demoted.items():
                 log_msg += "\n + %s as parent of '%s'" % (p, n)
@@ -1443,19 +1444,18 @@ class WorkflowConfig:
 
     def process_workflow_env(self):
         """Workflow context is exported to the local environment."""
-        for var, val in [
-            ('CYLC_WORKFLOW_NAME', self.workflow),
-            ('CYLC_DEBUG', str(cylc.flow.flags.debug).lower()),
-            ('CYLC_VERBOSE', str(cylc.flow.flags.verbose).lower()),
-            ('CYLC_WORKFLOW_RUN_DIR', self.run_dir),
-            ('CYLC_WORKFLOW_LOG_DIR', self.log_dir),
-            ('CYLC_WORKFLOW_WORK_DIR', self.work_dir),
-            ('CYLC_WORKFLOW_SHARE_DIR', self.share_dir),
+        for key, value in {
+            **verbosity_to_env(cylc.flow.flags.verbosity),
+            'CYLC_WORKFLOW_NAME': self.workflow,
+            'CYLC_WORKFLOW_RUN_DIR': self.run_dir,
+            'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
+            'CYLC_WORKFLOW_WORK_DIR': self.work_dir,
+            'CYLC_WORKFLOW_SHARE_DIR': self.share_dir,
             # BACK COMPAT: CYLC_WORKFLOW_DEF_PATH
             #   from: Cylc7
-            ('CYLC_WORKFLOW_DEF_PATH', self.run_dir),
-        ]:
-            os.environ[var] = val
+            'CYLC_WORKFLOW_DEF_PATH': self.run_dir,
+        }.items():
+            os.environ[key] = value
 
     def process_config_env(self):
         """Set local config derived environment."""
@@ -2058,7 +2058,7 @@ class WorkflowConfig:
             try:
                 seq = get_sequence(section, icp, fcp)
             except (AttributeError, TypeError, ValueError, CylcError) as exc:
-                if cylc.flow.flags.debug:
+                if cylc.flow.flags.verbosity > 1:
                     traceback.print_exc()
                 msg = 'Cannot process recurrence %s' % section
                 msg += ' (initial cycle point=%s)' % icp
