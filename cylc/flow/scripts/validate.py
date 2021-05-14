@@ -93,7 +93,7 @@ def main(_, options, reg):
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
 
-    if not cylc.flow.flags.verbosity > 1:
+    if cylc.flow.flags.verbosity < 2:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:
             if isinstance(handler.formatter, CylcLogFormatter):
