@@ -83,7 +83,7 @@ class WorkflowPoller(Poller):
         connected = False
 
         if cylc.flow.flags.verbosity > 0:
-            sys.stdout.write(
+            sys.stderr.write(
                 "connecting to workflow db for " +
                 self.args['run_dir'] + "/" + self.args['workflow'])
 
@@ -104,10 +104,10 @@ class WorkflowPoller(Poller):
                 if self.n_polls >= max_polls:
                     raise
                 if cylc.flow.flags.verbosity > 0:
-                    sys.stdout.write('.')
+                    sys.stderr.write('.')
                 sleep(self.interval)
         if cylc.flow.flags.verbosity > 0:
-            sys.stdout.write('\n')
+            sys.stderr.write('\n')
 
         if connected and self.args['cycle']:
             fmt = self.checker.get_remote_point_format()
