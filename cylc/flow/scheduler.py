@@ -60,6 +60,7 @@ from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
@@ -940,8 +941,14 @@ class Scheduler:
             LOG.setLevel(int(lvl))
         except (TypeError, ValueError):
             return
-        cylc.flow.flags.verbose = bool(LOG.isEnabledFor(logging.INFO))
-        cylc.flow.flags.debug = bool(LOG.isEnabledFor(logging.DEBUG))
+        if lvl <= logging.DEBUG:
+            cylc.flow.flags.verbosity == 2
+        elif lvl < logging.INFO:
+            cylc.flow.flags.verbosity == 1
+        elif lvl == logging.INFO:
+            cylc.flow.flags.verbosity == 0
+        else:
+            cylc.flow.flags.verbosity == -1
         return True, 'OK'
 
     def command_remove_tasks(self, items):
@@ -1101,9 +1108,8 @@ class Scheduler:
 
         # Pass static cylc and workflow variables to job script generation code
         self.task_job_mgr.job_file_writer.set_workflow_env({
+            **verbosity_to_env(cylc.flow.flags.verbosity),
             'CYLC_UTC': str(get_utc_mode()),
-            'CYLC_DEBUG': str(cylc.flow.flags.debug).lower(),
-            'CYLC_VERBOSE': str(cylc.flow.flags.verbose).lower(),
             'CYLC_WORKFLOW_NAME': self.workflow,
             'CYLC_CYCLING_MODE': str(
                 self.config.cfg['scheduling']['cycling mode']
@@ -1627,7 +1633,7 @@ class Scheduler:
             exc.__suppress_context__ = True
             if isinstance(exc, CylcError):
                 LOG.error(f"{exc.__class__.__name__}: {exc}")
-                if cylc.flow.flags.debug:
+                if cylc.flow.flags.verbosity > 1:
                     LOG.exception(exc)
             else:
                 LOG.exception(exc)
@@ -1647,7 +1653,7 @@ class Scheduler:
             LOG.error(
                 "Workflow shutting down - "
                 f"{reason.__class__.__name__}: {reason}")
-            if cylc.flow.flags.debug:
+            if cylc.flow.flags.verbosity > 1:
                 LOG.exception(reason)
         else:
             LOG.exception(reason)

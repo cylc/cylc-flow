@@ -74,7 +74,6 @@ from logging import getLevelName, INFO
 import os
 import sys
 
-import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
@@ -103,8 +102,6 @@ def main(parser, options, *args):
     """CLI."""
     if not args:
         return parser.error('No message supplied')
-    cylc.flow.flags.verbose = os.getenv('CYLC_VERBOSE') == 'true'
-    cylc.flow.flags.debug = os.getenv('CYLC_DEBUG') == 'true'
     if len(args) <= 2:
         # BACK COMPAT: args <= 2
         # from:

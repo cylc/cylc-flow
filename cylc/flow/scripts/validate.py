@@ -93,7 +93,7 @@ def main(_, options, reg):
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
 
-    if not cylc.flow.flags.debug:
+    if not cylc.flow.flags.verbosity > 1:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:
             if isinstance(handler.formatter, CylcLogFormatter):
@@ -127,7 +127,7 @@ def main(_, options, reg):
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
     # TODO - This is not exhaustive, it only uses the initial cycle point.
-    if cylc.flow.flags.verbose:
+    if cylc.flow.flags.verbosity > 0:
         print('Instantiating tasks to check trigger expressions')
     flow_label = FlowLabelMgr().get_new_label()
     for name, taskdef in cfg.taskdefs.items():
@@ -136,7 +136,7 @@ def main(_, options, reg):
         except TaskProxySequenceBoundsError:
             # Should already failed above
             mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)
-            if cylc.flow.flags.verbose:
+            if cylc.flow.flags.verbosity > 0:
                 sys.stderr.write(' + %s\n' % mesg)
             continue
         except Exception as exc:
@@ -160,7 +160,7 @@ def main(_, options, reg):
             print(str(exc), file=sys.stderr)
             raise WorkflowConfigError(
                 '%s: failed to evaluate triggers.' % name)
-        if cylc.flow.flags.verbose:
+        if cylc.flow.flags.verbosity > 0:
             print('  + %s ok' % itask.identity)
 
     print(cparse('<green>Valid for cylc-%s</green>' % CYLC_VERSION))

@@ -37,7 +37,6 @@ from cylc.flow.exceptions import (
     ServiceFileError,
     TaskRemoteMgmtError,
     WorkflowFilesError)
-import cylc.flow.flags
 from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir,
@@ -757,11 +756,14 @@ def _remote_clean_cmd(reg, platform, timeout):
     """
     LOG.debug(
         f'Cleaning on install target: {platform["install target"]} '
-        f'(using platform: {platform["name"]})')
-    cmd = ['clean', '--local-only', reg]
-    if cylc.flow.flags.debug:
-        cmd.append('--debug')
-    cmd = construct_ssh_cmd(cmd, platform, timeout=timeout)
+        f'(using platform: {platform["name"]})'
+    )
+    cmd = construct_ssh_cmd(
+        ['clean', '--local-only', reg],
+        platform,
+        timeout=timeout,
+        set_verbosity=True
+    )
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
 

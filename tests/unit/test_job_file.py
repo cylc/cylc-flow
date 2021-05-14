@@ -249,9 +249,10 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
     """Test the prelude section of job script file is correctly
     written.
     """
-    monkeypatch.setattr('cylc.flow.flags.debug', True)
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
+                '\nexport CYLC_VERBOSE=true'
                 '\nexport CYLC_DEBUG=true'
                 '\nexport CYLC_VERSION=\'%s\'\nexport ' % __version__
                 + 'CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
@@ -278,8 +279,7 @@ def test_write_prelude(monkeypatch, fixture_get_platform):
 def test_write_workflow_environment(fixture_get_platform, monkeypatch):
     """Test workflow environment is correctly written in jobscript"""
     # set some workflow environment conditions
-    monkeypatch.setattr('cylc.flow.flags.debug', True)
-    monkeypatch.setattr('cylc.flow.flags.verbose', True)
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
     workflow_env = {'CYLC_UTC': 'True',
                     'CYLC_CYCLING_MODE': 'integer'}
     job_file_writer = JobFileWriter()
