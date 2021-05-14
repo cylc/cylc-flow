@@ -29,7 +29,6 @@ import pkg_resources
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow.scripts import cylc_header
 from cylc.flow.terminal import (
-    centered,
     format_shell_examples,
     print_contents
 )
@@ -49,16 +48,12 @@ def get_version(long=False):
     return version
 
 
-DESC = '''
-Cylc ("silk") orchestrates complex cycling (and non-cycling) workflows.
-'''
-
 USAGE = f"""{cylc_header()}
-{centered(DESC)}
+Cylc ("silk") orchestrates complex cycling (and non-cycling) workflows.
 
 Version:
   $ cylc version --long           # print cylc-flow version and install path
-    {get_version(True)}
+  {get_version(True)}
 
 Usage:
   $ cylc help all                 # list all commands
@@ -71,9 +66,9 @@ Usage:
 Command Abbreviation:
   # Commands can be abbreviated as long as there is no ambiguity in
   # the abbreviated command:
-  $ cylc trigger WORKFLOW TASK       # trigger TASK in WORKFLOW
-  $ cylc trig WORKFLOW TASK          # ditto
-  $ cylc tr WORKFLOW TASK            # ditto
+  $ cylc trigger WORKFLOW TASK    # trigger TASK in WORKFLOW
+  $ cylc trig WORKFLOW TASK       # ditto
+  $ cylc tr WORKFLOW TASK         # ditto
   $ cylc t                        # Error: ambiguous command
 
 Task Identification:
@@ -83,8 +78,8 @@ Task Identification:
   Date-time cycle points are in an ISO 8601 date-time format, typically
   CCYYMMDDThhmm followed by a time zone - e.g. 20101225T0600Z.
 
-  Integer cycle points (including those for one-off workflows) are integers
-  - just '1' for one-off workflows.
+  Integer cycle points (including those for non-cycling workflows) are integers
+  - just '1' for non-cycling workflows.
 """
 
 # because this command is not served from behind cli_function like the
