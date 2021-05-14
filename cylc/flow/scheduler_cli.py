@@ -24,6 +24,7 @@ from ansimarkup import parse as cparse
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import ServiceFileError
+import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.loggingutil import TimestampRotatingFileHandler
@@ -197,12 +198,6 @@ def get_option_parser(add_std_opts=False):
         action="store_true", default=False, dest="abort_if_any_task_fails"
     )
 
-    parser.add_option(
-        "-q", "--quiet",
-        help="Don't print the Cylc header to stdout.",
-        action="store_true", default=False, dest="quiet"
-    )
-
     if add_std_opts:
         # This is for the API wrapper for integration tests. Otherwise (CLI
         # use) "standard options" are added later in options.parse_args().
@@ -287,7 +282,10 @@ def scheduler_cli(parser, options, reg):
     _distribute(options.host)
 
     # print the start message
-    if not options.quiet and (options.no_detach or options.format == 'plain'):
+    if (
+        cylc.flow.flags.verbosity > -1
+        and (options.no_detach or options.format == 'plain')
+    ):
         print(
             cparse(
                 cylc_header()
