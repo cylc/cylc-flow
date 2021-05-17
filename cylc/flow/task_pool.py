@@ -1284,8 +1284,10 @@ class TaskPool:
             self.hold_active_task(itask)
         elif self.hold_point and itask.point > self.hold_point:
             # Hold if beyond the workflow hold point
-            LOG.info("[%s] -holding (beyond workflow hold point) %s",
-                     itask, self.hold_point)
+            LOG.info(
+                f"[{itask}] -holding (beyond "
+                f"workflow hold point: {self.hold_point})"
+            )
             self.hold_active_task(itask)
 
         if self.stop_point and itask.point <= self.stop_point:
@@ -1295,8 +1297,10 @@ class TaskPool:
                     future_trigger_overrun = True
                     break
             if future_trigger_overrun:
-                LOG.warning("[%s] -won't run: depends on a "
-                            "task beyond the stop point", itask)
+                LOG.warning(
+                    f"[{itask}] -won't run: depends on a "
+                    "task beyond the stop point"
+                )
 
         # Attempt to satisfy any absolute triggers now.
         # TODO: consider doing this only for tasks with absolute prerequisites.
