@@ -1,7 +1,6 @@
 name: cylc-dev
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - aiofiles >=0.7.0,<0.8.0
   - ansimarkup >=1.0.0
