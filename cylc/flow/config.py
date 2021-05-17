@@ -44,7 +44,7 @@ from cylc.flow.parsec.util import replicate
 
 from cylc.flow import LOG
 from cylc.flow.c3mro import C3
-from cylc.flow.conditional_simplifier import ConditionalSimplifier
+from cylc.flow.listify import listify
 from cylc.flow.exceptions import (
     CylcError, WorkflowConfigError, IntervalParsingError, TaskDefError,
     ParamExpandError)
@@ -1652,7 +1652,7 @@ class WorkflowConfig:
 
         # Convert expression to a (nested) list.
         try:
-            expr_list = ConditionalSimplifier.listify(lexpression)
+            expr_list = listify(lexpression)
         except SyntaxError:
             raise WorkflowConfigError('Error in expression "%s"' % lexpression)
 

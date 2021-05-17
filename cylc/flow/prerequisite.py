@@ -19,7 +19,6 @@
 import math
 
 from cylc.flow import ID_DELIM
-from cylc.flow.conditional_simplifier import ConditionalSimplifier
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.data_messages_pb2 import (  # type: ignore
@@ -41,7 +40,7 @@ class Prerequisite:
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["satisfied", "_all_satisfied",
                  "target_point_strings", "start_point",
-                 "pre_initial_messages", "conditional_expression", "point"]
+                 "conditional_expression", "point"]
 
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self.satisfied[("%s", "%s", "%s")])'
@@ -67,10 +66,6 @@ class Prerequisite:
         # {('task name', 'point string', 'output'): DEP_STATE_X, ...}
         self.satisfied = {}
 
-        # Messages pertaining to pre-initial dependencies.
-        # ['task name', 'point string' ,'output']
-        self.pre_initial_messages = []
-
         # Expression present only when conditions are used.
         # 'foo.1 failed & bar.1 succeeded'
         self.conditional_expression = None
@@ -89,19 +84,21 @@ class Prerequisite:
             point (str/cylc.flow.cycling.PointBase): The cycle point at which
                 this dependent output should appear.
             output (str): String representing the output e.g. "succeeded".
-            pre_initial (bool): Set this output as a pre-initial dependency.
+            pre_initial (bool): this is a pre-initial dependency.
 
         """
         message = (name, str(point), output)
 
         # Add a new prerequisite message in an UNSATISFIED state.
-        self.satisfied[message] = self.DEP_STATE_UNSATISFIED
+        # UNLESS PRE_INITIAL!
+        if pre_initial:
+            self.satisfied[message] = self.DEP_STATE_SATISFIED
+        else:
+            self.satisfied[message] = self.DEP_STATE_UNSATISFIED
         if self._all_satisfied is not None:
             self._all_satisfied = False
         if point and str(point) not in self.target_point_strings:
             self.target_point_strings.append(str(point))
-        if pre_initial and message not in self.pre_initial_messages:
-            self.pre_initial_messages.append(message)
 
     def get_raw_conditional_expression(self):
         """Return a representation of this prereq as a string.
@@ -123,33 +120,8 @@ class Prerequisite:
         Resets the cached state (self._all_satisfied).
 
         """
-
-        drop_these = []
         self._all_satisfied = None
-
-        if self.pre_initial_messages:
-            for message in self.pre_initial_messages:
-                drop_these.append(message)
-
-        # Needed to drop pre warm-start dependence:
-        for message in self.satisfied:
-            if message in drop_these:
-                continue
-            if self.start_point:
-                if message[1]:  # Cycle point.
-                    if get_point(message[1]) < self.start_point <= self.point:
-                        # Drop if outside of relevant point range.
-                        drop_these.append(message)
-
-        for message in drop_these:
-            if message in self.satisfied:
-                self.satisfied.pop(message)
-
         if '|' in expr:
-            if drop_these:
-                simpler = ConditionalSimplifier(
-                    expr, [self.MESSAGE_TEMPLATE % m for m in drop_these])
-                expr = simpler.get_cleaned()
             # Make a Python expression so we can eval() the logic.
             for message in self.satisfied:
                 expr = expr.replace(self.MESSAGE_TEMPLATE % message,

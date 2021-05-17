@@ -214,12 +214,15 @@ class Dependency:
                              tdef.max_future_prereq_offset)):
                         tdef.max_future_prereq_offset = (
                             prereq_offset)
-                pre_initial = ((prereq_offset_point < tdef.start_point) &
-                               (point >= tdef.start_point))
-                cpre.add(task_trigger.task_name,
-                         task_trigger.get_point(point),
-                         task_trigger.output,
-                         pre_initial)
+                cpre.add(
+                    task_trigger.task_name,
+                     task_trigger.get_point(point),
+                     task_trigger.output,
+                     (
+                         (prereq_offset_point < tdef.start_point) &
+                         (point >= tdef.start_point)
+                     )
+                 )
             else:
                 # Trigger is within the same cycle point.
                 # Register task message with Prerequisite object.

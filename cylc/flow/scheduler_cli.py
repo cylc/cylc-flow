@@ -46,7 +46,6 @@ PLAY_DOC = r"""cylc play [OPTIONS] ARGS
 
 Start, restart or resume a workflow.
 
-
 The scheduler will run as a daemon unless you specify --no-detach.
 
 If the workflow is not already installed (by "cylc install" or a previous run)
@@ -136,6 +135,11 @@ def get_option_parser(add_std_opts=False):
             "config option '[scheduling]stop after cycle point'."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
+
+    parser.add_option(
+        "--start-from-task", "--starttask",
+        help="Task instance to start from",
+        metavar="NAME.CYCLE_POINT", action="store", dest="starttask")
 
     parser.add_option(
         "--pause",
@@ -366,4 +370,5 @@ async def _run(scheduler: Scheduler) -> int:
 @cli_function(get_option_parser)
 def play(parser, options, reg):
     """Implement cylc play."""
+    from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
     return scheduler_cli(parser, options, reg)
