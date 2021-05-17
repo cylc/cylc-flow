@@ -463,11 +463,14 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
-            self.load_tasks_for_restart()
+            self.load_tasks_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
+        elif self.options.starttask is not None:
+            self._load_tasks_from_given()
         else:
-            self.load_tasks_for_run()
+            self._load_tasks_from_point()
+
         self.process_cylc_stop_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
@@ -630,25 +633,28 @@ class Scheduler:
             # note start_scheduler handles its own shutdown logic
             await self.start_scheduler()
 
-    def load_tasks_for_run(self):
-        """Load tasks for a new run.
+    def _load_tasks_from_given(self):
+        LOG.info(f"Start from {self.options.starttask}")
+        self.pool.force_trigger_tasks([self.options.starttask], True)
 
-        Iterate through all sequences to find the first instance of each task,
-        and add it to the pool if it has no parents.
+    def _load_tasks_from_point(self):
+        """Load tasks for a new run from a cycle point.
 
-        (Later on, tasks with parents will be spawned on-demand, and tasks with
+        Iterate through all sequences to find the first instance of each task.
+        Add it to the pool if it has no parents at or after the start point.
+
+        (Later on, tasks with parents will be spawned on demand, and tasks with
         no parents will be auto-spawned when their own previous instances are
         released from the runahead pool.)
 
         """
         if self.config.start_point is not None:
             start_type = "Warm" if self.options.startcp else "Cold"
-            LOG.info(f"{start_type} Start {self.config.start_point}")
+            LOG.info(f"{start_type} start from {self.config.start_point}")
 
-        task_list = self.config.get_task_name_list()
-
+        initial_tasks = []
         flow_label = self.pool.flow_label_mgr.get_new_label()
-        for name in task_list:
+        for name in self.config.get_task_name_list():
             if self.config.start_point is None:
                 # No start cycle point at which to load cycling tasks.
                 continue
@@ -665,11 +671,12 @@ class Scheduler:
             parent_points = tdef.get_parent_points(point)
             if not parent_points or all(
                     x < self.config.start_point for x in parent_points):
-                self.pool.add_to_runahead_pool(
-                    TaskProxy(tdef, point, flow_label))
+                initial_tasks.append(TaskID.get(tdef.name, point))
 
-    def load_tasks_for_restart(self):
-        """Load tasks for restart."""
+        self.pool.force_trigger_tasks(initial_tasks, True)
+
+    def _load_task_pool_from_db(self):
+        """Load tasks from DB state for restart."""
         if self.options.startcp:
             self.config.start_point = TaskID.get_standardised_point(
                 self.options.startcp)
@@ -1862,6 +1869,13 @@ class Scheduler:
                         f"Ignoring option: --{opt}={val}. The only valid "
                         "value for a restart is 'ignore'.")
                     setattr(self.options, opt, None)
+            opt = 'starttask'
+            val = getattr(self.options, opt, None)
+            if val is not None:
+                LOG.warning(
+                    f"Ignoring option: --{opt}={val}. It is not valid "
+                    "for a restart.")
+                setattr(self.options, opt, None)
         else:
             for opt in ('icp', 'fcp', 'startcp', 'stopcp'):
                 if getattr(self.options, opt, None) == 'ignore':
