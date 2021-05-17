@@ -24,6 +24,8 @@ from typing import Any, Dict, List, Tuple, Optional, TYPE_CHECKING
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
+from cylc.flow.cycling.loader import standardise_point_string
+from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_action_timer import TimerFlags
@@ -246,7 +248,10 @@ class TaskProxy:
 
         self.failure_handled: bool = TASK_OUTPUT_FAILED in self.graph_children
 
-    def __str__(self):
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} '{self.identity}'>"
+
+    def __str__(self) -> str:
         """Stringify using "self.identity"."""
         return self.identity
 
@@ -400,7 +405,14 @@ class TaskProxy:
 
         None is treated as '*'.
         """
-        return (point is None) or fnmatchcase(str(self.point), point)
+        if point is None:
+            return True
+        try:
+            point = standardise_point_string(point)
+        except PointParsingError:
+            # point_str may be a glob
+            pass
+        return fnmatchcase(str(self.point), point)
 
     def status_match(self, status: Optional[str]) -> bool:
         """Return whether a string matches the task's status.

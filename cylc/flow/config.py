@@ -2103,14 +2103,14 @@ class WorkflowConfig:
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers)
 
-    def find_taskdefs(self, name):
+    def find_taskdefs(self, name: str) -> List[TaskDef]:
         """Find TaskDef objects in family "name" or matching "name".
 
         Return a list of TaskDef objects which:
         * have names that glob matches "name".
         * are in a family that glob matches "name".
         """
-        ret = []
+        ret: List[TaskDef] = []
         if name in self.taskdefs:
             # Match a task name
             ret.append(self.taskdefs[name])

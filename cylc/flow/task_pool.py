@@ -1000,22 +1000,24 @@ class TaskPool:
                 )
             )
 
-    def _hold_task(self, itask: TaskProxy) -> None:
+    def hold_active_task(self, itask: TaskProxy) -> None:
         if itask.state.reset(is_held=True):
             self.data_store_mgr.delta_task_held(itask)
+        self.tasks_to_hold.add((itask.tdef.name, itask.point))
 
-    def _release_held_task(self, itask: TaskProxy) -> None:
+    def release_held_active_task(self, itask: TaskProxy) -> None:
         if itask.state.reset(is_held=False):
             self.data_store_mgr.delta_task_held(itask)
             if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
                 self.queue_task(itask)
+        self.tasks_to_hold.discard((itask.tdef.name, itask.point))
 
     def set_hold_point(self, point: 'PointBase') -> None:
         """Set the point after which all tasks must be held."""
         self.hold_point = point
         for itask in self.get_all_tasks():
             if itask.point > point:
-                self._hold_task(itask)
+                self.hold_active_task(itask)
         self.workflow_db_mgr.put_workflow_hold_cycle_point(point)
 
     def hold_tasks(self, items: Iterable[str]) -> int:
@@ -1023,11 +1025,11 @@ class TaskPool:
         # Hold active tasks:
         itasks, unmatched = self.filter_task_proxies(items, warn=False)
         for itask in itasks:
-            self._hold_task(itask)
-        # Make it so future tasks will hold:
-        n_warnings, task_items_dict = self.match_taskdefs(
-            unmatched, ignore_state=False)
-        self.tasks_to_hold.update(task_items_dict.keys())
+            self.hold_active_task(itask)
+        # Set future tasks to be held:
+        n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
+        self.tasks_to_hold.update(task_items)
+        LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return n_warnings
 
     def release_held_tasks(self, items: Iterable[str]) -> int:
@@ -1035,20 +1037,63 @@ class TaskPool:
         # Release active tasks:
         itasks, unmatched = self.filter_task_proxies(items, warn=False)
         for itask in itasks:
-            self._release_held_task(itask)
+            self.release_held_active_task(itask)
         # Unhold future tasks:
-        n_warnings, task_items_dict = self.match_taskdefs(
-            unmatched, ignore_state=False)
-        self.tasks_to_hold.difference_update(task_items_dict.keys())
+        n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
+        self.tasks_to_hold.difference_update(task_items)
+        LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return n_warnings
 
     def release_hold_point(self) -> None:
-        """Release all tasks and unset the workflow hold point."""
+        """Unset the workflow hold point and release all held active tasks."""
         self.hold_point = None
         for itask in self.get_all_tasks():
-            self._release_held_task(itask)
+            self.release_held_active_task(itask)
         self.tasks_to_hold.clear()
         self.workflow_db_mgr.delete_workflow_hold_cycle_point()
+
+    def _explicit_match_tasks_to_hold(
+        self, items: Iterable[str]
+    ) -> Tuple[int, Set[Tuple[str, 'PointBase']]]:
+        """Match future tasks based on the assumption that no active tasks
+        matched the items.
+
+        Returns (n_warnings, matched_tasks)
+        """
+        n_warnings = 0
+        matched_tasks: Set[Tuple[str, 'PointBase']] = set()
+        for item in items:
+            point_str, name_str, status = self._parse_task_item(item)
+            if status or ('*' in item) or ('?' in item) or ('[' in item):
+                # Glob or task state was not matched in active pool
+                LOG.warning(f"No active tasks matching: {item}")
+                n_warnings += 1
+                continue
+            taskdefs = self.config.find_taskdefs(name_str)
+            if not taskdefs:
+                LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
+                n_warnings += 1
+                continue
+            if point_str is None:
+                LOG.warning(f"No active instances of task: {item}")
+                n_warnings += 1
+                continue
+            try:
+                point_str = standardise_point_string(point_str)
+            except PointParsingError as exc:
+                LOG.warning(
+                    f"{item} - invalid cycle point: {point_str} ({exc})")
+                n_warnings += 1
+                continue
+            point = get_point(point_str)
+            for taskdef in taskdefs:
+                if taskdef.is_valid_point(point):
+                    matched_tasks.add((taskdef.name, point))
+                else:
+                    # is_valid_point() already logged warning
+                    n_warnings += 1
+                    continue
+        return n_warnings, matched_tasks
 
     def check_abort_on_task_fails(self):
         """Check whether workflow should abort on task failure.
@@ -1236,12 +1281,12 @@ class TaskPool:
         )
         if (name, point) in self.tasks_to_hold:
             LOG.info(f"[{itask}] -holding (as requested earlier)")
-            self._hold_task(itask)
+            self.hold_active_task(itask)
         elif self.hold_point and itask.point > self.hold_point:
             # Hold if beyond the workflow hold point
             LOG.info("[%s] -holding (beyond workflow hold point) %s",
                      itask, self.hold_point)
-            self._hold_task(itask)
+            self.hold_active_task(itask)
 
         if self.stop_point and itask.point <= self.stop_point:
             future_trigger_overrun = False
@@ -1270,7 +1315,7 @@ class TaskPool:
         return itask
 
     def match_taskdefs(
-        self, items: Iterable[str], ignore_state: bool = True
+        self, items: Iterable[str]
     ) -> Tuple[int, Dict[Tuple[str, 'PointBase'], 'TaskDef']]:
         """Return matching taskdefs valid for selected cycle points.
 
@@ -1278,20 +1323,13 @@ class TaskPool:
             items: Identifiers for matching task definitions, each with the
                 form "name[.point][:state]" or "[point/]name[:state]".
                 Glob-like patterns will give a warning and be skipped.
-            ignore_state: Whether to allow and ignore the ":state" part of the
-                task identifier. If False, will give a warning and skip the
-                item.
         """
         n_warnings = 0
         task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
         for item in items:
             point_str, name_str, status = self._parse_task_item(item)
-            if not ignore_state and status is not None:
-                LOG.warning(f"{item}: specifying a task state is not allowed")
-                n_warnings += 1
-                continue
             if point_str is None:
-                LOG.warning(f"{item}: task to spawn must have a cycle point")
+                LOG.warning(f"{item} - task to spawn must have a cycle point")
                 n_warnings += 1
                 continue
             try:
@@ -1311,6 +1349,10 @@ class TaskPool:
             for taskdef in taskdefs:
                 if taskdef.is_valid_point(point):
                     task_items[(taskdef.name, point)] = taskdef
+                else:
+                    # is_valid_point() already logged warning
+                    n_warnings += 1
+                    continue
         return n_warnings, task_items
 
     def force_spawn_children(self, items, outputs):
@@ -1469,12 +1511,6 @@ class TaskPool:
         else:
             for item in items:
                 point_str, name_str, status = self._parse_task_item(item)
-                if point_str is not None:
-                    try:
-                        point_str = standardise_point_string(point_str)
-                    except PointParsingError:
-                        # point_str may be a glob
-                        pass
                 tasks_found = False
                 for itask in self.get_all_tasks():
                     if (itask.point_match(point_str) and
@@ -1484,7 +1520,7 @@ class TaskPool:
                         tasks_found = True
                 if not tasks_found:
                     if warn:
-                        LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(item))
+                        LOG.warning(f"No active tasks matching: {item}")
                     bad_items.append(item)
         return itasks, bad_items
 

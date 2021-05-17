@@ -47,7 +47,7 @@ Note: To pause a workflow (immediately preventing all job submission), use
 'cylc pause' instead.
 
 Note: globs and ":<state>" selectors will only match active tasks;
-to hold future tasks when they spawn, use exact identifiers e.g. mytask.1234
+to hold future tasks when they spawn, use exact identifiers e.g. "mytask.1234".
 
 See also 'cylc release'.
 """
@@ -98,6 +98,7 @@ def get_option_parser() -> COP:
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', "Workflow name"),
+            # TODO: switch back to TASK_ID?
             ('[TASK_GLOB ...]', "Task matching patterns")]
     )
 
