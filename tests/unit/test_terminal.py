@@ -135,7 +135,7 @@ def test_cli(
     The idea here is that "known" errors (those which subclass CylcError or
     ParsecError) should be formatted nicely (as opposed to dumping the
     full traceback to stderr) in interactive mode. This behaviour can be
-    overridden using --debug mode. In non-interactive mode we allways print the
+    overridden using --debug mode. In non-interactive mode we always print the
     full traceback for logging purposes.
 
     Other exceptions represent "unknown" errors which we would expect to occur.
