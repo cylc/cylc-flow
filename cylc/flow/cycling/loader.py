@@ -64,11 +64,13 @@ class DefaultCycler:
 
 
 @overload
-def get_point(value: str, cycling_type: Optional[str] = None) -> PointBase: ...
+def get_point(value: str, cycling_type: Optional[str] = None) -> PointBase:
+    ...
 
 
 @overload
-def get_point(value: None, cycling_type: Optional[str] = None) -> None: ...
+def get_point(value: None, cycling_type: Optional[str] = None) -> None:
+    ...
 
 
 def get_point(
@@ -145,13 +147,15 @@ def is_offset_absolute(offset_string, **kwargs):
 @overload
 def standardise_point_string(
     point_string: str, cycling_type: Optional[str] = None
-) -> str: ...
+) -> str:
+    ...
 
 
 @overload
 def standardise_point_string(
     point_string: None, cycling_type: Optional[str] = None
-) -> None: ...
+) -> None:
+    ...
 
 
 def standardise_point_string(

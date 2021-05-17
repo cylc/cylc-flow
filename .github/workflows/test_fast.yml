@@ -71,7 +71,6 @@ jobs:
 
       - name: style
         run: |
-          pycodestyle
           flake8
           etc/bin/shellchecker
 

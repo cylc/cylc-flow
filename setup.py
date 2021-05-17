@@ -62,7 +62,6 @@ tests_require = [
     'coverage>=5.0.0',
     'flake8>=3.0.0',
     'mypy>=0.800',
-    'pycodestyle>=2.5.0',
     # TODO: https://github.com/pytest-dev/pytest-asyncio/issues/ 209
     'pytest-asyncio>=0.15.1',
     'pytest-cov>=2.8.0',
