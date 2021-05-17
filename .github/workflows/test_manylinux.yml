@@ -39,6 +39,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Configure git  # Needed by the odd test
+        uses: cylc/release-actions/configure-git@v1
+
       - name: Configure Python
         uses: actions/setup-python@v2
         with:
