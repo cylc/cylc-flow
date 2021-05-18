@@ -27,19 +27,20 @@ fi
 set_test_number 12
 
 create_test_global_config "" "
-[symlink dirs]
-    [[localhost]]
-        run = \$TMPDIR/\$USER/cylctb_tmp_run_dir
-        share = \$TMPDIR/\$USER
-        log = \$TMPDIR/\$USER
-        share/cycle = \$TMPDIR/\$USER/cylctb_tmp_share_dir
-        work = \$TMPDIR/\$USER
-    [[$CYLC_TEST_INSTALL_TARGET]]
-        run = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_run_dir
-        share = \$TMPDIR/\$USER/test_cylc_symlink/
-        log = \$TMPDIR/\$USER/test_cylc_symlink/
-        share/cycle = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_share_dir
-        work = \$TMPDIR/\$USER/test_cylc_symlink/
+[install]
+    [[symlink dirs]]
+        [[[localhost]]]
+            run = \$TMPDIR/\$USER/cylctb_tmp_run_dir
+            share = \$TMPDIR/\$USER
+            log = \$TMPDIR/\$USER
+            share/cycle = \$TMPDIR/\$USER/cylctb_tmp_share_dir
+            work = \$TMPDIR/\$USER
+        [[[$CYLC_TEST_INSTALL_TARGET]]]
+            run = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_run_dir
+            share = \$TMPDIR/\$USER/test_cylc_symlink/
+            log = \$TMPDIR/\$USER/test_cylc_symlink/
+            share/cycle = \$TMPDIR/\$USER/test_cylc_symlink/ctb_tmp_share_dir
+            work = \$TMPDIR/\$USER/test_cylc_symlink/
 "
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

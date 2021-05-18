@@ -174,8 +174,9 @@ def test_make_workflow_run_tree(
     [
         pytest.param(  # basic
             '''
-            [symlink dirs]
-                [[the_matrix]]
+            [install]
+            [[symlink dirs]]
+                [[[the_matrix]]]
                     run = $DEE
                     work = $DAH
                     log = $DUH
@@ -193,8 +194,9 @@ def test_make_workflow_run_tree(
         ),
         pytest.param(  # remove nested run symlinks
             '''
-            [symlink dirs]
-                [[the_matrix]]
+            [install]
+            [[symlink dirs]]
+                [[[the_matrix]]]
                     run = $DEE
                     work = $DAH
                     log = $DEE
@@ -211,8 +213,9 @@ def test_make_workflow_run_tree(
         ),
         pytest.param(  # remove only nested run symlinks
             '''
-            [symlink dirs]
-                [[the_matrix]]
+            [install]
+            [[symlink dirs]]
+                [[[the_matrix]]]
                     run = $DOH
                     log = $DEE
                     share = $DEE
@@ -226,8 +229,9 @@ def test_make_workflow_run_tree(
         ),
         pytest.param(  # blank entries
             '''
-            [symlink dirs]
-                [[the_matrix]]
+            [install]
+            [[symlink dirs]]
+                [[[the_matrix]]]
                     run =
                     log = ""
                     share =

@@ -28,13 +28,14 @@ SYM_NAME="$(mktemp -u)"
 SYM_NAME="${SYM_NAME##*tmp.}"
 
 create_test_global_config "" "
-[symlink dirs]
-    [[localhost]]
-        run = ${TEST_DIR}/${SYM_NAME}/run
-        log = ${TEST_DIR}/${SYM_NAME}/log
-        share = ${TEST_DIR}/${SYM_NAME}/share
-        share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
-        work = ${TEST_DIR}/${SYM_NAME}/work
+[install]
+    [[symlink dirs]]
+        [[[localhost]]]
+            run = ${TEST_DIR}/${SYM_NAME}/run
+            log = ${TEST_DIR}/${SYM_NAME}/log
+            share = ${TEST_DIR}/${SYM_NAME}/share
+            share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
+            work = ${TEST_DIR}/${SYM_NAME}/work
 "
 init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduler]
