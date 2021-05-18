@@ -35,7 +35,7 @@ import re
 import sys
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow import LOG
@@ -398,7 +398,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
 def hashbang_and_plugin_templating_clash(
     templating: str, flines: List[str]
-) -> str:
+) -> Optional[str]:
     """Check whether plugin set template engine and #!hashbang line match.
 
     Args:
