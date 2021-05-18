@@ -137,9 +137,9 @@ def get_option_parser(add_std_opts=False):
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
     parser.add_option(
-        "--start-from-task", "--starttask",
-        help="Task instance to start from",
-        metavar="NAME.CYCLE_POINT", action="store", dest="starttask")
+        "--start-from-task", "--starttask", "-t",
+        help="Task instance to start from. Can be used mulitiple times.",
+        metavar="NAME.CYCLE_POINT", action="append", dest="starttasks")
 
     parser.add_option(
         "--pause",
