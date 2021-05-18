@@ -463,7 +463,7 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
-            self.load_tasks_from_db()
+            self._load_tasks_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         elif self.options.starttask is not None:
@@ -675,7 +675,7 @@ class Scheduler:
 
         self.pool.force_trigger_tasks(initial_tasks, True)
 
-    def _load_task_pool_from_db(self):
+    def _load_tasks_from_db(self):
         """Load tasks from DB state for restart."""
         if self.options.startcp:
             self.config.start_point = TaskID.get_standardised_point(

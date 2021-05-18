@@ -202,10 +202,13 @@ class Dependency:
         # Loop over TaskTrigger instances.
         for task_trigger in self.task_triggers:
             if task_trigger.cycle_point_offset is not None:
-                # Inter-cycle trigger - compute the trigger's cycle point from
-                # its offset.
-                prereq_offset_point = get_point_relative(
-                    task_trigger.cycle_point_offset, point)
+                # Compute trigger cycle point from offset.
+                if task_trigger.offset_is_from_icp:
+                     prereq_offset_point = get_point_relative(
+                            task_trigger.cycle_point_offset, tdef.initial_point)
+                else:
+                    prereq_offset_point = get_point_relative(
+                            task_trigger.cycle_point_offset, point)
                 if prereq_offset_point > point:
                     # Update tdef.max_future_prereq_offset.
                     prereq_offset = prereq_offset_point - point
