@@ -23,8 +23,8 @@ Install a new workflow.
 The workflow can then be started, stopped, and targeted by name.
 
 Normal installation creates a directory "~/cylc-run/REG/", with a run
-directory "~/cylc-run/REG/run1" containing a "_cylc-install/source" symlink to
-the source directory.
+directory "~/cylc-run/REG/run1". A "_cylc-install/source" symlink to the source
+directory will be created in the REG directory.
 Any files or directories (excluding .git, .svn) from the source directory are
 copied to the new run directory.
 A ".service" directory will also be created and used for server authentication

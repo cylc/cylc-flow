@@ -622,7 +622,7 @@ def test_reinstall_workflow(tmp_path, capsys):
     run_dir = cylc_install_dir.parent
     reinstall_workflow("flow-name", run_dir, source_dir)
     assert capsys.readouterr().out == (
-        f"REINSTALLED flow-name from {source_dir} -> {run_dir}\n")
+        f"REINSTALLED flow-name from {source_dir}\n")
 
 
 @pytest.mark.parametrize(

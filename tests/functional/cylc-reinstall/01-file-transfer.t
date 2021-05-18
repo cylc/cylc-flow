@@ -49,7 +49,7 @@ ${RND_WORKFLOW_RUNDIR}/run1
     \`-- install
 __OUT__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 run_ok "${TEST_NAME}" cylc install
 mkdir new_dir
@@ -79,7 +79,7 @@ ${RND_WORKFLOW_RUNDIR}/run2
     \`-- new_file2
 __OUT__
 contains_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
-REINSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run2
+REINSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 
 # Test cylc reinstall affects only named run, i.e. run1 should be unaffected in this case
