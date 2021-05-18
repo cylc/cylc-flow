@@ -28,6 +28,7 @@ import os
 from pkg_resources import parse_version
 from shutil import copy, rmtree
 from tempfile import mkstemp
+from typing import Any, Dict, List, TYPE_CHECKING, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -35,6 +36,14 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.exceptions import ServiceFileError
+
+if TYPE_CHECKING:
+    from cylc.flow.task_pool import TaskPool
+
+# # TODO: narrow down Any (should be str | int) after implementing type
+# # annotations in cylc.flow.task_state.TaskState
+DbArgDict = Dict[str, Any]
+DbUpdateTuple = Tuple[DbArgDict, DbArgDict]
 
 
 PERM_PRIVATE = 0o600  # -rw-------
@@ -90,7 +99,7 @@ class WorkflowDatabaseManager:
         self.pri_dao = None
         self.pub_dao = None
 
-        self.db_deletes_map = {
+        self.db_deletes_map: Dict[str, List[DbArgDict]] = {
             self.TABLE_BROADCAST_STATES: [],
             self.TABLE_WORKFLOW_PARAMS: [],
             self.TABLE_TASK_POOL: [],
@@ -99,7 +108,7 @@ class WorkflowDatabaseManager:
             self.TABLE_TASK_PREREQUISITES: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
             self.TABLE_XTRIGGERS: []}
-        self.db_inserts_map = {
+        self.db_inserts_map: Dict[str, List[DbArgDict]] = {
             self.TABLE_BROADCAST_EVENTS: [],
             self.TABLE_BROADCAST_STATES: [],
             self.TABLE_INHERITANCE: [],
@@ -112,7 +121,7 @@ class WorkflowDatabaseManager:
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
             self.TABLE_XTRIGGERS: [],
             self.TABLE_ABS_OUTPUTS: []}
-        self.db_updates_map = {}
+        self.db_updates_map: Dict[str, List[DbUpdateTuple]] = {}
 
     def copy_pri_to_pub(self) -> None:
         """Copy content of primary database file to public database file."""
@@ -216,7 +225,7 @@ class WorkflowDatabaseManager:
             self.pub_dao.close()
             self.pub_dao = None
 
-    def process_queued_ops(self):
+    def process_queued_ops(self) -> None:
         """Handle queued db operations for each task proxy."""
         if self.pri_dao is None:
             return
@@ -418,7 +427,7 @@ class WorkflowDatabaseManager:
         self.db_updates_map[self.TABLE_TASK_STATES].append(
             (set_args, where_args))
 
-    def put_task_pool(self, pool):
+    def put_task_pool(self, pool: 'TaskPool') -> None:
         """Update various task tables for current pool, in runtime database.
 
         Queue delete (everything) statements to wipe the tables, and queue the
