@@ -1278,7 +1278,7 @@ class TaskPool:
                 itask.manual_trigger = True
                 if itask.state.reset(TASK_STATUS_WAITING):
                     self.data_store_mgr.delta_task_state(itask)
-                LOG.critical('setting %s ready to run', itask)
+                LOG.info('setting %s ready to run', itask)
                 itask.state.set_prerequisites_all_satisfied()
                 self.data_store_mgr.delta_task_prerequisite(itask)
                 self.data_store_mgr.delta_task_outputs(itask)
