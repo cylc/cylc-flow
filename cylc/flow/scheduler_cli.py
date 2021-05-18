@@ -370,5 +370,5 @@ async def _run(scheduler: Scheduler) -> int:
 @cli_function(get_option_parser)
 def play(parser, options, reg):
     """Implement cylc play."""
-    from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
+    #from cylc.flow import patch_pudb; import pudb; pudb.set_trace()
     return scheduler_cli(parser, options, reg)
