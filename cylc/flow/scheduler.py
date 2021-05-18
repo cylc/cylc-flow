@@ -466,7 +466,7 @@ class Scheduler:
             self._load_tasks_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
-        elif self.options.starttask is not None:
+        elif self.options.starttasks:
             self._load_tasks_from_given()
         else:
             self._load_tasks_from_point()
@@ -634,8 +634,8 @@ class Scheduler:
             await self.start_scheduler()
 
     def _load_tasks_from_given(self):
-        LOG.info(f"Start from {self.options.starttask}")
-        self.pool.force_trigger_tasks([self.options.starttask], True)
+        LOG.info(f"Start from {self.options.starttasks}")
+        self.pool.force_trigger_tasks(self.options.starttasks, True)
 
     def _load_tasks_from_point(self):
         """Load tasks for a new run from a cycle point.
@@ -1869,7 +1869,7 @@ class Scheduler:
                         f"Ignoring option: --{opt}={val}. The only valid "
                         "value for a restart is 'ignore'.")
                     setattr(self.options, opt, None)
-            opt = 'starttask'
+            opt = 'starttasks'
             val = getattr(self.options, opt, None)
             if val is not None:
                 LOG.warning(
