@@ -125,6 +125,11 @@ def test_process_cylc_stop_point(get_point, options, expected):
             id="startcp on restart"
         ),
         pytest.param(
+            {'starttask': 'foo.5'}, True,
+            "option --starttask is not valid for restart.",
+            id="starttask on restart"
+        ),
+        pytest.param(
             {'icp': 'ignore'}, False,
             "option --icp=ignore is only valid for restart.",
             id="icp=ignore on first start"

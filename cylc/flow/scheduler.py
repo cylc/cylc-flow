@@ -467,9 +467,9 @@ class Scheduler:
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         elif self.options.starttask:
-            self._load_tasks_from_given()
+            self._load_pool_from_tasks()
         else:
-            self._load_tasks_from_point()
+            self._load_pool_from_point()
 
         self.process_cylc_stop_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
@@ -633,7 +633,8 @@ class Scheduler:
             # note start_scheduler handles its own shutdown logic
             await self.start_scheduler()
 
-    def _load_tasks_from_given(self):
+    def _load_pool_from_tasks(self):
+        """Load task pool with specified tasks, for a new run."""
         LOG.info(f"Start task: {self.options.starttask}")
         self.pool.force_trigger_tasks(self.options.starttask, True)
 
