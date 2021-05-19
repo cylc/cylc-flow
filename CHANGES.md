@@ -56,6 +56,9 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4218](https://github.com/cylc/cylc-flow/pull/4218)
+- Start a new run from specified tasks.
+
 [#4214](https://github.com/cylc/cylc-flow/pull/4214)
 - Unify `-v --verbose`, `-q --quiet` and `--debug` options.
 
