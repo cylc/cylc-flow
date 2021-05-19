@@ -89,8 +89,7 @@ class Prerequisite:
         """
         message = (name, str(point), output)
 
-        # Add a new prerequisite message in an UNSATISFIED state.
-        # UNLESS PRE_INITIAL!
+        # Add a new prerequisite as satisfied if pre-initial, else unsatisfied.
         if pre_initial:
             self.satisfied[message] = self.DEP_STATE_SATISFIED
         else:

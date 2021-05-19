@@ -463,7 +463,7 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
-            self._load_tasks_from_db()
+            self._load_pool_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         elif self.options.starttask:
@@ -638,8 +638,8 @@ class Scheduler:
         LOG.info(f"Start task: {self.options.starttask}")
         self.pool.force_trigger_tasks(self.options.starttask, True)
 
-    def _load_tasks_from_point(self):
-        """Load tasks for a new run from a cycle point.
+    def _load_pool_from_point(self):
+        """Load task pool for a cycle point, for a new run.
 
         Iterate through all sequences to find the first instance of each task.
         Add it to the pool if it has no parents at or after the start point.
@@ -676,8 +676,8 @@ class Scheduler:
                 self.pool.add_to_runahead_pool(
                     TaskProxy(tdef, point, flow_label))
 
-    def _load_tasks_from_db(self):
-        """Load tasks from DB state for restart."""
+    def _load_pool_from_db(self):
+        """Load task pool from DB, for a restart."""
         if self.options.startcp:
             self.config.start_point = TaskID.get_standardised_point(
                 self.options.startcp)
@@ -1856,7 +1856,7 @@ class Scheduler:
             self.config, key, default)
 
     def _check_startup_opts(self) -> None:
-        """Check "cylc play" options are consist with type of start.
+        """Abort if "cylc play" options are not consist with type of start.
 
         * Start from cycle point or task is not valid for a restart.
         * Ignore initial point (etc.) is not valid for a new run.
