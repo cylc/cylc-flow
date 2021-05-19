@@ -1450,6 +1450,7 @@ def test_check_flow_file_symlink(
     [
         ('log=$shortbread, share= $bourbon,share/cycle= $digestive, ', 'None',
             {'localhost': {
+                'run': None,
                 'log': "$shortbread",
                 'share': '$bourbon',
                 'share/cycle': '$digestive'
@@ -1468,11 +1469,17 @@ def test_check_flow_file_symlink(
          ),
     ]
 )
-def test_get_sym_dirs(symlink_dirs, err_msg, expected):
-    """Test get_sym_dirs raises errors on cli symlink options"""
+def test_get_sym_dirs(
+    symlink_dirs: str,
+    err_msg: str,
+    expected: Dict[str, Dict[str, Any]]
+):
+    """Test get_sym_dirs returns dict or correctly raises errors on cli symlink
+        dir options"""
     if err_msg != 'None':
-        with pytest.raises(WorkflowFilesError):
+        with pytest.raises(WorkflowFilesError) as exc:
             get_sym_dirs(symlink_dirs)
+            assert(err_msg) in str(exc)
 
     else:
         actual = get_sym_dirs(symlink_dirs)

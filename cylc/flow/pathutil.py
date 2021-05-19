@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Dict, Iterable, Set, Union
+from typing import Dict, Iterable, Set, Union, Optional, OrderedDict, Any
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -130,7 +130,9 @@ def make_workflow_run_tree(workflow):
 
 
 def make_localhost_symlinks(
-    rund: Union[Path, str], named_sub_dir: str, symlink_conf=None
+    rund: Union[Path, str],
+    named_sub_dir: str, 
+    symlink_conf: Optional[Dict[str, Dict[str, str]]] = None
 ) -> Dict[str, Union[Path, str]]:
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
@@ -166,12 +168,25 @@ def make_localhost_symlinks(
     return symlinks_created
 
 
-def get_dirs_to_symlink(install_target: str, flow_name: str, symlink_conf=None) -> Dict[str, str]:
-    """Returns dictionary of directories to symlink from glbcfg.
+def get_dirs_to_symlink(
+    install_target: str,
+    flow_name: str,
+    symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None
+) -> Dict[str, Any]:
+    """Returns dictionary of directories to symlink.
 
     Note the paths should remain unexpanded, to be expanded on the remote.
+    Args:
+        install_target: Symlinks to be created on this install target
+        flow_name: full name of the run, e.g. myflow/run1
+        symlink_conf: Symlink dirs, if sent on the cli.
+            Defaults to None, in which case global config symlink dirs will
+            be applied.
+
+    Returns:
+        dirs_to_symlink: [directory: symlink_path]
     """
-    dirs_to_symlink: Dict[str, str] = {}
+    dirs_to_symlink: Dict[str, Any] = {}
     if not symlink_conf:
         symlink_conf = glbl_cfg().get(['install', 'symlink dirs'])
     if install_target not in symlink_conf.keys():
@@ -180,8 +195,8 @@ def get_dirs_to_symlink(install_target: str, flow_name: str, symlink_conf=None) 
     if base_dir:
         dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', flow_name)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
-        link = symlink_conf[install_target][dir_]
-        if (not link) or link == base_dir:
+        link = symlink_conf[install_target].get(dir_, None)
+        if (not link) is None or link == base_dir:
             continue
         dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', flow_name, dir_)
     return dirs_to_symlink

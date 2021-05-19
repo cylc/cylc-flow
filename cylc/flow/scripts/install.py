@@ -69,7 +69,7 @@ multiple workflow run directories that link to the same workflow definition.
 
 """
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Dict, Any
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError
@@ -218,17 +218,16 @@ def install(
                 entry_point.name,
                 exc
             ) from None
+    cli_symdirs: Optional[Dict[str, Dict[str, Any]]] = None
     if opts.symlink_dirs:
-        symdirs = get_sym_dirs(opts.symlink_dirs)
-    else:
-        symdirs = None
+        cli_symdirs = get_sym_dirs(opts.symlink_dirs)
 
     source_dir, rundir, _flow_name = install_workflow(
         flow_name=flow_name,
         source=source,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,
-        symlink_dirs=symdirs
+        cli_symlink_dirs=cli_symdirs
     )
 
     for entry_point in iter_entry_points(

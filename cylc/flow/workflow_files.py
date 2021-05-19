@@ -1246,7 +1246,7 @@ def install_workflow(
     source: Optional[Union[Path, str]] = None,
     run_name: Optional[str] = None,
     no_run_name: bool = False,
-    symlink_dirs: Optional[list] = None
+    cli_symlink_dirs: Optional[Union[Dict[str, Dict[str, Any]], None]] = None
 ) -> Tuple[Path, Path, str]:
     """Install a workflow, or renew its installation.
 
@@ -1302,7 +1302,7 @@ def install_workflow(
     elif run_num:
         named_run = os.path.join(named_run, f'run{run_num}')
     symlinks_created = make_localhost_symlinks(
-        rundir, named_run, symlink_conf=symlink_dirs)
+        rundir, named_run, symlink_conf=cli_symlink_dirs)
     install_log = _get_logger(rundir, 'cylc-install')
     if bool(symlinks_created) is True:
         for src, dst in symlinks_created.items():
@@ -1493,11 +1493,34 @@ def validate_source_dir(source, flow_name):
     check_flow_file(source, logger=None)
 
 
-def get_sym_dirs(symlink_dirs):
-    symdict = {'localhost': {}}
+def get_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
+    """Converts command line entered symlink dirs to a dictionary.
+
+    Args:
+        symlink_dirs (str): As entered by user on cli,
+                            e.g. [log=$DIR, share=$DIR2].
+
+    Raises:
+        WorkflowFilesError: If directory to be symlinked is not in permitted
+                            dirs: run, log, share, work, share/cycle
+
+    Returns:
+        dict: In the same form as would be returned by global config.
+            e.g. {'localhost': {'log': '$DIR',
+                                'share': '$DIR2'
+                                }
+                }
+    """
+    # Ensures the same nested dict format which is returned by the glb cfg
+    symdict: Dict[str, Dict[str, Any]] = {'localhost': {'run': None}}
+    if symlink_dirs == 'None':
+        return symdict
     symlist = symlink_dirs.replace(" ", "").strip(',').split(',')
     for pair in symlist:
-        key, val = pair.split("=")
+        try:
+            key, val = pair.split("=")
+        except ValueError:
+            return symdict
         if key in ['run', 'log', 'share', 'share/cycle', 'work']:
             symdict['localhost'][key] = val
         else:
