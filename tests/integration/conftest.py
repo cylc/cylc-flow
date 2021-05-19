@@ -21,7 +21,7 @@ from pathlib import Path
 import pytest
 import re
 from shutil import rmtree
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Tuple
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.pathutil import get_workflow_run_dir
@@ -263,6 +263,8 @@ def db_select():
 
     Args:
         schd: The Scheduler object for the workflow.
+        process_db_queue: Whether to process the scheduler's db queue before
+            querying.
         table: The name of the database table to query.
         *columns (optional): The columns to select from the table. To select
             all columns, omit or use '*'.
@@ -273,17 +275,23 @@ def db_select():
 
     def _check_columns(table: str, *columns: str) -> None:
         all_columns = [x[0] for x in CylcWorkflowDAO.TABLES_ATTRS[table]]
-        if not all(col in all_columns for col in columns):
-            raise ValueError(
-                f"One or more unrecognised column names for table {table} "
-                f"in: {columns}")
+        for col in columns:
+            if col not in all_columns:
+                raise ValueError(f"Column '{col}' not in table '{table}'")
 
     def _inner(
-        schd: 'Scheduler', table: str, *columns: str, **where: str
-    ) -> List[str]:
+        schd: 'Scheduler',
+        process_db_queue: bool,
+        table: str,
+        *columns: str,
+        **where: str
+    ) -> List[Tuple[str, ...]]:
+
+        if process_db_queue:
+            schd.process_workflow_db_queue()
 
         if table not in CylcWorkflowDAO.TABLES_ATTRS:
-            raise ValueError(f"Table name '{table}' not recognised")
+            raise ValueError(f"Table '{table}' not in database")
         if not columns:
             columns = ('*',)
         elif columns != ('*',):
@@ -299,10 +307,10 @@ def db_select():
             stmt += f' WHERE {where_stmt}'
             stmt_args = list(where.values())
 
-        dao = schd.workflow_db_mgr.get_pri_dao()
+        pri_dao = schd.workflow_db_mgr.get_pri_dao()
         try:
-            return [i for i in dao.connect().execute(stmt, stmt_args)]
+            return list(pri_dao.connect().execute(stmt, stmt_args))
         finally:
-            dao.close()
+            pri_dao.close()
 
     return _inner

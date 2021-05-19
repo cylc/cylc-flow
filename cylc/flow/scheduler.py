@@ -688,6 +688,7 @@ class Scheduler:
             self.xtrigger_mgr.load_xtrigger_for_restart)
         self.workflow_db_mgr.pri_dao.select_abs_outputs_for_restart(
             self.pool.load_abs_outputs_for_restart)
+        self.pool.load_db_tasks_to_hold()
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""

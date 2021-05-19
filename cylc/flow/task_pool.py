@@ -572,6 +572,14 @@ class TaskPool:
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
 
+    def load_db_tasks_to_hold(self) -> None:
+        """Update the tasks_to_hold set with the tasks stored in the
+        database."""
+        self.tasks_to_hold.update(
+            (name, get_point(cycle)) for name, cycle in
+            self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
+        )
+
     def release_runahead_task(self, itask: TaskProxy) -> None:
         """Release itask from runahead limiting.
 
@@ -1004,6 +1012,7 @@ class TaskPool:
         if itask.state.reset(is_held=True):
             self.data_store_mgr.delta_task_held(itask)
         self.tasks_to_hold.add((itask.tdef.name, itask.point))
+        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
 
     def release_held_active_task(self, itask: TaskProxy) -> None:
         if itask.state.reset(is_held=False):
@@ -1011,6 +1020,7 @@ class TaskPool:
             if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
                 self.queue_task(itask)
         self.tasks_to_hold.discard((itask.tdef.name, itask.point))
+        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
 
     def set_hold_point(self, point: 'PointBase') -> None:
         """Set the point after which all tasks must be held."""
@@ -1029,6 +1039,7 @@ class TaskPool:
         # Set future tasks to be held:
         n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
         self.tasks_to_hold.update(task_items)
+        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return n_warnings
 
@@ -1041,6 +1052,7 @@ class TaskPool:
         # Unhold future tasks:
         n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
         self.tasks_to_hold.difference_update(task_items)
+        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return n_warnings
 
@@ -1050,6 +1062,7 @@ class TaskPool:
         for itask in self.get_all_tasks():
             self.release_held_active_task(itask)
         self.tasks_to_hold.clear()
+        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         self.workflow_db_mgr.delete_workflow_hold_cycle_point()
 
     def _explicit_match_tasks_to_hold(

@@ -23,7 +23,6 @@ useful testing in the process 😀.)
 import asyncio
 import logging
 from pathlib import Path
-
 import pytest
 
 from cylc.flow import __version__
@@ -225,11 +224,12 @@ async def test_db_select(one, run, db_select):
         pass
     # Now we can query the DB
     # Select all from workflow_params table:
-    assert ('UTC_mode', '0') in db_select(schd, 'workflow_params')
+    assert ('UTC_mode', '0') in db_select(schd, False, 'workflow_params')
     # Select name & status columns from task_states table:
-    results = db_select(schd, 'task_states', 'name', 'status')
+    results = db_select(schd, False, 'task_states', 'name', 'status')
     assert results[0] == ('one', 'waiting')
     # Select all columns where name==one & status==waiting from
     # task_states table:
-    results = db_select(schd, 'task_states', name='one', status='waiting')
+    results = db_select(
+        schd, False, 'task_states', name='one', status='waiting')
     assert len(results) == 1

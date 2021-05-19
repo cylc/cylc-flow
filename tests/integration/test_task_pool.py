@@ -18,9 +18,10 @@ from cylc.flow import CYLC_LOG
 import logging
 import pytest
 from pytest import param
-from typing import Callable, Iterable, List, Tuple
+from typing import Callable, Iterable, List, Tuple, Union
 
 from cylc.flow.cycling import PointBase
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
 
 
@@ -41,11 +42,11 @@ EXAMPLE_FLOW_CFG = {
 
 
 def get_task_ids(
-    name_point_list: Iterable[Tuple[str, PointBase]]
+    name_point_list: Iterable[Tuple[str, Union[PointBase, str, int]]]
 ) -> List[str]:
-    """Helper function to return task identities ("{name}.{point}") from a
-    list of  (name, point) tuples."""
-    return [f'{name}.{point}' for name, point in name_point_list]
+    """Helper function to return sorted task identities ("{name}.{point}")
+    from a list of  (name, point) tuples."""
+    return sorted(f'{name}.{point}' for name, point in name_point_list)
 
 
 def assert_expected_log(
@@ -88,17 +89,21 @@ async def mod_example_flow(
 
 @pytest.fixture
 async def example_flow(
-    flow: Callable, scheduler: Callable, run: Callable
+    flow: Callable, scheduler: Callable, caplog: pytest.LogCaptureFixture
 ) -> Scheduler:
     """Return a scheduler for interrogating its task pool.
 
     This is function-scoped so slower than mod_example_flow; only use this
     when the test mutates the scheduler or task pool.
     """
+    # The run(schd) fixture doesn't work for modifying the DB, so have to
+    # set up caplog and do schd.install()/.initialise()/.configure() instead
+    caplog.set_level(logging.INFO, CYLC_LOG)
     reg = flow(EXAMPLE_FLOW_CFG)
     schd: Scheduler = scheduler(reg)
-    async with run(schd):
-        pass
+    await schd.install()
+    await schd.initialise()
+    await schd.configure()
     return schd
 
 
@@ -230,8 +235,7 @@ async def test_match_taskdefs(
     task_pool = mod_example_flow.pool
 
     n_warnings, task_items = task_pool.match_taskdefs(items)
-    task_ids = get_task_ids(task_items)
-    assert sorted(task_ids) == sorted(expected_task_ids)
+    assert get_task_ids(task_items) == sorted(expected_task_ids)
 
     logged_warnings = assert_expected_log(caplog, expected_warnings)
     assert n_warnings == len(logged_warnings)
@@ -276,7 +280,8 @@ async def test_hold_tasks(
     items: List[str],
     expected_tasks_to_hold_ids: List[str],
     expected_warnings: List[str],
-    example_flow: Scheduler, caplog: pytest.LogCaptureFixture
+    example_flow: Scheduler, caplog: pytest.LogCaptureFixture,
+    db_select: Callable
 ) -> None:
     """Test TaskPool.hold_tasks().
 
@@ -289,6 +294,7 @@ async def test_hold_tasks(
             the TaskPool.tasks_to_hold set, of the form "{name}.{point}".
         expected_warnings: Expected to be logged.
     """
+    expected_tasks_to_hold_ids = sorted(expected_tasks_to_hold_ids)
     caplog.set_level(logging.WARNING, CYLC_LOG)
     task_pool = example_flow.pool
     n_warnings = task_pool.hold_tasks(items)
@@ -297,15 +303,19 @@ async def test_hold_tasks(
         hold_expected = itask.identity in expected_tasks_to_hold_ids
         assert itask.state.is_held is hold_expected
 
-    task_ids = get_task_ids(task_pool.tasks_to_hold)
-    assert sorted(task_ids) == sorted(expected_tasks_to_hold_ids)
+    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
 
     logged_warnings = assert_expected_log(caplog, expected_warnings)
     assert n_warnings == len(logged_warnings)
 
+    db_held_tasks = db_select(example_flow, True, 'tasks_to_hold')
+    assert get_task_ids(db_held_tasks) == expected_tasks_to_hold_ids
+
 
 @pytest.mark.asyncio
-async def test_release_held_tasks(example_flow: Scheduler) -> None:
+async def test_release_held_tasks(
+    example_flow: Scheduler, db_select: Callable
+) -> None:
     """Test TaskPool.release_held_tasks().
 
     For a workflow with held active tasks foo.1 & bar.1, and held future task
@@ -315,17 +325,67 @@ async def test_release_held_tasks(example_flow: Scheduler) -> None:
     function-scoped example_flow fixture, and it would repeat what is covered
     in test_hold_tasks().
     """
+    # Setup
     task_pool = example_flow.pool
     task_pool.hold_tasks(['foo.1', 'bar.1', 'pub.2'])
     for itask in task_pool.get_all_tasks():
         assert itask.state.is_held is True
-    task_ids = get_task_ids(task_pool.tasks_to_hold)
-    assert sorted(task_ids) == sorted(['foo.1', 'bar.1', 'pub.2'])
+    expected_tasks_to_hold_ids = sorted(['foo.1', 'bar.1', 'pub.2'])
+    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+    db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
+    assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
 
+    # Test
     task_pool.release_held_tasks(['foo.1', 'pub.2'])
     for itask in task_pool.get_all_tasks():
         hold_expected = itask.identity == 'bar.1'
         assert itask.state.is_held is hold_expected
 
-    task_ids = get_task_ids(task_pool.tasks_to_hold)
-    assert sorted(task_ids) == sorted(['bar.1'])
+    expected_tasks_to_hold_ids = sorted(['bar.1'])
+    assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
+
+    db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
+    assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'hold_after_point, expected_held_task_ids',
+    [
+        (0, ['foo.1', 'bar.1']),
+        (1, [])
+    ]
+)
+async def test_hold_point(
+    hold_after_point: int,
+    expected_held_task_ids: List[str],
+    example_flow: Scheduler, db_select: Callable
+) -> None:
+    """Test TaskPool.set_hold_point() and .release_hold_point()"""
+    expected_held_task_ids = sorted(expected_held_task_ids)
+    task_pool = example_flow.pool
+
+    # Test hold
+    task_pool.set_hold_point(IntegerPoint(hold_after_point))
+
+    assert ('holdcp', str(hold_after_point)) in db_select(
+        example_flow, True, 'workflow_params')
+
+    for itask in task_pool.get_all_tasks():
+        hold_expected = itask.identity in expected_held_task_ids
+        assert itask.state.is_held is hold_expected
+
+    assert get_task_ids(task_pool.tasks_to_hold) == expected_held_task_ids
+    db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
+    assert get_task_ids(db_tasks_to_hold) == expected_held_task_ids
+
+    # Test release
+    task_pool.release_hold_point()
+
+    assert db_select(example_flow, True, 'workflow_params', key='holdcp') == []
+
+    for itask in task_pool.get_all_tasks():
+        assert itask.state.is_held is False
+
+    assert task_pool.tasks_to_hold == set()
+    assert db_select(example_flow, True, 'tasks_to_hold') == []
