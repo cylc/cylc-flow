@@ -17,6 +17,7 @@
 
 import asyncio
 from collections import deque
+from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from dataclasses import dataclass
 import logging
 from optparse import Values
@@ -1649,7 +1650,10 @@ class Scheduler:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
             LOG.error(f'Workflow shutting down - {reason}')
-        elif isinstance(reason, CylcError):
+        elif (
+            isinstance(reason, CylcError)
+            or isinstance(reason, TemplateVarLanguageClash)
+        ):
             LOG.error(
                 "Workflow shutting down - "
                 f"{reason.__class__.__name__}: {reason}")

@@ -35,11 +35,14 @@ import re
 import sys
 
 from pathlib import Path
+from typing import List, Optional
 
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow import LOG
 from cylc.flow.exceptions import PluginError
-from cylc.flow.parsec.exceptions import FileParseError, ParsecError
+from cylc.flow.parsec.exceptions import (
+    FileParseError, ParsecError, TemplateVarLanguageClash
+)
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.include import inline
 from cylc.flow.parsec.util import itemstr
@@ -342,20 +345,19 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     template_vars['CYLC_TEMPLATE_VARS'] = template_vars
 
+    # Fail if templating_detected ≠ hashbang
+    hashbang = hashbang_and_plugin_templating_clash(
+        extra_vars['templating_detected'], flines
+    )
+
     # process with EmPy
     if do_empy:
         if (
             extra_vars['templating_detected'] == 'empy' and
-            not re.match(r'^#![Ee]m[Pp]y\s*', flines[0])
+            not hashbang and
+            hashbang != 'empy'
         ):
-            if not re.match(r'^#!', flines[0]):
-                flines.insert(0, '#!empy')
-            else:
-                raise FileParseError(
-                    "Plugins set templating engine = "
-                    f"{extra_vars['templating_detected']}"
-                    f" which does not match {flines[0]} set in flow.cylc."
-                )
+            flines.insert(0, '#!empy')
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
             try:
@@ -371,16 +373,10 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     if do_jinja2:
         if (
             extra_vars['templating_detected'] == 'jinja2' and
-            not re.match(r'^#![jJ]inja2\s*', flines[0])
+            not hashbang and
+            hashbang != 'jinja2'
         ):
-            if not re.match(r'^#!', flines[0]):
-                flines.insert(0, '#!jinja2')
-            else:
-                raise FileParseError(
-                    "Plugins set templating engine = "
-                    f"{extra_vars['templating_detected']}"
-                    f" which does not match {flines[0]} set in flow.cylc."
-                )
+            flines.insert(0, '#!jinja2')
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
             try:
@@ -398,6 +394,54 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
 
     # return rstripped lines
     return [fl.rstrip() for fl in flines]
+
+
+def hashbang_and_plugin_templating_clash(
+    templating: str, flines: List[str]
+) -> Optional[str]:
+    """Check whether plugin set template engine and #!hashbang line match.
+
+    Args:
+        templating (str): [description]
+        flines (List[str]): [description]
+
+    Raises:
+        TemplateVarLanguageClash
+
+    Returns:
+        str: the hashbang, in lower case, to allow for users using any of
+        ['empy', 'EmPy', 'EMPY'], or similar in other templating languages.
+
+    Examples:
+        - Hashbang and templating_detected match:
+            >>> thisfunc = hashbang_and_plugin_templating_clash
+            >>> thisfunc('jinja2', ['#!Jinja2', 'stuff'])
+            'jinja2'
+
+        - Function returns nothing:
+            >>> thisfunc('', [''])
+
+        - Function raises if templating engines clash:
+            >>> thisfunc('empy', ['#!jinja2'])
+            Traceback (most recent call last):
+                ...
+            cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
+    """
+    if flines and re.match(r'^#!(.*)\s*', flines[0]):
+        hashbang = re.findall(r'^#!(.*)\s*', flines[0])[0].lower()
+    else:
+        hashbang = None
+    if (
+        hashbang and templating
+        and templating != 'template variables'
+        and hashbang != templating
+    ):
+        raise TemplateVarLanguageClash(
+            "Plugins set templating engine = "
+            f"{templating}"
+            f" which does not match {flines[0]} set in flow.cylc."
+        )
+    return hashbang
 
 
 def parse(fpath, output_fname=None, template_vars=None):
