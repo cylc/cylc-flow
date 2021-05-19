@@ -1,0 +1,7 @@
+Start task: ['bar.3', 'war.3']
+Initial point: 1
+Final point: 3
+[bar.3] -triggered off []
+[war.3] -triggered off []
+[baz.3] -triggered off ['bar.3']
+[waz.3] -triggered off ['war.3']

@@ -66,7 +66,7 @@ Examples:
     # Start (at the initial cycle point), or restart, or resume workflow REG.
     $ cylc play REG
 
-    # Start a new run from a cycle point after the initial cycle point 
+    # Start a new run from a cycle point after the initial cycle point
     $ cylc play --start-cycle-point=3 REG  # (integer cycling)
     $ cylc play --start-cycle-point=20250101T0000Z REG  # (datetime cycling)
 
@@ -146,9 +146,9 @@ def get_option_parser(add_std_opts=False):
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
     parser.add_option(
-        "--start-from-task", "--starttask", "-t",
+        "--start-task", "--starttask", "-t",
         help="Task instance to start from. Can be used mulitiple times.",
-        metavar="NAME.CYCLE_POINT", action="append", dest="starttasks")
+        metavar="NAME.CYCLE_POINT", action="append", dest="starttask")
 
     parser.add_option(
         "--pause",

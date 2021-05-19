@@ -38,12 +38,13 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
-  + ((0  &  1)  &  (2  |  (3  &  4)))
+  + 0 & 1 & (2 | (3 & 4)) & 5
   + 	0 = a.20000101T0000Z succeeded
   + 	1 = b.20000101T0000Z succeeded
   + 	2 = c.20000101T0000Z succeeded
   + 	3 = d.20000101T0000Z succeeded
   + 	4 = e.20000101T0000Z succeeded
+  + 	5 = f.19991231T0000Z succeeded
 
 outputs (- => not completed):
   - f.20000101T0000Z expired
@@ -57,6 +58,7 @@ b.20000101T0000Z succeeded
 c.20000101T0000Z succeeded
 d.20000101T0000Z succeeded
 e.20000101T0000Z succeeded
+f.19991231T0000Z succeeded
 title: (not given)
 description: (not given)
 URL: (not given)
