@@ -204,11 +204,11 @@ class Dependency:
             if task_trigger.cycle_point_offset is not None:
                 # Compute trigger cycle point from offset.
                 if task_trigger.offset_is_from_icp:
-                     prereq_offset_point = get_point_relative(
-                            task_trigger.cycle_point_offset, tdef.initial_point)
+                    prereq_offset_point = get_point_relative(
+                        task_trigger.cycle_point_offset, tdef.initial_point)
                 else:
                     prereq_offset_point = get_point_relative(
-                            task_trigger.cycle_point_offset, point)
+                        task_trigger.cycle_point_offset, point)
                 if prereq_offset_point > point:
                     # Update tdef.max_future_prereq_offset.
                     prereq_offset = prereq_offset_point - point
@@ -219,13 +219,13 @@ class Dependency:
                             prereq_offset)
                 cpre.add(
                     task_trigger.task_name,
-                     task_trigger.get_point(point),
-                     task_trigger.output,
-                     (
-                         (prereq_offset_point < tdef.start_point) &
-                         (point >= tdef.start_point)
-                     )
-                 )
+                    task_trigger.get_point(point),
+                    task_trigger.output,
+                    (
+                        (prereq_offset_point < tdef.start_point) &
+                        (point >= tdef.start_point)
+                    )
+                )
             else:
                 # Trigger is within the same cycle point.
                 # Register task message with Prerequisite object.

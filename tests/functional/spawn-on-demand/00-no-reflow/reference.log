@@ -1,6 +1,6 @@
 Initial point: 1
 Final point: 2
-[foo.1] -triggered off []
+[foo.1] -triggered off ['foo.0']
 [bar.1] -triggered off ['foo.1']
 [foo.2] -triggered off ['foo.1']
 [baz.1] -triggered off ['bar.1']

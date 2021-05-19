@@ -134,7 +134,8 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     init()
     sequence = ISO8601Sequence('P1D', '2019')
@@ -180,7 +181,8 @@ def test_satisfy_xtrigger(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     init()
     sequence = ISO8601Sequence('P1D', '2000')
@@ -241,7 +243,8 @@ def test_collate(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     init()
     sequence = ISO8601Sequence('P1D', '20190101T00Z')
@@ -269,7 +272,8 @@ def test_collate(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     tdef.xtrig_labels[sequence] = ["wall_clock"]
     start_point = ISO8601Point('20000101T0000+05')
@@ -351,7 +355,8 @@ def test_check_xtriggers(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     init()
     sequence = ISO8601Sequence('P1D', '2019')
@@ -376,7 +381,8 @@ def test_check_xtriggers(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     tdef2.xtrig_labels[sequence] = ["wall_clock"]
     init()

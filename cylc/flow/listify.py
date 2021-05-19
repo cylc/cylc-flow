@@ -19,33 +19,34 @@ import re
 
 REC_CONDITIONALS = re.compile("([&|()])")
 
+
 def listify(message):
     """Convert a string containing a logical expression to a list
 
     Examples:
-        >>> ConditionalSimplifier.listify('(foo)')
+        >>> listify('(foo)')
         ['foo']
 
-        >>> ConditionalSimplifier.listify('foo & (bar | baz)')
+        >>> listify('foo & (bar | baz)')
         ['foo', '&', ['bar', '|', 'baz']]
 
-        >>> ConditionalSimplifier.listify('(a&b)|(c|d)&(e|f)')
+        >>> listify('(a&b)|(c|d)&(e|f)')
         [['a', '&', 'b'], '|', ['c', '|', 'd'], '&', ['e', '|', 'f']]
 
-        >>> ConditionalSimplifier.listify('a & (b & c)')
+        >>> listify('a & (b & c)')
         ['a', '&', ['b', '&', 'c']]
 
-        >>> ConditionalSimplifier.listify('a & b')
+        >>> listify('a & b')
         ['a', '&', 'b']
 
-        >>> ConditionalSimplifier.listify('a & (b)')
+        >>> listify('a & (b)')
         ['a', '&', 'b']
 
-        >>> ConditionalSimplifier.listify('((foo)')
+        >>> listify('((foo)')
         Traceback (most recent call last):
         ValueError: ((foo)
 
-        >>> ConditionalSimplifier.listify('(foo))')
+        >>> listify('(foo))')
         Traceback (most recent call last):
         ValueError: (foo))
 

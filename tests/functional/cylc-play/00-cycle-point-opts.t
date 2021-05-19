@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
-# Test that invalid cycle point cli options for `cylc play` on
-# start vs restart are ignored
+# Test that invalid cycle point CLI options for `cylc play` on
+# start vs restart cause the scheduler to abort.
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 7
+set_test_number 10
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW__'
 [scheduling]
@@ -34,25 +34,38 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW__'
     [[foo]]
         script = """
             if [[ "$CYLC_TASK_CYCLE_POINT" == 2 ]]; then
-                cylc stop "$WORKFLOW_NAME"
+                cylc stop "$CYLC_WORKFLOW_NAME"
             fi
         """
 __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-# Cannot use 'ignore' on first start:
-TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_ok "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --fcp=ignore
-log_scan "${TEST_NAME}-log-scan" "${WORKFLOW_RUN_DIR}/log/workflow/log" 20 2 \
-    "WARNING - Ignoring option: --fcp=ignore" \
-    "INFO - Final point: 3"
+WFLOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
-# Cannot use --icp or --startcp on restart:
-TEST_NAME="${TEST_NAME_BASE}-restart"
-workflow_run_ok "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --icp=2
-log_scan "${TEST_NAME}-log-scan" "${WORKFLOW_RUN_DIR}/log/workflow/log" 20 2 \
-    "WARNING - Ignoring option: --icp=2" \
-    "INFO - Initial point: 1"
+# Cannot use 'ignore' on first run:
+
+TEST_NAME="${TEST_NAME_BASE}-run-abort"
+workflow_run_fail "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --fcp=ignore
+grep_ok "option \-\-fcp=ignore is only valid for restart." "${WFLOG}"
+
+# Do first run:
+
+TEST_NAME="${TEST_NAME_BASE}-run"
+workflow_run_ok "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --stopcp=1 --no-detach
+
+# Cannot use --icp or --startcp or --start-task on restart:
+
+TEST_NAME="${TEST_NAME_BASE}-restart-abort-icp"
+workflow_run_fail "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --icp=2
+grep_ok "option \-\-icp is not valid for restart." "${WFLOG}"
+
+TEST_NAME="${TEST_NAME_BASE}-restart-abort-startcp"
+workflow_run_fail "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --startcp=2
+grep_ok "option \-\-startcp is not valid for restart." "${WFLOG}"
+
+TEST_NAME="${TEST_NAME_BASE}-restart-abort-starttask"
+workflow_run_fail "$TEST_NAME" cylc play "${WORKFLOW_NAME}" --no-detach --start-task=foo.2
+grep_ok "option \-\-starttask is not valid for restart." "${WFLOG}"
 
 purge

@@ -413,7 +413,7 @@ class Scheduler:
         # point before setting self.is_restart as we couldn't tell if
         # we're restarting until now.
 
-        self._check_startup_opt()
+        self._check_startup_opts()
 
         if self.is_restart:
             pri_dao = self.workflow_db_mgr.get_pri_dao()
@@ -466,7 +466,7 @@ class Scheduler:
             self._load_tasks_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
-        elif self.options.starttasks:
+        elif self.options.starttask:
             self._load_tasks_from_given()
         else:
             self._load_tasks_from_point()
@@ -634,8 +634,8 @@ class Scheduler:
             await self.start_scheduler()
 
     def _load_tasks_from_given(self):
-        LOG.info(f"Start from {self.options.starttasks}")
-        self.pool.force_trigger_tasks(self.options.starttasks, True)
+        LOG.info(f"Start task: {self.options.starttask}")
+        self.pool.force_trigger_tasks(self.options.starttask, True)
 
     def _load_tasks_from_point(self):
         """Load tasks for a new run from a cycle point.
@@ -672,8 +672,8 @@ class Scheduler:
             if not parent_points or all(
                     x < self.config.start_point for x in parent_points):
                 initial_tasks.append(TaskID.get(tdef.name, point))
-
-        self.pool.force_trigger_tasks(initial_tasks, True)
+                self.pool.add_to_runahead_pool(
+                    TaskProxy(tdef, point, flow_label))
 
     def _load_tasks_from_db(self):
         """Load tasks from DB state for restart."""
@@ -1850,27 +1850,25 @@ class Scheduler:
             self.config, key, default)
 
     def _check_startup_opts(self) -> None:
-        """Check "cylc play" options are consist with type of start. 
+        """Check "cylc play" options are consist with type of start.
 
         * Start from cycle point or task is not valid for a restart.
         * Ignore initial point (etc.) is not valid for a new run.
         """
         if self.is_restart:
             for opt in ('icp', 'startcp'):
-                val = getattr(self.options, opt, None)
-                if val not in (None, 'ignore'):
+                if getattr(self.options, opt, None) not in (None, 'ignore'):
                     raise SchedulerError(
-                        f"--{opt}={val} is not valid for restart.")
-            opt = 'starttasks'
-            val = getattr(self.options, opt, None)
-            if val is not None:
+                        f"option --{opt} is not valid for restart.")
+            opt = 'starttask'
+            if getattr(self.options, opt, None) is not None:
                 raise SchedulerError(
-                    f"--{opt}={val} is not valid for restart.")
+                    f"option --{opt} is not valid for restart.")
         else:
-            for opt in ('icp', 'fcp', 'startcp', 'stopcp'):
+            for opt in ('icp', 'fcp', 'startcp', 'stopcp', 'starttask'):
                 if getattr(self.options, opt, None) == 'ignore':
                     raise SchedulerError(
-                        f"--{opt}=ignore is only valid for restarts.")
+                        f"option --{opt}=ignore is only valid for restart.")
 
     def process_cylc_stop_point(self):
         """
