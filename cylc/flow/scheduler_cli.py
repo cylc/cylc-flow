@@ -44,7 +44,7 @@ from cylc.flow.terminal import cli_function
 
 PLAY_DOC = r"""cylc play [OPTIONS] ARGS
 
-Start new workflow, restart a stopped workflow, or resume a paused workflow.
+Start a new workflow, restart a stopped workflow, or resume a paused workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
