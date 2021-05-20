@@ -18,11 +18,10 @@
 import asyncio
 from functools import partial
 from pathlib import Path
+import pytest
 import re
 from shutil import rmtree
 from typing import List, TYPE_CHECKING
-
-import pytest
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.pathutil import get_workflow_run_dir
@@ -139,14 +138,24 @@ def flow(run_dir, test_dir):
 
 @pytest.fixture(scope='module')
 def mod_scheduler():
-    """Return a scheduler object for a flow."""
-    return _make_scheduler
+    """Return a Scheduler object for a flow.
+
+    Usage: see scheduler() below
+    """
+    with _make_scheduler() as _scheduler:
+        yield _scheduler
 
 
 @pytest.fixture
 def scheduler():
-    """Return a scheduler object for a flow."""
-    return _make_scheduler
+    """Return a Scheduler object for a flow.
+
+    Args:
+        reg (str): Workflow name.
+        **opts (Any): Options to be passed to the Scheduler.
+    """
+    with _make_scheduler() as _scheduler:
+        yield _scheduler
 
 
 @pytest.fixture(scope='module')
