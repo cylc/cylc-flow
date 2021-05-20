@@ -68,10 +68,10 @@ def pytest_runtest_makereport(item, call):
     item.module._module_outcomes = _module_outcomes
 
 
-def _pytest_passed(request):
+def _pytest_passed(request: pytest.FixtureRequest) -> bool:
     """Returns True if the test(s) a fixture was used in passed."""
     if hasattr(request.node, '_function_outcome'):
-        return request.node._function_outcome in {'passed', 'skipped'}
+        return request.node._function_outcome.outcome in {'passed', 'skipped'}
     return all((
         report.outcome in {'passed', 'skipped'}
         for report in request.node.obj._module_outcomes.values()
@@ -105,7 +105,7 @@ def mod_test_dir(request, ses_test_dir):
     yield path
     if _pytest_passed(request):
         # test passed -> remove all files
-        rmtree(path, ignore_errors=True)
+        rmtree(path, ignore_errors=False)
     else:
         # test failed -> remove the test dir if empty
         _rm_if_empty(path)
@@ -119,7 +119,7 @@ def test_dir(request, mod_test_dir):
     yield path
     if _pytest_passed(request):
         # test passed -> remove all files
-        rmtree(path, ignore_errors=True)
+        rmtree(path, ignore_errors=False)
     else:
         # test failed -> remove the test dir if empty
         _rm_if_empty(path)
