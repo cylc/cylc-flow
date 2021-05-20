@@ -34,6 +34,28 @@ from cylc.flow.wallclock import get_current_time_string
 _XTRIG_FUNCS: dict = {}
 
 
+def _killpg(proc, signal):
+    """Kill a process group."""
+    try:
+        os.killpg(proc.pid, signal)
+    except ProcessLookupError:
+        # process group has already exited
+        return False
+    except PermissionError:
+        # process group may contain zombie processes which will result in
+        # PermissionError on some systems, not sure what happens on others
+        #
+        # we could go through the processes in the group and call waitpid on
+        # them but waitpid is blocking and this would be a messy solution for a
+        # problem that shouldn't happen (it's really a bug in the Cylc subproc)
+        LOG.error(
+            f'Could not kill process group: {proc.pid}'
+            f'\nCommand: {" ".join(proc.args)}'
+        )
+        return False
+    return True
+
+
 def get_func(func_name, src_dir):
     """Find and return an xtrigger function from a module of the same name.
 
@@ -182,14 +204,11 @@ class SubProcPool:
                 continue
             # Command timed out, kill it
             if time() > ctx.timeout:
-                try:
-                    os.killpg(proc.pid, SIGKILL)  # kill process group
-                except OSError:
-                    # must have just exited, since poll.
-                    err_xtra = ""
-                else:
-                    err_xtra = "\nkilled on timeout (%s)" % (
-                        self.proc_pool_timeout)
+                err_xtra = ""
+                if _killpg(proc, SIGKILL):
+                    err_xtra = (
+                        f"\nkilled on timeout ({self.proc_pool_timeout})"
+                    )
                 self._proc_exit(proc, err_xtra, ctx, callback, callback_args)
                 continue
             # Command still running, see if STDOUT/STDERR are readable or not
@@ -267,7 +286,7 @@ class SubProcPool:
         for value in self.runnings:
             proc = value[0]
             if proc:
-                os.killpg(proc.pid, SIGKILL)
+                _killpg(proc, SIGKILL)
         # Wait for child processes
         self.process()
 
