@@ -48,7 +48,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-??-??</span>)__
+## __cylc-8.0b2 (<span actions:bind='release-date'>Upcoming, 2021</span>)__
 
 Third beta release of Cylc 8.
 
@@ -69,6 +69,9 @@ functionality is now provided by `[symlink dirs]`.
 
 [#4142](https://github.com/cylc/cylc-flow/pull/4142) - Record source directory
 version control information on installation of a workflow.
+
+[#4222](https://github.com/cylc/cylc-flow/pull/4222) - Fix bug where a
+workflow's public database file was not closed properly.
 
 ### Fixes
 
