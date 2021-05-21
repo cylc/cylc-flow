@@ -1444,6 +1444,10 @@ LogLevels = Enum(
 class WorkflowStopMode(Enum):
     """The mode used to stop a running workflow."""
 
+    # NOTE: using a different enum because:
+    # * Graphene requires special enums.
+    # * We only want to offer a subset of stop modes.
+
     # Note: contains only the REQUEST_* values from StopMode
     Clean = StopMode.REQUEST_CLEAN.value
     Kill = StopMode.REQUEST_KILL.value

@@ -137,8 +137,6 @@ DEAD_ENDS = {
         ' use cylc graph <flow1> --diff <flow2>',
     'gscan':
         'cylc gscan has been removed, use the web UI',
-    'gui':
-        'cylc gui has been removed, use the web UI',
     'insert':
         'inserting tasks is now done automatically',
     'jobscript':
