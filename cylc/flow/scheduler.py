@@ -780,47 +780,42 @@ class Scheduler:
     def process_command_queue(self):
         """Process queued commands."""
         qsize = self.command_queue.qsize()
-        if qsize > 0:
-            log_msg = 'Processing ' + str(qsize) + ' queued command(s)'
-        else:
+        if qsize <= 0:
             return
-
+        LOG.info(f"Processing {qsize} queued command(s)")
         while True:
             try:
                 name, args, kwargs = self.command_queue.get(False)
             except Empty:
                 break
             args_string = ', '.join(str(a) for a in args)
-            cmdstr = name + '(' + args_string
             kwargs_string = ', '.join(
-                ('%s=%s' % (key, value) for key, value in kwargs.items()))
-            if kwargs_string and args_string:
-                cmdstr += ', '
-            cmdstr += kwargs_string + ')'
-            log_msg += '\n+\t' + cmdstr
+                f"{key}={value}" for key, value in kwargs.items()
+            )
+            sep = ', ' if kwargs_string and args_string else ''
+            cmdstr = f"{name}({args_string}{sep}{kwargs_string})"
             try:
                 n_warnings = getattr(self, "command_%s" % name)(
                     *args, **kwargs)
             except SchedulerStop:
-                LOG.info('Command succeeded: ' + cmdstr)
+                LOG.info(f"Command succeeded: {cmdstr}")
                 raise
             except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 LOG.warning(traceback.format_exc())
                 LOG.warning(str(exc))
-                LOG.warning('Command failed: ' + cmdstr)
+                LOG.warning(f"Command failed: {cmdstr}")
             else:
                 if n_warnings:
                     LOG.info(
                         'Command succeeded with %s warning(s): %s' %
                         (n_warnings, cmdstr))
                 else:
-                    LOG.info('Command succeeded: ' + cmdstr)
+                    LOG.info(f"Command succeeded: {cmdstr}")
                 self.is_updated = True
                 if name in self.PROC_CMDS:
                     self.task_events_mgr.pflag = True
             self.command_queue.task_done()
-        LOG.info(log_msg)
 
     def info_get_graph_raw(self, cto, ctn, group_nodes=None,
                            ungroup_nodes=None,
