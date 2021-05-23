@@ -226,6 +226,10 @@ def cli_function(parser_function=None, **parser_kwargs):
                     list(api_args),
                     **parser_kwargs
                 )
+                for arg in args:
+                    if arg.endswith('runN'):
+                        from cylc.flow.workflow_files import parse_reg
+                        arg = parse_reg(arg)
                 use_color = (
                     hasattr(opts, 'color')
                     and (
