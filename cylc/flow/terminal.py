@@ -34,6 +34,7 @@ import cylc.flow.flags
 from cylc.flow.exceptions import CylcError
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.pathutil import get_workflow_run_dir
 
 
 # CLI exception message format
@@ -199,6 +200,26 @@ def parse_dirty_json(stdout):
     raise ValueError(orig)
 
 
+def parse_reg(arg: str):
+    """Replace runN with true reg name.
+
+    Args:
+        arg (str): flow as entered by user on cli e.g. myflow/runN
+    """
+    arg = arg.rstrip('/')
+    if not arg.startswith(get_workflow_run_dir('')):
+        workflow_dir = get_workflow_run_dir(arg)
+    else:
+        workflow_dir = arg
+    run_number = re.search(
+        r'(?:run)(\d*$)',
+        os.readlink(workflow_dir)).group(1)
+    # importing here to counter circular dependancy errors.
+    from cylc.flow.workflow_files import WorkflowFiles
+
+    return arg.replace(WorkflowFiles.RUN_N, f'run{run_number}')
+
+
 def cli_function(parser_function=None, **parser_kwargs):
     """Decorator for CLI entry points.
 
@@ -221,15 +242,19 @@ def cli_function(parser_function=None, **parser_kwargs):
             wrapped_args, wrapped_kwargs = tuple(), {}
             # should we use colour?
             if parser_function:
+                # importing here to counter circular dependancy errors.
+                from cylc.flow.workflow_files import WorkflowFiles
                 parser = parser_function()
                 opts, args = parser_function().parse_args(
                     list(api_args),
                     **parser_kwargs
                 )
-                for arg in args:
-                    if arg.endswith('runN'):
-                        from cylc.flow.workflow_files import parse_reg
-                        arg = parse_reg(arg)
+                # Ensure runN args are replaced with actual run number.
+                endings = (WorkflowFiles.RUN_N, f'{WorkflowFiles.RUN_N}/')
+                args = [
+                    parse_reg(cli_arg) if cli_arg.endswith(endings)
+                    else cli_arg for cli_arg in args
+                ]
                 use_color = (
                     hasattr(opts, 'color')
                     and (

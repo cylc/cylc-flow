@@ -492,24 +492,6 @@ async def load_contact_file_async(reg, run_dir=None):
         raise ServiceFileError("Couldn't load contact file")
 
 
-def parse_reg(arg: str):
-    """Replace runN with true reg name.
-
-    Args:
-        reg (str): flow as entered by user on cli e.g. myflow/runN
-    """
-    if not arg.startswith(get_workflow_run_dir('')):
-        workflow_dir = get_workflow_run_dir(arg)
-    else:
-        workflow_dir = arg
-
-    run_number = re.search(
-        r'(?:run)(\d*$)',
-        os.readlink(workflow_dir)).group(1)
-
-    return arg.replace(WorkflowFiles.RUN_N, f'run{run_number}')
-
-
 def parse_workflow_arg(options, arg):
     """From CLI arg "WORKFLOW", return workflow name and flow.cylc path.
 
