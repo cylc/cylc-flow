@@ -1851,7 +1851,7 @@ class Scheduler:
             self.config, key, default)
 
     def _check_startup_opts(self) -> None:
-        """Abort if "cylc play" options are not consist with type of start.
+        """Abort if "cylc play" options are not consistent with type of start.
 
         * Start from cycle point or task is not valid for a restart.
         * Ignore initial point (etc.) is not valid for a new run.
