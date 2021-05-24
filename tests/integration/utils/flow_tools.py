@@ -23,11 +23,11 @@ Use the fixtures provided in the conftest instead.
 
 import asyncio
 from async_timeout import timeout
-from async_generator import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 import logging
 from pathlib import Path
 import pytest
-from typing import Optional
+from typing import Any, Optional
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
@@ -54,13 +54,24 @@ def _make_flow(run_dir, test_dir, conf, name=None):
     return reg
 
 
-def _make_scheduler(reg, **opts):
+@contextmanager
+def _make_scheduler():
     """Return a scheduler object for a flow registration."""
-    # This allows paused_start to be overriden:
-    opts = {'paused_start': True, **opts}
-    options = RunOptions(**opts)
-    # create workflow
-    return Scheduler(reg, options)
+    schd: Scheduler = None  # type: ignore
+
+    def __make_scheduler(reg: str, **opts: Any) -> Scheduler:
+        # This allows paused_start to be overriden:
+        opts = {'paused_start': True, **opts}
+        options = RunOptions(**opts)
+        # create workflow
+        nonlocal schd
+        schd = Scheduler(reg, options)
+        return schd
+
+    yield __make_scheduler
+    # Teardown
+    if hasattr(schd, 'workflow_db_mgr'):
+        schd.workflow_db_mgr.on_workflow_shutdown()
 
 
 @asynccontextmanager

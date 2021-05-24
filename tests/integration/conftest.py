@@ -18,11 +18,10 @@
 import asyncio
 from functools import partial
 from pathlib import Path
+import pytest
 import re
 from shutil import rmtree
 from typing import List, TYPE_CHECKING
-
-import pytest
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.pathutil import get_workflow_run_dir
@@ -68,10 +67,10 @@ def pytest_runtest_makereport(item, call):
     item.module._module_outcomes = _module_outcomes
 
 
-def _pytest_passed(request):
+def _pytest_passed(request: pytest.FixtureRequest) -> bool:
     """Returns True if the test(s) a fixture was used in passed."""
     if hasattr(request.node, '_function_outcome'):
-        return request.node._function_outcome in {'passed', 'skipped'}
+        return request.node._function_outcome.outcome in {'passed', 'skipped'}
     return all((
         report.outcome in {'passed', 'skipped'}
         for report in request.node.obj._module_outcomes.values()
@@ -105,7 +104,7 @@ def mod_test_dir(request, ses_test_dir):
     yield path
     if _pytest_passed(request):
         # test passed -> remove all files
-        rmtree(path, ignore_errors=True)
+        rmtree(path, ignore_errors=False)
     else:
         # test failed -> remove the test dir if empty
         _rm_if_empty(path)
@@ -119,7 +118,7 @@ def test_dir(request, mod_test_dir):
     yield path
     if _pytest_passed(request):
         # test passed -> remove all files
-        rmtree(path, ignore_errors=True)
+        rmtree(path, ignore_errors=False)
     else:
         # test failed -> remove the test dir if empty
         _rm_if_empty(path)
@@ -139,14 +138,24 @@ def flow(run_dir, test_dir):
 
 @pytest.fixture(scope='module')
 def mod_scheduler():
-    """Return a scheduler object for a flow."""
-    return _make_scheduler
+    """Return a Scheduler object for a flow.
+
+    Usage: see scheduler() below
+    """
+    with _make_scheduler() as _scheduler:
+        yield _scheduler
 
 
 @pytest.fixture
 def scheduler():
-    """Return a scheduler object for a flow."""
-    return _make_scheduler
+    """Return a Scheduler object for a flow.
+
+    Args:
+        reg (str): Workflow name.
+        **opts (Any): Options to be passed to the Scheduler.
+    """
+    with _make_scheduler() as _scheduler:
+        yield _scheduler
 
 
 @pytest.fixture(scope='module')

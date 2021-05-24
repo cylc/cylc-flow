@@ -25,10 +25,9 @@ This module provides the logic to:
 
 import json
 import os
+from pkg_resources import parse_version
 from shutil import copy, rmtree
 from tempfile import mkstemp
-
-from pkg_resources import parse_version
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -36,6 +35,9 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.exceptions import ServiceFileError
+
+
+PERM_PRIVATE = 0o600  # -rw-------
 
 
 class WorkflowDatabaseManager:
@@ -112,27 +114,33 @@ class WorkflowDatabaseManager:
             self.TABLE_ABS_OUTPUTS: []}
         self.db_updates_map = {}
 
-    def copy_pri_to_pub(self):
-        """Copy content of primary database file to public database file.
-
-        Use temporary file to ensure that we do not end up with a partial file.
-
-        """
-        temp_pub_db_file_name = None
+    def copy_pri_to_pub(self) -> None:
+        """Copy content of primary database file to public database file."""
         self.pub_dao.close()
+        # Use temporary file to ensure that we do not end up with a
+        # partial file.
+        # If an external connection is locking the old public db, it will
+        # still be connected to its inode, but should no longer affect future
+        # accesses (hopefully that process will soon recover to give up
+        # the lock).
+        temp_pub_db_fd, temp_pub_db_file_name = mkstemp(
+            prefix=self.pub_dao.DB_FILE_BASE_NAME,
+            dir=os.path.dirname(self.pub_dao.db_file_name)
+        )
+        os.close(temp_pub_db_fd)
         try:
-            self.pub_dao.conn = None  # reset connection
-            open(self.pub_dao.db_file_name, "a").close()  # touch
+            # Create the file if it didn't exist; this is done in the hope of
+            # addressing potential NFS file lag, we think
+            open(self.pub_dao.db_file_name, "a").close()
+            # Get default permissions level for public db:
             st_mode = os.stat(self.pub_dao.db_file_name).st_mode
-            temp_pub_db_file_name = mkstemp(
-                prefix=self.pub_dao.DB_FILE_BASE_NAME,
-                dir=os.path.dirname(self.pub_dao.db_file_name))[1]
+
             copy(self.pri_dao.db_file_name, temp_pub_db_file_name)
             os.rename(temp_pub_db_file_name, self.pub_dao.db_file_name)
             os.chmod(self.pub_dao.db_file_name, st_mode)
-        except (IOError, OSError):
-            if temp_pub_db_file_name:
-                os.unlink(temp_pub_db_file_name)
+        except OSError:
+            if os.path.exists(temp_pub_db_file_name):
+                os.remove(temp_pub_db_file_name)
             raise
 
     def delete_workflow_params(self, *keys):
@@ -195,7 +203,7 @@ class WorkflowDatabaseManager:
                 # Just in case the path is a directory!
                 rmtree(self.pri_path, ignore_errors=True)
         self.pri_dao = self.get_pri_dao()
-        os.chmod(self.pri_path, 0o600)
+        os.chmod(self.pri_path, PERM_PRIVATE)
         self.pub_dao = CylcWorkflowDAO(self.pub_path, is_public=True)
         self.copy_pri_to_pub()
 
