@@ -153,7 +153,7 @@ class WorkflowConfig:
         is_reload: bool = False,
         output_fname: Optional[str] = None,
         xtrigger_mgr: Optional[XtriggerManager] = None,
-        mem_log_func: Optional[Callable] = None,
+        mem_log_func: Optional[Callable[[str], None]] = None,
         run_dir: Optional[str] = None,
         log_dir: Optional[str] = None,
         work_dir: Optional[str] = None,
@@ -162,7 +162,7 @@ class WorkflowConfig:
 
         self.mem_log = mem_log_func
         if self.mem_log is None:
-            self.mem_log = lambda *a, **k: False
+            self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
         self.workflow = workflow  # workflow name
         self.fpath = fpath  # workflow definition
