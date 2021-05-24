@@ -18,13 +18,12 @@
 import asyncio
 from functools import lru_cache
 import os
-import re
 import sys
 
 from ansimarkup import parse as cparse
 
 from cylc.flow import LOG, RSYNC_LOG
-from cylc.flow.exceptions import ServiceFileError, WorkflowFilesError
+from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
@@ -35,7 +34,6 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.pathutil import (
-    get_workflow_run_dir,
     get_workflow_run_log_name,
     get_workflow_file_install_log_name)
 from cylc.flow.remote import _remote_cylc_cmd
@@ -275,7 +273,6 @@ def scheduler_cli(parser, options, reg):
     functionality.
 
     """
-
     workflow_files.validate_flow_name(reg)
     reg = os.path.normpath(reg)
     try:
