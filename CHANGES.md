@@ -78,6 +78,9 @@ workflow's public database file was not closed properly.
 
 ### Fixes
 
+[#4227](https://github.com/cylc/cylc-flow/pull/4227) - Better error messages
+when initial cycle point is not valid for the cycling type.
+
 [#4193](https://github.com/cylc/cylc-flow/pull/4193) - Standard `cylc install`
 now correctly installs from directories with a `.` in the name. Symlink dirs
 now correctly expands environment variables on the remote. Fixes minor cosmetic
