@@ -91,8 +91,8 @@ def test_check_exeption():
         TaskTrigger.get_trigger_name("Foo:Elephant")
 
 
-def test_get_parent_point(cycling_mode):
-    cycling_mode()
+def test_get_parent_point(cycling_type):
+    cycling_type()
 
     one = get_point('1')
     two = get_point('2')
@@ -112,8 +112,8 @@ def test_get_parent_point(cycling_mode):
     assert trigger.get_parent_point(one) == two
 
 
-def test_get_child_point(cycling_mode):
-    cycling_mode()
+def test_get_child_point(cycling_type):
+    cycling_type()
 
     zero = get_point('0')
     one = get_point('1')
@@ -143,8 +143,8 @@ def test_get_child_point(cycling_mode):
     assert trigger.get_child_point(one, None) == two
 
 
-def test_get_point(cycling_mode):
-    cycling_mode()
+def test_get_point(cycling_type):
+    cycling_type()
 
     one = get_point('1')
     two = get_point('2')
@@ -163,8 +163,8 @@ def test_get_point(cycling_mode):
     assert trigger.get_point(one) == one
 
 
-def test_str(cycling_mode):
-    cycling_mode()
+def test_str(cycling_type):
+    cycling_type()
 
     one = get_point('1')
     two = get_point('2')
