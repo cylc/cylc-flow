@@ -741,9 +741,8 @@ class WorkflowConfig:
         orig_icp = self.cfg['scheduling']['initial cycle point']
         if self.cycling_type == INTEGER_CYCLING_TYPE:
             if orig_icp is None:
-                icp = orig_icp = '1'
-            else:
-                icp = orig_icp
+                orig_icp = '1'
+            icp = orig_icp
         elif self.cycling_type == ISO8601_CYCLING_TYPE:
             if orig_icp is None:
                 raise WorkflowConfigError(
