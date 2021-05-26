@@ -18,13 +18,26 @@
 import logging
 from optparse import OptionParser, OptionConflictError, Values, Option
 import os
+import re
+from ansimarkup import parse as cparse
 import sys
 from typing import Any, Dict, Optional, List
 
 from cylc.flow import LOG, RSYNC_LOG
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.terminal import format_shell_examples
+
+
+def format_shell_examples(string):
+    """Put comments in the terminal "dimished" colour."""
+    return cparse(
+        re.sub(
+            r'^(\s*(?:\$[^#]+)?)(#.*)$',
+            r'\1<dim>\2</dim>',
+            string,
+            flags=re.M
+        )
+    )
 
 
 def verbosity_to_opts(verb: int) -> List[str]:
