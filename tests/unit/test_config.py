@@ -263,7 +263,7 @@ def test_family_inheritance_and_quotes(
         (  # more non-integer ICP for integer cycling type
             {
                 'cycling type': loader.INTEGER_CYCLING_TYPE,
-                'initial cycle point': "now",
+                'initial cycle point': "20500808T0000Z",
                 'initial cycle point constraints': []
             },
             None,
