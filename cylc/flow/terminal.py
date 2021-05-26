@@ -35,6 +35,7 @@ from cylc.flow.exceptions import CylcError
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 # CLI exception message format
@@ -72,18 +73,6 @@ def centered(string, width=None):
         ' ' * int((width - len(line)) / 2)
         + line
         for line in string.splitlines()
-    )
-
-
-def format_shell_examples(string):
-    """Put comments in the terminal "dimished" colour."""
-    return cparse(
-        re.sub(
-            r'^(\s*(?:\$[^#]+)?)(#.*)$',
-            r'\1<dim>\2</dim>',
-            string,
-            flags=re.M
-        )
     )
 
 
@@ -211,12 +200,9 @@ def parse_reg(arg: str):
         workflow_dir = get_workflow_run_dir(arg)
     else:
         workflow_dir = arg
-    run_number = re.search(
+    run_number = re.search(  #type: ignore
         r'(?:run)(\d*$)',
         os.readlink(workflow_dir)).group(1)
-    # importing here to counter circular dependancy errors.
-    from cylc.flow.workflow_files import WorkflowFiles
-
     return arg.replace(WorkflowFiles.RUN_N, f'run{run_number}')
 
 
@@ -242,8 +228,6 @@ def cli_function(parser_function=None, **parser_kwargs):
             wrapped_args, wrapped_kwargs = tuple(), {}
             # should we use colour?
             if parser_function:
-                # importing here to counter circular dependancy errors.
-                from cylc.flow.workflow_files import WorkflowFiles
                 parser = parser_function()
                 opts, args = parser_function().parse_args(
                     list(api_args),

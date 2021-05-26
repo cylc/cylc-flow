@@ -27,11 +27,9 @@ from colorama import init as color_init
 import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
+from cylc.flow.option_parsers import format_shell_examples
 from cylc.flow.scripts import cylc_header
-from cylc.flow.terminal import (
-    format_shell_examples,
-    print_contents
-)
+from cylc.flow.terminal import print_contents
 
 
 def get_version(long=False):
