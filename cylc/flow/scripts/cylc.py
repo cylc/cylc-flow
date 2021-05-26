@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc main entry point"""
 
+import argparse
 from contextlib import contextmanager
 import os
 import sys
 from pathlib import Path
 
 from ansimarkup import parse as cparse
-import click
 from colorama import init as color_init
 import pkg_resources
 
@@ -188,13 +188,9 @@ def match_command(command):
     Returns:
         string - The matched command.
 
-    Raises:
-        click.ClickException:
-            In the event that there is no matching command.
-
     Exits:
         1:
-            In the event that the input is ambiguous.
+            If the number of command matches != 1
 
     """
     possible_cmds = {
@@ -212,12 +208,14 @@ def match_command(command):
         }
     }
     if len(possible_cmds) == 0:
-        raise click.ClickException(
+        print(
             f"cylc {command}: unknown utility. Abort.\n"
-            'Type "cylc help all" for a list of utilities.'
+            'Type "cylc help all" for a list of utilities.',
+            file=sys.stderr
         )
+        sys.exit(1)
     elif len(possible_cmds) > 1:
-        click.echo(
+        print(
             "cylc {}: is ambiguous for:\n{}".format(
                 command,
                 "\n".join(
@@ -227,7 +225,7 @@ def match_command(command):
                     ]
                 ),
             ),
-            err=True,
+            file=sys.stderr,
         )
         sys.exit(1)
     else:
@@ -333,7 +331,7 @@ def cli_help():
 
 def cli_version(long_fmt=False):
     """Wrapper for get_version."""
-    click.echo(get_version(long_fmt))
+    print(get_version(long_fmt))
     if long_fmt:
         list_plugins()
     sys.exit(0)
@@ -477,14 +475,28 @@ def pycoverage(cmd_args):
                 )
 
 
-@click.command(context_settings={'ignore_unknown_options': True})
-@click.option("--help", "-h", "help_", is_flag=True, is_eager=True)
-@click.option("--version", "-V", is_flag=True, is_eager=True)
-@click.argument("cmd-args", nargs=-1)
-def main(cmd_args, version, help_):
+def get_arg_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        '--help', '-h',
+        action='store_true',
+        default=False,
+        dest='help_'
+    )
+    parser.add_argument(
+        '--version', '-V',
+        action='store_true',
+        default=False,
+        dest='version'
+    )
+    return parser
+
+
+def main():
+    opts, cmd_args = get_arg_parser().parse_known_args()
     with pycoverage(cmd_args):
         if not cmd_args:
-            if version:
+            if opts.version:
                 cli_version()
             else:
                 cli_help()
@@ -496,7 +508,7 @@ def main(cmd_args, version, help_):
                 cli_version("--long" in cmd_args)
 
             if command == "help":
-                help_ = True
+                opts.help_ = True
                 if not len(cmd_args):
                     cli_help()
                 elif cmd_args == ['all']:
@@ -522,24 +534,9 @@ def main(cmd_args, version, help_):
             if command not in COMMANDS:
                 # check if this is a command abbreviation or exit
                 command = match_command(command)
-
-            if command == "jobs-submit":
-                if len(cmd_args) > 1:
-                    for arg in cmd_args:
-                        if not arg.startswith("-"):
-                            cmd_args.insert(cmd_args.index(arg) + 1, "--")
-                            break
-            elif command == "message":
-                if cmd_args:
-                    if cmd_args[0] in ['-s', '--severity', '-p', '--priority']:
-                        dd_index = 2
-                    else:
-                        dd_index = 0
-                    cmd_args.insert(dd_index, "--")
-
-            if help_:
+            if opts.help_:
                 execute_cmd(command, "--help")
             else:
-                if version:
+                if opts.version:
                     cmd_args.append("--version")
                 execute_cmd(command, *cmd_args)
