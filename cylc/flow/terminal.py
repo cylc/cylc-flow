@@ -200,7 +200,7 @@ def parse_reg(arg: str):
         workflow_dir = get_workflow_run_dir(arg)
     else:
         workflow_dir = arg
-    run_number = re.search(  #type: ignore
+    run_number = re.search(  # type: ignore
         r'(?:run)(\d*$)',
         os.readlink(workflow_dir)).group(1)
     return arg.replace(WorkflowFiles.RUN_N, f'run{run_number}')
