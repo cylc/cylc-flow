@@ -41,7 +41,7 @@ grep_ok \
 
 # Check that host = `hostname` is correctly evaluated
 grep_ok \
-    'host_subshell_backticks.1:.*`hostname` evaluated as localhost' \
+    "host_subshell_backticks.1:.*\`hostname\` evaluated as localhost" \
     "${logfile}"
 
 # Check that platform = $(echo "improbable platform name") correctly evaluated
