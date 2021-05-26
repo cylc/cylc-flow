@@ -23,8 +23,6 @@ from unittest.mock import Mock
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
-from cylc.flow.cycling.integer import CYCLER_TYPE_INTEGER
-from cylc.flow.cycling.iso8601 import CYCLER_TYPE_ISO8601
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
@@ -232,7 +230,7 @@ def test_family_inheritance_and_quotes(
     [
         (  # Lack of icp
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': None,
                 'initial cycle point constraints': []
             },
@@ -242,7 +240,7 @@ def test_family_inheritance_and_quotes(
         ),
         (  # Default icp for integer cycling type
             {
-                'cycling type': CYCLER_TYPE_INTEGER,
+                'cycling mode': 'integer',
                 'initial cycle point': None,
                 'initial cycle point constraints': []
             },
@@ -252,7 +250,7 @@ def test_family_inheritance_and_quotes(
         ),
         (  # non-integer ICP for integer cycling type
             {
-                'cycling type': loader.INTEGER_CYCLING_TYPE,
+                'cycling mode': 'integer',
                 'initial cycle point': "now",
                 'initial cycle point constraints': []
             },
@@ -262,7 +260,7 @@ def test_family_inheritance_and_quotes(
         ),
         (  # more non-integer ICP for integer cycling type
             {
-                'cycling type': loader.INTEGER_CYCLING_TYPE,
+                'cycling mode': 'integer',
                 'initial cycle point': "20500808T0000Z",
                 'initial cycle point constraints': []
             },
@@ -272,7 +270,7 @@ def test_family_inheritance_and_quotes(
         ),
         (  # non-ISO8601 ICP for ISO8601 cycling type
             {
-                'cycling type': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': '',
                 'initial cycle point': "1",
                 'initial cycle point constraints': []
             },
@@ -282,7 +280,7 @@ def test_family_inheritance_and_quotes(
         ),
         (  # "now"
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': 'now',
                 'initial cycle point constraints': []
             },
@@ -292,7 +290,7 @@ def test_family_inheritance_and_quotes(
         ),
         (  # Constraints
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2013',
                 'initial cycle point constraints': ['T00', 'T12']
             },
@@ -302,7 +300,7 @@ def test_family_inheritance_and_quotes(
         ),
         (  # Violated constraints
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2021-01-20',
                 'initial cycle point constraints': ['--01-19', '--01-21']
             },
@@ -330,10 +328,10 @@ def test_process_icp(
     """
     cycling_type(scheduling_cfg['cycling mode'], time_zone="+0530")
     mocked_config = Mock()
-    mocked_config.cycling_type = cycling_type(integer=int_cycling_type)
     mocked_config.cfg = {
         'scheduling': scheduling_cfg
     }
+    mocked_config.cycling_type = cycling_type(scheduling_cfg['cycling mode'], time_zone="+0530")
     mocked_config.options.icp = None
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
                         lambda: '20050102T0615+0530')
@@ -371,7 +369,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         startcp: The start cycle point given by cli option.
         expected: The expected startcp value that gets set.
     """
-    cycling_type(CYCLER_TYPE_ISO8601, time_zone="+0530")
+    cycling_type('', time_zone="+0530")
     mocked_config = Mock(initial_point='18990501T0000+0530')
     mocked_config.options.startcp = startcp
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
@@ -386,7 +384,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
     [
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2021',
                 'final cycle point': None,
                 'final cycle point constraints': []
@@ -398,7 +396,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
                 'final cycle point constraints': []
@@ -410,7 +408,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
                 'final cycle point constraints': []
@@ -422,7 +420,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '+P4D',
                 'final cycle point constraints': []
@@ -434,7 +432,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '---04',
                 'final cycle point constraints': []
@@ -447,7 +445,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_INTEGER,
+                'cycling mode': 'integer',
                 'initial cycle point': '1',
                 'final cycle point': '4',
                 'final cycle point constraints': []
@@ -459,7 +457,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_INTEGER,
+                'cycling mode': 'integer',
                 'initial cycle point': '1',
                 'final cycle point': '+P2',
                 'final cycle point constraints': []
@@ -471,7 +469,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2013',
                 'final cycle point': '2009',
                 'final cycle point constraints': []
@@ -485,7 +483,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2013',
                 'final cycle point': '-PT1S',
                 'final cycle point constraints': []
@@ -499,7 +497,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2013',
                 'final cycle point': '2021',
                 'final cycle point constraints': ['T00', 'T12']
@@ -511,7 +509,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2013',
                 'final cycle point': '2021-01-19',
                 'final cycle point constraints': ['--01-19', '--01-21']
@@ -523,7 +521,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling type': CYCLER_TYPE_ISO8601,
+                'cycling mode': '',
                 'initial cycle point': '2013',
                 'final cycle point': '2021',
                 'final cycle point constraints': []
@@ -585,7 +583,7 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
                 'graph': {'R1': 'foo'}
             },
             {
-                'cycling mode': CYCLER_TYPE_INTEGER,
+                'cycling mode': 'integer',
                 'initial cycle point': '1',
                 'final cycle point': '1',
                 'graph': {'R1': 'foo'}
@@ -595,11 +593,11 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
         ),
         pytest.param(
             {
-                'cycling mode': "gregorian",
+                'cycling mode': "",
                 'graph': {'R1': 'foo'}
             },
             {
-                'cycling mode': "gregorian",
+                'cycling mode': "",
                 'graph': {'R1': 'foo'}
             },
             None,
@@ -802,31 +800,30 @@ def test_valid_rsync_includes_returns_correct_list(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'ctype, runahead_limit, valid',
+    'cycling_mode, runahead_limit, valid',
     [
-        (CYCLER_TYPE_INTEGER, 'P14', True),
-        (CYCLER_TYPE_ISO8601, 'P14', True),
-        (CYCLER_TYPE_ISO8601, 'PT12H', True),
-        (CYCLER_TYPE_ISO8601, 'P7D', True),
-        (CYCLER_TYPE_ISO8601, 'P2W', True),
-        (CYCLER_TYPE_ISO8601, '4', True),
+        ('integer', 'P14', True),
+        ('', 'P14', True),
+        ('', 'PT12H', True),
+        ('', 'P7D', True),
+        ('', 'P2W', True),
+        ('', '4', True),
 
-        (CYCLER_TYPE_INTEGER, 'PT12H', False),
-        (CYCLER_TYPE_INTEGER, 'P7D', False),
-        (CYCLER_TYPE_INTEGER, '4', False),
-        (CYCLER_TYPE_ISO8601, '', False),
-        (CYCLER_TYPE_ISO8601, 'asdf', False)
+        ('integer', 'PT12H', False),
+        ('integer', 'P7D', False),
+        ('integer', '4', False),
+        ('', '', False),
+        ('', 'asdf', False)
     ]
 )
 def test_process_runahead_limit(
-    ctype: str, runahead_limit: str, valid: bool,
+    cycling_mode: str, runahead_limit: str, valid: bool,
     cycling_type: Callable
 ) -> None:
-    cycling_type(ctype)
-    mock_config = Mock(cycling_type=ctype)
+    mock_config = Mock(cycling_type=cycling_type(cycling_mode))
     mock_config.cfg = {
         'scheduling': {
-            'cycling type': ctype,
+            'cycling mode': cycling_mode,
             'runahead limit': runahead_limit
         }
     }

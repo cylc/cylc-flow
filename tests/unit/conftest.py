@@ -56,22 +56,27 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def cycling_type(monkeypatch: pytest.MonkeyPatch) -> str:
-    """Set the Cylc cycling type.
+def cycling_type(monkeypatch: pytest.MonkeyPatch):
+    """Initialize the cycling type according to cycling mode.
     Args:
-        type: The cycling type.
+        mode: The cycling mode.
         time_zone: If using ISO8601/datetime cycling type, you can specify a
             custom time zone to use.
     """
     def _cycling_type(
-        ctype: str = INTEGER_CYCLING_TYPE, time_zone: Optional[str] = None
-    ) -> None:
+        mode: str = 'integer', time_zone: Optional[str] = None
+    ) -> str:
+        if mode == 'integer':
+            ctype = INTEGER_CYCLING_TYPE
+        else:
+            ctype = ISO8601_CYCLING_TYPE
         class _DefaultCycler:
             TYPE = ctype
         monkeypatch.setattr(
             'cylc.flow.cycling.loader.DefaultCycler', _DefaultCycler)
         if ctype == ISO8601_CYCLING_TYPE:
             iso8601_init(time_zone=time_zone)
+        return ctype
     return _cycling_type
 
 
