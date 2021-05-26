@@ -4,7 +4,6 @@ channels:
 dependencies:
   - aiofiles >=0.7.0,<0.8.0
   - ansimarkup >=1.0.0
-  - click >=7.0
   - colorama >=0.4,<0.5
   - cryptography
   - graphene >=2.1,<3
