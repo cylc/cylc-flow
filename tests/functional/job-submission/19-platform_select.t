@@ -17,62 +17,37 @@
 #-------------------------------------------------------------------------------
 # Test recovery of a failed host select command for a group of tasks.
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 5
 
 create_test_global_config "
 [platforms]
     [[test platform]]
-        hosts = hostname
-
-    [[improbable platform name]]
         hosts = localhost
-        install target = localhost
 "
 
 install_workflow "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-run_fail "${TEST_NAME_BASE}-run" \
+run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-declare -A GREP_TESTS
+logfile="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
-# Check that we are warned that platform check will not occur until job-submit
-errname='warn cannot check at validate'
-GREP_TESTS["${errname}"]="""
-    WARNING - Cannot attempt check .*platform_subshell.*\$(echo \"improbable platform name\")
-"""
 
-errname="host subshell eval ok"
 # Check that host = $(hostname) is correctly evaluated
-GREP_TESTS["${errname}"]="""
-    DEBUG.*platform_subshell.1.*evaluated as improbable platform name
-"""
+grep_ok \
+    "platform_subshell.1.*evaluated as improbable platform name" \
+    "${logfile}"
 
 # Check that host = `hostname` is correctly evaluated
-errname="host subshell backticks eval ok"
-# shellcheck disable=SC2006
-GREP_TESTS["${errname}"]="""
-    DEBUG.*host_subshell_backticks.1:.*`hostname` evaluated as localhost
-"""
+grep_ok \
+    "host_subshell_backticks.1:.*\`hostname\` evaluated as localhost" \
+    "${logfile}"
 
 # Check that platform = $(echo "improbable platform name") correctly evaluated
-errname="platform subshell eval ok"
-GREP_TESTS["${errname}"]="""
-    DEBUG.*platform_subshell.1:.*evaluated as improbable platform name
-"""
-
-errname="fail if platform expression in backticks"
-# shellcheck disable=SC2006,SC2116
-GREP_TESTS["${errname}"]="""
-    ERROR - PlatformLookupError.*\"`echo \"improbable platform name\"`\".*
-"""
-
-for testname in "${!GREP_TESTS[@]}"; do
-    # Symlink to get a better test name from grep_ok
-    ln -s "${WORKFLOW_RUN_DIR}/log/workflow/log" "$testname"
-    grep_ok "${GREP_TESTS[$testname]}" "$testname"
-done
+grep_ok \
+    "platform_subshell.1:.*evaluated as improbable platform name" \
+    "${logfile}"
 
 purge
 exit

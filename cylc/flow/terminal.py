@@ -34,6 +34,8 @@ import cylc.flow.flags
 from cylc.flow.exceptions import CylcError
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 # CLI exception message format
@@ -71,18 +73,6 @@ def centered(string, width=None):
         ' ' * int((width - len(line)) / 2)
         + line
         for line in string.splitlines()
-    )
-
-
-def format_shell_examples(string):
-    """Put comments in the terminal "dimished" colour."""
-    return cparse(
-        re.sub(
-            r'^(\s*(?:\$[^#]+)?)(#.*)$',
-            r'\1<dim>\2</dim>',
-            string,
-            flags=re.M
-        )
     )
 
 
@@ -199,6 +189,23 @@ def parse_dirty_json(stdout):
     raise ValueError(orig)
 
 
+def parse_reg(arg: str):
+    """Replace runN with true reg name.
+
+    Args:
+        arg (str): flow as entered by user on cli e.g. myflow/runN
+    """
+    arg = arg.rstrip('/')
+    if not arg.startswith(get_workflow_run_dir('')):
+        workflow_dir = get_workflow_run_dir(arg)
+    else:
+        workflow_dir = arg
+    run_number = re.search(  # type: ignore
+        r'(?:run)(\d*$)',
+        os.readlink(workflow_dir)).group(1)
+    return arg.replace(WorkflowFiles.RUN_N, f'run{run_number}')
+
+
 def cli_function(parser_function=None, **parser_kwargs):
     """Decorator for CLI entry points.
 
@@ -226,6 +233,12 @@ def cli_function(parser_function=None, **parser_kwargs):
                     list(api_args),
                     **parser_kwargs
                 )
+                # Ensure runN args are replaced with actual run number.
+                endings = (WorkflowFiles.RUN_N, f'{WorkflowFiles.RUN_N}/')
+                args = [
+                    parse_reg(cli_arg) if cli_arg.endswith(endings)
+                    else cli_arg for cli_arg in args
+                ]
                 use_color = (
                     hasattr(opts, 'color')
                     and (
