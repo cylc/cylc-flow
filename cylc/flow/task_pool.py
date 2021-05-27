@@ -28,7 +28,6 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
-from cylc.flow.parsec.OrderedDict import OrderedDict
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
