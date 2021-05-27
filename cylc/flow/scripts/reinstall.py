@@ -38,9 +38,9 @@ Examples:
 """
 
 from pathlib import Path
-import pkg_resources
 from typing import Optional, TYPE_CHECKING
 
+from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
@@ -86,14 +86,14 @@ def get_option_parser():
             dest="defines"
         )
         parser.add_option(
-            "--define-workflow", "--define-flow", '-S',
+            "--rose-template-variable", '-S',
             help=(
                 "As `--define`, but with an implicit `[SECTION]` for "
                 "workflow variables."
             ),
             action="append",
             default=[],
-            dest="define_workflows"
+            dest="rose_template_vars"
         )
         parser.add_option(
             "--clear-rose-install-options",
@@ -138,7 +138,7 @@ def main(
             f'Restore the source or modify the "{source_path}"'
             ' symlink to continue.'
         )
-    for entry_point in pkg_resources.iter_entry_points(
+    for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
@@ -159,7 +159,7 @@ def main(
         dry_run=False  # TODO: ready for dry run implementation
     )
 
-    for entry_point in pkg_resources.iter_entry_points(
+    for entry_point in iter_entry_points(
         'cylc.post_install'
     ):
         try:

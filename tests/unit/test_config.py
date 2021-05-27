@@ -14,88 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 from pathlib import Path
 import pytest
 import logging
 from unittest.mock import Mock
-from tempfile import NamedTemporaryFile
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling import iso8601, loader
+from cylc.flow.cycling import loader
+from cylc.flow.cycling.integer import CYCLER_TYPE_INTEGER
+from cylc.flow.cycling.iso8601 import CYCLER_TYPE_ISO8601
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 Fixture = Any
-
-
-def get_test_inheritance_quotes():
-    """Provide test data for test_family_inheritance_and_quotes."""
-    return [
-        # first case, second family name surrounded by double quotes
-        b'''
-[scheduler]
-    allow implicit tasks = True
-[task parameters]
-    major = 1..5
-    minor = 10..20
-[scheduling]
-    [[graph]]
-        R1 = """hello => MAINFAM<major, minor>
-                hello => SOMEFAM
-        """
-[runtime]
-    [[root]]
-        script = true
-    [[MAINFAM<major, minor>]]
-    [[SOMEFAM]]
-    [[ goodbye_0<major, minor> ]]
-        inherit = 'MAINFAM<major, minor>', "SOMEFAM"
-        ''',
-        # second case, second family surrounded by single quotes
-        b'''
-[scheduler]
-    allow implicit tasks = True
-[task parameters]
-    major = 1..5
-    minor = 10..20
-[scheduling]
-    [[graph]]
-        R1 = """hello => MAINFAM<major, minor>
-                hello => SOMEFAM
-        """
-[runtime]
-    [[root]]
-        script = true
-    [[MAINFAM<major, minor>]]
-    [[SOMEFAM]]
-    [[ goodbye_0<major, minor> ]]
-        inherit = 'MAINFAM<major, minor>', 'SOMEFAM'
-        ''',
-        # third case, second family name without quotes
-        b'''
-[scheduler]
-    allow implicit tasks = True
-[task parameters]
-    major = 1..5
-    minor = 10..20
-[scheduling]
-    [[graph]]
-        R1 = """hello => MAINFAM<major, minor>
-                hello => SOMEFAM
-        """
-[runtime]
-    [[root]]
-        script = true
-    [[MAINFAM<major, minor>]]
-    [[SOMEFAM]]
-    [[ goodbye_0<major, minor> ]]
-        inherit = 'MAINFAM<major, minor>', SOMEFAM
-        '''
-    ]
 
 
 class TestWorkflowConfig:
@@ -232,39 +167,64 @@ class TestWorkflowConfig:
             )
         assert "callable" in str(excinfo.value)
 
-    def test_family_inheritance_and_quotes(self, mock_glbl_cfg):
-        """Test that inheritance does not ignore items, if not all quoted.
 
-        For example:
+@pytest.mark.parametrize(
+    'fam_txt',
+    [pytest.param('"SOMEFAM"', id="double quoted"),
+     pytest.param('\'SOMEFAM\'', id="single quoted"),
+     pytest.param('SOMEFAM', id="unquoted")]
+)
+def test_family_inheritance_and_quotes(
+    fam_txt: str,
+    mock_glbl_cfg: Callable, tmp_path: Path
+) -> None:
+    """Test that inheritance does not ignore items, if not all quoted.
 
-            inherit = 'MAINFAM<major, minor>', SOMEFAM
-            inherit = 'BIGFAM', SOMEFAM
+    For example:
 
-        See bug #2700 for more/
-        """
-        mock_glbl_cfg(
-            'cylc.flow.platforms.glbl_cfg',
-            '''
-            [platforms]
-                [[localhost]]
-                    hosts = localhost
-            '''
-        )
-        template_vars = {}
-        for content in get_test_inheritance_quotes():
-            with NamedTemporaryFile() as tf:
-                tf.write(content)
-                tf.flush()
-                config = WorkflowConfig(
-                    'test',
-                    tf.name,
-                    template_vars=template_vars,
-                    options=Mock(spec=[]))
-                assert 'goodbye_0_major1_minor10' in \
-                       (config.runtime['descendants']
-                        ['MAINFAM_major1_minor10'])
-                assert 'goodbye_0_major1_minor10' in \
-                       config.runtime['descendants']['SOMEFAM']
+        inherit = 'MAINFAM<major, minor>', SOMEFAM
+        inherit = 'BIGFAM', SOMEFAM
+
+    See bug #2700 for more/
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[localhost]]
+                hosts = localhost
+        '''
+    )
+    cfg = f'''
+        [scheduler]
+            allow implicit tasks = True
+        [task parameters]
+            major = 1..5
+            minor = 10..20
+        [scheduling]
+            [[graph]]
+                R1 = """hello => MAINFAM<major, minor>
+                        hello => SOMEFAM"""
+        [runtime]
+            [[root]]
+                script = true
+            [[MAINFAM<major, minor>]]
+            [[SOMEFAM]]
+            [[ goodbye_0<major, minor> ]]
+                inherit = 'MAINFAM<major, minor>', {fam_txt}
+    '''
+    file_path = tmp_path / 'thing.cylc'
+    file_path.write_text(cfg)
+    config = WorkflowConfig(
+        'test',
+        str(file_path),
+        template_vars={},
+        options=Mock(spec=[])
+    )
+    assert ('goodbye_0_major1_minor10' in
+            config.runtime['descendants']['MAINFAM_major1_minor10'])
+    assert ('goodbye_0_major1_minor10' in
+            config.runtime['descendants']['SOMEFAM'])
 
 
 @pytest.mark.parametrize(
@@ -272,7 +232,7 @@ class TestWorkflowConfig:
     [
         (  # Lack of icp
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': None,
                 'initial cycle point constraints': []
             },
@@ -282,7 +242,7 @@ class TestWorkflowConfig:
         ),
         (  # Default icp for integer cycling mode
             {
-                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_INTEGER,
                 'initial cycle point': None,
                 'initial cycle point constraints': []
             },
@@ -292,7 +252,7 @@ class TestWorkflowConfig:
         ),
         (  # "now"
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': 'now',
                 'initial cycle point constraints': []
             },
@@ -302,7 +262,7 @@ class TestWorkflowConfig:
         ),
         (  # Constraints
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2013',
                 'initial cycle point constraints': ['T00', 'T12']
             },
@@ -312,7 +272,7 @@ class TestWorkflowConfig:
         ),
         (  # Violated constraints
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2021-01-20',
                 'initial cycle point constraints': ['--01-19', '--01-21']
             },
@@ -338,11 +298,7 @@ def test_process_icp(
             (this gets stored in the workflow DB).
         expected_err: Exception class expected to be raised plus the message.
     """
-    int_cycling_mode = True
-    if scheduling_cfg['cycling mode'] == loader.ISO8601_CYCLING_TYPE:
-        int_cycling_mode = False
-        iso8601.init(time_zone="+0530")
-    cycling_mode(integer=int_cycling_mode)
+    cycling_mode(scheduling_cfg['cycling mode'], time_zone="+0530")
     mocked_config = Mock()
     mocked_config.cfg = {
         'scheduling': scheduling_cfg
@@ -384,8 +340,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         startcp: The start cycle point given by cli option.
         expected: The expected startcp value that gets set.
     """
-    iso8601.init(time_zone="+0530")
-    cycling_mode(integer=False)
+    cycling_mode(CYCLER_TYPE_ISO8601, time_zone="+0530")
     mocked_config = Mock(initial_point='18990501T0000+0530')
     mocked_config.options.startcp = startcp
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
@@ -400,7 +355,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
     [
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2021',
                 'final cycle point': None,
                 'final cycle point constraints': []
@@ -412,7 +367,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
                 'final cycle point constraints': []
@@ -424,7 +379,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
                 'final cycle point constraints': []
@@ -436,7 +391,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '+P4D',
                 'final cycle point constraints': []
@@ -448,7 +403,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '---04',
                 'final cycle point constraints': []
@@ -461,7 +416,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_INTEGER,
                 'initial cycle point': '1',
                 'final cycle point': '4',
                 'final cycle point constraints': []
@@ -473,7 +428,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_INTEGER,
                 'initial cycle point': '1',
                 'final cycle point': '+P2',
                 'final cycle point constraints': []
@@ -485,7 +440,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2013',
                 'final cycle point': '2009',
                 'final cycle point constraints': []
@@ -499,7 +454,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2013',
                 'final cycle point': '-PT1S',
                 'final cycle point constraints': []
@@ -513,7 +468,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2013',
                 'final cycle point': '2021',
                 'final cycle point constraints': ['T00', 'T12']
@@ -525,7 +480,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2013',
                 'final cycle point': '2021-01-19',
                 'final cycle point constraints': ['--01-19', '--01-21']
@@ -537,7 +492,7 @@ def test_process_startcp(startcp: Optional[str], expected: str,
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'initial cycle point': '2013',
                 'final cycle point': '2021',
                 'final cycle point constraints': []
@@ -561,11 +516,7 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
         expected_fcp: The expected fcp value that gets set.
         expected_err: Exception class expected to be raised plus the message.
     """
-    if scheduling_cfg['cycling mode'] == loader.ISO8601_CYCLING_TYPE:
-        iso8601.init(time_zone="+0530")
-        cycling_mode(integer=False)
-    else:
-        cycling_mode(integer=True)
+    cycling_mode(scheduling_cfg['cycling mode'], time_zone='+0530')
     mocked_config = Mock(cycling_type=scheduling_cfg['cycling mode'])
     mocked_config.cfg = {
         'scheduling': scheduling_cfg
@@ -603,7 +554,7 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
                 'graph': {'R1': 'foo'}
             },
             {
-                'cycling mode': loader.INTEGER_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_INTEGER,
                 'initial cycle point': '1',
                 'final cycle point': '1',
                 'graph': {'R1': 'foo'}
@@ -613,11 +564,11 @@ def test_process_fcp(scheduling_cfg: dict, options_fcp: Optional[str],
         ),
         pytest.param(
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'graph': {'R1': 'foo'}
             },
             {
-                'cycling mode': loader.ISO8601_CYCLING_TYPE,
+                'cycling mode': CYCLER_TYPE_ISO8601,
                 'graph': {'R1': 'foo'}
             },
             None,
@@ -820,27 +771,34 @@ def test_valid_rsync_includes_returns_correct_list(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'cfg_scheduling, valid',
+    'cycling_type, runahead_limit, valid',
     [
-        ({'cycling mode': 'integer', 'runahead limit': 'P14'}, True),
-        ({'cycling mode': 'gregorian', 'runahead limit': 'P14'}, True),
-        ({'cycling mode': 'gregorian', 'runahead limit': 'PT12H'}, True),
-        ({'cycling mode': 'gregorian', 'runahead limit': 'P7D'}, True),
-        ({'cycling mode': 'gregorian', 'runahead limit': 'P2W'}, True),
-        ({'cycling mode': 'gregorian', 'runahead limit': '4'}, True),
+        (CYCLER_TYPE_INTEGER, 'P14', True),
+        (CYCLER_TYPE_ISO8601, 'P14', True),
+        (CYCLER_TYPE_ISO8601, 'PT12H', True),
+        (CYCLER_TYPE_ISO8601, 'P7D', True),
+        (CYCLER_TYPE_ISO8601, 'P2W', True),
+        (CYCLER_TYPE_ISO8601, '4', True),
 
-        ({'cycling mode': 'integer', 'runahead limit': 'PT12H'}, False),
-        ({'cycling mode': 'integer', 'runahead limit': 'P7D'}, False),
-        ({'cycling mode': 'integer', 'runahead limit': '4'}, False),
-        ({'cycling mode': 'gregorian', 'runahead limit': ''}, False),
-        ({'cycling mode': 'gregorian', 'runahead limit': 'asdf'}, False)
+        (CYCLER_TYPE_INTEGER, 'PT12H', False),
+        (CYCLER_TYPE_INTEGER, 'P7D', False),
+        (CYCLER_TYPE_INTEGER, '4', False),
+        (CYCLER_TYPE_ISO8601, '', False),
+        (CYCLER_TYPE_ISO8601, 'asdf', False)
     ]
 )
-def test_process_runahead_limit(cfg_scheduling, valid, cycling_mode):
-    is_integer_mode = cfg_scheduling['cycling mode'] == 'integer'
-    mock_config = Mock()
-    mock_config.cycling_type = cycling_mode(integer=is_integer_mode)
-    mock_config.cfg = {'scheduling': cfg_scheduling}
+def test_process_runahead_limit(
+    cycling_type: str, runahead_limit: str, valid: bool,
+    cycling_mode: Callable
+) -> None:
+    cycling_mode(cycling_type)
+    mock_config = Mock(cycling_type=cycling_type)
+    mock_config.cfg = {
+        'scheduling': {
+            'cycling type': cycling_type,
+            'runahead limit': runahead_limit
+        }
+    }
     if valid:
         WorkflowConfig.process_runahead_limit(mock_config)
     else:

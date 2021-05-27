@@ -88,6 +88,10 @@ class FileParseError(ParsecError):
         return msg
 
 
+class TemplateVarLanguageClash(FileParseError):
+    ...
+
+
 class EmPyError(FileParseError):
     """Wrapper class for EmPy exceptions."""
 

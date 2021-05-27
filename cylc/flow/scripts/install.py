@@ -23,8 +23,8 @@ Install a new workflow.
 The workflow can then be started, stopped, and targeted by name.
 
 Normal installation creates a directory "~/cylc-run/REG/", with a run
-directory "~/cylc-run/REG/run1" containing a "_cylc-install/source" symlink to
-the source directory.
+directory "~/cylc-run/REG/run1". A "_cylc-install/source" symlink to the source
+directory will be created in the REG directory.
 Any files or directories (excluding .git, .svn) from the source directory are
 copied to the new run directory.
 A ".service" directory will also be created and used for server authentication
@@ -69,10 +69,9 @@ multiple workflow run directories that link to the same workflow definition.
 
 """
 
-
-import pkg_resources
 from typing import Optional, TYPE_CHECKING
 
+from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import (
@@ -154,14 +153,14 @@ def get_option_parser():
             dest="defines"
         )
         parser.add_option(
-            "--define-workflow", "--define-flow", '-S',
+            "--rose-template-variable", '-S',
             help=(
                 "As `--define`, but with an implicit `[SECTION]` for "
                 "workflow variables."
             ),
             action="append",
             default=[],
-            dest="define_workflows"
+            dest="rose_template_vars"
         )
     except ImportError:
         pass
@@ -189,7 +188,7 @@ def install(
         source = search_install_source_dirs(reg)
     flow_name = opts.flow_name or reg
 
-    for entry_point in pkg_resources.iter_entry_points(
+    for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
@@ -215,7 +214,7 @@ def install(
         no_symlinks=opts.no_symlinks
     )
 
-    for entry_point in pkg_resources.iter_entry_points(
+    for entry_point in iter_entry_points(
         'cylc.post_install'
     ):
         try:

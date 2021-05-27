@@ -113,7 +113,7 @@ def send_messages(workflow, task_job, messages, event_time):
         pass
     except Exception:
         # Backward communication not possible
-        if cylc.flow.flags.debug:
+        if cylc.flow.flags.verbosity > 1:
             import traceback
             traceback.print_exc()
     else:
@@ -137,7 +137,7 @@ def _append_job_status_file(workflow, task_job, event_time, messages):
     try:
         job_status_file = open(job_log_name + '.status', 'a')
     except IOError:
-        if cylc.flow.flags.debug:
+        if cylc.flow.flags.verbosity > 1:
             import traceback
             traceback.print_exc()
         return
@@ -184,6 +184,6 @@ def _append_job_status_file(workflow, task_job, event_time, messages):
     try:
         job_status_file.close()
     except IOError:
-        if cylc.flow.flags.debug:
+        if cylc.flow.flags.verbosity > 1:
             import traceback
             traceback.print_exc()

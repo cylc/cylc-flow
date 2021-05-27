@@ -21,13 +21,14 @@ from fnmatch import fnmatchcase
 from string import ascii_letters
 import json
 from time import time
-from typing import Iterable, TYPE_CHECKING
+from typing import Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.parsec.OrderedDict import OrderedDict
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
@@ -55,7 +56,13 @@ from cylc.flow.platforms import get_platform
 from cylc.flow.task_queues.independent import IndepQueueManager
 
 if TYPE_CHECKING:
-    from cylc.flow.cycling import PointBase
+    from cylc.flow.config import WorkflowConfig
+    from cylc.flow.cycling import IntervalBase, PointBase
+    from cylc.flow.data_store_mgr import DataStoreMgr
+    from cylc.flow.task_events_mgr import TaskEventsManager
+    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+
+Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
 
 class FlowLabelMgr:
@@ -146,40 +153,46 @@ class TaskPool:
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
 
     def __init__(
-            self, config, workflow_db_mgr, task_events_mgr, data_store_mgr):
-        self.config = config
+        self,
+        config: 'WorkflowConfig',
+        workflow_db_mgr: 'WorkflowDatabaseManager',
+        task_events_mgr: 'TaskEventsManager',
+        data_store_mgr: 'DataStoreMgr'
+    ) -> None:
+
+        self.config: 'WorkflowConfig' = config
         self.stop_point = config.final_point
-        self.workflow_db_mgr = workflow_db_mgr
-        self.task_events_mgr = task_events_mgr
+        self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
+        self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
         # TODO this is ugly:
         self.task_events_mgr.spawn_func = self.spawn_on_output
-        self.data_store_mgr = data_store_mgr
+        self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
         self.flow_label_mgr = FlowLabelMgr()
 
         self.do_reload = False
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
-        self.max_future_offset = None
-        self._prev_runahead_base_point = None
-        self.max_num_active_cycle_points = (
+        self.max_future_offset: Optional['IntervalBase'] = None
+        self._prev_runahead_base_point: Optional['PointBase'] = None
+        self.max_num_active_cycle_points: int = (
             self.config.get_max_num_active_cycle_points())
-        self._prev_runahead_sequence_points = None
+        self._prev_runahead_sequence_points: Optional[List['PointBase']] = None
 
-        self.main_pool = {}
-        self.hidden_pool = {}
-        self.main_pool_list = []
-        self.hidden_pool_list = []
+        self.main_pool: Pool = {}
+        self.hidden_pool: Pool = {}
+        self.main_pool_list: List[TaskProxy] = []
+        self.hidden_pool_list: List[TaskProxy] = []
         self.main_pool_changed = False
         self.hidden_pool_changed = False
 
-        self.hold_point = None
-        self.abs_outputs_done = set()
+        self.hold_point: Optional['PointBase'] = None
+        self.abs_outputs_done: Set[Tuple[str, str, str]] = set()
 
-        self.stop_task_id = None
+        self.stop_task_id: Optional[str] = None
         self.stop_task_finished = False
         self.abort_task_failed = False
         self.expected_failed_tasks = self.config.get_expected_failed_tasks()
 
-        self.orphans = []
+        self.orphans: List[str] = []
         self.task_name_list = self.config.get_task_name_list()
         self.task_queue_mgr = IndepQueueManager(
             self.config.cfg['scheduling']['queues'],
@@ -559,7 +572,7 @@ class TaskPool:
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
 
-    def release_runahead_task(self, itask):
+    def release_runahead_task(self, itask: TaskProxy) -> None:
         """Release itask from runahead limiting.
 
         Also auto-spawn next instance if:
@@ -641,11 +654,11 @@ class TaskPool:
             LOG.debug("[%s] -%s", itask, msg)
             del itask
 
-    def get_all_tasks(self):
+    def get_all_tasks(self) -> List[TaskProxy]:
         """Return a list of all task proxies."""
         return self.get_hidden_tasks() + self.get_tasks()
 
-    def get_tasks(self):
+    def get_tasks(self) -> List[TaskProxy]:
         """Return a list of task proxies in the main pool."""
         if self.main_pool_changed:
             self.main_pool_changed = False
@@ -655,7 +668,7 @@ class TaskPool:
                     self.main_pool_list.append(itask)
         return self.main_pool_list
 
-    def get_hidden_tasks(self):
+    def get_hidden_tasks(self) -> List[TaskProxy]:
         """Return a list of task proxies in the hidden pool."""
         if self.hidden_pool_changed:
             self.hidden_pool_changed = False
@@ -1166,7 +1179,7 @@ class TaskPool:
         self._merge_flow_labels(itask, flow_label)
         return itask
 
-    def can_spawn(self, name, point):
+    def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if name.point is within various workflow limits."""
 
         if name not in self.config.get_task_name_list():
@@ -1190,8 +1203,14 @@ class TaskPool:
 
         return True
 
-    def spawn_task(self, name, point, flow_label=None, reflow=True,
-                   parent_id=None):
+    def spawn_task(
+        self,
+        name: str,
+        point: 'PointBase',
+        flow_label: Optional[str] = None,
+        reflow: bool = True,
+        parent_id: Optional[str] = None
+    ) -> Optional[TaskProxy]:
         """Spawn name.point and add to runahead pool. Return it, or None."""
         if not self.can_spawn(name, point):
             return None
@@ -1329,7 +1348,6 @@ class TaskPool:
                     name, point, flow_label, reflow=reflow)
                 itask.is_manual_submit = True
                 self.add_to_pool(itask, is_new=True)
-
         return n_warnings
 
     def sim_time_check(self, message_queue):
@@ -1412,19 +1430,21 @@ class TaskPool:
                 return True
         return False
 
-    def filter_task_proxies(self, items):
+    def filter_task_proxies(
+        self, items: Iterable[str]
+    ) -> Tuple[List[TaskProxy], List[str]]:
         """Return task proxies that match names, points, states in items.
 
-        Return (itasks, bad_items).
-        In the new form, the arguments should look like:
-        items -- a list of strings for matching task proxies, each with
-                 the general form name[.point][:state] or [point/]name[:state]
-                 where name is a glob-like pattern for matching a task name or
-                 a family name.
+        Args:
+            items: strings for matching task proxies, each with the
+            general form name[.point][:state] or [point/]name[:state]
+            where name is a glob-like pattern for matching a task name or
+            a family name.
 
+        Return (itasks, bad_items).
         """
-        itasks = []
-        bad_items = []
+        itasks: List[TaskProxy] = []
+        bad_items: List[str] = []
         if not items:
             itasks += self.get_all_tasks()
         else:
@@ -1491,8 +1511,13 @@ class TaskPool:
         self.flow_label_mgr.make_avail(to_prune)
 
     @staticmethod
-    def _parse_task_item(item):
+    def _parse_task_item(
+        item: str
+    ) -> Tuple[Optional[str], str, Optional[str]]:
         """Parse point/name:state or name.point:state syntax."""
+        point_str: Optional[str]
+        name_str: str
+        state_str: Optional[str]
         if ":" in item:
             head, state_str = item.rsplit(":", 1)
         else:

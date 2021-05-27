@@ -41,34 +41,34 @@ def parse_exclusion(expr):
         return remainder.strip(), exclusions
 
 
-class PointBase(object, metaclass=ABCMeta):
+class PointBase(metaclass=ABCMeta):
 
     """The abstract base class for single points in a cycler sequence.
 
     Points should be based around a string value.
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
-    They should also provide self.cmp_, self.sub, self.add, and
+    They should also provide self._cmp, self.sub, self.add, and
     self.eq methods which should behave as __cmp__, __sub__,
-    etc standard comparison methods. Note: "cmp_" not "cmp".
+    etc standard comparison methods. Note: "_cmp" not "cmp".
 
     Subclasses may also provide an overridden self.standardise
     method to reprocess their value into a standard form.
 
     """
 
-    _TYPE = None
-    _TYPE_SORT_KEY = None
-
     __slots__ = ('value')
 
+    @property
     @abstractmethod
-    def TYPE(self):
-        return self._TYPE
+    def TYPE(self) -> str:
+        """Cycling type of this point."""
 
+    @property
     @abstractmethod
-    def TYPE_SORT_KEY(self):
-        return self._TYPE_SORT_KEY
+    def TYPE_SORT_KEY(self) -> int:
+        """Used for comparison operations between different PointBase-derived
+        class instances."""
 
     def __init__(self, value):
         if not isinstance(value, str):
@@ -80,7 +80,8 @@ class PointBase(object, metaclass=ABCMeta):
         """Add other (interval) to self, returning a point."""
         pass
 
-    def cmp_(self, other):
+    @abstractmethod
+    def _cmp(self, other) -> int:
         """Compare self to other point, returning a 'cmp'-like result."""
         pass
 
@@ -107,15 +108,39 @@ class PointBase(object, metaclass=ABCMeta):
 
     __repr__ = __str__
 
-    def __cmp__(self, other):
+    def __cmp__(self, other: 'PointBase') -> int:
         # Compare to other point.
+        # TODO: refactor as __cmp__ not used in python3
         if other is None:
             return -1
+        if not isinstance(other, PointBase):
+            return NotImplemented
+        # Note: apparently we can compare different subclasses of PointBase:
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
             return 0
-        return self.cmp_(other)
+        return self._cmp(other)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__cmp__(other) == 0
+        return NotImplemented
+
+    def __lt__(self, other: 'PointBase') -> bool:
+        return self.__cmp__(other) == -1
+
+    def __le__(self, other: 'PointBase') -> bool:
+        return self.__cmp__(other) <= 0
+
+    def __gt__(self, other: 'PointBase') -> bool:
+        return self.__cmp__(other) == 1
+
+    def __ge__(self, other: 'PointBase') -> bool:
+        return self.__cmp__(other) >= 0
+
+    def __hash__(self) -> int:
+        return hash(self.value)
 
     def __sub__(self, other):
         # Subtract other (point or interval) from self.
@@ -130,21 +155,21 @@ class PointBase(object, metaclass=ABCMeta):
         return self.add(other)
 
 
-class IntervalBase(object, metaclass=ABCMeta):
+class IntervalBase(metaclass=ABCMeta):
 
     """An interval separating points in a cycler sequence.
 
     Intervals should be based around a string value.
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
-    They should also provide self.cmp_, self.sub, self.add,
+    They should also provide self._cmp, self.sub, self.add,
     self.__mul__, self.__abs__ methods which should
     behave as __cmp__, __sub__, etc standard comparison methods.
 
     They can also just override the provided comparison methods (such
     as __cmp__) instead.
 
-    Note: "cmp_" not "cmp", etc. They should also provide:
+    Note: "_cmp" not "cmp", etc. They should also provide:
      * self.get_null, which is a method to extract the null interval of
     this type.
      * self.get_null_offset, which is a method to extract a null offset
@@ -157,18 +182,18 @@ class IntervalBase(object, metaclass=ABCMeta):
 
     """
 
-    _TYPE = None
-    _TYPE_SORT_KEY = None
-
     __slots__ = ('value')
 
+    @property
     @abstractmethod
-    def TYPE(self):
-        return self._TYPE
+    def TYPE(self) -> str:
+        """Cycling type of this interval."""
 
+    @property
     @abstractmethod
-    def TYPE_SORT_KEY(self):
-        return self._TYPE_SORT_KEY
+    def TYPE_SORT_KEY(self) -> int:
+        """Used for comparison operations between different
+        IntervalBase-derived class instances."""
 
     @classmethod
     @abstractmethod
@@ -210,7 +235,7 @@ class IntervalBase(object, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def cmp_(self, other):
+    def _cmp(self, other):
         """Compare self to other (interval), returning a 'cmp'-like result."""
         pass
 
@@ -236,15 +261,39 @@ class IntervalBase(object, metaclass=ABCMeta):
             raise CyclerTypeError(self.TYPE, self, other.TYPE, other)
         return self.add(other)
 
-    def __cmp__(self, other):
+    def __cmp__(self, other: 'IntervalBase') -> int:
         # Compare self to other (interval).
+        # TODO: refactor as __cmp__ not used in python3
         if other is None:
             return -1
+        if not isinstance(other, IntervalBase):
+            return NotImplemented
+        # Note: apparently we can compare different subclasses of IntervalBase:
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:
             return 0
-        return self.cmp_(other)
+        return self._cmp(other)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, self.__class__):
+            return self.__cmp__(other) == 0
+        return NotImplemented
+
+    def __lt__(self, other: 'IntervalBase') -> bool:
+        return self.__cmp__(other) == -1
+
+    def __le__(self, other: 'IntervalBase') -> bool:
+        return self.__cmp__(other) <= 0
+
+    def __gt__(self, other: 'IntervalBase') -> bool:
+        return self.__cmp__(other) == 1
+
+    def __ge__(self, other: 'IntervalBase') -> bool:
+        return self.__cmp__(other) >= 0
+
+    def __hash__(self) -> int:
+        return hash(self.value)
 
     def __sub__(self, other):
         # Subtract other (interval or point) from self.
@@ -257,7 +306,7 @@ class IntervalBase(object, metaclass=ABCMeta):
         return self * -1
 
 
-class SequenceBase(object, metaclass=ABCMeta):
+class SequenceBase(metaclass=ABCMeta):
 
     """The abstract base class for cycler sequences.
 
@@ -278,18 +327,18 @@ class SequenceBase(object, metaclass=ABCMeta):
 
     """
 
-    _TYPE = None
-    _TYPE_SORT_KEY = None
-
     __slots__ = ()
 
+    @property
     @abstractmethod
-    def TYPE(self):
-        return self._TYPE
+    def TYPE(self) -> str:
+        """Cycling type of this sequence."""
 
+    @property
     @abstractmethod
-    def TYPE_SORT_KEY(self):
-        return self._TYPE_SORT_KEY
+    def TYPE_SORT_KEY(self) -> int:
+        """Used for comparison operations between different
+        SequenceBase-derived class instances."""
 
     @classmethod
     @abstractmethod  # Note: stacked decorator not strictly enforced in Py2.x
@@ -359,8 +408,12 @@ class SequenceBase(object, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         # Return True if other (sequence) is equal to self.
+        pass
+
+    @abstractmethod
+    def __hash__(self) -> int:
         pass
 
 
@@ -419,18 +472,3 @@ def cmp(self, other):
     if self < other:
         return -1
     return 1
-
-
-def cmp_to_rich(cls):
-    """Temporary solution which monkey patches rich comparisons."""
-    cls.__lt__ = lambda self, other: cls.__cmp__(self, other) == -1
-    cls.__le__ = lambda self, other: cls.__cmp__(self, other) <= 0
-    cls.__gt__ = lambda self, other: cls.__cmp__(self, other) == 1
-    cls.__ge__ = lambda self, other: cls.__cmp__(self, other) >= 0
-    cls.__eq__ = lambda self, other: cls.__cmp__(self, other) == 0
-    cls.__ne__ = lambda self, other: cls.__cmp__(self, other) != 0
-
-
-# TODO: replace __cmp__ infrastructure
-cmp_to_rich(PointBase)
-cmp_to_rich(IntervalBase)

@@ -38,7 +38,7 @@ init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
         R1 = foo => bar
 __FLOW__
 
-MSG='The filename "suite.rc" is deprecated in favour of "flow.cylc". Symlink created.'
+MSG='The filename "suite.rc" is deprecated in favour of "flow.cylc"'
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .
@@ -54,7 +54,7 @@ exists_ok "flow.cylc"
 
 TEST_NAME="flow.cylc-readlink"
 readlink "flow.cylc" > "${TEST_NAME}.out"
-cmp_ok "${TEST_NAME}.out" <<< "${WORKFLOW_RUN_DIR}/suite.rc"
+cmp_ok "${TEST_NAME}.out" <<< "suite.rc"
 
 INSTALL_LOG="$(find "${WORKFLOW_RUN_DIR}/log/install" -type f -name '*.log')"
 grep_ok "$MSG" "${INSTALL_LOG}"

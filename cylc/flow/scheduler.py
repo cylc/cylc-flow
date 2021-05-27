@@ -17,6 +17,7 @@
 
 import asyncio
 from collections import deque
+from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from dataclasses import dataclass
 import logging
 from optparse import Values
@@ -60,6 +61,7 @@ from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
@@ -406,7 +408,7 @@ class Scheduler:
         # point before setting self.is_restart as we couldn't tell if
         # we're restarting until now.
 
-        self.process_cycle_point_opts()
+        self._check_startup_opts()
 
         if self.is_restart:
             pri_dao = self.workflow_db_mgr.get_pri_dao()
@@ -456,11 +458,14 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
-            self.load_tasks_for_restart()
+            self._load_pool_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
+        elif self.options.starttask:
+            self._load_pool_from_tasks()
         else:
-            self.load_tasks_for_run()
+            self._load_pool_from_point()
+
         self.process_cylc_stop_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
@@ -623,25 +628,28 @@ class Scheduler:
             # note start_scheduler handles its own shutdown logic
             await self.start_scheduler()
 
-    def load_tasks_for_run(self):
-        """Load tasks for a new run.
+    def _load_pool_from_tasks(self):
+        """Load task pool with specified tasks, for a new run."""
+        LOG.info(f"Start task: {self.options.starttask}")
+        self.pool.force_trigger_tasks(self.options.starttask, True)
 
-        Iterate through all sequences to find the first instance of each task,
-        and add it to the pool if it has no parents.
+    def _load_pool_from_point(self):
+        """Load task pool for a cycle point, for a new run.
 
-        (Later on, tasks with parents will be spawned on-demand, and tasks with
+        Iterate through all sequences to find the first instance of each task.
+        Add it to the pool if it has no parents at or after the start point.
+
+        (Later on, tasks with parents will be spawned on demand, and tasks with
         no parents will be auto-spawned when their previous instances are
         released from runhead.)
 
         """
         if self.config.start_point is not None:
             start_type = "Warm" if self.options.startcp else "Cold"
-            LOG.info(f"{start_type} Start {self.config.start_point}")
-
-        task_list = self.config.get_task_name_list()
+            LOG.info(f"{start_type} start from {self.config.start_point}")
 
         flow_label = self.pool.flow_label_mgr.get_new_label()
-        for name in task_list:
+        for name in self.config.get_task_name_list():
             if self.config.start_point is None:
                 # No start cycle point at which to load cycling tasks.
                 continue
@@ -661,8 +669,8 @@ class Scheduler:
                 self.pool.add_to_pool(
                     TaskProxy(tdef, point, flow_label))
 
-    def load_tasks_for_restart(self):
-        """Load tasks for restart."""
+    def _load_pool_from_db(self):
+        """Load task pool from DB, for a restart."""
         if self.options.startcp:
             self.config.start_point = TaskID.get_standardised_point(
                 self.options.startcp)
@@ -766,48 +774,43 @@ class Scheduler:
         self.task_job_mgr.poll_task_jobs(
             self.workflow, to_poll_tasks)
 
-    def process_command_queue(self):
+    def process_command_queue(self) -> None:
         """Process queued commands."""
         qsize = self.command_queue.qsize()
-        if qsize > 0:
-            log_msg = 'Processing ' + str(qsize) + ' queued command(s)'
-        else:
+        if qsize <= 0:
             return
-
+        LOG.info(f"Processing {qsize} queued command(s)")
         while True:
             try:
                 name, args, kwargs = self.command_queue.get(False)
             except Empty:
                 break
             args_string = ', '.join(str(a) for a in args)
-            cmdstr = name + '(' + args_string
             kwargs_string = ', '.join(
-                ('%s=%s' % (key, value) for key, value in kwargs.items()))
-            if kwargs_string and args_string:
-                cmdstr += ', '
-            cmdstr += kwargs_string + ')'
-            log_msg += '\n+\t' + cmdstr
+                f"{key}={value}" for key, value in kwargs.items()
+            )
+            sep = ', ' if kwargs_string and args_string else ''
+            cmdstr = f"{name}({args_string}{sep}{kwargs_string})"
             try:
-                n_warnings = getattr(self, "command_%s" % name)(
+                n_warnings: Optional[int] = getattr(self, f'command_{name}')(
                     *args, **kwargs)
             except SchedulerStop:
-                LOG.info('Command succeeded: ' + cmdstr)
+                LOG.info(f"Command succeeded: {cmdstr}")
                 raise
             except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 LOG.warning(traceback.format_exc())
                 LOG.warning(str(exc))
-                LOG.warning('Command failed: ' + cmdstr)
+                LOG.warning(f"Command failed: {cmdstr}")
             else:
                 if n_warnings:
                     LOG.info(
                         'Command succeeded with %s warning(s): %s' %
                         (n_warnings, cmdstr))
                 else:
-                    LOG.info('Command succeeded: ' + cmdstr)
+                    LOG.info(f"Command succeeded: {cmdstr}")
                 self.is_updated = True
             self.command_queue.task_done()
-        LOG.info(log_msg)
 
     def info_get_graph_raw(self, cto, ctn, group_nodes=None,
                            ungroup_nodes=None,
@@ -929,8 +932,14 @@ class Scheduler:
             LOG.setLevel(int(lvl))
         except (TypeError, ValueError):
             return
-        cylc.flow.flags.verbose = bool(LOG.isEnabledFor(logging.INFO))
-        cylc.flow.flags.debug = bool(LOG.isEnabledFor(logging.DEBUG))
+        if lvl <= logging.DEBUG:
+            cylc.flow.flags.verbosity == 2
+        elif lvl < logging.INFO:
+            cylc.flow.flags.verbosity == 1
+        elif lvl == logging.INFO:
+            cylc.flow.flags.verbosity == 0
+        else:
+            cylc.flow.flags.verbosity == -1
         return True, 'OK'
 
     def command_remove_tasks(self, items):
@@ -1090,9 +1099,8 @@ class Scheduler:
 
         # Pass static cylc and workflow variables to job script generation code
         self.task_job_mgr.job_file_writer.set_workflow_env({
+            **verbosity_to_env(cylc.flow.flags.verbosity),
             'CYLC_UTC': str(get_utc_mode()),
-            'CYLC_DEBUG': str(cylc.flow.flags.debug).lower(),
-            'CYLC_VERBOSE': str(cylc.flow.flags.verbose).lower(),
             'CYLC_WORKFLOW_NAME': self.workflow,
             'CYLC_CYCLING_MODE': str(
                 self.config.cfg['scheduling']['cycling mode']
@@ -1610,7 +1618,7 @@ class Scheduler:
             exc.__suppress_context__ = True
             if isinstance(exc, CylcError):
                 LOG.error(f"{exc.__class__.__name__}: {exc}")
-                if cylc.flow.flags.debug:
+                if cylc.flow.flags.verbosity > 1:
                     LOG.exception(exc)
             else:
                 LOG.exception(exc)
@@ -1626,11 +1634,14 @@ class Scheduler:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
             LOG.error(f'Workflow shutting down - {reason}')
-        elif isinstance(reason, CylcError):
+        elif (
+            isinstance(reason, CylcError)
+            or isinstance(reason, TemplateVarLanguageClash)
+        ):
             LOG.error(
                 "Workflow shutting down - "
                 f"{reason.__class__.__name__}: {reason}")
-            if cylc.flow.flags.debug:
+            if cylc.flow.flags.verbosity > 1:
                 LOG.exception(reason)
         else:
             LOG.exception(reason)
@@ -1840,28 +1851,26 @@ class Scheduler:
         return self.workflow_event_handler.get_events_conf(
             self.config, key, default)
 
-    def process_cycle_point_opts(self) -> None:
-        """Check the values of --icp, --fcp, --startcp, --stopcp.
+    def _check_startup_opts(self) -> None:
+        """Abort if "cylc play" options are not consistent with type of start.
 
-        Reset the values to None if necessary:
-        * The value 'ignore' is not used in a first start.
-        * The opts --icp and --startcp cannot be used in a restart.
+        * Start from cycle point or task is not valid for a restart.
+        * Ignore initial point (etc.) is not valid for a new run.
         """
         if self.is_restart:
             for opt in ('icp', 'startcp'):
-                val = getattr(self.options, opt, None)
-                if val not in (None, 'ignore'):
-                    LOG.warning(
-                        f"Ignoring option: --{opt}={val}. The only valid "
-                        "value for a restart is 'ignore'.")
-                    setattr(self.options, opt, None)
+                if getattr(self.options, opt, None) not in (None, 'ignore'):
+                    raise SchedulerError(
+                        f"option --{opt} is not valid for restart.")
+            opt = 'starttask'
+            if getattr(self.options, opt, None) is not None:
+                raise SchedulerError(
+                    f"option --{opt} is not valid for restart.")
         else:
-            for opt in ('icp', 'fcp', 'startcp', 'stopcp'):
+            for opt in ('icp', 'fcp', 'startcp', 'stopcp', 'starttask'):
                 if getattr(self.options, opt, None) == 'ignore':
-                    LOG.warning(
-                        f"Ignoring option: --{opt}=ignore. The value cannot "
-                        "be 'ignore' unless restarting the workflow.")
-                    setattr(self.options, opt, None)
+                    raise SchedulerError(
+                        f"option --{opt}=ignore is only valid for restart.")
 
     def process_cylc_stop_point(self):
         """

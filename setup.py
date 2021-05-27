@@ -42,9 +42,8 @@ def find_version(*file_paths):
 
 
 install_requires = [
-    'aiofiles==0.5.*',
+    'aiofiles==0.7.*',
     'ansimarkup>=1.0.0',
-    'click>=7.0',
     'colorama>=0.4,<=1',
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
@@ -62,7 +61,6 @@ tests_require = [
     'coverage>=5.0.0',
     'flake8>=3.0.0',
     'mypy>=0.800',
-    'pycodestyle>=2.5.0',
     # TODO: https://github.com/pytest-dev/pytest-asyncio/issues/ 209
     'pytest-asyncio>=0.15.1',
     'pytest-cov>=2.8.0',

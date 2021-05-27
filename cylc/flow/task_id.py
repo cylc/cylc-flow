@@ -24,6 +24,10 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 
 
+_TASK_NAME_PREFIX = r'\w'
+_TASK_NAME_CHARACTERS = [r'\w', r'\-', '+', '%', '@']
+
+
 class TaskID:
     """Task ID utilities."""
 
@@ -32,7 +36,7 @@ class TaskID:
     DELIM2 = '/'
     NAME_SUFFIX_RE = r"[\w\-+%@]+"
     NAME_SUFFIX_REC = re.compile(r"\A" + NAME_SUFFIX_RE + r"\Z")
-    NAME_RE = r"\w[\w\-+%@]*"
+    NAME_RE = rf'{_TASK_NAME_PREFIX}[{"".join(_TASK_NAME_CHARACTERS)}]*'
     NAME_REC = re.compile(r"\A" + NAME_RE + r"\Z")
     POINT_RE = r"\S+"
     POINT_REC = re.compile(r"\A" + POINT_RE + r"\Z")

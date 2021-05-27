@@ -1,6 +1,6 @@
 2017-12-27T14:42:10Z INFO - Initial point: 1
 2017-12-27T14:42:10Z INFO - Final point: 3
-2017-12-27T14:42:10Z INFO - [showdown.1] -triggered off []
+2017-12-27T14:42:10Z INFO - [showdown.1] -triggered off ['fin.0']
 2017-12-27T14:42:13Z INFO - [ugly.1] -triggered off ['showdown.1']
 2017-12-27T14:42:16Z INFO - [fin.1] -triggered off ['ugly.1']
 2017-12-27T14:42:19Z INFO - [showdown.2] -triggered off ['fin.1']

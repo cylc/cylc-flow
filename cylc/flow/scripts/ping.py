@@ -86,7 +86,7 @@ def main(parser, options, workflow, task_id=None):
         w_name = flow['name']
         w_port = flow['port']
         w_pub_port = flow['pubPort']
-        if cylc.flow.flags.verbose:
+        if cylc.flow.flags.verbosity > 0:
             sys.stdout.write(
                 f'{w_name} running on '
                 f'{pclient.host}:{w_port} {w_pub_port}\n'

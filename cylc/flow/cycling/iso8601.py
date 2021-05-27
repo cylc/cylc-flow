@@ -27,7 +27,7 @@ from metomi.isodatetime.timezone import (
 from metomi.isodatetime.exceptions import IsodatetimeError
 from cylc.flow.time_parser import CylcTimeParser
 from cylc.flow.cycling import (
-    PointBase, IntervalBase, SequenceBase, ExclusionBase, cmp_to_rich, cmp
+    PointBase, IntervalBase, SequenceBase, ExclusionBase, cmp
 )
 from cylc.flow.exceptions import (
     CylcConfigError,
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
         DurationParser, TimePointParser, TimeRecurrenceParser)
 
 CYCLER_TYPE_ISO8601 = "iso8601"
-CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
+CYCLER_TYPE_SORT_KEY_ISO8601 = 1
 
 DATE_TIME_FORMAT = "CCYYMMDDThhmm"
 EXPANDED_DATE_TIME_FORMAT = "+XCCYYMMDDThhmm"
@@ -87,16 +87,6 @@ class ISO8601Point(PointBase):
         """Add an Interval to self."""
         return ISO8601Point(self._iso_point_add(self.value, other.value))
 
-    def __cmp__(self, other):
-        # Compare other (point) to self.
-        if other is None:
-            return -1
-        if self.TYPE != other.TYPE:
-            return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
-        if self.value == other.value:
-            return 0
-        return self._iso_point_cmp(self.value, other.value)
-
     def standardise(self):
         """Reformat self.value into a standard representation."""
         try:
@@ -118,9 +108,6 @@ class ISO8601Point(PointBase):
         return ISO8601Point(
             self._iso_point_sub_interval(self.value, other.value))
 
-    def __hash__(self):
-        return hash(self.value)
-
     @staticmethod
     @lru_cache(10000)
     def _iso_point_add(point_string, interval_string):
@@ -128,6 +115,9 @@ class ISO8601Point(PointBase):
         point = point_parse(point_string)
         interval = interval_parse(interval_string)
         return str(point + interval)
+
+    def _cmp(self, other: 'ISO8601Point') -> int:
+        return self._iso_point_cmp(self.value, other.value)
 
     @staticmethod
     @lru_cache(10000)
@@ -152,10 +142,6 @@ class ISO8601Point(PointBase):
         point = point_parse(point_string)
         other_point = point_parse(other_point_string)
         return str(point - other_point)
-
-
-# TODO: replace __cmp__ infrastructure
-cmp_to_rich(ISO8601Point)
 
 
 class ISO8601Interval(IntervalBase):
@@ -205,7 +191,7 @@ class ISO8601Interval(IntervalBase):
                 self._iso_interval_add(self.value, other.value))
         return other + self
 
-    def cmp_(self, other):
+    def _cmp(self, other: 'IntervalBase') -> int:
         """Compare another interval with this one."""
         return self._iso_interval_cmp(self.value, other.value)
 
@@ -630,7 +616,7 @@ class ISO8601Sequence(SequenceBase):
     def __str__(self):
         return self.value
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.value)
 
 

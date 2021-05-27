@@ -200,7 +200,12 @@ class ReferenceLogFileHandler(logging.FileHandler):
     """
 
     REF_LOG_TEXTS = (
-        'triggered off', 'Initial point', 'Start point', 'Final point')
+        'triggered off',
+        'Initial point',
+        'Start point',
+        'Final point',
+        'Start task'
+    )
     """List of texts used for filtering messages."""
 
     def __init__(self, filename):

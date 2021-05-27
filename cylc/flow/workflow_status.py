@@ -40,6 +40,9 @@ WORKFLOW_STATUS_RUNNING_TO_HOLD = "running to hold at %s"
 class WorkflowStatus(Enum):
     """The possible statuses of a workflow."""
 
+    INSTALLED = "installed"
+    """Workflow is installed."""
+
     PAUSED = "paused"
     """Workflow will not submit any new jobs."""
 

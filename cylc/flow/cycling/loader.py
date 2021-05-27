@@ -19,15 +19,14 @@ Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
 
-from typing import Optional, Type
+from typing import Optional, Type, overload
 
-from . import PointBase, integer
-from . import iso8601
+from cylc.flow.cycling import PointBase, integer, iso8601
 from metomi.isodatetime.data import Calendar
 
 
-ISO8601_CYCLING_TYPE = 'iso8601'
-INTEGER_CYCLING_TYPE = 'integer'
+ISO8601_CYCLING_TYPE = iso8601.CYCLER_TYPE_ISO8601
+INTEGER_CYCLING_TYPE = integer.CYCLER_TYPE_INTEGER
 
 IS_OFFSET_ABSOLUTE_IMPLS = {
     INTEGER_CYCLING_TYPE: integer.is_offset_absolute,
@@ -63,8 +62,18 @@ class DefaultCycler:
     TYPE: str
 
 
+@overload
+def get_point(value: str, cycling_type: Optional[str] = None) -> PointBase:
+    ...
+
+
+@overload
+def get_point(value: None, cycling_type: Optional[str] = None) -> None:
+    ...
+
+
 def get_point(
-    value: str, cycling_type: Optional[str] = None
+    value: Optional[str], cycling_type: Optional[str] = None
 ) -> Optional[PointBase]:
     """Return a cylc.flow.cycling.PointBase-derived object from a string."""
     if value is None:
@@ -134,7 +143,23 @@ def is_offset_absolute(offset_string, **kwargs):
     return IS_OFFSET_ABSOLUTE_IMPLS[cycling_type](offset_string)
 
 
-def standardise_point_string(point_string, cycling_type=None):
+@overload
+def standardise_point_string(
+    point_string: str, cycling_type: Optional[str] = None
+) -> str:
+    ...
+
+
+@overload
+def standardise_point_string(
+    point_string: None, cycling_type: Optional[str] = None
+) -> None:
+    ...
+
+
+def standardise_point_string(
+    point_string: Optional[str], cycling_type: Optional[str] = None
+) -> Optional[str]:
     """Return a standardised version of point_string."""
     if point_string is None:
         return None

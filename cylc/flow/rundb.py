@@ -349,16 +349,16 @@ class CylcWorkflowDAO:
         """
         self.tables[table_name].add_update_item(set_args, where_args)
 
-    def close(self):
+    def close(self) -> None:
         """Explicitly close the connection."""
         if self.conn is not None:
             try:
                 self.conn.close()
-            except sqlite3.Error:
-                pass
+            except sqlite3.Error as exc:
+                LOG.debug(f"Error closing connection to DB: {exc}")
             self.conn = None
 
-    def connect(self):
+    def connect(self) -> sqlite3.Connection:
         """Connect to the database."""
         if self.conn is None:
             self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
@@ -452,7 +452,7 @@ class CylcWorkflowDAO:
         except sqlite3.Error:
             if not self.is_public:
                 raise
-            if cylc.flow.flags.debug:
+            if cylc.flow.flags.verbosity > 1:
                 traceback.print_exc()
             err_log = (
                 "cannot execute database statement:\n"

@@ -254,6 +254,11 @@ def apply_delta(key, delta, data):
                     continue
     # Prune data elements
     if hasattr(delta, 'pruned'):
+        # UIS flag to prune workflow, set externally.
+        if key == WORKFLOW:
+            if delta.HasField('pruned'):
+                data[WORKFLOW].pruned = True
+            return
         # Prune data elements by id
         for del_id in delta.pruned:
             if del_id not in data[key]:
@@ -321,8 +326,6 @@ def create_delta_store(delta=None, workflow_id=None):
     }
     if workflow_id is not None:
         delta_store['id'] = workflow_id
-        delta_store[DELTA_ADDED][WORKFLOW].id = workflow_id
-        delta_store[DELTA_UPDATED][WORKFLOW].id = workflow_id
     # ListFields returns a list fields that have been set (not all).
     for field, value in delta.ListFields():
         for sub_field, sub_value in value.ListFields():

@@ -17,8 +17,5 @@
 
 """Some global flags used in cylc"""
 
-# verbose mode
-verbose = False
-
-# debug mode
-debug = False
+# verbosity (<0=quiet, 0=normal, >0=verbose, >1=debug)
+verbosity: int = 0

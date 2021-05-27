@@ -27,7 +27,7 @@ from cylc.flow.exceptions import (
 )
 
 CYCLER_TYPE_INTEGER = "integer"
-CYCLER_TYPE_SORT_KEY_INTEGER = "a"
+CYCLER_TYPE_SORT_KEY_INTEGER = 0
 
 # TODO - abbreviated integer recurrences?
 
@@ -131,7 +131,7 @@ class IntegerPoint(PointBase):
         """Add other.value to self.value as integers."""
         return IntegerPoint(int(self) + int(other))
 
-    def cmp_(self, other):
+    def _cmp(self, other: 'IntegerPoint') -> int:
         """Compare self.value to self.other as integers with 'cmp'."""
         return cmp(int(self), int(other))
 
@@ -152,9 +152,6 @@ class IntegerPoint(PointBase):
     def __int__(self):
         # Provide a nice way to use the string self.value in calculations.
         return int(self.value)
-
-    def __hash__(self):
-        return hash(self.value)
 
 
 class IntegerInterval(IntervalBase):
@@ -204,7 +201,7 @@ class IntegerInterval(IntervalBase):
             return IntegerInterval.from_integer(int(self) + int(other))
         return IntegerPoint(int(self) + int(other))
 
-    def cmp_(self, other):
+    def _cmp(self, other: 'IntegerInterval') -> int:
         """Compare other to self as integers."""
         return cmp(int(self), int(other))
 
@@ -578,7 +575,7 @@ class IntegerSequence(SequenceBase):
                 self.exclusions == other.exclusions
 
     def __hash__(self):
-        return hash(tuple((getattr(self, attr) for attr in self.__slots__)))
+        return hash(tuple(getattr(self, attr) for attr in self.__slots__))
 
     def __lt__(self, other: 'IntegerSequence') -> bool:
         for attr in self.__slots__:

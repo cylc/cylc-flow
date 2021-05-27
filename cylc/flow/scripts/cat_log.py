@@ -68,7 +68,10 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    verbosity_to_opts,
+)
 from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
@@ -429,9 +432,7 @@ def main(parser, options, *args, color=False):
                 options.filename))
             tail_tmpl = platform["tail command template"]
             # Reinvoke the cat-log command on the remote account.
-            cmd = ['cat-log']
-            if cylc.flow.flags.debug:
-                cmd.append('--debug')
+            cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
             for item in [logpath, mode, tail_tmpl]:
                 cmd.append('--remote-arg=%s' % quote(item))
             if batchview_cmd:

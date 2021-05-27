@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 from unittest.mock import create_autospec, Mock, patch
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import Scheduler, SchedulerError
 
 Fixture = Any
 
@@ -112,52 +112,43 @@ def test_process_cylc_stop_point(get_point, options, expected):
 
 
 @pytest.mark.parametrize(
-    'opts, is_restart, expected_set_opts, expected_warnings',
+    'opts, is_restart, err',
     [
         pytest.param(
-            {}, False, {}, [], id="No opts"
+            {'icp': 3}, True,
+            "option --icp is not valid for restart.",
+            id="icp on restart"
         ),
         pytest.param(
-            {'icp': 'ignore'}, True, {'icp': 'ignore'}, [],
-            id="opt=ignore on restart"
+            {'startcp': 5}, True,
+            "option --startcp is not valid for restart.",
+            id="startcp on restart"
         ),
         pytest.param(
-            {'icp': 3, 'startcp': 5}, True, {'icp': None, 'startcp': None},
-            [("Ignoring option: --icp=3. The only valid "
-              "value for a restart is 'ignore'."),
-             ("Ignoring option: --startcp=5. The only valid "
-              "value for a restart is 'ignore'.")],
-            id="icp & startcp on restart"
+            {'starttask': 'foo.5'}, True,
+            "option --starttask is not valid for restart.",
+            id="starttask on restart"
         ),
         pytest.param(
-            {'icp': 'ignore'}, False, {'icp': None},
-            [("Ignoring option: --icp=ignore. The value cannot be 'ignore' "
-              "unless restarting the workflow.")],
-            id="opt=ignore on first start"
+            {'icp': 'ignore'}, False,
+            "option --icp=ignore is only valid for restart.",
+            id="icp=ignore on first start"
         ),
         pytest.param(
-            {'icp': '22', 'stopcp': 'ignore'}, False,
-            {'icp': '22', 'stopcp': None},
-            [("Ignoring option: --stopcp=ignore. The value cannot be 'ignore' "
-              "unless restarting the workflow.")],
-            id="mixed opts on first start"
+            {'stopcp': 'ignore'}, False,
+            "option --stopcp=ignore is only valid for restart.",
+            id="stopcp=ignore on first start"
         )
     ]
 )
-def test_process_cycle_point_opts(
+def test_check_startup_opts(
         opts: Dict[str, Optional[str]],
         is_restart: bool,
-        expected_set_opts: Dict[str, Optional[str]],
-        expected_warnings: List[str],
-        caplog: Fixture):
+        err: List[str]):
     """Test Scheduler.process_cycle_point_opts()"""
-    caplog.set_level(logging.WARNING, CYLC_LOG)
     mocked_scheduler = Mock()
     mocked_scheduler.options = Mock(spec=[], **opts)
     mocked_scheduler.is_restart = is_restart
-
-    Scheduler.process_cycle_point_opts(mocked_scheduler)
-    for opt, value in expected_set_opts.items():
-        assert getattr(mocked_scheduler.options, opt) == value
-    actual_warnings: List[str] = [rec.message for rec in caplog.records]
-    assert sorted(actual_warnings) == sorted(expected_warnings)
+    with pytest.raises(SchedulerError) as excinfo:
+        Scheduler._check_startup_opts(mocked_scheduler)
+    assert(err in str(excinfo))

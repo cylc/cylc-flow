@@ -24,6 +24,7 @@ from ansimarkup import parse as cparse
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import ServiceFileError
+import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.loggingutil import TimestampRotatingFileHandler
@@ -43,32 +44,40 @@ from cylc.flow.terminal import cli_function
 
 PLAY_DOC = r"""cylc play [OPTIONS] ARGS
 
-Start running a workflow, or restart a stopped workflow from its previous
-state, or resume a paused workflow.
+Start a new workflow, restart a stopped workflow, or resume a paused workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
 If the workflow is not already installed (by "cylc install" or a previous run)
 it will be installed on the fly before start up.
 
+To avoid overwriting existing run directories, workflows that already ran can
+only be restarted from prior state. To start again, "cylc install" a new copy
+or "cylc clean" the existing run directory.
+
+New runs start at the "initial cycle point", by default, which defines the
+start of the graph. Alternatively, you can start running at a later cycle
+point, or from specified tasks, within the graph.
+
+For convenience, any inter-cycle dependence reaching back beyond the start
+cycle point is considered to be satisfied.
+
 Examples:
-    # Start, restart or resume the workflow with name REG.
+    # Start (at the initial cycle point), or restart, or resume workflow REG.
     $ cylc play REG
 
-A "(cold) start" (the default for a freshly-installed workflow) starts from the
-initial cycle point (specified in flow.cylc or on the command line). Any
-dependence on tasks prior to the initial cycle point is ignored.
-It is also possible to start from a point that is later than the initial cycle
-point, using the option --startcp=CYCLE_POINT. The initial cycle point is
-preserved, but the workflow does not start there and instead starts part-way
-through the graph (historically known as a "warm start").
+    # Start a new run from a cycle point after the initial cycle point
+    $ cylc play --start-cycle-point=3 REG  # (integer cycling)
+    $ cylc play --start-cycle-point=20250101T0000Z REG  # (datetime cycling)
 
-A "restart" continues on from the most recent recorded state of the workflow.
-Tasks recorded as submitted or running are polled at restart to determine what
-happened to them while the workflow was shut down.
+    # Start a new run from specified tasks in the graph
+    $ cylc play --start-task=foo.3 REG
+    $ cylc play -t foo.3 -t bar.3 REG
 
-A "resume" of a paused (but not stopped) workflow allows task jobs to be
-submitted once again."""
+At restart, tasks recorded as submitted or running are polled to determine what
+happened to them while the workflow was down.
+
+"""
 
 
 FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
@@ -135,6 +144,11 @@ def get_option_parser(add_std_opts=False):
             "config option '[scheduling]stop after cycle point'."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
+
+    parser.add_option(
+        "--start-task", "--starttask", "-t",
+        help="Task instance to start from. Can be used mulitiple times.",
+        metavar="NAME.CYCLE_POINT", action="append", dest="starttask")
 
     parser.add_option(
         "--pause",
@@ -279,7 +293,10 @@ def scheduler_cli(parser, options, reg):
     _distribute(options.host)
 
     # print the start message
-    if options.no_detach or options.format == 'plain':
+    if (
+        cylc.flow.flags.verbosity > -1
+        and (options.no_detach or options.format == 'plain')
+    ):
         print(
             cparse(
                 cylc_header()

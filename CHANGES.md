@@ -48,9 +48,19 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-??-??</span>)__
+## __cylc-8.0b2 (<span actions:bind='release-date'>Upcoming, 2021</span>)__
+
+Third beta release of Cylc 8.
+
+(See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
+
+[#4218](https://github.com/cylc/cylc-flow/pull/4218)
+- Start a new run from specified tasks.
+
+[#4214](https://github.com/cylc/cylc-flow/pull/4214)
+- Unify `-v --verbose`, `-q --quiet` and `--debug` options.
 
 [#4174](https://github.com/cylc/cylc-flow/pull/4174) - Terminology: replace
 "suite" with "workflow".
@@ -60,16 +70,37 @@ configuration items from `global.cylc[platforms][<platform name>]`:
 `run directory`, `work directory` and `suite definition directory`. This
 functionality is now provided by `[symlink dirs]`.
 
+[#4142](https://github.com/cylc/cylc-flow/pull/4142) - Record source directory
+version control information on installation of a workflow.
+
+[#4222](https://github.com/cylc/cylc-flow/pull/4222) - Fix bug where a
+workflow's public database file was not closed properly.
+
 ### Fixes
+
+[#4228](https://github.com/cylc/cylc-flow/pull/4228) - Interacting with a
+workflow on the cli using `runN` is now supported.
+
+[#4193](https://github.com/cylc/cylc-flow/pull/4193) - Standard `cylc install`
+now correctly installs from directories with a `.` in the name. Symlink dirs
+now correctly expands environment variables on the remote. Fixes minor cosmetic
+bugs.
+
+[#4199](https://github.com/cylc/cylc-flow/pull/4199) -
+`cylc validate` and `cylc run` now check task/family names in the `[runtime]`
+section for validity.
 
 [#4180](https://github.com/cylc/cylc-flow/pull/4180) - Fix bug where installing
 a workflow that uses the deprecated `suite.rc` filename would symlink `flow.cylc`
 to the `suite.rc` in the source dir instead of the run dir. Also fixes a couple
 of other, small bugs.
 
-
 -------------------------------------------------------------------------------
 ## __cylc-8.0b1 (<span actions:bind='release-date'>Released 2021-04-21</span>)__
+
+Second beta release of Cylc 8.
+
+(See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
 

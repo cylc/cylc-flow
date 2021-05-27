@@ -32,7 +32,9 @@ from fnmatch import fnmatchcase
 import os
 import re
 import traceback
-from typing import Set
+from typing import (
+    Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple
+)
 
 from metomi.isodatetime.data import Calendar
 from metomi.isodatetime.parsers import DurationParser
@@ -44,7 +46,7 @@ from cylc.flow.parsec.util import replicate
 
 from cylc.flow import LOG
 from cylc.flow.c3mro import C3
-from cylc.flow.conditional_simplifier import ConditionalSimplifier
+from cylc.flow.listify import listify
 from cylc.flow.exceptions import (
     CylcError, WorkflowConfigError, IntervalParsingError, TaskDefError,
     ParamExpandError)
@@ -59,6 +61,7 @@ from cylc.flow.cycling.loader import (
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 import cylc.flow.flags
+from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.graphnode import GraphNodeParser
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
@@ -79,10 +82,17 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_trigger import TaskTrigger, Dependency
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.unicode_rules import (
-    XtriggerNameValidator, TaskOutputValidator)
+    TaskNameValidator,
+    TaskOutputValidator,
+    XtriggerNameValidator,
+)
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
+
+if TYPE_CHECKING:
+    from optparse import Values
+    from cylc.flow.cycling import IntervalBase, PointBase, SequenceBase
 
 
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
@@ -136,23 +146,23 @@ class WorkflowConfig:
 
     def __init__(
         self,
-        workflow,
-        fpath,
-        options=None,
-        template_vars=None,
-        is_reload=False,
-        output_fname=None,
-        xtrigger_mgr=None,
-        mem_log_func=None,
-        run_dir=None,
-        log_dir=None,
-        work_dir=None,
-        share_dir=None,
-    ):
+        workflow: str,
+        fpath: str,
+        options: Optional['Values'] = None,
+        template_vars: Optional[Mapping[str, Any]] = None,
+        is_reload: bool = False,
+        output_fname: Optional[str] = None,
+        xtrigger_mgr: Optional[XtriggerManager] = None,
+        mem_log_func: Optional[Callable[[str], None]] = None,
+        run_dir: Optional[str] = None,
+        log_dir: Optional[str] = None,
+        work_dir: Optional[str] = None,
+        share_dir: Optional[str] = None
+    ) -> None:
 
         self.mem_log = mem_log_func
-        if mem_log_func is None:
-            self.mem_log = lambda *a: False
+        if self.mem_log is None:
+            self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
         self.workflow = workflow  # workflow name
         self.fpath = fpath  # workflow definition
@@ -163,30 +173,32 @@ class WorkflowConfig:
         self.work_dir = work_dir or get_workflow_run_work_dir(self.workflow)
         self.options = options
         self.implicit_tasks: Set[str] = set()
-        self.edges = {}
-        self.taskdefs = {}
-        self.initial_point = None
-        self.start_point = None
-        self.final_point = None
+        self.edges: Dict[
+            'SequenceBase', Set[Tuple[str, str, bool, bool]]
+        ] = {}
+        self.taskdefs: Dict[str, TaskDef] = {}
+        self.initial_point: Optional['PointBase'] = None
+        self.start_point: Optional['PointBase'] = None
+        self.final_point: Optional['PointBase'] = None
         self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
         self.xtrigger_mgr = xtrigger_mgr
-        self.workflow_polling_tasks = {}
-        self._last_graph_raw_id = None
-        self._last_graph_raw_edges = []
+        self.workflow_polling_tasks = {}  # type: ignore # TODO figure out type
+        self._last_graph_raw_id: Optional[tuple] = None
+        self._last_graph_raw_edges = []  # type: ignore # TODO figure out type
 
-        self.sequences = []
-        self.actual_first_point = None
-        self._start_point_for_actual_first_point = None
+        self.sequences: List['SequenceBase'] = []
+        self.actual_first_point: Optional['PointBase'] = None
+        self._start_point_for_actual_first_point: Optional['PointBase'] = None
 
-        self.task_param_vars = {}
-        self.custom_runahead_limit = None
+        self.task_param_vars = {}  # type: ignore # TODO figure out type
+        self.custom_runahead_limit: Optional['IntervalBase'] = None
         self.max_num_active_cycle_points = None
 
         # runtime hierarchy dicts keyed by namespace name:
-        self.runtime = {
+        self.runtime: Dict[str, dict] = {  # TODO figure out type
             # lists of parent namespaces
             'parents': {},
             # lists of C3-linearized ancestor namespaces
@@ -202,9 +214,9 @@ class WorkflowConfig:
             'first-parent descendants': {},
         }
         # tasks
-        self.leaves = []
+        self.leaves = []  # TODO figure out type
         # one up from root
-        self.feet = []
+        self.feet = []  # type: ignore # TODO figure out type
 
         # Export local environmental workflow context before config parsing.
         self.process_workflow_env()
@@ -383,7 +395,7 @@ class WorkflowConfig:
                     name, offset_string = match.groups()
                     if not offset_string:
                         offset_string = "PT0M"
-                    if cylc.flow.flags.verbose:
+                    if cylc.flow.flags.verbosity > 0:
                         if offset_string.startswith("-"):
                             LOG.warning(
                                 "%s offsets are normally positive: %s" % (
@@ -438,7 +450,7 @@ class WorkflowConfig:
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
-                if not is_reload and cylc.flow.flags.verbose:
+                if not is_reload and cylc.flow.flags.verbosity > 0:
                     LOG.warning(
                         '[visualization][collapsed families]: ' +
                         'family ' + cfam + ' not defined')
@@ -461,6 +473,7 @@ class WorkflowConfig:
         self._check_explicit_cycling()
 
         self._check_implicit_tasks()
+        self.validate_namespace_names()
 
         # Check that external trigger messages are only used once (they have to
         # be discarded immediately to avoid triggering the next instance of the
@@ -479,7 +492,7 @@ class WorkflowConfig:
 
         ngs = self.cfg['visualization']['node groups']
         # If a node group member is a family, include its descendants too.
-        replace = {}
+        replace = {}  # type: ignore # TODO figure out type
         for ng, mems in ngs.items():
             replace[ng] = []
             for mem in mems:
@@ -496,7 +509,7 @@ class WorkflowConfig:
             if fam not in ngs:
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
 
-        if cylc.flow.flags.verbose:
+        if cylc.flow.flags.verbosity > 0:
             LOG.debug("Checking [visualization] node attributes")
             # TODO - these should probably be done in non-verbose mode too.
             # 1. node groups should contain valid namespace names
@@ -516,14 +529,14 @@ class WorkflowConfig:
                 LOG.warning(err_msg)
 
             # 2. node attributes must refer to node groups or namespaces
-            bad = []
+            bad_nas = []
             for na in self.cfg['visualization']['node attributes']:
                 if na not in ngs and na not in nspaces:
-                    bad.append(na)
-            if bad:
+                    bad_nas.append(na)
+            if bad_nas:
                 err_msg = "undefined node attribute targets"
-                for na in bad:
-                    err_msg += "\n+ " + str(na)
+                for na in bad_nas:
+                    err_msg += f"\n+ {na}"
                 LOG.warning(err_msg)
 
         # 3. node attributes must be lists of quoted "key=value" pairs.
@@ -575,7 +588,7 @@ class WorkflowConfig:
                 self.cfg['scheduling']['initial cycle point'])
             # If viz initial point is None don't accept a final point.
             if self.cfg['visualization']['final cycle point'] is not None:
-                if cylc.flow.flags.verbose:
+                if cylc.flow.flags.verbosity > 0:
                     LOG.warning(
                         "ignoring [visualization]final cycle point\n"
                         "(it must be defined with an initial cycle point)")
@@ -590,7 +603,9 @@ class WorkflowConfig:
             except IsodatetimeError:
                 vfcp = get_point(
                     self.cfg['visualization']['final cycle point']
-                ).standardise()
+                )
+                if vfcp is not None:
+                    vfcp = vfcp.standardise()
         else:
             vfcp = None
 
@@ -989,6 +1004,15 @@ class WorkflowConfig:
                 expanded_node_attrs[name] = val
         self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
+    def validate_namespace_names(self):
+        """Validate task and family names."""
+        for name in self.cfg['runtime']:
+            success, message = TaskNameValidator.validate(name)
+            if not success:
+                raise WorkflowConfigError(
+                    f'task/family name {message}\n[runtime][[{name}]]'
+                )
+
     @staticmethod
     def dequote(s):
         """Strip quotes off a string."""
@@ -1100,7 +1124,7 @@ class WorkflowConfig:
                 first_parents[name] = [pts[0]]
             self.runtime['parents'][name] = pts
 
-        if cylc.flow.flags.verbose and demoted:
+        if cylc.flow.flags.verbosity > 0 and demoted:
             log_msg = "First parent(s) demoted to secondary:"
             for n, p in demoted.items():
                 log_msg += "\n + %s as parent of '%s'" % (p, n)
@@ -1430,19 +1454,18 @@ class WorkflowConfig:
 
     def process_workflow_env(self):
         """Workflow context is exported to the local environment."""
-        for var, val in [
-            ('CYLC_WORKFLOW_NAME', self.workflow),
-            ('CYLC_DEBUG', str(cylc.flow.flags.debug).lower()),
-            ('CYLC_VERBOSE', str(cylc.flow.flags.verbose).lower()),
-            ('CYLC_WORKFLOW_RUN_DIR', self.run_dir),
-            ('CYLC_WORKFLOW_LOG_DIR', self.log_dir),
-            ('CYLC_WORKFLOW_WORK_DIR', self.work_dir),
-            ('CYLC_WORKFLOW_SHARE_DIR', self.share_dir),
+        for key, value in {
+            **verbosity_to_env(cylc.flow.flags.verbosity),
+            'CYLC_WORKFLOW_NAME': self.workflow,
+            'CYLC_WORKFLOW_RUN_DIR': self.run_dir,
+            'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
+            'CYLC_WORKFLOW_WORK_DIR': self.work_dir,
+            'CYLC_WORKFLOW_SHARE_DIR': self.share_dir,
             # BACK COMPAT: CYLC_WORKFLOW_DEF_PATH
             #   from: Cylc7
-            ('CYLC_WORKFLOW_DEF_PATH', self.run_dir),
-        ]:
-            os.environ[var] = val
+            'CYLC_WORKFLOW_DEF_PATH': self.run_dir,
+        }.items():
+            os.environ[key] = value
 
     def process_config_env(self):
         """Set local config derived environment."""
@@ -1639,7 +1662,7 @@ class WorkflowConfig:
 
         # Convert expression to a (nested) list.
         try:
-            expr_list = ConditionalSimplifier.listify(lexpression)
+            expr_list = listify(lexpression)
         except SyntaxError:
             raise WorkflowConfigError('Error in expression "%s"' % lexpression)
 
@@ -2045,7 +2068,7 @@ class WorkflowConfig:
             try:
                 seq = get_sequence(section, icp, fcp)
             except (AttributeError, TypeError, ValueError, CylcError) as exc:
-                if cylc.flow.flags.debug:
+                if cylc.flow.flags.verbosity > 1:
                     traceback.print_exc()
                 msg = 'Cannot process recurrence %s' % section
                 msg += ' (initial cycle point=%s)' % icp
@@ -2110,7 +2133,9 @@ class WorkflowConfig:
                                 ret.append(self.taskdefs[member])
         return ret
 
-    def get_taskdef(self, name, orig_expr=None):
+    def get_taskdef(
+        self, name: str, orig_expr: Optional[str] = None
+    ) -> TaskDef:
         """Return an instance of TaskDef for task name."""
         if name not in self.taskdefs:
             try:
@@ -2121,7 +2146,7 @@ class WorkflowConfig:
                 raise WorkflowConfigError(str(exc))
         return self.taskdefs[name]
 
-    def _get_taskdef(self, name):
+    def _get_taskdef(self, name: str) -> TaskDef:
         """Get the dense task runtime."""
         # (TaskDefError caught above)
 
@@ -2134,7 +2159,8 @@ class WorkflowConfig:
 
         # Get the taskdef object for generating the task proxy class
         taskd = TaskDef(
-            name, rtcfg, self.run_mode(), self.start_point)
+            name, rtcfg, self.run_mode(), self.start_point,
+            self.initial_point)
 
         # TODO - put all taskd.foo items in a single config dict
 

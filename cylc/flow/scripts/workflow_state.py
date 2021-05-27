@@ -82,8 +82,8 @@ class WorkflowPoller(Poller):
         # connect, or max number of polls exhausted) False
         connected = False
 
-        if cylc.flow.flags.verbose:
-            sys.stdout.write(
+        if cylc.flow.flags.verbosity > 0:
+            sys.stderr.write(
                 "connecting to workflow db for " +
                 self.args['run_dir'] + "/" + self.args['workflow'])
 
@@ -103,11 +103,11 @@ class WorkflowPoller(Poller):
             except (OSError, sqlite3.Error):
                 if self.n_polls >= max_polls:
                     raise
-                if cylc.flow.flags.verbose:
-                    sys.stdout.write('.')
+                if cylc.flow.flags.verbosity > 0:
+                    sys.stderr.write('.')
                 sleep(self.interval)
-        if cylc.flow.flags.verbose:
-            sys.stdout.write('\n')
+        if cylc.flow.flags.verbosity > 0:
+            sys.stderr.write('\n')
 
         if connected and self.args['cycle']:
             fmt = self.checker.get_remote_point_format()

@@ -49,7 +49,7 @@ ${RND_WORKFLOW_RUNDIR}/run1
     \`-- install
 __OUT__
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run1
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 run_ok "${TEST_NAME}" cylc install
 mkdir new_dir
@@ -57,11 +57,12 @@ touch new_dir/new_file1 new_dir/new_file2
 rm -rf dir2-be-removed file2
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run2"
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run2/log/install" -type f -name '*reinstall.log')"
-grep_ok "deleting dir2-be-removed/file1
-         deleting file2
-         new_dir/
-         new_dir/new_file1
-         new_dir/new_file2" "${REINSTALL_LOG}"
+grep_ok "
+del. dir2-be-removed/file1
+del. file2
+send new_dir/
+send new_dir/new_file1
+send new_dir/new_file2" "${REINSTALL_LOG}"
 
 tree -a -v -I "${tree_excludes}" --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/run2" > 'after-reinstall-run2-tree.out'
 cmp_ok 'after-reinstall-run2-tree.out'  <<__OUT__
@@ -78,7 +79,7 @@ ${RND_WORKFLOW_RUNDIR}/run2
     \`-- new_file2
 __OUT__
 contains_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
-REINSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_SOURCE} -> ${RND_WORKFLOW_RUNDIR}/run2
+REINSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 
 # Test cylc reinstall affects only named run, i.e. run1 should be unaffected in this case

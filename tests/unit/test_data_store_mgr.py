@@ -14,7 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.data_store_mgr import task_mean_elapsed_time, parse_job_item
+from copy import deepcopy
+from time import time
+
+from cylc.flow.data_store_mgr import (
+    task_mean_elapsed_time,
+    parse_job_item,
+    apply_delta,
+    WORKFLOW,
+    DELTAS_MAP,
+    ALL_DELTAS,
+    DATA_TEMPLATE
+)
 
 
 def int_id():
@@ -46,3 +57,30 @@ def test_parse_job_item():
     assert name, None == (point, (tpoint, tname, tsub_num))
     tpoint, tname, tsub_num = parse_job_item(f'{name}')
     assert name, None == (None, (tpoint, tname, tsub_num))
+
+
+def test_apply_delta():
+    """Test delta application.
+
+    Some functionality is not used at the Scheduler, so is not covered
+    by integration testing.
+
+    """
+    w_id = 'workflow_id'
+    delta = DELTAS_MAP[ALL_DELTAS]()
+    delta.workflow.time = time()
+    flow = delta.workflow.updated
+    flow.id = 'workflow_id'
+    flow.stamp = f'{w_id}@{delta.workflow.time}'
+    delta.workflow.pruned = w_id
+
+    data = deepcopy(DATA_TEMPLATE)
+
+    assert data[WORKFLOW].id != w_id
+    assert data[WORKFLOW].pruned is False
+
+    for field, sub_delta in delta.ListFields():
+        apply_delta(field.name, sub_delta, data)
+
+    assert data[WORKFLOW].id == w_id
+    assert data[WORKFLOW].pruned is True

@@ -66,9 +66,11 @@ jobs:
         run: |
           pip install ."[all]"
 
+      - name: Configure git  # Needed by the odd test
+        uses: cylc/release-actions/configure-git@v1
+
       - name: style
         run: |
-          pycodestyle
           flake8
           etc/bin/shellchecker
 

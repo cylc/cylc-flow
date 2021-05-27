@@ -127,7 +127,7 @@ class XtriggerManager:
             TMPL_USER_NAME: user,
             TMPL_WORKFLOW_RUN_DIR: workflow_run_dir,
             TMPL_WORKFLOW_SHARE_DIR: workflow_share_dir,
-            TMPL_DEBUG_MODE: cylc.flow.flags.debug
+            TMPL_DEBUG_MODE: cylc.flow.flags.verbosity > 1
         }
 
         self.proc_pool = proc_pool

@@ -195,7 +195,7 @@ class TaskRemoteMgr:
         tmphandle.seek(0)
         # Build the remote-init command to be run over ssh
         cmd = ['remote-init']
-        if cylc.flow.flags.debug:
+        if cylc.flow.flags.verbosity > 1:
             cmd.append('--debug')
         cmd.append(str(install_target))
         cmd.append(get_remote_workflow_run_dir(self.workflow))
@@ -231,7 +231,7 @@ class TaskRemoteMgr:
             platform = get_random_platform_for_install_target(install_target)
             platform_n = platform['name']
             cmd = ['remote-tidy']
-            if cylc.flow.flags.debug:
+            if cylc.flow.flags.verbosity > 1:
                 cmd.append('--debug')
             cmd.append(install_target)
             cmd.append(get_remote_workflow_run_dir(self.workflow))
@@ -372,7 +372,7 @@ class TaskRemoteMgr:
         if ctx.out:
             RSYNC_LOG.info(
                 'File installation information for '
-                f'{install_target}:\n {ctx.out}')
+                f'{install_target}:\n{ctx.out}')
         if ctx.ret_code == 0:
             # Both file installation and remote init success
             LOG.debug(ctx)

@@ -134,7 +134,8 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     init()
     sequence = ISO8601Sequence('P1D', '2019')
@@ -178,7 +179,8 @@ def test__call_xtriggers_async(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     init()
     sequence = ISO8601Sequence('P1D', '2000')
@@ -282,7 +284,8 @@ def test_check_xtriggers(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     init()
     sequence = ISO8601Sequence('P1D', '2019')
@@ -306,7 +309,8 @@ def test_check_xtriggers(xtrigger_mgr):
         name="foo",
         rtcfg=None,
         run_mode="live",
-        start_point=1
+        start_point=1,
+        initial_point=1
     )
     tdef2.xtrig_labels[sequence] = ["wall_clock"]
     init()

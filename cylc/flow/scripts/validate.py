@@ -39,7 +39,10 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.templatevars import load_template_vars
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    Options
+)
 from cylc.flow.workflow_files import parse_workflow_arg
 
 
@@ -73,13 +76,24 @@ def get_option_parser():
     return parser
 
 
+ValidateOptions = Options(
+    get_option_parser(),
+    # defaults
+    {
+        'check_circular': False,
+        'profile_mode': False,
+        'run_mode': 'live'
+    }
+)
+
+
 @cli_function(get_option_parser)
 def main(_, options, reg):
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
 
-    if not cylc.flow.flags.debug:
+    if cylc.flow.flags.verbosity < 2:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:
             if isinstance(handler.formatter, CylcLogFormatter):
@@ -113,7 +127,7 @@ def main(_, options, reg):
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
     # TODO - This is not exhaustive, it only uses the initial cycle point.
-    if cylc.flow.flags.verbose:
+    if cylc.flow.flags.verbosity > 0:
         print('Instantiating tasks to check trigger expressions')
     flow_label = FlowLabelMgr().get_new_label()
     for name, taskdef in cfg.taskdefs.items():
@@ -122,7 +136,7 @@ def main(_, options, reg):
         except TaskProxySequenceBoundsError:
             # Should already failed above
             mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)
-            if cylc.flow.flags.verbose:
+            if cylc.flow.flags.verbosity > 0:
                 sys.stderr.write(' + %s\n' % mesg)
             continue
         except Exception as exc:
@@ -146,7 +160,7 @@ def main(_, options, reg):
             print(str(exc), file=sys.stderr)
             raise WorkflowConfigError(
                 '%s: failed to evaluate triggers.' % name)
-        if cylc.flow.flags.verbose:
+        if cylc.flow.flags.verbosity > 0:
             print('  + %s ok' % itask.identity)
 
     print(cparse('<green>Valid for cylc-%s</green>' % CYLC_VERSION))

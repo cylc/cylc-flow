@@ -746,6 +746,7 @@ class Workflow(ObjectType):
             '''),
             default_value=[]),
         resolver=resolve_broadcasts)
+    pruned = Boolean()
 
 
 class Job(ObjectType):
@@ -1949,6 +1950,7 @@ def delta_subs(root, info, **args) -> AsyncGenerator[Any, None]:
 class Pruned(ObjectType):
     class Meta:
         description = """WFS Nodes/Edges that have been removed."""
+    workflow = String()
     families = List(String, default_value=[])
     family_proxies = List(String, default_value=[])
     jobs = List(String, default_value=[])

@@ -22,6 +22,7 @@ from typing import Optional
 from unittest.mock import create_autospec, Mock
 
 from cylc.flow.cfgspec.globalcfg import SPEC
+from cylc.flow.cycling.iso8601 import init as iso8601_init
 from cylc.flow.cycling.loader import (
     ISO8601_CYCLING_TYPE,
     INTEGER_CYCLING_TYPE
@@ -55,16 +56,23 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def cycling_mode(monkeypatch):
-    """Set the Cylc cycling mode and return its value."""
-    def _cycling_mode(integer=True):
-        mode = INTEGER_CYCLING_TYPE if integer else ISO8601_CYCLING_TYPE
+def cycling_mode(monkeypatch: pytest.MonkeyPatch):
+    """Set the Cylc cycling mode.
 
+    Args:
+        mode: The cycling mode.
+        time_zone: If using ISO8601/datetime cycling mode, you can specify a
+            custom time zone to use.
+    """
+    def _cycling_mode(
+        mode: str = INTEGER_CYCLING_TYPE, time_zone: Optional[str] = None
+    ) -> None:
         class _DefaultCycler:
             TYPE = mode
         monkeypatch.setattr(
             'cylc.flow.cycling.loader.DefaultCycler', _DefaultCycler)
-        return mode
+        if mode == ISO8601_CYCLING_TYPE:
+            iso8601_init(time_zone=time_zone)
     return _cycling_mode
 
 

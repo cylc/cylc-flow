@@ -18,7 +18,7 @@
 
 from collections import Counter
 from time import time
-from typing import Tuple
+from typing import Any, Dict, List, Tuple, Optional, TYPE_CHECKING
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
@@ -34,44 +34,49 @@ from cylc.flow.task_state import (
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
+    from cylc.flow.task_action_timer import TaskActionTimer
+    from cylc.flow.taskdef import TaskDef
+
 
 class TaskProxy:
     """Represent an instance of a cycling task in a running workflow.
 
     Attributes:
-        .clock_trigger_time (float):
+        .clock_trigger_time:
             Clock trigger time in seconds since epoch.
-        .expire_time (float):
+        .expire_time:
             Time in seconds since epoch when this task is considered expired.
-        .identity (str):
+        .identity:
             Task ID in NAME.POINT syntax.
-        .is_late (boolean):
+        .is_late:
             Is the task late?
-        .is_manual_submit (boolean):
+        .is_manual_submit:
             Is the latest job submission due to a manual trigger?
-        .job_vacated (boolean):
+        .job_vacated:
             Is the latest job pre-empted (or vacated)?
-        .jobs (list):
+        .jobs:
             A list of job ids associated with the task proxy.
-        .local_job_file_path (str):
+        .local_job_file_path:
             Path on workflow host to the latest job script for the task.
-        .late_time (float):
+        .late_time:
             Time in seconds since epoch, beyond which the task is considered
             late if it is never active.
         .non_unique_events (collections.Counter):
             Count non-unique events (e.g. critical, warning, custom).
-        .point (cylc.flow.cycling.PointBase):
+        .point:
             Cycle point of the task.
-        .point_as_seconds (int):
+        .point_as_seconds:
             Cycle point as seconds since epoch.
-        .poll_timer (cylc.flow.task_action_timer.TaskActionTimer):
+        .poll_timer:
             Schedule for polling submitted or running jobs.
-        .reload_successor (cylc.flow.task_proxy.TaskProxy):
+        .reload_successor:
             The task proxy object that replaces the current instance on reload.
             This attribute provides a useful link to the latest replacement
             instance while the current object may still be referenced by a job
             manipulation command.
-        .submit_num (int):
+        .submit_num:
             Number of times the task has attempted job submission.
         .summary (dict):
             job_runner_name (str):
@@ -108,44 +113,39 @@ class TaskProxy:
                 Latest job submission time as string.
             title (str):
                 Same as the .tdef.rtconfig['meta']['title'] attribute.
-        .state (cylc.flow.task_state.TaskState):
+        .state:
             Object representing the state of this task.
-        .platform (dict)
+        .platform:
             Dict containing info for platform where latest job is submitted.
-        .tdef (cylc.flow.taskdef.TaskDef):
+        .tdef:
             The definition object of this task.
-        .timeout (float):
+        .timeout:
             Timeout value in seconds since epoch for latest job
             submission/execution.
-        .try_timers (dict)
+        .try_timers:
             Retry schedules as cylc.flow.task_action_timer.TaskActionTimer
             objects.
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
-        .failure_handled (bool)
+        .failure_handled:
             task failure is handled (by children)
-        .flow_label (str)
+        .flow_label:
             flow label
-        .reflow (bool)
+        .reflow:
             flow on from outputs
-        .waiting_on_job_prep (bool)
+        .waiting_on_job_prep:
             task waiting on job prep
 
-    Arguments:
-        tdef (cylc.flow.taskdef.TaskDef):
-            The definition object of this task.
-        start_point (cylc.flow.cycling.PointBase):
-            Start point to calculate the task's cycle point on start up or the
-            cycle point for subsequent tasks.
-        status (str):
-            Task state string.
-        is_held (bool):
-            True if the task is held, else False.
-        submit_num (int):
-            Number of times the task has attempted job submission.
-        late_time (float):
-            Time in seconds since epoch, beyond which the task is considered
-            late if it is never active.
+    Args:
+        tdef: The definition object of this task.
+        start_point: Start point to calculate the task's cycle point on
+            start-up or the cycle point for subsequent tasks.
+        flow_label: Which flow within the scheduler this task belongs to.
+        status: Task state string.
+        is_held: True if the task is held, else False.
+        submit_num: Number of times the task has attempted job submission.
+        is_late: Is the task late?
+        reflow: Flow on from outputs. TODO: better description for arg?
     """
 
     # Memory optimization - constrain possible attributes to this list.
@@ -178,24 +178,33 @@ class TaskProxy:
         'waiting_on_job_prep',
     ]
 
-    def __init__(self, tdef, start_point, flow_label,
-                 status=TASK_STATUS_WAITING, is_held=False,
-                 submit_num=0, is_late=False, reflow=True):
+    def __init__(
+        self,
+        tdef: 'TaskDef',
+        start_point: 'PointBase',
+        flow_label: Optional[str],
+        status: str = TASK_STATUS_WAITING,
+        is_held: bool = False,
+        submit_num: int = 0,
+        is_late: bool = False,
+        reflow: bool = True
+    ) -> None:
+
         self.tdef = tdef
         if submit_num is None:
             submit_num = 0
         self.submit_num = submit_num
-        self.jobs = []
+        self.jobs: List[str] = []
         self.flow_label = flow_label
         self.reflow = reflow
         self.point = start_point
-        self.identity = TaskID.get(self.tdef.name, self.point)
+        self.identity: str = TaskID.get(self.tdef.name, self.point)
 
-        self.reload_successor = None
-        self.point_as_seconds = None
+        self.reload_successor: Optional['TaskProxy'] = None
+        self.point_as_seconds: Optional[int] = None
 
         self.is_manual_submit = False
-        self.summary = {
+        self.summary: Dict[str, Any] = {
             'latest_message': '',
             'submitted_time': None,
             'submitted_time_string': None,
@@ -211,19 +220,19 @@ class TaskProxy:
             'flow_label': None
         }
 
-        self.local_job_file_path = None
+        self.local_job_file_path: Optional[str] = None
 
         self.platform = get_platform()
 
         self.job_vacated = False
-        self.poll_timer = None
-        self.timeout = None
-        self.try_timers = {}
-        self.non_unique_events = Counter()
+        self.poll_timer: Optional['TaskActionTimer'] = None
+        self.timeout: Optional[float] = None
+        self.try_timers: Dict[str, 'TaskActionTimer'] = {}
+        self.non_unique_events = Counter()  # type: ignore # TODO: figure out
 
-        self.clock_trigger_time = None
-        self.expire_time = None
-        self.late_time = None
+        self.clock_trigger_time: Optional[float] = None
+        self.expire_time: Optional[float] = None
+        self.late_time: Optional[float] = None
         self.is_late = is_late
         self.waiting_on_job_prep = True
 
@@ -234,10 +243,7 @@ class TaskProxy:
         if TASK_OUTPUT_SUCCEEDED in self.graph_children:
             self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
 
-        if TASK_OUTPUT_FAILED in self.graph_children:
-            self.failure_handled = True
-        else:
-            self.failure_handled = False
+        self.failure_handled: bool = TASK_OUTPUT_FAILED in self.graph_children
 
     def __str__(self):
         """Stringify using "self.identity"."""

@@ -159,6 +159,9 @@ jobs:
           sleep 1
           ssh -vv _remote_background_indep_poll hostname
 
+      - name: Configure git  # Needed by the odd test
+        uses: cylc/release-actions/configure-git@v1
+
       - name: Filter Tests
         env:
           # NOTE: we only want the CHUNK set in this step else we will

@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 # Number of tests depends on the number of 'cylc' commands.
-set_test_number $(( 23 + $(find "${CYLC_REPO_DIR}/bin" -name 'cylc-*' | wc -l) ))
+set_test_number 23
 
 # Top help
 run_ok "${TEST_NAME_BASE}-0" cylc
@@ -35,7 +35,7 @@ done
 # Sub-command - no match
 run_fail "${TEST_NAME_BASE}-aardvark" cylc aardvark
 cmp_ok "${TEST_NAME_BASE}-aardvark.stderr" <<'__STDERR__'
-Error: cylc aardvark: unknown utility. Abort.
+cylc aardvark: unknown utility. Abort.
 Type "cylc help all" for a list of utilities.
 __STDERR__
 
