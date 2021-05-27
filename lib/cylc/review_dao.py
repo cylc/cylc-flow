@@ -279,17 +279,15 @@ class CylcReviewDAO(object):
         return (entries, of_n_entries)
 
     def is_cylc8(self, user_name, suite_name):
-        # Detemine Cylc version for a given suite: Database changes require
-        # A different database query for Cylc8.
+        """Detemine Cylc version for a given suite: Database changes require
+        A different database query for Cylc8.
+        """
         suite_info = self._db_exec(
-            user_name, suite_name, 'SELECT * FROM suite_params', []
+            user_name, suite_name,
+            'SELECT name FROM sqlite_master WHERE type=\'table\';', []
         )
-        cylc_version = None
-        for row in suite_info:
-            if row[0] == u'cylc_version':
-                cylc_version = row[1]
-
-        if cylc_version and cylc_version[0] == '8':
+        suite_info = [i[0] for i in suite_info]
+        if 'workflow_params' in suite_info:
             return True
         else:
             return False
