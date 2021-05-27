@@ -12,9 +12,9 @@ purpose = """
 [scheduling]
     [[dependencies]]
         R1 = """
-            platform_subshell
+            platform_subshell:submit-fail => fin
+            platform_no_subshell:submit-fail => fin
             host_subshell
-            platform_no_subshell
             host_no_subshell
             host_subshell_backticks
         """
@@ -35,8 +35,11 @@ purpose = """
 
     [[host_subshell]]
         [[[remote]]]
-            host = $(echo hostname)
+            host = $(hostname)
 
     [[host_subshell_backticks]]
         [[[remote]]]
-            host = `echo hostname`
+            host = `hostname`
+
+    [[fin]]
+        script = cylc remove ${CYLC_SUITE_NAME} platform_*
