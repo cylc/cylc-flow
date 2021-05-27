@@ -1753,16 +1753,16 @@ class Scheduler:
             # Don't if stalled, unless "abort on stalled" is set.
             return False
 
-        if [
-                itask for itask in self.pool.get_tasks()
-                if itask.state(
-                    TASK_STATUS_PREPARING,
-                    TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_RUNNING
-                )
-                or (itask.state(TASK_STATUS_WAITING)
-                    and not itask.state.is_runahead)
-        ]:
+        if any(
+            itask for itask in self.pool.get_tasks()
+            if itask.state(
+                TASK_STATUS_PREPARING,
+                TASK_STATUS_SUBMITTED,
+                TASK_STATUS_RUNNING
+            )
+            or (itask.state(TASK_STATUS_WAITING)
+                and not itask.state.is_runahead)
+        ):
             # Don't if there are more tasks to run (if waiting and not
             # runahead, then held, queued, or xtriggered).
             return False
