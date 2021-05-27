@@ -321,7 +321,7 @@ class TaskPool:
 
         points = []
         for point, itasks in sorted(self.get_tasks_by_point().items()):
-            if points or all(
+            if points or any(
                 not itask.state(
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED,
@@ -394,6 +394,11 @@ class TaskPool:
         if self.stop_point and latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point
 
+        # An intermediate list (release_me) is necessary here because
+        # self.release_runahead_tasks() can change the task pool size
+        # (parentless tasks are spawned when their previous instances are
+        # released from runahead limiting).
+        release_me = []
         for itask in (
             itask
             for point, itask_id_map in self.main_pool.items()
@@ -401,6 +406,9 @@ class TaskPool:
             if point <= latest_allowed_point
             if itask.state.is_runahead
         ):
+            release_me.append(itask)
+
+        for itask in release_me:
             self.release_runahead_task(itask)
             released = True
 
@@ -705,30 +713,8 @@ class TaskPool:
             itask.state.reset(is_queued=True)
             # TODO Reset manual trigger flag. One manual trigger queues and
             # unqueued task, another one triggers a queued task.
-            self.data_store_mgr.delta_task_state(itask)  # TODO needed?
             self.data_store_mgr.delta_task_queued(itask)
         self.task_queue_mgr.push_tasks(itasks)
-
-    def _queue_tasks(self):
-        """Queue tasks that are ready to run. (After reload?)"""
-        to_queue = []
-        for itask in self.get_tasks():
-            if itask.state.is_queued:
-                # Already queued
-                continue
-            ready_check_items = itask.is_ready_to_run()
-
-            # TODO: PUT THIS SOMEWHERE ELSE?:
-            # Use this periodic checking point for data-store delta
-            # creation, some items aren't event driven (i.e. clock).
-            if itask.tdef.clocktrigger_offset is not None:
-                self.data_store_mgr.delta_task_clock_trigger(
-                    itask, ready_check_items)
-
-            if all(ready_check_items) and not itask.state.is_runahead:
-                to_queue.append(itask)
-
-        self.queue_tasks(to_queue)
 
     def release_queued_tasks(self):
         """Return list of queue-released tasks for job prep."""
@@ -852,7 +838,23 @@ class TaskPool:
             self.config.get_task_name_list(),
             self.config.runtime['descendants']
         )
-        self._queue_tasks()
+
+        # Now queue all tasks that are ready to run
+        to_queue = []
+        for itask in self.get_tasks():
+            if itask.state.is_queued:
+                # Already queued
+                continue
+            ready_check_items = itask.is_ready_to_run()
+            # Use this periodic checking point for data-store delta
+            # creation, some items aren't event driven (i.e. clock).
+            if itask.tdef.clocktrigger_offset is not None:
+                self.data_store_mgr.delta_task_clock_trigger(
+                    itask, ready_check_items)
+
+            if all(ready_check_items) and not itask.state.is_runahead:
+                to_queue.append(itask)
+        self.queue_tasks(to_queue)
 
         LOG.info("Reload completed.")
         self.do_reload = False
@@ -1327,7 +1329,7 @@ class TaskPool:
             itask = self.get_task_main(name, point, flow_label)
             if itask is not None:
                 # Trigger existing task proxy
-                LOG.critical('setting %s ready to run', itask)
+                LOG.info('setting %s ready to run', itask)
                 itask.is_manual_submit = True
                 itask.reset_try_timers()
                 # (If None, spawner reports cycle bounds errors).
