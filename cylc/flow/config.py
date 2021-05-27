@@ -739,20 +739,21 @@ class WorkflowConfig:
             WorkflowConfigError - if it fails to validate
         """
         orig_icp = self.cfg['scheduling']['initial cycle point']
-        if orig_icp is None:
-            if self.cfg['scheduling']['cycling mode'] == INTEGER_CYCLING_TYPE:
+        if self.cycling_type == INTEGER_CYCLING_TYPE:
+            if orig_icp is None:
                 orig_icp = '1'
-            else:
+            icp = orig_icp
+        elif self.cycling_type == ISO8601_CYCLING_TYPE:
+            if orig_icp is None:
                 raise WorkflowConfigError(
                     "This workflow requires an initial cycle point.")
-        if orig_icp == "now":
-            icp = get_current_time_string()
-        else:
-            try:
-                my_now = get_current_time_string()
-                icp = ingest_time(orig_icp, my_now)
-            except IsodatetimeError as exc:
-                raise WorkflowConfigError(str(exc))
+            if orig_icp == "now":
+                icp = get_current_time_string()
+            else:
+                try:
+                    icp = ingest_time(orig_icp, get_current_time_string())
+                except IsodatetimeError as exc:
+                    raise WorkflowConfigError(str(exc))
         if orig_icp != icp:
             # now/next()/prev() was used, need to store evaluated point in DB
             self.options.icp = icp
