@@ -70,12 +70,10 @@ class BroadcastMgr:
             ext_trigger = ext_trigger_queue.get_nowait()
             self.ext_triggers.setdefault(ext_trigger, 0)
             self.ext_triggers[ext_trigger] += 1
-        return set(
-            [
-                itask for itask in itasks
-                if self._match_ext_trigger(itask)
-            ]
-        )
+        return {
+            itask for itask in itasks
+            if self._match_ext_trigger(itask)
+        }
 
     def clear_broadcast(
             self, point_strings=None, namespaces=None, cancel_settings=None):

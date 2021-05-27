@@ -371,12 +371,10 @@ class XtriggerManager:
             db_update_func: method to update xtriggers in the DB
 
         """
-        satisfied = set(
-            [
-                itask for itask in itasks
-                if itask.state.xtriggers_all_satisfied()
-            ]
-        )
+        satisfied = {
+            itask for itask in itasks
+            if itask.state.xtriggers_all_satisfied()
+        }
         if satisfied:
             self._housekeep(itasks)
             db_update_func(self.sat_xtrig)

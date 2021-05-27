@@ -303,39 +303,33 @@ class TaskPool:
         # And any manually-triggered task.
 
         # TODO: should runahead should not consider unsatisfied hidden tasks?
-        release = []
-        for itask_id_maps in (
-                list(self.main_pool.values())
-                + list(self.hidden_pool.values())):
-            for itask in itask_id_maps.values():
-                if not itask.state.is_runahead:
-                    continue
-                if (
-                    itask.state(TASK_STATUS_FAILED,
-                                TASK_STATUS_SUCCEEDED,
-                                TASK_STATUS_EXPIRED)
-                    or itask.is_manual_submit
-                ):
-                    release.append(itask)
-        for itask in release:
+        for itask in (
+            itask
+            for pool in (self.main_pool, self.hidden_pool)
+            for cycle in pool.values()
+            for itask in cycle.values()
+            if itask.state.is_runahead
+            if itask.state(
+                TASK_STATUS_FAILED,
+                TASK_STATUS_SUCCEEDED,
+                TASK_STATUS_EXPIRED
+            )
+            or itask.is_manual_submit
+        ):
             self.release_runahead_task(itask)
             released = True
 
         points = []
         for point, itasks in sorted(self.get_tasks_by_point().items()):
-            has_unfinished_itasks = False
-            for itask in itasks:
-                if not itask.state(
+            if points or all(
+                not itask.state(
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED,
                     TASK_STATUS_EXPIRED
-                ):
-                    has_unfinished_itasks = True
-                    break
-            if not points and not has_unfinished_itasks:
-                # We need to begin with an unfinished cycle point.
-                continue
-            points.append(point)
+                )
+                for itask in itasks
+            ):
+                points.append(point)
 
         if not points:
             return False
@@ -400,16 +394,16 @@ class TaskPool:
         if self.stop_point and latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point
 
-        release = []
-        for point, itask_id_map in self.main_pool.items():
-            if point <= latest_allowed_point:
-                for itask in itask_id_map.values():
-                    if not itask.state.is_runahead:
-                        continue
-                    release.append(itask)
-        for itask in release:
+        for itask in (
+            itask
+            for point, itask_id_map in self.main_pool.items()
+            for itask in itask_id_map.values()
+            if point <= latest_allowed_point
+            if itask.state.is_runahead
+        ):
             self.release_runahead_task(itask)
             released = True
+
         return released
 
     def load_abs_outputs_for_restart(self, row_idx, row):
