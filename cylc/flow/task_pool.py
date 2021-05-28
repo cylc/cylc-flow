@@ -302,11 +302,9 @@ class TaskPool:
         # restart when all tasks are initially loaded into the runahead pool).
         # And any manually-triggered task.
 
-        # TODO: should runahead should not consider unsatisfied hidden tasks?
         for itask in (
             itask
-            for pool in (self.main_pool, self.hidden_pool)
-            for cycle in pool.values()
+            for cycle in self.main_pool.values()
             for itask in cycle.values()
             if itask.state.is_runahead
             if itask.state(
