@@ -709,7 +709,7 @@ class TaskPool:
         """Queue tasks that are ready to run."""
         for itask in itasks:
             itask.state.reset(is_queued=True)
-            # TODO Reset manual trigger flag. One manual trigger queues and
+            # TODO Reset manual trigger flag. One manual trigger queues an
             # unqueued task, another one triggers a queued task.
             self.data_store_mgr.delta_task_queued(itask)
         self.task_queue_mgr.push_tasks(itasks)
@@ -1318,29 +1318,36 @@ class TaskPool:
         return len(bad_items)
 
     def force_trigger_tasks(self, items, reflow=False):
-        """Trigger matching tasks, with or without reflow."""
+        """Trigger matching tasks, with or without reflow.
+
+        Queue the task if not queued, otherwise release it to run.
+        """
         # TODO check reflow from existing tasks - unless unhandled fail?
         n_warnings, task_items = self.match_taskdefs(items)
         flow_label = self.flow_label_mgr.get_new_label()
         for name, point in task_items.keys():
-            # Already in pool? Keep it and merge flow labels.
             itask = self.get_task_main(name, point, flow_label)
             if itask is not None:
-                # Trigger existing task proxy
-                LOG.info('setting %s ready to run', itask)
+                # Already in pool: trigger and merge flow labels.
                 itask.is_manual_submit = True
                 itask.reset_try_timers()
                 # (If None, spawner reports cycle bounds errors).
                 if itask.state.reset(TASK_STATUS_WAITING):
                     self.data_store_mgr.delta_task_state(itask)
                 # (No need to set prerequisites satisfied here).
-                self.queue_tasks([itask])
+                if not itask.state.is_queued:
+                    LOG.info("Force-trigger: queueing {itask.identity}")
+                    self.queue_tasks([itask])
+                else:
+                    self.task_queue_mgr.force_release_task(itask)
             else:
                 # Spawn with new flow label.
                 itask = self.spawn_task(
                     name, point, flow_label, reflow=reflow)
                 itask.is_manual_submit = True
+                # This will queue the task.
                 self.add_to_pool(itask, is_new=True)
+                LOG.critical(f"WTF 2: {itask.identity}")
         return n_warnings
 
     def sim_time_check(self, message_queue):
