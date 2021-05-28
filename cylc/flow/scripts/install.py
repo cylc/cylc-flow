@@ -153,10 +153,10 @@ def get_option_parser():
     parser.add_option(
         "--symlink-dirs",
         help=(
-            "Enter a list, in the form ['log'= 'path/to/store', share = '$...'"
-            "]. Use this option to override creating default local symlinks"
-            ", for directories run, log, work, share, share/cycle, as"
-            " configured in global.cylc."),
+            "Enter a list, in the form 'log=path/to/store, share = $...'"
+            ". Use this option to override local symlinks for directories run,"
+            " log, work, share, share/cycle, as configured in global.cylc."
+        ),
         action="store",
         default=None,
         dest="symlink_dirs")
