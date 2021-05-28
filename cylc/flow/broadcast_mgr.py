@@ -59,21 +59,18 @@ class BroadcastMgr:
         self.ext_triggers = {}  # Can use collections.Counter in future
         self.lock = RLock()
 
-    def check_ext_triggers(self, itasks, ext_trigger_queue):
+    def check_ext_triggers(self, itask, ext_trigger_queue):
         """Get queued ext trigger messages and try to satisfy itasks.
 
         Ext-triggers are pushed by the remote end, so we can check for
         new messages and satisfy dependendent tasks at the same time.
-        Return list of tasks with newly satisfied ext-triggers.
+        Return True if itask has a newly satisfied ext-trigger.
         """
         while not ext_trigger_queue.empty():
             ext_trigger = ext_trigger_queue.get_nowait()
             self.ext_triggers.setdefault(ext_trigger, 0)
             self.ext_triggers[ext_trigger] += 1
-        return {
-            itask for itask in itasks
-            if self._match_ext_trigger(itask)
-        }
+        return self._match_ext_trigger(itask)
 
     def clear_broadcast(
             self, point_strings=None, namespaces=None, cancel_settings=None):

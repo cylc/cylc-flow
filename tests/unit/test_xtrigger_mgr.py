@@ -114,7 +114,7 @@ def test_housekeeping_nothing_satisfied(xtrigger_mgr):
     # now XtriggerManager#sat_xtrigger will contain the get_name xtrigger
     xtrigger_mgr.load_xtrigger_for_restart(row_idx=0, row=row)
     assert xtrigger_mgr.sat_xtrig
-    xtrigger_mgr._housekeep([])
+    xtrigger_mgr.housekeep([])
     assert not xtrigger_mgr.sat_xtrig
 
 
@@ -147,7 +147,7 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     xtrigger_mgr.active.append(xtrig.get_signature())
     xtrigger_mgr.callback(xtrig)
     assert xtrigger_mgr.sat_xtrig
-    xtrigger_mgr._housekeep([itask])
+    xtrigger_mgr.housekeep([itask])
     # here we still have the same number as before
     assert xtrigger_mgr.sat_xtrig
 
@@ -197,12 +197,12 @@ def test__call_xtriggers_async(xtrigger_mgr):
     assert len(xtrigger_mgr.active) == 0
 
     # after calling the first time, we get two active
-    xtrigger_mgr._call_xtriggers_async(itask)
+    xtrigger_mgr.call_xtriggers_async(itask)
     assert len(xtrigger_mgr.sat_xtrig) == 0
     assert len(xtrigger_mgr.active) == 2
 
     # calling again does not change anything
-    xtrigger_mgr._call_xtriggers_async(itask)
+    xtrigger_mgr.call_xtriggers_async(itask)
     assert len(xtrigger_mgr.sat_xtrig) == 0
     assert len(xtrigger_mgr.active) == 2
 
@@ -215,7 +215,7 @@ def test__call_xtriggers_async(xtrigger_mgr):
     assert len(xtrigger_mgr.active) == 0
 
     # calling satisfy_xtriggers again still does not change anything
-    xtrigger_mgr._call_xtriggers_async(itask)
+    xtrigger_mgr.call_xtriggers_async(itask)
     assert len(xtrigger_mgr.sat_xtrig) == 2
     assert len(xtrigger_mgr.active) == 0
 
@@ -319,6 +319,6 @@ def test_check_xtriggers(xtrigger_mgr):
     itask2 = TaskProxy(
         tdef2, start_point, FlowLabelMgr().get_new_label())
 
-    xtrigger_mgr.check_xtriggers([itask1, itask2], lambda foo: None)
+    xtrigger_mgr.check_xtriggers(itask1, lambda foo: None)
     # won't be satisfied, as it is async, we are are not calling callback
     assert not xtrigger_mgr.sat_xtrig

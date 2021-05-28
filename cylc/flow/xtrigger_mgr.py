@@ -18,7 +18,7 @@ import json
 import re
 from copy import deepcopy
 from time import time
-from typing import Any, Dict, Set, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -265,19 +265,14 @@ class XtriggerManager:
         ctx.update_command(self.workflow_run_dir)
         return ctx
 
-    def call_xtriggers(self, itasks: List[TaskProxy]):
-        """Call all xtrigger functions depended on by itasks."""
-        for itask in itasks:
-            self._call_xtriggers_async(itask)
-
-    def _call_xtriggers_async(self, itask: TaskProxy):
+    def call_xtriggers_async(self, itask: TaskProxy):
         """Call itask's xtrigger functions via the process pool...
 
-        ...if previous call not still in-process, and retry period is up.
+        ...if previous call not still in-process and retry period is up.
 
 
         Args:
-            itask (TaskProxy): TaskProxy with xtriggers to check.
+            itask: task proxy to check.
         """
         for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
             if sig.startswith("wall_clock"):
@@ -322,11 +317,11 @@ class XtriggerManager:
             self.active.append(sig)
             self.proc_pool.put_command(ctx, self.callback)
 
-    def _housekeep(self, itasks: List[TaskProxy]):
+    def housekeep(self, itasks: List[TaskProxy]):
         """Delete satisfied xtriggers no longer needed by any task.
 
         Args:
-            itasks (List[TaskProxy]): list of task proxies.
+            itasks: list of all task proxies.
         """
         all_xtrig = []
         for itask in itasks:
@@ -360,22 +355,17 @@ class XtriggerManager:
 
     def check_xtriggers(
             self,
-            itasks: List[TaskProxy],
-            db_update_func: Callable[[dict], None]) -> Set[TaskProxy]:
-        """Check if any of itasks' xtriggers have become satisfied.
+            itask: TaskProxy,
+            db_update_func: Callable[[dict], None]) -> bool:
+        """Check if all of itasks' xtriggers have become satisfied.
 
-        Return set of newly satisfied tasks.
+        Return True if satisfied, else False
 
         Args:
-            itasks: list of tasks to check
+            itasks: task proxs to check
             db_update_func: method to update xtriggers in the DB
-
         """
-        satisfied = {
-            itask for itask in itasks
-            if itask.state.xtriggers_all_satisfied()
-        }
-        if satisfied:
-            self._housekeep(itasks)
+        if itask.state.xtriggers_all_satisfied():
             db_update_func(self.sat_xtrig)
-        return satisfied
+            return True
+        return False

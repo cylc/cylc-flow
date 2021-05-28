@@ -1421,49 +1421,49 @@ class Scheduler:
 
             self.proc_pool.process()
 
-            # Get tasks with newly-satisfied external triggers.
-            check_if_ready = self.broadcast_mgr.check_ext_triggers(
-                [x for x in self.pool.get_tasks()
-                    if x.state(TASK_STATUS_WAITING)
-                    and not x.state.is_queued
-                    and not x.state.is_runahead
-                    and x.state.external_triggers
-                    and not x.state.external_triggers_all_satisfied()],
-                self.ext_trigger_queue
-            )
+            # Tasks in the main pool that are waiting but not queued must be
+            # waiting on external dependencies, i.e. xtriggers or ext_triggers.
+            # For these tasks, call any unsatisfied xtrigger functions, and
+            # queue tasks that have become ready. (Tasks do not appear in the
+            # main pool at all until all other-task deps are satisfied, and are
+            # queued immediately on release from runahead limiting if they are
+            # not waiting on external deps).
+            housekeep_xtriggers = False
+            for itask in self.pool.get_tasks():
+                if (
+                    not itask.state(TASK_STATUS_WAITING)
+                    or itask.state.is_queued
+                    or itask.state.is_runahead
+                ):
+                    continue
 
-            # Call unsatisfied xtrigger functions if needed.
-            self.xtrigger_mgr.call_xtriggers(
-                [
-                    itask for itask in self.pool.get_tasks()
-                    if (
-                        itask.state(TASK_STATUS_WAITING)
-                        and not itask.state.is_queued
-                        and not itask.state.is_runahead
-                        and itask.state.xtriggers
-                        and not itask.state.xtriggers_all_satisfied()
-                    )
-                ]
-            )
+                if (
+                    itask.state.xtriggers
+                    and not itask.state.xtriggers_all_satisfied()
+                ):
+                    # Call unsatisfied xtriggers if not already in-process.
+                    # Results are returned asynchronously.
+                    self.xtrigger_mgr.call_xtriggers_async(itask)
+                    # Check for satisfied xtriggers, and queue if ready.
+                    if self.xtrigger_mgr.check_xtriggers(
+                            itask, self.workflow_db_mgr.put_xtriggers):
+                        housekeep_xtriggers = True
+                        if all(itask.is_ready_to_run()):
+                            self.pool.queue_tasks([itask])
 
-            # Get tasks with satisfied xtriggers.
-            check_if_ready.update(
-                self.xtrigger_mgr.check_xtriggers(
-                    [itask for itask in self.pool.get_tasks()
-                        if itask.state(TASK_STATUS_WAITING)
-                        and not itask.state.is_queued
-                        and itask.state.xtriggers],
-                    self.workflow_db_mgr.put_xtriggers
-                )
-            )
+                # Check for satisfied ext_triggers, and queue if ready.
+                if (
+                    itask.state.external_triggers
+                    and not itask.state.external_triggers_all_satisfied()
+                    and self.broadcast_mgr.check_ext_triggers(
+                        itask, self.ext_trigger_queue)
+                    and all(itask.is_ready_to_run())
+                ):
+                    self.pool.queue_tasks([itask])
 
-            # Queue if these tasks are ready to run.
-            self.pool.queue_tasks(
-                [
-                    itask for itask in check_if_ready
-                    if all(itask.is_ready_to_run())
-                ]
-            )
+            if housekeep_xtriggers:
+                # (Could do this periodically?)
+                self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
             self.pool.set_expired_tasks()
             self.release_queued_tasks()
