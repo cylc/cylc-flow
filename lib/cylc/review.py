@@ -438,10 +438,11 @@ class CylcReviewService(object):
             SuiteSrvFilesManager.DIR_BASE_SRV,
             "log",
             "share",
-            "work",
-            SuiteSrvFilesManager.FILE_BASE_SUITE_RC]
+            "work"
+        ]
         for dirpath, dnames, fnames in os.walk(
-                user_suite_dir_root, followlinks=True):
+            user_suite_dir_root, followlinks=True
+        ):
             if dirpath != user_suite_dir_root and (
                     any(name in dnames or name in fnames
                         for name in sub_names)):
