@@ -449,6 +449,12 @@ class CylcReviewService(object):
                 dnames[:] = []
             else:
                 continue
+
+            # Don't display the symlink to the latest version of
+            # the Cylc8 Suite
+            if re.match(r'.*runN$', dirpath):
+                continue
+
             item = os.path.relpath(dirpath, user_suite_dir_root)
             if not any(fnmatch(item, glob_) for glob_ in name_globs):
                 continue
