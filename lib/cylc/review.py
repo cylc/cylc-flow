@@ -753,8 +753,10 @@ class CylcReviewService(object):
                                   "mtime": f_stat.st_mtime,
                                   "size": f_stat.st_size}
 
-        # Get cylc suite log files and other files:
+        # Get cylc suite/workflow log files and other files:
         EXTRA_FILES = [
+            "log/workflow/log*",
+            "log/workflow/file-installation-log.*",
             "log/suite/log*",
             "log/suite/file-installation-log.*",
             "log/install/*"
