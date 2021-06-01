@@ -24,11 +24,8 @@ set_test_number 7
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-
 workflow_run_fail "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --stopcp=2 --no-detach
-
 
 DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
 
@@ -44,7 +41,6 @@ cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
 __EOF__
 
 workflow_run_fail "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --stopcp=3 --no-detach
-poll_workflow_stopped
 
 # Check bar.2 is still waiting (i.e. prereqs not satisfied):
 TEST_NAME="${TEST_NAME_BASE}-db-task-pool"

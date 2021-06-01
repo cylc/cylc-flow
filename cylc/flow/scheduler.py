@@ -98,6 +98,10 @@ from cylc.flow.task_remote_mgr import (
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_NEVER_ACTIVE,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_WAITING,
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.wallclock import (
@@ -155,16 +159,6 @@ class Scheduler:
     START_PUB_MESSAGE_TMPL = (
         START_PUB_MESSAGE_PREFIX +
         'url=%(comms_method)s://%(host)s:%(port)s')
-
-    # Dependency negotiation etc. will run after these commands
-    PROC_CMDS = (
-        'release_workflow',
-        'release_tasks',
-        'kill_tasks',
-        'force_spawn_children',
-        'force_trigger_tasks',
-        'reload_workflow'
-    )
 
     # managers
     profiler: Profiler
@@ -383,7 +377,8 @@ class Scheduler:
             self.broadcast_mgr,
             self.xtrigger_mgr,
             self.data_store_mgr,
-            self.options.log_timestamp
+            self.options.log_timestamp,
+            self.reset_inactivity_timer
         )
         self.task_events_mgr.uuid_str = self.uuid_str
 
@@ -491,7 +486,7 @@ class Scheduler:
                     180
                 )
         if self._get_events_conf(key):
-            self.set_workflow_inactivity_timer()
+            self.reset_inactivity_timer()
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load(
@@ -645,15 +640,14 @@ class Scheduler:
         Add it to the pool if it has no parents at or after the start point.
 
         (Later on, tasks with parents will be spawned on demand, and tasks with
-        no parents will be auto-spawned when their own previous instances are
-        released from the runahead pool.)
+        no parents will be auto-spawned when their previous instances are
+        released from runhead.)
 
         """
         if self.config.start_point is not None:
             start_type = "Warm" if self.options.startcp else "Cold"
             LOG.info(f"{start_type} start from {self.config.start_point}")
 
-        initial_tasks = []
         flow_label = self.pool.flow_label_mgr.get_new_label()
         for name in self.config.get_task_name_list():
             if self.config.start_point is None:
@@ -672,8 +666,7 @@ class Scheduler:
             parent_points = tdef.get_parent_points(point)
             if not parent_points or all(
                     x < self.config.start_point for x in parent_points):
-                initial_tasks.append(TaskID.get(tdef.name, point))
-                self.pool.add_to_runahead_pool(
+                self.pool.add_to_pool(
                     TaskProxy(tdef, point, flow_label))
 
     def _load_pool_from_db(self):
@@ -697,13 +690,9 @@ class Scheduler:
             self.pool.load_abs_outputs_for_restart)
 
     def restart_remote_init(self):
-        """Remote init for all submitted / running tasks in the pool.
-
-        Note: tasks should all be in the runahead pool at this point.
-
-        """
+        """Remote init for all submitted/running tasks in the pool."""
         distinct_install_target_platforms = []
-        for itask in self.pool.get_rh_tasks():
+        for itask in self.pool.get_tasks():
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
             if itask.state(*TASK_STATUSES_ACTIVE):
@@ -821,8 +810,6 @@ class Scheduler:
                 else:
                     LOG.info(f"Command succeeded: {cmdstr}")
                 self.is_updated = True
-                if name in self.PROC_CMDS:
-                    self.task_events_mgr.pflag = True
             self.command_queue.task_done()
 
     def info_get_graph_raw(self, cto, ctn, group_nodes=None,
@@ -888,7 +875,7 @@ class Scheduler:
 
     def command_release(self, task_globs: Iterable[str]) -> int:
         """Release held tasks."""
-        return self.pool.release_tasks(task_globs)
+        return self.pool.release_held_tasks(task_globs)
 
     def command_release_hold_point(self) -> None:
         """Release all held tasks and unset workflow hold after cycle point,
@@ -998,15 +985,15 @@ class Scheduler:
             get_current_time_string())
         self.workflow_timer_active = True
 
-    def set_workflow_inactivity_timer(self):
-        """Set workflow's inactivity timer."""
-        self.workflow_inactivity_timeout = time() + (
-            self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
-        )
+    def reset_inactivity_timer(self):
+        """Reset workflow inactivity timer."""
+        timeout = self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
+        if timeout is None:
+            return
+        self.workflow_inactivity_timeout = time() + timeout
         LOG.debug(
             "%s workflow inactivity timer starts NOW: %s",
-            get_seconds_as_interval_string(
-                self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
+            get_seconds_as_interval_string(timeout),
             get_current_time_string())
 
     def _configure_contact(self):
@@ -1222,8 +1209,8 @@ class Scheduler:
             event, str(reason), self.workflow, self.uuid_str, self.owner,
             self.host, self.server.port))
 
-    def process_task_pool(self):
-        """Queue and release tasks, and submit task jobs.
+    def release_queued_tasks(self):
+        """Release queued tasks, and submit task jobs.
 
         The task queue manages references to task proxies in the task pool.
 
@@ -1232,11 +1219,6 @@ class Scheduler:
         processes are done.
 
         """
-        LOG.debug("BEGIN TASK PROCESSING")
-        time0 = time()
-        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
-            self.set_workflow_inactivity_timer()
-
         # Forget tasks that are no longer preparing for job submission.
         self.pre_submit_tasks = [
             itask for itask in self.pre_submit_tasks if
@@ -1246,7 +1228,7 @@ class Scheduler:
         if (not self.is_paused and
                 self.stop_mode is None and self.auto_restart_time is None):
             # Add newly released tasks to those still preparing.
-            self.pre_submit_tasks += self.pool.queue_and_release()
+            self.pre_submit_tasks += self.pool.release_queued_tasks()
             if self.pre_submit_tasks:
                 self.is_updated = True
                 self.task_job_mgr.task_remote_mgr.rsync_includes = (
@@ -1260,11 +1242,6 @@ class Scheduler:
                     # TODO log flow labels here (beware effect on ref tests)
                     LOG.info('[%s] -triggered off %s',
                              itask, itask.state.get_resolved_dependencies())
-
-        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
-        self.xtrigger_mgr.housekeep()
-        self.workflow_db_mgr.put_xtriggers(self.xtrigger_mgr.sat_xtrig)
-        LOG.debug("END TASK PROCESSING (took %s seconds)" % (time() - time0))
 
     def process_workflow_db_queue(self):
         """Update workflow DB."""
@@ -1422,11 +1399,6 @@ class Scheduler:
                 self.count, get_current_time_string()))
         self.count += 1
 
-    def release_runahead_tasks(self) -> None:
-        if self.pool.release_runahead_tasks():
-            self.is_updated = True
-            self.task_events_mgr.pflag = True
-
     async def main_loop(self):
         """The scheduler main loop."""
         while True:  # MAIN LOOP
@@ -1441,12 +1413,66 @@ class Scheduler:
                     self.data_store_mgr.publish_deltas)
 
             self.process_command_queue()
+
             if not self.is_paused:
-                self.release_runahead_tasks()
+                if self.pool.release_runahead_tasks():
+                    self.is_updated = True
+                    self.reset_inactivity_timer()
+
             self.proc_pool.process()
 
-            if self.should_process_tasks():
-                self.process_task_pool()
+            # Tasks in the main pool that are waiting but not queued must be
+            # waiting on external dependencies, i.e. xtriggers or ext_triggers.
+            # For these tasks, call any unsatisfied xtrigger functions, and
+            # queue tasks that have become ready. (Tasks do not appear in the
+            # main pool at all until all other-task deps are satisfied, and are
+            # queued immediately on release from runahead limiting if they are
+            # not waiting on external deps).
+            housekeep_xtriggers = False
+            for itask in self.pool.get_tasks():
+                if (
+                    not itask.state(TASK_STATUS_WAITING)
+                    or itask.state.is_queued
+                    or itask.state.is_runahead
+                ):
+                    continue
+
+                if (
+                    itask.state.xtriggers
+                    and not itask.state.xtriggers_all_satisfied()
+                ):
+                    # Call unsatisfied xtriggers if not already in-process.
+                    # Results are returned asynchronously.
+                    self.xtrigger_mgr.call_xtriggers_async(itask)
+                    # Check for satisfied xtriggers, and queue if ready.
+                    if self.xtrigger_mgr.check_xtriggers(
+                            itask, self.workflow_db_mgr.put_xtriggers):
+                        housekeep_xtriggers = True
+                        if all(itask.is_ready_to_run()):
+                            self.pool.queue_tasks([itask])
+
+                # Check for satisfied ext_triggers, and queue if ready.
+                if (
+                    itask.state.external_triggers
+                    and not itask.state.external_triggers_all_satisfied()
+                    and self.broadcast_mgr.check_ext_triggers(
+                        itask, self.ext_trigger_queue)
+                    and all(itask.is_ready_to_run())
+                ):
+                    self.pool.queue_tasks([itask])
+
+            if housekeep_xtriggers:
+                # (Could do this periodically?)
+                self.xtrigger_mgr.housekeep(self.pool.get_tasks())
+
+            self.pool.set_expired_tasks()
+            self.release_queued_tasks()
+
+            if self.pool.sim_time_check(self.message_queue):
+                # A simulated task state change occurred.
+                self.reset_inactivity_timer()
+
+            self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
             self.late_tasks_check()
 
             self.process_queued_task_messages()
@@ -1507,7 +1533,7 @@ class Scheduler:
     async def update_data_structure(self):
         """Update DB, UIS, Summary data elements"""
         updated_tasks = [
-            t for t in self.pool.get_all_tasks() if t.state.is_updated]
+            t for t in self.pool.get_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
         # Add tasks that have moved moved from runahead to live pool.
         if has_updated or self.data_store_mgr.updates_pending:
@@ -1566,7 +1592,7 @@ class Scheduler:
     def check_workflow_stalled(self):
         """Check if workflow is stalled or not."""
         if self.is_stalled:  # already reported
-            return
+            return True
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
             self.run_event_handlers(self.EVENT_STALLED, 'workflow stalled')
@@ -1576,52 +1602,7 @@ class Scheduler:
             # Start workflow timeout timer
             if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.set_workflow_timer()
-
-    def should_process_tasks(self) -> bool:
-        """Return True if waiting tasks are ready."""
-        # do we need to do a pass through the main task processing loop?
-        process = False
-
-        # New-style xtriggers.
-        self.xtrigger_mgr.check_xtriggers(self.pool.get_tasks())
-        if self.xtrigger_mgr.pflag:
-            process = True
-            self.xtrigger_mgr.pflag = False  # reset
-        # Old-style external triggers.
-        self.broadcast_mgr.add_ext_triggers(self.ext_trigger_queue)
-        for itask in self.pool.get_tasks():
-            if (itask.state.external_triggers and
-                    self.broadcast_mgr.match_ext_trigger(itask)):
-                process = True
-
-        if self.task_events_mgr.pflag:
-            # This flag is turned on by commands that change task state
-            process = True
-            self.task_events_mgr.pflag = False  # reset
-
-        if self.task_job_mgr.task_remote_mgr.ready:
-            # This flag is turned on when a host init/select command completes
-            process = True
-            self.task_job_mgr.task_remote_mgr.ready = False  # reset
-
-        broadcast_mgr = self.task_events_mgr.broadcast_mgr
-        broadcast_mgr.add_ext_triggers(self.ext_trigger_queue)
-        for itask in self.pool.get_tasks():
-            # External trigger matching and task expiry must be done
-            # regardless, so they need to be in separate "if ..." blocks.
-            if broadcast_mgr.match_ext_trigger(itask):
-                process = True
-            if self.pool.set_expired_task(itask, time()):
-                process = True
-            if all(itask.is_ready()):
-                process = True
-        if (
-            self.config.run_mode('simulation') and
-            self.pool.sim_time_check(self.message_queue)
-        ):
-            process = True
-
-        return process
+        return self.is_stalled
 
     async def shutdown(self, reason: Exception) -> None:
         """Gracefully shut down the scheduler."""
@@ -1761,17 +1742,37 @@ class Scheduler:
         return False
 
     def check_auto_shutdown(self):
-        """Check if we should do an automatic shutdown: main pool empty."""
+        """Check if we should shut down now."""
         if self.is_paused:
+            # Don't if paused.
             return False
+
         self.pool.release_runahead_tasks()
-        if self.pool.get_tasks():
+
+        if self.check_workflow_stalled():
+            # Don't if stalled, unless "abort on stalled" is set.
             return False
-        # can shut down
+
+        if any(
+            itask for itask in self.pool.get_tasks()
+            if itask.state(
+                TASK_STATUS_PREPARING,
+                TASK_STATUS_SUBMITTED,
+                TASK_STATUS_RUNNING
+            )
+            or (itask.state(TASK_STATUS_WAITING)
+                and not itask.state.is_runahead)
+        ):
+            # Don't if there are more tasks to run (if waiting and not
+            # runahead, then held, queued, or xtriggered).
+            return False
+
+        # Can shut down.
         if self.pool.stop_point:
             self.options.stopcp = None
             self.pool.stop_point = None
             self.workflow_db_mgr.delete_workflow_stop_cycle_point()
+
         return True
 
     def pause_workflow(self) -> None:

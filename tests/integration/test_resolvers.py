@@ -70,7 +70,7 @@ async def mock_flow(
     await ret.schd.install()
     await ret.schd.initialise()
     await ret.schd.configure()
-    ret.schd.release_runahead_tasks()
+    ret.schd.pool.release_runahead_tasks()
     ret.schd.data_store_mgr.initiate_data_model()
 
     ret.owner = ret.schd.owner

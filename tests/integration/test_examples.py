@@ -140,8 +140,8 @@ async def test_task_pool(flow, scheduler, one_conf):
     await schd.configure()
 
     # pump the scheduler's heart manually
-    schd.release_runahead_tasks()
-    assert len(schd.pool.pool) == 1
+    schd.pool.release_runahead_tasks()
+    assert len(schd.pool.main_pool) == 1
 
 
 @pytest.mark.asyncio

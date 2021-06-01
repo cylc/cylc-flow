@@ -105,6 +105,8 @@ class IndepQueueManager(TaskQueueManagerBase):
                 config["limit"], config["members"]
             )
 
+        self.force_released: Set[TaskProxy] = set()
+
     def push_tasks(self, itasks: List[TaskProxy]) -> None:
         """Queue each task to the appropriate queue."""
         for _, queue in self.queues.items():
@@ -115,6 +117,9 @@ class IndepQueueManager(TaskQueueManagerBase):
         released: List[TaskProxy] = []
         for _, queue in self.queues.items():
             released += queue.release(active)
+        if self.force_released:
+            released += list(self.force_released)
+            self.force_released = set()
         return released
 
     def remove_task(self, itask: TaskProxy) -> None:
@@ -122,6 +127,14 @@ class IndepQueueManager(TaskQueueManagerBase):
         for _, queue in self.queues.items():
             if queue.remove(itask):
                 break
+
+    def force_release_task(self, itask: TaskProxy) -> None:
+        """Remove a task from whichever queue it belongs to.
+
+        To be returned when release_tasks() is next called.
+        """
+        self.remove_task(itask)
+        self.force_released.add(itask)
 
     def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt orphaned tasks to the default group."""
