@@ -117,8 +117,7 @@ ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
     \`-- cylc-clean
         \`-- ${TEST_NAME_BASE}
-            |-- share
-            \`-- work
+            \`-- share
 ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
 \`-- ${FUNCTIONAL_DIR}
     \`-- cylc-clean
@@ -130,8 +129,6 @@ ${TEST_DIR}/${SYM_NAME}/run/cylc-run/${CYLC_TEST_REG_BASE}
             \`-- share -> ${TEST_DIR}/${SYM_NAME}/other/cylc-run/${WORKFLOW_NAME}/share
 __TREE__
 # -----------------------------------------------------------------------------
-rmdir "${TEST_DIR}/${SYM_NAME}/other/cylc-run/${WORKFLOW_NAME}/work"
-
 # Clean the last remaining symlink dir
 run_ok "${TEST_NAME_BASE}-targeted-clean-3" cylc clean "$WORKFLOW_NAME" \
     --rm 'share'

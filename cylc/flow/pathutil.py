@@ -15,11 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Functions to return paths to common workflow files and directories."""
 
+import glob
 import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Dict, Iterable, Set, Union
+from typing import Dict, Iterable, List, Set, Union
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -311,3 +312,28 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
                 part += '/'
             result.add(part)
     return result
+
+
+def glob_in_run_dir(run_dir: Union[Path, str], pattern: str) -> List[Path]:
+    """Execute a (recursive) glob search in the given run directory.
+
+    NOTE: this follows symlinks, so be careful what you do with the results.
+    """
+    return sorted(
+        Path(i) for i in glob.iglob(
+            # Note: use os.path.join, not pathlib, to preserve trailing slash
+            os.path.join(glob.escape(str(run_dir)), pattern),
+            recursive=True
+        )
+    )
+
+
+def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
+    """Return whether or not path1 is relative to path2."""
+    # In future, we can just use pathlib.Path.is_relative_to()
+    # when Python 3.9 becomes the minimum supported version
+    try:
+        Path(path1).relative_to(path2)
+    except ValueError:
+        return False
+    return True

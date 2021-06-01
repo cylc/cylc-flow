@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from glob import iglob
 import logging
+import os
 from pathlib import Path
 import pytest
 import shutil
@@ -33,6 +35,7 @@ from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     WorkflowFiles,
+    _clean_using_glob,
     check_flow_file,
     check_nested_run_dirs,
     get_workflow_source_dir,
@@ -383,6 +386,14 @@ def test_init_clean_rm_dirs(
             ['cylc-run/foo/log', 'cylc-run/foo/work', 'cylc-run/foo/share'],
             id="Targeted clean with glob"
         ),
+        pytest.param(
+            'foo',
+            {'log': 'sym-log'},
+            {'w*', 'wo*', 'l*', 'lo*'},
+            ['cylc-run/foo/work', 'cylc-run/foo/log', 'sym-log/cylc-run/foo'],
+            ['cylc-run/foo/share', 'cylc-run/foo/share/cycle'],
+            id="Targeted clean with degenerate glob"
+        ),
     ]
 )
 def test_clean(
@@ -409,31 +420,30 @@ def test_clean(
     run_dir: Path = tmp_run_dir(reg)
 
     if 'run' in symlink_dirs:
-        target = tmp_path.joinpath(symlink_dirs['run'], 'cylc-run', reg)
+        target = tmp_path / symlink_dirs['run'] / 'cylc-run' / reg
         target.mkdir(parents=True)
         shutil.rmtree(run_dir)
         run_dir.symlink_to(target)
         symlink_dirs.pop('run')
     for symlink_name, target_name in symlink_dirs.items():
-        target = tmp_path.joinpath(target_name, 'cylc-run', reg, symlink_name)
+        target = tmp_path / target_name / 'cylc-run' / reg / symlink_name
         target.mkdir(parents=True)
-        symlink = run_dir.joinpath(symlink_name)
+        symlink = run_dir / symlink_name
         symlink.symlink_to(target)
     for d_name in ('log', 'share', 'share/cycle', 'work'):
-        path = run_dir.joinpath(d_name)
         if d_name not in symlink_dirs:
-            path.mkdir()
+            (run_dir / d_name).mkdir()
 
     for rel_path in [*expected_deleted, *expected_remaining]:
-        assert tmp_path.joinpath(rel_path).exists()
+        assert (tmp_path / rel_path).exists()
 
     # --- The actual test ---
     workflow_files.clean(reg, run_dir, rm_dirs)
     for rel_path in expected_deleted:
-        assert tmp_path.joinpath(rel_path).exists() is False
-        assert tmp_path.joinpath(rel_path).is_symlink() is False
+        assert (tmp_path / rel_path).exists() is False
+        assert (tmp_path / rel_path).is_symlink() is False
     for rel_path in expected_remaining:
-        assert tmp_path.joinpath(rel_path).exists()
+        assert (tmp_path / rel_path).exists()
 
 
 def test_clean_broken_symlink_run_dir(
@@ -452,6 +462,7 @@ def test_clean_broken_symlink_run_dir(
     # Test
     workflow_files.clean(reg, run_dir)
     assert run_dir.parent.exists() is False  # cylc-run/foo should be gone
+    assert target.parent.exists() is False  # rabbow/cylc-run/foo too
 
 
 def test_clean_bad_symlink_dir_wrong_type(
@@ -502,6 +513,138 @@ def test_clean_rm_dir_not_file(pattern: str, tmp_run_dir: Callable):
 
     workflow_files.clean(reg, run_dir, rm_dirs)
     assert a_file.exists()
+
+
+FILETREE_1 = {
+    # Types of entries:
+    #   dict - directory
+    #   None - file
+    #   Path - symlink to the specified path
+    'cylc-run': {'foo': {'bar': {
+        'flow.cylc': None,
+        'log': Path('sym/cylc-run/foo/bar/log'),
+        'mirkwood': Path('you-shall-not-pass/mirkwood'),
+        'rincewind.txt': Path('you-shall-not-pass/rincewind.txt')
+    }}},
+    'sym': {'cylc-run': {'foo': {'bar': {
+        'log': {
+            'darmok': Path('you-shall-not-pass/darmok'),
+            'temba.txt': Path('you-shall-not-pass/temba.txt'),
+            'bib': {
+                'fortuna.txt': None
+            }
+        }
+    }}}},
+    'you-shall-not-pass': {  # Nothing in here should get deleted
+        'darmok': {
+            'jalad.txt': None
+        },
+        'mirkwood': {
+            'spiders.txt': None
+        },
+        'rincewind.txt': None,
+        'temba.txt': None
+    }
+}
+
+
+@pytest.mark.parametrize(
+    'pattern, files_left_behind',
+    [
+        (
+            '**',
+            {
+                'cylc-run': {'foo': {}},
+                'sym': {'cylc-run': {'foo': {'bar': {}}}}
+            }
+        ),
+        (
+            '*/**',
+            {
+                'cylc-run': {'foo': {'bar': {
+                    'flow.cylc': None,
+                    'rincewind.txt': Path('whatever')
+                }}},
+                'sym': {'cylc-run': {'foo': {'bar': {}}}}
+            }
+        ),
+        (
+            '**/*.txt',
+            {
+                'cylc-run': {'foo': {'bar': {
+                    'flow.cylc': None,
+                    'log': Path('whatever'),
+                    'mirkwood': Path('whatever')
+                }}},
+                'sym': {'cylc-run': {'foo': {'bar': {
+                    'log': {
+                        'darmok': Path('whatever'),
+                        'bib': {}
+                    }
+                }}}}
+            }
+        )
+    ]
+)
+def test_clean_using_glob(
+    pattern: str, files_left_behind: Dict[str, Any],
+    tmp_path: Path
+) -> None:
+    """Test _clean_using_glob(), particularly that it does not follow and
+    delete symlinks (apart from the standard symlink dirs).
+
+    Params:
+        pattern: The glob pattern to test.
+        files_left_behind: The filetree expected to remain after
+            _clean_using_glob() is called (excluding
+            <tmp_path>/you-shall-not-pass, which is always expected to remain).
+    """
+    # --- Setup ---
+    reg = 'foo/bar'
+
+    def create_filetree(filetree: Dict[str, Any], location: Path) -> None:
+        for name, entry in filetree.items():
+            path = location / name
+            if isinstance(entry, dict):
+                path.mkdir()
+                create_filetree(entry, path)
+            elif isinstance(entry, Path):
+                path.symlink_to(tmp_path / entry)
+            else:
+                path.touch()
+
+    def get_filetree_as_list(
+        filetree: Dict[str, Any], location: Path
+    ) -> List[str]:
+        ret: List[str] = []
+        for name, entry in filetree.items():
+            path = location / name
+            ret.append(str(path))
+            if isinstance(entry, dict):
+                ret.extend(get_filetree_as_list(entry, path))
+        return ret
+
+    create_filetree(FILETREE_1, tmp_path)
+    stuff_not_to_delete = [
+        os.path.normpath(i) for i in
+        iglob(str(tmp_path / 'you-shall-not-pass/**'), recursive=True)
+    ]
+    stuff_not_to_delete.extend(
+        get_filetree_as_list(files_left_behind, tmp_path)
+    )
+    stuff_to_delete = set(
+        get_filetree_as_list(FILETREE_1, tmp_path)
+    ).difference(
+        stuff_not_to_delete
+    )
+    run_dir = tmp_path / 'cylc-run' / reg
+
+    # --- Test ---
+    _clean_using_glob(run_dir, pattern, symlink_dirs=['log'])
+    for item in stuff_not_to_delete:
+        assert os.path.exists(item) is True
+    for item in stuff_to_delete:
+        assert os.path.lexists(item) is False
 
 
 PLATFORMS = {
