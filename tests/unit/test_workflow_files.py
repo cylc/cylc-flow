@@ -515,11 +515,86 @@ def test_clean_rm_dir_not_file(pattern: str, tmp_run_dir: Callable):
     assert a_file.exists()
 
 
+@pytest.fixture
+def filetree_for_testing_cylc_clean(tmp_path: Path):
+    """Fixture that creates a filetree from the given dict, and returns which
+    files are expected to be deleted and which aren't.
+
+    A filetree is represented by a dict like so:
+    {
+        # Dirs are represented by dicts (which are also sub-filetrees):
+        'dir': {
+            'another-dir': {
+                # Files are represented by None:
+                'file.txt': None
+            }
+        },
+        # Symlinks are represented by pathlib.Path, with the relative path
+        # being the target
+        'symlink': Path('dir/another-dir')
+    }
+
+    Args:
+        reg: Workflow name.
+        initial_filetree: The filetree before cleaning.
+        filetree_left_behind: The filetree that is expected to be left behind
+            after cleaning, excluding the 'you-shall-not-pass/' directory,
+            which is always expected to be left behind.
+
+    Returns:
+        run_dir: Workflow run dir.
+        files_to_delete: List of files that are expected to be deleted.
+        files_not_to_delete: List of files that are not expected to be deleted.
+    """
+    def _filetree_for_testing_cylc_clean(
+        reg: str,
+        initial_filetree: Dict[str, Any],
+        filetree_left_behind: Dict[str, Any]
+    ) -> Tuple[Path, List[str], List[str]]:
+        create_filetree(initial_filetree, tmp_path)
+        files_not_to_delete = [
+            os.path.normpath(i) for i in
+            iglob(str(tmp_path / 'you-shall-not-pass/**'), recursive=True)
+        ]
+        files_not_to_delete.extend(
+            get_filetree_as_list(filetree_left_behind, tmp_path)
+        )
+        files_to_delete = list(
+            set(get_filetree_as_list(initial_filetree, tmp_path)).difference(
+                files_not_to_delete
+            )
+        )
+        run_dir = tmp_path / 'cylc-run' / reg
+        return run_dir, files_to_delete, files_not_to_delete
+
+    def create_filetree(filetree: Dict[str, Any], location: Path) -> None:
+        """Helper function"""
+        for name, entry in filetree.items():
+            path = location / name
+            if isinstance(entry, dict):
+                path.mkdir()
+                create_filetree(entry, path)
+            elif isinstance(entry, Path):
+                path.symlink_to(tmp_path / entry)
+            else:
+                path.touch()
+
+    def get_filetree_as_list(
+        filetree: Dict[str, Any], location: Path
+    ) -> List[str]:
+        """Helper function"""
+        ret: List[str] = []
+        for name, entry in filetree.items():
+            path = location / name
+            ret.append(str(path))
+            if isinstance(entry, dict):
+                ret.extend(get_filetree_as_list(entry, path))
+        return ret
+
+    return _filetree_for_testing_cylc_clean
+
+
 FILETREE_1 = {
-    # Types of entries:
-    #   dict - directory
-    #   None - file
-    #   Path - symlink to the specified path
     'cylc-run': {'foo': {'bar': {
         'flow.cylc': None,
         'log': Path('sym/cylc-run/foo/bar/log'),
@@ -549,7 +624,7 @@ FILETREE_1 = {
 
 
 @pytest.mark.parametrize(
-    'pattern, files_left_behind',
+    'pattern, filetree_left_behind',
     [
         (
             '**',
@@ -587,8 +662,8 @@ FILETREE_1 = {
     ]
 )
 def test_clean_using_glob(
-    pattern: str, files_left_behind: Dict[str, Any],
-    tmp_path: Path
+    pattern: str, filetree_left_behind: Dict[str, Any],
+    filetree_for_testing_cylc_clean: Callable
 ) -> None:
     """Test _clean_using_glob(), particularly that it does not follow and
     delete symlinks (apart from the standard symlink dirs).
@@ -600,51 +675,19 @@ def test_clean_using_glob(
             <tmp_path>/you-shall-not-pass, which is always expected to remain).
     """
     # --- Setup ---
-    reg = 'foo/bar'
-
-    def create_filetree(filetree: Dict[str, Any], location: Path) -> None:
-        for name, entry in filetree.items():
-            path = location / name
-            if isinstance(entry, dict):
-                path.mkdir()
-                create_filetree(entry, path)
-            elif isinstance(entry, Path):
-                path.symlink_to(tmp_path / entry)
-            else:
-                path.touch()
-
-    def get_filetree_as_list(
-        filetree: Dict[str, Any], location: Path
-    ) -> List[str]:
-        ret: List[str] = []
-        for name, entry in filetree.items():
-            path = location / name
-            ret.append(str(path))
-            if isinstance(entry, dict):
-                ret.extend(get_filetree_as_list(entry, path))
-        return ret
-
-    create_filetree(FILETREE_1, tmp_path)
-    stuff_not_to_delete = [
-        os.path.normpath(i) for i in
-        iglob(str(tmp_path / 'you-shall-not-pass/**'), recursive=True)
-    ]
-    stuff_not_to_delete.extend(
-        get_filetree_as_list(files_left_behind, tmp_path)
+    run_dir: Path
+    files_to_delete: List[str]
+    files_not_to_delete: List[str]
+    run_dir, files_to_delete, files_not_to_delete = (
+        filetree_for_testing_cylc_clean(
+            'foo/bar', FILETREE_1, filetree_left_behind)
     )
-    stuff_to_delete = set(
-        get_filetree_as_list(FILETREE_1, tmp_path)
-    ).difference(
-        stuff_not_to_delete
-    )
-    run_dir = tmp_path / 'cylc-run' / reg
-
     # --- Test ---
     _clean_using_glob(run_dir, pattern, symlink_dirs=['log'])
-    for item in stuff_not_to_delete:
-        assert os.path.exists(item) is True
-    for item in stuff_to_delete:
-        assert os.path.lexists(item) is False
+    for file in files_not_to_delete:
+        assert os.path.exists(file) is True
+    for file in files_to_delete:
+        assert os.path.lexists(file) is False
 
 
 PLATFORMS = {
