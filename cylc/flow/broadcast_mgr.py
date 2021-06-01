@@ -60,7 +60,7 @@ class BroadcastMgr:
         self.lock = RLock()
 
     def check_ext_triggers(self, itask, ext_trigger_queue):
-        """Get queued ext trigger messages and try to satisfy itasks.
+        """Get queued ext trigger messages and try to satisfy itask.
 
         Ext-triggers are pushed by the remote end, so we can check for
         new messages and satisfy dependendent tasks at the same time.

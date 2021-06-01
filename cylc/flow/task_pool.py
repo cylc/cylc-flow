@@ -304,8 +304,8 @@ class TaskPool:
 
         for itask in (
             itask
-            for cycle in self.main_pool.values()
-            for itask in cycle.values()
+            for point_id_map in self.main_pool.values()
+            for itask in point_id_map.values()
             if itask.state.is_runahead
             if itask.state(
                 TASK_STATUS_FAILED,

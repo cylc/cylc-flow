@@ -129,7 +129,10 @@ class IndepQueueManager(TaskQueueManagerBase):
                 break
 
     def force_release_task(self, itask: TaskProxy) -> None:
-        """Remove a task from whichever queue it belongs to."""
+        """Remove a task from whichever queue it belongs to.
+
+        To be returned when release_tasks() is next called.
+        """
         self.remove_task(itask)
         self.force_released.add(itask)
 

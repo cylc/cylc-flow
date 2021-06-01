@@ -57,6 +57,14 @@ class TaskQueueManagerBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def force_release_task(self, itask: TaskProxy) -> None:
+        """Remove a task from whichever queue it belongs to.
+
+        To be returned when release_tasks() is next called.
+        """
+        pass
+
+    @abstractmethod
     def adopt_tasks(self, orphans: List[str]) -> None:
         """Adopt tasks with defs removed by scheduler reload or restart."""
         pass
