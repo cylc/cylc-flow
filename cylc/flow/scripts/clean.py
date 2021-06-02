@@ -32,6 +32,26 @@ Examples:
   # Remove the workflow at ~/cylc-run/foo/bar
   $ cylc clean foo/bar
 
+  # Remove the workflow's log directory
+  $ cylc clean foo/bar --rm log
+
+  # Remove the log and work directories
+  $ cylc clean foo/bar --rm log:work
+  # or
+  $ cylc clean foo/bar --rm log --rm work
+
+  # Remove all job log files from the 2020 cycle points
+  cylc clean foo/bar --rm 'log/job/2020*'
+
+  # Remove all .csv files
+  $ cylc clean foo/bar --rm '**/*.csv'
+
+  # Only remove the workflow on the local filesystem
+  $ cylc clean foo/bar --local-only
+
+  # Only remove the workflow on remote install targets
+  $ cylc clean foo/bar --remote-only
+
 """
 
 from typing import TYPE_CHECKING
