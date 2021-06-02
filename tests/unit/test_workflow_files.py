@@ -529,8 +529,8 @@ def filetree_for_testing_cylc_clean(tmp_path: Path):
                 'file.txt': None
             }
         },
-        # Symlinks are represented by pathlib.Path, with the relative path
-        # being the target
+        # Symlinks are represented by pathlib.Path, with the target represented
+        # by the relative path from the tmp_path directory:
         'symlink': Path('dir/another-dir')
     }
 
@@ -572,7 +572,7 @@ def filetree_for_testing_cylc_clean(tmp_path: Path):
         for name, entry in filetree.items():
             path = location / name
             if isinstance(entry, dict):
-                path.mkdir()
+                path.mkdir(exist_ok=True)
                 create_filetree(entry, path)
             elif isinstance(entry, Path):
                 path.symlink_to(tmp_path / entry)
@@ -596,6 +596,7 @@ def filetree_for_testing_cylc_clean(tmp_path: Path):
 
 FILETREE_1 = {
     'cylc-run': {'foo': {'bar': {
+        '.service': {'db': None},
         'flow.cylc': None,
         'log': Path('sym/cylc-run/foo/bar/log'),
         'mirkwood': Path('you-shall-not-pass/mirkwood'),
@@ -624,10 +625,11 @@ FILETREE_1 = {
 
 
 @pytest.mark.parametrize(
-    'pattern, filetree_left_behind',
+    'pattern, initial_filetree, filetree_left_behind',
     [
         (
             '**',
+            FILETREE_1,
             {
                 'cylc-run': {'foo': {}},
                 'sym': {'cylc-run': {'foo': {'bar': {}}}}
@@ -635,8 +637,10 @@ FILETREE_1 = {
         ),
         (
             '*/**',
+            FILETREE_1,
             {
                 'cylc-run': {'foo': {'bar': {
+                    '.service': {'db': None},
                     'flow.cylc': None,
                     'rincewind.txt': Path('whatever')
                 }}},
@@ -645,8 +649,10 @@ FILETREE_1 = {
         ),
         (
             '**/*.txt',
+            FILETREE_1,
             {
                 'cylc-run': {'foo': {'bar': {
+                    '.service': {'db': None},
                     'flow.cylc': None,
                     'log': Path('whatever'),
                     'mirkwood': Path('whatever')
@@ -661,8 +667,10 @@ FILETREE_1 = {
         )
     ]
 )
-def test_clean_using_glob(
-    pattern: str, filetree_left_behind: Dict[str, Any],
+def test__clean_using_glob(
+    pattern: str,
+    initial_filetree: Dict[str, Any],
+    filetree_left_behind: Dict[str, Any],
     filetree_for_testing_cylc_clean: Callable
 ) -> None:
     """Test _clean_using_glob(), particularly that it does not follow and
@@ -670,6 +678,7 @@ def test_clean_using_glob(
 
     Params:
         pattern: The glob pattern to test.
+        initial_filetree: The filetree to test against.
         files_left_behind: The filetree expected to remain after
             _clean_using_glob() is called (excluding
             <tmp_path>/you-shall-not-pass, which is always expected to remain).
@@ -680,10 +689,184 @@ def test_clean_using_glob(
     files_not_to_delete: List[str]
     run_dir, files_to_delete, files_not_to_delete = (
         filetree_for_testing_cylc_clean(
-            'foo/bar', FILETREE_1, filetree_left_behind)
+            'foo/bar', initial_filetree, filetree_left_behind)
     )
     # --- Test ---
     _clean_using_glob(run_dir, pattern, symlink_dirs=['log'])
+    for file in files_not_to_delete:
+        assert os.path.exists(file) is True
+    for file in files_to_delete:
+        assert os.path.lexists(file) is False
+
+
+FILETREE_2 = {
+    'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+    'sym-run': {'cylc-run': {'foo': {'bar': {
+        '.service': {'db': None},
+        'flow.cylc': None,
+        'share': Path('sym-share/cylc-run/foo/bar/share')
+    }}}},
+    'sym-share': {'cylc-run': {'foo': {'bar': {
+        'share': {
+            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
+        }
+    }}}},
+    'sym-cycle': {'cylc-run': {'foo': {'bar': {
+        'share': {
+            'cycle': {
+                'macklunkey.txt': None
+            }
+        }
+    }}}},
+    'you-shall-not-pass': {}
+}
+
+
+@pytest.mark.parametrize(
+    'rm_dirs, initial_filetree, filetree_left_behind',
+    [
+        (
+            {'**'},
+            FILETREE_1,
+            {
+                'cylc-run': {},
+                'sym': {'cylc-run': {}}
+            }
+        ),
+        (
+            {'*/**'},
+            FILETREE_1,
+            {
+                'cylc-run': {'foo': {'bar': {
+                    '.service': {'db': None},
+                    'flow.cylc': None,
+                    'rincewind.txt': Path('whatever')
+                }}},
+                'sym': {'cylc-run': {}}
+            }
+        ),
+        (
+            {'**/*.txt'},
+            FILETREE_1,
+            {
+                'cylc-run': {'foo': {'bar': {
+                    '.service': {'db': None},
+                    'flow.cylc': None,
+                    'log': Path('whatever'),
+                    'mirkwood': Path('whatever')
+                }}},
+                'sym': {'cylc-run': {'foo': {'bar': {
+                    'log': {
+                        'darmok': Path('whatever'),
+                        'bib': {}
+                    }
+                }}}}
+            }
+        ),
+        (
+            {'**/cycle'},
+            FILETREE_2,
+            {
+                'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+                'sym-run': {'cylc-run': {'foo': {'bar': {
+                    '.service': {'db': None},
+                    'flow.cylc': None,
+                    'share': Path('sym-share/cylc-run/foo/bar/share')
+                }}}},
+                'sym-share': {'cylc-run': {'foo': {'bar': {
+                    'share': {}
+                }}}},
+                'sym-cycle': {'cylc-run': {}}
+            }
+        ),
+        (
+            {'share'},
+            FILETREE_2,
+            {
+                'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+                'sym-run': {'cylc-run': {'foo': {'bar': {
+                    '.service': {'db': None},
+                    'flow.cylc': None,
+                }}}},
+                'sym-share': {'cylc-run': {}},
+                'sym-cycle': {'cylc-run': {'foo': {'bar': {
+                    'share': {
+                        'cycle': {
+                            'macklunkey.txt': None
+                        }
+                    }
+                }}}}
+            }
+        ),
+        (
+            {'**'},
+            FILETREE_2,
+            {
+                'cylc-run': {},
+                'sym-run': {'cylc-run': {}},
+                'sym-share': {'cylc-run': {}},
+                'sym-cycle': {'cylc-run': {}}
+            }
+        ),
+        (
+            {'*'},
+            FILETREE_2,
+            {
+                'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+                'sym-run': {'cylc-run': {'foo': {'bar': {
+                    '.service': {'db': None},
+                }}}},
+                'sym-share': {'cylc-run': {}},
+                'sym-cycle': {'cylc-run': {'foo': {'bar': {
+                    'share': {
+                        'cycle': {
+                            'macklunkey.txt': None
+                        }
+                    }
+                }}}}
+            }
+        ),
+        (  # Check https://bugs.python.org/issue35201 has no effect
+            {'non-exist/**'},
+            FILETREE_2,
+            FILETREE_2
+        )
+    ],
+    ids=lambda x: str(x) if isinstance(x, set) else None
+)
+def test_targeted_clean(
+    rm_dirs: Set[str],
+    initial_filetree: Dict[str, Any],
+    filetree_left_behind: Dict[str, Any],
+    caplog: pytest.LogCaptureFixture, tmp_run_dir: Callable,
+    filetree_for_testing_cylc_clean: Callable
+) -> None:
+    """Test clean(), particularly that it does not follow and delete symlinks
+    (apart from the standard symlink dirs).
+
+    This is similar to test__clean_using_glob(), but the filetree expected to
+    remain after cleaning is different due to the tidy up of empty dirs.
+
+    Params:
+        rm_dirs: The glob patterns to test.
+        initial_filetree: The filetree to test against.
+        files_left_behind: The filetree expected to remain after
+            clean() is called (excluding <tmp_path>/you-shall-not-pass,
+            which is always expected to remain).
+    """
+    # --- Setup ---
+    caplog.set_level(logging.DEBUG, CYLC_LOG)
+    tmp_run_dir()
+    reg = 'foo/bar'
+    run_dir: Path
+    files_to_delete: List[str]
+    files_not_to_delete: List[str]
+    run_dir, files_to_delete, files_not_to_delete = (
+        filetree_for_testing_cylc_clean(
+            reg, initial_filetree, filetree_left_behind)
+    )
+    # --- Test ---
+    workflow_files.clean(reg, run_dir, rm_dirs)
     for file in files_not_to_delete:
         assert os.path.exists(file) is True
     for file in files_to_delete:

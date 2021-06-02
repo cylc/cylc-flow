@@ -687,8 +687,9 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         if '' not in symlink_dirs:
             # if run dir isn't a symlink dir and hasn't been deleted yet
             remove_dir_and_target(run_dir)
-        _remove_empty_parents(run_dir, reg)
     # Tidy up if necessary
+    # Remove any empty parents of run dir up to ~/cylc-run/
+    _remove_empty_parents(run_dir, reg)
     for symlink, target in symlink_dirs.items():
         # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
         _remove_empty_parents(target, Path(reg, symlink))
