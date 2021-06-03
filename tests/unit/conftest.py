@@ -41,7 +41,7 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     Args:
         reg: Workflow name.
     """
-    def inner(reg: Optional[str] = None) -> Path:
+    def _tmp_run_dir(reg: Optional[str] = None) -> Path:
         cylc_run_dir = tmp_path / 'cylc-run'
         cylc_run_dir.mkdir(exist_ok=True)
         monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)
@@ -52,32 +52,28 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             (run_dir / WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
             return run_dir
         return cylc_run_dir
-    return inner
+    return _tmp_run_dir
 
 
 @pytest.fixture
-def cycling_type(monkeypatch: pytest.MonkeyPatch):
-    """Initialize the cycling type according to cycling mode.
+def set_cycling_type(monkeypatch: pytest.MonkeyPatch):
+    """Initialize the Cylc cycling type.
+
     Args:
-        mode: The cycling mode.
+        ctype: The cycling type (integer or iso8601).
         time_zone: If using ISO8601/datetime cycling type, you can specify a
             custom time zone to use.
     """
-    def _cycling_type(
-        mode: str = 'integer', time_zone: Optional[str] = None
-    ) -> str:
-        if mode == 'integer':
-            ctype = INTEGER_CYCLING_TYPE
-        else:
-            ctype = ISO8601_CYCLING_TYPE
+    def _set_cycling_type(
+        ctype: str = INTEGER_CYCLING_TYPE, time_zone: Optional[str] = None
+    ) -> None:
         class _DefaultCycler:
             TYPE = ctype
         monkeypatch.setattr(
             'cylc.flow.cycling.loader.DefaultCycler', _DefaultCycler)
         if ctype == ISO8601_CYCLING_TYPE:
             iso8601_init(time_zone=time_zone)
-        return ctype
-    return _cycling_type
+    return _set_cycling_type
 
 
 @pytest.fixture
