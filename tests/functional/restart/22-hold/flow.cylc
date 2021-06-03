@@ -10,21 +10,19 @@
     initial cycle point = 2016
     final cycle point = 2017
     [[graph]]
-        P1Y = """
-          t1[-P1Y] => t1
-          t1 & fast => t2
-          """
+        R1/2016 = t1 & fast => t2
+        R1/2017 = t1[2016] => t1 => t2
 [runtime]
     [[t1]]
         script = """
-if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
-    cylc__job__poll_grep_workflow_log -F 'spawned t2.2016'
-    cylc hold "${CYLC_WORKFLOW_NAME}" t2.2016
-    cylc stop "${CYLC_WORKFLOW_NAME}"
-else
-    cylc release "${CYLC_WORKFLOW_NAME}" t2.2016
-fi
-"""
+            if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
+                cylc__job__poll_grep_workflow_log -F 'spawned t2.2016'
+                cylc hold "${CYLC_WORKFLOW_NAME}" t2.2016 t2.2017
+                cylc stop "${CYLC_WORKFLOW_NAME}"
+            else
+                cylc release "${CYLC_WORKFLOW_NAME}" t2.2016 t2.2017
+            fi
+        """
     [[fast]]
         script = true
     [[t2]]
