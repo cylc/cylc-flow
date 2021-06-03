@@ -1303,7 +1303,7 @@ class TaskPool:
             itask = TaskProxy(taskdef, point,
                               self.flow_label_mgr.get_new_label())
             # Spawn downstream on selected outputs.
-            for trig, out, status in itask.state.outputs.get_all():
+            for trig, out, _ in itask.state.outputs.get_all():
                 if trig in outputs:
                     LOG.info('Forced spawning on %s:%s', itask.identity, out)
                     self.spawn_on_output(itask, out)

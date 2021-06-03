@@ -126,7 +126,7 @@ def ansi_log(name='cylc', stream='stderr'):
     stream_name = f'<{stream}>'
     for handler in logging.getLogger(name).handlers:
         if (
-            getattr(handler, 'formatter')
+            getattr(handler, 'formatter', None)
             and isinstance(handler.formatter, CylcLogFormatter)
             and isinstance(handler, logging.StreamHandler)
             and handler.stream.name == stream_name

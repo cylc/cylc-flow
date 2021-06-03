@@ -1641,7 +1641,7 @@ def warn_about_depr_event_handler_tmpl(cfg):
     for task in cfg['runtime']:
         if 'events' not in cfg['runtime'][task]:
             continue
-        for event, handler in cfg['runtime'][task]['events'].items():
+        for handler in cfg['runtime'][task]['events'].values():
             if f'%({EventData.JobID_old.value})' in handler:
                 LOG.warning(
                     deprecation_msg.format(EventData.JobID_old.value,
