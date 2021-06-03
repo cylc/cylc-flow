@@ -82,7 +82,7 @@ class CylcLogFormatter(logging.Formatter):
         else:
             self.wrapper = partial(textwrap.wrap, width=self.max_width)
 
-    def format(self, record):
+    def format(self, record):  # noqa: A003 (method name not local)
         """Indent continuation lines in multi-line messages."""
         text = logging.Formatter.format(self, record)
         if not self.timestamp:

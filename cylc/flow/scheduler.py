@@ -187,7 +187,7 @@ class Scheduler:
     workflow: Optional[str] = None
     owner: Optional[str] = None
     host: Optional[str] = None
-    id: Optional[str] = None  # owner|workflow
+    id: Optional[str] = None  # noqa: A003 (instance attr not local)
     uuid_str: Optional[SchedulerUUID] = None
     contact_data: Optional[dict] = None
 

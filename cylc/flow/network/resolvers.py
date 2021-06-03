@@ -589,7 +589,7 @@ class Resolvers(BaseResolvers):
             ("poll_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
-    def put_ext_trigger(self, message, id):
+    def put_ext_trigger(self, message, id):  # noqa: A002 (graphql interface)
         """Server-side external event trigger interface.
 
         Args:

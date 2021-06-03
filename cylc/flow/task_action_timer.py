@@ -65,7 +65,7 @@ class TaskActionTimer:
         """Return True if timeout is set."""
         return self.timeout is not None
 
-    def next(self, no_exhaust=False):
+    def next(self, no_exhaust=False):  # noqa: A003 (method name not local)
         """Return the next retry delay.
 
         When delay list has no more item:

@@ -347,11 +347,11 @@ class IgnoreFieldMiddleware:
         self.tree_paths = set()
         self.field_sets = {}
 
-    def resolve(self, next, root, info, **args):
+    def resolve(self, next_, root, info, **args):
         """Middleware resolver; handles field according to operation."""
         # GraphiQL introspection is 'query' but not async
         if getattr(info.operation.name, 'value', None) == 'IntrospectionQuery':
-            return next(root, info, **args)
+            return next_(root, info, **args)
 
         if info.operation.operation in STRIP_OPS:
             path_string = f'{info.path}'
@@ -413,23 +413,23 @@ class IgnoreFieldMiddleware:
                         return None
                 if (
                         info.operation.operation in self.ASYNC_OPS
-                        or iscoroutinefunction(next)
+                        or iscoroutinefunction(next_)
                 ):
-                    return self.async_null_setter(next, root, info, **args)
-                return null_setter(next(root, info, **args))
+                    return self.async_null_setter(next_, root, info, **args)
+                return null_setter(next_(root, info, **args))
 
         if (
                 info.operation.operation in self.ASYNC_OPS
-                or iscoroutinefunction(next)
+                or iscoroutinefunction(next_)
         ):
-            return self.async_resolve(next, root, info, **args)
-        return next(root, info, **args)
+            return self.async_resolve(next_, root, info, **args)
+        return next_(root, info, **args)
 
-    async def async_resolve(self, next, root, info, **args):
+    async def async_resolve(self, next_, root, info, **args):
         """Return awaited coroutine"""
-        return await next(root, info, **args)
+        return await next_(root, info, **args)
 
-    async def async_null_setter(self, next, root, info, **args):
+    async def async_null_setter(self, next_, root, info, **args):
         """Set type to null after awaited result if empty/null-like."""
-        result = await next(root, info, **args)
+        result = await next_(root, info, **args)
         return null_setter(result)
