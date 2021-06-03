@@ -716,9 +716,9 @@ class TaskPool:
 
     def queue_task(self, itask: TaskProxy) -> None:
         """Queue a task that is ready to run."""
-        itask.state.reset(is_queued=True)
-        self.data_store_mgr.delta_task_queued(itask)
-        self.task_queue_mgr.push_task(itask)
+        if itask.state.reset(is_queued=True):
+            self.data_store_mgr.delta_task_queued(itask)
+            self.task_queue_mgr.push_task(itask)
 
     def release_queued_tasks(self):
         """Return list of queue-released tasks for job prep."""
@@ -1344,7 +1344,7 @@ class TaskPool:
         n_warnings = 0
         task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
         for item in items:
-            point_str, name_str, status = self._parse_task_item(item)
+            point_str, name_str, _ = self._parse_task_item(item)
             if point_str is None:
                 LOG.warning(f"{item} - task to spawn must have a cycle point")
                 n_warnings += 1

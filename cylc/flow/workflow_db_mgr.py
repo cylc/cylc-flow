@@ -512,9 +512,10 @@ class WorkflowDatabaseManager:
         self, tasks: Set[Tuple[str, 'PointBase']]
     ) -> None:
         """Replace the tasks in the tasks_to_hold table."""
-        # As we are replacing the maps each time this is called, there
-        # shouldn't be much cost to calling this multiple times between
-        # processing of the db queue
+        # There isn't that much cost in calling this multiple times between
+        # processing of the db queue (when the db queue is eventually
+        # processed, the SQL commands only get run once). Still, replacing the
+        # whole table each time the queue is processed is a bit ineffecient.
         self.db_deletes_map[self.TABLE_TASKS_TO_HOLD] = [{}]
         self.db_inserts_map[self.TABLE_TASKS_TO_HOLD] = [
             {"name": name, "cycle": str(point)}
