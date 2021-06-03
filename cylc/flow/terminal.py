@@ -225,7 +225,7 @@ def cli_function(parser_function=None, **parser_kwargs):
 
             """
             use_color = False
-            wrapped_args, wrapped_kwargs = tuple(), {}
+            wrapped_args, wrapped_kwargs = (), {}
             # should we use colour?
             if parser_function:
                 parser = parser_function()

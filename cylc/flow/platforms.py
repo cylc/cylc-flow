@@ -493,11 +493,16 @@ def get_install_target_to_platforms_map(
     """
     platform_names = set(platform_names)
     platforms = [platform_from_name(p_name) for p_name in platform_names]
-    install_targets = set(get_install_target_from_platform(platform)
-                          for platform in platforms)
+    install_targets = {
+        get_install_target_from_platform(platform)
+        for platform in platforms
+    }
     return {
-        target: [platform for platform in platforms
-                 if get_install_target_from_platform(platform) == target]
+        target: [
+            platform
+            for platform in platforms
+            if get_install_target_from_platform(platform) == target
+        ]
         for target in install_targets
     }
 

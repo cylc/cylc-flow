@@ -315,7 +315,7 @@ class BaseResolvers:
         """Return nodes and edges within a specified distance of root nodes."""
         # Initial root node selection.
         nodes = root_nodes
-        node_ids = set(n.id for n in root_nodes)
+        node_ids = {n.id for n in root_nodes}
         edges = []
         edge_ids = set()
         # Setup for edgewise search.
@@ -324,10 +324,11 @@ class BaseResolvers:
             # Gather edges.
             # Edges should be unique (graph not circular),
             # but duplicates will be present as node holds all associated.
-            new_edge_ids = set(
+            new_edge_ids = {
                 e_id
                 for n in new_nodes
-                for e_id in n.edges).difference(edge_ids)
+                for e_id in n.edges
+            }.difference(edge_ids)
             edge_ids.update(new_edge_ids)
             new_edges = [
                 edge
@@ -530,7 +531,7 @@ class Resolvers(BaseResolvers):
 
     def pause(self) -> Tuple[bool, str]:
         """Pause the workflow."""
-        self.schd.command_queue.put(('pause', tuple(), {}))
+        self.schd.command_queue.put(('pause', (), {}))
         return (True, 'Command queued')
 
     def kill_tasks(self, tasks):
@@ -657,12 +658,12 @@ class Resolvers(BaseResolvers):
 
     def release_hold_point(self) -> Tuple[bool, str]:
         """Release all tasks and unset workflow hold point."""
-        self.schd.command_queue.put(('release_hold_point', tuple(), {}))
+        self.schd.command_queue.put(('release_hold_point', (), {}))
         return (True, 'Command queued')
 
     def resume(self) -> Tuple[bool, str]:
         """Resume the workflow."""
-        self.schd.command_queue.put(('resume', tuple(), {}))
+        self.schd.command_queue.put(('resume', (), {}))
         return (True, 'Command queued')
 
     def set_verbosity(self, level):

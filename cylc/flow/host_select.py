@@ -229,7 +229,7 @@ def _filter_by_hostname(
 
     """
     if not data:
-        data = {host: dict() for host in hosts}
+        data = {host: {} for host in hosts}
     for host in list(hosts):
         key = 'blacklisted'
         if blacklist_name:
@@ -518,7 +518,7 @@ def _get_metrics(hosts, metrics, data=None):
     host_stats = {}
     proc_map = {}
     if not data:
-        data = {host: dict() for host in hosts}
+        data = {host: {} for host in hosts}
 
     # Start up commands on hosts
     cmd = ['psutil']
