@@ -476,9 +476,11 @@ class TaskJobManager:
         post_script = rtconfig['post-script']
         if itask.tdef.workflow_polling_cfg:
             # Automatic workflow state polling script
-            comstr = "cylc workflow-state " + \
-                     " --task=" + itask.tdef.workflow_polling_cfg['task'] + \
-                     " --point=" + str(itask.point)
+            comstr = (
+                "cylc workflow-state "
+                + " --task=" + itask.tdef.workflow_polling_cfg['task']
+                + " --point=" + str(itask.point)
+            )
             if LOG.isEnabledFor(DEBUG):
                 comstr += ' --debug'
             for key, fmt in [
