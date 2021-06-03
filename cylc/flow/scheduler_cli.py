@@ -372,8 +372,7 @@ async def _run(scheduler: Scheduler) -> int:
         ret = 3
 
     # kthxbye
-    finally:
-        return ret
+    return ret
 
 
 @cli_function(get_option_parser)

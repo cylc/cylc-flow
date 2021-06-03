@@ -933,13 +933,13 @@ class Scheduler:
         except (TypeError, ValueError):
             return
         if lvl <= logging.DEBUG:
-            cylc.flow.flags.verbosity == 2
+            cylc.flow.flags.verbosity = 2
         elif lvl < logging.INFO:
-            cylc.flow.flags.verbosity == 1
+            cylc.flow.flags.verbosity = 1
         elif lvl == logging.INFO:
-            cylc.flow.flags.verbosity == 0
+            cylc.flow.flags.verbosity = 0
         else:
-            cylc.flow.flags.verbosity == -1
+            cylc.flow.flags.verbosity = -1
         return True, 'OK'
 
     def command_remove_tasks(self, items):
@@ -1841,7 +1841,7 @@ class Scheduler:
             stdin=DEVNULL, stdout=PIPE)
         try:
             cpu_frac = float(proc.communicate()[0])
-        except (TypeError, OSError, IOError, ValueError) as exc:
+        except (TypeError, OSError, ValueError) as exc:
             LOG.warning("Cannot get CPU % statistics: %s" % exc)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")

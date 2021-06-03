@@ -362,7 +362,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             LOG.debug('Processing with EmPy')
             try:
                 from cylc.flow.parsec.empysupport import empyprocess
-            except (ImportError, ModuleNotFoundError):
+            except ImportError:
                 raise ParsecError('EmPy Python package must be installed '
                                   'to process file: ' + fpath)
             flines = empyprocess(
@@ -381,7 +381,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
             LOG.debug('Processing with Jinja2')
             try:
                 from cylc.flow.parsec.jinja2support import jinja2process
-            except (ImportError, ModuleNotFoundError):
+            except ImportError:
                 raise ParsecError('Jinja2 Python package must be installed '
                                   'to process file: ' + fpath)
             flines = jinja2process(

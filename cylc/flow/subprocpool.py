@@ -375,7 +375,7 @@ class SubProcPool:
                 usesh=ctx.cmd_kwargs.get('shell'))
             # calls to open a shell are aggregated in cylc_subproc.procopen()
             # with logging for what is calling it and the commands given
-        except (IOError, OSError) as exc:
+        except IOError as exc:
             if exc.filename is None:
                 exc.filename = ctx.cmd[0]
             LOG.exception(exc)

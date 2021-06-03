@@ -235,7 +235,7 @@ class JobRunnerManager():
             try:
                 mod_of_name = __import__(key, fromlist=[key])
                 self._INSTANCES[job_runner_name] = getattr(
-                    mod_of_name, "JOB_RUNNER_HANDLER")
+                    mod_of_name, "JOB_RUNNER_HANDLER", None)
                 return self._INSTANCES[job_runner_name]
             except ImportError:
                 if key == job_runner_name:

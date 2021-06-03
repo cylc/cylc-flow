@@ -240,7 +240,7 @@ def apply_delta(key, delta, data):
                     data_element = data[key][element.id]
                     # Clear fields that require overwrite with delta
                     if CLEAR_FIELD_MAP[key]:
-                        for field, value in element.ListFields():
+                        for field, _ in element.ListFields():
                             if field.name in CLEAR_FIELD_MAP[key]:
                                 data_element.ClearField(field.name)
                     data_element.MergeFrom(element)
@@ -703,7 +703,7 @@ class DataStoreMgr:
             self, s_id, s_node, items, active_id, flow_label, reflow,
             edge_distance, descendant=False, is_parent=False):
         """Construct nodes/edges for children/parents of source node."""
-        for t_name, t_point, is_abs in items:
+        for t_name, t_point, _ in items:
             t_node = f'{t_name}.{t_point}'
             t_id = (
                 f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
@@ -1550,7 +1550,7 @@ class DataStoreMgr:
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        for label, message, satisfied in itask.state.outputs.get_all():
+        for label, _, satisfied in itask.state.outputs.get_all():
             output = tp_delta.outputs[label]
             output.label = label
             output.satisfied = satisfied

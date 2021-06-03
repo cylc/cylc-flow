@@ -250,7 +250,7 @@ class TaskJobManager:
         # Submit task jobs for each platform
         done_tasks = bad_tasks
 
-        for platform_name, itasks in sorted(auth_itasks.items()):
+        for _, itasks in sorted(auth_itasks.items()):
             platform = itasks[0].platform
             install_target = get_install_target_from_platform(platform)
             ri_map = self.task_remote_mgr.remote_init_map
@@ -389,7 +389,7 @@ class TaskJobManager:
             else:
                 cmd = ['cylc'] + cmd
 
-            for i, itasks_batch in enumerate(itasks_batches):
+            for _, itasks_batch in enumerate(itasks_batches):
                 stdin_files = []
                 job_log_dirs = []
                 for itask in itasks_batch:
@@ -619,7 +619,7 @@ class TaskJobManager:
                             del bad_tasks[(point, name, submit_num)]
                         itask = tasks[(point, name, submit_num)]
                         callback(workflow, itask, ctx, line)
-                    except (LookupError, ValueError, KeyError) as exc:
+                    except (LookupError, ValueError) as exc:
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
                         LOG.exception(exc)

@@ -427,7 +427,7 @@ class GraphParser:
 
             # Determine semantics of all family triggers present.
             family_trig_map = {}
-            for name, offset, trig in info:
+            for name, _, trig in info:
                 if name.startswith('@'):
                     # (Avoiding @trigger nodes.)
                     continue

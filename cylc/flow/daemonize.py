@@ -86,7 +86,7 @@ def daemonize(schd):
                                 sys.exit(1)
                             except IOError:
                                 sys.exit("Workflow schd program exited")
-                except (IOError, OSError, ValueError):
+                except (OSError, ValueError):
                     pass
             if workflow_pid is None or workflow_url is None:
                 sys.exit("Workflow not started after %ds" % _TIMEOUT)
