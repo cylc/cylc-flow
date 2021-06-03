@@ -709,8 +709,6 @@ class TaskPool:
         """Queue tasks that are ready to run."""
         for itask in itasks:
             itask.state.reset(is_queued=True)
-            # TODO Reset manual trigger flag. One manual trigger queues an
-            # unqueued task, another one triggers a queued task.
             self.data_store_mgr.delta_task_queued(itask)
         self.task_queue_mgr.push_tasks(itasks)
 
