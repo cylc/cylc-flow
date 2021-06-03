@@ -648,7 +648,7 @@ class TimeZone(ObjectType):
 class Workflow(ObjectType):
     class Meta:
         description = """Global workflow info."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for definition)
     name = String()
     status = String()
     status_msg = String()
@@ -752,7 +752,7 @@ class Workflow(ObjectType):
 class Job(ObjectType):
     class Meta:
         description = """Jobs."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for definition)
     submit_num = Int()
     state = String()
     # name and cycle_point for filtering/sorting
@@ -791,7 +791,7 @@ class Job(ObjectType):
 class Task(ObjectType):
     class Meta:
         description = """Task definition, static fields"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for definition)
     name = String()
     meta = Field(NodeMeta)
     mean_elapsed_time = Float()
@@ -884,7 +884,7 @@ class ClockTrigger(ObjectType):
 class XTrigger(ObjectType):
     class Meta:
         description = """Task trigger"""
-    id = String()
+    id = String()  # noqa: A003 (required for definition)
     label = String()
     message = String()
     satisfied = Boolean()
@@ -894,7 +894,7 @@ class XTrigger(ObjectType):
 class TaskProxy(ObjectType):
     class Meta:
         description = """Task cycle instance."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     task = Field(
         Task,
         description="""Task definition""",
@@ -984,7 +984,7 @@ class TaskProxy(ObjectType):
 class Family(ObjectType):
     class Meta:
         description = """Task definition, static fields"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     name = String()
     meta = Field(NodeMeta)
     depth = Int()
@@ -1033,7 +1033,7 @@ class Family(ObjectType):
 class FamilyProxy(ObjectType):
     class Meta:
         description = """Family composite."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     cycle_point = String()
     # name & namespace for filtering/sorting
     name = String()
@@ -1106,7 +1106,7 @@ class Node(Union):
 class Edge(ObjectType):
     class Meta:
         description = """Dependency edge task/family proxies"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     source = ID()
     source_node = Field(
         Node,
@@ -1769,7 +1769,7 @@ class ExtTrigger(Mutation):
             description='External trigger message.',
             required=True
         )
-        id = String(
+        id = String(  # noqa: A003 (required for schema definition)
             description='Unique trigger ID.',
             required=True
         )
@@ -2102,7 +2102,7 @@ class Updated(ObjectType):
 class Deltas(ObjectType):
     class Meta:
         description = """Grouped deltas of the WFS publish"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     shutdown = Boolean(default_value=False)
     added = Field(
         Added,

@@ -56,8 +56,12 @@ class PyModuleLoader(BaseLoader):
         # prefix that can be used to avoid name collisions with template files
         self._python_namespace_prefix = prefix + '.'
 
-    # pylint: disable-msg=redefined-builtin
-    def load(self, environment, name, globals=None):
+    def load(
+        self,
+        environment,
+        name,
+        globals=None  # noqa: A002 (required to match underlying interface?)
+    ):
         """Imports Python module and returns it as Jinja2 template."""
         if name.startswith(self._python_namespace_prefix):
             name = name[len(self._python_namespace_prefix):]
