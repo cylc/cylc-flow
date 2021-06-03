@@ -399,10 +399,10 @@ class IgnoreFieldMiddleware:
                     ):
                         self.field_sets[parent_path_string] = {
                             'stamp': stamp,
-                            'fields': set(
+                            'fields': {
                                 field.name
                                 for field, _ in root.ListFields()
-                            )
+                            }
                         }
 
                     if (

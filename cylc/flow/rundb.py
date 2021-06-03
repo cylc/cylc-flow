@@ -622,7 +622,7 @@ class CylcWorkflowDAO:
     def select_task_job_platforms(self):
         """Return the set of platform names from task_jobs table."""
         stmt = f"SELECT DISTINCT platform_name FROM {self.TABLE_TASK_JOBS}"
-        return set(i[0] for i in self.connect().execute(stmt))
+        return {i[0] for i in self.connect().execute(stmt)}
 
     def select_submit_nums(self, name, point):
         """Select submit_num and flow_label from task_states table.
@@ -774,7 +774,7 @@ class CylcWorkflowDAO:
             'name', 'cycle', 'host', 'job_runner',
             'submit_time', 'start_time', 'succeed_time'
         )
-        return columns, [r for r in self.connect().execute(q)]
+        return columns, list(self.connect().execute(q))
 
     def vacuum(self):
         """Vacuum to the database."""

@@ -77,7 +77,9 @@ def sort_elements(elements, args):
     sort_args = args.get('sort')
     if sort_args and elements:
         keys = [
-            key for key in [to_snake_case(k) for k in sort_args.keys]]
+            to_snake_case(key)
+            for key in sort_args.keys
+        ]
         if not keys:
             raise ValueError('You must provide at least one key to sort')
         keys_not_in_schema = [
@@ -375,7 +377,7 @@ def get_native_ids(field_ids):
     if isinstance(field_ids, str):
         return [field_ids]
     if isinstance(field_ids, dict):
-        return [f_id for f_id in field_ids]
+        return list(field_ids)
     return field_ids
 
 
@@ -415,7 +417,7 @@ async def get_nodes_all(root, info, **args):
         if isinstance(field_ids, str):
             field_ids = [field_ids]
         elif isinstance(field_ids, dict):
-            field_ids = [f_id for f_id in field_ids]
+            field_ids = list(field_ids)
         args['ids'] = field_ids
     elif field_ids == []:
         return []
@@ -590,7 +592,7 @@ async def resolve_broadcasts(root, info, **args):
                 continue
             t_args['ids'] = [(None, None, None, name, None, None)]
             tasks = await resolvers.get_nodes_all(t_type, t_args)
-            for namespace in set(ns for t in tasks for ns in t.namespace):
+            for namespace in {ns for t in tasks for ns in t.namespace}:
                 if namespace in broadcasts[cycle]:
                     addict(
                         result,

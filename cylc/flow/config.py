@@ -925,7 +925,7 @@ class WorkflowConfig:
         """
         # Starter x nodes are those with no incoming, i.e.
         # x nodes that never appear as a y.
-        sxs = set(x01 for x01 in x2ys if x01 not in y2xs)
+        sxs = {x01 for x01 in x2ys if x01 not in y2xs}
         while sxs:
             sx01 = sxs.pop()
             for y01 in x2ys[sx01]:
@@ -1042,10 +1042,10 @@ class WorkflowConfig:
 
     def check_param_env_tmpls(self):
         """Check for illegal parameter environment templates"""
-        parameter_values = dict(
-            (key, values[0])
+        parameter_values = {
+            key: values[0]
             for key, values in self.parameters[0].items() if values
-        )
+        }
         bads = set()
         for task_name, task_items in self.cfg['runtime'].items():
             if 'environment' not in task_items:

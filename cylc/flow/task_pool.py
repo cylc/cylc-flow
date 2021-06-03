@@ -123,8 +123,8 @@ class FlowLabelMgr:
         """
         if lab1 == lab2:
             return lab1
-        labs1 = set(list(lab1))
-        labs2 = set(list(lab2))
+        labs1 = set(lab1)
+        labs2 = set(lab2)
         return ''.join(labs1.union(labs2))
 
     @staticmethod
@@ -141,8 +141,8 @@ class FlowLabelMgr:
         If they do, the owner tasks can be considered part of the same flow.
         Note the incoming labels could already be merged.
         """
-        labs1 = set(list(lab1))
-        labs2 = set(list(lab2))
+        labs1 = set(lab1)
+        labs2 = set(lab2)
         return bool(labs1.intersection(labs2))
 
 
@@ -243,7 +243,7 @@ class TaskPool:
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
             # Add to hidden pool if not satisfied.
-            self.hidden_pool.setdefault(itask.point, dict())
+            self.hidden_pool.setdefault(itask.point, {})
             self.hidden_pool[itask.point][itask.identity] = itask
             self.hidden_pool_changed = True
         else:
@@ -257,7 +257,7 @@ class TaskPool:
                 self.hidden_pool_changed = True
                 if not self.hidden_pool[itask.point]:
                     del self.hidden_pool[itask.point]
-            self.main_pool.setdefault(itask.point, dict())
+            self.main_pool.setdefault(itask.point, {})
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
 
@@ -1102,8 +1102,9 @@ class TaskPool:
                 else:
                     tasks = [c_task]
                 for t in tasks:
-                    t.state.satisfy_me(
-                        set([(itask.tdef.name, str(itask.point), output)]))
+                    t.state.satisfy_me({
+                        (itask.tdef.name, str(itask.point), output)
+                    })
                     self.data_store_mgr.delta_task_prerequisite(t)
                 # Event-driven suicide.
                 if (c_task.state.suicide_prerequisites and

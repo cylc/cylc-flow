@@ -62,6 +62,7 @@ tests_require = [
     'flake8-broken-line>=0.3.0',
     'flake8-bugbear>=21.0.0',
     'flake8-builtins>=1.5.0',
+    'flake8-comprehensions>=3.5.0',
     'flake8>=3.0.0',
     'mypy>=0.800',
     # TODO: https://github.com/pytest-dev/pytest-asyncio/issues/ 209
