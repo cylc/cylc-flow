@@ -1268,9 +1268,11 @@ class WorkflowConfig:
             if name not in self.workflow_polling_tasks:
                 continue
             rtc = tdef.rtconfig
-            comstr = "cylc workflow-state" + \
-                     " --task=" + tdef.workflow_polling_cfg['task'] + \
-                     " --point=$CYLC_TASK_CYCLE_POINT"
+            comstr = (
+                "cylc workflow-state"
+                + " --task=" + tdef.workflow_polling_cfg['task']
+                + " --point=$CYLC_TASK_CYCLE_POINT"
+            )
             for key, fmt in [
                     ('user', ' --%s=%s'),
                     ('host', ' --%s=%s'),

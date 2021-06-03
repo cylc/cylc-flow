@@ -335,8 +335,10 @@ TASK_GLOB matches task or family names at a given cycle point.
         if len(args) < self.n_compulsory_args:
             self.error("Wrong number of arguments (too few)")
 
-        elif not self.unlimited_args and \
-                len(args) > self.n_compulsory_args + self.n_optional_args:
+        elif (
+            not self.unlimited_args
+            and len(args) > self.n_compulsory_args + self.n_optional_args
+        ):
             self.error("Wrong number of arguments (too many)")
 
         if self.jset:

@@ -565,14 +565,20 @@ class IntegerSequence(SequenceBase):
 
     def __eq__(self, other):
         # Return True if other (sequence) is equal to self.
-        if self.i_step and not other.i_step or \
-                not self.i_step and other.i_step:
+        if (
+            self.i_step
+            and not other.i_step
+            or not self.i_step
+            and other.i_step
+        ):
             return False
         else:
-            return self.i_step == other.i_step and \
-                self.p_start == other.p_start and \
-                self.p_stop == other.p_stop and \
-                self.exclusions == other.exclusions
+            return (
+                self.i_step == other.i_step
+                and self.p_start == other.p_start
+                and self.p_stop == other.p_stop
+                and self.exclusions == other.exclusions
+            )
 
     def __hash__(self):
         return hash(tuple(getattr(self, attr) for attr in self.__slots__))
