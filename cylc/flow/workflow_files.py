@@ -17,7 +17,9 @@
 """Workflow service files management."""
 
 import aiofiles
+from collections import deque
 from enum import Enum
+from functools import partial
 import logging
 import os
 from pathlib import Path
@@ -27,7 +29,8 @@ import shutil
 from subprocess import Popen, PIPE, DEVNULL
 import time
 from typing import (
-    Any, Dict, Iterable, List, Optional, Set, Tuple, TYPE_CHECKING, Union
+    Any, Deque, Dict, Iterable, List, NamedTuple, Optional, Set, Tuple,
+    TYPE_CHECKING, Union
 )
 import zmq.auth
 
@@ -788,49 +791,60 @@ def remote_clean(
             "Cannot clean on remote platforms as the workflow database is "
             f"out of date/inconsistent with the global config - {exc}")
 
-    pool: List[Tuple['Popen[str]', str, List[Dict[str, Any]]]] = []
+    class QueueTuple(NamedTuple):
+        proc: 'Popen[str]'
+        install_target: str
+        platforms: List[Dict[str, Any]]
+    queue: Deque[QueueTuple] = deque()
+    remote_clean_cmd = partial(
+        _remote_clean_cmd, reg=reg, rm_dirs=rm_dirs, timeout=timeout
+    )
     for target, platforms in install_targets_map.items():
         if target == get_localhost_install_target():
             continue
         shuffle(platforms)
         LOG.info(
-            f"Cleaning on install target: {platforms[0]['install target']}")
+            f"Cleaning on install target: {platforms[0]['install target']}"
+        )
         # Issue ssh command:
-        pool.append(
-            (_remote_clean_cmd(reg, platforms[0], rm_dirs, timeout),
-             target, platforms)
+        queue.append(
+            QueueTuple(
+                remote_clean_cmd(platform=platforms[0]), target, platforms
+            )
         )
     failed_targets: List[str] = []
     # Handle subproc pool results almost concurrently:
-    while pool:
-        for proc, target, platforms in pool:
-            ret_code = proc.poll()
-            if ret_code is None:  # proc still running
-                continue
-            pool.remove((proc, target, platforms))
-            out, err = proc.communicate()
-            if out:
-                LOG.debug(out)
-            if ret_code:
-                # Try again using the next platform for this install target:
-                this_platform = platforms.pop(0)
-                excp = TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
-                    proc.args, ret_code, out, err)
-                LOG.debug(excp)
-                if platforms:
-                    pool.append((
-                        _remote_clean_cmd(reg, platforms[0], rm_dirs, timeout),
-                        target, platforms
-                    ))
-                else:  # Exhausted list of platforms
-                    failed_targets.append(target)
-            elif err:
-                LOG.debug(err)
+    while queue:
+        item = queue.popleft()
+        ret_code = item.proc.poll()
+        if ret_code is None:  # proc still running
+            queue.append(item)
+            continue
+        out, err = item.proc.communicate()
+        if out:
+            LOG.debug(out)
+        if ret_code:
+            # Try again using the next platform for this install target:
+            this_platform = item.platforms.pop(0)
+            LOG.debug(TaskRemoteMgmtError(
+                TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
+                item.proc.args, ret_code, out, err
+            ))
+            if item.platforms:
+                queue.append(
+                    item._replace(
+                        proc=remote_clean_cmd(platform=item.platforms[0])
+                    )
+                )
+            else:  # Exhausted list of platforms
+                failed_targets.append(item.install_target)
+        elif err:
+            LOG.debug(err)
         time.sleep(0.2)
     if failed_targets:
         raise CylcError(
-            f"Could not clean on install targets: {', '.join(failed_targets)}")
+            f"Could not clean on install targets: {', '.join(failed_targets)}"
+        )
 
 
 def _remote_clean_cmd(
@@ -856,7 +870,7 @@ def _remote_clean_cmd(
     cmd = ['clean', '--local-only', reg]
     if rm_dirs is not None:
         for item in rm_dirs:
-            cmd += ['--rm', item]
+            cmd.extend(['--rm', item])
     cmd = construct_ssh_cmd(cmd, platform, timeout=timeout, set_verbosity=True)
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)

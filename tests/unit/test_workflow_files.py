@@ -36,10 +36,13 @@ from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     WorkflowFiles,
     _clean_using_glob,
+    _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
     get_workflow_source_dir,
-    reinstall_workflow, search_install_source_dirs)
+    reinstall_workflow,
+    search_install_source_dirs
+)
 
 from tests.unit.conftest import MonkeyMock
 
@@ -989,6 +992,7 @@ def test_remote_clean(
 
     mocked_remote_clean_cmd = monkeymock(
         'cylc.flow.workflow_files._remote_clean_cmd',
+        spec=_remote_clean_cmd,
         side_effect=mocked_remote_clean_cmd_side_effect)
     rm_dirs = ["whatever"]
     # ----- Test -----
