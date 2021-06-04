@@ -37,7 +37,7 @@ def authorise():
     """
     def wrapper(fcn):
         @wraps(fcn)  # preserve args and docstrings
-        def _authorise(self, *args, user='?', meta=None, **kwargs):
+        def _call(self, *args, user='?', meta=None, **kwargs):
             if not meta:
                 meta = {}
             host = meta.get('host', '?')
@@ -46,11 +46,11 @@ def authorise():
 
             # Hardcoded, for new - but much of this functionality can be
             # removed more swingingly.
-            LOG.info(
+            LOG.debug(
                 '[client-command] %s %s://%s@%s:%s',
                 fcn.__name__, comms_method, user, host, prog
             )
             return fcn(self, *args, **kwargs)
 
-        return _authorise
+        return _call
     return wrapper
