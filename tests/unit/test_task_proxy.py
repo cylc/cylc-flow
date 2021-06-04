@@ -37,10 +37,10 @@ from cylc.flow.task_proxy import TaskProxy
 )
 def test_point_match(
     itask_point: PointBase, point_str: Optional[str], expected: bool,
-    cycling_type: Callable
+    set_cycling_type: Callable
 ) -> None:
     """Test TaskProxy.point_match()."""
-    cycling_type(itask_point.TYPE)
+    set_cycling_type(itask_point.TYPE)
     mock_itask = Mock(point=itask_point.standardise())
 
     assert TaskProxy.point_match(mock_itask, point_str) is expected
