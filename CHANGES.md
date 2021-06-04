@@ -80,6 +80,12 @@ version control information on installation of a workflow.
 [#4222](https://github.com/cylc/cylc-flow/pull/4222) - Fix bug where a
 workflow's public database file was not closed properly.
 
+[#4237](https://github.com/cylc/cylc-flow/pull/4237) - `cylc clean` can now
+remove specific sub-directories instead of the whole run directory, using the
+`--rm` option. There are also the options `--local-only` and `--remote-only`
+for choosing to only clean on the local filesystem or remote install targets
+respectively.
+
 ### Fixes
 
 [#4227](https://github.com/cylc/cylc-flow/pull/4227) - Better error messages
