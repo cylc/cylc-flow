@@ -60,6 +60,7 @@ from collections import Counter, deque
 from copy import deepcopy
 import json
 from time import time
+from typing import Union, Tuple, TYPE_CHECKING
 import zlib
 
 from cylc.flow import __version__ as CYLC_VERSION, LOG, ID_DELIM
@@ -91,6 +92,9 @@ from cylc.flow.wallclock import (
     get_utc_mode,
     get_time_string_from_unix_time as time2str
 )
+
+if TYPE_CHECKING:
+    from cylc.flow.cyclers import PointBase
 
 
 EDGES = 'edges'
@@ -797,6 +801,10 @@ class DataStoreMgr:
             id=tp_id,
             task=t_id,
             cycle_point=point_string,
+            is_held=(
+                (itask.tdef.name, itask.point)
+                in self.schd.pool.tasks_to_hold
+            ),
             depth=task_def.depth,
             name=task_def.name,
             state=TASK_STATUS_WAITING,
@@ -1448,22 +1456,32 @@ class DataStoreMgr:
                     PbTask(id=t_id)).MergeFrom(t_delta)
         self.updates_pending = True
 
-    def delta_task_held(self, itask):
+    def delta_task_held(
+        self,
+        itask: Union[TaskProxy, Tuple[str, 'PointBase', bool]]
+    ):
         """Create delta for change in task proxy held state.
 
         Args:
-            itask (cylc.flow.task_proxy.TaskProxy):
-                Update task-node from corresponding task proxy
-                objects from the workflow task pool.
+            itask:
+                The TaskProxy to hold/release OR a tuple of the form
+                (name, cycle, is_held).
 
         """
-        tp_id, tproxy = self.store_node_fetcher(itask.tdef.name, itask.point)
+        if isinstance(itask, TaskProxy):
+            name = itask.tdef.name
+            cycle = itask.point
+            is_held = itask.state.is_held
+        else:
+            name, cycle, is_held = itask
+
+        tp_id, tproxy = self.store_node_fetcher(name, cycle)
         if not tproxy:
             return
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{time()}'
-        tp_delta.is_held = itask.state.is_held
+        tp_delta.is_held = is_held
         self.state_update_families.add(tproxy.first_parent)
         self.updates_pending = True
 
