@@ -1593,6 +1593,8 @@ class Scheduler:
         """Check if workflow is stalled or not."""
         if self.is_stalled:  # already reported
             return True
+        if self.is_paused:  # cannot be stalled it's not even running
+            return False
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
             self.run_event_handlers(self.EVENT_STALLED, 'workflow stalled')
