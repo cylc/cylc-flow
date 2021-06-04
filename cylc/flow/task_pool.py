@@ -1038,6 +1038,8 @@ class TaskPool:
             self.hold_active_task(itask)
         # Set future tasks to be held:
         n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
+        for name, cycle in task_items:
+            self.data_store_mgr.delta_task_held((name, cycle, True))
         self.tasks_to_hold.update(task_items)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
@@ -1051,6 +1053,8 @@ class TaskPool:
             self.release_held_active_task(itask)
         # Unhold future tasks:
         n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
+        for name, cycle in task_items:
+            self.data_store_mgr.delta_task_held((name, cycle, False))
         self.tasks_to_hold.difference_update(task_items)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
