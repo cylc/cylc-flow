@@ -925,7 +925,7 @@ class WorkflowConfig:
         """
         # Starter x nodes are those with no incoming, i.e.
         # x nodes that never appear as a y.
-        sxs = {x01 for x01 in x2ys if x01 not in y2xs}
+        sxs = set(x2ys).difference(y2xs)
         while sxs:
             sx01 = sxs.pop()
             for y01 in x2ys[sx01]:
