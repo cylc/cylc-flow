@@ -389,7 +389,7 @@ class TaskJobManager:
             else:
                 cmd = ['cylc'] + cmd
 
-            for _, itasks_batch in enumerate(itasks_batches):
+            for itasks_batch in itasks_batches:
                 stdin_files = []
                 job_log_dirs = []
                 for itask in itasks_batch:
