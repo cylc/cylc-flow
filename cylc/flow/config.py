@@ -1270,8 +1270,8 @@ class WorkflowConfig:
             rtc = tdef.rtconfig
             comstr = (
                 "cylc workflow-state"
-                + " --task=" + tdef.workflow_polling_cfg['task']
-                + " --point=$CYLC_TASK_CYCLE_POINT"
+                f" --task={tdef.workflow_polling_cfg['task']}"
+                " --point=$CYLC_TASK_CYCLE_POINT"
             )
             for key, fmt in [
                     ('user', ' --%s=%s'),

@@ -524,7 +524,7 @@ def get_all_platforms_for_install_target(
     """Return list of platform dictionaries for given install target."""
     platforms: List[Dict[str, Any]] = []
     all_platforms = glbl_cfg(cached=True).get(['platforms'], sparse=False)
-    for k, v in all_platforms.items():
+    for k, v in all_platforms.iteritems():  # noqa: B301 (iteritems valid here)
         if (v.get('install target', k) == install_target):
             v_copy = deepcopy(v)
             v_copy['name'] = k
