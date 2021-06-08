@@ -37,6 +37,10 @@ EXAMPLE_FLOW_CFG = {
             'P1': 'foo & bar',
             'R1/2': 'foo[1] => pub'  # pub.2 doesn't spawn at start
         }
+    },
+    'runtime': {
+        'FAM': {},
+        'bar': {'inherit': 'FAM'}
     }
 }
 
@@ -120,6 +124,10 @@ async def example_flow(
             id="Name glob"
         ),
         param(
+            ['FAM.1'], ['bar.1'], [], [],
+            id="Family name"
+        ),
+        param(
             ['foo.*'], ['foo.1'], [], [],
             id="Point glob"
         ),
@@ -191,6 +199,10 @@ async def test_filter_task_proxies(
             id="Name glob"
         ),
         param(
+            ['FAM.2'], ['bar.2'], [],
+            id="Family name"
+        ),
+        param(
             ['foo.*'], [], ["No matching tasks found: foo.*"],
             id="Point glob not allowed"
         ),
@@ -253,6 +265,11 @@ async def test_match_taskdefs(
             ['*.1', '*.2'], ['foo.1', 'bar.1'],
             ["No active tasks matching: *.2"],
             id="Name globs hold active tasks only"
+        ),
+        param(
+            ['FAM.1', 'FAM.2'], ['bar.1'],
+            ["No active tasks in the family 'FAM' matching: FAM.2"],
+            id="Family names hold active tasks only"
         ),
         param(
             ['foo.*', 'bar', 'pub', 'grogu.*'], ['foo.1', 'bar.1'],

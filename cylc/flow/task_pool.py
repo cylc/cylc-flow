@@ -1082,13 +1082,19 @@ class TaskPool:
         for item in items:
             point_str, name_str, status = self._parse_task_item(item)
             if status or ('*' in item) or ('?' in item) or ('[' in item):
-                # Glob or task state was not matched in active pool
+                # Glob or task state was not matched by active tasks
                 LOG.warning(f"No active tasks matching: {item}")
                 n_warnings += 1
                 continue
-            taskdefs = self.config.find_taskdefs(name_str)
-            if not taskdefs:
-                LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
+            if name_str not in self.config.taskdefs:
+                if self.config.find_taskdefs(name_str):
+                    # It's a family name; was not matched by active tasks
+                    LOG.warning(
+                        f"No active tasks in the family '{name_str}' "
+                        f"matching: {item}"
+                    )
+                else:
+                    LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
                 n_warnings += 1
                 continue
             if point_str is None:
@@ -1103,13 +1109,13 @@ class TaskPool:
                 n_warnings += 1
                 continue
             point = get_point(point_str)
-            for taskdef in taskdefs:
-                if taskdef.is_valid_point(point):
-                    matched_tasks.add((taskdef.name, point))
-                else:
-                    # is_valid_point() already logged warning
-                    n_warnings += 1
-                    continue
+            taskdef = self.config.taskdefs[name_str]
+            if taskdef.is_valid_point(point):
+                matched_tasks.add((taskdef.name, point))
+            else:
+                # is_valid_point() already logged warning
+                n_warnings += 1
+                continue
         return n_warnings, matched_tasks
 
     def check_abort_on_task_fails(self):
