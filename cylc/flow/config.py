@@ -991,10 +991,11 @@ class WorkflowConfig:
                         )
                         repl_parents.append(expanded)
                         if used_indices:
-                            if name not in self.task_param_vars:
-                                self.task_param_vars[name] = used_indices
-                            else:
-                                self.task_param_vars[name].update(used_indices)
+                            self.task_param_vars.setdefault(
+                                name, {}
+                            ).update(
+                                used_indices
+                            )
                     newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
 
@@ -1065,7 +1066,7 @@ class WorkflowConfig:
         if bads:
             LOG.warning(
                 'bad parameter environment template:\n    '
-                '\n    '.join(
+                + '\n    '.join(
                     '[runtime][%s][environment]%s = %s  # %s' %
                     bad for bad in sorted(bads)
                 )
