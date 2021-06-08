@@ -567,7 +567,7 @@ def register(
     return flow_name
 
 
-def is_installed(path):
+def is_installed(path: Union[Path, str]) -> bool:
     """Check to see if the path sent contains installed flow.
 
     Checks for valid _cylc-install directory in current folder and checks
@@ -575,9 +575,7 @@ def is_installed(path):
     """
     cylc_install_folder = Path(path, WorkflowFiles.Install.DIRNAME)
     source = Path(cylc_install_folder, WorkflowFiles.Install.SOURCE)
-    if cylc_install_folder.exists and source.is_symlink():
-        return True
-    return False
+    return cylc_install_folder.is_dir() and source.is_symlink()
 
 
 def _clean_check(reg, run_dir):
@@ -1235,32 +1233,30 @@ def get_run_dir_info(
     return relink, run_num, rundir
 
 
-def detect_flow_exists(run_path_base, numbered):
+def detect_flow_exists(
+    run_path_base: Union[Path, str], numbered: bool
+) -> bool:
     """Returns True if installed flow already exists.
 
     Args:
-        run_path_base (Path):
-            Workflow run directory i.e ~/cylc-run/<flow_name>
-        numbered (bool):
-            If true, will detect if numbered runs exist
-            If false, will detect if non-numbered runs exist, i.e. runs
-            installed by --run-name)
-
-    Returns:
-        True if installed flows exist.
-
+        run_path_base: Absolute path of workflow directory,
+            i.e ~/cylc-run/<flow_name>
+        numbered: If True, will detect if numbered runs exist. If False, will
+            detect if non-numbered runs exist, i.e. runs installed
+            by --run-name.
     """
     for entry in Path(run_path_base).iterdir():
-        isNumbered = bool(re.search(r'^run\d+$', entry.name))
+        is_numbered = bool(re.search(r'^run\d+$', entry.name))
         if (
             entry.is_dir()
-            and entry.name not in [
+            and entry.name not in {
                 WorkflowFiles.Install.DIRNAME, WorkflowFiles.RUN_N
-            ]
+            }
             and Path(entry, WorkflowFiles.FLOW_FILE).exists()
-            and isNumbered == numbered
+            and is_numbered == numbered
         ):
             return True
+    return False
 
 
 def check_flow_file(
