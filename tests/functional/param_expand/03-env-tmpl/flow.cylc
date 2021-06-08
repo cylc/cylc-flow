@@ -1,6 +1,7 @@
 [task parameters]
     num = 99..101..2
     stuff = this, that
+    state = open, closed
 [scheduling]
     [[graph]]
         R1 = "t1<num,stuff> => t2<num,stuff>"
@@ -10,13 +11,20 @@
             MYNUM = %(num)d
             MYSTUFF = stuff %(stuff)s
             MY_FILE = %(num)04d-%(stuff)s
+    [[U<state>]]
+        [[[environment]]]
+            STATUS = %(state)s
     [[t1<num,stuff>]]
-        inherit = T
+        inherit = T, U<state=open>
         script = """
-echo "${MYNUM} and ${MYSTUFF}" >"${CYLC_WORKFLOW_RUN_DIR}/${MY_FILE}"
-"""
+            FILE="${CYLC_WORKFLOW_RUN_DIR}/t1-${MY_FILE}"
+            echo "${MYNUM} ${MYSTUFF} ${STATUS}" >"${FILE}"
+            diff ${FILE} ${FILE}.ref
+        """
     [[t2<num,stuff>]]
-        inherit = T
+        inherit = T, U<state=closed>
         script = """
-test "${MYNUM} and ${MYSTUFF}" = "$(<"${CYLC_WORKFLOW_RUN_DIR}/${MY_FILE}")"
-"""
+            FILE="${CYLC_WORKFLOW_RUN_DIR}/t2-${MY_FILE}"
+            echo "${MYNUM} ${MYSTUFF} ${STATUS}" >"${FILE}"
+            diff ${FILE} ${FILE}.ref
+        """
