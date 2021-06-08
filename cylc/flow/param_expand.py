@@ -215,7 +215,7 @@ class NameExpander:
         """
         head, p_list_str, tail = REC_P_ALL.match(parent).groups()
         if not p_list_str:
-            return head
+            return (None, head)
         used = {}
         for item in (i.strip() for i in p_list_str.split(',')):
             if '-' in item or '+' in item:
@@ -253,7 +253,7 @@ class NameExpander:
             tmpl += self.param_tmpl_cfg[pname]
         if tail:
             tmpl += tail
-        return tmpl % used
+        return (used, tmpl % used)
 
 
 class GraphExpander:

@@ -985,9 +985,16 @@ class WorkflowConfig:
                     origin = 'inherit = %s' % ', '.join(parents)
                     repl_parents = []
                     for parent in parents:
-                        repl_parents.append(
+                        used_indices, expanded = (
                             name_expander.expand_parent_params(
-                                parent, indices, origin))
+                                parent, indices, origin)
+                        )
+                        repl_parents.append(expanded)
+                        if used_indices:
+                            if name not in self.task_param_vars:
+                                self.task_param_vars[name] = used_indices
+                            else:
+                                self.task_param_vars[name].update(used_indices)
                     newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
 
