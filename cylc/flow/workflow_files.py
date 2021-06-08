@@ -575,9 +575,7 @@ def is_installed(path):
     """
     cylc_install_folder = Path(path, WorkflowFiles.Install.DIRNAME)
     source = Path(cylc_install_folder, WorkflowFiles.Install.SOURCE)
-    if cylc_install_folder.exists and source.is_symlink():
-        return True
-    return False
+    return cylc_install_folder.is_dir() and source.is_symlink()
 
 
 def _clean_check(reg, run_dir):
