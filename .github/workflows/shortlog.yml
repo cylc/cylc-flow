@@ -1,13 +1,10 @@
 name: check contributor list
 
 on:
-  pull_request:
   workflow_dispatch:
-  push:
-    paths-ignore:
-      - '**'
-      - '!CONTRIBUTING.md'  # e.g. when new contributor adds themselves
-      - '!cylc/flow/__init__.py'  # e.g. when __version__ is changed for a new release
+  pull_request:
+    paths:
+      - 'CONTRIBUTING.md'
 
 jobs:
   test:

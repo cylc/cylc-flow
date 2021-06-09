@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0  # need to fetch all commits to check contributors
 
       - name: Check CONTRIBUTING.md
-        uses: cylc/release-actions/check-shortlog@c8205dcfb0df1661b99e2c240b75787c4fa02aa3
+        uses: cylc/release-actions/check-shortlog@v1
 
       - name: Setup Python
         uses: actions/setup-python@v2
