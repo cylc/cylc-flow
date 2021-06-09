@@ -66,7 +66,7 @@ tests_require = [
     'flake8-debugger>=4.0.0',
     'flake8-mutable>=1.2.0',
     'flake8>=3.0.0',
-    'mypy>=0.800',
+    'mypy>=0.900',
     # TODO: https://github.com/pytest-dev/pytest-asyncio/issues/ 209
     'pytest-asyncio>=0.15.1',
     'pytest-cov>=2.8.0',
