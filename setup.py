@@ -73,7 +73,14 @@ tests_require = [
     'pytest-xdist>=2',
     'pytest-env>=0.6.2',
     'pytest>=6',
-    'testfixtures>=6.11.0'
+    'testfixtures>=6.11.0',
+    # Type annotation stubs
+    # (http://mypy-lang.blogspot.com/2021/05/the-upcoming-switch-to-modular-typeshed.html)  # noqa: E501
+    'types-Jinja2>=0.1.3',
+    'types-aiofiles>=0.1.3',
+    'types-pkg_resources>=0.1.2',
+    'types-protobuf>=0.1.10',
+    'types-six>=0.1.6'
 ]
 
 extra_requires = {

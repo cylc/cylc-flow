@@ -75,11 +75,7 @@ jobs:
           etc/bin/shellchecker
 
       - name: typing
-        run: |
-          yes | mypy --install-types
-          # Need --install-types because mypy>=0.900 only ships with stubs for
-          # stdlib modules (else we need to install e.g. types-aiofiles etc.)
-          # Need "yes" until mypy fix: https://github.com/python/mypy/issues/10598
+        run: mypy
 
       - name: Doctests
         run: |
