@@ -581,26 +581,38 @@ def register(
     # flow.cylc must exist so we can detect accidentally reversed args.
     source = os.path.abspath(source)
     check_flow_file(source, symlink_suiterc=True, logger=None)
-    symlinks_created = make_localhost_symlinks(
-        get_workflow_run_dir(flow_name), flow_name)
-    if bool(symlinks_created):
-        for src, dst in symlinks_created.items():
-            LOG.info(f"Symlink created from {src} to {dst}")
+    if not is_installed(get_workflow_run_dir(flow_name)):
+        symlinks_created = make_localhost_symlinks(
+            get_workflow_run_dir(flow_name), flow_name)
+        if bool(symlinks_created):
+            for src, dst in symlinks_created.items():
+                LOG.info(f"Symlink created from {src} to {dst}")
     # Create service dir if necessary.
     srv_d = get_workflow_srv_dir(flow_name)
     os.makedirs(srv_d, exist_ok=True)
     return flow_name
 
 
-def is_installed(path: Union[Path, str]) -> bool:
+def is_installed(rund: Union[Path, str]) -> bool:
     """Check to see if the path sent contains installed flow.
 
-    Checks for valid _cylc-install directory in current folder and checks
-    source link exists.
+    Checks for valid _cylc-install directory in the two possible locations in
+    relation to the run directory.
+
+    Args:
+        rund (Union[Path, str]): run directory path to check
+
+    Returns:
+        bool: True if rund belongs to an installed workflow
     """
-    cylc_install_folder = Path(path, WorkflowFiles.Install.DIRNAME)
-    source = Path(cylc_install_folder, WorkflowFiles.Install.SOURCE)
-    return cylc_install_folder.is_dir() and source.is_symlink()
+    rund = Path(rund)
+    cylc_install_dir = Path(rund, WorkflowFiles.Install.DIRNAME)
+    alt_cylc_install_dir = Path(rund.parent, WorkflowFiles.Install.DIRNAME)
+    if cylc_install_dir.is_dir():
+        return True
+    elif alt_cylc_install_dir.is_dir():
+        return True
+    return False
 
 
 def _clean_check(reg: str, run_dir: Path) -> None:
@@ -1246,7 +1258,7 @@ def install_workflow(
     source: Optional[Union[Path, str]] = None,
     run_name: Optional[str] = None,
     no_run_name: bool = False,
-    cli_symlink_dirs: Optional[Union[Dict[str, Dict[str, Any]], None]] = None
+    cli_symlink_dirs: Optional[Dict[str, Dict[str, Any]]] = None
 ) -> Tuple[Path, Path, str]:
     """Install a workflow, or renew its installation.
 
@@ -1498,7 +1510,8 @@ def get_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
 
     Args:
         symlink_dirs (str): As entered by user on cli,
-                            e.g. [log=$DIR, share=$DIR2].
+                            e.g. "log=$DIR, share=$DIR2".
+        fill_syms (bool): If True, will fill missing
 
     Raises:
         WorkflowFilesError: If directory to be symlinked is not in permitted
@@ -1513,20 +1526,20 @@ def get_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
     """
     # Ensures the same nested dict format which is returned by the glb cfg
     symdict: Dict[str, Dict[str, Any]] = {'localhost': {'run': None}}
-    if symlink_dirs == 'None':
+    if symlink_dirs == "":
         return symdict
     symlist = symlink_dirs.replace(" ", "").strip(',').split(',')
     for pair in symlist:
         try:
             key, val = pair.split("=")
         except ValueError:
-            return symdict
-        if key in ['run', 'log', 'share', 'share/cycle', 'work']:
-            symdict['localhost'][key] = val
-        else:
+            continue
+        if key not in ['run', 'log', 'share', 'share/cycle', 'work']:
             raise WorkflowFilesError(
                 f"{key} not a valid entry for --symlink-dirs"
             )
+        symdict['localhost'][key] = val.strip() or None
+
     return symdict
 
 

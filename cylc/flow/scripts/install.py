@@ -155,11 +155,12 @@ def get_option_parser():
         help=(
             "Enter a list, in the form 'log=path/to/store, share = $...'"
             ". Use this option to override local symlinks for directories run,"
-            " log, work, share, share/cycle, as configured in global.cylc."
+            " log, work, share, share/cycle, as configured in global.cylc. "
+            "Enter an empty list \"\" to skip making localhost symlink dirs."
         ),
         action="store",
-        default=None,
-        dest="symlink_dirs")
+        dest="symlink_dirs"
+    )
 
     parser.add_option(
         "--run-name",
@@ -219,9 +220,10 @@ def install(
                 exc
             ) from None
     cli_symdirs: Optional[Dict[str, Dict[str, Any]]] = None
-    if opts.symlink_dirs:
+    if opts.symlink_dirs == '':
+        cli_symdirs = {}
+    elif opts.symlink_dirs:
         cli_symdirs = get_sym_dirs(opts.symlink_dirs)
-
     source_dir, rundir, _flow_name = install_workflow(
         flow_name=flow_name,
         source=source,

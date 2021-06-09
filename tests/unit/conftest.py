@@ -63,8 +63,9 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     Args:
         reg: Workflow name.
+        installed: named or no-name. Creates 
     """
-    def _tmp_run_dir(reg: Optional[str] = None) -> Path:
+    def _tmp_run_dir(reg: Optional[str] = None, installed = None) -> Path:
         cylc_run_dir = tmp_path / 'cylc-run'
         cylc_run_dir.mkdir(exist_ok=True)
         monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)
@@ -73,6 +74,11 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
             (run_dir / WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
+            if installed == 'named':
+                (run_dir.parent / WorkflowFiles.Install.DIRNAME).mkdir(exist_ok=True)
+            elif installed == 'no-name':
+                (run_dir / WorkflowFiles.Install.DIRNAME).mkdir(exist_ok=True)
+
             return run_dir
         return cylc_run_dir
     return _tmp_run_dir

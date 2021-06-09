@@ -42,6 +42,8 @@ from cylc.flow.workflow_files import (
     check_nested_run_dirs,
     get_sym_dirs,
     get_symlink_dirs,
+    is_installed,
+    get_sym_dirs,
     get_workflow_source_dir,
     glob_in_run_dir,
     reinstall_workflow,
@@ -1485,3 +1487,16 @@ def test_get_sym_dirs(
         actual = get_sym_dirs(symlink_dirs)
 
         assert actual == expected
+
+@pytest.mark.parametrize(
+    'reg, installed, expected',
+    [('reg1/run1', 'named', True),
+     ('reg2', 'no-name', True),
+     ('reg3', None, False)]
+)
+def test_is_installed(tmp_run_dir: Callable,reg, installed, expected):
+    
+
+    cylc_run_dir: Path = tmp_run_dir(reg, installed=installed)
+    actual = is_installed(cylc_run_dir)
+    assert actual == expected

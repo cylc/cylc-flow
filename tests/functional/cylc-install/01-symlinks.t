@@ -24,7 +24,7 @@ if [[ -z ${TMPDIR:-} || -z ${USER:-} || $TMPDIR/$USER == "$HOME" ]]; then
     skip_all '"TMPDIR" or "USER" not defined or "TMPDIR"/"USER" is "HOME"'
 fi
 
-set_test_number 25
+set_test_number 27
 
 create_test_global_config "" "
 [install]
@@ -106,7 +106,7 @@ __FLOW__
 
 popd || exit 1
 
-run_ok "${TEST_NAME_BASE}-play" cylc play "${RND_WORKFLOW_NAME}/runN" --debug
+run_ok "${TEST_NAME_BASE}-play" cylc play "${RND_WORKFLOW_NAME}/runN" --debug --no-detach
 
 # test ensure symlinks, not in cli install are not created from glbl cfg.
 TEST_SYM="${TEST_NAME_BASE}-share-cycle-cli"
@@ -117,13 +117,12 @@ rm -rf "${TMPDIR}/${USER}/test_cylc_cli_symlink/"
 purge_rnd_workflow
 
 
-# test no symlinks created with --symlink-dirs=None
-
+# test no symlinks created with --symlink-dirs=""
 
 TEST_NAME="${TEST_NAME_BASE}-no-sym-dirs-cli"
 make_rnd_workflow
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" \
---directory="${RND_WORKFLOW_SOURCE}" --symlink-dirs=None
+--directory="${RND_WORKFLOW_SOURCE}" --symlink-dirs=""
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -144,4 +143,22 @@ for DIR in 'work' 'share' 'log'; do
    = "$TMPDIR/${USER}/test_cylc_symlink/cylc-run/${RND_WORKFLOW_NAME}/run1/${DIR}"
 done
 
+pushd "${WORKFLOW_RUN_DIR}" || exit 1
+cat > 'flow.cylc' << __FLOW__
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        script = true
+__FLOW__
+
+popd || exit 1
+
+run_ok "${TEST_NAME_BASE}-play" cylc play "${RND_WORKFLOW_NAME}/runN" --debug --no-detach
+# test ensure localhost symlink dirs skipped for installed workflows.
+TEST_SYM="${TEST_NAME_BASE}-installed-workflow-skips-symdirs"
+run_fail "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}")" \
+    = "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_WORKFLOW_NAME}/run1"
+rm -rf "${TMPDIR}/${USER}/test_cylc_cli_symlink/"
 purge_rnd_workflow

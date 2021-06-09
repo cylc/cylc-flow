@@ -142,14 +142,17 @@ def make_localhost_symlinks(
     Returns:
         Dictionary of symlinks with sources as keys and
         destinations as values: ``{source: destination}``
+        symlink_conf: Symlinks dirs configuration passed from cli
 
     """
+    symlinks_created = {}
     dirs_to_symlink = get_dirs_to_symlink(
         get_localhost_install_target(),
         named_sub_dir, symlink_conf=symlink_conf
     )
-    symlinks_created = {}
     for key, value in dirs_to_symlink.items():
+        if value is None:
+            continue
         if key == 'run':
             symlink_path = rund
         else:
