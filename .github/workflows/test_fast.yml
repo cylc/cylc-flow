@@ -76,9 +76,12 @@ jobs:
 
       - name: typing
         run: |
-          mypy --explicit-package-bases
-        # Need --explicit-package-bases because we don't have __init__.py in
-        # top-level dir
+          yes | mypy --explicit-package-bases --install-types
+          # Need --explicit-package-bases because we don't have __init__.py in
+          # top-level dir
+          # Need --install-types because mypy>=0.900 only ships with stubs for
+          # stdlib modules (else we need to install e.g. types-aiofiles etc.)
+          # Need "yes" until mypy fix: https://github.com/python/mypy/issues/10598
 
       - name: Doctests
         run: |
