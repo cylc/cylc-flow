@@ -18,8 +18,8 @@
 import logging
 import os
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Set
 import pytest
+from typing import Callable, Dict, Iterable, List, Set
 from unittest.mock import Mock, patch, call
 
 from cylc.flow.exceptions import UserInputError, WorkflowFilesError

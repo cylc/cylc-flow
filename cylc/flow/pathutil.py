@@ -20,7 +20,7 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Dict, Iterable, List, Set, Union
+from typing import Container, Dict, Iterable, List, Set, Union
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -314,18 +314,55 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
     return result
 
 
-def glob_in_run_dir(run_dir: Union[Path, str], pattern: str) -> List[Path]:
+def glob_in_run_dir(
+    run_dir: Union[Path, str], pattern: str, symlink_dirs: Container[Path]
+) -> List[Path]:
     """Execute a (recursive) glob search in the given run directory.
 
-    NOTE: this follows symlinks, so be careful what you do with the results.
+    Returns list of any absolute paths that match the pattern. However:
+    * Does not follow symlinks (apart from the spcedified symlink dirs).
+    * Also does not return matching subpaths of matching directories (because
+        that would be redundant).
+
+    Args:
+        run_dir: Absolute path of the workflow run dir.
+        pattern: The glob pattern.
+        symlink_dirs: Absolute paths to the workflow's symlink dirs.
     """
-    return sorted(
-        Path(i) for i in glob.iglob(
-            # Note: use os.path.join, not pathlib, to preserve trailing slash
-            os.path.join(glob.escape(str(run_dir)), pattern),
-            recursive=True
-        )
-    )
+    # Note: use os.path.join, not pathlib, to preserve trailing slash if
+    # present in pattern
+    pattern = os.path.join(glob.escape(str(run_dir)), pattern)
+    # Note: don't use pathlib.Path.glob() because when you give it an exact
+    # filename instead of pattern, it doesn't return broken symlinks
+    matches = sorted(Path(i) for i in glob.iglob(pattern, recursive=True))
+    # sort guarantees parents come before their children
+    if len(matches) == 1 and not os.path.lexists(matches[0]):
+        # https://bugs.python.org/issue35201
+        return []
+    results: List[Path] = []
+    subpath_excludes: Set[Path] = set()
+    for path in matches:
+        for rel_ancestor in reversed(path.relative_to(run_dir).parents):
+            ancestor = run_dir / rel_ancestor
+            if ancestor in subpath_excludes:
+                break
+            if ancestor.is_symlink() and ancestor not in symlink_dirs:
+                # Do not follow non-standard symlinks
+                subpath_excludes.add(ancestor)
+                break
+            if (not symlink_dirs) and ancestor in results:
+                # We can be sure all subpaths of this ancestor are redundant
+                subpath_excludes.add(ancestor)
+                break
+            if ancestor == path.parent:
+                # Final iteration over ancestors
+                if ancestor in matches and path not in symlink_dirs:
+                    # Redundant (but don't exclude subpaths in case any of the
+                    # subpaths are std symlink dirs)
+                    break
+        else:  # no break
+            results.append(path)
+    return results
 
 
 def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:

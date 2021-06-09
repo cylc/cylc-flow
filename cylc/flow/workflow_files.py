@@ -48,7 +48,6 @@ from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir,
     glob_in_run_dir,
-    is_relative_to,
     make_localhost_symlinks,
     parse_rm_dirs,
     remove_dir_and_target,
@@ -212,21 +211,20 @@ class WorkflowFiles:
         SOURCE = 'source'
         """Symlink to the workflow definition (For run dir)."""
 
-    RESERVED_DIRNAMES = [
-        LOG_DIR, SHARE_DIR, WORK_DIR, RUN_N, Service.DIRNAME, Install.DIRNAME]
+    RESERVED_DIRNAMES = frozenset([
+        LOG_DIR, SHARE_DIR, WORK_DIR, RUN_N, Service.DIRNAME, Install.DIRNAME
+    ])
     """Reserved directory names that cannot be present in a source dir."""
 
-    RESERVED_NAMES = [FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES]
+    RESERVED_NAMES = frozenset([FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES])
     """Reserved filenames that cannot be used as run names."""
 
-    SYMLINK_DIRS = sorted(
-        [SHARE_CYCLE_DIR, SHARE_DIR, LOG_DIR, WORK_DIR, ''],
-        reverse=True
-    )
-    """The symlink dirs that may be set in global.cylc[symlink dirs] (apart
-    from the run dir). '' represents the run dir. Note: these should be ordered
-    by deepest to shallowest (i.e. share/cycle/ before share/, '' last),
-    hence the use of `sorted()` to make sure."""
+    SYMLINK_DIRS = frozenset([
+        SHARE_CYCLE_DIR, SHARE_DIR, LOG_DIR, WORK_DIR, ''
+    ])
+    """The paths of the symlink dirs that may be set in
+    global.cylc[symlink dirs], relative to the run dir
+    ('' represents the run dir)."""
 
 
 class ContactFileFields:
@@ -707,7 +705,8 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
     Raises WorkflowFilesError if a symlink points to an unexpected place.
     """
     ret: Dict[str, Path] = {}
-    for _dir in WorkflowFiles.SYMLINK_DIRS:
+    for _dir in sorted(WorkflowFiles.SYMLINK_DIRS, reverse=True):
+        # ordered by deepest to shallowest
         path = Path(run_dir, _dir)
         if path.is_symlink():
             target = path.resolve()
@@ -730,41 +729,31 @@ def _clean_using_glob(
     """Delete the files/dirs in the run dir that match the pattern.
 
     Does not follow symlinks (apart from the standard symlink dirs).
+
+    Args:
+        run_dir: Absolute path of workflow run dir.
+        pattern: The glob pattern.
+        symlink_dirs: Paths of the workflow's symlink dirs relative to
+            the run dir.
     """
-    matches = glob_in_run_dir(run_dir, pattern)
+    abs_symlink_dirs = tuple(sorted(
+        (run_dir / d for d in symlink_dirs),
+        reverse=True  # ordered by deepest to shallowest
+    ))
+    matches = glob_in_run_dir(run_dir, pattern, abs_symlink_dirs)
     if not matches:
         return
-    abs_symlink_dirs = [run_dir / d for d in symlink_dirs]
     # First clean any matching symlink dirs
-    if abs_symlink_dirs:
-        for path in abs_symlink_dirs:
-            if path in matches:
-                remove_dir_and_target(path)
-                if path == run_dir:
-                    # We have deleted the run dir
-                    return
-        # Redo glob as contents have changed
-        matches = glob_in_run_dir(run_dir, pattern)
+    for path in abs_symlink_dirs:
+        if path in matches:
+            remove_dir_and_target(path)
+            if path == run_dir:
+                # We have deleted the run dir
+                return
+            matches.remove(path)
     # Now clean the rest
-    if matches and matches[0] == run_dir:
-        remove_dir_or_file(run_dir)
-        return
-    skip_children_of: Optional[Path] = None
     for path in matches:
-        # Skip path if inside a dir we have already dealt with
-        if skip_children_of and is_relative_to(path, skip_children_of):
-            continue
-        # Important: exclude subpaths of symlinks (apart from the standard
-        # symlink dirs)
-        for a in list(reversed(path.relative_to(run_dir).parents))[1:]:
-            ancestor = Path(run_dir, a)
-            if ancestor.is_symlink() and ancestor not in abs_symlink_dirs:
-                skip_children_of = ancestor
-                break
-        else:  # no break
-            if os.path.lexists(path):
-                remove_dir_or_file(path)
-            skip_children_of = path
+        remove_dir_or_file(path)
 
 
 def remote_clean(

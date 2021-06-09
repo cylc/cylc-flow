@@ -449,7 +449,7 @@ def test_clean(
         assert (tmp_path / rel_path).exists()
 
 
-def test_clean_broken_symlink_run_dir(
+def test_clean__broken_symlink_run_dir(
     tmp_path: Path, tmp_run_dir: Callable
 ) -> None:
     """Test clean() successfully remove a run dir that is a broken symlink."""
@@ -468,7 +468,7 @@ def test_clean_broken_symlink_run_dir(
     assert target.parent.exists() is False  # rabbow/cylc-run/foo too
 
 
-def test_clean_bad_symlink_dir_wrong_type(
+def test_clean__bad_symlink_dir_wrong_type(
     tmp_path: Path, tmp_run_dir: Callable
 ) -> None:
     """Test clean() raises error when a symlink dir actually points to a file
@@ -487,7 +487,7 @@ def test_clean_bad_symlink_dir_wrong_type(
     assert symlink.exists() is True
 
 
-def test_clean_bad_symlink_dir_wrong_form(
+def test_clean__bad_symlink_dir_wrong_form(
     tmp_path: Path, tmp_run_dir: Callable
 ) -> None:
     """Test clean() raises error when a symlink dir points to an
@@ -505,7 +505,7 @@ def test_clean_bad_symlink_dir_wrong_form(
 
 
 @pytest.mark.parametrize('pattern', ['thing/', 'thing/*'])
-def test_clean_rm_dir_not_file(pattern: str, tmp_run_dir: Callable):
+def test_clean__rm_dir_not_file(pattern: str, tmp_run_dir: Callable):
     """Test clean() does not remove a file when the rm_dir glob pattern would
     match a dir only."""
     reg = 'foo'
@@ -630,7 +630,7 @@ FILETREE_1 = {
 @pytest.mark.parametrize(
     'pattern, initial_filetree, filetree_left_behind',
     [
-        (
+        pytest.param(
             '**',
             FILETREE_1,
             {
@@ -638,7 +638,7 @@ FILETREE_1 = {
                 'sym': {'cylc-run': {'foo': {'bar': {}}}}
             }
         ),
-        (
+        pytest.param(
             '*/**',
             FILETREE_1,
             {
@@ -650,7 +650,7 @@ FILETREE_1 = {
                 'sym': {'cylc-run': {'foo': {'bar': {}}}}
             }
         ),
-        (
+        pytest.param(
             '**/*.txt',
             FILETREE_1,
             {
@@ -724,19 +724,57 @@ FILETREE_2 = {
     'you-shall-not-pass': {}
 }
 
+FILETREE_3 = {
+    'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
+    'sym-run': {'cylc-run': {'foo': {'bar': {
+        '.service': {'db': None},
+        'flow.cylc': None,
+        'share': {
+            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
+        }
+    }}}},
+    'sym-cycle': {'cylc-run': {'foo': {'bar': {
+        'share': {
+            'cycle': {
+                'sokath.txt': None
+            }
+        }
+    }}}},
+    'you-shall-not-pass': {}
+}
+
+FILETREE_4 = {
+    'cylc-run': {'foo': {'bar': {
+        '.service': {'db': None},
+        'flow.cylc': None,
+        'share': {
+            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
+        }
+    }}},
+    'sym-cycle': {'cylc-run': {'foo': {'bar': {
+        'share': {
+            'cycle': {
+                'kiazi.txt': None
+            }
+        }
+    }}}},
+    'you-shall-not-pass': {}
+}
+
 
 @pytest.mark.parametrize(
     'rm_dirs, initial_filetree, filetree_left_behind',
     [
-        (
+        pytest.param(
             {'**'},
             FILETREE_1,
             {
                 'cylc-run': {},
                 'sym': {'cylc-run': {}}
-            }
+            },
+            id="filetree1 **"
         ),
-        (
+        pytest.param(
             {'*/**'},
             FILETREE_1,
             {
@@ -746,9 +784,10 @@ FILETREE_2 = {
                     'rincewind.txt': Path('whatever')
                 }}},
                 'sym': {'cylc-run': {}}
-            }
+            },
+            id="filetree1 */**"
         ),
-        (
+        pytest.param(
             {'**/*.txt'},
             FILETREE_1,
             {
@@ -764,9 +803,10 @@ FILETREE_2 = {
                         'bib': {}
                     }
                 }}}}
-            }
+            },
+            id="filetree1 **/*.txt"
         ),
-        (
+        pytest.param(
             {'**/cycle'},
             FILETREE_2,
             {
@@ -780,9 +820,10 @@ FILETREE_2 = {
                     'share': {}
                 }}}},
                 'sym-cycle': {'cylc-run': {}}
-            }
+            },
+            id="filetree2 **/cycle"
         ),
-        (
+        pytest.param(
             {'share'},
             FILETREE_2,
             {
@@ -799,9 +840,10 @@ FILETREE_2 = {
                         }
                     }
                 }}}}
-            }
+            },
+            id="filetree2 share"
         ),
-        (
+        pytest.param(
             {'**'},
             FILETREE_2,
             {
@@ -809,9 +851,10 @@ FILETREE_2 = {
                 'sym-run': {'cylc-run': {}},
                 'sym-share': {'cylc-run': {}},
                 'sym-cycle': {'cylc-run': {}}
-            }
+            },
+            id="filetree2 **"
         ),
-        (
+        pytest.param(
             {'*'},
             FILETREE_2,
             {
@@ -827,17 +870,37 @@ FILETREE_2 = {
                         }
                     }
                 }}}}
-            }
+            },
+            id="filetree2 *"
         ),
-        (  # Check https://bugs.python.org/issue35201 has no effect
+        pytest.param(  # Check https://bugs.python.org/issue35201 has no effect
             {'non-exist/**'},
             FILETREE_2,
-            FILETREE_2
+            FILETREE_2,
+            id="filetree2 non-exist/**"
+        ),
+        pytest.param(
+            {'**'},
+            FILETREE_3,
+            {
+                'cylc-run': {},
+                'sym-run': {'cylc-run': {}},
+                'sym-cycle': {'cylc-run': {}},
+            },
+            id="filetree3 **"
+        ),
+        pytest.param(
+            {'**'},
+            FILETREE_4,
+            {
+                'cylc-run': {},
+                'sym-cycle': {'cylc-run': {}},
+            },
+            id="filetree4 **"
         )
     ],
-    ids=lambda x: str(x) if isinstance(x, set) else None
 )
-def test_targeted_clean(
+def test_clean__targeted(
     rm_dirs: Set[str],
     initial_filetree: Dict[str, Any],
     filetree_left_behind: Dict[str, Any],
