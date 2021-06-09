@@ -358,8 +358,8 @@ def process_resolver_info(root, info, args):
     """Set and gather info for resolver."""
     # Add the subscription id to the resolver context
     # to know which delta-store to use."""
-    if 'sub_id' in info.context:
-        args['sub_id'] = info.context['sub_id']
+    if 'backend_sub_id' in info.variable_values:
+        args['sub_id'] = info.variable_values['backend_sub_id']
 
     field_name = to_snake_case(info.field_name)
     # root is the parent data object.
