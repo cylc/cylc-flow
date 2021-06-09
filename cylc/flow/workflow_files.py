@@ -1041,7 +1041,7 @@ def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
 
     reg_path: Union[Path, str] = os.path.normpath(run_dir)
     parent_dir = os.path.dirname(reg_path)
-    while parent_dir not in ['', '/']:
+    while parent_dir not in ['', os.sep]:
         if is_valid_run_dir(parent_dir):
             raise WorkflowFilesError(
                 exc_msg.format(parent_dir, get_cylc_run_abs_path(parent_dir))

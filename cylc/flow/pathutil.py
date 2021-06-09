@@ -32,7 +32,7 @@ from cylc.flow.platforms import get_localhost_install_target
 
 # Note: do not import this elsewhere, as it might bypass unit test
 # monkeypatching:
-_CYLC_RUN_DIR = '$HOME/cylc-run'
+_CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
 
 
 def expand_path(*args: Union[Path, str]) -> str:
@@ -297,11 +297,11 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             part = part.strip()
             if not part:
                 continue
-            is_dir = part.endswith('/')
+            is_dir = part.endswith(os.sep)
             part = os.path.normpath(part)
             if os.path.isabs(part):
                 raise UserInputError("--rm option cannot take absolute paths")
-            if part == '.' or part.startswith('../'):
+            if part == '.' or part.startswith(f'..{os.sep}'):
                 raise UserInputError(
                     "--rm option cannot take paths that point to the "
                     "run directory or above"
@@ -309,7 +309,7 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             if is_dir:
                 # Preserve trailing slash to ensure it only matches dirs,
                 # not files, when globbing
-                part += '/'
+                part += os.sep
             result.add(part)
     return result
 
@@ -333,7 +333,7 @@ def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
     # In future, we can just use pathlib.Path.is_relative_to()
     # when Python 3.9 becomes the minimum supported version
     try:
-        Path(path1).relative_to(path2)
+        Path(os.path.normpath(path1)).relative_to(os.path.normpath(path2))
     except ValueError:
         return False
     return True

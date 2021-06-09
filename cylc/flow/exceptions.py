@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Exceptions for "expected" errors."""
 
-
+import errno
 from typing import Callable, Iterable, NoReturn, Tuple, Type
 
 
@@ -106,7 +106,7 @@ def handle_rmtree_err(
 ) -> NoReturn:
     """Error handler for shutil.rmtree."""
     exc = excinfo[1]
-    if isinstance(exc, OSError) and exc.errno == 39:
+    if isinstance(exc, OSError) and exc.errno == errno.ENOTEMPTY:
         # "Directory not empty", likely due to filesystem lag
         raise FileRemovalError(exc)
     raise exc
