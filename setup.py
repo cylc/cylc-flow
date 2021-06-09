@@ -53,7 +53,7 @@ install_requires = [
     'pyuv==1.4.*',
     'pyzmq==19.0.*',
     'setuptools>=49',
-    'urwid==2.*'
+    'urwid==2.*',
 ]
 tests_require = [
     'async-timeout>=3.0.0',
@@ -80,27 +80,27 @@ tests_require = [
     'types-aiofiles>=0.1.3',
     'types-pkg_resources>=0.1.2',
     'types-protobuf>=0.1.10',
-    'types-six>=0.1.6'
+    'types-six>=0.1.6',
 ]
 
 extra_requires = {
     'empy': [
-        'EmPy==3.3.*'
+        'EmPy==3.3.*',
     ],
     'all': [],
     'report-timings': [
-        'pandas==1.*'
+        'pandas==1.*',
     ],
     'main_loop-log_data_store': [
         'pympler',
-        'matplotlib'
+        'matplotlib',
     ],
     'main_loop-log_main_loop': [
-        'matplotlib'
+        'matplotlib',
     ],
     'main_loop-log_memory': [
         'pympler',
-        'matplotlib'
+        'matplotlib',
     ]
 }
 extra_requires['all'] = (
@@ -121,8 +121,12 @@ setup(
     packages=find_namespace_packages(include=["cylc.*"]),
     package_data={
         'cylc.flow': [
-            'etc/*.yaml', 'etc/flow*.eg', 'etc/job.sh',
-            'etc/syntax/*', 'etc/cylc-bash-completion', 'py.typed'
+            'etc/*.yaml',
+            'etc/flow*.eg',
+            'etc/job.sh',
+            'etc/syntax/*',
+            'etc/cylc-bash-completion',
+            'py.typed',
         ]
     },
     install_requires=install_requires,
