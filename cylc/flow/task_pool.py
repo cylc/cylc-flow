@@ -1346,7 +1346,6 @@ class TaskPool:
                 itask.is_manual_submit = True
                 # This will queue the task.
                 self.add_to_pool(itask, is_new=True)
-                LOG.critical(f"WTF 2: {itask.identity}")
         return n_warnings
 
     def sim_time_check(self, message_queue):
