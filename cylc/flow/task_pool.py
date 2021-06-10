@@ -993,7 +993,7 @@ class TaskPool:
 
         if prereqs_map:
             LOG.warning(
-                "Some partially satisfied prerequisites left over:\n"
+                "Partially satisfied prerequisites left over:\n"
                 + "\n".join(
                     f"{id_} is waiting on:"
                     + "\n".join(
