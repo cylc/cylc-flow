@@ -367,7 +367,7 @@ class BaseResolvers:
         """
         workflow_ids = set(args.get('workflows', args.get('ids', ())))
         sub_id = uuid4()
-        info.context['sub_id'] = sub_id
+        info.variable_values['backend_sub_id'] = sub_id
         self.delta_store[sub_id] = {}
         delta_queues = self.data_store_mgr.delta_queues
         deltas_queue = queue.Queue()
