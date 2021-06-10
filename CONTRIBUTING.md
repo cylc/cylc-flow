@@ -33,6 +33,7 @@ from outside of NIWA and the Met Office that predate the explicit introduction
 of this Agreement in July 2018; they must be un-parenthesised in future pull
 requests_).
 
+<!-- start-shortlog -->
  - Hilary Oliver
  - Matt Shin
  - Ben Fitzpatrick
@@ -56,9 +57,9 @@ requests_).
  - Jonny Williams
  - (Milton Woods)
  - (Alex Reinecke)
- - (Chan Wilson)
+ - (Chandin Wilson)
  - (Kevin Pulo)
- - Lois Hugget
+ - Lois Huggett
  - (Martin Dix)
  - (Ivor Blockley)
  - Alexander Paulsell
@@ -72,6 +73,7 @@ requests_).
  - Ronnie Dutta
  - John Haiducek
  - (Andrew Huang)
+<!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version
 control logs or otherwise.)
