@@ -645,12 +645,21 @@ class WorkflowConfig:
             self.start_point
         """
         if getattr(self.options, 'startcp', None) is not None:
-            # Warm start from a point later than initial point.
+            # Start from a point later than initial point.
             if self.options.startcp == 'now':
                 self.options.startcp = get_current_time_string()
             self.start_point = get_point(self.options.startcp).standardise()
+        elif getattr(self.options, 'starttask', None) is not None:
+            # Start from designated task(s).
+            # Select the earliest start point for use in pre-initial ignore.
+            self.start_point = min(
+                get_point(
+                    TaskID.split(taskid)[1]
+                ).standardise()
+                for taskid in self.options.starttask
+            )
         else:
-            # Cold start.
+            # Start from the initial point.
             self.start_point = self.initial_point
 
     def process_final_cycle_point(self):

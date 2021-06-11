@@ -45,7 +45,8 @@ from cylc.flow.terminal import cli_function
 
 PLAY_DOC = r"""cylc play [OPTIONS] ARGS
 
-Start a new workflow, restart a stopped workflow, or resume a paused workflow.
+Start a newly-installed workflow from scratch, restart a stopped workflow, or
+resume a paused workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
@@ -53,12 +54,12 @@ To avoid overwriting existing run directories, workflows that already ran can
 only be restarted from prior state. To start again, "cylc install" a new copy
 or "cylc clean" the existing run directory.
 
-New runs start at the "initial cycle point", by default, which defines the
-start of the graph. Alternatively, you can start running at a later cycle
-point, or from specified tasks, within the graph.
+By default new runs begin at the start of the graph, determined by the initial
+cycle point. You can also begin at a later cycle point (--start-cycle-point),
+or at specified tasks (--start task) within the graph.
 
-For convenience, any inter-cycle dependence reaching back beyond the start
-cycle point is considered to be satisfied.
+For convenience any dependence on tasks prior to the start cycle point (or to
+the cycle point of the earliest start task) will be taken as satisfied.
 
 Examples:
     # Start (at the initial cycle point), or restart, or resume workflow REG.
@@ -144,7 +145,11 @@ def get_option_parser(add_std_opts=False):
 
     parser.add_option(
         "--start-task", "--starttask", "-t",
-        help="Task instance to start from. Can be used mulitiple times.",
+        help="Start from this task instance. Can be used multiple times "
+        "to start from multiple tasks at once. Dependence on tasks with "
+        "with cycle points earlier than the earliest start-task will be "
+        "ignored. A sub-graph of the workflow will run if selected tasks "
+        "do not lead on to the full graph.",
         metavar="NAME.CYCLE_POINT", action="append", dest="starttask")
 
     parser.add_option(
