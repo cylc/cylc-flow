@@ -582,7 +582,10 @@ class CylcReviewService(object):
                     if entry["submit_num"] == int(submit_num):
                         job_entry = entry
                         break
-        if fnmatch(os.path.basename(path), "suite*.rc*"):
+        if (
+            fnmatch(os.path.basename(path), "suite*.rc*")
+            or fnmatch(os.path.basename(path), "flow*.cylc*")
+        ):
             file_content = "cylc-suite-rc"
         elif fnmatch(os.path.basename(path), "rose*.conf"):
             file_content = "rose-conf"
