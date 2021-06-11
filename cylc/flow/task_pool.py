@@ -303,7 +303,6 @@ class TaskPool:
         # Any finished tasks can be released immediately (this can happen at
         # restart when all tasks are initially loaded into the runahead pool).
         # And any manually-triggered task.
-
         for itask in (
             itask
             for point_id_map in self.main_pool.values()
@@ -320,7 +319,7 @@ class TaskPool:
             released = True
 
         points = []
-        for point, itasks in sorted(self.get_tasks_by_point().items()):
+        for point, itasks in sorted(self._get_main_tasks_by_point().items()):
             if points or any(
                 not itask.state(
                     TASK_STATUS_FAILED,
@@ -689,17 +688,11 @@ class TaskPool:
                 self.hidden_pool_list.extend(list(itask_id_maps.values()))
         return self.hidden_pool_list
 
-    def get_tasks_by_point(self):
-        """Return a map of task proxies by cycle point."""
+    def _get_main_tasks_by_point(self):
+        """Return a map of main pool task proxies by cycle point."""
         point_itasks = {}
         for point, itask_id_map in self.main_pool.items():
             point_itasks[point] = list(itask_id_map.values())
-        for point, itask_id_map in self.hidden_pool.items():
-            if point not in point_itasks:
-                point_itasks[point] = list(itask_id_map.values())
-            else:
-                point_itasks[point] += list(itask_id_map.values())
-
         return point_itasks
 
     def _get_hidden_task_by_id(self, id_):
