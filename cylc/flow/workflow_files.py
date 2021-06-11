@@ -20,6 +20,7 @@ import aiofiles
 from collections import deque
 from enum import Enum
 from functools import partial
+import glob
 import logging
 import os
 from pathlib import Path
@@ -29,8 +30,8 @@ import shutil
 from subprocess import Popen, PIPE, DEVNULL
 import time
 from typing import (
-    Any, Deque, Dict, Iterable, List, NamedTuple, Optional, Set, Tuple,
-    TYPE_CHECKING, Union
+    Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
+    Tuple, TYPE_CHECKING, Union
 )
 import zmq.auth
 
@@ -47,7 +48,6 @@ from cylc.flow.exceptions import (
 from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir,
-    glob_in_run_dir,
     make_localhost_symlinks,
     parse_rm_dirs,
     remove_dir_and_target,
@@ -721,6 +721,57 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
                     f'Expected target to end with "{expected_end}"')
             ret[_dir] = target
     return ret
+
+
+def glob_in_run_dir(
+    run_dir: Union[Path, str], pattern: str, symlink_dirs: Container[Path]
+) -> List[Path]:
+    """Execute a (recursive) glob search in the given run directory.
+
+    Returns list of any absolute paths that match the pattern. However:
+    * Does not follow symlinks (apart from the spcedified symlink dirs).
+    * Also does not return matching subpaths of matching directories (because
+        that would be redundant).
+
+    Args:
+        run_dir: Absolute path of the workflow run dir.
+        pattern: The glob pattern.
+        symlink_dirs: Absolute paths to the workflow's symlink dirs.
+    """
+    # Note: use os.path.join, not pathlib, to preserve trailing slash if
+    # present in pattern
+    pattern = os.path.join(glob.escape(str(run_dir)), pattern)
+    # Note: don't use pathlib.Path.glob() because when you give it an exact
+    # filename instead of pattern, it doesn't return broken symlinks
+    matches = sorted(Path(i) for i in glob.iglob(pattern, recursive=True))
+    # sort guarantees parents come before their children
+    if len(matches) == 1 and not os.path.lexists(matches[0]):
+        # https://bugs.python.org/issue35201
+        return []
+    results: List[Path] = []
+    subpath_excludes: Set[Path] = set()
+    for path in matches:
+        for rel_ancestor in reversed(path.relative_to(run_dir).parents):
+            ancestor = run_dir / rel_ancestor
+            if ancestor in subpath_excludes:
+                break
+            if ancestor.is_symlink() and ancestor not in symlink_dirs:
+                # Do not follow non-standard symlinks
+                subpath_excludes.add(ancestor)
+                break
+            if (not symlink_dirs) and ancestor in results:
+                # We can be sure all subpaths of this ancestor are redundant
+                subpath_excludes.add(ancestor)
+                break
+            if ancestor == path.parent:
+                # Final iteration over ancestors
+                if ancestor in matches and path not in symlink_dirs:
+                    # Redundant (but don't exclude subpaths in case any of the
+                    # subpaths are std symlink dirs)
+                    break
+        else:  # no break
+            results.append(path)
+    return results
 
 
 def _clean_using_glob(

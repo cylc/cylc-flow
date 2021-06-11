@@ -432,7 +432,7 @@ def test_parse_rm_dirs(dirs: List[str], expected: Set[str]):
          "cannot take paths that point to the run directory or above"),
     ]
 )
-def test_parse_rm_dirs_bad(dirs: List[str], err_msg: str):
+def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
     """Test parse_dirs() with bad inputs"""
     with pytest.raises(UserInputError) as exc:
         parse_rm_dirs(dirs)

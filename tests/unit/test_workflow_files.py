@@ -20,7 +20,7 @@ import os
 from pathlib import Path
 import pytest
 import shutil
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
 from unittest import mock
 
 from cylc.flow import CYLC_LOG
@@ -39,12 +39,22 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
+    get_symlink_dirs,
     get_workflow_source_dir,
+    glob_in_run_dir,
     reinstall_workflow,
     search_install_source_dirs
 )
 
 from tests.unit.conftest import MonkeyMock
+from tests.unit.filetree import (
+    FILETREE_1,
+    FILETREE_2,
+    FILETREE_3,
+    FILETREE_4,
+    create_filetree,
+    get_filetree_as_list
+)
 
 
 @pytest.mark.parametrize(
@@ -518,24 +528,144 @@ def test_clean__rm_dir_not_file(pattern: str, tmp_run_dir: Callable):
     assert a_file.exists()
 
 
+@pytest.mark.parametrize(
+    'filetree, expected',
+    [
+        pytest.param(
+            FILETREE_1,
+            {'log': 'sym/cylc-run/foo/bar/log'},
+            id="filetree1"
+        ),
+        pytest.param(
+            FILETREE_2,
+            {
+                'share/cycle': 'sym-cycle/cylc-run/foo/bar/share/cycle',
+                'share': 'sym-share/cylc-run/foo/bar/share',
+                '': 'sym-run/cylc-run/foo/bar/'
+            },
+            id="filetree2"
+        ),
+        pytest.param(
+            FILETREE_3,
+            {
+                'share/cycle': 'sym-cycle/cylc-run/foo/bar/share/cycle',
+                '': 'sym-run/cylc-run/foo/bar/'
+            },
+            id="filetree3"
+        ),
+        pytest.param(
+            FILETREE_4,
+            {'share/cycle': 'sym-cycle/cylc-run/foo/bar/share/cycle'},
+            id="filetree4"
+        ),
+    ]
+)
+def test_get_symlink_dirs(
+    filetree: Dict[str, Any],
+    expected: Dict[str, Union[Path, str]],
+    tmp_run_dir: Callable, tmp_path: Path
+):
+    """Test get_symlink_dirs().
+
+    Params:
+        filetree: The directory structure to test against.
+        expected: The expected return dictionary, except with the values being
+            relative to tmp_path instead of absolute paths.
+    """
+    # Setup
+    cylc_run_dir = tmp_run_dir()
+    create_filetree(filetree, tmp_path, tmp_path)
+    reg = 'foo/bar'
+    for k, v in expected.items():
+        expected[k] = Path(tmp_path / v)
+    # Test
+    assert get_symlink_dirs(reg, cylc_run_dir / reg) == expected
+
+
+@pytest.mark.parametrize(
+    'pattern, filetree, expected_matches',
+    [
+        pytest.param(
+            '**',
+            FILETREE_1,
+            ['cylc-run/foo/bar',
+             'cylc-run/foo/bar/log'],
+            id="filetree1 **"
+        ),
+        pytest.param(
+            '*',
+            FILETREE_1,
+            ['cylc-run/foo/bar/flow.cylc',
+             'cylc-run/foo/bar/log',
+             'cylc-run/foo/bar/mirkwood',
+             'cylc-run/foo/bar/rincewind.txt'],
+            id="filetree1 *"
+        ),
+        pytest.param(
+            '**/*.txt',
+            FILETREE_1,
+            ['cylc-run/foo/bar/log/bib/fortuna.txt',
+             'cylc-run/foo/bar/log/temba.txt',
+             'cylc-run/foo/bar/rincewind.txt'],
+            id="filetree1 **/*.txt"
+        ),
+        pytest.param(
+            '**',
+            FILETREE_2,
+            ['cylc-run/foo/bar',
+             'cylc-run/foo/bar/share',
+             'cylc-run/foo/bar/share/cycle'],
+            id="filetree2 **"
+        ),
+        pytest.param(
+            '**',
+            FILETREE_3,
+            ['cylc-run/foo/bar',
+             'cylc-run/foo/bar/share/cycle'],
+            id="filetree3 **"
+        ),
+        pytest.param(
+            '**/s*',
+            FILETREE_3,
+            ['cylc-run/foo/bar/share',
+             'cylc-run/foo/bar/share/cycle/sokath.txt'],
+            id="filetree3 **/s*"
+        ),
+        pytest.param(
+            '**',
+            FILETREE_4,
+            ['cylc-run/foo/bar',
+             'cylc-run/foo/bar/share/cycle'],
+            id="filetree4 **"
+        ),
+    ]
+)
+def test_glob_in_run_dir(
+    pattern: str,
+    filetree: Dict[str, Any],
+    expected_matches: List[str],
+    tmp_path: Path, tmp_run_dir: Callable
+) -> None:
+    """Test that glob_in_run_dir() returns the minimal set of results with
+    no redundant paths.
+    """
+    # Setup
+    cylc_run_dir: Path = tmp_run_dir()
+    reg = 'foo/bar'
+    run_dir = cylc_run_dir / reg
+    create_filetree(filetree, tmp_path, tmp_path)
+    symlink_dirs = [run_dir / i for i in get_symlink_dirs(reg, run_dir)]
+    expected = [tmp_path / i for i in expected_matches]
+    # Test
+    assert glob_in_run_dir(run_dir, pattern, symlink_dirs) == expected
+
+
 @pytest.fixture
 def filetree_for_testing_cylc_clean(tmp_path: Path):
     """Fixture that creates a filetree from the given dict, and returns which
     files are expected to be deleted and which aren't.
 
-    A filetree is represented by a dict like so:
-    {
-        # Dirs are represented by dicts (which are also sub-filetrees):
-        'dir': {
-            'another-dir': {
-                # Files are represented by None:
-                'file.txt': None
-            }
-        },
-        # Symlinks are represented by pathlib.Path, with the target represented
-        # by the relative path from the tmp_path directory:
-        'symlink': Path('dir/another-dir')
-    }
+    See tests/unit/filetree.py
 
     Args:
         reg: Workflow name.
@@ -554,7 +684,7 @@ def filetree_for_testing_cylc_clean(tmp_path: Path):
         initial_filetree: Dict[str, Any],
         filetree_left_behind: Dict[str, Any]
     ) -> Tuple[Path, List[str], List[str]]:
-        create_filetree(initial_filetree, tmp_path)
+        create_filetree(initial_filetree, tmp_path, tmp_path)
         files_not_to_delete = [
             os.path.normpath(i) for i in
             iglob(str(tmp_path / 'you-shall-not-pass/**'), recursive=True)
@@ -569,62 +699,7 @@ def filetree_for_testing_cylc_clean(tmp_path: Path):
         )
         run_dir = tmp_path / 'cylc-run' / reg
         return run_dir, files_to_delete, files_not_to_delete
-
-    def create_filetree(filetree: Dict[str, Any], location: Path) -> None:
-        """Helper function"""
-        for name, entry in filetree.items():
-            path = location / name
-            if isinstance(entry, dict):
-                path.mkdir(exist_ok=True)
-                create_filetree(entry, path)
-            elif isinstance(entry, Path):
-                path.symlink_to(tmp_path / entry)
-            else:
-                path.touch()
-
-    def get_filetree_as_list(
-        filetree: Dict[str, Any], location: Path
-    ) -> List[str]:
-        """Helper function"""
-        ret: List[str] = []
-        for name, entry in filetree.items():
-            path = location / name
-            ret.append(str(path))
-            if isinstance(entry, dict):
-                ret.extend(get_filetree_as_list(entry, path))
-        return ret
-
     return _filetree_for_testing_cylc_clean
-
-
-FILETREE_1 = {
-    'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'log': Path('sym/cylc-run/foo/bar/log'),
-        'mirkwood': Path('you-shall-not-pass/mirkwood'),
-        'rincewind.txt': Path('you-shall-not-pass/rincewind.txt')
-    }}},
-    'sym': {'cylc-run': {'foo': {'bar': {
-        'log': {
-            'darmok': Path('you-shall-not-pass/darmok'),
-            'temba.txt': Path('you-shall-not-pass/temba.txt'),
-            'bib': {
-                'fortuna.txt': None
-            }
-        }
-    }}}},
-    'you-shall-not-pass': {  # Nothing in here should get deleted
-        'darmok': {
-            'jalad.txt': None
-        },
-        'mirkwood': {
-            'spiders.txt': None
-        },
-        'rincewind.txt': None,
-        'temba.txt': None
-    }
-}
 
 
 @pytest.mark.parametrize(
@@ -700,66 +775,6 @@ def test__clean_using_glob(
         assert os.path.exists(file) is True
     for file in files_to_delete:
         assert os.path.lexists(file) is False
-
-
-FILETREE_2 = {
-    'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
-    'sym-run': {'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'share': Path('sym-share/cylc-run/foo/bar/share')
-    }}}},
-    'sym-share': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
-        }
-    }}}},
-    'sym-cycle': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': {
-                'macklunkey.txt': None
-            }
-        }
-    }}}},
-    'you-shall-not-pass': {}
-}
-
-FILETREE_3 = {
-    'cylc-run': {'foo': {'bar': Path('sym-run/cylc-run/foo/bar')}},
-    'sym-run': {'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'share': {
-            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
-        }
-    }}}},
-    'sym-cycle': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': {
-                'sokath.txt': None
-            }
-        }
-    }}}},
-    'you-shall-not-pass': {}
-}
-
-FILETREE_4 = {
-    'cylc-run': {'foo': {'bar': {
-        '.service': {'db': None},
-        'flow.cylc': None,
-        'share': {
-            'cycle': Path('sym-cycle/cylc-run/foo/bar/share/cycle')
-        }
-    }}},
-    'sym-cycle': {'cylc-run': {'foo': {'bar': {
-        'share': {
-            'cycle': {
-                'kiazi.txt': None
-            }
-        }
-    }}}},
-    'you-shall-not-pass': {}
-}
 
 
 @pytest.mark.parametrize(
