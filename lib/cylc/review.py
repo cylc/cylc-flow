@@ -584,7 +584,7 @@ class CylcReviewService(object):
                         break
         if (
             fnmatch(os.path.basename(path), "suite*.rc*")
-            or fnmatch(os.path.basename(path), "flow*.cylc*")
+            or fnmatch(os.path.basename(path), "flow.cylc*")
         ):
             file_content = "cylc-suite-rc"
         elif fnmatch(os.path.basename(path), "rose*.conf"):
