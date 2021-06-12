@@ -4,7 +4,10 @@
     state = open, closed
 [scheduling]
     [[graph]]
-        R1 = "t1<num,stuff> => t2<num,stuff>"
+        R1 = """
+           t1<num,stuff> => t2<num,stuff>
+           x<stuff>
+        """
 [runtime]
     [[T]]
         [[[environment]]]
@@ -28,3 +31,10 @@
             echo "${MYNUM} ${MYSTUFF} ${STATUS}" >"${FILE}"
             diff ${FILE} ${FILE}.ref
         """
+    # The following tests the example of GH #4248. We had wrongly assumed that
+    # general comes before specific, for parameters in inherited environments.
+    [[x<stuff=that>]]
+        inherit = U<state=closed>
+        script = test $STATUS == closed
+    [[x<stuff>]]
+        pre-script = "echo pre"
