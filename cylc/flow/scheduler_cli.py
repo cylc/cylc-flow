@@ -48,9 +48,6 @@ Start a new workflow, restart a stopped workflow, or resume a paused workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
-If the workflow is not already installed (by "cylc install" or a previous run)
-it will be installed on the fly before start up.
-
 To avoid overwriting existing run directories, workflows that already ran can
 only be restarted from prior state. To start again, "cylc install" a new copy
 or "cylc clean" the existing run directory.
@@ -76,7 +73,6 @@ Examples:
 
 At restart, tasks recorded as submitted or running are polled to determine what
 happened to them while the workflow was down.
-
 """
 
 
