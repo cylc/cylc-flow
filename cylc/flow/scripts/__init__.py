@@ -27,19 +27,19 @@ _copyright_year = 2021  # This is set by GH Actions update_copyright workflow
 # fmt: off
 LOGO_LETTERS = (
     (
-        "oooo",
-        "oo  ",
+        "ooo",
+        "oo ",
         "oooo",
     ),
     (
         "oo oo",
         "ooooo",
-        "   oo",
+        " ooo",
     ),
     (
-        "oo",
-        "oo",
-        "oo",
+        "oo ",
+        "ooo",
+        "ooo",
     ),
     (
         "oooo",
