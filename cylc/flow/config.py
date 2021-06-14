@@ -946,6 +946,17 @@ class WorkflowConfig:
             exp_names += [name for name, _ in name_expander.expand(orig_name)]
         return exp_names
 
+    def _update_task_params(self, task_name, params):
+        """Update the dict of parameters used in a task definition.
+
+        # Used to expand parameter values in task environments.
+        """
+        self.task_param_vars.setdefault(
+            task_name, {}
+        ).update(
+            params
+        )
+
     def _expand_runtime(self):
         """Expand [runtime] name lists or parameterized names.
 
@@ -973,8 +984,7 @@ class WorkflowConfig:
                     newruntime[name] = OrderedDictWithDefaults()
                 replicate(newruntime[name], namespace_dict)
                 if indices:
-                    # Put parameter values in task environments.
-                    self.task_param_vars[name] = indices
+                    self._update_task_params(name, indices)
                     new_environ = OrderedDictWithDefaults()
                     if 'environment' in newruntime[name]:
                         new_environ = newruntime[name]['environment'].copy()
@@ -985,12 +995,15 @@ class WorkflowConfig:
                     origin = 'inherit = %s' % ', '.join(parents)
                     repl_parents = []
                     for parent in parents:
-                        repl_parents.append(
+                        used_indices, expanded = (
                             name_expander.expand_parent_params(
-                                parent, indices, origin))
+                                parent, indices, origin)
+                        )
+                        repl_parents.append(expanded)
+                        if used_indices:
+                            self._update_task_params(name, used_indices)
                     newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
-
         # Parameter expansion of visualization node attributes. TODO - do vis
         # 'node groups' too, or deprecate them (use families in 'node attrs').
         name_expander = NameExpander(self.parameters)
@@ -1058,7 +1071,7 @@ class WorkflowConfig:
         if bads:
             LOG.warning(
                 'bad parameter environment template:\n    '
-                '\n    '.join(
+                + '\n    '.join(
                     '[runtime][%s][environment]%s = %s  # %s' %
                     bad for bad in sorted(bads)
                 )

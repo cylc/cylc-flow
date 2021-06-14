@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test parameter environment templates
+# Extended to include inheritance from parameterized parents (GitHub #4248)
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest

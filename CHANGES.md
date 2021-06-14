@@ -82,6 +82,9 @@ workflow's public database file was not closed properly.
 
 ### Fixes
 
+[#4248](https://github.com/cylc/cylc-flow/pull/4248)
+ - Fix parameter expansion in inherited task environments.
+
 [#4227](https://github.com/cylc/cylc-flow/pull/4227) - Better error messages
 when initial cycle point is not valid for the cycling type.
 
