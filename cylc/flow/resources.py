@@ -25,8 +25,6 @@ from cylc.flow import LOG
 
 
 resource_names = [
-    'etc/global.cylc.eg',
-    'etc/global-tests.cylc.eg',
     'etc/syntax/cylc-mode.el',
     'etc/syntax/cylc.lang',
     'etc/syntax/cylc.vim',
