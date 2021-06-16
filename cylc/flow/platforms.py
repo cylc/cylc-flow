@@ -270,11 +270,11 @@ def platform_from_job_info(
     #   - In the case of "host" we also want a regex match to the platform name
     #   - In the case of "batch system" we want to match the name of the
     #     system/job runner to a platform when host is localhost.
-    if 'host' in remote.keys() and remote['host']:
+    if 'host' in remote and remote['host']:
         task_host = remote['host']
     else:
         task_host = 'localhost'
-    if 'batch system' in job.keys() and job['batch system']:
+    if 'batch system' in job and job['batch system']:
         task_job_runner = job['batch system']
     else:
         # Necessary? Perhaps not if batch system default is 'background'
@@ -296,7 +296,7 @@ def platform_from_job_info(
             return 'localhost'
 
         elif (
-            'hosts' in platform_spec.keys() and
+            'hosts' in platform_spec and
             task_host in platform_spec['hosts'] and
             task_job_runner == platform_spec['job runner']
         ):
@@ -389,7 +389,7 @@ def get_host_from_platform(platform, method='random'):
     """
     if method == 'random':
         return random.choice(platform['hosts'])
-    elif method == 'first':
+    elif method == 'first':  # noqa: SIM106
         return platform['hosts'][0]
     else:
         raise NotImplementedError(
@@ -512,10 +512,10 @@ def is_platform_with_target_in_list(
         distinct_platforms_list: Iterable[Dict[str, Any]]
 ) -> bool:
     """Determines whether install target is in the list of platforms"""
-    for distinct_platform in distinct_platforms_list:
-        if install_target == distinct_platform['install target']:
-            return True
-    return False
+    return any(
+        install_target == distinct_platform['install target']
+        for distinct_platform in distinct_platforms_list
+    )
 
 
 def get_all_platforms_for_install_target(

@@ -17,6 +17,7 @@
 Integer cycling by point, interval, and sequence classes.
 """
 
+import contextlib
 import re
 
 from cylc.flow.cycling import (
@@ -585,11 +586,9 @@ class IntegerSequence(SequenceBase):
 
     def __lt__(self, other: 'IntegerSequence') -> bool:
         for attr in self.__slots__:
-            try:
+            with contextlib.suppress(TypeError):
                 if getattr(self, attr) < getattr(other, attr):
                     return True
-            except TypeError:
-                pass
         return False
 
 

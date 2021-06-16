@@ -122,10 +122,8 @@ class upgrader:
         pre = []
         post = []
         many = []
-        i = -1
         okeys = upg['old']
-        for k in okeys:
-            i += 1
+        for i, k in enumerate(okeys):
             if k == "__MANY__":
                 pre = okeys[:i]
                 post = okeys[i + 1:]
@@ -151,7 +149,7 @@ class upgrader:
             npre = []
             npost = []
             for k in nkeys:
-                i += 1
+                i += 1  # noqa: SIM113 (multiple loops interacting)
                 if k == "__MANY__":
                     npre = nkeys[:i]
                     npost = nkeys[i + 1:]

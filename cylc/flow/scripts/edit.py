@@ -146,9 +146,8 @@ def main(parser, options, *args):
         # record original modtime
         modtimes[flow_file] = os.stat(flow_file).st_mtime
         # read the file
-        h = open(flow_file, 'r')
-        lines0 = h.readlines()
-        h.close()
+        with open(flow_file, 'r') as handle:
+            lines0 = handle.readlines()
         if lines0[0].startswith('# !WARNING! CYLC EDIT INLINED'):
             print('WARNING: RECOVERING A PREVIOUSLY INLINED FILE')
             recovery = True
@@ -162,10 +161,9 @@ def main(parser, options, *args):
     lines = [i.rstrip() for i in lines]
 
     # overwrite the (now backed up) original with the inlined file:
-    h = open(flow_file, 'wb')
-    for line in lines:
-        h.write((line + '\n').encode())
-    h.close()
+    with open(flow_file, 'wb') as handle:
+        for line in lines:
+            handle.write((line + '\n').encode())
 
     print('PRE-EDIT BACKUPS:')
     for file in backups:
@@ -193,9 +191,8 @@ def main(parser, options, *args):
     copy(flow_file, inlined_flow_file_backup)
 
     # read in the edited inlined file
-    h = open(flow_file, 'r')
-    lines = h.readlines()
-    h.close()
+    with open(flow_file, 'r') as handle:
+        lines = handle.readlines()
 
     # split it back into separate files
     split_file(workflowdir, lines, flow_file, recovery)

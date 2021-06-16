@@ -136,16 +136,16 @@ class CylcWorkflowDBChecker:
         if status:
             return bool(res)
         elif message:
-            for outputs_str, in res:
-                for value in json.loads(outputs_str).values():
-                    if message == value:
-                        return True
-            return False
+            return any(
+                message == value
+                for outputs_str, in res
+                for value in json.loads(outputs_str).values()
+            )
 
     @staticmethod
     def validate_mask(mask):
         fieldnames = ["name", "status", "cycle"]  # extract from rundb.py?
-        for term in mask.split(","):
-            if term.strip(" ") not in fieldnames:
-                return False
-        return True
+        return all(
+            term.strip(' ') in fieldnames
+            for term in mask.split(',')
+        )

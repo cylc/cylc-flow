@@ -259,21 +259,18 @@ def cli_function(parser_function=None, **parser_kwargs):
                 # run the command
                 wrapped_function(*wrapped_args, **wrapped_kwargs)
             except (CylcError, ParsecError) as exc:
-                if cylc.flow.flags.verbosity < 2:
-                    # catch "known" CylcErrors which should have sensible short
-                    # summations of the issue, full traceback not necessary
-                    print(
-                        EXC_EXIT.format(
-                            name=exc.__class__.__name__,
-                            exc=exc
-                        ),
-                        file=sys.stderr
-                    )
-                    sys.exit(1)
-                else:
-                    # if command is running non-interactively just raise the
-                    # full traceback
+                if cylc.flow.flags.verbosity >= 1:
+                    # raise the full traceback
                     raise
+                print(
+                    EXC_EXIT.format(
+                        name=exc.__class__.__name__,
+                        exc=exc
+                    ),
+                    file=sys.stderr
+                )
+                sys.exit(1)
+
             except SystemExit as exc:
                 if exc.args and isinstance(exc.args[0], str):
                     # catch and reformat sys.exit(<str>)

@@ -487,7 +487,7 @@ def parse(fpath, output_fname=None, template_vars=None):
             elif nb == nesting_level + 1:
                 # child section
                 parents = parents + [sect_name]
-            elif nb < nesting_level:
+            elif nb < nesting_level:  # noqa: SIM106
                 # back up one or more levels
                 ndif = nesting_level - nb
                 parents = parents[:-ndif - 1] + [sect_name]

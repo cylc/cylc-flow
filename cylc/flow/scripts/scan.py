@@ -464,7 +464,7 @@ def get_formatter(opts):
     elif opts.format == 'tree':
         formatter = _format_plain
         method = _tree
-    elif opts.format == 'name':
+    elif opts.format == 'name':  # noqa: SIM106
         formatter = _format_name_only
         method = _async
     else:

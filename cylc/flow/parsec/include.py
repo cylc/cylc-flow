@@ -19,6 +19,7 @@ import os
 import re
 import sys
 from shutil import copy as shcopy
+from textwrap import dedent
 
 from cylc.flow.parsec.exceptions import (
     FileParseError, IncludeFileNotFoundError)
@@ -103,22 +104,21 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
                     backup(inc)
                     # store original modtime
                     modtimes[inc] = os.stat(inc).st_mtime
-                if os.path.isfile(inc):
-                    if for_grep or single or label or for_edit:
-                        outf.append(
-                            '#++++ START INLINED INCLUDE FILE ' + match + msg)
-                    h = open(inc, 'r')
-                    finc = [line.rstrip('\n') for line in h]
-                    h.close()
-                    # recursive inclusion
-                    outf.extend(inline(
-                        finc, dir_, inc, for_grep, for_edit, viewcfg, level))
-                    if for_grep or single or label or for_edit:
-                        outf.append(
-                            '#++++ END INLINED INCLUDE FILE ' + match + msg)
-                else:
+                if not os.path.isfile(inc):
                     flist.append(inc)
                     raise IncludeFileNotFoundError(flist)
+                if for_grep or single or label or for_edit:
+                    outf.append(
+                        '#++++ START INLINED INCLUDE FILE ' + match + msg)
+                with open(inc, 'r') as handle:
+                    finc = [line.rstrip('\n') for line in handle]
+                # recursive inclusion
+                outf.extend(inline(
+                    finc, dir_, inc, for_grep, for_edit, viewcfg, level))
+                if for_grep or single or label or for_edit:
+                    outf.append(
+                        '#++++ END INLINED INCLUDE FILE ' + match + msg)
+
             else:
                 if not for_edit:
                     outf.append(level + line)
@@ -170,46 +170,47 @@ def split_file(dir_, lines, filename, recovery=False, level=None):
         newfiles.append(filename)
 
     inclines = []
-    fnew = open(filename, 'w')
-    match_on = False
-    for line in lines:
-        if re.match('^# !WARNING!', line):
-            continue
-        if not match_on:
-            m = re.match(
-                r'^#\+\+\+\+ START INLINED INCLUDE FILE ' +
-                r'([\w/.\-]+) \(DO NOT MODIFY THIS LINE!\)', line)
-            if m:
-                match_on = True
-                inc_filename = m.groups()[0]
-                inc_file = os.path.join(dir_, m.groups()[0])
-                fnew.write('%include ' + inc_filename + '\n')
-            else:
+    with open(filename, 'w') as fnew:
+        match_on = False
+        for line in lines:
+            if re.match('^# !WARNING!', line):
+                continue
+            if not match_on:
+                m = re.match(
+                    r'^#\+\+\+\+ START INLINED INCLUDE FILE ' +
+                    r'([\w/.\-]+) \(DO NOT MODIFY THIS LINE!\)', line)
+                if m:
+                    match_on = True
+                    inc_filename = m.groups()[0]
+                    inc_file = os.path.join(dir_, m.groups()[0])
+                    fnew.write('%include ' + inc_filename + '\n')
+                else:
+                    fnew.write(line)
+            elif match_on:
+                # match on, go to end of the 'on' include-file
+                m = re.match(
+                    r'^#\+\+\+\+ END INLINED INCLUDE FILE ' +
+                    inc_filename + r' \(DO NOT MODIFY THIS LINE!\)', line)
+                if m:
+                    match_on = False
+                    # now split this lot, in case of nested inclusions
+                    split_file(dir_, inclines, inc_file, recovery, level)
+                    # now empty the inclines list ready for the next inclusion
+                    # in this file
+                    inclines = []
+                else:
+                    inclines.append(line)
+        if match_on:
+            for line in inclines:
                 fnew.write(line)
-        elif match_on:
-            # match on, go to end of the 'on' include-file
-            m = re.match(
-                r'^#\+\+\+\+ END INLINED INCLUDE FILE ' +
-                inc_filename + r' \(DO NOT MODIFY THIS LINE!\)', line)
-            if m:
-                match_on = False
-                # now split this lot, in case of nested inclusions
-                split_file(dir_, inclines, inc_file, recovery, level)
-                # now empty the inclines list ready for the next inclusion in
-                # this file
-                inclines = []
-            else:
-                inclines.append(line)
-    if match_on:
-        for line in inclines:
-            fnew.write(line)
-        print(file=sys.stderr)
-        print((
-            "ERROR: end-of-file reached while matching include-file",
-            inc_filename + "."), file=sys.stderr)
-        print((
-            """This probably means you have corrupted the inlined file by
-modifying one of the include-file boundary markers. Fix the backed-
-up inlined file, copy it to the original filename and invoke another
-inlined edit session split the file up again."""), file=sys.stderr)
-        print(file=sys.stderr)
+            print(file=sys.stderr)
+            print((
+                "ERROR: end-of-file reached while matching include-file",
+                inc_filename + "."), file=sys.stderr)
+            print(dedent(
+                """This probably means you have corrupted the inlined file by
+                modifying one of the include-file boundary markers. Fix the
+                backed- up inlined file, copy it to the original filename and
+                invoke another inlined edit session split the file up again."""
+            ), file=sys.stderr)
+            print(file=sys.stderr)

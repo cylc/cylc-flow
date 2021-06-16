@@ -22,6 +22,7 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
+from contextlib import suppress
 import os
 from shlex import quote
 import re
@@ -257,10 +258,8 @@ class TaskRemoteMgr:
                         proc.returncode, out, err))
         # Terminate any remaining commands
         for platform_n, (cmd, proc) in procs.items():
-            try:
+            with suppress(OSError):
                 proc.terminate()
-            except OSError:
-                pass
             out, err = (f.decode() for f in proc.communicate())
             if proc.wait():
                 LOG.warning(TaskRemoteMgmtError(
@@ -292,37 +291,35 @@ class TaskRemoteMgr:
         Set remote_init_map status to REMOTE_INIT_FAILED on error.
 
         """
-        try:
+        with suppress(OSError):  # E.g. ignore bad unlink, etc
             tmphandle.close()
-        except OSError:  # E.g. ignore bad unlink, etc
-            pass
+
         install_target = platform['install target']
-        if proc_ctx.ret_code == 0:
-            if "KEYSTART" in proc_ctx.out:
-                regex_result = re.search(
-                    'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
-                key = regex_result.group(1)
-                workflow_srv_dir = get_workflow_srv_dir(self.workflow)
-                public_key = KeyInfo(
-                    KeyType.PUBLIC,
-                    KeyOwner.CLIENT,
-                    workflow_srv_dir=workflow_srv_dir,
-                    install_target=install_target
-                )
-                old_umask = os.umask(0o177)
-                with open(
-                        public_key.full_key_path,
-                        'w', encoding='utf8') as text_file:
-                    text_file.write(key)
-                os.umask(old_umask)
-                # configure_curve must be called every time certificates are
-                # added or removed, in order to update the Authenticator's
-                # state.
-                curve_auth.configure_curve(
-                    domain='*', location=(client_pub_key_dir))
-                self.remote_init_map[install_target] = REMOTE_INIT_DONE
-                self.ready = True
-                return
+        if proc_ctx.ret_code == 0 and "KEYSTART" in proc_ctx.out:
+            regex_result = re.search(
+                'KEYSTART((.|\n|\r)*)KEYEND', proc_ctx.out)
+            key = regex_result.group(1)
+            workflow_srv_dir = get_workflow_srv_dir(self.workflow)
+            public_key = KeyInfo(
+                KeyType.PUBLIC,
+                KeyOwner.CLIENT,
+                workflow_srv_dir=workflow_srv_dir,
+                install_target=install_target
+            )
+            old_umask = os.umask(0o177)
+            with open(
+                    public_key.full_key_path,
+                    'w', encoding='utf8') as text_file:
+                text_file.write(key)
+            os.umask(old_umask)
+            # configure_curve must be called every time certificates are
+            # added or removed, in order to update the Authenticator's
+            # state.
+            curve_auth.configure_curve(
+                domain='*', location=(client_pub_key_dir))
+            self.remote_init_map[install_target] = REMOTE_INIT_DONE
+            self.ready = True
+            return
         # Bad status
         LOG.error(TaskRemoteMgmtError(
             TaskRemoteMgmtError.MSG_INIT,

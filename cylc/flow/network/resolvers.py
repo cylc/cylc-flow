@@ -81,12 +81,14 @@ def workflow_ids_filter(w_atts, items):
 
     Returns a boolean."""
     # Return true if workflow matches any id arg.
-    for owner, name, status in set(items):
-        if ((not owner or fnmatchcase(w_atts[0], owner)) and
-                (not name or fnmatchcase(w_atts[1], name)) and
-                (not status or w_atts[2] == status)):
-            return True
-    return False
+    return any(
+        (
+            (not owner or fnmatchcase(w_atts[0], owner))
+            and (not name or fnmatchcase(w_atts[1], name))
+            and (not status or w_atts[2] == status)
+        )
+        for owner, name, status in set(items)
+    )
 
 
 def workflow_filter(flow, args, w_atts=None):
@@ -126,16 +128,19 @@ def node_ids_filter(n_atts, items):
     """Match id arguments with node attributes.
 
     Returns a boolean."""
-    for owner, workflow, cycle, name, submit_num, state in items:
-        if ((not owner or fnmatchcase(n_atts[0], owner)) and
-                (not workflow or fnmatchcase(n_atts[1], workflow)) and
-                (not cycle or fnmatchcase(n_atts[2], cycle)) and
-                any(fnmatchcase(nn, name) for nn in n_atts[3]) and
-                (not submit_num or
-                 fnmatchcase(str(n_atts[4]), submit_num.lstrip('0'))) and
-                (not state or n_atts[5] == state)):
-            return True
-    return False
+    return any(
+        (
+            (not owner or fnmatchcase(n_atts[0], owner))
+            and (not workflow or fnmatchcase(n_atts[1], workflow))
+            and (not cycle or fnmatchcase(n_atts[2], cycle))
+            and any(fnmatchcase(nn, name) for nn in n_atts[3])
+            and (
+                not submit_num
+                or fnmatchcase(str(n_atts[4]), submit_num.lstrip('0')))
+            and (not state or n_atts[5] == state)
+        )
+        for owner, workflow, cycle, name, submit_num, state in items
+    )
 
 
 def node_filter(node, node_type, args):
@@ -187,7 +192,7 @@ def get_data_elements(flow, nat_ids, element_type):
     ]
 
 
-class BaseResolvers:
+class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
     """Data access methods for resolving GraphQL queries."""
 
     def __init__(self, data_store_mgr):

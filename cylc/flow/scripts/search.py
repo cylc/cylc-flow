@@ -84,9 +84,8 @@ def main(parser, options, reg, *patterns):
     workflowdir = os.path.dirname(flow_file)
 
     if os.path.isfile(flow_file):
-        h = open(flow_file, 'r')
-        lines = h.readlines()
-        h.close()
+        with open(flow_file, 'r') as handle:
+            lines = handle.readlines()
         lines = inline(lines, workflowdir, flow_file, for_grep=True)
     else:
         parser.error(f"File not found: {flow_file}")
@@ -172,20 +171,17 @@ def main(parser, options, reg, *patterns):
             continue
         new_file = True
         try:
-            h = open(os.path.join(bin_, name), 'r')
+            with open(os.path.join(bin_, name), 'r') as handle:
+                contents = handle.readlines()
         except IOError as exc:
             # e.g. there's a sub-directory under bin; ignore it.
             print('Unable to open file ' + os.path.join(bin_, name),
                   file=sys.stderr)
             print(exc, file=sys.stderr)
             continue
-        contents = h.readlines()
-        h.close()
 
-        count = 0
-        for line in contents:
+        for count, line in enumerate(contents):
             line = line.rstrip('\n')
-            count += 1
             if re.search(pattern, line):
                 if new_file:
                     print('\nFILE:', os.path.join(bin_, name))

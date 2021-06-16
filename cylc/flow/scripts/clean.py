@@ -71,7 +71,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, opts: 'Values', reg: str):
-    if not cylc.flow.flags.verbosity > 1:
+    if cylc.flow.flags.verbosity > 1:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:
             if isinstance(handler.formatter, CylcLogFormatter):

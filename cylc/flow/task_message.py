@@ -135,7 +135,8 @@ def _append_job_status_file(workflow, task_job, event_time, messages):
     if not job_log_name:
         job_log_name = get_workflow_run_job_dir(workflow, task_job, 'job')
     try:
-        job_status_file = open(job_log_name + '.status', 'a')
+        job_status_file = open(job_log_name + '.status', 'a')  # noqa: SIM115
+        # TODO: niceify read/write/appending messages to this file
     except IOError:
         if cylc.flow.flags.verbosity > 1:
             import traceback
@@ -170,10 +171,10 @@ def _append_job_status_file(workflow, task_job, event_time, messages):
             job_status_file_name = job_status_file.name
             job_status_file.close()
             lines = []
-            for line in open(job_status_file_name):
+            for line in open(job_status_file_name):  # noqa: SIM115
                 if not line.startswith('CYLC_JOB_'):
                     lines.append(line)
-            job_status_file = open(job_status_file_name, 'w')
+            job_status_file = open(job_status_file_name, 'w')  # noqa: SIM115
             for line in lines:
                 job_status_file.write(line)
             job_status_file.write('%s=%s|%s|%s\n' % (

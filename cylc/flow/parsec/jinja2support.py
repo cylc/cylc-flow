@@ -18,6 +18,7 @@
 Importing code should catch ImportError in case Jinja2 is not installed.
 """
 
+from contextlib import suppress
 import importlib
 import os
 import pkgutil
@@ -65,10 +66,8 @@ class PyModuleLoader(BaseLoader):
         """Imports Python module and returns it as Jinja2 template."""
         if name.startswith(self._python_namespace_prefix):
             name = name[len(self._python_namespace_prefix):]
-        try:
+        with suppress(KeyError):
             return self._templates[name]
-        except KeyError:
-            pass
         try:
             mdict = __import__(name, fromlist=['*']).__dict__
         except ImportError:
