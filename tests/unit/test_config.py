@@ -366,13 +366,20 @@ def test_process_icp(
 
 
 @pytest.mark.parametrize(
-    'startcp, expected',
-    [('20210120T1700+0530', '20210120T1700+0530'),
-     ('now', '20050102T0615+0530'),
-     (None, '18990501T0000+0530')]
+    'startcp, starttask, expected',
+    [
+        ('20210120T1700+0530', None, '20210120T1700+0530'),
+        ('now', None, '20050102T0615+0530'),
+        (None, None, '18990501T0000+0530'),
+        (
+            None,
+            ['foo.20090802T0615+0530', 'bar.20090802T0515+0530'],
+            '20090802T0515+0530'
+        )
+    ]
 )
 def test_process_startcp(
-    startcp: Optional[str], expected: str,
+    startcp: Optional[str], starttask: Optional[str], expected: str,
     monkeypatch: pytest.MonkeyPatch, set_cycling_type: Fixture
 ) -> None:
     """Test WorkflowConfig.process_start_cycle_point().
@@ -387,9 +394,9 @@ def test_process_startcp(
     set_cycling_type(ISO8601_CYCLING_TYPE, time_zone="+0530")
     mocked_config = Mock(initial_point='18990501T0000+0530')
     mocked_config.options.startcp = startcp
+    mocked_config.options.starttask = starttask
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
                         lambda: '20050102T0615+0530')
-
     WorkflowConfig.process_start_cycle_point(mocked_config)
     assert str(mocked_config.start_point) == expected
 
