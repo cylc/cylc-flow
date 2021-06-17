@@ -266,33 +266,35 @@ def m_override(target, sparse):
                         # A 'sub-many' dict - would it ever exist in real life?
                         dest[key] = OrderedDictWithDefaults()
                         child_many_defaults = many_defaults['__MANY__']
-                    elif key in many_defaults:
-                        dest[key] = OrderedDictWithDefaults()
-                    else:
+                    elif key not in many_defaults:
                         # TODO - validation prevents this, but handle properly
                         # for completeness.
                         raise Exception(
                             "parsec dict override: no __MANY__ placeholder" +
                             "%s" % (keylist + [key])
                         )
+                    dest[key] = OrderedDictWithDefaults()
+
                 stack.append(
                     (val, dest[key], keylist + [key], child_many_defaults))
             else:
                 if key not in dest:
-                    if ('__MANY__' in dest or key in many_defaults or
-                            '__MANY__' in many_defaults):
-                        if isinstance(val, list):
-                            dest[key] = val[:]
-                        else:
-                            dest[key] = val
-
-                    else:
+                    if not (
+                        '__MANY__' in dest
+                        or key in many_defaults
+                        or '__MANY__' in many_defaults
+                    ):
                         # TODO - validation prevents this, but handle properly
                         # for completeness.
                         raise Exception(
                             "parsec dict override: no __MANY__ placeholder" +
                             "%s" % (keylist + [key])
                         )
+                    if isinstance(val, list):
+                        dest[key] = val[:]
+                    else:
+                        dest[key] = val
+
                 if isinstance(val, list):
                     dest[key] = val[:]
                 else:
@@ -310,10 +312,13 @@ def un_many(cfig):
             try:
                 del cfig[key]
             except KeyError:
-                if hasattr(cfig, 'defaults_') and key in cfig.defaults_:
-                    del cfig.defaults_[key]
-                else:
+                if (
+                    not hasattr(cfig, 'defaults_')
+                    or key not in cfig.defaults_
+                ):
                     raise
+                del cfig.defaults_[key]
+
         elif isinstance(val, dict):
             un_many(cfig[key])
 

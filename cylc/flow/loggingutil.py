@@ -21,6 +21,7 @@ This module provides:
   Note: The ISO date time bit is redundant in Python 3,
   because "time.strftime" will handle time zone from "localtime" properly.
 """
+from contextlib import suppress
 import os
 import re
 import sys
@@ -211,10 +212,8 @@ class ReferenceLogFileHandler(logging.FileHandler):
     def __init__(self, filename):
         """Create the reference log file handler, specifying the file to
         write the reference log lines."""
-        try:
+        with suppress(OSError):
             os.unlink(filename)
-        except OSError:
-            pass
         super().__init__(filename)
         self.formatter = logging.Formatter('%(message)s')
         self.addFilter(self._filter)

@@ -216,11 +216,9 @@ class GraphParser:
         part_lines = []
         for i, _ in enumerate(non_blank_lines):
             this_line = non_blank_lines[i]
-            if i == 0:
+            if i == 0 and this_line.startswith(ARROW):
                 # First line can't start with an arrow.
-                if this_line.startswith(ARROW):
-                    raise GraphParseError(
-                        "leading arrow: %s" % this_line)
+                raise GraphParseError("leading arrow: %s" % this_line)
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
@@ -435,7 +433,9 @@ class GraphParser:
                     if trig.endswith(self.__class__.FAM_TRIG_EXT_ANY):
                         ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ANY]
                         ext = self.__class__.FAM_TRIG_EXT_ANY
-                    elif trig.endswith(self.__class__.FAM_TRIG_EXT_ALL):
+                    elif trig.endswith(  # noqa: SIM106
+                        self.__class__.FAM_TRIG_EXT_ALL
+                    ):
                         ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ALL]
                         ext = self.__class__.FAM_TRIG_EXT_ALL
                     else:

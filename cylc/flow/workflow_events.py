@@ -172,9 +172,9 @@ class WorkflowEventHandler():
                     'event': quote(ctx.event),
                     'message': quote(ctx.reason),
                     'workflow': quote(ctx.workflow),
-                    'workflow_uuid': quote(str(ctx.uuid_str)),
+                    'workflow_uuid': quote(ctx.uuid_str),
                     'suite': quote(ctx.workflow),  # deprecated
-                    'suite_uuid': quote(str(ctx.uuid_str)),  # deprecated
+                    'suite_uuid': quote(ctx.uuid_str),  # deprecated
                 }
                 if config.cfg['meta']:
                     for key, value in config.cfg['meta'].items():

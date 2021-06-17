@@ -113,6 +113,7 @@ job_runner.SUBMIT_CMD_TMPL
 
 """
 
+from contextlib import suppress
 import json
 import os
 import shlex
@@ -170,10 +171,9 @@ class JobPollContext():
 
         if attrs:
             for key, value in attrs.items():
-                if key in self.CONTEXT_ATTRIBUTES:
-                    setattr(self, key, value)
-                else:
+                if key not in self.CONTEXT_ATTRIBUTES:
                     raise ValueError('Invalid kwarg "%s"' % key)
+                setattr(self, key, value)
 
     def get_summary_str(self):
         """Return the poll context as a summary string delimited by "|"."""
@@ -395,47 +395,55 @@ class JobRunnerManager():
         # WORKFLOW_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
         self.configure_workflow_run_dir(st_file_path.rsplit(os.sep, 6)[0])
         try:
-            st_file = open(st_file_path)
-            for line in st_file:
-                if line.startswith(f"{self.CYLC_JOB_RUNNER_NAME}="):
-                    job_runner = self._get_sys(line.strip().split("=", 1)[1])
-                    break
-            else:
-                return (1,
-                        "Cannot determine job runner from %s file" % (
-                            JOB_LOG_STATUS))
-            st_file.seek(0, 0)  # rewind
-            if getattr(job_runner, "SHOULD_KILL_PROC_GROUP", False):
+            with open(st_file_path) as st_file:
                 for line in st_file:
-                    if line.startswith(CYLC_JOB_PID + "="):
-                        pid = line.strip().split("=", 1)[1]
+                    if line.startswith(f"{self.CYLC_JOB_RUNNER_NAME}="):
+                        job_runner = self._get_sys(
+                            line.strip().split("=", 1)[1]
+                        )
+                        break
+                else:
+                    return (
+                        1,
+                        "Cannot determine job runner from "
+                        f"{JOB_LOG_STATUS} file"
+                    )
+                st_file.seek(0, 0)  # rewind
+                if getattr(job_runner, "SHOULD_KILL_PROC_GROUP", False):
+                    for line in st_file:
+                        if line.startswith(CYLC_JOB_PID + "="):
+                            pid = line.strip().split("=", 1)[1]
+                            try:
+                                os.killpg(os.getpgid(int(pid)), SIGKILL)
+                            except (OSError, ValueError) as exc:
+                                traceback.print_exc()
+                                return (1, str(exc))
+                            else:
+                                return (0, "")
+                st_file.seek(0, 0)  # rewind
+                if hasattr(job_runner, "KILL_CMD_TMPL"):
+                    for line in st_file:
+                        if not line.startswith(f"{self.CYLC_JOB_ID}="):
+                            continue
+                        job_id = line.strip().split("=", 1)[1]
+                        command = shlex.split(
+                            job_runner.KILL_CMD_TMPL % {"job_id": job_id})
                         try:
-                            os.killpg(os.getpgid(int(pid)), SIGKILL)
-                        except (OSError, ValueError) as exc:
+                            proc = procopen(command, stdindevnull=True,
+                                            stderrpipe=True)
+                        except OSError as exc:
+                            # subprocess.Popen has a bad habit of not setting
+                            # the filename of the executable when it raises an
+                            # OSError.
+                            if not exc.filename:
+                                exc.filename = command[0]
                             traceback.print_exc()
                             return (1, str(exc))
                         else:
-                            return (0, "")
-            st_file.seek(0, 0)  # rewind
-            if hasattr(job_runner, "KILL_CMD_TMPL"):
-                for line in st_file:
-                    if not line.startswith(f"{self.CYLC_JOB_ID}="):
-                        continue
-                    job_id = line.strip().split("=", 1)[1]
-                    command = shlex.split(
-                        job_runner.KILL_CMD_TMPL % {"job_id": job_id})
-                    try:
-                        proc = procopen(command, stdindevnull=True,
-                                        stderrpipe=True)
-                    except OSError as exc:
-                        # subprocess.Popen has a bad habit of not setting the
-                        # filename of the executable when it raises an OSError.
-                        if not exc.filename:
-                            exc.filename = command[0]
-                        traceback.print_exc()
-                        return (1, str(exc))
-                    else:
-                        return (proc.wait(), proc.communicate()[1].decode())
+                            return (
+                                proc.wait(),
+                                proc.communicate()[1].decode()
+                            )
             return (1, f"Cannot determine job ID from {JOB_LOG_STATUS} file")
         except IOError as exc:
             return (1, str(exc))
@@ -486,13 +494,12 @@ class JobRunnerManager():
                     job_id = match.group("id")
                     if hasattr(job_runner, "manip_job_id"):
                         job_id = job_runner.manip_job_id(job_id)
-                    job_status_file = open(st_file_path, "a")
-                    job_status_file.write("{0}={1}\n".format(
-                        self.CYLC_JOB_ID, job_id))
-                    job_status_file.write("{0}={1}\n".format(
-                        self.CYLC_JOB_RUNNER_SUBMIT_TIME,
-                        get_current_time_string()))
-                    job_status_file.close()
+                    with open(st_file_path, "a") as job_status_file:
+                        job_status_file.write("{0}={1}\n".format(
+                            self.CYLC_JOB_ID, job_id))
+                        job_status_file.write("{0}={1}\n".format(
+                            self.CYLC_JOB_RUNNER_SUBMIT_TIME,
+                            get_current_time_string()))
                     break
         if hasattr(job_runner, "filter_submit_output"):
             out, err = job_runner.filter_submit_output(out, err)
@@ -502,38 +509,38 @@ class JobRunnerManager():
         """Helper 1 for self.jobs_poll(job_log_root, job_log_dirs)."""
         ctx = JobPollContext(job_log_dir)
         try:
-            handle = open(os.path.join(
-                job_log_root, ctx.job_log_dir, JOB_LOG_STATUS))
+            with open(
+                os.path.join(job_log_root, ctx.job_log_dir, JOB_LOG_STATUS)
+            ) as handle:
+                for line in handle:
+                    if "=" not in line:
+                        continue
+                    key, value = line.strip().split("=", 1)
+                    if key == self.CYLC_JOB_RUNNER_NAME:
+                        ctx.job_runner_name = value
+                    elif key == self.CYLC_JOB_ID:
+                        ctx.job_id = value
+                    elif key == self.CYLC_JOB_RUNNER_EXIT_POLLED:
+                        ctx.job_runner_exit_polled = 1
+                    elif key == CYLC_JOB_PID:
+                        ctx.pid = value
+                    elif key == self.CYLC_JOB_RUNNER_SUBMIT_TIME:
+                        ctx.time_submit_exit = value
+                    elif key == CYLC_JOB_INIT_TIME:
+                        ctx.time_run = value
+                    elif key == CYLC_JOB_EXIT_TIME:
+                        ctx.time_run_exit = value
+                    elif key == CYLC_JOB_EXIT:
+                        if value == TASK_OUTPUT_SUCCEEDED.upper():
+                            ctx.run_status = 0
+                        else:
+                            ctx.run_status = 1
+                            ctx.run_signal = value
+                    elif key == CYLC_MESSAGE:
+                        ctx.messages.append(value)
         except IOError as exc:
             sys.stderr.write(f"{exc}\n")
             return
-        for line in handle:
-            if "=" not in line:
-                continue
-            key, value = line.strip().split("=", 1)
-            if key == self.CYLC_JOB_RUNNER_NAME:
-                ctx.job_runner_name = value
-            elif key == self.CYLC_JOB_ID:
-                ctx.job_id = value
-            elif key == self.CYLC_JOB_RUNNER_EXIT_POLLED:
-                ctx.job_runner_exit_polled = 1
-            elif key == CYLC_JOB_PID:
-                ctx.pid = value
-            elif key == self.CYLC_JOB_RUNNER_SUBMIT_TIME:
-                ctx.time_submit_exit = value
-            elif key == CYLC_JOB_INIT_TIME:
-                ctx.time_run = value
-            elif key == CYLC_JOB_EXIT_TIME:
-                ctx.time_run_exit = value
-            elif key == CYLC_JOB_EXIT:
-                if value == TASK_OUTPUT_SUCCEEDED.upper():
-                    ctx.run_status = 0
-                else:
-                    ctx.run_status = 1
-                    ctx.run_signal = value
-            elif key == CYLC_MESSAGE:
-                ctx.messages.append(value)
-        handle.close()
 
         return ctx
 
@@ -580,10 +587,8 @@ class JobRunnerManager():
             elif hasattr(job_runner, "filter_poll_many_output"):
                 # Allow custom filter
                 for id_ in job_runner.filter_poll_many_output(out):
-                    try:
+                    with suppress(ValueError):
                         bad_ids.remove(id_)
-                    except ValueError:
-                        pass
             else:
                 # Just about all poll commands return a table, with column 1
                 # being the job ID. The logic here should be sufficient to
@@ -594,10 +599,8 @@ class JobRunnerManager():
                     except IndexError:
                         continue
                     if head in exp_ids:
-                        try:
+                        with suppress(ValueError):
                             bad_ids.remove(head)
-                        except ValueError:
-                            pass
 
         debug_flag = False
         for ctx in my_ctx_list:
@@ -613,12 +616,13 @@ class JobRunnerManager():
             # Add information to "job.status"
             if ctx.job_runner_exit_polled:
                 try:
-                    handle = open(os.path.join(
-                        job_log_root, ctx.job_log_dir, JOB_LOG_STATUS), "a")
-                    handle.write("{0}={1}\n".format(
-                        self.CYLC_JOB_RUNNER_EXIT_POLLED,
-                        get_current_time_string()))
-                    handle.close()
+                    with open(os.path.join(
+                        job_log_root, ctx.job_log_dir, JOB_LOG_STATUS), "a"
+                    ) as handle:
+                        handle.write("{0}={1}\n".format(
+                            self.CYLC_JOB_RUNNER_EXIT_POLLED,
+                            get_current_time_string())
+                        )
                 except IOError as exc:
                     sys.stderr.write(f"{exc}\n")
 
@@ -632,16 +636,17 @@ class JobRunnerManager():
         # Create NN symbolic link, if necessary
         self._create_nn(job_file_path)
         for name in JOB_LOG_ERR, JOB_LOG_OUT:
-            try:
+            with suppress(OSError):
                 os.unlink(os.path.join(job_file_path, name))
-            except OSError:
-                pass
 
         # Start new status file
-        job_status_file = open(f"{job_file_path}.status", "w")
-        job_status_file.write(
-            "{0}={1}\n".format(self.CYLC_JOB_RUNNER_NAME, job_runner_name))
-        job_status_file.close()
+        with open(f"{job_file_path}.status", "w") as job_status_file:
+            job_status_file.write(
+                "{0}={1}\n".format(
+                    self.CYLC_JOB_RUNNER_NAME,
+                    job_runner_name
+                )
+            )
 
         # Submit job
         job_runner = self._get_sys(job_runner_name)
@@ -699,10 +704,8 @@ class JobRunnerManager():
                     return 1, "", str(exc), ""
             out, err = (f.decode() for f in proc.communicate(proc_stdin_value))
             ret_code = proc.wait()
-            try:
+            with suppress(AttributeError, IOError):
                 proc_stdin_arg.close()
-            except (AttributeError, IOError):
-                pass
 
         # Filter submit command output, if relevant
         # Get job ID, if possible
@@ -733,16 +736,22 @@ class JobRunnerManager():
             job_file_path = os.path.join(job_log_root, job_log_dir, "job")
             job_runner_name = None
             submit_opts = {}
-            for line in open(job_file_path):
-                if line.startswith(self.LINE_PREFIX_JOB_RUNNER_NAME):
-                    job_runner_name = line.replace(
-                        self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
-                elif line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
-                    submit_opts["job_runner_cmd_tmpl"] = line.replace(
-                        self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
-                elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
-                    submit_opts["execution_time_limit"] = float(line.replace(
-                        self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())
+            with open(job_file_path, 'r') as job_file:
+                for line in job_file:
+                    if line.startswith(self.LINE_PREFIX_JOB_RUNNER_NAME):
+                        job_runner_name = line.replace(
+                            self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
+                    elif line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
+                        submit_opts["job_runner_cmd_tmpl"] = line.replace(
+                            self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
+                    elif line.startswith(
+                        self.LINE_PREFIX_EXECUTION_TIME_LIMIT
+                    ):
+                        submit_opts["execution_time_limit"] = float(
+                            line.replace(
+                                self.LINE_PREFIX_EXECUTION_TIME_LIMIT, ""
+                            ).strip()
+                        )
             items.append((job_log_dir, job_runner_name, submit_opts))
         return items
 
@@ -790,7 +799,9 @@ class JobRunnerManager():
                 os.makedirs(
                     os.path.join(job_log_root, job_log_dir),
                     exist_ok=True)
-                handle = open(
+                if handle is not None:
+                    handle.close()
+                handle = open(  # noqa: SIM115 (can't convert to with open)
                     os.path.join(job_log_root, job_log_dir, "job.tmp"), "wb")
 
             if handle is None:

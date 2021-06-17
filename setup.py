@@ -65,6 +65,7 @@ tests_require = [
     'flake8-comprehensions>=3.5.0',
     'flake8-debugger>=4.0.0',
     'flake8-mutable>=1.2.0',
+    'flake8-simplify>=0.14.0',
     'flake8>=3.0.0',
     'mypy>=0.900',
     # TODO: https://github.com/pytest-dev/pytest-asyncio/issues/ 209
@@ -113,9 +114,13 @@ extra_requires['all'] = (
 )
 
 
+with open('README.md') as readme_file:
+    readme = readme_file.read()
+
+
 setup(
     version=find_version("cylc", "flow", "__init__.py"),
-    long_description=open('README.md').read(),
+    long_description=readme,
     long_description_content_type="text/markdown",
     scripts=glob(join('bin', '*')),
     packages=find_namespace_packages(include=["cylc.*"]),

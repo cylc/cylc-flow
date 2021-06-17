@@ -24,6 +24,7 @@ This module provides logic to:
 * Prepare task jobs poll/kill, and manage the callbacks.
 """
 
+from contextlib import suppress
 import json
 import os
 from copy import deepcopy
@@ -280,7 +281,7 @@ class TaskJobManager:
                     self.task_remote_mgr.file_install(platform)
                     continue
 
-                elif (ri_map[install_target] in self.IN_PROGRESS.keys()):
+                elif (ri_map[install_target] in self.IN_PROGRESS):
                     # Remote init or file install in progress.
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
@@ -1021,11 +1022,10 @@ class TaskJobManager:
             itask.submit_num] = itask.platform['name']
 
         itask.summary['job_runner_name'] = itask.platform['job runner']
-        try:
+        with suppress(TypeError):
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
-                rtconfig['execution time limit'])
-        except TypeError:
-            pass
+                rtconfig['execution time limit']
+            )
 
         scripts = self._get_job_scripts(itask, rtconfig)
 

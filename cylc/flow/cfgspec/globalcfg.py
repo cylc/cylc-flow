@@ -708,11 +708,12 @@ with Conf('global.cylc', desc='''
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 
     # Platform Groups
-    with Conf('platform groups'):
+    with Conf('platform groups'):  # noqa: SIM117 (keep same format)
         with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
     # Symlink Dirs
-    with Conf('symlink dirs', desc="""
+    with Conf('symlink dirs',   # noqa: SIM117 (keep same format)
+              desc="""
         Define directories to be moved, symlinks from the the original
         ``$HOME/cylc-run`` directories will be created.
     """):

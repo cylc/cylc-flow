@@ -26,7 +26,7 @@ Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
 
-
+import contextlib
 from copy import copy
 from fnmatch import fnmatchcase
 import os
@@ -395,11 +395,13 @@ class WorkflowConfig:
                     name, offset_string = match.groups()
                     if not offset_string:
                         offset_string = "PT0M"
-                    if cylc.flow.flags.verbosity > 0:
-                        if offset_string.startswith("-"):
-                            LOG.warning(
-                                "%s offsets are normally positive: %s" % (
-                                    s_type, item))
+                    if (
+                        cylc.flow.flags.verbosity > 0
+                        and offset_string.startswith("-")
+                    ):
+                        LOG.warning(
+                            "%s offsets are normally positive: %s" % (
+                                s_type, item))
                     try:
                         offset_interval = (
                             get_interval(offset_string).standardise())
@@ -610,10 +612,13 @@ class WorkflowConfig:
             vfcp = None
 
         # A viz final point can't be beyond the workflow final point.
-        if vfcp is not None and self.final_point is not None:
-            if vfcp > self.final_point:
-                self.cfg['visualization']['final cycle point'] = str(
-                    self.final_point)
+        if (
+            vfcp is not None
+            and self.final_point is not None
+            and vfcp > self.final_point
+        ):
+            self.cfg['visualization']['final cycle point'] = str(
+                self.final_point)
 
         # Replace workflow and task name in workflow and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
@@ -821,13 +826,10 @@ class WorkflowConfig:
                         self.initial_point
                     ).standardise()
             else:
-                try:
+                with contextlib.suppress(IsodatetimeError):
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
                         fcp_str, self.initial_point).standardise()
-                except IsodatetimeError:
-                    # (not relative)
-                    pass
             if self.final_point is None:
                 # Must be absolute.
                 self.final_point = get_point(fcp_str).standardise()
@@ -868,13 +870,13 @@ class WorkflowConfig:
             err_msg = (
                 "implicit tasks detected (no entry under [runtime]):\n"
                 f"    * {implicit_tasks_str}")
-            if self.cfg['scheduler']['allow implicit tasks']:
-                LOG.debug(err_msg)
-            else:
+            if not self.cfg['scheduler']['allow implicit tasks']:
                 raise WorkflowConfigError(
                     f"{err_msg}\n\n"
                     "To allow implicit tasks, use "
                     "'flow.cylc[scheduler]allow implicit tasks'")
+            else:
+                LOG.debug(err_msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
@@ -1235,8 +1237,10 @@ class WorkflowConfig:
             # Handle "runahead limit = P0":
             if self.custom_runahead_limit.is_null():
                 self.custom_runahead_limit = IntegerInterval('P1')
-        elif (self.cycling_type == ISO8601_CYCLING_TYPE and
-              any(tlr.fullmatch(limit) for tlr in time_limit_regexes)):
+        elif (  # noqa: SIM106
+            self.cycling_type == ISO8601_CYCLING_TYPE
+            and any(tlr.fullmatch(limit) for tlr in time_limit_regexes)
+        ):
             self.custom_runahead_limit = ISO8601Interval(limit)
         else:
             raise WorkflowConfigError(
@@ -1749,13 +1753,14 @@ class WorkflowConfig:
             try:
                 xtrig = self.cfg['scheduling']['xtriggers'][label]
             except KeyError:
-                if label == 'wall_clock':
+                if label != 'wall_clock':
+                    raise WorkflowConfigError(f"xtrigger not defined: {label}")
+                else:
                     # Allow "@wall_clock" in the graph as an undeclared
                     # zero-offset clock xtrigger.
                     xtrig = SubFuncContext(
                         'wall_clock', 'wall_clock', [], {})
-                else:
-                    raise WorkflowConfigError(f"xtrigger not defined: {label}")
+
             if (xtrig.func_name == 'wall_clock' and
                     self.cfg['scheduling']['cycling mode'] == (
                         INTEGER_CYCLING_TYPE)):
@@ -1824,9 +1829,11 @@ class WorkflowConfig:
                 self.closed_families = copy(self.collapsed_families_config)
             else:
                 for fam in first_parent_descendants:
-                    if fam != 'root':
-                        if fam not in self.closed_families:
-                            self.closed_families.append(fam)
+                    if (
+                        fam != 'root'
+                        and fam not in self.closed_families
+                    ):
+                        self.closed_families.append(fam)
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []

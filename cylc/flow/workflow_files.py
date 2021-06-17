@@ -17,6 +17,7 @@
 """Workflow service files management."""
 
 import aiofiles
+from contextlib import suppress
 from enum import Enum
 import logging
 import os
@@ -77,7 +78,7 @@ class KeyOwner(Enum):
     CLIENT = "client"
 
 
-class KeyInfo():
+class KeyInfo():  # noqa: SIM119 (not really relevant here)
     """Represents a server or client key file, which can be private or public.
 
     Attributes:
@@ -101,7 +102,7 @@ class KeyInfo():
         self.install_target = install_target
         if self.full_key_path is not None:
             self.key_path, self.file_name = os.path.split(self.full_key_path)
-        elif self.workflow_srv_dir is not None:
+        elif self.workflow_srv_dir is not None:  # noqa: SIM106
             # Build key filename
             file_name = key_owner.value
 
@@ -449,19 +450,18 @@ def load_contact_file(reg):
     file_base = WorkflowFiles.Service.CONTACT
     path = get_workflow_srv_dir(reg)
     file_content = _load_local_item(file_base, path)
-    if file_content:
-        data = {}
-        for line in file_content.splitlines():
-            key, value = [item.strip() for item in line.split("=", 1)]
-            # BACK COMPAT: contact pre "suite" to "workflow" conversion.
-            # from:
-            #     Cylc 8
-            # remove at:
-            #     Cylc 9
-            data[key.replace('SUITE', 'WORKFLOW')] = value
-        return data
-    else:
+    if not file_content:
         raise ServiceFileError("Couldn't load contact file")
+    data = {}
+    for line in file_content.splitlines():
+        key, value = [item.strip() for item in line.split("=", 1)]
+        # BACK COMPAT: contact pre "suite" to "workflow" conversion.
+        # from:
+        #     Cylc 8
+        # remove at:
+        #     Cylc 9
+        data[key.replace('SUITE', 'WORKFLOW')] = value
+    return data
 
 
 async def load_contact_file_async(reg, run_dir=None):
@@ -841,16 +841,17 @@ def get_workflow_title(reg):
     * Assume title is not in an include-file.
     """
     title = NO_TITLE
-    for line in open(get_flow_file(reg), 'r'):
-        if line.lstrip().startswith("[meta]"):
-            # continue : title comes inside [meta] section
-            continue
-        elif line.lstrip().startswith("["):
-            # abort: title comes before first [section]
-            break
-        match = REC_TITLE.match(line)
-        if match:
-            title = match.groups()[0].strip('"\'')
+    with open(get_flow_file(reg), 'r') as handle:
+        for line in handle:
+            if line.lstrip().startswith("[meta]"):
+                # continue : title comes inside [meta] section
+                continue
+            elif line.lstrip().startswith("["):
+                # abort: title comes before first [section]
+                break
+            match = REC_TITLE.match(line)
+            if match:
+                title = match.groups()[0].strip('"\'')
     return title
 
 
@@ -965,7 +966,7 @@ def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
 def _get_logger(rund, log_name):
     """Get log and create and open if necessary."""
     logger = logging.getLogger(log_name)
-    if not logger.getEffectiveLevel == logging.INFO:
+    if logger.getEffectiveLevel != logging.INFO:
         logger.setLevel(logging.INFO)
     if not logger.hasHandlers():
         _open_install_log(rund, logger)
@@ -997,10 +998,8 @@ def _close_install_log(logger):
         Args:
             logger (constant)"""
     for handler in logger.handlers:
-        try:
+        with suppress(IOError):
             handler.close()
-        except IOError:
-            pass
 
 
 def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
@@ -1074,7 +1073,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
         f"Copying files from {source} to {rundir}"
         f'\n{stdout}'
     )
-    if not proc.returncode == 0:
+    if proc.returncode != 0:
         reinstall_log.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         reinstall_log.warning(f" Error: {stderr}")
@@ -1180,8 +1179,9 @@ def install_workflow(
     if not source_link.exists():
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source)
-    elif source_link.exists() and (
-        source_link.resolve() == source.resolve()
+    elif (  # noqa: SIM106
+        source_link.exists()
+        and source_link.resolve() == source.resolve()
     ):
         install_log.info(
             f"Symlink from \"{source_link}\" to \"{source}\" in place.")
@@ -1354,10 +1354,8 @@ def link_runN(latest_run: Union[Path, str]):
     """Create symlink runN, pointing at the latest run"""
     latest_run = Path(latest_run)
     run_n = Path(latest_run.parent, WorkflowFiles.RUN_N)
-    try:
+    with suppress(OSError):
         run_n.symlink_to(latest_run.name)
-    except OSError:
-        pass
 
 
 def search_install_source_dirs(flow_name: str) -> Path:

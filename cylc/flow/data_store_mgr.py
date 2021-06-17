@@ -56,6 +56,7 @@ Packaging methods are included for dissemination of protobuf messages.
 
 """
 
+from contextlib import suppress
 from collections import Counter, deque
 from copy import deepcopy
 import json
@@ -268,22 +269,18 @@ def apply_delta(key, delta, data):
                 # remove relationship from task
                 data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
-                try:
+                with suppress(KeyError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_tasks.remove(del_id)
-                except KeyError:
-                    pass
                 # remove relationship from workflow
                 getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
                 data[FAMILIES][data[key][del_id].family].proxies.remove(del_id)
-                try:
+                with suppress(KeyError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_families.remove(del_id)
-                except KeyError:
-                    pass
                 getattr(data[WORKFLOW], key).remove(del_id)
             elif key == EDGES:
                 edge = data[key][del_id]
@@ -545,11 +542,9 @@ class DataStoreMgr:
                 family.parents.extend(
                     [f'{self.workflow_id}{ID_DELIM}{p_name}'
                      for p_name in parents[name]])
-                try:
+                with suppress(IndexError):
                     family.first_parent = (
                         f'{self.workflow_id}{ID_DELIM}{ancestors[name][1]}')
-                except IndexError:
-                    pass
                 families[f_id] = family
 
         for name, parent_list in parents.items():

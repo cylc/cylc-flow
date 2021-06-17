@@ -353,13 +353,16 @@ class SubProcPool:
                         if hasattr(file_, 'read'):
                             stdin_file.write(file_.read())
                         else:
-                            stdin_file.write(open(file_, 'rb').read())
+                            with open(file_, 'rb') as openfile:
+                                stdin_file.write(openfile.read())
                     stdin_file.seek(0)
                 elif hasattr(ctx.cmd_kwargs['stdin_files'][0], 'read'):
                     stdin_file = ctx.cmd_kwargs['stdin_files'][0]
                 else:
-                    stdin_file = open(
-                        ctx.cmd_kwargs['stdin_files'][0], 'rb')
+                    stdin_file = open(  # noqa: SIM115
+                        # (nasty use of file handles, should avoid in future)
+                        ctx.cmd_kwargs['stdin_files'][0], 'rb'
+                    )
             elif ctx.cmd_kwargs.get('stdin_str'):
                 stdin_file = cls.get_temporary_file()
                 stdin_file.write(ctx.cmd_kwargs.get('stdin_str').encode())

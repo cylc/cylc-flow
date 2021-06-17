@@ -66,8 +66,7 @@ class OrderedDictWithDefaults(OrderedDict):
 
     def iterkeys(self):
         """Include default keys"""
-        for key in OrderedDict.keys(self):
-            yield key
+        yield from OrderedDict.keys(self)
         for key in getattr(self, 'defaults_', []):
             if not OrderedDict.__contains__(self, key):
                 yield key
@@ -83,9 +82,11 @@ class OrderedDictWithDefaults(OrderedDict):
             yield (k, self[k])
 
     def __contains__(self, key):
-        if self._allow_contains_default:
-            if key in getattr(self, "defaults_", {}):
-                return True
+        if (
+            self._allow_contains_default
+            and key in getattr(self, "defaults_", {})
+        ):
+            return True
         return OrderedDict.__contains__(self, key)
 
     def __bool__(self):

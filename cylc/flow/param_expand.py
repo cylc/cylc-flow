@@ -56,6 +56,7 @@ foo_m1=>bar_m1_n2
 #------------------------------------------------------------------------------
 """
 
+from contextlib import suppress
 import re
 
 from cylc.flow.exceptions import ParamExpandError
@@ -224,10 +225,8 @@ class NameExpander:
             elif '=' in item:
                 # Specific value given.
                 pname, pval = [val.strip() for val in item.split('=', 1)]
-                try:
+                with suppress(ValueError):
                     pval = int(pval)
-                except ValueError:
-                    pass
                 if pname not in self.param_cfg:
                     raise ParamExpandError(
                         "parameter '%s' undefined in '%s'" % (

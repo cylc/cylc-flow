@@ -56,12 +56,13 @@ def load_template_vars(template_vars=None, template_vars_file=None):
     """Load template variables from key=value strings."""
     res = {}
     if template_vars_file:
-        for line in open(template_vars_file):
-            line = line.strip().split("#", 1)[0]
-            if not line:
-                continue
-            key, val = line.split("=", 1)
-            res[key.strip()] = eval_var(val.strip())
+        with open(template_vars_file, 'r') as handle:
+            for line in handle:
+                line = line.strip().split("#", 1)[0]
+                if not line:
+                    continue
+                key, val = line.split("=", 1)
+                res[key.strip()] = eval_var(val.strip())
     if template_vars:
         for pair in template_vars:
             key, val = pair.split("=", 1)

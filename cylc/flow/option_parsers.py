@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common options for all cylc commands."""
 
+from contextlib import suppress
 import logging
 from optparse import OptionParser, OptionConflictError, Values, Option
 import os
@@ -209,10 +210,8 @@ TASK_GLOB matches task or family names at a given cycle point.
 
     def add_std_option(self, *args, **kwargs):
         """Add a standard option, ignoring override."""
-        try:
+        with suppress(OptionConflictError):
             self.add_option(*args, **kwargs)
-        except OptionConflictError:
-            pass
 
     def add_std_options(self):
         """Add standard options if they have not been overridden."""
@@ -325,10 +324,8 @@ TASK_GLOB matches task or family names at a given cycle point.
 
         if remove_opts:
             for opt in remove_opts:
-                try:
+                with suppress(ValueError):
                     self.remove_option(opt)
-                except ValueError:
-                    pass
 
         (options, args) = OptionParser.parse_args(self, api_args)
 
@@ -341,10 +338,10 @@ TASK_GLOB matches task or family names at a given cycle point.
         ):
             self.error("Wrong number of arguments (too many)")
 
-        if self.jset:
-            if options.templatevars_file:
-                options.templatevars_file = os.path.abspath(os.path.expanduser(
-                    options.templatevars_file))
+        if self.jset and options.templatevars_file:
+            options.templatevars_file = os.path.abspath(os.path.expanduser(
+                options.templatevars_file)
+            )
 
         cylc.flow.flags.verbosity = options.verbosity
 
@@ -422,8 +419,8 @@ class Options:
     def __call__(self, **kwargs) -> Values:
         opts = Values(self.defaults)
         for key, value in kwargs.items():
-            if hasattr(opts, key):
-                setattr(opts, key, value)
-            else:
+            if not hasattr(opts, key):
                 raise ValueError(key)
+            setattr(opts, key, value)
+
         return opts

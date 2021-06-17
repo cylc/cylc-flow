@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the workflow runtime database."""
 
+from contextlib import suppress
+from dataclasses import dataclass
 import sqlite3
 import traceback
 from os.path import expandvars
@@ -23,15 +25,13 @@ from cylc.flow import LOG
 import cylc.flow.flags
 
 
+@dataclass
 class CylcWorkflowDAOTableColumn:
     """Represent a column in a table."""
 
-    __slots__ = ('name', 'datatype', 'is_primary_key')
-
-    def __init__(self, name, datatype, is_primary_key):
-        self.name = name
-        self.datatype = datatype
-        self.is_primary_key = is_primary_key
+    name: str
+    datatype: str
+    is_primary_key: bool
 
 
 class CylcWorkflowDAOTable:
@@ -408,10 +408,8 @@ class CylcWorkflowDAO:
                 "%(file)s: write attempt (%(attempt)d) did not complete\n" % {
                     "file": self.db_file_name, "attempt": self.n_tries})
             if self.conn is not None:
-                try:
+                with suppress(sqlite3.Error):
                     self.conn.rollback()
-                except sqlite3.Error:
-                    pass
             return
         else:
             # Clear the queues
