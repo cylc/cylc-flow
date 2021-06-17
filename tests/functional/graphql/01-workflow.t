@@ -92,8 +92,8 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
                 "title": "foo",
                 "description": "bar"
             },
-            "newestActiveCyclePoint": "1",
-            "oldestActiveCyclePoint": "1",
+            "newestActiveCyclePoint": "20210101T0000Z",
+            "oldestActiveCyclePoint": "20210101T0000Z",
             "reloaded": false,
             "runMode": "live",
             "stateTotals": {
@@ -117,7 +117,7 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
             ],
             "states": ["waiting"],
             "latestStateTasks": {
-                "waiting": ["foo.1"]
+                "waiting": ["foo.20210101T0000Z"]
             }
         }
     ]
