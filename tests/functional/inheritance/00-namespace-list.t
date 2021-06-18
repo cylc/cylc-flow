@@ -27,7 +27,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-config
-cylc config --sparse -i runtime "${WORKFLOW_NAME}" > runtime.out
+cylc config -i runtime "${WORKFLOW_NAME}" > runtime.out
 cmp_ok runtime.out <<'__DONE__'
 [[root]]
 [[FAMILY]]

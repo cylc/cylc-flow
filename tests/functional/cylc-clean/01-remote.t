@@ -20,7 +20,7 @@
 export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 
-SSH_CMD="$(cylc config -i "[platforms][${CYLC_TEST_PLATFORM}]ssh command") ${CYLC_TEST_HOST}"
+SSH_CMD="$(cylc config -d -i "[platforms][${CYLC_TEST_PLATFORM}]ssh command") ${CYLC_TEST_HOST}"
 
 if ! $SSH_CMD command -v 'tree' > '/dev/null'; then
     skip_all "'tree' command not available on remote host ${CYLC_TEST_HOST}"

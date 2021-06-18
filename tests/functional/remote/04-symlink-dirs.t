@@ -75,7 +75,7 @@ for DIR in 'work' 'share' 'log'; do
     fi
 done
 
-SSH="$(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
+SSH="$(cylc config -d -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
 
 # shellcheck disable=SC2016
 LINK="$(${SSH} "${CYLC_TEST_HOST}" 'readlink "$HOME/cylc-run/'"$WORKFLOW_NAME"'"')"

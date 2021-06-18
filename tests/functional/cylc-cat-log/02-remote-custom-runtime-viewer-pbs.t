@@ -19,8 +19,8 @@
 export REQUIRE_PLATFORM='runner:pbs'
 . "$(dirname "$0")/test_header"
 
-OUT_VIEWER="$(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]out viewer")"
-ERR_VIEWER="$(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]err viewer")"
+OUT_VIEWER="$(cylc config -d -i "[platforms][$CYLC_TEST_PLATFORM]out viewer")"
+ERR_VIEWER="$(cylc config -d -i "[platforms][$CYLC_TEST_PLATFORM]err viewer")"
 if [[ -z "${ERR_VIEWER}" || -z "${OUT_VIEWER}" ]]; then
     skip_all 'remote viewers not configured for this platform'
 fi
