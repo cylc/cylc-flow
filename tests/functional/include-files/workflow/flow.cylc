@@ -5,6 +5,3 @@
     allow implicit tasks = True
 
 %include body.cylc
-
-[visualization]
-    default node attributes = "style=filled"

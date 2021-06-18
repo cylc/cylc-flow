@@ -83,30 +83,6 @@ def sort_datetime_edge(item):
     return (item[0], item[1] or '')
 
 
-def get_cycling_bounds(config, start_point=None, stop_point=None):
-    """Determine the start and stop points for graphing a workflow."""
-    # default start and stop points to values in the visualization section
-    if not start_point:
-        start_point = config.cfg['visualization']['initial cycle point']
-    if not stop_point:
-        viz_stop_point = config.cfg['visualization']['final cycle point']
-        if viz_stop_point:
-            stop_point = viz_stop_point
-
-    # don't allow stop_point before start_point
-    if stop_point is not None:
-        if get_point(stop_point) < get_point(start_point):
-            # NOTE: we need to cast with get_point for this comparison due to
-            #       ISO8061 extended datetime formats
-            stop_point = start_point
-        else:
-            stop_point = stop_point
-    else:
-        stop_point = None
-
-    return start_point, stop_point
-
-
 def graph_workflow(
     config,
     start_point=None,
@@ -126,9 +102,17 @@ def graph_workflow(
         node_sort = None  # lexicographically sortable
         edge_sort = sort_datetime_edge
 
-    # get graph
-    start_point, stop_point = get_cycling_bounds(
-        config, start_point, stop_point)
+    start_point = (
+        start_point or
+        config.cfg['scheduling']['initial cycle point']
+    )
+
+    if (
+        stop_point and
+        get_point(stop_point) < get_point(start_point)
+    ):
+        stop_point = start_point
+
     graph = config.get_graph_raw(
         start_point, stop_point, ungroup_all=ungrouped)
     if not graph:

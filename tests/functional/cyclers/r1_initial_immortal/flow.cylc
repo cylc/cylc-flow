@@ -12,6 +12,3 @@
         script = true
     [[stop]]
         script = cylc shutdown "${CYLC_WORKFLOW_NAME}" '20140107'
-[visualization]
-    initial cycle point = 20140101
-    final cycle point = 20140110

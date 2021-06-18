@@ -82,6 +82,9 @@ workflow's public database file was not closed properly.
 
 ### Fixes
 
+[#4273](https://github.com/cylc/cylc-flow/pull/4273)
+ - Remove obsolete Cylc 7 visualization config section.
+
 [#4248](https://github.com/cylc/cylc-flow/pull/4248)
  - Fix parameter expansion in inherited task environments.
 

@@ -110,12 +110,3 @@
         script = ls {{PRODUCT_DIR}}
         [[[meta]]]
             title = collate all products from the workflow run
-
-[visualization]
-    default node attributes = "style=filled", "shape=box"
-    [[node attributes]]
-        satsim = "fillcolor=yellow"
-        WORKDIR = "fillcolor=limegreen"
-        get_data = "fillcolor=skyblue"
-        products = "fillcolor=orange"
-        collate = "fillcolor=red"

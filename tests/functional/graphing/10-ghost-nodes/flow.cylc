@@ -5,5 +5,3 @@
         P1!3 = foo[-P1] => foo
 [runtime]
     [[foo]]
-[visualization]
-    number of cycle points = 4

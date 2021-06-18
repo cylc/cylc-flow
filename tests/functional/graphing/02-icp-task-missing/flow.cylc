@@ -11,6 +11,3 @@
    {% endif %}
         T00 = NZC1[-PT3H] => pc
         T21 = NZC1
-[visualization]
-    initial cycle point = 20150304T00
-    final cycle point = 20150306T00

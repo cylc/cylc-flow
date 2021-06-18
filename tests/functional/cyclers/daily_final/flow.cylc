@@ -8,6 +8,3 @@
 [runtime]
     [[daily_foo]]
         script = true
-[visualization]
-    initial cycle point = 20140101
-    final cycle point = 20140102T12

@@ -16,7 +16,6 @@
         <RegExpr attribute='Keyword' String=' xtriggers '/>
         <RegExpr attribute='Keyword' String=' work sub-directory '/>
         <RegExpr attribute='Keyword' String=' warning handler '/>
-        <RegExpr attribute='Keyword' String=' visualization '/>
         <RegExpr attribute='Keyword' String=' verbose mode '/>
         <RegExpr attribute='Keyword' String=' user '/>
         <RegExpr attribute='Keyword' String=' use node fillcolor for edges '/>

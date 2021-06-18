@@ -9,6 +9,3 @@
 [runtime]
     [[foo]]
         script = true
-[visualization]
-    initial cycle point = 20120228T00
-    final cycle point = 20120301T00

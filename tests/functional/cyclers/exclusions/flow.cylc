@@ -28,6 +28,3 @@
 [runtime]
     [[root]]
         script = echo success
-[visualization]
-    initial cycle point = 20000101T00Z
-    final cycle point = 20000101T03Z

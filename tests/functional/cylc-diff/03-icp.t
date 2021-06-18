@@ -68,15 +68,11 @@ Workflow definitions ${WORKFLOW_NAME1} and ${WORKFLOW_NAME2} differ
    [runtime] [[barley]]
  >   script = true
 
-2 common items differ ${WORKFLOW_NAME1}(<) ${WORKFLOW_NAME2}(>)
+1 common items differ ${WORKFLOW_NAME1}(<) ${WORKFLOW_NAME2}(>)
 
    [scheduling] [[graph]]
  <   R1 = foo => bar
  >   R1 = food => barley
-
-   [visualization] [[node groups]]
- <   root = ['root', 'foo', 'bar']
- >   root = ['root', 'food', 'barley']
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 

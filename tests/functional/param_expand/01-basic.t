@@ -396,8 +396,6 @@ cmp_ok '19.cylc' <<'__FLOW_CONFIG__'
         script = true
         [[[environment]]]
             FC = gfortran
-[visualization]
-    [[node attributes]]
 __FLOW_CONFIG__
 
 exit
