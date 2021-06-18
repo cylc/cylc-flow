@@ -341,7 +341,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
                       group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
-        """Return a textural representation of the workflow graph.
+        """Return a textual representation of the workflow graph.
 
         .. warning::
 

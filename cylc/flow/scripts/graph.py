@@ -19,11 +19,11 @@
 
 A text-based graph representation of workflow dependencies.
 
-Implements the old ``cylc graph --reference command`` for producing a textural
+Implements the old ``cylc graph --reference command`` for producing a textual
 graph of a workflow.
 
 Examples:
-    # print a textural representation of the graph of the flow one
+    # print a textual representation of the graph of the flow one
     $ cylc graph one --reference
 
     # display the difference between the flows one and two
