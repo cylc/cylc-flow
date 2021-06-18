@@ -81,17 +81,17 @@ def test_pb_entire_workflow(myflow):
 async def test_listener(one, start):
     """Test listener."""
     async with start(one):
-        one.server.queue.put('STOP')
+        one.server.replier.queue.put('STOP')
         async with timeout(2):
             # wait for the server to consume the STOP item from the queue
             while True:
-                if one.server.queue.empty():
+                if one.server.replier.queue.empty():
                     break
                 await asyncio.sleep(0.01)
         # ensure the server is "closed"
         with pytest.raises(ValueError):
-            one.server.queue.put('foobar')
-            one.server._listener()
+            one.server.replier.queue.put('foobar')
+            one.server.replier._listener()
 
 
 async def test_receiver(one, start):

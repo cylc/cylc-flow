@@ -556,8 +556,8 @@ class DataStoreMgr:
         workflow.name = self.schd.workflow
         workflow.owner = self.schd.owner
         workflow.host = self.schd.host
-        workflow.port = self.schd.port or -1
-        workflow.pub_port = self.schd.pub_port or -1
+        workflow.port = self.schd.server.port or -1
+        workflow.pub_port = self.schd.server.pub_port or -1
         user_defined_meta = {}
         for key, val in config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
@@ -1648,8 +1648,8 @@ class DataStoreMgr:
         w_delta.last_updated = time()
         w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
 
-        w_delta.port = self.schd.port
-        w_delta.pub_port = self.schd.pub_port
+        w_delta.port = self.schd.server.port
+        w_delta.pub_port = self.schd.server.pub_port
         self.updates_pending = True
 
     def delta_broadcast(self):
