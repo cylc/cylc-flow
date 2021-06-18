@@ -18,15 +18,10 @@
 # Test intercycle dependencies.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 1
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" 9999_rollover
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate --debug "${WORKFLOW_NAME}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
-grep_ok "Cannot dump TimePoint year: 10000 not in bounds 0 to 9999" "${TEST_NAME}.stderr"
-#-------------------------------------------------------------------------------
+run_fail "${TEST_NAME}" cylc validate --debug "${WORKFLOW_NAME}"
 purge

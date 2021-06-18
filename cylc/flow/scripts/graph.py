@@ -33,14 +33,16 @@ Examples:
 
 from difflib import unified_diff
 import sys
+import contextlib
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling.loader import get_point
+from cylc.flow.cycling.loader import get_point, get_point_relative
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+from metomi.isodatetime.exceptions import IsodatetimeError
 
 
 def sort_integer_node(item):
@@ -106,15 +108,37 @@ def graph_workflow(
         start_point or
         config.cfg['scheduling']['initial cycle point']
     )
+    start_point = get_point(start_point)
 
-    if (
-        stop_point and
-        get_point(stop_point) < get_point(start_point)
-    ):
+    if stop_point is not None:
+        # Is the final point(/interval) relative to initial?
+        if config.cfg['scheduling']['cycling mode'] == 'integer':
+            if "P" in stop_point:
+                # Relative, integer cycling.
+                stop_point = get_point_relative(
+                    stop_point, start_point
+                ).standardise()
+        else:
+            with contextlib.suppress(IsodatetimeError):
+                # Relative, ISO8601 cycling.
+                stop_point = get_point_relative(
+                    stop_point, start_point
+                ).standardise()
+
+    if (stop_point is not None and stop_point < start_point):
         stop_point = start_point
 
+    if stop_point is not None:
+        stop_point = str(stop_point)
+    if start_point is not None:
+        start_point = str(start_point)
+
     graph = config.get_graph_raw(
-        start_point, stop_point, ungroup_all=ungrouped)
+        start_point,
+        stop_point,
+        group_all=not ungrouped,
+        ungroup_all=ungrouped,
+    )
     if not graph:
         return
 
@@ -178,10 +202,9 @@ def get_option_parser():
         __doc__, jset=True, prep=True,
         argdoc=[
             ('[WORKFLOW]', 'Workflow name or path'),
-            ('[START]', 'Initial cycle point '
-             '(default: workflow initial point)'),
-            ('[STOP]', 'Final cycle point '
-             '(default: initial + 3 points)')])
+            ('[START]', 'Graph start. Default: initial cycle point'),
+            ('[STOP]', 'Graph stop point or interval. '
+             'Default: 3 points from START')])
 
     parser.add_option(
         '-u', '--ungrouped',

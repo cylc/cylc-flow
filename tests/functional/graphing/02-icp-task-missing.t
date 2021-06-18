@@ -26,11 +26,15 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-r1"
-graph_workflow "${WORKFLOW_NAME}" 'r1.graph.plain.test' --set='INCLUDE_R1="true"'
+graph_workflow "${WORKFLOW_NAME}" 'r1.graph.plain.test' \
+   --set='INCLUDE_R1="true"' \
+   20150304T00Z +P2D
 cmp_ok 'r1.graph.plain.test' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-no-r1"
-graph_workflow "${WORKFLOW_NAME}" 'no-r1.graph.plain.test' --set='INCLUDE_R1="true"'
+graph_workflow "${WORKFLOW_NAME}" 'no-r1.graph.plain.test' \
+   --set='INCLUDE_R1="false"' \
+   20150304T00Z +P2D
 cmp_ok 'no-r1.graph.plain.test' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
 purge

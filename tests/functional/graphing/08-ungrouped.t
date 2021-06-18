@@ -28,8 +28,8 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 graph_workflow "${WORKFLOW_NAME}" 'graph.plain'
 cmp_ok graph.plain "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
-graph_workflow "${WORKFLOW_NAME}" 'graph.plain.suicide' --ungrouped
-cmp_ok graph.plain.suicide \
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain.ungrouped' --ungrouped
+cmp_ok graph.plain.ungrouped \
     "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ungrouped.ref"
 #-------------------------------------------------------------------------------
 purge

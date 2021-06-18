@@ -21,7 +21,7 @@ set_test_number 3
 install_workflow "${TEST_NAME_BASE}" 'integer_exclusions_advanced'
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain"
+graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain" 1 "+P15"
 cmp_ok "${WORKFLOW_NAME}.graph.plain" 'graph.plain.ref'
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"

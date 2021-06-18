@@ -32,7 +32,8 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-graph"
-graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain"
+graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain" \
+    20001231T0100 20010114
 sed "s/Z/$CURRENT_TZ_UTC_OFFSET/g" \
     "$TEST_SOURCE_DIR/$CHOSEN_WORKFLOW/graph.plain.ref" > 'graph.plain.local.ref'
 cmp_ok "${WORKFLOW_NAME}.graph.plain" 'graph.plain.local.ref'

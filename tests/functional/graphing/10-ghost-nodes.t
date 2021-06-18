@@ -25,7 +25,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-graph_workflow "${WORKFLOW_NAME}" 'graph.plain'
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain' 1 5
 cmp_ok 'graph.plain' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
 purge

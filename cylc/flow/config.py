@@ -1653,7 +1653,7 @@ class WorkflowConfig:
 
     def get_graph_raw(self, start_point_string, stop_point_string,
                       group_nodes=None, ungroup_nodes=None,
-                      ungroup_recursive=False, group_all=False,
+                      ungroup_recursive=False, group_all=True,
                       ungroup_all=False):
         """Convert the abstract graph edges (self.edges, etc) to actual edges
 
