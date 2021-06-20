@@ -1832,7 +1832,11 @@ class WorkflowConfig:
 
         ret = set()
         for edge in self.get_graph_raw(
-                start_point_string, stop_point_string, ungroup_all=True):
+                start_point_string,
+                stop_point_string,
+                ungroup_all=True,
+                group_all=False
+        ):
             left, right = edge[0:2]
             if left:
                 ret.add(left)

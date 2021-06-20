@@ -32,7 +32,7 @@ def main():
         'ungroup_nodes': None,
         'ungroup_recursive': False,
         'group_all': False,
-        'ungroup_all': False}
+        'ungroup_all': True}
     for item in sys.argv[1:]:
         key, value = item.split('=', 1)
         kwargs[key] = value

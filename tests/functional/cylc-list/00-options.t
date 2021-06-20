@@ -85,7 +85,7 @@ root       root
 __DONE__
 #------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-opt-p
-cylc ls -p 20140808T00,20140812T00 "${WORKFLOW_NAME}" > list-p.out
+cylc ls -p 20140808T0000Z,20140812T0000Z "${WORKFLOW_NAME}" > list-p.out
 cmp_ok list-p.out << __DONE__
 cujo.20140808T0000Z
 cujo.20140809T0000Z

@@ -18,8 +18,8 @@
 
 # variables used in the sourced common script below.
 # shellcheck disable=SC2034
-INITIALCP=""
+INITIALCP="20100101T0000Z"
 # shellcheck disable=SC2034
-FINALCP=""
+FINALCP="+P3W"
 
 source "$(dirname "$0")"/common
