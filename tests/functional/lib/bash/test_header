@@ -862,7 +862,7 @@ get_host_from_platform () {
 get_install_target_from_platform () {
     local platform="$1"
 
-    cylc config -i "[platforms][${platform}]install target" \
+    cylc config -d -i "[platforms][${platform}]install target" \
         | cut -d ',' -f 1
 }
 
@@ -879,7 +879,7 @@ get_fqdn () {
 }
 
 _get_test_platforms () {
-    cylc config -i '[platforms]' --sparse \
+    cylc config -i '[platforms]' \
         | sed -n 's/\[\[\(_.*\)\]\]/\1/p'
 }
 
