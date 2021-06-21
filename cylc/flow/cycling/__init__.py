@@ -30,11 +30,17 @@ def parse_exclusion(expr):
                         "permitted" % expr)
     else:
         remainder, exclusions = expr.split('!')
-        if ',' in exclusions:
-            if (not exclusions.strip().startswith('(') or not
-                    exclusions.strip().endswith(')')):
-                raise Exception("'%s': a list of exclusions must be "
-                                "enclosed in parentheses." % exclusions)
+        if (
+            ',' in exclusions
+            and (
+                not exclusions.strip().startswith('(')
+                or not exclusions.strip().endswith(')')
+            )
+        ):
+            raise Exception(
+                f"'{exclusions}': a list of exclusions must be enclosed in"
+                " parentheses."
+            )
 
         exclusions = exclusions.translate(str.maketrans('', '', ' ()'))
         exclusions = exclusions.split(',')
@@ -417,7 +423,7 @@ class SequenceBase(metaclass=ABCMeta):
         pass
 
 
-class ExclusionBase(object, metaclass=ABCMeta):
+class ExclusionBase(metaclass=ABCMeta):
     """A collection of points or sequences that are treated in an
     exclusionary manner"""
     __slots__ = ('exclusion_sequences', 'exclusion_points',

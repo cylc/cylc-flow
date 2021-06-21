@@ -16,10 +16,9 @@
 """Cylc site and user configuration file spec."""
 
 import os
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 
 from pkg_resources import parse_version
-from pkg_resources.extern.packaging.version import Version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
@@ -55,7 +54,7 @@ with Conf('global.cylc', desc='''
 
     To view your global config run::
 
-       $ cylc config --sparse
+       $ cylc config
 
     Cylc will attempt to load the global configuration (``global.cylc``) from a
     hierarchy of locations, including the site directory (defaults to
@@ -709,11 +708,12 @@ with Conf('global.cylc', desc='''
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 
     # Platform Groups
-    with Conf('platform groups'):
+    with Conf('platform groups'):  # noqa: SIM117 (keep same format)
         with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
     # Symlink Dirs
-    with Conf('symlink dirs', desc="""
+    with Conf('symlink dirs',   # noqa: SIM117 (keep same format)
+              desc="""
         Define directories to be moved, symlinks from the the original
         ``$HOME/cylc-run`` directories will be created.
     """):
@@ -803,7 +803,8 @@ def get_version_hierarchy(version: str) -> List[str]:
         ['', '8', '8.0', '8.0.1', '8.0.1a2', '8.0.1a2.dev']
 
     """
-    smart_ver: Version = parse_version(version)
+    smart_ver: Any = parse_version(version)
+    # (No type anno. yet for Version in pkg_resources.extern.packaging.version)
     base = [str(i) for i in smart_ver.release]
     hierarchy = ['']
     hierarchy += ['.'.join(base[:i]) for i in range(1, len(base) + 1)]

@@ -27,8 +27,8 @@ TEST_NAME="${TEST_NAME_BASE}-get-items"
 run_fail "${TEST_NAME}.non-existent" \
     cylc config --item='[this][doesnt]exist'
 #-------------------------------------------------------------------------------
-VAL1="$(cylc config --item '[platforms][localhost]use login shell')"
-VAL2="$(cylc config | sed -n '/\[\[localhost\]\]/,$p' | \
+VAL1="$(cylc config -d --item '[platforms][localhost]use login shell')"
+VAL2="$(cylc config -d | sed -n '/\[\[localhost\]\]/,$p' | \
     sed -n "0,/use login shell/s/^[ \t]*\(use login shell =.*\)/\1/p")"
 run_ok "${TEST_NAME_BASE}-check-output" \
     test "use login shell = ${VAL1}" = "${VAL2}"

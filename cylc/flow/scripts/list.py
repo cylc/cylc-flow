@@ -102,10 +102,9 @@ def main(parser, options, reg):
     else:
         which = "graphed tasks"
 
-    if options.tree:
-        if os.environ['LANG'] == 'C' and options.box:
-            print("WARNING, ignoring -t/--tree: $LANG=C", file=sys.stderr)
-            options.tree = False
+    if options.tree and os.environ['LANG'] == 'C' and options.box:
+        print("WARNING, ignoring -t/--tree: $LANG=C", file=sys.stderr)
+        options.tree = False
 
     if options.titles and options.mro:
         parser.error("Please choose --mro or --title, not both")

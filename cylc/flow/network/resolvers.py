@@ -81,12 +81,14 @@ def workflow_ids_filter(w_atts, items):
 
     Returns a boolean."""
     # Return true if workflow matches any id arg.
-    for owner, name, status in set(items):
-        if ((not owner or fnmatchcase(w_atts[0], owner)) and
-                (not name or fnmatchcase(w_atts[1], name)) and
-                (not status or w_atts[2] == status)):
-            return True
-    return False
+    return any(
+        (
+            (not owner or fnmatchcase(w_atts[0], owner))
+            and (not name or fnmatchcase(w_atts[1], name))
+            and (not status or w_atts[2] == status)
+        )
+        for owner, name, status in set(items)
+    )
 
 
 def workflow_filter(flow, args, w_atts=None):
@@ -126,16 +128,19 @@ def node_ids_filter(n_atts, items):
     """Match id arguments with node attributes.
 
     Returns a boolean."""
-    for owner, workflow, cycle, name, submit_num, state in items:
-        if ((not owner or fnmatchcase(n_atts[0], owner)) and
-                (not workflow or fnmatchcase(n_atts[1], workflow)) and
-                (not cycle or fnmatchcase(n_atts[2], cycle)) and
-                any(fnmatchcase(nn, name) for nn in n_atts[3]) and
-                (not submit_num or
-                 fnmatchcase(str(n_atts[4]), submit_num.lstrip('0'))) and
-                (not state or n_atts[5] == state)):
-            return True
-    return False
+    return any(
+        (
+            (not owner or fnmatchcase(n_atts[0], owner))
+            and (not workflow or fnmatchcase(n_atts[1], workflow))
+            and (not cycle or fnmatchcase(n_atts[2], cycle))
+            and any(fnmatchcase(nn, name) for nn in n_atts[3])
+            and (
+                not submit_num
+                or fnmatchcase(str(n_atts[4]), submit_num.lstrip('0')))
+            and (not state or n_atts[5] == state)
+        )
+        for owner, workflow, cycle, name, submit_num, state in items
+    )
 
 
 def node_filter(node, node_type, args):
@@ -187,7 +192,7 @@ def get_data_elements(flow, nat_ids, element_type):
     ]
 
 
-class BaseResolvers:
+class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
     """Data access methods for resolving GraphQL queries."""
 
     def __init__(self, data_store_mgr):
@@ -315,7 +320,7 @@ class BaseResolvers:
         """Return nodes and edges within a specified distance of root nodes."""
         # Initial root node selection.
         nodes = root_nodes
-        node_ids = set(n.id for n in root_nodes)
+        node_ids = {n.id for n in root_nodes}
         edges = []
         edge_ids = set()
         # Setup for edgewise search.
@@ -324,10 +329,11 @@ class BaseResolvers:
             # Gather edges.
             # Edges should be unique (graph not circular),
             # but duplicates will be present as node holds all associated.
-            new_edge_ids = set(
+            new_edge_ids = {
                 e_id
                 for n in new_nodes
-                for e_id in n.edges).difference(edge_ids)
+                for e_id in n.edges
+            }.difference(edge_ids)
             edge_ids.update(new_edge_ids)
             new_edges = [
                 edge
@@ -366,7 +372,7 @@ class BaseResolvers:
         """
         workflow_ids = set(args.get('workflows', args.get('ids', ())))
         sub_id = uuid4()
-        info.context['sub_id'] = sub_id
+        info.variable_values['backend_sub_id'] = sub_id
         self.delta_store[sub_id] = {}
         delta_queues = self.data_store_mgr.delta_queues
         deltas_queue = queue.Queue()
@@ -530,7 +536,7 @@ class Resolvers(BaseResolvers):
 
     def pause(self) -> Tuple[bool, str]:
         """Pause the workflow."""
-        self.schd.command_queue.put(('pause', tuple(), {}))
+        self.schd.command_queue.put(('pause', (), {}))
         return (True, 'Command queued')
 
     def kill_tasks(self, tasks):
@@ -589,7 +595,7 @@ class Resolvers(BaseResolvers):
             ("poll_tasks", (tasks,), {}))
         return (True, 'Command queued')
 
-    def put_ext_trigger(self, message, id):
+    def put_ext_trigger(self, message, id):  # noqa: A002 (graphql interface)
         """Server-side external event trigger interface.
 
         Args:
@@ -657,12 +663,12 @@ class Resolvers(BaseResolvers):
 
     def release_hold_point(self) -> Tuple[bool, str]:
         """Release all tasks and unset workflow hold point."""
-        self.schd.command_queue.put(('release_hold_point', tuple(), {}))
+        self.schd.command_queue.put(('release_hold_point', (), {}))
         return (True, 'Command queued')
 
     def resume(self) -> Tuple[bool, str]:
         """Resume the workflow."""
-        self.schd.command_queue.put(('resume', tuple(), {}))
+        self.schd.command_queue.put(('resume', (), {}))
         return (True, 'Command queued')
 
     def set_verbosity(self, level):

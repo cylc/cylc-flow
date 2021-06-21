@@ -70,23 +70,25 @@ def daemonize(schd):
                     if (log_stat.st_mtime == old_log_mtime or
                             log_stat.st_size == 0):
                         continue
-                    for line in open(logfname):
-                        if schd.START_MESSAGE_PREFIX in line:
-                            workflow_url, workflow_pid = (
-                                item.rsplit("=", 1)[-1]
-                                for item in line.rsplit()[-2:])
-                        if schd.START_PUB_MESSAGE_PREFIX in line:
-                            pub_url = line.rsplit("=", 1)[-1].rstrip()
-                        if workflow_url and pub_url:
-                            break
-                        elif ' ERROR -' in line or ' CRITICAL -' in line:
-                            # ERROR and CRITICAL before workflow starts
-                            try:
-                                sys.stderr.write(open(logfname).read())
-                                sys.exit(1)
-                            except IOError:
-                                sys.exit("Workflow schd program exited")
-                except (IOError, OSError, ValueError):
+                    with open(logfname, 'r') as logfile:
+                        for line in logfile:
+                            if schd.START_MESSAGE_PREFIX in line:
+                                workflow_url, workflow_pid = (
+                                    item.rsplit("=", 1)[-1]
+                                    for item in line.rsplit()[-2:])
+                            if schd.START_PUB_MESSAGE_PREFIX in line:
+                                pub_url = line.rsplit("=", 1)[-1].rstrip()
+                            if workflow_url and pub_url:
+                                break
+                            elif ' ERROR -' in line or ' CRITICAL -' in line:
+                                # ERROR and CRITICAL before workflow starts
+                                try:
+                                    with open(logfname, 'r') as logfile2:
+                                        sys.stderr.write(logfile2.read())
+                                    sys.exit(1)
+                                except IOError:
+                                    sys.exit("Workflow schd program exited")
+                except (OSError, ValueError):
                     pass
             if workflow_pid is None or workflow_url is None:
                 sys.exit("Workflow not started after %ds" % _TIMEOUT)
@@ -130,5 +132,5 @@ def daemonize(schd):
     # if we import modules that write to stdin and stdout from C
     # code - evidently the subprocess module is in this category!
     # TODO: close resource? atexit?
-    dvnl = open(os.devnull, 'r')
+    dvnl = open(os.devnull, 'r')  # noqa: SIM115 (keep devnull open until exit)
     os.dup2(dvnl.fileno(), sys.stdin.fileno())

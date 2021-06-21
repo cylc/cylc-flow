@@ -33,7 +33,7 @@ grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
 grep_ok "\* bar.20100101T0000Z (failed)" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Some partially satisfied prerequisites left over:" \
+grep_ok "WARNING - Partially satisfied prerequisites left over:" \
     "${TEST_NAME_BASE}-run.stderr"
 grep_ok "foo.20100101T0600Z is waiting on:" \
     "${TEST_NAME_BASE}-run.stderr"

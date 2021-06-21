@@ -7,8 +7,8 @@
  % cylc graph -n WORKFLOW # graph namespaces
  % cylc graph WORKFLOW # dependencies, collapse on first-parent namespaces
 
-  % cylc config --sparse --item [runtime]ops_s1 WORKFLOW
-  % cylc config --sparse --item [runtime]var_p2 foo"""
+  % cylc config --item [runtime]ops_s1 WORKFLOW
+  % cylc config --item [runtime]var_p2 foo"""
 
 [scheduling]
     [[graph]]

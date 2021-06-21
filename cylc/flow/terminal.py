@@ -126,7 +126,7 @@ def ansi_log(name='cylc', stream='stderr'):
     stream_name = f'<{stream}>'
     for handler in logging.getLogger(name).handlers:
         if (
-            getattr(handler, 'formatter')
+            getattr(handler, 'formatter', None)
             and isinstance(handler.formatter, CylcLogFormatter)
             and isinstance(handler, logging.StreamHandler)
             and handler.stream.name == stream_name
@@ -225,7 +225,7 @@ def cli_function(parser_function=None, **parser_kwargs):
 
             """
             use_color = False
-            wrapped_args, wrapped_kwargs = tuple(), {}
+            wrapped_args, wrapped_kwargs = (), {}
             # should we use colour?
             if parser_function:
                 parser = parser_function()
@@ -259,21 +259,18 @@ def cli_function(parser_function=None, **parser_kwargs):
                 # run the command
                 wrapped_function(*wrapped_args, **wrapped_kwargs)
             except (CylcError, ParsecError) as exc:
-                if cylc.flow.flags.verbosity < 2:
-                    # catch "known" CylcErrors which should have sensible short
-                    # summations of the issue, full traceback not necessary
-                    print(
-                        EXC_EXIT.format(
-                            name=exc.__class__.__name__,
-                            exc=exc
-                        ),
-                        file=sys.stderr
-                    )
-                    sys.exit(1)
-                else:
-                    # if command is running non-interactively just raise the
-                    # full traceback
+                if cylc.flow.flags.verbosity >= 1:
+                    # raise the full traceback
                     raise
+                print(
+                    EXC_EXIT.format(
+                        name=exc.__class__.__name__,
+                        exc=exc
+                    ),
+                    file=sys.stderr
+                )
+                sys.exit(1)
+
             except SystemExit as exc:
                 if exc.args and isinstance(exc.args[0], str):
                     # catch and reformat sys.exit(<str>)

@@ -26,7 +26,7 @@ Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
 
-
+import contextlib
 from copy import copy
 from fnmatch import fnmatchcase
 import os
@@ -395,11 +395,13 @@ class WorkflowConfig:
                     name, offset_string = match.groups()
                     if not offset_string:
                         offset_string = "PT0M"
-                    if cylc.flow.flags.verbosity > 0:
-                        if offset_string.startswith("-"):
-                            LOG.warning(
-                                "%s offsets are normally positive: %s" % (
-                                    s_type, item))
+                    if (
+                        cylc.flow.flags.verbosity > 0
+                        and offset_string.startswith("-")
+                    ):
+                        LOG.warning(
+                            "%s offsets are normally positive: %s" % (
+                                s_type, item))
                     try:
                         offset_interval = (
                             get_interval(offset_string).standardise())
@@ -610,10 +612,13 @@ class WorkflowConfig:
             vfcp = None
 
         # A viz final point can't be beyond the workflow final point.
-        if vfcp is not None and self.final_point is not None:
-            if vfcp > self.final_point:
-                self.cfg['visualization']['final cycle point'] = str(
-                    self.final_point)
+        if (
+            vfcp is not None
+            and self.final_point is not None
+            and vfcp > self.final_point
+        ):
+            self.cfg['visualization']['final cycle point'] = str(
+                self.final_point)
 
         # Replace workflow and task name in workflow and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
@@ -821,13 +826,10 @@ class WorkflowConfig:
                         self.initial_point
                     ).standardise()
             else:
-                try:
+                with contextlib.suppress(IsodatetimeError):
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
                         fcp_str, self.initial_point).standardise()
-                except IsodatetimeError:
-                    # (not relative)
-                    pass
             if self.final_point is None:
                 # Must be absolute.
                 self.final_point = get_point(fcp_str).standardise()
@@ -868,13 +870,13 @@ class WorkflowConfig:
             err_msg = (
                 "implicit tasks detected (no entry under [runtime]):\n"
                 f"    * {implicit_tasks_str}")
-            if self.cfg['scheduler']['allow implicit tasks']:
-                LOG.debug(err_msg)
-            else:
+            if not self.cfg['scheduler']['allow implicit tasks']:
                 raise WorkflowConfigError(
                     f"{err_msg}\n\n"
                     "To allow implicit tasks, use "
                     "'flow.cylc[scheduler]allow implicit tasks'")
+            else:
+                LOG.debug(err_msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
@@ -925,7 +927,7 @@ class WorkflowConfig:
         """
         # Starter x nodes are those with no incoming, i.e.
         # x nodes that never appear as a y.
-        sxs = set(x01 for x01 in x2ys if x01 not in y2xs)
+        sxs = set(x2ys).difference(y2xs)
         while sxs:
             sx01 = sxs.pop()
             for y01 in x2ys[sx01]:
@@ -945,6 +947,17 @@ class WorkflowConfig:
         for orig_name in orig_names:
             exp_names += [name for name, _ in name_expander.expand(orig_name)]
         return exp_names
+
+    def _update_task_params(self, task_name, params):
+        """Update the dict of parameters used in a task definition.
+
+        # Used to expand parameter values in task environments.
+        """
+        self.task_param_vars.setdefault(
+            task_name, {}
+        ).update(
+            params
+        )
 
     def _expand_runtime(self):
         """Expand [runtime] name lists or parameterized names.
@@ -973,8 +986,7 @@ class WorkflowConfig:
                     newruntime[name] = OrderedDictWithDefaults()
                 replicate(newruntime[name], namespace_dict)
                 if indices:
-                    # Put parameter values in task environments.
-                    self.task_param_vars[name] = indices
+                    self._update_task_params(name, indices)
                     new_environ = OrderedDictWithDefaults()
                     if 'environment' in newruntime[name]:
                         new_environ = newruntime[name]['environment'].copy()
@@ -985,12 +997,15 @@ class WorkflowConfig:
                     origin = 'inherit = %s' % ', '.join(parents)
                     repl_parents = []
                     for parent in parents:
-                        repl_parents.append(
+                        used_indices, expanded = (
                             name_expander.expand_parent_params(
-                                parent, indices, origin))
+                                parent, indices, origin)
+                        )
+                        repl_parents.append(expanded)
+                        if used_indices:
+                            self._update_task_params(name, used_indices)
                     newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
-
         # Parameter expansion of visualization node attributes. TODO - do vis
         # 'node groups' too, or deprecate them (use families in 'node attrs').
         name_expander = NameExpander(self.parameters)
@@ -1042,10 +1057,10 @@ class WorkflowConfig:
 
     def check_param_env_tmpls(self):
         """Check for illegal parameter environment templates"""
-        parameter_values = dict(
-            (key, values[0])
+        parameter_values = {
+            key: values[0]
             for key, values in self.parameters[0].items() if values
-        )
+        }
         bads = set()
         for task_name, task_items in self.cfg['runtime'].items():
             if 'environment' not in task_items:
@@ -1058,7 +1073,7 @@ class WorkflowConfig:
         if bads:
             LOG.warning(
                 'bad parameter environment template:\n    '
-                '\n    '.join(
+                + '\n    '.join(
                     '[runtime][%s][environment]%s = %s  # %s' %
                     bad for bad in sorted(bads)
                 )
@@ -1222,8 +1237,10 @@ class WorkflowConfig:
             # Handle "runahead limit = P0":
             if self.custom_runahead_limit.is_null():
                 self.custom_runahead_limit = IntegerInterval('P1')
-        elif (self.cycling_type == ISO8601_CYCLING_TYPE and
-              any(tlr.fullmatch(limit) for tlr in time_limit_regexes)):
+        elif (  # noqa: SIM106
+            self.cycling_type == ISO8601_CYCLING_TYPE
+            and any(tlr.fullmatch(limit) for tlr in time_limit_regexes)
+        ):
             self.custom_runahead_limit = ISO8601Interval(limit)
         else:
             raise WorkflowConfigError(
@@ -1268,9 +1285,11 @@ class WorkflowConfig:
             if name not in self.workflow_polling_tasks:
                 continue
             rtc = tdef.rtconfig
-            comstr = "cylc workflow-state" + \
-                     " --task=" + tdef.workflow_polling_cfg['task'] + \
-                     " --point=$CYLC_TASK_CYCLE_POINT"
+            comstr = (
+                "cylc workflow-state"
+                f" --task={tdef.workflow_polling_cfg['task']}"
+                " --point=$CYLC_TASK_CYCLE_POINT"
+            )
             for key, fmt in [
                     ('user', ' --%s=%s'),
                     ('host', ' --%s=%s'),
@@ -1327,7 +1346,7 @@ class WorkflowConfig:
 
             # All dummy modes should run on platform localhost
             # All Cylc 7 config items which conflict with platform are removed.
-            for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+            for section, key, _ in FORBIDDEN_WITH_PLATFORM:
                 if (section in rtc and key in rtc[section]):
                     rtc[section][key] = None
             rtc['platform'] = 'localhost'
@@ -1734,13 +1753,14 @@ class WorkflowConfig:
             try:
                 xtrig = self.cfg['scheduling']['xtriggers'][label]
             except KeyError:
-                if label == 'wall_clock':
+                if label != 'wall_clock':
+                    raise WorkflowConfigError(f"xtrigger not defined: {label}")
+                else:
                     # Allow "@wall_clock" in the graph as an undeclared
                     # zero-offset clock xtrigger.
                     xtrig = SubFuncContext(
                         'wall_clock', 'wall_clock', [], {})
-                else:
-                    raise WorkflowConfigError(f"xtrigger not defined: {label}")
+
             if (xtrig.func_name == 'wall_clock' and
                     self.cfg['scheduling']['cycling mode'] == (
                         INTEGER_CYCLING_TYPE)):
@@ -1809,9 +1829,11 @@ class WorkflowConfig:
                 self.closed_families = copy(self.collapsed_families_config)
             else:
                 for fam in first_parent_descendants:
-                    if fam != 'root':
-                        if fam not in self.closed_families:
-                            self.closed_families.append(fam)
+                    if (
+                        fam != 'root'
+                        and fam not in self.closed_families
+                    ):
+                        self.closed_families.append(fam)
         elif ungroup_all:
             # Ungroup all family nodes
             self.closed_families = []

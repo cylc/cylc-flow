@@ -77,7 +77,9 @@ def sort_elements(elements, args):
     sort_args = args.get('sort')
     if sort_args and elements:
         keys = [
-            key for key in [to_snake_case(k) for k in sort_args.keys]]
+            to_snake_case(key)
+            for key in sort_args.keys
+        ]
         if not keys:
             raise ValueError('You must provide at least one key to sort')
         keys_not_in_schema = [
@@ -356,8 +358,8 @@ def process_resolver_info(root, info, args):
     """Set and gather info for resolver."""
     # Add the subscription id to the resolver context
     # to know which delta-store to use."""
-    if 'sub_id' in info.context:
-        args['sub_id'] = info.context['sub_id']
+    if 'backend_sub_id' in info.variable_values:
+        args['sub_id'] = info.variable_values['backend_sub_id']
 
     field_name = to_snake_case(info.field_name)
     # root is the parent data object.
@@ -375,7 +377,7 @@ def get_native_ids(field_ids):
     if isinstance(field_ids, str):
         return [field_ids]
     if isinstance(field_ids, dict):
-        return [f_id for f_id in field_ids]
+        return list(field_ids)
     return field_ids
 
 
@@ -415,7 +417,7 @@ async def get_nodes_all(root, info, **args):
         if isinstance(field_ids, str):
             field_ids = [field_ids]
         elif isinstance(field_ids, dict):
-            field_ids = [f_id for f_id in field_ids]
+            field_ids = list(field_ids)
         args['ids'] = field_ids
     elif field_ids == []:
         return []
@@ -590,7 +592,7 @@ async def resolve_broadcasts(root, info, **args):
                 continue
             t_args['ids'] = [(None, None, None, name, None, None)]
             tasks = await resolvers.get_nodes_all(t_type, t_args)
-            for namespace in set(ns for t in tasks for ns in t.namespace):
+            for namespace in {ns for t in tasks for ns in t.namespace}:
                 if namespace in broadcasts[cycle]:
                     addict(
                         result,
@@ -648,7 +650,7 @@ class TimeZone(ObjectType):
 class Workflow(ObjectType):
     class Meta:
         description = """Global workflow info."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for definition)
     name = String()
     status = String()
     status_msg = String()
@@ -752,7 +754,7 @@ class Workflow(ObjectType):
 class Job(ObjectType):
     class Meta:
         description = """Jobs."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for definition)
     submit_num = Int()
     state = String()
     # name and cycle_point for filtering/sorting
@@ -791,7 +793,7 @@ class Job(ObjectType):
 class Task(ObjectType):
     class Meta:
         description = """Task definition, static fields"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for definition)
     name = String()
     meta = Field(NodeMeta)
     mean_elapsed_time = Float()
@@ -884,7 +886,7 @@ class ClockTrigger(ObjectType):
 class XTrigger(ObjectType):
     class Meta:
         description = """Task trigger"""
-    id = String()
+    id = String()  # noqa: A003 (required for definition)
     label = String()
     message = String()
     satisfied = Boolean()
@@ -894,7 +896,7 @@ class XTrigger(ObjectType):
 class TaskProxy(ObjectType):
     class Meta:
         description = """Task cycle instance."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     task = Field(
         Task,
         description="""Task definition""",
@@ -984,7 +986,7 @@ class TaskProxy(ObjectType):
 class Family(ObjectType):
     class Meta:
         description = """Task definition, static fields"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     name = String()
     meta = Field(NodeMeta)
     depth = Int()
@@ -1033,7 +1035,7 @@ class Family(ObjectType):
 class FamilyProxy(ObjectType):
     class Meta:
         description = """Family composite."""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     cycle_point = String()
     # name & namespace for filtering/sorting
     name = String()
@@ -1106,7 +1108,7 @@ class Node(Union):
 class Edge(ObjectType):
     class Meta:
         description = """Dependency edge task/family proxies"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     source = ID()
     source_node = Field(
         Node,
@@ -1769,7 +1771,7 @@ class ExtTrigger(Mutation):
             description='External trigger message.',
             required=True
         )
-        id = String(
+        id = String(  # noqa: A003 (required for schema definition)
             description='Unique trigger ID.',
             required=True
         )
@@ -2102,7 +2104,7 @@ class Updated(ObjectType):
 class Deltas(ObjectType):
     class Meta:
         description = """Grouped deltas of the WFS publish"""
-    id = ID(required=True)
+    id = ID(required=True)  # noqa: A003 (required for schema definition)
     shutdown = Boolean(default_value=False)
     added = Field(
         Added,

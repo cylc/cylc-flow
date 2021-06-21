@@ -25,6 +25,7 @@ This module provides logic to:
 * Manage invoking and retrying of task event handlers.
 """
 
+from contextlib import suppress
 from collections import namedtuple
 from enum import Enum
 from logging import getLevelName, INFO, DEBUG
@@ -243,11 +244,8 @@ class TaskEventsManager():
             time_ref = itask.summary['submitted_time']
             event = 'submission timeout'
         msg = event
-        try:
+        with suppress(TypeError, ValueError):
             msg += ' after %s' % intvl_as_str(itask.timeout - time_ref)
-        except (TypeError, ValueError):
-            # Badness in time_ref?
-            pass
         itask.timeout = None  # emit event only once
         if msg and event:
             LOG.warning('[%s] -%s', itask, msg)
@@ -630,7 +628,7 @@ class TaskEventsManager():
             subject = "[%s/%s/%02d %s] %s" % (
                 point, name, submit_num, event, schd_ctx.workflow)
         else:
-            event_set = set(id_key[0][1] for id_key in id_keys)
+            event_set = {id_key[0][1] for id_key in id_keys}
             if len(event_set) == 1:
                 # 1 event from n tasks
                 subject = "[%d tasks %s] %s" % (
@@ -750,11 +748,9 @@ class TaskEventsManager():
             try:
                 # All completed jobs are expected to have a "job.out".
                 fnames = [JOB_LOG_OUT]
-                try:
+                with suppress(TypeError):
                     if key1[1] not in 'succeeded':
                         fnames.append(JOB_LOG_ERR)
-                except TypeError:
-                    pass
                 fname_oks = {}
                 for fname in fnames:
                     fname_oks[fname] = os.path.exists(get_task_job_log(
@@ -967,16 +963,15 @@ class TaskEventsManager():
 
     def _process_message_submitted(self, itask, event_time):
         """Helper for process_message, handle a submit-succeeded message."""
-        try:
+        with suppress(KeyError):
             LOG.info(
                 '[%s] -job[%02d] submitted to %s:%s[%s]',
                 itask,
                 itask.summary['submit_num'],
                 itask.summary['platforms_used'][itask.summary['submit_num']],
                 itask.summary['job_runner_name'],
-                itask.summary['submit_method_id'])
-        except KeyError:
-            pass
+                itask.summary['submit_method_id']
+            )
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "time_submit_exit": event_time,
             "submit_status": 0,
@@ -1142,7 +1137,7 @@ class TaskEventsManager():
                     EventData.Workflow.value:
                         quote(self.workflow),
                     EventData.WorkflowUUID.value:
-                        quote(str(self.uuid_str)),
+                        quote(self.uuid_str),
                     # BACK COMPAT: Suite, SuiteUUID deprecated
                     # url:
                     #     https://github.com/cylc/cylc-flow/pull/4174
@@ -1153,7 +1148,7 @@ class TaskEventsManager():
                     EventData.Suite.value:  # deprecated
                         quote(self.workflow),
                     EventData.SuiteUUID.value:  # deprecated
-                        quote(str(self.uuid_str)),
+                        quote(self.uuid_str),
                     EventData.TryNum.value:
                         itask.get_try_num(),
                     # BACK COMPAT: JobID_old, JobRunnerName_old

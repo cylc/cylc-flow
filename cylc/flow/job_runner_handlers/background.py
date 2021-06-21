@@ -78,8 +78,9 @@ class BgCommandHandler:
                 env=submit_opts.get('env'),
                 preexec_fn=os.setpgrp,
                 stdin=DEVNULL,
-                stdout=open(os.devnull, "wb"),
-                stderr=STDOUT)
+                stdout=DEVNULL,
+                stderr=STDOUT
+            )
         except OSError as exc:
             # subprocess.Popen has a bad habit of not setting the
             # filename of the executable when it raises an OSError.

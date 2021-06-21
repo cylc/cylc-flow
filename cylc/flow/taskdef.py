@@ -35,10 +35,9 @@ def generate_graph_children(tdef, point):
                 child_point = trigger.get_child_point(point, seq)
                 is_abs = (trigger.offset_is_absolute or
                           trigger.offset_is_from_icp)
-                if is_abs:
-                    if trigger.get_parent_point(point) != point:
-                        # If 'foo[^] => bar' only spawn off of '^'.
-                        continue
+                if is_abs and trigger.get_parent_point(point) != point:
+                    # If 'foo[^] => bar' only spawn off of '^'.
+                    continue
                 if seq.is_valid(child_point):
                     # E.g.: foo should trigger only on T06:
                     #   PT6H = "waz"
@@ -71,10 +70,9 @@ def generate_graph_parents(tdef, point):
             parent_point = trigger.get_parent_point(point)
             is_abs = (trigger.offset_is_absolute or
                       trigger.offset_is_from_icp)
-            if is_abs:
-                if parent_point != point:
-                    # If 'foo[^] => bar' only spawn off of '^'.
-                    continue
+            if is_abs and parent_point != point:
+                # If 'foo[^] => bar' only spawn off of '^'.
+                continue
             if seq.is_valid(parent_point):
                 # E.g.: foo should trigger only on T06:
                 #   PT6H = "waz"
@@ -240,10 +238,11 @@ class TaskDef:
 
     def is_valid_point(self, point):
         """Return True if point is on-sequence and within bounds."""
-        for sequence in self.sequences:
-            if sequence.is_valid(point):
-                return True
-        else:
+        is_valid_point = any(
+            sequence.is_valid(point)
+            for sequence in self.sequences
+        )
+        if not is_valid_point:
             LOG.warning("%s%s, %s" % (
                 self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, self.name, point))
-            return False
+        return is_valid_point

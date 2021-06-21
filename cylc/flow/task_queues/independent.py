@@ -16,8 +16,9 @@
 
 """Implement independent limited task queues."""
 
-from typing import List, Set, Dict, Counter, Any
 from collections import deque
+from contextlib import suppress
+from typing import List, Set, Dict, Counter, Any
 
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_queues import TaskQueueManagerBase
@@ -156,11 +157,9 @@ class IndepQueueManager(TaskQueueManagerBase):
                 continue
             for qmem in qconfig["members"]:
                 # Remove from default queue
-                try:
+                with suppress(KeyError):
+                    # may already have been removed
                     queues[self.Q_DEFAULT]["members"].remove(qmem)
-                except KeyError:
-                    # Already removed.
-                    pass
                 if qmem in seen:
                     # Override previous queue assignment.
                     oldq = seen[qmem]

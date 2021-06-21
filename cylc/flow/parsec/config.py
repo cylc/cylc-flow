@@ -145,7 +145,7 @@ class ParsecConfig:
             if mkeys:
                 for keys in mkeys:
                     item = self.get(keys, sparse)
-                    if isinstance(item, list) or isinstance(item, dict):
+                    if isinstance(item, (list, dict)):
                         raise NotSingleItemError(itemstr(keys))
                     if not item:
                         item = none_str or "None"

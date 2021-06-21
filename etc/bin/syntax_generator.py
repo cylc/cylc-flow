@@ -21,7 +21,7 @@ def get_keywords_from_workflow_cfg():
         keywords += [item[1].name]
 
     keywords = sorted(set(keywords) - set(PRIVATE_NAMES))
-    return [i for i in reversed(keywords)]
+    return list(reversed(keywords))
 
 
 def update_cylc_lang(keywords, file_, template):

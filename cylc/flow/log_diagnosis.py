@@ -47,9 +47,10 @@ def _load_reflog(filename):
     """Reference test: get trigger info from reference log."""
     res = []
     re_trig = re.compile(r'(\[.+\]\s-triggered\soff\s\[.*\])$')
-    for line in open(os.path.expandvars(filename), 'r'):
-        match = re_trig.search(line)
-        if match:
-            res.append(match.groups()[0])
+    with open(os.path.expandvars(filename), 'r') as reflog:
+        for line in reflog:
+            match = re_trig.search(line)
+            if match:
+                res.append(match.groups()[0])
     res.sort()
     return res

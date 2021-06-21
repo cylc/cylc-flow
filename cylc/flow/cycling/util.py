@@ -29,16 +29,18 @@ def add_offset(cycle_point, offset):
     my_offset_parser = DurationParser()
 
     oper = "+"
-    if offset.startswith("-") or offset.startswith("+"):
+    if offset.startswith(("-", "+")):
         oper = offset[0]
         offset = offset[1:]
-    if offset.startswith("P"):
-        my_shift = my_offset_parser.parse(offset)
-        if oper == "-":
-            my_target_point -= my_shift
-        else:
-            my_target_point += my_shift
-    else:
+
+    if not offset.startswith("P"):
         # TODO - raise appropriate exception
         raise ValueError("ERROR, bad offset format: %s" % offset)
+
+    my_shift = my_offset_parser.parse(offset)
+    if oper == "-":
+        my_target_point -= my_shift
+    else:
+        my_target_point += my_shift
+
     return my_target_point

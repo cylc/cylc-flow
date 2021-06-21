@@ -16,6 +16,7 @@
 
 """Date-time cycling by point, interval, and sequence classes."""
 
+import contextlib
 from functools import lru_cache
 import re
 from typing import List, Optional, TYPE_CHECKING, Tuple
@@ -367,13 +368,11 @@ class ISO8601Sequence(SequenceBase):
 
         # Creating an exclusions object instead
         if excl_points:
-            try:
+            with contextlib.suppress(AttributeError):
                 self.exclusions = ISO8601Exclusions(
                     excl_points,
                     exclusion_start_point,
                     exclusion_end_point)
-            except AttributeError:
-                pass
 
         self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
@@ -486,10 +485,8 @@ class ISO8601Sequence(SequenceBase):
 
     def get_next_point(self, point):
         """Return the next point > p, or None if out of bounds."""
-        try:
+        with contextlib.suppress(KeyError):
             return ISO8601Point(self._cached_next_point_values[point.value])
-        except KeyError:
-            pass
         # Iterate starting at recent valid points, for speed.
         for valid_point in reversed(self._cached_recent_valid_points):
             if valid_point >= point:
@@ -555,10 +552,8 @@ class ISO8601Sequence(SequenceBase):
 
     def get_first_point(self, point):
         """Return the first point >= to point, or None if out of bounds."""
-        try:
+        with contextlib.suppress(KeyError):
             return ISO8601Point(self._cached_first_point_values[point.value])
-        except KeyError:
-            pass
         p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point >= p_iso_point:
@@ -919,10 +914,8 @@ def _point_parse(point_string):
     """Parse a point_string into a proper TimePoint object."""
     if "%" in WorkflowSpecifics.DUMP_FORMAT:
         # May be a custom not-quite ISO 8601 dump format.
-        try:
+        with contextlib.suppress(IsodatetimeError):
             return WorkflowSpecifics.point_parser.strptime(
                 point_string, WorkflowSpecifics.DUMP_FORMAT)
-        except IsodatetimeError:
-            pass
     # Attempt to parse it in ISO 8601 format.
     return WorkflowSpecifics.point_parser.parse(point_string)

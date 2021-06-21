@@ -493,11 +493,10 @@ class TuiApp:
 
     def close_topmost(self):
         """Remove the topmost frame or uit the app if none present."""
-        if self.stack > 0:
-            self.loop.widget = self.loop.widget[0]
-            self.stack -= 1
-        else:
+        if self.stack <= 0:
             raise urwid.ExitMainLoop()
+        self.loop.widget = self.loop.widget[0]
+        self.stack -= 1
 
 
 BINDINGS.add_group(

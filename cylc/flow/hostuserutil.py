@@ -98,7 +98,7 @@ class HostUtil:
         """
 
         ipaddr = ""
-        with suppress(IOError):
+        with suppress(IOError):  # noqa: SIM117 (use of as convolutes this)
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
                 sock.connect((target, 8000))
                 ipaddr = sock.getsockname()[0]
@@ -222,10 +222,10 @@ class HostUtil:
         """
         if not platform:
             return False
-        for host in platform['hosts']:
-            if is_remote_host(host) is True:
-                return True
-        return False
+        return any(
+            is_remote_host(host)
+            for host in platform['hosts']
+        )
 
 
 def get_host_ip_by_name(target):

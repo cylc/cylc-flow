@@ -7,9 +7,9 @@
 [scheduling]
     [[graph]]
         R1 = """
-          l-good<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>
-          l-mess<{{UPSTREAM}}::messenger> => done
-                """
+            l-good<{{UPSTREAM}}::good-stuff> & lbad<{{UPSTREAM}}::bad:fail>
+            l-mess<{{UPSTREAM}}::messenger> => done
+        """
 [runtime]
     [[l-good,lbad]]
         [[[workflow state polling]]]

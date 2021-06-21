@@ -56,6 +56,7 @@ foo_m1=>bar_m1_n2
 #------------------------------------------------------------------------------
 """
 
+from contextlib import suppress
 import re
 
 from cylc.flow.exceptions import ParamExpandError
@@ -215,7 +216,7 @@ class NameExpander:
         """
         head, p_list_str, tail = REC_P_ALL.match(parent).groups()
         if not p_list_str:
-            return head
+            return (None, head)
         used = {}
         for item in (i.strip() for i in p_list_str.split(',')):
             if '-' in item or '+' in item:
@@ -224,10 +225,8 @@ class NameExpander:
             elif '=' in item:
                 # Specific value given.
                 pname, pval = [val.strip() for val in item.split('=', 1)]
-                try:
+                with suppress(ValueError):
                     pval = int(pval)
-                except ValueError:
-                    pass
                 if pname not in self.param_cfg:
                     raise ParamExpandError(
                         "parameter '%s' undefined in '%s'" % (
@@ -253,7 +252,7 @@ class NameExpander:
             tmpl += self.param_tmpl_cfg[pname]
         if tail:
             tmpl += tail
-        return tmpl % used
+        return (used, tmpl % used)
 
 
 class GraphExpander:

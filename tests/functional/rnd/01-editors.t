@@ -24,7 +24,7 @@ set_test_number 6
 TEST_NAME="$TEST_NAME_BASE-defaults"
 export EDITOR=
 export GEDITOR=
-run_ok "$TEST_NAME" cylc config -i '[editors]'
+run_ok "$TEST_NAME" cylc config -d -i '[editors]'
 cmp_ok "${TEST_NAME}.stdout" << __HERE__
 terminal = vi
 gui = gvim -fg
@@ -34,7 +34,7 @@ __HERE__
 TEST_NAME="$TEST_NAME_BASE-envvar-override"
 export EDITOR=editor
 export GEDITOR=geditor
-run_ok "$TEST_NAME" cylc config -i '[editors]'
+run_ok "$TEST_NAME" cylc config -d -i '[editors]'
 cmp_ok "${TEST_NAME}.stdout" << __HERE__
 terminal = editor
 gui = geditor
@@ -49,7 +49,7 @@ create_test_global_config '' '
     terminal = myeditor
     gui = mygeditor
 '
-run_ok "$TEST_NAME" cylc config -i '[editors]'
+run_ok "$TEST_NAME" cylc config -d -i '[editors]'
 cmp_ok "${TEST_NAME}.stdout" << __HERE__
 terminal = myeditor
 gui = mygeditor

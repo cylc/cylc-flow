@@ -95,7 +95,7 @@ class LSFHandler():
     @classmethod
     def get_submit_stdin(cls, job_file_path, _):
         """Return proc_stdin_arg, proc_stdin_value."""
-        return (open(job_file_path), None)
+        return (open(job_file_path), None)  # noqa: SIM115 (open fh by design)
 
 
 JOB_RUNNER_HANDLER = LSFHandler()

@@ -56,6 +56,7 @@ Packaging methods are included for dissemination of protobuf messages.
 
 """
 
+from contextlib import suppress
 from collections import Counter, deque
 from copy import deepcopy
 import json
@@ -244,7 +245,7 @@ def apply_delta(key, delta, data):
                     data_element = data[key][element.id]
                     # Clear fields that require overwrite with delta
                     if CLEAR_FIELD_MAP[key]:
-                        for field, value in element.ListFields():
+                        for field, _ in element.ListFields():
                             if field.name in CLEAR_FIELD_MAP[key]:
                                 data_element.ClearField(field.name)
                     data_element.MergeFrom(element)
@@ -272,22 +273,18 @@ def apply_delta(key, delta, data):
                 # remove relationship from task
                 data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
-                try:
+                with suppress(KeyError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_tasks.remove(del_id)
-                except KeyError:
-                    pass
                 # remove relationship from workflow
                 getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
                 data[FAMILIES][data[key][del_id].family].proxies.remove(del_id)
-                try:
+                with suppress(KeyError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_families.remove(del_id)
-                except KeyError:
-                    pass
                 getattr(data[WORKFLOW], key).remove(del_id)
             elif key == EDGES:
                 edge = data[key][del_id]
@@ -549,11 +546,9 @@ class DataStoreMgr:
                 family.parents.extend(
                     [f'{self.workflow_id}{ID_DELIM}{p_name}'
                      for p_name in parents[name]])
-                try:
+                with suppress(IndexError):
                     family.first_parent = (
                         f'{self.workflow_id}{ID_DELIM}{ancestors[name][1]}')
-                except IndexError:
-                    pass
                 families[f_id] = family
 
         for name, parent_list in parents.items():
@@ -707,7 +702,7 @@ class DataStoreMgr:
             self, s_id, s_node, items, active_id, flow_label, reflow,
             edge_distance, descendant=False, is_parent=False):
         """Construct nodes/edges for children/parents of source node."""
-        for t_name, t_point, is_abs in items:
+        for t_name, t_point, _ in items:
             t_node = f'{t_name}.{t_point}'
             t_id = (
                 f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
@@ -1568,7 +1563,7 @@ class DataStoreMgr:
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        for label, message, satisfied in itask.state.outputs.get_all():
+        for label, _, satisfied in itask.state.outputs.get_all():
             output = tp_delta.outputs[label]
             output.label = label
             output.satisfied = satisfied

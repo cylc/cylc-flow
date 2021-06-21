@@ -17,6 +17,7 @@
 """Provide a class to represent a task proxy in a running workflow."""
 
 from collections import Counter
+from contextlib import suppress
 from fnmatch import fnmatchcase
 from time import time
 from typing import Any, Dict, List, Tuple, Optional, TYPE_CHECKING
@@ -407,11 +408,8 @@ class TaskProxy:
         """
         if point is None:
             return True
-        try:
+        with suppress(PointParsingError):  # point_str may be a glob
             point = standardise_point_string(point)
-        except PointParsingError:
-            # point_str may be a glob
-            pass
         return fnmatchcase(str(self.point), point)
 
     def status_match(self, status: Optional[str]) -> bool:
@@ -425,7 +423,6 @@ class TaskProxy:
         """Return whether a string/glob matches the task's name."""
         if fnmatchcase(self.tdef.name, name):
             return True
-        for ns in self.tdef.namespace_hierarchy:
-            if fnmatchcase(ns, name):
-                return True
-        return False
+        return any(
+            fnmatchcase(ns, name) for ns in self.tdef.namespace_hierarchy
+        )

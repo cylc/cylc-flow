@@ -53,41 +53,55 @@ install_requires = [
     'pyuv==1.4.*',
     'pyzmq==19.0.*',
     'setuptools>=49',
-    'urwid==2.*'
+    'urwid==2.*',
 ]
 tests_require = [
     'async-timeout>=3.0.0',
     'async_generator',
     'coverage>=5.0.0',
+    'flake8-broken-line>=0.3.0',
+    'flake8-bugbear>=21.0.0',
+    'flake8-builtins>=1.5.0',
+    'flake8-comprehensions>=3.5.0',
+    'flake8-debugger>=4.0.0',
+    'flake8-mutable>=1.2.0',
+    'flake8-simplify>=0.14.0',
     'flake8>=3.0.0',
-    'mypy>=0.800',
+    'mypy>=0.900',
     # TODO: https://github.com/pytest-dev/pytest-asyncio/issues/ 209
     'pytest-asyncio>=0.15.1',
     'pytest-cov>=2.8.0',
     'pytest-xdist>=2',
     'pytest-env>=0.6.2',
     'pytest>=6',
-    'testfixtures>=6.11.0'
+    'testfixtures>=6.11.0',
+    # Type annotation stubs
+    # (http://mypy-lang.blogspot.com/2021/05/the-upcoming-switch-to-modular-typeshed.html)  # noqa: E501
+    'types-Jinja2>=0.1.3',
+    'types-aiofiles>=0.1.3',
+    'types-pkg_resources>=0.1.2',
+    'types-protobuf>=0.1.10',
+    'types-six>=0.1.6',
 ]
 
 extra_requires = {
     'empy': [
-        'EmPy==3.3.*'
+        'EmPy==3.3.*',
     ],
     'all': [],
     'report-timings': [
-        'pandas==1.*'
+        'pandas==1.*',
     ],
     'main_loop-log_data_store': [
         'pympler',
-        'matplotlib'
+        'matplotlib',
     ],
     'main_loop-log_main_loop': [
-        'matplotlib'
+        'matplotlib',
     ],
     'main_loop-log_memory': [
         'pympler',
-        'matplotlib'
+        'matplotlib',
     ]
 }
 extra_requires['all'] = (
@@ -100,16 +114,24 @@ extra_requires['all'] = (
 )
 
 
+with open('README.md') as readme_file:
+    readme = readme_file.read()
+
+
 setup(
     version=find_version("cylc", "flow", "__init__.py"),
-    long_description=open('README.md').read(),
+    long_description=readme,
     long_description_content_type="text/markdown",
     scripts=glob(join('bin', '*')),
     packages=find_namespace_packages(include=["cylc.*"]),
     package_data={
         'cylc.flow': [
-            'etc/*.yaml', 'etc/flow*.eg', 'etc/job.sh',
-            'etc/syntax/*', 'etc/cylc-bash-completion', 'py.typed'
+            'etc/*.yaml',
+            'etc/flow*.eg',
+            'etc/job.sh',
+            'etc/syntax/*',
+            'etc/cylc-bash-completion',
+            'py.typed',
         ]
     },
     install_requires=install_requires,

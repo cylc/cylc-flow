@@ -183,11 +183,13 @@ class ParsecValidator:
                             # (GitHub #2417)
                             raise IllegalItemError(
                                 keys, key, 'consecutive spaces')
-                        if ((val_is_dict and spc_is_dict) or
-                                (not val_is_dict and not spc_is_dict)):
-                            speckey = '__MANY__'
-                        else:
+                        if not (
+                            (val_is_dict and spc_is_dict)
+                            or (not val_is_dict and not spc_is_dict)
+                        ):
                             raise IllegalItemError(keys, key)
+                        speckey = '__MANY__'
+
                 else:
                     speckey = key
                 specval = spec[speckey]
@@ -224,7 +226,7 @@ class ParsecValidator:
             return True
         elif value in ['False', 'false']:
             return False
-        elif value in ['', None]:
+        elif value in ['', None]:  # noqa: SIM106
             return None
         else:
             raise IllegalValueError('boolean', keys, value)
@@ -461,10 +463,9 @@ class ParsecValidator:
                 ["'", cls._REC_SQ_VALUE]]:
             if value.startswith(substr):
                 match = rec.match(value)
-                if match:
-                    value = match.groups()[0]
-                else:
+                if not match:
                     raise IllegalValueError("string", keys, value)
+                value = match.groups()[0]
                 break
         else:
             # unquoted
@@ -879,7 +880,7 @@ class CylcConfigValidator(ParsecValidator):
                         'parameter', keys, value, 'mixing int range and str')
                 can_only_be = int
                 items.extend(values)
-            elif cls._REC_NAME_SUFFIX.match(item):
+            elif cls._REC_NAME_SUFFIX.match(item):  # noqa: SIM106
                 try:
                     int(item)
                 except ValueError:

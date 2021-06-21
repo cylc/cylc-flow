@@ -144,7 +144,7 @@ class WorkflowDatabaseManager:
         try:
             # Create the file if it didn't exist; this is done in the hope of
             # addressing potential NFS file lag, we think
-            open(self.pub_dao.db_file_name, "a").close()
+            open(self.pub_dao.db_file_name, "a").close()  # noqa: SIM115
             # Get default permissions level for public db:
             st_mode = os.stat(self.pub_dao.db_file_name).st_mode
 
@@ -321,7 +321,7 @@ class WorkflowDatabaseManager:
         """
         self.db_deletes_map[self.TABLE_WORKFLOW_PARAMS].append({})
         self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].extend([
-            {"key": self.KEY_UUID_STR, "value": str(schd.uuid_str)},
+            {"key": self.KEY_UUID_STR, "value": schd.uuid_str},
             {"key": self.KEY_CYLC_VERSION, "value": CYLC_VERSION},
             {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
         ])

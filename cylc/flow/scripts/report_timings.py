@@ -71,7 +71,7 @@ def smart_open(filename=None):
 
     """
     if filename and filename != '-':
-        fh = open(filename, 'w')
+        fh = open(filename, 'w')  # noqa SIM115 (close done in finally block)
     else:
         fh = sys.stdout
     try:

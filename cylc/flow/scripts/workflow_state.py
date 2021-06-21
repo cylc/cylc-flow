@@ -187,10 +187,9 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
             "cannot specify a cycle point and use environment variable")
 
     if options.use_task_point:
-        if "CYLC_TASK_CYCLE_POINT" in os.environ:
-            options.cycle = os.environ["CYLC_TASK_CYCLE_POINT"]
-        else:
+        if "CYLC_TASK_CYCLE_POINT" not in os.environ:
             raise UserInputError("CYLC_TASK_CYCLE_POINT is not defined")
+        options.cycle = os.environ["CYLC_TASK_CYCLE_POINT"]
 
     if options.offset and not options.cycle:
         raise UserInputError(
