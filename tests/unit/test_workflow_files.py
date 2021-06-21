@@ -46,8 +46,8 @@ from cylc.flow.workflow_files import (
     search_install_source_dirs
 )
 
-from tests.unit.conftest import MonkeyMock
-from tests.unit.filetree import (
+from .conftest import MonkeyMock
+from .filetree import (
     FILETREE_1,
     FILETREE_2,
     FILETREE_3,

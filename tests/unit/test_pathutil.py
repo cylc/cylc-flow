@@ -44,7 +44,7 @@ from cylc.flow.pathutil import (
     remove_dir_or_file
 )
 
-from tests.unit.conftest import MonkeyMock
+from .conftest import MonkeyMock
 
 
 HOME = Path.home()
