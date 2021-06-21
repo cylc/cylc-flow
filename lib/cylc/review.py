@@ -661,6 +661,8 @@ class CylcReviewService(object):
     def view(self, user, suite, path, path_in_tar=None, mode=None,
              no_fuzzy_time="0"):
         """View a text log file."""
+        if re.findall(r"log\..*\d\d\s\d\d$", path):
+            path = path.replace(' ', '+')
         # get file or serve raw data
         file_output = self.get_file(
             user, suite, path, path_in_tar=path_in_tar, mode=mode)
@@ -786,7 +788,8 @@ class CylcReviewService(object):
 
         """
         if not os.path.exists(path):
-            raise cherrypy.HTTPError(404)
+            raise cherrypy.HTTPError(
+                404, 'Path {path} does not exist'.format(path=path))
         if not os.access(path, os.R_OK):
             raise cherrypy.HTTPError(403)
         return path
