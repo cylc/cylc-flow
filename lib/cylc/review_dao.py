@@ -279,7 +279,7 @@ class CylcReviewDAO(object):
         return (entries, of_n_entries)
 
     def is_cylc8(self, user_name, suite_name):
-        """Detemine Cylc version for a given suite: Database changes require
+        """Determine Cylc version for a given suite: Database changes require
         A different database query for Cylc8.
         """
         suite_info = self._db_exec(
