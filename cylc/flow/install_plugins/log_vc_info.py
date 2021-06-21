@@ -154,12 +154,14 @@ def get_vc_info(path: Union[Path, str]) -> Optional['OrderedDict[str, str]']:
             missing_base = True
             LOG.debug(exc)
         except OSError as exc:
-            if any(exc.strerror.lower().startswith(err)
-                   for err in NOT_REPO_ERRS[vcs]):
+            if not any(
+                exc.strerror.lower().startswith(err)
+                for err in NOT_REPO_ERRS[vcs]
+            ):
+                raise exc
+            else:
                 LOG.debug(f"Source dir {path} is not a {vcs} repository")
                 continue
-            else:
-                raise exc
 
         info['version control system'] = vcs
         if vcs == SVN:

@@ -16,6 +16,7 @@
 """Common logic for "cylc play" CLI."""
 
 import asyncio
+from contextlib import suppress
 from functools import lru_cache
 import os
 import sys
@@ -48,9 +49,6 @@ Start a new workflow, restart a stopped workflow, or resume a paused workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
-If the workflow is not already installed (by "cylc install" or a previous run)
-it will be installed on the fly before start up.
-
 To avoid overwriting existing run directories, workflows that already ran can
 only be restarted from prior state. To start again, "cylc install" a new copy
 or "cylc clean" the existing run directory.
@@ -76,7 +74,6 @@ Examples:
 
 At restart, tasks recorded as submitted or running are polled to determine what
 happened to them while the workflow was down.
-
 """
 
 
@@ -254,12 +251,10 @@ def _open_logs(reg, no_detach):
 def _close_logs():
     """Close Cylc log handlers for a flow run."""
     for handler in LOG.handlers:
-        try:
-            handler.close()
-        except IOError:
+        with suppress(IOError):
             # suppress traceback which `logging` might try to write to the
             # log we are trying to close
-            pass
+            handler.close()
 
 
 def scheduler_cli(parser, options, reg):
@@ -372,8 +367,7 @@ async def _run(scheduler: Scheduler) -> int:
         ret = 3
 
     # kthxbye
-    finally:
-        return ret
+    return ret
 
 
 @cli_function(get_option_parser)

@@ -13,6 +13,9 @@
     [[events]]
         abort on timeout = True
         timeout = PT30S
+        abort on inactivity = True
+        inactivity = PT30S
+
 [scheduling]
     [[special tasks]]
         external-trigger = foo("drugs and money")
@@ -21,20 +24,22 @@
         #      - killed tasks are held to prevent retries; they have to be
         #        released before they can be removed.
         R1 = """
-          foo & bar
-          bar:fail => handler
-          """
+            foo & bar
+            bar:fail => handler
+        """
+
 [runtime]
     [[foo]]
         script = """
-           cylc kill "$CYLC_WORKFLOW_NAME" 'bar.1'
-           cylc__job__poll_grep_workflow_log '\[bar\.1\].* (internal)failed'
-           cylc release "$CYLC_WORKFLOW_NAME" 'bar.1'
-           """
+            cylc kill "$CYLC_WORKFLOW_NAME" 'bar.1'
+            cylc__job__poll_grep_workflow_log '\[bar\.1\].* (internal)failed'
+            cylc release "$CYLC_WORKFLOW_NAME" 'bar.1'
+        """
     [[bar]]
         script = """
-sleep 5
-cylc ext-trigger $CYLC_WORKFLOW_NAME "drugs and money" 12345
-sleep 60"""
+            sleep 5
+            cylc ext-trigger $CYLC_WORKFLOW_NAME "drugs and money" 12345
+            sleep 60
+        """
     [[handler]]
          script = true

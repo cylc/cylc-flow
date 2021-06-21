@@ -57,7 +57,7 @@ workflow_run_ok "${TEST_NAME}-run1" cylc play "${WORKFLOW_NAME}" \
     -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
 
 # ensure these files get installed on the remote platform
-SSH="$(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
+SSH="$(cylc config -d -i "[platforms][$CYLC_TEST_PLATFORM]ssh command")"
 ${SSH} "${CYLC_TEST_HOST}" \
     find "${RUN_DIR_REL}/"{app,bin,etc,lib} -type f | sort > 'find.out'
 cmp_ok 'find.out'  <<__OUT__

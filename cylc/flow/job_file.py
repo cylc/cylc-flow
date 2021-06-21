@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Write task job files."""
 
+from contextlib import suppress
 import os
 import re
 import stat
@@ -74,10 +75,8 @@ class JobFileWriter:
                 self._write_epilogue(handle, job_conf, run_d)
         except IOError as exc:
             # Remove temporary file
-            try:
+            with suppress(OSError):
                 os.unlink(tmp_name)
-            except OSError:
-                pass
             raise exc
         # check syntax
         if check_syntax:
@@ -95,10 +94,8 @@ class JobFileWriter:
                 if exc.filename is None:
                     exc.filename = 'bash'
                 # Remove temporary file
-                try:
+                with suppress(OSError):
                     os.unlink(tmp_name)
-                except OSError:
-                    pass
                 raise exc
         # Make job file executable
         mode = (
@@ -267,12 +264,10 @@ class JobFileWriter:
         """
         # Interpolate any parameter environment template variables:
         if param_vars:
-            try:
+            with suppress(ParamExpandError):
                 value = interpolate_template(value, param_vars)
-            except ParamExpandError:
-                # Already logged warnings in
+                # ParamExpandError: Already logged warnings in
                 # cylc.flow.config.WorkflowConfig.check_param_env_tmpls()
-                pass
 
         # Handle '~':
         match = re.match(r"^(~[^/\s]*/)(.*)$", value)

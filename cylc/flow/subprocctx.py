@@ -24,7 +24,7 @@ from shlex import quote
 from cylc.flow.wallclock import get_current_time_string
 
 
-class SubProcContext:
+class SubProcContext:  # noqa: SIM119 (not really relevant to this case)
     """Represent the context of an external command to run as a subprocess.
 
     Attributes:

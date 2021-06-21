@@ -16,6 +16,7 @@
 """Cylc scheduler server."""
 
 import asyncio
+from contextlib import suppress
 from collections import deque
 from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from dataclasses import dataclass
@@ -122,17 +123,6 @@ class SchedulerError(CylcError):
     pass
 
 
-class SchedulerUUID:
-    """Scheduler identifier - which persists on restart."""
-    __slots__ = ('value')
-
-    def __init__(self):
-        self.value = str(uuid4())
-
-    def __str__(self):
-        return self.value
-
-
 @dataclass
 class Scheduler:
     """Cylc scheduler server."""
@@ -187,8 +177,8 @@ class Scheduler:
     workflow: Optional[str] = None
     owner: Optional[str] = None
     host: Optional[str] = None
-    id: Optional[str] = None  # owner|workflow
-    uuid_str: Optional[SchedulerUUID] = None
+    id: Optional[str] = None  # noqa: A003 (instance attr not local)
+    uuid_str: Optional[str] = None
     contact_data: Optional[dict] = None
 
     # run options
@@ -252,7 +242,7 @@ class Scheduler:
         self.owner = get_user()
         self.host = get_host()
         self.id = f'{self.owner}{ID_DELIM}{self.workflow}'
-        self.uuid_str = SchedulerUUID()
+        self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = load_template_vars(
             self.options.templatevars,
@@ -695,14 +685,16 @@ class Scheduler:
         for itask in self.pool.get_tasks():
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
-            if itask.state(*TASK_STATUSES_ACTIVE):
-                if not (
+            if (
+                itask.state(*TASK_STATUSES_ACTIVE)
+                and not (
                     is_platform_with_target_in_list(
                         itask.platform['install target'],
                         distinct_install_target_platforms
                     )
-                ):
-                    distinct_install_target_platforms.append(itask.platform)
+                )
+            ):
+                distinct_install_target_platforms.append(itask.platform)
 
         incomplete_init = False
         for platform in distinct_install_target_platforms:
@@ -933,13 +925,13 @@ class Scheduler:
         except (TypeError, ValueError):
             return
         if lvl <= logging.DEBUG:
-            cylc.flow.flags.verbosity == 2
+            cylc.flow.flags.verbosity = 2
         elif lvl < logging.INFO:
-            cylc.flow.flags.verbosity == 1
+            cylc.flow.flags.verbosity = 1
         elif lvl == logging.INFO:
-            cylc.flow.flags.verbosity == 0
+            cylc.flow.flags.verbosity = 0
         else:
-            cylc.flow.flags.verbosity == -1
+            cylc.flow.flags.verbosity = -1
         return True, 'OK'
 
     def command_remove_tasks(self, items):
@@ -1038,7 +1030,7 @@ class Scheduler:
             fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:
                 self.workflow_run_dir,
             fields.UUID:
-                self.uuid_str.value,
+                self.uuid_str,
             fields.VERSION:
                 CYLC_VERSION,
             fields.SCHEDULER_SSH_COMMAND:
@@ -1154,7 +1146,7 @@ class Scheduler:
                 self.options.run_mode = value
                 LOG.info(f"+ run mode = {value}")
         elif key == self.workflow_db_mgr.KEY_UUID_STR:
-            self.uuid_str.value = value
+            self.uuid_str = value
             LOG.info('+ workflow UUID = %s', value)
         elif key == self.workflow_db_mgr.KEY_PAUSED:
             if self.options.paused_start is None:
@@ -1198,13 +1190,11 @@ class Scheduler:
         Run workflow events in simulation and dummy mode ONLY if enabled.
         """
         conf = self.config
-        try:
+        with suppress(KeyError):
             if (
                 conf.run_mode('simulation', 'dummy')
             ):
                 return
-        except KeyError:
-            pass
         self.workflow_event_handler.handle(conf, WorkflowEventContext(
             event, str(reason), self.workflow, self.uuid_str, self.owner,
             self.host, self.server.port))
@@ -1347,7 +1337,9 @@ class Scheduler:
                     break
             else:
                 self._set_stop(StopMode.REQUEST_NOW_NOW)
-        elif self.auto_restart_mode == AutoRestartMode.FORCE_STOP:
+        elif (  # noqa: SIM106
+            self.auto_restart_mode == AutoRestartMode.FORCE_STOP
+        ):
             # ... yes - leave local jobs running then stop the workflow
             #           (no restart)
             self._set_stop(StopMode.REQUEST_NOW)
@@ -1414,10 +1406,9 @@ class Scheduler:
 
             self.process_command_queue()
 
-            if not self.is_paused:
-                if self.pool.release_runahead_tasks():
-                    self.is_updated = True
-                    self.reset_inactivity_timer()
+            if not self.is_paused and self.pool.release_runahead_tasks():
+                self.is_updated = True
+                self.reset_inactivity_timer()
 
             self.proc_pool.process()
 
@@ -1593,6 +1584,8 @@ class Scheduler:
         """Check if workflow is stalled or not."""
         if self.is_stalled:  # already reported
             return True
+        if self.is_paused:  # cannot be stalled it's not even running
+            return False
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
             self.run_event_handlers(self.EVENT_STALLED, 'workflow stalled')
@@ -1634,10 +1627,7 @@ class Scheduler:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
             LOG.error(f'Workflow shutting down - {reason}')
-        elif (
-            isinstance(reason, CylcError)
-            or isinstance(reason, TemplateVarLanguageClash)
-        ):
+        elif isinstance(reason, (CylcError, TemplateVarLanguageClash)):
             LOG.error(
                 "Workflow shutting down - "
                 f"{reason.__class__.__name__}: {reason}")
@@ -1841,7 +1831,7 @@ class Scheduler:
             stdin=DEVNULL, stdout=PIPE)
         try:
             cpu_frac = float(proc.communicate()[0])
-        except (TypeError, OSError, IOError, ValueError) as exc:
+        except (TypeError, OSError, ValueError) as exc:
             LOG.warning("Cannot get CPU % statistics: %s" % exc)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")

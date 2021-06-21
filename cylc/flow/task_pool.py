@@ -16,6 +16,7 @@
 
 """Wrangle task proxies to manage the workflow."""
 
+from contextlib import suppress
 from collections import Counter
 from fnmatch import fnmatchcase
 from string import ascii_letters
@@ -94,10 +95,8 @@ class FlowLabelMgr:
         """Return labels (set) to the pool of available labels."""
         LOG.info("returning flow label(s) %s", labels)
         for label in labels:
-            try:
+            with suppress(KeyError):
                 self.inuse.remove(label)
-            except KeyError:
-                pass
             self.avail.add(label)
 
     def get_new_label(self):
@@ -123,8 +122,8 @@ class FlowLabelMgr:
         """
         if lab1 == lab2:
             return lab1
-        labs1 = set(list(lab1))
-        labs2 = set(list(lab2))
+        labs1 = set(lab1)
+        labs2 = set(lab2)
         return ''.join(labs1.union(labs2))
 
     @staticmethod
@@ -141,8 +140,8 @@ class FlowLabelMgr:
         If they do, the owner tasks can be considered part of the same flow.
         Note the incoming labels could already be merged.
         """
-        labs1 = set(list(lab1))
-        labs2 = set(list(lab2))
+        labs1 = set(lab1)
+        labs2 = set(lab2)
         return bool(labs1.intersection(labs2))
 
 
@@ -228,10 +227,12 @@ class TaskPool:
             if itask.identity in self.hidden_pool[itask.point]:
                 self.hidden_pool[itask.point][itask.identity] = itask
                 self.hidden_pool_changed = True
-        elif itask.point in self.main_pool:
-            if itask.identity in self.main_pool[itask.point]:
-                self.main_pool[itask.point][itask.identity] = itask
-                self.main_pool_changed = True
+        elif (
+            itask.point in self.main_pool
+            and itask.identity in self.main_pool[itask.point]
+        ):
+            self.main_pool[itask.point][itask.identity] = itask
+            self.main_pool_changed = True
 
     def add_to_pool(self, itask, is_new=True):
         """Add a new task to the hidden or main pool.
@@ -243,7 +244,7 @@ class TaskPool:
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
             # Add to hidden pool if not satisfied.
-            self.hidden_pool.setdefault(itask.point, dict())
+            self.hidden_pool.setdefault(itask.point, {})
             self.hidden_pool[itask.point][itask.identity] = itask
             self.hidden_pool_changed = True
         else:
@@ -257,7 +258,7 @@ class TaskPool:
                 self.hidden_pool_changed = True
                 if not self.hidden_pool[itask.point]:
                     del self.hidden_pool[itask.point]
-            self.main_pool.setdefault(itask.point, dict())
+            self.main_pool.setdefault(itask.point, {})
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
 
@@ -380,13 +381,16 @@ class TaskPool:
             # measured from the oldest non-finished task.
             latest_allowed_point = runahead_base_point + runahead_time_limit
 
-            if (self._prev_runahead_base_point is None or
-                    self._prev_runahead_base_point != runahead_base_point):
-                if runahead_time_limit < self.max_future_offset:
-                    LOG.warning(
-                        f'runahead limit "{runahead_time_limit}" '
-                        'is less than future triggering offset '
-                        f'"{self.max_future_offset}"; workflow may stall.')
+            if (
+                self._prev_runahead_base_point is None
+                or self._prev_runahead_base_point != runahead_base_point
+                and runahead_time_limit < self.max_future_offset
+            ):
+                LOG.warning(
+                    f'runahead limit "{runahead_time_limit}" '
+                    'is less than future triggering offset '
+                    f'"{self.max_future_offset}"; workflow may stall.'
+                )
             self._prev_runahead_base_point = runahead_base_point
 
         if self.stop_point and latest_allowed_point > self.stop_point:
@@ -692,25 +696,19 @@ class TaskPool:
     def _get_hidden_task_by_id(self, id_):
         """Return runahead pool task by ID if it exists, or None."""
         for itask_ids in list(self.hidden_pool.values()):
-            try:
+            with suppress(KeyError):
                 return itask_ids[id_]
-            except KeyError:
-                pass
 
     def _get_task_by_id(self, id_):
         """Return main pool task by ID if it exists, or None."""
         for itask_ids in list(self.main_pool.values()):
-            try:
+            with suppress(KeyError):
                 return itask_ids[id_]
-            except KeyError:
-                pass
 
     def queue_tasks(self, itasks):
         """Queue tasks that are ready to run."""
         for itask in itasks:
             itask.state.reset(is_queued=True)
-            # TODO Reset manual trigger flag. One manual trigger queues an
-            # unqueued task, another one triggers a queued task.
             self.data_store_mgr.delta_task_queued(itask)
         self.task_queue_mgr.push_tasks(itasks)
 
@@ -895,14 +893,15 @@ class TaskPool:
             return True
         if self.task_events_mgr._event_timers:
             return False
-        for itask in self.get_tasks():
-            if (
-                    stop_mode == StopMode.REQUEST_CLEAN
-                    and itask.state(*TASK_STATUSES_ACTIVE)
-                    and not itask.state.kill_failed
-            ):
-                return False
-        return True
+
+        return not any(
+            (
+                stop_mode == StopMode.REQUEST_CLEAN
+                and itask.state(*TASK_STATUSES_ACTIVE)
+                and not itask.state.kill_failed
+            )
+            for itask in self.get_tasks()
+        )
 
     def warn_stop_orphans(self):
         """Log (warning) orphaned tasks on workflow stop."""
@@ -995,7 +994,7 @@ class TaskPool:
 
         if prereqs_map:
             LOG.warning(
-                "Some partially satisfied prerequisites left over:\n"
+                "Partially satisfied prerequisites left over:\n"
                 + "\n".join(
                     f"{id_} is waiting on:"
                     + "\n".join(
@@ -1008,9 +1007,11 @@ class TaskPool:
         """Set the point after which all tasks must be held."""
         self.hold_point = point
         for itask in self.get_all_tasks():
-            if itask.point > point:
-                if itask.state.reset(is_held=True):
-                    self.data_store_mgr.delta_task_held(itask)
+            if (
+                itask.point > point
+                and itask.state.reset(is_held=True)
+            ):
+                self.data_store_mgr.delta_task_held(itask)
         self.workflow_db_mgr.put_workflow_hold_cycle_point(point)
 
     def hold_tasks(self, items: Iterable[str]) -> int:
@@ -1070,10 +1071,12 @@ class TaskPool:
         outputs to satisfy any tasks with abs prerequisites).
 
         """
-        if output == TASK_OUTPUT_FAILED:
-            if (self.expected_failed_tasks is not None
-                    and itask.identity not in self.expected_failed_tasks):
-                self.abort_task_failed = True
+        if (
+            output == TASK_OUTPUT_FAILED
+            and self.expected_failed_tasks is not None
+            and itask.identity not in self.expected_failed_tasks
+        ):
+            self.abort_task_failed = True
 
         try:
             children = itask.graph_children[output]
@@ -1104,8 +1107,9 @@ class TaskPool:
                 else:
                     tasks = [c_task]
                 for t in tasks:
-                    t.state.satisfy_me(
-                        set([(itask.tdef.name, str(itask.point), output)]))
+                    t.state.satisfy_me({
+                        (itask.tdef.name, str(itask.point), output)
+                    })
                     self.data_store_mgr.delta_task_prerequisite(t)
                 # Event-driven suicide.
                 if (c_task.state.suicide_prerequisites and
@@ -1305,7 +1309,7 @@ class TaskPool:
             itask = TaskProxy(taskdef, point,
                               self.flow_label_mgr.get_new_label())
             # Spawn downstream on selected outputs.
-            for trig, out, status in itask.state.outputs.get_all():
+            for trig, out, _ in itask.state.outputs.get_all():
                 if trig in outputs:
                     LOG.info('Forced spawning on %s:%s', itask.identity, out)
                     self.spawn_on_output(itask, out)
@@ -1347,7 +1351,6 @@ class TaskPool:
                 itask.is_manual_submit = True
                 # This will queue the task.
                 self.add_to_pool(itask, is_new=True)
-                LOG.critical(f"WTF 2: {itask.identity}")
         return n_warnings
 
     def sim_time_check(self, message_queue):
@@ -1422,13 +1425,13 @@ class TaskPool:
 
     def task_succeeded(self, id_):
         """Return True if task with id_ is in the succeeded state."""
-        for itask in self.get_tasks():
-            if (
-                    itask.identity == id_
-                    and itask.state(TASK_STATUS_SUCCEEDED)
-            ):
-                return True
-        return False
+        return any(
+            (
+                itask.identity == id_
+                and itask.state(TASK_STATUS_SUCCEEDED)
+            )
+            for itask in self.get_tasks()
+        )
 
     def filter_task_proxies(
         self, items: Iterable[str]
@@ -1453,11 +1456,10 @@ class TaskPool:
                 if point_str is None:
                     point_str = "*"
                 else:
-                    try:
-                        point_str = standardise_point_string(point_str)
-                    except PointParsingError:
+                    with suppress(PointParsingError):
                         # point_str may be a glob
-                        pass
+                        point_str = standardise_point_string(point_str)
+
                 tasks_found = False
                 for itask in self.get_all_tasks():
                     nss = itask.tdef.namespace_hierarchy

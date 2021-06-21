@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Define all legal items and values for cylc workflow definition files."""
 
-import re
-
+import contextlib
 from itertools import product
+import re
 from typing import Any, Dict, Set
 
 from metomi.isodatetime.data import Calendar
@@ -228,7 +228,7 @@ with Conf(
                task output filenames.
         ''')
 
-        with Conf('main loop'):
+        with Conf('main loop'):  # noqa: SIM117 (keep same format)
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 
@@ -639,7 +639,8 @@ with Conf(
                      foo:submit-fail => bar
             ''')
 
-    with Conf('runtime', desc='''
+    with Conf('runtime',  # noqa: SIM117 (keep same format)
+              desc='''
         This section is used to specify how, where, and what to execute when
         tasks are ready to run. Common configuration can be factored out in a
         multiple-inheritance hierarchy of runtime namespaces that culminates
@@ -1538,7 +1539,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     """Upgrade Cylc 7 `[scheduling][dependencies][X]graph` format to
     `[scheduling][graph]X`."""
     # Parsec upgrader cannot do this type of move
-    try:
+    with contextlib.suppress(KeyError):
         if 'dependencies' in cfg['scheduling']:
             msg_old = '[scheduling][dependencies][X]graph'
             msg_new = '[scheduling][graph]X'
@@ -1568,8 +1569,6 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                         f' * (8.0.0) {msg_old} -> {msg_new} - for X in:\n'
                         f"       {', '.join(sorted(keys))}"
                     )
-    except KeyError:
-        pass
 
 
 def upgrade_param_env_templates(cfg, descr):
@@ -1641,7 +1640,7 @@ def warn_about_depr_event_handler_tmpl(cfg):
     for task in cfg['runtime']:
         if 'events' not in cfg['runtime'][task]:
             continue
-        for event, handler in cfg['runtime'][task]['events'].items():
+        for handler in cfg['runtime'][task]['events'].values():
             if f'%({EventData.JobID_old.value})' in handler:
                 LOG.warning(
                     deprecation_msg.format(EventData.JobID_old.value,

@@ -26,7 +26,7 @@ set_test_number 1
 echo '' > "$CYLC_CONF_PATH/global.cylc"
 
 # Replace it entirely with system defaults.
-cylc config > "$CYLC_CONF_PATH/global.cylc"
+cylc config -d > "$CYLC_CONF_PATH/global.cylc"
 
 # Check that the new file parses OK.
 run_ok "${TEST_NAME_BASE}" cylc config

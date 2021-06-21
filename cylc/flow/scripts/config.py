@@ -73,9 +73,11 @@ def get_option_parser():
         action="append", dest="item", default=[])
 
     parser.add_option(
-        "-r", "--sparse",
-        help="Only print items explicitly set in the config files.",
-        action="store_true", default=False, dest="sparse")
+        '-d', '--defaults',
+        help='Include the hard-coded Cylc default values in the output.',
+        action='store_true',
+        default=False
+    )
 
     parser.add_option(
         "-n", "--null-value",
@@ -114,8 +116,11 @@ def main(parser, options, reg=None):
 
     if reg is None:
         glbl_cfg().idump(
-            options.item, sparse=options.sparse, oneline=options.oneline,
-            none_str=options.none_str)
+            options.item,
+            not options.defaults,
+            oneline=options.oneline,
+            none_str=options.none_str
+        )
         return
 
     workflow, flow_file = parse_workflow_arg(options, reg)
@@ -127,8 +132,11 @@ def main(parser, options, reg=None):
         load_template_vars(options.templatevars, options.templatevars_file))
 
     config.pcfg.idump(
-        options.item, options.sparse, oneline=options.oneline,
-        none_str=options.none_str)
+        options.item,
+        not options.defaults,
+        oneline=options.oneline,
+        none_str=options.none_str
+    )
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ This module provides logic to:
 * Prepare task jobs poll/kill, and manage the callbacks.
 """
 
+from contextlib import suppress
 import json
 import os
 from copy import deepcopy
@@ -250,7 +251,7 @@ class TaskJobManager:
         # Submit task jobs for each platform
         done_tasks = bad_tasks
 
-        for platform_name, itasks in sorted(auth_itasks.items()):
+        for _, itasks in sorted(auth_itasks.items()):
             platform = itasks[0].platform
             install_target = get_install_target_from_platform(platform)
             ri_map = self.task_remote_mgr.remote_init_map
@@ -280,7 +281,7 @@ class TaskJobManager:
                     self.task_remote_mgr.file_install(platform)
                     continue
 
-                elif (ri_map[install_target] in self.IN_PROGRESS.keys()):
+                elif (ri_map[install_target] in self.IN_PROGRESS):
                     # Remote init or file install in progress.
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
@@ -389,7 +390,7 @@ class TaskJobManager:
             else:
                 cmd = ['cylc'] + cmd
 
-            for i, itasks_batch in enumerate(itasks_batches):
+            for itasks_batch in itasks_batches:
                 stdin_files = []
                 job_log_dirs = []
                 for itask in itasks_batch:
@@ -476,9 +477,11 @@ class TaskJobManager:
         post_script = rtconfig['post-script']
         if itask.tdef.workflow_polling_cfg:
             # Automatic workflow state polling script
-            comstr = "cylc workflow-state " + \
-                     " --task=" + itask.tdef.workflow_polling_cfg['task'] + \
-                     " --point=" + str(itask.point)
+            comstr = (
+                "cylc workflow-state "
+                + " --task=" + itask.tdef.workflow_polling_cfg['task']
+                + " --point=" + str(itask.point)
+            )
             if LOG.isEnabledFor(DEBUG):
                 comstr += ' --debug'
             for key, fmt in [
@@ -619,7 +622,7 @@ class TaskJobManager:
                             del bad_tasks[(point, name, submit_num)]
                         itask = tasks[(point, name, submit_num)]
                         callback(workflow, itask, ctx, line)
-                    except (LookupError, ValueError, KeyError) as exc:
+                    except (LookupError, ValueError) as exc:
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
                         LOG.exception(exc)
@@ -1019,11 +1022,10 @@ class TaskJobManager:
             itask.submit_num] = itask.platform['name']
 
         itask.summary['job_runner_name'] = itask.platform['job runner']
-        try:
+        with suppress(TypeError):
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = float(
-                rtconfig['execution time limit'])
-        except TypeError:
-            pass
+                rtconfig['execution time limit']
+            )
 
         scripts = self._get_job_scripts(itask, rtconfig)
 

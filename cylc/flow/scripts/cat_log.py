@@ -52,9 +52,6 @@ Examples:
   $cylc cat-log -f e foo bar.2020
 """
 
-import sys
-from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
-
 import os
 import shlex
 from contextlib import suppress
@@ -62,7 +59,8 @@ from glob import glob
 from shlex import quote
 from stat import S_IRUSR
 from tempfile import NamedTemporaryFile
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
+import sys
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
@@ -78,6 +76,7 @@ from cylc.flow.pathutil import (
     get_workflow_run_job_dir,
     get_workflow_run_log_name,
     get_workflow_run_pub_db_name)
+from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
@@ -198,7 +197,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
             cmd = ['cat', logpath]
         proc1 = Popen(
             cmd,
-            stdin=open(os.devnull),
+            stdin=DEVNULL,
             stdout=PIPE if color else None
         )
         colorise_cat_log(proc1, color=color)
@@ -208,7 +207,7 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
             cmd = batchview_cmd
         else:
             cmd = tailer_tmpl % {"filename": logpath}
-        proc = Popen(shlex.split(cmd), stdin=open(os.devnull))
+        proc = Popen(shlex.split(cmd), stdin=DEVNULL)
         with suppress(KeyboardInterrupt):
             watch_and_kill(proc)
         return proc.wait()
@@ -304,11 +303,12 @@ def tmpfile_edit(tmpfile, geditor=False):
     proc = Popen(cmd, stderr=PIPE)
     err = proc.communicate()[1].decode()
     ret_code = proc.wait()
-    if ret_code == 0:
-        if os.stat(tmpfile.name).st_mtime > modtime1:
-            sys.stderr.write(
-                'WARNING: you edited a TEMPORARY COPY of %s\n' % (
-                    os.path.basename(tmpfile.name)))
+    if ret_code == 0 and os.stat(tmpfile.name).st_mtime > modtime1:
+        sys.stderr.write(
+            'WARNING: you edited a TEMPORARY COPY of %s\n' % (
+                os.path.basename(tmpfile.name)
+            )
+        )
     if ret_code and err:
         sys.stderr.write(err)
 
@@ -389,11 +389,9 @@ def main(parser, options, *args, color=False):
             options.filename = JOB_LOG_OUT
         else:
             # Convert short filename args to long (e.g. 'o' to 'job.out').
-            try:
+            with suppress(KeyError):
                 options.filename = JOB_LOG_OPTS[options.filename]
-            except KeyError:
-                # Is already long form (standard log, or custom).
-                pass
+                # KeyError: Is already long form (standard log, or custom).
         platform_name, job_runner_name, live_job_id = get_task_job_attrs(
             workflow_name, point, task, options.submit_num)
         platform = get_platform(platform_name)
@@ -414,10 +412,8 @@ def main(parser, options, *args, color=False):
                     conf_key = "err tailer"
             if conf_key is not None:
                 batchview_cmd_tmpl = None
-                try:
+                with suppress(KeyError):
                     batchview_cmd_tmpl = platform[conf_key]
-                except KeyError:
-                    pass
                 if batchview_cmd_tmpl is not None:
                     batchview_cmd = batchview_cmd_tmpl % {
                         "job_id": str(live_job_id)}

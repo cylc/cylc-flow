@@ -1,0 +1,20 @@
+name: check contributor list
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'CONTRIBUTING.md'
+
+jobs:
+  test:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # need to fetch all commits to check contributors
+
+      - name: Check CONTRIBUTING.md
+        uses: cylc/release-actions/check-shortlog@c8205dcfb0df1661b99e2c240b75787c4fa02aa3

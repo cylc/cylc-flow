@@ -34,7 +34,7 @@ grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
 grep_ok "\* foo.1 (failed)" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Some partially satisfied prerequisites left over:" \
+grep_ok "WARNING - Partially satisfied prerequisites left over:" \
     "${TEST_NAME_BASE}-run.stderr"
 grep_ok "f_1.1 is waiting on:" \
     "${TEST_NAME_BASE}-run.stderr"

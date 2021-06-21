@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import suppress
 import json
 import re
 from copy import deepcopy
@@ -249,16 +250,12 @@ class XtriggerManager:
         kwargs = {}
         args = []
         for val in ctx.func_args:
-            try:
+            with suppress(TypeError):
                 val = val % farg_templ
-            except TypeError:
-                pass
             args.append(val)
         for key, val in ctx.func_kwargs.items():
-            try:
+            with suppress(TypeError):
                 val = val % farg_templ
-            except TypeError:
-                pass
             kwargs[key] = val
         ctx.func_args = args
         ctx.func_kwargs = kwargs

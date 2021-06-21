@@ -470,7 +470,7 @@ def extract_context(selection):
         for type_, part in zip(PARTS, parts):
             context[type_].add(part)
     return {
-        key: list(sorted(value))
+        key: sorted(value)
         for key, value in context.items()
         if value
     }

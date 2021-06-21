@@ -65,16 +65,12 @@ def grow_tree(tree, path, leaves=None):
         None
     """
     tree_loc = [tree, {}]
-    b_1 = 0
-    b_2 = 1
-    for key in path:
-        if key in tree_loc[b_1 % 2]:
-            tree_loc[b_2 % 2] = tree_loc[b_1 % 2][key]
+    for loc, key in enumerate(path):
+        if key in tree_loc[loc % 2]:
+            tree_loc[(loc + 1) % 2] = tree_loc[loc % 2][key]
         else:
-            tree_loc[b_1 % 2][key] = tree_loc[b_2 % 2]
-        tree_loc[b_1 % 2] = {}
-        b_1 += 1
-        b_2 += 1
+            tree_loc[loc % 2][key] = tree_loc[(loc + 1) % 2]
+        tree_loc[loc % 2] = {}
     if leaves:
         tree_loc[len(path) % 2].update({'leaves': leaves})
 
@@ -347,11 +343,11 @@ class IgnoreFieldMiddleware:
         self.tree_paths = set()
         self.field_sets = {}
 
-    def resolve(self, next, root, info, **args):
+    def resolve(self, next_, root, info, **args):
         """Middleware resolver; handles field according to operation."""
         # GraphiQL introspection is 'query' but not async
         if getattr(info.operation.name, 'value', None) == 'IntrospectionQuery':
-            return next(root, info, **args)
+            return next_(root, info, **args)
 
         if info.operation.operation in STRIP_OPS:
             path_string = f'{info.path}'
@@ -399,10 +395,10 @@ class IgnoreFieldMiddleware:
                     ):
                         self.field_sets[parent_path_string] = {
                             'stamp': stamp,
-                            'fields': set(
+                            'fields': {
                                 field.name
                                 for field, _ in root.ListFields()
-                            )
+                            }
                         }
 
                     if (
@@ -413,23 +409,23 @@ class IgnoreFieldMiddleware:
                         return None
                 if (
                         info.operation.operation in self.ASYNC_OPS
-                        or iscoroutinefunction(next)
+                        or iscoroutinefunction(next_)
                 ):
-                    return self.async_null_setter(next, root, info, **args)
-                return null_setter(next(root, info, **args))
+                    return self.async_null_setter(next_, root, info, **args)
+                return null_setter(next_(root, info, **args))
 
         if (
                 info.operation.operation in self.ASYNC_OPS
-                or iscoroutinefunction(next)
+                or iscoroutinefunction(next_)
         ):
-            return self.async_resolve(next, root, info, **args)
-        return next(root, info, **args)
+            return self.async_resolve(next_, root, info, **args)
+        return next_(root, info, **args)
 
-    async def async_resolve(self, next, root, info, **args):
+    async def async_resolve(self, next_, root, info, **args):
         """Return awaited coroutine"""
-        return await next(root, info, **args)
+        return await next_(root, info, **args)
 
-    async def async_null_setter(self, next, root, info, **args):
+    async def async_null_setter(self, next_, root, info, **args):
         """Set type to null after awaited result if empty/null-like."""
-        result = await next(root, info, **args)
+        result = await next_(root, info, **args)
         return null_setter(result)

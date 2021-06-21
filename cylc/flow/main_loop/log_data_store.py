@@ -112,7 +112,7 @@ def _plot(state, path):
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('Size (kb)')
-    for key, sizes in state['size'].items():
+    for sizes in state['size'].values():
         ax2.plot(times, [x / 1000 for x in sizes], linestyle=':')
 
     ax1.legend(loc=0)

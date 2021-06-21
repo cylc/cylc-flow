@@ -67,7 +67,7 @@ class _AsyncPipe:
             preserve_order=True
     ):
         self.func = func
-        self.args = args or tuple()
+        self.args = args or ()
         self.kwargs = kwargs or {}
         self.filter_stop = filter_stop
         self.preserve_order = preserve_order

@@ -109,9 +109,9 @@ def main(_, options, *args):
     for platform_name, result in versions.items():
         print(f'{platform_name.rjust(max_len)}: {result}')
     if all((version == CYLC_VERSION for version in versions.values())):
-        exit = 0
+        ret_code = 0
     elif options.error:
-        exit = 1
+        ret_code = 1
     else:
-        exit = 0
-    sys.exit(exit)
+        ret_code = 0
+    sys.exit(ret_code)

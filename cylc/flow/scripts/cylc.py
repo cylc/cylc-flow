@@ -267,16 +267,15 @@ def iter_commands():
         if cmd == 'cylc':
             # don't include this command in the listing
             continue
-        if obj:
-            # python command
-            module = __import__(obj.module_name, fromlist=[''])
-            if getattr(module, 'INTERNAL', False):
-                # do not list internal commands
-                continue
-            usage, desc = parse_docstring(module.__doc__)
-            yield (cmd, desc, usage)
-        else:
+        if not obj:
             raise ValueError(f'Unrecognised command "{cmd}"')
+        # python command
+        module = __import__(obj.module_name, fromlist=[''])
+        if getattr(module, 'INTERNAL', False):
+            # do not list internal commands
+            continue
+        usage, desc = parse_docstring(module.__doc__)
+        yield (cmd, desc, usage)
 
 
 def print_command_list(commands=None, indent=0):
