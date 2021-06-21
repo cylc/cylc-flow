@@ -186,8 +186,6 @@ class WorkflowConfig:
         self.ext_triggers = {}  # Old external triggers (client/server)
         self.xtrigger_mgr = xtrigger_mgr
         self.workflow_polling_tasks = {}  # type: ignore # TODO figure out type
-        self._last_graph_raw_id: Optional[tuple] = None
-        self._last_graph_raw_edges = []  # type: ignore # TODO figure out type
 
         self.sequences: List['SequenceBase'] = []
         self.actual_first_point: Optional['PointBase'] = None
@@ -432,17 +430,6 @@ class WorkflowConfig:
                     self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
             self.cfg['scheduling']['special tasks'][s_type] = result
-
-        if getattr(options, 'collapsed', None):
-            # (used by the "cylc graph" viewer)
-            self.closed_families = getattr(self.options, 'collapsed', None)
-        else:
-            self.closed_families = []
-        for cfam in self.closed_families:
-            if cfam not in self.runtime['descendants']:
-                self.closed_families.remove(cfam)
-                if not is_reload and cylc.flow.flags.verbosity > 0:
-                    LOG.warning('family ' + cfam + ' not defined')
 
         self.process_config_env()
 
@@ -1651,66 +1638,38 @@ class WorkflowConfig:
             self.actual_first_point = start_point
         return self.actual_first_point
 
-    def get_graph_raw(self, start_point_string, stop_point_string,
-                      group_nodes=None, ungroup_nodes=None,
-                      ungroup_recursive=False, group_all=True,
-                      ungroup_all=False):
-        """Convert the abstract graph edges (self.edges, etc) to actual edges
+    def get_graph_raw(
+            self, start_point_string, stop_point_string, grouping=None):
+        """Return concrete graph edges between specified cycle points.
 
-        Actual edges have concrete ranges of cycle points.
+        For validation, return non-suicide edges with left and right nodes.
 
-        In validate mode, set ungroup_all to True, and only return non-suicide
-        edges with left and right nodes.
+        grouping:
+            - None: no family grouping (default)
+            - ['FAM1', 'FAM2']: group (collapse) specified families
+            - ['<all>']: group (collapse) all families above root
         """
+        if grouping is None:
+            grouping = []
+        elif grouping == ['<all>']:
+            grouping = [
+                fam for
+                fam in self.runtime["first-parent descendants"].keys()
+                if fam != "root"
+            ]
+        else:
+            for bad in (
+                set(grouping).difference(
+                    self.runtime["first-parent descendants"].keys()
+                )
+            ):
+                LOG.warning(f"Ignoring undefined family {bad}")
+                grouping.remove(bad)
+
         is_validate = getattr(
             self.options, 'is_validate', False)  # this is for _check_circular
         if is_validate:
-            ungroup_all = True
-        if group_nodes is None:
-            group_nodes = []
-        if ungroup_nodes is None:
-            ungroup_nodes = []
-
-        first_parent_descendants = self.runtime['first-parent descendants']
-        if group_all:
-            for fam in first_parent_descendants:
-                if (
-                    fam != 'root'
-                    and fam not in self.closed_families
-                ):
-                    self.closed_families.append(fam)
-        elif ungroup_all:
-            # Ungroup all family nodes
-            self.closed_families = []
-        elif group_nodes:
-            # Group chosen family nodes
-            first_parent_ancestors = self.runtime['first-parent ancestors']
-            for node in group_nodes:
-                parent = first_parent_ancestors[node][1]
-                if parent not in self.closed_families and parent != 'root':
-                    self.closed_families.append(parent)
-        elif ungroup_nodes:
-            # Ungroup chosen family nodes
-            for node in ungroup_nodes:
-                if node not in self.runtime['descendants']:
-                    # not a family node
-                    continue
-                if node in self.closed_families:
-                    self.closed_families.remove(node)
-                if ungroup_recursive:
-                    for fam in copy(self.closed_families):
-                        if fam in first_parent_descendants[node]:
-                            self.closed_families.remove(fam)
-
-        graph_raw_id = (
-            start_point_string, stop_point_string, tuple(group_nodes),
-            tuple(ungroup_nodes), ungroup_recursive, group_all,
-            ungroup_all, tuple(self.closed_families),
-            tuple((seq, sorted(val))
-                  for seq, val in sorted(self.edges.items())),
-            self.VIS_N_POINTS)
-        if graph_raw_id == self._last_graph_raw_id:
-            return self._last_graph_raw_edges
+            grouping = []
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         start_point = get_point(start_point_string)
@@ -1726,12 +1685,15 @@ class WorkflowConfig:
         else:
             stop_point = None
 
-        # For nested families, only consider the outermost one
+        # For nested closed families, only consider the outermost one
+        fpd = self.runtime['first-parent descendants']
         clf_map = {}
-        for name in self.closed_families:
-            if all(name not in first_parent_descendants[i]
-                   for i in self.closed_families):
-                clf_map[name] = first_parent_descendants[name]
+        for name in grouping:
+            if all(
+                name not in fpd[i]
+                for i in grouping
+            ):
+                clf_map[name] = fpd[name]
 
         gr_edges = {}
         start_point_offset_cache = {}
@@ -1811,7 +1773,6 @@ class WorkflowConfig:
         del start_point_offset_cache
         del point_offset_cache
         GraphNodeParser.get_inst().clear()
-        self._last_graph_raw_id = graph_raw_id
         if stop_point is None:
             # Prune to VIS_N_POINTS points in total.
             graph_raw_edges = []
@@ -1822,7 +1783,6 @@ class WorkflowConfig:
             graph_raw_edges = (
                 [i for sublist in gr_edges.values() for i in sublist])
         graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x[:2]])
-        self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
     def get_node_labels(self, start_point_string=None, stop_point_string=None):
@@ -1834,8 +1794,6 @@ class WorkflowConfig:
         for edge in self.get_graph_raw(
                 start_point_string,
                 stop_point_string,
-                ungroup_all=True,
-                group_all=False
         ):
             left, right = edge[0:2]
             if left:
@@ -1971,7 +1929,7 @@ class WorkflowConfig:
             # Match a task name
             ret.append(self.taskdefs[name])
         else:
-            fams = self.get_first_parent_descendants()
+            fams = self.runtime['first-parent descendants']
             # Match a family name
             if name in fams:
                 for member in fams[name]:

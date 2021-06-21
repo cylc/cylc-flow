@@ -89,7 +89,7 @@ def graph_workflow(
     config,
     start_point=None,
     stop_point=None,
-    ungrouped=False,
+    grouping=None,
     show_suicide=False,
     write=print
 ):
@@ -136,8 +136,7 @@ def graph_workflow(
     graph = config.get_graph_raw(
         start_point,
         stop_point,
-        group_all=not ungrouped,
-        ungroup_all=ungrouped,
+        grouping
     )
     if not graph:
         return
@@ -207,9 +206,10 @@ def get_option_parser():
              'Default: 3 points from START')])
 
     parser.add_option(
-        '-u', '--ungrouped',
-        help='Start with task families ungrouped (the default is grouped).',
-        action='store_true', default=False, dest='ungrouped')
+        '-g', '--group',
+        help="task family to group. Can be used multiple times. "
+        "Use '<all>' to specify all families above root.",
+        action='append', default=[], dest='grouping')
 
     parser.add_option(
         '-n', '--namespaces',
@@ -225,8 +225,7 @@ def get_option_parser():
 
     parser.add_option(
         '--show-suicide',
-        help='Show suicide triggers.  They are not shown by default, unless '
-             'toggled on with the tool bar button.',
+        help='Show suicide triggers. Not shown by default.',
         action='store_true', default=False, dest='show_suicide')
 
     parser.add_option(
@@ -245,8 +244,8 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, opts, workflow=None, start=None, stop=None):
     """Implement ``cylc graph``."""
-    if opts.ungrouped and opts.namespaces:
-        raise UserInputError('Cannot combine --ungrouped and --namespaces.')
+    if opts.grouping and opts.namespaces:
+        raise UserInputError('Cannot combine --group and --namespaces.')
     if not (opts.reference or opts.diff):
         raise UserInputError(
             'Only the --reference and --diff use cases are supported'
@@ -267,7 +266,7 @@ def main(parser, opts, workflow=None, start=None, stop=None):
         if opts.namespaces:
             graph_inheritance(config, write=write)
         else:
-            graph_workflow(config, start, stop, ungrouped=opts.ungrouped,
+            graph_workflow(config, start, stop, grouping=opts.grouping,
                            show_suicide=opts.show_suicide, write=write)
 
     if opts.diff:

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -27,6 +28,7 @@ create_test_global_config "
 "
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+cp -r "${TEST_SOURCE_DIR}"/bin "${WORKFLOW_RUN_DIR}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \

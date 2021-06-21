@@ -25,10 +25,10 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-graph_workflow "${WORKFLOW_NAME}" 'graph.plain'
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain' "--group=<all>"
 cmp_ok graph.plain "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
-graph_workflow "${WORKFLOW_NAME}" 'graph.plain.ungrouped' --ungrouped
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain.ungrouped'
 cmp_ok graph.plain.ungrouped \
     "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ungrouped.ref"
 #-------------------------------------------------------------------------------

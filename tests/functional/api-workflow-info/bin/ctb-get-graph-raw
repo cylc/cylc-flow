@@ -25,19 +25,13 @@ from cylc.flow.network.client import WorkflowRuntimeClient
 
 
 def main():
-    kwargs = {
-        'start_point_string': None,
-        'stop_point_string': None,
-        'group_nodes': None,
-        'ungroup_nodes': None,
-        'ungroup_recursive': False,
-        'group_all': False,
-        'ungroup_all': True}
+    kwargs = {}
     for item in sys.argv[1:]:
         key, value = item.split('=', 1)
-        if value == 'None':
-            value = None
-        kwargs[key] = value
+        if key == "grouping":
+            kwargs[key] = [value]
+        else:
+            kwargs[key] = value
     client = WorkflowRuntimeClient(os.environ['CYLC_WORKFLOW_NAME'])
     print(json.dumps(client('get_graph_raw', kwargs), indent=4))
 

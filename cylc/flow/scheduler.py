@@ -804,15 +804,10 @@ class Scheduler:
                 self.is_updated = True
             self.command_queue.task_done()
 
-    def info_get_graph_raw(self, cto, ctn, group_nodes=None,
-                           ungroup_nodes=None,
-                           ungroup_recursive=False, group_all=False,
-                           ungroup_all=False):
+    def info_get_graph_raw(self, cto, ctn, grouping=None):
         """Return raw graph."""
         return (
-            self.config.get_graph_raw(
-                cto, ctn, group_nodes, ungroup_nodes, ungroup_recursive,
-                group_all, ungroup_all),
+            self.config.get_graph_raw(cto, ctn, grouping),
             self.config.workflow_polling_tasks,
             self.config.leaves,
             self.config.feet)

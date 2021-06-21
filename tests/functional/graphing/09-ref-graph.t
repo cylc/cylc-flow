@@ -26,7 +26,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-graph"
-graph_workflow "${WORKFLOW_NAME}" 'new.ref'
+graph_workflow "${WORKFLOW_NAME}" 'new.ref' "--group=<all>"
 cmp_ok 'new.ref' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.ref"
 #-------------------------------------------------------------------------------
 purge

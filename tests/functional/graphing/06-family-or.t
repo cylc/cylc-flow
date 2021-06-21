@@ -42,7 +42,7 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${PWD}/flow.cylc"
 
-graph_workflow "${PWD}/flow.cylc" 'graph.plain' 20000101T0000Z 20000103T0000Z  
+graph_workflow "${PWD}/flow.cylc" "graph.plain" 20000101T0000Z 20000103T0000Z "--group=<all>"
 cmp_ok 'graph.plain' - <<'__GRAPH__'
 edge "A.20000101T0000Z" "c.20000102T0000Z"
 edge "A.20000102T0000Z" "c.20000103T0000Z"

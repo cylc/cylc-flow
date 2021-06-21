@@ -337,22 +337,16 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def get_graph_raw(self, start_point_string, stop_point_string,
-                      group_nodes=None, ungroup_nodes=None,
-                      ungroup_recursive=False, group_all=False,
-                      ungroup_all=False):
+    def get_graph_raw(
+            self, start_point_string, stop_point_string, grouping=None
+    ):
         """Return a textual representation of the workflow graph.
 
         .. warning::
 
            The grouping options:
 
-           * ``group_nodes``
-           * ``ungroup_nodes``
-           * ``group_all``
-           * ``ungroup_all``
-
-           Are mutually exclusive.
+           * ``grouping``
 
         Args:
             start_point_string (str):
@@ -361,18 +355,9 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             stop_point_string (str):
                 Cycle point as a string to define the window of view of the
                 workflow graph.
-            group_nodes (list, optional):
-                List of (graph nodes) family names to group (collapse according
-                to inheritance) in the output graph.
-            ungroup_nodes (list, optional):
-                List of (graph nodes) family names to ungroup (expand according
-                to inheritance) in the output graph.
-            ungroup_recursive (bool, optional):
-                Recursively ungroup families.
-            group_all (bool, optional):
-                Group all families (collapse according to inheritance).
-            ungroup_all (bool, optional):
-                Ungroup all families (expand according to inheritance).
+            grouping (list, optional):
+                List of (graph nodes) family names to group according to
+                inheritance.
 
         Returns:
             list: [left, right, None, is_suicide, condition]
@@ -393,11 +378,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
         # Ensure that a "None" str is converted to the None value.
         return self.schd.info_get_graph_raw(
             start_point_string, stop_point_string,
-            group_nodes=group_nodes,
-            ungroup_nodes=ungroup_nodes,
-            ungroup_recursive=ungroup_recursive,
-            group_all=group_all,
-            ungroup_all=ungroup_all)
+            grouping=grouping)
 
     # UIServer Data Commands
     @authorise()
