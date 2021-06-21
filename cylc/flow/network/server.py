@@ -338,7 +338,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
     @authorise()
     @expose
     def get_graph_raw(
-            self, start_point_string, stop_point_string, grouping=None
+            self, start_point_str, stop_point_str, grouping=None
     ):
         """Return a textual representation of the workflow graph.
 
@@ -349,10 +349,10 @@ class WorkflowRuntimeServer(ZMQSocketBase):
            * ``grouping``
 
         Args:
-            start_point_string (str):
+            start_point_str (str):
                 Cycle point as a string to define the window of view of the
                 workflow graph.
-            stop_point_string (str):
+            stop_point_str (str):
                 Cycle point as a string to define the window of view of the
                 workflow graph.
             grouping (list, optional):
@@ -377,7 +377,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
         """
         # Ensure that a "None" str is converted to the None value.
         return self.schd.info_get_graph_raw(
-            start_point_string, stop_point_string,
+            start_point_str, stop_point_str,
             grouping=grouping)
 
     # UIServer Data Commands

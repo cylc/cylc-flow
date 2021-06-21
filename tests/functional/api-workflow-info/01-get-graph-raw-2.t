@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #

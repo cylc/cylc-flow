@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test: family-OR logic pre-initial simplification bug (#1626).
 . "$(dirname "$0")/test_header"
-set_test_number 2
+set_test_number 3
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduler]
@@ -42,7 +42,8 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${PWD}/flow.cylc"
 
-graph_workflow "${PWD}/flow.cylc" "graph.plain" 20000101T0000Z 20000103T0000Z "--group=<all>"
+graph_workflow "${PWD}/flow.cylc" "graph.plain" \
+   -g A -g B -g X 20000101T0000Z 20000103T0000Z
 cmp_ok 'graph.plain' - <<'__GRAPH__'
 edge "A.20000101T0000Z" "c.20000102T0000Z"
 edge "A.20000102T0000Z" "c.20000103T0000Z"
@@ -60,5 +61,7 @@ node "c.20000102T0000Z" "c\n20000102T0000Z"
 node "c.20000103T0000Z" "c\n20000103T0000Z"
 stop
 __GRAPH__
+
+grep_ok "Ignoring undefined family X" "graph.plain.err" 
 
 exit

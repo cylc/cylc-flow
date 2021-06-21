@@ -76,8 +76,9 @@ def get_option_parser():
 
     parser.add_option(
         "-p", "--points",
-        help="Print task IDs from [START],[STOP] cycle points. Both bounds "
-        "are optional; give a lone comma (-p,) for the default range.",
+        help="Print task IDs from [START] to [STOP] cycle points. Both bounds "
+        "are optional and STOP can be an interval from START (or from the "
+        "initial cycle point, by default). Use '-p , ' for the default range.",
         metavar="[START],[STOP]", action="store", default=None, dest="prange")
 
     return parser

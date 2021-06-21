@@ -743,9 +743,9 @@ class WorkflowConfig:
                 "check graph for circular dependencies. To enforce this "
                 "check, use the option --check-circular.")
             return
-        start_point_string = self.cfg['scheduling']['initial cycle point']
-        raw_graph = self.get_graph_raw(start_point_string,
-                                       stop_point_string=None)
+        start_point_str = self.cfg['scheduling']['initial cycle point']
+        raw_graph = self.get_graph_raw(start_point_str,
+                                       stop_point_str=None)
         lhs2rhss = {}  # left hand side to right hand sides
         rhs2lhss = {}  # right hand side to left hand sides
         for lhs, rhs in raw_graph:
@@ -1638,17 +1638,44 @@ class WorkflowConfig:
             self.actual_first_point = start_point
         return self.actual_first_point
 
+    def _get_stop_point(self, start_point, stop_point_str=None):
+        """Get stop point from string value or interval, or return None."""
+        if stop_point_str is None:
+            stop_point = None
+        elif "P" in stop_point_str:
+            # Is the final point(/interval) relative to initial?
+            if self.cfg['scheduling']['cycling mode'] == 'integer':
+                # Relative, integer cycling.
+                stop_point = get_point_relative(
+                    stop_point_str, start_point
+                ).standardise()
+            else:
+                # Relative, ISO8601 cycling.
+                stop_point = get_point_relative(
+                    stop_point_str, start_point
+                ).standardise()
+        else:
+            stop_point = get_point(stop_point_str).standardise()
+        return stop_point
+
     def get_graph_raw(
-            self, start_point_string, stop_point_string, grouping=None):
+            self, start_point_str=None, stop_point_str=None, grouping=None):
         """Return concrete graph edges between specified cycle points.
 
-        For validation, return non-suicide edges with left and right nodes.
+        Return a family-collapsed graph if the grouping arg is not None:
+          * ['FAM1', 'FAM2']: group (collapse) specified families
+          * ['<all>']: group (collapse) all families above root
 
-        grouping:
-            - None: no family grouping (default)
-            - ['FAM1', 'FAM2']: group (collapse) specified families
-            - ['<all>']: group (collapse) all families above root
+        For validation, return non-suicide edges with left and right nodes.
         """
+        start_point = get_point(
+            start_point_str or
+            self.cfg['scheduling']['initial cycle point']
+        )
+        stop_point = self._get_stop_point(start_point, stop_point_str)
+
+        actual_first_point = self.get_actual_first_point(start_point)
+
         if grouping is None:
             grouping = []
         elif grouping == ['<all>']:
@@ -1672,18 +1699,12 @@ class WorkflowConfig:
             grouping = []
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
-        start_point = get_point(start_point_string)
-        actual_first_point = self.get_actual_first_point(start_point)
 
         workflow_final_point = get_point(
             self.cfg['scheduling']['final cycle point'])
 
         # For the computed stop point, store VIS_N_POINTS of each sequence,
         # and then cull later to the first VIS_N_POINTS over all sequences.
-        if stop_point_string is not None:
-            stop_point = get_point(stop_point_string)
-        else:
-            stop_point = None
 
         # For nested closed families, only consider the outermost one
         fpd = self.runtime['first-parent descendants']
@@ -1785,15 +1806,12 @@ class WorkflowConfig:
         graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x[:2]])
         return graph_raw_edges
 
-    def get_node_labels(self, start_point_string=None, stop_point_string=None):
+    def get_node_labels(self, start_point_str=None, stop_point_str=None):
         """Return dependency graph node labels."""
-        if start_point_string is None:
-            start_point_string = self.cfg["scheduling"]["initial cycle point"]
-
         ret = set()
         for edge in self.get_graph_raw(
-                start_point_string,
-                stop_point_string,
+                start_point_str,
+                stop_point_str,
         ):
             left, right = edge[0:2]
             if left:
