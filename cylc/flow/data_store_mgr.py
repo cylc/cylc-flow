@@ -698,7 +698,10 @@ class DataStoreMgr:
             self, s_id, s_node, items, active_id, flow_label, reflow,
             edge_distance, descendant=False, is_parent=False):
         """Construct nodes/edges for children/parents of source node."""
+        final_point = self.schd.config.final_point
         for t_name, t_point, _ in items:
+            if t_point > final_point:
+                continue
             t_node = f'{t_name}.{t_point}'
             t_id = (
                 f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')

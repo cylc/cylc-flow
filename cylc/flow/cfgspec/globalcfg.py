@@ -54,7 +54,7 @@ with Conf('global.cylc', desc='''
 
     To view your global config run::
 
-       $ cylc config --sparse
+       $ cylc config
 
     Cylc will attempt to load the global configuration (``global.cylc``) from a
     hierarchy of locations, including the site directory (defaults to

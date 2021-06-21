@@ -25,7 +25,7 @@ create_test_global_config '#!jinja2' '
 [scheduler]
     UTC mode = {{UTC_MODE}}'
 
-run_ok "${TEST_NAME_BASE}" cylc config --item='[scheduler]UTC mode'
+run_ok "${TEST_NAME_BASE}" cylc config -d --item='[scheduler]UTC mode'
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<'True'
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit

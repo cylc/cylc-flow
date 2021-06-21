@@ -34,9 +34,7 @@ poll_grep_workflow_log -F "spawned bar.${NEXT1}"
 sleep 10
 cylc dump -t "${WORKFLOW_NAME}" | awk '{print $1 $2 $3}' >'log'
 cmp_ok 'log' - <<__END__
-bar,$YYYY,succeeded,
 bar,$NEXT1,waiting,
-foo,$YYYY,succeeded,
 foo,$NEXT1,waiting,
 __END__
 

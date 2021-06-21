@@ -6,8 +6,10 @@
     UTC mode = True
 
 [scheduling]
+    initial cycle point = 20210101T0000Z
+    final cycle point = 20210101T0000Z
     [[graph]]
-        R1 = foo
+        P1Y = foo[-P1Y] => foo
 
 [runtime]
     [[foo]]

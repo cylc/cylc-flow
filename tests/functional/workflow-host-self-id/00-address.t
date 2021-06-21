@@ -30,7 +30,7 @@ __PYTHON__
 }
 
 #-------------------------------------------------------------------------------
-MY_INET_TARGET=$(cylc config '--item=[scheduler][host self-identification]target')
+MY_INET_TARGET=$(cylc config -d '--item=[scheduler][host self-identification]target')
 MY_HOST_IP="$(get_local_ip_address "${MY_INET_TARGET}")"
 
 run_ok "${TEST_NAME_BASE}-validate" \

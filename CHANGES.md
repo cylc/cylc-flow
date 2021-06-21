@@ -85,6 +85,9 @@ workflow's public database file was not closed properly.
 [#4273](https://github.com/cylc/cylc-flow/pull/4273)
  - Remove obsolete Cylc 7 visualization config section.
 
+[#4272](https://github.com/cylc/cylc-flow/pull/4272) - Workflow visualisation
+data (data-store) now constrained by final cycle point.
+
 [#4248](https://github.com/cylc/cylc-flow/pull/4248)
  - Fix parameter expansion in inherited task environments.
 

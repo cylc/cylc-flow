@@ -23,17 +23,17 @@ set_test_number 19
 init_workflow "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-all"
-run_ok "${TEST_NAME}" cylc config "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc config -d "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME}-validate" cylc validate --check-circular "${TEST_NAME}.stdout"
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-section1"
-run_ok "${TEST_NAME}" cylc config --item=[scheduling] "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc config -d --item=[scheduling] "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/section1.stdout"
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-section1-section"
-run_ok "${TEST_NAME}" cylc config --item=[scheduling][graph] "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc config -d --item=[scheduling][graph] "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 R1 = OPS:finish-all => VAR
 __OUT__
@@ -41,14 +41,14 @@ cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-section1-section-option"
 run_ok "${TEST_NAME}" \
-    cylc config --item=[scheduling][graph]R1 "${WORKFLOW_NAME}"
+    cylc config -d --item=[scheduling][graph]R1 "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
 OPS:finish-all => VAR
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-section2"
-run_ok "${TEST_NAME}" cylc config --item=[runtime] "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc config -d --item=[runtime] "${WORKFLOW_NAME}"
 # Crude sorting to handle against change of dict order when new items added:
 sort "${TEST_NAME}.stdout" > stdout.1
 sort "$TEST_SOURCE_DIR/${TEST_NAME_BASE}/section2.stdout" > stdout.2
@@ -57,8 +57,8 @@ cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
 # Basic test that --print-hierarchy works
 TEST_NAME="${TEST_NAME_BASE}-hierarchy"
-run_ok "${TEST_NAME}-global" cylc config --print-hierarchy
-run_ok "${TEST_NAME}-all" cylc config --print-hierarchy "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME}-global" cylc config -d --print-hierarchy
+run_ok "${TEST_NAME}-all" cylc config -d --print-hierarchy "${WORKFLOW_NAME}"
 # The two should be same with last line of latter removed
 cmp_ok "${TEST_NAME}-global.stdout" <<< "$( sed '$d' "${TEST_NAME}-all.stdout" )"
 # The last line should be the workflow run dir
