@@ -14,6 +14,7 @@
         The sort is in reverse order to allow longer keywords to take precedence over sub-sets. -->
         <!--TAG_FOR_AUTO_UPDATE-->
         <RegExpr attribute='Keyword' String=' xtriggers '/>
+        <RegExpr attribute='Keyword' String=' workflow state polling '/>
         <RegExpr attribute='Keyword' String=' work sub-directory '/>
         <RegExpr attribute='Keyword' String=' warning handler '/>
         <RegExpr attribute='Keyword' String=' visualization '/>
@@ -30,8 +31,6 @@
         <RegExpr attribute='Keyword' String=' templates '/>
         <RegExpr attribute='Keyword' String=' task parameters '/>
         <RegExpr attribute='Keyword' String=' task event batch interval '/>
-        <RegExpr attribute='Keyword' String=' suite state polling '/>
-        <RegExpr attribute='Keyword' String=' workflow state polling '/>
         <RegExpr attribute='Keyword' String=' succeeded handler '/>
         <RegExpr attribute='Keyword' String=' submitted handler '/>
         <RegExpr attribute='Keyword' String=' submission timeout handler '/>
@@ -139,6 +138,7 @@
         <RegExpr attribute='Keyword' String=' clock-expire '/>
         <RegExpr attribute='Keyword' String=' batch system '/>
         <RegExpr attribute='Keyword' String=' batch submit command template '/>
+        <RegExpr attribute='Keyword' String=' allow implicit tasks '/>
         <RegExpr attribute='Keyword' String=' aborted handler '/>
         <RegExpr attribute='Keyword' String=' abort on timeout '/>
         <RegExpr attribute='Keyword' String=' abort on stalled '/>
