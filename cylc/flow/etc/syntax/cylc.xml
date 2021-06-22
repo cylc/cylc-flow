@@ -18,9 +18,6 @@
         <RegExpr attribute='Keyword' String=' warning handler '/>
         <RegExpr attribute='Keyword' String=' verbose mode '/>
         <RegExpr attribute='Keyword' String=' user '/>
-        <RegExpr attribute='Keyword' String=' use node fillcolor for edges '/>
-        <RegExpr attribute='Keyword' String=' use node color for labels '/>
-        <RegExpr attribute='Keyword' String=' use node color for edges '/>
         <RegExpr attribute='Keyword' String=' to '/>
         <RegExpr attribute='Keyword' String=' title '/>
         <RegExpr attribute='Keyword' String=' timeout handler '/>
@@ -66,10 +63,6 @@
         <RegExpr attribute='Keyword' String=' parameter environment templates '/>
         <RegExpr attribute='Keyword' String=' owner '/>
         <RegExpr attribute='Keyword' String=' outputs '/>
-        <RegExpr attribute='Keyword' String=' number of cycle points '/>
-        <RegExpr attribute='Keyword' String=' node penwidth '/>
-        <RegExpr attribute='Keyword' String=' node groups '/>
-        <RegExpr attribute='Keyword' String=' node attributes '/>
         <RegExpr attribute='Keyword' String=' meta '/>
         <RegExpr attribute='Keyword' String=' message '/>
         <RegExpr attribute='Keyword' String=' members '/>
@@ -119,13 +112,10 @@
         <RegExpr attribute='Keyword' String=' environment filter '/>
         <RegExpr attribute='Keyword' String=' environment '/>
         <RegExpr attribute='Keyword' String=' env-script '/>
-        <RegExpr attribute='Keyword' String=' edge penwidth '/>
         <RegExpr attribute='Keyword' String=' disable task event handlers '/>
         <RegExpr attribute='Keyword' String=' directives '/>
         <RegExpr attribute='Keyword' String=' description '/>
         <RegExpr attribute='Keyword' String=' default run length '/>
-        <RegExpr attribute='Keyword' String=' default node attributes '/>
-        <RegExpr attribute='Keyword' String=' default edge attributes '/>
         <RegExpr attribute='Keyword' String=' default '/>
         <RegExpr attribute='Keyword' String=' cycling mode '/>
         <RegExpr attribute='Keyword' String=' cycle point time zone '/>
@@ -133,7 +123,6 @@
         <RegExpr attribute='Keyword' String=' cycle point format '/>
         <RegExpr attribute='Keyword' String=' custom handler '/>
         <RegExpr attribute='Keyword' String=' critical handler '/>
-        <RegExpr attribute='Keyword' String=' collapsed families '/>
         <RegExpr attribute='Keyword' String=' clock-trigger '/>
         <RegExpr attribute='Keyword' String=' clock-expire '/>
         <RegExpr attribute='Keyword' String=' batch system '/>
