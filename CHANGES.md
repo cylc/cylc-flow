@@ -56,8 +56,14 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4258](https://github.com/cylc/cylc-flow/pull/4258) -
+Make runahead limiting depend only on active tasks.
+
 [#4284](https://github.com/cylc/cylc-flow/pull/4284)
  - Make `--color=never` work with `cylc <command> --help`.
+
+[#4259](https://github.com/cylc/cylc-flow/pull/4259) -
+Ignore pre-initial dependencies with `cylc play --start-task`
 
 [#4103](https://github.com/cylc/cylc-flow/pull/4103) -
 Expose runahead limiting to UIs; restore correct force-triggering of queued
