@@ -59,7 +59,8 @@ cycle point. You can also begin at a later cycle point (--start-cycle-point),
 or at specified tasks (--start-task) within the graph.
 
 For convenience, any dependence on tasks prior to the start cycle point (or to
-the cycle point of the earliest start task) will be taken as satisfied.
+the cycle point of the earliest task specified by --start-task) will be taken
+as satisfied.
 
 Examples:
     # Start (at the initial cycle point), or restart, or resume workflow REG.
