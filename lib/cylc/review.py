@@ -671,6 +671,10 @@ class CylcReviewService(object):
     def view(self, user, suite, path, path_in_tar=None, mode=None,
              no_fuzzy_time="0"):
         """View a text log file."""
+        # Log files with +TZ in name end up with space instead of plus sign, so
+        # put plus sign back in (https://github.com/cylc/cylc-flow/issues/4260)
+        path = re.sub(r"(log\.\S+\d{2})\s(\d{2,4})$", r"\1+\2", path)
+        
         # get file or serve raw data
         file_output = self.get_file(
             user, suite, path, path_in_tar=path_in_tar, mode=mode)
@@ -796,7 +800,8 @@ class CylcReviewService(object):
 
         """
         if not os.path.exists(path):
-            raise cherrypy.HTTPError(404)
+            raise cherrypy.HTTPError(
+                404, 'Path {path} does not exist'.format(path=path))
         if not os.access(path, os.R_OK):
             raise cherrypy.HTTPError(403)
         return path
