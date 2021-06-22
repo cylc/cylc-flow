@@ -1,24 +1,30 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        timeout = PT0.2M
-        abort on timeout = True
+        abort on inactivity = True
+        inactivity = PT10S
 [scheduling]
     initial cycle point = 2010-01-01
     final cycle point = 2010-01-05
-    runahead limit = P2 # marker
+    runahead limit = PT12H # marker
     [[graph]]
         # oops is stuck waiting task to hold back runahead
-        R1/T00 = "foo & reloader => oops"
-        T00/PT6H = "foo => bar"
+        R1 = "foo:start => reloader"
+        PT6H ="foo" 
 [runtime]
     [[foo]]
-        script = false
-    [[bar, oops]]
-        script = true
+        script = """
+            if [[ "$CYLC_TASK_JOB" == '20100101T0000Z/foo/01' ]]; then
+                # keep running until scheduler is gone
+                while cylc ping $CYLC_WORKFLOW_NAME; do
+                    sleep 10
+                done
+            else
+                true
+            fi
+        """
     [[reloader]]
         script = """
-cylc__job__poll_grep_workflow_log '\[foo.* (received)failed'
-perl -pi -e 's/(runahead limit = )P2( # marker)/\1 P4\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
+perl -pi -e 's/(runahead limit = )PT12H( # marker)/\1 P1D\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
 cylc reload $CYLC_WORKFLOW_NAME
 """

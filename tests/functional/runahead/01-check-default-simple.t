@@ -28,9 +28,6 @@ run_ok "${TEST_NAME}" cylc validate -v "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-# Testing runahead by counting tasks after a stall is tricky, so this test
-# might not be optimal. For instance, abort-on-stall aborts even if tasks
-# could immediately be released from the runahead pool.
 TEST_NAME="${TEST_NAME_BASE}-max-cycle"
 DB="${WORKFLOW_RUN_DIR}/log/db"
 run_ok "${TEST_NAME}" sqlite3 "${DB}" \
@@ -38,6 +35,6 @@ run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 cmp_ok "${TEST_NAME}.stdout" <<< "20100102T0000Z"
 # i.e. should have spawned 5 cycle points from initial 01T00
 #-------------------------------------------------------------------------------
-grep_ok 'Workflow shutting down - Abort on workflow stalled is set' "${WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_ok 'Workflow shutting down - Abort on workflow inactivity is set' "${WORKFLOW_RUN_DIR}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

@@ -1,25 +1,29 @@
 [scheduler]
     UTC mode = True
-    allow implicit tasks = True
     [[events]]
-        abort on stalled = True
-        timeout = PT30S
-        abort on timeout = True
+        abort on inactivity = True
+        inactivity = PT10S
 [scheduling]
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
     [[graph]]
         # T00, T07, T14, ...
-        # oops makes bar spawn as waiting
-        PT7H = "foo & oops => bar"
+        PT7H = "foo"
         # T00, T12, T18...
         T00, T12, T18 = "foo"
         # T04...
-        T04 = "run_ok"
+        T04 = "foo"
         # T05...
-        T05 = "run_ok_2"
+        T05 = "foo"
 [runtime]
-    [[foo, fail]]
-        script = false
-    [[bar]]
-        script = true
+    [[foo]]
+        script = """
+            if [[ "$CYLC_TASK_JOB" == '20100101T0000Z/foo/01' ]]; then
+                # keep running until scheduler is gone
+                while cylc ping $CYLC_WORKFLOW_NAME; do
+                    sleep 10
+                done
+            else
+                true
+            fi
+        """
