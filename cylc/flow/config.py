@@ -644,12 +644,19 @@ class WorkflowConfig:
             self.options.startcp
             self.start_point
         """
-        if getattr(self.options, 'startcp', None) is not None:
+        startcp = getattr(self.options, 'startcp', None)
+        starttask = getattr(self.options, 'starttask', None)
+
+        if startcp is not None and starttask is not None:
+            raise WorkflowConfigError(
+                "--start-cycle-point and --start-task are mutually exclusive"
+            )
+        if startcp:
             # Start from a point later than initial point.
             if self.options.startcp == 'now':
                 self.options.startcp = get_current_time_string()
             self.start_point = get_point(self.options.startcp).standardise()
-        elif getattr(self.options, 'starttask', None) is not None:
+        elif starttask:
             # Start from designated task(s).
             # Select the earliest start point for use in pre-initial ignore.
             self.start_point = min(
