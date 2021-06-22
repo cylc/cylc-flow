@@ -35,6 +35,9 @@ Examples:
 
 Held tasks do not submit their jobs even if ready to run.
 
+Note: globs and ":<state>" selectors will only match active tasks;
+to release future tasks, use exact identifiers e.g. "mytask.1234".
+
 See also 'cylc hold'.
 """
 

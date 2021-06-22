@@ -17,9 +17,10 @@
 
 from contextlib import suppress
 from dataclasses import dataclass
+from os.path import expandvars
 import sqlite3
 import traceback
-from os.path import expandvars
+from typing import List, Tuple
 
 from cylc.flow import LOG
 import cylc.flow.flags
@@ -182,6 +183,7 @@ class CylcWorkflowDAO:
     TABLE_TASK_PREREQUISITES = "task_prerequisites"
     TABLE_TASK_STATES = "task_states"
     TABLE_TASK_TIMEOUT_TIMERS = "task_timeout_timers"
+    TABLE_TASKS_TO_HOLD = "tasks_to_hold"
     TABLE_XTRIGGERS = "xtriggers"
     TABLE_ABS_OUTPUTS = "absolute_outputs"
 
@@ -294,6 +296,10 @@ class CylcWorkflowDAO:
             ["cycle"],
             ["name"],
             ["output"],
+        ],
+        TABLE_TASKS_TO_HOLD: [
+            ["name"],
+            ["cycle"],
         ],
     }
 
@@ -729,7 +735,9 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_prerequisites(self, cycle, name):
+    def select_task_prerequisites(
+        self, cycle: str, name: str
+    ) -> List[Tuple[str, str, str, str]]:
         """Return prerequisites of a task of the given name & cycle point."""
         stmt = f"""
             SELECT
@@ -740,9 +748,15 @@ class CylcWorkflowDAO:
             FROM
                 {self.TABLE_TASK_PREREQUISITES}
             WHERE
-                cycle == '{cycle}' AND
-                name == '{name}'
+                cycle == ? AND
+                name == ?
         """
+        stmt_args = [cycle, name]
+        return list(self.connect().execute(stmt, stmt_args))
+
+    def select_tasks_to_hold(self) -> List[Tuple[str, str]]:
+        """Return all tasks to hold stored in the DB."""
+        stmt = f"SELECT name, cycle FROM {self.TABLE_TASKS_TO_HOLD}"
         return list(self.connect().execute(stmt))
 
     def select_task_times(self):

@@ -28,7 +28,7 @@ import os
 from pkg_resources import parse_version
 from shutil import copy, rmtree
 from tempfile import mkstemp
-from typing import Any, Dict, List, TYPE_CHECKING, Tuple
+from typing import Any, Dict, List, Set, TYPE_CHECKING, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -38,6 +38,7 @@ from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.exceptions import ServiceFileError
 
 if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
     from cylc.flow.task_pool import TaskPool
 
 # # TODO: narrow down Any (should be str | int) after implementing type
@@ -84,6 +85,7 @@ class WorkflowDatabaseManager:
     TABLE_TASK_STATES = CylcWorkflowDAO.TABLE_TASK_STATES
     TABLE_TASK_PREREQUISITES = CylcWorkflowDAO.TABLE_TASK_PREREQUISITES
     TABLE_TASK_TIMEOUT_TIMERS = CylcWorkflowDAO.TABLE_TASK_TIMEOUT_TIMERS
+    TABLE_TASKS_TO_HOLD = CylcWorkflowDAO.TABLE_TASKS_TO_HOLD
     TABLE_XTRIGGERS = CylcWorkflowDAO.TABLE_XTRIGGERS
     TABLE_ABS_OUTPUTS = CylcWorkflowDAO.TABLE_ABS_OUTPUTS
 
@@ -107,6 +109,7 @@ class WorkflowDatabaseManager:
             self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_PREREQUISITES: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
+            self.TABLE_TASKS_TO_HOLD: [],
             self.TABLE_XTRIGGERS: []}
         self.db_inserts_map: Dict[str, List[DbArgDict]] = {
             self.TABLE_BROADCAST_EVENTS: [],
@@ -119,6 +122,7 @@ class WorkflowDatabaseManager:
             self.TABLE_TASK_OUTPUTS: [],
             self.TABLE_TASK_PREREQUISITES: [],
             self.TABLE_TASK_TIMEOUT_TIMERS: [],
+            self.TABLE_TASKS_TO_HOLD: [],
             self.TABLE_XTRIGGERS: [],
             self.TABLE_ABS_OUTPUTS: []}
         self.db_updates_map: Dict[str, List[DbUpdateTuple]] = {}
@@ -227,7 +231,7 @@ class WorkflowDatabaseManager:
 
     def process_queued_ops(self) -> None:
         """Handle queued db operations for each task proxy."""
-        if self.pri_dao is None:
+        if self.pri_dao is None or self.pub_dao is None:
             return
         # Record workflow parameters and tasks in pool
         # Record any broadcast settings to be dumped out
@@ -440,7 +444,6 @@ class WorkflowDatabaseManager:
         # Should already be done by self.put_task_event_timers above.
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
-            # Update the task_prerequisites table:
             for prereq in itask.state.prerequisites:
                 for (p_name, p_cycle, p_output), satisfied_state in (
                         prereq.satisfied.items()):
@@ -448,18 +451,21 @@ class WorkflowDatabaseManager:
                         "prereq_name": p_name,
                         "prereq_cycle": p_cycle,
                         "prereq_output": p_output,
-                        "satisfied": satisfied_state})
+                        "satisfied": satisfied_state
+                    })
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
                 "flow_label": itask.flow_label,
                 "status": itask.state.status,
-                "is_held": itask.state.is_held})
+                "is_held": itask.state.is_held
+            })
             if itask.timeout is not None:
                 self.db_inserts_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({
                     "name": itask.tdef.name,
                     "cycle": str(itask.point),
-                    "timeout": itask.timeout})
+                    "timeout": itask.timeout
+                })
             if itask.poll_timer is not None:
                 self.db_inserts_map[self.TABLE_TASK_ACTION_TIMERS].append({
                     "name": itask.tdef.name,
@@ -469,7 +475,8 @@ class WorkflowDatabaseManager:
                     "delays": json.dumps(itask.poll_timer.delays),
                     "num": itask.poll_timer.num,
                     "delay": itask.poll_timer.delay,
-                    "timeout": itask.poll_timer.timeout})
+                    "timeout": itask.poll_timer.timeout
+                })
             for ctx_key_1, timer in itask.try_timers.items():
                 if timer is None:
                     continue
@@ -481,7 +488,8 @@ class WorkflowDatabaseManager:
                     "delays": json.dumps(timer.delays),
                     "num": timer.num,
                     "delay": timer.delay,
-                    "timeout": timer.timeout})
+                    "timeout": timer.timeout
+                })
             if itask.state.time_updated:
                 set_args = {
                     "time_updated": itask.state.time_updated,
@@ -496,8 +504,23 @@ class WorkflowDatabaseManager:
                 }
                 self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
                 self.db_updates_map[self.TABLE_TASK_STATES].append(
-                    (set_args, where_args))
+                    (set_args, where_args)
+                )
                 itask.state.time_updated = None
+
+    def put_tasks_to_hold(
+        self, tasks: Set[Tuple[str, 'PointBase']]
+    ) -> None:
+        """Replace the tasks in the tasks_to_hold table."""
+        # There isn't that much cost in calling this multiple times between
+        # processing of the db queue (when the db queue is eventually
+        # processed, the SQL commands only get run once). Still, replacing the
+        # whole table each time the queue is processed is a bit ineffecient.
+        self.db_deletes_map[self.TABLE_TASKS_TO_HOLD] = [{}]
+        self.db_inserts_map[self.TABLE_TASKS_TO_HOLD] = [
+            {"name": name, "cycle": str(point)}
+            for name, point in tasks
+        ]
 
     def put_insert_task_events(self, itask, args):
         """Put INSERT statement for task_events table."""

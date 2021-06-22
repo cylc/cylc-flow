@@ -17,12 +17,16 @@
 """Provide a class to represent a task proxy in a running workflow."""
 
 from collections import Counter
+from contextlib import suppress
+from fnmatch import fnmatchcase
 from time import time
 from typing import Any, Dict, List, Tuple, Optional, TYPE_CHECKING
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
+from cylc.flow.cycling.loader import standardise_point_string
+from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_action_timer import TimerFlags
@@ -245,7 +249,10 @@ class TaskProxy:
 
         self.failure_handled: bool = TASK_OUTPUT_FAILED in self.graph_children
 
-    def __str__(self):
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} '{self.identity}'>"
+
+    def __str__(self) -> str:
         """Stringify using "self.identity"."""
         return self.identity
 
@@ -393,3 +400,29 @@ class TaskProxy:
         # unset any retry delay timers
         for timer in self.try_timers.values():
             timer.timeout = None
+
+    def point_match(self, point: Optional[str]) -> bool:
+        """Return whether a string/glob matches the task's point.
+
+        None is treated as '*'.
+        """
+        if point is None:
+            return True
+        with suppress(PointParsingError):  # point_str may be a glob
+            point = standardise_point_string(point)
+        return fnmatchcase(str(self.point), point)
+
+    def status_match(self, status: Optional[str]) -> bool:
+        """Return whether a string matches the task's status.
+
+        None/an empty string is treated as a match.
+        """
+        return (not status) or self.state.status == status
+
+    def name_match(self, name: str) -> bool:
+        """Return whether a string/glob matches the task's name."""
+        if fnmatchcase(self.tdef.name, name):
+            return True
+        return any(
+            fnmatchcase(ns, name) for ns in self.tdef.namespace_hierarchy
+        )

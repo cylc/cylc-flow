@@ -33,11 +33,10 @@ class LimitedTaskQueue:
         self.members = members  # member task names
         self.deque: deque = deque()
 
-    def push_tasks(self, itasks: List[TaskProxy]) -> None:
-        """Queue tasks in my membership list, reject others."""
-        for itask in itasks:
-            if itask.tdef.name in self.members:
-                self.deque.appendleft(itask)
+    def push_task(self, itask: TaskProxy) -> None:
+        """Queue task if in my membership list."""
+        if itask.tdef.name in self.members:
+            self.deque.appendleft(itask)
 
     def release(self, active: Counter[str]) -> List[TaskProxy]:
         """Release tasks if below the active limit."""
@@ -108,15 +107,15 @@ class IndepQueueManager(TaskQueueManagerBase):
 
         self.force_released: Set[TaskProxy] = set()
 
-    def push_tasks(self, itasks: List[TaskProxy]) -> None:
-        """Queue each task to the appropriate queue."""
-        for _, queue in self.queues.items():
-            queue.push_tasks(itasks)
+    def push_task(self, itask: TaskProxy) -> None:
+        """Push a task to the appropriate queue."""
+        for queue in self.queues.values():
+            queue.push_task(itask)
 
     def release_tasks(self, active: Counter[str]) -> List[TaskProxy]:
         """Release tasks up to the queue limits."""
         released: List[TaskProxy] = []
-        for _, queue in self.queues.items():
+        for queue in self.queues.values():
             released += queue.release(active)
         if self.force_released:
             released += list(self.force_released)
@@ -125,7 +124,7 @@ class IndepQueueManager(TaskQueueManagerBase):
 
     def remove_task(self, itask: TaskProxy) -> None:
         """Remove a task from whichever queue it belongs to."""
-        for _, queue in self.queues.items():
+        for queue in self.queues.values():
             if queue.remove(itask):
                 break
 

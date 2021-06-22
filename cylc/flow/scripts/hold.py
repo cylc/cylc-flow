@@ -23,7 +23,8 @@ Hold one or more tasks in a workflow.
 Held tasks do not submit their jobs even if ready to run.
 
 Examples:
-  # Hold mytask at cycle point 1234 in my_flow
+  # Hold mytask at cycle point 1234 in my_flow (if it has not yet spawned, it
+  # will hold as soon as it spawns)
   $ cylc hold my_flow mytask.1234
 
   # Hold all active tasks at cycle 1234 in my_flow (note: tasks before/after
@@ -33,12 +34,20 @@ Examples:
   # Hold all active instances of mytask in my_flow (note: this will not hold
   # any unspawned tasks that might spawn in the future)
   $ cylc hold my_flow 'mytask.*'
+  # or
+  $ cylc hold my_flow mytask
+
+  # Hold all active failed tasks
+  $ cylc hold my_flow '*:failed'
 
   # Hold all tasks after cycle point 1234 in my_flow
   $ cylc hold my_flow --after=1234
 
 Note: To pause a workflow (immediately preventing all job submission), use
 'cylc pause' instead.
+
+Note: globs and ":<state>" selectors will only match active tasks;
+to hold future tasks when they spawn, use exact identifiers e.g. "mytask.1234".
 
 See also 'cylc release'.
 """
@@ -89,6 +98,7 @@ def get_option_parser() -> COP:
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', "Workflow name"),
+            # TODO: switch back to TASK_ID?
             ('[TASK_GLOB ...]', "Task matching patterns")]
     )
 

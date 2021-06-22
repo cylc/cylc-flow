@@ -37,7 +37,7 @@ async def test_is_paused_after_stop(
         assert not schd.is_restart
         assert schd.is_paused
     # Stopped
-    assert ('is_paused', '1') not in db_select(schd, 'workflow_params')
+    assert ('is_paused', '1') not in db_select(schd, False, 'workflow_params')
     # Restart
     schd = scheduler(reg, paused_start=None)
     async with run(schd):
@@ -65,7 +65,7 @@ async def test_is_paused_after_crash(
             assert not schd.is_restart
             assert schd.is_paused
     # Stopped
-    assert ('is_paused', '1') in db_select(schd, 'workflow_params')
+    assert ('is_paused', '1') in db_select(schd, False, 'workflow_params')
     # Reset patched method
     setattr(schd, 'workflow_shutdown', _schd_workflow_shutdown)
     # Restart

@@ -678,6 +678,7 @@ class Scheduler:
             self.xtrigger_mgr.load_xtrigger_for_restart)
         self.workflow_db_mgr.pri_dao.select_abs_outputs_for_restart(
             self.pool.load_abs_outputs_for_restart)
+        self.pool.load_db_tasks_to_hold()
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""
@@ -1440,7 +1441,7 @@ class Scheduler:
                             itask, self.workflow_db_mgr.put_xtriggers):
                         housekeep_xtriggers = True
                         if all(itask.is_ready_to_run()):
-                            self.pool.queue_tasks([itask])
+                            self.pool.queue_task(itask)
 
                 # Check for satisfied ext_triggers, and queue if ready.
                 if (
@@ -1450,7 +1451,7 @@ class Scheduler:
                         itask, self.ext_trigger_queue)
                     and all(itask.is_ready_to_run())
                 ):
-                    self.pool.queue_tasks([itask])
+                    self.pool.queue_task(itask)
 
             if housekeep_xtriggers:
                 # (Could do this periodically?)
