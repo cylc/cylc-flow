@@ -54,7 +54,7 @@ To avoid overwriting existing run directories, workflows that already ran can
 only be restarted from prior state. To start again, "cylc install" a new copy
 or "cylc clean" the existing run directory.
 
-By default new runs begin at the start of the graph, determined by the initial
+By default, new runs begin at the start of the graph, determined by the initial
 cycle point. You can also begin at a later cycle point (--start-cycle-point),
 or at specified tasks (--start task) within the graph.
 
