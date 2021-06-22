@@ -608,9 +608,9 @@ class CylcReviewDAO(object):
             port_str = None
             for line in open(port_file_path):
                 key, value = [item.strip() for item in line.split("=", 1)]
-                if key == "CYLC_SUITE_HOST":
+                if key in ["CYLC_SUITE_HOST", "CYLC_WORKFLOW_HOST"]:
                     host = value
-                elif key == "CYLC_SUITE_PORT":
+                elif key in ["CYLC_SUITE_PORT", "CYLC_WORKFLOW_PORT"]:
                     port_str = value
         except (IOError, ValueError):
             pass
