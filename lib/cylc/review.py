@@ -438,16 +438,23 @@ class CylcReviewService(object):
             SuiteSrvFilesManager.DIR_BASE_SRV,
             "log",
             "share",
-            "work",
-            SuiteSrvFilesManager.FILE_BASE_SUITE_RC]
+            "work"
+        ]
         for dirpath, dnames, fnames in os.walk(
-                user_suite_dir_root, followlinks=True):
+            user_suite_dir_root, followlinks=True
+        ):
             if dirpath != user_suite_dir_root and (
                     any(name in dnames or name in fnames
                         for name in sub_names)):
                 dnames[:] = []
             else:
                 continue
+
+            # Don't display the symlink to the latest version of
+            # the Cylc8 Suite
+            if re.match(r'.*runN$', dirpath):
+                continue
+
             item = os.path.relpath(dirpath, user_suite_dir_root)
             if not any(fnmatch(item, glob_) for glob_ in name_globs):
                 continue
