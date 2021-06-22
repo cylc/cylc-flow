@@ -366,20 +366,48 @@ def test_process_icp(
 
 
 @pytest.mark.parametrize(
-    'startcp, starttask, expected',
+    'startcp, starttask, expected, expected_err',
     [
-        ('20210120T1700+0530', None, '20210120T1700+0530'),
-        ('now', None, '20050102T0615+0530'),
-        (None, None, '18990501T0000+0530'),
+        (
+            '20210120T1700+0530',
+            None,
+            '20210120T1700+0530',
+            None
+        ),
+        (
+            'now',
+            None,
+            '20050102T0615+0530',
+            None
+        ),
+        (
+            None,
+            None,
+            '18990501T0000+0530',
+            None
+        ),
         (
             None,
             ['foo.20090802T0615+0530', 'bar.20090802T0515+0530'],
-            '20090802T0515+0530'
+            '20090802T0515+0530',
+            None
+        ),
+        (
+            '20210120T1700+0530',
+            ['foo.20090802T0615+0530'],
+            None,
+            (
+                WorkflowConfigError,
+                "--start-cycle-point and --start-task are mutually exclusive"
+            ),
         )
     ]
 )
 def test_process_startcp(
-    startcp: Optional[str], starttask: Optional[str], expected: str,
+    startcp: Optional[str],
+    starttask: Optional[str],
+    expected: str,
+    expected_err: Optional[Tuple[Type[Exception], str]],
     monkeypatch: pytest.MonkeyPatch, set_cycling_type: Fixture
 ) -> None:
     """Test WorkflowConfig.process_start_cycle_point().
@@ -390,6 +418,7 @@ def test_process_startcp(
     Params:
         startcp: The start cycle point given by cli option.
         expected: The expected startcp value that gets set.
+        expected_err: Expected exception.
     """
     set_cycling_type(ISO8601_CYCLING_TYPE, time_zone="+0530")
     mocked_config = Mock(initial_point='18990501T0000+0530')
@@ -397,8 +426,14 @@ def test_process_startcp(
     mocked_config.options.starttask = starttask
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
                         lambda: '20050102T0615+0530')
-    WorkflowConfig.process_start_cycle_point(mocked_config)
-    assert str(mocked_config.start_point) == expected
+    if expected_err is not None:
+        err, msg = expected_err
+        with pytest.raises(err) as exc:
+            WorkflowConfig.process_start_cycle_point(mocked_config)
+        assert msg in str(exc.value)
+    else:
+        WorkflowConfig.process_start_cycle_point(mocked_config)
+        assert str(mocked_config.start_point) == expected
 
 
 @pytest.mark.parametrize(
