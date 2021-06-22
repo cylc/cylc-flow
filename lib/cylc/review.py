@@ -661,7 +661,7 @@ class CylcReviewService(object):
     def view(self, user, suite, path, path_in_tar=None, mode=None,
              no_fuzzy_time="0"):
         """View a text log file."""
-        if re.searc(r"log\..*\d\d\s\d\d$", path):
+        if re.search(r"log\..*\d\d\s\d\d$", path):
             path = path.replace(' ', '+')
         # get file or serve raw data
         file_output = self.get_file(
