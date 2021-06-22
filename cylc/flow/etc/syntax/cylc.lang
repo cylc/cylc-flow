@@ -88,6 +88,7 @@
         -->
         <!--TAG_FOR_AUTO_UPDATE-->
         <keyword>xtriggers</keyword>
+        <keyword>workflow state polling</keyword>
         <keyword>work sub-directory</keyword>
         <keyword>warning handler</keyword>
         <keyword>visualization</keyword>
@@ -104,8 +105,6 @@
         <keyword>templates</keyword>
         <keyword>task parameters</keyword>
         <keyword>task event batch interval</keyword>
-        <keyword>suite state polling</keyword>
-        <keyword>workflow state polling</keyword>
         <keyword>succeeded handler</keyword>
         <keyword>submitted handler</keyword>
         <keyword>submission timeout handler</keyword>
@@ -213,6 +212,7 @@
         <keyword>clock-expire</keyword>
         <keyword>batch system</keyword>
         <keyword>batch submit command template</keyword>
+        <keyword>allow implicit tasks</keyword>
         <keyword>aborted handler</keyword>
         <keyword>abort on timeout</keyword>
         <keyword>abort on stalled</keyword>
