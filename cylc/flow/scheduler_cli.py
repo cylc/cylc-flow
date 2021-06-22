@@ -56,7 +56,7 @@ or "cylc clean" the existing run directory.
 
 By default, new runs begin at the start of the graph, determined by the initial
 cycle point. You can also begin at a later cycle point (--start-cycle-point),
-or at specified tasks (--start task) within the graph.
+or at specified tasks (--start-task) within the graph.
 
 For convenience any dependence on tasks prior to the start cycle point (or to
 the cycle point of the earliest start task) will be taken as satisfied.
