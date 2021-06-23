@@ -43,8 +43,9 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     ServiceFileError,
     TaskRemoteMgmtError,
-    WorkflowFilesError,
-    handle_rmtree_err
+    handle_rmtree_err,
+    UserInputError,
+    WorkflowFilesError
 )
 from cylc.flow.pathutil import (
     expand_path,
@@ -227,7 +228,7 @@ class WorkflowFiles:
         SHARE_CYCLE_DIR, SHARE_DIR, LOG_DIR, WORK_DIR, ''
     ])
     """The paths of the symlink dirs that may be set in
-    global.cylc[symlink dirs], relative to the run dir
+    global.cylc[install]symlink dirs, relative to the run dir
     ('' represents the run dir)."""
 
 
@@ -584,7 +585,7 @@ def register(
     if not is_installed(get_workflow_run_dir(flow_name)):
         symlinks_created = make_localhost_symlinks(
             get_workflow_run_dir(flow_name), flow_name)
-        if bool(symlinks_created):
+        if symlinks_created:
             for src, dst in symlinks_created.items():
                 LOG.info(f"Symlink created from {src} to {dst}")
     # Create service dir if necessary.
@@ -608,11 +609,7 @@ def is_installed(rund: Union[Path, str]) -> bool:
     rund = Path(rund)
     cylc_install_dir = Path(rund, WorkflowFiles.Install.DIRNAME)
     alt_cylc_install_dir = Path(rund.parent, WorkflowFiles.Install.DIRNAME)
-    if cylc_install_dir.is_dir():
-        return True
-    elif alt_cylc_install_dir.is_dir():
-        return True
-    return False
+    return cylc_install_dir.is_dir() or alt_cylc_install_dir.is_dir()
 
 
 def _clean_check(reg: str, run_dir: Path) -> None:
@@ -1316,7 +1313,7 @@ def install_workflow(
     symlinks_created = make_localhost_symlinks(
         rundir, named_run, symlink_conf=cli_symlink_dirs)
     install_log = _get_logger(rundir, 'cylc-install')
-    if bool(symlinks_created) is True:
+    if symlinks_created:
         for src, dst in symlinks_created.items():
             install_log.info(f"Symlink created from {src} to {dst}")
     try:
@@ -1528,15 +1525,22 @@ def get_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
     symdict: Dict[str, Dict[str, Any]] = {'localhost': {'run': None}}
     if symlink_dirs == "":
         return symdict
-    symlist = symlink_dirs.replace(" ", "").strip(',').split(',')
+    symlist = symlink_dirs.strip(',').split(',')
     for pair in symlist:
         try:
             key, val = pair.split("=")
+            key = key.strip()
         except ValueError:
-            continue
+            raise UserInputError(
+                'There is an error in --symlink-dirs option:'
+                f' {pair}. Try entering option in the form '
+                '--symlink-dirs=\'log=$DIR, share=$DIR2, ...\''
+            )
         if key not in ['run', 'log', 'share', 'share/cycle', 'work']:
-            raise WorkflowFilesError(
-                f"{key} not a valid entry for --symlink-dirs"
+            raise UserInputError(
+                f"{key} not a valid entry for --symlink-dirs. "
+                "Configurable symlink dirs are: 'run', 'log', 'share',"
+                " 'share/cycle', 'work'"
             )
         symdict['localhost'][key] = val.strip() or None
 

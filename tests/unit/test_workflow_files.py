@@ -29,6 +29,7 @@ from cylc.flow.exceptions import (
     CylcError,
     ServiceFileError,
     TaskRemoteMgmtError,
+    UserInputError,
     WorkflowFilesError
 )
 from cylc.flow.option_parsers import Options
@@ -1450,13 +1451,16 @@ def test_check_flow_file_symlink(
 @pytest.mark.parametrize(
     'symlink_dirs, err_msg, expected',
     [
-        ('log=$shortbread, share= $bourbon,share/cycle= $digestive, ', 'None',
-            {'localhost': {
-                'run': None,
-                'log': "$shortbread",
-                'share': '$bourbon',
-                'share/cycle': '$digestive'
-            }}
+        ('log=$shortbread, share= $bourbon,share/cycle= $digestive, ',
+         "There is an error in --symlink-dirs option:",
+            None
+         ),
+        ('log=$shortbread share= $bourbon share/cycle= $digestive ',
+         "There is an error in --symlink-dirs option:"
+         " log=$shortbread share= $bourbon share/cycle= $digestive . "
+         "Try entering option in the form --symlink-dirs="
+         "'log=$DIR, share=$DIR2, ...'",
+            None
          ),
         ('run=$NICE, log= $Garibaldi, share/cycle=$RichTea', 'None',
             {'localhost': {
@@ -1479,7 +1483,7 @@ def test_get_sym_dirs(
     """Test get_sym_dirs returns dict or correctly raises errors on cli symlink
         dir options"""
     if err_msg != 'None':
-        with pytest.raises(WorkflowFilesError) as exc:
+        with pytest.raises(UserInputError) as exc:
             get_sym_dirs(symlink_dirs)
             assert(err_msg) in str(exc)
 

@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Dict, Iterable, Set, Union, Optional, OrderedDict, Any
+from typing import Dict, Iterable, Set, Union, Optional, Any
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -131,7 +131,7 @@ def make_workflow_run_tree(workflow):
 
 def make_localhost_symlinks(
     rund: Union[Path, str],
-    named_sub_dir: str, 
+    named_sub_dir: str,
     symlink_conf: Optional[Dict[str, Dict[str, str]]] = None
 ) -> Dict[str, Union[Path, str]]:
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
@@ -190,7 +190,7 @@ def get_dirs_to_symlink(
         dirs_to_symlink: [directory: symlink_path]
     """
     dirs_to_symlink: Dict[str, Any] = {}
-    if not symlink_conf:
+    if symlink_conf is None:
         symlink_conf = glbl_cfg().get(['install', 'symlink dirs'])
     if install_target not in symlink_conf.keys():
         return dirs_to_symlink
@@ -199,7 +199,7 @@ def get_dirs_to_symlink(
         dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', flow_name)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target].get(dir_, None)
-        if (not link) is None or link == base_dir:
+        if (not link) or link == base_dir:
             continue
         dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', flow_name, dir_)
     return dirs_to_symlink
