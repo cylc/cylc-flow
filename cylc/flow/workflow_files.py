@@ -282,6 +282,12 @@ class ContactFileFields:
     """Remote command setting for Scheduler."""
 
 
+class RemoteCleanQueueTuple(NamedTuple):
+    proc: 'Popen[str]'
+    install_target: str
+    platforms: List[Dict[str, Any]]
+
+
 REG_DELIM = "/"
 
 NO_TITLE = "No title provided"
@@ -828,12 +834,7 @@ def remote_clean(
         raise PlatformLookupError(
             "Cannot clean on remote platforms as the workflow database is "
             f"out of date/inconsistent with the global config - {exc}")
-
-    class QueueTuple(NamedTuple):
-        proc: 'Popen[str]'
-        install_target: str
-        platforms: List[Dict[str, Any]]
-    queue: Deque[QueueTuple] = deque()
+    queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(
         _remote_clean_cmd, reg=reg, rm_dirs=rm_dirs, timeout=timeout
     )
@@ -846,7 +847,7 @@ def remote_clean(
         )
         # Issue ssh command:
         queue.append(
-            QueueTuple(
+            RemoteCleanQueueTuple(
                 remote_clean_cmd(platform=platforms[0]), target, platforms
             )
         )
@@ -862,13 +863,14 @@ def remote_clean(
         if out:
             LOG.debug(out)
         if ret_code:
-            # Try again using the next platform for this install target:
             this_platform = item.platforms.pop(0)
             LOG.debug(TaskRemoteMgmtError(
                 TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
                 item.proc.args, ret_code, out, err
             ))
-            if item.platforms:
+            if ret_code == 255 and item.platforms:
+                # SSH error; try again using the next platform for this
+                # install target
                 queue.append(
                     item._replace(
                         proc=remote_clean_cmd(platform=item.platforms[0])

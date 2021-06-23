@@ -981,59 +981,75 @@ PLATFORMS = {
 @pytest.mark.parametrize(
     'install_targets_map, failed_platforms, expected_platforms, expected_err',
     [
-        (
-            {'localhost': [PLATFORMS['exeter']]}, None, None, None
+        pytest.param(
+            {'localhost': [PLATFORMS['exeter']]}, None, None, None,
+            id="Only localhost install target - no remote clean"
         ),
-        (
+        pytest.param(
             {
                 'localhost': [PLATFORMS['exeter']],
                 'picard': [PLATFORMS['enterprise']]
             },
             None,
             ['enterprise'],
-            None
+            None,
+            id="Localhost and remote install target"
         ),
-        (
+        pytest.param(
             {
                 'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
                 'janeway': [PLATFORMS['voyager']]
             },
             None,
             ['enterprise', 'voyager'],
-            None
+            None,
+            id="Only remote install targets"
         ),
-        (
+        pytest.param(
             {
                 'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
                 'janeway': [PLATFORMS['voyager']]
             },
-            ['enterprise'],
+            {'enterprise': 255},
             ['enterprise', 'stargazer', 'voyager'],
-            None
+            None,
+            id="Install target with 1 failed, 1 successful platform"
         ),
-        (
+        pytest.param(
             {
                 'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
                 'janeway': [PLATFORMS['voyager']]
             },
-            ['enterprise', 'stargazer'],
+            {'enterprise': 255, 'stargazer': 255},
             ['enterprise', 'stargazer', 'voyager'],
-            (CylcError, "Could not clean on install targets: picard")
+            (CylcError, "Could not clean on install targets: picard"),
+            id="Install target with all failed platforms"
         ),
-        (
+        pytest.param(
             {
                 'picard': [PLATFORMS['enterprise']],
                 'janeway': [PLATFORMS['voyager']]
             },
+            {'enterprise': 255, 'voyager': 255},
             ['enterprise', 'voyager'],
-            ['enterprise', 'voyager'],
-            (CylcError, "Could not clean on install targets: picard, janeway")
-        )
+            (CylcError, "Could not clean on install targets: picard, janeway"),
+            id="All install targets have all failed platforms"
+        ),
+        pytest.param(
+            {
+                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']]
+            },
+            {'enterprise': 1},
+            ['enterprise'],
+            (CylcError, "Could not clean on install targets: picard"),
+            id=("Remote clean cmd fails on a platform for non-SSH reason - "
+                "does not retry")
+        ),
     ]
 )
 def test_remote_clean(
     install_targets_map: Dict[str, Any],
-    failed_platforms: Optional[List[str]],
+    failed_platforms: Optional[Dict[str, int]],
     expected_platforms: Optional[List[str]],
     expected_err: Optional[Tuple[Type[Exception], str]],
     monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
@@ -1045,7 +1061,8 @@ def test_remote_clean(
         install_targets_map The map that would be returned by
             platforms.get_install_target_to_platforms_map()
         failed_platforms: If specified, any platforms that clean will
-            artificially fail on in this test case.
+            artificially fail on in this test case. The key is the platform
+            name, the value is the remote clean cmd return code.
         expected_platforms: If specified, all the platforms that the
             remote clean cmd is expected to run on.
         expected_err: If specified, a tuple of the form
@@ -1062,11 +1079,12 @@ def test_remote_clean(
     def mocked_remote_clean_cmd_side_effect(reg, platform, rm_dirs, timeout):
         proc_ret_code = 0
         if failed_platforms and platform['name'] in failed_platforms:
-            proc_ret_code = 1
+            proc_ret_code = failed_platforms[platform['name']]
         return mock.Mock(
             poll=lambda: proc_ret_code,
             communicate=lambda: ("", ""),
-            args=[])
+            args=[]
+        )
 
     mocked_remote_clean_cmd = monkeymock(
         'cylc.flow.workflow_files._remote_clean_cmd',
