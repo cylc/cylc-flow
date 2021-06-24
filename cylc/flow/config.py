@@ -48,8 +48,13 @@ from cylc.flow import LOG
 from cylc.flow.c3mro import C3
 from cylc.flow.listify import listify
 from cylc.flow.exceptions import (
-    CylcError, WorkflowConfigError, IntervalParsingError, TaskDefError,
-    ParamExpandError)
+    CylcError,
+    WorkflowConfigError,
+    IntervalParsingError,
+    TaskDefError,
+    ParamExpandError,
+    UserInputError
+)
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -648,7 +653,7 @@ class WorkflowConfig:
         starttask = getattr(self.options, 'starttask', None)
 
         if startcp is not None and starttask is not None:
-            raise WorkflowConfigError(
+            raise UserInputError(
                 "--start-cycle-point and --start-task are mutually exclusive"
             )
         if startcp:

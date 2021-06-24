@@ -24,7 +24,11 @@ from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
 from cylc.flow.cycling.loader import INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
-from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.exceptions import (
+    WorkflowConfigError,
+    PointParsingError,
+    UserInputError
+)
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -397,7 +401,7 @@ def test_process_icp(
             ['foo.20090802T0615+0530'],
             None,
             (
-                WorkflowConfigError,
+                UserInputError,
                 "--start-cycle-point and --start-task are mutually exclusive"
             ),
         )
