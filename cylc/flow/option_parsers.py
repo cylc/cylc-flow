@@ -244,7 +244,11 @@ TASK_GLOB matches task or family names at a given cycle point.
             self.add_std_option(
                 '--color', '--colour', metavar='WHEN', action='store',
                 default='auto', choices=['never', 'auto', 'always'],
-                help='Determine when to use color in terminal output.')
+                help=(
+                    "Determine when to use color/bold text in terminal output."
+                    " Options available are 'never', 'auto' and 'always'."
+                )
+            )
 
         if self.prep:
             self.add_std_option(

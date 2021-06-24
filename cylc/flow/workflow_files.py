@@ -431,15 +431,13 @@ def get_workflow_source_dir(
             return None, None
 
 
-def get_workflow_srv_dir(reg, workflow_owner=None):
+def get_workflow_srv_dir(reg):
     """Return service directory of a workflow."""
-    if not workflow_owner:
-        workflow_owner = get_user()
     run_d = os.getenv("CYLC_WORKFLOW_RUN_DIR")
     if (
         not run_d
         or os.getenv("CYLC_WORKFLOW_NAME") != reg
-        or os.getenv("CYLC_WORKFLOW_OWNER") != workflow_owner
+        or os.getenv("CYLC_WORKFLOW_OWNER") != get_user()
     ):
         run_d = get_workflow_run_dir(reg)
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
