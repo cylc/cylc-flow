@@ -18,7 +18,7 @@
 # Test various uses of the cylc list command
 . "$(dirname "$0")/test_header"
 #------------------------------------------------------------------------------
-set_test_number 7
+set_test_number 10
 #------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #------------------------------------------------------------------------------
@@ -84,9 +84,7 @@ not-used   not-used root
 root       root
 __DONE__
 #------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-opt-p
-cylc ls -p 20140808T00,20140812T00 "${WORKFLOW_NAME}" > list-p.out
-cmp_ok list-p.out << __DONE__
+cat > res.out << __DONE__
 cujo.20140808T0000Z
 cujo.20140809T0000Z
 cujo.20140810T0000Z
@@ -103,5 +101,37 @@ manny.20140810T0000Z
 manny.20140811T0000Z
 manny.20140812T0000Z
 __DONE__
+
+TEST_NAME=${TEST_NAME_BASE}-opt-p1
+cylc ls -p 20140808T0000Z,20140812T0000Z "${WORKFLOW_NAME}" > list-p1.out
+cmp_ok list-p1.out res.out
+
+TEST_NAME=${TEST_NAME_BASE}-opt-p2
+# default from initial point
+cylc ls -p ,20140812T0000Z "${WORKFLOW_NAME}" > list-p2.out
+cmp_ok list-p2.out res.out
+
+cat > res2.out << __DONE__
+cujo.20140808T0000Z
+cujo.20140809T0000Z
+cujo.20140810T0000Z
+fido.20140808T0000Z
+fido.20140809T0000Z
+fido.20140810T0000Z
+manny.20140808T0000Z
+manny.20140809T0000Z
+manny.20140810T0000Z
+__DONE__
+
+
+TEST_NAME=${TEST_NAME_BASE}-opt-p3
+cylc ls -p 20140808T0000Z, "${WORKFLOW_NAME}" > list-p3.out
+# default 3 cycle points
+cmp_ok list-p3.out res2.out
+
+TEST_NAME=${TEST_NAME_BASE}-opt-p4
+cylc ls -p , "${WORKFLOW_NAME}" > list-p4.out
+# default 3 cycle points from initial
+cmp_ok list-p4.out res2.out
 #------------------------------------------------------------------------------
 purge

@@ -18,7 +18,7 @@
 # Test namespace graphing. 
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
@@ -27,7 +27,10 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-graph"
 graph_workflow "${WORKFLOW_NAME}" 'graph.plain' -n
-cmp_ok graph.plain \
-    "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
+cmp_ok graph.plain "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
+
+TEST_NAME="${TEST_NAME_BASE}-err"
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain2' -n -g X
+grep_ok "Cannot combine \-\-group and \-\-namespaces." "graph.plain2.err"
 #-------------------------------------------------------------------------------
 purge

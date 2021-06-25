@@ -19,23 +19,21 @@
 
 A text-based graph representation of workflow dependencies.
 
-Implements the old ``cylc graph --reference command`` for producing a textural
+Implements the old ``cylc graph --reference command`` for producing a textual
 graph of a workflow.
 
 Examples:
-    # print a textural representation of the graph of the flow one
+    # print a textual representation of the graph of the flow one
     $ cylc graph one --reference
 
     # display the difference between the flows one and two
     $ cylc graph one --diff two
-
 """
 
 from difflib import unified_diff
 import sys
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import parse_workflow_arg
@@ -83,39 +81,23 @@ def sort_datetime_edge(item):
     return (item[0], item[1] or '')
 
 
-def get_cycling_bounds(config, start_point=None, stop_point=None):
-    """Determine the start and stop points for graphing a workflow."""
-    # default start and stop points to values in the visualization section
-    if not start_point:
-        start_point = config.cfg['visualization']['initial cycle point']
-    if not stop_point:
-        viz_stop_point = config.cfg['visualization']['final cycle point']
-        if viz_stop_point:
-            stop_point = viz_stop_point
-
-    # don't allow stop_point before start_point
-    if stop_point is not None:
-        if get_point(stop_point) < get_point(start_point):
-            # NOTE: we need to cast with get_point for this comparison due to
-            #       ISO8061 extended datetime formats
-            stop_point = start_point
-        else:
-            stop_point = stop_point
-    else:
-        stop_point = None
-
-    return start_point, stop_point
-
-
 def graph_workflow(
     config,
-    start_point=None,
-    stop_point=None,
-    ungrouped=False,
+    start_point_str=None,
+    stop_point_str=None,
+    grouping=None,
     show_suicide=False,
     write=print
 ):
     """Implement ``cylc-graph --reference``."""
+    graph = config.get_graph_raw(
+        start_point_str,
+        stop_point_str,
+        grouping
+    )
+    if not graph:
+        return
+
     # set sort keys based on cycling mode
     if config.cfg['scheduling']['cycling mode'] == 'integer':
         # integer sorting
@@ -125,14 +107,6 @@ def graph_workflow(
         # datetime sorting
         node_sort = None  # lexicographically sortable
         edge_sort = sort_datetime_edge
-
-    # get graph
-    start_point, stop_point = get_cycling_bounds(
-        config, start_point, stop_point)
-    graph = config.get_graph_raw(
-        start_point, stop_point, ungroup_all=ungrouped)
-    if not graph:
-        return
 
     edges = (
         (left, right)
@@ -194,15 +168,19 @@ def get_option_parser():
         __doc__, jset=True, prep=True,
         argdoc=[
             ('[WORKFLOW]', 'Workflow name or path'),
-            ('[START]', 'Initial cycle point '
-             '(default: workflow initial point)'),
-            ('[STOP]', 'Final cycle point '
-             '(default: initial + 3 points)')])
+            ('[START]', 'Graph start; defaults to initial cycle point'),
+            (
+                '[STOP]',
+                'Graph stop point or interval; defaults to 3 points from START'
+            )
+        ]
+    )
 
     parser.add_option(
-        '-u', '--ungrouped',
-        help='Start with task families ungrouped (the default is grouped).',
-        action='store_true', default=False, dest='ungrouped')
+        '-g', '--group',
+        help="task family to group. Can be used multiple times. "
+        "Use '<all>' to specify all families above root.",
+        action='append', default=[], dest='grouping')
 
     parser.add_option(
         '-n', '--namespaces',
@@ -218,8 +196,7 @@ def get_option_parser():
 
     parser.add_option(
         '--show-suicide',
-        help='Show suicide triggers.  They are not shown by default, unless '
-             'toggled on with the tool bar button.',
+        help='Show suicide triggers. Not shown by default.',
         action='store_true', default=False, dest='show_suicide')
 
     parser.add_option(
@@ -238,8 +215,8 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, opts, workflow=None, start=None, stop=None):
     """Implement ``cylc graph``."""
-    if opts.ungrouped and opts.namespaces:
-        raise UserInputError('Cannot combine --ungrouped and --namespaces.')
+    if opts.grouping and opts.namespaces:
+        raise UserInputError('Cannot combine --group and --namespaces.')
     if not (opts.reference or opts.diff):
         raise UserInputError(
             'Only the --reference and --diff use cases are supported'
@@ -260,7 +237,7 @@ def main(parser, opts, workflow=None, start=None, stop=None):
         if opts.namespaces:
             graph_inheritance(config, write=write)
         else:
-            graph_workflow(config, start, stop, ungrouped=opts.ungrouped,
+            graph_workflow(config, start, stop, grouping=opts.grouping,
                            show_suicide=opts.show_suicide, write=write)
 
     if opts.diff:

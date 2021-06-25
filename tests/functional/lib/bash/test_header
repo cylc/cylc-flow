@@ -422,7 +422,8 @@ graph_workflow() {
     local OUTPUT_FILE="${2}"
     shift 2
     mkdir -p "$(dirname "${OUTPUT_FILE}")"
-    cylc graph --reference "${WORKFLOW_NAME}" "$@" >"${OUTPUT_FILE}"
+    cylc graph --reference "${WORKFLOW_NAME}" "$@" \
+        >"${OUTPUT_FILE}" 2>"${OUTPUT_FILE}".err
 }
 
 init_workflow() {

@@ -1,8 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = foo
-[runtime]
-    [[foo]]
-[visualization]
-    [[node attributes]]
-        foo = "blue" # Should be foo = "fillcolor=blue".

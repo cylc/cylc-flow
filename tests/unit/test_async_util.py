@@ -195,7 +195,7 @@ async def test_pipe_concurrent(caplog, preserve_order):
 
 
 def test_pipe_str():
-    """It has helpful textural representations."""
+    """It has helpful textual representations."""
     pipe = a_range(5) | even(filter_stop=False) | mult(10, kwarg=42)
     assert str(pipe) == 'a_range(5)'
     assert repr(pipe) == 'a_range(5) | even() | mult(10, kwarg=42)'

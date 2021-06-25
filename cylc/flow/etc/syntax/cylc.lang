@@ -91,12 +91,8 @@
         <keyword>workflow state polling</keyword>
         <keyword>work sub-directory</keyword>
         <keyword>warning handler</keyword>
-        <keyword>visualization</keyword>
         <keyword>verbose mode</keyword>
         <keyword>user</keyword>
-        <keyword>use node fillcolor for edges</keyword>
-        <keyword>use node color for labels</keyword>
-        <keyword>use node color for edges</keyword>
         <keyword>to</keyword>
         <keyword>title</keyword>
         <keyword>timeout handler</keyword>
@@ -140,10 +136,6 @@
         <keyword>parameter environment templates</keyword>
         <keyword>owner</keyword>
         <keyword>outputs</keyword>
-        <keyword>number of cycle points</keyword>
-        <keyword>node penwidth</keyword>
-        <keyword>node groups</keyword>
-        <keyword>node attributes</keyword>
         <keyword>meta</keyword>
         <keyword>message</keyword>
         <keyword>members</keyword>
@@ -198,8 +190,6 @@
         <keyword>directives</keyword>
         <keyword>description</keyword>
         <keyword>default run length</keyword>
-        <keyword>default node attributes</keyword>
-        <keyword>default edge attributes</keyword>
         <keyword>default</keyword>
         <keyword>cycling mode</keyword>
         <keyword>cycle point time zone</keyword>
@@ -207,7 +197,6 @@
         <keyword>cycle point format</keyword>
         <keyword>custom handler</keyword>
         <keyword>critical handler</keyword>
-        <keyword>collapsed families</keyword>
         <keyword>clock-trigger</keyword>
         <keyword>clock-expire</keyword>
         <keyword>batch system</keyword>

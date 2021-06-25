@@ -43,10 +43,10 @@ TNAME=${TEST_NAME_BASE}-1
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" --group="<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp" 
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
 graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
@@ -75,10 +75,10 @@ TNAME=${TEST_NAME_BASE}-2
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp"
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
 graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
@@ -108,10 +108,10 @@ TNAME=${TEST_NAME_BASE}-3
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp"
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
 graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
@@ -140,10 +140,10 @@ TNAME=${TEST_NAME_BASE}-4
 # validate
 run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "flow.cylc" "${TNAME}-graph-fam"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-b.ref"
 # task graph
-graph_workflow "flow.cylc" "${TNAME}-graph-exp" -u
+graph_workflow "flow.cylc" "${TNAME}-graph-exp"
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-b.ref"
 # inheritance graph
 graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
@@ -190,7 +190,7 @@ cat >'flow.cylc' <<'__WORKFLOW__'
 __WORKFLOW__
 
 run_ok "${TEST_NAME_BASE}-6" cylc validate 'flow.cylc'
-cylc graph --reference -u 'flow.cylc' 1>'06.graph'
+cylc graph --reference 'flow.cylc' 1>'06.graph'
 cmp_ok '06.graph' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/06.graph.ref"
 
 #------------------------------------------------------------------------------

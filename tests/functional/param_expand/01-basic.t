@@ -298,7 +298,7 @@ cat >'flow.cylc' <<'__WORKFLOW__'
         inherit = X<s>Y
 __WORKFLOW__
 run_ok "${TEST_NAME_BASE}-15" cylc validate "flow.cylc"
-cylc graph --reference 'flow.cylc' >'15.graph'
+cylc graph --reference --group="<all>" 'flow.cylc' >'15.graph'
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/15.graph.ref" '15.graph'
 
 # -ve offset on RHS
@@ -396,8 +396,6 @@ cmp_ok '19.cylc' <<'__FLOW_CONFIG__'
         script = true
         [[[environment]]]
             FC = gfortran
-[visualization]
-    [[node attributes]]
 __FLOW_CONFIG__
 
 exit

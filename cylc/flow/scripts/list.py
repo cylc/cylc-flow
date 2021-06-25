@@ -76,9 +76,10 @@ def get_option_parser():
 
     parser.add_option(
         "-p", "--points",
-        help="Print actual task IDs from the "
-             "START [through STOP] cycle points.",
-        metavar="START[,STOP]", action="store", default=None, dest="crange")
+        help="Print task IDs from [START] to [STOP] cycle points. Both bounds "
+        "are optional and STOP can be an interval from START (or from the "
+        "initial cycle point, by default). Use '-p , ' for the default range.",
+        metavar="[START],[STOP]", action="store", default=None, dest="prange")
 
     return parser
 
@@ -93,12 +94,19 @@ def main(parser, options, reg):
         which = "all tasks"
     elif options.all_namespaces:
         which = "all namespaces"
-    elif options.crange:
-        which = "crange"
-        try:
-            tr_start, tr_stop = options.crange.split(',')
-        except ValueError:
-            tr_start = tr_stop = options.crange
+    elif options.prange:
+        which = "prange"
+        if options.prange == ",":
+            tr_start = None
+            tr_stop = None
+        elif options.prange.endswith(","):
+            tr_start = options.prange[:-1]
+            tr_stop = None
+        elif options.prange.startswith(","):
+            tr_start = None
+            tr_stop = options.prange[1:]
+        else:
+            tr_start, tr_stop = options.prange.split(',')
     else:
         which = "graphed tasks"
 
@@ -121,7 +129,7 @@ def main(parser, options, reg):
     if options.tree:
         config.print_first_parent_tree(
             pretty=options.box, titles=options.titles)
-    elif options.crange:
+    elif options.prange:
         for node in sorted(config.get_node_labels(tr_start, tr_stop)):
             print(node)
     else:

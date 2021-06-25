@@ -1376,26 +1376,6 @@ with Conf(
             '''):
                 Conf('<parameter>', VDR.V_STRING)
 
-    with Conf('visualization'):
-        Conf('initial cycle point', VDR.V_CYCLE_POINT)
-        Conf('final cycle point', VDR.V_STRING)
-        Conf('number of cycle points', VDR.V_INTEGER, 3)
-        Conf('collapsed families', VDR.V_STRING_LIST)
-        Conf('use node color for edges', VDR.V_BOOLEAN)
-        Conf('use node fillcolor for edges', VDR.V_BOOLEAN)
-        Conf('use node color for labels', VDR.V_BOOLEAN)
-        Conf('node penwidth', VDR.V_INTEGER, 2)
-        Conf('edge penwidth', VDR.V_INTEGER, 2)
-        Conf('default node attributes', VDR.V_STRING_LIST,
-             default=['style=unfilled', 'shape=ellipse'])
-        Conf('default edge attributes', VDR.V_STRING_LIST)
-
-        with Conf('node groups'):
-            Conf('<group>', VDR.V_STRING_LIST)
-
-        with Conf('node attributes'):
-            Conf('<node>', VDR.V_STRING_LIST)
-
 
 def upg(cfg, descr):
     """Upgrade old workflow configuration."""
@@ -1432,6 +1412,7 @@ def upg(cfg, descr):
         '8.0.0',
         ['cylc', 'simulation', 'disable suite event handlers'])
     u.obsolete('8.0.0', ['cylc', 'simulation'])
+    u.obsolete('8.0.0', ['visualization'])
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],

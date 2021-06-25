@@ -19,6 +19,3 @@
         """
         [[[outputs]]]
             out1 = the cheese is ready
-[visualization]
-    initial cycle point = 1
-    final cycle point = 16

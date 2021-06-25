@@ -143,6 +143,7 @@ class WorkflowConfig:
     """Class for workflow configuration items and derived quantities."""
 
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
+    VIS_N_POINTS = 3
 
     def __init__(
         self,
@@ -180,14 +181,11 @@ class WorkflowConfig:
         self.initial_point: Optional['PointBase'] = None
         self.start_point: Optional['PointBase'] = None
         self.final_point: Optional['PointBase'] = None
-        self.first_graph = True
         self.clock_offsets = {}
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
         self.xtrigger_mgr = xtrigger_mgr
         self.workflow_polling_tasks = {}  # type: ignore # TODO figure out type
-        self._last_graph_raw_id: Optional[tuple] = None
-        self._last_graph_raw_edges = []  # type: ignore # TODO figure out type
 
         self.sequences: List['SequenceBase'] = []
         self.actual_first_point: Optional['PointBase'] = None
@@ -209,8 +207,7 @@ class WorkflowConfig:
             # (not including the final tasks)
             'descendants': {},
             # lists of all descendant namespaces from the first-parent
-            # hierarchy (first parents are collapsible in workflow
-            # visualization)
+            # hierarchy (first parents are collapsible in visualization)
             'first-parent descendants': {},
         }
         # tasks
@@ -434,29 +431,6 @@ class WorkflowConfig:
 
             self.cfg['scheduling']['special tasks'][s_type] = result
 
-        self.collapsed_families_config = (
-            self.cfg['visualization']['collapsed families'])
-        for fam in self.collapsed_families_config:
-            if fam not in self.runtime['first-parent descendants']:
-                raise WorkflowConfigError(
-                    '[visualization]collapsed families: '
-                    '%s is not a first parent' % fam)
-
-        if getattr(options, 'collapsed', None):
-            # (used by the "cylc graph" viewer)
-            self.closed_families = getattr(self.options, 'collapsed', None)
-        elif is_reload:
-            self.closed_families = []
-        else:
-            self.closed_families = self.collapsed_families_config
-        for cfam in self.closed_families:
-            if cfam not in self.runtime['descendants']:
-                self.closed_families.remove(cfam)
-                if not is_reload and cylc.flow.flags.verbosity > 0:
-                    LOG.warning(
-                        '[visualization][collapsed families]: ' +
-                        'family ' + cfam + ' not defined')
-
         self.process_config_env()
 
         self.mem_log("config.py: before load_graph()")
@@ -492,81 +466,6 @@ class WorkflowConfig:
                     raise WorkflowConfigError(
                         "external triggers must be used only once.")
 
-        ngs = self.cfg['visualization']['node groups']
-        # If a node group member is a family, include its descendants too.
-        replace = {}  # type: ignore # TODO figure out type
-        for ng, mems in ngs.items():
-            replace[ng] = []
-            for mem in mems:
-                replace[ng] += [mem]
-                if mem in self.runtime['descendants']:
-                    replace[ng] += self.runtime['descendants'][mem]
-        for ng in replace:
-            ngs[ng] = replace[ng]
-
-        # Define family node groups automatically so that family and
-        # member nodes can be styled together using the family name.
-        # Users can override this for individual nodes or sub-groups.
-        for fam in self.runtime['descendants']:
-            if fam not in ngs:
-                ngs[fam] = [fam] + self.runtime['descendants'][fam]
-
-        if cylc.flow.flags.verbosity > 0:
-            LOG.debug("Checking [visualization] node attributes")
-            # TODO - these should probably be done in non-verbose mode too.
-            # 1. node groups should contain valid namespace names
-            nspaces = list(self.cfg['runtime'])
-            bad = {}
-            for ng, mems in ngs.items():
-                n_bad = []
-                for mem in mems:
-                    if mem not in nspaces:
-                        n_bad.append(mem)
-                if n_bad:
-                    bad[ng] = n_bad
-            if bad:
-                err_msg = "undefined node group members"
-                for ng, mems in bad.items():
-                    err_msg += "\n+ " + ng + ":\t,".join(mems)
-                LOG.warning(err_msg)
-
-            # 2. node attributes must refer to node groups or namespaces
-            bad_nas = []
-            for na in self.cfg['visualization']['node attributes']:
-                if na not in ngs and na not in nspaces:
-                    bad_nas.append(na)
-            if bad_nas:
-                err_msg = "undefined node attribute targets"
-                for na in bad_nas:
-                    err_msg += f"\n+ {na}"
-                LOG.warning(err_msg)
-
-        # 3. node attributes must be lists of quoted "key=value" pairs.
-        fail = False
-        for node, attrs in (
-                self.cfg['visualization']['node attributes'].items()):
-            for attr in attrs:
-                # Check form is 'name = attr'.
-                if attr.count('=') != 1:
-                    fail = True
-                    LOG.error(
-                        "[visualization][node attributes]%s = %s" % (
-                            node, attr))
-        if fail:
-            raise WorkflowConfigError(
-                "Node attributes must be of the form "
-                "'key1=value1', 'key2=value2', etc."
-            )
-
-        # (Note that we're retaining 'default node attributes' even
-        # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in the flow.cylc spec
-        # results in root appearing last in the ordered dict of node
-        # names, so it overrides the styling for lesser groups and
-        # nodes, whereas the reverse is needed - fixing this would
-        # require reordering task_attr in cylc/flow/graphing.py
-        # TODO: graphing.py is gone now! ).
-
         self.leaves = self.get_task_name_list()
         for ancestors in self.runtime['first-parent ancestors'].values():
             try:
@@ -576,49 +475,6 @@ class WorkflowConfig:
             else:
                 if foot not in self.feet:
                     self.feet.append(foot)
-
-        # CLI override for visualization settings.
-        for key in ('initial', 'final'):
-            vis_str = getattr(self.options, 'vis_' + key, None)
-            if vis_str:
-                self.cfg['visualization'][key + ' cycle point'] = vis_str
-
-        # For static visualization, start point defaults to workflow initial
-        # point; stop point must be explicit with initial point, or None.
-        if self.cfg['visualization']['initial cycle point'] is None:
-            self.cfg['visualization']['initial cycle point'] = (
-                self.cfg['scheduling']['initial cycle point'])
-            # If viz initial point is None don't accept a final point.
-            if self.cfg['visualization']['final cycle point'] is not None:
-                if cylc.flow.flags.verbosity > 0:
-                    LOG.warning(
-                        "ignoring [visualization]final cycle point\n"
-                        "(it must be defined with an initial cycle point)")
-                self.cfg['visualization']['final cycle point'] = None
-
-        vfcp = self.cfg['visualization']['final cycle point']
-        if vfcp:
-            try:
-                vfcp = get_point_relative(
-                    self.cfg['visualization']['final cycle point'],
-                    self.initial_point).standardise()
-            except IsodatetimeError:
-                vfcp = get_point(
-                    self.cfg['visualization']['final cycle point']
-                )
-                if vfcp is not None:
-                    vfcp = vfcp.standardise()
-        else:
-            vfcp = None
-
-        # A viz final point can't be beyond the workflow final point.
-        if (
-            vfcp is not None
-            and self.final_point is not None
-            and vfcp > self.final_point
-        ):
-            self.cfg['visualization']['final cycle point'] = str(
-                self.final_point)
 
         # Replace workflow and task name in workflow and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
@@ -887,9 +743,9 @@ class WorkflowConfig:
                 "check graph for circular dependencies. To enforce this "
                 "check, use the option --check-circular.")
             return
-        start_point_string = self.cfg['visualization']['initial cycle point']
-        raw_graph = self.get_graph_raw(start_point_string,
-                                       stop_point_string=None)
+        start_point_str = self.cfg['scheduling']['initial cycle point']
+        raw_graph = self.get_graph_raw(start_point_str,
+                                       stop_point_str=None)
         lhs2rhss = {}  # left hand side to right hand sides
         rhs2lhss = {}  # right hand side to left hand sides
         for lhs, rhs in raw_graph:
@@ -1006,19 +862,6 @@ class WorkflowConfig:
                             self._update_task_params(name, used_indices)
                     newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
-        # Parameter expansion of visualization node attributes. TODO - do vis
-        # 'node groups' too, or deprecate them (use families in 'node attrs').
-        name_expander = NameExpander(self.parameters)
-        expanded_node_attrs = OrderedDictWithDefaults()
-        if 'visualization' not in self.cfg:
-            self.cfg['visualization'] = OrderedDictWithDefaults()
-        if 'node attributes' not in self.cfg['visualization']:
-            self.cfg['visualization']['node attributes'] = (
-                OrderedDictWithDefaults())
-        for node, val in self.cfg['visualization']['node attributes'].items():
-            for name, _ in name_expander.expand(node):
-                expanded_node_attrs[name] = val
-        self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
     def validate_namespace_names(self):
         """Validate task and family names."""
@@ -1795,100 +1638,83 @@ class WorkflowConfig:
             self.actual_first_point = start_point
         return self.actual_first_point
 
-    def get_graph_raw(self, start_point_string, stop_point_string,
-                      group_nodes=None, ungroup_nodes=None,
-                      ungroup_recursive=False, group_all=False,
-                      ungroup_all=False):
-        """Convert the abstract graph edges (self.edges, etc) to actual edges
+    def _get_stop_point(self, start_point, stop_point_str=None):
+        """Get stop point from string value or interval, or return None."""
+        if stop_point_str is None:
+            stop_point = None
+        elif "P" in stop_point_str:
+            # Is the final point(/interval) relative to initial?
+            if self.cfg['scheduling']['cycling mode'] == 'integer':
+                # Relative, integer cycling.
+                stop_point = get_point_relative(
+                    stop_point_str, start_point
+                ).standardise()
+            else:
+                # Relative, ISO8601 cycling.
+                stop_point = get_point_relative(
+                    stop_point_str, start_point
+                ).standardise()
+        else:
+            stop_point = get_point(stop_point_str).standardise()
+        return stop_point
 
-        Actual edges have concrete ranges of cycle points.
+    def get_graph_raw(
+            self, start_point_str=None, stop_point_str=None, grouping=None):
+        """Return concrete graph edges between specified cycle points.
 
-        In validate mode, set ungroup_all to True, and only return non-suicide
-        edges with left and right nodes.
+        Return a family-collapsed graph if the grouping arg is not None:
+          * ['FAM1', 'FAM2']: group (collapse) specified families
+          * ['<all>']: group (collapse) all families above root
+
+        For validation, return non-suicide edges with left and right nodes.
         """
+        start_point = get_point(
+            start_point_str or
+            self.cfg['scheduling']['initial cycle point']
+        )
+        stop_point = self._get_stop_point(start_point, stop_point_str)
+
+        actual_first_point = self.get_actual_first_point(start_point)
+
+        if grouping is None:
+            grouping = []
+        elif grouping == ['<all>']:
+            grouping = [
+                fam for
+                fam in self.runtime["first-parent descendants"].keys()
+                if fam != "root"
+            ]
+        else:
+            for bad in (
+                set(grouping).difference(
+                    self.runtime["first-parent descendants"].keys()
+                )
+            ):
+                LOG.warning(f"Ignoring undefined family {bad}")
+                grouping.remove(bad)
+
         is_validate = getattr(
             self.options, 'is_validate', False)  # this is for _check_circular
         if is_validate:
-            ungroup_all = True
-        if group_nodes is None:
-            group_nodes = []
-        if ungroup_nodes is None:
-            ungroup_nodes = []
-
-        if self.first_graph:
-            self.first_graph = False
-            if not self.collapsed_families_config and not ungroup_all:
-                # initially default to collapsing all families if
-                # "[visualization]collapsed families" not defined
-                group_all = True
-
-        first_parent_descendants = self.runtime['first-parent descendants']
-        if group_all:
-            # Group all family nodes
-            if self.collapsed_families_config:
-                self.closed_families = copy(self.collapsed_families_config)
-            else:
-                for fam in first_parent_descendants:
-                    if (
-                        fam != 'root'
-                        and fam not in self.closed_families
-                    ):
-                        self.closed_families.append(fam)
-        elif ungroup_all:
-            # Ungroup all family nodes
-            self.closed_families = []
-        elif group_nodes:
-            # Group chosen family nodes
-            first_parent_ancestors = self.runtime['first-parent ancestors']
-            for node in group_nodes:
-                parent = first_parent_ancestors[node][1]
-                if parent not in self.closed_families and parent != 'root':
-                    self.closed_families.append(parent)
-        elif ungroup_nodes:
-            # Ungroup chosen family nodes
-            for node in ungroup_nodes:
-                if node not in self.runtime['descendants']:
-                    # not a family node
-                    continue
-                if node in self.closed_families:
-                    self.closed_families.remove(node)
-                if ungroup_recursive:
-                    for fam in copy(self.closed_families):
-                        if fam in first_parent_descendants[node]:
-                            self.closed_families.remove(fam)
-
-        n_points = self.cfg['visualization']['number of cycle points']
-
-        graph_raw_id = (
-            start_point_string, stop_point_string, tuple(group_nodes),
-            tuple(ungroup_nodes), ungroup_recursive, group_all,
-            ungroup_all, tuple(self.closed_families),
-            tuple((seq, sorted(val))
-                  for seq, val in sorted(self.edges.items())),
-            n_points)
-        if graph_raw_id == self._last_graph_raw_id:
-            return self._last_graph_raw_edges
+            grouping = []
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
-        start_point = get_point(start_point_string)
-        actual_first_point = self.get_actual_first_point(start_point)
 
         workflow_final_point = get_point(
             self.cfg['scheduling']['final cycle point'])
 
-        # For the computed stop point, we store n_points of each sequence,
-        # and then cull later to the first n_points over all sequences.
-        if stop_point_string is not None:
-            stop_point = get_point(stop_point_string)
-        else:
-            stop_point = None
+        # For the computed stop point, store VIS_N_POINTS of each sequence,
+        # and then cull later to the first VIS_N_POINTS over all sequences.
 
-        # For nested families, only consider the outermost one
+        # For nested closed families, only consider the outermost one
+        fpd = self.runtime['first-parent descendants']
         clf_map = {}
-        for name in self.closed_families:
-            if all(name not in first_parent_descendants[i]
-                   for i in self.closed_families):
-                clf_map[name] = first_parent_descendants[name]
+        for name in grouping:
+            if all(
+                name not in fpd[i]
+                for i in grouping
+            ):
+                clf_map[name] = fpd[name]
 
         gr_edges = {}
         start_point_offset_cache = {}
@@ -1907,8 +1733,8 @@ class WorkflowConfig:
                         and point > workflow_final_point):
                     # Beyond workflow final cycle point.
                     break
-                if stop_point is None and len(new_points) > n_points:
-                    # Take n_points cycles from each sequence.
+                if stop_point is None and len(new_points) > self.VIS_N_POINTS:
+                    # Take VIS_N_POINTS cycles from each sequence.
                     break
                 point_offset_cache = {}
                 for left, right, suicide, cond in edges:
@@ -1968,41 +1794,25 @@ class WorkflowConfig:
         del start_point_offset_cache
         del point_offset_cache
         GraphNodeParser.get_inst().clear()
-        self._last_graph_raw_id = graph_raw_id
         if stop_point is None:
-            # Prune to n_points points in total.
+            # Prune to VIS_N_POINTS points in total.
             graph_raw_edges = []
-            for point in sorted(gr_edges)[:n_points]:
+            for point in sorted(gr_edges)[:self.VIS_N_POINTS]:
                 graph_raw_edges.extend(gr_edges[point])
         else:
             # Flatten nested list.
             graph_raw_edges = (
                 [i for sublist in gr_edges.values() for i in sublist])
         graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x[:2]])
-        self._last_graph_raw_edges = graph_raw_edges
         return graph_raw_edges
 
-    def get_node_labels(self, start_point_string, stop_point_string=None):
+    def get_node_labels(self, start_point_str=None, stop_point_str=None):
         """Return dependency graph node labels."""
-        stop_point = None
-        if stop_point_string is None:
-            vfcp = self.cfg['visualization']['final cycle point']
-            if vfcp:
-                try:
-                    stop_point = get_point_relative(
-                        vfcp, get_point(start_point_string)).standardise()
-                except IsodatetimeError:
-                    stop_point = get_point(vfcp).standardise()
-
-        if stop_point is not None:
-            if stop_point < get_point(start_point_string):
-                # Avoid a null graph.
-                stop_point_string = start_point_string
-            else:
-                stop_point_string = str(stop_point)
         ret = set()
         for edge in self.get_graph_raw(
-                start_point_string, stop_point_string, ungroup_all=True):
+                start_point_str,
+                stop_point_str,
+        ):
             left, right = edge[0:2]
             if left:
                 ret.add(left)
@@ -2137,7 +1947,7 @@ class WorkflowConfig:
             # Match a task name
             ret.append(self.taskdefs[name])
         else:
-            fams = self.get_first_parent_descendants()
+            fams = self.runtime['first-parent descendants']
             # Match a family name
             if name in fams:
                 for member in fams[name]:

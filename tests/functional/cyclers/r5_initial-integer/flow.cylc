@@ -11,6 +11,3 @@
 [runtime]
     [[root]]
         script = true
-[visualization]
-    initial cycle point = 1
-    final cycle point = 7

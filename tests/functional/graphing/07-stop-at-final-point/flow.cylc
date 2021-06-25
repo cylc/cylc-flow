@@ -9,8 +9,3 @@
       R1 = start => foo
       P1D = foo[-P1D] => foo => bar & baz
       R1/P0D = baz => stop
-[visualization]
-    {{STOP_CRITERION | default('')}}
-    [[node attributes]]
-        start = "style=filled", "fillcolor=slategray"
-        stop = "style=filled", "fillcolor=red"

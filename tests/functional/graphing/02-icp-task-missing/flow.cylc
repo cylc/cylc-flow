@@ -9,8 +9,6 @@
    {% if INCLUDE_R1 is defined and INCLUDE_R1 -%}
         R1 = pc
    {% endif %}
+        #R1 = pc
         T00 = NZC1[-PT3H] => pc
         T21 = NZC1
-[visualization]
-    initial cycle point = 20150304T00
-    final cycle point = 20150306T00

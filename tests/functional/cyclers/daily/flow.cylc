@@ -9,6 +9,3 @@
 [runtime]
     [[root]]
         script = touch typing
-[visualization]
-    initial cycle point = 20131231T2300
-    final cycle point = 20140103T0000

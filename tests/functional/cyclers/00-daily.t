@@ -16,36 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Test triggering from unbounded to bound sequences - date-time cycling.
-. "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-if [[ -f "$TEST_SOURCE_DIR/${TEST_NAME_BASE}-find.out" ]]; then
-    set_test_number 4
-else
-    set_test_number 3
-fi
-#-------------------------------------------------------------------------------
-CHOSEN_WORKFLOW="$(basename "$0" | sed "s/^.*-\(.*\)\.t/\1/g")"
-install_workflow "${TEST_NAME_BASE}" "${CHOSEN_WORKFLOW}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-graph"
-graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain"
-cmp_ok "${WORKFLOW_NAME}.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_WORKFLOW/graph.plain.ref"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_ok "${TEST_NAME}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
-#-------------------------------------------------------------------------------
-if [[ -f "$TEST_SOURCE_DIR/${TEST_NAME_BASE}-find.out" ]]; then
-    TEST_NAME="${TEST_NAME_BASE}-find"
-    WORKFLOW_RUN_DIR="$RUN_DIR/${WORKFLOW_NAME}"
-    {
-        (cd "${WORKFLOW_RUN_DIR}" && find 'log/job' -type f)
-        (cd "${WORKFLOW_RUN_DIR}" && find 'work' -type f)
-    } | sort -V >"${TEST_NAME}"
-    cmp_ok "${TEST_NAME}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}-find.out"
-fi
-#-------------------------------------------------------------------------------
-purge
+# variables used in the sourced common script below.
+# shellcheck disable=SC2034
+INITIALCP="20131231T2300"
+# shellcheck disable=SC2034
+FINALCP="20140103T0000"
+
+source "$(dirname "$0")"/common

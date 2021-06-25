@@ -31,7 +31,8 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-graph"
-graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain" "20000101T00" "20010102T12"
+graph_workflow "${WORKFLOW_NAME}" "${WORKFLOW_NAME}.graph.plain" \
+    "20000101T00Z" "20000102T12Z"
 cmp_ok "${WORKFLOW_NAME}.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_WORKFLOW/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"

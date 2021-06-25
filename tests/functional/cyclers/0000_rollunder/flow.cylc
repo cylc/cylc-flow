@@ -8,6 +8,3 @@
 [runtime]
     [[foo]]
         script = true
-[visualization]
-    initial cycle point = 00000101T00
-    final cycle point = 00000101T00

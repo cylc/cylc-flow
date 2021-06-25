@@ -13,6 +13,3 @@
 [runtime]
     [[root]]
         script = "echo Hello World"
-
-[visualization]
-    default node attributes = "style=filled"

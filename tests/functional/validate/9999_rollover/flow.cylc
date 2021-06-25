@@ -1,6 +1,4 @@
 # A workflow that tries to run beyond year 9999 without using extended year digits.
-# [visualization]number of cycle points = 1" keeps it under the limit during
-# validation, but R3/PT1H puts it over the limit at run time.
 
 [scheduler]
     UTC mode = True
@@ -11,6 +9,3 @@
 [runtime]
     [[foo]]
         script = true
-[visualization]
-    initial cycle point = 99991231T2200
-    number of cycle points = 1
