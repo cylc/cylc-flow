@@ -1111,6 +1111,8 @@ class DataStoreMgr:
 
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]
+        tp_updated = self.updated[TASK_PROXIES]
+        j_updated = self.updated[JOBS]
         parent_ids = set()
         for tp_id in list(node_ids):
             if tp_id in self.n_window_nodes:
@@ -1128,6 +1130,14 @@ class DataStoreMgr:
                 self.xtrigger_tasks[sig].remove(tp_id)
                 if not self.xtrigger_tasks[sig]:
                     del self.xtrigger_tasks[sig]
+
+            # Don't process updated deltas of pruned node
+            if tp_id in tp_updated:
+                for j_id in list(node.jobs) + list(tp_updated[tp_id].jobs):
+                    if j_id in j_updated:
+                        del j_updated[j_id]
+                del tp_updated[tp_id]
+
             self.deltas[TASK_PROXIES].pruned.append(tp_id)
             self.deltas[JOBS].pruned.extend(node.jobs)
             self.deltas[EDGES].pruned.extend(node.edges)
@@ -1182,6 +1192,9 @@ class DataStoreMgr:
             else:
                 if fam_node.first_parent:
                     parent_ids.add(fam_node.first_parent)
+                # Don't process updated deltas of pruned node
+                if fp_id in fp_updated:
+                    del fp_updated[fp_id]
                 prune_ids.add(fp_id)
         checked_ids.add(fp_id)
         if fp_id in parent_ids:
