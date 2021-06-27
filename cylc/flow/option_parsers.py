@@ -30,7 +30,7 @@ from cylc.flow.loggingutil import CylcLogFormatter
 
 
 def format_shell_examples(string):
-    """Put comments in the terminal "dimished" colour."""
+    """Put comments in the terminal "diminished" colour."""
     return cparse(
         re.sub(
             r'^(\s*(?:\$[^#]+)?)(#.*)$',
@@ -167,8 +167,10 @@ TASK_GLOB matches task or family names at a given cycle point.
             else:
                 argdoc = [('REG', 'Workflow name')]
 
-        # make comments grey in usage for readability
-        usage = format_shell_examples(usage)
+        if '--color=never' not in '='.join(sys.argv[2:]):
+            # Before option parsing, for `--help`, make comments grey in usage.
+            # (This catches both '--color=never' and '--color never'.)
+            usage = format_shell_examples(usage)
 
         if multitask:
             usage += self.MULTITASKCYCLE_USAGE
