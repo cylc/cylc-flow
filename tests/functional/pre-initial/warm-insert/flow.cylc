@@ -25,4 +25,4 @@
     [[INSERT_FAM]]
     [[foo,bar]]
     [[inserter]]
-        script = cylc trigger --reflow $CYLC_WORKFLOW_NAME foo.20100101T1200Z
+        script = cylc trigger --flow=other $CYLC_WORKFLOW_NAME foo.20100101T1200Z

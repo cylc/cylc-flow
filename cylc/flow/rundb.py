@@ -262,7 +262,7 @@ class CylcWorkflowDAO:
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["flow_label", {"is_primary_key": True}],
+            ["flows", {"is_primary_key": True}],
             ["status"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
@@ -281,7 +281,7 @@ class CylcWorkflowDAO:
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
             ["cycle", {"is_primary_key": True}],
-            ["flow_label", {"is_primary_key": True}],
+            ["flows", {"is_primary_key": True}],
             ["time_created"],
             ["time_updated"],
             ["submit_num", {"datatype": "INTEGER"}],
@@ -629,12 +629,12 @@ class CylcWorkflowDAO:
         return {i[0] for i in self.connect().execute(stmt)}
 
     def select_submit_nums(self, name, point):
-        """Select submit_num and flow_label from task_states table.
+        """Select submit_num and flows from task_states table.
 
-        Fetch submit number and flow label for spawning task name.point.
+        Fetch submit number and flows for spawning task name.point.
         Return:
         {
-            flow_label: submit_num,
+            flows: submit_num,
             ...,
         }
 
@@ -646,13 +646,13 @@ class CylcWorkflowDAO:
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
         stmt = (  # nosec
-            r"SELECT flow_label,submit_num FROM %(name)s"
+            r"SELECT flows,submit_num FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
-        for flow_label, submit_num in self.connect().execute(
+        for flows, submit_num in self.connect().execute(
                 stmt, (name, point,)):
-            ret[flow_label] = submit_num
+            ret[flows] = submit_num
         return ret
 
     def select_xtriggers_for_restart(self, callback):
@@ -687,7 +687,7 @@ class CylcWorkflowDAO:
             SELECT
                 %(task_pool)s.cycle,
                 %(task_pool)s.name,
-                %(task_pool)s.flow_label,
+                %(task_pool)s.flows,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
                 %(task_pool)s.is_held,
@@ -704,7 +704,7 @@ class CylcWorkflowDAO:
                 %(task_states)s
             ON  %(task_pool)s.cycle == %(task_states)s.cycle AND
                 %(task_pool)s.name == %(task_states)s.name AND
-                %(task_pool)s.flow_label == %(task_states)s.flow_label
+                %(task_pool)s.flows == %(task_states)s.flows
             LEFT OUTER JOIN
                 %(task_late_flags)s
             ON  %(task_pool)s.cycle == %(task_late_flags)s.cycle AND

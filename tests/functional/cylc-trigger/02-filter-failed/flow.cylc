@@ -16,9 +16,9 @@ FIXABLES:succeed-all => Z
     [[fixer]]
         script = """
 cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_workflow_log '\[fixable1\.1\].* (received)failed'
-cylc__job__poll_grep_workflow_log '\[fixable2\.1\].* (received)failed'
-cylc__job__poll_grep_workflow_log '\[fixable3\.1\].* (received)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable1\.1 running .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable2\.1 running .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable3\.1 running .* \(received\)failed'
 cylc trigger "${CYLC_WORKFLOW_NAME}" '1/fixable*'
         """
     [[Z]]

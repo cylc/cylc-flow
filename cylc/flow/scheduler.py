@@ -38,7 +38,9 @@ from zmq.auth.thread import ThreadAuthenticator
 
 from metomi.isodatetime.parsers import TimePointParser
 
-from cylc.flow import LOG, main_loop, ID_DELIM, __version__ as CYLC_VERSION
+from cylc.flow import (
+    LOG, ORIGINAL_FLOW_NAME, main_loop, ID_DELIM, __version__ as CYLC_VERSION
+)
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
@@ -621,7 +623,8 @@ class Scheduler:
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
         LOG.info(f"Start task: {self.options.starttask}")
-        self.pool.force_trigger_tasks(self.options.starttask, True)
+        self.pool.force_trigger_tasks(
+            self.options.starttask, ORIGINAL_FLOW_NAME)
 
     def _load_pool_from_point(self):
         """Load task pool for a cycle point, for a new run.
@@ -638,7 +641,6 @@ class Scheduler:
             start_type = "Warm" if self.options.startcp else "Cold"
             LOG.info(f"{start_type} start from {self.config.start_point}")
 
-        flow_label = self.pool.flow_label_mgr.get_new_label()
         for name in self.config.get_task_name_list():
             if self.config.start_point is None:
                 # No start cycle point at which to load cycling tasks.
@@ -657,7 +659,8 @@ class Scheduler:
             if not parent_points or all(
                     x < self.config.start_point for x in parent_points):
                 self.pool.add_to_pool(
-                    TaskProxy(tdef, point, flow_label))
+                    TaskProxy(tdef, point, {ORIGINAL_FLOW_NAME})
+                )
 
     def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
@@ -820,10 +823,10 @@ class Scheduler:
             # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
             clock_time=None,
             task=None,
-            flow_label=None
+            flow=None
     ):
-        if flow_label:
-            self.pool.stop_flow(flow_label)
+        if flow:
+            self.pool.stop_flow(flow)
             return
 
         if cycle_point:
@@ -889,7 +892,7 @@ class Scheduler:
         if self.config.run_mode('simulation'):
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
-                    itask.state.reset(TASK_STATUS_FAILED)
+                    itask.state_reset(TASK_STATUS_FAILED)
                     self.data_store_mgr.delta_task_state(itask)
             return len(bad_items)
         self.task_job_mgr.kill_task_jobs(self.workflow, itasks)
@@ -1225,9 +1228,11 @@ class Scheduler:
                         self.curve_auth,
                         self.client_pub_key_dir,
                         self.config.run_mode('simulation')):
-                    # TODO log flow labels here (beware effect on ref tests)
-                    LOG.info('[%s] -triggered off %s',
-                             itask, itask.state.get_resolved_dependencies())
+                    # (Not using f"{itask}"_here to avoid breaking func tests)
+                    LOG.info(
+                        f"[{itask.identity}] -triggered off "
+                        f"{itask.state.get_resolved_dependencies()}"
+                    )
 
     def process_workflow_db_queue(self):
         """Update workflow DB."""
@@ -1252,7 +1257,7 @@ class Scheduler:
                     self.task_events_mgr.EVENT_LATE,
                     time2str(itask.get_late_time()))
                 itask.is_late = True
-                LOG.warning('[%s] -%s', itask, msg)
+                LOG.warning(f"[{itask}] {msg}")
                 self.task_events_mgr.setup_event_handlers(
                     itask, self.task_events_mgr.EVENT_LATE, msg)
                 self.workflow_db_mgr.put_insert_task_late_flags(itask)
@@ -1785,13 +1790,13 @@ class Scheduler:
         self.is_paused = False
         self.workflow_db_mgr.delete_workflow_paused()
 
-    def command_force_trigger_tasks(self, items, reflow=False):
+    def command_force_trigger_tasks(self, items, flow=None):
         """Trigger tasks."""
-        return self.pool.force_trigger_tasks(items, reflow)
+        return self.pool.force_trigger_tasks(items, flow)
 
-    def command_force_spawn_children(self, items, outputs):
+    def command_force_spawn_children(self, items, outputs, flow):
         """Force spawn task successors."""
-        return self.pool.force_spawn_children(items, outputs)
+        return self.pool.force_spawn_children(items, outputs, flow)
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""

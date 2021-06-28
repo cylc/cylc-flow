@@ -56,6 +56,9 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4287](https://github.com/cylc/cylc-flow/pull/4287) -
+Implement named flows (multiple simultaneous flows within a workflow).
+
 [#4103](https://github.com/cylc/cylc-flow/pull/4103) -
 Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.

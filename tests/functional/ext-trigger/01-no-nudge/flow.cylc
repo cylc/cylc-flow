@@ -32,7 +32,7 @@
     [[foo]]
         script = """
             cylc kill "$CYLC_WORKFLOW_NAME" 'bar.1'
-            cylc__job__poll_grep_workflow_log '\[bar\.1\].* (internal)failed'
+            cylc__job__poll_grep_workflow_log -E 'bar\.1 .* \(internal\)failed'
             cylc release "$CYLC_WORKFLOW_NAME" 'bar.1'
         """
     [[bar]]

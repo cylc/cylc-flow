@@ -49,26 +49,27 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
-sed -n -e 's/^.* \([A-Z]* - \[foo.1\] status=running: (received).*$\)/\1/p' \
-       -e '/\tbadness\|\tslowness\|\tand other incorrectness/p' \
+sed -r -n -e 's/^.* ([A-Z]+ .* \(received\).*$)/\1/p' \
+       -e '/\tbadness|\tslowness|\tand other incorrectness/p' \
     "${LOG}" >'sed.out'
 sed -i 's/\(^.*\) at .*$/\1/;' 'sed.out'
 
 # Note: the continuation bit gets printed twice, because the message gets a
 # warning as being unhandled.
 cmp_ok 'sed.out' <<'__LOG__'
-WARNING - [foo.1] status=running: (received)Warn this
-INFO - [foo.1] status=running: (received)Greeting
-WARNING - [foo.1] status=running: (received)Warn that
-DEBUG - [foo.1] status=running: (received)Remove stuffs such as
+INFO - [foo.1 submitted job:01] (received)started
+WARNING - [foo.1 running job:01] (received)Warn this
+INFO - [foo.1 running job:01] (received)Greeting
+WARNING - [foo.1 running job:01] (received)Warn that
+DEBUG - [foo.1 running job:01] (received)Remove stuffs such as
 	badness
 	slowness
 	and other incorrectness.
 	badness
 	slowness
 	and other incorrectness.
-INFO - [foo.1] status=running: (received)whatever
-INFO - [foo.1] status=running: (received)succeeded
+INFO - [foo.1 running job:01] (received)whatever
+INFO - [foo.1 running job:01] (received)succeeded
 __LOG__
 
 purge

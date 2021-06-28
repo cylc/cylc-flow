@@ -22,6 +22,7 @@ import pkg_resources
 
 CYLC_LOG = 'cylc'
 FILE_INSTALL_LOG = 'cylc-rsync'
+ORIGINAL_FLOW_NAME = "original"
 
 LOG = logging.getLogger(CYLC_LOG)
 LOG.addHandler(logging.NullHandler())  # Start with a null handler

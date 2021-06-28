@@ -18,15 +18,13 @@
 
 """cylc set-outputs [OPTIONS] REG TASK-GLOB [...]
 
-Override the outputs of tasks in a running workflow.
-
-Tell the scheduler that specified outputs (the "succeeded" output by default)
+Tell the scheduler that specified (or "succeeded", by default) outputs
 of tasks are complete.
 
 Downstream tasks will be spawned or updated just as if the outputs were
 completed normally.
 
-The --output=OUTPUT option can be used multiple times on the command line.
+The --output option can be used multiple times on the command line.
 
 """
 
@@ -41,11 +39,13 @@ mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
   $outputs: [String],
+  $flow: String,
 ) {
   setOutputs (
     workflows: $wFlows,
     tasks: $tasks,
-    outputs: $outputs
+    outputs: $outputs,
+    flow: $flow,
   ) {
     result
   }
@@ -59,15 +59,26 @@ def get_option_parser():
         argdoc=[
             ("REG", "Workflow name"),
             ('TASK-GLOB [...]', 'Task match pattern')])
+
     parser.add_option(
-        "--output", metavar="OUTPUT",
-        help="Set task output OUTPUT completed, defaults to 'succeeded'.",
+        "-o", "--output", metavar="OUTPUT",
+        help="Set OUTPUT (default \"succeeded\") completed.",
         action="append", dest="outputs")
+
+    parser.add_option(
+        "-f", "--flow", metavar="FLOW",
+        help="Name of the flow to attribute the outputs.",
+        action="store", default=None, dest="flow")
+
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser, options, workflow, *task_globs):
+
+    if options.flow is None:
+        parser.error("--flow=FLOW is required.")
+
     workflow = os.path.normpath(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
@@ -77,6 +88,7 @@ def main(parser, options, workflow, *task_globs):
             'wFlows': [workflow],
             'tasks': list(task_globs),
             'outputs': options.outputs,
+            'flow': options.flow
         }
     }
 

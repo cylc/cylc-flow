@@ -55,7 +55,7 @@ mutation (
   $cyclePoint: CyclePoint,
   $clockTime: TimePoint,
   $task: TaskID,
-  $flowLabel: String,
+  $flow: String,
 ) {
   stop (
     workflows: $wFlows,
@@ -63,7 +63,7 @@ mutation (
     cyclePoint: $cyclePoint,
     clockTime: $clockTime,
     task: $task,
-    flowLabel: $flowLabel
+    flow: $flow
   ) {
     result
   }
@@ -115,10 +115,10 @@ def get_option_parser():
         action="store_true", default=False, dest="kill")
 
     parser.add_option(
-        "--flow", metavar="LABEL",
-        help="Stop a specified flow from spawning any further. "
-             "The scheduler will shut down if LABEL is the only flow.",
-        action="store", dest="flow_label")
+        "--flow", metavar="FLOW",
+        help="Stop flow FLOW from spawning more tasks. "
+             "The scheduler will shut down if FLOW is the only flow.",
+        action="store", dest="flow")
 
     parser.add_option(
         "-n", "--now",
@@ -148,7 +148,7 @@ def main(parser, options, workflow, shutdown_arg=None):
     if options.kill and options.now:
         parser.error("ERROR: --kill is not compatible with --now")
 
-    if options.flow_label and int(options.max_polls) > 0:
+    if options.flow and int(options.max_polls) > 0:
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
     workflow = os.path.normpath(workflow)
@@ -184,7 +184,7 @@ def main(parser, options, workflow, shutdown_arg=None):
             'cyclePoint': cycle_point,
             'clockTime': options.wall_clock,
             'task': task,
-            'flowLabel': options.flow_label,
+            'flow': options.flow,
         }
     }
 

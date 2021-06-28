@@ -91,11 +91,11 @@ def get_option_parser():
 
     parser.add_option(
         "--flow-name",
-        help="Install into ~/cylc-run/<flow_name>/runN ",
+        help="Install into ~/cylc-run/<workflow_name>/runN ",
         action="store",
-        metavar="FLOW_NAME",
+        metavar="WORKFLOW_NAME",
         default=None,
-        dest="flow_name")
+        dest="workflow_name")
 
     parser.add_option(
         "--directory", "-C",
@@ -115,7 +115,7 @@ def get_option_parser():
 
     parser.add_option(
         "--no-run-name",
-        help="Install the workflow directly into ~/cylc-run/<flow_name>",
+        help="Install the workflow directly into ~/cylc-run/<workflow_name>",
         action="store_true",
         default=False,
         dest="no_run_name")
@@ -186,7 +186,7 @@ def install(
         if opts.source:
             parser.error("REG and --directory are mutually exclusive.")
         source = search_install_source_dirs(reg)
-    flow_name = opts.flow_name or reg
+    workflow_name = opts.workflow_name or reg
 
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
@@ -206,8 +206,8 @@ def install(
                 exc
             ) from None
 
-    source_dir, rundir, _flow_name = install_workflow(
-        flow_name=flow_name,
+    source_dir, rundir, _workflow_name = install_workflow(
+        workflow_name=workflow_name,
         source=source,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,

@@ -28,7 +28,7 @@ WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 grep_ok \
 "\[(('event-handler-00', 'custom-1'), 1) out\] !!CUSTOM!! foo.1 fugu Data ready for barring" \
     "${FOO_ACTIVITY_LOG}"
-grep_ok "\[foo.1\].*Data ready for barring" "${WORKFLOW_LOG}"
-grep_ok "\[foo.1\].*Data ready for bazzing" "${WORKFLOW_LOG}"
-grep_ok "\[foo.1\].*Aren't the hydrangeas nice?" "${WORKFLOW_LOG}"
+grep_ok "foo\.1 .*Data ready for barring" "${WORKFLOW_LOG}" -E
+grep_ok "foo\.1 .*Data ready for bazzing" "${WORKFLOW_LOG}" -E
+grep_ok "foo\.1 .*Aren't the hydrangeas nice" "${WORKFLOW_LOG}" -E
 purge

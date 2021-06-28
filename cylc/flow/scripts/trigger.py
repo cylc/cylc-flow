@@ -40,12 +40,12 @@ MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
-  $reflow: Boolean,
+  $flow: String,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
-    reflow: $reflow
+    flow: $flow
   ) {
     result
   }
@@ -61,9 +61,10 @@ def get_option_parser():
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     parser.add_option(
-        "-r", "--reflow",
-        help="Start a new flow from the triggered task.",
-        action="store_true", default=False, dest="reflow")
+        "-f", "--flow",
+        metavar="FLOW",
+        help="Start a new flow named FLOW from the triggered task.",
+        action="store", default=None, dest="flow")
 
     return parser
 
@@ -79,7 +80,7 @@ def main(parser, options, workflow, *task_globs):
         'variables': {
             'wFlows': [workflow],
             'tasks': list(task_globs),
-            'reflow': options.reflow,
+            'flow': options.flow,
         }
     }
 

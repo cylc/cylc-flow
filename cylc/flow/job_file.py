@@ -215,7 +215,9 @@ class JobFileWriter:
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         handle.write(
-            '\n    export CYLC_TASK_FLOW_LABEL=%s' % job_conf['flow_label'])
+            "\n    export CYLC_TASK_FLOWS="
+            f"{','.join(sorted(job_conf['flows']))}"
+        )
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))

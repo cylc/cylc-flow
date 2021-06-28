@@ -136,14 +136,14 @@ def test_check_nested_run_dirs_children(tmp_run_dir: Callable):
      ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
      ('./foo', WorkflowFilesError, "invalid workflow name")]
 )
-def test_validate_flow_name(reg, expected_err, expected_msg):
+def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            workflow_files.validate_flow_name(reg)
+            workflow_files.validate_workflow_name(reg)
         if expected_msg:
             assert expected_msg in str(exc.value)
     else:
-        workflow_files.validate_flow_name(reg)
+        workflow_files.validate_workflow_name(reg)
 
 
 @pytest.mark.parametrize(

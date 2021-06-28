@@ -8,8 +8,8 @@
         script = """
             echo '# killing "sleeper"'
             cylc kill "${CYLC_WORKFLOW_NAME}" "sleeper.1"
-            cylc__job__poll_grep_workflow_log -F \
-                '[sleeper.1] -job(01) failed, held' 
+            cylc__job__poll_grep_workflow_log -E \
+                'sleeper\.1 waiting\(held\) .* job killed' 
             sleep 10  # sleep, should still be held after 10 seconds
             cylc dump -s -t "${CYLC_WORKFLOW_NAME}" >'cylc-dump.out'
             diff -u 'cylc-dump.out' - <<'__OUT__'

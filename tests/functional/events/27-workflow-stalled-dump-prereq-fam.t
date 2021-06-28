@@ -31,23 +31,18 @@ grep_ok "Abort on workflow stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 (failed)" \
-    "${TEST_NAME_BASE}-run.stderr"
+
+grep_ok "\* foo.1 failed" "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Partially satisfied prerequisites left over:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "f_1.1 is waiting on:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 succeeded" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "f_2.1 is waiting on:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 succeeded" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "f_3.1 is waiting on:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 succeeded" \
-    "${TEST_NAME_BASE}-run.stderr"
+
+grep_ok "f_1.1 is waiting on:" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "\* foo.1 succeeded" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "f_2.1 is waiting on:" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "\* foo.1 succeeded" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "f_3.1 is waiting on:" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "\* foo.1 succeeded" "${TEST_NAME_BASE}-run.stderr"
 
 purge
 exit

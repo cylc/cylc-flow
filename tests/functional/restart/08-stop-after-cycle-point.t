@@ -19,33 +19,31 @@
 # on the command line.
 
 . "$(dirname "$0")/test_header"
-set_test_number 9
+set_test_number 7
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 # Check that the config stop point works.
 workflow_run_ok "${TEST_NAME_BASE}-no-cmd-line-opts" \
-    cylc play --no-detach "${WORKFLOW_NAME}"
-WORKFLOWLOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
-# Check task hello@stopped cylc point is spawned but never submitted
-grep_fail "\[hello.19700101T0100Z\] -submit-num=01" "${WORKFLOWLOG}"
+    cylc play --reference-test --no-detach "${WORKFLOW_NAME}"
 
 delete_db
 
 # Check that the command line stop point works.
 workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
-    cylc play --no-detach --stopcp=19700101T0100Z "${WORKFLOW_NAME}"
-grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
+    cylc play --reference-test --no-detach --stopcp=19700101T0100Z "${WORKFLOW_NAME}"
+
+WORKFLOWLOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # Check that stop is preserved on restart ...
 workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
     cylc play --no-detach "${WORKFLOW_NAME}"
-grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
+grep_fail "submitted" "${WORKFLOWLOG}"
 
 # ... unless we say otherwise.
 workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
     cylc play --no-detach --stopcp=ignore "${WORKFLOW_NAME}"
-grep_ok "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
+grep_ok "hello.19700101T0300Z .* => succeeded" "${WORKFLOWLOG}" -E
 
 purge

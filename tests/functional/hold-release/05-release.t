@@ -63,7 +63,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[stop]]
         inherit = STOP
         script = """
-            cylc__job__poll_grep_workflow_log '\[dog1\.1\] -task proxy removed (finished)'
+            cylc__job__poll_grep_workflow_log -E \
+               'dog1\.1 .* task proxy removed \(finished\)'
             cylc stop "${CYLC_WORKFLOW_NAME}"
         """
 __FLOW_CONFIG__

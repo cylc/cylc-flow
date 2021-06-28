@@ -18,9 +18,4 @@ description = """
 
 [runtime]
     [[hello]]
-        script = """
-        if [[ "$CYLC_TASK_CYCLE_POINT" == 19700101T0000Z ]]; then
-            cylc stop "$CYLC_WORKFLOW_NAME"
-        fi
-
-        """
+        script =true 

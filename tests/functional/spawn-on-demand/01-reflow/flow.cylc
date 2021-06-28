@@ -11,5 +11,5 @@
     [[triggerer]]
          script = """
 # Cause both bar.1 and baz.1 to run again.
-cylc trigger --reflow ${CYLC_WORKFLOW_NAME} bar.1
+cylc trigger --flow=cheese ${CYLC_WORKFLOW_NAME} bar.1
          """

@@ -18,7 +18,6 @@
 
 from contextlib import suppress
 from collections import Counter
-from string import ascii_letters
 import json
 from time import time
 from typing import Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple
@@ -65,86 +64,6 @@ if TYPE_CHECKING:
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
 
-class FlowLabelMgr:
-    """
-    Manage flow labels consisting of a string of one or more letters [a-zA-Z].
-
-    Flow labels are task attributes representing the flow the task belongs to,
-    passed down to spawned children. If a new flow is started, a new single
-    character label is chosen randomly. This allows for 52 simultaneous flows
-    (which should be more than enough) with labels that are easy to work with.
-
-    Flows merge locally when a task can't be spawned because it already exists
-    in the pool with a different label. We merge the labels at such tasks so
-    that downstream events can be considered to belong to either of the
-    original flows. Merged labels are simple strings that contains the
-    component labels, e.g. if flow "a" merges with flow "b" the merged result
-    is "ab" (or "ba", it doesn't matter which).
-
-    """
-    def __init__(self):
-        """Store available and used labels."""
-        self.avail = set(ascii_letters)
-        self.inuse = set()
-
-    def get_num_inuse(self):
-        """Return the number of labels currently in use."""
-        return len(list(self.inuse))
-
-    def make_avail(self, labels):
-        """Return labels (set) to the pool of available labels."""
-        LOG.info("returning flow label(s) %s", labels)
-        for label in labels:
-            with suppress(KeyError):
-                self.inuse.remove(label)
-            self.avail.add(label)
-
-    def get_new_label(self):
-        """Return a new label, or None if we've run out."""
-        try:
-            label = self.avail.pop()
-        except KeyError:
-            return None
-        self.inuse.add(label)
-        return label
-
-    @staticmethod
-    def get_common_labels(labels):
-        """Return list of common labels."""
-        set_labels = [set(lab) for lab in labels]
-        return set.intersection(*set_labels)
-
-    @staticmethod
-    def merge_labels(lab1, lab2):
-        """Return the label representing both lab1 and lab2.
-
-        Note the incoming labels could already be merged.
-        """
-        if lab1 == lab2:
-            return lab1
-        labs1 = set(lab1)
-        labs2 = set(lab2)
-        return ''.join(labs1.union(labs2))
-
-    @staticmethod
-    def unmerge_labels(prune, target):
-        """Unmerge prune from target."""
-        for char in list(prune):
-            target = target.replace(char, '')
-        return target
-
-    @staticmethod
-    def match_labels(lab1, lab2):
-        """Return True if lab1 and lab2 have any labels in common.
-
-        If they do, the owner tasks can be considered part of the same flow.
-        Note the incoming labels could already be merged.
-        """
-        labs1 = set(lab1)
-        labs2 = set(lab2)
-        return bool(labs1.intersection(labs2))
-
-
 class TaskPool:
     """Task pool of a workflow."""
 
@@ -165,7 +84,6 @@ class TaskPool:
         # TODO this is ugly:
         self.task_events_mgr.spawn_func = self.spawn_on_output
         self.data_store_mgr: 'DataStoreMgr' = data_store_mgr
-        self.flow_label_mgr = FlowLabelMgr()
 
         self.do_reload = False
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
@@ -274,11 +192,15 @@ class TaskPool:
 
         if is_new:
             # Add row to "task_states" table:
-            self.workflow_db_mgr.put_insert_task_states(itask, {
-                "time_created": get_current_time_string(),
-                "time_updated": get_current_time_string(),
-                "status": itask.state.status,
-                "flow_label": itask.flow_label})
+            self.workflow_db_mgr.put_insert_task_states(
+                itask,
+                {
+                    "time_created": get_current_time_string(),
+                    "time_updated": get_current_time_string(),
+                    "status": itask.state.status,
+                    "flows": json.dumps(sorted(itask.flows))
+                }
+            )
             # Add row to "task_outputs" table:
             if itask.state.outputs.has_custom_triggers():
                 self.workflow_db_mgr.put_insert_task_outputs(itask)
@@ -300,14 +222,14 @@ class TaskPool:
 
         released = False
 
-        # Any finished tasks can be released immediately (this can happen at
-        # restart when all tasks are initially loaded into the runahead pool).
-        # And any manually-triggered task.
+        # At restart all tasks are loaded as runahead-limited, but finished and
+        # manually-triggered ones (including --start-task) can be released
+        # immediately. Note runahead release can cause the task pool to change
+        # size because we spawn parentless tasks on previous-instance release.
 
         for itask in (
             itask
-            for point_id_map in self.main_pool.values()
-            for itask in point_id_map.values()
+            for itask in self.get_tasks()
             if itask.state.is_runahead
             if itask.state(
                 TASK_STATUS_FAILED,
@@ -432,13 +354,13 @@ class TaskPool:
         if row_idx == 0:
             LOG.info("LOADING task proxies")
         # Create a task proxy corresponding to this DB entry.
-        (cycle, name, flow_label, is_late, status, is_held, submit_num, _,
+        (cycle, name, flows_str, is_late, status, is_held, submit_num, _,
          platform_name, time_submit, time_run, timeout, outputs_str) = row
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
                 get_point(cycle),
-                flow_label,
+                set(json.loads(flows_str)),
                 is_held=is_held,
                 submit_num=submit_num,
                 is_late=bool(is_late))
@@ -494,8 +416,8 @@ class TaskPool:
                 for key, _ in itask_prereq.satisfied.items():
                     itask_prereq.satisfied[key] = sat[key]
 
-            itask.state.reset(status)
-            itask.state.reset(is_runahead=True)
+            itask.state_reset(status)
+            itask.state_reset(is_runahead=True)
             self.add_to_pool(itask, is_new=False)
 
     def load_db_task_action_timers(self, row_idx, row):
@@ -528,14 +450,14 @@ class TaskPool:
             return
         LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
         if ctx_key == "poll_timer":
-            itask = self._get_task_by_id(id_)
+            itask = self._get_main_task_by_id(id_)
             if itask is None:
                 LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
             itask.poll_timer = TaskActionTimer(
                 ctx, delays, num, delay, timeout)
         elif ctx_key[0] == "try_timers":
-            itask = self._get_task_by_id(id_)
+            itask = self._get_main_task_by_id(id_)
             if itask is None:
                 LOG.warning("%(id)s: task not found, skip" % {"id": id_})
                 return
@@ -584,6 +506,26 @@ class TaskPool:
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
+    def _spawn_next_instance(self, itask):
+        """Spawn next instance of parentless or absolute-triggered tasks."""
+        next_point = itask.next_point()
+        if next_point is not None:
+            parent_points = itask.tdef.get_parent_points(next_point)
+            if (
+                not parent_points
+                or all(x < self.config.start_point for x in parent_points)
+                or itask.tdef.get_abs_triggers(next_point)
+            ):
+                taskid = TaskID.get(itask.tdef.name, next_point)
+                next_task = (
+                    self._get_hidden_task_by_id(taskid)
+                    or self._get_main_task_by_id(taskid)
+                    or self.spawn_task(
+                        itask.tdef.name, next_point, itask.flows)
+                )
+                if next_task:
+                    self.add_to_pool(next_task)
+
     def release_runahead_task(self, itask: TaskProxy) -> None:
         """Release itask from runahead limiting.
 
@@ -591,10 +533,8 @@ class TaskPool:
         - no parents to do it
         - has absolute triggers (these are satisfied already by definition)
         """
-        if itask.state.reset(is_runahead=False):
+        if itask.state_reset(is_runahead=False):
             self.data_store_mgr.delta_task_runahead(itask)
-
-        LOG.info("[%s] -released from runahead", itask)
 
         # Queue if ready to run
         if all(itask.is_ready_to_run()):
@@ -606,27 +546,10 @@ class TaskPool:
         if itask.tdef.sequential:
             # implicit prev-instance parent
             return
-        if not itask.reflow:
+        if not itask.flows:
+            # No reflow
             return
-        next_point = itask.next_point()
-        if next_point is not None:
-            parent_points = itask.tdef.get_parent_points(next_point)
-            n_task = None
-            if (not parent_points or
-                    all(x < self.config.start_point for x in parent_points)):
-                # Auto-spawn next instance of tasks with no parents at the next
-                # point (or with all parents before the workflow start point).
-                n_task = self.get_or_spawn_task(
-                    itask.tdef.name, next_point, flow_label=itask.flow_label,
-                    parent_id=itask.identity)
-            elif itask.tdef.get_abs_triggers(next_point):
-                # Auto-spawn (if needed) next absolute-triggered instances.
-                n_task = self.get_or_spawn_task(
-                    itask.tdef.name, next_point,
-                    flow_label=itask.flow_label,
-                    parent_id=itask.identity)
-            if n_task:
-                self.add_to_pool(n_task)
+        self._spawn_next_instance(itask)
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool (e.g. after a reload)."""
@@ -663,8 +586,7 @@ class TaskPool:
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
             self.workflow_db_mgr.put_update_task_state(itask)
-            LOG.debug("[%s] -%s", itask, msg)
-            del itask
+            LOG.debug(f"[{itask}] {msg}")
 
     def get_all_tasks(self) -> List[TaskProxy]:
         """Return a list of all task proxies."""
@@ -708,7 +630,7 @@ class TaskPool:
             with suppress(KeyError):
                 return itask_ids[id_]
 
-    def _get_task_by_id(self, id_):
+    def _get_main_task_by_id(self, id_):
         """Return main pool task by ID if it exists, or None."""
         for itask_ids in list(self.main_pool.values()):
             with suppress(KeyError):
@@ -716,7 +638,7 @@ class TaskPool:
 
     def queue_task(self, itask: TaskProxy) -> None:
         """Queue a task that is ready to run."""
-        if itask.state.reset(is_queued=True):
+        if itask.state_reset(is_queued=True):
             self.data_store_mgr.delta_task_queued(itask)
             self.task_queue_mgr.push_task(itask)
 
@@ -733,12 +655,11 @@ class TaskPool:
             )
         )
         for itask in released:
-            itask.state.reset(is_queued=False)
-            itask.state.reset(TASK_STATUS_PREPARING)
+            itask.state_reset(is_queued=False)
+            itask.state_reset(TASK_STATUS_PREPARING)
             itask.waiting_on_job_prep = True
             self.data_store_mgr.delta_task_state(itask)
             self.data_store_mgr.delta_task_queued(itask)
-            LOG.info(f"Queue released: {itask.identity}")
         return released
 
     def get_min_point(self):
@@ -819,21 +740,21 @@ class TaskPool:
                 else:
                     # Keep active orphaned task, but stop it from spawning.
                     itask.graph_children = {}
-                    LOG.warning("[%s] -will not spawn children"
-                                " (task definition removed)", itask)
+                    LOG.warning(
+                        "f[{itask}] will not spawn children "
+                        "- task definition removed"
+                    )
             else:
                 new_task = TaskProxy(
                     self.config.get_taskdef(itask.tdef.name),
-                    itask.point,
-                    itask.flow_label, itask.state.status)
+                    itask.point, itask.flows, itask.state.status)
                 itask.copy_to_reload_successor(new_task)
                 self._swap_out(new_task)
-                LOG.info('[%s] -reloaded task definition', itask)
+                LOG.info(f"[{itask}] reloaded task definition")
                 if itask.state(*TASK_STATUSES_ACTIVE):
                     LOG.warning(
-                        "[%s] -job(%02d) active with pre-reload settings",
-                        itask,
-                        itask.submit_num)
+                        f"[{itask}] active with pre-reload settings"
+                    )
 
         # Reassign live tasks to the internal queue
         del self.task_queue_mgr
@@ -879,10 +800,10 @@ class TaskPool:
                     )
             ):
                 LOG.warning(
-                    "[%s] -not running (beyond workflow stop cycle) %s",
-                    itask,
-                    self.stop_point)
-                if itask.state.reset(is_held=True):
+                    f"[{itask}] not running (beyond workflow stop cycle) "
+                    f"{self.stop_point}"
+                )
+                if itask.state_reset(is_held=True):
                     self.data_store_mgr.delta_task_held(itask)
         return self.stop_point
 
@@ -962,7 +883,7 @@ class TaskPool:
             LOG.warning(
                 "Workflow stalled with unhandled failed tasks:\n"
                 + "\n".join(
-                    f"* {itask.identity} ({itask.state.status})"
+                    f"* {itask}"
                     for itask in unhandled_failed
                 )
             )
@@ -1010,13 +931,13 @@ class TaskPool:
             )
 
     def hold_active_task(self, itask: TaskProxy) -> None:
-        if itask.state.reset(is_held=True):
+        if itask.state_reset(is_held=True):
             self.data_store_mgr.delta_task_held(itask)
         self.tasks_to_hold.add((itask.tdef.name, itask.point))
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
 
     def release_held_active_task(self, itask: TaskProxy) -> None:
-        if itask.state.reset(is_held=False):
+        if itask.state_reset(is_held=False):
             self.data_store_mgr.delta_task_held(itask)
             if (not itask.state.is_runahead) and all(itask.is_ready_to_run()):
                 self.queue_task(itask)
@@ -1130,7 +1051,7 @@ class TaskPool:
         """Spawn and update children, remove parent if finished.
 
         Also set a the abort-on-task-failed flag if necessary.
-        If not itask.reflow update existing children but don't spawn them.
+        If not reflow update existing children but don't spawn them.
 
         If an absolute output is completed update the store of completed abs
         outputs, and update the prerequisites of every instance of the child
@@ -1159,13 +1080,32 @@ class TaskPool:
                 self.workflow_db_mgr.put_insert_abs_output(
                     str(itask.point), itask.tdef.name, output)
                 self.workflow_db_mgr.process_queued_ops()
-            if itask.reflow:
-                c_task = self.get_or_spawn_task(
-                    c_name, c_point, flow_label=itask.flow_label,
-                    parent_id=itask.identity)
-            else:
-                # Don't spawn, but update existing children.
-                c_task = self.get_task(c_name, c_point)
+
+            c_taskid = TaskID.get(c_name, c_point)
+            c_task = (
+                self._get_hidden_task_by_id(c_taskid)
+                or self._get_main_task_by_id(c_taskid)
+            )
+            if c_task is not None:
+                # Child already spawned, update it.
+                c_task.merge_flows(itask.flows)
+                LOG.info(
+                    f"[{c_task}] Merged flows {','.join(itask.flows)}"
+                )
+                self.workflow_db_mgr.put_insert_task_states(
+                    c_task,
+                    {
+                        "status": c_task.state.status,
+                        "flows": json.dumps(sorted(c_task.flows))
+                    }
+                )
+                # self.workflow_db_mgr.process_queued_ops()
+
+            elif itask.flows:
+                # Spawn child only if itask.flows is not empty.
+                c_task = self.spawn_task(
+                    c_name, c_point, itask.flows,
+                )
 
             if c_task is not None:
                 # Update downstream prerequisites directly.
@@ -1191,7 +1131,7 @@ class TaskPool:
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING,
                     is_held=False):
-                LOG.warning(f'[{c_task}] -suiciding while active')
+                LOG.warning(f"[{c_task}] suiciding while active")
             self.remove(c_task, 'SUICIDE')
 
         # Remove the parent task if finished.
@@ -1201,55 +1141,11 @@ class TaskPool:
                 self.stop_task_finished = True
             self.remove(itask, 'finished')
 
-    def get_or_spawn_task(self, name, point, flow_label=None, reflow=True,
-                          parent_id=None):
-        """Return existing or spawned task, or None."""
-        return (self.get_task(name, point, flow_label)
-                or self.spawn_task(name, point, flow_label, reflow, parent_id))
-
-    def _merge_flow_labels(self, itask, flab2):
-        """Merge flab2 into itask's flow label and update DB."""
-
-        # TODO can we do a more minimal (flow-label only) update of the
-        # existing row? (flow label is a primary key so need new insert).
-        # ? self.workflow_db_mgr.put_update_task_state(itask)
-
-        if flab2 is None or flab2 == itask.flow_label:
-            return
-        itask.flow_label = self.flow_label_mgr.merge_labels(
-            itask.flow_label, flab2)
-        self.workflow_db_mgr.put_insert_task_states(itask, {
-            "status": itask.state.status,
-            "flow_label": itask.flow_label})
-        self.workflow_db_mgr.process_queued_ops()  # TODO is this needed here?
-        LOG.info('%s merged flow(%s)', itask.identity, itask.flow_label)
-
-    def get_task_main(self, name, point, flow_label=None):
-        """Return task proxy from main pool and merge flow label if found."""
-        itask = self._get_task_by_id(TaskID.get(name, point))
-        if itask is not None:
-            self._merge_flow_labels(itask, flow_label)
-        return itask
-
-    def get_task(self, name, point, flow_label=None):
-        """Return existing task proxy and merge flow label if found."""
-        itask = (
-            self._get_hidden_task_by_id(TaskID.get(name, point))
-            or self._get_task_by_id(TaskID.get(name, point))
-        )
-        if itask is None:
-            LOG.debug('Task %s.%s not found in task pool.', name, point)
-            return None
-        self._merge_flow_labels(itask, flow_label)
-        return itask
-
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if name.point is within various workflow limits."""
-
         if name not in self.config.get_task_name_list():
             LOG.debug('No task definition %s', name)
             return False
-
         # Don't spawn outside of graph limits.
         # TODO: is it possible for initial_point to not be defined??
         # (see also the similar check + log message in scheduler.py)
@@ -1264,22 +1160,19 @@ class TaskPool:
             LOG.debug(
                 'Not spawning %s.%s: beyond final cycle point', name, point)
             return False
-
         return True
 
     def spawn_task(
         self,
         name: str,
         point: 'PointBase',
-        flow_label: Optional[str] = None,
-        reflow: bool = True,
-        parent_id: Optional[str] = None
+        flows: Set[str],
     ) -> Optional[TaskProxy]:
         """Spawn name.point and add to runahead pool. Return it, or None."""
         if not self.can_spawn(name, point):
             return None
 
-        # Get submit number by flow label {flow_label: submit_num, ...}
+        # Get submit number by flows {flows: submit_num, ...}
         snums = self.workflow_db_mgr.pri_dao.select_submit_nums(
             name, str(point)
         )
@@ -1290,12 +1183,12 @@ class TaskPool:
             submit_num = 0
 
         for f_id in snums.keys():
-            # Flow labels of previous instances.  E.g. f_id "u".
-            if self.flow_label_mgr.match_labels(flow_label, f_id):
-                # Already spawned in this flow. E.g. flow_label "uV".
-                # TODO update existing DB row to avoid cond reflow from V too?
-                LOG.warning('Not spawning %s.%s (spawned in flow %s)',
-                            name, point, f_id)
+            # Flows of previous instances.
+            if set.intersection(flows, set(json.loads(f_id))):
+                # To avoid "conditional reflow" with (e.g.) "foo | bar => baz".
+                LOG.warning(
+                    f"Task {name}.{point} already spawned in {flows}"
+                )
                 return None
 
         # Spawn if on-sequence and within recurrence bounds.
@@ -1303,17 +1196,15 @@ class TaskPool:
         if not taskdef.is_valid_point(point):
             return None
 
-        itask = TaskProxy(
-            taskdef, point, flow_label, submit_num=submit_num, reflow=reflow
-        )
+        itask = TaskProxy(taskdef, point, flows, submit_num=submit_num)
         if (name, point) in self.tasks_to_hold:
-            LOG.info(f"[{itask}] -holding (as requested earlier)")
+            LOG.info(f"[{itask}] holding (as requested earlier)")
             self.hold_active_task(itask)
         elif self.hold_point and itask.point > self.hold_point:
             # Hold if beyond the workflow hold point
             LOG.info(
-                f"[{itask}] -holding (beyond "
-                f"workflow hold point: {self.hold_point})"
+                f"[{itask}] holding (beyond workflow "
+                f"hold point: {self.hold_point})"
             )
             self.hold_active_task(itask)
 
@@ -1325,24 +1216,15 @@ class TaskPool:
                     break
             if future_trigger_overrun:
                 LOG.warning(
-                    f"[{itask}] -won't run: depends on a "
-                    "task beyond the stop point"
+                    f"[{itask}] won't run: depends on a task beyond "
+                    f"the stop point ({self.stop_point})"
                 )
-
         # Attempt to satisfy any absolute triggers now.
         # TODO: consider doing this only for tasks with absolute prerequisites.
         if itask.state.prerequisites_are_not_all_satisfied():
             itask.state.satisfy_me(self.abs_outputs_done)
 
-        if parent_id is not None:
-            msg = "(" + parent_id + ") spawned %s.%s flow(%s)"
-        else:
-            msg = "(no parent) spawned %s.%s %s"
-        if flow_label is None:
-            # Manual trigger: new flow
-            msg += " (new flow)"
-
-        LOG.info(msg, name, point, flow_label)
+        LOG.info(f"[{itask}] spawned")
         return itask
 
     def match_taskdefs(
@@ -1386,17 +1268,16 @@ class TaskPool:
                     continue
         return n_warnings, task_items
 
-    def force_spawn_children(self, items, outputs):
+    def force_spawn_children(self, items, outputs, flow):
         """Spawn downstream children of given task outputs on user command."""
         n_warnings, task_items = self.match_taskdefs(items)
         for (_, point), taskdef in sorted(task_items.items()):
             # This the upstream target task:
-            itask = TaskProxy(taskdef, point,
-                              self.flow_label_mgr.get_new_label())
+            itask = TaskProxy(taskdef, point, flows={flow})
             # Spawn downstream on selected outputs.
             for trig, out, _ in itask.state.outputs.get_all():
                 if trig in outputs:
-                    LOG.info('Forced spawning on %s:%s', itask.identity, out)
+                    LOG.info(f"[{itask}] Forced spawning on {out}")
                     self.spawn_on_output(itask, out)
 
     def remove_tasks(self, items):
@@ -1407,37 +1288,64 @@ class TaskPool:
         return len(bad_items)
 
     def force_trigger_tasks(
-        self, items: Iterable[str], reflow: bool = False
+        self, items: Iterable[str],
+        flow: Optional[str] = None
     ) -> int:
         """Trigger matching tasks, with or without reflow.
 
-        Queue the task if not queued, otherwise release it to run.
+        If target tasks found in the pool:
+            - (if new flow name given, merge it)
+            - if already active: ignore
+            - if not queued: queue
+            - if queued: release to run
+        else spawn new tasks:
+            - with reflow if new flow name given
+            - one-off if new flow name not given
         """
-        # TODO check reflow from existing tasks - unless unhandled fail?
+        flows = {flow} if flow is not None else set()
         n_warnings, task_items = self.match_taskdefs(items)
-        flow_label = self.flow_label_mgr.get_new_label()
         for name, point in task_items.keys():
-            itask = self.get_task_main(name, point, flow_label)
-            if itask is not None:
-                # Already in pool: trigger and merge flow labels.
-                itask.is_manual_submit = True
-                itask.reset_try_timers()
-                # (If None, spawner reports cycle bounds errors).
-                if itask.state.reset(TASK_STATUS_WAITING):
-                    self.data_store_mgr.delta_task_state(itask)
-                # (No need to set prerequisites satisfied here).
-                if not itask.state.is_queued:
-                    LOG.info("Force-trigger: queueing {itask.identity}")
-                    self.queue_task(itask)
-                else:
-                    self.task_queue_mgr.force_release_task(itask)
-            else:
-                # Spawn with new flow label.
-                itask = self.spawn_task(
-                    name, point, flow_label, reflow=reflow)
+            task_id = TaskID.get(name, point)
+            itask = (
+                self._get_main_task_by_id(task_id)
+                or self._get_hidden_task_by_id(task_id)
+            )
+            if itask is None:
+                # Spawn with new flow name.
+                itask = self.spawn_task(name, point, flows)
+                if itask is None:
+                    continue
                 itask.is_manual_submit = True
                 # This will queue the task.
                 self.add_to_pool(itask, is_new=True)
+            else:
+                # In pool already
+                if itask.state(*TASK_STATUSES_ACTIVE):
+                    LOG.warning(f"[{itask}] ignoring trigger - already active")
+                    continue
+                itask.merge_flows(flows)
+                LOG.info(f"[{itask}] Merged flows: {','.join(flows)}")
+                itask.is_manual_submit = True
+                itask.reset_try_timers()
+                # (If None, spawner reports cycle bounds errors).
+                if itask.state_reset(TASK_STATUS_WAITING):
+                    # (could also be unhandled failed)
+                    self.data_store_mgr.delta_task_state(itask)
+                # (No need to set prerequisites satisfied here).
+                if not itask.state.is_queued:
+                    LOG.info(
+                        f"[{itask}] queued, trigger again to submit now."
+                    )
+                    self.queue_task(itask)
+                else:
+                    self.task_queue_mgr.force_release_task(itask)
+            self.workflow_db_mgr.put_insert_task_states(
+                itask,
+                {
+                    "status": itask.state.status,
+                    "flows": json.dumps(sorted(itask.flows))
+                }
+            )
         return n_warnings
 
     def sim_time_check(self, message_queue):
@@ -1499,11 +1407,11 @@ class TaskPool:
                 itask.get_offset_as_seconds(itask.tdef.expiration_offset))
         if time() > itask.expire_time:
             msg = 'Task expired (skipping job).'
-            LOG.warning('[%s] -%s', itask, msg)
+            LOG.warning(f"[{itask}] {msg}")
             self.task_events_mgr.setup_event_handlers(itask, "expired", msg)
             # TODO succeeded and expired states are useless due to immediate
             # removal under all circumstances (unhandled failed is still used).
-            if itask.state.reset(TASK_STATUS_EXPIRED, is_held=False):
+            if itask.state_reset(TASK_STATUS_EXPIRED, is_held=False):
                 self.data_store_mgr.delta_task_state(itask)
                 self.data_store_mgr.delta_task_held(itask)
             self.remove(itask, 'expired')
@@ -1554,43 +1462,11 @@ class TaskPool:
                     bad_items.append(item)
         return itasks, bad_items
 
-    def stop_flow(self, flow_label):
+    def stop_flow(self, flow):
         """Stop a particular flow from spawning any further."""
-        # Stop tasks belong to flow_label from continuing.
         for itask in self.get_all_tasks():
-            # Don't use match_label(); we don't want to stop merged flows.
-            if itask.flow_label == flow_label:
-                itask.reflow = False
-
-    def prune_flow_labels(self):
-        """Remove redundant flow labels.
-
-        Note this iterates the task pool twice but it can be called
-        infrequently and doesn't do anything if there is only one flow.
-
-        """
-        if self.flow_label_mgr.get_num_inuse() == 1:
-            # Nothing to do.
-            return
-        # Gather all current labels.
-        labels = [itask.flow_label for itask in self.get_all_tasks()]
-        if not labels:
-            return
-        # Find any labels common to all tasks.
-        common = self.flow_label_mgr.get_common_labels(labels)
-        # And prune them back to just one.
-        num = len(list(common))
-        if num <= 1:
-            return
-        LOG.debug('Pruning redundant flow labels: %s', common)
-        to_prune = []
-        while num > 1:
-            to_prune.append(common.pop())
-            num -= 1
-        for itask in self.get_all_tasks():
-            itask.flow_label = self.flow_label_mgr.unmerge_labels(
-                to_prune, itask.flow_label)
-        self.flow_label_mgr.make_avail(to_prune)
+            with suppress(KeyError):
+                itask.flows.remove(flow)
 
     @staticmethod
     def _parse_task_item(

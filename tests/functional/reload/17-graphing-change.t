@@ -65,8 +65,8 @@ grep_ok "Removed task: 'one'" "${LOG_FILE}"
 cp "${TEST_SOURCE_DIR}/graphing-change/flow-2.cylc" \
     "${RUN_DIR}/${WORKFLOW_NAME}/flow.cylc"
 
-cylc set-outputs "${WORKFLOW_NAME}"  foo.1
-cylc set-outputs "${WORKFLOW_NAME}"  baz.1
+cylc set-outputs --flow=other "${WORKFLOW_NAME}"  foo.1
+cylc set-outputs --flow=other "${WORKFLOW_NAME}"  baz.1
 # reload workflow
 run_ok "${TEST_NAME_BASE}-swap-reload" cylc reload "${WORKFLOW_NAME}"
 poll grep_workflow_log_n_times 'Reload completed' 3

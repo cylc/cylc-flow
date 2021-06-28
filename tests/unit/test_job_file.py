@@ -87,7 +87,7 @@ def test_write(mocked_get_remote_workflow_run_dir, fixture_get_platform):
                             'duck': '~quack'},
             "job_d": "1/baa/01",
             "try_num": 1,
-            "flow_label": "aZ",
+            "flows": {"original"},
             # "job_runner_name": "background",
             "param_var": {"duck": "quack",
                           "mouse": "squeak"},
@@ -366,7 +366,7 @@ def test_write_task_environment():
                 'CYLC_TASK_NAMESPACE_HIERARCHY="baa moo"\n    export '
                 'CYLC_TASK_DEPENDENCIES="moo neigh quack"\n    export '
                 'CYLC_TASK_TRY_NUMBER=1\n    export '
-                'CYLC_TASK_FLOW_LABEL=aZ\n    export '
+                'CYLC_TASK_FLOWS=original\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
@@ -376,7 +376,7 @@ def test_write_task_environment():
         "namespace_hierarchy": ["baa", "moo"],
         "dependencies": ['moo', 'neigh', 'quack'],
         "try_num": 1,
-        "flow_label": "aZ",
+        "flows": {"original"},
         "param_var": {"duck": "quack",
                       "mouse": "squeak"},
         "work_d": "farm_noises/work_d"

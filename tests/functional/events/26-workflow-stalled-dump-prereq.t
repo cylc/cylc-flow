@@ -30,7 +30,7 @@ grep_ok "Abort on workflow stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* bar.20100101T0000Z (failed)" \
+grep_ok "\* bar.20100101T0000Z failed" \
     "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Partially satisfied prerequisites left over:" \

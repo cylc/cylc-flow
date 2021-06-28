@@ -57,8 +57,8 @@ __SELECT__
 
 grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "* b.1 (submit-failed)
-	* a.1 (submit-failed)" \
+grep_ok "* b.1 submit-failed
+* a.1 submit-failed" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge

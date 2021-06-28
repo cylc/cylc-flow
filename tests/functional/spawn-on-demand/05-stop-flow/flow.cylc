@@ -9,7 +9,6 @@
 [runtime]
     [[bar]]
          script = """
-eval $(cylc cat-log -f j "${CYLC_WORKFLOW_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
-cylc stop --flow=${CYLC_TASK_FLOW_LABEL} ${CYLC_WORKFLOW_NAME}
+cylc stop --flow=original ${CYLC_WORKFLOW_NAME}
 cylc__job__poll_grep_workflow_log 'Command succeeded: stop'
          """

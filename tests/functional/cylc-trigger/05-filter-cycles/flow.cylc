@@ -20,8 +20,8 @@
     [[fixer]]
         script = """
 cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_workflow_log '\[fixable\.19700101T0000Z\].* (received)failed'
-cylc__job__poll_grep_workflow_log '\[fixable\.19900101T0000Z\].* (received)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable\.19700101T0000Z .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable\.19900101T0000Z .* \(received\)failed'
 cylc trigger "${CYLC_WORKFLOW_NAME}" '19700101T0000Z/*' '19900101T0000Z/*'
 """
     [[z]]
