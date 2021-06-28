@@ -16,6 +16,7 @@
 
 import pytest
 
+import sys
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 
@@ -23,6 +24,20 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 @pytest.fixture(scope='module')
 def parser():
     return COP('usage')
+
+
+@pytest.fixture(scope='module')
+def parser_nocolor():
+    argv = sys.argv
+    sys.argv = ['cmd', 'arg', '--help', '--color=never']
+    cop = COP('usage \n # comment')
+    sys.argv = argv
+    return cop
+
+
+@pytest.fixture(scope='module')
+def parser_color():
+    return COP('usage \n # comment')
 
 
 @pytest.mark.parametrize(
@@ -46,3 +61,13 @@ def test_verbosity(args, verbosity, parser, monkeypatch):
     assert opts.verbosity == verbosity
     # test side-effect, the verbosity flag should be set
     assert cylc.flow.flags.verbosity == verbosity
+
+
+def test_help_color(parser_color):
+    """Test for colorized comments in 'cylc cmd --help'."""
+    assert not parser_color.usage.startswith('usage \n # comment')
+
+
+def test_help_nocolor(parser_nocolor):
+    """Test for no colorization in 'cylc cmd --help --color=never'."""
+    assert parser_nocolor.usage.startswith('usage \n # comment')
