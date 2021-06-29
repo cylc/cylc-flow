@@ -18,11 +18,11 @@
 import logging
 import os
 from pathlib import Path
-from typing import Callable, Iterable, List
 import pytest
-from unittest.mock import patch, call
+from typing import Callable, Dict, Iterable, List, Set
+from unittest.mock import Mock, patch, call
 
-from cylc.flow.exceptions import WorkflowFilesError
+from cylc.flow.exceptions import UserInputError, WorkflowFilesError
 from cylc.flow.pathutil import (
     expand_path,
     get_dirs_to_symlink,
@@ -39,8 +39,12 @@ from cylc.flow.pathutil import (
     get_workflow_test_log_name,
     make_localhost_symlinks,
     make_workflow_run_tree,
-    remove_dir
+    parse_rm_dirs,
+    remove_dir_and_target,
+    remove_dir_or_file
 )
+
+from .conftest import MonkeyMock
 
 
 HOME = Path.home()
@@ -166,82 +170,109 @@ def test_make_workflow_run_tree(
 
 
 @pytest.mark.parametrize(
-    'workflow, install_target, mocked_glbl_cfg, output',
+    'mocked_glbl_cfg, output',
     [
-        (  # basic
-            'workflow1', 'install_target_1',
-            '''[symlink dirs]
-            [[install_target_1]]
-                run = $DEE
-                work = $DAH
-                log = $DUH
-                share = $DOH
-                share/cycle = $DAH''', {
-                'run': '$DEE/cylc-run/workflow1',
-                'work': '$DAH/cylc-run/workflow1/work',
-                'log': '$DUH/cylc-run/workflow1/log',
-                'share': '$DOH/cylc-run/workflow1/share',
-                'share/cycle': '$DAH/cylc-run/workflow1/share/cycle'
-            }),
-        (  # remove nested run symlinks
-            'workflow2', 'install_target_2',
+        pytest.param(  # basic
             '''
-        [symlink dirs]
-            [[install_target_2]]
-                run = $DEE
-                work = $DAH
-                log = $DEE
-                share = $DOH
-                share/cycle = $DAH
-
-        ''', {
-                'run': '$DEE/cylc-run/workflow2',
-                'work': '$DAH/cylc-run/workflow2/work',
-                'share': '$DOH/cylc-run/workflow2/share',
-                'share/cycle': '$DAH/cylc-run/workflow2/share/cycle'
-            }),
-        (  # remove only nested run symlinks
-            'workflow3', 'install_target_3', '''
-        [symlink dirs]
-            [[install_target_3]]
-                run = $DOH
-                log = $DEE
-                share = $DEE
-        ''', {
-                'run': '$DOH/cylc-run/workflow3',
-                'log': '$DEE/cylc-run/workflow3/log',
-                'share': '$DEE/cylc-run/workflow3/share'})
-    ], ids=["1", "2", "3"])
-def test_get_dirs_to_symlink(workflow, install_target, mocked_glbl_cfg,
-                             output, mock_glbl_cfg, tmp_path, monkeypatch):
-    # Using env variable 'DEE' to ensure dirs returned are unexpanded
-    monkeypatch.setenv('DEE', str(tmp_path))
+            [symlink dirs]
+                [[the_matrix]]
+                    run = $DEE
+                    work = $DAH
+                    log = $DUH
+                    share = $DOH
+                    share/cycle = $DAH
+            ''',
+            {
+                'run': '$DEE/cylc-run/morpheus',
+                'work': '$DAH/cylc-run/morpheus/work',
+                'log': '$DUH/cylc-run/morpheus/log',
+                'share': '$DOH/cylc-run/morpheus/share',
+                'share/cycle': '$DAH/cylc-run/morpheus/share/cycle'
+            },
+            id="basic"
+        ),
+        pytest.param(  # remove nested run symlinks
+            '''
+            [symlink dirs]
+                [[the_matrix]]
+                    run = $DEE
+                    work = $DAH
+                    log = $DEE
+                    share = $DOH
+                    share/cycle = $DAH
+            ''',
+            {
+                'run': '$DEE/cylc-run/morpheus',
+                'work': '$DAH/cylc-run/morpheus/work',
+                'share': '$DOH/cylc-run/morpheus/share',
+                'share/cycle': '$DAH/cylc-run/morpheus/share/cycle'
+            },
+            id="remove nested run symlinks"
+        ),
+        pytest.param(  # remove only nested run symlinks
+            '''
+            [symlink dirs]
+                [[the_matrix]]
+                    run = $DOH
+                    log = $DEE
+                    share = $DEE
+            ''',
+            {
+                'run': '$DOH/cylc-run/morpheus',
+                'log': '$DEE/cylc-run/morpheus/log',
+                'share': '$DEE/cylc-run/morpheus/share'
+            },
+            id="remove only nested run symlinks"
+        ),
+        pytest.param(  # blank entries
+            '''
+            [symlink dirs]
+                [[the_matrix]]
+                    run =
+                    log = ""
+                    share =
+                    work = " "
+            ''',
+            {},
+            id="blank entries"
+        )
+    ]
+)
+def test_get_dirs_to_symlink(
+    mocked_glbl_cfg: str,
+    output: Dict[str, str],
+    mock_glbl_cfg: Callable,
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Set env var 'DEE', but we expect it to be unexpanded
+    monkeypatch.setenv('DEE', 'poiuytrewq')
     mock_glbl_cfg('cylc.flow.pathutil.glbl_cfg', mocked_glbl_cfg)
-    dirs = get_dirs_to_symlink(install_target, workflow)
+    dirs = get_dirs_to_symlink('the_matrix', 'morpheus')
     assert dirs == output
 
 
-@patch('os.path.expandvars')
 @patch('cylc.flow.pathutil.get_workflow_run_dir')
-@patch('cylc.flow.pathutil.make_symlink')
 @patch('cylc.flow.pathutil.get_dirs_to_symlink')
 def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
-        mocked_dirs_to_symlink,
-        mocked_make_symlink,
-        mocked_get_workflow_run_dir, mocked_expandvars):
-
+    mocked_dirs_to_symlink: Mock,
+    mocked_get_workflow_run_dir: Mock,
+    monkeypatch: pytest.MonkeyPatch, monkeymock: MonkeyMock
+) -> None:
     mocked_dirs_to_symlink.return_value = {
-        'run': '$DOH/workflow3',
-        'log': '$DEE/workflow3/log',
-        'share': '$DEE/workflow3/share'}
+        'run': '$DOH/trinity',
+        'log': '$DEE/trinity/log',
+        'share': '$DEE/trinity/share'
+    }
     mocked_get_workflow_run_dir.return_value = "rund"
-    mocked_expandvars.return_value = "expanded"
-    mocked_make_symlink.return_value = True
+    for v in ('DOH', 'DEE'):
+        monkeypatch.setenv(v, 'expanded')
+    mocked_make_symlink = monkeymock('cylc.flow.pathutil.make_symlink')
+
     make_localhost_symlinks('rund', 'workflow')
     mocked_make_symlink.assert_has_calls([
-        call('expanded', 'rund'),
-        call('expanded', 'rund/log'),
-        call('expanded', 'rund/share')
+        call('rund', 'expanded/trinity'),
+        call('rund/log', 'expanded/trinity/log'),
+        call('rund/share', 'expanded/trinity/share')
     ])
 
 
@@ -271,8 +302,9 @@ def test_incorrect_environment_variables_raise_error(
      ('file', NotADirectoryError),
      (None, FileNotFoundError)]
 )
-def test_remove_dir(filetype, expected_err, tmp_path):
-    """Test that remove_dir() can delete nested dirs and handle bad paths."""
+def test_remove_dir_and_target(filetype, expected_err, tmp_path):
+    """Test that remove_dir_and_target() can delete nested dirs and handle
+    bad paths."""
     test_path = tmp_path.joinpath('foo/bar')
     if filetype == 'dir':
         # Test removal of sub directories too
@@ -286,9 +318,9 @@ def test_remove_dir(filetype, expected_err, tmp_path):
 
     if expected_err:
         with pytest.raises(expected_err):
-            remove_dir(test_path)
+            remove_dir_and_target(test_path)
     else:
-        remove_dir(test_path)
+        remove_dir_and_target(test_path)
         assert test_path.exists() is False
         assert test_path.is_symlink() is False
 
@@ -299,8 +331,9 @@ def test_remove_dir(filetype, expected_err, tmp_path):
      ('file', NotADirectoryError),
      (None, None)]
 )
-def test_remove_dir_symlinks(target, expected_err, tmp_path):
-    """Test that remove_dir() can delete symlinks, including the target."""
+def test_remove_dir_and_target_symlinks(target, expected_err, tmp_path):
+    """Test that remove_dir_and_target() can delete symlinks, including
+    the target."""
     target_path = tmp_path.joinpath('x/y')
     target_path.mkdir(parents=True)
 
@@ -322,21 +355,85 @@ def test_remove_dir_symlinks(target, expected_err, tmp_path):
 
     if expected_err:
         with pytest.raises(expected_err):
-            remove_dir(symlink_path)
+            remove_dir_and_target(symlink_path)
     else:
-        remove_dir(symlink_path)
+        remove_dir_and_target(symlink_path)
         for path in [symlink_path, target_path]:
             assert path.exists() is False
             assert path.is_symlink() is False
 
 
-def test_remove_dir_relative(tmp_path):
-    """Test that you cannot use remove_dir() on a relative path.
+@pytest.mark.parametrize(
+    'func', [remove_dir_and_target, remove_dir_or_file]
+)
+def test_remove_relative(func: Callable, tmp_path: Path):
+    """Test that you cannot use remove_dir_and_target() or remove_dir_or_file()
+    on relative paths.
 
     When removing a path, we want to be absolute-ly sure where it is!
     """
     # cd to temp dir in case we accidentally succeed in deleting the path
     os.chdir(tmp_path)
     with pytest.raises(ValueError) as cm:
-        remove_dir('foo/bar')
+        func('foo/bar')
     assert 'Path must be absolute' in str(cm.value)
+
+
+def test_remove_dir_or_file(tmp_path: Path):
+    """Test remove_dir_or_file()"""
+    a_file = tmp_path.joinpath('fyle')
+    a_file.touch()
+    assert a_file.exists()
+    remove_dir_or_file(a_file)
+    assert a_file.exists() is False
+
+    a_symlink = tmp_path.joinpath('simlynk')
+    a_file.touch()
+    a_symlink.symlink_to(a_file)
+    assert a_symlink.is_symlink()
+    remove_dir_or_file(a_symlink)
+    assert a_symlink.is_symlink() is False
+    assert a_file.exists()
+
+    a_dir = tmp_path.joinpath('der')
+    # Add contents to check whole tree is removed
+    sub_dir = a_dir.joinpath('sub_der')
+    sub_dir.mkdir(parents=True)
+    sub_dir.joinpath('fyle').touch()
+    assert a_dir.exists()
+    remove_dir_or_file(a_dir)
+    assert a_dir.exists() is False
+
+
+@pytest.mark.parametrize(
+    'dirs, expected',
+    [
+        ([" "], set()),
+        (["foo", "bar"], {"foo", "bar"}),
+        (["foo:bar", "baz/*"], {"foo", "bar", "baz/*"}),
+        ([" :foo :bar:"], {"foo", "bar"}),
+        (["foo/:bar//baz "], {"foo/", "bar/baz"}),
+        ([".foo", "..bar", " ./gah"], {".foo", "..bar", "gah"})
+    ]
+)
+def test_parse_rm_dirs(dirs: List[str], expected: Set[str]):
+    """Test parse_dirs()"""
+    assert parse_rm_dirs(dirs) == expected
+
+
+@pytest.mark.parametrize(
+    'dirs, err_msg',
+    [
+        (["foo:/bar"],
+         "--rm option cannot take absolute paths"),
+        (["foo:../bar"],
+         "cannot take paths that point to the run directory or above"),
+        (["foo:bar/../../gah"],
+         "cannot take paths that point to the run directory or above"),
+    ]
+)
+def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
+    """Test parse_dirs() with bad inputs"""
+    with pytest.raises(UserInputError) as exc:
+        parse_rm_dirs(dirs)
+    assert err_msg in str(exc.value)

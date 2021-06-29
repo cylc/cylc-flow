@@ -19,17 +19,19 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Union
+from typing import Dict, Iterable, Set, Union
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import WorkflowFilesError
+from cylc.flow.exceptions import (
+    UserInputError, WorkflowFilesError, handle_rmtree_err
+)
 from cylc.flow.platforms import get_localhost_install_target
 
 
 # Note: do not import this elsewhere, as it might bypass unit test
 # monkeypatching:
-_CYLC_RUN_DIR = '$HOME/cylc-run'
+_CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
 
 
 def expand_path(*args: Union[Path, str]) -> str:
@@ -128,15 +130,17 @@ def make_workflow_run_tree(workflow):
             LOG.debug(f'{dir_}: directory created')
 
 
-def make_localhost_symlinks(rund, named_sub_dir):
+def make_localhost_symlinks(
+    rund: Union[Path, str], named_sub_dir: str
+) -> Dict[str, Union[Path, str]]:
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
         rund: the entire run directory path
         named_sub_dir: e.g flow_name/run1
 
     Returns:
-         dict - A dictionary of Symlinks with sources as keys and
-         destinations as values: ``{source: destination}``
+        Dictionary of symlinks with sources as keys and
+        destinations as values: ``{source: destination}``
 
     """
     dirs_to_symlink = get_dirs_to_symlink(
@@ -144,80 +148,89 @@ def make_localhost_symlinks(rund, named_sub_dir):
     symlinks_created = {}
     for key, value in dirs_to_symlink.items():
         if key == 'run':
-            dst = rund
+            symlink_path = rund
         else:
-            dst = os.path.join(rund, key)
-        src = expand_path(value)
-        if '$' in src:
+            symlink_path = os.path.join(rund, key)
+        target = expand_path(value)
+        if '$' in target:
             raise WorkflowFilesError(
-                f'Unable to create symlink to {src}.'
+                f'Unable to create symlink to {target}.'
                 f' \'{value}\' contains an invalid environment variable.'
                 ' Please check configuration.')
-        symlink_success = make_symlink(src, dst)
-        # symlink info returned for logging purposes, symlinks created
-        # before logs as this dir may be a symlink.
+        symlink_success = make_symlink(symlink_path, target)
+        # Symlink info returned for logging purposes. Symlinks should be
+        # created before logs as the log dir may be a symlink.
         if symlink_success:
-            symlinks_created[src] = dst
+            symlinks_created[target] = symlink_path
     return symlinks_created
 
 
-def get_dirs_to_symlink(install_target, flow_name):
+def get_dirs_to_symlink(install_target: str, flow_name: str) -> Dict[str, str]:
     """Returns dictionary of directories to symlink from glbcfg.
-       Note the paths should remain unexpanded, to be expanded on the remote.
+
+    Note the paths should remain unexpanded, to be expanded on the remote.
     """
-    dirs_to_symlink = {}
+    dirs_to_symlink: Dict[str, str] = {}
     symlink_conf = glbl_cfg().get(['symlink dirs'])
 
     if install_target not in symlink_conf.keys():
         return dirs_to_symlink
     base_dir = symlink_conf[install_target]['run']
-    if base_dir is not None:
+    if base_dir:
         dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', flow_name)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target][dir_]
-        if link is None or link == base_dir:
+        if (not link) or link == base_dir:
             continue
         dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', flow_name, dir_)
     return dirs_to_symlink
 
 
-def make_symlink(src, dst):
+def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
     """Makes symlinks for directories.
+
     Args:
-        src (str): target path, where the files are to be stored.
-        dst (str): full path of link that will point to src.
+        path: Absolute path of the desired symlink.
+        target: Absolute path of the symlink's target directory.
     """
-    if os.path.exists(dst):
-        if os.path.islink(dst) and os.path.samefile(dst, src):
+    path = Path(path)
+    target = Path(target)
+    if path.exists():
+        if path.is_symlink() and path.samefile(target):
             # correct symlink already exists
             return False
         # symlink name is in use by a physical file or directory
         # log and return
         LOG.debug(
-            f"Unable to create {src} symlink. The path {dst} already exists.")
+            f"Unable to create symlink to {target}. "
+            f"The path {path} already exists.")
         return False
-    elif os.path.islink(dst):
+    elif path.is_symlink():
         # remove a bad symlink.
         try:
-            os.unlink(dst)
-        except Exception:
+            path.unlink()
+        except OSError:
             raise WorkflowFilesError(
-                f"Error when symlinking. Failed to unlink bad symlink {dst}.")
-    os.makedirs(src, exist_ok=True)
-    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                f"Error when symlinking. Failed to unlink bad symlink {path}.")
+    target.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        # Trying to link to itself; no symlink needed
+        # (e.g. path's parent is symlink to target's parent)
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        os.symlink(src, dst, target_is_directory=True)
+        path.symlink_to(target)
         return True
-    except Exception as exc:
+    except OSError as exc:
         raise WorkflowFilesError(f"Error when symlinking\n{exc}")
 
 
-def remove_dir(path):
-    """Delete a directory including contents, including the target directory
-    if the specified path is a symlink.
+def remove_dir_and_target(path: Union[Path, str]) -> None:
+    """Delete a directory tree (i.e. including contents), as well as the
+    target directory tree if the specified path is a symlink.
 
     Args:
-        path (str): the absolute path of the directory to delete.
+        path: the absolute path of the directory to delete.
     """
     if not os.path.isabs(path):
         raise ValueError('Path must be absolute')
@@ -228,7 +241,7 @@ def remove_dir(path):
             target = os.path.realpath(path)
             LOG.debug(
                 f'Removing symlink target directory: ({path} ->) {target}')
-            rmtree(target)
+            rmtree(target, onerror=handle_rmtree_err)
             LOG.debug(f'Removing symlink: {path}')
         else:
             LOG.debug(f'Removing broken symlink: {path}')
@@ -237,7 +250,27 @@ def remove_dir(path):
         raise FileNotFoundError(path)
     else:
         LOG.debug(f'Removing directory: {path}')
-        rmtree(path)
+        rmtree(path, onerror=handle_rmtree_err)
+
+
+def remove_dir_or_file(path: Union[Path, str]) -> None:
+    """Delete a directory tree, or a file, or a symlink.
+    Does not follow symlinks.
+
+    Args:
+        path: the absolute path of the directory/file/symlink to delete.
+    """
+    if not os.path.isabs(path):
+        raise ValueError("Path must be absolute")
+    if os.path.islink(path):
+        LOG.debug(f"Removing symlink: {path}")
+        os.remove(path)
+    elif os.path.isfile(path):
+        LOG.debug(f"Removing file: {path}")
+        os.remove(path)
+    else:
+        LOG.debug(f"Removing directory: {path}")
+        rmtree(path, onerror=handle_rmtree_err)
 
 
 def get_next_rundir_number(run_path):
@@ -249,3 +282,43 @@ def get_next_rundir_number(run_path):
         return int(last_run_num) + 1
     except OSError:
         return 1
+
+
+def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
+    """Parse a list of possibly colon-separated dirs (or files or globs).
+    Return the set of all the dirs.
+
+    Used by cylc clean with the --rm option.
+    """
+    result: Set[str] = set()
+    for item in rm_dirs:
+        for part in item.split(':'):
+            part = part.strip()
+            if not part:
+                continue
+            is_dir = part.endswith(os.sep)
+            part = os.path.normpath(part)
+            if os.path.isabs(part):
+                raise UserInputError("--rm option cannot take absolute paths")
+            if part == '.' or part.startswith(f'..{os.sep}'):
+                raise UserInputError(
+                    "--rm option cannot take paths that point to the "
+                    "run directory or above"
+                )
+            if is_dir:
+                # Preserve trailing slash to ensure it only matches dirs,
+                # not files, when globbing
+                part += os.sep
+            result.add(part)
+    return result
+
+
+def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
+    """Return whether or not path1 is relative to path2."""
+    # In future, we can just use pathlib.Path.is_relative_to()
+    # when Python 3.9 becomes the minimum supported version
+    try:
+        Path(os.path.normpath(path1)).relative_to(os.path.normpath(path2))
+    except ValueError:
+        return False
+    return True

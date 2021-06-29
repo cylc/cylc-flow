@@ -17,8 +17,11 @@
 """Workflow service files management."""
 
 import aiofiles
+from collections import deque
 from contextlib import suppress
 from enum import Enum
+from functools import partial
+import glob
 import logging
 import os
 from pathlib import Path
@@ -27,7 +30,10 @@ import re
 import shutil
 from subprocess import Popen, PIPE, DEVNULL
 import time
-from typing import List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
+    Tuple, TYPE_CHECKING, Union
+)
 import zmq.auth
 
 from cylc.flow import LOG
@@ -37,13 +43,18 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     ServiceFileError,
     TaskRemoteMgmtError,
-    WorkflowFilesError)
+    WorkflowFilesError,
+    handle_rmtree_err
+)
 from cylc.flow.pathutil import (
     expand_path,
     get_workflow_run_dir,
     make_localhost_symlinks,
-    remove_dir,
-    get_next_rundir_number)
+    parse_rm_dirs,
+    remove_dir_and_target,
+    get_next_rundir_number,
+    remove_dir_or_file
+)
 from cylc.flow.platforms import (
     get_install_target_to_platforms_map,
     get_localhost_install_target,
@@ -201,13 +212,20 @@ class WorkflowFiles:
         SOURCE = 'source'
         """Symlink to the workflow definition (For run dir)."""
 
-    RESERVED_DIRNAMES = [
-        LOG_DIR, SHARE_DIR, WORK_DIR, RUN_N, Service.DIRNAME, Install.DIRNAME]
+    RESERVED_DIRNAMES = frozenset([
+        LOG_DIR, SHARE_DIR, WORK_DIR, RUN_N, Service.DIRNAME, Install.DIRNAME
+    ])
     """Reserved directory names that cannot be present in a source dir."""
 
-    RESERVED_NAMES = [
-        FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES]
+    RESERVED_NAMES = frozenset([FLOW_FILE, SUITE_RC, *RESERVED_DIRNAMES])
     """Reserved filenames that cannot be used as run names."""
+
+    SYMLINK_DIRS = frozenset([
+        SHARE_CYCLE_DIR, SHARE_DIR, LOG_DIR, WORK_DIR, ''
+    ])
+    """The paths of the symlink dirs that may be set in
+    global.cylc[symlink dirs], relative to the run dir
+    ('' represents the run dir)."""
 
 
 class ContactFileFields:
@@ -262,6 +280,12 @@ class ContactFileFields:
 
     SCHEDULER_USE_LOGIN_SHELL = 'SCHEDULER_USE_LOGIN_SHELL'
     """Remote command setting for Scheduler."""
+
+
+class RemoteCleanQueueTuple(NamedTuple):
+    proc: 'Popen[str]'
+    install_target: str
+    platforms: List[Dict[str, Any]]
 
 
 REG_DELIM = "/"
@@ -576,12 +600,12 @@ def is_installed(path: Union[Path, str]) -> bool:
     return cylc_install_folder.is_dir() and source.is_symlink()
 
 
-def _clean_check(reg, run_dir):
+def _clean_check(reg: str, run_dir: Path) -> None:
     """Check whether a workflow can be cleaned.
 
     Args:
-        reg (str): Workflow name.
-        run_dir (str): Path to the workflow run dir on the filesystem.
+        reg: Workflow name.
+        run_dir: Path to the workflow run dir on the filesystem.
     """
     validate_flow_name(reg)
     reg = os.path.normpath(reg)
@@ -589,6 +613,7 @@ def _clean_check(reg, run_dir):
         raise WorkflowFilesError(
             "Workflow name cannot be a path that points to the cylc-run "
             "directory or above")
+    # Must be dir or broken symlink:
     if not run_dir.is_dir() and not run_dir.is_symlink():
         msg = f"No directory to clean at {run_dir}"
         raise FileNotFoundError(msg)
@@ -604,8 +629,8 @@ def init_clean(reg: str, opts: 'Values') -> None:
     scheduler filesystem and remote hosts.
 
     Args:
-        reg (str): Workflow name.
-        opts (optparse.Values): CLI options object for cylc clean.
+        reg: Workflow name.
+        opts: CLI options object for cylc clean.
     """
     local_run_dir = Path(get_workflow_run_dir(reg))
     try:
@@ -614,77 +639,191 @@ def init_clean(reg: str, opts: 'Values') -> None:
         LOG.info(str(exc))
         return
 
-    platform_names = None
-    try:
-        platform_names = get_platforms_from_db(local_run_dir)
-    except FileNotFoundError:
-        LOG.info("No workflow database - will only clean locally")
-    except ServiceFileError as exc:
-        raise ServiceFileError(f"Cannot clean - {exc}")
+    if not opts.local_only:
+        platform_names = None
+        try:
+            platform_names = get_platforms_from_db(local_run_dir)
+        except FileNotFoundError:
+            if opts.remote_only:
+                raise ServiceFileError(
+                    "No workflow database - cannot perform remote clean")
+            LOG.info("No workflow database - will only clean locally")
+        except ServiceFileError as exc:
+            raise ServiceFileError(f"Cannot clean - {exc}")
 
-    if platform_names and platform_names != {'localhost'}:
-        remote_clean(reg, platform_names, opts.remote_timeout)
-    LOG.info("Cleaning on local filesystem")
-    clean(reg)
+        if platform_names and platform_names != {'localhost'}:
+            remote_clean(
+                reg, platform_names, opts.rm_dirs, opts.remote_timeout)
+
+    if not opts.remote_only:
+        rm_dirs = None
+        if opts.rm_dirs:
+            rm_dirs = parse_rm_dirs(opts.rm_dirs)
+        clean(reg, local_run_dir, rm_dirs)
 
 
-def clean(reg):
+def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
     """Remove a stopped workflow from the local filesystem only.
 
-    Deletes the workflow run directory and any symlink dirs. Note: if the
-    run dir has already been manually deleted, it will not be possible to
-    clean the symlink dirs.
+    Deletes the workflow run directory and any symlink dirs, or just the
+    specified sub dirs if rm_dirs is specified.
+
+    Note: if the run dir has already been manually deleted, it will not be
+    possible to clean any symlink dirs.
 
     Args:
-        reg (str): Workflow name.
+        reg: Workflow name.
+        run_dir: Absolute path of the workflow's run dir.
+        rm_dirs: Set of sub dirs to remove instead of the whole run dir.
     """
-    run_dir = Path(get_workflow_run_dir(reg))
-    try:
-        _clean_check(reg, run_dir)
-    except FileNotFoundError as exc:
-        LOG.info(str(exc))
-        return
+    LOG.info("Cleaning on local filesystem")
+    symlink_dirs = get_symlink_dirs(reg, run_dir)
+    if rm_dirs is not None:
+        # Targeted clean
+        for pattern in rm_dirs:
+            _clean_using_glob(run_dir, pattern, symlink_dirs)
+    else:
+        # Wholesale clean
+        for symlink in symlink_dirs:
+            # Remove <symlink_dir>/cylc-run/<reg>/<symlink>
+            remove_dir_and_target(run_dir / symlink)
+        if '' not in symlink_dirs:
+            # if run dir isn't a symlink dir and hasn't been deleted yet
+            remove_dir_and_target(run_dir)
+    # Tidy up if necessary
+    # Remove any empty parents of run dir up to ~/cylc-run/
+    _remove_empty_parents(run_dir, reg)
+    for symlink, target in symlink_dirs.items():
+        # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
+        _remove_empty_parents(target, Path(reg, symlink))
 
-    # Note: 'share/cycle' must come first, and '' must come last
-    for possible_symlink in (
-            WorkflowFiles.SHARE_CYCLE_DIR, WorkflowFiles.SHARE_DIR,
-            WorkflowFiles.LOG_DIR, WorkflowFiles.WORK_DIR, ''):
-        name = Path(possible_symlink)
-        path = Path(run_dir, possible_symlink)
+
+def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
+    """Return the standard symlink dirs and their targets if they exist in
+    the workflow run dir.
+
+    Note: does not check the global config, only the existing run dir filetree.
+
+    Raises WorkflowFilesError if a symlink points to an unexpected place.
+    """
+    ret: Dict[str, Path] = {}
+    for _dir in sorted(WorkflowFiles.SYMLINK_DIRS, reverse=True):
+        # ordered by deepest to shallowest
+        path = Path(run_dir, _dir)
         if path.is_symlink():
-            # Ensure symlink is pointing to expected directory. If not,
-            # something is wrong and we should abort
             target = path.resolve()
             if target.exists() and not target.is_dir():
                 raise WorkflowFilesError(
                     f'Invalid Cylc symlink directory {path} -> {target}\n'
                     f'Target is not a directory')
-            expected_end = str(Path('cylc-run', reg, name))
+            expected_end = str(Path('cylc-run', reg, _dir))
             if not str(target).endswith(expected_end):
                 raise WorkflowFilesError(
                     f'Invalid Cylc symlink directory {path} -> {target}\n'
                     f'Expected target to end with "{expected_end}"')
-            # Remove <symlink_dir>/cylc-run/<reg>
-            target_cylc_run_dir = str(target).rsplit(str(reg), 1)[0]
-            target_reg_dir = Path(target_cylc_run_dir, reg)
-            if target_reg_dir.is_dir():
-                remove_dir(target_reg_dir)
-            # Remove empty parents
-            _remove_empty_reg_parents(reg, target_reg_dir)
-
-    remove_dir(run_dir)
-    _remove_empty_reg_parents(reg, run_dir)
+            ret[_dir] = target
+    return ret
 
 
-def remote_clean(reg, platform_names, timeout):
+def glob_in_run_dir(
+    run_dir: Union[Path, str], pattern: str, symlink_dirs: Container[Path]
+) -> List[Path]:
+    """Execute a (recursive) glob search in the given run directory.
+
+    Returns list of any absolute paths that match the pattern. However:
+    * Does not follow symlinks (apart from the spcedified symlink dirs).
+    * Also does not return matching subpaths of matching directories (because
+        that would be redundant).
+
+    Args:
+        run_dir: Absolute path of the workflow run dir.
+        pattern: The glob pattern.
+        symlink_dirs: Absolute paths to the workflow's symlink dirs.
+    """
+    # Note: use os.path.join, not pathlib, to preserve trailing slash if
+    # present in pattern
+    pattern = os.path.join(glob.escape(str(run_dir)), pattern)
+    # Note: don't use pathlib.Path.glob() because when you give it an exact
+    # filename instead of pattern, it doesn't return broken symlinks
+    matches = sorted(Path(i) for i in glob.iglob(pattern, recursive=True))
+    # sort guarantees parents come before their children
+    if len(matches) == 1 and not os.path.lexists(matches[0]):
+        # https://bugs.python.org/issue35201
+        return []
+    results: List[Path] = []
+    subpath_excludes: Set[Path] = set()
+    for path in matches:
+        for rel_ancestor in reversed(path.relative_to(run_dir).parents):
+            ancestor = run_dir / rel_ancestor
+            if ancestor in subpath_excludes:
+                break
+            if ancestor.is_symlink() and ancestor not in symlink_dirs:
+                # Do not follow non-standard symlinks
+                subpath_excludes.add(ancestor)
+                break
+            if (not symlink_dirs) and ancestor in results:
+                # We can be sure all subpaths of this ancestor are redundant
+                subpath_excludes.add(ancestor)
+                break
+            if ancestor == path.parent:  # noqa: SIM102
+                # Final iteration over ancestors
+                if ancestor in matches and path not in symlink_dirs:
+                    # Redundant (but don't exclude subpaths in case any of the
+                    # subpaths are std symlink dirs)
+                    break
+        else:  # No break
+            results.append(path)
+    return results
+
+
+def _clean_using_glob(
+    run_dir: Path, pattern: str, symlink_dirs: Iterable[str]
+) -> None:
+    """Delete the files/dirs in the run dir that match the pattern.
+
+    Does not follow symlinks (apart from the standard symlink dirs).
+
+    Args:
+        run_dir: Absolute path of workflow run dir.
+        pattern: The glob pattern.
+        symlink_dirs: Paths of the workflow's symlink dirs relative to
+            the run dir.
+    """
+    abs_symlink_dirs = tuple(sorted(
+        (run_dir / d for d in symlink_dirs),
+        reverse=True  # ordered by deepest to shallowest
+    ))
+    matches = glob_in_run_dir(run_dir, pattern, abs_symlink_dirs)
+    if not matches:
+        return
+    # First clean any matching symlink dirs
+    for path in abs_symlink_dirs:
+        if path in matches:
+            remove_dir_and_target(path)
+            if path == run_dir:
+                # We have deleted the run dir
+                return
+            matches.remove(path)
+    # Now clean the rest
+    for path in matches:
+        remove_dir_or_file(path)
+
+
+def remote_clean(
+    reg: str,
+    platform_names: Iterable[str],
+    rm_dirs: Optional[List[str]] = None,
+    timeout: str = '120'
+) -> None:
     """Run subprocesses to clean workflows on remote install targets
     (skip localhost), given a set of platform names to look up.
 
     Args:
-        reg (str): Workflow name.
-        platform_names (list): List of platform names to look up in the global
+        reg: Workflow name.
+        platform_names: List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
-        timeout (str): Number of seconds to wait before cancelling.
+        rm_dirs: Sub dirs to remove instead of the whole run dir.
+        timeout: Number of seconds to wait before cancelling.
     """
     try:
         install_targets_map = (
@@ -693,95 +832,112 @@ def remote_clean(reg, platform_names, timeout):
         raise PlatformLookupError(
             "Cannot clean on remote platforms as the workflow database is "
             f"out of date/inconsistent with the global config - {exc}")
-
-    pool = []
+    queue: Deque[RemoteCleanQueueTuple] = deque()
+    remote_clean_cmd = partial(
+        _remote_clean_cmd, reg=reg, rm_dirs=rm_dirs, timeout=timeout
+    )
     for target, platforms in install_targets_map.items():
         if target == get_localhost_install_target():
             continue
         shuffle(platforms)
         LOG.info(
-            f"Cleaning on install target: {platforms[0]['install target']}")
-        # Issue ssh command:
-        pool.append(
-            (_remote_clean_cmd(reg, platforms[0], timeout), target, platforms)
+            f"Cleaning on install target: {platforms[0]['install target']}"
         )
-    failed_targets = []
+        # Issue ssh command:
+        queue.append(
+            RemoteCleanQueueTuple(
+                remote_clean_cmd(platform=platforms[0]), target, platforms
+            )
+        )
+    failed_targets: List[str] = []
     # Handle subproc pool results almost concurrently:
-    while pool:
-        for proc, target, platforms in pool:
-            ret_code = proc.poll()
-            if ret_code is None:  # proc still running
-                continue
-            pool.remove((proc, target, platforms))
-            out, err = (f.decode() for f in proc.communicate())
-            if out:
-                LOG.debug(out)
-            if ret_code:
-                # Try again using the next platform for this install target:
-                this_platform = platforms.pop(0)
-                excn = TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
-                    " ".join(proc.args), ret_code, out, err)
-                LOG.debug(excn)
-                if platforms:
-                    pool.append(
-                        (_remote_clean_cmd(reg, platforms[0], timeout),
-                         target, platforms)
+    while queue:
+        item = queue.popleft()
+        ret_code = item.proc.poll()
+        if ret_code is None:  # proc still running
+            queue.append(item)
+            continue
+        out, err = item.proc.communicate()
+        if out:
+            LOG.debug(out)
+        if ret_code:
+            this_platform = item.platforms.pop(0)
+            LOG.debug(TaskRemoteMgmtError(
+                TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
+                item.proc.args, ret_code, out, err
+            ))
+            if ret_code == 255 and item.platforms:
+                # SSH error; try again using the next platform for this
+                # install target
+                queue.append(
+                    item._replace(
+                        proc=remote_clean_cmd(platform=item.platforms[0])
                     )
-                else:  # Exhausted list of platforms
-                    failed_targets.append(target)
-            elif err:
-                LOG.debug(err)
+                )
+            else:  # Exhausted list of platforms
+                failed_targets.append(item.install_target)
+        elif err:
+            LOG.debug(err)
         time.sleep(0.2)
     if failed_targets:
         raise CylcError(
-            f"Could not clean on install targets: {', '.join(failed_targets)}")
+            f"Could not clean on install targets: {', '.join(failed_targets)}"
+        )
 
 
-def _remote_clean_cmd(reg, platform, timeout):
+def _remote_clean_cmd(
+    reg: str,
+    platform: Dict[str, str],
+    rm_dirs: Optional[List[str]],
+    timeout: str
+) -> 'Popen[str]':
     """Remove a stopped workflow on a remote host.
 
     Call "cylc clean --local-only" over ssh and return the subprocess.
 
     Args:
-        reg (str): Workflow name.
-        platform (dict): Config for the platform on which to remove the
-            workflow.
-        timeout (str): Number of seconds to wait before cancelling the command.
+        reg: Workflow name.
+        platform: Config for the platform on which to remove the workflow.
+        rm_dirs: Sub dirs to remove instead of the whole run dir.
+        timeout: Number of seconds to wait before cancelling the command.
     """
     LOG.debug(
         f'Cleaning on install target: {platform["install target"]} '
         f'(using platform: {platform["name"]})'
     )
-    cmd = construct_ssh_cmd(
-        ['clean', '--local-only', reg],
-        platform,
-        timeout=timeout,
-        set_verbosity=True
-    )
+    cmd = ['clean', '--local-only', reg]
+    if rm_dirs is not None:
+        for item in rm_dirs:
+            cmd.extend(['--rm', item])
+    cmd = construct_ssh_cmd(cmd, platform, timeout=timeout, set_verbosity=True)
     LOG.debug(" ".join(cmd))
-    return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+    return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
 
 
-def _remove_empty_reg_parents(reg, path):
-    """If reg is nested e.g. a/b/c, work our way up the tree, removing empty
-    parents only.
+def _remove_empty_parents(
+    path: Union[Path, str], tail: Union[Path, str]
+) -> None:
+    """Work our way up the tail of path, removing empty dirs only.
 
     Args:
-        reg (str): workflow name, e.g. a/b/c
-        path (str): path to this directory, e.g. /foo/bar/a/b/c
+        path: Absolute path to the directory, e.g. /foo/bar/a/b/c
+        tail: The tail of the path to work our way up, e.g. a/b/c
 
     Example:
-        _remove_empty_reg_parents('a/b/c', '/foo/bar/a/b/c') would remove
+        _remove_empty_parents('/foo/bar/a/b/c', 'a/b/c') would remove
         /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
         empty).
     """
-    reg = Path(reg)
-    reg_depth = len(reg.parts) - 1
     path = Path(path)
     if not path.is_absolute():
-        raise ValueError('Path must be absolute')
-    for i in range(reg_depth):
+        raise ValueError('path must be absolute')
+    tail = Path(tail)
+    if tail.is_absolute():
+        raise ValueError('tail must not be an absolute path')
+    if not str(path).endswith(str(tail)):
+        raise ValueError(f"path '{path}' does not end with '{tail}'")
+    depth = len(tail.parts) - 1
+    for i in range(depth):
         parent = path.parents[i]
         if not parent.is_dir():
             continue
@@ -801,7 +957,7 @@ def remove_keys_on_server(keys):
     # Remove client public key folder
     client_public_key_dir = keys["client_public_key"].key_path
     if os.path.exists(client_public_key_dir):
-        shutil.rmtree(client_public_key_dir)
+        shutil.rmtree(client_public_key_dir, onerror=handle_rmtree_err)
 
 
 def create_server_keys(keys, workflow_srv_dir):
@@ -924,7 +1080,7 @@ def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
 
     reg_path: Union[Path, str] = os.path.normpath(run_dir)
     parent_dir = os.path.dirname(reg_path)
-    while parent_dir not in ['', '/']:
+    while parent_dir not in ['', os.sep]:
         if is_valid_run_dir(parent_dir):
             raise WorkflowFilesError(
                 exc_msg.format(parent_dir, get_cylc_run_abs_path(parent_dir))

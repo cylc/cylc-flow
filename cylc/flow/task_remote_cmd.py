@@ -83,29 +83,29 @@ def create_client_keys(srvd, install_target):
     os.umask(old_umask)
 
 
-def remote_init(install_target, rund, *dirs_to_symlink):
+def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
     """cylc remote-init
 
     Arguments:
-        install_target (str): target to be initialised
-        rund (str): workflow run directory
-        dirs_to_symlink (list): directories to be symlinked in form
+        install_target: target to be initialised
+        rund: workflow run directory
+        dirs_to_symlink: directories to be symlinked in form
         [directory=symlink_location, ...]
     """
     rund = os.path.expandvars(rund)
     for item in dirs_to_symlink:
         key, val = item.split("=", 1)
         if key == 'run':
-            dst = rund
+            path = rund
         else:
-            dst = os.path.join(rund, key)
-        src = os.path.expandvars(val)
-        if '$' in src:
+            path = os.path.join(rund, key)
+        target = os.path.expandvars(val)
+        if '$' in target:
             print(REMOTE_INIT_FAILED)
             print(f'Error occurred when symlinking.'
-                  f' {src} contains an invalid environment variable.')
+                  f' {target} contains an invalid environment variable.')
             return
-        make_symlink(src, dst)
+        make_symlink(path, target)
     srvd = os.path.join(rund, WorkflowFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
 

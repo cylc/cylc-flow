@@ -81,6 +81,12 @@ version control information on installation of a workflow.
 be held in advance using `cylc hold` (previously it was only active tasks
 that could be held).
 
+[#4237](https://github.com/cylc/cylc-flow/pull/4237) - `cylc clean` can now
+remove specific sub-directories instead of the whole run directory, using the
+`--rm` option. There are also the options `--local-only` and `--remote-only`
+for choosing to only clean on the local filesystem or remote install targets
+respectively.
+
 ### Fixes
 
 [#4273](https://github.com/cylc/cylc-flow/pull/4273)

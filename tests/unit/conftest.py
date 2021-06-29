@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Standard pytest fixtures for unit tests."""
-from cylc.flow.data_store_mgr import DataStoreMgr
+
 from pathlib import Path
 import pytest
 from shutil import rmtree
-from typing import Optional
+from typing import Any, Callable, Optional
 from unittest.mock import create_autospec, Mock
 
 from cylc.flow.cfgspec.globalcfg import SPEC
@@ -27,10 +27,35 @@ from cylc.flow.cycling.loader import (
     ISO8601_CYCLING_TYPE,
     INTEGER_CYCLING_TYPE
 )
+from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.xtrigger_mgr import XtriggerManager
+
+
+# Type alias for monkeymock()
+MonkeyMock = Callable[..., Mock]
+
+
+@pytest.fixture
+def monkeymock(monkeypatch: pytest.MonkeyPatch):
+    """Fixture that patches a function/attr with a Mock and returns that Mock.
+
+    Args:
+        pypath: The Python-style import path to be patched.
+        **kwargs: Any kwargs to set on the Mock.
+
+    Example:
+        mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+        something()  # calls workflow_files.clean
+        assert mock_clean.called is True
+    """
+    def inner(pypath: str, **kwargs: Any) -> Mock:
+        _mock = Mock(**kwargs)
+        monkeypatch.setattr(pypath, _mock)
+        return _mock
+    return inner
 
 
 @pytest.fixture
