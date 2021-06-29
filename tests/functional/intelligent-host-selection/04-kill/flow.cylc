@@ -1,0 +1,54 @@
+[meta]
+title = "Try out scenarios for intelligent host selection."
+description = """
+Tasks
+- goodhost: a control to check that everything works
+- badhost is always going to fail
+- mixedhost contains some hosts that will and won't fail
+"""
+
+[scheduler]
+    [[events]]
+        expected task failures = goodhosttask.1, mixedhosttask.1
+
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[graph]]
+        # Run good and mixed as controls
+        R1 = """
+            goodhosttask & mixedhosttask
+            goodhosttask:start => stop_g
+            mixedhosttask:start => stop_m
+        """
+
+
+[runtime]
+    [[root]]
+        script = sleep 120 & echo $! >file; wait
+
+    [[mystop]]
+        script="""
+            sleep 5  # Give the badhosts list time to empty
+            cylc kill "$CYLC_WORKFLOW_NAME" "$TASK" || true
+            cylc stop $CYLC_WORKFLOW_NAME
+        """
+
+    [[goodhosttask]]
+        platform = goodhostplatform
+
+    [[mixedhosttask]]
+        script=sleep 120 & echo $! >file; wait
+
+        platform = mixedhostplatform
+
+    [[stop_g]]
+        inherit = mystop
+        [[[environment]]]
+            TASK = goodhosttask.1
+
+    [[stop_m]]
+        inherit = mystop
+        [[[environment]]]
+            TASK = mixedhosttask.1

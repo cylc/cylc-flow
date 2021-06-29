@@ -292,6 +292,7 @@ async def test_scan_sigstop(flow, scheduler, run, one_conf, test_dir, caplog):
             raise Exception("There shouldn't be any scan results")
         # there should, however, be a warning
         name = Path(reg).name
-        assert [(level, msg) for _, level, msg in caplog.record_tuples] == [
+        assert (
             (30, f'Workflow not running: {name}')
-        ]
+            in [(level, msg) for _, level, msg in caplog.record_tuples]
+        )

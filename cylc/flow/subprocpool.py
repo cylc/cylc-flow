@@ -25,10 +25,12 @@ from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
 from subprocess import DEVNULL  # nosec
+from typing import Any, Callable, List, Optional
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
+from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.wallclock import get_current_time_string
 
 _XTRIG_FUNCS: dict = {}
@@ -179,7 +181,11 @@ class SubProcPool:
         with self.stopping_lock:
             return self.stopping
 
-    def _proc_exit(self, proc, err_xtra, ctx, callback, callback_args):
+    def _proc_exit(
+        self, proc, err_xtra, ctx,
+        callback, callback_args, bad_hosts=None,
+        callback_255=None, callback_255_args=None
+    ):
         """Get ret_code, out, err of exited command, and call its callback."""
         ctx.ret_code = proc.wait()
         out, err = (f.decode() for f in proc.communicate())
@@ -191,16 +197,35 @@ class SubProcPool:
             if ctx.err is None:
                 ctx.err = ''
             ctx.err += err + err_xtra
-        self._run_command_exit(ctx, callback, callback_args)
+        self._run_command_exit(
+            ctx, bad_hosts=bad_hosts,
+            callback=callback, callback_args=callback_args,
+            callback_255=callback_255, callback_255_args=callback_255_args
+        )
 
     def process(self):
         """Process done child processes and submit more."""
         # Handle child processes that are done
         runnings = []
-        for proc, ctx, callback, callback_args in self.runnings:
+        for running in self.runnings:
+            if len(running) == 5:
+                proc, ctx, bad_hosts, callback, callback_args = running
+                callback_255, callback_255_args = None, None
+            if len(running) == 7:
+                (
+                    proc, ctx, bad_hosts,
+                    callback, callback_args,
+                    callback_255, callback_255_args
+                ) = running
             # Command completed/exited
             if proc.poll() is not None:
-                self._proc_exit(proc, "", ctx, callback, callback_args)
+                self._proc_exit(
+                    proc, "", ctx,
+                    callback=callback, callback_args=callback_args,
+                    bad_hosts=bad_hosts,
+                    callback_255=callback_255,
+                    callback_255_args=callback_255_args
+                )
                 continue
             # Command timed out, kill it
             if time() > ctx.timeout:
@@ -209,10 +234,15 @@ class SubProcPool:
                     err_xtra = (
                         f"\nkilled on timeout ({self.proc_pool_timeout})"
                     )
-                self._proc_exit(proc, err_xtra, ctx, callback, callback_args)
+                self._proc_exit(
+                    proc, err_xtra, ctx,
+                    callback=callback,
+                    callback_args=callback_args,
+                    bad_hosts=bad_hosts
+                )
                 continue
             # Command still running, see if STDOUT/STDERR are readable or not
-            runnings.append([proc, ctx, callback, callback_args])
+            runnings.append([proc, ctx, bad_hosts, callback, callback_args])
             # Unblock proc's STDOUT/STDERR if necessary. Otherwise, a full
             # STDOUT or STDERR may stop command from proceeding.
             self._poll_proc_pipes(proc, ctx)
@@ -222,18 +252,30 @@ class SubProcPool:
         # Create more child processes, if items in queue and space in pool
         stopping = self._is_stopping()
         while self.queuings and len(self.runnings) < self.size:
-            ctx, callback, callback_args = self.queuings.popleft()
+            (
+                ctx, bad_hosts, callback, callback_args,
+                callback_255, callback_255_args
+            ) = self.queuings.popleft()
             if stopping and ctx.cmd_key == self.JOBS_SUBMIT:
                 ctx.err = self.ERR_WORKFLOW_STOPPING
                 ctx.ret_code = self.RET_CODE_WORKFLOW_STOPPING
                 self._run_command_exit(ctx)
             else:
-                proc = self._run_command_init(ctx, callback, callback_args)
+                proc = self._run_command_init(
+                    ctx, bad_hosts, callback, callback_args,
+                    callback_255, callback_255_args
+                )
                 if proc is not None:
                     ctx.timeout = time() + self.proc_pool_timeout
-                    self.runnings.append([proc, ctx, callback, callback_args])
+                    self.runnings.append([
+                        proc, ctx, bad_hosts, callback, callback_args,
+                        callback_255, callback_255_args
+                    ])
 
-    def put_command(self, ctx, callback=None, callback_args=None):
+    def put_command(
+        self, ctx, bad_hosts=None, callback=None, callback_args=None,
+        callback_255=None, callback_255_args=None
+    ):
         """Queue a new shell command to execute.
 
         Arguments:
@@ -250,9 +292,18 @@ class SubProcPool:
                 ctx.cmd_key == self.JOBS_SUBMIT):
             ctx.err = self.ERR_WORKFLOW_STOPPING
             ctx.ret_code = self.RET_CODE_WORKFLOW_STOPPING
-            self._run_command_exit(ctx, callback, callback_args)
+            self._run_command_exit(
+                ctx, bad_hosts=bad_hosts,
+                callback=callback, callback_args=callback_args,
+                callback_255=callback_255, callback_255_args=callback_255_args
+            )
         else:
-            self.queuings.append([ctx, callback, callback_args])
+            self.queuings.append(
+                [
+                    ctx, bad_hosts, callback, callback_args,
+                    callback_255, callback_255_args
+                ]
+            )
 
     @classmethod
     def run_command(cls, ctx):
@@ -343,7 +394,10 @@ class SubProcPool:
         self.pipepoller.unregister(proc.stderr.fileno())
 
     @classmethod
-    def _run_command_init(cls, ctx, callback=None, callback_args=None):
+    def _run_command_init(
+        cls, ctx, bad_hosts=None, callback=None, callback_args=None,
+        callback_255=None, callback_255_args=None
+    ):
         """Prepare and launch shell command in ctx."""
         try:
             if ctx.cmd_kwargs.get('stdin_files'):
@@ -384,17 +438,91 @@ class SubProcPool:
             LOG.exception(exc)
             ctx.ret_code = 1
             ctx.err = str(exc)
-            cls._run_command_exit(ctx, callback, callback_args)
+            cls._run_command_exit(
+                ctx, bad_hosts=bad_hosts,
+                callback=callback, callback_args=callback_args,
+                callback_255=callback_255, callback_255_args=callback_255_args
+            )
             return None
         else:
             LOG.debug(ctx.cmd)
             return proc
 
     @classmethod
-    def _run_command_exit(cls, ctx, callback=None, callback_args=None):
-        """Process command completion."""
+    def _run_command_exit(
+        cls, ctx, bad_hosts=None,
+        callback: Optional[Callable] = None,
+        callback_args: Optional[List[Any]] = None,
+        callback_255: Optional[Callable] = None,
+        callback_255_args: Optional[List[Any]] = None
+    ) -> None:
+        """Process command completion.
+
+        If task has failed with a 255 error, run an alternative callback if
+        one is provided.
+
+         ┌───────────────┐           ┌───────────────┐
+         │ctx.ret_code is│  Yes      │Append host to │
+         │255 (ssh comms ├──────────►│list of bad    │
+         │     failure)  │           │hosts          │
+         └──┬────────────┘           └───────┬───────┘
+            │No                              │
+            │                        ┌───────▼───────┐
+            │                   No   │255 Specific   │
+            │         ┌──────────────┤callback       │
+            │         │              │provided?      │
+            │         │              └───────┬───────┘
+            │         │                      │Yes
+         ┌──▼─────────▼──┐           ┌───────▼───────┐
+         │Run callback if│           │Run 255 error  │
+         │given.         │           │callback       │
+         │               │           │               │
+         └───────────────┘           └───────────────┘
+
+        Args:
+            ctx: SubProcContext object for this task.
+            callback: Function to run on command exit.
+            callback_args: Arguments to proivide to callback
+            callback_255: Function to run if command exits with a 255
+                error - usually associated with ssh being unable to
+                contact a remote host.
+            callback_255_args: Arguements for the 255 callback function.
+
+        """
+        def _run_callback(callback, args_=None):
+            if callable(callback):
+                if not args_:
+                    args_ = []
+                callback(ctx, *args_)
+            else:
+                return False
+
         ctx.timestamp = get_current_time_string()
-        if callable(callback):
-            if not callback_args:
-                callback_args = []
-            callback(ctx, *callback_args)
+        if ctx.ret_code == 255:
+            # Job log retrieval passes a special object as a command key
+            # Extra logic to provide sensible strings for logging.
+            if isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
+                cmd_key = ctx.cmd_key.key
+            else:
+                cmd_key = ctx.cmd_key
+            LOG.warning(
+                f'"{cmd_key}" failed because "{ctx.host}" is not '
+                f'available right now. "{ctx.host}" has been added to the '
+                f'list of unreachable hosts and {cmd_key} will retry '
+                'if another host is available.'
+            )
+
+            # If callback_255 takes the same args as callback, we don't
+            # want to spec those args:
+            if callable(callback_255) and callback_255_args is None:
+                callback_255_args = callback_args
+
+            # Run Callback
+            if bad_hosts is not None:
+                bad_hosts.add(ctx.host)
+            res = _run_callback(callback_255, callback_255_args)
+            if res is False:
+                _run_callback(callback, callback_args)
+        else:
+            # For every other return code run default callback.
+            _run_callback(callback, callback_args)

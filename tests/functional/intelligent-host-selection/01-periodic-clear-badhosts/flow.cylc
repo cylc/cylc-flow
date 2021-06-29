@@ -1,0 +1,18 @@
+
+[meta]
+title = "Try out scenarios for intelligent host selection."
+description = """
+Tasks
+- mixedhost contains some hosts that will and won't fail
+"""
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[graph]]
+        R1 = mixedhosttask
+
+[runtime]
+    [[mixedhosttask]]
+        platform = mixedhostplatform
+        script = true

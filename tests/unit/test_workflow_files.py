@@ -1136,7 +1136,12 @@ def test_remote_clean_cmd(
             gets constructed.
     """
     reg = 'jean/luc/picard'
-    platform = {'name': 'enterprise', 'install target': 'mars'}
+    platform = {
+        'name': 'enterprise',
+        'install target': 'mars',
+        'hosts': ['Trill'],
+        'selection': {'method': 'definition order'}
+    }
     mock_construct_ssh_cmd = monkeymock(
         'cylc.flow.workflow_files.construct_ssh_cmd', return_value=['blah'])
     monkeymock('cylc.flow.workflow_files.Popen')

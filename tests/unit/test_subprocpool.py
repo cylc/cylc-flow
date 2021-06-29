@@ -14,12 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tempfile import NamedTemporaryFile, SpooledTemporaryFile, TemporaryFile,\
+from tempfile import (
+    NamedTemporaryFile, SpooledTemporaryFile, TemporaryFile,
     TemporaryDirectory
+)
 import unittest
+import pytest
 
 from pathlib import Path
+from types import SimpleNamespace
 
+from cylc.flow import LOG
+from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.subprocpool import SubProcPool, _XTRIG_FUNCS, get_func
 
@@ -197,3 +203,87 @@ class TestSubProcPool(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+
+
+@pytest.mark.parametrize(
+    'expect, ret_code, cmd_key',
+    [
+        pytest.param('Test Callback Called', 0, 'cylc-cat', id="return 0"),
+        pytest.param('Test Callback Called', 1, 'cylc-cat', id="return 1"),
+        pytest.param(
+            '"cylc-cat" failed because "mouse" is not available',
+            255,
+            'cylc-cat',
+            id="return 255"
+        ),
+        pytest.param(
+            '"cylc-ret" failed because "mouse" is not available',
+            255,
+            TaskJobLogsRetrieveContext('cylc-ret', None, None, None),
+            id="return 255 (log-ret)"
+        )
+    ]
+)
+def test__run_command_exit(caplog, expect, ret_code, cmd_key):
+    """It runs a callback
+    """
+    def _test_callback(ctx):
+        LOG.error(expect)
+
+    def _test_callback_255(ctx):
+        LOG.error('255 substitute callback: ' + expect)
+
+    ctx = SimpleNamespace(
+        timestamp=None,
+        ret_code=ret_code,
+        host='mouse',
+        cmd_key=cmd_key
+    )
+    SubProcPool._run_command_exit(
+        ctx, callback=_test_callback, callback_255=_test_callback_255
+    )
+    assert expect in caplog.records[0].msg
+    if ret_code == 255:
+        assert f'255 substitute callback: {expect}' in caplog.records[1].msg
+
+
+def test__run_command_exit_no_255_args(caplog):
+    """It runs the 255 callback with the args of the callback.
+    """
+    def _test_callback(ctx, foo):
+        LOG.error(f'Logging from callback {foo}')
+
+    def _test_callback_255(ctx, foo):
+        LOG.error(f'Logging from 255 callback {foo}')
+
+    ctx = SimpleNamespace(
+        timestamp=None,
+        ret_code=255,
+        host='mouse',
+        cmd_key='my-command'
+    )
+    SubProcPool._run_command_exit(
+        ctx, callback=_test_callback, callback_args=['Zaphod'],
+        callback_255=_test_callback_255
+    )
+    assert '255' in caplog.records[1].msg
+
+def test__run_command_exit_add_to_badhosts():
+    """It updates the list of badhosts
+    """
+    badhosts = {'foo', 'bar'}
+    ctx = SimpleNamespace(
+        timestamp=None,
+        ret_code=255,
+        host='mouse',
+        cmd_key='my-command'
+    )
+    SubProcPool._run_command_exit(
+        ctx,
+        bad_hosts=badhosts,
+        callback=print,
+        callback_args=['Welcome to Magrathea']
+    )
+    assert badhosts == {'foo', 'bar', 'mouse'}

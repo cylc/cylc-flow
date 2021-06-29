@@ -1,0 +1,23 @@
+
+[meta]
+title = "Try out scenarios for intelligent host selection."
+description = """
+Tasks
+- goodhost: a control to check that everything works
+- mixedhost contains some hosts that will and won't fail
+"""
+
+[scheduling]
+    initial cycle point = 1
+    [[graph]]
+        R1 = mixedhosttask & goodhosttask
+
+[runtime]
+    [[root]]
+        script = true
+
+    [[goodhosttask]]
+        platform = goodhostplatform
+
+    [[mixedhosttask]]
+        platform = mixedhostplatform
