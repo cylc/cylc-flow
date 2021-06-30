@@ -87,23 +87,26 @@ remove specific sub-directories instead of the whole run directory, using the
 for choosing to only clean on the local filesystem or remote install targets
 respectively.
 
+[#4285](https://github.com/cylc/cylc-flow/pull/4285) - Cylc now automatically
+infers the latest numbered run of the workflow for most commands (e.g. you can
+run `cylc pause foo` instead of having to type out `foo/run3`).
+
 ### Fixes
 
-[#4273](https://github.com/cylc/cylc-flow/pull/4273)
- - Remove obsolete Cylc 7 visualization config section.
+[#4273](https://github.com/cylc/cylc-flow/pull/4273) - Remove obsolete
+Cylc 7 visualization config section.
 
 [#4272](https://github.com/cylc/cylc-flow/pull/4272) - Workflow visualisation
 data (data-store) now constrained by final cycle point.
 
-[#4248](https://github.com/cylc/cylc-flow/pull/4248)
- - Fix parameter expansion in inherited task environments.
+[#4248](https://github.com/cylc/cylc-flow/pull/4248) - Fix parameter
+expansion in inherited task environments.
 
 [#4227](https://github.com/cylc/cylc-flow/pull/4227) - Better error messages
 when initial cycle point is not valid for the cycling type.
 
 [#4228](https://github.com/cylc/cylc-flow/pull/4228) - Interacting with a
 workflow on the cli using `runN` is now supported.
-
 
 [#4193](https://github.com/cylc/cylc-flow/pull/4193) - Standard `cylc install`
 now correctly installs from directories with a `.` in the name. Symlink dirs
