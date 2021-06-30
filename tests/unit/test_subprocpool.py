@@ -205,8 +205,6 @@ if __name__ == '__main__':
     unittest.main()
 
 
-
-
 @pytest.mark.parametrize(
     'expect, ret_code, cmd_key',
     [
@@ -249,6 +247,21 @@ def test__run_command_exit(caplog, expect, ret_code, cmd_key):
         assert f'255 substitute callback: {expect}' in caplog.records[1].msg
 
 
+def test__run_command_exit_no_255_callback(
+    caplog
+):
+    def _test_callback(ctx):
+        LOG.error('Test Callback Called')
+
+    ctx = SimpleNamespace(
+        timestamp=None,
+        ret_code=255,
+        host='mouse',
+        cmd_key='my-command'
+    )
+    SubProcPool._run_command_exit(ctx, callback=_test_callback)
+    assert 'Test Callback Called' in caplog.records[1].msg
+
 def test__run_command_exit_no_255_args(caplog):
     """It runs the 255 callback with the args of the callback.
     """
@@ -269,6 +282,7 @@ def test__run_command_exit_no_255_args(caplog):
         callback_255=_test_callback_255
     )
     assert '255' in caplog.records[1].msg
+
 
 def test__run_command_exit_add_to_badhosts():
     """It updates the list of badhosts
