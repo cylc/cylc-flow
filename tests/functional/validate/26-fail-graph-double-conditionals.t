@@ -27,12 +27,12 @@ cat > flow.cylc <<__END__
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-async-and
-run_fail "${TEST_NAME}" cylc validate -v flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v "${PWD}/flow.cylc"
 grep_ok "GraphParseError: the graph AND operator is '&': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-async-or
 sed -i -e 's/&&/||/' flow.cylc
-run_fail "${TEST_NAME}" cylc validate -v flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v "${PWD}/flow.cylc"
 grep_ok "GraphParseError: the graph OR operator is '|': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 cat > flow.cylc <<__END__
@@ -43,10 +43,10 @@ cat > flow.cylc <<__END__
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cycling-and
-run_fail "${TEST_NAME}" cylc validate -v flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v "${PWD}/flow.cylc"
 grep_ok "GraphParseError: the graph AND operator is '&': " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-cycling-or
 sed -i -e 's/&&/||/' flow.cylc
-run_fail "${TEST_NAME}" cylc validate -v flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v "${PWD}/flow.cylc"
 grep_ok "GraphParseError: the graph OR operator is '|': " "${TEST_NAME}.stderr"

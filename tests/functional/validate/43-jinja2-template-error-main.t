@@ -30,7 +30,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[foo]]
         script = sleep 1
 __FLOW_CONFIG__
-run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
 Jinja2Error: You can only sort by either "key" or "value"
 Context lines:

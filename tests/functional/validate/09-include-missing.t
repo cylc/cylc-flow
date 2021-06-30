@@ -21,7 +21,7 @@
 set_test_number 2
 echo '%include foo.cylc' >flow.cylc
 echo '%include bar.cylc' >foo.cylc
-run_fail "${TEST_NAME_BASE}" cylc validate flow.cylc
+run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
 IncludeFileNotFoundError: bar.cylc via foo.cylc from $PWD/flow.cylc
 __ERR__

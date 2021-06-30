@@ -29,4 +29,4 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         T00 = "@wall_clock => foo"
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
+run_ok "${TEST_NAME_BASE}-val" cylc validate "${PWD}/flow.cylc"

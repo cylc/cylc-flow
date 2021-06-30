@@ -34,7 +34,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc graph --reference 'flow.cylc'
+run_ok "${TEST_NAME_BASE}" cylc graph --reference "${PWD}/flow.cylc"
 grep_ok "t1.20171231T1200Z" "${TEST_NAME_BASE}.stdout"
 
 exit

@@ -33,7 +33,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
-run_fail "${TEST_NAME}" cylc validate -v 'flow.cylc'
+run_fail "${TEST_NAME}" cylc validate -v "${PWD}/flow.cylc"
 grep_ok "WorkflowConfigError: Cannot process recurrence 1" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 exit

@@ -28,7 +28,7 @@ do
     [[graph]]
         R1 = ${GRAPH}
 __FLOW_CONFIG__
-    run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+    run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
     grep_ok 'GraphParseError: null task name in graph: ' \
         "${TEST_NAME_BASE}.stderr"
 done

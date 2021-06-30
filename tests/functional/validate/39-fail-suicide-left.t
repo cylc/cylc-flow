@@ -27,7 +27,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[dont-kill-me, no-problem]]
 __FLOW_CONFIG__
 
-run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
 GraphParseError: suicide markers must be on the right of a trigger: !dont-kill-me
 __ERR__

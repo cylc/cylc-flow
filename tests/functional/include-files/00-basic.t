@@ -27,7 +27,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}.1" cylc val "${WORKFLOW_NAME}"
 # test workflow validates as inlined during editing
 cylc view --inline --mark-for-edit --stdout "${WORKFLOW_NAME}" > inlined-for-edit.cylc
-run_ok "${TEST_NAME}.2" cylc val inlined-for-edit.cylc
+run_ok "${TEST_NAME}.2" cylc val "${PWD}/inlined-for-edit.cylc"
 #-------------------------------------------------------------------------------
 # compare inlined workflow def with reference copy
 TEST_NAME=${TEST_NAME_BASE}-compare
