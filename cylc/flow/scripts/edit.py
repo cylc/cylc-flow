@@ -59,12 +59,15 @@ See also 'cylc view'."""
 
 import os
 import re
-from subprocess import call
 from shutil import copy
+from subprocess import call
 import sys
+from typing import TYPE_CHECKING
+
 
 from cylc.flow.exceptions import CylcError, UserInputError
-
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.include import (
     inline,
     split_file,
@@ -74,11 +77,12 @@ from cylc.flow.parsec.include import (
     cleanup,
     modtimes
 )
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.terminal import cli_function
 from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def get_option_parser():
@@ -102,8 +106,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, *args):
-    flow_file = parse_workflow_arg(options, args[0])[1]
+def main(parser: COP, options: 'Values', reg: str) -> None:
+    flow_file = str(parse_reg(reg, src=True)[1])
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
@@ -161,9 +165,9 @@ def main(parser, options, *args):
     lines = [i.rstrip() for i in lines]
 
     # overwrite the (now backed up) original with the inlined file:
-    with open(flow_file, 'wb') as handle:
+    with open(flow_file, 'wb') as bhandle:
         for line in lines:
-            handle.write((line + '\n').encode())
+            bhandle.write((line + '\n').encode())
 
     print('PRE-EDIT BACKUPS:')
     for file in backups:

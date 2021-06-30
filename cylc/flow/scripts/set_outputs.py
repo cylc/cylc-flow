@@ -30,11 +30,12 @@ The --output=OUTPUT option can be used multiple times on the command line.
 
 """
 
-import os.path
+from optparse import Values
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 MUTATION = '''
 mutation (
@@ -67,14 +68,14 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow, *task_globs):
-    workflow = os.path.normpath(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+def main(parser: COP, options: 'Values', reg: str, *task_globs: str) -> None:
+    reg = parse_reg(reg)
+    pclient = get_client(reg, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [reg],
             'tasks': list(task_globs),
             'outputs': options.outputs,
         }

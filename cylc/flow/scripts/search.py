@@ -39,7 +39,7 @@ import re
 import sys
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.workflow_files import parse_reg
 from cylc.flow.terminal import cli_function
 from cylc.flow.parsec.include import inline
 
@@ -76,7 +76,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg, *patterns):
-    workflow, flow_file = parse_workflow_arg(options, reg)
+    workflow, flow_file = parse_reg(reg, src=True)
 
     # cylc search WORKFLOW PATTERN
     pattern = '|'.join(patterns)

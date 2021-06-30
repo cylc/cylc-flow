@@ -59,6 +59,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_pub_db_name
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 
 @contextlib.contextmanager
@@ -111,6 +112,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, workflow):
+    workflow = parse_reg(workflow)
     output_options = [
         options.show_raw, options.show_summary, options.html_summary
     ]

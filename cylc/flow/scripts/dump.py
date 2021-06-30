@@ -43,6 +43,7 @@ from graphene.utils.str_converters import to_snake_case
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 TASK_SUMMARY_FRAGMENT = '''
 fragment tProxy on TaskProxy {
@@ -167,6 +168,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, workflow):
+    workflow = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.sort_by_cycle:

@@ -55,7 +55,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
-from cylc.flow.workflow_files import WorkflowFiles, parse_workflow_arg
+from cylc.flow.workflow_files import WorkflowFiles, parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -123,13 +123,14 @@ def main(parser, options, reg=None):
         )
         return
 
-    workflow, flow_file = parse_workflow_arg(options, reg)
+    workflow, flow_file = parse_reg(reg, src=True)
 
     config = WorkflowConfig(
         workflow,
         flow_file,
         options,
-        load_template_vars(options.templatevars, options.templatevars_file))
+        load_template_vars(options.templatevars, options.templatevars_file)
+    )
 
     config.pcfg.idump(
         options.item,

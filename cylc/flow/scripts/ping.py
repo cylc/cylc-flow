@@ -35,6 +35,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import TASK_STATUS_RUNNING
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 FLOW_QUERY = '''
 query ($wFlows: [ID]) {
@@ -67,6 +68,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, workflow, task_id=None):
+    workflow = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if task_id and not TaskID.is_valid_id(task_id):

@@ -22,11 +22,11 @@ Remove task instances from the scheduler task pool.
 
 """
 
-import os.path
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 MUTATION = '''
 mutation (
@@ -55,7 +55,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, workflow, *task_globs):
-    workflow = os.path.normpath(workflow)
+    workflow = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {

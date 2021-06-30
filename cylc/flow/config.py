@@ -30,10 +30,12 @@ import contextlib
 from copy import copy
 from fnmatch import fnmatchcase
 import os
+from pathlib import Path
 import re
 import traceback
 from typing import (
-    Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple
+    Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple,
+    Union
 )
 
 from metomi.isodatetime.data import Calendar
@@ -148,8 +150,8 @@ class WorkflowConfig:
     def __init__(
         self,
         workflow: str,
-        fpath: str,
-        options: Optional['Values'] = None,
+        fpath: Union[Path, str],
+        options: 'Values',
         template_vars: Optional[Mapping[str, Any]] = None,
         is_reload: bool = False,
         output_fname: Optional[str] = None,
@@ -166,7 +168,7 @@ class WorkflowConfig:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
         self.workflow = workflow  # workflow name
-        self.fpath = fpath  # workflow definition
+        self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
         self.log_dir = log_dir or get_workflow_run_log_dir(self.workflow)

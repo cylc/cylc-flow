@@ -64,6 +64,7 @@ from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.pathutil import expand_path, get_workflow_run_dir
+from cylc.flow.workflow_files import parse_reg
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -182,6 +183,8 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', workflow: str) -> None:
+    workflow = parse_reg(workflow)
+
     if options.use_task_point and options.cycle:
         raise UserInputError(
             "cannot specify a cycle point and use environment variable")

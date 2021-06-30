@@ -43,7 +43,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
-from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.workflow_files import parse_reg
 
 
 def get_option_parser():
@@ -99,13 +99,15 @@ def main(_, options, reg):
             if isinstance(handler.formatter, CylcLogFormatter):
                 handler.formatter.configure(timestamp=False)
 
-    workflow, flow_file = parse_workflow_arg(options, reg)
+    workflow, flow_file = parse_reg(reg, src=True)
     cfg = WorkflowConfig(
         workflow,
         flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file),
-        output_fname=options.output, mem_log_func=profiler.log_memory)
+        output_fname=options.output,
+        mem_log_func=profiler.log_memory
+    )
 
     # Check bounds of sequences
     out_of_bounds = [str(seq) for seq in cfg.sequences

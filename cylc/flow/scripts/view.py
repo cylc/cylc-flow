@@ -44,7 +44,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.fileparse import read_and_proc
-from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -117,7 +117,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    workflow, flow_file = parse_workflow_arg(options, reg)
+    workflow, flow_file = parse_reg(reg, src=True)
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])

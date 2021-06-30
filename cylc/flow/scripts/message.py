@@ -79,6 +79,7 @@ from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.unicode_rules import TaskMessageValidator
+from cylc.flow.workflow_files import parse_reg
 
 
 def get_option_parser():
@@ -115,6 +116,7 @@ def main(parser, options, *args):
         message_strs = list(args)
     else:
         workflow, task_job, *message_strs = args
+        workflow = parse_reg(workflow)
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''

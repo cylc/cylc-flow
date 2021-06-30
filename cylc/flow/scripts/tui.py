@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """cylc tui REG
 
 View and control running workflows in the terminal.
@@ -41,6 +42,7 @@ from cylc.flow.tui.app import (
     TREE_EXPAND_DEPTH
     # ^ a nasty solution
 )
+from cylc.flow.workflow_files import parse_reg
 
 
 __doc__ += indent(TUI, '           ')
@@ -82,6 +84,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, reg):
+    reg = parse_reg(reg)
     screen = None
     if options.display == 'html':
         TREE_EXPAND_DEPTH[0] = -1  # expand tree fully

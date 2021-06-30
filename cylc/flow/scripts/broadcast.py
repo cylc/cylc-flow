@@ -93,6 +93,7 @@ from cylc.flow.cfgspec.workflow import SPEC, upg
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
+from cylc.flow.workflow_files import parse_reg
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
 
@@ -295,7 +296,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options, workflow):
     """Implement cylc broadcast."""
-    workflow = os.path.normpath(workflow)
+    workflow = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {

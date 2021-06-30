@@ -15,7 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc graph WORKFLOW [START] [STOP]
+
+"""cylc graph [OPTIONS] ARGS
 
 A text-based graph representation of workflow dependencies.
 
@@ -36,9 +37,9 @@ import sys
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 
 def sort_integer_node(item):
@@ -158,7 +159,7 @@ def graph_inheritance(config, write=print):
 
 def get_config(flow, opts, template_vars=None):
     """Return a WorkflowConfig object for the provided reg / path."""
-    flow, flow_file = parse_workflow_arg(opts, flow)
+    flow, flow_file = parse_reg(flow, src=True)
     return WorkflowConfig(flow, flow_file, opts, template_vars=template_vars)
 
 

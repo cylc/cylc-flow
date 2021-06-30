@@ -22,7 +22,7 @@ Print contact information of a running workflow."""
 
 from cylc.flow.exceptions import CylcError, ServiceFileError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import load_contact_file
+from cylc.flow.workflow_files import load_contact_file, parse_reg
 from cylc.flow.terminal import cli_function
 
 
@@ -33,6 +33,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, options, reg):
     """CLI for "cylc get-workflow-contact"."""
+    reg = parse_reg(reg)
     try:
         data = load_contact_file(reg)
     except ServiceFileError:

@@ -32,6 +32,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.terminal import cli_function
 from cylc.flow.network.server import PB_METHOD_MAP
+from cylc.flow.workflow_files import parse_reg
 
 INTERNAL = True
 
@@ -51,6 +52,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, workflow, func):
+    workflow = parse_reg(workflow)
     pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
     if options.no_input:
         kwargs = {}

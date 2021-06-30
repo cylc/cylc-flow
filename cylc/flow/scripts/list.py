@@ -34,7 +34,7 @@ import sys
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -86,7 +86,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser, options, reg):
-    workflow, flow_file = parse_workflow_arg(options, reg)
+    workflow, flow_file = parse_reg(reg, src=True)
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")

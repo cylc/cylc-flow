@@ -18,7 +18,6 @@
 import asyncio
 from contextlib import suppress
 from functools import lru_cache
-import os
 import sys
 
 from ansimarkup import parse as cparse
@@ -268,8 +267,7 @@ def scheduler_cli(parser, options, reg):
     functionality.
 
     """
-    workflow_files.validate_flow_name(reg)
-    reg = os.path.normpath(reg)
+    reg = workflow_files.parse_reg(reg)
     try:
         workflow_files.detect_old_contact_file(reg)
     except ServiceFileError as exc:
