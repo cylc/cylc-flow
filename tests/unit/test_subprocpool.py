@@ -205,11 +205,42 @@ if __name__ == '__main__':
     unittest.main()
 
 
+@pytest.fixture
+def mock_ctx():
+    def inner_(ret_code=None, host=None, cmd_key=None):
+        """Provide a SimpleNamespace which looks like a ctx object.
+        """
+        inputs = locals()
+        defaults = {
+            'ret_code': 255, 'host': 'mouse', 'cmd_key': 'my-command'
+        }
+        for key in inputs:
+            if inputs[key] == None:
+                inputs[key] = defaults[key]
+        ctx = SimpleNamespace(
+            timestamp=None,
+            ret_code=inputs['ret_code'],
+            host=inputs['host'],
+            cmd_key=inputs['cmd_key']
+        )
+        return ctx
+    yield inner_
+
+
+def _test_callback(ctx, foo=''):
+    """Very Simple test callback function"""
+    LOG.error(f'callback called.{foo}')
+
+def _test_callback_255(ctx, foo=''):
+    """Very Simple test callback function"""
+    LOG.error(f'255 callback called.{foo}')
+
+
 @pytest.mark.parametrize(
     'expect, ret_code, cmd_key',
     [
-        pytest.param('Test Callback Called', 0, 'cylc-cat', id="return 0"),
-        pytest.param('Test Callback Called', 1, 'cylc-cat', id="return 1"),
+        pytest.param('callback called', 0, 'cylc-cat', id="return 0"),
+        pytest.param('callback called', 1, 'cylc-cat', id="return 1"),
         pytest.param(
             '"cylc-cat" failed because "mouse" is not available',
             255,
@@ -224,78 +255,44 @@ if __name__ == '__main__':
         )
     ]
 )
-def test__run_command_exit(caplog, expect, ret_code, cmd_key):
+def test__run_command_exit(caplog, mock_ctx, expect, ret_code, cmd_key):
     """It runs a callback
     """
-    def _test_callback(ctx):
-        LOG.error(expect)
-
-    def _test_callback_255(ctx):
-        LOG.error('255 substitute callback: ' + expect)
-
-    ctx = SimpleNamespace(
-        timestamp=None,
-        ret_code=ret_code,
-        host='mouse',
-        cmd_key=cmd_key
-    )
+    ctx = mock_ctx(ret_code=ret_code, cmd_key=cmd_key)
     SubProcPool._run_command_exit(
         ctx, callback=_test_callback, callback_255=_test_callback_255
     )
     assert expect in caplog.records[0].msg
     if ret_code == 255:
-        assert f'255 substitute callback: {expect}' in caplog.records[1].msg
+        assert f'255 callback called.' in caplog.records[1].msg
 
 
-def test__run_command_exit_no_255_callback(
-    caplog
-):
-    def _test_callback(ctx):
-        LOG.error('Test Callback Called')
 
-    ctx = SimpleNamespace(
-        timestamp=None,
-        ret_code=255,
-        host='mouse',
-        cmd_key='my-command'
-    )
-    SubProcPool._run_command_exit(ctx, callback=_test_callback)
-    assert 'Test Callback Called' in caplog.records[1].msg
+def test__run_command_exit_no_255_callback(caplog, mock_ctx):
+    """It runs the vanilla callback if no 255 callback provided"""
+    SubProcPool._run_command_exit(mock_ctx(), callback=_test_callback)
+    assert 'callback called' in caplog.records[1].msg
 
-def test__run_command_exit_no_255_args(caplog):
-    """It runs the 255 callback with the args of the callback.
+
+def test__run_command_exit_no_255_args(caplog, mock_ctx):
+    """It runs the 255 callback with the args of the callback if no
+    callback 255 args provided.
     """
-    def _test_callback(ctx, foo):
-        LOG.error(f'Logging from callback {foo}')
-
-    def _test_callback_255(ctx, foo):
-        LOG.error(f'Logging from 255 callback {foo}')
-
-    ctx = SimpleNamespace(
-        timestamp=None,
-        ret_code=255,
-        host='mouse',
-        cmd_key='my-command'
-    )
     SubProcPool._run_command_exit(
-        ctx, callback=_test_callback, callback_args=['Zaphod'],
+        mock_ctx(),
+        callback=_test_callback,
+        callback_args=['Zaphod'],
         callback_255=_test_callback_255
     )
     assert '255' in caplog.records[1].msg
 
 
-def test__run_command_exit_add_to_badhosts():
+def test__run_command_exit_add_to_badhosts(mock_ctx):
     """It updates the list of badhosts
     """
     badhosts = {'foo', 'bar'}
-    ctx = SimpleNamespace(
-        timestamp=None,
-        ret_code=255,
-        host='mouse',
-        cmd_key='my-command'
-    )
     SubProcPool._run_command_exit(
-        ctx,
+        mock_ctx(),
         bad_hosts=badhosts,
         callback=print,
         callback_args=['Welcome to Magrathea']
