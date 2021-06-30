@@ -29,20 +29,21 @@ much more efficient in the future.
 # https://github.com/cylc/cylc-flow/issues/3527
 
 from textwrap import indent
-
+from typing import TYPE_CHECKING
 from urwid import html_fragment
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.tui import (
-    TUI
-)
+from cylc.flow.tui import TUI
 from cylc.flow.tui.app import (
     TuiApp,
     TREE_EXPAND_DEPTH
     # ^ a nasty solution
 )
 from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 __doc__ += indent(TUI, '           ')
@@ -83,7 +84,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, reg):
+def main(_, options: 'Values', reg: str) -> None:
     reg = parse_reg(reg)
     screen = None
     if options.display == 'html':

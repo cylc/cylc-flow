@@ -33,6 +33,7 @@ Examples:
 
 from difflib import unified_diff
 import sys
+from typing import Callable, List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
@@ -40,6 +41,9 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def sort_integer_node(item):
@@ -214,7 +218,13 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, workflow=None, start=None, stop=None):
+def main(
+    parser: COP,
+    opts: 'Values',
+    workflow: str,
+    start: Optional[str] = None,
+    stop: Optional[str] = None
+) -> None:
     """Implement ``cylc graph``."""
     if opts.grouping and opts.namespaces:
         raise UserInputError('Cannot combine --group and --namespaces.')
@@ -226,8 +236,8 @@ def main(parser, opts, workflow=None, start=None, stop=None):
     template_vars = load_template_vars(
         opts.templatevars, opts.templatevars_file)
 
-    write = print
-    flows = [(workflow, [])]
+    write: Callable = print
+    flows: List[Tuple[str, List[str]]] = [(workflow, [])]
     if opts.diff:
         flows.append((opts.diff, []))
 

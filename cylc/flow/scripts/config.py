@@ -49,7 +49,7 @@ Examples:
 """
 
 import os.path
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
@@ -58,6 +58,9 @@ from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.workflow_files import WorkflowFiles, parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def get_option_parser():
@@ -109,7 +112,7 @@ def get_config_file_hierarchy(reg: Optional[str] = None) -> List[str]:
 
 
 @cli_function(get_option_parser)
-def main(parser, options, reg=None):
+def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
     if options.print_hierarchy:
         print("\n".join(get_config_file_hierarchy(reg)))
         return

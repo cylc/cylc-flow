@@ -31,12 +31,16 @@ To visualize the full multiple inheritance hierarchy use:
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def get_option_parser():
@@ -85,7 +89,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, reg):
+def main(parser: COP, options: 'Values', reg: str) -> None:
     workflow, flow_file = parse_reg(reg, src=True)
 
     if options.all_tasks and options.all_namespaces:

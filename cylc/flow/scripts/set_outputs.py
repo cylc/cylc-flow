@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc set-outputs [OPTIONS] REG TASK-GLOB [...]
+"""cylc set-outputs [OPTIONS] ARGS
 
 Override the outputs of tasks in a running workflow.
 

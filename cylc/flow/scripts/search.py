@@ -37,11 +37,15 @@ from collections import deque
 import os
 import re
 import sys
+from typing import Optional, TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import parse_reg
 from cylc.flow.terminal import cli_function
 from cylc.flow.parsec.include import inline
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def section_level(heading):
@@ -75,7 +79,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, reg, *patterns):
+def main(parser: COP, options: 'Values', reg: str, *patterns: str) -> None:
     workflow, flow_file = parse_reg(reg, src=True)
 
     # cylc search WORKFLOW PATTERN
@@ -83,7 +87,7 @@ def main(parser, options, reg, *patterns):
 
     workflowdir = os.path.dirname(flow_file)
 
-    if os.path.isfile(flow_file):
+    if flow_file.is_file():
         with open(flow_file, 'r') as handle:
             lines = handle.readlines()
         lines = inline(lines, workflowdir, flow_file, for_grep=True)
@@ -93,8 +97,7 @@ def main(parser, options, reg, *patterns):
     sections = deque(['(top)'])
 
     line_count = 1
-    inc_file = None
-    in_include_file = False
+    inc_file: Optional[str] = None
     prev_section_key = None
     prev_file = None
 
@@ -104,18 +107,16 @@ def main(parser, options, reg, *patterns):
             r'^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line)
         if m:
             inc_file = m.groups()[0]
-            in_include_file = True
             inc_line_count = 0
             continue
 
-        if not in_include_file:
+        if not inc_file:
             line_count += 1
         else:
             inc_line_count += 1
             m = re.match(
                 r'^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line)
             if m:
-                in_include_file = False
                 inc_file = None
                 continue
 
@@ -134,11 +135,11 @@ def main(parser, options, reg, *patterns):
             # Found a pattern match.
 
             # Print the file name
-            if in_include_file:
+            if inc_file:
                 curr_file = os.path.join(workflowdir, inc_file)
                 line_no = inc_line_count
             else:
-                curr_file = flow_file
+                curr_file = str(flow_file)
                 line_no = line_count
 
             if curr_file != prev_file:

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc broadcast [OPTIONS] REG
+"""cylc broadcast [OPTIONS] ARGS
 
 Override [runtime] configuration items in a running workflow.
 
@@ -75,11 +75,11 @@ Broadcast cannot change [runtime] inheritance.
 
 See also 'cylc reload' - reload a modified workflow definition at run time."""
 
-import os.path
-import sys
-import re
-from tempfile import NamedTemporaryFile
 from ansimarkup import parse as cparse
+import re
+import sys
+from tempfile import NamedTemporaryFile
+from typing import Any, Dict, TYPE_CHECKING
 
 from cylc.flow import ID_DELIM
 from cylc.flow.task_id import TaskID
@@ -94,6 +94,10 @@ from cylc.flow.network.client_factory import get_client
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
 
@@ -218,7 +222,10 @@ def report_bad_options(bad_options, is_set=False):
 
 def get_option_parser():
     """CLI for "cylc broadcast"."""
-    parser = COP(__doc__, comms=True)
+    parser = COP(
+        __doc__, comms=True,
+        argdoc=[('REG', "Workflow name")]
+    )
 
     parser.add_option(
         "-p", "--point", metavar="CYCLE_POINT",
@@ -294,12 +301,12 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, workflow):
+def main(_, options: 'Values', workflow: str) -> None:
     """Implement cylc broadcast."""
     workflow = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
-    mutation_kwargs = {
+    mutation_kwargs: Dict[str, Any] = {
         'request_string': MUTATION,
         'variables': {
             'wFlows': [workflow],
@@ -311,7 +318,7 @@ def main(_, options, workflow):
         }
     }
 
-    query_kwargs = {
+    query_kwargs: Dict[str, Any] = {
         'request_string': QUERY,
         'variables': {
             'wFlows': [workflow],

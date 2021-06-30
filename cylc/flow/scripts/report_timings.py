@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc report-timings [OPTIONS] REG
+"""cylc report-timings [OPTIONS] ARGS
 
 Display workflow timing information.
 
@@ -49,10 +49,11 @@ the database query to obtain the timing information may take some time.
 
 """
 
-import io as StringIO
 import collections
 import contextlib
+import io as StringIO
 import sys
+from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -60,6 +61,9 @@ from cylc.flow.pathutil import get_workflow_run_pub_db_name
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 @contextlib.contextmanager
@@ -111,8 +115,9 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow):
+def main(parser: COP, options: 'Values', workflow: str) -> None:
     workflow = parse_reg(workflow)
+
     output_options = [
         options.show_raw, options.show_summary, options.html_summary
     ]
@@ -129,6 +134,7 @@ def main(parser, options, workflow):
         if options.show_raw:
             output.write(row_buf.getvalue())
         else:
+            summary: TimingSummary
             if options.show_summary:
                 summary = TextTimingSummary(row_buf)
             elif options.html_summary:

@@ -15,23 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Functionality to assist working with terminals"""
-import json
-import os
-import re
-import sys
-import inspect
-import logging
-from textwrap import wrap
-
-from functools import wraps
-from subprocess import PIPE, Popen  # nosec
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
-
-import cylc.flow.flags
+from functools import wraps
+import inspect
+import json
+import logging
+from optparse import OptionParser
+import os
+from subprocess import PIPE, Popen  # nosec
+import sys
+from textwrap import wrap
+from typing import Any, Callable, Optional
 
 from cylc.flow.exceptions import CylcError
+import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
 
@@ -187,15 +186,18 @@ def parse_dirty_json(stdout):
     raise ValueError(orig)
 
 
-def cli_function(parser_function=None, **parser_kwargs):
+def cli_function(
+    parser_function: Optional[Callable[..., OptionParser]] = None,
+    **parser_kwargs: Any
+):
     """Decorator for CLI entry points.
 
     Catches "known" errors and suppresses [full] traceback.
 
     """
-    def inner(wrapped_function):
+    def inner(wrapped_function: Callable):
         @wraps(wrapped_function)
-        def wrapper(*api_args):
+        def wrapper(*api_args: str) -> None:
             """The function that we actually call.
 
             Args:
@@ -206,22 +208,19 @@ def cli_function(parser_function=None, **parser_kwargs):
 
             """
             use_color = False
-            wrapped_args, wrapped_kwargs = (), {}
-            # should we use colour?
+            wrapped_args, wrapped_kwargs = [], {}
             if parser_function:
                 parser = parser_function()
                 opts, args = parser_function().parse_args(
                     list(api_args),
                     **parser_kwargs
                 )
-                use_color = (
-                    hasattr(opts, 'color')
-                    and (
+                if hasattr(opts, 'color'):
+                    use_color = (
                         opts.color == 'always'
                         or (opts.color == 'auto' and supports_color())
                     )
-                )
-                wrapped_args = (parser, opts, *args)
+                wrapped_args = [parser, opts, *args]
             if 'color' in inspect.signature(wrapped_function).parameters:
                 wrapped_kwargs['color'] = use_color
 

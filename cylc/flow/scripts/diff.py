@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc diff [OPTIONS] WORKFLOW1 WORKFLOW2
+"""cylc diff [OPTIONS] ARGS
 
 Compare two workflow configurations and display any differences.
 

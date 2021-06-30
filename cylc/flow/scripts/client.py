@@ -24,15 +24,20 @@ Invoke workflow runtime client, expect JSON from STDIN for keyword arguments.
 Use the -n option if client function requires no keyword arguments.
 """
 
+from google.protobuf.json_format import MessageToDict
 import json
 import sys
-from google.protobuf.json_format import MessageToDict
+from typing import TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import WorkflowRuntimeClient
-from cylc.flow.terminal import cli_function
 from cylc.flow.network.server import PB_METHOD_MAP
+from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 INTERNAL = True
 
@@ -51,7 +56,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, workflow, func):
+def main(_, options: 'Values', workflow: str, func: str) -> None:
     workflow = parse_reg(workflow)
     pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
     if options.no_input:

@@ -23,6 +23,7 @@ Validate a workflow configuration.
 If the workflow definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline WORKFLOW' for comparison."""
+from optparse import Values
 from ansimarkup import parse as cparse
 import sys
 import textwrap
@@ -88,7 +89,7 @@ ValidateOptions = Options(
 
 
 @cli_function(get_option_parser)
-def main(_, options, reg):
+def main(parser: COP, options: 'Values', reg: str) -> None:
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()

@@ -180,15 +180,15 @@ class WorkflowConfig:
             'SequenceBase', Set[Tuple[str, str, bool, bool]]
         ] = {}
         self.taskdefs: Dict[str, TaskDef] = {}
-        self.initial_point: Optional['PointBase'] = None
-        self.start_point: Optional['PointBase'] = None
-        self.final_point: Optional['PointBase'] = None
         self.clock_offsets = {}
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
         self.xtrigger_mgr = xtrigger_mgr
         self.workflow_polling_tasks = {}  # type: ignore # TODO figure out type
 
+        self.initial_point: 'PointBase'
+        self.start_point: 'PointBase'
+        self.final_point: Optional['PointBase'] = None
         self.sequences: List['SequenceBase'] = []
         self.actual_first_point: Optional['PointBase'] = None
         self._start_point_for_actual_first_point: Optional['PointBase'] = None
@@ -591,7 +591,7 @@ class WorkflowConfig:
                 )
         self.cfg['scheduler']['cycle point time zone'] = orig_cp_tz
 
-    def process_initial_cycle_point(self):
+    def process_initial_cycle_point(self) -> None:
         """Validate and set initial cycle point from flow.cylc or options.
 
         Sets:
@@ -639,7 +639,7 @@ class WorkflowConfig:
                     f"Initial cycle point {self.initial_point} does not meet "
                     f"the constraints {constraints}")
 
-    def process_start_cycle_point(self):
+    def process_start_cycle_point(self) -> None:
         """Set the start cycle point from options.
 
         Sets:
@@ -655,7 +655,7 @@ class WorkflowConfig:
             # Cold start.
             self.start_point = self.initial_point
 
-    def process_final_cycle_point(self):
+    def process_final_cycle_point(self) -> None:
         """Validate and set the final cycle point from flow.cylc or options.
 
         Sets:

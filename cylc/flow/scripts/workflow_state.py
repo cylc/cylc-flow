@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-r"""cylc workflow-state REG [OPTIONS]
+r"""cylc workflow-state [OPTIONS] ARGS
 
 Retrieve task states from the workflow database.
 
@@ -126,7 +126,10 @@ class WorkflowPoller(Poller):
 
 
 def get_option_parser() -> COP:
-    parser = COP(__doc__)
+    parser = COP(
+        __doc__,
+        argdoc=[('REG', "Workflow name")]
+    )
 
     parser.add_option(
         "-t", "--task", help="Specify a task to check the state of.",
