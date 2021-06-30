@@ -18,6 +18,7 @@
 import pytest
 
 from cylc.flow.platforms import get_host_from_platform, NoHostsError
+from cylc.flow.exceptions import CylcError
 
 
 TEST_PLATFORM = {
@@ -39,7 +40,22 @@ def test_get_host_from_platform(badhosts, expect):
     assert get_host_from_platform(platform, badhosts) == expect
 
 
-def test_get_host_from_platform_fails():
+def test_get_host_from_platform_fails_no_goodhosts():
     platform = TEST_PLATFORM
-    with pytest.raises(NoHostsError):
+    with pytest.raises(NoHostsError) as err:
         get_host_from_platform(platform, {'nellie', 'dumbo', 'jumbo'})
+    assert err.exconly() == (
+        'cylc.flow.platforms.NoHostsError: '
+        'Unable to find valid host for Elephant'
+    )
+
+
+def test_get_host_from_platform_fails_bad_method():
+    platform = TEST_PLATFORM.copy()
+    platform['selection']['method'] = 'roulette'
+    with pytest.raises(CylcError) as err:
+        get_host_from_platform(platform, {'Elephant'})
+    assert err.exconly() == (
+        'cylc.flow.exceptions.CylcError: method "roulette" is not a '
+        'supported host selection method.'
+    )

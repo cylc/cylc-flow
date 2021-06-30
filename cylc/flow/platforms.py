@@ -405,8 +405,8 @@ def get_host_from_platform(
     else:
         if method not in methods:
             raise CylcError(
-                f'method {method} is not a valid input for '
-                'get_host_from_platform'
+                f'method \"{method}\" is not a supported host '
+                'selection method.'
             )
         else:
             LOG.debug(
