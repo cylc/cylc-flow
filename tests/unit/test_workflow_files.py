@@ -222,142 +222,121 @@ def setup__test_parse_reg(mod_tmp_run_dir: Callable) -> Path:
     (non_numbered_workflow / 'flow.cylc').touch()
     (cylc_run_dir / 'empty').mkdir()
     tmp_path = cylc_run_dir.parent
+    (tmp_path / 'flow.cylc').touch()
     (tmp_path / 'random_file.cylc').touch()
     return cylc_run_dir
 
 
 @pytest.mark.parametrize(
-    ('reg', 'src', 'require_flow_file',
-     'expected_reg', 'expected_path', 'expected_err_msg'),
+    'reg, src, expected_reg, expected_path, expected_err_msg',
     [
         pytest.param(
-            'numbered/workflow', False, False,
+            'numbered/workflow', False,
             'numbered/workflow/run1',
             None,
             None,
             id="numbered workflow, src=False"
         ),
         pytest.param(
-            'numbered/workflow', True, True,
+            'numbered/workflow', True,
             'numbered/workflow/run1',
             '{cylc_run_dir}/numbered/workflow/run1/flow.cylc',
             None,
             id="numbered workflow, src=True"
         ),
         pytest.param(
-            'numbered/workflow/runN', False, False,
+            'numbered/workflow/runN', False,
             'numbered/workflow/run1',
             None,
             None,
             id="numbered workflow targeted by runN, src=False"
         ),
         pytest.param(
-            'non_numbered/workflow', False, False,
+            'non_numbered/workflow', False,
             'non_numbered/workflow',
             None,
             None,
             id="non-numbered, src=False"
         ),
         pytest.param(
-            'non_numbered/workflow', True, True,
+            'non_numbered/workflow', True,
             'non_numbered/workflow',
             '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
             None,
             id="non-numbered, src=True"
         ),
         pytest.param(
-            'empty', True, False,
-            'empty',
-            '{cylc_run_dir}/empty',
-            None,
-            id="empty run dir, src=True, require_flow_file=False"
-        ),
-        pytest.param(
-            'empty', True, True,
+            'empty', True,
             None,
             None,
             "no flow.cylc or suite.rc in ",
-            id="empty run dir, src=True, require_flow_file=True"
+            id="empty run dir, src=True"
         ),
         pytest.param(
-            'non_exist', False, False,
+            'non_exist', False,
             'non_exist',
             None,
             None,
             id="non-existent workflow, src=False"
         ),
         pytest.param(
-            'non_exist', True, True,
+            'non_exist', True,
             None,
             None,
             os.strerror(errno.ENOENT),
             id="non-existent workflow, src=True"
         ),
         pytest.param(
-            'non_exist', True, False,
-            'non_exist',
-            '{cylc_run_dir}/non_exist',
-            None,
-            id="non-existent workflow, src=True, require_flow_file=False"
-        ),
-        pytest.param(
-            'non_exist', False, True,
-            'non_exist',
-            None,
-            None,
-            id="require_flow_file=True ignored when src=False"
-        ),
-        pytest.param(
-            '.', True, False,
+            '.', True,
             '{cwd}',
-            '{cwd}',
+            '{cwd}/flow.cylc',
             None,
-            id="dot for cwd, src=True, require_flow_file=False"
+            id="dot for cwd, src=True"
         ),
         pytest.param(
-            'non_numbered/workflow/flow.cylc', False, False,
+            'non_numbered/workflow/flow.cylc', False,
             None,
             None,
             "Workflow name must refer to a directory, not a file",
             id="reg refers to a file, src=False"
         ),
         pytest.param(
-            'non_numbered/workflow/flow.cylc', True, True,
+            'non_numbered/workflow/flow.cylc', True,
             'non_numbered/workflow',
             '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
             None,
             id="reg refers to a file, src=True"
         ),
         pytest.param(
-            '{cylc_run_dir}/non_numbered/workflow', False, False,
+            '{cylc_run_dir}/non_numbered/workflow', False,
             None,
             None,
             "workflow name cannot be an absolute path",
             id="reg is absolute path, src=False"
         ),
         pytest.param(
-            '{cylc_run_dir}/non_numbered/workflow', True, True,
+            '{cylc_run_dir}/non_numbered/workflow', True,
             'non_numbered/workflow',
             '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
             None,
             id="reg is absolute path, src=True"
         ),
         pytest.param(
-            '{tmp_path}/random_file.cylc', True, True,
+            '{tmp_path}/random_file.cylc', True,
             '{tmp_path}',
             '{tmp_path}/random_file.cylc',
             None,
             id="reg is absolute path not in ~/cylc-run, src=True"
         ),
         pytest.param(
-            'foo/../../random_file.cylc', False, False,
+            'foo/../../random_file.cylc', False,
             None,
             None,
             "cannot be a path that points to the cylc-run directory or above",
             id="reg points to path above ~/cylc-run, src=False"
         ),
         pytest.param(
-            'foo/../../random_file.cylc', True, True,
+            'foo/../../random_file.cylc', True,
             '..',
             '{tmp_path}/random_file.cylc',
             None,
@@ -368,22 +347,23 @@ def setup__test_parse_reg(mod_tmp_run_dir: Callable) -> Path:
 def test_parse_reg(
     reg: str,
     src: bool,
-    require_flow_file: bool,
     expected_reg: str,
     expected_path: Optional[str],
     expected_err_msg: Optional[str],
-    setup__test_parse_reg: Path
+    setup__test_parse_reg: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test parse_reg()."""
+    tmp_path = setup__test_parse_reg.parent
+    monkeypatch.chdir(tmp_path)
     paths = {
         'cylc_run_dir': setup__test_parse_reg,
-        'tmp_path': setup__test_parse_reg.parent,
-        'cwd': os.getcwd()
+        'tmp_path': tmp_path,
+        'cwd': tmp_path
     }
     reg = reg.format(**paths)
     if expected_err_msg:
         with pytest.raises(WorkflowFilesError) as exc_info:
-            parse_reg(reg, src, require_flow_file)
+            parse_reg(reg, src)
         assert expected_err_msg in str(exc_info.value)
     else:
         expected: Union[str, Tuple[str, Path]]
@@ -393,7 +373,7 @@ def test_parse_reg(
             expected = (expected_reg, Path(expected_path))
         else:
             expected = expected_reg
-        assert parse_reg(reg, src, require_flow_file) == expected
+        assert parse_reg(reg, src) == expected
 
 
 @pytest.mark.parametrize(

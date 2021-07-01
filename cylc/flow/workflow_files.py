@@ -1005,29 +1005,21 @@ def get_platforms_from_db(run_dir):
 
 
 @overload
-def parse_reg(
-    reg: str, src: Literal[False] = False, require_flow_file: bool = True
-) -> str:
+def parse_reg(reg: str, src: Literal[False] = False) -> str:
     ...
 
 
 @overload
-def parse_reg(
-    reg: str, src: Literal[True], require_flow_file: bool = True
-) -> Tuple[str, Path]:
+def parse_reg(reg: str, src: Literal[True]) -> Tuple[str, Path]:
     ...
 
 
 @overload
-def parse_reg(
-    reg: str, src: bool, require_flow_file: bool
-) -> Union[str, Tuple[str, Path]]:
+def parse_reg(reg: str, src: bool) -> Union[str, Tuple[str, Path]]:
     ...  # Need this 3rd overload https://github.com/python/mypy/issues/6113
 
 
-def parse_reg(
-    reg: str, src: bool = False, require_flow_file: bool = True
-) -> Union[str, Tuple[str, Path]]:
+def parse_reg(reg: str, src: bool = False) -> Union[str, Tuple[str, Path]]:
     """Centralised parsing of the workflow argument, to be used by most
     cylc commands (script modules).
 
@@ -1035,7 +1027,7 @@ def parse_reg(
     foo -> foo/run3, foo/runN -> foo/run3).
 
     "Offline" commands (e.g. cylc validate) can usually be used on
-    workflow sources so will need src = True and require_flow_file = True.
+    workflow sources so will need src = True.
 
     "Online" commands (e.g. cylc stop) are usually only used on workflows in
     the cylc-run dir so will need src = False.
@@ -1049,18 +1041,13 @@ def parse_reg(
         src: Whether the workflow arg can be a workflow source (i.e. an
             absolute path (which might not be in ~/cylc-run) and/or a
             flow.cylc file (or any file really), or '.' for cwd).
-        require_flow_file: (Ignored if src is False, or if reg is already a
-            path to a file.) Whether a flow.cylc (or suite.rc) file is required
-            to be present in the path looked up from the workflow arg.
 
     Returns:
         reg: The normalised workflow arg.
         path: (Only if src is True) The absolute path to the workflow file
-            (flow.cylc or suite.rc), or just the workflow dir if
-            require_flow_file is False.
+            (flow.cylc or suite.rc).
     """
     if not src:
-        require_flow_file = False
         validate_workflow_name(reg)
     reg = expand_path(os.path.normpath(reg))
     if src and (reg == '.'):
@@ -1074,7 +1061,7 @@ def parse_reg(
         reg_path if reg_path.is_absolute()
         else Path(get_workflow_run_dir(reg_path))
     )
-    if require_flow_file and not os.path.lexists(abs_path):
+    if src and not os.path.lexists(abs_path):
         raise WorkflowFilesError(f"{os.strerror(errno.ENOENT)}: {abs_path}")
     if abs_path.is_file():
         if not src:
@@ -1090,7 +1077,7 @@ def parse_reg(
                 reg_path = reg_path.parent
             reg_path = reg_path / latest_run.name
             abs_path = latest_run
-        if require_flow_file:
+        if src:
             abs_path = check_flow_file(abs_path)
     reg = str(reg_path)
     if src:
