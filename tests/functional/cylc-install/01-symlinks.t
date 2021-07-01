@@ -24,7 +24,7 @@ if [[ -z ${TMPDIR:-} || -z ${USER:-} || $TMPDIR/$USER == "$HOME" ]]; then
     skip_all '"TMPDIR" or "USER" not defined or "TMPDIR"/"USER" is "HOME"'
 fi
 
-set_test_number 27
+set_test_number 30
 
 create_test_global_config "" "
 [install]
@@ -160,5 +160,27 @@ run_ok "${TEST_NAME_BASE}-play" cylc play "${RND_WORKFLOW_NAME}/runN" --debug --
 TEST_SYM="${TEST_NAME_BASE}-installed-workflow-skips-symdirs"
 run_fail "${TEST_SYM}" test "$(readlink "${WORKFLOW_RUN_DIR}")" \
     = "$TMPDIR/${USER}/test_cylc_symlink/cylctb_tmp_run_dir/cylc-run/${RND_WORKFLOW_NAME}/run1"
+rm -rf "${TMPDIR}/${USER}/test_cylc_cli_symlink/"
+purge_rnd_workflow
+
+
+# test share and share/cycle same symlinks don't error 
+SYMDIR=${TMPDIR}/${USER}/test_cylc_cli_symlink/
+
+TEST_NAME="${TEST_NAME_BASE}-share-share-cycle-same-dirs"
+make_rnd_workflow
+# check install runs without failure
+run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" \
+--directory="${RND_WORKFLOW_SOURCE}" \
+--symlink-dirs="share/cycle=${SYMDIR}, share=${SYMDIR}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
+__OUT__
+WORKFLOW_RUN_DIR="$HOME/cylc-run/${RND_WORKFLOW_NAME}/run1"
+
+TEST_SYM="${TEST_NAME_BASE}-share-cli"
+run_ok "$TEST_SYM" test "$(readlink "${WORKFLOW_RUN_DIR}/share")" \
+   = "${TMPDIR}/${USER}/test_cylc_cli_symlink/cylc-run/${RND_WORKFLOW_NAME}/run1/share"
+
 rm -rf "${TMPDIR}/${USER}/test_cylc_cli_symlink/"
 purge_rnd_workflow

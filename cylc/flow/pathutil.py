@@ -138,11 +138,11 @@ def make_localhost_symlinks(
     Args:
         rund: the entire run directory path
         named_sub_dir: e.g flow_name/run1
+        symlink_conf: Symlinks dirs configuration passed from cli
 
     Returns:
         Dictionary of symlinks with sources as keys and
         destinations as values: ``{source: destination}``
-        symlink_conf: Symlinks dirs configuration passed from cli
 
     """
     symlinks_created = {}
@@ -215,7 +215,7 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
     path = Path(path)
     target = Path(target)
     if path.exists():
-        if path.is_symlink() and path.samefile(target):
+        if path.is_symlink() and target.exists() and path.samefile(target):
             # correct symlink already exists
             return False
         # symlink name is in use by a physical file or directory
@@ -232,6 +232,11 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
             raise WorkflowFilesError(
                 f"Error when symlinking. Failed to unlink bad symlink {path}.")
     target.mkdir(parents=True, exist_ok=True)
+
+    # This is needed in case share and share/cycle have the same symlink dir:
+    if path.exists():
+        return False
+
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         path.symlink_to(target)

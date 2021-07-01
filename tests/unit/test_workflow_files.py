@@ -41,10 +41,10 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
-    get_sym_dirs,
+    parse_cli_sym_dirs,
     get_symlink_dirs,
     is_installed,
-    get_sym_dirs,
+    parse_cli_sym_dirs,
     get_workflow_source_dir,
     glob_in_run_dir,
     reinstall_workflow,
@@ -1475,32 +1475,32 @@ def test_check_flow_file_symlink(
          ),
     ]
 )
-def test_get_sym_dirs(
+def test_parse_cli_sym_dirs(
     symlink_dirs: str,
     err_msg: str,
     expected: Dict[str, Dict[str, Any]]
 ):
-    """Test get_sym_dirs returns dict or correctly raises errors on cli symlink
-        dir options"""
+    """Test parse_cli_sym_dirs returns dict or correctly raises errors on cli
+    symlink dir options"""
     if err_msg != 'None':
         with pytest.raises(UserInputError) as exc:
-            get_sym_dirs(symlink_dirs)
+            parse_cli_sym_dirs(symlink_dirs)
             assert(err_msg) in str(exc)
 
     else:
-        actual = get_sym_dirs(symlink_dirs)
+        actual = parse_cli_sym_dirs(symlink_dirs)
 
         assert actual == expected
 
-@pytest.mark.parametrize(
-    'reg, installed, expected',
-    [('reg1/run1', 'named', True),
-     ('reg2', 'no-name', True),
-     ('reg3', None, False)]
-)
-def test_is_installed(tmp_run_dir: Callable,reg, installed, expected):
-    
 
-    cylc_run_dir: Path = tmp_run_dir(reg, installed=installed)
+@pytest.mark.parametrize(
+    'reg, installed, named,  expected',
+    [('reg1/run1', True, True, True),
+     ('reg2', True, False, True),
+     ('reg3', False, False, False)]
+)
+def test_is_installed(tmp_run_dir: Callable, reg, installed, named, expected):
+    """Test is_installed correctly identifies presence of _cylc-install dir"""
+    cylc_run_dir: Path = tmp_run_dir(reg, installed=installed, named=named)
     actual = is_installed(cylc_run_dir)
     assert actual == expected

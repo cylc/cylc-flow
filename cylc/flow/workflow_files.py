@@ -228,7 +228,7 @@ class WorkflowFiles:
         SHARE_CYCLE_DIR, SHARE_DIR, LOG_DIR, WORK_DIR, ''
     ])
     """The paths of the symlink dirs that may be set in
-    global.cylc[install]symlink dirs, relative to the run dir
+    global.cylc[install][symlink dirs], relative to the run dir
     ('' represents the run dir)."""
 
 
@@ -1502,7 +1502,7 @@ def validate_source_dir(source, flow_name):
     check_flow_file(source, logger=None)
 
 
-def get_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
+def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
     """Converts command line entered symlink dirs to a dictionary.
 
     Args:
@@ -1526,6 +1526,9 @@ def get_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
     if symlink_dirs == "":
         return symdict
     symlist = symlink_dirs.strip(',').split(',')
+    possible_symlink_dirs = WorkflowFiles.SYMLINK_DIRS.symmetric_difference(
+        {'', WorkflowFiles.RUN_DIR}
+    )
     for pair in symlist:
         try:
             key, val = pair.split("=")
@@ -1536,11 +1539,12 @@ def get_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
                 f' {pair}. Try entering option in the form '
                 '--symlink-dirs=\'log=$DIR, share=$DIR2, ...\''
             )
-        if key not in ['run', 'log', 'share', 'share/cycle', 'work']:
+        if key not in possible_symlink_dirs:
+            dirs = str(
+                possible_symlink_dirs).lstrip('frozenset({').rstrip('})')
             raise UserInputError(
                 f"{key} not a valid entry for --symlink-dirs. "
-                "Configurable symlink dirs are: 'run', 'log', 'share',"
-                " 'share/cycle', 'work'"
+                f"Configurable symlink dirs are: {dirs}"
             )
         symdict['localhost'][key] = val.strip() or None
 

@@ -75,7 +75,7 @@ from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import (
-    install_workflow, search_install_source_dirs, get_sym_dirs
+    install_workflow, search_install_source_dirs, parse_cli_sym_dirs
 )
 from cylc.flow.terminal import cli_function
 
@@ -223,7 +223,7 @@ def install(
     if opts.symlink_dirs == '':
         cli_symdirs = {}
     elif opts.symlink_dirs:
-        cli_symdirs = get_sym_dirs(opts.symlink_dirs)
+        cli_symdirs = parse_cli_sym_dirs(opts.symlink_dirs)
     source_dir, rundir, _flow_name = install_workflow(
         flow_name=flow_name,
         source=source,
