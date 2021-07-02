@@ -607,7 +607,7 @@ async def get_contained_workflows(path: Path) -> List[str]:
     return sorted([i['name'] async for i in scan(scan_dir=path)])
 
 
-def _clean_check(reg: str, run_dir: Path) -> None:
+def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
     """Check whether a workflow can be cleaned.
 
     Args:
@@ -632,10 +632,13 @@ def _clean_check(reg: str, run_dir: Path) -> None:
     contained_workflows = asyncio.run(get_contained_workflows(run_dir))
     if contained_workflows:
         bullet = "\n    - "
-        raise WorkflowFilesError(
-            f"Cannot clean {run_dir} - it contains the following workflow(s):"
+        msg = (
+            f"{run_dir} contains the following workflow(s):"
             f"{bullet}{bullet.join(contained_workflows)}"
         )
+        if not opts.force:
+            raise WorkflowFilesError(f"Cannot clean - {msg}")
+        LOG.warning(msg)
 
 
 def init_clean(reg: str, opts: 'Values') -> None:
@@ -648,7 +651,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
     """
     local_run_dir = Path(get_workflow_run_dir(reg))
     try:
-        _clean_check(reg, local_run_dir)
+        _clean_check(opts, reg, local_run_dir)
     except FileNotFoundError as exc:
         LOG.info(str(exc))
         return

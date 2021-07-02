@@ -154,8 +154,6 @@ def test_validate_flow_name(reg, expected_err, expected_msg):
         ('foo/../..', True, WorkflowFilesError,
          "cannot be a path that points to the cylc-run directory or above"),
         ('foo', False, ServiceFileError, "Cannot remove running workflow"),
-        ('workflow_base', True, WorkflowFilesError,
-         "contains the following workflow(s)")
     ]
 )
 def test_clean_check__fail(
@@ -163,7 +161,7 @@ def test_clean_check__fail(
     stopped: bool,
     err: Type[Exception],
     err_msg: str,
-    tmp_run_dir: Callable, monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test that _clean_check() fails appropriately.
 
@@ -173,14 +171,7 @@ def test_clean_check__fail(
         err: Expected error class.
         err_msg: Message that is expected to be in the exception.
     """
-    if reg == 'workflow_base':
-        cylc_run_dir: Path = tmp_run_dir()
-        run_dir = cylc_run_dir / reg
-        numbered_run = run_dir / 'run1'
-        numbered_run.mkdir(parents=True)
-        (numbered_run / WorkflowFiles.FLOW_FILE).touch()
-    else:
-        run_dir = mock.Mock()
+    run_dir = mock.Mock()
 
     def mocked_detect_old_contact_file(*a, **k):
         if not stopped:
@@ -190,8 +181,32 @@ def test_clean_check__fail(
                         mocked_detect_old_contact_file)
 
     with pytest.raises(err) as exc:
-        workflow_files._clean_check(reg, run_dir)
+        workflow_files._clean_check(CleanOptions(), reg, run_dir)
     assert err_msg in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    'force_opt',
+    [pytest.param(False, id="normal"),
+     pytest.param(True, id="--force")]
+)
+def test_clean_check__workflow_base_dir(
+    force_opt: bool,
+    tmp_run_dir: Callable
+) -> None:
+    """_clean_check() should raise if supplied a dir that is a workflow base
+    dir containing run dirs/named runs, unless --force is used."""
+    reg = 'temba'
+    run_dir: Path = tmp_run_dir(os.path.join(reg, 'run1'))
+    base_dir = run_dir.parent
+    opts = CleanOptions(force=force_opt)
+
+    if force_opt:
+        workflow_files._clean_check(opts, reg, base_dir)
+    else:
+        with pytest.raises(WorkflowFilesError) as exc_info:
+            workflow_files._clean_check(opts, reg, base_dir)
+        assert "contains the following workflow(s)" in str(exc_info.value)
 
 
 @pytest.mark.parametrize(
