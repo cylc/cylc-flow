@@ -48,6 +48,7 @@ Examples:
 import asyncio
 import json
 from pathlib import Path
+from typing import Callable, Optional, TYPE_CHECKING
 
 from ansimarkup import ansiprint as cprint
 
@@ -68,6 +69,8 @@ from cylc.flow.print_tree import get_tree
 from cylc.flow.workflow_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
 
+if TYPE_CHECKING:
+    from optparse import Values
 
 # default grey colour (do not use "dim", it is not sufficiently portable)
 DIM = 'fg 248'
@@ -488,7 +491,12 @@ async def scanner(opts, write, scan_dir=None):
     await method(pipe, formatter, opts, write)
 
 
-async def main(opts, color=False, scan_dir=None, write=cprint):
+async def main(
+    opts: 'Values',
+    color: bool = False,
+    scan_dir: Optional[Path] = None,
+    write: Callable = cprint
+) -> None:
     """Open up a Python API for testing purposes.
 
     Note:
@@ -525,7 +533,7 @@ async def main(opts, color=False, scan_dir=None, write=cprint):
 
 
 @cli_function(get_option_parser)
-def cli(_, opts, color):
+def cli(_, opts: 'Values', color: bool) -> None:
     """Implement `cylc scan`."""
     asyncio.run(
         main(opts, color)

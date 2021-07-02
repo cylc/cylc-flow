@@ -44,10 +44,10 @@ e.g. :py:func:`contact_info`.
 
 """
 
-from collections.abc import Iterable
 import asyncio
 from pathlib import Path
 import re
+from typing import AsyncGenerator, Dict, Iterable, List, Optional, Union
 
 from pkg_resources import (
     parse_requirements,
@@ -89,7 +89,7 @@ EXCLUDE_FILES = {
 }
 
 
-def dir_is_flow(listing):
+def dir_is_flow(listing: Iterable[Path]) -> bool:
     """Return True if a Path contains a flow at the top level.
 
     Args:
@@ -101,28 +101,29 @@ def dir_is_flow(listing):
         bool - True if the listing indicates that this is a flow directory.
 
     """
-    listing = {
-        path.name
-        for path in listing
-    }
-    return bool(FLOW_FILES & listing)
+    names = {path.name for path in listing}
+    return bool(FLOW_FILES & names)
 
 
 @pipe
-async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
+async def scan(
+    run_dir: Optional[Path] = None,
+    scan_dir: Optional[Path] = None,
+    max_depth: int = MAX_SCAN_DEPTH
+) -> AsyncGenerator[Dict[str, Union[str, Path]], None]:
     """List flows installed on the filesystem.
 
     Args:
-        run_dir (pathlib.Path):
+        run_dir:
             The run dir to look for workflows in, defaults to ~/cylc-run.
 
             All workflow registrations will be given relative to this path.
-        scan_dir(pathlib.Path):
+        scan_dir:
             The directory to scan for workflows in.
 
             Use in combination with run_dir if you want to scan a subdir
             within the run_dir.
-        max_depth (int):
+        max_depth:
             The maximum number of levels to descend before bailing.
 
             * ``max_depth=1`` will pick up top-level workflows (e.g. ``foo``).
@@ -138,7 +139,7 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
     if not scan_dir:
         scan_dir = run_dir
 
-    running = []
+    running: List[asyncio.tasks.Task] = []
 
     # wrapper for scandir to preserve context
     async def _scandir(path, depth):
