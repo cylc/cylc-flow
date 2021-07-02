@@ -148,18 +148,22 @@ def test_validate_flow_name(reg, expected_err, expected_msg):
 
 @pytest.mark.parametrize(
     'reg, stopped, err, err_msg',
-    [('foo/..', True, WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above"),
-     ('foo/../..', True, WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above"),
-     ('foo', False, ServiceFileError, "Cannot remove running workflow")]
+    [
+        ('foo/..', True, WorkflowFilesError,
+         "cannot be a path that points to the cylc-run directory or above"),
+        ('foo/../..', True, WorkflowFilesError,
+         "cannot be a path that points to the cylc-run directory or above"),
+        ('foo', False, ServiceFileError, "Cannot remove running workflow"),
+        ('workflow_base', True, WorkflowFilesError,
+         "contains the following workflow(s)")
+    ]
 )
-def test_clean_check_fail(
+def test_clean_check__fail(
     reg: str,
     stopped: bool,
     err: Type[Exception],
     err_msg: str,
-    monkeypatch: pytest.MonkeyPatch
+    tmp_run_dir: Callable, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Test that _clean_check() fails appropriately.
 
@@ -169,7 +173,14 @@ def test_clean_check_fail(
         err: Expected error class.
         err_msg: Message that is expected to be in the exception.
     """
-    run_dir = mock.Mock()
+    if reg == 'workflow_base':
+        cylc_run_dir: Path = tmp_run_dir()
+        run_dir = cylc_run_dir / reg
+        numbered_run = run_dir / 'run1'
+        numbered_run.mkdir(parents=True)
+        (numbered_run / WorkflowFiles.FLOW_FILE).touch()
+    else:
+        run_dir = mock.Mock()
 
     def mocked_detect_old_contact_file(*a, **k):
         if not stopped:

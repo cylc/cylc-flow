@@ -17,6 +17,7 @@
 """Workflow service files management."""
 
 import aiofiles
+import asyncio
 from collections import deque
 from contextlib import suppress
 from enum import Enum
@@ -600,6 +601,12 @@ def is_installed(path: Union[Path, str]) -> bool:
     return cylc_install_folder.is_dir() and source.is_symlink()
 
 
+async def get_contained_workflows(path: Path) -> List[str]:
+    """Return the sorted names of any workflows in the path provided"""
+    from cylc.flow.network.scan import scan
+    return sorted([i['name'] async for i in scan(scan_dir=path)])
+
+
 def _clean_check(reg: str, run_dir: Path) -> None:
     """Check whether a workflow can be cleaned.
 
@@ -620,8 +627,15 @@ def _clean_check(reg: str, run_dir: Path) -> None:
     try:
         detect_old_contact_file(reg)
     except ServiceFileError as exc:
-        raise ServiceFileError(
-            f"Cannot remove running workflow.\n\n{exc}")
+        raise ServiceFileError(f"Cannot remove running workflow.\n\n{exc}")
+    # Check dir does not contain other workflows:
+    contained_workflows = asyncio.run(get_contained_workflows(run_dir))
+    if contained_workflows:
+        bullet = "\n    - "
+        raise WorkflowFilesError(
+            f"Cannot clean {run_dir} - it contains the following workflow(s):"
+            f"{bullet}{bullet.join(contained_workflows)}"
+        )
 
 
 def init_clean(reg: str, opts: 'Values') -> None:
