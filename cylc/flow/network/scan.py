@@ -80,7 +80,7 @@ FLOW_FILES = {
     WorkflowFiles.Service.DIRNAME,
     WorkflowFiles.SUITE_RC,   # cylc7 flow definition file name
     WorkflowFiles.FLOW_FILE,  # cylc8 flow definition file name
-    'log'
+    WorkflowFiles.LOG_DIR
 }
 
 EXCLUDE_FILES = {
@@ -132,8 +132,9 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
         dict - Dictionary containing information about the flow.
 
     """
+    cylc_run_dir = Path(get_workflow_run_dir(''))
     if not run_dir:
-        run_dir = Path(get_workflow_run_dir(''))
+        run_dir = cylc_run_dir
     if not scan_dir:
         scan_dir = run_dir
 
@@ -145,7 +146,12 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
         return path, depth, contents
 
     # perform the first directory listing
-    for subdir in await scandir(scan_dir):
+    scan_dir_listing = await scandir(scan_dir)
+    if scan_dir != cylc_run_dir and dir_is_flow(scan_dir_listing):
+        # If the scan_dir itself is a workflow run dir, yield nothing
+        return
+
+    for subdir in scan_dir_listing:
         if subdir.is_dir():
             running.append(
                 asyncio.create_task(
