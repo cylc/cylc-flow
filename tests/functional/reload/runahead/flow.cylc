@@ -8,7 +8,6 @@
     final cycle point = 2010-01-05
     runahead limit = PT12H # marker
     [[graph]]
-        # oops is stuck waiting task to hold back runahead
         R1 = "foo:start => reloader"
         PT6H ="foo" 
 [runtime]
