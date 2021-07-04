@@ -56,6 +56,9 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4284](https://github.com/cylc/cylc-flow/pull/4284)
+ - Make `--color=never` work with `cylc <command> --help`.
+
 [#4103](https://github.com/cylc/cylc-flow/pull/4103) -
 Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
