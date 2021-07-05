@@ -58,8 +58,9 @@ with Conf('global.cylc', desc='''
 
     Cylc will attempt to load the global configuration (``global.cylc``) from a
     hierarchy of locations, including the site directory (defaults to
-    ``/etc/cylc/flow/``) and the user directory (``~/.cylc/flow/``). E.g. for
-    Cylc version 8.0.1, the hierarchy would be, in order of ascending priority:
+    ``/etc/cylc/flow/``) and the user directory (``~/.cylc/flow/``). For
+    example at Cylc version 8.0.1, the hierarchy would be, in order of
+    ascending priority:
 
     .. code-block:: sub
 
@@ -78,6 +79,17 @@ with Conf('global.cylc', desc='''
     A setting in a file lower down in the list will override the same setting
     from those higher up (but if a setting is present in a file higher up and
     not in any files lower down, it will not be overridden).
+
+    .. note::
+
+       For example, if the following files had these settings:
+
+       .. csv-table::
+          :header: File, Setting A, Setting B, Setting C
+
+          <site-conf-path>/flow/global.cylc, Hello, World, <not set>
+          ~/.cylc/flow/global.cylc, <not set>, Mars, 42
+          **Actual config**, **Hello**, **Mars**, **42**
 
     The following environment variables can change the files which are loaded:
 
@@ -153,7 +165,7 @@ with Conf('global.cylc', desc='''
             Conf('available', VDR.V_SPACELESS_STRING_LIST, desc='''
                 A list of workflow run hosts. One of these hosts will be
                 appointed for a workflow to start on if an explicit host is not
-                provided as an option to a ``run`` or ``restart`` command.
+                provided as an option to a ``play`` command.
             ''')
             Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
                  desc='''
@@ -198,8 +210,8 @@ with Conf('global.cylc', desc='''
                 .. rubric:: Threshold
 
                 Thresholds are expressions which return boolean values.
-                If a host returns a ``False`` value is will not be considered
-                for host selection. Examples:
+                If a host returns a ``False`` value that host will not be
+                selected. Examples:
 
                 .. code-block:: python
 
@@ -244,27 +256,26 @@ with Conf('global.cylc', desc='''
                 'method', VDR.V_STRING, 'name',
                 options=['name', 'address', 'hardwired'],
                 desc='''
-                    This item determines how cylc finds the identity of the
-                    workflow host. For the default *name* method cylc asks the
-                    workflow host for its host name. This should resolve on
-                    task hosts to the IP address of the workflow host; if it
-                    doesn't, adjust network settings or use one of the other
-                    methods. For the *address* method, cylc attempts to use a
-                    special external "target address" to determine the IP
-                    address of the workflow host as seen by remote task hosts.
-                    And finally, as a last resort, you can choose the
-                    *hardwired* method and manually specify the host name or IP
-                    address of the workflow host.
+                    ``method`` determines how cylc finds the identity of the
+                    workflow host.
 
                     Options:
 
                     name
-                       Self-identified host name.
+                       (The default method) Self-identified host name.
+                       Cylc asks the workflow host for its host name. This
+                       should resolve on task hosts to the IP address of the
+                       workflow host; if it doesn't, adjust network settings or
+                       use one of the other methods.
                     address
                        Automatically determined IP address (requires *target*).
+                       Cylc attempts to use a special external "target address"
+                       to determine the IP address of the workflow host as
+                       seen by remote task hosts.
                     hardwired
-                       Manually specified host name or IP address (requires
-                       *host*).
+                       (only to be used as a last resort) Manually specified
+                       host name or IP address (requires *host*) of the
+                       workflow host.
             ''')
             Conf('target', VDR.V_STRING, 'google.com', desc='''
                 This item is required for the *address* self-identification
@@ -322,7 +333,7 @@ with Conf('global.cylc', desc='''
             Conf('plugins', VDR.V_STRING_LIST,
                  ['health check', 'prune flow labels'], desc='''
                 Configure the default main loop plugins to use when
-                starting up new workflows.
+                starting new workflows.
             ''')
 
             with Conf('<plugin name>', desc='''
@@ -409,6 +420,7 @@ with Conf('global.cylc', desc='''
             Examples::
 
                atom --wait
+               code --wait
                code -nw
                emacs
                gedit -s
