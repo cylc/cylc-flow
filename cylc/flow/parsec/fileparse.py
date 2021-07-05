@@ -278,7 +278,7 @@ def process_plugins(fpath):
     return extra_vars
 
 
-def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
+def read_and_proc(fpath, template_vars=None, viewcfg=None):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
@@ -324,7 +324,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     # inline any cylc include-files
     if do_inline:
         flines = inline(
-            flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
+            flines, fdir, fpath, viewcfg=viewcfg)
 
     template_vars['CYLC_VERSION'] = __version__
 

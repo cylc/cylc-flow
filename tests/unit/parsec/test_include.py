@@ -19,11 +19,12 @@ rely on file system operations, and are probably better tested by functional
 tests. So this suite of unit tests should not cover all the module features.
 """
 
+import os
 import tempfile
 import unittest
 
 from cylc.flow.parsec.exceptions import ParsecError
-from cylc.flow.parsec.include import *
+from cylc.flow.parsec.include import inline, IncludeFileNotFoundError
 
 
 class TestInclude(unittest.TestCase):
@@ -35,22 +36,6 @@ class TestInclude(unittest.TestCase):
             error = IncludeFileNotFoundError(file_list)
             self.assertTrue(" via " in str(error))
 
-    def test_inline_error_empty_lines_1(self):
-        """The inline function throws an error when you have the following
-        combination:
-
-        - lines is an empty list
-        - for_edit is True
-        - level is None
-        """
-        with self.assertRaises(IndexError):
-            inline(
-                lines=[],
-                dir_=None,
-                filename=None,
-                for_edit=True,
-                level=None)
-
     def test_inline_error_mismatched_quotes(self):
         """The inline function throws an error when you have the
         %include statement with a value without the correct balance
@@ -61,7 +46,6 @@ class TestInclude(unittest.TestCase):
                 lines=["%include 'abc.txt"],
                 dir_=None,
                 filename=None,
-                for_edit=True,
                 level=None)
 
     def test_inline(self):
