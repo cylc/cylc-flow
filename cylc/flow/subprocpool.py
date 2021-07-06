@@ -208,15 +208,11 @@ class SubProcPool:
         # Handle child processes that are done
         runnings = []
         for running in self.runnings:
-            if len(running) == 5:
-                proc, ctx, bad_hosts, callback, callback_args = running
-                callback_255, callback_255_args = None, None
-            if len(running) == 7:
-                (
-                    proc, ctx, bad_hosts,
-                    callback, callback_args,
-                    callback_255, callback_255_args
-                ) = running
+            (
+                proc, ctx, bad_hosts,
+                callback, callback_args,
+                callback_255, callback_255_args
+            ) = running
             # Command completed/exited
             if proc.poll() is not None:
                 self._proc_exit(
@@ -242,7 +238,8 @@ class SubProcPool:
                 )
                 continue
             # Command still running, see if STDOUT/STDERR are readable or not
-            runnings.append([proc, ctx, bad_hosts, callback, callback_args])
+            runnings.append([
+                proc, ctx, bad_hosts, callback, callback_args, None, None])
             # Unblock proc's STDOUT/STDERR if necessary. Otherwise, a full
             # STDOUT or STDERR may stop command from proceeding.
             self._poll_proc_pipes(proc, ctx)

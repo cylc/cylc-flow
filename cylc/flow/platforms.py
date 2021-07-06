@@ -23,7 +23,7 @@ from typing import (
     Any, Dict, Iterable, List, Optional, Tuple, Union, Set)
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import PlatformLookupError, CylcError
+from cylc.flow.exceptions import PlatformLookupError, CylcError, NoHostsError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
 
@@ -38,9 +38,10 @@ FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
 HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
 
-
-class NoHostsError(CylcError):
-    ...
+HOST_SELECTION_METHODS = {
+    'definition order': lambda goodhosts: goodhosts[0],
+    'random': random.choice
+}
 
 
 # BACK COMPAT: get_platform
@@ -396,14 +397,10 @@ def get_host_from_platform(
 
     # Get the selection method
     method = platform['selection']['method']
-    methods = {
-        'definition order': lambda goodhosts: goodhosts[0],
-        'random': random.choice
-    }
     if not goodhosts:
-        raise NoHostsError(f'Unable to find valid host for {platform["name"]}')
+        raise NoHostsError(platform)
     else:
-        if method not in methods:
+        if method not in HOST_SELECTION_METHODS:
             raise CylcError(
                 f'method \"{method}\" is not a supported host '
                 'selection method.'
@@ -413,7 +410,7 @@ def get_host_from_platform(
                 f'host selection platform={platform["name"]} '
                 f'method={method} badhosts={bad_hosts}'
             )
-            return methods[method](goodhosts)
+            return HOST_SELECTION_METHODS[method](goodhosts)
 
 
 def fail_if_platform_and_host_conflict(task_conf, task_name):

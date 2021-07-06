@@ -253,3 +253,10 @@ class HostSelectException(CylcError):
             for key, value in data.items():
                 ret += f'\n        {key}: {value}'
         return ret
+
+
+class NoHostsError(CylcError):
+    """None of the hsts of a given platform were reachable."""
+    def __init__(self, platform):
+        self.platform_n = platform['name']
+        super().__init__(f'Unable to find valid host for {self.platform_n}')

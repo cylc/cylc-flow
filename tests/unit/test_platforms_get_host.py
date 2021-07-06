@@ -45,7 +45,7 @@ def test_get_host_from_platform_fails_no_goodhosts():
     with pytest.raises(NoHostsError) as err:
         get_host_from_platform(platform, {'nellie', 'dumbo', 'jumbo'})
     assert err.exconly() == (
-        'cylc.flow.platforms.NoHostsError: '
+        'cylc.flow.exceptions.NoHostsError: '
         'Unable to find valid host for Elephant'
     )
 
