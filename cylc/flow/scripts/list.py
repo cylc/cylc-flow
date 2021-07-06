@@ -35,6 +35,7 @@ import sys
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.scripts.install import add_cylc_rose_options
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -81,44 +82,7 @@ def get_option_parser():
         "initial cycle point, by default). Use '-p , ' for the default range.",
         metavar="[START],[STOP]", action="store", default=None, dest="prange")
 
-    # If cylc-rose plugin is available ad the --option/-O config
-    try:
-        __import__('cylc.rose')
-        parser.add_option(
-            "--opt-conf-key", "-O",
-            help=(
-                "Use optional Rose Config Setting"
-                "(If Cylc-Rose is installed)"
-            ),
-            action="append",
-            default=[],
-            dest="opt_conf_keys"
-        )
-        parser.add_option(
-            "--define", '-D',
-            help=(
-                "Each of these overrides the `[SECTION]KEY` setting in a "
-                "`rose-suite.conf` file. "
-                "Can be used to disable a setting using the syntax "
-                "`--define=[SECTION]!KEY` or even `--define=[!SECTION]`."
-            ),
-            action="append",
-            default=[],
-            dest="defines"
-        )
-        parser.add_option(
-            "--rose-template-variable", '-S',
-            help=(
-                "As `--define`, but with an implicit `[SECTION]` for "
-                "workflow variables."
-            ),
-            action="append",
-            default=[],
-            dest="rose_template_vars"
-        )
-    except ImportError:
-        pass
-
+    parser = add_cylc_rose_options(parser)
     return parser
 
 
