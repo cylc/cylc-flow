@@ -114,14 +114,10 @@ with Conf(
         Conf('description', VDR.V_STRING, '', desc='''
             A multi-line description of the workflow. It can be retrieved at
             run time with the ``cylc show`` command.
-
-            .. TODO Does this still work?
         ''')
         Conf('title', VDR.V_STRING, '', desc='''
             A single line description of the workflow. It can be retrieved at
             run time with the ``cylc show`` command.
-
-            .. TODO Does this still work?
 
         ''')
         Conf('URL', VDR.V_STRING, '', desc='''
@@ -133,8 +129,6 @@ with Conf(
             Example:
 
             ``http://my-site.com/workflows/%(workflow_name)s/index.html``
-
-            .. TODO Does this still work?
 
         ''')
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
@@ -169,8 +163,8 @@ with Conf(
                 * etc
                 * lib
 
-                And include the server.key file (from the .service
-                directory), this is required for authentication.
+               And include the server.key file (from the .service
+               directory), this is required for authentication.
 
                These should be located in the top level of your Cylc workflow,
                i.e. the directory that contains your flow.cylc file.
@@ -704,12 +698,12 @@ with Conf(
             other namespaces inherit from it, or a task if no others inherit
             from it.
 
-            Names may not contain ``:`` or ``.``.
+            .. important::
 
-            ..note::
+               Names may not contain ``:`` or ``.``.
 
-               ``:`` would stop cylc adding paths using task name to ``$PATH``.
-               ``.`` would be interpreted as a namespace delimeter
+               See :ref:`task namespace rules. <namespace-names>`
+
 
             legal values:
 

@@ -80,17 +80,6 @@ with Conf('global.cylc', desc='''
     from those higher up (but if a setting is present in a file higher up and
     not in any files lower down, it will not be overridden).
 
-    .. note::
-
-       For example, if the following files had these settings:
-
-       .. csv-table::
-          :header: File, Setting A, Setting B, Setting C
-
-          <site-conf-path>/flow/global.cylc, Hello, World, <not set>
-          ~/.cylc/flow/global.cylc, <not set>, Mars, 42
-          **Actual config**, **Hello**, **Mars**, **42**
-
     The following environment variables can change the files which are loaded:
 
     .. envvar:: CYLC_CONF_PATH
@@ -420,8 +409,7 @@ with Conf('global.cylc', desc='''
             Examples::
 
                atom --wait
-               code --wait
-               code -nw
+               code -new-window --wait
                emacs
                gedit -s
                gvim -fg
