@@ -350,9 +350,8 @@ with Conf('global.cylc', desc='''
                 Periodically clear the scheduler list of unreachable (bad)
                 hosts.
             '''):
-                Conf('interval', VDR.V_INTERVAL, DurationFloat(3600), desc='''
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(1800), desc='''
                     How often (in seconds) to run this plugin.
-                    This should probably be ~hours.
                 ''')
 
         with Conf('logging', desc='''
@@ -726,7 +725,7 @@ with Conf('global.cylc', desc='''
                           unless that host has been unreachable. In many cases
                           this is likely to cause load imbalances, but might
                           be appropriate if your hosts were
-                          `[main, backup, failsafe]`.
+                          ``[main, backup, failsafe]``.
                     '''
                 )
         with Conf('localhost', meta=Platform):

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Functions relating to (job) platforms.
+"""Functions relating to (job) platforms."""
 
 import random
 import re

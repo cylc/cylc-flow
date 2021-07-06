@@ -1321,8 +1321,9 @@ class TaskEventsManager():
     def reset_bad_hosts(self):
         """Periodically clear bad_hosts list.
         """
-        LOG.info(
-            'Periodic clearing of bad hosts which were: '
-            f'{self.bad_hosts}'
-        )
-        self.bad_hosts.clear()
+        if self.bad_hosts:
+            LOG.info(
+                'Periodic clearing of bad hosts which were: '
+                f'{self.bad_hosts}'
+            )
+            self.bad_hosts.clear()
