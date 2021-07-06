@@ -256,7 +256,7 @@ with Conf('global.cylc', desc='''
                 'method', VDR.V_STRING, 'name',
                 options=['name', 'address', 'hardwired'],
                 desc='''
-                    ``method`` determines how cylc finds the identity of the
+                    Determines how cylc finds the identity of the
                     workflow host.
 
                     Options:
