@@ -154,7 +154,7 @@ with Conf('global.cylc', desc='''
             Conf('available', VDR.V_SPACELESS_STRING_LIST, desc='''
                 A list of workflow run hosts. One of these hosts will be
                 appointed for a workflow to start on if an explicit host is not
-                provided as an option to a ``play`` command.
+                provided as an option to the ``cylc play`` command.
             ''')
             Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
                  desc='''
@@ -245,7 +245,7 @@ with Conf('global.cylc', desc='''
                 'method', VDR.V_STRING, 'name',
                 options=['name', 'address', 'hardwired'],
                 desc='''
-                    ``method`` determines how cylc finds the identity of the
+                    Determines how cylc finds the identity of the
                     workflow host.
 
                     Options:

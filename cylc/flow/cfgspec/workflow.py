@@ -447,7 +447,7 @@ with Conf(
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
             Cylc runs using the proleptic Gregorian calendar by default.
-            ``cycling mode`` allows you to run the workflow with the 360 day
+            This allows you to run the workflow with the 360 day
             calendar (12 months of 30 days in a year) OR integer cycling. It
             also supports use of the 365 (never a leap year) and 366 (always a
             leap year) calendars.
