@@ -105,7 +105,6 @@ ALIASES = {
     'external-trigger': 'ext-trigger',
     'get-contact': 'get-workflow-contact',
     'get-cylc-version': 'get-workflow-version',
-    'grep': 'search',
     'log': 'cat-log',
     'ls': 'list',
     'shutdown': 'stop',
