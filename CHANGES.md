@@ -56,6 +56,8 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4291](https://github.com/cylc/cylc-flow/pull/4291)
+ - Remove obsolete `cylc edit` and `cylc search` commands.
 
 [#4284](https://github.com/cylc/cylc-flow/pull/4284)
  - Make `--color=never` work with `cylc <command> --help`.
