@@ -60,7 +60,8 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform,
     get_localhost_install_target,
-    get_platform
+    get_platform,
+    NoHostsError
 )
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
@@ -356,7 +357,6 @@ class TaskJobManager:
             # allows the restart logic to correctly poll the status of the
             # background/at jobs that may still be running on the previous
             # workflow host.
-            from cylc.flow.platforms import NoHostsError
             try:
                 host = get_host_from_platform(
                     platform,

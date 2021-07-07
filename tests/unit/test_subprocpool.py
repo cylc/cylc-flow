@@ -215,7 +215,7 @@ def mock_ctx():
             'ret_code': 255, 'host': 'mouse', 'cmd_key': 'my-command'
         }
         for key in inputs:
-            if inputs[key] == None:
+            if inputs[key] is None:
                 inputs[key] = defaults[key]
         ctx = SimpleNamespace(
             timestamp=None,
@@ -230,6 +230,7 @@ def mock_ctx():
 def _test_callback(ctx, foo=''):
     """Very Simple test callback function"""
     LOG.error(f'callback called.{foo}')
+
 
 def _test_callback_255(ctx, foo=''):
     """Very Simple test callback function"""
@@ -265,7 +266,6 @@ def test__run_command_exit(caplog, mock_ctx, expect, ret_code, cmd_key):
     assert expect in caplog.records[0].msg
     if ret_code == 255:
         assert f'255 callback called.' in caplog.records[1].msg
-
 
 
 def test__run_command_exit_no_255_callback(caplog, mock_ctx):

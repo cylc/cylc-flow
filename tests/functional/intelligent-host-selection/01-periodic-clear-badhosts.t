@@ -85,5 +85,5 @@ named_grep_ok "definition order remote tidy fails" \
     "Tried to tidy remote platform: 'mixedhostplatform' using host 'unreachable_host' but failed; trying a different host" \
     "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
-purge
+purge "${WORKFLOW_NAME}" "mixedhostplatform"
 exit 0

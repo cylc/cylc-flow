@@ -483,7 +483,7 @@ class SubProcPool:
             callback_255: Function to run if command exits with a 255
                 error - usually associated with ssh being unable to
                 contact a remote host.
-            callback_255_args: Arguements for the 255 callback function.
+            callback_255_args: Arguments for the 255 callback function.
 
         """
         def _run_callback(callback, args_=None):
