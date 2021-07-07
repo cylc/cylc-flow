@@ -68,7 +68,7 @@ named_grep_ok "mixedhost task suceeded" \
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.
 named_grep_ok "remove task platform bad hosts after submit-fail" \
-    "Clearing \['e9755ca30f5', '3c0b4799402'\] from bad_hosts" \
+    "badhostplatform: Initialisation on platform" \
     "${LOGFILE}"
 
 purge

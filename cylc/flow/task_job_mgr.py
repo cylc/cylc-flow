@@ -285,10 +285,8 @@ class TaskJobManager:
                     self.bad_hosts.difference_update(itask.platform['hosts'])
                     LOG.critical(TaskRemoteMgmtError(
                         (
-                            f'{itask.platform["name"]}: initialisation did '
-                            f'not complete because it has no reachable hosts.'
-                            f' Clearing {itask.platform["hosts"]} from '
-                            'bad_hosts'
+                            'Initialisation on platform did not complete:'
+                            'no hosts were reachable.'
                         ), itask.platform['name'], [], 1, '', '',
                     ))
                     out_of_hosts = True

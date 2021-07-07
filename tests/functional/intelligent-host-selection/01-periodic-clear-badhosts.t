@@ -61,7 +61,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 
 # Periodic clearance of badhosts happened:
 named_grep_ok "periodic clearance message" \
-    "Periodic clearing of bad hosts which were: {'unreachable_host'}" \
+    "Clearing bad hosts: {'unreachable_host'}" \
     "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # job log retrieval failed on the definition order attempt (us):

@@ -1319,11 +1319,11 @@ class TaskEventsManager():
         self.event_timers_updated = True
 
     def reset_bad_hosts(self):
-        """Periodically clear bad_hosts list.
+        """Clear bad_hosts list.
         """
         if self.bad_hosts:
             LOG.info(
-                'Periodic clearing of bad hosts which were: '
+                'Clearing bad hosts: '
                 f'{self.bad_hosts}'
             )
             self.bad_hosts.clear()
