@@ -16,8 +16,13 @@
 """Load custom variables for template processor."""
 
 from ast import literal_eval
+from optparse import Values
+from os import PathLike
+from pathlib import Path
+from typing import Union, Dict
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow import iter_entry_points
+from cylc.flow.exceptions import UserInputError, PluginError
 
 
 def eval_var(var):
@@ -68,3 +73,39 @@ def load_template_vars(template_vars=None, template_vars_file=None):
             key, val = pair.split("=", 1)
             res[key.strip()] = eval_var(val.strip())
     return res
+
+
+def get_template_vars(
+    options: Values, flow_file: Union[str, 'PathLike[str]']
+) -> Dict:
+    # If we are operating on an installed workflow _load_template_vars should
+    # Return something.
+    template_vars = load_template_vars(
+        options.templatevars, options.templatevars_file)
+    # If it doesn't we operate on the possibility that we might be looking at
+    # a cylc-src dir.
+    if template_vars == {}:
+        flow_file = Path(flow_file)
+        source = flow_file.parent
+        for entry_point in iter_entry_points(
+            'cylc.pre_configure'
+        ):
+            try:
+                if source:
+                    ep_result = entry_point.resolve()(
+                        srcdir=source, opts=options
+                    )
+                else:
+                    ep_result = entry_point.resolve()(
+                        srcdir=Path().cwd(), opts=options
+                    )
+                template_vars = ep_result['template_variables']
+            except Exception as exc:
+                # NOTE: except Exception (purposefully vague)
+                # this is to separate plugin from core Cylc errors
+                raise PluginError(
+                    'cylc.pre_configure',
+                    entry_point.name,
+                    exc
+                ) from None
+    return template_vars

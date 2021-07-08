@@ -36,7 +36,7 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.scripts.install import add_cylc_rose_options
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
 
@@ -90,33 +90,7 @@ def get_option_parser():
 def main(parser, options, reg):
     workflow, flow_file = parse_workflow_arg(options, reg)
 
-    from cylc.flow import iter_entry_points
-    from cylc.flow.exceptions import PluginError
-    from pathlib import Path
-    flow_file = Path(flow_file)
-    source = flow_file.parent
-
-    template_vars = load_template_vars(
-        options.templatevars, options.templatevars_file)
-    if template_vars == {}:
-        for entry_point in iter_entry_points(
-            'cylc.pre_configure'
-        ):
-            try:
-                if source:
-                    ep_result = entry_point.resolve()(srcdir=source, opts=options)
-                else:
-                    from pathlib import Path
-                    ep_result = entry_point.resolve()(srcdir=Path().cwd(), opts=options)
-                template_vars = ep_result['template_variables']
-            except Exception as exc:
-                # NOTE: except Exception (purposefully vague)
-                # this is to separate plugin from core Cylc errors
-                raise PluginError(
-                    'cylc.pre_configure',
-                    entry_point.name,
-                    exc
-                ) from None
+    template_vars = get_template_vars(options, flow_file)
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")
