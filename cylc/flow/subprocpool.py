@@ -24,12 +24,13 @@ import sys
 from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
-from subprocess import DEVNULL  # nosec
+from subprocess import DEVNULL, run  # nosec
 from typing import Any, Callable, List, Optional
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
+from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.wallclock import get_current_time_string
 
@@ -458,24 +459,6 @@ class SubProcPool:
         If task has failed with a 255 error, run an alternative callback if
         one is provided.
 
-         ┌───────────────┐           ┌───────────────┐
-         │ctx.ret_code is│  Yes      │Append host to │
-         │255 (ssh comms ├──────────►│list of bad    │
-         │     failure)  │           │hosts          │
-         └──┬────────────┘           └───────┬───────┘
-            │No                              │
-            │                        ┌───────▼───────┐
-            │                   No   │255 Specific   │
-            │         ┌──────────────┤callback       │
-            │         │              │provided?      │
-            │         │              └───────┬───────┘
-            │         │                      │Yes
-         ┌──▼─────────▼──┐           ┌───────▼───────┐
-         │Run callback if│           │Run 255 error  │
-         │given.         │           │callback       │
-         │               │           │               │
-         └───────────────┘           └───────────────┘
-
         Args:
             ctx: SubProcContext object for this task.
             callback: Function to run on command exit.
@@ -495,7 +478,8 @@ class SubProcPool:
                 return False
 
         ctx.timestamp = get_current_time_string()
-        if ctx.ret_code == 255:
+
+        if cls.ssh_255_fail(ctx) or cls.rsync_255_fail(ctx) is True:
             # Job log retrieval passes a special object as a command key
             # Extra logic to provide sensible strings for logging.
             if isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
@@ -523,3 +507,41 @@ class SubProcPool:
         else:
             # For every other return code run default callback.
             _run_callback(callback, callback_args)
+
+    @staticmethod
+    def ssh_255_fail(ctx) -> bool:
+        """Test context for ssh command failing with a 255 error."""
+        ssh_255_fail = False
+        if (
+            ctx.cmd[0] == 'ssh'
+            and ctx.ret_code == 255
+        ):
+            ssh_255_fail = True
+        return ssh_255_fail
+
+    @staticmethod
+    def rsync_255_fail(ctx) -> bool:
+        """Tests context for rsync failing to communicate with a host.
+
+        If there has been a failure caused by rsync being unable to connect
+        try a test of ssh connectivity. Necessary becuase loss of connectivity
+        may cause different rsync failures depending on version, and some of
+        the failures may be caused by other problems.
+        """
+        rsync_255_fail = False
+        if (
+            ctx.cmd[0] == 'rsync'
+            and ctx.ret_code not in [0, 255]
+            and is_remote_host(ctx.host)
+        ):
+            ssh_test = run(
+                ['ssh', ctx.host, 'echo', 'True'], capture_output=True
+            )
+            if ssh_test.returncode == 255:
+                rsync_255_fail = True
+        elif (
+            ctx.cmd[0] == 'rsync'
+            and ctx.ret_code == 255
+        ):
+            rsync_255_fail = True
+        return rsync_255_fail

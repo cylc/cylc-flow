@@ -207,17 +207,19 @@ if __name__ == '__main__':
 
 @pytest.fixture
 def mock_ctx():
-    def inner_(ret_code=None, host=None, cmd_key=None):
+    def inner_(ret_code=None, host=None, cmd_key=None, cmd=None):
         """Provide a SimpleNamespace which looks like a ctx object.
         """
         inputs = locals()
         defaults = {
-            'ret_code': 255, 'host': 'mouse', 'cmd_key': 'my-command'
+            'ret_code': 255, 'host': 'mouse', 'cmd_key': 'my-command',
+            'cmd': ['bistromathic', 'take-off']
         }
         for key in inputs:
             if inputs[key] is None:
                 inputs[key] = defaults[key]
         ctx = SimpleNamespace(
+            cmd=inputs['cmd'],
             timestamp=None,
             ret_code=inputs['ret_code'],
             host=inputs['host'],
@@ -240,26 +242,30 @@ def _test_callback_255(ctx, foo=''):
 @pytest.mark.parametrize(
     'expect, ret_code, cmd_key',
     [
-        pytest.param('callback called', 0, 'cylc-cat', id="return 0"),
-        pytest.param('callback called', 1, 'cylc-cat', id="return 1"),
+        pytest.param('callback called', 0, 'ssh something', id="return 0"),
+        pytest.param('callback called', 1, 'ssh something', id="return 1"),
         pytest.param(
-            '"cylc-cat" failed because "mouse" is not available',
+            '"ssh" failed because "mouse" is not available',
             255,
-            'cylc-cat',
+            'ssh',
             id="return 255"
         ),
         pytest.param(
-            '"cylc-ret" failed because "mouse" is not available',
+            (
+                '"[\'ssh\', \'something\']" failed because "mouse" is '
+                'not available'
+            ),
             255,
-            TaskJobLogsRetrieveContext('cylc-ret', None, None, None),
+            TaskJobLogsRetrieveContext(['ssh', 'something'], None, None, None),
             id="return 255 (log-ret)"
         )
     ]
 )
-def test__run_command_exit(caplog, mock_ctx, expect, ret_code, cmd_key):
+def test__run_command_exit(
+    caplog, mock_ctx, expect, ret_code, cmd_key):
     """It runs a callback
     """
-    ctx = mock_ctx(ret_code=ret_code, cmd_key=cmd_key)
+    ctx = mock_ctx(ret_code=ret_code, cmd_key=cmd_key, cmd=['ssh'])
     SubProcPool._run_command_exit(
         ctx, callback=_test_callback, callback_255=_test_callback_255
     )
@@ -271,7 +277,7 @@ def test__run_command_exit(caplog, mock_ctx, expect, ret_code, cmd_key):
 def test__run_command_exit_no_255_callback(caplog, mock_ctx):
     """It runs the vanilla callback if no 255 callback provided"""
     SubProcPool._run_command_exit(mock_ctx(), callback=_test_callback)
-    assert 'callback called' in caplog.records[1].msg
+    assert 'callback called' in caplog.records[0].msg
 
 
 def test__run_command_exit_no_255_args(caplog, mock_ctx):
@@ -279,7 +285,7 @@ def test__run_command_exit_no_255_args(caplog, mock_ctx):
     callback 255 args provided.
     """
     SubProcPool._run_command_exit(
-        mock_ctx(),
+        mock_ctx(cmd=['ssh', 'Zaphod']),
         callback=_test_callback,
         callback_args=['Zaphod'],
         callback_255=_test_callback_255
@@ -292,9 +298,54 @@ def test__run_command_exit_add_to_badhosts(mock_ctx):
     """
     badhosts = {'foo', 'bar'}
     SubProcPool._run_command_exit(
-        mock_ctx(),
+        mock_ctx(cmd=['ssh']),
         bad_hosts=badhosts,
         callback=print,
         callback_args=['Welcome to Magrathea']
     )
     assert badhosts == {'foo', 'bar', 'mouse'}
+
+
+def test__run_command_exit_rsync_fails(mock_ctx):
+    """It updates the list of badhosts
+    """
+    badhosts = {'foo', 'bar'}
+    ctx = mock_ctx(cmd=['rsync'], ret_code=42)
+    SubProcPool._run_command_exit(
+        ctx=ctx,
+        bad_hosts=badhosts,
+        callback=print,
+        callback_args=['Welcome to Magrathea']
+    )
+    assert badhosts == {'foo', 'bar', 'mouse'}
+
+
+@pytest.mark.parametrize(
+    'expect, ctx_kwargs',
+    [
+        (True, {'cmd': ['ssh'], 'ret_code': 255}),
+        (False, {'cmd': ['foo'], 'ret_code': 255}),
+        (False, {'cmd': ['ssh'], 'ret_code': 42})
+    ]
+)
+def test_ssh_255_fail(mock_ctx, expect, ctx_kwargs):
+    """It knows when a ctx has failed
+    """
+    output = SubProcPool.ssh_255_fail(mock_ctx(**ctx_kwargs))
+    assert output == expect
+
+
+@pytest.mark.parametrize(
+    'expect, ctx_kwargs',
+    [
+        (True, {'cmd': ['rsync'], 'ret_code': 99, 'host': 'not_local'}),
+        (True, {'cmd': ['rsync'], 'ret_code': 255, 'host': 'not_local'}),
+        (False, {'cmd': ['make it-so'], 'ret_code': 255, 'host': 'not_local'}),
+        (False, {'cmd': ['rsync'], 'ret_code': 125, 'host': 'localhost'}),
+    ]
+)
+def test_rsync_255_fail(mock_ctx, expect, ctx_kwargs):
+    """It knows when a ctx has failed
+    """
+    output = SubProcPool.rsync_255_fail(mock_ctx(**ctx_kwargs))
+    assert output == expect
