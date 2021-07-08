@@ -120,13 +120,26 @@ def test_get_template_vars_installed_flow(monkeypatch):
     assert get_template_vars(opts, '') == {'foo': 'bar'}
 
 
-def test_get_template_vars_src_flow(monkeypatch):
-    """It works on a flow which hasn't been installed.
-    """
+@pytest.fixture(scope='module')
+def provide_opts():
+    """Provide a fake opts"""
+    return SimpleNamespace(
+        templatevars='', templatevars_file=''
+    )
+
+
+@pytest.fixture
+def monkeypatch_load_template_vars(monkeypatch):
     monkeypatch.setattr(
         'cylc.flow.templatevars.load_template_vars',
         lambda templatevars, templatevars_file: {}
     )
+
+
+def test_get_template_vars_src_flow(
+    monkeypatch, provide_opts, monkeypatch_load_template_vars):
+    """It works on a flow which hasn't been installed.
+    """
     def fake_iter_entry_points(_):
         class fake_ep:
             name = 'Zaphod'
@@ -140,19 +153,13 @@ def test_get_template_vars_src_flow(monkeypatch):
         'cylc.flow.templatevars.iter_entry_points',
         fake_iter_entry_points
     )
-    opts = SimpleNamespace(
-        templatevars='', templatevars_file='', opt_conf_keys=[], defines=[],
-        rose_template_vars=[])
-    assert get_template_vars(opts, '') == {'MYVAR': 'foo'}
+    assert get_template_vars(provide_opts, '') == {'MYVAR': 'foo'}
 
 
-def test_get_template_vars_src_flow_fails(monkeypatch):
+def test_get_template_vars_src_flow_fails(
+    monkeypatch, provide_opts, monkeypatch_load_template_vars):
     """It fails if there is a plugin error.
     """
-    monkeypatch.setattr(
-        'cylc.flow.templatevars.load_template_vars',
-        lambda templatevars, templatevars_file: {}
-    )
     def fake_iter_entry_points(_):
         class fake_ep:
             name = 'Zaphod'
@@ -166,10 +173,8 @@ def test_get_template_vars_src_flow_fails(monkeypatch):
         'cylc.flow.templatevars.iter_entry_points',
         fake_iter_entry_points
     )
-    opts = SimpleNamespace(
-        templatevars='', templatevars_file='', opt_conf_keys=[], defines=[],
-        rose_template_vars=[])
+
     with pytest.raises(PluginError) as exc:
-        get_template_vars(opts, '')
+        get_template_vars(provide_opts, '')
     assert exc.match(
         'Error in plugin cylc.pre_configure.Zaphod\nUtter Drivel.')
