@@ -78,6 +78,21 @@ def load_template_vars(template_vars=None, template_vars_file=None):
 def get_template_vars(
     options: Values, flow_file: Union[str, 'PathLike[str]']
 ) -> Dict:
+    """Get Template Vars from either an uninstalled or installed flow.
+
+    Designed to allow a Cylc Script to be run on an installed workflow where
+    template variables have been processed and saved to file, but fallback to
+    evaluating templating if run on an uninstalled workflow.
+
+    Args:
+        options: Options passed to the Cylc script which is using this
+            function.
+        flow_file: Path to the ``flow.cylc`` (or ``suite.rc``) file defining
+            this workflow.
+
+    Returns:
+        template_vars: Template variables to give to a Cylc config.
+    """
     # If we are operating on an installed workflow _load_template_vars should
     # Return something.
     template_vars = load_template_vars(
@@ -85,20 +100,14 @@ def get_template_vars(
     # If it doesn't we operate on the possibility that we might be looking at
     # a cylc-src dir.
     if template_vars == {}:
-        flow_file = Path(flow_file)
-        source = flow_file.parent
+        source = Path(flow_file).parent
         for entry_point in iter_entry_points(
             'cylc.pre_configure'
         ):
             try:
-                if source:
-                    ep_result = entry_point.resolve()(
-                        srcdir=source, opts=options
-                    )
-                else:
-                    ep_result = entry_point.resolve()(
-                        srcdir=Path().cwd(), opts=options
-                    )
+                ep_result = entry_point.resolve()(
+                    srcdir=source, opts=options
+                )
                 template_vars = ep_result['template_variables']
             except Exception as exc:
                 # NOTE: except Exception (purposefully vague)
