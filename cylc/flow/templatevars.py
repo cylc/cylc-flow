@@ -19,7 +19,7 @@ from ast import literal_eval
 from optparse import Values
 from os import PathLike
 from pathlib import Path
-from typing import Union, Dict
+from typing import Union, Dict, Tuple, Optional
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import UserInputError, PluginError
@@ -76,7 +76,9 @@ def load_template_vars(template_vars=None, template_vars_file=None):
 
 
 def get_template_vars(
-    options: Values, flow_file: Union[str, 'PathLike[str]']
+    options: Values,
+    flow_file: Union[str, 'PathLike[str]'],
+    names: Optional[Tuple[str, str]] = None
 ) -> Dict:
     """Get Template Vars from either an uninstalled or installed flow.
 
@@ -93,13 +95,16 @@ def get_template_vars(
     Returns:
         template_vars: Template variables to give to a Cylc config.
     """
-    # If we are operating on an installed workflow _load_template_vars should
-    # Return something.
-    template_vars = load_template_vars(
-        options.templatevars, options.templatevars_file)
-    # If it doesn't we operate on the possibility that we might be looking at
-    # a cylc-src dir.
-    if template_vars == {}:
+    # We are operating on an installed workflow.
+    if (
+        names
+        and names[0] == names[1]
+        and not Path(names[0]).is_file()
+    ):
+        template_vars = load_template_vars(
+            options.templatevars, options.templatevars_file)
+    # Else we act as if we might be looking at a cylc-src dir.
+    else:
         source = Path(flow_file).parent
         for entry_point in iter_entry_points(
             'cylc.pre_configure'

@@ -38,7 +38,7 @@ from cylc.flow.exceptions import (WorkflowConfigError,
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
@@ -104,7 +104,7 @@ def main(_, options, reg):
         workflow,
         flow_file,
         options,
-        load_template_vars(options.templatevars, options.templatevars_file),
+        get_template_vars(options, flow_file, [reg, workflow]),
         output_fname=options.output, mem_log_func=profiler.log_memory)
 
     # Check bounds of sequences

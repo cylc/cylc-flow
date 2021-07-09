@@ -132,7 +132,7 @@ def main(parser, options, reg=None):
         workflow,
         flow_file,
         options,
-        get_template_vars(options, flow_file))
+        get_template_vars(options, flow_file, [reg, workflow]))
 
     config.pcfg.idump(
         options.item,
