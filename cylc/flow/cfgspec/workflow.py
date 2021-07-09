@@ -874,14 +874,10 @@ with Conf(
                     displayed by the ``cylc list`` command and can be
                     retrieved from running tasks with the ``cylc show``
                     command.
-
-                    .. TODO - cylc show dead?
                 ''')
                 Conf('description', VDR.V_STRING, '', desc='''
                     A multi-line description of this namespace, retrievable
                     from running tasks with the ``cylc show`` command.
-
-                    .. TODO - cylc show dead?
                 ''')
                 Conf(
                     'URL', VDR.V_STRING, '', desc='''
