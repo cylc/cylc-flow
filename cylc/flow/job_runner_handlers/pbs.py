@@ -69,7 +69,7 @@ class PBSHandler:
     DIRECTIVE_PREFIX = "#PBS "
     # PBS fails a job submit if job "name" in "-N name" is too long.
     # For version 12 or below, this is 15 characters.
-    # You can modify this in the site/user `global.cfg` like this
+    # You can modify this in the site/user `global.cylc` like this
     # [platforms]
     #     [[the-name-of-my-pbs-platform]]
     #         job runner = pbs
