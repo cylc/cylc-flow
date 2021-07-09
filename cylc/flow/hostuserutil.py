@@ -44,13 +44,17 @@ returning the IP address associated with this socket.
 
 """
 
+from contextlib import suppress
 import os
 import pwd
 import socket
-from contextlib import suppress
+import sys
 from time import time
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+
+
+IS_MAC_OS = 'darwin' in sys.platform.lower()
 
 
 class HostUtil:
@@ -114,6 +118,19 @@ class HostUtil:
         if target not in self._host_exs:
             if target is None:
                 target = socket.getfqdn()
+            if (
+                IS_MAC_OS
+                and target == (
+                    '1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.'
+                    '0.0.0.0.0.0.ip6.arpa'
+                )
+            ):
+                # Python's socket bindings don't play nicely with mac os
+                # so by default we get the above ip6.arpa adresss from
+                # socket.getfqdn, note this does *not* match `hostname -f`.
+                # https://github.com/cylc/cylc-flow/issues/2689
+                # https://github.com/cylc/cylc-flow/issues/3595
+                target = socket.gethostname()
             try:
                 self._host_exs[target] = socket.gethostbyname_ex(target)
             except IOError as exc:

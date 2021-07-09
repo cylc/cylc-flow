@@ -92,9 +92,6 @@ jobs:
       - name: Brew Install
         if: startsWith(matrix.os, 'macos')
         run: |
-          # apply DNS patch
-          patch cylc/flow/hostuserutil.py < etc/conf/macos-patch
-
           # install system deps
           brew update
           brew install bash coreutils gnu-sed

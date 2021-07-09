@@ -102,6 +102,9 @@ respectively.
 
 ### Fixes
 
+[#4296](https://github.com/cylc/cylc-flow/pull/4296) -
+Patches DNS issues with newer versions of Mac OS.
+
 [#4273](https://github.com/cylc/cylc-flow/pull/4273)
  - Remove obsolete Cylc 7 visualization config section.
 
