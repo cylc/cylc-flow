@@ -67,18 +67,6 @@ jobs:
       REMOTE_PLATFORM: ${{ contains(matrix.platform, '_remote') }}
 
     steps:
-      - name: Fudge /etc/hosts
-        run: |
-          # Add the current IP address, long hostname and short hostname
-          # record to /etc/hosts file
-          # https://github.com/actions/virtual-environments/issues/3185
-          echo -e \
-            "$(ip addr show eth0 \
-            | grep "inet\b" \
-            | awk '{print $2}' \
-            | cut -d/ -f1)\t$(hostname -f) $(hostname -s)" \
-            | sudo tee -a /etc/hosts
-
       - name: Checkout
         uses: actions/checkout@v2
         with:
