@@ -91,6 +91,9 @@ def get_template_vars(
             function.
         flow_file: Path to the ``flow.cylc`` (or ``suite.rc``) file defining
             this workflow.
+        names: reg and flow file name from
+            `cylc.flow.workflow_filesparse_workflow_arg`: Used to determine
+            whether flow is installed.
 
     Returns:
         template_vars: Template variables to give to a Cylc config.
@@ -98,8 +101,8 @@ def get_template_vars(
     # We are operating on an installed workflow.
     if (
         names
-        and names[0] == names[1]
-        and not Path(names[0]).is_file()
+        and names[0] == names[1]            # reg == flow_file name
+        and not Path(names[0]).is_file()    # reg is not a path
     ):
         template_vars = load_template_vars(
             options.templatevars, options.templatevars_file)

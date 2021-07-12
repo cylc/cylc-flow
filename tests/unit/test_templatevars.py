@@ -117,7 +117,8 @@ def test_get_template_vars_installed_flow(monkeypatch):
         lambda templatevars, templatevars_file: {'foo': 'bar'}
     )
     opts = SimpleNamespace(templatevars='', templatevars_file='')
-    assert get_template_vars(opts, '') == {'foo': 'bar'}
+    result = get_template_vars(opts, '', names=('eg/runN', 'eg/runN'))
+    assert result == {'foo': 'bar'}
 
 
 @pytest.fixture(scope='module')
