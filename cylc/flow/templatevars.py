@@ -99,7 +99,6 @@ def get_template_vars(
         template_vars: Template variables to give to a Cylc config.
     """
     # We are operating on an installed workflow.
-    template_vars = {}
     if (
         names
         and names[0] == names[1]            # reg == flow_file name
@@ -109,6 +108,8 @@ def get_template_vars(
             options.templatevars, options.templatevars_file)
     # Else we act as if we might be looking at a cylc-src dir.
     else:
+        template_vars = load_template_vars(
+            options.templatevars, options.templatevars_file)
         source = Path(flow_file).parent
         for entry_point in iter_entry_points(
             'cylc.pre_configure'
@@ -117,7 +118,7 @@ def get_template_vars(
                 ep_result = entry_point.resolve()(
                     srcdir=source, opts=options
                 )
-                template_vars = ep_result['template_variables']
+                template_vars.extend(ep_result['template_variables'])
             except Exception as exc:
                 # NOTE: except Exception (purposefully vague)
                 # this is to separate plugin from core Cylc errors
