@@ -50,7 +50,7 @@ create_test_global_config "" "
             method = 'definition order'
     "
 #-------------------------------------------------------------------------------
-
+cylc config -i 'platforms' >&2
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

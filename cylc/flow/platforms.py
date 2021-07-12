@@ -387,7 +387,7 @@ def get_host_from_platform(
     """
     # Get list of goodhosts:
     if bad_hosts:
-        LOG.warning(
+        LOG.debug(
             'Cylc knows that these hosts are unreachable: \n'
             f'{", ".join(sorted(bad_hosts))}'
         )
