@@ -66,6 +66,7 @@ requests_).
  - Martin Ryan
  - Mel Hall
  - Ronnie Dutta
+ - Glenn Creighton
 
 
 (All contributors are identifiable with email addresses in the git version
