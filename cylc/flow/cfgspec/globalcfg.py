@@ -409,7 +409,7 @@ with Conf('global.cylc', desc='''
             Examples::
 
                atom --wait
-               code -new-window --wait
+               code --new-window --wait
                emacs
                gedit -s
                gvim -fg
