@@ -118,7 +118,7 @@ def get_template_vars(
                 ep_result = entry_point.resolve()(
                     srcdir=source, opts=options
                 )
-                template_vars.extend(ep_result['template_variables'])
+                template_vars.update(ep_result['template_variables'])
             except Exception as exc:
                 # NOTE: except Exception (purposefully vague)
                 # this is to separate plugin from core Cylc errors
