@@ -215,6 +215,8 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
     path = Path(path)
     target = Path(target)
     if path.exists():
+        # note all three checks are needed here due to case where user has set
+        # their own symlink which does not match the global config set one.
         if path.is_symlink() and target.exists() and path.samefile(target):
             # correct symlink already exists
             return False
