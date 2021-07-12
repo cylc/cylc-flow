@@ -1888,6 +1888,7 @@ class Scheduler:
         if stoppoint is not None:
             self.options.stopcp = str(stoppoint)
             self.pool.set_stop_point(get_point(self.options.stopcp))
+            self.validate_finalcp()
 
     async def handle_exception(self, exc: Exception) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
@@ -1899,3 +1900,17 @@ class Scheduler:
         """
         await self.shutdown(exc)
         raise exc from None
+
+    def validate_finalcp(self):
+        """Warn if Stop Cycle point is on or after the final cycle point
+        """
+        if self.config.final_point is None:
+            return
+        if (
+            get_point(self.options.stopcp, self.config.cycling_type)
+            > get_point(self.config.final_point, self.config.cycling_type)
+        ):
+            LOG.warning(
+                f'Stop Cycle point \'{self.options.stopcp}\' will have no '
+                'effect as it is after the final Cycle '
+                f'point \'{self.options.fcp}\'.')
