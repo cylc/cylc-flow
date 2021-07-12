@@ -44,6 +44,7 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.scripts.install import add_cylc_rose_options
 
 
 def get_option_parser():
@@ -70,6 +71,8 @@ def get_option_parser():
         "-u", "--run-mode", help="Validate for run mode.", action="store",
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'dummy-local', 'simulation'])
+
+    parser = add_cylc_rose_options(parser)
 
     parser.set_defaults(is_validate=True)
 
