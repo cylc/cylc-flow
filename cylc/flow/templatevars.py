@@ -99,6 +99,7 @@ def get_template_vars(
         template_vars: Template variables to give to a Cylc config.
     """
     # We are operating on an installed workflow.
+    template_vars = {}
     if (
         names
         and names[0] == names[1]            # reg == flow_file name
