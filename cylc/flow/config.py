@@ -48,8 +48,13 @@ from cylc.flow import LOG
 from cylc.flow.c3mro import C3
 from cylc.flow.listify import listify
 from cylc.flow.exceptions import (
-    CylcError, WorkflowConfigError, IntervalParsingError, TaskDefError,
-    ParamExpandError)
+    CylcError,
+    WorkflowConfigError,
+    IntervalParsingError,
+    TaskDefError,
+    ParamExpandError,
+    UserInputError
+)
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.param_expand import NameExpander
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -644,13 +649,29 @@ class WorkflowConfig:
             self.options.startcp
             self.start_point
         """
-        if getattr(self.options, 'startcp', None) is not None:
-            # Warm start from a point later than initial point.
+        startcp = getattr(self.options, 'startcp', None)
+        starttask = getattr(self.options, 'starttask', None)
+
+        if startcp is not None and starttask is not None:
+            raise UserInputError(
+                "--start-cycle-point and --start-task are mutually exclusive"
+            )
+        if startcp:
+            # Start from a point later than initial point.
             if self.options.startcp == 'now':
                 self.options.startcp = get_current_time_string()
             self.start_point = get_point(self.options.startcp).standardise()
+        elif starttask:
+            # Start from designated task(s).
+            # Select the earliest start point for use in pre-initial ignore.
+            self.start_point = min(
+                get_point(
+                    TaskID.split(taskid)[1]
+                ).standardise()
+                for taskid in self.options.starttask
+            )
         else:
-            # Cold start.
+            # Start from the initial point.
             self.start_point = self.initial_point
 
     def process_final_cycle_point(self):

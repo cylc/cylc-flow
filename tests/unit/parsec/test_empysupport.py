@@ -71,18 +71,17 @@ class TestEmpysupport1(unittest.TestCase):
                 'empy': True, 'jinja2': False,
                 'contin': False, 'inline': False
             }
-            asedit = None
             tf.write("#!empy\na=@name\n".encode())
             tf.flush()
             r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
+                              viewcfg=viewcfg)
             self.assertEqual(['a=Cylc'], r)
 
             del template_vars['name']
 
             with self.assertRaises(EmPyError):
                 read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
+                              viewcfg=viewcfg)
             sys.stdout.getvalue = lambda: ''
 
         sys.stdout.getvalue = lambda: ''
