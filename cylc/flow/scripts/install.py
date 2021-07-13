@@ -94,7 +94,7 @@ def add_cylc_rose_options(parser):
         parser.add_option(
             "--opt-conf-key", "-O",
             help=(
-                "Use optional Rose Config Setting"
+                "Use optional Rose Config Setting "
                 "(If Cylc-Rose is installed)"
             ),
             action="append",
