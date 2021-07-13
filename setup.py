@@ -47,7 +47,7 @@ install_requires = [
     'colorama>=0.4,<=1',
     'graphene>=2.1,<3',
     'jinja2==2.11.*',
-    # 'metomi-isodatetime>=1!2.0.2, <1!2.1.0',
+    'metomi-isodatetime>=1!2.0.2, <1!2.1.0',
     'protobuf==3.15.*',
     'psutil>=5.6.0',
     'pyuv==1.4.*',
