@@ -406,10 +406,6 @@ def get_host_from_platform(
                 'selection method.'
             )
         else:
-            LOG.debug(
-                f'host selection platform={platform["name"]} '
-                f'method={method} badhosts={bad_hosts}'
-            )
             return HOST_SELECTION_METHODS[method](goodhosts)
 
 
