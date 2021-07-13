@@ -49,14 +49,47 @@ DEPRECATION_WARN = '''
    Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
 '''
 
+SCRIPT_COMMON = '''
+
+                See also :ref:`JobScripts`.
+
+                User-defined script items:
+
+                * :cylc:conf:`[..]init-script`
+                * :cylc:conf:`[..]env-script`
+                * :cylc:conf:`[..]pre-script`
+                * :cylc:conf:`[..]script`
+                * :cylc:conf:`[..]post-script`
+                * :cylc:conf:`[..]err-script`
+                * :cylc:conf:`[..]exit-script`
+
+                Example::
+
+                   {}
+'''
+
+DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
+.. warning::
+
+   This config item has been moved to a platform setting in the
+   :cylc:conf:`global.cylc[platforms]` section. It will be used by the
+   automated platform upgrade mechanism at Cylc 8, and deprecated
+   at Cylc 9.
+
+   Ideally, as a user this should be set by your site admins
+   and you will only need to pick a suitable
+   :cylc:conf:`flow.cylc[runtime][<namespace>]platform`.
+'''
+
 
 with Conf(
     'flow.cylc',
     desc='''
-        Defines a cylc workflow configuration.
+        Defines a Cylc workflow configuration.
 
-        Embedded Jinja2 code (see :ref:`Jinja`) must process to a valid
-        raw flow.cylc file. See also :ref:`FlowConfigFile` for a descriptive
+        After processing any embedded templating code
+        (see :ref:`Jinja`) the resultant raw flow.cylc file
+        must to be valid. See also :ref:`FlowConfigFile` for a descriptive
         overview of flow.cylc files, including syntax (:ref:`Syntax`).
 
         .. note::
@@ -68,11 +101,15 @@ with Conf(
 ) as SPEC:
 
     with Conf('meta', desc='''
-        Section for metadata items for this workflow. Several items (title,
-        description, URL) are pre-defined and are used by Cylc. Others can be
-        user-defined and passed to workflow event handlers to be interpreted
-        according to your needs. For example, the value of "workflow-priority"
-        could determine how an event handler responds to failure events.
+        Section for metadata items for this workflow. Cylc defines and uses
+        some terms (title, description, URL). Users can define more terms,
+        and use these in event handlers.
+
+        .. note::
+
+           A user could define "workflow-priority". An event handler
+           would then respond to failure events in a way set by
+           "workflow-priority".
     '''):
         Conf('description', VDR.V_STRING, '', desc='''
             A multi-line description of the workflow. It can be retrieved at
@@ -81,6 +118,7 @@ with Conf(
         Conf('title', VDR.V_STRING, '', desc='''
             A single line description of the workflow. It can be retrieved at
             run time with the ``cylc show`` command.
+
         ''')
         Conf('URL', VDR.V_STRING, '', desc='''
             A web URL to workflow documentation.  If present it can be browsed
@@ -91,6 +129,7 @@ with Conf(
             Example:
 
             ``http://my-site.com/workflows/%(workflow_name)s/index.html``
+
         ''')
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
             Any user-defined metadata item. These, like title, URL, etc. can be
@@ -103,7 +142,7 @@ with Conf(
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
             :term:`Implicit tasks <implicit task>` are tasks without explicit
             runtime definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
-            these are not allowed, as often they happen to be typos. However,
+            these are not allowed, as they are often typos. However,
             this setting can be set to ``True`` to allow implict tasks.
             It is recommended to set this to ``True`` if required during
             development/prototyping of a workflow graph, but set it to
@@ -115,19 +154,20 @@ with Conf(
             Configure the directories and files to be included in the remote
             file installation.
 
-             .. note::
-                These, as standard, include the following directories:
+            .. note::
 
-                 * app
-                 * bin
-                 * etc
-                 * lib
+               The following directories are installed by default:
 
-                 And include the server.key file (from the .service
-                 directory), this is required for authentication.
+                * app
+                * bin
+                * etc
+                * lib
 
-            These should be located in the top level of your Cylc workflow,
-            i.e. the directory that contains your flow.cylc file.
+               And include the server.key file (from the .service
+               directory), this is required for authentication.
+
+               These should be located in the top level of your Cylc workflow,
+               i.e. the directory that contains your flow.cylc file.
 
             Directories must have a trailing slash.
             For example, to add the following items to your file installation:
@@ -151,9 +191,9 @@ with Conf(
             :term:`cycle points<cycle point>` in :term:`datetime cycling`
             workflows.
 
-            To just alter the timezone used in the date-time cycle point
+            To alter the timezone used in the date-time cycle point
             format, see :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-            To just alter the number of expanded year digits (for years
+            To alter the number of expanded year digits (for years
             below 0 or above 9999), see
             :cylc:conf:`flow.cylc
             [scheduler]cycle point num expanded year digits`.
@@ -400,16 +440,17 @@ with Conf(
 
                 Not to be confused with :cylc:conf:`[..]final cycle point`:
                 There can be more graph beyond this point, but you are
-                choosing not to run that part of the graph.
+                choosing not to run that part of the graph. You can play
+                the workflow and continue.
 
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
-            Cylc runs using the proleptic Gregorian calendar by default. This
-            item allows you to run the workflow with the 360 day calendar
-            (12 months of 30 days in a year) OR integer cycling. It also
-            supports use of the 365 (never a leap year) and 366 (always a leap
-            year) calendars.
+            Cylc runs using the proleptic Gregorian calendar by default.
+            This allows you to run the workflow with the 360 day
+            calendar (12 months of 30 days in a year) OR integer cycling. It
+            also supports use of the 365 (never a leap year) and 366 (always a
+            leap year) calendars.
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
             Runahead limiting prevents the fastest tasks in a workflow from
@@ -644,8 +685,8 @@ with Conf(
         This section is used to specify how, where, and what to execute when
         tasks are ready to run. Common configuration can be factored out in a
         multiple-inheritance hierarchy of runtime namespaces that culminates
-        in the tasks of the workflow. Precedence is determined by the C3
-        linearization algorithm as used to find the *method resolution order*
+        in the tasks of the workflow. Precedence is determined by the same C3
+        linearization algorithm used to find the *method resolution order*
         in Python language class hierarchies. For details and examples see
         :ref:`User Guide Runtime`.
     '''):
@@ -657,11 +698,12 @@ with Conf(
             other namespaces inherit from it, or a task if no others inherit
             from it.
 
-            Names may not contain colons (which would preclude use of
-            directory paths involving the registration name in ``$PATH``
-            variables). They may not contain the ``.`` character (it will be
-            interpreted as the namespace hierarchy delimiter, separating
-            groups and names -huh?).
+            .. important::
+
+               Names may not contain ``:`` or ``.``.
+
+               See :ref:`task namespace rules. <namespace-names>`
+
 
             legal values:
 
@@ -669,7 +711,7 @@ with Conf(
             - ``[foo, bar, baz]``
 
             If multiple names are listed the subsequent settings apply to
-            each.
+            all.
 
             All namespaces inherit initially from ``root``, which can be
             explicitly configured to provide or override default settings for
@@ -677,8 +719,8 @@ with Conf(
         '''):
             Conf('platform', VDR.V_STRING)
             Conf('inherit', VDR.V_STRING_LIST, desc='''
-                A list of the immediate parent(s) this namespace inherits
-                from. If no parents are listed ``root`` is assumed.
+                A list of the immediate parent(s) of this namespace.
+                If no parents are listed default is ``root``.
             ''')
             Conf('init-script', VDR.V_STRING, desc='''
                 Custom script invoked by the task job script before the task
@@ -688,23 +730,7 @@ with Conf(
                 original intention for this item was to allow remote tasks to
                 source login scripts to configure their access to cylc, but
                 this should no longer be necessary.
-
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-                Example::
-
-                   echo 'Hello World'
-            ''')
+            ''' + SCRIPT_COMMON.format('echo "Hello World"'))
             Conf('env-script', VDR.V_STRING, desc='''
                 Custom script invoked by the task job script between the
                 cylc-defined environment (workflow and task identity, etc.) and
@@ -712,23 +738,7 @@ with Conf(
                 to the cylc environment (and the task environment has access
                 to variables defined by this scripting). It can be an
                 external command or script, or inlined scripting.
-
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-                Example::
-
-                   echo 'Hello World'
-            ''')
+            ''' + SCRIPT_COMMON.format('echo "Hello World"'))
             Conf('err-script', VDR.V_STRING, desc='''
                 Custom script to be invoked at the end of the error trap,
                 which is triggered due to failure of a command in the task job
@@ -739,102 +749,30 @@ with Conf(
                 return quickly.  Companion of ``exit-script``, which is
                 executed on job success.  It can be an external command or
                 script, or inlined scripting.
-
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-                Example::
-
-                   printenv FOO
-            ''')
+            ''' + SCRIPT_COMMON.format('echo "Hello World"'))
             Conf('exit-script', VDR.V_STRING, desc='''
                 Custom script invoked at the very end of *successful* job
                 execution, just before the job script exits. It should
                 execute very quickly. Companion of ``err-script``, which is
                 executed on job failure. It can be an external command or
                 script, or inlined scripting.
-
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-                Example::
-
-                   rm -f "$TMP_FILES"
-            ''')
+            ''' + SCRIPT_COMMON.format('rm -f "$TMP_FILES"'))
             Conf('pre-script', VDR.V_STRING, desc='''
                 Custom script invoked by the task job script immediately
                 before the ``script`` item (just below). It can be an
                 external command or script, or inlined scripting.
+            ''' + SCRIPT_COMMON.format(
+                'echo "Hello from workflow ${CYLC_WORKFLOW_NAME}!"'))
 
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-                Example::
-
-                   echo "Hello from workflow ${CYLC_WORKFLOW_NAME}!"
-            ''')
             Conf('script', VDR.V_STRING, desc='''
                 The main custom script invoked from the task job script. It
                 can be an external command or script, or inlined scripting.
-
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-            ''')
+            ''' + SCRIPT_COMMON)
             Conf('post-script', VDR.V_STRING, desc='''
                 Custom script invoked by the task job script immediately
-                after the ``script`` item (just above). It can be an external
+                after the ``script`` item. It can be an external
                 command or script, or inlined scripting.
-
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-            ''')
+            ''' + SCRIPT_COMMON)
 
             Conf('work sub-directory', VDR.V_STRING, desc='''
                 Task job scripts are executed from within *work directories*
@@ -867,12 +805,8 @@ with Conf(
                 'execution polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc='''
-                    .. warning::
-
-                       Deprecated, use :cylc:conf:`global.cylc[platforms]
-                       [<platform name>]execution polling intervals`
-                ''')
+                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+            )
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
                 Cylc can automate resubmission of a failed task job.
 
@@ -902,22 +836,14 @@ with Conf(
                 'submission polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc='''
-                    .. warning::
-
-                       Deprecated, use :cylc:conf:`global.cylc[platforms]
-                       [<platform name>]submission polling intervals`
-            ''')
+                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+            )
             Conf(
                 'submission retry delays',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc='''
-                    .. warning::
-
-                       Deprecated, use :cylc:conf:`global.cylc[platforms]
-                       [<platform name>]submission retry delays`
-            ''')
+                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+            )
             with Conf('meta', desc=r'''
                 Section containing metadata items for this task or family
                 namespace.  Several items (title, description, URL) are
@@ -1073,7 +999,7 @@ with Conf(
                      VDR.V_INTERVAL_LIST, None)
 
             with Conf('events', desc='''
-                Cylc can call nominated event handlers when certain task
+                Cylc can call :term:`event handlers` when certain task
                 events occur. This section configures specific task event
                 handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
                 workflow event handlers.

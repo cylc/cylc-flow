@@ -22,10 +22,13 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from cylc.flow.network.scan import (
+    filter_name,
     graphql_query,
     is_active,
-    scan
+    scan,
+    workflow_params,
 )
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import WorkflowFiles
 
 
@@ -267,6 +270,41 @@ async def test_max_depth(nested_run_dir):
         'b/c',
         'd/e/f'
     ]
+
+
+@pytest.mark.asyncio
+async def test_workflow_params(
+    flow,
+    scheduler,
+    run,
+    one_conf,
+    run_dir,
+    mod_test_dir
+):
+    """It should extract workflow params from the workflow database.
+
+    Note:
+        For this test we ensure that the workflow UUID is present in the params
+        table.
+    """
+    reg = flow(one_conf)
+    schd = scheduler(reg)
+    async with run(schd):
+        pipe = (
+            # scan just this workflow
+            scan(scan_dir=mod_test_dir)
+            | filter_name(rf'^{reg}$')
+            | is_active(True)
+            | workflow_params
+        )
+        async for flow in pipe:
+            # check the workflow_params field has been provided
+            assert 'workflow_params' in flow
+            # check the workflow uuid key has been read from the DB
+            uuid_key = WorkflowDatabaseManager.KEY_UUID_STR
+            assert uuid_key in flow['workflow_params']
+            # check the workflow uuid key matches the scheduler value
+            assert flow['workflow_params'][uuid_key] == schd.uuid_str
 
 
 @pytest.mark.asyncio

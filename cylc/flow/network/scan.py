@@ -41,14 +41,15 @@ e.g. :py:func:`contact_info`.
 .. autofunction:: api_version
 .. autofunction:: graphql_query
 .. autofunction:: title
+.. autofunction:: workflow_params
 
 """
 
 from collections.abc import Iterable
-import asyncio
 from pathlib import Path
 import re
 
+import asyncio
 from pkg_resources import (
     parse_requirements,
     parse_version
@@ -63,12 +64,13 @@ from cylc.flow.network.client import (
     WorkflowRuntimeClient, ClientError, ClientTimeout)
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.exceptions import WorkflowStopped
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
     ContactFileFields,
+    MAX_SCAN_DEPTH,
     WorkflowFiles,
     get_workflow_title,
     load_contact_file_async,
-    MAX_SCAN_DEPTH
 )
 
 
@@ -410,4 +412,28 @@ async def title(flow):
 
     """
     flow['title'] = get_workflow_title(flow['name'])
+    return flow
+
+
+@pipe
+async def workflow_params(flow):
+    """Extract workflow parameter entries from the workflow database.
+
+    Requires:
+        * is_active(True)
+    """
+    params = {}
+
+    def _callback(_, entry):
+        nonlocal params
+        key, value = entry
+        params[key] = value
+
+    db_file = flow['path'] / SERVICE / 'db'
+    if db_file.exists():
+        dao = CylcWorkflowDAO(db_file, is_public=False)
+        dao.connect()
+        dao.select_workflow_params(_callback)
+        flow['workflow_params'] = params
+
     return flow
