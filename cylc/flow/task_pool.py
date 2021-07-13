@@ -300,14 +300,14 @@ class TaskPool:
 
         released = False
 
-        # Any finished tasks can be released immediately (this can happen at
-        # restart when all tasks are initially loaded into the runahead pool).
-        # And any manually-triggered task.
+        # At restart all tasks are loaded as runahead-limited, but finished and
+        # manually-triggered ones (including --start-task) can be released
+        # immediately. Note runahead release can cause the task pool to change
+        # size because we spawn parentless tasks on previous-instance release.
 
         for itask in (
             itask
-            for point_id_map in self.main_pool.values()
-            for itask in point_id_map.values()
+            for itask in self.get_tasks()
             if itask.state.is_runahead
             if itask.state(
                 TASK_STATUS_FAILED,
