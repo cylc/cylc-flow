@@ -426,6 +426,13 @@ def hashbang_and_plugin_templating_clash(
             Traceback (most recent call last):
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
+
+        - Function raises if plugin templating engine is generic and hashbang
+          unset:
+            >>> thisfunc('template variables', ['# Some Comment'])
+            Traceback (most recent call last):
+                ...
+            cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
     """
     if flines and re.match(r'^#!(.*)\s*', flines[0]):
         hashbang = re.findall(r'^#!(.*)\s*', flines[0])[0].lower()
@@ -440,6 +447,14 @@ def hashbang_and_plugin_templating_clash(
             "Plugins set templating engine = "
             f"{templating}"
             f" which does not match {flines[0]} set in flow.cylc."
+        )
+    elif (
+        hashbang is None
+        and templating == 'template variables'
+    ):
+        raise TemplateVarLanguageClash(
+            'Plugins provided template variables, but workflow definition '
+            'has no hashbang (e.g. #jinja2): Templating will fail.'
         )
     return hashbang
 
