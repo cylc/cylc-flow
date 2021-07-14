@@ -454,7 +454,7 @@ def hashbang_and_plugin_templating_clash(
     ):
         raise TemplateVarLanguageClash(
             'Plugins provided template variables, but workflow definition '
-            'has no hashbang (e.g. #jinja2): Templating will fail.'
+            'has no hashbang (e.g. #!jinja2): Templating will fail.'
         )
     return hashbang
 
