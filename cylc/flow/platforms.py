@@ -22,7 +22,6 @@ from copy import deepcopy
 from typing import (
     Any, Dict, Iterable, List, Optional, Tuple, Union, Set)
 
-from cylc.flow import LOG
 from cylc.flow.exceptions import PlatformLookupError, CylcError, NoHostsError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
@@ -387,10 +386,6 @@ def get_host_from_platform(
     """
     # Get list of goodhosts:
     if bad_hosts:
-        LOG.debug(
-            'Cylc knows that these hosts are unreachable: \n'
-            f'{", ".join(sorted(bad_hosts))}'
-        )
         goodhosts = list(set(platform['hosts']) - bad_hosts)
     else:
         goodhosts = platform['hosts']
