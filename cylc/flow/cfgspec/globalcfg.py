@@ -726,7 +726,7 @@ with Conf('global.cylc', desc='''
                           unless that host has been unreachable. In many cases
                           this is likely to cause load imbalances, but might
                           be appropriate if your hosts were
-                          ``[main, backup, failsafe]``.
+                          ``main, backup, failsafe``.
                     '''
                 )
         with Conf('localhost', meta=Platform):
