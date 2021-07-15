@@ -38,12 +38,13 @@ from cylc.flow.exceptions import (WorkflowConfigError,
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
 from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.scripts.install import add_cylc_rose_options
 
 
 def get_option_parser():
@@ -70,6 +71,8 @@ def get_option_parser():
         "-u", "--run-mode", help="Validate for run mode.", action="store",
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'dummy-local', 'simulation'])
+
+    parser = add_cylc_rose_options(parser)
 
     parser.set_defaults(is_validate=True)
 
@@ -104,7 +107,7 @@ def main(_, options, reg):
         workflow,
         flow_file,
         options,
-        load_template_vars(options.templatevars, options.templatevars_file),
+        get_template_vars(options, flow_file, [reg, workflow]),
         output_fname=options.output, mem_log_func=profiler.log_memory)
 
     # Check bounds of sequences
