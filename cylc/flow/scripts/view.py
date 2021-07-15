@@ -30,8 +30,7 @@ editor, after optional include-file inlining and Jinja2 preprocessing.
 The edit process is spawned in the foreground as follows:
   $ <editor> flow.cylc
 Where <editor> can be set in cylc global config.
-
-See also 'cylc edit'."""
+"""
 
 import os
 import shlex
@@ -109,12 +108,6 @@ def get_option_parser():
         "--stdout", help="Print the workflow definition to stdout.",
         action="store_true", default=False, dest="stdout")
 
-    parser.add_option(
-        "--mark-for-edit",
-        help="(With '-i') View file inclusion markers as "
-             "for 'cylc edit --inline'.",
-        action="store_true", default=False, dest="asedit")
-
     return parser
 
 
@@ -141,7 +134,7 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
     lines = read_and_proc(
         flow_file,
         load_template_vars(options.templatevars, options.templatevars_file),
-        viewcfg=viewcfg, asedit=options.asedit)
+        viewcfg=viewcfg)
 
     if options.stdout:
         for line in lines:
@@ -179,13 +172,11 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
     modtime2 = os.stat(viewfile.name).st_mtime
 
     if modtime2 > modtime1:
-        print()
-        print('WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY WORKFLOW COPY:',
-              file=sys.stderr)
-        print(viewfile.name, file=sys.stderr)
-        print('In future use \'cylc edit\' to edit a workflow.',
-              file=sys.stderr)
-        print()
+        print(
+            "\nWARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY COPY "
+            f"OF THE WORKFLOW:\n   {viewfile.name}\n",
+            file=sys.stderr
+        )
     # DONE
     viewfile.close()
 

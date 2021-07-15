@@ -104,6 +104,7 @@ print_mro(ex_9.Z)
 
 
 from copy import copy
+from typing import Dict, List
 
 
 class C3:
@@ -150,7 +151,7 @@ class C3:
 
 
 if __name__ == "__main__":
-    parents: dict = {}
+    parents: Dict[str, List[str]] = {}
     parents['root'] = []
     parents['a'] = ['root']
     parents['b'] = ['root']
@@ -158,7 +159,7 @@ if __name__ == "__main__":
 
     print('foo', C3(parents).mro('foo'))
 
-    parents = {}
+    parents.clear()
     parents['o'] = []
     parents['a'] = ['o']
     parents['b'] = ['o']

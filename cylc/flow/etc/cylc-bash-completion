@@ -38,7 +38,7 @@ _cylc() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     sec="${COMP_WORDS[1]}"
     opts="$(cylc scan -t name 2>/dev/null)"
-    workflow_cmds="broadcast|bcast|cat-log|check-versions|clean|compare|config|diff|dump|edit|ext-trigger|external-trigger|get-workflow-version|get-cylc-version|graph|hold|insert|install|kill|list|log|ls|tui|pause|ping|play|poll|print|reinstall|release|unhold|reload|remove|report-timings|reset|scan|search|grep|set-verbosity|show|set-outputs|stop|shutdown|single|workflow-state|test-battery|trigger|validate|view|warranty"
+    workflow_cmds="broadcast|bcast|cat-log|check-versions|clean|compare|config|diff|dump|ext-trigger|external-trigger|get-workflow-version|get-cylc-version|graph|hold|insert|install|kill|list|log|ls|tui|pause|ping|play|poll|print|reinstall|release|unhold|reload|remove|report-timings|reset|scan|set-verbosity|show|set-outputs|stop|shutdown|single|workflow-state|test-battery|trigger|validate|view|warranty"
 
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then

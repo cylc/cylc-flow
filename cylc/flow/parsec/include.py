@@ -14,28 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
 import os
 import re
-import sys
-from shutil import copy as shcopy
-from textwrap import dedent
 
 from cylc.flow.parsec.exceptions import (
     FileParseError, IncludeFileNotFoundError)
 
 
 done = []
-modtimes = {}
-backups = {}
-newfiles = []
 flist = []
 
 include_re = re.compile(r'\s*%include\s+([\'"]?)(.*?)([\'"]?)\s*$')
 
 
-def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
-           level=None):
+def inline(lines, dir_, filename, for_grep=False, viewcfg=None, level=None):
     """Recursive inlining of parsec include-files"""
 
     global flist
@@ -55,36 +47,16 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
         viewcfg = {}
 
     global done
-    global modtimes
 
     outf = []
     initial_line_index = 0
 
     if level is None:
         level = ''
-        if for_edit:
-            m = re.match('^(#![jJ]inja2)', lines[0])
-            if m:
-                outf.append(m.groups()[0])
-                initial_line_index = 1
-            outf.append(
-                """# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
-# !WARNING! This is an inlined parsec config file; include-files are split
-# !WARNING! out again on exiting the edit session.  If you are editing
-# !WARNING! this file manually then a previous inlined session may have
-# !WARNING! crashed; exit now and use 'cylc edit -i' to recover (this
-# !WARNING! will split the file up again on exiting).""")
+    elif mark:
+        level += '!'
 
-    else:
-        if mark:
-            level += '!'
-        elif for_edit:
-            level += ' > '
-
-    if for_edit:
-        msg = ' (DO NOT MODIFY THIS LINE!)'
-    else:
-        msg = ''
+    msg = ''
 
     for line in lines[initial_line_index:]:
         m = include_re.match(line)
@@ -98,119 +70,26 @@ def inline(lines, dir_, filename, for_grep=False, for_edit=False, viewcfg=None,
                 )
             inc = os.path.join(dir_, match)
             if inc not in done:
-                if single or for_edit:
+                if single:
                     done.append(inc)
-                if for_edit:
-                    backup(inc)
-                    # store original modtime
-                    modtimes[inc] = os.stat(inc).st_mtime
                 if not os.path.isfile(inc):
                     flist.append(inc)
                     raise IncludeFileNotFoundError(flist)
-                if for_grep or single or label or for_edit:
+                if for_grep or single or label:
                     outf.append(
                         '#++++ START INLINED INCLUDE FILE ' + match + msg)
                 with open(inc, 'r') as handle:
                     finc = [line.rstrip('\n') for line in handle]
                 # recursive inclusion
                 outf.extend(inline(
-                    finc, dir_, inc, for_grep, for_edit, viewcfg, level))
-                if for_grep or single or label or for_edit:
+                    finc, dir_, inc, for_grep, viewcfg, level))
+                if for_grep or single or label:
                     outf.append(
                         '#++++ END INLINED INCLUDE FILE ' + match + msg)
 
             else:
-                if not for_edit:
-                    outf.append(level + line)
-                else:
-                    outf.append(line)
+                outf.append(level + line)
         else:
             # no match
-            if not for_edit:
-                outf.append(level + line)
-            else:
-                outf.append(line)
+            outf.append(level + line)
     return outf
-
-
-def cleanup(workflowdir):
-    print('CLEANUP REQUESTED, deleting:')
-    for root, _, files in os.walk(workflowdir):
-        for filename in files:
-            if '.EDIT.' in filename:
-                print(' + %s' % filename.replace(workflowdir + '/', ''))
-                os.unlink(os.path.join(root, filename))
-
-
-def backup(src, tag=''):
-    if not os.path.exists(src):
-        raise SystemExit("File not found: " + src)
-    bkp = src + tag + '.EDIT.' + datetime.datetime.now().isoformat()
-    global backups
-    shcopy(src, bkp)
-    backups[src] = bkp
-
-
-def split_file(dir_, lines, filename, recovery=False, level=None):
-    global modtimes
-    global newfiles
-
-    if level is None:
-        # config file itself
-        level = ''
-    else:
-        level += ' > '
-        # check mod time on the target file
-        if not recovery:
-            mtime = os.stat(filename).st_mtime
-            if mtime != modtimes[filename]:
-                # oops - original file has changed on disk since we started
-                # editing
-                filename += '.EDIT.NEW.' + datetime.datetime.now().isoformat()
-        newfiles.append(filename)
-
-    inclines = []
-    with open(filename, 'w') as fnew:
-        match_on = False
-        for line in lines:
-            if re.match('^# !WARNING!', line):
-                continue
-            if not match_on:
-                m = re.match(
-                    r'^#\+\+\+\+ START INLINED INCLUDE FILE ' +
-                    r'([\w/.\-]+) \(DO NOT MODIFY THIS LINE!\)', line)
-                if m:
-                    match_on = True
-                    inc_filename = m.groups()[0]
-                    inc_file = os.path.join(dir_, m.groups()[0])
-                    fnew.write('%include ' + inc_filename + '\n')
-                else:
-                    fnew.write(line)
-            elif match_on:
-                # match on, go to end of the 'on' include-file
-                m = re.match(
-                    r'^#\+\+\+\+ END INLINED INCLUDE FILE ' +
-                    inc_filename + r' \(DO NOT MODIFY THIS LINE!\)', line)
-                if m:
-                    match_on = False
-                    # now split this lot, in case of nested inclusions
-                    split_file(dir_, inclines, inc_file, recovery, level)
-                    # now empty the inclines list ready for the next inclusion
-                    # in this file
-                    inclines = []
-                else:
-                    inclines.append(line)
-        if match_on:
-            for line in inclines:
-                fnew.write(line)
-            print(file=sys.stderr)
-            print((
-                "ERROR: end-of-file reached while matching include-file",
-                inc_filename + "."), file=sys.stderr)
-            print(dedent(
-                """This probably means you have corrupted the inlined file by
-                modifying one of the include-file boundary markers. Fix the
-                backed- up inlined file, copy it to the original filename and
-                invoke another inlined edit session split the file up again."""
-            ), file=sys.stderr)
-            print(file=sys.stderr)
