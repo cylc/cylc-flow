@@ -535,7 +535,7 @@ class SubProcPool:
             and is_remote_host(ctx.host)
         ):
             ssh_test = run(
-                ['ssh', ctx.host, 'echo', 'True'], capture_output=True
+                ['ssh', ctx.host, 'true'], capture_output=True
             )
             if ssh_test.returncode == 255:
                 rsync_255_fail = True
