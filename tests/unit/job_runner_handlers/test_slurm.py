@@ -15,11 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-import os
 
 from cylc.flow.job_runner_handlers.slurm import JOB_RUNNER_HANDLER
-
-home = os.path.expandvars('$HOME/')
 
 
 @pytest.mark.parametrize(
@@ -29,19 +26,19 @@ home = os.path.expandvars('$HOME/')
             {
                 'directives': {},
                 'execution_time_limit': 180,
-                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
+                'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },
             [
                 '#SBATCH --job-name=axe.1.chop',
                 (
-                    f'#SBATCH --output='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                    '#SBATCH --output='
+                    'cylc-run/chop/log/job/1/axe/01/job.out'
                 ),
                 (
-                    f'#SBATCH --error='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                    '#SBATCH --error='
+                    'cylc-run/chop/log/job/1/axe/01/job.err'
                 ),
                 '#SBATCH --time=3:00',
             ],
@@ -51,7 +48,7 @@ home = os.path.expandvars('$HOME/')
                 'directives': {},
                 'execution_time_limit': 180,
                 'job_file_path': (
-                    '$HOME/cylc-run/chop/log/job/1/axe%40HEAD/01/job'
+                    'cylc-run/chop/log/job/1/axe%40HEAD/01/job'
                 ),
                 'workflow_name': 'chop',
                 'task_id': 'axe%40HEAD.1',
@@ -59,12 +56,12 @@ home = os.path.expandvars('$HOME/')
             [
                 '#SBATCH --job-name=axe%40HEAD.1.chop',
                 (
-                    f'#SBATCH --output'
-                    f'={home}cylc-run/chop/log/job/1/axe%%40HEAD/01/job.out'
+                    '#SBATCH --output'
+                    '=cylc-run/chop/log/job/1/axe%%40HEAD/01/job.out'
                 ),
                 (
-                    f'#SBATCH --error'
-                    f'={home}cylc-run/chop/log/job/1/axe%%40HEAD/01/job.err'
+                    '#SBATCH --error'
+                    '=cylc-run/chop/log/job/1/axe%%40HEAD/01/job.err'
                 ),
                 '#SBATCH --time=3:00',
             ],
@@ -77,19 +74,19 @@ home = os.path.expandvars('$HOME/')
                     '--mem': '256gb',
                 },
                 'execution_time_limit': 200,
-                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
+                'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },
             [
                 '#SBATCH --job-name=axe.1.chop',
                 (
-                    f'#SBATCH --output='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                    '#SBATCH --output='
+                    'cylc-run/chop/log/job/1/axe/01/job.out'
                 ),
                 (
-                    f'#SBATCH --error='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                    '#SBATCH --error='
+                    'cylc-run/chop/log/job/1/axe/01/job.err'
                 ),
                 '#SBATCH --time=3:20',
                 '#SBATCH -p=middle',
@@ -105,19 +102,19 @@ home = os.path.expandvars('$HOME/')
                     'hetjob_1_--mem': '256gb',
                 },
                 'execution_time_limit': 200,
-                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
+                'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },
             [
                 '#SBATCH --job-name=axe.1.chop',
                 (
-                    f'#SBATCH --output='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.out'
+                    '#SBATCH --output='
+                    'cylc-run/chop/log/job/1/axe/01/job.out'
                 ),
                 (
-                    f'#SBATCH --error='
-                    f'{home}cylc-run/chop/log/job/1/axe/01/job.err'
+                    '#SBATCH --error='
+                    'cylc-run/chop/log/job/1/axe/01/job.err'
                 ),
                 '#SBATCH --time=3:20',
                 '#SBATCH -p=middle',
