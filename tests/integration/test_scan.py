@@ -26,6 +26,7 @@ from cylc.flow.network.scan import (
     graphql_query,
     is_active,
     scan,
+    scan_multi,
     workflow_params,
 )
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
@@ -145,6 +146,33 @@ def nested_run_dir():
     )
     yield tmp_path
     rmtree(tmp_path)
+
+
+@pytest.fixture
+def source_dirs(mock_glbl_cfg):
+    src = Path(TemporaryDirectory().name)
+    src.mkdir()
+    src1 = src / '1'
+    src1.mkdir()
+    init_flows(
+        src1,
+        registered=('a', 'b/c')
+    )
+    src2 = src / '2'
+    src2.mkdir()
+    init_flows(
+        src2,
+        registered=('d', 'e/f')
+    )
+    mock_glbl_cfg(
+        'cylc.flow.scripts.scan.glbl_cfg',
+        f'''
+            [install]
+                source dirs = {src1}, {src2}
+        '''
+    )
+    yield [src1, src2]
+    rmtree(src)
 
 
 async def listify(async_gen, field='name'):
@@ -305,6 +333,21 @@ async def test_workflow_params(
             assert uuid_key in flow['workflow_params']
             # check the workflow uuid key matches the scheduler value
             assert flow['workflow_params'][uuid_key] == schd.uuid_str
+
+
+@pytest.mark.asyncio
+async def test_source_dirs(source_dirs):
+    """It should list uninstalled workflows from configured source dirs."""
+    src1, src2 = source_dirs
+    assert await listify(
+        scan_multi(source_dirs, max_depth=3)
+    ) == [
+        # NOTE: flow names from scan_multi are full paths
+        (src1 / 'a'),
+        (src1 / 'b/c'),
+        (src2 / 'd'),
+        (src2 / 'e/f'),
+    ]
 
 
 @pytest.mark.asyncio

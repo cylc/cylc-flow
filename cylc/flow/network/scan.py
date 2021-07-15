@@ -45,11 +45,11 @@ e.g. :py:func:`contact_info`.
 
 """
 
-from collections.abc import Iterable
+import asyncio
 from pathlib import Path
 import re
+from typing import AsyncGenerator, Iterable
 
-import asyncio
 from pkg_resources import (
     parse_requirements,
     parse_version
@@ -60,10 +60,13 @@ from cylc.flow.async_util import (
     pipe,
     scandir
 )
-from cylc.flow.network.client import (
-    WorkflowRuntimeClient, ClientError, ClientTimeout)
-from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.exceptions import WorkflowStopped
+from cylc.flow.network.client import (
+    ClientError,
+    ClientTimeout,
+    WorkflowRuntimeClient,
+)
+from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
     ContactFileFields,
@@ -108,6 +111,30 @@ def dir_is_flow(listing):
         for path in listing
     }
     return bool(FLOW_FILES & listing)
+
+
+@pipe
+async def scan_multi(
+    dirs: Iterable[Path],
+    max_depth: int = MAX_SCAN_DEPTH
+) -> AsyncGenerator[dict, None]:
+    """List flows from multiple directories.
+
+    This is intended for listing uninstalled flows though will work for
+    installed ones.
+
+    Args:
+        dirs
+    """
+    for dir_ in dirs:
+        async for flow in scan(
+            run_dir=dir_,
+            scan_dir=dir_,
+            max_depth=max_depth
+        ):
+            # set the flow name as the full path
+            flow['name'] = dir_ / flow['name']
+            yield flow
 
 
 @pipe
