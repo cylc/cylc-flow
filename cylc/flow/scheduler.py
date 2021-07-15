@@ -180,6 +180,7 @@ class Scheduler:
     id: Optional[str] = None  # noqa: A003 (instance attr not local)
     uuid_str: Optional[str] = None
     contact_data: Optional[dict] = None
+    bad_hosts: Optional[Set[str]] = None
 
     # run options
     is_restart: Optional[bool] = None

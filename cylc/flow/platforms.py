@@ -386,7 +386,7 @@ def get_host_from_platform(
     """
     # Get list of goodhosts:
     if bad_hosts:
-        goodhosts = list(set(platform['hosts']) - bad_hosts)
+        goodhosts = [i for i in platform['hosts'] if i not in bad_hosts]
     else:
         goodhosts = platform['hosts']
 
