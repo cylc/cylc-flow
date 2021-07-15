@@ -22,10 +22,14 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from cylc.flow.network.scan import (
+    filter_name,
     graphql_query,
     is_active,
-    scan
+    scan,
+    scan_multi,
+    workflow_params,
 )
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import WorkflowFiles
 
 
@@ -143,6 +147,33 @@ def nested_run_dir():
     )
     yield tmp_path
     rmtree(tmp_path)
+
+
+@pytest.fixture
+def source_dirs(mock_glbl_cfg):
+    src = Path(TemporaryDirectory().name)
+    src.mkdir()
+    src1 = src / '1'
+    src1.mkdir()
+    init_flows(
+        src1,
+        registered=('a', 'b/c')
+    )
+    src2 = src / '2'
+    src2.mkdir()
+    init_flows(
+        src2,
+        registered=('d', 'e/f')
+    )
+    mock_glbl_cfg(
+        'cylc.flow.scripts.scan.glbl_cfg',
+        f'''
+            [install]
+                source dirs = {src1}, {src2}
+        '''
+    )
+    yield [src1, src2]
+    rmtree(src)
 
 
 async def listify(async_gen, field='name'):
@@ -267,6 +298,56 @@ async def test_max_depth(nested_run_dir):
         'a',
         'b/c',
         'd/e/f'
+    ]
+
+
+@pytest.mark.asyncio
+async def test_workflow_params(
+    flow,
+    scheduler,
+    run,
+    one_conf,
+    run_dir,
+    mod_test_dir
+):
+    """It should extract workflow params from the workflow database.
+
+    Note:
+        For this test we ensure that the workflow UUID is present in the params
+        table.
+    """
+    reg = flow(one_conf)
+    schd = scheduler(reg)
+    async with run(schd):
+        pipe = (
+            # scan just this workflow
+            scan(scan_dir=mod_test_dir)
+            | filter_name(rf'^{reg}$')
+            | is_active(True)
+            | workflow_params
+        )
+        async for flow in pipe:
+            # check the workflow_params field has been provided
+            assert 'workflow_params' in flow
+            # check the workflow uuid key has been read from the DB
+            uuid_key = WorkflowDatabaseManager.KEY_UUID_STR
+            assert uuid_key in flow['workflow_params']
+            # check the workflow uuid key matches the scheduler value
+            assert flow['workflow_params'][uuid_key] == schd.uuid_str
+
+
+@pytest.mark.asyncio
+async def test_source_dirs(source_dirs):
+    """It should list uninstalled workflows from configured source dirs."""
+    src1, src2 = source_dirs
+    assert await listify(
+        scan_multi(source_dirs, max_depth=3)
+    ) == [
+        # NOTE: flow names from scan_multi are full paths
+        (src1 / 'a'),
+        (src1 / 'b/c'),
+        (src2 / 'd'),
+        (src2 / 'e/f'),
     ]
 
 

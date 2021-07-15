@@ -272,11 +272,10 @@ def test_read_and_proc_no_template_engine():
             'empy': False, 'jinja2': False,
             'contin': False, 'inline': False
         }
-        asedit = None
         tf.write("a=b\n".encode())
         tf.flush()
         r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                          viewcfg=viewcfg, asedit=asedit)
+                          viewcfg=viewcfg)
         assert r == ['a=b']
 
         # last \\ is ignored, becoming just ''
@@ -288,7 +287,7 @@ def test_read_and_proc_no_template_engine():
             'contin': True, 'inline': False
         }
         r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                          viewcfg=viewcfg, asedit=asedit)
+                          viewcfg=viewcfg)
         assert r == ['a=b', 'c=d', '']
 
 
@@ -301,7 +300,6 @@ def test_inline():
             'contin': False, 'inline': True,
             'mark': None, 'single': None, 'label': None
         }
-        asedit = None
         with tempfile.NamedTemporaryFile() as include_file:
             include_file.write("c=d".encode())
             include_file.flush()
@@ -309,7 +307,7 @@ def test_inline():
                       .format(include_file.name)).encode())
             tf.flush()
             r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                              viewcfg=viewcfg, asedit=asedit)
+                              viewcfg=viewcfg)
             assert r == ['a=b', 'c=d']
 
 
@@ -322,12 +320,11 @@ def test_inline_error():
             'contin': False, 'inline': True,
             'mark': None, 'single': None, 'label': None
         }
-        asedit = None
         tf.write("a=b\n%include \"404.txt\"".encode())
         tf.flush()
         with pytest.raises(IncludeFileNotFoundError) as cm:
             read_and_proc(fpath=fpath, template_vars=template_vars,
-                          viewcfg=viewcfg, asedit=asedit)
+                          viewcfg=viewcfg)
         assert "404.txt" in str(cm.value)
 
 
@@ -341,11 +338,10 @@ def test_read_and_proc_jinja2():
             'empy': False, 'jinja2': True,
             'contin': False, 'inline': False
         }
-        asedit = None
         tf.write("#!jinja2\na={{ name }}\n".encode())
         tf.flush()
         r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                          viewcfg=viewcfg, asedit=asedit)
+                          viewcfg=viewcfg)
         assert r == ['a=Cylc']
 
 
@@ -359,12 +355,11 @@ def test_read_and_proc_jinja2_error():
             'empy': False, 'jinja2': True,
             'contin': False, 'inline': False
         }
-        asedit = None
         tf.write("#!jinja2\na={{ name \n".encode())
         tf.flush()
         with pytest.raises(Jinja2Error) as cm:
             read_and_proc(fpath=fpath, template_vars=template_vars,
-                          viewcfg=viewcfg, asedit=asedit)
+                          viewcfg=viewcfg)
         assert (
             "unexpected end of template, expected "
             "'end of print statement'."
@@ -381,12 +376,11 @@ def test_read_and_proc_jinja2_error_missing_shebang():
             'empy': False, 'jinja2': True,
             'contin': False, 'inline': False
         }
-        asedit = None
         # first line is missing shebang!
         tf.write("a={{ name }}\n".encode())
         tf.flush()
         r = read_and_proc(fpath=fpath, template_vars=template_vars,
-                          viewcfg=viewcfg, asedit=asedit)
+                          viewcfg=viewcfg)
         assert r == ['a={{ name }}']
 
 

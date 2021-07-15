@@ -278,7 +278,7 @@ def process_plugins(fpath):
     return extra_vars
 
 
-def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
+def read_and_proc(fpath, template_vars=None, viewcfg=None):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
@@ -324,7 +324,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     # inline any cylc include-files
     if do_inline:
         flines = inline(
-            flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
+            flines, fdir, fpath, viewcfg=viewcfg)
 
     template_vars['CYLC_VERSION'] = __version__
 
@@ -426,6 +426,13 @@ def hashbang_and_plugin_templating_clash(
             Traceback (most recent call last):
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
+
+        - Function raises if plugin templating engine is generic and hashbang
+          unset:
+            >>> thisfunc('template variables', ['# Some Comment'])
+            Traceback (most recent call last):
+                ...
+            cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
     """
     if flines and re.match(r'^#!(.*)\s*', flines[0]):
         hashbang = re.findall(r'^#!(.*)\s*', flines[0])[0].lower()
@@ -440,6 +447,14 @@ def hashbang_and_plugin_templating_clash(
             "Plugins set templating engine = "
             f"{templating}"
             f" which does not match {flines[0]} set in flow.cylc."
+        )
+    elif (
+        hashbang is None
+        and templating == 'template variables'
+    ):
+        raise TemplateVarLanguageClash(
+            'Plugins provided template variables, but workflow definition '
+            'has no hashbang (e.g. #!jinja2): Templating will fail.'
         )
     return hashbang
 

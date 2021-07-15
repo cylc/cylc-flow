@@ -41,6 +41,10 @@ Examples:
   # filter workflows by name
   $ cylc scan --name '^f.*'  # show only flows starting with "f"
 
+  # list source workflows in a tree
+  # (looks in the dirs configured by "global.cylc[install]source dirs")
+  $ cylc scan --source -t tree
+
   # get results in JSON format
   $ cylc scan -t json
 """
@@ -53,21 +57,23 @@ from typing import Callable, Optional, TYPE_CHECKING
 from ansimarkup import ansiprint as cprint
 
 from cylc.flow import LOG
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.scan import (
-    scan,
-    is_active,
     contact_info,
+    filter_name,
     graphql_query,
-    filter_name
+    is_active,
+    scan,
+    scan_multi,
 )
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
 from cylc.flow.print_tree import get_tree
-from cylc.flow.workflow_files import ContactFileFields as Cont
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import ContactFileFields as Cont
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -168,7 +174,7 @@ def get_option_parser():
     parser.add_option(
         '--name', '-n',
         help=(
-            'Filter flows by registered name using a regex.'
+            'Filter workflows by registered name using a regex.'
             ' Can be used multiple times, workflows will be displayed if'
             ' their name matches ANY of the provided regexes.'
         ),
@@ -178,12 +184,22 @@ def get_option_parser():
     parser.add_option(
         '--states',
         help=(
-            'Choose which flows to display by providing a list of states'
+            'Choose which workflows to display by providing a list of states'
             ' or "all" to show everything. See the full `cylc scan` help'
             ' for a list of supported states.'
         ),
         default='running,paused,stopping',
         action='store'
+    )
+
+    parser.add_option(
+        '--source', '-s',
+        help=(
+            'List source workflows from configured source'
+            ' directories (overrides the --states option).'
+        ),
+        default=False,
+        action='store_true'
     )
 
     parser.add_option(
@@ -400,6 +416,12 @@ def get_pipe(opts, formatter, scan_dir=None):
     """Construct a pipe for listing flows."""
     if scan_dir:
         pipe = scan(scan_dir=scan_dir)
+    elif opts.source:
+        pipe = scan_multi(
+            Path(path).expanduser()
+            for path in glbl_cfg().get(['install', 'source dirs'])
+        )
+        opts.states = {'stopped'}
     else:
         pipe = scan
 

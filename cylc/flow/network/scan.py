@@ -41,6 +41,7 @@ e.g. :py:func:`contact_info`.
 .. autofunction:: api_version
 .. autofunction:: graphql_query
 .. autofunction:: title
+.. autofunction:: workflow_params
 
 """
 
@@ -59,16 +60,20 @@ from cylc.flow.async_util import (
     pipe,
     scandir
 )
-from cylc.flow.network.client import (
-    WorkflowRuntimeClient, ClientError, ClientTimeout)
-from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.exceptions import WorkflowStopped
+from cylc.flow.network.client import (
+    ClientError,
+    ClientTimeout,
+    WorkflowRuntimeClient,
+)
+from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
     ContactFileFields,
+    MAX_SCAN_DEPTH,
     WorkflowFiles,
     get_workflow_title,
     load_contact_file_async,
-    MAX_SCAN_DEPTH
 )
 
 
@@ -103,6 +108,30 @@ def dir_is_flow(listing: Iterable[Path]) -> bool:
     """
     names = {path.name for path in listing}
     return bool(FLOW_FILES & names)
+
+
+@pipe
+async def scan_multi(
+    dirs: Iterable[Path],
+    max_depth: int = MAX_SCAN_DEPTH
+) -> AsyncGenerator[dict, None]:
+    """List flows from multiple directories.
+
+    This is intended for listing uninstalled flows though will work for
+    installed ones.
+
+    Args:
+        dirs
+    """
+    for dir_ in dirs:
+        async for flow in scan(
+            run_dir=dir_,
+            scan_dir=dir_,
+            max_depth=max_depth
+        ):
+            # set the flow name as the full path
+            flow['name'] = dir_ / flow['name']
+            yield flow
 
 
 @pipe
@@ -417,4 +446,28 @@ async def title(flow):
 
     """
     flow['title'] = get_workflow_title(flow['name'])
+    return flow
+
+
+@pipe
+async def workflow_params(flow):
+    """Extract workflow parameter entries from the workflow database.
+
+    Requires:
+        * is_active(True)
+    """
+    params = {}
+
+    def _callback(_, entry):
+        nonlocal params
+        key, value = entry
+        params[key] = value
+
+    db_file = flow['path'] / SERVICE / 'db'
+    if db_file.exists():
+        dao = CylcWorkflowDAO(db_file, is_public=False)
+        dao.connect()
+        dao.select_workflow_params(_callback)
+        flow['workflow_params'] = params
+
     return flow

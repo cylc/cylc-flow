@@ -56,6 +56,22 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4286](https://github.com/cylc/cylc-flow/pull/4286) -
+Add an option for displaying source workflows in `cylc scan`.
+
+[#4291](https://github.com/cylc/cylc-flow/pull/4291)
+ - Remove obsolete `cylc edit` and `cylc search` commands.
+
+[#4284](https://github.com/cylc/cylc-flow/pull/4284)
+ - Make `--color=never` work with `cylc <command> --help`.
+
+[#4259](https://github.com/cylc/cylc-flow/pull/4259)
+- Ignore pre-initial dependencies with `cylc play --start-task`
+
+[#4103](https://github.com/cylc/cylc-flow/pull/4103)
+- Expose runahead limiting to UIs; restore correct force-triggering of queued
+tasks for Cylc 8.
+
 [#4103](https://github.com/cylc/cylc-flow/pull/4103) -
 Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
@@ -88,6 +104,9 @@ for choosing to only clean on the local filesystem or remote install targets
 respectively.
 
 ### Fixes
+
+[#4296](https://github.com/cylc/cylc-flow/pull/4296) -
+Patches DNS issues with newer versions of Mac OS.
 
 [#4273](https://github.com/cylc/cylc-flow/pull/4273)
  - Remove obsolete Cylc 7 visualization config section.
