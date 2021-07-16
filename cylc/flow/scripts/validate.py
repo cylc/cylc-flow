@@ -108,7 +108,7 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
         workflow,
         flow_file,
         options,
-        get_template_vars(options, flow_file, [reg, workflow]),
+        get_template_vars(options, flow_file),
         output_fname=options.output,
         mem_log_func=profiler.log_memory
     )

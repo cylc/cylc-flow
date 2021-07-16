@@ -162,10 +162,13 @@ def graph_inheritance(config, write=print):
     write('stop')
 
 
-def get_config(flow, opts, template_vars=None):
+def get_config(workflow: str, opts: 'Values') -> WorkflowConfig:
     """Return a WorkflowConfig object for the provided reg / path."""
-    flow, flow_file = parse_reg(flow, src=True)
-    return WorkflowConfig(flow, flow_file, opts, template_vars=template_vars)
+    workflow, flow_file = parse_reg(workflow, src=True)
+    template_vars = get_template_vars(opts, flow_file)
+    return WorkflowConfig(
+        workflow, flow_file, opts, template_vars=template_vars
+    )
 
 
 def get_option_parser():
@@ -236,8 +239,6 @@ def main(
             'Only the --reference and --diff use cases are supported'
         )
 
-    template_vars = get_template_vars(opts, workflow)
-
     write: Callable = print
     flows: List[Tuple[str, List[str]]] = [(workflow, [])]
     if opts.diff:
@@ -246,7 +247,7 @@ def main(
     for flow, graph in flows:
         if opts.diff:
             write = graph.append
-        config = get_config(flow, opts, template_vars=template_vars)
+        config = get_config(flow, opts)
         if opts.namespaces:
             graph_inheritance(config, write=write)
         else:
