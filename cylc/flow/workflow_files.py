@@ -312,7 +312,19 @@ To start a new run, stop the old one first with one or more of these:
 * ssh -n "%(host)s" kill %(pid)s   # final brute force!
 """
 
-REG_CLASH_MSG = "Workflow files found in both {0} and {1}. Cylc will use {0}."
+SUITERC_DEPR_MSG = (
+    f"The filename '{WorkflowFiles.SUITE_RC}' is deprecated "
+    f"in favour of '{WorkflowFiles.FLOW_FILE}'"
+)
+
+NO_FLOW_FILE_MSG = (
+    f"no {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "
+    "in {}"
+)
+
+REG_CLASH_MSG = (
+    "Workflow files found in both {0} and {1}. This command will use {0}."
+)
 
 
 def detect_old_contact_file(reg, check_host_port=None):
@@ -1073,7 +1085,8 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
             abs_path, reg = infer_latest_run(abs_path)
     else:
         run_dir_path = Path(get_workflow_run_dir(reg))
-        reg = Path(os.path.normpath(Path.cwd() / reg))
+        cwd = Path.cwd()
+        reg = Path(os.path.normpath(cwd / reg))
         abs_path = reg
         with suppress(ValueError):
             # ValueError if abs_path not relative to ~/cylc-run
@@ -1087,22 +1100,29 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
             if abs_path != run_dir_path:
                 if abs_path.is_file():
                     if run_dir_path.is_file():
-                        LOG.warning(
-                            REG_CLASH_MSG.format(abs_path, run_dir_path)
-                        )
+                        LOG.warning(REG_CLASH_MSG.format(
+                            f"./{abs_path.relative_to(cwd)}", run_dir_path
+                        ))
                     return (str(reg.parent), abs_path)
                 if run_dir_path.is_file():
                     return (str(run_dir_reg.parent), run_dir_path)
                 try:
                     run_dir_path = check_flow_file(run_dir_path)
                 except WorkflowFilesError:
-                    abs_path = check_flow_file(abs_path)
+                    try:
+                        abs_path = check_flow_file(abs_path)
+                    except WorkflowFilesError:
+                        raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(
+                            f"./{abs_path.relative_to(cwd)} or {run_dir_path}"
+                        ))
                 else:
                     try:
                         abs_path = check_flow_file(abs_path)
                     except WorkflowFilesError:
                         return (str(run_dir_reg), run_dir_path)
-                    LOG.warning(REG_CLASH_MSG.format(abs_path, run_dir_path))
+                    LOG.warning(REG_CLASH_MSG.format(
+                        f"./{abs_path.relative_to(cwd)}", run_dir_path
+                    ))
                 return (str(reg), abs_path)
     if abs_path.is_file():
         reg = reg.parent
@@ -1555,31 +1575,27 @@ def check_flow_file(
     """
     flow_file_path = Path(expand_path(path), WorkflowFiles.FLOW_FILE)
     suite_rc_path = Path(expand_path(path), WorkflowFiles.SUITE_RC)
-    depr_msg = (
-        f'The filename "{WorkflowFiles.SUITE_RC}" is deprecated '
-        f'in favour of "{WorkflowFiles.FLOW_FILE}"')
     if flow_file_path.is_file():
         if not flow_file_path.is_symlink():
             return flow_file_path
         if flow_file_path.resolve() == suite_rc_path.resolve():
             # A symlink that points to *existing* suite.rc
             if logger:
-                logger.warning(depr_msg)
+                logger.warning(SUITERC_DEPR_MSG)
             return flow_file_path
     if suite_rc_path.is_file():
         if not symlink_suiterc:
             if logger:
-                logger.warning(depr_msg)
+                logger.warning(SUITERC_DEPR_MSG)
             return suite_rc_path
         if flow_file_path.is_symlink():
             # Symlink broken or points elsewhere - replace
             flow_file_path.unlink()
         flow_file_path.symlink_to(WorkflowFiles.SUITE_RC)
         if logger:
-            logger.warning(f'{depr_msg}. Symlink created.')
+            logger.warning(f'{SUITERC_DEPR_MSG}. Symlink created.')
         return flow_file_path
-    raise WorkflowFilesError(
-        f"no {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} in {path}")
+    raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
 
 
 def create_workflow_srv_dir(rundir=None, source=None):

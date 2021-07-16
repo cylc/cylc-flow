@@ -42,7 +42,7 @@ run_fail "${TEST_NAME}" \
     cylc graph "${DIFF_WORKFLOW_NAME}" --diff "${CONTROL_WORKFLOW_NAME}.bad"
 cmp_ok "${TEST_NAME}.stdout" </'dev/null'
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: No such file or directory: ${RUN_DIR}/${CONTROL_WORKFLOW_NAME}.bad
+WorkflowFilesError: no flow.cylc or suite.rc in ./${CONTROL_WORKFLOW_NAME}.bad or ${RUN_DIR}/${CONTROL_WORKFLOW_NAME}.bad
 __ERR__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-deps-fail"

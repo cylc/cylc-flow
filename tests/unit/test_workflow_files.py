@@ -35,6 +35,7 @@ from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     REG_CLASH_MSG,
+    SUITERC_DEPR_MSG,
     WorkflowFiles,
     _clean_using_glob,
     _remote_clean_cmd,
@@ -468,12 +469,10 @@ def test_parse_reg__clash(
         cwd / reg / FLOW_FILE
     )
     expected_warning = REG_CLASH_MSG.format(
-        cwd / reg / FLOW_FILE,
+        f"./{reg}/{FLOW_FILE}",
         run_dir / FLOW_FILE
     )
-    assert (
-        (CYLC_LOG, logging.WARNING, expected_warning) in caplog.record_tuples
-    )
+    assert expected_warning in caplog.messages
     caplog.clear()
     # Now test that no warning when cwd == ~/cylc-run
     monkeypatch.chdir(tmp_path / 'cylc-run')
@@ -1758,9 +1757,7 @@ def test_check_flow_file_symlink(
         suiterc.touch()
     if flow_file_target:
         flow_file.symlink_to(flow_file_target)
-    log_msg = (
-        f'The filename "{WorkflowFiles.SUITE_RC}" is deprecated '
-        f'in favour of "{WorkflowFiles.FLOW_FILE}"')
+    log_msg = SUITERC_DEPR_MSG
     caplog.set_level(logging.WARNING, CYLC_LOG)
 
     if err:
@@ -1773,6 +1770,6 @@ def test_check_flow_file_symlink(
             assert flow_file.samefile(suiterc)
             expected_file = WorkflowFiles.FLOW_FILE
             if flow_file_target != WorkflowFiles.SUITE_RC:
-                log_msg = f'{log_msg}. Symlink created.'
+                log_msg = f'{SUITERC_DEPR_MSG}. Symlink created.'
         assert result == tmp_path.joinpath(expected_file)
         assert caplog.messages == [log_msg]
