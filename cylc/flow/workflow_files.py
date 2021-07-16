@@ -22,7 +22,6 @@ from contextlib import suppress
 from enum import Enum
 from functools import partial
 import glob
-import errno
 import logging
 import os
 from pathlib import Path
@@ -52,7 +51,6 @@ from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
-    is_relative_to,
     make_localhost_symlinks,
     parse_rm_dirs,
     remove_dir_and_target,
@@ -313,6 +311,8 @@ To start a new run, stop the old one first with one or more of these:
 * cylc stop --now --now %(workflow)s  # don't wait
 * ssh -n "%(host)s" kill %(pid)s   # final brute force!
 """
+
+REG_CLASH_MSG = "Workflow files found in both {0} and {1}. Cylc will use {0}."
 
 
 def detect_old_contact_file(reg, check_host_port=None):
@@ -1050,40 +1050,65 @@ def parse_reg(reg: str, src: bool = False) -> Union[str, Tuple[str, Path]]:
     """
     if not src:
         validate_workflow_name(reg)
-    reg = expand_path(os.path.normpath(reg))
-    if src and (reg == '.'):
-        reg = os.getcwd()
-    reg_path = Path(reg)
+    reg: Path = Path(expand_path(reg))
+
     if src:
-        cylc_run_dir = get_workflow_run_dir('')
-        with suppress(ValueError):
-            reg_path = reg_path.relative_to(cylc_run_dir)
-    abs_path = (
-        reg_path if reg_path.is_absolute()
-        else Path(get_workflow_run_dir(reg_path))
-    )
-    if src and not os.path.lexists(abs_path):
-        raise WorkflowFilesError(f"{os.strerror(errno.ENOENT)}: {abs_path}")
+        return _parse_src_reg(reg)
+
+    abs_path = Path(get_workflow_run_dir(reg))
     if abs_path.is_file():
-        if not src:
-            raise WorkflowFilesError(
-                f"Workflow name must refer to a directory, not a file: "
-                f"{reg_path}"
-            )
-        reg_path = reg_path.parent
+        raise WorkflowFilesError(
+            f"Workflow name must refer to a directory, not a file: {reg}"
+        )
+    abs_path, reg = infer_latest_run(abs_path)
+    return str(reg)
+
+
+def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
+    """Helper function for parse_reg() when src=True."""
+    if reg.is_absolute():
+        abs_path = reg
+        with suppress(ValueError):
+            # ValueError if abs_path not relative to ~/cylc-run
+            abs_path, reg = infer_latest_run(abs_path)
     else:
-        latest_run = infer_latest_run(abs_path)
-        if abs_path != latest_run:
-            if not is_relative_to(latest_run, abs_path):
-                reg_path = reg_path.parent
-            reg_path = reg_path / latest_run.name
-            abs_path = latest_run
-        if src:
-            abs_path = check_flow_file(abs_path)
-    reg = str(reg_path)
-    if src:
-        return (reg, abs_path)
-    return reg
+        run_dir_path = Path(get_workflow_run_dir(reg))
+        reg = Path(os.path.normpath(Path.cwd() / reg))
+        abs_path = reg
+        with suppress(ValueError):
+            # ValueError if abs_path not relative to ~/cylc-run
+            abs_path, reg = infer_latest_run(abs_path)
+        try:
+            run_dir_path, run_dir_reg = infer_latest_run(run_dir_path)
+        except ValueError:
+            # run_dir_path not relative to ~/cylc-run
+            pass
+        else:
+            if abs_path != run_dir_path:
+                if abs_path.is_file():
+                    if run_dir_path.is_file():
+                        LOG.warning(
+                            REG_CLASH_MSG.format(abs_path, run_dir_path)
+                        )
+                    return (str(reg.parent), abs_path)
+                if run_dir_path.is_file():
+                    return (str(run_dir_reg.parent), run_dir_path)
+                try:
+                    run_dir_path = check_flow_file(run_dir_path)
+                except WorkflowFilesError:
+                    abs_path = check_flow_file(abs_path)
+                else:
+                    try:
+                        abs_path = check_flow_file(abs_path)
+                    except WorkflowFilesError:
+                        return (str(run_dir_reg), run_dir_path)
+                    LOG.warning(REG_CLASH_MSG.format(abs_path, run_dir_path))
+                return (str(reg), abs_path)
+    if abs_path.is_file():
+        reg = reg.parent
+    else:
+        abs_path = check_flow_file(abs_path)
+    return (str(reg), abs_path)
 
 
 def validate_workflow_name(name: str) -> None:
@@ -1108,33 +1133,45 @@ def validate_workflow_name(name: str) -> None:
         )
 
 
-def infer_latest_run(path: Path) -> Path:
+def infer_latest_run(path: Path) -> Tuple[Path, Path]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
     Args:
         path: Absolute path to the workflow dir, run dir or runN dir.
 
+    Returns:
+        path: Absolute path of the numbered run dir if applicable, otherwise
+            the input arg path.
+        reg: The workflow name (including the numbered run if applicable).
+
     Raises WorkflowFilesError if the runN symlink is not valid.
     """
+    cylc_run_dir = get_cylc_run_dir()
+    try:
+        reg = path.relative_to(cylc_run_dir)
+    except ValueError:
+        raise ValueError(f"{path} is not in the cylc-run directory")
     if path.name == WorkflowFiles.RUN_N:
         runN_path = path
     else:
         runN_path = path / WorkflowFiles.RUN_N
         if not os.path.lexists(runN_path):
-            return path
+            return (path, reg)
     if not runN_path.is_symlink() or not runN_path.is_dir():
         raise WorkflowFilesError(
             f"runN directory at {runN_path} is a broken or invalid symlink"
         )
     numbered_run = os.readlink(str(runN_path))
     if not re.match(r'run\d+$', numbered_run):
-        # Note: the link should be relative
-        # TODO: what about cylc 8.0b1 workflows where it was absolute?
+        # Note: the link should be relative. This means it won't work for
+        # cylc 8.0b1 workflows where it was absolute (won't fix).
         raise WorkflowFilesError(
             f"runN symlink at {runN_path} points to invalid location: "
             f"{numbered_run}"
         )
-    return runN_path.parent / numbered_run
+    path = runN_path.parent / numbered_run
+    reg = path.relative_to(cylc_run_dir)
+    return (path, reg)
 
 
 def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
