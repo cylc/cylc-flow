@@ -313,6 +313,45 @@ TASK_GLOB matches task or family names at a given cycle point.
                 dest="icp",
             )
 
+    def add_cylc_rose_options(self) -> None:
+        """Add extra options for cylc-rose plugin if it is installed."""
+        try:
+            __import__('cylc.rose')
+        except ImportError:
+            return
+        self.add_option(
+            "--opt-conf-key", "-O",
+            help=(
+                "Use optional Rose Config Setting "
+                "(If Cylc-Rose is installed)"
+            ),
+            action="append",
+            default=[],
+            dest="opt_conf_keys"
+        )
+        self.add_option(
+            "--define", '-D',
+            help=(
+                "Each of these overrides the `[SECTION]KEY` setting in a "
+                "`rose-suite.conf` file. "
+                "Can be used to disable a setting using the syntax "
+                "`--define=[SECTION]!KEY` or even `--define=[!SECTION]`."
+            ),
+            action="append",
+            default=[],
+            dest="defines"
+        )
+        self.add_option(
+            "--rose-template-variable", '-S',
+            help=(
+                "As `--define`, but with an implicit `[SECTION]` for "
+                "workflow variables."
+            ),
+            action="append",
+            default=[],
+            dest="rose_template_vars"
+        )
+
     def parse_args(self, api_args, remove_opts=None):
         """Parse options and arguments, overrides OptionParser.parse_args.
 

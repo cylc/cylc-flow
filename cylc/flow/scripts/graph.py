@@ -38,7 +38,6 @@ from typing import Callable, List, Optional, TYPE_CHECKING, Tuple
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.scripts.install import add_cylc_rose_options
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import parse_reg
@@ -218,7 +217,7 @@ def get_option_parser():
         action='store',
     )
 
-    parser = add_cylc_rose_options(parser)
+    parser.add_cylc_rose_options()
 
     return parser
 

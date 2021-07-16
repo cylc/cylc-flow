@@ -44,7 +44,6 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
-from cylc.flow.scripts.install import add_cylc_rose_options
 from cylc.flow.workflow_files import parse_reg
 
 
@@ -73,7 +72,7 @@ def get_option_parser():
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'dummy-local', 'simulation'])
 
-    parser = add_cylc_rose_options(parser)
+    parser.add_cylc_rose_options()
 
     parser.set_defaults(is_validate=True)
 
