@@ -58,6 +58,11 @@ def get_remote_workflow_run_job_dir(
     return get_remote_workflow_run_dir(flow_name, 'log', 'job', *args)
 
 
+def get_cylc_run_dir() -> str:
+    """Return the cylc-run dir path with vars/user expanded."""
+    return expand_path(_CYLC_RUN_DIR)
+
+
 def get_workflow_run_dir(
     flow_name: Union[Path, str], *args: Union[Path, str]
 ) -> str:

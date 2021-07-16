@@ -50,6 +50,7 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.pathutil import (
     expand_path,
+    get_cylc_run_dir,
     get_workflow_run_dir,
     is_relative_to,
     make_localhost_symlinks,
@@ -1568,7 +1569,7 @@ def validate_source_dir(source, flow_name):
             raise WorkflowFilesError(
                 f'{flow_name} installation failed. - {dir_} exists in source '
                 'directory.')
-    cylc_run_dir = Path(get_workflow_run_dir(''))
+    cylc_run_dir = Path(get_cylc_run_dir())
     if (os.path.abspath(os.path.realpath(cylc_run_dir))
             in os.path.abspath(os.path.realpath(source))):
         raise WorkflowFilesError(

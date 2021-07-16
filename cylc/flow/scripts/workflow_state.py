@@ -63,7 +63,7 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.pathutil import expand_path, get_workflow_run_dir
+from cylc.flow.pathutil import expand_path, get_cylc_run_dir
 from cylc.flow.workflow_files import parse_reg
 
 from metomi.isodatetime.parsers import TimePointParser
@@ -222,7 +222,7 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
     if options.run_dir:
         run_dir = expand_path(options.run_dir)
     else:
-        run_dir = get_workflow_run_dir('')
+        run_dir = get_cylc_run_dir()
 
     pollargs = {
         'workflow': workflow,

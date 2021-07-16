@@ -62,7 +62,7 @@ from cylc.flow.async_util import (
 )
 from cylc.flow.network.client import (
     WorkflowRuntimeClient, ClientError, ClientTimeout)
-from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.exceptions import WorkflowStopped
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
@@ -135,7 +135,7 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
 
     """
     if not run_dir:
-        run_dir = Path(get_workflow_run_dir(''))
+        run_dir = Path(get_cylc_run_dir())
     if not scan_dir:
         scan_dir = run_dir
 
