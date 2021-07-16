@@ -310,12 +310,12 @@ def test__run_command_exit_rsync_fails(mock_ctx):
     """It updates the list of badhosts
     """
     badhosts = {'foo', 'bar'}
-    ctx = mock_ctx(cmd=['rsync'], ret_code=42)
+    ctx = mock_ctx(cmd=['rsync'], ret_code=42, cmd_key='file-install')
     SubProcPool._run_command_exit(
         ctx=ctx,
         bad_hosts=badhosts,
         callback=print,
-        callback_args=['Welcome to Magrathea']
+        callback_args=['Welcome to Magrathea', {'ssh command': 'ssh'}]
     )
     assert badhosts == {'foo', 'bar', 'mouse'}
 
@@ -347,5 +347,8 @@ def test_ssh_255_fail(mock_ctx, expect, ctx_kwargs):
 def test_rsync_255_fail(mock_ctx, expect, ctx_kwargs):
     """It knows when a ctx has failed
     """
-    output = SubProcPool.rsync_255_fail(mock_ctx(**ctx_kwargs))
+    output = SubProcPool.rsync_255_fail(
+        mock_ctx(**ctx_kwargs),
+        {'ssh command': 'ssh'}
+    )
     assert output == expect

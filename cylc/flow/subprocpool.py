@@ -21,6 +21,7 @@ import os
 import select
 from signal import SIGKILL
 import sys
+import shlex
 from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
@@ -476,10 +477,22 @@ class SubProcPool:
                 callback(ctx, *args_)
             else:
                 return False
-
         ctx.timestamp = get_current_time_string()
 
-        if cls.ssh_255_fail(ctx) or cls.rsync_255_fail(ctx) is True:
+        # If cmd is fileinstall, which uses rsync, get a platform so
+        # that you can use that platform's ssh command.
+        platform = None
+        if (
+            ctx.cmd_key == 'file-install'
+            and isinstance(callback_args, list)
+        ):
+            platform = callback_args[-1]
+            callback_args = callback_args[:-1]
+        elif isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
+            from cylc.flow.platforms import get_platform
+            platform = get_platform(ctx.cmd_key.platform_n)
+
+        if cls.ssh_255_fail(ctx) or cls.rsync_255_fail(ctx, platform) is True:
             # Job log retrieval passes a special object as a command key
             # Extra logic to provide sensible strings for logging.
             if isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
@@ -501,6 +514,7 @@ class SubProcPool:
             # Run Callback
             if bad_hosts is not None:
                 bad_hosts.add(ctx.host)
+
             res = _run_callback(callback_255, callback_255_args)
             if res is False:
                 _run_callback(callback, callback_args)
@@ -520,7 +534,7 @@ class SubProcPool:
         return ssh_255_fail
 
     @staticmethod
-    def rsync_255_fail(ctx) -> bool:
+    def rsync_255_fail(ctx, platform=None) -> bool:
         """Tests context for rsync failing to communicate with a host.
 
         If there has been a failure caused by rsync being unable to connect
@@ -528,6 +542,9 @@ class SubProcPool:
         may cause different rsync failures depending on version, and some of
         the failures may be caused by other problems.
         """
+        if platform is not None:
+            ssh_cmd = platform['ssh command']
+
         rsync_255_fail = False
         if (
             ctx.cmd[0] == 'rsync'
@@ -535,7 +552,8 @@ class SubProcPool:
             and is_remote_host(ctx.host)
         ):
             ssh_test = run(
-                ['ssh', ctx.host, 'true'], capture_output=True
+                shlex.split(f'{ssh_cmd} {ctx.host} true'),
+                capture_output=True
             )
             if ssh_test.returncode == 255:
                 rsync_255_fail = True

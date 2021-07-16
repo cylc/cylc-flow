@@ -461,7 +461,7 @@ class TaskRemoteMgr:
                 ctx,
                 bad_hosts=self.bad_hosts,
                 callback=self._file_install_callback,
-                callback_args=[install_target],
+                callback_args=[install_target, platform],
                 callback_255=self._file_install_callback_255,
             )
 
