@@ -41,15 +41,15 @@ __WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-1
 # validate
-run_ok "${TNAME}" cylc validate "${PWD}/flow.cylc"
+run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-fam" --group="<all>"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" --group="<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-exp"
+graph_workflow "flow.cylc" "${TNAME}-graph-exp" 
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.ref"
 
 #------------------------------------------------------------------------------
@@ -73,15 +73,15 @@ __WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-2
 # validate
-run_ok "${TNAME}" cylc validate "${PWD}/flow.cylc"
+run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-exp"
+graph_workflow "flow.cylc" "${TNAME}-graph-exp"
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.ref"
 
 #------------------------------------------------------------------------------
@@ -106,15 +106,15 @@ __WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-3
 # validate
-run_ok "${TNAME}" cylc validate "${PWD}/flow.cylc"
+run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-1.ref"
 # task graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-exp"
+graph_workflow "flow.cylc" "${TNAME}-graph-exp"
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-1.ref"
 # inheritance graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-1.ref"
 
 #------------------------------------------------------------------------------
@@ -138,15 +138,15 @@ __WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-4
 # validate
-run_ok "${TNAME}" cylc validate "${PWD}/flow.cylc"
+run_ok "${TNAME}" cylc validate "flow.cylc"
 # family graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
+graph_workflow "flow.cylc" "${TNAME}-graph-fam" "--group=<all>"
 cmp_ok "${TNAME}-graph-fam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-fam-b.ref"
 # task graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-exp"
+graph_workflow "flow.cylc" "${TNAME}-graph-exp"
 cmp_ok "${TNAME}-graph-exp" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-exp-b.ref"
 # inheritance graph
-graph_workflow "${PWD}/flow.cylc" "${TNAME}-graph-nam" -n
+graph_workflow "flow.cylc" "${TNAME}-graph-nam" -n
 cmp_ok "${TNAME}-graph-nam" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph-nam-b.ref"
 
 #------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ cat >'flow.cylc' <<'__WORKFLOW__'
         inherit = "FAM<i=dog,j=1>"  # OK (plain task can inherit from specific params)
 __WORKFLOW__
 
-run_ok "${TEST_NAME_BASE}-5" cylc validate "${PWD}/flow.cylc"
+run_ok "${TEST_NAME_BASE}-5" cylc validate "flow.cylc"
 
 #------------------------------------------------------------------------------
 cat >'flow.cylc' <<'__WORKFLOW__'
@@ -189,8 +189,8 @@ cat >'flow.cylc' <<'__WORKFLOW__'
         inherit = BAR<i>, BAZ<j>
 __WORKFLOW__
 
-run_ok "${TEST_NAME_BASE}-6" cylc validate "${PWD}/flow.cylc"
-cylc graph --reference "${PWD}/flow.cylc" 1>'06.graph'
+run_ok "${TEST_NAME_BASE}-6" cylc validate 'flow.cylc'
+cylc graph --reference 'flow.cylc' 1>'06.graph'
 cmp_ok '06.graph' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/06.graph.ref"
 
 #------------------------------------------------------------------------------
@@ -213,7 +213,7 @@ cat >'flow.cylc' <<'__WORKFLOW__'
 __WORKFLOW__
 
 TNAME=${TEST_NAME_BASE}-err-1
-run_fail "${TNAME}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TNAME}" cylc validate "flow.cylc"
 cmp_ok "${TNAME}.stderr" - << __ERR__
 ParamExpandError: illegal value 'i=frog' in 'inherit = FAM<i=frog,j>'
 __ERR__
@@ -240,7 +240,7 @@ cat >'flow.cylc' <<'__WORKFLOW__'
 __WORKFLOW__
 
 TNAME="${TEST_NAME_BASE}-err-2"
-run_fail "${TNAME}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TNAME}" cylc validate "flow.cylc"
 cmp_ok "${TNAME}.stderr" - << __ERR__
 ParamExpandError: parameter 'i' undefined in 'inherit = FAM<i,j=1>'
 __ERR__

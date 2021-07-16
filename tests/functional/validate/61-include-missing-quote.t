@@ -25,7 +25,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 %include 'foo.cylc
 __FLOW_CONFIG__
 
-run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME_BASE}.stderr" <<__ERR__
 FileParseError: mismatched quotes (in $PWD/flow.cylc):
    %include 'foo.cylc

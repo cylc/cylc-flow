@@ -31,7 +31,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         [[[events]]]
             failed handler = echo %(id)s, echo %(rubbish)s
 __FLOW_CONFIG__
-run_fail "${TEST_NAME}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
 __ERR__
@@ -47,7 +47,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         [[[events]]]
             failed handler = echo %(ids
 __FLOW_CONFIG__
-run_fail "${TEST_NAME}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
 WorkflowConfigError: bad task event handler template t1: echo %(ids: ValueError('incomplete format key')
 __ERR__

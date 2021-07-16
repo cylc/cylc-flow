@@ -22,7 +22,7 @@ set_test_number 2
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
+run_fail "${TEST_NAME}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: 'UNDEFINED_WHATEVER' is undefined
 Context lines:

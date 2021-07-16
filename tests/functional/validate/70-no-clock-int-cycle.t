@@ -31,7 +31,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
       R/^/P1 = "@c1 & foo[-P1] => foo"
 __FLOW_CONFIG__
 
-run_fail "${TEST_NAME_BASE}-val" cylc validate "${PWD}/flow.cylc"
+run_fail "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 
 contains_ok "${TEST_NAME_BASE}-val.stderr" <<'__END__'
 WorkflowConfigError: clock xtriggers need date-time cycling: c1 = wall_clock(offset=P0Y)

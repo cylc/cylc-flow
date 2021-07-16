@@ -24,6 +24,6 @@ init_workflow "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cyl
 
 run_ok "${TEST_NAME_BASE}" cylc config "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --check-circular "${PWD}/${TEST_NAME_BASE}.stdout"
+    cylc validate --check-circular "${TEST_NAME_BASE}.stdout"
 purge
 exit

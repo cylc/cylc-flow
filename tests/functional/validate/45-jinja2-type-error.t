@@ -29,7 +29,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         R1 = foo
 {{ 1 / 'foo' }}
 __FLOW_CONFIG__
-run_fail "${TEST_NAME}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: unsupported operand type(s) for /: 'int' and 'str'
 Context lines:
@@ -44,7 +44,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 {% set foo = [1, 2] %}
 {% set a, b, c = foo %}
 __FLOW_CONFIG__
-run_fail "${TEST_NAME}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: not enough values to unpack (expected 3, got 2)
 Context lines:

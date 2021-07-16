@@ -33,7 +33,7 @@ cat > flow.cylc <<__END__
         [[[directives]]]
             -l  select=1:ncpus=24:mem=20GB  # ERROR!
 __END__
-run_fail "${TEST_NAME}" cylc validate "${PWD}/flow.cylc"
+run_fail "${TEST_NAME}" cylc validate flow.cylc
 cmp_ok "${TEST_NAME}.stderr" <<__END__
 IllegalItemError: [runtime][task1][directives]-l  select - (consecutive spaces)
 __END__

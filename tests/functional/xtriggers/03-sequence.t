@@ -44,7 +44,7 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
    [[foo]]
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 
 # Run workflow; it will stall waiting on the never-satisfied xtriggers.
 cylc play "${WORKFLOW_NAME}"
