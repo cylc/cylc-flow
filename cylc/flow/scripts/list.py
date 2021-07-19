@@ -35,9 +35,10 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import parse_reg
-from cylc.flow.templatevars import load_template_vars
+from cylc.flow.scripts.install import add_cylc_rose_options
+from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -85,12 +86,14 @@ def get_option_parser():
         "initial cycle point, by default). Use '-p , ' for the default range.",
         metavar="[START],[STOP]", action="store", default=None, dest="prange")
 
+    parser = add_cylc_rose_options(parser)
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', reg: str) -> None:
     workflow, flow_file = parse_reg(reg, src=True)
+    template_vars = get_template_vars(options, flow_file, [reg, flow_file])
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")
@@ -129,7 +132,7 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
         workflow,
         flow_file,
         options,
-        load_template_vars(options.templatevars, options.templatevars_file))
+        template_vars)
     if options.tree:
         config.print_first_parent_tree(
             pretty=options.box, titles=options.titles)
