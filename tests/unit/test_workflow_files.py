@@ -463,11 +463,13 @@ def test_parse_reg__clash(
     monkeypatch.chdir(cwd)
 
     reg_arg = os.path.join(reg, FLOW_FILE) if reg_includes_flow_file else reg
-
+    # The workflow file relative to cwd should take precedence
     assert parse_reg(reg_arg, src=True) == (
         str(cwd / reg),
         cwd / reg / FLOW_FILE
     )
+    # It should warn that it also found a workflow in ~/cylc-run but didn't
+    # use it
     expected_warning = REG_CLASH_MSG.format(
         f"./{reg}/{FLOW_FILE}",
         run_dir / FLOW_FILE
