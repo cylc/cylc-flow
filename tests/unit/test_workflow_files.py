@@ -1462,7 +1462,7 @@ def test_check_flow_file_symlink(
          "'log=$DIR, share=$DIR2, ...'",
             None
          ),
-        ('run=$NICE, log= $Garibaldi, share/cycle=$RichTea', 'None',
+        ('run=$NICE, log= $Garibaldi, share/cycle=$RichTea', None,
             {'localhost': {
                 'run': '$NICE',
                 'log': '$Garibaldi',
@@ -1482,7 +1482,7 @@ def test_parse_cli_sym_dirs(
 ):
     """Test parse_cli_sym_dirs returns dict or correctly raises errors on cli
     symlink dir options"""
-    if err_msg != 'None':
+    if err_msg is not None:
         with pytest.raises(UserInputError) as exc:
             parse_cli_sym_dirs(symlink_dirs)
             assert(err_msg) in str(exc)

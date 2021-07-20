@@ -601,7 +601,7 @@ def is_installed(rund: Union[Path, str]) -> bool:
     relation to the run directory.
 
     Args:
-        rund (Union[Path, str]): run directory path to check
+        rund: run directory path to check
 
     Returns:
         bool: True if rund belongs to an installed workflow
@@ -1271,6 +1271,7 @@ def install_workflow(
         rundir: for overriding the default cylc-run directory.
         no_run_name: Flag as True to install workflow into
             ~/cylc-run/<flow_name>
+        cli_symlink_dirs: Symlink dirs, if entered on the cli.
 
     Return:
         source: The source directory.
@@ -1506,9 +1507,8 @@ def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
     """Converts command line entered symlink dirs to a dictionary.
 
     Args:
-        symlink_dirs (str): As entered by user on cli,
+        symlink_dirs: As entered by user on cli,
                             e.g. "log=$DIR, share=$DIR2".
-        fill_syms (bool): If True, will fill missing
 
     Raises:
         WorkflowFilesError: If directory to be symlinked is not in permitted
@@ -1526,9 +1526,10 @@ def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
     if symlink_dirs == "":
         return symdict
     symlist = symlink_dirs.strip(',').split(',')
-    possible_symlink_dirs = WorkflowFiles.SYMLINK_DIRS.symmetric_difference(
-        {'', WorkflowFiles.RUN_DIR}
+    possible_symlink_dirs = set(WorkflowFiles.SYMLINK_DIRS.union(
+        {WorkflowFiles.RUN_DIR})
     )
+    possible_symlink_dirs.remove('')
     for pair in symlist:
         try:
             key, val = pair.split("=")
@@ -1540,8 +1541,7 @@ def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
                 '--symlink-dirs=\'log=$DIR, share=$DIR2, ...\''
             )
         if key not in possible_symlink_dirs:
-            dirs = str(
-                possible_symlink_dirs).lstrip('frozenset({').rstrip('})')
+            dirs = ', '.join(possible_symlink_dirs)
             raise UserInputError(
                 f"{key} not a valid entry for --symlink-dirs. "
                 f"Configurable symlink dirs are: {dirs}"
