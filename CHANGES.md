@@ -72,6 +72,10 @@ Add an option for displaying source workflows in `cylc scan`.
 - Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
 
+[#4250](https://github.com/cylc/cylc-flow/pull/4250) -
+Symlink dirs localhost symlinks are now overridable with cli option
+`--symlink-dirs`.
+
 [#4103](https://github.com/cylc/cylc-flow/pull/4103) -
 Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
@@ -122,7 +126,6 @@ when initial cycle point is not valid for the cycling type.
 
 [#4228](https://github.com/cylc/cylc-flow/pull/4228) - Interacting with a
 workflow on the cli using `runN` is now supported.
-
 
 [#4193](https://github.com/cylc/cylc-flow/pull/4193) - Standard `cylc install`
 now correctly installs from directories with a `.` in the name. Symlink dirs

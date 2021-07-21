@@ -29,8 +29,10 @@ from cylc.flow.exceptions import (
     CylcError,
     ServiceFileError,
     TaskRemoteMgmtError,
+    UserInputError,
     WorkflowFilesError
 )
+from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
@@ -39,7 +41,10 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
+    parse_cli_sym_dirs,
     get_symlink_dirs,
+    is_installed,
+    parse_cli_sym_dirs,
     get_workflow_source_dir,
     glob_in_run_dir,
     reinstall_workflow,
@@ -1441,3 +1446,61 @@ def test_check_flow_file_symlink(
                 log_msg = f'{log_msg}. Symlink created.'
         assert result == tmp_path.joinpath(expected_file)
         assert caplog.messages == [log_msg]
+
+
+@pytest.mark.parametrize(
+    'symlink_dirs, err_msg, expected',
+    [
+        ('log=$shortbread, share= $bourbon,share/cycle= $digestive, ',
+         "There is an error in --symlink-dirs option:",
+            None
+         ),
+        ('log=$shortbread share= $bourbon share/cycle= $digestive ',
+         "There is an error in --symlink-dirs option:"
+         " log=$shortbread share= $bourbon share/cycle= $digestive . "
+         "Try entering option in the form --symlink-dirs="
+         "'log=$DIR, share=$DIR2, ...'",
+            None
+         ),
+        ('run=$NICE, log= $Garibaldi, share/cycle=$RichTea', None,
+            {'localhost': {
+                'run': '$NICE',
+                'log': '$Garibaldi',
+                'share/cycle': '$RichTea'
+            }}
+         ),
+        ('some_other_dir=$bourbon',
+         'some_other_dir not a valid entry for --symlink-dirs',
+            {'some_other_dir': '£bourbon'}
+         ),
+    ]
+)
+def test_parse_cli_sym_dirs(
+    symlink_dirs: str,
+    err_msg: str,
+    expected: Dict[str, Dict[str, Any]]
+):
+    """Test parse_cli_sym_dirs returns dict or correctly raises errors on cli
+    symlink dir options"""
+    if err_msg is not None:
+        with pytest.raises(UserInputError) as exc:
+            parse_cli_sym_dirs(symlink_dirs)
+            assert(err_msg) in str(exc)
+
+    else:
+        actual = parse_cli_sym_dirs(symlink_dirs)
+
+        assert actual == expected
+
+
+@pytest.mark.parametrize(
+    'reg, installed, named,  expected',
+    [('reg1/run1', True, True, True),
+     ('reg2', True, False, True),
+     ('reg3', False, False, False)]
+)
+def test_is_installed(tmp_run_dir: Callable, reg, installed, named, expected):
+    """Test is_installed correctly identifies presence of _cylc-install dir"""
+    cylc_run_dir: Path = tmp_run_dir(reg, installed=installed, named=named)
+    actual = is_installed(cylc_run_dir)
+    assert actual == expected
