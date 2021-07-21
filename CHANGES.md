@@ -72,6 +72,10 @@ Add an option for displaying source workflows in `cylc scan`.
 - Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
 
+[#4250](https://github.com/cylc/cylc-flow/pull/4250) -
+Symlink dirs localhost symlinks are now overridable with cli option
+`--symlink-dirs`.
+
 [#4103](https://github.com/cylc/cylc-flow/pull/4103) -
 Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.

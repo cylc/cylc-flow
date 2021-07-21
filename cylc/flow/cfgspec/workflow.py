@@ -788,7 +788,7 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :cylc:conf:`global.cylc[symlink dirs]`).
+                :cylc:conf:`global.cylc[install][symlink dirs]`).
 
                 .. note::
 

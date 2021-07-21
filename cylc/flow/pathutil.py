@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
-from typing import Dict, Iterable, Set, Union
+from typing import Dict, Iterable, Set, Union, Optional, Any
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -27,7 +27,6 @@ from cylc.flow.exceptions import (
     UserInputError, WorkflowFilesError, handle_rmtree_err
 )
 from cylc.flow.platforms import get_localhost_install_target
-
 
 # Note: do not import this elsewhere, as it might bypass unit test
 # monkeypatching:
@@ -137,22 +136,29 @@ def make_workflow_run_tree(workflow):
 
 
 def make_localhost_symlinks(
-    rund: Union[Path, str], named_sub_dir: str
+    rund: Union[Path, str],
+    named_sub_dir: str,
+    symlink_conf: Optional[Dict[str, Dict[str, str]]] = None
 ) -> Dict[str, Union[Path, str]]:
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
         rund: the entire run directory path
         named_sub_dir: e.g flow_name/run1
+        symlink_conf: Symlinks dirs configuration passed from cli
 
     Returns:
         Dictionary of symlinks with sources as keys and
         destinations as values: ``{source: destination}``
 
     """
-    dirs_to_symlink = get_dirs_to_symlink(
-        get_localhost_install_target(), named_sub_dir)
     symlinks_created = {}
+    dirs_to_symlink = get_dirs_to_symlink(
+        get_localhost_install_target(),
+        named_sub_dir, symlink_conf=symlink_conf
+    )
     for key, value in dirs_to_symlink.items():
+        if value is None:
+            continue
         if key == 'run':
             symlink_path = rund
         else:
@@ -171,21 +177,34 @@ def make_localhost_symlinks(
     return symlinks_created
 
 
-def get_dirs_to_symlink(install_target: str, flow_name: str) -> Dict[str, str]:
-    """Returns dictionary of directories to symlink from glbcfg.
+def get_dirs_to_symlink(
+    install_target: str,
+    flow_name: str,
+    symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None
+) -> Dict[str, Any]:
+    """Returns dictionary of directories to symlink.
 
     Note the paths should remain unexpanded, to be expanded on the remote.
-    """
-    dirs_to_symlink: Dict[str, str] = {}
-    symlink_conf = glbl_cfg().get(['symlink dirs'])
+    Args:
+        install_target: Symlinks to be created on this install target
+        flow_name: full name of the run, e.g. myflow/run1
+        symlink_conf: Symlink dirs, if sent on the cli.
+            Defaults to None, in which case global config symlink dirs will
+            be applied.
 
+    Returns:
+        dirs_to_symlink: [directory: symlink_path]
+    """
+    dirs_to_symlink: Dict[str, Any] = {}
+    if symlink_conf is None:
+        symlink_conf = glbl_cfg().get(['install', 'symlink dirs'])
     if install_target not in symlink_conf.keys():
         return dirs_to_symlink
     base_dir = symlink_conf[install_target]['run']
     if base_dir:
         dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', flow_name)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
-        link = symlink_conf[install_target][dir_]
+        link = symlink_conf[install_target].get(dir_, None)
         if (not link) or link == base_dir:
             continue
         dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', flow_name, dir_)
@@ -202,7 +221,9 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
     path = Path(path)
     target = Path(target)
     if path.exists():
-        if path.is_symlink() and path.samefile(target):
+        # note all three checks are needed here due to case where user has set
+        # their own symlink which does not match the global config set one.
+        if path.is_symlink() and target.exists() and path.samefile(target):
             # correct symlink already exists
             return False
         # symlink name is in use by a physical file or directory
@@ -219,10 +240,11 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
             raise WorkflowFilesError(
                 f"Error when symlinking. Failed to unlink bad symlink {path}.")
     target.mkdir(parents=True, exist_ok=True)
+
+    # This is needed in case share and share/cycle have the same symlink dir:
     if path.exists():
-        # Trying to link to itself; no symlink needed
-        # (e.g. path's parent is symlink to target's parent)
         return False
+
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         path.symlink_to(target)

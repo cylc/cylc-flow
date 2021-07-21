@@ -67,13 +67,22 @@ def tmp_run_dir(
 
     Args:
         reg: Workflow name.
+        installed: If True, make it look like the workflow was installed
+            using cylc install (creates _cylc-install dir).
+        named: If True and installed is True, the _cylc-install dir will
+            be created in the parent to make it look like this is a
+            named run.
 
     Example:
         run_dir = tmp_run_dir('foo')
         # Or:
         cylc_run_dir = tmp_run_dir()
     """
-    def _tmp_run_dir(reg: Optional[str] = None) -> Path:
+    def _tmp_run_dir(
+        reg: Optional[str] = None,
+        installed: bool = False,
+        named: bool = False
+    ) -> Path:
         cylc_run_dir = tmp_path / 'cylc-run'
         cylc_run_dir.mkdir(exist_ok=True)
         monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)
@@ -82,6 +91,16 @@ def tmp_run_dir(
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
             (run_dir / WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
+            if installed:
+                if named:
+                    if len(Path(reg).parts) < 2:
+                        raise ValueError("Named run requires two-level reg")
+                    (run_dir.parent / WorkflowFiles.Install.DIRNAME).mkdir(
+                        exist_ok=True)
+                else:
+                    (run_dir / WorkflowFiles.Install.DIRNAME).mkdir(
+                        exist_ok=True)
+
             return run_dir
         return cylc_run_dir
     return _tmp_run_dir
