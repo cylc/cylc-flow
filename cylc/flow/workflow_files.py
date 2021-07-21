@@ -601,10 +601,21 @@ def is_installed(path: Union[Path, str]) -> bool:
     return cylc_install_folder.is_dir() and source.is_symlink()
 
 
-async def get_contained_workflows(path: Path) -> List[str]:
-    """Return the sorted names of any workflows in the path provided"""
+async def get_contained_workflows(
+    path: Path,
+    scan_depth: Optional[int] = None
+) -> List[str]:
+    """Return the sorted names of any workflows in a directory.
+
+    Args:
+        path: Absolute path to the dir.
+        scan_depth: How many levels deep to look inside the dir.
+    """
     from cylc.flow.network.scan import scan
-    return sorted([i['name'] async for i in scan(scan_dir=path)])
+    kwargs = {'max_depth': scan_depth} if scan_depth is not None else {}
+    return sorted(
+        [i['name'] async for i in scan(scan_dir=path, **kwargs)]
+    )
 
 
 def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
@@ -629,7 +640,9 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
     except ServiceFileError as exc:
         raise ServiceFileError(f"Cannot remove running workflow.\n\n{exc}")
     # Check dir does not contain other workflows:
-    contained_workflows = asyncio.run(get_contained_workflows(run_dir))
+    contained_workflows = asyncio.get_event_loop().run_until_complete(
+        get_contained_workflows(run_dir, MAX_SCAN_DEPTH + 1)
+    )  # Note: increased scan depth for safety
     if contained_workflows:
         bullet = "\n    - "
         msg = (
