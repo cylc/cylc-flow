@@ -266,7 +266,3 @@ def main(parser, options, *args):
             print(iso_point_dumper.dump(cycle_point, "T" + template)[1:])
         else:
             print(dump_string)
-
-
-if __name__ == "__main__":
-    main()

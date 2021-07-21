@@ -103,10 +103,3 @@ def duration_as(iso8601_duration, units):
     else:
         raise ValueError('No matching units found for %s' % units)
     return converter(DurationParser().parse(iso8601_duration).get_seconds())
-
-
-if __name__ == "__main__":
-    for duration in ['PT1H', 'P1D', 'P7D']:
-        for short_name, _ in CONVERSIONS:
-            print(short_name, duration_as(duration, short_name))
-        print('\n')

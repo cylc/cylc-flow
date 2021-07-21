@@ -168,7 +168,3 @@ def main(_, options, reg):
 
     print(cparse('<green>Valid for cylc-%s</green>' % CYLC_VERSION))
     profiler.stop()
-
-
-if __name__ == "__main__":
-    main()

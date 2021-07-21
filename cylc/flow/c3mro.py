@@ -104,7 +104,6 @@ print_mro(ex_9.Z)
 
 
 from copy import copy
-from typing import Dict, List
 
 
 class C3:
@@ -148,30 +147,3 @@ class C3:
         return self.merge(
             [[C]] + [self.mro(x) for x in self.tree[C]] + [copy(self.tree[C])],
             label=C)
-
-
-if __name__ == "__main__":
-    parents: Dict[str, List[str]] = {}
-    parents['root'] = []
-    parents['a'] = ['root']
-    parents['b'] = ['root']
-    parents['foo'] = ['a', 'b']
-
-    print('foo', C3(parents).mro('foo'))
-
-    parents.clear()
-    parents['o'] = []
-    parents['a'] = ['o']
-    parents['b'] = ['o']
-    parents['c'] = ['o']
-    parents['d'] = ['o']
-    parents['e'] = ['o']
-    parents['k1'] = ['a', 'b', 'c']
-    parents['k2'] = ['d', 'b', 'e']
-    parents['k3'] = ['d', 'a']
-    parents['z'] = ['k1', 'k2', 'k3']
-
-    print('z', C3(parents).mro('z'))
-
-    # Note we can get Python's result by defining an equivalent class
-    # hierarchy (with empty class bodies) and printing foo.__mro__.

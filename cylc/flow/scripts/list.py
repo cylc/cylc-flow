@@ -157,7 +157,3 @@ def main(parser, options, reg):
                 print(result[ns])
             else:
                 print(ns)
-
-
-if __name__ == "__main__":
-    main()

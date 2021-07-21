@@ -96,7 +96,3 @@ class TestInclude(unittest.TestCase):
                 "[section2]"
             ]
             self.assertEqual(expected, r)
-
-
-if __name__ == '__main__':
-    unittest.main()

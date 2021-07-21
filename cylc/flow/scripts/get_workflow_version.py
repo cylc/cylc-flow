@@ -58,7 +58,3 @@ def main(parser, options, workflow):
 
     for workflow in result['workflows']:
         print(workflow['cylcVersion'])
-
-
-if __name__ == "__main__":
-    main()

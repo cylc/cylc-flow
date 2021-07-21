@@ -65,7 +65,3 @@ def main(parser, options, install_target, rund, *dirs_to_be_symlinked):
         rund,
         *dirs_to_be_symlinked
     )
-
-
-if __name__ == "__main__":
-    main()

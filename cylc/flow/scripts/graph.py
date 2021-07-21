@@ -255,7 +255,3 @@ def main(parser, opts, workflow=None, start=None, stop=None):
         if lines:
             sys.stdout.writelines(lines)
             sys.exit(1)
-
-
-if __name__ == '__main__':
-    main()

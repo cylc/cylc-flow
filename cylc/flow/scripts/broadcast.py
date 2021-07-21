@@ -401,7 +401,3 @@ def main(_, options, workflow):
             print(get_broadcast_change_report(
                 modified_settings, is_cancel=report_cancel))
     sys.exit(report_bad_options(bad_options, is_set=report_set))
-
-
-if __name__ == "__main__":
-    main()

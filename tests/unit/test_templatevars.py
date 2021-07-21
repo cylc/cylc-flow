@@ -103,10 +103,6 @@ class TestTemplatevars(unittest.TestCase):
         self.assertEqual(expected, load_template_vars(template_vars=pairs))
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 def test_get_template_vars_installed_flow(monkeypatch):
     """It works on an installed flow.
 

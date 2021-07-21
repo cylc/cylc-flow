@@ -468,7 +468,3 @@ def main(parser, options, *args, color=False):
                 sys.exit(out)
         if mode == 'edit':
             tmpfile_edit(out, options.geditor)
-
-
-if __name__ == "__main__":
-    main()

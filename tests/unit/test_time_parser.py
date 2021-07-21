@@ -198,7 +198,3 @@ class TestRecurrenceWorkflow(unittest.TestCase):
         for expression in tests:
             test_data = str(self._parsers[0].parse_interval(expression))
             self.assertEqual(test_data, expression)
-
-
-if __name__ == "__main__":
-    unittest.main()

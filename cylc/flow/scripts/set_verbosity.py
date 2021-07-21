@@ -78,7 +78,3 @@ def main(parser, options, workflow, severity_str):
     }
 
     pclient('graphql', mutation_kwargs)
-
-
-if __name__ == "__main__":
-    main()

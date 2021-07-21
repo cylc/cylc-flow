@@ -150,7 +150,3 @@ def main(parser, options, *args):
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
     record_messages(workflow, task_job, messages)
-
-
-if __name__ == '__main__':
-    main()

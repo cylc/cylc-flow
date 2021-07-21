@@ -312,7 +312,3 @@ def main(_, options, workflow, *task_args):
 
     if options.json:
         print(json.dumps(json_filter, indent=4))
-
-
-if __name__ == "__main__":
-    main()

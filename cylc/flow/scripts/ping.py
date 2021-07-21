@@ -106,7 +106,3 @@ def main(parser, options, workflow, task_id=None):
             if msg:
                 print(cparse(f'<red>{msg}</red>'))
                 sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()

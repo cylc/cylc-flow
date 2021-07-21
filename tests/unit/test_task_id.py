@@ -65,7 +65,3 @@ class TestTaskId(unittest.TestCase):
             "abc", "123", "____", "_", "a_b", "a_1", "1_b", "ABC"
         ]:
             self.assertFalse(TaskID.is_valid_id_2(id2))
-
-
-if __name__ == '__main__':
-    unittest.main()

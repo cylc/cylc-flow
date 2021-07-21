@@ -193,7 +193,3 @@ class TestSubProcPool(unittest.TestCase):
                 f.flush()
             with self.assertRaises(AttributeError):
                 get_func("the_sword", temp_dir)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -78,7 +78,3 @@ class TestLoggingutil(unittest.TestCase):
                 file_handler.close()
                 LOG.removeHandler(file_handler)
                 logging.raiseExceptions = True
-
-
-if __name__ == '__main__':
-    unittest.main()

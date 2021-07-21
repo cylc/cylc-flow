@@ -175,7 +175,3 @@ def main(parser, options, reg):
         )
     # DONE
     viewfile.close()
-
-
-if __name__ == "__main__":
-    main()

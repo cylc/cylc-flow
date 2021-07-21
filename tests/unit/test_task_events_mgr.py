@@ -53,7 +53,3 @@ class TestTaskEventsManager(unittest.TestCase):
         task_events_manager._job_logs_retrieval_callback(proc_ctx, None)
         self.assertEqual(1, cylc_log.debug.call_count)
         self.assertTrue(cylc_log.debug.call_args.contains("ls /tmp/123"))
-
-
-if __name__ == '__main__':
-    unittest.main()

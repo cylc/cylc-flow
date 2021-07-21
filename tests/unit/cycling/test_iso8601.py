@@ -777,7 +777,3 @@ class TestRelativeCyclePoint(unittest.TestCase):
         timepoint_truncated = "19951231T0630"  # 19951231T0630
         output = ingest_time(timepoint_truncated, my_now)
         self.assertEqual("19951231T0630", output)
-
-
-if __name__ == '__main__':
-    unittest.main()

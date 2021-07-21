@@ -40,7 +40,3 @@ class TestMessageSorting(unittest.TestCase):
             random.shuffle(messages)
             output = sorted(messages, key=TaskOutputs.msg_sort_key)
             self.assertEqual(output, self.TEST_MESSAGES, output)
-
-
-if __name__ == '__main__':
-    unittest.main()

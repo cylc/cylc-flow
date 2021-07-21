@@ -68,7 +68,3 @@ def main(_, options, workflow, func):
     else:
         res_msg = res
     sys.stdout.write(json.dumps(res_msg, indent=4) + '\n')
-
-
-if __name__ == '__main__':
-    main()

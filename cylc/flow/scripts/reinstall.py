@@ -176,7 +176,3 @@ def main(
                 entry_point.name,
                 exc
             ) from None
-
-
-if __name__ == "__main__":
-    main()

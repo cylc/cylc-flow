@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 NIWA
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,20 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
+from cylc.flow.jinja.filters.duration_as import duration_as
 
-from cylc.flow.parsec.exceptions import ParsecError
+import pytest
 
 
-class TestParsec(unittest.TestCase):
-
-    def test_parsec_error_msg(self):
-        parsec_error = ParsecError()
-        self.assertEqual('', str(parsec_error))
-        parsec_error = ParsecError('foo')
-        self.assertEqual('foo', str(parsec_error))
-
-    def test_parsec_error_str(self):
-        msg = 'Turbulence!'
-        parsec_error = ParsecError(msg)
-        self.assertEqual(msg, str(parsec_error))
+@pytest.mark.parametrize(
+    'duration,fmt,result',
+    [
+        pytest.param('PT1H', 's', 3600, id='PT1H->s'),
+        pytest.param('PT1H', 'm', 60, id='PT1H->m'),
+        pytest.param('PT1H', 'h', 1, id='PT1H->h'),
+        pytest.param('PT1H', 'd', 1 / 24, id='PT1H->d'),
+        pytest.param('PT1H', 'w', 1 / (24 * 7), id='PT1H->w'),
+        pytest.param('P7D', 'd', 7, id='P7D->d'),
+        pytest.param('P7D', 's', 604800, id='P7D->s'),
+    ]
+)
+def test_all(duration, fmt, result):
+    assert duration_as(duration, fmt) == result

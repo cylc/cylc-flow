@@ -254,7 +254,3 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
                 task=options.task,
                 cycle=formatted_pt,
                 status=options.status))
-
-
-if __name__ == "__main__":
-    main()

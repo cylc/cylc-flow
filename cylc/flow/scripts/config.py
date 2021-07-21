@@ -140,7 +140,3 @@ def main(parser, options, reg=None):
         oneline=options.oneline,
         none_str=options.none_str
     )
-
-
-if __name__ == "__main__":
-    main()

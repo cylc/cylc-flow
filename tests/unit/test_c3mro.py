@@ -74,7 +74,3 @@ class TestC3mro(unittest.TestCase):
             C3.merge([[], ['x', 'y', 'o'], ['y', 'x', 'o'], []], None)
         self.assertTrue("ERROR: bad runtime namespace inheritance hierarchy"
                         in str(cm.exception))
-
-
-if __name__ == '__main__':
-    unittest.main()

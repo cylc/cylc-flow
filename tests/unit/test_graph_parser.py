@@ -498,7 +498,3 @@ class TestGraphParser(unittest.TestCase):
             }
         }
         self.assertEqual(gp.triggers, triggers)
-
-
-if __name__ == "__main__":
-    unittest.main()
