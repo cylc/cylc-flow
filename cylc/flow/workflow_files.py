@@ -1198,6 +1198,8 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         'rose-suite.conf',
         'opt/rose-suite-cylc-install.conf',
         WorkflowFiles.LOG_DIR,
+        WorkflowFiles.WORK_DIR,
+        WorkflowFiles.SHARE_DIR,
         WorkflowFiles.Install.DIRNAME,
         WorkflowFiles.Service.DIRNAME
     ]:

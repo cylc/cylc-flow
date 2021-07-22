@@ -41,6 +41,7 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
+    get_rsync_rund_cmd,
     parse_cli_sym_dirs,
     get_symlink_dirs,
     is_installed,
@@ -1504,3 +1505,21 @@ def test_is_installed(tmp_run_dir: Callable, reg, installed, named, expected):
     cylc_run_dir: Path = tmp_run_dir(reg, installed=installed, named=named)
     actual = is_installed(cylc_run_dir)
     assert actual == expected
+
+
+def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
+    """Test rsync command for cylc install/reinstall excludes cylc dirs.
+    """
+    cylc_run_dir: Path = tmp_run_dir('rsync_flow', installed=True, named=False)
+    for dir in [
+        WorkflowFiles.WORK_DIR,
+        WorkflowFiles.SHARE_DIR,
+        WorkflowFiles.LOG_DIR,
+    ]:
+        cylc_run_dir.joinpath(dir).mkdir(exist_ok=True)
+    actual_cmd = get_rsync_rund_cmd('blah', cylc_run_dir)
+    assert actual_cmd == [
+        'rsync', '-a', '--checksum', '--out-format=%o %n%L', '--no-t',
+        '--exclude=log', '--exclude=work', '--exclude=share',
+        '--exclude=_cylc-install', '--exclude=.service',
+        'blah/', f'{cylc_run_dir}/']
