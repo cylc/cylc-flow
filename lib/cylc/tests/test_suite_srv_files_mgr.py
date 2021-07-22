@@ -17,12 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import pytest
 import unittest
 
 import mock
 
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager, \
-    SuiteServiceFileError
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager,
+    SuiteServiceFileError,
+    SuiteCylcVersionError
+)
 
 
 def get_register_test_cases():
@@ -216,6 +220,25 @@ class TestSuiteSrvFilesManager(unittest.TestCase):
                     the_exception = cm.exception
                     self.assertTrue(e_message in str(the_exception),
                                     str(the_exception))
+
+
+@pytest.mark.parametrize(
+    'version, expected_err',
+    [
+        ('6.11.3', None),
+        ('7.8.8-26-g03abf-dirty', None),
+        ('8.0.0', SuiteCylcVersionError),
+        ('8.0b2.dev', SuiteCylcVersionError),
+        ('9', SuiteCylcVersionError),
+        ('foo', SuiteServiceFileError)
+    ]
+)
+def test_check_cylc_version(version, expected_err):
+    if expected_err:
+        with pytest.raises(expected_err):
+            SuiteSrvFilesManager.check_cylc_version(version)
+    else:
+        SuiteSrvFilesManager.check_cylc_version(version)
 
 
 if __name__ == '__main__':
