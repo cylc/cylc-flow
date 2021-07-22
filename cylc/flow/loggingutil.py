@@ -72,7 +72,7 @@ class CylcLogFormatter(logging.Formatter):
             logging.Formatter.__init__(
                 self,
                 (
-                    '[%(pathname)s:%(lineno)d]\n'
+                    '[%(pathname)s:%(lineno)d] '
                     '%(asctime)s %(levelname)-2s - %(message)s'
                 ),
                 '%Y-%m-%dT%H:%M:%S%Z')
