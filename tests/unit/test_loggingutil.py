@@ -17,11 +17,14 @@
 import logging
 import tempfile
 import unittest
+import pytest
 
+from pytest import param
 from unittest import mock
 
 from cylc.flow import LOG
-from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.loggingutil import (
+    TimestampRotatingFileHandler, CylcLogFormatter)
 
 
 class TestLoggingutil(unittest.TestCase):
@@ -82,3 +85,27 @@ class TestLoggingutil(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+@pytest.mark.parametrize(
+    'dev_info, expect',
+    [
+        param(
+            True,
+            (
+                '[%(pathname)s:%(lineno)d]\n'
+                '%(asctime)s %(levelname)-2s - %(message)s'
+            ),
+            id='dev_info=True'
+        ),
+        param(
+            False,
+            '%(asctime)s %(levelname)-2s - %(message)s',
+            id='dev_info=False'
+        )
+    ]
+)
+def test_CylcLogFormatter__init__dev_info(dev_info, expect):
+    """dev_info switch changes the logging format string."""
+    formatter = CylcLogFormatter(dev_info=dev_info)
+    assert formatter._fmt == expect

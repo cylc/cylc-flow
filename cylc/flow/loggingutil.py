@@ -58,17 +58,29 @@ class CylcLogFormatter(logging.Formatter):
     #       deamonise script (url, pid) are not wrapped
     MAX_WIDTH = 999
 
-    def __init__(self, timestamp=True, color=False, max_width=None):
+    def __init__(
+        self, timestamp=True, color=False, max_width=None, dev_info=False
+    ):
         self.timestamp = None
         self.color = None
         self.max_width = self.MAX_WIDTH
         self.wrapper = None
         self.configure(timestamp, color, max_width)
-        # You may find adding %(filename)s %(lineno)d are useful when debugging
-        logging.Formatter.__init__(
-            self,
-            '%(asctime)s %(levelname)-2s - %(message)s',
-            '%Y-%m-%dT%H:%M:%S%Z')
+        if dev_info is True:
+            # Add location message created in codebase when in very very, very
+            # verbose mode.
+            logging.Formatter.__init__(
+                self,
+                (
+                    '[%(pathname)s:%(lineno)d]\n'
+                    '%(asctime)s %(levelname)-2s - %(message)s'
+                ),
+                '%Y-%m-%dT%H:%M:%S%Z')
+        else:
+            logging.Formatter.__init__(
+                self,
+                '%(asctime)s %(levelname)-2s - %(message)s',
+                '%Y-%m-%dT%H:%M:%S%Z')
 
     def configure(self, timestamp=None, color=None, max_width=None):
         """Reconfigure the format settings."""
@@ -103,6 +115,23 @@ class CylcLogFormatter(logging.Formatter):
         "time.strftime" will handle time zone from "localtime" properly.
         """
         return get_time_string_from_unix_time(record.created)
+
+
+class CylcLogFormatterPlus(CylcLogFormatter):
+    def __init__(self, timestamp=True, color=False, max_width=None):
+        self.timestamp = None
+        self.color = None
+        self.max_width = self.MAX_WIDTH
+        self.wrapper = None
+        self.configure(timestamp, color, max_width)
+        # You may find adding %(filename)s %(lineno)d are useful when debugging
+        logging.Formatter.__init__(
+            self,
+            (
+                '%(asctime)s %(filename)s:%(lineno)d %(levelname)-2s'
+                ' - %(message)s'
+            ),
+            '%Y-%m-%dT%H:%M:%S%Z')
 
 
 class TimestampRotatingFileHandler(logging.FileHandler):
