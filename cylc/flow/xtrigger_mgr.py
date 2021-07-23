@@ -312,7 +312,7 @@ class XtriggerManager:
             self.t_next_call[sig] = now + ctx.intvl
             # Queue to the process pool, and record as active.
             self.active.append(sig)
-            self.proc_pool.put_command(ctx, self.callback)
+            self.proc_pool.put_command(ctx, callback=self.callback)
 
     def housekeep(self, itasks: List[TaskProxy]):
         """Delete satisfied xtriggers no longer needed by any task.

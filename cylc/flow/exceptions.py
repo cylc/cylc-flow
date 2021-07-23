@@ -255,6 +255,13 @@ class HostSelectException(CylcError):
         return ret
 
 
+class NoHostsError(CylcError):
+    """None of the hosts of a given platform were reachable."""
+    def __init__(self, platform):
+        self.platform_n = platform['name']
+        super().__init__(f'Unable to find valid host for {self.platform_n}')
+
+
 class CylcVersionError(CylcError):
     """Contact file is for a Cylc Version not supported by this script."""
     def __init__(self, version=None):

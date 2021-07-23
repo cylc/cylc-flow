@@ -320,9 +320,10 @@ with Conf('global.cylc', desc='''
             Configuration of the Cylc Scheduler's main loop.
         '''):
             Conf('plugins', VDR.V_STRING_LIST,
-                 ['health check', 'prune flow labels'], desc='''
-                Configure the default main loop plugins to use when
-                starting new workflows.
+                 ['health check', 'prune flow labels', 'reset bad hosts'],
+                 desc='''
+                     Configure the default main loop plugins to use when
+                     starting new workflows.
             ''')
 
             with Conf('<plugin name>', desc='''
@@ -344,6 +345,14 @@ with Conf('global.cylc', desc='''
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     The interval with which this plugin is run.
+                ''')
+
+            with Conf('reset bad hosts', meta=MainLoopPlugin, desc='''
+                Periodically clear the scheduler list of unreachable (bad)
+                hosts.
+            '''):
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(1800), desc='''
+                    How often (in seconds) to run this plugin.
                 ''')
 
         with Conf('logging', desc='''
@@ -754,6 +763,22 @@ with Conf('global.cylc', desc='''
                 systems so for safety there is an upper limit on the number
                 of job submissions which can be batched together.
             ''')
+            with Conf('selection'):
+                Conf(
+                    'method', VDR.V_STRING, default='random',
+                    options=['random', 'definition order'],
+                    desc='''
+                        Host selection method for the platform. Available
+                        options:
+
+                        - random: Suitable for an identical pool of hosts.
+                        - definition order: Take the first host in the list
+                          unless that host has been unreachable. In many cases
+                          this is likely to cause load imbalances, but might
+                          be appropriate if your hosts were
+                          ``main, backup, failsafe``.
+                    '''
+                )
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 

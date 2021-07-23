@@ -1,0 +1,36 @@
+
+[meta]
+title = "Try out scenarios for intelligent host selection."
+description = """
+Tasks
+- goodhost: a control to check that everything works
+- badhost is always going to fail
+- mixedhost contains some hosts that will and won't fail
+"""
+
+[scheduler]
+    [[events]]
+        abort on stalled = true
+
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[graph]]
+        # Run good and mixed as controls
+        R1 = badhosttask:submit-fail => goodhosttask & mixedhosttask
+
+[runtime]
+    [[root]]
+        script = true
+        [[[remote]]]
+            retrieve job logs = True
+
+    [[badhosttask]]
+        platform = badhostplatform
+
+    [[goodhosttask]]
+        platform = goodhostplatform
+
+    [[mixedhosttask]]
+        platform = mixedhostplatform

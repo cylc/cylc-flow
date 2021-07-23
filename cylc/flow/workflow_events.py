@@ -141,7 +141,7 @@ class WorkflowEventHandler():
             else:
                 # Run command using process pool otherwise
                 self.proc_pool.put_command(
-                    proc_ctx, self._run_event_mail_callback)
+                    proc_ctx, callback=self._run_event_mail_callback)
 
     def _run_event_custom_handlers(self, config, ctx):
         """Helper for "run_event_handlers", custom event handlers."""
@@ -204,7 +204,7 @@ class WorkflowEventHandler():
             else:
                 # Run command using process pool otherwise
                 self.proc_pool.put_command(
-                    proc_ctx, self._run_event_handlers_callback)
+                    proc_ctx, callback=self._run_event_handlers_callback)
 
     @staticmethod
     def _run_event_handlers_callback(proc_ctx, abort_on_error=False):
