@@ -1,0 +1,26 @@
+
+[meta]
+title = "Try out scenarios for intelligent host selection."
+description = """
+Tasks
+=====
+
+Bad
+---
+Fails on all hosts on all plaforms
+"""
+[scheduler]
+    [[events]]
+        abort on stalled = true
+
+[scheduling]
+    initial cycle point = 1
+    [[graph]]
+        R1 = bad
+
+[runtime]
+    [[root]]
+        script = true
+
+    [[bad]]
+        platform = badplatformgroup

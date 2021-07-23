@@ -786,6 +786,22 @@ with Conf('global.cylc', desc='''
     with Conf('platform groups'):  # noqa: SIM117 (keep same format)
         with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
+            with Conf('selection'):
+                Conf(
+                    'method', VDR.V_STRING, default='random',
+                    options=['random', 'definition order'],
+                    desc='''
+                        Host selection method for the platform. Available
+                        options:
+
+                        - random: Suitable for an identical pool of hosts.
+                        - definition order: Take the first host in the list
+                          unless that host has been unreachable. In many cases
+                          this is likely to cause load imbalances, but might
+                          be appropriate if your hosts were
+                          ``main, backup, failsafe``.
+                    '''
+                )
     # task
     with Conf('task events', desc='''
         Global site/user defaults for
