@@ -177,6 +177,10 @@ def construct_rsync_over_ssh_cmd(
         platform: contains info relating to platform
         rsync_includes: files and directories to be included in the rsync
 
+    Developer Warning:
+        The Cylc Subprocess Pool method ``rsync_255_fail`` relies on
+        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this funtion
+        do not break ``rsync_255_fail``.
     """
     dst_host = get_host_from_platform(platform, bad_hosts=bad_hosts)
     ssh_cmd = platform['ssh command']

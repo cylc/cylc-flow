@@ -542,15 +542,21 @@ class SubProcPool:
         may cause different rsync failures depending on version, and some of
         the failures may be caused by other problems.
         """
-        if platform is not None:
-            ssh_cmd = platform['ssh command']
-
         rsync_255_fail = False
         if (
             ctx.cmd[0] == 'rsync'
             and ctx.ret_code not in [0, 255]
             and is_remote_host(ctx.host)
         ):
+            ssh_cmd = (
+                platform['ssh command']
+                if platform is not None
+                else 'ssh'
+            )
+            ssh_test_cmd = shlex.split(f'{ssh_cmd} {ctx.host} true')
+            LOG.info(
+                f'testing connectivity for {ctx.host} using {ssh_test_cmd}'
+            )
             ssh_test = run(
                 shlex.split(f'{ssh_cmd} {ctx.host} true'),
                 capture_output=True
