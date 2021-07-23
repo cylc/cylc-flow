@@ -70,6 +70,5 @@ named_grep_ok "job poll retries & succeeds" \
     "\[jobs-poll out\] \[TASK JOB SUMMARY\].*1/mixedhosttask/01" \
     "${LOGFILE}"
 
-
 purge
 exit 0

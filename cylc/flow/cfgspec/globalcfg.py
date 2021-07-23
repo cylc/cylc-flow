@@ -1145,7 +1145,7 @@ class GlobalConfig(ParsecConfig):
             # Explicit config file override.
             fname = os.path.join(conf_path_str, self.CONF_BASENAME)
             self._load(fname, upgrader.USER_CONFIG)
-        elif conf_path_str is None:
+        else:
             # Use default locations.
             for conf_type, conf_dir in self.conf_dir_hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)

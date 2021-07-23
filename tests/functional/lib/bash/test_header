@@ -803,6 +803,7 @@ create_test_global_config() {
     mkdir 'etc'
     # Scheduler host self-identification method.
     echo "$PRE" >'etc/global.cylc'
+    # add defaults
     cat >>'etc/global.cylc' <<__HERE__
     # set a default timeout for all flow runs to avoid hanging tests
     [scheduler]
@@ -812,9 +813,14 @@ create_test_global_config() {
             abort on inactivity timeout = true
             abort on workflow timeout = true
 __HERE__
+    # add global-tests.cylc
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
     if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
+    fi
+    # add platform config
+    if [[ -n "${CYLC_TEST_PLATFORM:-}" ]]; then
+        _add_platform_to_test_global_conf "$CYLC_TEST_PLATFORM"
     fi
     echo "$POST" >>'etc/global.cylc'
     export CYLC_CONF_PATH="${PWD}/etc"
@@ -922,7 +928,7 @@ get_fqdn () {
 }
 
 _get_test_platforms () {
-    cylc config -i '[platforms]' \
+    CYLC_CONF_PATH='' cylc config -i '[platforms]' \
         | sed -n 's/\[\[\(_.*\)\]\]/\1/p'
 }
 
@@ -983,6 +989,23 @@ _check_test_requirements () {
     if ! _get_test_platform "${REQUIRE_PLATFORM}"; then
         skip_all "requires $REQUIRE_PLATFORM"
     fi
+    _add_platform_to_test_global_conf "$CYLC_TEST_PLATFORM"
+}
+
+_add_platform_to_test_global_conf () {
+    # add a test platform from the global config to the test global config
+    # NOTE: Uses global.cylc NOT global-tests.cylc
+    #       Do not configure test platforms in the global-tests.cylc file
+    PLATFORM="$1"
+    cat >> "${CYLC_CONF_PATH}/global.cylc" <<__HERE__
+[platforms]
+    [[$PLATFORM]]
+$(
+    CYLC_CONF_PATH='' cylc config \
+        -i "[platforms][$PLATFORM]" \
+        | sed 's/^/        /'
+)
+__HERE__
 }
 
 delete_db() {
