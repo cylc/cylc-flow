@@ -69,13 +69,13 @@ multiple workflow run directories that link to the same workflow definition.
 
 """
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Dict, Any
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import (
-    install_workflow, search_install_source_dirs
+    install_workflow, search_install_source_dirs, parse_cli_sym_dirs
 )
 from cylc.flow.terminal import cli_function
 
@@ -83,57 +83,18 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-def get_option_parser():
-    parser = COP(
-        __doc__, comms=True, prep=True,
-        argdoc=[("[REG]", "Workflow name")]
-    )
+def add_cylc_rose_options(parser):
+    """Add extra options for cylc-rose plugin if it is installed.
 
-    parser.add_option(
-        "--flow-name",
-        help="Install into ~/cylc-run/<flow_name>/runN ",
-        action="store",
-        metavar="FLOW_NAME",
-        default=None,
-        dest="flow_name")
-
-    parser.add_option(
-        "--directory", "-C",
-        help="Install the workflow found in path specfied.",
-        action="store",
-        metavar="PATH/TO/FLOW",
-        default=None,
-        dest="source")
-
-    parser.add_option(
-        "--run-name",
-        help="Name the run.",
-        action="store",
-        metavar="RUN_NAME",
-        default=None,
-        dest="run_name")
-
-    parser.add_option(
-        "--no-run-name",
-        help="Install the workflow directly into ~/cylc-run/<flow_name>",
-        action="store_true",
-        default=False,
-        dest="no_run_name")
-
-    parser.add_option(
-        "--no-symlink-dirs",
-        help="Use this option to override creating default local symlinks.",
-        action="store_true",
-        default=False,
-        dest="no_symlinks")
-
-    # If cylc-rose plugin is available ad the --option/-O config
+    Args:
+        parser: An option parser object
+    """
     try:
         __import__('cylc.rose')
         parser.add_option(
             "--opt-conf-key", "-O",
             help=(
-                "Use optional Rose Config Setting"
+                "Use optional Rose Config Setting "
                 "(If Cylc-Rose is installed)"
             ),
             action="append",
@@ -164,6 +125,59 @@ def get_option_parser():
         )
     except ImportError:
         pass
+    return parser
+
+
+def get_option_parser():
+    parser = COP(
+        __doc__, comms=True, prep=True,
+        argdoc=[("[REG]", "Workflow name")]
+    )
+
+    parser.add_option(
+        "--flow-name",
+        help="Install into ~/cylc-run/<flow_name>/runN ",
+        action="store",
+        metavar="FLOW_NAME",
+        default=None,
+        dest="flow_name")
+
+    parser.add_option(
+        "--directory", "-C",
+        help="Install the workflow found in path specfied.",
+        action="store",
+        metavar="PATH/TO/FLOW",
+        default=None,
+        dest="source")
+
+    parser.add_option(
+        "--symlink-dirs",
+        help=(
+            "Enter a list, in the form 'log=path/to/store, share = $...'"
+            ". Use this option to override local symlinks for directories run,"
+            " log, work, share, share/cycle, as configured in global.cylc. "
+            "Enter an empty list \"\" to skip making localhost symlink dirs."
+        ),
+        action="store",
+        dest="symlink_dirs"
+    )
+
+    parser.add_option(
+        "--run-name",
+        help="Name the run.",
+        action="store",
+        metavar="RUN_NAME",
+        default=None,
+        dest="run_name")
+
+    parser.add_option(
+        "--no-run-name",
+        help="Install the workflow directly into ~/cylc-run/<flow_name>",
+        action="store_true",
+        default=False,
+        dest="no_run_name")
+
+    parser = add_cylc_rose_options(parser)
 
     return parser
 
@@ -205,13 +219,17 @@ def install(
                 entry_point.name,
                 exc
             ) from None
-
+    cli_symdirs: Optional[Dict[str, Dict[str, Any]]] = None
+    if opts.symlink_dirs == '':
+        cli_symdirs = {}
+    elif opts.symlink_dirs:
+        cli_symdirs = parse_cli_sym_dirs(opts.symlink_dirs)
     source_dir, rundir, _flow_name = install_workflow(
         flow_name=flow_name,
         source=source,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,
-        no_symlinks=opts.no_symlinks
+        cli_symlink_dirs=cli_symdirs
     )
 
     for entry_point in iter_entry_points(

@@ -28,14 +28,15 @@ SYM_NAME="$(mktemp -u)"
 SYM_NAME="sym-${SYM_NAME##*tmp.}"
 
 create_test_global_config "" "
-[symlink dirs]
-    [[localhost]]
-        run = ${TEST_DIR}/${SYM_NAME}/run
-        log = ${TEST_DIR}/${SYM_NAME}/other
-        share = ${TEST_DIR}/${SYM_NAME}/other
-        work = ${TEST_DIR}/${SYM_NAME}/other
-        # Need to override any symlink dirs set in global-tests.cylc:
-        share/cycle =
+[install]
+    [[symlink dirs]]
+        [[[localhost]]]
+            run = ${TEST_DIR}/${SYM_NAME}/run
+            log = ${TEST_DIR}/${SYM_NAME}/other
+            share = ${TEST_DIR}/${SYM_NAME}/other
+            work = ${TEST_DIR}/${SYM_NAME}/other
+            # Need to override any symlink dirs set in global-tests.cylc:
+            share/cycle =
 "
 init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]

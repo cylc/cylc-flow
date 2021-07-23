@@ -260,3 +260,18 @@ class NoHostsError(CylcError):
     def __init__(self, platform):
         self.platform_n = platform['name']
         super().__init__(f'Unable to find valid host for {self.platform_n}')
+
+
+class CylcVersionError(CylcError):
+    """Contact file is for a Cylc Version not supported by this script."""
+    def __init__(self, version=None):
+        self.version = version
+
+    def __str__(self):
+        if self.version is not None:
+            return (
+                f'Installed Cylc {self.version} workflow is not '
+                'compatible with Cylc 8.'
+            )
+        else:
+            return "Installed workflow is not compatible with Cylc 8."

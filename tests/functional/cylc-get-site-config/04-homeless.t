@@ -22,14 +22,15 @@ set_test_number 3
 
 # shellcheck disable=SC2016
 create_test_global_config '' '
-[symlink dirs]
-    [[localhost]]
-        run = $HOME/dr-malcolm
+[install]
+    [[symlink dirs]]
+        [[[localhost]]]
+            run = $HOME/dr-malcolm
 '
 
 run_ok "${TEST_NAME_BASE}" \
     env -u HOME \
-    cylc config --item='[symlink dirs][localhost]run'
+    cylc config --item='[install][symlink dirs][localhost]run'
 cmp_ok "${TEST_NAME_BASE}.stdout" <<<"\$HOME/dr-malcolm"
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 exit

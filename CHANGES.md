@@ -56,6 +56,9 @@ Third beta release of Cylc 8.
 
 ### Enhancements
 
+[#4286](https://github.com/cylc/cylc-flow/pull/4286) -
+Add an option for displaying source workflows in `cylc scan`.
+
 [#4291](https://github.com/cylc/cylc-flow/pull/4291)
  - Remove obsolete `cylc edit` and `cylc search` commands.
 
@@ -68,6 +71,10 @@ Third beta release of Cylc 8.
 [#4103](https://github.com/cylc/cylc-flow/pull/4103)
 - Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
+
+[#4250](https://github.com/cylc/cylc-flow/pull/4250) -
+Symlink dirs localhost symlinks are now overridable with cli option
+`--symlink-dirs`.
 
 [#4103](https://github.com/cylc/cylc-flow/pull/4103) -
 Expose runahead limiting to UIs; restore correct force-triggering of queued
@@ -102,6 +109,9 @@ respectively.
 
 ### Fixes
 
+[#4296](https://github.com/cylc/cylc-flow/pull/4296) -
+Patches DNS issues with newer versions of Mac OS.
+
 [#4273](https://github.com/cylc/cylc-flow/pull/4273)
  - Remove obsolete Cylc 7 visualization config section.
 
@@ -116,7 +126,6 @@ when initial cycle point is not valid for the cycling type.
 
 [#4228](https://github.com/cylc/cylc-flow/pull/4228) - Interacting with a
 workflow on the cli using `runN` is now supported.
-
 
 [#4193](https://github.com/cylc/cylc-flow/pull/4193) - Standard `cylc install`
 now correctly installs from directories with a `.` in the name. Symlink dirs
