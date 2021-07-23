@@ -477,6 +477,7 @@ To start a new run, stop the old one first with one or more of these:
 
         # suite.rc must exist so we can detect accidentally reversed args.
         source = os.path.abspath(source)
+        self.check_for_cylc8_flow_file(source)
         if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
             raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
 
@@ -548,6 +549,7 @@ To start a new run, stop the old one first with one or more of these:
         """Create or renew passphrase and SSL files for suite 'reg'."""
         # Suite service directory.
         srv_d = self.get_suite_srv_dir(reg)
+        self.check_for_cylc8_flow_file(os.path.dirname(srv_d))
         mkdir_p(srv_d)
 
         # Create a new passphrase for the suite if necessary.
@@ -813,3 +815,12 @@ To start a new run, stop the old one first with one or more of these:
             )
         if major_version > 7:
             raise SuiteCylcVersionError(version_str)
+
+    @staticmethod
+    def check_for_cylc8_flow_file(run_dir):
+        flow_file_path = os.path.join(run_dir, 'flow.cylc')
+        if os.path.isfile(flow_file_path):
+            sys.exit(
+                "ERROR: Cannot run - flow.cylc (Cylc 8) file detected in "
+                "suite run dir. "
+            )

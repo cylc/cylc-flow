@@ -234,6 +234,8 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
+        SuiteSrvFilesManager.check_for_cylc8_flow_file(self.suite_run_dir)
+
         self._start_print_blurb()
 
         glbl_cfg().create_cylc_run_tree(self.suite)
