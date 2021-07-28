@@ -48,7 +48,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0b2 (<span actions:bind='release-date'>Upcoming, 2021</span>)__
+## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
 Third beta release of Cylc 8.
 
@@ -59,26 +59,22 @@ Third beta release of Cylc 8.
 [#4286](https://github.com/cylc/cylc-flow/pull/4286) -
 Add an option for displaying source workflows in `cylc scan`.
 
-[#4291](https://github.com/cylc/cylc-flow/pull/4291)
- - Remove obsolete `cylc edit` and `cylc search` commands.
+[#4291](https://github.com/cylc/cylc-flow/pull/4291) -
+Remove obsolete `cylc edit` and `cylc search` commands.
 
-[#4284](https://github.com/cylc/cylc-flow/pull/4284)
- - Make `--color=never` work with `cylc <command> --help`.
+[#4284](https://github.com/cylc/cylc-flow/pull/4284) -
+Make `--color=never` work with `cylc <command> --help`.
 
-[#4259](https://github.com/cylc/cylc-flow/pull/4259)
-- Ignore pre-initial dependencies with `cylc play --start-task`
+[#4259](https://github.com/cylc/cylc-flow/pull/4259) -
+Ignore pre-initial dependencies with `cylc play --start-task`
 
-[#4103](https://github.com/cylc/cylc-flow/pull/4103)
-- Expose runahead limiting to UIs; restore correct force-triggering of queued
+[#4103](https://github.com/cylc/cylc-flow/pull/4103) -
+Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
 
 [#4250](https://github.com/cylc/cylc-flow/pull/4250) -
 Symlink dirs localhost symlinks are now overridable with cli option
 `--symlink-dirs`.
-
-[#4103](https://github.com/cylc/cylc-flow/pull/4103) -
-Expose runahead limiting to UIs; restore correct force-triggering of queued
-tasks for Cylc 8.
 
 [#4218](https://github.com/cylc/cylc-flow/pull/4218) - Add ability to
 start a new run from specified tasks instead of a cycle point.
@@ -112,14 +108,14 @@ respectively.
 [#4296](https://github.com/cylc/cylc-flow/pull/4296) -
 Patches DNS issues with newer versions of Mac OS.
 
-[#4273](https://github.com/cylc/cylc-flow/pull/4273)
- - Remove obsolete Cylc 7 visualization config section.
+[#4273](https://github.com/cylc/cylc-flow/pull/4273) -
+Remove obsolete Cylc 7 visualization config section.
 
 [#4272](https://github.com/cylc/cylc-flow/pull/4272) - Workflow visualisation
 data (data-store) now constrained by final cycle point.
 
-[#4248](https://github.com/cylc/cylc-flow/pull/4248)
- - Fix parameter expansion in inherited task environments.
+[#4248](https://github.com/cylc/cylc-flow/pull/4248) -
+Fix parameter expansion in inherited task environments.
 
 [#4227](https://github.com/cylc/cylc-flow/pull/4227) - Better error messages
 when initial cycle point is not valid for the cycling type.
