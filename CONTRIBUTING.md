@@ -22,7 +22,7 @@ Issue](https://github.com/cylc/cylc-flow/issues) as the team may not be able to
 consider large changes that appear out of the blue. New contributors should
 add their details to the [Code Contributors](#code-contributors) section of
 this file as part of their first Pull Request, and reviewers are responsible
-for checking this before merging the new branch into *master*.
+for checking this before merging the new branch.
 
 ## Code Contributors
 
