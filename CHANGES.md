@@ -24,6 +24,31 @@ management and does not bundle Jinja2.
 
 
 -------------------------------------------------------------------------------
+## __cylc-7.8.9 (upcoming, 2021)__
+
+### Enhancements
+
+[#4264](https://github.com/cylc/cylc-flow/pull/4264) - Syntax highlighting
+for Cylc 8 `flow.cylc` files in Cylc Review.
+
+### Fixes
+
+[#4233](https://github.com/cylc/cylc-flow/pull/4233) - Fix bug in Cylc Review
+caused by Cylc 8 workflows (change in terminology from 'suite' to 'workflow').
+
+[#4276](https://github.com/cylc/cylc-flow/pull/4276) - Fix failure to show
+certain log files in Cylc Review.
+
+[#4280](https://github.com/cylc/cylc-flow/pull/4280) - Fix failure to show
+Cylc 8 workflow status in Cylc Review.
+
+[#4299](https://github.com/cylc/cylc-flow/pull/4299) -
+Fix a GUI bug which can cause extra log files to be listed multiple times.
+
+[#4327](https://github.com/cylc/cylc-flow/pull/4327) - Ensure the suite always
+restarts using the same time zone as the last `cylc run`.
+
+-------------------------------------------------------------------------------
 ## __cylc-7.8.8 (2021-03-24)__
 
 ### Enhancements
@@ -32,6 +57,7 @@ management and does not bundle Jinja2.
 to display information about Cylc 8 workflows.
 
 
+-------------------------------------------------------------------------------
 ## __cylc-7.8.7 (2020-12-04)__
 
 ### Enhancements
@@ -41,8 +67,8 @@ heteregeneous jobs through an artificial "hetjob_<N>_" or "packjob_<N>_"
 directive prefix.
 
 [#3784](https://github.com/cylc/cylc-flow/pull/3784) - Deprecate the
-[runtime][X][parameter environment templates] section and instead allow
-templates in [runtime][X][environment].
+`[runtime][X][parameter environment templates]` section and instead allow
+templates in `[runtime][X][environment]`.
 
 ### Fixes
 
@@ -60,14 +86,6 @@ labels to prevent runtime bugs when exporting environment variables.
 [#3814](https://github.com/cylc/cylc-flow/pull/3814) - Fixes a minor bug in the
 auto-restart functionality which caused suites to wait for local jobs running
 on *any* host to complete before restarting.
-
--------------------------------------------------------------------------------
-## __cylc-7.8.7 (2020-??-??)__
-
-### Fixes
-
-[#4299](https://github.com/cylc/cylc-flow/pull/4299) -
-Fix a GUI bug which can cause extra log files to be listed multiple times.
 
 -------------------------------------------------------------------------------
 ## __cylc-7.8.6 (2020-05-14)__
