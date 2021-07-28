@@ -58,7 +58,8 @@ jobs:
         body: |
           See [${{ env.CHANGELOG_FILE }}](https://github.com/${{ github.repository }}/blob/master/${{ env.CHANGELOG_FILE }}) for detail.
 
-          The Cylc-8 system can be installed by Conda - you don't need to download this release directly.
+          Cylc 8 can be installed via pypi or Conda - you don't need to download this release directly.
+          See the [installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) section of the documentation.
         # TODO: Get topmost changelog section somehow and use that as the body?
 
     - name: Comment on the release PR with the results & next steps
