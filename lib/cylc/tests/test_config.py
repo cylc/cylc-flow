@@ -14,12 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+import mock
 import os
+import pytest
 import shutil
 import unittest
 from tempfile import mkdtemp
 
-from cylc.config import SuiteConfig, SuiteConfigError
+from cylc.config import SuiteConfig
+from cylc.wallclock import get_utc_mode, set_utc_mode
 
 
 class TestSuiteConfig(unittest.TestCase):
@@ -136,6 +140,140 @@ class TestSuiteConfig(unittest.TestCase):
                 SuiteConfig(suite="suite_with_not_callable", fpath=f.name)
                 self.assertTrue("callable" in str(ex))
         shutil.rmtree(temp_dir)
+
+
+@pytest.mark.parametrize(
+    'utc_mode, expected, expected_warnings',
+    [
+        pytest.param(
+            {'glbl': True, 'suite': None, 'stored': None},
+            True,
+            0,
+            id="global: True"
+        ),
+        pytest.param(
+            {'glbl': True, 'suite': False, 'stored': None},
+            False,
+            0,
+            id="suite: False; global: True"
+        ),
+        pytest.param(
+            {'glbl': False, 'suite': None, 'stored': True},
+            True,
+            0,
+            id="Restart DB: True; global: False"
+        ),
+        pytest.param(
+            {'glbl': False, 'suite': False, 'stored': True},
+            True,
+            1,
+            id="Changed config value between restarts"
+        )
+    ]
+)
+def test_utc_mode(
+    utc_mode, expected, expected_warnings,
+    caplog, monkeypatch
+):
+    """Test that UTC mode is handled correctly."""
+    # -- Setup --
+    caplog.set_level(logging.WARNING, 'cylc')
+
+    def mock_glbl_cfg_get(item):
+        if item == ['cylc', 'UTC mode']:
+            return utc_mode['glbl']
+    mock_glbl_cfg = mock.Mock(return_value=mock.Mock(
+        get=mock_glbl_cfg_get
+    ))
+    monkeypatch.setattr('cylc.config.glbl_cfg', mock_glbl_cfg)
+    mock_config = mock.Mock(
+        spec=SuiteConfig,
+        cfg={
+            'cylc': {
+                'UTC mode': utc_mode['suite']
+            }
+        },
+        options=mock.Mock(utc_mode=utc_mode['stored'])
+    )
+    # -- Test --
+    SuiteConfig.process_utc_mode(mock_config)
+    assert mock_config.cfg['cylc']['UTC mode'] is expected
+    assert get_utc_mode() is expected
+    assert len(caplog.record_tuples) == expected_warnings
+
+
+@pytest.mark.parametrize(
+    'cp_tz, utc_mode, expected, expected_warnings',
+    [
+        pytest.param(
+            {'suite': None, 'stored': None},
+            True,
+            'Z',
+            0,
+            id="Z when UTC mode = True"
+        ),
+        pytest.param(
+            {'suite': None, 'stored': None},
+            False,
+            '{local}',
+            0,
+            id="Local when UTC mode = False"
+        ),
+        pytest.param(
+            {'suite': '+0530', 'stored': None},
+            True,
+            '+0530',
+            0,
+            id="Suite config tz precedes UTC mode"
+        ),
+        pytest.param(
+            {'suite': 'Z', 'stored': 'Z'},
+            False,
+            'Z',
+            0,
+            id="Stored tz on restart"
+        ),
+        pytest.param(
+            {'suite': None, 'stored': '+0530'},
+            True,
+            '+0530',
+            0,
+            id="Stored tz on restart precedes UTC mode"
+        ),
+        pytest.param(
+            {'suite': '+0530', 'stored': '-0030'},
+            True,
+            '-0030',
+            1,
+            id="Changed config value between restarts"
+        ),
+    ]
+)
+def test_cycle_point_tz(
+    cp_tz, utc_mode, expected, expected_warnings,
+    caplog, monkeypatch
+):
+    """Test that `[cylc]cycle point time zone` is handled correctly."""
+    # -- Setup --
+    caplog.set_level(logging.WARNING, 'cylc')
+    local_tz = '-0230'
+    monkeypatch.setattr('cylc.config.get_local_time_zone_format',
+                        lambda: local_tz)
+    expected = expected.format(local=local_tz)
+    set_utc_mode(utc_mode)
+    mock_config = mock.Mock(
+        spec=SuiteConfig,
+        cfg={
+            'cylc': {
+                'cycle point time zone': cp_tz['suite']
+            }
+        },
+        options=mock.Mock(cycle_point_tz=cp_tz['stored'])
+    )
+    # -- Test --
+    SuiteConfig.process_cycle_point_tz(mock_config)
+    assert mock_config.cfg['cylc']['cycle point time zone'] == expected
+    assert len(caplog.record_tuples) == expected_warnings
 
 
 if __name__ == '__main__':

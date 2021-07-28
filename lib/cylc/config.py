@@ -36,7 +36,9 @@ import re
 import traceback
 
 from isodatetime.data import Calendar
+from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import DurationParser
+from isodatetime.timezone import get_local_time_zone_format
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
 
@@ -379,16 +381,14 @@ class SuiteConfig(object):
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
 
+        # These 2 must be called before init_cyclers(self.cfg):
+        self.process_utc_mode()
+        self.process_cycle_point_tz()
+
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
         self.cycling_type = get_interval_cls().get_null().TYPE
         self.cycle_point_dump_format = get_dump_format(self.cycling_type)
-
-        # Running in UTC time? (else just use the system clock)
-        if self.cfg['cylc']['UTC mode'] is None:
-            set_utc_mode(glbl_cfg().get(['cylc', 'UTC mode']))
-        else:
-            set_utc_mode(self.cfg['cylc']['UTC mode'])
 
         # Initial point from suite definition (or CLI override above).
         orig_icp = self.cfg['scheduling']['initial cycle point']
@@ -761,6 +761,65 @@ class SuiteConfig(object):
             self.mem_log("config.py: after _check_circular()")
 
         self.mem_log("config.py: end init config")
+
+    def process_utc_mode(self):
+        """Set UTC mode from config or from stored value on restart.
+
+        Sets:
+            - self.cfg['cylc']['UTC mode']
+            - The UTC mode flag
+        """
+        cfg_utc_mode = self.cfg['cylc']['UTC mode']
+        # Get the original UTC mode if restart:
+        orig_utc_mode = getattr(self.options, 'utc_mode', None)
+        if orig_utc_mode is None:
+            # Not a restart - will save config value
+            if cfg_utc_mode is not None:
+                orig_utc_mode = cfg_utc_mode
+            else:
+                orig_utc_mode = glbl_cfg().get(['cylc', 'UTC mode'])
+        elif cfg_utc_mode is not None and cfg_utc_mode != orig_utc_mode:
+            LOG.warning(
+                "UTC mode = {0} specified in configuration, but it is stored "
+                "as {1} from the initial run. The suite will continue to use "
+                "UTC mode = {1}"
+                .format(cfg_utc_mode, orig_utc_mode)
+            )
+        self.cfg['cylc']['UTC mode'] = orig_utc_mode
+        set_utc_mode(orig_utc_mode)
+
+    def process_cycle_point_tz(self):
+        """Set the cycle point time zone from config or from stored value
+        on restart.
+
+        Ensure suites restart with the same cycle point time zone even after
+        system time zone changes e.g. DST (the value is put in db by
+        Scheduler).
+
+        Sets self.cfg['cylc']['cycle point time zone']
+        """
+        cfg_cp_tz = self.cfg['cylc'].get('cycle point time zone')
+        # Get the original suite run time zone if restart:
+        orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
+        if orig_cp_tz is None:
+            # Not a restart
+            if cfg_cp_tz is None:
+                if get_utc_mode() is True:
+                    orig_cp_tz = 'Z'
+                else:
+                    orig_cp_tz = get_local_time_zone_format()
+            else:
+                orig_cp_tz = cfg_cp_tz
+        elif cfg_cp_tz is not None:
+            dmp = TimePointDumper()
+            if dmp.get_time_zone(cfg_cp_tz) != dmp.get_time_zone(orig_cp_tz):
+                LOG.warning(
+                    "cycle point time zone = {0} specified in configuration, "
+                    "but there is a stored value of {1} from the initial run. "
+                    "The suite will continue to run in {1}"
+                    .format(cfg_cp_tz, orig_cp_tz)
+                )
+        self.cfg['cylc']['cycle point time zone'] = orig_cp_tz
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
