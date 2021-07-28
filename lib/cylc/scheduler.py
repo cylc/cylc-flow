@@ -1129,7 +1129,7 @@ conditions; see `cylc conditions`.
         elif key == 'stop_task':
             self.stop_task = value
             LOG.info('+ stop task = %s', value)
-        elif key == 'utc_mode':
+        elif key == 'UTC_mode':
             value = bool(int(value))
             self.options.utc_mode = value
             LOG.info('+ UTC mode = %s' % value)
