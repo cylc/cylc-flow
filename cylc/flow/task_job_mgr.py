@@ -42,7 +42,9 @@ from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.exceptions import (
     PlatformLookupError,
     WorkflowConfigError,
-    TaskRemoteMgmtError
+    TaskRemoteMgmtError,
+    NoPlatformsError,
+    NoHostsError
 )
 from cylc.flow.hostuserutil import (
     get_host,
@@ -61,7 +63,6 @@ from cylc.flow.platforms import (
     get_install_target_from_platform,
     get_localhost_install_target,
     get_platform,
-    NoHostsError
 )
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
@@ -287,12 +288,19 @@ class TaskJobManager:
                         ), itask.platform['name'], [], 1, '', '',
                     ))
                     # Get another platform, if task config platform is a group
-                    platform = get_platform(
-                        itask.tdef.rtconfig['platform'],
-                        bad_hosts=self.bad_hosts
-                    )
-                    # If were able to select a new platform;
-                    if platform and platform != itask.platform:
+                    use_next_platform_in_group = False
+                    try:
+                        platform = get_platform(
+                            itask.tdef.rtconfig['platform'],
+                            bad_hosts=self.bad_hosts
+                        )
+                        # If were able to select a new platform;
+                        if platform and platform != itask.platform:
+                            use_next_platform_in_group = True
+                    except NoPlatformsError:
+                        use_next_platform_in_group = False
+
+                    if use_next_platform_in_group:
                         # store the previous platform's hosts so that when
                         # we record a submit fail we can clear all hosts
                         # from all platforms from bad_hosts.

@@ -262,6 +262,14 @@ class NoHostsError(CylcError):
         super().__init__(f'Unable to find valid host for {self.platform_n}')
 
 
+class NoPlatformsError(CylcError):
+    """None of the platforms of a given group were reachable."""
+    def __init__(self, group):
+        self.group_n = group['name']
+        super().__init__(
+            f'Unable to find valid platform in {self.group}')
+
+
 class CylcVersionError(CylcError):
     """Contact file is for a Cylc Version not supported by this script."""
     def __init__(self, version=None):

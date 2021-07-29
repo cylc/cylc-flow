@@ -49,6 +49,9 @@ create_test_global_config "" "
             method = definition order
     "
 #-------------------------------------------------------------------------------
+# Uncomment to print config for manual testing of workflow.
+# cylc config -i '[platforms]' >&2
+# cylc config -i '[platform groups]' >&2
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

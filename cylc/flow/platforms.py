@@ -22,7 +22,8 @@ from copy import deepcopy
 from typing import (
     Any, Dict, Iterable, List, Optional, Tuple, Union, Set)
 
-from cylc.flow.exceptions import PlatformLookupError, CylcError, NoHostsError
+from cylc.flow.exceptions import (
+    PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
 
@@ -145,8 +146,6 @@ def platform_from_name(
             platform_name = get_platform_from_group(
                 platform_groups[platform_name_re], bad_hosts=bad_hosts
             )
-            if platform_name is False:
-                return False
 
     # The list is reversed to allow user-set platforms (which are loaded
     # later than site set platforms) to be matched first and override site
@@ -190,7 +189,7 @@ def platform_from_name(
 
 def get_platform_from_group(
     group: Dict[str, Any], bad_hosts: Optional[Set[str]]
-) -> Union[str, bool]:
+) -> str:
     """Get platform name from group, according to the selection method.
 
     Args:
@@ -200,6 +199,10 @@ def get_platform_from_group(
     Returns:
         Name of platform selected, or False if all hosts on all platforms are
         in bad_hosts.
+
+    Raises:
+        NoPlatformsError: If there are no platforms with any usable
+        hosts in the platform group.
 
     TODO:
         Currently uses host_selection methods, which is fine, but should
@@ -217,7 +220,7 @@ def get_platform_from_group(
 
     # Return False if there are no platforms available to be selected.
     if not platform_names:
-        return False
+        raise NoPlatformsError(group)
 
     # Get the selection method
     method = group['selection']['method']
