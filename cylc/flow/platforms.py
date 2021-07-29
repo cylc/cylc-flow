@@ -188,7 +188,7 @@ def platform_from_name(
 
 
 def get_platform_from_group(
-    group: Dict[str, Any], bad_hosts: Optional[Set[str]]
+    group: Dict[str, Any], bad_hosts: Optional[Set[str]] = None
 ) -> str:
     """Get platform name from group, according to the selection method.
 
@@ -220,7 +220,7 @@ def get_platform_from_group(
 
     # Return False if there are no platforms available to be selected.
     if not platform_names:
-        raise NoPlatformsError(group)
+        raise NoPlatformsError()
 
     # Get the selection method
     method = group['selection']['method']

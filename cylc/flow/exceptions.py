@@ -264,10 +264,9 @@ class NoHostsError(CylcError):
 
 class NoPlatformsError(CylcError):
     """None of the platforms of a given group were reachable."""
-    def __init__(self, group):
-        self.group_n = group['name']
+    def __init__(self):
         super().__init__(
-            f'Unable to find valid platform in {self.group}')
+            'Unable to find valid platform.')
 
 
 class CylcVersionError(CylcError):
