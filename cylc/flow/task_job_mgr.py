@@ -283,8 +283,7 @@ class TaskJobManager:
                     # ...else set task to submit failed.
                     LOG.warning(TaskRemoteMgmtError(
                         (
-                            'Tried all the hosts on platform '
-                            f'{istask.platform['name']}.'
+                            'Tried all the hosts on platform.'
                         ), itask.platform['name'], [], 1, '', '',
                     ))
                     # Get another platform, if task config platform is a group
@@ -1167,7 +1166,7 @@ class TaskJobManager:
                 )
                 return False
             else:
-                #if not itask.platform:
+                # if not itask.platform:
                 if itask.platform == get_platform():
                     itask.platform = platform
                 # Submit number not yet incremented

@@ -145,7 +145,7 @@ def platform_from_name(
             platform_name = get_platform_from_group(
                 platform_groups[platform_name_re], bad_hosts=bad_hosts
             )
-            if platform_name == False:
+            if platform_name is False:
                 return False
 
     # The list is reversed to allow user-set platforms (which are loaded
@@ -205,7 +205,6 @@ def get_platform_from_group(
         Currently uses host_selection methods, which is fine, but should
         also have the ability to use custom selection methods.
     """
-    possible_platforms = group['platforms']
     if bad_hosts:
         good_platforms = set()
         for platform in group['platforms']:
