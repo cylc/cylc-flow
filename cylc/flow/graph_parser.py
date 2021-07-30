@@ -16,6 +16,7 @@
 """Module for parsing cylc graph strings."""
 
 import re
+import contextlib
 
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.param_expand import GraphExpander
@@ -506,6 +507,18 @@ class GraphParser:
             else:
                 members = [right]
             for member in members:
+                with contextlib.suppress(KeyError):
+                    osuicide = self.triggers[member][expr][1]
+                    # This trigger already exists, so we must have both
+                    # "expr => member" and "expr => !member" in the graph,
+                    # or simply a duplicate trigger not recognized earlier
+                    # because of parameter offsets.
+                    if suicide or osuicide:
+                        oexp = re.sub(r'(&|\|)', r' \1 ', orig_expr)
+                        oexp = re.sub(r':succeed', '', oexp)
+                        raise GraphParseError(
+                            f"{oexp} can't trigger both {member} and !{member}"
+                        )
                 self.triggers.setdefault(member, {})
                 self.original.setdefault(member, {})
                 self.triggers[member][expr] = (trigs, suicide)
