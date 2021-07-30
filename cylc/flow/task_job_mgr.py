@@ -245,11 +245,9 @@ class TaskJobManager:
         """
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks)
-
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
             workflow, itasks)
-
         # Reset consumed host selection results
         self.task_remote_mgr.subshell_eval_reset()
 
@@ -1175,8 +1173,8 @@ class TaskJobManager:
                 return False
             else:
                 # if not itask.platform:
-                if itask.platform == get_platform():
-                    itask.platform = platform
+                # if itask.platform == get_platform():
+                itask.platform = platform
                 # Submit number not yet incremented
                 itask.submit_num += 1
                 # Retry delays, needed for the try_num
