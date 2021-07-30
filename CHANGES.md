@@ -48,6 +48,19 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0b3 (<span actions:bind='release-date'>???</span>)__
+
+Fourth beta release of Cylc 8.
+
+(See note on cylc-8 backward-incompatible changes, above)
+
+### Enhancements
+
+[#4335](https://github.com/cylc/cylc-flow/pull/4335) - have validation catch
+erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
+
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
 Third beta release of Cylc 8.
