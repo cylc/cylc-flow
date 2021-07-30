@@ -186,7 +186,7 @@ class ConfigNode(ContextNode):
             This is useful if you want to create a specific instance of
             a generic configuration e.g. ``[elephant]`` from ``[<animal>]``.
 
-            Leaf nodes inherited from the generic config wil have
+            Leaf nodes inherited from the generic config will have
             ``meta=True``.
 
     """

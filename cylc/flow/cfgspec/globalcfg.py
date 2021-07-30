@@ -781,6 +781,17 @@ with Conf('global.cylc', desc='''
                 )
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
+            with Conf('selection'):
+                Conf(
+                    'method', VDR.V_STRING, default='random',
+                    options=['random', 'definition order'],
+                    desc='''
+                        .. seealso::
+
+                           :cylc:conf:`global.cylc[platforms]
+                           [<platform name>][selection]`
+                    '''
+                )
 
     # Platform Groups
     with Conf('platform groups'):  # noqa: SIM117 (keep same format)
