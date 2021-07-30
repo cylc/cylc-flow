@@ -48,7 +48,7 @@ e.g. :py:func:`contact_info`.
 import asyncio
 from pathlib import Path
 import re
-from typing import AsyncGenerator, Dict, Iterable, List, Optional, Union
+from typing import AsyncGenerator, Dict, Iterable, List, Optional, Tuple, Union
 
 from pkg_resources import (
     parse_requirements,
@@ -171,9 +171,18 @@ async def scan(
     running: List[asyncio.tasks.Task] = []
 
     # wrapper for scandir to preserve context
-    async def _scandir(path, depth):
+    async def _scandir(path: Path, depth: int) -> Tuple[Path, int, List[Path]]:
         contents = await scandir(path)
         return path, depth, contents
+
+    def _scan_subdirs(listing: List[Path], depth: int) -> None:
+        for subdir in listing:
+            if subdir.is_dir() and subdir.stem not in EXCLUDE_FILES:
+                running.append(
+                    asyncio.create_task(
+                        _scandir(subdir, depth + 1)
+                    )
+                )
 
     # perform the first directory listing
     scan_dir_listing = await scandir(scan_dir)
@@ -181,13 +190,7 @@ async def scan(
         # If the scan_dir itself is a workflow run dir, yield nothing
         return
 
-    for subdir in scan_dir_listing:
-        if subdir.is_dir():
-            running.append(
-                asyncio.create_task(
-                    _scandir(subdir, 1)
-                )
-            )
+    _scan_subdirs(scan_dir_listing, depth=0)
 
     # perform all further directory listings
     while running:
@@ -207,14 +210,7 @@ async def scan(
                 }
             elif depth < max_depth:
                 # we may have a nested flow, lets see...
-                for subdir in contents:
-                    if (subdir.is_dir()
-                            and subdir.stem not in EXCLUDE_FILES):
-                        running.append(
-                            asyncio.create_task(
-                                _scandir(subdir, depth + 1)
-                            )
-                        )
+                _scan_subdirs(contents, depth)
         # don't allow this to become blocking
         await asyncio.sleep(0)
 
