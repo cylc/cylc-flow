@@ -1516,9 +1516,6 @@ class WorkflowConfig:
             # Only add sequence to taskdef if explicit (not an offset).
             if offset:
                 taskdef.used_in_offset_trigger = True
-            elif suicide and name == right:
-                # "foo => !bar" should not create taskdef bar
-                pass
             else:
                 taskdef.add_sequence(seq)
 

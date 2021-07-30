@@ -216,8 +216,6 @@ class TaskDef:
             if seq in self.dependencies:
                 # task has prereqs in this sequence
                 for dep in self.dependencies[seq]:
-                    if dep.suicide:
-                        continue
                     for trig in dep.task_triggers:
                         parent_points.add(trig.get_parent_point(point))
         return parent_points

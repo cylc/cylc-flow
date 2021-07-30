@@ -16,6 +16,7 @@
 """Module for parsing cylc graph strings."""
 
 import re
+import contextlib
 
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.param_expand import GraphExpander
@@ -506,6 +507,13 @@ class GraphParser:
             else:
                 members = [right]
             for member in members:
+                with contextlib.suppress(KeyError):
+                    # See GitHub cylc-flow#4333.
+                    # If an identical trigger was already processed, check
+                    # if it had a suicide marker and retain it if it did.
+                    # i.e. if we have "a => b" and "a => !b" in the same graph,
+                    # the suicide trigger takes precedence.
+                    suicide = suicide or self.triggers[member][expr][1]
                 self.triggers.setdefault(member, {})
                 self.original.setdefault(member, {})
                 self.triggers[member][expr] = (trigs, suicide)
