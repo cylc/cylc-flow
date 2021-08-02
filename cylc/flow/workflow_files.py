@@ -1519,7 +1519,7 @@ def install_workflow(
     cylc_install.mkdir(parents=True, exist_ok=True)
     if not source_link.exists():
         install_log.info(f"Creating symlink from {source_link}")
-        source_link.symlink_to(source)
+        source_link.symlink_to(source.resolve())
     elif (  # noqa: SIM106
         source_link.exists()
         and source_link.resolve() == source.resolve()
