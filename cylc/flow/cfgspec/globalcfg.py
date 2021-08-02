@@ -763,22 +763,20 @@ with Conf('global.cylc', desc='''
                 systems so for safety there is an upper limit on the number
                 of job submissions which can be batched together.
             ''')
-            with Conf('selection'):
-                Conf(
-                    'method', VDR.V_STRING, default='random',
-                    options=['random', 'definition order'],
-                    desc='''
-                        Host selection method for the platform. Available
-                        options:
+            Conf('host selection method', VDR.V_STRING, default='random',
+                 options=['random', 'definition order'],
+                 desc='''
+                Method for choosing the job host from the platform.
+                Available options:
 
-                        - random: Suitable for an identical pool of hosts.
-                        - definition order: Take the first host in the list
-                          unless that host has been unreachable. In many cases
-                          this is likely to cause load imbalances, but might
-                          be appropriate if your hosts were
-                          ``main, backup, failsafe``.
-                    '''
-                )
+                - ``random``: Choose randomly from the list of hosts.
+                  This is suitable for a pool of identical hosts.
+                - ``definition order``: Take the first host in the list
+                  unless that host was unreachable. In many cases
+                  this is likely to cause load imbalances, but might
+                  be appropriate if following the pattern
+                  ``hosts = main, backup, failsafe``.
+            ''')
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 

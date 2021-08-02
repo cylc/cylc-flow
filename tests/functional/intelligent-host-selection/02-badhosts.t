@@ -30,8 +30,7 @@ create_test_global_config "" "
     [[badhostplatform]]
         hosts = e9755ca30f5, 3c0b4799402
         install target = ${CYLC_TEST_INSTALL_TARGET}
-        [[[selection]]]
-            method = definition order
+        host selection method = 'definition order'
 
     [[goodhostplatform]]
         hosts = ${CYLC_TEST_HOST}
@@ -42,8 +41,7 @@ create_test_global_config "" "
         hosts = unreachable_host, ${CYLC_TEST_HOST}
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
-        [[[selection]]]
-            method = 'definition order'
+        host selection method = 'definition order'
     "
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

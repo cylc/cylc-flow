@@ -1146,7 +1146,7 @@ def test_remote_clean_cmd(
         'name': 'enterprise',
         'install target': 'mars',
         'hosts': ['Trill'],
-        'selection': {'method': 'definition order'}
+        'host selection method': 'definition order'
     }
     mock_construct_ssh_cmd = monkeymock(
         'cylc.flow.workflow_files.construct_ssh_cmd', return_value=['blah'])

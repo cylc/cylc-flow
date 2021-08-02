@@ -57,7 +57,7 @@ def test_construct_rsync_over_ssh_cmd():
         {
             'hosts': ['miklegard'],
             'ssh command': 'strange_ssh',
-            'selection': {'method': 'definition order'},
+            'host selection method': 'definition order',
             'name': 'testplat'
         }
     )

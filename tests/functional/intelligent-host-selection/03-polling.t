@@ -46,8 +46,7 @@ create_test_global_config "" "
         communication method = poll
         execution polling intervals = PT0S, PT14M
         submission polling intervals = PT0S, PT41M
-        [[[selection]]]
-            method = 'definition order'
+        host selection method = 'definition order'
     "
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

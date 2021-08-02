@@ -45,7 +45,7 @@ def test_remote_init_skip(
         'install target': install_target,
         'communication method': CommsMeth.POLL,
         'hosts': ['localhost'],
-        'selection': {'method': 'random'},
+        'host selection method': 'random',
         'name': 'foo'
     }
     mock_task_remote_mgr = MagicMock(remote_init_map={}, bad_hosts=[])

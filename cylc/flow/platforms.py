@@ -391,7 +391,7 @@ def get_host_from_platform(
         goodhosts = platform['hosts']
 
     # Get the selection method
-    method = platform['selection']['method']
+    method: str = platform['host selection method']
     if not goodhosts:
         raise NoHostsError(platform)
     else:

@@ -35,8 +35,7 @@ create_test_global_config "" "
         hosts = unreachable_host, ${CYLC_TEST_HOST}
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
-        [[[selection]]]
-            method = 'definition order'
+        host selection method = 'definition order'
     "
 #-------------------------------------------------------------------------------
 

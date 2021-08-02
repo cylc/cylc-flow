@@ -24,7 +24,7 @@ from cylc.flow.exceptions import CylcError
 TEST_PLATFORM = {
     'name': 'Elephant',
     'hosts': ['nellie', 'dumbo', 'jumbo'],
-    'selection': {'method': 'definition order'}
+    'host selection method': 'definition order'
 }
 
 
@@ -52,7 +52,7 @@ def test_get_host_from_platform_fails_no_goodhosts():
 
 def test_get_host_from_platform_fails_bad_method():
     platform = TEST_PLATFORM.copy()
-    platform['selection']['method'] = 'roulette'
+    platform['host selection method'] = 'roulette'
     with pytest.raises(CylcError) as err:
         get_host_from_platform(platform, {'Elephant'})
     assert err.exconly() == (

@@ -39,8 +39,7 @@ create_test_global_config "" "
     [[mixedhostplatform]]
         hosts = unreachable_host, ${CYLC_TEST_HOST}
         install target = ${CYLC_TEST_INSTALL_TARGET}
-        [[[selection]]]
-            method = 'definition order'
+        host selection method = 'definition order'
     "
 #-------------------------------------------------------------------------------
 
