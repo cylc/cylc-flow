@@ -24,11 +24,17 @@ from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
-from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
+from cylc.flow.parsec.config import (
+    ConfigNode as Conf,
+    ParsecConfig,
+)
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
-    DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+    CylcConfigValidator as VDR,
+    DurationFloat,
+    cylc_config_validate,
+)
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -709,8 +715,7 @@ with Conf('global.cylc', desc='''
             Conf('install target', VDR.V_STRING, desc='''
                 This defaults to the platform name. This will be used as the
                 target for remote file installation.
-                For example, to indicate to Cylc that Platform_A shares a file
-                system with localhost, we would configure as follows:
+                For example, if Platform_A shares a file system with localhost:
 
                 .. code-block:: cylc
 
@@ -745,13 +750,15 @@ with Conf('global.cylc', desc='''
             Conf('job submission environment pass-through', VDR.V_STRING_LIST,
                  desc='''
                 Minimal list of environment variable names to pass through to
-                job submission subprocesses. $HOME is passed automatically.
+                job submission subprocesses. ``$HOME`` is passed automatically.
                 You are unlikely to need this.
             ''')
-            Conf('job submission executable paths', VDR.V_STRING_LIST, desc='''
+            Conf('job submission executable paths', VDR.V_STRING_LIST,
+                 desc=f'''
                 Additional executable locations to pass to the job
-                submission subprocess beyond the standard locations''' +
-                 ', '.join(SYSPATH) + '''. You are unlikely to need this.
+                submission subprocess beyond the standard locations
+                {", ".join(f"``{i}``" for i in SYSPATH)}.
+                You are unlikely to need this.
             ''')
             Conf('max batch submit size', VDR.V_INTEGER, default=100, desc='''
                 Limits the maximum number of jobs that can be submitted at
