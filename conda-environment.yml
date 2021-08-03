@@ -4,7 +4,7 @@ channels:
 dependencies:
   - aiofiles >=0.7.0,<0.8.0
   - ansimarkup >=1.0.0
-  - colorama >=0.4,<0.5
+  - colorama >=0.4,<1.0
   - graphene >=2.1,<3
   - jinja2 ==2.11.0,<2.12
   - metomi-isodatetime >=1!2.0.2, <1!2.1.0
@@ -14,10 +14,9 @@ dependencies:
   - pyuv >=1.4.0,<1.5.0
   - pyzmq >=19.0.0,<19.1.0
   - setuptools >=49
-  - urwid >=2.0,<2.1
-  #- rx >=1.6,<2 # TODO: https://github.com/conda-forge/cylc-feedstock/pull/3#issuecomment-660716268
+  - urwid >=2,<3
 # optional dependencies
   #- empy >=3.3,<3.4
-  #- pandas >=0.25.0,<0.26
+  #- pandas >=1.0,<2
   #- pympler
   #- matplotlib-base
