@@ -32,7 +32,6 @@ from cylc.flow.exceptions import (
     UserInputError,
     WorkflowFilesError
 )
-from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
@@ -42,7 +41,6 @@ from cylc.flow.workflow_files import (
     check_flow_file,
     check_nested_run_dirs,
     get_rsync_rund_cmd,
-    parse_cli_sym_dirs,
     get_symlink_dirs,
     is_installed,
     parse_cli_sym_dirs,
@@ -1182,55 +1180,6 @@ def test_remote_clean_cmd(
     args, kwargs = mock_construct_ssh_cmd.call_args
     constructed_cmd = args[0]
     assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
-
-
-def test_remove_empty_parents(tmp_path: Path):
-    """Test that _remove_empty_parents() doesn't remove parents containing a
-    sibling."""
-    # -- Setup --
-    reg = 'foo/bar/baz/qux'
-    path = tmp_path.joinpath(reg)
-    tmp_path.joinpath('foo/bar/baz').mkdir(parents=True)
-    # Note qux does not exist, but that shouldn't matter
-    sibling_reg = 'foo/darmok'
-    sibling_path = tmp_path.joinpath(sibling_reg)
-    sibling_path.mkdir()
-    # -- Test --
-    workflow_files._remove_empty_parents(path, reg)
-    assert tmp_path.joinpath('foo/bar').exists() is False
-    assert tmp_path.joinpath('foo').exists() is True
-    # Check it skips non-existent dirs, and stops at the right place too
-    tmp_path.joinpath('foo/bar').mkdir()
-    sibling_path.rmdir()
-    workflow_files._remove_empty_parents(path, reg)
-    assert tmp_path.joinpath('foo').exists() is False
-    assert tmp_path.exists() is True
-
-
-@pytest.mark.parametrize(
-    'path, tail, exc_msg',
-    [
-        pytest.param(
-            'meow/foo/darmok', 'foo/darmok', "path must be absolute",
-            id="relative path"
-        ),
-        pytest.param(
-            '/meow/foo/darmok', '/foo/darmok',
-            "tail must not be an absolute path",
-            id="absolute tail"
-        ),
-        pytest.param(
-            '/meow/foo/darmok', 'foo/jalad',
-            "path '/meow/foo/darmok' does not end with 'foo/jalad'",
-            id="tail not in path"
-        )
-    ]
-)
-def test_remove_empty_parents_bad(path: str, tail: str, exc_msg: str):
-    """Test that _remove_empty_parents() fails appropriately with bad args."""
-    with pytest.raises(ValueError) as exc:
-        workflow_files._remove_empty_parents(path, tail)
-    assert exc_msg in str(exc.value)
 
 
 @pytest.mark.parametrize(

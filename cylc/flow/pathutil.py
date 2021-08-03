@@ -295,6 +295,40 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
         rmtree(path, onerror=handle_rmtree_err)
 
 
+def remove_empty_parents(
+    path: Union[Path, str], tail: Union[Path, str]
+) -> None:
+    """Work our way up the tail of path, removing empty dirs only.
+
+    Args:
+        path: Absolute path to the directory, e.g. /foo/bar/a/b/c
+        tail: The tail of the path to work our way up, e.g. a/b/c
+
+    Example:
+        remove_empty_parents('/foo/bar/a/b/c', 'a/b/c') would remove
+        /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
+        empty).
+    """
+    path = Path(path)
+    if not path.is_absolute():
+        raise ValueError('path must be absolute')
+    tail = Path(tail)
+    if tail.is_absolute():
+        raise ValueError('tail must not be an absolute path')
+    if not str(path).endswith(str(tail)):
+        raise ValueError(f"path '{path}' does not end with '{tail}'")
+    depth = len(tail.parts) - 1
+    for i in range(depth):
+        parent = path.parents[i]
+        if not parent.is_dir():
+            continue
+        try:
+            parent.rmdir()
+            LOG.debug(f'Removing directory: {parent}')
+        except OSError:
+            break
+
+
 def get_next_rundir_number(run_path):
     """Return the new run number"""
     run_n_path = os.path.expanduser(os.path.join(run_path, "runN"))

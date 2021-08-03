@@ -55,7 +55,8 @@ from cylc.flow.pathutil import (
     parse_rm_dirs,
     remove_dir_and_target,
     get_next_rundir_number,
-    remove_dir_or_file
+    remove_dir_or_file,
+    remove_empty_parents
 )
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -667,9 +668,7 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
         LOG.warning(msg)
 
 
-def init_clean(
-    reg: str, opts: 'Values'
-) -> None:
+def init_clean(reg: str, opts: 'Values') -> None:
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 
@@ -691,19 +690,19 @@ def init_clean(
         except FileNotFoundError:
             if opts.remote_only:
                 raise ServiceFileError(
-                    "No workflow database - cannot perform remote clean")
+                    "No workflow database - cannot perform remote clean"
+                )
             LOG.info("No workflow database - will only clean locally")
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot clean - {exc}")
 
         if platform_names and platform_names != {'localhost'}:
             remote_clean(
-                reg, platform_names, opts.rm_dirs, opts.remote_timeout)
+                reg, platform_names, opts.rm_dirs, opts.remote_timeout
+            )
 
     if not opts.remote_only:
-        rm_dirs = None
-        if opts.rm_dirs:
-            rm_dirs = parse_rm_dirs(opts.rm_dirs)
+        rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
         clean(reg, local_run_dir, rm_dirs)
 
 
@@ -737,10 +736,10 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
             remove_dir_and_target(run_dir)
     # Tidy up if necessary
     # Remove any empty parents of run dir up to ~/cylc-run/
-    _remove_empty_parents(run_dir, reg)
+    remove_empty_parents(run_dir, reg)
     for symlink, target in symlink_dirs.items():
         # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
-        _remove_empty_parents(target, Path(reg, symlink))
+        remove_empty_parents(target, Path(reg, symlink))
 
 
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
@@ -806,7 +805,7 @@ def glob_in_run_dir(
                 # Do not follow non-standard symlinks
                 subpath_excludes.add(ancestor)
                 break
-            if (not symlink_dirs) and ancestor in results:
+            if not symlink_dirs and (ancestor in results):
                 # We can be sure all subpaths of this ancestor are redundant
                 subpath_excludes.add(ancestor)
                 break
@@ -932,7 +931,7 @@ def remote_clean(
 
 def _remote_clean_cmd(
     reg: str,
-    platform: Dict[str, str],
+    platform: Dict[str, Any],
     rm_dirs: Optional[List[str]],
     timeout: str
 ) -> 'Popen[str]':
@@ -961,40 +960,6 @@ def _remote_clean_cmd(
     )
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
-
-
-def _remove_empty_parents(
-    path: Union[Path, str], tail: Union[Path, str]
-) -> None:
-    """Work our way up the tail of path, removing empty dirs only.
-
-    Args:
-        path: Absolute path to the directory, e.g. /foo/bar/a/b/c
-        tail: The tail of the path to work our way up, e.g. a/b/c
-
-    Example:
-        _remove_empty_parents('/foo/bar/a/b/c', 'a/b/c') would remove
-        /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
-        empty).
-    """
-    path = Path(path)
-    if not path.is_absolute():
-        raise ValueError('path must be absolute')
-    tail = Path(tail)
-    if tail.is_absolute():
-        raise ValueError('tail must not be an absolute path')
-    if not str(path).endswith(str(tail)):
-        raise ValueError(f"path '{path}' does not end with '{tail}'")
-    depth = len(tail.parts) - 1
-    for i in range(depth):
-        parent = path.parents[i]
-        if not parent.is_dir():
-            continue
-        try:
-            parent.rmdir()
-            LOG.debug(f'Removing directory: {parent}')
-        except OSError:
-            break
 
 
 def remove_keys_on_server(keys):
