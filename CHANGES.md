@@ -59,6 +59,10 @@ Fourth beta release of Cylc 8.
 [#4335](https://github.com/cylc/cylc-flow/pull/4335) - have validation catch
 erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
 
+### Fixes
+
+[#](https://github.com/cylc/cylc-flow/pull/) -
+Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
