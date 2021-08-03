@@ -61,7 +61,7 @@ erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
 
 ### Fixes
 
-[#](https://github.com/cylc/cylc-flow/pull/) -
+[#4310](https://github.com/cylc/cylc-flow/pull/4310 -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
 
 -------------------------------------------------------------------------------
