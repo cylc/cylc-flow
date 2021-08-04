@@ -31,7 +31,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List
+from typing import Iterable, NoReturn, Optional, List, Set
 from uuid import uuid4
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
@@ -180,6 +180,7 @@ class Scheduler:
     id: Optional[str] = None  # noqa: A003 (instance attr not local)
     uuid_str: Optional[str] = None
     contact_data: Optional[dict] = None
+    bad_hosts: Optional[Set[str]] = None
 
     # run options
     is_restart: Optional[bool] = None
@@ -253,6 +254,7 @@ class Scheduler:
         self._profile_amounts = {}
         self._profile_update_times = {}
         self.pre_submit_tasks = []
+        self.bad_hosts: Set[str] = set()
 
         self.restored_stop_task_id = None
 
@@ -343,7 +345,6 @@ class Scheduler:
             self, context=self.zmq_context, barrier=self.barrier)
         self.publisher = WorkflowPublisher(
             self.workflow, context=self.zmq_context, barrier=self.barrier)
-
         self.proc_pool = SubProcPool()
         self.command_queue = Queue()
         self.message_queue = Queue()
@@ -368,6 +369,7 @@ class Scheduler:
             self.xtrigger_mgr,
             self.data_store_mgr,
             self.options.log_timestamp,
+            self.bad_hosts,
             self.reset_inactivity_timer
         )
         self.task_events_mgr.uuid_str = self.uuid_str
@@ -377,7 +379,8 @@ class Scheduler:
             self.proc_pool,
             self.workflow_db_mgr,
             self.task_events_mgr,
-            self.data_store_mgr
+            self.data_store_mgr,
+            self.bad_hosts
         )
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 

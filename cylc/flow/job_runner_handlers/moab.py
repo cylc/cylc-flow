@@ -79,7 +79,7 @@ class MoabHandler:
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = job_conf["job_file_path"].replace(r"$HOME/", "")
+        job_file_path = job_conf['job_file_path']
         directives = job_conf["directives"].__class__()  # an ordereddict
 
         directives["-N"] = (

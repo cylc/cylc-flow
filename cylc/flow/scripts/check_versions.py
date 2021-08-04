@@ -40,7 +40,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.templatevars import load_template_vars
@@ -88,7 +88,15 @@ def main(_, options, *args):
     versions = {}
     for platform_name in sorted(platforms):
         platform = get_platform(platform_name)
-        cmd = construct_ssh_cmd(['version'], platform)
+        host = get_host_from_platform(
+            platform,
+            bad_hosts=None
+        )
+        cmd = construct_ssh_cmd(
+            ['version'],
+            platform,
+            host
+        )
         if verbose:
             print(cmd)
         proc = procopen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)

@@ -60,6 +60,8 @@
 #         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE [$OPTS]
 #         Run "grep [$OPTS] -q -e PATTERN FILE".
+#     named_grep_ok NAME PATTERN FILE [$OPTS]
+#         Run grep_ok with a custom test name.
 #         OPTS: put grep options like '-E' (extended regex) at end of line.
 #     grep_fail PATTERN FILE
 #         Run "grep -q -e PATTERN FILE", expect no match.
@@ -353,8 +355,18 @@ grep_ok() {
     local FILE="$2"
     shift 2
     OPTS="$*"
+    named_grep_ok "$(basename "${FILE}")-grep-ok" "$BRE" "$FILE" "$OPTS"
+}
+
+named_grep_ok() {
+    # (Put extra grep options like '-E' at end of the command line)
+    local NAME="$1"
+    local BRE="$2"
+    local FILE="$3"
+    shift 3
+    OPTS="$*"
     local TEST_NAME
-    TEST_NAME="$(basename "${FILE}")-grep-ok"
+    TEST_NAME="grep-ok: ${NAME}"
     # shellcheck disable=SC2086
     if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
@@ -817,6 +829,7 @@ _get_test_platform () {
     local platform
     local required_platform
     required_platform="$(_parse_platform_spec "${requirement}")"
+
     for platform in "${PLATFORMS[@]}"; do
         # we are purposfully allowing pattern matching here
         # shellcheck disable=SC2053

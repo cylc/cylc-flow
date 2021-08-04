@@ -320,9 +320,10 @@ with Conf('global.cylc', desc='''
             Configuration of the Cylc Scheduler's main loop.
         '''):
             Conf('plugins', VDR.V_STRING_LIST,
-                 ['health check', 'prune flow labels'], desc='''
-                Configure the default main loop plugins to use when
-                starting new workflows.
+                 ['health check', 'prune flow labels', 'reset bad hosts'],
+                 desc='''
+                     Configure the default main loop plugins to use when
+                     starting new workflows.
             ''')
 
             with Conf('<plugin name>', desc='''
@@ -344,6 +345,14 @@ with Conf('global.cylc', desc='''
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     The interval with which this plugin is run.
+                ''')
+
+            with Conf('reset bad hosts', meta=MainLoopPlugin, desc='''
+                Periodically clear the scheduler list of unreachable (bad)
+                hosts.
+            '''):
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(1800), desc='''
+                    How often (in seconds) to run this plugin.
                 ''')
 
         with Conf('logging', desc='''
@@ -369,6 +378,56 @@ with Conf('global.cylc', desc='''
                If workflow source directories of the same name exist in more
                than one of these paths, only the first one will be picked up.
         ''')
+        # Symlink Dirs
+        with Conf('symlink dirs',  # noqa: SIM117 (keep same format)
+                  desc="""
+            Configure alternate workflow run directory locations. Symlinks from
+            the the standard ``$HOME/cylc-run`` locations will be created.
+        """):
+            with Conf('<install target>'):
+                Conf('run', VDR.V_STRING, None, desc="""
+                    If specified, the workflow run directory will
+                    be created in ``<run dir>/cylc-run/<workflow-name>`` and a
+                    symbolic link will be created from
+                    ``$HOME/cylc-run/<workflow-name>``.
+                    If not specified the workflow run directory will be created
+                    in ``$HOME/cylc-run/<workflow-name>``.
+                    All the workflow files and the ``.service`` directory get
+                    installed into this directory.
+                """)
+                Conf('log', VDR.V_STRING, None, desc="""
+                    If specified the workflow log directory will be created in
+                    ``<log dir>/cylc-run/<workflow-name>/log`` and a symbolic
+                    link will be created from
+                    ``$HOME/cylc-run/<workflow-name>/log``. If not specified
+                    the workflow log directory will be created in
+                    ``$HOME/cylc-run/<workflow-name>/log``.
+                """)
+                Conf('share', VDR.V_STRING, None, desc="""
+                    If specified the workflow share directory will be
+                    created in ``<share dir>/cylc-run/<workflow-name>/share``
+                    and a symbolic link will be created from
+                    ``<$HOME/cylc-run/<workflow-name>/share``. If not specified
+                    the workflow share directory will be created in
+                    ``$HOME/cylc-run/<workflow-name>/share``.
+                """)
+                Conf('share/cycle', VDR.V_STRING, None, desc="""
+                    If specified the workflow share/cycle directory
+                    will be created in
+                    ``<share/cycle dir>/cylc-run/<workflow-name>/share/cycle``
+                    and a symbolic link will be created from
+                    ``$HOME/cylc-run/<workflow-name>/share/cycle``. If not
+                    specified the workflow share/cycle directory will be
+                    created in ``$HOME/cylc-run/<workflow-name>/share/cycle``.
+                """)
+                Conf('work', VDR.V_STRING, None, desc="""
+                    If specified the workflow work directory will be created in
+                    ``<work dir>/cylc-run/<workflow-name>/work`` and a symbolic
+                    link will be created from
+                    ``$HOME/cylc-run/<workflow-name>/work``. If not specified
+                    the workflow work directory will be created in
+                    ``$HOME/cylc-run/<workflow-name>/work``.
+                """)
 
     with Conf('editors', desc='''
         Choose your favourite text editor for editing workflow configurations.
@@ -704,6 +763,22 @@ with Conf('global.cylc', desc='''
                 systems so for safety there is an upper limit on the number
                 of job submissions which can be batched together.
             ''')
+            with Conf('selection'):
+                Conf(
+                    'method', VDR.V_STRING, default='random',
+                    options=['random', 'definition order'],
+                    desc='''
+                        Host selection method for the platform. Available
+                        options:
+
+                        - random: Suitable for an identical pool of hosts.
+                        - definition order: Take the first host in the list
+                          unless that host has been unreachable. In many cases
+                          this is likely to cause load imbalances, but might
+                          be appropriate if your hosts were
+                          ``main, backup, failsafe``.
+                    '''
+                )
         with Conf('localhost', meta=Platform):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 
@@ -711,60 +786,6 @@ with Conf('global.cylc', desc='''
     with Conf('platform groups'):  # noqa: SIM117 (keep same format)
         with Conf('<group>'):
             Conf('platforms', VDR.V_STRING_LIST)
-    # Symlink Dirs
-    with Conf('symlink dirs',   # noqa: SIM117 (keep same format)
-              desc="""
-        Define directories to be moved, symlinks from the the original
-        ``$HOME/cylc-run`` directories will be created.
-    """):
-        with Conf('<install target>'):
-            Conf('run', VDR.V_STRING, None, desc="""
-                Specifies the directory where the workflow run directories are
-                created. If specified, the workflow run directory will be
-                created in ``<run dir>/cylc-run/<workflow-name>`` and a
-                symbolic link will be created from
-                ``$HOME/cylc-run/<workflow-name>``.
-                If not specified the workflow run directory will be created in
-                ``$HOME/cylc-run/<workflow-name>``.
-                All the workflow files and the ``.service`` directory get
-                installed into this directory.
-            """)
-            Conf('log', VDR.V_STRING, None, desc="""
-                Specifies the directory where log directories are created. If
-                specified the workflow log directory will be created in
-                ``<log dir>/cylc-run/<workflow-name>/log`` and a symbolic link
-                will be created from ``$HOME/cylc-run/<workflow-name>/log``. If
-                not specified the workflow log directory will be created in
-                ``$HOME/cylc-run/<workflow-name>/log``.
-            """)
-            Conf('share', VDR.V_STRING, None, desc="""
-                Specifies the directory where share directories are created.
-                If specified the workflow share directory will be created in
-                ``<share dir>/cylc-run/<workflow-name>/share`` and a symbolic
-                link will be created from
-                ``<$HOME/cylc-run/<workflow-name>/share``. If not specified the
-                workflow share directory will be created in
-                ``$HOME/cylc-run/<workflow-name>/share``.
-            """)
-            Conf('share/cycle', VDR.V_STRING, None, desc="""
-                Specifies the directory where share/cycle directories are
-                created. If specified the workflow share/cycle directory will
-                be created in
-                ``<share/cycle dir>/cylc-run/<workflow-name>/share/cycle`` and
-                a symbolic link will be created from
-                ``$HOME/cylc-run/<workflow-name>/share/cycle``. If not
-                specified the workflow share/cycle directory will be created in
-                ``$HOME/cylc-run/<workflow-name>/share/cycle``.
-            """)
-            Conf('work', VDR.V_STRING, None, desc="""
-                Specifies the directory where work directories are created.
-                If specified the workflow work directory will be created in
-                ``<work dir>/cylc-run/<workflow-name>/work`` and a symbolic
-                link will be created from
-                ``$HOME/cylc-run/<workflow-name>/work``. If not specified the
-                workflow work directory will be created in
-                ``$HOME/cylc-run/<workflow-name>/work``.
-            """)
     # task
     with Conf('task events', desc='''
         Global site/user defaults for

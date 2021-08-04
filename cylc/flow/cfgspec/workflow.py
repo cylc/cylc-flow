@@ -788,7 +788,7 @@ with Conf(
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
-                :cylc:conf:`global.cylc[symlink dirs]`).
+                :cylc:conf:`global.cylc[install][symlink dirs]`).
 
                 .. note::
 
@@ -1339,6 +1339,7 @@ def upg(cfg, descr):
         ['cylc', 'simulation', 'disable suite event handlers'])
     u.obsolete('8.0.0', ['cylc', 'simulation'])
     u.obsolete('8.0.0', ['visualization'])
+    u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points']),
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],

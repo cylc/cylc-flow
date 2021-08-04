@@ -435,6 +435,7 @@ def main(parser, options, *args, color=False):
                 cmd.append('--remote-arg=%s' % quote(batchview_cmd))
             cmd.append(workflow_name)
             is_edit_mode = (mode == 'edit')
+            # TODO: Add Intelligent Host selection to this
             try:
                 proc = remote_cylc_cmd(
                     cmd,

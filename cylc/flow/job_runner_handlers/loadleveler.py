@@ -84,7 +84,7 @@ class LoadlevelerHandler():
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = re.sub(r"\$HOME/", "", job_conf["job_file_path"])
+        job_file_path = job_conf['job_file_path']
         directives = job_conf["directives"].__class__()
         directives["job_name"] = (
             job_conf["workflow_name"] + "." + job_conf["task_id"])
