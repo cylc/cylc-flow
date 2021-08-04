@@ -59,10 +59,17 @@ Fourth beta release of Cylc 8.
 [#4335](https://github.com/cylc/cylc-flow/pull/4335) - have validation catch
 erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
 
+[#4285](https://github.com/cylc/cylc-flow/pull/4285) - Cylc now automatically
+infers the latest numbered run of the workflow for most commands (e.g. you can
+run `cylc pause foo` instead of having to type out `foo/run3`).
+
 ### Fixes
 
 [#4310](https://github.com/cylc/cylc-flow/pull/4310 -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
+
+[#4319](https://github.com/cylc/cylc-flow/pull/4319) -
+Update cylc reinstall to skip cylc dirs work and share
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
@@ -120,14 +127,7 @@ remove specific sub-directories instead of the whole run directory, using the
 for choosing to only clean on the local filesystem or remote install targets
 respectively.
 
-[#4285](https://github.com/cylc/cylc-flow/pull/4285) - Cylc now automatically
-infers the latest numbered run of the workflow for most commands (e.g. you can
-run `cylc pause foo` instead of having to type out `foo/run3`).
-
 ### Fixes
-
-[#4319](https://github.com/cylc/cylc-flow/pull/4319) -
-Update cylc reinstall to skip cylc dirs work and share #4319
 
 [#4296](https://github.com/cylc/cylc-flow/pull/4296) -
 Patches DNS issues with newer versions of Mac OS.
