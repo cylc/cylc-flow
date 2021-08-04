@@ -1518,6 +1518,13 @@ def install_workflow(
     # check source link matches the source symlink from workflow dir.
     cylc_install.mkdir(parents=True, exist_ok=True)
     if not source_link.exists():
+        if source_link.is_symlink():
+            raise WorkflowFilesError(
+                f'Workflow source dir is not accessible:'
+                f' "{source_link.resolve()}".\n'
+                f'Restore the source or modify the "{source_link}" symlink'
+                ' to continue.'
+            )
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source.resolve())
     elif (  # noqa: SIM106
