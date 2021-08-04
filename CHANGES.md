@@ -48,7 +48,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0b3 (<span actions:bind='release-date'>???</span>)__
+## __cylc-8.0b3 (<span actions:bind='release-date'>Upcoming 2021</span>)__
 
 Fourth beta release of Cylc 8.
 
@@ -62,9 +62,14 @@ erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
 [#4346](https://github.com/cylc/cylc-flow/pull/4346) -
 Use natural sort order for the `cylc scan --sort` option.
 
+[#4313](https://github.com/cylc/cylc-flow/pull/4313) - Change `ignore` to
+`reload` for the cycle point cli options (e.g. `--fcp=reload`), as this more
+accurately reflects what it's doing. Also improve validation of these
+cli options.
+
 ### Fixes
 
-[#4341](https://github.com/cylc/cylc-flow/pull/4341 -
+[#4341](https://github.com/cylc/cylc-flow/pull/4341) -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
 
 [#4289](https://github.com/cylc/cylc-flow/pull/4289) - Make `cylc clean`
