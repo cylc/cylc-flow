@@ -1339,6 +1339,7 @@ def upg(cfg, descr):
         ['cylc', 'simulation', 'disable suite event handlers'])
     u.obsolete('8.0.0', ['cylc', 'simulation'])
     u.obsolete('8.0.0', ['visualization'])
+    u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points']),
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],

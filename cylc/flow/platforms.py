@@ -14,15 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests for the platform lookup.
+"""Functions relating to (job) platforms."""
 
 import random
 import re
 from copy import deepcopy
 from typing import (
-    Any, Dict, Iterable, List, Optional, Tuple, Union, overload)
+    Any, Dict, Iterable, List, Optional, Tuple, Union, Set, overload
+)
 
-from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.exceptions import PlatformLookupError, CylcError, NoHostsError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
 
@@ -38,6 +39,11 @@ FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
 # Regex to check whether a string is a command
 HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 PLATFORM_REC_COMMAND = re.compile(r'(\$\()\s*(.*)\s*([)])$')
+
+HOST_SELECTION_METHODS = {
+    'definition order': lambda goodhosts: goodhosts[0],
+    'random': random.choice
+}
 
 
 @overload
@@ -382,35 +388,37 @@ def generic_items_match(
     return True
 
 
-def get_host_from_platform(platform, method='random'):
+def get_host_from_platform(
+    platform: Dict[str, Any], bad_hosts: Optional[Set[str]] = None
+) -> str:
     """Placeholder for a more sophisticated function which returns a host
     given a platform dictionary.
 
     Args:
-        platform (dict):
-            A dict representing a platform.
-        method (str):
-            Name a function to use when selecting hosts from list provided
-            by platform.
-            - 'random' (default): Pick a random host from list
-            - 'first': Return the first host in the list
+        platform: A dict representing a platform.
+        bad_hosts: A set of hosts Cylc knows to be unreachable.
 
     Returns:
-        hostname (str):
-
-    TODO:
-        Other host selection methods:
-            - Random Selection with check for host availability
-
+        hostname: The name of a host.
     """
-    if method == 'random':
-        return random.choice(platform['hosts'])
-    elif method == 'first':  # noqa: SIM106
-        return platform['hosts'][0]
+    # Get list of goodhosts:
+    if bad_hosts:
+        goodhosts = [i for i in platform['hosts'] if i not in bad_hosts]
     else:
-        raise NotImplementedError(
-            f'method {method} is not a valid input for get_host_from_platform'
-        )
+        goodhosts = platform['hosts']
+
+    # Get the selection method
+    method = platform['selection']['method']
+    if not goodhosts:
+        raise NoHostsError(platform)
+    else:
+        if method not in HOST_SELECTION_METHODS:
+            raise CylcError(
+                f'method \"{method}\" is not a supported host '
+                'selection method.'
+            )
+        else:
+            return HOST_SELECTION_METHODS[method](goodhosts)
 
 
 def fail_if_platform_and_host_conflict(task_conf, task_name):

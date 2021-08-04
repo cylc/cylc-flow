@@ -59,6 +59,7 @@ from cylc.flow.pathutil import (
     remove_dir_or_file
 )
 from cylc.flow.platforms import (
+    get_host_from_platform,
     get_install_target_to_platforms_map,
     get_localhost_install_target,
     get_platform
@@ -617,7 +618,9 @@ def _clean_check(reg: str, run_dir: Path) -> None:
         raise ServiceFileError(f"Cannot remove running workflow.\n\n{exc}")
 
 
-def init_clean(reg: str, opts: 'Values') -> None:
+def init_clean(
+    reg: str, opts: 'Values'
+) -> None:
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 
@@ -902,7 +905,11 @@ def _remote_clean_cmd(
     if rm_dirs is not None:
         for item in rm_dirs:
             cmd.extend(['--rm', item])
-    cmd = construct_ssh_cmd(cmd, platform, timeout=timeout, set_verbosity=True)
+    cmd = construct_ssh_cmd(
+        cmd, platform,
+        get_host_from_platform(platform),
+        timeout=timeout, set_verbosity=True
+    )
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
 
@@ -1342,6 +1349,8 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         'rose-suite.conf',
         'opt/rose-suite-cylc-install.conf',
         WorkflowFiles.LOG_DIR,
+        WorkflowFiles.WORK_DIR,
+        WorkflowFiles.SHARE_DIR,
         WorkflowFiles.Install.DIRNAME,
         WorkflowFiles.Service.DIRNAME
     ]:

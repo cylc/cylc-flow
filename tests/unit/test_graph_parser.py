@@ -44,6 +44,16 @@ class TestGraphParser(unittest.TestCase):
         with self.assertRaises(GraphParseError):
             self.parser.parse_graph("a b => c")
 
+    def test_parse_graph_fails_with_suicide_and_not_suicide(self):
+        """Test graph parser fails with both "expr => !foo"
+        and "expr => !foo" in the same graph."""
+        with self.assertRaises(GraphParseError):
+            self.parser.parse_graph(
+                """(a | b & c) => d
+                   foo => bar
+                   (a | b & c) => !d
+                """)
+
     def test_parse_graph_fails_with_invalid_and_operator(self):
         """Test that the graph parse will fail when the and operator is not
         correctly used."""

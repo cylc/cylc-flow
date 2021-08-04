@@ -28,6 +28,7 @@ import signal
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from time import sleep
+from typing import Any, Dict, List, Tuple
 
 import cylc.flow.flags
 from cylc.flow import __version__ as CYLC_VERSION
@@ -162,20 +163,26 @@ DEFAULT_RSYNC_OPTS = [
 
 
 def construct_rsync_over_ssh_cmd(
-        src_path, dst_path, platform, rsync_includes=None):
+    src_path: str, dst_path: str, platform: Dict[str, Any],
+    rsync_includes=None, bad_hosts=None
+) -> Tuple[List[str], str]:
     """Constructs the rsync command used for remote file installation.
 
     Includes as standard the directories: app, bin, etc, lib; and the server
     key, used for ZMQ authentication.
 
     Args:
-        src_path(string): source path
-        dst_path(string): path of target
-        platform(dict)): contains info relating to platform
-        rsync_includes(list): files and directories to be included in the rsync
+        src_path: source path
+        dst_path: path of target
+        platform: contains info relating to platform
+        rsync_includes: files and directories to be included in the rsync
 
+    Developer Warning:
+        The Cylc Subprocess Pool method ``rsync_255_fail`` relies on
+        ``rsync_cmd[0] == 'rsync'``. Please check that changes to this funtion
+        do not break ``rsync_255_fail``.
     """
-    dst_host = get_host_from_platform(platform)
+    dst_host = get_host_from_platform(platform, bad_hosts=bad_hosts)
     ssh_cmd = platform['ssh command']
     rsync_cmd = [
         "rsync",
@@ -202,10 +209,12 @@ def construct_rsync_over_ssh_cmd(
     rsync_cmd.append("--exclude=*")  # exclude everything else
     rsync_cmd.append(f"{src_path}/")
     rsync_cmd.append(f"{dst_host}:{dst_path}/")
-    return rsync_cmd
+    return rsync_cmd, dst_host
 
 
-def construct_ssh_cmd(raw_cmd, platform, **kwargs):
+def construct_ssh_cmd(
+    raw_cmd, platform, host, **kwargs
+):
     """Build an SSH command for execution on a remote platform.
 
     Constructs the SSH command according to the platform configuration.
@@ -214,7 +223,7 @@ def construct_ssh_cmd(raw_cmd, platform, **kwargs):
     """
     return _construct_ssh_cmd(
         raw_cmd,
-        host=get_host_from_platform(platform),
+        host=host,
         ssh_cmd=platform['ssh command'],
         remote_cylc_path=platform['cylc path'],
         ssh_login_shell=platform['use login shell'],
@@ -331,7 +340,7 @@ def _construct_ssh_cmd(
     return command
 
 
-def remote_cylc_cmd(cmd, platform, **kwargs):
+def remote_cylc_cmd(cmd, platform, bad_hosts=None, **kwargs):
     """Execute a Cylc command on a remote platform.
 
     Uses the platform configuration to construct the command.
@@ -340,7 +349,7 @@ def remote_cylc_cmd(cmd, platform, **kwargs):
     """
     return _remote_cylc_cmd(
         cmd,
-        host=get_host_from_platform(platform),
+        host=get_host_from_platform(platform, bad_hosts=bad_hosts),
         ssh_cmd=platform['ssh command'],
         remote_cylc_path=platform['cylc path'],
         ssh_login_shell=platform['use login shell'],

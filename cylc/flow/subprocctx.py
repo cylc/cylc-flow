@@ -52,6 +52,8 @@ class SubProcContext:  # noqa: SIM119 (not really relevant to this case)
                     Content to send to command's STDIN.
         .err (str):
             Content of the command's STDERR.
+        .host (str):
+            The host Cylc intended to use for this command.
         .out (str)
             Content of the command's STDOUT.
         .ret_code (int):
@@ -67,7 +69,7 @@ class SubProcContext:  # noqa: SIM119 (not really relevant to this case)
     # Format string for multi-line output
     JOB_LOG_FMT_M = '[%(cmd_key)s %(attr)s]\n%(mesg)s'
 
-    def __init__(self, cmd_key, cmd, **cmd_kwargs):
+    def __init__(self, cmd_key, cmd, host='localhost', **cmd_kwargs):
         self.timestamp = get_current_time_string()
         self.cmd_key = cmd_key
         self.cmd = cmd
@@ -76,6 +78,7 @@ class SubProcContext:  # noqa: SIM119 (not really relevant to this case)
         self.err = cmd_kwargs.get('err')
         self.ret_code = cmd_kwargs.get('ret_code')
         self.out = cmd_kwargs.get('out')
+        self.host = host
 
     def __str__(self):
         ret = ''
