@@ -107,6 +107,9 @@ if it points to the removed directory.
 [#4395](https://github.com/cylc/cylc-flow/pull/4362) -
 Fix ``cylc stop --kill`` which was not actually killing task jobs.
 
+[#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
+now works with relative paths.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
@@ -164,9 +167,6 @@ for choosing to only clean on the local filesystem or remote install targets
 respectively.
 
 ### Fixes
-
-[#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
-now works with relative paths.
 
 [#4319](https://github.com/cylc/cylc-flow/pull/4319) -
 Update cylc reinstall to skip cylc dirs work and share #4319
