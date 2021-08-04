@@ -692,7 +692,7 @@ class WorkflowConfig:
         ):
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
-        if fcp_str == 'ignore':
+        if fcp_str == 'reload':
             fcp_str = self.options.fcp = None
         if fcp_str is None:
             fcp_str = self.cfg['scheduling']['final cycle point']

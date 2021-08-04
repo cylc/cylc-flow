@@ -45,7 +45,7 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
 from cylc.flow.exceptions import (
-    CyclingError, CylcError
+    CyclingError, CylcError, UserInputError
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
@@ -1118,25 +1118,25 @@ class Scheduler:
             LOG.info('LOADING workflow parameters')
         key, value = row
         if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.icp == 'ignore':
+            if self.is_restart and self.options.icp == 'reload':
                 LOG.debug(f"- initial point = {value} (ignored)")
             elif self.options.icp is None:
                 self.options.icp = value
                 LOG.info(f"+ initial point = {value}")
         elif key in self.workflow_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.startcp == 'ignore':
+            if self.is_restart and self.options.startcp == 'reload':
                 LOG.debug(f"- start point = {value} (ignored)")
             elif self.options.startcp is None:
                 self.options.startcp = value
                 LOG.info(f"+ start point = {value}")
         elif key in self.workflow_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.fcp == 'ignore':
+            if self.is_restart and self.options.fcp == 'reload':
                 LOG.debug(f"- override final point = {value} (ignored)")
             elif self.options.fcp is None:
                 self.options.fcp = value
                 LOG.info(f"+ override final point = {value}")
         elif key == self.workflow_db_mgr.KEY_STOP_CYCLE_POINT:
-            if self.is_restart and self.options.stopcp == 'ignore':
+            if self.is_restart and self.options.stopcp == 'reload':
                 LOG.debug(f"- stop point = {value} (ignored)")
             elif self.options.stopcp is None:
                 self.options.stopcp = value
@@ -1845,35 +1845,39 @@ class Scheduler:
         """Abort if "cylc play" options are not consistent with type of start.
 
         * Start from cycle point or task is not valid for a restart.
-        * Ignore initial point (etc.) is not valid for a new run.
+        * Reloading of cycle points is not valid for a new run.
         """
-        if self.is_restart:
-            for opt in ('icp', 'startcp'):
-                if getattr(self.options, opt, None) not in (None, 'ignore'):
-                    raise SchedulerError(
-                        f"option --{opt} is not valid for restart.")
-            opt = 'starttask'
-            if getattr(self.options, opt, None) is not None:
-                raise SchedulerError(
-                    f"option --{opt} is not valid for restart.")
-        else:
-            for opt in ('icp', 'fcp', 'startcp', 'stopcp', 'starttask'):
-                if getattr(self.options, opt, None) == 'ignore':
-                    raise SchedulerError(
-                        f"option --{opt}=ignore is only valid for restart.")
+        for opt in ('icp', 'startcp', 'starttask'):
+            value = getattr(self.options, opt, None)
+            if self.is_restart:
+                if value is not None:
+                    raise UserInputError(
+                        f"option --{opt} is not valid for restart"
+                    )
+            elif value == 'reload':
+                raise UserInputError(
+                    f"option --{opt}=reload is not valid "
+                    "(only --fcp and --stopcp can be 'reload')"
+                )
+        if not self.is_restart:
+            for opt in ('fcp', 'stopcp'):
+                if getattr(self.options, opt, None) == 'reload':
+                    raise UserInputError(
+                        f"option --{opt}=reload is only valid for restart"
+                    )
 
     def process_cylc_stop_point(self):
         """
         Set stop point.
 
         In decreasing priority, stop cycle point (``stopcp``) is set:
-        * From the final point for ``cylc play --stopcp=ignore``.
+        * From the final point for ``cylc play --stopcp=reload``.
         * From the command line (``cylc play --stopcp=XYZ``).
         * From the database.
         * From the flow.cylc file (``[scheduling]stop after cycle point``).
         """
         stoppoint = None
-        if self.is_restart and self.options.stopcp == 'ignore':
+        if self.is_restart and self.options.stopcp == 'reload':
             stoppoint = self.config.final_point
         elif self.options.stopcp:
             stoppoint = self.options.stopcp

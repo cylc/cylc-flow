@@ -15,14 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for Cylc scheduler server."""
 
-import logging
 import pytest
 from types import SimpleNamespace
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 from unittest.mock import create_autospec, Mock, patch
 
-from cylc.flow import CYLC_LOG
-from cylc.flow.scheduler import Scheduler, SchedulerError
+from cylc.flow.exceptions import UserInputError
+from cylc.flow.scheduler import Scheduler
 
 Fixture = Any
 
@@ -33,7 +32,7 @@ Fixture = Any
         (
             {
                 'self.is_restart': True,
-                'self.options.stopcp': 'ignore',
+                'self.options.stopcp': 'reload',
             },
             '2000'
         ),
@@ -112,43 +111,37 @@ def test_process_cylc_stop_point(get_point, options, expected):
 
 
 @pytest.mark.parametrize(
-    'opts, is_restart, err',
+    'opts_to_test, is_restart, err_msg',
     [
         pytest.param(
-            {'icp': 3}, True,
-            "option --icp is not valid for restart.",
-            id="icp on restart"
+            ['icp', 'startcp', 'starttask'],
+            True,
+            "option --{} is not valid for restart",
+            id="start opts on restart"
         ),
         pytest.param(
-            {'startcp': 5}, True,
-            "option --startcp is not valid for restart.",
-            id="startcp on restart"
+            ['icp', 'startcp', 'starttask'],
+            False,
+            "option --{}=reload is not valid",
+            id="start opts =reload"
         ),
         pytest.param(
-            {'starttask': 'foo.5'}, True,
-            "option --starttask is not valid for restart.",
-            id="starttask on restart"
+            ['fcp', 'stopcp'],
+            False,
+            "option --{}=reload is only valid for restart",
+            id="end opts =reload when not restart"
         ),
-        pytest.param(
-            {'icp': 'ignore'}, False,
-            "option --icp=ignore is only valid for restart.",
-            id="icp=ignore on first start"
-        ),
-        pytest.param(
-            {'stopcp': 'ignore'}, False,
-            "option --stopcp=ignore is only valid for restart.",
-            id="stopcp=ignore on first start"
-        )
     ]
 )
 def test_check_startup_opts(
-        opts: Dict[str, Optional[str]],
-        is_restart: bool,
-        err: List[str]):
-    """Test Scheduler.process_cycle_point_opts()"""
-    mocked_scheduler = Mock()
-    mocked_scheduler.options = Mock(spec=[], **opts)
-    mocked_scheduler.is_restart = is_restart
-    with pytest.raises(SchedulerError) as excinfo:
-        Scheduler._check_startup_opts(mocked_scheduler)
-    assert(err in str(excinfo))
+    opts_to_test: List[str],
+    is_restart: bool,
+    err_msg: str
+) -> None:
+    """Test Scheduler._check_startup_opts()"""
+    for opt in opts_to_test:
+        mocked_scheduler = Mock(is_restart=is_restart)
+        mocked_scheduler.options = SimpleNamespace(**{opt: 'reload'})
+        with pytest.raises(UserInputError) as excinfo:
+            Scheduler._check_startup_opts(mocked_scheduler)
+        assert(err_msg.format(opt) in str(excinfo))
