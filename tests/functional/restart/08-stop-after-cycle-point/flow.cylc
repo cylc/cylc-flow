@@ -1,3 +1,4 @@
+#!jinja2
 [meta]
 title = Test: flow.cylc[scheduling]stop after cycle point
 description = """
@@ -8,19 +9,22 @@ description = """
 
 [scheduler]
     UTC mode = True
+    cycle point format = %Y
 
 [scheduling]
-    initial cycle point = 19700101T0000Z
-    final cycle point = 19700101T0300Z
-    stop after cycle point = 19700101T0100Z
-    [[dependencies]]
-        PT1H = hello[-PT1H] => hello
+    runahead limit = P1
+    initial cycle point = 1970
+    final cycle point = 1974
+    stop after cycle point = 1972
+    [[graph]]
+        P1Y = hello
 
 [runtime]
     [[hello]]
+{% if MANUAL_SHUTDOWN is defined %}
         script = """
-        if [[ "$CYLC_TASK_CYCLE_POINT" == 19700101T0000Z ]]; then
-            cylc stop "$CYLC_WORKFLOW_NAME"
-        fi
-
+            if [[ "$CYLC_TASK_CYCLE_POINT" == {{ MANUAL_SHUTDOWN }} ]]; then
+                cylc stop "$CYLC_WORKFLOW_NAME"
+            fi
         """
+{% endif %}
