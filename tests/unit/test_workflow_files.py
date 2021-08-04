@@ -190,30 +190,6 @@ def test_clean_check__fail(
 
 
 @pytest.mark.parametrize(
-    'force_opt',
-    [pytest.param(False, id="normal"),
-     pytest.param(True, id="--force")]
-)
-def test_clean_check__workflow_base_dir(
-    force_opt: bool,
-    tmp_run_dir: Callable
-) -> None:
-    """_clean_check() should raise if supplied a dir that is a workflow base
-    dir containing run dirs/named runs, unless --force is used."""
-    reg = 'temba'
-    run_dir: Path = tmp_run_dir(os.path.join(reg, 'run1'))
-    base_dir = run_dir.parent
-    opts = CleanOptions(force=force_opt)
-
-    if force_opt:
-        workflow_files._clean_check(opts, reg, base_dir)
-    else:
-        with pytest.raises(WorkflowFilesError) as exc_info:
-            workflow_files._clean_check(opts, reg, base_dir)
-        assert "contains the following workflow(s)" in str(exc_info.value)
-
-
-@pytest.mark.parametrize(
     'db_platforms, opts, clean_called, remote_clean_called',
     [
         pytest.param(
@@ -251,7 +227,7 @@ def test_init_clean(
         remote_clean_called: If a remote clean is expected to go ahead.
     """
     reg = 'foo/bar/'
-    tmp_run_dir(reg)
+    tmp_run_dir(reg, installed=True)
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
@@ -262,7 +238,7 @@ def test_init_clean(
     assert mock_remote_clean.called is remote_clean_called
 
 
-def test_init_clean_no_dir(
+def test_init_clean__no_dir(
     monkeymock: MonkeyMock, tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -278,7 +254,7 @@ def test_init_clean_no_dir(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean_no_db(
+def test_init_clean__no_db(
     monkeymock: MonkeyMock, tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -294,7 +270,7 @@ def test_init_clean_no_db(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean_remote_only_no_db(
+def test_init_clean__remote_only_no_db(
     monkeymock: MonkeyMock, tmp_run_dir: Callable
 ) -> None:
     """Test remote-only init_clean() when the workflow DB doesn't exist"""
@@ -310,7 +286,7 @@ def test_init_clean_remote_only_no_db(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean_running_workflow(
+def test_init_clean__running_workflow(
     monkeypatch: pytest.MonkeyPatch, tmp_run_dir: Callable
 ) -> None:
     """Test init_clean() fails when workflow is still running"""
@@ -325,12 +301,56 @@ def test_init_clean_running_workflow(
     assert "Cannot remove running workflow" in str(exc.value)
 
 
+@pytest.mark.parametrize('number_of_runs', [1, 2])
+@pytest.mark.parametrize(
+    'force_opt',
+    [pytest.param(False, id="normal"),
+     pytest.param(True, id="--force")]
+)
+def test_init_clean__multiple_runs(
+    force_opt: bool,
+    number_of_runs: int,
+    tmp_run_dir: Callable, monkeymock: MonkeyMock,
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test init_clean() for workflow dirs that contain 1 or more run dirs."""
+    # -- Setup --
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    for n in range(1, number_of_runs + 1):
+        last_run_dir: Path = tmp_run_dir(f'foo/run{n}', named=True)
+    workflow_dir = last_run_dir.parent  # Path to cylc-run/foo
+    mock_clean = monkeymock(
+        'cylc.flow.workflow_files.clean', spec=workflow_files.clean
+    )
+    opts = CleanOptions(force=force_opt)
+    # -- Test --
+    if number_of_runs > 1:
+        if force_opt:
+            # It should call clean() with 'foo' and log a warning
+            workflow_files.init_clean('foo', opts)
+            mock_clean.assert_called_once_with('foo', workflow_dir, None)
+            msg = caplog.text
+        else:
+            # It should raise
+            with pytest.raises(WorkflowFilesError) as exc_info:
+                workflow_files.init_clean('foo', opts)
+            msg = str(exc_info.value)
+        assert "contains the following workflows" in msg
+    else:
+        # It should call clean() with 'foo/run1' followed by 'foo'
+        workflow_files.init_clean('foo', opts)
+        assert mock_clean.call_args_list == [
+            mock.call('foo/run1', last_run_dir, None),
+            mock.call('foo', workflow_dir, None)
+        ]
+
+
 @pytest.mark.parametrize(
     'rm_dirs, expected_clean, expected_remote_clean',
     [(None, None, []),
      (["r2d2:c3po"], {"r2d2", "c3po"}, ["r2d2:c3po"])]
 )
-def test_init_clean_rm_dirs(
+def test_init_clean__rm_dirs(
     rm_dirs: Optional[List[str]],
     expected_clean: Set[str],
     expected_remote_clean: List[str],

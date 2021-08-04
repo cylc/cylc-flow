@@ -653,19 +653,6 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
         detect_old_contact_file(reg)
     except ServiceFileError as exc:
         raise ServiceFileError(f"Cannot remove running workflow.\n\n{exc}")
-    # Check dir does not contain other workflows:
-    contained_workflows = asyncio.get_event_loop().run_until_complete(
-        get_contained_workflows(run_dir, MAX_SCAN_DEPTH + 1)
-    )  # Note: increased scan depth for safety
-    if contained_workflows:
-        bullet = "\n    - "
-        msg = (
-            f"{run_dir} contains the following workflow(s):"
-            f"{bullet}{bullet.join(contained_workflows)}"
-        )
-        if not opts.force:
-            raise WorkflowFilesError(f"Cannot clean - {msg}")
-        LOG.warning(msg)
 
 
 def init_clean(reg: str, opts: 'Values') -> None:
@@ -683,6 +670,24 @@ def init_clean(reg: str, opts: 'Values') -> None:
         LOG.info(str(exc))
         return
 
+    # Check dir does not contain other workflows:
+    contained_workflows = asyncio.get_event_loop().run_until_complete(
+        get_contained_workflows(local_run_dir, MAX_SCAN_DEPTH + 1)
+    )  # Note: increased scan depth for safety
+    _suppress_no_db_msg = False
+    if len(contained_workflows) == 1:
+        init_clean(contained_workflows[0], opts)
+        _suppress_no_db_msg = True
+    elif len(contained_workflows) > 1:
+        bullet = "\n    - "
+        msg = (
+            f"{local_run_dir} contains the following workflows:"
+            f"{bullet}{bullet.join(contained_workflows)}"
+        )
+        if not opts.force:
+            raise WorkflowFilesError(f"Cannot clean - {msg}")
+        LOG.warning(msg)
+
     if not opts.local_only:
         platform_names = None
         try:
@@ -692,7 +697,8 @@ def init_clean(reg: str, opts: 'Values') -> None:
                 raise ServiceFileError(
                     "No workflow database - cannot perform remote clean"
                 )
-            LOG.info("No workflow database - will only clean locally")
+            if not _suppress_no_db_msg:
+                LOG.info("No workflow database - will only clean locally")
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot clean - {exc}")
 
@@ -720,7 +726,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         run_dir: Absolute path of the workflow's run dir.
         rm_dirs: Set of sub dirs to remove instead of the whole run dir.
     """
-    LOG.info("Cleaning on local filesystem")
+    LOG.info(f"Cleaning on local filesystem: {run_dir}")
     symlink_dirs = get_symlink_dirs(reg, run_dir)
     if rm_dirs is not None:
         # Targeted clean
