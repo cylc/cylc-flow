@@ -34,7 +34,7 @@ from cylc.hostuserutil import is_remote_host, get_host_ip_by_name
 from cylc.network.httpclient import (
     SuiteRuntimeServiceClient, ClientError, ClientTimeout)
 from cylc.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+    SuiteSrvFilesManager, SuiteServiceFileError, SuiteCylcVersionError)
 from cylc.suite_status import (KEY_NAME, KEY_OWNER, KEY_STATES)
 
 CONNECT_TIMEOUT = 5.0
@@ -311,14 +311,13 @@ def get_scan_items_from_fs(owner_pattern=None, updater=None):
                 contact_data = srv_files_mgr.load_contact_file(reg, owner)
             except (SuiteServiceFileError, IOError, TypeError, ValueError):
                 continue
+            except SuiteCylcVersionError as exc:
+                LOG.debug(
+                    "Suite {0} is running in Cylc version {1} and "
+                    "will not be displayed.".format(reg, exc.cylc_version)
+                )
+                continue
             else:
-                cylc_ver = contact_data[srv_files_mgr.KEY_VERSION]
-                major_ver = int(cylc_ver.split(".", 1)[0])
-                if (major_ver > 7):
-                    LOG.debug("Suite %s is running in Cylc version %s "
-                              "and will not be displayed." % (reg, cylc_ver)
-                              )
-                    continue
                 items.append((
                     contact_data[srv_files_mgr.KEY_HOST],
                     contact_data[srv_files_mgr.KEY_PORT]))
