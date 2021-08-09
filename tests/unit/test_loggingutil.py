@@ -92,10 +92,10 @@ if __name__ == '__main__':
     [
         param(
             True,
-            (
-                '[%(pathname)s:%(lineno)d]\n'
-                '%(asctime)s %(levelname)-2s - %(message)s'
-            ),
+                (
+                    '%(asctime)s %(levelname)-2s - [%(pathname)s:%(lineno)d] '
+                    '%(message)s'
+                ),
             id='dev_info=True'
         ),
         param(
