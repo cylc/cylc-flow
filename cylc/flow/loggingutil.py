@@ -66,21 +66,14 @@ class CylcLogFormatter(logging.Formatter):
         self.max_width = self.MAX_WIDTH
         self.wrapper = None
         self.configure(timestamp, color, max_width)
+        prefix = '%(asctime)s %(levelname)-2s - '
         if dev_info is True:
-            # Add location message created in codebase when in very very, very
-            # verbose mode.
-            logging.Formatter.__init__(
-                self,
-                (
-                    '%(asctime)s %(levelname)-2s - [%(pathname)s:%(lineno)d] '
-                    '%(message)s'
-                ),
-                '%Y-%m-%dT%H:%M:%S%Z')
-        else:
-            logging.Formatter.__init__(
-                self,
-                '%(asctime)s %(levelname)-2s - %(message)s',
-                '%Y-%m-%dT%H:%M:%S%Z')
+            prefix += '[%(module)s:%(lineno)d] - '
+
+        logging.Formatter.__init__(
+            self,
+            prefix + '%(message)s',
+            '%Y-%m-%dT%H:%M:%S%Z')
 
     def configure(self, timestamp=None, color=None, max_width=None):
         """Reconfigure the format settings."""
@@ -115,23 +108,6 @@ class CylcLogFormatter(logging.Formatter):
         "time.strftime" will handle time zone from "localtime" properly.
         """
         return get_time_string_from_unix_time(record.created)
-
-
-class CylcLogFormatterPlus(CylcLogFormatter):
-    def __init__(self, timestamp=True, color=False, max_width=None):
-        self.timestamp = None
-        self.color = None
-        self.max_width = self.MAX_WIDTH
-        self.wrapper = None
-        self.configure(timestamp, color, max_width)
-        # You may find adding %(filename)s %(lineno)d are useful when debugging
-        logging.Formatter.__init__(
-            self,
-            (
-                '%(asctime)s %(filename)s:%(lineno)d %(levelname)-2s'
-                ' - %(message)s'
-            ),
-            '%Y-%m-%dT%H:%M:%S%Z')
 
 
 class TimestampRotatingFileHandler(logging.FileHandler):
