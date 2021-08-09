@@ -27,7 +27,7 @@ if remrun():
 
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+    SuiteSrvFilesManager, SuiteServiceFileError, SuiteCylcVersionError)
 
 
 def main():
@@ -38,6 +38,8 @@ def main():
         data = SuiteSrvFilesManager().load_contact_file(reg)
     except SuiteServiceFileError:
         sys.exit("%s: cannot get contact info, suite not running?" % (reg,))
+    except SuiteCylcVersionError as exc:
+        sys.exit("{0}: {1}".format(reg, exc))
     else:
         for key, value in sorted(data.items()):
             print("%s=%s" % (key, value))

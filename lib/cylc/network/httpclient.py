@@ -34,7 +34,7 @@ import cylc.flags
 from cylc.network import NO_PASSPHRASE
 from cylc.hostuserutil import get_host, get_fqdn_by_host, get_user
 from cylc.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+    SuiteSrvFilesManager, SuiteServiceFileError, SuiteCylcVersionError)
 from cylc.unicode_util import utf8_enforce
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import get_current_time_string
@@ -646,6 +646,8 @@ class SuiteRuntimeServiceClient(object):
             self.port = int(self.comms1.get(self.srv_files_mgr.KEY_PORT))
         except (IOError, ValueError, SuiteServiceFileError):
             raise ClientInfoError(self.suite)
+        except SuiteCylcVersionError as exc:
+            sys.exit("ERROR: {}".format(exc))
         else:
             # Check mismatch suite UUID
             env_suite = os.getenv(self.srv_files_mgr.KEY_NAME)
@@ -668,6 +670,8 @@ class SuiteRuntimeServiceClient(object):
                 SuiteSrvFilesManager.FILE_BASE_CONTACT2))
         except SuiteServiceFileError:
             pass
+        except SuiteCylcVersionError as exc:
+            sys.exit("ERROR: {}".format(exc))
 
 
 def get_exception_from_html(html_text):

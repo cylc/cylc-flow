@@ -23,6 +23,7 @@ import os
 import re
 from uuid import uuid4
 from string import ascii_letters, digits
+import sys
 
 from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
@@ -36,6 +37,16 @@ from cylc.hostuserutil import (
 class SuiteServiceFileError(Exception):
     """Raise on error related to suite service files."""
     pass
+
+
+class SuiteCylcVersionError(Exception):
+    MESSAGE = "Suite Cylc version {} is incompatible with Cylc 7"
+
+    def __init__(self, version):
+        self.cylc_version = version
+
+    def __str__(self):
+        return self.MESSAGE.format(self.cylc_version)
 
 
 class SuiteSrvFilesManager(object):
@@ -134,6 +145,8 @@ class SuiteSrvFilesManager(object):
         except (IOError, ValueError, SuiteServiceFileError):
             # Contact file does not exist or corrupted, should be OK to proceed
             return
+        except SuiteCylcVersionError as exc:
+            sys.exit("ERROR: {}".format(exc))
         if check_host_port and check_host_port != (old_host, int(old_port)):
             raise AssertionError("%s != (%s, %s)" % (
                 check_host_port, old_host, old_port))
@@ -403,6 +416,7 @@ To start a new run, stop the old one first with one or more of these:
         for line in file_content.splitlines():
             key, value = [item.strip() for item in line.split("=", 1)]
             data[key] = value
+        self.check_cylc_version(data[self.KEY_VERSION])
         return data
 
     def parse_suite_arg(self, options, arg):
@@ -463,6 +477,7 @@ To start a new run, stop the old one first with one or more of these:
 
         # suite.rc must exist so we can detect accidentally reversed args.
         source = os.path.abspath(source)
+        self.check_for_cylc8_flow_file(source)
         if not os.path.isfile(os.path.join(source, self.FILE_BASE_SUITE_RC)):
             raise SuiteServiceFileError("ERROR: no suite.rc in %s" % source)
 
@@ -534,6 +549,7 @@ To start a new run, stop the old one first with one or more of these:
         """Create or renew passphrase and SSL files for suite 'reg'."""
         # Suite service directory.
         srv_d = self.get_suite_srv_dir(reg)
+        self.check_for_cylc8_flow_file(os.path.dirname(srv_d))
         mkdir_p(srv_d)
 
         # Create a new passphrase for the suite if necessary.
@@ -787,3 +803,24 @@ To start a new run, stop the old one first with one or more of these:
         fname = os.path.join(path, item)
         if os.path.exists(fname):
             return fname
+
+    @staticmethod
+    def check_cylc_version(version_str):
+        major_version = version_str.split('.')[0]
+        try:
+            major_version = int(major_version)
+        except (TypeError, ValueError):
+            raise SuiteServiceFileError(
+                "Unable to parse suite Cylc version in contact file"
+            )
+        if major_version > 7:
+            raise SuiteCylcVersionError(version_str)
+
+    @staticmethod
+    def check_for_cylc8_flow_file(run_dir):
+        flow_file_path = os.path.join(run_dir, 'flow.cylc')
+        if os.path.isfile(flow_file_path):
+            sys.exit(
+                "ERROR: Cannot run - flow.cylc (Cylc 8) file detected in "
+                "suite run dir. "
+            )

@@ -31,6 +31,9 @@ management and does not bundle Jinja2.
 [#4264](https://github.com/cylc/cylc-flow/pull/4264) - Syntax highlighting
 for Cylc 8 `flow.cylc` files in Cylc Review.
 
+[#4320](https://github.com/cylc/cylc-flow/pull/4320) - Prevent Cylc 7 from
+trying to run Cylc 8 workflows.
+
 ### Fixes
 
 [#4233](https://github.com/cylc/cylc-flow/pull/4233) - Fix bug in Cylc Review

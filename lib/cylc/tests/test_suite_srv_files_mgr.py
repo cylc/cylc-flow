@@ -16,28 +16,43 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import os
-import unittest
+import pytest
 
 import mock
 
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager, \
-    SuiteServiceFileError
+from cylc.suite_srv_files_mgr import (
+    SuiteSrvFilesManager,
+    SuiteServiceFileError,
+    SuiteCylcVersionError
+)
 
 
-def get_register_test_cases():
-    """Test cases for suite_srv_files_mgr.register function."""
-    return [
+def makedirs(path, exist_ok=False):
+    if not exist_ok:
+        os.makedirs(path)
+    else:
+        try:
+            os.makedirs(path)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise exc
+
+
+@pytest.mark.parametrize(
+    ('reg', 'source', 'redirect', 'cwd', 'suiterc_exists', 'suite_srv_dir',
+     'readlink', 'expected_symlink', 'expected', 'e_expected', 'e_message'),
+    [
         # 1 no parameters provided, current directory is not a symlink,
         # and contains a valid suite.rc
         (None,  # reg
          None,  # source
          False,  # redirect,
-         "/home/user/cylc-run/suite1",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite1/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite1",  # readlink
+         "{home}/user/cylc-run/suite1",  # cwd
+         True,  # suiterc_exists
+         "{home}/user/cylc-run/suite1/.service",  # suite_srv_dir
+         "{home}/user/cylc-run/suite1",  # readlink
          None,  # expected symlink
          "suite1",  # expected return value
          None,  # expected exception
@@ -48,11 +63,10 @@ def get_register_test_cases():
         ("super-suite-2",  # reg
          None,  # source
          False,  # redirect,
-         "/home/user/cylc-run/suite2",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite2/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite2",  # readlink
+         "{home}/user/cylc-run/suite2",  # cwd
+         True,  # suiterc_exists
+         "{home}/user/cylc-run/suite2/.service",  # suite_srv_dir
+         "{home}/user/cylc-run/suite2",  # readlink
          None,  # expected symlink
          "super-suite-2",  # expected return value
          None,  # expected exception
@@ -61,13 +75,12 @@ def get_register_test_cases():
         # 3 suite name and directory location of suite.rc provided,
         # current directory is not a symlink, and contains a valid suite.rc
         ("suite3",  # reg
-         "/home/user/cylc-run/suite3/suite.rc",  # source
+         "{home}/user/cylc-run/suite3/suite.rc",  # source
          False,  # redirect,
-         "/home/user/cylc-run/suite3",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite3/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite3",  # readlink
+         "{home}/user/cylc-run/suite3",  # cwd
+         True,  # suiterc_exists
+         "{home}/user/cylc-run/suite3/.service",  # suite_srv_dir
+         "{home}/user/cylc-run/suite3",  # readlink
          None,  # expected symlink
          "suite3",  # expected return value
          None,  # expected exception
@@ -77,13 +90,12 @@ def get_register_test_cases():
         # current directory is not a symlink, but the suite.rc does not
         # exist
         ("suite4",  # reg
-         "/home/user/cylc-run/suite4/suite.txt",  # source
+         "{home}/user/cylc-run/suite4/suite.txt",  # source
          False,  # redirect,
-         "/home/user/cylc-run/suite4",  # cwd
-         False,  # isabs
-         False,  # isfile
-         "/home/user/cylc-run/suite4/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suite4",  # readlink
+         "{home}/user/cylc-run/suite4",  # cwd
+         False,  # suiterc_exists
+         "{home}/user/cylc-run/suite4/.service",  # suite_srv_dir
+         "{home}/user/cylc-run/suite4",  # readlink
          None,  # expected symlink
          "suite4",  # expected return value
          SuiteServiceFileError,  # expected exception
@@ -93,14 +105,13 @@ def get_register_test_cases():
         # $SOURCE/.service are not the same directory. No redirect
         # specified, so it must raise an error
         ("suite5",  # reg
-         "/home/user/cylc-run/suite5/suite.txt",  # source
+         "{home}/user/cylc-run/suite5",  # source
          False,  # redirect,
-         "/home/user/cylc-run/suite5",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite5/.service",  # suite_srv_dir
-         "/home/hercules/cylc-run/suite5",  # readlink
-         "/home/user/cylc-run/suite5",  # expected symlink
+         "{home}/user/cylc-run/suite5",  # cwd
+         True,  # suiterc_exists
+         "{home}/user/cylc-run/suite5/.service",  # suite_srv_dir
+         "{home}/hercules/cylc-run/suite5",  # readlink
+         "{home}/user/cylc-run/suite5",  # expected symlink
          "suite5",  # expected return value
          SuiteServiceFileError,  # expected exception
          "already points to"  # expected part of exception message
@@ -109,14 +120,13 @@ def get_register_test_cases():
         # $SOURCE/.service are not the same directory. The redirect
         # flag is true, so it must simply delete the old source link
         ("suite6",  # reg
-         "/home/user/cylc-run/suite6/suite.rc",  # source
+         "{home}/user/cylc-run/suite6/suite.rc",  # source
          True,  # redirect,
-         "/home/user/cylc-run/suite6",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/hercules/cylc-run/suite6/.service",  # suite_srv_dir
-         "/home/hercules/cylc-run/suite6",  # readlink
-         "/home/user/cylc-run/suite6",  # expected symlink
+         "{home}/user/cylc-run/suite6",  # cwd
+         True,  # suiterc_exists
+         "{home}/hercules/cylc-run/suite6/.service",  # suite_srv_dir
+         "{home}/hercules/cylc-run/suite6",  # readlink
+         "{home}/user/cylc-run/suite6",  # expected symlink
          "suite6",  # expected return value
          None,  # expected exception
          None  # expected part of exception message
@@ -126,13 +136,12 @@ def get_register_test_cases():
         # flag is true. But the resolved orig_source's parent directory,
         # is the source directory. So the symlink must be '..'
         ("suite7",  # reg
-         "/home/user/cylc-run/suite7/suite.rc",  # source
+         "{home}/user/cylc-run/suite7/suite.rc",  # source
          True,  # redirect,
-         "/home/user/cylc-run/suite7",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite7/.service",  # suite_srv_dir
-         "/home/user/cylc-run/suites/suite7",  # readlink
+         "{home}/user/cylc-run/suite7",  # cwd
+         True,  # suiterc_exists
+         "{home}/user/cylc-run/suite7/.service",  # suite_srv_dir
+         "{home}/user/cylc-run/suites/suite7",  # readlink
          "..",  # expected symlink
          "suite7",  # expected return value
          None,  # expected exception
@@ -140,12 +149,11 @@ def get_register_test_cases():
          ),
         # 8 fails to readlink, resulting in a new symlink created
         ("suite8",  # reg
-         "/home/user/cylc-run/suite8/suite.rc",  # source
+         "{home}/user/cylc-run/suite8/suite.rc",  # source
          False,  # redirect,
-         "/home/user/cylc-run/suite8",  # cwd
-         False,  # isabs
-         True,  # isfile
-         "/home/user/cylc-run/suite8/.service",  # suite_srv_dir
+         "{home}/user/cylc-run/suite8",  # cwd
+         True,  # suiterc_exists
+         "{home}/user/cylc-run/suite8/.service",  # suite_srv_dir
          OSError,  # readlink
          "..",  # expected symlink
          "suite8",  # expected return value
@@ -157,8 +165,7 @@ def get_register_test_cases():
          None,  # source
          False,  # redirect,
          None,  # cwd
-         True,  # isabs
-         True,  # isfile
+         True,  # suiterc_exists
          None,  # suite_srv_dir
          None,  # readlink
          None,  # expected symlink
@@ -167,56 +174,83 @@ def get_register_test_cases():
          "cannot be an absolute path"  # expected part of exception message
          )
     ]
-
-
-class TestSuiteSrvFilesManager(unittest.TestCase):
-
-    def setUp(self):
-        self.suite_srv_files_mgr = SuiteSrvFilesManager()
-
-    @mock.patch('cylc.suite_srv_files_mgr.mkdir_p')
-    @mock.patch('cylc.suite_srv_files_mgr.os')
-    def test_register(self, mocked_os, mocked_mkdir_p):
-        """Test the SuiteSrvFilesManager register function."""
-        # we do not need to mock these functions
-        mocked_os.path.basename.side_effect = os.path.basename
-        mocked_os.path.join = os.path.join
-        mocked_os.path.normpath = os.path.normpath
-        mocked_os.path.dirname = os.path.dirname
-        mocked_mkdir_p.side_effect = lambda (x): True
-        mocked_os.path.abspath.side_effect = lambda (x): x
-
-        for reg, source, redirect, cwd, isabs, isfile, \
-            suite_srv_dir, readlink, expected_symlink, \
-            expected, e_expected, e_message \
-                in get_register_test_cases():
-            mocked_os.getcwd.side_effect = lambda: cwd
-            mocked_os.path.isabs.side_effect = lambda (x): isabs
-
-            mocked_os.path.isfile = lambda (x): isfile
-            self.suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
-                return_value=suite_srv_dir
+)
+@mock.patch('cylc.suite_srv_files_mgr.mkdir_p')
+def test_register(
+    mocked_mkdir_p,
+    reg, source, redirect, cwd, suiterc_exists, suite_srv_dir,
+    readlink, expected_symlink, expected, e_expected, e_message,
+    monkeypatch, tmp_path
+):
+    """Test the SuiteSrvFilesManager register function."""
+    # --- Setup ---
+    mocked_mkdir_p.side_effect = lambda x: True
+    if cwd:
+        cwd = cwd.format(home=tmp_path)
+        makedirs(cwd)
+    else:
+        cwd = str(tmp_path)
+    monkeypatch.chdir(cwd)
+    if source:
+        source = source.format(home=tmp_path)
+        if '.' in os.path.basename(source):
+            source_dir = os.path.dirname(source)
+        else:
+            source_dir = source
+        makedirs(source_dir, exist_ok=True)
+    if suiterc_exists:
+        if not source:
+            source_dir = cwd
+        suiterc_file = os.path.join(source_dir, 'suite.rc')
+        with open(suiterc_file, 'w'):
+            pass
+    if suite_srv_dir:
+        suite_srv_dir = suite_srv_dir.format(home=tmp_path)
+        makedirs(suite_srv_dir, exist_ok=True)
+        if readlink and readlink != OSError:
+            readlink = readlink.format(home=tmp_path)
+            makedirs(readlink, exist_ok=True)
+            source_link = os.path.join(
+                suite_srv_dir, SuiteSrvFilesManager.FILE_BASE_SOURCE
             )
-            if readlink == OSError:
-                mocked_os.readlink.side_effect = readlink
-            else:
-                mocked_os.readlink.side_effect = lambda (x): readlink
+            os.symlink(readlink, source_link)
+    if expected_symlink:
+        expected_symlink = expected_symlink.format(home=tmp_path)
+    mock_os_symlink = mock.Mock()
+    monkeypatch.setattr('cylc.suite_srv_files_mgr.os.symlink', mock_os_symlink)
+    suite_srv_files_mgr = SuiteSrvFilesManager()
+    suite_srv_files_mgr.get_suite_srv_dir = mock.MagicMock(
+        return_value=suite_srv_dir
+    )
+    # --- Test ---
+    if e_expected is None:
+        reg = suite_srv_files_mgr.register(reg, source, redirect)
+        assert expected == reg
+        if mock_os_symlink.call_count > 0:
+            # first argument, of the first call
+            arg0 = mock_os_symlink.call_args[0][0]
+            assert arg0 == expected_symlink
+    else:
+        with pytest.raises(e_expected) as excinfo:
+            suite_srv_files_mgr.register(reg, source, redirect)
+        if e_message is not None:
+            assert e_message in str(excinfo.value)
 
-            if e_expected is None:
-                reg = self.suite_srv_files_mgr.register(reg, source, redirect)
-                self.assertEqual(expected, reg)
-                if mocked_os.symlink.call_count > 0:
-                    # first argument, of the first call
-                    arg0 = mocked_os.symlink.call_args[0][0]
-                    self.assertEqual(expected_symlink, arg0)
-            else:
-                with self.assertRaises(e_expected) as cm:
-                    self.suite_srv_files_mgr.register(reg, source, redirect)
-                if e_message is not None:
-                    the_exception = cm.exception
-                    self.assertTrue(e_message in str(the_exception),
-                                    str(the_exception))
 
-
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.parametrize(
+    'version, expected_err',
+    [
+        ('6.11.3', None),
+        ('7.8.8-26-g03abf-dirty', None),
+        ('8.0.0', SuiteCylcVersionError),
+        ('8.0b2.dev', SuiteCylcVersionError),
+        ('9', SuiteCylcVersionError),
+        ('foo', SuiteServiceFileError)
+    ]
+)
+def test_check_cylc_version(version, expected_err):
+    if expected_err:
+        with pytest.raises(expected_err):
+            SuiteSrvFilesManager.check_cylc_version(version)
+    else:
+        SuiteSrvFilesManager.check_cylc_version(version)

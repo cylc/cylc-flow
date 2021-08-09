@@ -61,7 +61,7 @@ from cylc.suite_db_mgr import SuiteDatabaseManager
 from cylc.suite_events import (
     SuiteEventContext, SuiteEventError, SuiteEventHandler)
 from cylc.suite_srv_files_mgr import (
-    SuiteSrvFilesManager, SuiteServiceFileError)
+    SuiteSrvFilesManager, SuiteServiceFileError, SuiteCylcVersionError)
 from cylc.suite_status import (
     KEY_DESCRIPTION, KEY_GROUP, KEY_META, KEY_NAME, KEY_OWNER, KEY_STATES,
     KEY_TASKS_BY_STATE, KEY_TITLE, KEY_UPDATE_TIME, KEY_VERSION)
@@ -234,6 +234,8 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
+        SuiteSrvFilesManager.check_for_cylc8_flow_file(self.suite_run_dir)
+
         self._start_print_blurb()
 
         glbl_cfg().create_cylc_run_tree(self.suite)
@@ -1577,7 +1579,7 @@ conditions; see `cylc conditions`.
                 if contact_data != self.contact_data:
                     raise AssertionError('contact file modified')
             except (AssertionError, IOError, ValueError,
-                    SuiteServiceFileError) as exc:
+                    SuiteServiceFileError, SuiteCylcVersionError) as exc:
                 LOG.error(
                     "%s: contact file corrupted/modified and may be left",
                     self.suite_srv_files_mgr.get_contact_file(self.suite))
