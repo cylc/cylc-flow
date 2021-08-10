@@ -156,25 +156,3 @@ def test_check_startup_opts(
     assert(err in str(excinfo))
 
 from types import SimpleNamespace
-
-
-@pytest.mark.parametrize(
-    'type_, scp, fcp, err',
-    [
-        param('integer', 2, 1, True, id='Integer: stop cp < final cp'),
-        param('integer', 1, 1, False, id='Integer: stop cp = final cp'),
-        param('integer', 1, 2, False, id='Integer: stop cp > final cp'),
-    ]
-)
-def test_validate_finalcp(monkeypatch, caplog, type_, scp, fcp, err):
-    """Scheduler warns is stopcp ≥ finalcp"""
-    mocked_scheduler = Mock()
-    mocked_scheduler.options = SimpleNamespace(stopcp=scp, fcp=fcp)
-    mocked_scheduler.config = SimpleNamespace(
-        final_point=fcp, cycling_type=type_)
-
-    Scheduler.validate_finalcp(mocked_scheduler)
-    if err == True:
-        assert search(f'{scp}.*{fcp}', caplog.records[0].message)
-    else:
-        assert caplog.records == []

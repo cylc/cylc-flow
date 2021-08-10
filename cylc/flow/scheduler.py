@@ -1910,4 +1910,4 @@ class Scheduler:
             LOG.warning(
                 f'Stop Cycle point \'{self.options.stopcp}\' will have no '
                 'effect as it is after the final Cycle '
-                f'point \'{self.options.fcp}\'.')
+                f'point \'{self.config.final_point}\'.')
