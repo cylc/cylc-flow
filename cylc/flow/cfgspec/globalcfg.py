@@ -909,15 +909,9 @@ class GlobalConfig(ParsecConfig):
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
                 try:
                     self._load(fname, conf_type)
-                except ParsecError as exc:
-                    if conf_type == upgrader.SITE_CONFIG:
-                        # Warn on bad site file (users can't fix it).
-                        LOG.warning(
-                            f'ignoring bad {conf_type} {fname}:\n{exc}')
-                    else:
-                        # Abort on bad user file (users can fix it).
-                        LOG.error(f'bad {conf_type} {fname}')
-                        raise
+                except ParsecError:
+                    LOG.error(f'bad {conf_type} {fname}')
+                    raise
 
         self._set_default_editors()
 
