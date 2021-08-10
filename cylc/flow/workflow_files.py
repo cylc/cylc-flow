@@ -1136,7 +1136,7 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
                         ))
                 else:
                     try:
-                        abs_path = check_flow_file(abs_path)
+                        abs_path = check_flow_file(abs_path, logger=None)
                     except WorkflowFilesError:
                         return (str(run_dir_reg), run_dir_path)
                     LOG.warning(REG_CLASH_MSG.format(

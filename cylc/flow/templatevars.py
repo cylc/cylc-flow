@@ -79,7 +79,7 @@ def load_template_vars(template_vars=None, template_vars_file=None):
 def get_template_vars(options: Values, flow_file: Path) -> Dict[str, Any]:
     """Get Template Vars from either an uninstalled or installed flow.
 
-    Designed to allow a Cylc Script to be run on an installed workflow where
+    Designed to allow a Cylc script to be run on an installed workflow where
     template variables have been processed and saved to file, but fallback to
     evaluating templating if run on an uninstalled workflow.
 
@@ -88,9 +88,6 @@ def get_template_vars(options: Values, flow_file: Path) -> Dict[str, Any]:
             function.
         flow_file: Path to the ``flow.cylc`` (or ``suite.rc``) file defining
             this workflow.
-        names: reg and flow file name from
-            `cylc.flow.workflow_filesparse_workflow_arg`: Used to determine
-            whether flow is installed.
 
     Returns:
         template_vars: Template variables to give to a Cylc config.
