@@ -449,14 +449,19 @@ class DataStoreMgr:
         self.update_workflow()
 
         # Apply current deltas
-        self.apply_deltas(reloaded)
+        self.batch_deltas()
+        self.apply_delta_batch()
+
+        if not reloaded:
+            # Gather this batch of deltas for publish
+            self.apply_delta_checksum()
+            self.publish_deltas = self.get_publish_deltas()
+
         self.updates_pending = False
 
-        # Gather this batch of deltas for publish
-        self.publish_deltas = self.get_publish_deltas()
-
         # Clear deltas after application and publishing
-        self.clear_deltas()
+        self.clear_delta_store()
+        self.clear_delta_batch()
 
     def generate_definition_elements(self):
         """Generate static definition data elements.
@@ -1059,7 +1064,7 @@ class DataStoreMgr:
             tp_delta.jobs.append(j_id)
             self.updates_pending = True
 
-    def update_data_structure(self):
+    def update_data_structure(self, reloaded=False):
         """Workflow batch updates in the data structure."""
 
         # Avoids changing window edge distance during edge/node creation
@@ -1074,14 +1079,25 @@ class DataStoreMgr:
         if self.updates_pending:
             # Update workflow statuses and totals if needed
             self.update_workflow()
-            self.updates_pending = False
 
             # Apply current deltas
-            self.apply_deltas()
+            self.batch_deltas()
+            self.apply_delta_batch()
+
+        if reloaded:
+            self.clear_delta_batch()
+            self.batch_deltas(reloaded=True)
+
+        if self.updates_pending or reloaded:
+            self.apply_delta_checksum()
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
-            # Clear deltas
-            self.clear_deltas()
+
+        self.updates_pending = False
+
+        # Clear deltas
+        self.clear_delta_batch()
+        self.clear_delta_store()
 
     def prune_data_store(self):
         """Remove flagged nodes and edges not in the set of active paths."""
@@ -1770,38 +1786,54 @@ class DataStoreMgr:
                 f'{ID_DELIM}{name}{ID_DELIM}{sub_num}'
             )
             node_type = JOBS
-        if node_id in self.data[self.workflow_id][node_type]:
-            return (node_id, self.data[self.workflow_id][node_type][node_id])
-        elif node_id in self.added[node_type]:
+        if node_id in self.added[node_type]:
             return (node_id, self.added[node_type][node_id])
+        elif node_id in self.data[self.workflow_id][node_type]:
+            return (node_id, self.data[self.workflow_id][node_type][node_id])
         return (node_id, False)
 
-    def apply_deltas(self, reloaded=False):
+    def batch_deltas(self, reloaded=False):
         """Gather and apply deltas."""
         # Gather cumulative update element
-        for key, elements in self.added.items():
-            if elements:
-                if key == WORKFLOW:
-                    if elements.ListFields():
-                        self.deltas[WORKFLOW].added.CopyFrom(elements)
-                    continue
-                self.deltas[key].added.extend(elements.values())
-        for key, elements in self.updated.items():
-            if elements:
-                if key == WORKFLOW:
-                    if elements.ListFields():
-                        self.deltas[WORKFLOW].updated.CopyFrom(elements)
-                    continue
-                self.deltas[key].updated.extend(elements.values())
+        if reloaded:
+            for key, elements in self.data[self.workflow_id].items():
+                if elements:
+                    if key == WORKFLOW:
+                        if elements.ListFields():
+                            self.deltas[WORKFLOW].added.CopyFrom(elements)
+                        continue
+                    self.deltas[key].added.extend(elements.values())
+        else:
+            for key, elements in self.added.items():
+                if elements:
+                    if key == WORKFLOW:
+                        if elements.ListFields():
+                            self.deltas[WORKFLOW].added.CopyFrom(elements)
+                        continue
+                    self.deltas[key].added.extend(elements.values())
+            for key, elements in self.updated.items():
+                if elements:
+                    if key == WORKFLOW:
+                        if elements.ListFields():
+                            self.deltas[WORKFLOW].updated.CopyFrom(elements)
+                        continue
+                    self.deltas[key].updated.extend(elements.values())
 
-        # Apply deltas to local data-store
+        # set reloaded flag on deltas
+        for delta in self.deltas.values():
+            if delta.ListFields() or reloaded:
+                delta.reloaded = reloaded
+
+    def apply_delta_batch(self):
+        """Apply delta batch to local data-store."""
         data = self.data[self.workflow_id]
         for key, delta in self.deltas.items():
             if delta.ListFields():
-                delta.reloaded = reloaded
                 apply_delta(key, delta, data)
 
-        # Construct checksum on deltas for export
+    def apply_delta_checksum(self):
+        """Construct checksum on deltas for export."""
+        data = self.data[self.workflow_id]
         update_time = time()
         for key, delta in self.deltas.items():
             if delta.ListFields():
@@ -1816,16 +1848,24 @@ class DataStoreMgr:
                          for e in data[key].values()]
                     )
 
-    def clear_deltas(self):
+    def clear_delta_batch(self):
         """Clear current deltas."""
-        for key in self.deltas:
-            self.deltas[key].Clear()
-            if key == WORKFLOW:
-                self.added[key].Clear()
-                self.updated[key].Clear()
-                continue
-            self.added[key].clear()
-            self.updated[key].clear()
+        # Potential shared reference, avoid clearing
+        self.deltas = {
+            EDGES: EDeltas(),
+            FAMILIES: FDeltas(),
+            FAMILY_PROXIES: FPDeltas(),
+            JOBS: JDeltas(),
+            TASKS: TDeltas(),
+            TASK_PROXIES: TPDeltas(),
+            WORKFLOW: WDeltas(),
+        }
+
+    def clear_delta_store(self):
+        """Clear current delta store."""
+        # Potential shared reference, avoid clearing
+        self.added = deepcopy(DATA_TEMPLATE)
+        self.updated = deepcopy(DATA_TEMPLATE)
 
     # Message collation and dissemination methods:
     def get_entire_workflow(self):
