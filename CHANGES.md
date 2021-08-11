@@ -59,6 +59,9 @@ Fourth beta release of Cylc 8.
 [#4335](https://github.com/cylc/cylc-flow/pull/4335) - have validation catch
 erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
 
+[#4346](https://github.com/cylc/cylc-flow/pull/4346) -
+Use natural sort order for the `cylc scan --sort` option.
+
 ### Fixes
 
 [#4310](https://github.com/cylc/cylc-flow/pull/4310 -

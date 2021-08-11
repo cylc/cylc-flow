@@ -72,6 +72,7 @@ from cylc.flow.option_parsers import (
 )
 from cylc.flow.print_tree import get_tree
 from cylc.flow.terminal import cli_function
+from cylc.flow.util import natural_sort_key
 from cylc.flow.workflow_files import ContactFileFields as Cont
 
 
@@ -356,7 +357,7 @@ def sort_function(flow):
         state = 2
     else:
         state = 3
-    return (state, flow['name'])
+    return (state, *natural_sort_key(flow['name']))
 
 
 async def _sorted(pipe, formatter, opts, write):
