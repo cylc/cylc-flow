@@ -210,6 +210,7 @@ class Scheduler:
     is_paused: Optional[bool] = None
     is_updated: Optional[bool] = None
     is_stalled: Optional[bool] = None
+    is_reloaded: Optional[bool] = None
 
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
@@ -450,6 +451,7 @@ class Scheduler:
             self.task_events_mgr,
             self.data_store_mgr)
 
+        self.is_reloaded = False
         self.data_store_mgr.initiate_data_model()
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
@@ -1396,9 +1398,8 @@ class Scheduler:
                 # Re-initialise data model on reload
                 self.data_store_mgr.initiate_data_model(reloaded=True)
                 self.pool.reload_taskdefs()
+                self.is_reloaded = True
                 self.is_updated = True
-                await self.publisher.publish(
-                    self.data_store_mgr.publish_deltas)
 
             self.process_command_queue()
 
@@ -1527,9 +1528,14 @@ class Scheduler:
             t for t in self.pool.get_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
         # Add tasks that have moved moved from runahead to live pool.
-        if has_updated or self.data_store_mgr.updates_pending:
+        if (
+                (has_updated and not self.is_reloaded)
+                or self.data_store_mgr.updates_pending
+        ):
             # Collect/apply data store updates/deltas
-            self.data_store_mgr.update_data_structure()
+            self.data_store_mgr.update_data_structure(
+                reloaded=self.is_reloaded)
+            self.is_reloaded = False
             # Publish updates:
             await self.publisher.publish(self.data_store_mgr.publish_deltas)
         if has_updated:
