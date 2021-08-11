@@ -205,7 +205,6 @@ class TimingSummary(object):
                 df['succeed_time'] - df['submit_time']).apply(self._dt_to_s),
         })
 
-        # self.df = self.df.rename('timing_category', axis='columns')
         self.by_host_and_batch = self.df.groupby(
             level=['host', 'batch_system']
         )
