@@ -154,5 +154,3 @@ def test_check_startup_opts(
     with pytest.raises(SchedulerError) as excinfo:
         Scheduler._check_startup_opts(mocked_scheduler)
     assert(err in str(excinfo))
-
-from types import SimpleNamespace
