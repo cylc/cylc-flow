@@ -23,6 +23,7 @@ from typing import Union, Dict, Tuple, Optional
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import UserInputError, PluginError
+from cylc.flow.parsec.fileparse import merge_template_vars
 
 
 def eval_var(var):
@@ -118,7 +119,8 @@ def get_template_vars(
                 ep_result = entry_point.resolve()(
                     srcdir=source, opts=options
                 )
-                template_vars.update(ep_result['template_variables'])
+                template_vars = merge_template_vars(
+                    template_vars, ep_result)
             except Exception as exc:
                 # NOTE: except Exception (purposefully vague)
                 # this is to separate plugin from core Cylc errors

@@ -30,6 +30,7 @@ from cylc.flow.parsec.fileparse import (
     multiline,
     parse,
     read_and_proc,
+    merge_template_vars
 )
 
 
@@ -554,3 +555,43 @@ def test_unclosed_multiline():
         assert exc.reason == 'Invalid line'
         assert 'echo hello world' in exc.line
         assert 'Did you forget to close [scheduling][graph]R1?' in str(exc)
+
+
+@pytest.mark.parametrize(
+    'expect, native_tvars, plugin_result, log',
+    [
+        pytest.param(
+            {'FOO': 123},
+            {'FOO': 123},
+            {
+                'templating_detected': None,
+                'template_variables': {'FOO': 123}
+            },
+            [],
+            id='no templating engine set'
+        ),
+        pytest.param(
+            {'FOO': 125},
+            {'FOO': 125},
+            {
+                'templating_detected': 'qux',
+                'template_variables': {'FOO': 124}
+            },
+            ['Overriding FOO: 124 -> 125'],
+            id='Variable overridden'
+        ),
+        pytest.param(
+            {'FOO': 126},
+            {'FOO': 126},
+            {
+                'templating_detected': 'qux',
+                'template_variables': {'FOO': 126}
+            },
+            [],
+            id='Variable overridden quietly'
+        )
+    ]
+)
+def test_merge_template_vars(caplog, expect, native_tvars, plugin_result, log):
+    assert merge_template_vars(native_tvars, plugin_result) == expect
+    assert [r.msg for r in caplog.records] == log
