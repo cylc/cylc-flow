@@ -259,7 +259,7 @@ def dot(opts, lines):
     if opts.output:
         filename = opts.output
         try:
-            fmt = filename.split('.')[1]
+            fmt = filename.rsplit('.', 1)[1]
         except IndexError:
             sys.exit('Output filename requires a format.')
     else:
@@ -307,13 +307,10 @@ def dot(opts, lines):
                 ]
             )
         dot.extend(
-            [
-                rf'    "{task}.{cycle}" [label="{task}\n{cycle}"]'
-                for task in tasks
-            ]
+            rf'    "{task}.{cycle}" [label="{task}\n{cycle}"]'
+            for task in tasks
         )
-        if opts.cycles:
-            dot.append('  }' if opts.cycles else '')
+        dot.append('  }' if opts.cycles else '')
 
     # write edges
     for left, right in edges:
