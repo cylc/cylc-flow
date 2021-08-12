@@ -32,7 +32,6 @@ from cylc.flow.exceptions import (
     UserInputError,
     WorkflowFilesError
 )
-from cylc.flow.option_parsers import Options
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
@@ -42,7 +41,6 @@ from cylc.flow.workflow_files import (
     check_flow_file,
     check_nested_run_dirs,
     get_rsync_rund_cmd,
-    parse_cli_sym_dirs,
     get_symlink_dirs,
     is_installed,
     parse_cli_sym_dirs,
@@ -154,13 +152,15 @@ def test_validate_flow_name(reg, expected_err, expected_msg):
 
 @pytest.mark.parametrize(
     'reg, stopped, err, err_msg',
-    [('foo/..', True, WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above"),
-     ('foo/../..', True, WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above"),
-     ('foo', False, ServiceFileError, "Cannot remove running workflow")]
+    [
+        ('foo/..', True, WorkflowFilesError,
+         "cannot be a path that points to the cylc-run directory or above"),
+        ('foo/../..', True, WorkflowFilesError,
+         "cannot be a path that points to the cylc-run directory or above"),
+        ('foo', False, ServiceFileError, "Cannot remove running workflow"),
+    ]
 )
-def test_clean_check_fail(
+def test_clean_check__fail(
     reg: str,
     stopped: bool,
     err: Type[Exception],
@@ -185,7 +185,7 @@ def test_clean_check_fail(
                         mocked_detect_old_contact_file)
 
     with pytest.raises(err) as exc:
-        workflow_files._clean_check(reg, run_dir)
+        workflow_files._clean_check(CleanOptions(), reg, run_dir)
     assert err_msg in str(exc.value)
 
 
@@ -227,7 +227,7 @@ def test_init_clean(
         remote_clean_called: If a remote clean is expected to go ahead.
     """
     reg = 'foo/bar/'
-    tmp_run_dir(reg)
+    tmp_run_dir(reg, installed=True)
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
@@ -238,7 +238,7 @@ def test_init_clean(
     assert mock_remote_clean.called is remote_clean_called
 
 
-def test_init_clean_no_dir(
+def test_init_clean__no_dir(
     monkeymock: MonkeyMock, tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -254,7 +254,7 @@ def test_init_clean_no_dir(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean_no_db(
+def test_init_clean__no_db(
     monkeymock: MonkeyMock, tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -270,7 +270,7 @@ def test_init_clean_no_db(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean_remote_only_no_db(
+def test_init_clean__remote_only_no_db(
     monkeymock: MonkeyMock, tmp_run_dir: Callable
 ) -> None:
     """Test remote-only init_clean() when the workflow DB doesn't exist"""
@@ -286,7 +286,7 @@ def test_init_clean_remote_only_no_db(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean_running_workflow(
+def test_init_clean__running_workflow(
     monkeypatch: pytest.MonkeyPatch, tmp_run_dir: Callable
 ) -> None:
     """Test init_clean() fails when workflow is still running"""
@@ -301,12 +301,56 @@ def test_init_clean_running_workflow(
     assert "Cannot remove running workflow" in str(exc.value)
 
 
+@pytest.mark.parametrize('number_of_runs', [1, 2])
+@pytest.mark.parametrize(
+    'force_opt',
+    [pytest.param(False, id="normal"),
+     pytest.param(True, id="--force")]
+)
+def test_init_clean__multiple_runs(
+    force_opt: bool,
+    number_of_runs: int,
+    tmp_run_dir: Callable, monkeymock: MonkeyMock,
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test init_clean() for workflow dirs that contain 1 or more run dirs."""
+    # -- Setup --
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    for n in range(1, number_of_runs + 1):
+        last_run_dir: Path = tmp_run_dir(f'foo/run{n}', named=True)
+    workflow_dir = last_run_dir.parent  # Path to cylc-run/foo
+    mock_clean = monkeymock(
+        'cylc.flow.workflow_files.clean', spec=workflow_files.clean
+    )
+    opts = CleanOptions(force=force_opt)
+    # -- Test --
+    if number_of_runs > 1:
+        if force_opt:
+            # It should call clean() with 'foo' and log a warning
+            workflow_files.init_clean('foo', opts)
+            mock_clean.assert_called_once_with('foo', workflow_dir, None)
+            msg = caplog.text
+        else:
+            # It should raise
+            with pytest.raises(WorkflowFilesError) as exc_info:
+                workflow_files.init_clean('foo', opts)
+            msg = str(exc_info.value)
+        assert "contains the following workflows" in msg
+    else:
+        # It should call clean() with 'foo/run1' followed by 'foo'
+        workflow_files.init_clean('foo', opts)
+        assert mock_clean.call_args_list == [
+            mock.call('foo/run1', last_run_dir, None),
+            mock.call('foo', workflow_dir, None)
+        ]
+
+
 @pytest.mark.parametrize(
     'rm_dirs, expected_clean, expected_remote_clean',
     [(None, None, []),
      (["r2d2:c3po"], {"r2d2", "c3po"}, ["r2d2:c3po"])]
 )
-def test_init_clean_rm_dirs(
+def test_init_clean__rm_dirs(
     rm_dirs: Optional[List[str]],
     expected_clean: Set[str],
     expected_remote_clean: List[str],
@@ -1156,55 +1200,6 @@ def test_remote_clean_cmd(
     args, kwargs = mock_construct_ssh_cmd.call_args
     constructed_cmd = args[0]
     assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
-
-
-def test_remove_empty_parents(tmp_path: Path):
-    """Test that _remove_empty_parents() doesn't remove parents containing a
-    sibling."""
-    # -- Setup --
-    reg = 'foo/bar/baz/qux'
-    path = tmp_path.joinpath(reg)
-    tmp_path.joinpath('foo/bar/baz').mkdir(parents=True)
-    # Note qux does not exist, but that shouldn't matter
-    sibling_reg = 'foo/darmok'
-    sibling_path = tmp_path.joinpath(sibling_reg)
-    sibling_path.mkdir()
-    # -- Test --
-    workflow_files._remove_empty_parents(path, reg)
-    assert tmp_path.joinpath('foo/bar').exists() is False
-    assert tmp_path.joinpath('foo').exists() is True
-    # Check it skips non-existent dirs, and stops at the right place too
-    tmp_path.joinpath('foo/bar').mkdir()
-    sibling_path.rmdir()
-    workflow_files._remove_empty_parents(path, reg)
-    assert tmp_path.joinpath('foo').exists() is False
-    assert tmp_path.exists() is True
-
-
-@pytest.mark.parametrize(
-    'path, tail, exc_msg',
-    [
-        pytest.param(
-            'meow/foo/darmok', 'foo/darmok', "path must be absolute",
-            id="relative path"
-        ),
-        pytest.param(
-            '/meow/foo/darmok', '/foo/darmok',
-            "tail must not be an absolute path",
-            id="absolute tail"
-        ),
-        pytest.param(
-            '/meow/foo/darmok', 'foo/jalad',
-            "path '/meow/foo/darmok' does not end with 'foo/jalad'",
-            id="tail not in path"
-        )
-    ]
-)
-def test_remove_empty_parents_bad(path: str, tail: str, exc_msg: str):
-    """Test that _remove_empty_parents() fails appropriately with bad args."""
-    with pytest.raises(ValueError) as exc:
-        workflow_files._remove_empty_parents(path, tail)
-    assert exc_msg in str(exc.value)
 
 
 @pytest.mark.parametrize(

@@ -48,7 +48,7 @@ e.g. :py:func:`contact_info`.
 import asyncio
 from pathlib import Path
 import re
-from typing import AsyncGenerator, Iterable
+from typing import AsyncGenerator, Dict, Iterable, List, Optional, Tuple, Union
 
 from pkg_resources import (
     parse_requirements,
@@ -85,7 +85,7 @@ FLOW_FILES = {
     WorkflowFiles.Service.DIRNAME,
     WorkflowFiles.SUITE_RC,   # cylc7 flow definition file name
     WorkflowFiles.FLOW_FILE,  # cylc8 flow definition file name
-    'log'
+    WorkflowFiles.LOG_DIR
 }
 
 EXCLUDE_FILES = {
@@ -94,7 +94,7 @@ EXCLUDE_FILES = {
 }
 
 
-def dir_is_flow(listing):
+def dir_is_flow(listing: Iterable[Path]) -> bool:
     """Return True if a Path contains a flow at the top level.
 
     Args:
@@ -106,11 +106,8 @@ def dir_is_flow(listing):
         bool - True if the listing indicates that this is a flow directory.
 
     """
-    listing = {
-        path.name
-        for path in listing
-    }
-    return bool(FLOW_FILES & listing)
+    names = {path.name for path in listing}
+    return bool(FLOW_FILES & names)
 
 
 @pipe
@@ -138,20 +135,24 @@ async def scan_multi(
 
 
 @pipe
-async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
+async def scan(
+    run_dir: Optional[Path] = None,
+    scan_dir: Optional[Path] = None,
+    max_depth: int = MAX_SCAN_DEPTH
+) -> AsyncGenerator[Dict[str, Union[str, Path]], None]:
     """List flows installed on the filesystem.
 
     Args:
-        run_dir (pathlib.Path):
+        run_dir:
             The run dir to look for workflows in, defaults to ~/cylc-run.
 
             All workflow registrations will be given relative to this path.
-        scan_dir(pathlib.Path):
+        scan_dir:
             The directory to scan for workflows in.
 
             Use in combination with run_dir if you want to scan a subdir
             within the run_dir.
-        max_depth (int):
+        max_depth:
             The maximum number of levels to descend before bailing.
 
             * ``max_depth=1`` will pick up top-level workflows (e.g. ``foo``).
@@ -161,26 +162,35 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
         dict - Dictionary containing information about the flow.
 
     """
+    cylc_run_dir = Path(get_workflow_run_dir(''))
     if not run_dir:
-        run_dir = Path(get_workflow_run_dir(''))
+        run_dir = cylc_run_dir
     if not scan_dir:
         scan_dir = run_dir
 
-    running = []
+    running: List[asyncio.tasks.Task] = []
 
     # wrapper for scandir to preserve context
-    async def _scandir(path, depth):
+    async def _scandir(path: Path, depth: int) -> Tuple[Path, int, List[Path]]:
         contents = await scandir(path)
         return path, depth, contents
 
-    # perform the first directory listing
-    for subdir in await scandir(scan_dir):
-        if subdir.is_dir():
-            running.append(
-                asyncio.create_task(
-                    _scandir(subdir, 1)
+    def _scan_subdirs(listing: List[Path], depth: int) -> None:
+        for subdir in listing:
+            if subdir.is_dir() and subdir.stem not in EXCLUDE_FILES:
+                running.append(
+                    asyncio.create_task(
+                        _scandir(subdir, depth + 1)
+                    )
                 )
-            )
+
+    # perform the first directory listing
+    scan_dir_listing = await scandir(scan_dir)
+    if scan_dir != cylc_run_dir and dir_is_flow(scan_dir_listing):
+        # If the scan_dir itself is a workflow run dir, yield nothing
+        return
+
+    _scan_subdirs(scan_dir_listing, depth=0)
 
     # perform all further directory listings
     while running:
@@ -200,14 +210,7 @@ async def scan(run_dir=None, scan_dir=None, max_depth=MAX_SCAN_DEPTH):
                 }
             elif depth < max_depth:
                 # we may have a nested flow, lets see...
-                for subdir in contents:
-                    if (subdir.is_dir()
-                            and subdir.stem not in EXCLUDE_FILES):
-                        running.append(
-                            asyncio.create_task(
-                                _scandir(subdir, depth + 1)
-                            )
-                        )
+                _scan_subdirs(contents, depth)
         # don't allow this to become blocking
         await asyncio.sleep(0)
 

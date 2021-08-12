@@ -64,8 +64,12 @@ Use natural sort order for the `cylc scan --sort` option.
 
 ### Fixes
 
-[#4310](https://github.com/cylc/cylc-flow/pull/4310 -
+[#4341](https://github.com/cylc/cylc-flow/pull/4341 -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
+
+[#4289](https://github.com/cylc/cylc-flow/pull/4289) - Make `cylc clean`
+safer by preventing cleaning of dirs that contain more than one workflow
+run dir (use `--force` to override this safeguard).
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
