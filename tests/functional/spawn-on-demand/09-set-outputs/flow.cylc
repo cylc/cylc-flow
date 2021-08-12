@@ -20,11 +20,11 @@
             # but bar is gone, when its outputs get set - just to make it clear
             # the target task doesn't have to exist.
 
-            foo:out1 => qux
-            foo:out2 => quw
+            foo:out1? => qux
+            foo:out2? => quw
 
-            bar:out1 => fux
-            bar:out2 => fuw
+            bar:out1? => fux
+            bar:out2? => fuw
         """
 
 [runtime]

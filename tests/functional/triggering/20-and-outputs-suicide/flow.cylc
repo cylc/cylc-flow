@@ -10,9 +10,9 @@
         P1 = """
             fin[-P1] => showdown
 
-            showdown:good => good & ! bad & ! ugly
-            showdown:bad => bad & ! good & ! ugly
-            showdown:ugly => ugly & ! good & ! bad
+            showdown:good? => good & ! bad & ! ugly
+            showdown:bad? => bad & ! good & ! ugly
+            showdown:ugly? => ugly & ! good & ! bad
 
             # Note: The above implies:
             # showdown:good => good

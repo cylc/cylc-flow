@@ -21,7 +21,7 @@
 export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 6
 create_test_global_config "" "
 [platforms]
     [[ariel]]
@@ -55,10 +55,11 @@ f|0|0|ariel
 g|0|0|localhost
 __SELECT__
 
-grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
+grep_ok "WARNING - Incomplete tasks:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "* b.1 (submit-failed)
-	* a.1 (submit-failed)" \
+grep_ok "a.1 did not complete required outputs" \
+    "${TEST_NAME_BASE}-run.stderr"
+grep_ok "b.1 did not complete required outputs" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge

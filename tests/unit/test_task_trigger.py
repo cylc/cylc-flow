@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
-
 from cylc.flow.cycling.loader import get_point, get_sequence
-from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.task_trigger import TaskTrigger, Dependency
+from cylc.flow.task_outputs import TaskOutputs
 
 
 def test_check_with_cycle_point():
@@ -86,9 +84,8 @@ def test_check_for_list_of_lists_exp():
     assert actual == expected
 
 
-def test_check_exeption():
-    with pytest.raises(TriggerExpressionError):
-        TaskTrigger.get_trigger_name("Foo:Elephant")
+def test_check_trigger_name():
+    assert not TaskOutputs.is_valid_std_name("Elephant")
 
 
 def test_get_parent_point(set_cycling_type):

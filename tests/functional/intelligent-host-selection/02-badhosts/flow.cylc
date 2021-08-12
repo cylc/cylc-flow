@@ -18,7 +18,7 @@ Tasks
     initial cycle point = 1
     [[graph]]
         # Run good and mixed as controls
-        R1 = badhosttask:submit-fail => goodhosttask & mixedhosttask
+        R1 = badhosttask:submit-fail? => goodhosttask & mixedhosttask
 
 [runtime]
     [[root]]

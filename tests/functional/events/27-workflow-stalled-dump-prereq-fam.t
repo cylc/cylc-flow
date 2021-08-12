@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test workflow event handler, dump unmet prereqs on stall
 . "$(dirname "$0")/test_header"
-set_test_number 12
+set_test_number 9
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -29,24 +29,21 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 
 grep_ok "Abort on workflow stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 (failed)" \
+grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
+
+grep_ok "foo.1 did not complete required outputs: \['succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Partially satisfied prerequisites left over:" \
+grep_ok "WARNING - Partially satisfied prerequisites:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "f_1.1 is waiting on:" \
+
+grep_ok "f_1.1 is waiting on \['foo.1:succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 succeeded" \
+
+grep_ok "f_2.1 is waiting on \['foo.1:succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "f_2.1 is waiting on:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 succeeded" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "f_3.1 is waiting on:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* foo.1 succeeded" \
+
+grep_ok "f_3.1 is waiting on \['foo.1:succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge

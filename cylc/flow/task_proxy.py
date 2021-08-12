@@ -30,11 +30,7 @@ from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_action_timer import TimerFlags
-from cylc.flow.task_state import (
-    TaskState,
-    TASK_STATUS_WAITING,
-    TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_SUCCEEDED)
+from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
@@ -131,8 +127,8 @@ class TaskProxy:
             objects.
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
-        .failure_handled:
-            task failure is handled (by children)
+        .incomplete:
+            TODO
         .flow_label:
             flow label
         .reflow:
@@ -176,7 +172,7 @@ class TaskProxy:
         'timeout',
         'try_timers',
         'graph_children',
-        'failure_handled',
+        'incomplete',
         'flow_label',
         'reflow',
         'waiting_on_job_prep',
@@ -244,10 +240,11 @@ class TaskProxy:
 
         # Determine graph children of this task (for spawning).
         self.graph_children = generate_graph_children(tdef, self.point)
-        if TASK_OUTPUT_SUCCEEDED in self.graph_children:
-            self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
+        # if TASK_OUTPUT_SUCCEEDED in self.graph_children:
+        #     # TODO WHY IS THIS NEEDED?
+        #     self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
 
-        self.failure_handled: bool = TASK_OUTPUT_FAILED in self.graph_children
+        self.incomplete: bool = False
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} '{self.identity}'>"
@@ -336,7 +333,7 @@ class TaskProxy:
 
         """
         if self.is_manual_submit:
-            # Manually triggered, ignore unsatisified prerequisites.
+            # Manually triggered, ignore unsatisfied prerequisites.
             return (True,)
         if self.state.is_held:
             # A held task is not ready to run.

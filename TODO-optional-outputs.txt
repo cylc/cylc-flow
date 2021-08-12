@@ -1,0 +1,17 @@
+# expired needs ? too? 
+cylctb-20210812T045150Z-ibS-/f/clock-expire/00-basic 
+
+# DOCUMENTATION
+- Can't have different optionality in different graph sections. If you need this,
+    use different logical tasks to represent the same process.
+- Optionality is not inferred from suicide triggers ('?" ignored)
+- :start implies :succeed unless success or failure is otherwise defined
+- Can't have ? on workflow polling task syntax
+
+# note pre-initial ignore assumes specific outputs completed
+- foo[-P1]:x => bar
+This can screw up suicide based on previous-cycle outputs!
+- foo[-P1]:y => !foo
+Use a same-cycle prerequisite too
+- foo[-P1]y & bar => !foo
+(Or else explicitly start cycling beyond the initial point)

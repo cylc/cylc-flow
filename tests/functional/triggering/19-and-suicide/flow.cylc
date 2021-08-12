@@ -8,8 +8,8 @@
 [scheduling]
     [[graph]]
         R1 = """
-            t0:failed & t1:failed => !t2
-            t0 | t1 => t2
+            t0:fail? & t1:fail? => !t2
+            t0? | t1? => t2
         """
 [runtime]
     [[t0]]

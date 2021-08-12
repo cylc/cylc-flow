@@ -6,14 +6,13 @@
     initial cycle point = 1970
     final cycle point = 2010
     [[graph]]
-# Unhandled failures stay around for retriggering by "fixer"
 # fixable in the first two cycles fail and get retriggered,
 # but is left as failed in the last cycle.
 # Putting fixer at an offset to avoid retriggering it as well by the '*' glob.
-        P20Y = fixable
+        P20Y = fixable?
         R1/2009 = fixer
         R1/2010 = """
-           fixer[-P1Y] & fixable:fail => z"""
+           fixer[-P1Y] & fixable:fail? => z"""
 [runtime]
     [[fixable]]
         script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2

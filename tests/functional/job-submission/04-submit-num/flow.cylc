@@ -5,8 +5,8 @@
 [scheduling]
     [[graph]]
         R1 = """
-            foo:fail => bar
-            foo & bar => baz
+            foo:fail? => bar
+            foo? & bar => baz
         """
 
 [runtime]

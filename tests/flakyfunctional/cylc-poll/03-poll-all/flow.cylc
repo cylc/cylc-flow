@@ -23,11 +23,11 @@ trigger, and the workflow to shut down successfully."""
     final cycle point   = 20141208T0000Z
     [[graph]]
         T00 = """
-            run_kill[-P1D]:fail => run_kill
-            run_kill:start => submit_hold
-            run_kill:fail => !run_kill
-            submit_hold:submit => poll_check_kill => poll_now
-            submit_hold:submit-fail => !submit_hold
+            run_kill[-P1D]:fail? => run_kill?
+            run_kill:start => submit_hold?
+            run_kill:fail? => !run_kill
+            submit_hold:submit? => poll_check_kill => poll_now
+            submit_hold:submit-fail? => !submit_hold
         """
 
 [runtime]

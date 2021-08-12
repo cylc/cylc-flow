@@ -21,7 +21,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
     [[graph]]
         P1D = """
             model[-P1D] => model => copy => proc
-            copy:expired => !proc
+            copy:expired? => !proc
         """
 [runtime]
     [[root]]

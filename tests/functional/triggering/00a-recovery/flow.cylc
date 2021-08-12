@@ -1,3 +1,6 @@
+# Spawn on Demand variant of 00-recovery
+# No need for suicide triggers.
+
 [meta]
     title = "automated failure recovery example"
     description = """
@@ -19,9 +22,7 @@
         T00,T12 = """
            pre:finish => model?  # finish trigger
            model:fail? => diagnose => recover # fail trigger
-           model? => !diagnose & !recover  # explicit success trigger
            model:succeed? | recover => post  # conditional and explicit success
-           post => !model  # removes failed model to allow workflow to auto finish
         """
 
 [runtime]

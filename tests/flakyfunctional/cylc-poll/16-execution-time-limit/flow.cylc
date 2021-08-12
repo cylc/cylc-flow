@@ -7,8 +7,7 @@
 [scheduling]
     [[graph]]
         R1 = """
-            foo
-            foo:fail => ! foo
+            foo:fail? => ! foo
         """
 [runtime]
     [[foo]]
