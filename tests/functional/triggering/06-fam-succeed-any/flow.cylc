@@ -6,7 +6,7 @@
     [[graph]]
         R1 = """
             FAM:succeed-any => foo
-            a:fail & c:fail => handled
+            a:fail? & c:fail? => handled
         """
 [runtime]
     [[FAM]]

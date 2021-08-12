@@ -65,7 +65,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
+    TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED)
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string as intvl_as_str
@@ -929,17 +929,6 @@ class TaskEventsManager():
             itask.tdef.elapsed_times.append(
                 itask.summary['finished_time'] -
                 itask.summary['started_time'])
-        if not itask.state.outputs.all_completed():
-            msg = ""
-            for output in itask.state.outputs.get_not_completed():
-                if output not in [
-                        TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMIT_FAILED,
-                        TASK_OUTPUT_FAILED, TASK_OUTPUT_STARTED]:
-                    msg += "\n  " + output
-            if msg:
-                LOG.info(
-                    f"[{itask}] -Succeeded with outputs not completed: {msg}"
-                )
         if itask.state.reset(TASK_STATUS_SUCCEEDED):
             self.setup_event_handlers(
                 itask, self.EVENT_SUCCEEDED, f"job {self.EVENT_SUCCEEDED}")

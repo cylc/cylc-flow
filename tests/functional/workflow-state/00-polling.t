@@ -48,8 +48,8 @@ cylc config -d \
     --set="UPSTREAM='${UPSTREAM}'" -i '[runtime][lbad]script' "${WORKFLOW_NAME}" \
     >'lbad.script'
 cmp_ok 'lbad.script' << __END__
-echo cylc workflow-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=fail ${UPSTREAM}
-cylc workflow-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=fail ${UPSTREAM}
+echo cylc workflow-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=failed ${UPSTREAM}
+cylc workflow-state --task=bad --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=failed ${UPSTREAM}
 __END__
 
 # check auto-generated task script for l-good
@@ -57,8 +57,8 @@ cylc config -d \
     --set="UPSTREAM='${UPSTREAM}'" -i '[runtime][l-good]script' "${WORKFLOW_NAME}" \
     >'l-good.script'
 cmp_ok 'l-good.script' << __END__
-echo cylc workflow-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeed ${UPSTREAM}
-cylc workflow-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeed ${UPSTREAM}
+echo cylc workflow-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeeded ${UPSTREAM}
+cylc workflow-state --task=good-stuff --point=\$CYLC_TASK_CYCLE_POINT --interval=2 --max-polls=20 --status=succeeded ${UPSTREAM}
 __END__
 
 #-------------------------------------------------------------------------------

@@ -26,9 +26,9 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduling]
     [[graph]]
         R1 = """
-            foo => bar => baz
-            foo:fail => qux => baz
-            foo:fail & baz => !foo
+            foo? => bar => baz
+            foo:fail? => qux => baz
+            foo:fail? & baz => !foo
         """
 __FLOW__
 #-------------------------------------------------------------------------------

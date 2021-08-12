@@ -11,7 +11,7 @@
     initial cycle point = 2000
     final cycle point = 2000
     [[graph]]
-        P1Y = "foo:meet & bar:greet => baz"
+        P1Y = "foo:meet? & bar:greet? => baz"
 [runtime]
     [[root]]
         script = true

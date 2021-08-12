@@ -25,7 +25,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}
 run_fail "${TEST_NAME}" cylc validate -v "${WORKFLOW_NAME}"
-grep_ok "GraphParseError: parenthesis mismatch in: " "${TEST_NAME}.stderr"
+grep_ok "GraphParseError: Mismatched parentheses in: " "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge
 exit

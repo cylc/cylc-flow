@@ -17,8 +17,8 @@
 [scheduling]
     [[graph]]
         R1 = """
-            prep => foo & bar & baz
-            bar:submit-fail & baz:fail & foo => done
+            prep => foo & bar & baz?
+            bar:submit-fail? & baz:fail? & foo => done
             done => !bar & !baz
         """
 [runtime]

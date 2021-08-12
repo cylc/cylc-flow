@@ -20,12 +20,11 @@
     [[special tasks]]
         external-trigger = foo("drugs and money")
     [[graph]]
-        # SoD: - handled failed tasks can be removed
-        #      - killed tasks are held to prevent retries; they have to be
-        #        released before they can be removed.
+        # killed tasks are held to prevent retries; they have to be
+        # released before they can be removed.
         R1 = """
-            foo & bar
-            bar:fail => handler
+            foo & bar?
+            bar:fail? => handler
         """
 
 [runtime]

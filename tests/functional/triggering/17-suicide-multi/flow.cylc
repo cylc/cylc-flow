@@ -11,12 +11,12 @@
         P1 = """
             fin[-P1] => showdown
 
-            showdown:good => good
-            showdown:bad => bad
-            showdown:ugly => ugly
-            showdown:good | showdown:bad => ! ugly
-            showdown:good | showdown:ugly => ! bad
-            showdown:bad | showdown:ugly => ! good
+            showdown:good? => good
+            showdown:bad? => bad
+            showdown:ugly? => ugly
+            showdown:good? | showdown:bad? => ! ugly
+            showdown:good? | showdown:ugly? => ! bad
+            showdown:bad? | showdown:ugly? => ! good
 
             good | bad | ugly => fin
         """

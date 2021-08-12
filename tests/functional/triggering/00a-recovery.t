@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,29 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test workflow event handler, dump unmet prereqs on stall
+# Test automated failure recovery example
 . "$(dirname "$0")/test_header"
-set_test_number 7
-
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${WORKFLOW_NAME}"
-
-workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
-
-grep_ok "Abort on workflow stalled is set" "${TEST_NAME_BASE}-run.stderr"
-
-grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
-
-grep_ok "bar.20100101T0000Z did not complete required outputs: \['succeeded'\]" \
-    "${TEST_NAME_BASE}-run.stderr"
-
-grep_ok "WARNING - Partially satisfied prerequisites:" \
-    "${TEST_NAME_BASE}-run.stderr"
-
-grep_ok "foo.20100101T0600Z is waiting on \['bar.20100101T0000Z:succeeded'\]" \
-    "${TEST_NAME_BASE}-run.stderr"
-
-purge
+set_test_number 2
+reftest
 exit

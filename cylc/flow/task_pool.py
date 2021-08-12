@@ -38,7 +38,7 @@ from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
-    TASK_STATUSES_FAILURE,
+    TASK_STATUSES_FINAL,
     TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
@@ -639,10 +639,11 @@ class TaskPool:
         except KeyError:
             pass
         else:
-            # e.g. for suicide?
+            # e.g. for suicide of partially satisfied task
             self.hidden_pool_changed = True
             if not self.hidden_pool[itask.point]:
                 del self.hidden_pool[itask.point]
+            LOG.debug("[%s] -%s", itask, msg)
             return
 
         try:
@@ -942,72 +943,87 @@ class TaskPool:
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
                 point, name, submit_num, key1))
 
-    def is_stalled(self):
-        """Return True if the workflow is stalled.
-
-        A workflow is stalled if it is not held and the active pool contains
-        only unhandled failed tasks and un-released runahead tasks.
-
-        """
-        self.release_runahead_tasks()
-        unhandled_failed = []
+    def log_incomplete_tasks(self):
+        """Log finished but incomplete tasks; return True if there any."""
+        incomplete = {}
         for itask in self.get_tasks():
-            if itask.state(*TASK_STATUSES_FAILURE):
-                unhandled_failed.append(itask)
-            elif itask.state.is_runahead:
+            if not itask.state(*TASK_STATUSES_FINAL):
                 continue
-            else:
-                return False
-        if unhandled_failed:
+            outputs = itask.state.outputs.get_incomplete()
+            if outputs:
+                incomplete[itask.identity] = outputs
+
+        if incomplete:
             LOG.warning(
-                "Workflow stalled with unhandled failed tasks:\n"
+                "Incomplete tasks:\n"
                 + "\n".join(
-                    f"* {itask.identity} ({itask.state.status})"
-                    for itask in unhandled_failed
+                    f"* {name} did not complete required outputs: {outputs}"
+                    for name, outputs in incomplete.items()
+                )
+            )
+            return True
+        return False
+
+    def log_unsatisfied_prereqs(self):
+        """Log unsatisfied prerequisites in the hidden pool.
+
+        Return True if any, ignoring:
+            - prerequisites beyond the stop point
+            - dependence on tasks beyond the stop point
+            (can be caused by future triggers)
+        """
+        unsat = {}
+        for itask in self.get_hidden_tasks():
+            _, point = TaskID().split(itask.identity)
+            if get_point(point) > self.stop_point:
+                continue
+            for pre in itask.state.get_unsatisfied_prerequisites():
+                name, point, output = pre
+                if get_point(point) > self.stop_point:
+                    continue
+                if itask.identity not in unsat:
+                    unsat[itask.identity] = []
+                unsat[itask.identity].append(f"{name}.{point}:{output}")
+        if unsat:
+            LOG.warning(
+                "Partially satisfied prerequisites:\n"
+                + "\n".join(
+                    f"{id_} is waiting on {others}"
+                    for id_, others in unsat.items()
                 )
             )
             return True
         else:
             return False
 
-    def report_unmet_deps(self):
-        """Log unmet dependencies on stall or shutdown."""
-        prereqs_map = {}
-        for itask in self.get_hidden_tasks():
-            prereqs_map[itask.identity] = []
-            for prereq_str, is_met in itask.state.prerequisites_dump():
-                if not is_met:
-                    prereqs_map[itask.identity].append(prereq_str)
+    def is_stalled(self):
+        """Return True if the workflow is stalled.
 
-        # prune tree to ignore items that are elsewhere in it
-        for id_, prereqs in list(prereqs_map.copy().items()):
-            if not prereqs:
-                # (tasks in runahead pool that are not unsatisfied)
-                del prereqs_map[id_]
-                continue
-            for prereq in prereqs:
-                prereq_strs = prereq.split()
-                if prereq_strs[0] == "LABEL:":
-                    unsatisfied_id = prereq_strs[3]
-                elif prereq_strs[0] == "CONDITION:":
-                    continue
-                else:
-                    unsatisfied_id = prereq_strs[0]
-                # Clear out tasks with dependencies on other waiting tasks
-                if unsatisfied_id in prereqs_map:
-                    del prereqs_map[id_]
-                    break
+        Stalled if not paused and contains only:
+          - incomplete tasks
+          - partially satisfied prerequisites
+          - runahead-limited tasks (held back by the above)
+        """
+        # TODO check reporting of runahead-limited tasks at stall
+        if any(
+            itask.state(
+                *TASK_STATUSES_ACTIVE,
+                TASK_STATUS_PREPARING
+            ) or (
+                itask.state(TASK_STATUS_WAITING)
+                and not itask.state.is_runahead
+            ) for itask in self.get_tasks()
+        ):
+            return False
 
-        if prereqs_map:
-            LOG.warning(
-                "Partially satisfied prerequisites left over:\n"
-                + "\n".join(
-                    f"{id_} is waiting on:"
-                    + "\n".join(
-                        f"\n* {prereq}" for prereq in prereqs
-                    ) for id_, prereqs in prereqs_map.items()
-                )
-            )
+        incomplete = self.log_incomplete_tasks()
+        unsatisfied = self.log_unsatisfied_prereqs()
+        if incomplete or unsatisfied:
+            LOG.critical("Workflow stalled")
+            self.log_task_pool()
+            return True
+        else:
+            return False
 
     def hold_active_task(self, itask: TaskProxy) -> None:
         if itask.state.reset(is_held=True):
@@ -1194,15 +1210,28 @@ class TaskPool:
                 LOG.warning(f'[{c_task}] -suiciding while active')
             self.remove(c_task, 'SUICIDE')
 
-        # Remove the parent task if finished.
-        if (output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_EXPIRED]
-                or output == TASK_OUTPUT_FAILED and itask.failure_handled):
-            if itask.identity == self.stop_task_id:
-                self.stop_task_finished = True
-            self.remove(itask, 'finished')
+        # Remove the parent task if finished and complete.
+        if output in [
+            TASK_OUTPUT_SUCCEEDED,
+            TASK_OUTPUT_EXPIRED,
+            TASK_OUTPUT_FAILED
+        ]:
+            incomplete = itask.state.outputs.get_incomplete()
+            if incomplete:
+                # Retain as an incomplete task.
+                LOG.warning(
+                    f"[{itask}] did not complete required outputs:"
+                    f" {incomplete}"
+                )
+            else:
+                # Remove as completed.
+                self.remove(itask, 'finished')
+                if itask.identity == self.stop_task_id:
+                    self.stop_task_finished = True
 
-    def get_or_spawn_task(self, name, point, flow_label=None, reflow=True,
-                          parent_id=None):
+    def get_or_spawn_task(
+        self, name, point, flow_label=None, reflow=True, parent_id=None
+    ):
         """Return existing or spawned task, or None."""
         return (self.get_task(name, point, flow_label)
                 or self.spawn_task(name, point, flow_label, reflow, parent_id))
@@ -1427,7 +1456,7 @@ class TaskPool:
                     self.data_store_mgr.delta_task_state(itask)
                 # (No need to set prerequisites satisfied here).
                 if not itask.state.is_queued:
-                    LOG.info("Force-trigger: queueing {itask.identity}")
+                    LOG.info(f"Force-trigger: queueing {itask.identity}")
                     self.queue_task(itask)
                 else:
                     self.task_queue_mgr.force_release_task(itask)
@@ -1591,6 +1620,27 @@ class TaskPool:
             itask.flow_label = self.flow_label_mgr.unmerge_labels(
                 to_prune, itask.flow_label)
         self.flow_label_mgr.make_avail(to_prune)
+
+    def log_task_pool(self):
+        """Log content of task and prerequisite pools in debug mode."""
+        if self.main_pool_list:
+            LOG.debug(
+                "Task pool:\n"
+                + "\n".join(
+                    f"* {itask} status={itask.state.status}"
+                    f" runahead={itask.state.is_runahead}"
+                    for itask in self.main_pool_list
+                )
+            )
+        if self.hidden_pool_list:
+            LOG.debug(
+                "Prerequisite pool:\n"
+                + "\n".join(
+                    f"* {itask} status={itask.state.status}"
+                    f" runahead={itask.state.is_runahead}"
+                    for itask in self.hidden_pool_list
+                )
+            )
 
     @staticmethod
     def _parse_task_item(
