@@ -17,6 +17,7 @@
 """Workflow service files management."""
 
 import aiofiles
+import asyncio
 from collections import deque
 from contextlib import suppress
 from enum import Enum
@@ -56,7 +57,8 @@ from cylc.flow.pathutil import (
     parse_rm_dirs,
     remove_dir_and_target,
     get_next_rundir_number,
-    remove_dir_or_file
+    remove_dir_or_file,
+    remove_empty_parents
 )
 from cylc.flow.platforms import (
     get_host_from_platform,
@@ -600,7 +602,24 @@ def is_installed(rund: Union[Path, str]) -> bool:
     return cylc_install_dir.is_dir() or alt_cylc_install_dir.is_dir()
 
 
-def _clean_check(reg: str, run_dir: Path) -> None:
+async def get_contained_workflows(
+    path: Path,
+    scan_depth: Optional[int] = None
+) -> List[str]:
+    """Return the sorted names of any workflows in a directory.
+
+    Args:
+        path: Absolute path to the dir.
+        scan_depth: How many levels deep to look inside the dir.
+    """
+    from cylc.flow.network.scan import scan
+    kwargs = {'max_depth': scan_depth} if scan_depth is not None else {}
+    return sorted(
+        [i['name'] async for i in scan(scan_dir=path, **kwargs)]
+    )
+
+
+def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
     """Check whether a workflow can be cleaned.
 
     Args:
@@ -618,9 +637,7 @@ def _clean_check(reg: str, run_dir: Path) -> None:
         raise ServiceFileError(f"Cannot remove running workflow.\n\n{exc}")
 
 
-def init_clean(
-    reg: str, opts: 'Values'
-) -> None:
+def init_clean(reg: str, opts: 'Values') -> None:
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 
@@ -630,10 +647,28 @@ def init_clean(
     """
     local_run_dir = Path(get_workflow_run_dir(reg))
     try:
-        _clean_check(reg, local_run_dir)
+        _clean_check(opts, reg, local_run_dir)
     except FileNotFoundError as exc:
         LOG.info(str(exc))
         return
+
+    # Check dir does not contain other workflows:
+    contained_workflows = asyncio.get_event_loop().run_until_complete(
+        get_contained_workflows(local_run_dir, MAX_SCAN_DEPTH + 1)
+    )  # Note: increased scan depth for safety
+    _suppress_no_db_msg = False
+    if len(contained_workflows) == 1:
+        init_clean(contained_workflows[0], opts)
+        _suppress_no_db_msg = True
+    elif len(contained_workflows) > 1:
+        bullet = "\n    - "
+        msg = (
+            f"{local_run_dir} contains the following workflows:"
+            f"{bullet}{bullet.join(contained_workflows)}"
+        )
+        if not opts.force:
+            raise WorkflowFilesError(f"Cannot clean - {msg}")
+        LOG.warning(msg)
 
     if not opts.local_only:
         platform_names = None
@@ -642,19 +677,20 @@ def init_clean(
         except FileNotFoundError:
             if opts.remote_only:
                 raise ServiceFileError(
-                    "No workflow database - cannot perform remote clean")
-            LOG.info("No workflow database - will only clean locally")
+                    "No workflow database - cannot perform remote clean"
+                )
+            if not _suppress_no_db_msg:
+                LOG.info("No workflow database - will only clean locally")
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot clean - {exc}")
 
         if platform_names and platform_names != {'localhost'}:
             remote_clean(
-                reg, platform_names, opts.rm_dirs, opts.remote_timeout)
+                reg, platform_names, opts.rm_dirs, opts.remote_timeout
+            )
 
     if not opts.remote_only:
-        rm_dirs = None
-        if opts.rm_dirs:
-            rm_dirs = parse_rm_dirs(opts.rm_dirs)
+        rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
         clean(reg, local_run_dir, rm_dirs)
 
 
@@ -672,7 +708,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         run_dir: Absolute path of the workflow's run dir.
         rm_dirs: Set of sub dirs to remove instead of the whole run dir.
     """
-    LOG.info("Cleaning on local filesystem")
+    LOG.info(f"Cleaning on local filesystem: {run_dir}")
     symlink_dirs = get_symlink_dirs(reg, run_dir)
     if rm_dirs is not None:
         # Targeted clean
@@ -688,10 +724,10 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
             remove_dir_and_target(run_dir)
     # Tidy up if necessary
     # Remove any empty parents of run dir up to ~/cylc-run/
-    _remove_empty_parents(run_dir, reg)
+    remove_empty_parents(run_dir, reg)
     for symlink, target in symlink_dirs.items():
         # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
-        _remove_empty_parents(target, Path(reg, symlink))
+        remove_empty_parents(target, Path(reg, symlink))
 
 
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
@@ -757,7 +793,7 @@ def glob_in_run_dir(
                 # Do not follow non-standard symlinks
                 subpath_excludes.add(ancestor)
                 break
-            if (not symlink_dirs) and ancestor in results:
+            if not symlink_dirs and (ancestor in results):
                 # We can be sure all subpaths of this ancestor are redundant
                 subpath_excludes.add(ancestor)
                 break
@@ -883,7 +919,7 @@ def remote_clean(
 
 def _remote_clean_cmd(
     reg: str,
-    platform: Dict[str, str],
+    platform: Dict[str, Any],
     rm_dirs: Optional[List[str]],
     timeout: str
 ) -> 'Popen[str]':
@@ -912,40 +948,6 @@ def _remote_clean_cmd(
     )
     LOG.debug(" ".join(cmd))
     return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
-
-
-def _remove_empty_parents(
-    path: Union[Path, str], tail: Union[Path, str]
-) -> None:
-    """Work our way up the tail of path, removing empty dirs only.
-
-    Args:
-        path: Absolute path to the directory, e.g. /foo/bar/a/b/c
-        tail: The tail of the path to work our way up, e.g. a/b/c
-
-    Example:
-        _remove_empty_parents('/foo/bar/a/b/c', 'a/b/c') would remove
-        /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
-        empty).
-    """
-    path = Path(path)
-    if not path.is_absolute():
-        raise ValueError('path must be absolute')
-    tail = Path(tail)
-    if tail.is_absolute():
-        raise ValueError('tail must not be an absolute path')
-    if not str(path).endswith(str(tail)):
-        raise ValueError(f"path '{path}' does not end with '{tail}'")
-    depth = len(tail.parts) - 1
-    for i in range(depth):
-        parent = path.parents[i]
-        if not parent.is_dir():
-            continue
-        try:
-            parent.rmdir()
-            LOG.debug(f'Removing directory: {parent}')
-        except OSError:
-            break
 
 
 def remove_keys_on_server(keys):

@@ -84,10 +84,12 @@ def sample_run_dir():
     rmtree(tmp_path)
 
 
-@pytest.fixture(scope='session')
-def badly_messed_up_run_dir():
-    tmp_path = Path(TemporaryDirectory().name)
-    tmp_path.mkdir()
+@pytest.fixture
+def badly_messed_up_cylc_run_dir(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch
+) -> Path:
+    monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', tmp_path)
     # one regular workflow
     init_flows(
         tmp_path,
@@ -95,8 +97,7 @@ def badly_messed_up_run_dir():
     )
     # and an erroneous service dir at the top level for no reason
     Path(tmp_path, SRV_DIR).mkdir()
-    yield tmp_path
-    rmtree(tmp_path)
+    return tmp_path
 
 
 @pytest.fixture(scope='session')
@@ -215,16 +216,16 @@ async def test_scan_with_files(sample_run_dir):
 
 
 @pytest.mark.asyncio
-async def test_scan_horrible_mess(badly_messed_up_run_dir):
+async def test_scan_horrible_mess(badly_messed_up_cylc_run_dir):
     """It shouldn't be affected by erroneous cylc files/dirs.
 
-    How could you end up with a .service dir in cylc-run, well misuse of
+    How could you end up with a .service dir in ~/cylc-run? Well misuse of
     Cylc7 can result in this situation so this test ensures Cylc7 workflows
     can't mess up a Cylc8 scan.
 
     """
     assert await listify(
-        scan(badly_messed_up_run_dir)
+        scan(badly_messed_up_cylc_run_dir)
     ) == [
         'foo'
     ]

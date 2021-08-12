@@ -63,13 +63,20 @@ erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
 infers the latest numbered run of the workflow for most commands (e.g. you can
 run `cylc pause foo` instead of having to type out `foo/run3`).
 
+[#4346](https://github.com/cylc/cylc-flow/pull/4346) -
+Use natural sort order for the `cylc scan --sort` option.
+
 ### Fixes
 
-[#4310](https://github.com/cylc/cylc-flow/pull/4310 -
+[#4341](https://github.com/cylc/cylc-flow/pull/4341 -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
 
 [#4319](https://github.com/cylc/cylc-flow/pull/4319) -
 Update cylc reinstall to skip cylc dirs work and share
+
+[#4289](https://github.com/cylc/cylc-flow/pull/4289) - Make `cylc clean`
+safer by preventing cleaning of dirs that contain more than one workflow
+run dir (use `--force` to override this safeguard).
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__

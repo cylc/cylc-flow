@@ -406,7 +406,9 @@ TASK_GLOB matches task or family names at a given cycle point.
             LOG.removeHandler(LOG.handlers[0])
         errhandler = logging.StreamHandler(sys.stderr)
         errhandler.setFormatter(CylcLogFormatter(
-            timestamp=options.log_timestamp))
+            timestamp=options.log_timestamp,
+            dev_info=bool(options.verbosity > 2)
+        ))
         LOG.addHandler(errhandler)
 
         return (options, args)

@@ -59,7 +59,7 @@ jobs:
         run: |
           docker cp bash:/root/cylc-run .
 
-      - name: Upload
+      - name: Upload artifact
         if: failure()
         uses: actions/upload-artifact@v2
         with:

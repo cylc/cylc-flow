@@ -129,7 +129,6 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
 
     run_db = _get_dao(workflow)
     row_buf = format_rows(*run_db.select_task_times())
-
     with smart_open(options.output_filename) as output:
         if options.show_raw:
             output.write(row_buf.getvalue())
@@ -218,7 +217,7 @@ class TimingSummary:
         if buf is None:
             buf = sys.stdout
         self.write_summary_header(buf)
-        for group, df in self.by_host_and_runner:
+        for group, df in self.by_host_and_job_runner:
             self.write_group_header(buf, group)
             df_reshape = self._reshape_timings(df)
             df_describe = df.groupby(level='name').describe()
