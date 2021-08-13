@@ -52,6 +52,8 @@ ones in. -->
 
 Fourth beta release of Cylc 8.
 
+`suite owner` and `workflow owner` option option has been removed.
+
 (See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
