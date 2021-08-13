@@ -1234,7 +1234,8 @@ def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
     """
     exc_msg = (
         'Nested run directories not allowed - cannot install workflow name '
-        '"{0}" as "{1}" is already a valid run directory.')
+        '"{0}" as "{1}" is already a valid run directory.'
+    )
 
     def _check_child_dirs(path: Union[Path, str], depth_count: int = 1):
         for result in os.scandir(path):
@@ -1248,10 +1249,10 @@ def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
 
     reg_path: Union[Path, str] = os.path.normpath(run_dir)
     parent_dir = os.path.dirname(reg_path)
-    while parent_dir not in ['', os.sep]:
+    while parent_dir not in {'', os.sep}:
         if is_valid_run_dir(parent_dir):
             raise WorkflowFilesError(
-                exc_msg.format(parent_dir, get_cylc_run_abs_path(parent_dir))
+                exc_msg.format(flow_name, get_cylc_run_abs_path(parent_dir))
             )
         parent_dir = os.path.dirname(parent_dir)
 
