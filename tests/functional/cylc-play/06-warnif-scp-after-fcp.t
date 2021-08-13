@@ -43,12 +43,13 @@ for SCP in 1 2 3; do
         workflow_run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" \
         --no-detach --stopcp="${SCP}"
 
-    V=""
     if [[ "${SCP}" -lt 3 ]]; then
-        V="-v"
+        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+            "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "-v"
+    else
+        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+            "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log"
     fi
-    grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
-        "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "$V"
 done
 
 purge
@@ -74,12 +75,13 @@ for SCP in 1348 1349 1350; do
         workflow_run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" \
         --no-detach --stopcp="${SCP}"
 
-    V=""
     if [[ "${SCP}" -lt 1350 ]]; then
-        V="-v"
+        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+            "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "-v"
+    else
+        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+            "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log"
     fi
-    grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
-        "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "$V"
 done
 
 purge
