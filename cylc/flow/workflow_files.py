@@ -330,7 +330,8 @@ NO_FLOW_FILE_MSG = (
 )
 
 REG_CLASH_MSG = (
-    "Workflow files found in both {0} and {1}. This command will use {0}."
+    "The specified reg could refer to ./{0} or ~/cylc-run/{1}. "
+    "This command will use ./{0}."
 )
 
 
@@ -1122,7 +1123,8 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
                 if abs_path.is_file():
                     if run_dir_path.is_file():
                         LOG.warning(REG_CLASH_MSG.format(
-                            f"./{abs_path.relative_to(cwd)}", run_dir_path
+                            abs_path.relative_to(cwd),
+                            run_dir_path.relative_to(get_cylc_run_dir())
                         ))
                     return (str(reg.parent), abs_path)
                 if run_dir_path.is_file():
@@ -1142,7 +1144,8 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
                     except WorkflowFilesError:
                         return (str(run_dir_reg), run_dir_path)
                     LOG.warning(REG_CLASH_MSG.format(
-                        f"./{abs_path.relative_to(cwd)}", run_dir_path
+                        abs_path.relative_to(cwd),
+                        run_dir_path.relative_to(get_cylc_run_dir())
                     ))
                 return (str(reg), abs_path)
     if abs_path.is_file():

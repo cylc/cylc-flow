@@ -475,8 +475,8 @@ def test_parse_reg__clash(
     # It should warn that it also found a workflow in ~/cylc-run but didn't
     # use it
     expected_warning = REG_CLASH_MSG.format(
-        f"./{reg}/{FLOW_FILE}",
-        run_dir / FLOW_FILE
+        f"{reg}/{FLOW_FILE}",
+        run_dir.relative_to(tmp_path / 'cylc-run') / FLOW_FILE
     )
     assert expected_warning in caplog.messages
     caplog.clear()
