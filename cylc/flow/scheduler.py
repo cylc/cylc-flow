@@ -1416,6 +1416,10 @@ class Scheduler:
                 # Re-initialise data model on reload
                 self.data_store_mgr.initiate_data_model(reloaded=True)
                 self.pool.reload_taskdefs()
+                # Load jobs from DB
+                self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
+                    self.data_store_mgr.insert_db_job)
+                LOG.info("Reload completed.")
                 self.is_reloaded = True
                 self.is_updated = True
 
@@ -1542,10 +1546,7 @@ class Scheduler:
             t for t in self.pool.get_tasks() if t.state.is_updated]
         has_updated = self.is_updated or updated_tasks
         # Add tasks that have moved moved from runahead to live pool.
-        if (
-                (has_updated and not self.is_reloaded)
-                or self.data_store_mgr.updates_pending
-        ):
+        if has_updated or self.data_store_mgr.updates_pending:
             # Collect/apply data store updates/deltas
             self.data_store_mgr.update_data_structure(
                 reloaded=self.is_reloaded)

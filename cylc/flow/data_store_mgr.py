@@ -268,35 +268,41 @@ def apply_delta(key, delta, data):
         for del_id in delta.pruned:
             if del_id not in data[key]:
                 continue
-            # remove relationships
+            # Remove relationships.
+            # The suppression of key/value errors is to avoid
+            # elements and their relationships missing on reload.
             if key == TASK_PROXIES:
                 # remove relationship from task
                 data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
-                with suppress(KeyError):
+                with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_tasks.remove(del_id)
                 # remove relationship from workflow
-                getattr(data[WORKFLOW], key).remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
                 data[FAMILIES][data[key][del_id].family].proxies.remove(del_id)
-                with suppress(KeyError):
+                with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_families.remove(del_id)
-                getattr(data[WORKFLOW], key).remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).remove(del_id)
             elif key == EDGES:
                 edge = data[key][del_id]
-                if edge.source in data[TASK_PROXIES]:
+                with suppress(KeyError, ValueError):
                     data[TASK_PROXIES][edge.source].edges.remove(del_id)
-                if edge.target in data[TASK_PROXIES]:
+                with suppress(KeyError, ValueError):
                     data[TASK_PROXIES][edge.target].edges.remove(del_id)
-                getattr(data[WORKFLOW], key).edges.remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).edges.remove(del_id)
             elif key == JOBS:
                 # Jobs are only removed if their task is, so only need
                 # to remove relationship from workflow.
-                getattr(data[WORKFLOW], key).remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).remove(del_id)
             # remove/prune element from data-store
             del data[key][del_id]
 
@@ -1793,36 +1799,29 @@ class DataStoreMgr:
         return (node_id, False)
 
     def batch_deltas(self, reloaded=False):
-        """Gather and apply deltas."""
+        """Batch gathered deltas."""
         # Gather cumulative update element
         if reloaded:
-            for key, elements in self.data[self.workflow_id].items():
-                if elements:
-                    if key == WORKFLOW:
-                        if elements.ListFields():
-                            self.deltas[WORKFLOW].added.CopyFrom(elements)
-                        continue
-                    self.deltas[key].added.extend(elements.values())
+            self.gather_delta_elements(self.data[self.workflow_id], 'added')
         else:
-            for key, elements in self.added.items():
-                if elements:
-                    if key == WORKFLOW:
-                        if elements.ListFields():
-                            self.deltas[WORKFLOW].added.CopyFrom(elements)
-                        continue
-                    self.deltas[key].added.extend(elements.values())
-            for key, elements in self.updated.items():
-                if elements:
-                    if key == WORKFLOW:
-                        if elements.ListFields():
-                            self.deltas[WORKFLOW].updated.CopyFrom(elements)
-                        continue
-                    self.deltas[key].updated.extend(elements.values())
+            self.gather_delta_elements(self.added, 'added')
+            self.gather_delta_elements(self.updated, 'updated')
 
         # set reloaded flag on deltas
         for delta in self.deltas.values():
             if delta.ListFields() or reloaded:
                 delta.reloaded = reloaded
+
+    def gather_delta_elements(self, store, delta_type):
+        """Gather deltas from store."""
+        for key, elements in store.items():
+            if elements:
+                if key == WORKFLOW:
+                    if elements.ListFields():
+                        getattr(self.deltas[WORKFLOW], delta_type).CopyFrom(
+                            elements)
+                    continue
+                getattr(self.deltas[key], delta_type).extend(elements.values())
 
     def apply_delta_batch(self):
         """Apply delta batch to local data-store."""
