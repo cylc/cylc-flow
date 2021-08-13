@@ -1908,6 +1908,6 @@ class Scheduler:
             return
         if get_point(self.options.stopcp) > self.config.final_point:
             LOG.warning(
-                f'Stop Cycle point \'{self.options.stopcp}\' will have no '
-                'effect as it is after the final Cycle '
-                f'point \'{self.config.final_point}\'.')
+                f"Stop cycle point '{self.options.stopcp}' will have no "
+                "effect as it is after the final cycle "
+                f"point '{self.config.final_point}'.")
