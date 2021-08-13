@@ -265,14 +265,7 @@ class TaskPool:
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
 
-            # Register pool node reference data-store with ID_DELIM format
-            self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
-            # Create new data-store n-distance graph window about this task
-            self.data_store_mgr.increment_graph_window(itask)
-            self.data_store_mgr.delta_task_state(itask)
-            self.data_store_mgr.delta_task_held(itask)
-            self.data_store_mgr.delta_task_queued(itask)
-            self.data_store_mgr.delta_task_runahead(itask)
+            self.create_data_store_elements(itask)
 
         if is_new:
             # Add row to "task_states" table:
@@ -285,6 +278,17 @@ class TaskPool:
             if itask.state.outputs.has_custom_triggers():
                 self.workflow_db_mgr.put_insert_task_outputs(itask)
         return itask
+
+    def create_data_store_elements(self, itask):
+        """Create the node window elements about given task proxy."""
+        # Register pool node reference data-store with ID_DELIM format
+        self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
+        # Create new data-store n-distance graph window about this task
+        self.data_store_mgr.increment_graph_window(itask)
+        self.data_store_mgr.delta_task_state(itask)
+        self.data_store_mgr.delta_task_held(itask)
+        self.data_store_mgr.delta_task_queued(itask)
+        self.data_store_mgr.delta_task_runahead(itask)
 
     def release_runahead_tasks(self):
         """Release runahead tasks to restrict active cycle points.
@@ -867,6 +871,8 @@ class TaskPool:
 
         # Now queue all tasks that are ready to run
         for itask in self.get_tasks():
+            # Recreate data store elements from main pool.
+            self.create_data_store_elements(itask)
             if itask.state.is_queued:
                 # Already queued
                 continue
@@ -876,11 +882,9 @@ class TaskPool:
             if itask.tdef.clocktrigger_offset is not None:
                 self.data_store_mgr.delta_task_clock_trigger(
                     itask, ready_check_items)
-
             if all(ready_check_items) and not itask.state.is_runahead:
                 self.queue_task(itask)
 
-        LOG.info("Reload completed.")
         self.do_reload = False
 
     def set_stop_point(self, stop_point):
