@@ -814,7 +814,8 @@ class Scheduler:
             self.config.get_graph_raw(cto, ctn, grouping),
             self.config.workflow_polling_tasks,
             self.config.leaves,
-            self.config.feet)
+            self.config.feet
+        )
 
     def command_stop(
             self,
