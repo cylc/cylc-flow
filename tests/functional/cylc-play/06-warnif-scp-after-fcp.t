@@ -44,10 +44,10 @@ for SCP in 1 2 3; do
         --no-detach --stopcp="${SCP}"
 
     if [[ "${SCP}" -lt 3 ]]; then
-        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "-v"
     else
-        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log"
     fi
 done
@@ -76,10 +76,10 @@ for SCP in 1348 1349 1350; do
         --no-detach --stopcp="${SCP}"
 
     if [[ "${SCP}" -lt 1350 ]]; then
-        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "-v"
     else
-        grep_ok "Stop Cycle point '.*'.*after.*final Cycle point '.*'" \
+        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log"
     fi
 done
