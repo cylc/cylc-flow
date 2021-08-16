@@ -275,12 +275,6 @@ class SuiteDatabaseManager(object):
             schd (cylc.scheduler.Scheduler): scheduler object.
         """
         self.db_deletes_map[self.TABLE_SUITE_PARAMS].append({})
-        if schd.config.final_point is None:
-            # Store None as proper null value in database. No need to do this
-            # for initial cycle point, which should never be None.
-            final_point_str = None
-        else:
-            final_point_str = str(schd.config.final_point)
         self.db_inserts_map[self.TABLE_SUITE_PARAMS].extend([
             {"key": "uuid_str", "value": str(schd.uuid_str)},
             {"key": "run_mode", "value": schd.config.run_mode()},
@@ -294,7 +288,10 @@ class SuiteDatabaseManager(object):
         if schd.pool.is_held:
             self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({
                 "key": "is_held", "value": 1})
-        for key in ('icp', 'fcp', 'startcp', 'stopcp', 'no_auto_shutdown'):
+        for key in (
+            'icp', 'fcp', 'startcp', 'stopcp', 'no_auto_shutdown',
+            'cycle_point_tz'
+        ):
             value = getattr(schd.options, key, None)
             if value is not None:
                 self.db_inserts_map[self.TABLE_SUITE_PARAMS].append({

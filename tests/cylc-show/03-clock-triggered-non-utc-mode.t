@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -31,8 +31,7 @@ fi
 if [[ "${TZ_OFFSET_EXTENDED}" == "+00:00" ]]; then
     TZ_OFFSET_EXTENDED=Z
 fi
-TZ_OFFSET_BASIC=${TZ_OFFSET_EXTENDED/:00/}
-TZ_OFFSET_BASIC=${TZ_OFFSET_BASIC/:/}
+TZ_OFFSET_BASIC=${TZ_OFFSET_EXTENDED/:/}
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate \

@@ -48,6 +48,9 @@ Cylc 8 workflow status in Cylc Review.
 [#4299](https://github.com/cylc/cylc-flow/pull/4299) -
 Fix a GUI bug which can cause extra log files to be listed multiple times.
 
+[#4327](https://github.com/cylc/cylc-flow/pull/4327) - Ensure the suite always
+restarts using the same time zone as the last `cylc run`.
+
 -------------------------------------------------------------------------------
 ## __cylc-7.8.8 (2021-03-24)__
 

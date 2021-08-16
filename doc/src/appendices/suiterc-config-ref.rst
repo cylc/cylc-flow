@@ -199,11 +199,6 @@ This number defaults to 0 (no sign or extra digits used).
 [cylc] ``->`` cycle point time zone
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you set UTC mode to True (:ref:`UTC-mode`) then this will default to
-``Z``. If you use a custom cycle point format
-(:ref:`cycle-point-format`), you should specify the timezone choice (or null
-timezone choice) here as well.
-
 You may set your own time zone choice here, which will be used for all
 date-time cycle point dumping. Time zones should be expressed as ISO 8601 time
 zone offsets from UTC, such as ``+13``, ``+1300``,
@@ -211,10 +206,20 @@ zone offsets from UTC, such as ``+13``, ``+1300``,
 special ``+0000`` case. Cycle points will be converted to the time
 zone you give and will be represented with this string at the end.
 
+If you set UTC mode to True (:ref:`UTC-mode`) then this will default to
+``Z``. If you use a custom cycle point format
+(:ref:`cycle-point-format`), you should specify the timezone choice (or null
+timezone choice) here as well.
+
 Cycle points that are input without time zones (e.g. as an initial cycle
 point
 setting) will use this time zone if set. If this isn't set (and UTC mode is
 also not set), then they will default to the current local time zone.
+
+This setting will persist over local time zone
+changes (e.g. if the suite is run during winter time, then stopped,
+then restarted after summer time has begun, the cycle points will
+remain in winter time).
 
 .. note::
 
