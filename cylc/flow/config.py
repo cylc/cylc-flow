@@ -480,6 +480,7 @@ class WorkflowConfig:
             else:
                 if foot not in self.feet:
                     self.feet.append(foot)
+        self.feet.sort()  # sort effects get_graph_raw output
 
         # Replace workflow and task name in workflow and task URLs.
         self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
@@ -1434,8 +1435,12 @@ class WorkflowConfig:
             taskdef.check_for_explicit_cycling()
 
     def get_task_name_list(self):
-        # return a list of all tasks used in the dependency graph
-        return list(self.taskdefs)
+        """Return a sorted list of all tasks used in the dependency graph.
+
+        Note: the sort order may effect get_graph_raw ouput.
+
+        """
+        return sorted(self.taskdefs)
 
     def generate_edges(self, lexpr, orig_lexpr, left_nodes, right, seq,
                        suicide=False):

@@ -64,8 +64,8 @@ cmp_ok "${WORKFLOW_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
         "t3"
     ],
     [
-        "t1",
-        "T"
+        "T",
+        "t1"
     ]
 ]
 __OUT__
