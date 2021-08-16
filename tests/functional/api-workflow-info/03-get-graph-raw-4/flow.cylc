@@ -8,11 +8,17 @@
 [runtime]
     [[t1]]
         script = """
-if [[ "${CYLC_TASK_CYCLE_POINT}" == '20200202T0000Z' ]]; then
-    python3 ${CYLC_WORKFLOW_RUN_DIR}/bin/ctb-get-graph-raw \
-        'start_point_str=20200202T0000Z' \
-        'stop_point_str=20200203T0000Z' \
-        'grouping=<all>' \
-        >"${CYLC_WORKFLOW_RUN_DIR}/ctb-get-graph-raw.out"
-fi
-"""
+            if [[ "${CYLC_TASK_CYCLE_POINT}" == '20200202T0000Z' ]]; then
+                cylc client \
+                    "$CYLC_WORKFLOW_NAME" \
+                    get_graph_raw \
+                    >"${CYLC_WORKFLOW_RUN_DIR}/ctb-get-graph-raw.out" \
+                    <<__HERE__
+                {
+                    "start_point_str": "20200202T0000Z",
+                    "stop_point_str": "20200203T0000Z",
+                    "grouping": ["<all>"]
+                }
+            __HERE__
+            fi
+        """
