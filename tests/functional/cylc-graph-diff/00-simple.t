@@ -83,15 +83,15 @@ cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 --- ${DIFF_WORKFLOW_NAME}
 +++ ${CONTROL_WORKFLOW_NAME}
 @@ -1,7 +1,7 @@
--edge FOO bar
--edge FOO baz
- edge FOO foo
- edge root FOO
-+edge root bar
-+edge root baz
- edge root cold_foo
+-edge "FOO" "bar"
+-edge "FOO" "baz"
+ edge "FOO" "foo"
+ edge "root" "FOO"
++edge "root" "bar"
++edge "root" "baz"
+ edge "root" "cold_foo"
  graph
- node FOO FOO
+ node "FOO" "FOO"
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------

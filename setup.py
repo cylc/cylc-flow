@@ -102,6 +102,9 @@ extra_requires = {
     'main_loop-log_memory': [
         'pympler',
         'matplotlib',
+    ],
+    'graph': [
+        'pillow'
     ]
 }
 extra_requires['all'] = (

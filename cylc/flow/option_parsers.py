@@ -252,13 +252,6 @@ TASK_GLOB matches task or family names at a given cycle point.
                 )
             )
 
-        if self.prep:
-            self.add_std_option(
-                "--workflow-owner",
-                help="Specify workflow owner",
-                metavar="OWNER", action="store", default=None,
-                dest="workflow_owner")
-
         if self.comms:
             self.add_std_option(
                 "--comms-timeout", metavar='SEC',

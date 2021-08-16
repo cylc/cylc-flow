@@ -52,12 +52,19 @@ ones in. -->
 
 Fourth beta release of Cylc 8.
 
+`suite owner` and `workflow owner` option option has been removed.
+
 (See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
 
-[#4335](https://github.com/cylc/cylc-flow/pull/4335) - have validation catch
-erroneous use of both `expr => bar` and `expr => !bar` in the same graph.
+[#4324](https://github.com/cylc/cylc-flow/pull/4324) -
+Re-implement a basic form of the Cylc 7 `cylc graph` command for static
+graph visualisation.
+
+[#4335](https://github.com/cylc/cylc-flow/pull/4335) -
+Have validation catch erroneous use of both `expr => bar` and `expr => !bar` in
+the same graph.
 
 [#4285](https://github.com/cylc/cylc-flow/pull/4285) - Cylc now automatically
 infers the latest numbered run of the workflow for most commands (e.g. you can

@@ -18,12 +18,13 @@
 
 """cylc graph [OPTIONS] ARGS
 
-A text-based graph representation of workflow dependencies.
-
-Implements the old ``cylc graph --reference command`` for producing a textual
-graph of a workflow.
+Produces graphical and textural representations of workflow dependencies.
 
 Examples:
+    # generate a graphical representation of workflow dependencies
+    # (requires graphviz to be installed in the Cylc environment)
+    $ cylc graph one
+
     # print a textual representation of the graph of the flow one
     $ cylc graph one --reference
 
@@ -32,8 +33,12 @@ Examples:
 """
 
 from difflib import unified_diff
+import re
+from shutil import which
+from subprocess import Popen, PIPE
 import sys
-from typing import Callable, List, Optional, TYPE_CHECKING, Tuple
+from tempfile import NamedTemporaryFile
+from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
@@ -151,12 +156,12 @@ def graph_inheritance(config, write=print):
         nodes.add(namespace)
 
     for edge in sorted(edges):
-        write('edge %s %s' % edge)
+        write('edge "%s" "%s"' % edge)
 
     write('graph')
 
     for node in sorted(nodes):
-        write('node %s %s' % (node, node))
+        write('node "%s" "%s"' % (node, node))
 
     write('stop')
 
@@ -191,6 +196,30 @@ def get_option_parser():
         action='append', default=[], dest='grouping')
 
     parser.add_option(
+        '-c', '--cycles',
+        help='Group tasks by cycle point.',
+        action='store_true',
+        default=False,
+    )
+
+    parser.add_option(
+        '-t', '--transpose',
+        help='Transpose graph.',
+        action='store_true',
+        default=False,
+    )
+
+    parser.add_option(
+        '-o',
+        help=(
+            'Output the graph to a file. The file extension determines the'
+            ' format.'
+        ),
+        action='store',
+        dest='output'
+    )
+
+    parser.add_option(
         '-n', '--namespaces',
         help='Plot the workflow namespace inheritance hierarchy '
              '(task run time properties).',
@@ -222,6 +251,106 @@ def get_option_parser():
     return parser
 
 
+def dot(opts, lines):
+    """Render a graph using graphviz 'dot'.
+
+    This crudely re-parses the output of the reference output for simplicity.
+
+    This functionality will be replaced by the GUI.
+
+    """
+    if not which('dot'):
+        sys.exit('Graphviz must be installed to render graphs.')
+
+    # set filename and output format
+    if opts.output:
+        filename = opts.output
+        try:
+            fmt = filename.rsplit('.', 1)[1]
+        except IndexError:
+            sys.exit('Output filename requires a format.')
+    else:
+        filename = NamedTemporaryFile().name
+        fmt = 'png'
+
+    # scrape nodes and edges from the reference output
+    node = re.compile(r'node "(.*)" "(.*)"')
+    edge = re.compile(r'edge "(.*)" "(.*)"')
+    nodes = {}
+    edges = []
+    for line in lines:
+        match = node.match(line)
+        if match:
+            if opts.namespaces:
+                task = match.group(1)
+                cycle = ''
+            else:
+                task, cycle = match.group(1).split('.')
+                nodes.setdefault(cycle, []).append(task)
+            continue
+        match = edge.match(line)
+        if match:
+            edges.append(match.groups())
+
+    # write graph header
+    dot = [
+        'digraph {',
+        '  graph [fontname="sans" fontsize="25"]',
+        '  node [fontname="sans"]',
+    ]
+    if opts.transpose:
+        dot.append('  rankdir="LR"')
+    if opts.namespaces:
+        dot.append('  node [shape="rect"]')
+
+    # write nodes
+    for cycle, tasks in nodes.items():
+        if opts.cycles:
+            dot.extend(
+                [
+                    f'  subgraph "cluster_{cycle}" {{ ',
+                    f'    label="{cycle}"',
+                    '    style="dashed"',
+                ]
+            )
+        dot.extend(
+            rf'    "{task}.{cycle}" [label="{task}\n{cycle}"]'
+            for task in tasks
+        )
+        dot.append('  }' if opts.cycles else '')
+
+    # write edges
+    for left, right in edges:
+        dot.append(f'  "{left}" -> "{right}"')
+
+    # close graph
+    dot.append('}')
+
+    # render graph
+    proc = Popen(
+        ['dot', f'-T{fmt}', '-o', filename],
+        stdin=PIPE,
+        text=True
+    )
+    proc.communicate('\n'.join(dot))
+    proc.wait()
+    if proc.returncode:
+        sys.exit('Graphing Failed')
+
+    return filename
+
+
+def gui(filename):
+    """Open the rendered image file."""
+    try:
+        from PIL import Image
+    except ModuleNotFoundError:
+        print(f'Graph rendered to {filename}')
+    else:
+        img = Image.open(filename)
+        img.show()
+
+
 @cli_function(get_option_parser)
 def main(
     parser: COP,
@@ -233,12 +362,13 @@ def main(
     """Implement ``cylc graph``."""
     if opts.grouping and opts.namespaces:
         raise UserInputError('Cannot combine --group and --namespaces.')
-    if not (opts.reference or opts.diff):
-        raise UserInputError(
-            'Only the --reference and --diff use cases are supported'
-        )
 
-    write: Callable = print
+    lines: List[str] = []
+    if not (opts.reference or opts.diff):
+        write = lines.append
+    else:
+        write = print
+
     flows: List[Tuple[str, List[str]]] = [(workflow, [])]
     if opts.diff:
         flows.append((opts.diff, []))
@@ -250,11 +380,17 @@ def main(
         if opts.namespaces:
             graph_inheritance(config, write=write)
         else:
-            graph_workflow(config, start, stop, grouping=opts.grouping,
-                           show_suicide=opts.show_suicide, write=write)
+            graph_workflow(
+                config,
+                start,
+                stop,
+                grouping=opts.grouping,
+                show_suicide=opts.show_suicide,
+                write=write
+            )
 
     if opts.diff:
-        lines = list(
+        diff_lines = list(
             unified_diff(
                 [f'{line}\n' for line in flows[0][1]],
                 [f'{line}\n' for line in flows[1][1]],
@@ -263,9 +399,16 @@ def main(
             )
         )
 
-        if lines:
-            sys.stdout.writelines(lines)
+        if diff_lines:
+            sys.stdout.writelines(diff_lines)
             sys.exit(1)
+
+    if not (opts.reference or opts.diff):
+        filename = dot(opts, lines)
+        if opts.output:
+            print(f'Graph rendered to {opts.output}')
+        else:
+            gui(filename)
 
 
 if __name__ == '__main__':
