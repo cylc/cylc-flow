@@ -747,6 +747,11 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
         remove_empty_parents(target, Path(reg, symlink))
 
+    # Remove `runN` symlink if it's now broken
+    runN = run_dir.parent / 'runN'
+    if runN.is_symlink() and runN.readlink() == Path(run_dir.stem):
+        runN.unlink()
+
 
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
     """Return the standard symlink dirs and their targets if they exist in

@@ -40,6 +40,7 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
+    clean,
     get_rsync_rund_cmd,
     get_symlink_dirs,
     is_installed,
@@ -1523,3 +1524,24 @@ def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
         '--exclude=log', '--exclude=work', '--exclude=share',
         '--exclude=_cylc-install', '--exclude=.service',
         'blah/', f'{cylc_run_dir}/']
+
+
+@pytest.mark.parametrize(
+    'expect, dirs',
+    [
+        (['run1'], ['run1', 'run2']),
+        (['run1', 'run11'], ['run1', 'run11', 'run2']),
+        (['run1200'], ['run1200', 'run1201']),
+        (['foo'], ['foo', 'bar']),
+    ]
+)
+def test_delete_runN(tmp_path, expect, dirs):
+    """It deletes the runN symlink.
+    """
+    import re
+    for dir_ in dirs:
+        (tmp_path / dir_).mkdir()
+    if re.findall('run\d*', dirs[-1]):
+        (Path(tmp_path / 'runN')).symlink_to(dirs[-1])
+    clean(str(tmp_path.stem) + '/' + dirs[-1], tmp_path / dirs[-1])
+    assert [i.stem for i in tmp_path.glob('*')] == expect
