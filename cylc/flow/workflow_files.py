@@ -749,7 +749,10 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
 
     # Remove `runN` symlink if it's now broken
     runN = run_dir.parent / 'runN'
-    if runN.is_symlink() and runN.readlink() == Path(run_dir.stem):
+    if (
+        runN.is_symlink() and
+        os.readlink(str(runN)) == str(Path(run_dir.stem))
+    ):
         runN.unlink()
 
 
