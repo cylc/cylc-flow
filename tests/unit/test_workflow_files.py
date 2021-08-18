@@ -19,6 +19,7 @@ import logging
 import os
 from pathlib import Path
 import pytest
+import re
 import shutil
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
 from unittest import mock
@@ -1538,10 +1539,18 @@ def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
 def test_delete_runN(tmp_path, expect, dirs):
     """It deletes the runN symlink.
     """
-    import re
     for dir_ in dirs:
         (tmp_path / dir_).mkdir()
     if re.findall('run\d*', dirs[-1]):
         (Path(tmp_path / 'runN')).symlink_to(dirs[-1])
-    clean(str(tmp_path.stem) + '/' + dirs[-1], tmp_path / dirs[-1])
+    clean(str(tmp_path.name) + '/' + dirs[-1], tmp_path / dirs[-1])
     assert sorted([i.stem for i in tmp_path.glob('*')]) == sorted(expect)
+
+
+def test_delete_runN_skipif_cleanedrun_not_runN(tmp_path):
+    """It doesn't delete the symlink dir to be cleaned is not runN"""
+    for folder in ['run1', 'run2']:
+        (tmp_path / folder).mkdir()
+    (tmp_path / 'runN').symlink_to(tmp_path / 'run2')
+    clean(str(tmp_path.name) + '/' + 'run1', tmp_path / 'run1')
+    assert sorted([i.stem for i in tmp_path.glob('*')]) == ['run2', 'runN']
