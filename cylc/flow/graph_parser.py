@@ -154,7 +154,7 @@ class GraphParser:
         \s+                     # do not allow 'task<space>task'
         ''' + TaskID.NAME_SUFFIX_RE, re.X)
 
-    # Match @actions.
+    # Match @actions (xtriggers, and more to come?).
     REC_ACTION = re.compile(r'@[\w\-+%]+')
 
     # Match fully qualified parameterized single nodes.
@@ -279,7 +279,7 @@ class GraphParser:
             this_line = non_blank_lines[i]
             if i == 0 and this_line.startswith(self.__class__.ARROW):
                 # First line can't start with an arrow.
-                raise GraphParseError("leading arrow: %s" % this_line)
+                raise GraphParseError(f"Leading arrow: {this_line}")
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
@@ -287,7 +287,7 @@ class GraphParser:
                 if this_line.endswith(self.__class__.ARROW):
                     # Last line can't end with an arrow.
                     raise GraphParseError(
-                        "trailing arrow: %s" % this_line)
+                        f"Trailing arrow: {this_line}")
             part_lines.append(this_line)
             if (
                 this_line.endswith(self.__class__.ARROW) or
@@ -319,12 +319,12 @@ class GraphParser:
         for line in full_lines:
             if self.__class__.OP_AND_ERR in line:
                 raise GraphParseError(
-                    "the graph AND operator is '%s': %s" % (
-                        self.__class__.OP_AND, line))
+                    "The graph AND operator is "
+                    f"'{self.__class__.OP_AND}': {line}")
             if self.__class__.OP_OR_ERR in line:
                 raise GraphParseError(
-                    "the graph OR operator is '%s': %s" % (
-                        self.__class__.OP_OR, line))
+                    "The graph OR operator is "
+                    f"'{self.__class__.OP_OR}: {line}")
             # Check node syntax. First drop all non-node characters.
             node_str = line
             for spec in [
@@ -431,13 +431,13 @@ class GraphParser:
         """
         # Raise error for right-hand-side OR operators.
         if right and self.__class__.OP_OR in right:
-            raise GraphParseError("illegal OR on RHS: %s" % right)
+            raise GraphParseError(f"Illegal OR on right side: {right}")
 
         # Raise error if suicide triggers on the left of the trigger.
         if left and self.__class__.SUICIDE in left:
             raise GraphParseError(
-                "suicide markers must be"
-                " on the right of a trigger: %s" % left)
+                "Suicide markers must be"
+                f" on the right of a trigger: {left}")
 
         # Ignore cycle point offsets on the right side.
         # (Note we can't ban this; all nodes get process as left and right.)
@@ -453,7 +453,7 @@ class GraphParser:
         rights = right.split(self.__class__.OP_AND)
         if '' in rights or right and not all(rights):
             raise GraphParseError(
-                "null task name in graph: %s => %s" % (left, right))
+                f"Null task name in graph: {left} => {right}")
 
         if not left or (self.__class__.OP_OR in left or '(' in left):
             # Treat conditional or bracketed expressions as a single entity.
@@ -463,7 +463,7 @@ class GraphParser:
             lefts = left.split(self.__class__.OP_AND)
         if '' in lefts or left and not all(lefts):
             raise GraphParseError(
-                "null task name in graph: %s => %s" % (left, right))
+                f"Null task name in graph: {left} => {right}")
 
         for left in lefts:
             # Extract information about all nodes on the left.
@@ -506,7 +506,9 @@ class GraphParser:
                     n_trig = TASK_OUTPUT_SUCCEEDED
                     if offset:
                         this = r'\b%s\b%s(?!:)' % (
-                            re.escape(name), re.escape(offset))
+                            re.escape(name),
+                            re.escape(offset)
+                        )
                     else:
                         this = r'\b%s\b(?![\[:])' % re.escape(name)
                     that = f"{name}{offset}:{n_trig}"
@@ -535,7 +537,7 @@ class GraphParser:
                     # Not family
                     if trig in self.__class__.fam_trigger_map:
                         raise GraphParseError("family trigger on non-"
-                                              "family namespace %s" % expr)
+                                              f"family namespace {expr}")
 
             # remove '?' from expr (not needed in logical trigger evaluation!)
             expr = re.sub(self.__class__._RE_OPT, '', expr)
@@ -555,8 +557,12 @@ class GraphParser:
                 m_expr = []
                 for mem in self.family_map[name]:
                     m_info.append((mem, offset, ttype))
-                    m_expr.append("%s%s:%s" % (mem, offset, ttype))
-                this = r'\b%s%s:%s\b' % (name, re.escape(offset), trig)
+                    m_expr.append(f"{mem}{offset}:{ttype}")
+                this = r'\b%s%s:%s\b' % (
+                    name,
+                    re.escape(offset),
+                    trig
+                )
                 if mem_all:
                     that = '(%s)' % '&'.join(m_expr)
                 else:
