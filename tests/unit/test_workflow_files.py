@@ -1544,4 +1544,4 @@ def test_delete_runN(tmp_path, expect, dirs):
     if re.findall('run\d*', dirs[-1]):
         (Path(tmp_path / 'runN')).symlink_to(dirs[-1])
     clean(str(tmp_path.stem) + '/' + dirs[-1], tmp_path / dirs[-1])
-    assert [i.stem for i in tmp_path.glob('*')] == expect
+    assert sorted([i.stem for i in tmp_path.glob('*')]) == sorted(expect)
