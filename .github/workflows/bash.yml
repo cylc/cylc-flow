@@ -40,10 +40,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Build Docker container
+      - name: Run Docker container
         run: |
-          docker build -t bash:test  -m 1G --memory-swap 1G dockerfiles/bash/
-          docker run --name bash -v $(pwd -P):/root/cylc-flow --rm -t -d -m 1G --memory-swap 1G bash:test /bin/bash
+          docker pull ghcr.io/cylc/cylc-bash-testing:master
+          docker run --name bash -v $(pwd -P):/root/cylc-flow --rm -t -d -m 1G --memory-swap 1G ghcr.io/cylc/cylc-bash-testing:master /bin/bash
           docker ps -a
 
       - name: Install Cylc dependencies in the container
