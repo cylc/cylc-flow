@@ -191,6 +191,7 @@ def test_clean_check__fail(
     assert err_msg in str(exc.value)
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'db_platforms, opts, clean_called, remote_clean_called',
     [
@@ -240,6 +241,7 @@ def test_init_clean(
     assert mock_remote_clean.called is remote_clean_called
 
 
+@pytest.mark.asyncio
 def test_init_clean__no_dir(
     monkeymock: MonkeyMock, tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
@@ -256,6 +258,7 @@ def test_init_clean__no_dir(
     assert mock_remote_clean.called is False
 
 
+@pytest.mark.asyncio
 def test_init_clean__no_db(
     monkeymock: MonkeyMock, tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
@@ -272,6 +275,7 @@ def test_init_clean__no_db(
     assert mock_remote_clean.called is False
 
 
+@pytest.mark.asyncio
 def test_init_clean__remote_only_no_db(
     monkeymock: MonkeyMock, tmp_run_dir: Callable
 ) -> None:
@@ -288,6 +292,7 @@ def test_init_clean__remote_only_no_db(
     assert mock_remote_clean.called is False
 
 
+@pytest.mark.asyncio
 def test_init_clean__running_workflow(
     monkeypatch: pytest.MonkeyPatch, tmp_run_dir: Callable
 ) -> None:
@@ -303,6 +308,7 @@ def test_init_clean__running_workflow(
     assert "Cannot remove running workflow" in str(exc.value)
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize('number_of_runs', [1, 2])
 @pytest.mark.parametrize(
     'force_opt',
@@ -347,6 +353,7 @@ def test_init_clean__multiple_runs(
         ]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'rm_dirs, expected_clean, expected_remote_clean',
     [(None, None, []),
