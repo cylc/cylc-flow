@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,23 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Fail on null task name!
-
+#-------------------------------------------------------------------------------
+# Test validation of an empty graph.
 . "$(dirname "$0")/test_header"
-
-set_test_number 10
-
-for GRAPH in 't1 => & t2' 't1 => t2 &' '& t1 => t2' 't1 & => t2' 't1 => => t2'
-do
-    cat >'flow.cylc' <<__FLOW_CONFIG__
-[scheduling]
-    [[graph]]
-        R1 = ${GRAPH}
-__FLOW_CONFIG__
-    run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
-    grep_ok 'GraphParseError: null task name in graph: ' \
-        "${TEST_NAME_BASE}.stderr"
-done
-
+#-------------------------------------------------------------------------------
+set_test_number 2
+#-------------------------------------------------------------------------------
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+#-------------------------------------------------------------------------------
+TEST_NAME=${TEST_NAME_BASE}
+run_fail "${TEST_NAME}" cylc validate -v "${WORKFLOW_NAME}"
+grep_ok "No workflow dependency graph defined\." "${TEST_NAME}.stderr"
+#-------------------------------------------------------------------------------
+purge
 exit
