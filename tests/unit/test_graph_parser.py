@@ -31,22 +31,57 @@ class TestGraphParser(unittest.TestCase):
         self.parser = GraphParser()
 
     def test_parse_graph_fails_if_starts_with_arrow(self):
-        """Test that the graph parse will fail when the graph starts with an
-        arrow."""
+        """Test fail when the graph starts with an arrow."""
         with self.assertRaises(GraphParseError):
             self.parser.parse_graph("=> b")
 
     def test_parse_graph_fails_if_ends_with_arrow(self):
-        """Test that the graph parse will fail when the graph ends with an
-        arrow."""
+        """Test fail when the graph ends with an arrow."""
         with self.assertRaises(GraphParseError):
             self.parser.parse_graph("a =>")
 
     def test_parse_graph_fails_with_spaces_in_task_name(self):
-        """Test that the graph parse will fail when the task name contains
-        spaces."""
+        """Test fail when the task name contains spaces."""
         with self.assertRaises(GraphParseError):
             self.parser.parse_graph("a b => c")
+
+    def test_parse_graph_fails_null_task_name(self):
+        """Test fail null task names."""
+
+        for graph in (
+            't1 => & t2',
+            't1 => t2 &',
+            '& t1 => t2',
+            't1 & => t2',
+            't1 => => t2'
+        ):
+            with self.assertRaises(GraphParseError) as cm:
+                self.parser.parse_graph(graph)
+            self.assertTrue(
+                str(cm.exception).startswith(
+                    "Null task name in graph:"
+                )
+            )
+
+    def test_parse_graph_fails_suicide_on_left(self):
+        """Test fail with suicide trigger on the left."""
+        with self.assertRaises(GraphParseError) as cm:
+            self.parser.parse_graph("!foo => bar")
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "Suicide markers must be on the right of a trigger:"
+            )
+        )
+
+    def test_parse_graph_fails_mismatched_paren(self):
+        """Test fail mismatched parentheses."""
+        with self.assertRaises(GraphParseError) as cm:
+            self.parser.parse_graph("( foo & bar => baz")
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "Mismatched parentheses in:"
+            )
+        )
 
     def test_parse_graph_fails_with_suicide_and_not_suicide(self):
         """Test graph parser fails with both "expr => !foo"
@@ -58,17 +93,25 @@ class TestGraphParser(unittest.TestCase):
                    (a | b & c) => !d
                 """)
 
-    def test_parse_graph_fails_with_invalid_and_operator(self):
-        """Test that the graph parse will fail when the and operator is not
-        correctly used."""
-        with self.assertRaises(GraphParseError):
-            self.parser.parse_graph("a => c &&")
+    def test_parse_graph_fails_double_and_operator(self):
+        """Test incorrect double-& AND operator fails."""
+        with self.assertRaises(GraphParseError) as cm:
+            self.parser.parse_graph("a => c && b")
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "The graph AND operator is '&'"
+            )
+        )
 
-    def test_parse_graph_fails_with_invalid_or_operator(self):
+    def test_parse_graph_fails_double_or_operator(self):
         """Test that the graph parse will fail when the or operator is not
         correctly used."""
-        with self.assertRaises(GraphParseError):
-            self.parser.parse_graph("a => c ||")
+        with self.assertRaises(GraphParseError) as cm:
+            self.parser.parse_graph("a => c || d")
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "The graph OR operator is '|'")
+        )
 
     def test_parse_graph_simple(self):
         """Test parsing graphs."""
