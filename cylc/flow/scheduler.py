@@ -616,7 +616,6 @@ class Scheduler:
         Lightweight wrapper for convenience.
 
         """
-        LOG.critical("PURPLE GIRAFFES")
         try:
             await self.initialise()
             await self.configure()
