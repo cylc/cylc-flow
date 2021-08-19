@@ -2,10 +2,28 @@
 name: bash
 
 on:
-  pull_request:
   workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/bash.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
   push:
     branches: [master]
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/bash.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
 
 jobs:
   bash-docker:
