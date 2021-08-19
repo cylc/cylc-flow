@@ -173,6 +173,8 @@ class JobFileWriter:
         for key, value in verbosity_to_env(cylc.flow.flags.verbosity).items():
             handle.write(f'\nexport {key}={value}')
         handle.write("\nexport CYLC_VERSION='%s'" % CYLC_VERSION)
+        handle.write(
+            "\nexport CYLC_ENV_NAME='%s'" % os.getenv('CYLC_ENV_NAME'))
         env_vars = (
             (job_conf['platform']['copyable environment variables'] or [])
             # pass CYLC_COVERAGE into the job execution environment
