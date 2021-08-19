@@ -135,7 +135,10 @@ def test_get_template_vars_src_flow(
 
             def resolve():
                 def _inner(srcdir, opts):
-                    return {'template_variables': {'MYVAR': 'foo'}}
+                    return {
+                        'template_variables': {'MYVAR': 'foo'},
+                        'templating_detected': 'lazyman'
+                    }
                 return _inner
         return [fake_ep]
 

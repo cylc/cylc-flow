@@ -22,6 +22,7 @@ from typing import Any, Dict
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import UserInputError, PluginError
+from cylc.flow.parsec.fileparse import merge_template_vars
 from cylc.flow.pathutil import get_cylc_run_dir, is_relative_to
 from cylc.flow.workflow_files import is_installed
 
@@ -109,7 +110,8 @@ def get_template_vars(options: Values, flow_file: Path) -> Dict[str, Any]:
             ep_result = entry_point.resolve()(
                 srcdir=source, opts=options
             )
-            template_vars.update(ep_result['template_variables'])
+            template_vars = merge_template_vars(
+                template_vars, ep_result)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
