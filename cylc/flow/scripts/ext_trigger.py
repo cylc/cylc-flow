@@ -34,14 +34,18 @@ Use the retry options in case the target workflow is down or out of contact.
 
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
-import os.path
 from time import sleep
+from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, ClientError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 MAX_N_TRIES = 5
@@ -89,8 +93,14 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow, event_msg, event_id):
-    workflow = os.path.normpath(workflow)
+def main(
+    parser: COP,
+    options: 'Values',
+    workflow: str,
+    event_msg: str,
+    event_id: str
+) -> None:
+    workflow = parse_reg(workflow)
     LOG.info('Send to workflow %s: "%s" (%s)', workflow, event_msg, event_id)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 

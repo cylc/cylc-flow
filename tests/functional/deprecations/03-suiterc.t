@@ -38,7 +38,7 @@ init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
         R1 = foo => bar
 __FLOW__
 
-MSG='The filename "suite.rc" is deprecated in favour of "flow.cylc"'
+MSG="The filename 'suite.rc' is deprecated in favour of 'flow.cylc'"
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .

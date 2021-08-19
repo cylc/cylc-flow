@@ -24,7 +24,7 @@ from shutil import rmtree
 from typing import List, TYPE_CHECKING, Tuple
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.rundb import CylcWorkflowDAO
 
@@ -80,7 +80,7 @@ def _pytest_passed(request: pytest.FixtureRequest) -> bool:
 @pytest.fixture(scope='session')
 def run_dir():
     """The cylc run directory for this host."""
-    path = Path(get_workflow_run_dir(''))
+    path = Path(get_cylc_run_dir())
     path.mkdir(exist_ok=True)
     yield path
 

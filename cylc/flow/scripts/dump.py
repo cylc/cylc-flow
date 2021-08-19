@@ -34,15 +34,20 @@ Examples:
   # Display the state of all tasks in a particular cycle point:
   $ cylc dump -t WORKFLOW | grep 2010082406"""
 
-from cylc.flow.network.client_factory import get_client
-import sys
-import json
-
 from graphene.utils.str_converters import to_snake_case
+import json
+import sys
+from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client_factory import get_client
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 TASK_SUMMARY_FRAGMENT = '''
 fragment tProxy on TaskProxy {
@@ -166,7 +171,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, workflow):
+def main(_, options: 'Values', workflow: str) -> None:
+    workflow = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.sort_by_cycle:

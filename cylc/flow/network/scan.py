@@ -66,7 +66,7 @@ from cylc.flow.network.client import (
     ClientTimeout,
     WorkflowRuntimeClient,
 )
-from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
     ContactFileFields,
@@ -162,7 +162,7 @@ async def scan(
         dict - Dictionary containing information about the flow.
 
     """
-    cylc_run_dir = Path(get_workflow_run_dir(''))
+    cylc_run_dir = Path(get_cylc_run_dir())
     if not run_dir:
         run_dir = cylc_run_dir
     if not scan_dir:

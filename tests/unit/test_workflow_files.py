@@ -36,6 +36,8 @@ from cylc.flow.exceptions import (
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
+    REG_CLASH_MSG,
+    SUITERC_DEPR_MSG,
     WorkflowFiles,
     _clean_using_glob,
     _remote_clean_cmd,
@@ -48,6 +50,8 @@ from cylc.flow.workflow_files import (
     parse_cli_sym_dirs,
     get_workflow_source_dir,
     glob_in_run_dir,
+    infer_latest_run,
+    parse_reg,
     reinstall_workflow,
     search_install_source_dirs
 )
@@ -140,16 +144,348 @@ def test_check_nested_run_dirs_children(tmp_run_dir: Callable):
     [('foo/bar/', None, None),
      ('/foo/bar', WorkflowFilesError, "cannot be an absolute path"),
      ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
-     ('./foo', WorkflowFilesError, "invalid workflow name")]
+     ('./foo', WorkflowFilesError, "invalid workflow name"),
+     ('meow/..', WorkflowFilesError,
+      "cannot be a path that points to the cylc-run directory or above")]
 )
-def test_validate_flow_name(reg, expected_err, expected_msg):
+def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            workflow_files.validate_flow_name(reg)
+            workflow_files.validate_workflow_name(reg)
         if expected_msg:
             assert expected_msg in str(exc.value)
     else:
-        workflow_files.validate_flow_name(reg)
+        workflow_files.validate_workflow_name(reg)
+
+
+@pytest.mark.parametrize(
+    'path, expected_reg',
+    [
+        ('{cylc_run}/numbered/workflow', 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow/runN', 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow/run1', 'numbered/workflow/run1'),
+        ('{cylc_run}/non_numbered/workflow', 'non_numbered/workflow')
+    ]
+)
+def test_infer_latest_run(
+    path: str,
+    expected_reg: str,
+    tmp_run_dir: Callable,
+) -> None:
+    """Test infer_latest_run().
+
+    Params:
+        path: Input arg.
+        expected_reg: The reg part of the expected returned tuple.
+    """
+    # Setup
+    cylc_run_dir: Path = tmp_run_dir()
+
+    run_dir = cylc_run_dir / 'numbered' / 'workflow'
+    run_dir.mkdir(parents=True)
+    (run_dir / 'run1').mkdir()
+    (run_dir / 'run2').mkdir()
+    (run_dir / 'runN').symlink_to('run2')
+
+    run_dir = cylc_run_dir / 'non_numbered' / 'workflow' / 'named_run'
+    run_dir.mkdir(parents=True)
+
+    path: Path = Path(path.format(cylc_run=cylc_run_dir))
+    expected = (cylc_run_dir / expected_reg, Path(expected_reg))
+
+    # Test
+    assert infer_latest_run(path) == expected
+
+
+@pytest.mark.parametrize(
+    'reason',
+    ['not dir', 'not symlink', 'broken symlink', 'invalid target']
+)
+def test_infer_latest_run__bad(
+    reason: str,
+    tmp_run_dir: Callable
+) -> None:
+    # -- Setup --
+    cylc_run_dir: Path = tmp_run_dir()
+    run_dir = cylc_run_dir / 'sulu'
+    run_dir.mkdir()
+    runN_path = run_dir / 'runN'
+    err_msg = f"runN directory at {runN_path} is a broken or invalid symlink"
+    if reason == 'not dir':
+        (run_dir / 'run1').touch()
+        runN_path.symlink_to('run1')
+    elif reason == 'not symlink':
+        runN_path.mkdir()
+    elif reason == 'broken symlink':
+        runN_path.symlink_to('run1')
+    elif reason == 'invalid target':  # noqa: SIM106
+        (run_dir / 'palpatine').mkdir()
+        runN_path.symlink_to('palpatine')
+        err_msg = (
+            f"runN symlink at {runN_path} points to invalid "
+            "location: palpatine"
+        )
+    else:
+        raise ValueError(reason)
+    # -- Test --
+    with pytest.raises(WorkflowFilesError) as exc:
+        infer_latest_run(run_dir)
+    assert str(exc.value) == err_msg
+
+
+@pytest.fixture(scope='module')
+def setup__test_parse_reg(mod_tmp_run_dir: Callable):
+    """Setup for test_parse_reg().
+
+    Returns dict of template vars tmp_path, cylc_run_dir and cwd.
+    """
+    cylc_run_dir: Path = mod_tmp_run_dir()
+    numbered_workflow = cylc_run_dir / 'numbered' / 'workflow'
+    (numbered_workflow / 'run1').mkdir(parents=True)
+    (numbered_workflow / 'run1' / 'flow.cylc').touch()
+    (numbered_workflow / 'runN').symlink_to('run1')
+    non_numbered_workflow = cylc_run_dir / 'non_numbered' / 'workflow'
+    non_numbered_workflow.mkdir(parents=True)
+    (non_numbered_workflow / 'flow.cylc').touch()
+    (cylc_run_dir / 'empty').mkdir()
+    tmp_path = cylc_run_dir.parent
+    (tmp_path / 'random_file.cylc').touch()
+    mock_cwd = tmp_path / 'mock-cwd'
+    mock_cwd.mkdir()
+    (mock_cwd / 'flow.cylc').touch()
+
+    def _setup__test_parse_reg() -> Dict[str, Path]:
+        return {
+            'cylc_run_dir': cylc_run_dir,
+            'tmp_path': tmp_path,
+            'cwd': mock_cwd
+        }
+
+    orig_cwd = os.getcwd()
+    os.chdir(mock_cwd)
+    yield _setup__test_parse_reg
+    os.chdir(orig_cwd)
+
+
+@pytest.mark.parametrize('src', [True, False])
+@pytest.mark.parametrize(
+    'reg, expected_reg, expected_path',
+    [
+        pytest.param(
+            'numbered/workflow',
+            'numbered/workflow/run1',
+            '{cylc_run_dir}/numbered/workflow/run1/flow.cylc',
+            id="numbered workflow"
+        ),
+        pytest.param(
+            'numbered/workflow/runN',
+            'numbered/workflow/run1',
+            '{cylc_run_dir}/numbered/workflow/run1/flow.cylc',
+            id="numbered workflow targeted by runN"
+        ),
+        pytest.param(
+            'non_numbered/workflow',
+            'non_numbered/workflow',
+            '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
+            id="non-numbered workflow"
+        ),
+    ]
+)
+def test_parse_reg__ok(
+    src: bool,
+    reg: str,
+    expected_reg: str,
+    expected_path: str,
+    setup__test_parse_reg: Callable
+) -> None:
+    """Test parse_reg() with relative reg.
+
+    Params:
+        src: Arg passed to parse_reg().
+        reg: Arg passed to parse_reg().
+        expected_reg: Expected reg returned for both src=True|False.
+        expected_path: Expected path returned for src=True only.
+    """
+    paths: dict = setup__test_parse_reg()
+    expected: Union[str, Tuple[str, Path]]
+    expected_reg = expected_reg.format(**paths)
+    if src:
+        expected_path = expected_path.format(**paths)
+        expected = (expected_reg, Path(expected_path))
+    else:
+        expected = expected_reg
+    assert parse_reg(reg, src) == expected
+
+
+@pytest.mark.parametrize(
+    'args, expected_reg, expected_path, expected_err_msg',
+    [
+        pytest.param(
+            ('non_exist', False),
+            'non_exist',
+            None,
+            None,
+            id="non-existent workflow, src=False"
+        ),
+        pytest.param(
+            ('non_exist', True),
+            None,
+            None,
+            "no flow.cylc or suite.rc in ",
+            id="non-existent workflow, src=True"
+        ),
+        pytest.param(
+            ('empty', True),
+            None,
+            None,
+            "no flow.cylc or suite.rc in ",
+            id="empty run dir, src=True"
+        ),
+        pytest.param(
+            ('.', False),
+            None,
+            None,
+            "invalid workflow name",
+            id="dot for cwd, src=False"
+        ),
+        pytest.param(
+            ('.', True),
+            '{cwd}',
+            '{cwd}/flow.cylc',
+            None,
+            id="dot for cwd, src=True"
+        ),
+        pytest.param(
+            ('non_numbered/workflow/flow.cylc', False),
+            None,
+            None,
+            "Workflow name must refer to a directory, not a file",
+            id="reg refers to a file, src=False"
+        ),
+        pytest.param(
+            ('non_numbered/workflow/flow.cylc', True),
+            'non_numbered/workflow',
+            '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
+            None,
+            id="reg refers to a file, src=True"
+        ),
+        pytest.param(
+            ('{cylc_run_dir}/non_numbered/workflow', False),
+            None,
+            None,
+            "workflow name cannot be an absolute path",
+            id="reg is absolute path, src=False"
+        ),
+        pytest.param(
+            ('{cylc_run_dir}/non_numbered/workflow', True),
+            'non_numbered/workflow',
+            '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
+            None,
+            id="reg is absolute path, src=True"
+        ),
+        pytest.param(
+            ('{tmp_path}/random_file.cylc', True),
+            '{tmp_path}',
+            '{tmp_path}/random_file.cylc',
+            None,
+            id="reg is absolute path not in ~/cylc-run, src=True"
+        ),
+        pytest.param(
+            ('foo/../../random_file.cylc', False),
+            None,
+            None,
+            "cannot be a path that points to the cylc-run directory or above",
+            id="reg points to path above, src=False"
+        ),
+        pytest.param(
+            ('foo/../../random_file.cylc', True),
+            '{tmp_path}',
+            '{tmp_path}/random_file.cylc',
+            None,
+            id="reg points to path above, src=True"
+        ),
+        # # TODO more tests cases
+    ]
+)
+def test_parse_reg__various(
+    args: Tuple[str, bool],
+    expected_reg: Optional[str],
+    expected_path: Optional[str],
+    expected_err_msg: Optional[str],
+    setup__test_parse_reg: Callable
+) -> None:
+    """Test parse_reg() with various combinations of reg and src.
+
+    Params:
+        args: Args passed to parse_reg().
+        expected_reg: Expected reg returned for both src=True|False.
+        expected_path: Expected path returned for src=True only.
+        expected_err_msg: If an exception is expected, text that is expected
+            to be contained in the message.
+    """
+    paths: Dict[str, Path] = setup__test_parse_reg()
+    reg, src = args
+    reg = reg.format(**paths)
+
+    if expected_err_msg:
+        with pytest.raises(WorkflowFilesError) as exc_info:
+            parse_reg(reg, src)
+        assert expected_err_msg in str(exc_info.value)
+    else:
+        expected: Union[str, Tuple[str, Path]]
+        assert expected_reg is not None
+        expected_reg = expected_reg.format(**paths)
+        if src:
+            assert expected_path is not None
+            expected_path = expected_path.format(**paths)
+            expected = (expected_reg, Path(expected_path))
+        else:
+            expected = expected_reg
+        assert parse_reg(reg, src) == expected
+
+
+@pytest.mark.parametrize(
+    'reg_includes_flow_file', [True, False]
+)
+def test_parse_reg__clash(
+    reg_includes_flow_file: bool,
+    tmp_run_dir: Callable, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test parse_reg() with src=True and a reg that exists both under cwd
+    and ~/cylc-run
+
+    Params:
+        reg_includes_flow_file: Whether the reg arg passed to parse_reg()
+            includes 'flow.cylc' at the end.
+    """
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    FLOW_FILE = WorkflowFiles.FLOW_FILE
+    reg = 'darmok/jalad'
+    run_dir: Path = tmp_run_dir(reg)
+    cwd = tmp_path / 'mock-cwd'
+    (cwd / reg).mkdir(parents=True)
+    (cwd / reg / FLOW_FILE).touch()
+    monkeypatch.chdir(cwd)
+
+    reg_arg = os.path.join(reg, FLOW_FILE) if reg_includes_flow_file else reg
+    # The workflow file relative to cwd should take precedence
+    assert parse_reg(reg_arg, src=True) == (
+        str(cwd / reg),
+        cwd / reg / FLOW_FILE
+    )
+    # It should warn that it also found a workflow in ~/cylc-run but didn't
+    # use it
+    expected_warning = REG_CLASH_MSG.format(
+        f"{reg}/{FLOW_FILE}",
+        run_dir.relative_to(tmp_path / 'cylc-run') / FLOW_FILE
+    )
+    assert expected_warning in caplog.messages
+    caplog.clear()
+    # Now test that no warning when cwd == ~/cylc-run
+    monkeypatch.chdir(tmp_path / 'cylc-run')
+    assert parse_reg(reg_arg, src=True) == (reg, run_dir / FLOW_FILE)
+    assert caplog.record_tuples == []
 
 
 @pytest.mark.parametrize(
@@ -1431,9 +1767,7 @@ def test_check_flow_file_symlink(
         suiterc.touch()
     if flow_file_target:
         flow_file.symlink_to(flow_file_target)
-    log_msg = (
-        f'The filename "{WorkflowFiles.SUITE_RC}" is deprecated '
-        f'in favour of "{WorkflowFiles.FLOW_FILE}"')
+    log_msg = SUITERC_DEPR_MSG
     caplog.set_level(logging.WARNING, CYLC_LOG)
 
     if err:
@@ -1446,7 +1780,7 @@ def test_check_flow_file_symlink(
             assert flow_file.samefile(suiterc)
             expected_file = WorkflowFiles.FLOW_FILE
             if flow_file_target != WorkflowFiles.SUITE_RC:
-                log_msg = f'{log_msg}. Symlink created.'
+                log_msg = f'{SUITERC_DEPR_MSG}. Symlink created.'
         assert result == tmp_path.joinpath(expected_file)
         assert caplog.messages == [log_msg]
 

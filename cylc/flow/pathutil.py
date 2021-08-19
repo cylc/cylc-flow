@@ -34,10 +34,11 @@ _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
 
 
 def expand_path(*args: Union[Path, str]) -> str:
-    """Expand both vars and user in path, joining any extra args."""
-    return os.path.expanduser(os.path.expandvars(
+    """Expand both vars and user in path and normalise it, joining any
+    extra args."""
+    return os.path.normpath(os.path.expanduser(os.path.expandvars(
         os.path.join(*args)
-    ))
+    )))
 
 
 def get_remote_workflow_run_dir(
@@ -54,6 +55,11 @@ def get_remote_workflow_run_job_dir(
     """Return remote workflow job log directory, joining any extra args,
     NOT expanding vars or user."""
     return get_remote_workflow_run_dir(flow_name, 'log', 'job', *args)
+
+
+def get_cylc_run_dir() -> str:
+    """Return the cylc-run dir path with vars/user expanded."""
+    return expand_path(_CYLC_RUN_DIR)
 
 
 def get_workflow_run_dir(

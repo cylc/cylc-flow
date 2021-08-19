@@ -30,10 +30,12 @@ import contextlib
 from copy import copy
 from fnmatch import fnmatchcase
 import os
+from pathlib import Path
 import re
 import traceback
 from typing import (
-    Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple
+    Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple,
+    Union
 )
 
 from metomi.isodatetime.data import Calendar
@@ -153,8 +155,8 @@ class WorkflowConfig:
     def __init__(
         self,
         workflow: str,
-        fpath: str,
-        options: Optional['Values'] = None,
+        fpath: Union[Path, str],
+        options: 'Values',
         template_vars: Optional[Mapping[str, Any]] = None,
         is_reload: bool = False,
         output_fname: Optional[str] = None,
@@ -171,7 +173,7 @@ class WorkflowConfig:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
         self.workflow = workflow  # workflow name
-        self.fpath = fpath  # workflow definition
+        self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
         self.log_dir = log_dir or get_workflow_run_log_dir(self.workflow)
@@ -183,15 +185,15 @@ class WorkflowConfig:
             'SequenceBase', Set[Tuple[str, str, bool, bool]]
         ] = {}
         self.taskdefs: Dict[str, TaskDef] = {}
-        self.initial_point: Optional['PointBase'] = None
-        self.start_point: Optional['PointBase'] = None
-        self.final_point: Optional['PointBase'] = None
         self.clock_offsets = {}
         self.expiration_offsets = {}
         self.ext_triggers = {}  # Old external triggers (client/server)
         self.xtrigger_mgr = xtrigger_mgr
         self.workflow_polling_tasks = {}  # type: ignore # TODO figure out type
 
+        self.initial_point: 'PointBase'
+        self.start_point: 'PointBase'
+        self.final_point: Optional['PointBase'] = None
         self.sequences: List['SequenceBase'] = []
         self.actual_first_point: Optional['PointBase'] = None
         self._start_point_for_actual_first_point: Optional['PointBase'] = None
@@ -595,7 +597,7 @@ class WorkflowConfig:
                 )
         self.cfg['scheduler']['cycle point time zone'] = orig_cp_tz
 
-    def process_initial_cycle_point(self):
+    def process_initial_cycle_point(self) -> None:
         """Validate and set initial cycle point from flow.cylc or options.
 
         Sets:
@@ -643,7 +645,7 @@ class WorkflowConfig:
                     f"Initial cycle point {self.initial_point} does not meet "
                     f"the constraints {constraints}")
 
-    def process_start_cycle_point(self):
+    def process_start_cycle_point(self) -> None:
         """Set the start cycle point from options.
 
         Sets:
@@ -675,7 +677,7 @@ class WorkflowConfig:
             # Start from the initial point.
             self.start_point = self.initial_point
 
-    def process_final_cycle_point(self):
+    def process_final_cycle_point(self) -> None:
         """Validate and set the final cycle point from flow.cylc or options.
 
         Sets:

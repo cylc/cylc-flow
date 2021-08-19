@@ -15,7 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc graph WORKFLOW [START] [STOP]
+
+"""cylc graph [OPTIONS] ARGS
 
 Produces graphical and textural representations of workflow dependencies.
 
@@ -37,14 +38,17 @@ from shutil import which
 from subprocess import Popen, PIPE
 import sys
 from tempfile import NamedTemporaryFile
+from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import parse_workflow_arg
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.scripts.install import add_cylc_rose_options
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def sort_integer_node(item):
@@ -162,10 +166,13 @@ def graph_inheritance(config, write=print):
     write('stop')
 
 
-def get_config(flow, opts, template_vars=None):
+def get_config(workflow: str, opts: 'Values') -> WorkflowConfig:
     """Return a WorkflowConfig object for the provided reg / path."""
-    flow, flow_file = parse_workflow_arg(opts, flow)
-    return WorkflowConfig(flow, flow_file, opts, template_vars=template_vars)
+    workflow, flow_file = parse_reg(workflow, src=True)
+    template_vars = get_template_vars(opts, flow_file)
+    return WorkflowConfig(
+        workflow, flow_file, opts, template_vars=template_vars
+    )
 
 
 def get_option_parser():
@@ -239,7 +246,7 @@ def get_option_parser():
         action='store',
     )
 
-    parser = add_cylc_rose_options(parser)
+    parser.add_cylc_rose_options()
 
     return parser
 
@@ -345,27 +352,31 @@ def gui(filename):
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, workflow=None, start=None, stop=None):
+def main(
+    parser: COP,
+    opts: 'Values',
+    workflow: str,
+    start: Optional[str] = None,
+    stop: Optional[str] = None
+) -> None:
     """Implement ``cylc graph``."""
     if opts.grouping and opts.namespaces:
         raise UserInputError('Cannot combine --group and --namespaces.')
 
-    template_vars = get_template_vars(opts, workflow)
-
-    lines = []
+    lines: List[str] = []
     if not (opts.reference or opts.diff):
         write = lines.append
     else:
         write = print
 
-    flows = [(workflow, [])]
+    flows: List[Tuple[str, List[str]]] = [(workflow, [])]
     if opts.diff:
         flows.append((opts.diff, []))
 
     for flow, graph in flows:
         if opts.diff:
             write = graph.append
-        config = get_config(flow, opts, template_vars=template_vars)
+        config = get_config(flow, opts)
         if opts.namespaces:
             graph_inheritance(config, write=write)
         else:

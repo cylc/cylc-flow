@@ -18,20 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow reinstallation expected failures
 . "$(dirname "$0")/test_header"
-set_test_number 26
-
-# Test fails is there is a nested run directory structure in the run directory to be reinstalled
-
-TEST_NAME="${TEST_NAME_BASE}-nested-rundir-forbidden-reinstall"
-make_rnd_workflow
-run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}"
-mkdir "${RND_WORKFLOW_RUNDIR}/run1/nested_run_dir"
-touch "${RND_WORKFLOW_RUNDIR}/run1/nested_run_dir/flow.cylc"
-run_fail "${TEST_NAME}-reinstall-nested-run-dir" cylc reinstall "${RND_WORKFLOW_NAME}"
-contains_ok "${TEST_NAME}-reinstall-nested-run-dir.stderr" <<__ERR__
-WorkflowFilesError: Nested run directories not allowed - cannot install workflow name "${RND_WORKFLOW_NAME}" as "${RND_WORKFLOW_RUNDIR}/run1" is already a valid run directory.
-__ERR__
-purge_rnd_workflow
+set_test_number 23
 
 # Test fail no workflow source dir
 
@@ -39,8 +26,8 @@ TEST_NAME="${TEST_NAME_BASE}-reinstall-no-run-dir"
 make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -rf "${RND_WORKFLOW_RUNDIR}"
-run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}" 
-contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
+run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"
+cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
 WorkflowFilesError: "${RND_WORKFLOW_NAME}" is not an installed workflow.
 __ERR__
 purge_rnd_workflow
@@ -51,8 +38,8 @@ TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-dir"
 make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -rf "${RND_WORKFLOW_SOURCE}"
-run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"  
-contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
+run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"
+cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
 WorkflowFilesError: Workflow source dir is not accessible: "${RND_WORKFLOW_SOURCE}".
 Restore the source or modify the "${RND_WORKFLOW_RUNDIR}/_cylc-install/source" symlink to continue.
 __ERR__
@@ -65,7 +52,7 @@ make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: no flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 purge_rnd_workflow
@@ -79,7 +66,7 @@ for DIR in 'work' 'share' 'log' '_cylc-install'; do
     cylc install --no-run-name --flow-name="${RND_WORKFLOW_NAME}"
     mkdir ${DIR}
     run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
-    contains_ok "${TEST_NAME}.stderr" <<__ERR__
+    cmp_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: ${RND_WORKFLOW_NAME} installation failed. - ${DIR} exists in source directory.
 __ERR__
     purge_rnd_workflow
@@ -94,9 +81,8 @@ run_ok "${TEST_NAME}-install" cylc install --no-run-name --flow-name="${RND_WORK
 pushd "${RND_WORKFLOW_RUNDIR}" || exit 1
 rm -rf "_cylc-install"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall
-CWD=$(pwd -P)
-contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: "${CWD}" is not a workflow run directory.
+cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
+WorkflowFilesError: "${RND_WORKFLOW_NAME}" was not installed with cylc install.
 __ERR__
 popd || exit 1
 popd || exit 1
@@ -110,7 +96,7 @@ run_ok "${TEST_NAME}-install" cylc install --no-run-name --flow-name="${RND_WORK
 pushd "${RND_WORKFLOW_RUNDIR}" || exit 1
 rm -rf "_cylc-install"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "$RND_WORKFLOW_NAME"
-contains_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
+cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
 WorkflowFilesError: "${RND_WORKFLOW_NAME}" was not installed with cylc install.
 __ERR__
 popd || exit 1

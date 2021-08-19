@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -42,7 +42,7 @@ run_fail "${TEST_NAME}" \
     cylc graph "${DIFF_WORKFLOW_NAME}" --diff "${CONTROL_WORKFLOW_NAME}.bad"
 cmp_ok "${TEST_NAME}.stdout" </'dev/null'
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: no flow.cylc or suite.rc in ${RUN_DIR}/${CONTROL_WORKFLOW_NAME}.bad
+WorkflowFilesError: no flow.cylc or suite.rc in ./${CONTROL_WORKFLOW_NAME}.bad or ${RUN_DIR}/${CONTROL_WORKFLOW_NAME}.bad
 __ERR__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-deps-fail"
