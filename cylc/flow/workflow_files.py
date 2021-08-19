@@ -747,6 +747,15 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
         remove_empty_parents(target, Path(reg, symlink))
 
+    # Remove `runN` symlink if it's now broken
+    runN = run_dir.parent / WorkflowFiles.RUN_N
+    if (
+        runN.is_symlink() and
+        not run_dir.exists() and
+        os.readlink(str(runN)) == run_dir.name
+    ):
+        runN.unlink()
+
 
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
     """Return the standard symlink dirs and their targets if they exist in

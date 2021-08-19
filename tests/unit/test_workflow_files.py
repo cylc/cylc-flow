@@ -19,6 +19,7 @@ import logging
 import os
 from pathlib import Path
 import pytest
+import re
 import shutil
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
 from unittest import mock
@@ -40,6 +41,7 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_run_dirs,
+    clean,
     get_rsync_rund_cmd,
     get_symlink_dirs,
     is_installed,
@@ -1523,3 +1525,32 @@ def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
         '--exclude=log', '--exclude=work', '--exclude=share',
         '--exclude=_cylc-install', '--exclude=.service',
         'blah/', f'{cylc_run_dir}/']
+
+
+@pytest.mark.parametrize(
+    'expect, dirs',
+    [
+        (['run1'], ['run1', 'run2']),
+        (['run1', 'run11'], ['run1', 'run11', 'run2']),
+        (['run1200'], ['run1200', 'run1201']),
+        (['foo'], ['foo', 'bar']),
+    ]
+)
+def test_delete_runN(tmp_path, expect, dirs):
+    """It deletes the runN symlink.
+    """
+    for dir_ in dirs:
+        (tmp_path / dir_).mkdir()
+    if re.findall('run\d*', dirs[-1]):
+        (Path(tmp_path / 'runN')).symlink_to(dirs[-1])
+    clean(str(tmp_path.name) + '/' + dirs[-1], tmp_path / dirs[-1])
+    assert sorted([i.stem for i in tmp_path.glob('*')]) == sorted(expect)
+
+
+def test_delete_runN_skipif_cleanedrun_not_runN(tmp_path):
+    """It doesn't delete the symlink dir to be cleaned is not runN"""
+    for folder in ['run1', 'run2']:
+        (tmp_path / folder).mkdir()
+    (tmp_path / 'runN').symlink_to(tmp_path / 'run2')
+    clean(str(tmp_path.name) + '/' + 'run1', tmp_path / 'run1')
+    assert sorted([i.stem for i in tmp_path.glob('*')]) == ['run2', 'runN']

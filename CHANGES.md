@@ -78,6 +78,10 @@ Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
 safer by preventing cleaning of dirs that contain more than one workflow
 run dir (use `--force` to override this safeguard).
 
+[#4362](https://github.com/cylc/cylc-flow/pull/4362) -
+When using `cylc clean` on a sequential run directory, remove the `runN` symlink
+if it points to the removed directory.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
