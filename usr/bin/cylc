@@ -147,9 +147,16 @@ fi
 
 if [[ -z "${CYLC_HOME}" ]]; then
     # Look for specified or default version under the root locations
+    # Build CYLC_NAME from CYLC_VERSION if you can:
     if [[ -n "${CYLC_VERSION}" ]]; then
         CYLC_NAME="cylc-$CYLC_VERSION"
-    else
+        echo "cylc name is $CYLC_NAME"
+    fi
+    # Build CYLC_NAME from CYLC_ENV_NAME if you can:
+    if [[ -n "${CYLC_ENV_NAME}" ]]; then
+        CYLC_NAME="${CYLC_ENV_NAME}"
+    fi
+    if [[ -z "${CYLC_ENV_NAME}" && -z "${CYLC_VERSION}" ]]; then
         # Default version symlink
         CYLC_NAME="cylc"
     fi
