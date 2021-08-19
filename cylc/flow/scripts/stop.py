@@ -38,8 +38,8 @@ job poll and kill commands, however, will be executed prior to shutdown, unless
 This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for workflow shutdown."""
 
-import os.path
 import sys
+from typing import Optional, TYPE_CHECKING
 
 from cylc.flow.command_polling import Poller
 from cylc.flow.exceptions import ClientError, ClientTimeout
@@ -47,6 +47,11 @@ from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 MUTATION = '''
 mutation (
@@ -116,8 +121,10 @@ def get_option_parser():
 
     parser.add_option(
         "--flow", metavar="LABEL",
-        help="Stop a specified flow from spawning any further. "
-             "The scheduler will shut down if LABEL is the only flow.",
+        help=(
+            "Stop a specified flow within a workflow from spawning "
+            "any further. The scheduler will shut down if LABEL is the "
+            "only flow."),
         action="store", dest="flow_label")
 
     parser.add_option(
@@ -141,7 +148,12 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow, shutdown_arg=None):
+def main(
+    parser: COP,
+    options: 'Values',
+    reg: str,
+    shutdown_arg: Optional[str] = None
+) -> None:
     if shutdown_arg is not None and options.kill:
         parser.error("ERROR: --kill is not compatible with [STOP]")
 
@@ -151,8 +163,8 @@ def main(parser, options, workflow, shutdown_arg=None):
     if options.flow_label and int(options.max_polls) > 0:
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
-    workflow = os.path.normpath(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    reg = parse_reg(reg)
+    pclient = get_client(reg, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
@@ -179,7 +191,7 @@ def main(parser, options, workflow, shutdown_arg=None):
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [reg],
             'stopMode': mode,
             'cyclePoint': cycle_point,
             'clockTime': options.wall_clock,

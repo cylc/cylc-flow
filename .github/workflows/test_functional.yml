@@ -1,8 +1,17 @@
 name: functional tests
 
 on:
-  pull_request:
   workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/test_functional.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
   push:
     branches: [master]
     paths-ignore:
@@ -221,7 +230,7 @@ jobs:
           find "${TMPDIR:-/tmp}/${USER}/cylctb-"* -type f \
               -exec echo '====== {} ======' \; -exec cat '{}' \;
 
-      - name: Set Upload Name
+      - name: Set artifact upload name
         if: failure() && steps.test.outcome == 'failure'
         id: uploadname
         run: |
@@ -229,7 +238,7 @@ jobs:
           CID="$(sed 's|/|-|g' <<< "${{ matrix.name || matrix.chunk }}")"
           echo "::set-output name=uploadname::$CID"
 
-      - name: Upload
+      - name: Upload artifact
         if: failure() && steps.test.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
@@ -262,8 +271,14 @@ jobs:
         run: |
           etc/bin/swarm kill
 
-      - name: Coverage
+      - name: Combine coverage & report
         run: |
           coverage combine -a
+          coverage xml
           coverage report
-          bash <(curl -s https://codecov.io/bash)
+
+      - name: Codecov upload
+        uses: codecov/codecov-action@v2
+        with:
+          name: '"${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}"'
+          fail_ci_if_error: true

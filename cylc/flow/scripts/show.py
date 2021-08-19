@@ -29,6 +29,7 @@ Prerequisite and output status is indicated for current active tasks.
 """
 
 import json
+from optparse import Values
 import sys
 
 from ansimarkup import ansiprint
@@ -38,6 +39,7 @@ from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 
 WORKFLOW_META_QUERY = '''
@@ -154,21 +156,22 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, workflow, *task_args):
+def main(_, options: 'Values', reg: str, *task_args: str) -> None:
     """Implement "cylc show" CLI."""
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    reg = parse_reg(reg)
+    pclient = get_client(reg, timeout=options.comms_timeout)
     json_filter = {}
 
     if not task_args:
         query = WORKFLOW_META_QUERY
         query_kwargs = {
             'request_string': query,
-            'variables': {'wFlows': [workflow]}
+            'variables': {'wFlows': [reg]}
         }
         # Print workflow info.
         results = pclient('graphql', query_kwargs)
-        for workflow in results['workflows']:
-            flat_data = flatten_data(workflow)
+        for reg in results['workflows']:
+            flat_data = flatten_data(reg)
             if options.json:
                 json_filter.update(flat_data)
             else:
@@ -183,7 +186,7 @@ def main(_, options, workflow, *task_args):
         tasks_query = TASK_META_QUERY
         tasks_kwargs = {
             'request_string': tasks_query,
-            'variables': {'wFlows': [workflow], 'taskIds': task_names}
+            'variables': {'wFlows': [reg], 'taskIds': task_names}
         }
         # Print workflow info.
         results = pclient('graphql', tasks_kwargs)
@@ -204,7 +207,7 @@ def main(_, options, workflow, *task_args):
         tp_kwargs = {
             'request_string': tp_query,
             'variables': {
-                'wFlows': [workflow],
+                'wFlows': [reg],
                 'taskIds': [
                     f'{c}{ID_DELIM}{n}'
                     for n, c in [

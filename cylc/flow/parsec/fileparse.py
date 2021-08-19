@@ -377,18 +377,18 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None):
     template_vars['CYLC_TEMPLATE_VARS'] = template_vars
 
     # Fail if templating_detected ≠ hashbang
-    hashbang = hashbang_and_plugin_templating_clash(
+    process_with = hashbang_and_plugin_templating_clash(
         extra_vars['templating_detected'], flines
     )
-
     # process with EmPy
     if do_empy:
         if (
             extra_vars['templating_detected'] == 'empy' and
-            not hashbang and
-            hashbang != 'empy'
+            not process_with and
+            process_with != 'empy'
         ):
             flines.insert(0, '#!empy')
+
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
             try:
@@ -404,10 +404,11 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None):
     if do_jinja2:
         if (
             extra_vars['templating_detected'] == 'jinja2' and
-            not hashbang and
-            hashbang != 'jinja2'
+            not process_with and
+            process_with != 'jinja2'
         ):
             flines.insert(0, '#!jinja2')
+
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
             try:
@@ -457,18 +458,13 @@ def hashbang_and_plugin_templating_clash(
             Traceback (most recent call last):
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
-
-        - Function raises if plugin templating engine is generic and hashbang
-          unset:
-            >>> thisfunc('template variables', ['# Some Comment'])
-            Traceback (most recent call last):
-                ...
-            cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
     """
+    # Get hashbang if possible:
     if flines and re.match(r'^#!(.*)\s*', flines[0]):
         hashbang = re.findall(r'^#!(.*)\s*', flines[0])[0].lower()
     else:
         hashbang = None
+
     if (
         hashbang and templating
         and templating != 'template variables'
@@ -478,14 +474,6 @@ def hashbang_and_plugin_templating_clash(
             "Plugins set templating engine = "
             f"{templating}"
             f" which does not match {flines[0]} set in flow.cylc."
-        )
-    elif (
-        hashbang is None
-        and templating == 'template variables'
-    ):
-        raise TemplateVarLanguageClash(
-            'Plugins provided template variables, but workflow definition '
-            'has no hashbang (e.g. #!jinja2): Templating will fail.'
         )
     return hashbang
 

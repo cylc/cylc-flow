@@ -34,10 +34,11 @@ _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
 
 
 def expand_path(*args: Union[Path, str]) -> str:
-    """Expand both vars and user in path, joining any extra args."""
-    return os.path.expanduser(os.path.expandvars(
+    """Expand both vars and user in path and normalise it, joining any
+    extra args."""
+    return os.path.normpath(os.path.expanduser(os.path.expandvars(
         os.path.join(*args)
-    ))
+    )))
 
 
 def get_remote_workflow_run_dir(
@@ -54,6 +55,11 @@ def get_remote_workflow_run_job_dir(
     """Return remote workflow job log directory, joining any extra args,
     NOT expanding vars or user."""
     return get_remote_workflow_run_dir(flow_name, 'log', 'job', *args)
+
+
+def get_cylc_run_dir() -> str:
+    """Return the cylc-run dir path with vars/user expanded."""
+    return expand_path(_CYLC_RUN_DIR)
 
 
 def get_workflow_run_dir(
@@ -293,6 +299,40 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
     else:
         LOG.debug(f"Removing directory: {path}")
         rmtree(path, onerror=handle_rmtree_err)
+
+
+def remove_empty_parents(
+    path: Union[Path, str], tail: Union[Path, str]
+) -> None:
+    """Work our way up the tail of path, removing empty dirs only.
+
+    Args:
+        path: Absolute path to the directory, e.g. /foo/bar/a/b/c
+        tail: The tail of the path to work our way up, e.g. a/b/c
+
+    Example:
+        remove_empty_parents('/foo/bar/a/b/c', 'a/b/c') would remove
+        /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
+        empty).
+    """
+    path = Path(path)
+    if not path.is_absolute():
+        raise ValueError('path must be absolute')
+    tail = Path(tail)
+    if tail.is_absolute():
+        raise ValueError('tail must not be an absolute path')
+    if not str(path).endswith(str(tail)):
+        raise ValueError(f"path '{path}' does not end with '{tail}'")
+    depth = len(tail.parts) - 1
+    for i in range(depth):
+        parent = path.parents[i]
+        if not parent.is_dir():
+            continue
+        try:
+            parent.rmdir()
+            LOG.debug(f'Removing directory: {parent}')
+        except OSError:
+            break
 
 
 def get_next_rundir_number(run_path):

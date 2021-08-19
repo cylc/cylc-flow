@@ -2,10 +2,28 @@
 name: bash
 
 on:
-  pull_request:
   workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/bash.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
   push:
     branches: [master]
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/bash.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
 
 jobs:
   bash-docker:
@@ -59,7 +77,7 @@ jobs:
         run: |
           docker cp bash:/root/cylc-run .
 
-      - name: Upload
+      - name: Upload artifact
         if: failure()
         uses: actions/upload-artifact@v2
         with:

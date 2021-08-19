@@ -1,13 +1,13 @@
-edge FAM f1
-edge FAM f2
-edge FAM f3
-edge TOP FAM
-edge root TOP
+edge "FAM" "f1"
+edge "FAM" "f2"
+edge "FAM" "f3"
+edge "TOP" "FAM"
+edge "root" "TOP"
 graph
-node FAM FAM
-node TOP TOP
-node f1 f1
-node f2 f2
-node f3 f3
-node root root
+node "FAM" "FAM"
+node "TOP" "TOP"
+node "f1" "f1"
+node "f2" "f2"
+node "f3" "f3"
+node "root" "root"
 stop

@@ -23,6 +23,7 @@ from types import SimpleNamespace
 from cylc.flow.exceptions import PluginError
 from cylc.flow.templatevars import get_template_vars, load_template_vars
 
+
 class TestTemplatevars(unittest.TestCase):
 
     def test_load_template_vars_no_params(self):
@@ -107,20 +108,6 @@ if __name__ == '__main__':
     unittest.main()
 
 
-def test_get_template_vars_installed_flow(monkeypatch):
-    """It works on an installed flow.
-
-    n.b. Does not attempt to test ``load_template_vars``
-    """
-    monkeypatch.setattr(
-        'cylc.flow.templatevars.load_template_vars',
-        lambda templatevars, templatevars_file: {'foo': 'bar'}
-    )
-    opts = SimpleNamespace(templatevars='', templatevars_file='')
-    result = get_template_vars(opts, '', names=('eg/runN', 'eg/runN'))
-    assert result == {'foo': 'bar'}
-
-
 @pytest.fixture(scope='module')
 def provide_opts():
     """Provide a fake opts"""
@@ -138,12 +125,14 @@ def monkeypatch_load_template_vars(monkeypatch):
 
 
 def test_get_template_vars_src_flow(
-    monkeypatch, provide_opts, monkeypatch_load_template_vars):
+    monkeypatch, provide_opts, monkeypatch_load_template_vars
+):
     """It works on a flow which hasn't been installed.
     """
     def fake_iter_entry_points(_):
         class fake_ep:
             name = 'Zaphod'
+
             def resolve():
                 def _inner(srcdir, opts):
                     return {
@@ -161,12 +150,14 @@ def test_get_template_vars_src_flow(
 
 
 def test_get_template_vars_src_flow_fails(
-    monkeypatch, provide_opts, monkeypatch_load_template_vars):
+    monkeypatch, provide_opts, monkeypatch_load_template_vars
+):
     """It fails if there is a plugin error.
     """
     def fake_iter_entry_points(_):
         class fake_ep:
             name = 'Zaphod'
+
             def resolve():
                 def _inner(srcdir, opts):
                     raise TypeError('Utter Drivel.')

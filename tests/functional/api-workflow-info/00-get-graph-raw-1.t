@@ -27,7 +27,6 @@ create_test_global_config "
 "
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-cp -r "${TEST_SOURCE_DIR}"/bin "${WORKFLOW_RUN_DIR}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
@@ -64,8 +63,8 @@ cmp_ok "${WORKFLOW_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
         "t3"
     ],
     [
-        "t1",
-        "T"
+        "T",
+        "t1"
     ]
 ]
 __OUT__

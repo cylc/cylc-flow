@@ -32,7 +32,6 @@ run_ok "${TEST_NAME}.2" cylc val inlined.cylc
 #-------------------------------------------------------------------------------
 # compare inlined workflow def with reference copy
 TEST_NAME=${TEST_NAME_BASE}-compare
-cylc view --inline --stdout "${WORKFLOW_NAME}" > inlined.cylc
 cmp_ok inlined.cylc "${TEST_SOURCE_DIR}/workflow/ref-inlined.cylc"
 #-------------------------------------------------------------------------------
 purge

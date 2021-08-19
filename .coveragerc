@@ -44,9 +44,19 @@ timid = False
 exclude_lines =
     pragma: no cover
     def __repr__
+
+    # Don't complain if tests don't hit defensive assertion code:
     raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run:
     if __name__ == .__main__.:
+    if (typing\.)?TYPE_CHECKING:
+
+    # Don't complain about ellipsis (exception classes, typing overloads etc):
+        \.\.\.
+
     def parse_args
+
 fail_under=0
 ignore_errors = False
 include=

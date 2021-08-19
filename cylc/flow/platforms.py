@@ -20,12 +20,15 @@ import random
 import re
 from copy import deepcopy
 from typing import (
-    Any, Dict, Iterable, List, Optional, Tuple, Union, Set)
+    Any, Dict, Iterable, List, Optional, Tuple, Union, Set, overload
+)
 
 from cylc.flow.exceptions import PlatformLookupError, CylcError, NoHostsError
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
 
+
+UNKNOWN_TASK = 'unknown task'
 
 FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
     ('remote', 'host', ['localhost', None]),
@@ -43,6 +46,20 @@ HOST_SELECTION_METHODS = {
 }
 
 
+@overload
+def get_platform(
+    task_conf: Union[str, None] = None, task_id: str = UNKNOWN_TASK
+) -> Dict[str, Any]:
+    ...
+
+
+@overload
+def get_platform(
+    task_conf: Dict[str, Any], task_id: str = UNKNOWN_TASK
+) -> Optional[Dict[str, Any]]:
+    ...
+
+
 # BACK COMPAT: get_platform
 #     At Cylc 9 remove all Cylc7 upgrade logic.
 # from:
@@ -53,7 +70,7 @@ HOST_SELECTION_METHODS = {
 #     Cylc9
 def get_platform(
     task_conf: Union[str, Dict[str, Any], None] = None,
-    task_id: str = 'unknown task'
+    task_id: str = UNKNOWN_TASK
 ) -> Optional[Dict[str, Any]]:
     """Get a platform.
 
@@ -439,7 +456,7 @@ def fail_if_platform_and_host_conflict(task_conf, task_name):
 
 
 def get_platform_deprecated_settings(
-    task_conf: Dict[str, Any], task_name: str = 'unknown task'
+    task_conf: Dict[str, Any], task_name: str = UNKNOWN_TASK
 ) -> List[str]:
     """Return deprecated [runtime][<task_name>] settings that should be
     upgraded to platforms.
@@ -555,5 +572,5 @@ def get_random_platform_for_install_target(
 
 def get_localhost_install_target() -> str:
     """Returns the install target of localhost platform"""
-    localhost = platform_from_name()
+    localhost = get_platform()
     return get_install_target_from_platform(localhost)
