@@ -565,7 +565,7 @@ def test_unclosed_multiline():
             {'FOO': 123},
             {
                 'templating_detected': None,
-                'template_variables': {'FOO': 123}
+                'template_variables': {'FOO': 122}
             },
             [],
             id='no templating engine set'
