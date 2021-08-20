@@ -1256,7 +1256,7 @@ class TaskPool:
     def get_task_main(self, name, point, flow_label=None):
         """Return task proxy from main pool and merge flow label if found."""
         itask = self._get_task_by_id(TaskID.get(name, point))
-        if itask is not None:
+        if itask is not None and flow_label is not None:
             self._merge_flow_labels(itask, flow_label)
         return itask
 
@@ -1440,13 +1440,17 @@ class TaskPool:
     ) -> int:
         """Trigger matching tasks, with or without reflow.
 
+        Don't get a new flow label for existing task proxies (e.g. incomplete
+        tasks). These can flow on in the original flow if retriggered.
+
+        Otherwise generate a new flow label for a new task proxy, with or
+        without reflow.
+
         Queue the task if not queued, otherwise release it to run.
         """
-        # TODO check reflow from existing tasks - unless unhandled fail?
         n_warnings, task_items = self.match_taskdefs(items)
-        flow_label = self.flow_label_mgr.get_new_label()
         for name, point in task_items.keys():
-            itask = self.get_task_main(name, point, flow_label)
+            itask = self.get_task_main(name, point)
             if itask is not None:
                 # Already in pool: trigger and merge flow labels.
                 itask.is_manual_submit = True
@@ -1462,6 +1466,7 @@ class TaskPool:
                     self.task_queue_mgr.force_release_task(itask)
             else:
                 # Spawn with new flow label.
+                flow_label = self.flow_label_mgr.get_new_label()
                 itask = self.spawn_task(
                     name, point, flow_label, reflow=reflow)
                 itask.is_manual_submit = True
