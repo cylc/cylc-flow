@@ -184,11 +184,6 @@ class TaskOutputs:
 
     def get_incomplete(self):
         """Return a list of required outputs that are not complete."""
-        # incomplete = []
-        # for trigger, (_, _, is_completed) in self._by_trigger.items():
-        #    if not is_completed and trigger in self._required:
-        #        incomplete.append(trigger)
-        # return incomplete
         return [
             trigger
             for trigger, (_, _, is_completed) in self._by_trigger.items()
@@ -232,14 +227,3 @@ class TaskOutputs:
         except ValueError:
             ind = 999
         return (ind, item[_MESSAGE] or '')
-
-    def __str__(self):
-        """PRINT INCOMPLETE OUTPUTS
-
-        TODO probably not the best place to do this.
-        """
-        res = ""
-        for key, val in self._by_trigger.items():
-            if key in self._required and not val[2]:
-                res += f"{key} "
-        return res

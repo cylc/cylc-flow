@@ -949,9 +949,9 @@ class TaskPool:
         for itask in self.get_tasks():
             if not itask.state(*TASK_STATUSES_FINAL):
                 continue
-            outputs = itask.state.outputs.get_incomplete()
-            if outputs:
-                incomplete[itask.identity] = outputs
+            incomplete[itask.identity] = itask.state.outputs.get_incomplete()
+
+        print(incomplete)
 
         if incomplete:
             LOG.warning(
