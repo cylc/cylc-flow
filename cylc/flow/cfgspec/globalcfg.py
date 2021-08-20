@@ -306,9 +306,9 @@ with Conf('global.cylc', desc='''
             Conf('shutdown handler', VDR.V_STRING_LIST)
             Conf('aborted handler', VDR.V_STRING_LIST)
             Conf('stalled handler', VDR.V_STRING_LIST)
-            Conf('timeout', VDR.V_INTERVAL)
+            Conf('timeout', VDR.V_INTERVAL, DurationFloat(3600))
             Conf('inactivity', VDR.V_INTERVAL)
-            Conf('abort on timeout', VDR.V_BOOLEAN)
+            Conf('abort on timeout', VDR.V_BOOLEAN, True)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
             Conf('abort on stalled', VDR.V_BOOLEAN)
 

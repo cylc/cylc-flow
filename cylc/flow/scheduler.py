@@ -473,7 +473,6 @@ class Scheduler:
         self.workflow_db_mgr.put_runtime_inheritance(self.config)
 
         self.already_timed_out = False
-        self.set_workflow_timer()
 
         # Inactivity setting
         self.already_inactive = False
@@ -985,7 +984,7 @@ class Scheduler:
         if timeout is None:
             return
         self.workflow_timer_timeout = time() + timeout
-        LOG.debug(
+        LOG.info(
             "%s workflow timer starts NOW: %s",
             get_seconds_as_interval_string(timeout),
             get_current_time_string())
@@ -1557,7 +1556,7 @@ class Scheduler:
             # Workflow can't be stalled, so stop the workflow timer.
             if self.workflow_timer_active:
                 self.workflow_timer_active = False
-                LOG.debug(
+                LOG.info(
                     "%s workflow timer stopped NOW: %s",
                     get_seconds_as_interval_string(
                         self._get_events_conf(self.EVENT_TIMEOUT)),
