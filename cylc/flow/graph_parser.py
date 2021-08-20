@@ -324,7 +324,7 @@ class GraphParser:
             if self.__class__.OP_OR_ERR in line:
                 raise GraphParseError(
                     "The graph OR operator is "
-                    f"'{self.__class__.OP_OR}: {line}")
+                    f"'{self.__class__.OP_OR}': {line}")
             # Check node syntax. First drop all non-node characters.
             node_str = line
             for spec in [
