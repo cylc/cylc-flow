@@ -1482,44 +1482,26 @@ class WorkflowConfig:
                     f"self-edge detected: {left} => {right}")
             self.edges[seq].add((left, right, suicide, conditional))
 
-    def generate_taskdefs(
-        self, orig_expr, left_nodes, right, seq, suicide, parser
-    ):
-        """Generate task definitions for all nodes in orig_expr."""
-        # TODO CAN DO THIS WITH RIGHT ONLY?
-        for node in [right]:
-            if not node or node.startswith('@'):
-                # if right is None, lefts are lone nodes
-                # for which we still define the taskdefs
-                continue
-            name = GraphNodeParser.get_inst().parse(node)[0]
+    def generate_taskdef(self, orig_expr, node):
+        """Generate task definition for node."""
+        name = GraphNodeParser.get_inst().parse(node)[0]
+        taskdef = self.get_taskdef(name, orig_expr)
+        if name in self.workflow_polling_tasks:
+            taskdef.workflow_polling_cfg = {
+                'workflow': self.workflow_polling_tasks[name][0],
+                'task': self.workflow_polling_tasks[name][1],
+                'status': self.workflow_polling_tasks[name][2]}
 
-            # check task name legality and create the taskdef
-            taskdef = self.get_taskdef(name, orig_expr)
-
-            if name in self.workflow_polling_tasks:
-                taskdef.workflow_polling_cfg = {
-                    'workflow': self.workflow_polling_tasks[name][0],
-                    'task': self.workflow_polling_tasks[name][1],
-                    'status': self.workflow_polling_tasks[name][2]}
-
-        # TODO CHECK THIS AND MOVE IT TO generate_triggers?
-        for node in left_nodes + [right]:
-            # TODO: can node be None?
-            if not node or node.startswith('@'):
-                # if right is None, lefts are lone nodes
-                # for which we still define the taskdefs
-                continue
+    def add_sequence(self, nodes, seq, suicide):
+        """Add valid sequences to taskdefs."""
+        for node in nodes:
             name, offset = GraphNodeParser.get_inst().parse(node)[:2]
-
-            taskdef = self.get_taskdef(name, orig_expr)
+            taskdef = self.get_taskdef(name)
             # Only add sequence to taskdef if explicit (not an offset).
             if offset:
                 taskdef.used_in_offset_trigger = True
-            elif suicide and name == right:
-                # "foo => !bar" should not create taskdef bar
-                pass
-            else:
+            elif not suicide:
+                # "foo => !bar" does not define a sequence for bar
                 taskdef.add_sequence(seq)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
@@ -1927,8 +1909,8 @@ class WorkflowConfig:
             parser.parse_graph(graph)
             self.workflow_polling_tasks.update(
                 parser.workflow_state_polling_tasks)
-            self._proc_triggers(
-                parser, seq, task_triggers)
+            self._proc_triggers(parser, seq, task_triggers)
+            self.set_required_outputs(parser)
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
         overlap = set(self.taskdefs.keys()).intersection(
@@ -1944,34 +1926,62 @@ class WorkflowConfig:
         """Define graph edges, taskdefs, and triggers, from graph sections."""
         for right, val in parser.triggers.items():
             for expr, trigs in val.items():
-                lefts, suicide = trigs
                 orig = parser.original[right][expr]
-                self.generate_edges(
-                    expr, orig, lefts, right, seq, suicide
+                lefts, suicide = trigs
+                # (lefts, right) e.g.:
+                # for """
+                #    foo|bar => baz
+                #    @x => baz
+                # """
+                # - ['@x'], baz
+                # - ['foo:succeeded', 'bar:succeeded'], baz
+                # - [], bar
+                # - [] foo
+
+                self.generate_edges(expr, orig, lefts, right, seq, suicide)
+
+                # For "foo => bar" here we get:
+                # - [] => foo
+                # - [foo:succeeded] => bar
+                # For "foo|bar => baz":
+                # - [] => foo
+                # - [] => bar
+                # - [foo:succeeded, bar:succeeded] => baz
+                # Lefts can be null; all appear on RHS once so can generate
+                # taskdefs with right only. Right is never None or an @action.
+
+                self.generate_taskdef(orig, right)
+
+                self.add_sequence(
+                    [
+                        node
+                        for node in lefts + [right]
+                        if node and not node.startswith('@')
+                    ],
+                    seq,
+                    suicide
                 )
-                self.generate_taskdefs(
-                    orig, lefts, right, seq, suicide, parser
-                )
+
                 # RHS quals not needed not (used already for taskdef outputs)
                 right = re.sub(parser._RE_TRIG, '', right)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers
                 )
-        # TODO MOVE THIS UP OUT OF THIS FUNCTION
+
+    def set_required_outputs(self, graph_parser):
+        """Go through task outupts and set optional/required status."""
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:
                 try:
-                    # inconsistent task opt/req already caught by parser
-                    optional = parser.task_output_opt[(name, output)]
+                    # inconsistent opt/req status already caught by parser
+                    opt = graph_parser.task_output_opt[(name, output)]
                 except KeyError:
                     try:
-                        optional = parser.memb_output_opt[(name, output)]
+                        opt = graph_parser.memb_output_opt[(name, output)]
                     except KeyError:
-                        # raise WorkflowConfigError(f'WTF?? {name}, {output}')
-                        # print(f'    (skip {output})')
-                        # output not used in graph
+                        # Output not used in graph.
                         continue
-                taskdef.set_required_output(output, not optional)
+                taskdef.set_required_output(output, not opt)
 
     def find_taskdefs(self, name: str) -> List[TaskDef]:
         """Find TaskDef objects in family "name" or matching "name".
