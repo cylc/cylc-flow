@@ -58,8 +58,12 @@ Fourth beta release of Cylc 8.
 
 ### Enhancements
 
+
 [#4367](https://github.com/cylc/cylc-flow/pull/4367) -
 Make the central wrapper work with arbitrary virtual environment names.
+
+[#4343](https://github.com/cylc/cylc-flow/pull/4343) -
+Implement required and optional outputs with new graph notation.
 
 [#4324](https://github.com/cylc/cylc-flow/pull/4324) -
 Re-implement a basic form of the Cylc 7 `cylc graph` command for static
