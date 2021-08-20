@@ -164,7 +164,7 @@ def main(
     if options.flow_label and int(options.max_polls) > 0:
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
-    reg = parse_reg(reg)
+    reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:

@@ -87,7 +87,7 @@ readlink "flow.cylc" > "${TEST_NAME}.out"
 cmp_ok "${TEST_NAME}.out" <<< "suite.rc"
 
 INSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*.log')"
-grep_ok "The filename 'suite.rc' is deprecated in favour of 'flow.cylc'. Symlink created." "${INSTALL_LOG}"
+grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
 popd || exit 1
 
 purge_rnd_workflow

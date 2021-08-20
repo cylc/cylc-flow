@@ -93,26 +93,6 @@ class TestGraphParser(unittest.TestCase):
                    (a | b & c) => !d
                 """)
 
-    def test_parse_graph_fails_double_and_operator(self):
-        """Test incorrect double-& AND operator fails."""
-        with self.assertRaises(GraphParseError) as cm:
-            self.parser.parse_graph("a => c && b")
-        self.assertTrue(
-            str(cm.exception).startswith(
-                "The graph AND operator is '&'"
-            )
-        )
-
-    def test_parse_graph_fails_double_or_operator(self):
-        """Test that the graph parse will fail when the or operator is not
-        correctly used."""
-        with self.assertRaises(GraphParseError) as cm:
-            self.parser.parse_graph("a => c || d")
-        self.assertTrue(
-            str(cm.exception).startswith(
-                "The graph OR operator is '|'")
-        )
-
     def test_parse_graph_simple(self):
         """Test parsing graphs."""
         # added white spaces and comments to show that these change nothing
@@ -265,6 +245,9 @@ class TestGraphParser(unittest.TestCase):
         gp2 = GraphParser()
         gp2.parse_graph("foo:succeed => bar")
         self.assertEqual(gp1.triggers, gp2.triggers)
+        gp3 = GraphParser()
+        gp3.parse_graph("foo:succeeded => bar")
+        self.assertEqual(gp1.triggers, gp3.triggers)
 
     def test_finish_trigger(self):
         """Test finish trigger expansion."""
@@ -434,12 +417,20 @@ class TestGraphParser(unittest.TestCase):
 
     def test_double_oper(self):
         """Test that illegal forms of the logical operators are detected."""
-        graph = "foo && bar => baz"
-        gp = GraphParser()
-        self.assertRaises(GraphParseError, gp.parse_graph, graph)
-        graph = "foo || bar => baz"
-        gp = GraphParser()
-        self.assertRaises(GraphParseError, gp.parse_graph, graph)
+        with self.assertRaises(GraphParseError) as cm:
+            self.parser.parse_graph("foo && bar => baz")
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "The graph AND operator is '&'"
+            )
+        )
+        with self.assertRaises(GraphParseError) as cm:
+            self.parser.parse_graph("foo || bar => baz")
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "The graph OR operator is '|'"
+            )
+        )
 
     def test_bad_node_syntax(self):
         """Test that badly formatted graph nodes are detected.
@@ -582,9 +573,6 @@ class TestGraphParser(unittest.TestCase):
             x:fail? => y
             """
         )
-        import pprint
-        pp = pprint.PrettyPrinter(indent=2)
-        pp.pprint(gp.task_output_opt)
         for i in range(1, 4):
             self.assertEqual(
                 gp.task_output_opt[(f'a{i}', TASK_OUTPUT_SUCCEEDED)],

@@ -18,7 +18,7 @@
 # Test backwards compatibility for suite.rc files
 
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 5
 
 init_suiterc() {
     local TEST_NAME="$1"
@@ -38,13 +38,14 @@ init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
         R1 = foo => bar
 __FLOW__
 
-MSG="The filename 'suite.rc' is deprecated in favour of 'flow.cylc'"
+MSG="WARNING - Back-compat mode turned ON for Cylc 7 'suite.rc' files.
+	Do NOT rename to "flow.cylc" without upgrading to Cylc 8 syntax."
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .
 grep_ok "$MSG" "${TEST_NAME_BASE}-validate.stderr"
 
-# Test install upgrades suite.rc and logs deprecation notification, even after validation
+# Test install suite.rc
 # See also tests/functional/cylc-install/00-simple.t
 TEST_NAME="${TEST_NAME_BASE}-install-after-validate"
 run_ok "${TEST_NAME}" cylc install --flow-name="${WORKFLOW_NAME}" --no-run-name
@@ -55,9 +56,6 @@ exists_ok "flow.cylc"
 TEST_NAME="flow.cylc-readlink"
 readlink "flow.cylc" > "${TEST_NAME}.out"
 cmp_ok "${TEST_NAME}.out" <<< "suite.rc"
-
-INSTALL_LOG="$(find "${WORKFLOW_RUN_DIR}/log/install" -type f -name '*.log')"
-grep_ok "$MSG" "${INSTALL_LOG}"
 
 cd "${TEST_DIR}" || exit 1
 rm -rf "${TEST_DIR:?}/${WORKFLOW_NAME}/"

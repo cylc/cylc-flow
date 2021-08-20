@@ -33,11 +33,11 @@ from subprocess import Popen, PIPE, DEVNULL
 import time
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
-    Tuple, TYPE_CHECKING, Union, overload
+    Tuple, TYPE_CHECKING, Union
 )
-from typing_extensions import Literal
 import zmq.auth
 
+import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
@@ -320,8 +320,10 @@ To start a new run, stop the old one first with one or more of these:
 """
 
 SUITERC_DEPR_MSG = (
-    f"The filename '{WorkflowFiles.SUITE_RC}' is deprecated "
-    f"in favour of '{WorkflowFiles.FLOW_FILE}'"
+    f"Back-compat mode turned ON for Cylc 7 '{WorkflowFiles.SUITE_RC}' "
+    "files.\n"
+    f"Do NOT rename to '{WorkflowFiles.FLOW_FILE}' without "
+    "upgrading to Cylc 8 syntax."
 )
 
 NO_FLOW_FILE_MSG = (
@@ -1048,22 +1050,7 @@ def get_platforms_from_db(run_dir):
         pri_dao.close()
 
 
-@overload
-def parse_reg(reg: str, src: Literal[False] = False) -> str:
-    ...
-
-
-@overload
-def parse_reg(reg: str, src: Literal[True]) -> Tuple[str, Path]:
-    ...
-
-
-@overload
-def parse_reg(reg: str, src: bool) -> Union[str, Tuple[str, Path]]:
-    ...  # Need this 3rd overload https://github.com/python/mypy/issues/6113
-
-
-def parse_reg(reg: str, src: bool = False) -> Union[str, Tuple[str, Path]]:
+def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
     """Centralised parsing of the workflow argument, to be used by most
     cylc commands (script modules).
 
@@ -1096,18 +1083,23 @@ def parse_reg(reg: str, src: bool = False) -> Union[str, Tuple[str, Path]]:
     reg: Path = Path(expand_path(reg))
 
     if src:
-        return _parse_src_reg(reg)
+        reg, abs_path = _parse_src_reg(reg)
+    else:
+        abs_path = Path(get_workflow_run_dir(reg))
+        if abs_path.is_file():
+            raise WorkflowFilesError(
+                f"Workflow name must refer to a directory, not a file: {reg}"
+            )
+        abs_path, reg = infer_latest_run(abs_path)
 
-    abs_path = Path(get_workflow_run_dir(reg))
-    if abs_path.is_file():
-        raise WorkflowFilesError(
-            f"Workflow name must refer to a directory, not a file: {reg}"
-        )
-    abs_path, reg = infer_latest_run(abs_path)
-    return str(reg)
+    if os.path.realpath(abs_path).endswith('suite.rc'):
+        cylc.flow.flags.cylc7_back_compat = True
+        LOG.warning(SUITERC_DEPR_MSG)
+
+    return (str(reg), abs_path)
 
 
-def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
+def _parse_src_reg(reg: Path) -> Tuple[Path, Path]:
     """Helper function for parse_reg() when src=True."""
     if reg.is_absolute():
         abs_path = reg
@@ -1135,9 +1127,9 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
                             abs_path.relative_to(cwd),
                             run_dir_path.relative_to(get_cylc_run_dir())
                         ))
-                    return (str(reg.parent), abs_path)
+                    return (reg.parent, abs_path)
                 if run_dir_path.is_file():
-                    return (str(run_dir_reg.parent), run_dir_path)
+                    return (run_dir_reg.parent, run_dir_path)
                 try:
                     run_dir_path = check_flow_file(run_dir_path)
                 except WorkflowFilesError:
@@ -1151,17 +1143,18 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
                     try:
                         abs_path = check_flow_file(abs_path, logger=None)
                     except WorkflowFilesError:
-                        return (str(run_dir_reg), run_dir_path)
+                        return (run_dir_reg, run_dir_path)
                     LOG.warning(REG_CLASH_MSG.format(
                         abs_path.relative_to(cwd),
                         run_dir_path.relative_to(get_cylc_run_dir())
                     ))
-                return (str(reg), abs_path)
+                return (reg, abs_path)
     if abs_path.is_file():
         reg = reg.parent
     else:
         abs_path = check_flow_file(abs_path)
-    return (str(reg), abs_path)
+
+    return (reg, abs_path)
 
 
 def validate_workflow_name(name: str) -> None:
@@ -1616,20 +1609,19 @@ def check_flow_file(
             return flow_file_path
         if flow_file_path.resolve() == suite_rc_path.resolve():
             # A symlink that points to *existing* suite.rc
-            if logger:
-                logger.warning(SUITERC_DEPR_MSG)
             return flow_file_path
     if suite_rc_path.is_file():
         if not symlink_suiterc:
-            if logger:
-                logger.warning(SUITERC_DEPR_MSG)
             return suite_rc_path
         if flow_file_path.is_symlink():
             # Symlink broken or points elsewhere - replace
             flow_file_path.unlink()
         flow_file_path.symlink_to(WorkflowFiles.SUITE_RC)
         if logger:
-            logger.warning(f'{SUITERC_DEPR_MSG}. Symlink created.')
+            logger.warning(
+                f"Symlink created: "
+                f"{WorkflowFiles.FLOW_FILE} -> {WorkflowFiles.SUITE_RC}"
+            )
         return flow_file_path
     raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
 
