@@ -120,7 +120,7 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         message_strs = list(args)
     else:
         workflow, task_job, *message_strs = args
-        workflow = parse_reg(workflow)
+        workflow, _ = parse_reg(workflow)
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''

@@ -279,7 +279,7 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
     functionality.
 
     """
-    reg = workflow_files.parse_reg(reg)
+    reg, _ = workflow_files.parse_reg(reg)
     try:
         workflow_files.detect_old_contact_file(reg)
     except ServiceFileError as exc:
