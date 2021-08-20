@@ -262,7 +262,6 @@ class TaskProxy:
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
         reload_successor.state.prerequisites = self.state.prerequisites
-        reload_successor.graph_children = self.graph_children
 
     @staticmethod
     def get_offset_as_seconds(offset):
