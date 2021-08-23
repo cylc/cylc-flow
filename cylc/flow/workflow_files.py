@@ -1092,7 +1092,7 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
             )
         abs_path, reg = infer_latest_run(abs_path)
 
-    if os.path.realpath(abs_path).endswith('suite.rc'):
+    if abs_path.resolve().name == WorkflowFiles.SUITE_RC:
         cylc.flow.flags.cylc7_back_compat = True
         LOG.warning(SUITERC_DEPR_MSG)
 

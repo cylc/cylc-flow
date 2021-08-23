@@ -61,8 +61,7 @@ class TaskOutputs:
         self._by_trigger = {}
         self._required = set()
         # Add outputs from task def.
-        for trigger, val in tdef.outputs.items():
-            message, required = val
+        for trigger, (message, required) in tdef.outputs.items():
             self.add(message, trigger, required=required)
 
     def add(self, message, trigger=None, is_completed=False, required=False):

@@ -172,7 +172,6 @@ class TaskProxy:
         'timeout',
         'try_timers',
         'graph_children',
-        'incomplete',
         'flow_label',
         'reflow',
         'waiting_on_job_prep',
@@ -240,11 +239,6 @@ class TaskProxy:
 
         # Determine graph children of this task (for spawning).
         self.graph_children = generate_graph_children(tdef, self.point)
-        # if TASK_OUTPUT_SUCCEEDED in self.graph_children:
-        #     # TODO WHY IS THIS NEEDED?
-        #     self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
-
-        self.incomplete: bool = False
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} '{self.identity}'>"
