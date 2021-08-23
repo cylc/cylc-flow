@@ -1521,7 +1521,7 @@ def install_workflow(
             f"Symlink from \"{source_link}\" to \"{source}\" in place.")
     else:
         raise WorkflowFilesError(
-            "Source directory between runs are not consistent.")
+            "Source directory not consistent between runs.")
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
     _close_install_log(install_log)
