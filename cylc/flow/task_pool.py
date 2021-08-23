@@ -285,26 +285,29 @@ class TaskPool:
         return itask
 
     def release_runahead_tasks(self):
-        """Release runahead tasks.
+        """Release runahead tasks to restric to restrict active cycle points.
 
-        This serves to restrict the number of active cycle points.
+        Compute runahead limit, and release tasks if they are below the limit
+        point (and <= the stop point, if there is one).
 
-        Compute runahead limit, and release tasks to the main pool if they are
-        below that point (and <= the stop point, if there is a stop point).
+        Incomplete tasks and partially satisfied prerequisites are counted
+        toward the runahead limit, because they represent tasks that will
+        (or may, in the case or prerequisites) yet run at their cycle points.
+
+        Note runahead release can cause the task pool to change size because
+        we spawn parentless tasks on previous-instance release.
+
         Return True if any tasks released, else False.
 
         """
         if not self.main_pool:
-            # (At start-up, in case main pool doesn't exist yet)
+            # (At start-up main pool might not exist yet)
             return False
 
         released = False
 
-        # At restart all tasks are loaded as runahead-limited, but finished and
-        # manually-triggered ones (including --start-task) can be released
-        # immediately. Note runahead release can cause the task pool to change
-        # size because we spawn parentless tasks on previous-instance release.
-
+        # At restart all tasks are runahead-limited but finished and manually
+        # triggered tasks (incl. --start-task's) can be released immediately.
         for itask in (
             itask
             for itask in self.get_tasks()
@@ -321,13 +324,17 @@ class TaskPool:
 
         points = []
         for point, itasks in sorted(self.get_tasks_by_point().items()):
-            if points or any(
-                not itask.state(
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED,
-                    TASK_STATUS_EXPIRED
+            if (
+                points  # got the limit already so this point too
+                or any(
+                    not itask.state(
+                        TASK_STATUS_FAILED,
+                        TASK_STATUS_SUCCEEDED,
+                        TASK_STATUS_EXPIRED
+                    )
+                    or itask.state.outputs.is_incomplete()
+                    for itask in itasks
                 )
-                for itask in itasks
             ):
                 points.append(point)
 
@@ -945,20 +952,20 @@ class TaskPool:
 
     def log_incomplete_tasks(self):
         """Log finished but incomplete tasks; return True if there any."""
-        incomplete = {}
+        incomplete = []
         for itask in self.get_tasks():
             if not itask.state(*TASK_STATUSES_FINAL):
                 continue
-            incomplete[itask.identity] = itask.state.outputs.get_incomplete()
-
-        print(incomplete)
+            outputs = itask.state.outputs.get_incomplete()
+            if outputs:
+                incomplete.append((itask.identity, outputs))
 
         if incomplete:
             LOG.warning(
                 "Incomplete tasks:\n"
                 + "\n".join(
-                    f"* {name} did not complete required outputs: {outputs}"
-                    for name, outputs in incomplete.items()
+                    f"  * {id_} did not complete required outputs: {outputs}"
+                    for id_, outputs in incomplete
                 )
             )
             return True
@@ -988,7 +995,7 @@ class TaskPool:
             LOG.warning(
                 "Partially satisfied prerequisites:\n"
                 + "\n".join(
-                    f"{id_} is waiting on {others}"
+                    f"  * {id_} is waiting on {others}"
                     for id_, others in unsat.items()
                 )
             )
@@ -1004,7 +1011,6 @@ class TaskPool:
           - partially satisfied prerequisites
           - runahead-limited tasks (held back by the above)
         """
-        # TODO check reporting of runahead-limited tasks at stall
         if any(
             itask.state(
                 *TASK_STATUSES_ACTIVE,

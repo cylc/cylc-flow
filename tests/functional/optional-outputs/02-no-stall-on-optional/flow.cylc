@@ -1,0 +1,18 @@
+# Should not stall at runhead limit with incomplete foo
+[scheduler]
+   [[events]]
+      abort on stalled = True
+[scheduling]
+   cycling mode = integer
+   initial cycle point = 1
+   final cycle point = 2
+   runahead limit = P1
+   [[graph]]
+      P1 = "foo:y? => bar"
+[runtime]
+   [[foo]]
+     script = "cylc message x"
+     [[[outputs]]]
+       x = x
+       y = y
+   [[bar]]
