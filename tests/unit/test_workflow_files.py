@@ -273,19 +273,19 @@ def setup__test_parse_reg(mod_tmp_run_dir: Callable):
         pytest.param(
             'numbered/workflow',
             'numbered/workflow/run1',
-            '{cylc_run_dir}/numbered/workflow/run1/flow.cylc',
+            '{cylc_run_dir}/numbered/workflow/run1',
             id="numbered workflow"
         ),
         pytest.param(
             'numbered/workflow/runN',
             'numbered/workflow/run1',
-            '{cylc_run_dir}/numbered/workflow/run1/flow.cylc',
+            '{cylc_run_dir}/numbered/workflow/run1',
             id="numbered workflow targeted by runN"
         ),
         pytest.param(
             'non_numbered/workflow',
             'non_numbered/workflow',
-            '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
+            '{cylc_run_dir}/non_numbered/workflow',
             id="non-numbered workflow"
         ),
     ]
@@ -303,16 +303,15 @@ def test_parse_reg__ok(
         src: Arg passed to parse_reg().
         reg: Arg passed to parse_reg().
         expected_reg: Expected reg returned for both src=True|False.
-        expected_path: Expected path returned for src=True only.
+        expected_path: Expected path returned for src=False (for src=True,
+            flow.cylc will be appended).
     """
     paths: dict = setup__test_parse_reg()
-    expected: Tuple[str, Path]
     expected_reg = expected_reg.format(**paths)
+    expected_path: Path = Path(expected_path.format(**paths))
     if src:
-        expected_path = expected_path.format(**paths)
-        assert Path(expected_path) == parse_reg(reg, src)[1]
-    else:
-        assert expected_reg == parse_reg(reg, src)[0]
+        expected_path = expected_path / WorkflowFiles.FLOW_FILE
+    assert parse_reg(reg, src) == (expected_reg, expected_path)
 
 
 @pytest.mark.parametrize(
@@ -321,7 +320,7 @@ def test_parse_reg__ok(
         pytest.param(
             ('non_exist', False),
             'non_exist',
-            None,
+            '{cylc_run_dir}/non_exist',
             None,
             id="non-existent workflow, src=False"
         ),
@@ -402,7 +401,6 @@ def test_parse_reg__ok(
             None,
             id="reg points to path above, src=True"
         ),
-        # # TODO more tests cases
     ]
 )
 def test_parse_reg__various(
@@ -416,8 +414,8 @@ def test_parse_reg__various(
 
     Params:
         args: Args passed to parse_reg().
-        expected_reg: Expected reg returned for both src=True|False.
-        expected_path: Expected path returned for src=True only.
+        expected_reg: Expected reg returned.
+        expected_path: Expected path returned.
         expected_err_msg: If an exception is expected, text that is expected
             to be contained in the message.
     """
@@ -430,15 +428,11 @@ def test_parse_reg__various(
             parse_reg(reg, src)
         assert expected_err_msg in str(exc_info.value)
     else:
-        expected: Tuple[str, Path]
         assert expected_reg is not None
+        assert expected_path is not None
         expected_reg = expected_reg.format(**paths)
-        if src:
-            assert expected_path is not None
-            expected_path = expected_path.format(**paths)
-            assert Path(expected_path) == parse_reg(reg, src)[1]
-        else:
-            assert expected_reg == parse_reg(reg, src)[0]
+        expected_path = expected_path.format(**paths)
+        assert parse_reg(reg, src) == (expected_reg, Path(expected_path))
 
 
 @pytest.mark.parametrize(

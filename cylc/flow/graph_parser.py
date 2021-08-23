@@ -579,7 +579,6 @@ class GraphParser:
         orig_expr, family=False
     ):
         """Record parsed triggers and outputs."""
-        # TODO CAN WE RETURN IF expr == "" HERE?
 
         # Check suicide triggers
         with contextlib.suppress(KeyError):

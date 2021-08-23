@@ -1928,28 +1928,20 @@ class WorkflowConfig:
             for expr, trigs in val.items():
                 orig = parser.original[right][expr]
                 lefts, suicide = trigs
+
                 # (lefts, right) e.g.:
                 # for """
                 #    foo|bar => baz
                 #    @x => baz
                 # """
-                # - ['@x'], baz
-                # - ['foo:succeeded', 'bar:succeeded'], baz
-                # - [], bar
                 # - [] foo
-
+                # - [], bar
+                # - ['foo:succeeded', 'bar:succeeded'], baz
+                # - ['@x'], baz
                 self.generate_edges(expr, orig, lefts, right, seq, suicide)
 
-                # For "foo => bar" here we get:
-                # - [] => foo
-                # - [foo:succeeded] => bar
-                # For "foo|bar => baz":
-                # - [] => foo
-                # - [] => bar
-                # - [foo:succeeded, bar:succeeded] => baz
                 # Lefts can be null; all appear on RHS once so can generate
                 # taskdefs with right only. Right is never None or an @action.
-
                 self.generate_taskdef(orig, right)
 
                 self.add_sequence(
@@ -1962,7 +1954,7 @@ class WorkflowConfig:
                     suicide
                 )
 
-                # RHS quals not needed not (used already for taskdef outputs)
+                # RHS quals not needed now (used already for taskdef outputs)
                 right = re.sub(parser._RE_TRIG, '', right)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers
