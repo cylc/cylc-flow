@@ -19,6 +19,7 @@ import logging
 import os
 from pathlib import Path
 import pytest
+from pytest import param
 from typing import Callable, Dict, Iterable, List, Set
 from unittest.mock import Mock, patch, call
 
@@ -26,6 +27,7 @@ from cylc.flow.exceptions import UserInputError, WorkflowFilesError
 from cylc.flow.pathutil import (
     expand_path,
     get_dirs_to_symlink,
+    get_next_rundir_number,
     get_remote_workflow_run_dir,
     get_remote_workflow_run_job_dir,
     get_workflow_run_dir,
@@ -491,3 +493,23 @@ def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
     with pytest.raises(UserInputError) as exc:
         parse_rm_dirs(dirs)
     assert err_msg in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    'expect, files, runN',
+    [
+        param(1, [], False, id='1st run (from filenames)'),
+        param(2, ['run1'], False, id='2nd run (from filenames)'),
+        param(1000, ['run999'], False, id='1000th run (from filenames)'),
+        param(6, ['run1', 'run5'], False,
+            id='Non-sequential (from filenames)'),
+        param(2, ['run1'], True, id='2nd run (from symlink)'),
+        param(100, ['run1', 'run99'], True, id='100th run (from symlink)')
+    ]
+)
+def test_get_next_rundir_number(tmp_path, expect, files, runN):
+    for file_ in files:
+        (tmp_path / file_).mkdir()
+    if runN:
+        (tmp_path / 'runN').symlink_to(tmp_path / files[-1])
+    assert get_next_rundir_number(tmp_path) == expect
