@@ -1,3 +1,0 @@
-[platforms]
-    [[_local_background_indep_tcp]]
-        hosts = localhost
