@@ -350,7 +350,7 @@ def get_next_rundir_number(run_path: Union[str, Path]) -> int:
         # This function unlikely to be called in circumstances where this will
         # be a problem.
         last_run_num = re.search(  # type: ignore[union-attr]
-            r'(?:run)(\d*$)', old_run_path
+            r'run(\d+)$', old_run_path
         ).group(1)
         last_run_num = int(last_run_num)
     else:
