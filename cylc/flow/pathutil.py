@@ -354,11 +354,14 @@ def get_next_rundir_number(run_path: Union[str, Path]) -> int:
         ).group(1)
         last_run_num = int(last_run_num)
     else:
-        # If the ``runN`` symlink has been removed, make a sensible guess at
-        # what the next numbered run should be.
+        # If the ``runN`` symlink has been removed, get next numbered run from
+        # file names:
         last_run_num = 0
         for rundir in Path(run_path).glob('run[0-9]*'):
-            highest_yet = int(str(rundir).split('run')[-1])
+            highest_yet = re.search(  # type: ignore[union-attr]
+                r'(?:run)(\d*$)', str(rundir.name)
+            ).group(1)
+            highest_yet = int(highest_yet)
             if highest_yet > last_run_num:
                 last_run_num = highest_yet
 

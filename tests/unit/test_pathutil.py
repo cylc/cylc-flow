@@ -500,11 +500,15 @@ def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
     [
         param(1, [], False, id='1st run (from filenames)'),
         param(2, ['run1'], False, id='2nd run (from filenames)'),
-        param(1000, ['run999'], False, id='1000th run (from filenames)'),
+        param(
+            1000, ['run20', 'run400', 'run999'], False,
+            id='1000th run (from filenames)'
+        ),
         param(6, ['run1', 'run5'], False,
             id='Non-sequential (from filenames)'),
         param(2, ['run1'], True, id='2nd run (from symlink)'),
-        param(100, ['run1', 'run99'], True, id='100th run (from symlink)')
+        param(100, ['run1', 'run99'], True, id='100th run (from symlink)'),
+        param(42, ['foo', 'foo12', 'run41'], False, id='with dirs not runX')
     ]
 )
 def test_get_next_rundir_number(tmp_path, expect, files, runN):
