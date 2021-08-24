@@ -343,23 +343,22 @@ def get_next_rundir_number(run_path: Union[str, Path]) -> int:
         (often ``~/cylc-run/workflow``).
 
     """
+    re_runX = re.compile(r'run(\d+)$')
     run_n_path = Path(os.path.expanduser(os.path.join(run_path, "runN")))
     if run_n_path.exists() and run_n_path.is_symlink():
         old_run_path = os.readlink(run_n_path)
         # Line below could in theory not return a match group, so mypy objects.
         # This function unlikely to be called in circumstances where this will
         # be a problem.
-        last_run_num = re.search(  # type: ignore[union-attr]
-            r'run(\d+)$', old_run_path
-        ).group(1)
+        last_run_num = re_runX.search(old_run_path).group(1)
         last_run_num = int(last_run_num)
     else:
         # If the ``runN`` symlink has been removed, get next numbered run from
         # file names:
-        paths = os.scandir()
+        paths = Path(run_path).glob('run[0-9]*')
         run_numbers = (
             int(m.group(1)) for m in (
-                re.match(r'^run(\d+)$', i.name) for i in paths
+                re_runX.search(i.name) for i in paths
             ) if m
         )
         last_run_num = max(run_numbers, default=0)
