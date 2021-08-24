@@ -127,8 +127,6 @@ class TaskProxy:
             objects.
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
-        .incomplete:
-            TODO
         .flow_label:
             flow label
         .reflow:

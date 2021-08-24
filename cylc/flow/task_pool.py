@@ -285,7 +285,7 @@ class TaskPool:
         return itask
 
     def release_runahead_tasks(self):
-        """Release runahead tasks to restric to restrict active cycle points.
+        """Release runahead tasks to restrict active cycle points.
 
         Compute runahead limit, and release tasks if they are below the limit
         point (and <= the stop point, if there is one).

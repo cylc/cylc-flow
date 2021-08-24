@@ -38,8 +38,8 @@ init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
         R1 = foo => bar
 __FLOW__
 
-MSG='WARNING - Back-compat mode turned ON for Cylc 7 '\''suite.rc'\'' files.
-	Do NOT rename to "flow.cylc" without upgrading to Cylc 8 syntax.'
+MSG=$(python -c 'from cylc.flow.workflow_files import SUITERC_DEPR_MSG;
+print(SUITERC_DEPR_MSG)')
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .

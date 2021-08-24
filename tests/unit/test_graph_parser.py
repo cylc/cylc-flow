@@ -288,6 +288,10 @@ class TestGraphParser(unittest.TestCase):
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("(m1 & m2) => post")
         self.assertEqual(gp1.triggers, gp2.triggers)
+        self.assertFalse(gp1.memb_output_opt[('m1', TASK_OUTPUT_SUCCEEDED)])
+        self.assertFalse(gp1.memb_output_opt[('m2', TASK_OUTPUT_SUCCEEDED)])
+        self.assertFalse(gp2.task_output_opt[('m1', TASK_OUTPUT_SUCCEEDED)])
+        self.assertFalse(gp2.task_output_opt[('m2', TASK_OUTPUT_SUCCEEDED)])
 
     def test_fam_any_to_one(self):
         """Test family any-to-one semantics."""
