@@ -359,7 +359,7 @@ def get_next_rundir_number(run_path: Union[str, Path]) -> int:
         last_run_num = 0
         for rundir in Path(run_path).glob('run[0-9]*'):
             highest_yet = re.search(  # type: ignore[union-attr]
-                r'(?:run)(\d*$)', str(rundir.name)
+                r'^run(\d*)$', str(rundir.name)
             ).group(1)
             highest_yet = int(highest_yet)
             if highest_yet > last_run_num:
