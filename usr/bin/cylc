@@ -145,18 +145,23 @@ fi
 # Note: the code above is only needed if still using standalone Rose 2019
 # versions
 
+# CYLC_NAME construction:
+#                           ╔════════════════════════════╗
+#                           ║        CYLC_VERSION        ║
+#                           ╠══════════════════╦═════════╣
+#                           ║        set       ║ not set ║
+# ╔═══════════════╦═════════╬══════════════════╩═════════╣
+# ║ CYLC_ENV_NAME ║   set   ║      Use CYLC_ENV_NAME     ║
+# ║               ╠═════════╬══════════════════╦═════════╣
+# ║               ║ not set ║ Use CYLC_VERSION ║  "cylc" ║
+# ╚═══════════════╩═════════╩══════════════════╩═════════╝
 if [[ -z "${CYLC_HOME}" ]]; then
-    # Look for specified or default version under the root locations
-    # Build CYLC_NAME from CYLC_VERSION if you can:
-    if [[ -n "${CYLC_VERSION}" ]]; then
-        CYLC_NAME="cylc-$CYLC_VERSION"
-        echo "cylc name is $CYLC_NAME"
-    fi
-    # Build CYLC_NAME from CYLC_ENV_NAME if you can:
     if [[ -n "${CYLC_ENV_NAME}" ]]; then
         CYLC_NAME="${CYLC_ENV_NAME}"
-    fi
-    if [[ -z "${CYLC_ENV_NAME}" && -z "${CYLC_VERSION}" ]]; then
+        export CYLC_ENV_NAME
+    elif [[ -n "${CYLC_VERSION}" ]]; then
+        CYLC_NAME="cylc-$CYLC_VERSION"
+    elif [[ -z "${CYLC_ENV_NAME}" && -z "${CYLC_VERSION}" ]]; then
         # Default version symlink
         CYLC_NAME="cylc"
     fi
