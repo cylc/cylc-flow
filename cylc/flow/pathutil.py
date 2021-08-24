@@ -356,7 +356,7 @@ def get_next_rundir_number(run_path: Union[str, Path]) -> int:
     else:
         # If the ``runN`` symlink has been removed, get next numbered run from
         # file names:
-        paths = Path(run_path).glob('run[0-9]*')
+        paths = os.scandir()
         run_numbers = (
             int(m.group(1)) for m in (
                 re.match(r'^run(\d+)$', i.name) for i in paths
