@@ -350,8 +350,8 @@ def get_next_rundir_number(run_path: Union[str, Path]) -> int:
         # Line below could in theory not return a match group, so mypy objects.
         # This function unlikely to be called in circumstances where this will
         # be a problem.
-        last_run_num = re_runX.search(
-            old_run_path).group(1)  # type: ignore
+        last_run_num = re_runX.search(  # type: ignore[type-attr]
+            old_run_path).group(1)
         last_run_num = int(last_run_num)
     else:
         # If the ``runN`` symlink has been removed, get next numbered run from
