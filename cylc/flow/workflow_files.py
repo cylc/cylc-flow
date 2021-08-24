@@ -320,10 +320,11 @@ To start a new run, stop the old one first with one or more of these:
 """
 
 SUITERC_DEPR_MSG = (
-    f"Back-compat mode turned ON for Cylc 7 '{WorkflowFiles.SUITE_RC}' "
-    "files.\n"
-    f"Do NOT rename to '{WorkflowFiles.FLOW_FILE}' without "
-    "upgrading to Cylc 8 syntax."
+    "Cylc 7 backward compatibility ON for deprecated "
+    f"'{WorkflowFiles.SUITE_RC}' filename.\n"
+    "Upgrade to Cylc 8 syntax BEFORE "
+    f"renaming the file to '{WorkflowFiles.FLOW_FILE}'.\n"
+    "Backward compatibility has some limits - see Cylc 8 documentation."
 )
 
 NO_FLOW_FILE_MSG = (
@@ -1065,7 +1066,8 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
 
     Args:
         reg: The workflow arg. Can be one of:
-            - relative path to the run dir from ~/cylc-run;
+            - relative path to the run dir from ~/cylc-run, i.e. the "name"
+                of the workflow;
             - absolute path to a run dir, source dir or workflow file (only
                 if src is True);
             - '.' for the current directory (only if src is True).
@@ -1075,8 +1077,9 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
 
     Returns:
         reg: The normalised workflow arg.
-        path: (Only if src is True) The absolute path to the workflow file
-            (flow.cylc or suite.rc).
+        path: If src is True, the absolute path to the workflow file
+            (flow.cylc or suite.rc). Otherwise, the absolute path to the
+            workflow run dir.
     """
     if not src:
         validate_workflow_name(reg)
@@ -1084,6 +1087,7 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
 
     if src:
         reg, abs_path = _parse_src_reg(reg)
+        check_deprecation(abs_path)
     else:
         abs_path = Path(get_workflow_run_dir(reg))
         if abs_path.is_file():
@@ -1091,12 +1095,25 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
                 f"Workflow name must refer to a directory, not a file: {reg}"
             )
         abs_path, reg = infer_latest_run(abs_path)
-
-    if abs_path.resolve().name == WorkflowFiles.SUITE_RC:
-        cylc.flow.flags.cylc7_back_compat = True
-        LOG.warning(SUITERC_DEPR_MSG)
+        check_deprecation(abs_path)
 
     return (str(reg), abs_path)
+
+
+def check_deprecation(path):
+    if (
+        (
+            # path to file
+            path.resolve().name == WorkflowFiles.SUITE_RC
+        ) or
+        (
+            # path to run dir
+            Path(path, WorkflowFiles.FLOW_FILE).resolve() ==
+            Path(path, WorkflowFiles.SUITE_RC).resolve()
+        )
+    ):
+        cylc.flow.flags.cylc7_back_compat = True
+        LOG.warning(SUITERC_DEPR_MSG)
 
 
 def _parse_src_reg(reg: Path) -> Tuple[Path, Path]:
@@ -1404,7 +1421,9 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
         reinstall_log.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         reinstall_log.warning(f" Error: {stderr}")
-    check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
+    check_deprecation(
+        check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
+    )
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
     print(f'REINSTALLED {named_run} from {source}')
     _close_install_log(reinstall_log)
@@ -1497,7 +1516,9 @@ def install_workflow(
             f"An error occurred when copying files from {source} to {rundir}")
         install_log.warning(f" Error: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
-    check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
+    check_deprecation(
+        check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
+    )
     if no_run_name:
         cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
@@ -1608,7 +1629,7 @@ def check_flow_file(
         if not flow_file_path.is_symlink():
             return flow_file_path
         if flow_file_path.resolve() == suite_rc_path.resolve():
-            # A symlink that points to *existing* suite.rc
+            # A symlink that points to existing suite.rc
             return flow_file_path
     if suite_rc_path.is_file():
         if not symlink_suiterc:

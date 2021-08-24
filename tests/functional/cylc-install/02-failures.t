@@ -38,7 +38,7 @@ pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 
-cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Source directory not consistent between runs.
 __ERR__
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"

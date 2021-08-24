@@ -321,7 +321,7 @@ def test_parse_reg__ok(
             ('non_exist', False),
             'non_exist',
             '{cylc_run_dir}/non_exist',
-            None,
+            "no flow.cylc or suite.rc in ",
             id="non-existent workflow, src=False"
         ),
         pytest.param(

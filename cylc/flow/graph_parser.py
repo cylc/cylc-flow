@@ -71,10 +71,10 @@ class GraphParser:
             NODE<i=0,j,k>  # specific parameter value
             NODE<i-1,j,k>  # offset parameter value
         * A parameterized qualified node name looks like this:
-            NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER)
+            NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:QUALIFIER)
         * The default trigger type is ':succeeded'.
         * A remote workflow qualified node name looks like this:
-            NODE(<REMOTE-WORKFLOW-TRIGGER>)(:TRIGGER)
+            NODE(<REMOTE-WORKFLOW-QUALIFIER>)(:QUALIFIER)
         * Outputs (boo:x) are ignored as triggers on the RHS to allow chaining:
             "foo => bar:x => baz & qux"
     """
@@ -85,98 +85,110 @@ class GraphParser:
     OP_OR_ERR = '||'
     SUICIDE = '!'
     OPTIONAL = '?'
-    TRIGGER = ':'
+    QUALIFIER = ':'
     ARROW = '=>'
-    ACTION = '@'
+    XTRIG = '@'
 
-    TRIG_FAM_SUCCEED_ALL = "succeed-all"
-    TRIG_FAM_SUCCEED_ANY = "succeed-any"
-    TRIG_FAM_FAIL_ALL = "fail-all"
-    TRIG_FAM_FAIL_ANY = "fail-any"
-    TRIG_FAM_FINISH_ALL = "finish-all"
-    TRIG_FAM_FINISH_ANY = "finish-any"
-    TRIG_FAM_START_ALL = "start-all"
-    TRIG_FAM_START_ANY = "start-any"
-    TRIG_FAM_SUBMIT_ALL = "submit-all"
-    TRIG_FAM_SUBMIT_ANY = "submit-any"
-    TRIG_FAM_SUBMIT_FAIL_ALL = "submit-fail-all"
-    TRIG_FAM_SUBMIT_FAIL_ANY = "submit-fail-any"
+    QUAL_FAM_SUCCEED_ALL = "succeed-all"
+    QUAL_FAM_SUCCEED_ANY = "succeed-any"
+    QUAL_FAM_FAIL_ALL = "fail-all"
+    QUAL_FAM_FAIL_ANY = "fail-any"
+    QUAL_FAM_FINISH_ALL = "finish-all"
+    QUAL_FAM_FINISH_ANY = "finish-any"
+    QUAL_FAM_START_ALL = "start-all"
+    QUAL_FAM_START_ANY = "start-any"
+    QUAL_FAM_SUBMIT_ALL = "submit-all"
+    QUAL_FAM_SUBMIT_ANY = "submit-any"
+    QUAL_FAM_SUBMIT_FAIL_ALL = "submit-fail-all"
+    QUAL_FAM_SUBMIT_FAIL_ANY = "submit-fail-any"
 
-    # Map family trigger to inferred member output optionality.
-    fam_output_map = {
-        # Required outputs.
-        # (started is never optional; only checked if task finishes)
-        TRIG_FAM_START_ALL: (TASK_OUTPUT_STARTED, False),
-        TRIG_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
-        TRIG_FAM_SUCCEED_ALL: (TASK_OUTPUT_SUCCEEDED, False),
-        TRIG_FAM_FAIL_ALL: (TASK_OUTPUT_FAILED, False),
-        TRIG_FAM_SUBMIT_ALL: (TASK_OUTPUT_SUBMITTED, False),
-        TRIG_FAM_SUBMIT_FAIL_ALL: (TASK_OUTPUT_SUBMIT_FAILED, False),
-        # Optional outputs.
-        TRIG_FAM_SUBMIT_FAIL_ANY: (TASK_OUTPUT_SUBMITTED, True),
-        TRIG_FAM_SUCCEED_ANY: (TASK_OUTPUT_SUCCEEDED, True),
-        TRIG_FAM_FAIL_ANY: (TASK_OUTPUT_SUCCEEDED, True),
-        TRIG_FAM_FINISH_ALL: (TASK_OUTPUT_SUCCEEDED, True),
-        TRIG_FAM_FINISH_ANY: (TASK_OUTPUT_SUCCEEDED, True),
-        TRIG_FAM_SUBMIT_ANY: (TASK_OUTPUT_SUBMITTED, True),
+    # Map family trigger type to (member-trigger, any/all), for use in
+    # expanding family trigger expressions to member trigger expressions.
+    # - "FAM:succeed-all => g" means "f1:succeed & f2:succeed => g"
+    # - "FAM:fail-any => g" means "f1:fail | f2:fail => g".
+    # E.g. QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True) simply maps
+    #   "FAM:start-all" to "MEMBER:started" and "-all" (all members).
+    fam_to_mem_trigger_map = {
+        QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True),
+        QUAL_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
+        QUAL_FAM_SUCCEED_ALL: (TASK_OUTPUT_SUCCEEDED, True),
+        QUAL_FAM_SUCCEED_ANY: (TASK_OUTPUT_SUCCEEDED, False),
+        QUAL_FAM_FAIL_ALL: (TASK_OUTPUT_FAILED, True),
+        QUAL_FAM_FAIL_ANY: (TASK_OUTPUT_FAILED, False),
+        QUAL_FAM_SUBMIT_ALL: (TASK_OUTPUT_SUBMITTED, True),
+        QUAL_FAM_SUBMIT_ANY: (TASK_OUTPUT_SUBMITTED, False),
+        QUAL_FAM_SUBMIT_FAIL_ALL: (TASK_OUTPUT_SUBMIT_FAILED, True),
+        QUAL_FAM_SUBMIT_FAIL_ANY: (TASK_OUTPUT_SUBMITTED, False),
+        QUAL_FAM_FINISH_ALL: (TASK_OUTPUT_FINISHED, True),
+        QUAL_FAM_FINISH_ANY: (TASK_OUTPUT_FINISHED, False),
     }
 
-    # Map family trigger to member triggers. _ALL True, _ANY False
-    fam_trigger_map = {
-        TRIG_FAM_START_ALL: (TASK_OUTPUT_STARTED, True),
-        TRIG_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
-        TRIG_FAM_SUCCEED_ALL: (TASK_OUTPUT_SUCCEEDED, True),
-        TRIG_FAM_SUCCEED_ANY: (TASK_OUTPUT_SUCCEEDED, False),
-        TRIG_FAM_FAIL_ALL: (TASK_OUTPUT_FAILED, True),
-        TRIG_FAM_FAIL_ANY: (TASK_OUTPUT_FAILED, False),
-        TRIG_FAM_SUBMIT_ALL: (TASK_OUTPUT_SUBMITTED, True),
-        TRIG_FAM_SUBMIT_ANY: (TASK_OUTPUT_SUBMITTED, False),
-        TRIG_FAM_SUBMIT_FAIL_ALL: (TASK_OUTPUT_SUBMIT_FAILED, True),
-        TRIG_FAM_SUBMIT_FAIL_ANY: (TASK_OUTPUT_SUBMITTED, False),
-        TRIG_FAM_FINISH_ALL: (TASK_OUTPUT_FINISHED, True),
-        TRIG_FAM_FINISH_ANY: (TASK_OUTPUT_FINISHED, False),
+    # Map of family trigger type to inferred member success/fail
+    # optionality. True means optional, False means required.
+    # (Started is never optional; it is only checked at task finish.)
+    fam_to_mem_optional_output_map = {
+        # Required outputs.
+        QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, False),
+        QUAL_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
+        QUAL_FAM_SUCCEED_ALL: (TASK_OUTPUT_SUCCEEDED, False),
+        QUAL_FAM_FAIL_ALL: (TASK_OUTPUT_FAILED, False),
+        QUAL_FAM_SUBMIT_ALL: (TASK_OUTPUT_SUBMITTED, False),
+        QUAL_FAM_SUBMIT_FAIL_ALL: (TASK_OUTPUT_SUBMIT_FAILED, False),
+        # Optional outputs.
+        QUAL_FAM_SUBMIT_FAIL_ANY: (TASK_OUTPUT_SUBMITTED, True),
+        QUAL_FAM_SUCCEED_ANY: (TASK_OUTPUT_SUCCEEDED, True),
+        QUAL_FAM_FAIL_ANY: (TASK_OUTPUT_SUCCEEDED, True),
+        QUAL_FAM_FINISH_ALL: (TASK_OUTPUT_SUCCEEDED, True),
+        QUAL_FAM_FINISH_ANY: (TASK_OUTPUT_SUCCEEDED, True),
+        QUAL_FAM_SUBMIT_ANY: (TASK_OUTPUT_SUBMITTED, True),
     }
 
     _RE_SUICIDE = r'(?:!)?'
     _RE_NODE = _RE_SUICIDE + TaskID.NAME_RE
-    _RE_NODE_OR_ACTION = r'(?:[!@])?' + TaskID.NAME_RE
+    _RE_NODE_OR_XTRIG = r'(?:[!@])?' + TaskID.NAME_RE
     _RE_PARAMS = r'<[\w,=\-+]+>'
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
-    _RE_TRIG = TRIGGER + r'[\w\-]+'  # task or fam trigger
+    RE_QUAL = QUALIFIER + r'[\w\-]+'  # task or fam trigger
     _RE_OPT = r'\??'  # optional output indicator
 
     # Match if there are any spaces which could lead to graph problems
     REC_GRAPH_BAD_SPACES_LINE = re.compile(
         TaskID.NAME_RE +
-        r'''
+        rf"""
         (?<![\-+](?=\s*[0-9]))  # allow spaces after -+ if numbers follow
         (?!\s*[\-+]\s*[0-9])    # allow spaces before/after -+ if nums follow
         \s+                     # do not allow 'task<space>task'
-        ''' + TaskID.NAME_SUFFIX_RE, re.X)
+        {TaskID.NAME_SUFFIX_RE}
+        """,
+        re.X
+    )
 
-    # Match @actions (xtriggers, and more to come?).
-    REC_ACTION = re.compile(r'@[\w\-+%]+')
+    # Match @xtriggers.
+    REC_XTRIG = re.compile(r'@[\w\-+%]+')
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
-        _RE_SUICIDE +
-        r'''
-        (?:(?:''' +
-        TaskID.NAME_RE + r'(?:' + _RE_PARAMS + r')?|' + _RE_PARAMS +
-        ''')                          # node name
-        )+                            # allow task<param> to repeat
-        (?:''' + _RE_OFFSET + r''')?  # optional cycle point offset
-        (?:''' + _RE_TRIG + r''')?    # optional trigger
-        (?:''' + _RE_OPT + r''')?     # optional optional indicator
-        ''', re.X)                    # end of string
+        rf"""
+        {_RE_SUICIDE}
+        (?:(?:{TaskID.NAME_RE}             # node name
+        (?:{_RE_PARAMS})?|{_RE_PARAMS}))+  # allow task<param> to repeat
+        (?:{_RE_OFFSET})?                  # cycle point offset
+        (?:{RE_QUAL})?                     # qualifier
+        (?:{_RE_OPT})?                     # optional output indicator
+        """,
+        re.X
+    )
 
-    # Extract node or action from left-side expressions after param expansion.
-    REC_NODES = re.compile(r'''
-        (''' + _RE_NODE_OR_ACTION + r''')  # node name
-        (''' + _RE_OFFSET + r''')?         # optional cycle point offset
-        (''' + _RE_TRIG + r''')?           # optional trigger
-        (''' + _RE_OPT + r''')?            # optional optional indicator
-    ''', re.X)
+    # Extract node or xtrigger from LHS expressions after param expansion.
+    REC_NODES = re.compile(
+        rf"""
+        ({_RE_NODE_OR_XTRIG})  # node name
+        ({_RE_OFFSET})?        # cycle point offset
+        ({RE_QUAL})?           # trigger qualifier
+        ({_RE_OPT})?           # optional output indicator
+        """,
+        re.X
+    )
 
     REC_COMMENT = re.compile('#.*$')
 
@@ -185,9 +197,11 @@ class GraphParser:
 
     # Detect and extract workflow state polling task info.
     REC_WORKFLOW_STATE = re.compile(
-        r'(' + TaskID.NAME_RE + r''')
-        (<([\w.\-/]+)::(''' + TaskID.NAME_RE + r''')
-        (''' + _RE_TRIG + r')?>)',
+        rf"""
+        ({TaskID.NAME_RE})
+        (<([\w.\-/]+)::({TaskID.NAME_RE})
+        ({RE_QUAL})?>)
+        """,
         re.X
     )
 
@@ -196,10 +210,12 @@ class GraphParser:
     # <REMOVE_TOKEN>   : <TASK_NAME_PART> <_REMOVE>
     #                    <TASK_NAME_PART>?
     _TASK_NAME_PART = rf'[^\s{OP_AND}{OP_OR}]'
-    _REMOVE_TOKEN = (rf'{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?'
-                     rf'{_TASK_NAME_PART}+')
+    _REMOVE_TOKEN = (
+        rf"{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?{_TASK_NAME_PART}+"
+    )
 
-    REC_NODE_OUT_OF_RANGE = re.compile(rf'''
+    REC_NODE_OUT_OF_RANGE = re.compile(
+        rf"""
         (                                     #
             ^{_REMOVE_TOKEN}[{OP_AND}{OP_OR}] # ^<REMOVE> <AND|OR>
             |                                 #
@@ -207,15 +223,17 @@ class GraphParser:
             |                                 #
             ^{_REMOVE_TOKEN}$                 # ^<REMOVE>$
         )                                     #
-        ''', re.X)
+        """,
+        re.X
+    )
 
     REC_RHS_NODE = re.compile(
-        r'''
-        (!)?                      # optional suicide mark
-        (''' + _RE_NODE + r''')   # node name
-        (''' + _RE_TRIG + r''')?  # optional trigger
-        (''' + _RE_OPT + r''')?   # optional optional indicator
-        ''',
+        rf"""
+        (!)?          # suicide mark
+        ({_RE_NODE})  # node name
+        ({RE_QUAL})?  # trigger qualifier
+        ({_RE_OPT})?  # optional output indicator
+        """,
         re.X
     )
 
@@ -232,8 +250,12 @@ class GraphParser:
         self.triggers = {}
         self.original = {}
         self.workflow_state_polling_tasks = {}
-        self.task_output_opt = {}  # {(name, output): bool}
-        self.memb_output_opt = {}  # {(name, output): bool}
+
+        # Task output optional/required status: {(name, output): bool}
+        # Store those derived from family member expressions separately
+        # in case both family and member expressions appear in the graph.
+        self.task_output_opt = {}  # from plain tasks
+        self.memb_output_opt = {}  # from family triggers
 
     def parse_graph(self, graph_string):
         """Parse the graph string for a single graph section.
@@ -303,7 +325,7 @@ class GraphParser:
             for item in repl.match_groups:
                 l_task, r_all, r_workflow, r_task, r_status = item
                 if r_status:
-                    r_status = r_status.strip(self.__class__.TRIGGER)
+                    r_status = r_status.strip(self.__class__.QUALIFIER)
                     r_status = TaskTrigger.standardise_name(r_status)
                 else:
                     r_status = TASK_OUTPUT_SUCCEEDED
@@ -337,7 +359,7 @@ class GraphParser:
             ]:
                 node_str = node_str.replace(spec, ' ')
             # Drop all valid @triggers, longest first to avoid sub-strings.
-            nodes = self.__class__.REC_ACTION.findall(node_str)
+            nodes = self.__class__.REC_XTRIG.findall(node_str)
             nodes.sort(key=len, reverse=True)
             for node in nodes:
                 node_str = node_str.replace(node, '')
@@ -384,7 +406,7 @@ class GraphParser:
 
             for item in self.__class__.REC_NODES.findall(chain[0]):
                 # Auto-trigger lone nodes and initial nodes in a chain.
-                if not item[0].startswith(self.__class__.ACTION):
+                if not item[0].startswith(self.__class__.XTRIG):
                     pairs.add((None, ''.join(item)))
 
             for i in range(0, len(chain) - 1):
@@ -412,12 +434,12 @@ class GraphParser:
             "bad graph node format:\n"
             "  " + "\n  ".join(lines) + "\n"
             "Correct format is:\n"
-            " @ACTION or "
-            " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER)(?)\n"
+            " @XTRIG or "
+            " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:QUALIFIER)(?)\n"
             " {NAME(<PARAMS>) can also be: "
             "<PARAMS>NAME or NAME<PARAMS>NAME_CONTINUED}\n"
             " or\n"
-            " NAME(<REMOTE-WORKFLOW-TRIGGER>)(:TRIGGER)")
+            " NAME(<REMOTE-WORKFLOW-QUALIFIER>)(:QUALIFIER)")
 
     def _proc_dep_pair(self, left, right):
         """Process a single dependency pair 'left => right'.
@@ -425,7 +447,7 @@ class GraphParser:
         'left' can be a logical expression of qualified node names.
         'right' can be one or more node names joined by AND.
         A node is an xtrigger, or a task or a family name.
-        A qualified name is NAME([CYCLE-POINT-OFFSET])(:TRIGGER).
+        A qualified name is NAME([CYCLE-POINT-OFFSET])(:QUALIFIER).
         Trigger qualifiers, but not cycle offsets, are ignored on the right to
         allow chaining.
         """
@@ -480,12 +502,12 @@ class GraphParser:
             n_info = []
             for name, offset, trig, opt_char in info:
                 opt = opt_char == self.__class__.OPTIONAL
-                if name.startswith(self.__class__.ACTION):
+                if name.startswith(self.__class__.XTRIG):
                     n_info.append((name, offset, trig, opt))
                     continue
                 if trig:
                     # Replace with standard trigger name if necessary
-                    trig = trig.strip(self.__class__.TRIGGER)
+                    trig = trig.strip(self.__class__.QUALIFIER)
                     n_trig = TaskTrigger.standardise_name(trig)
                     if n_trig != trig:
                         if offset:
@@ -521,25 +543,25 @@ class GraphParser:
             # Determine semantics of all family triggers present.
             family_trig_map = {}
             for name, _, trig, _ in info:
-                if name.startswith(self.__class__.ACTION):
+                if name.startswith(self.__class__.XTRIG):
                     # Avoid @trigger nodes.
                     continue
                 if name in self.family_map:
                     # Family; deal with members
                     try:
                         family_trig_map[(name, trig)] = (
-                            self.__class__.fam_trigger_map[trig]
+                            self.__class__.fam_to_mem_trigger_map[trig]
                         )
                     except KeyError:
                         # Unqualified (FAM => foo) or bad (FAM:bad => foo).
                         raise GraphParseError(f"Bad family trigger in {expr}")
                 else:
                     # Not family
-                    if trig in self.__class__.fam_trigger_map:
+                    if trig in self.__class__.fam_to_mem_trigger_map:
                         raise GraphParseError("family trigger on non-"
                                               f"family namespace {expr}")
 
-            # remove '?' from expr (not needed in logical trigger evaluation!)
+            # remove '?' from expr (not needed in logical trigger evaluation)
             expr = re.sub(self.__class__._RE_OPT, '', expr)
             self._families_all_to_all(expr, rights, info, family_trig_map)
 
@@ -632,7 +654,7 @@ class GraphParser:
         trigs = []
         for name, offset, trigger in info:
             # Replace finish triggers (must be done after member substn).
-            if name.startswith(self.__class__.ACTION):
+            if name.startswith(self.__class__.XTRIG):
                 trigs += [name]
             elif trigger == TASK_OUTPUT_FINISHED:
                 this = f"{name}{offset}:{trigger}"
@@ -655,7 +677,7 @@ class GraphParser:
             suicide = (suicide_char == self.__class__.SUICIDE)
             opt = opt_char == self.__class__.OPTIONAL
             if output:
-                output = output.strip(self.__class__.TRIGGER)
+                output = output.strip(self.__class__.QUALIFIER)
 
             if name not in self.family_map:
                 # Task.
@@ -679,7 +701,9 @@ class GraphParser:
 
                 # Derive member optional/required outputs.
                 try:
-                    output, optional = self.__class__.fam_output_map[output]
+                    output, optional = (
+                        self.__class__.fam_to_mem_optional_output_map[output]
+                    )
                 except KeyError:
                     if output:
                         raise GraphParseError(

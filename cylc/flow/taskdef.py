@@ -204,6 +204,7 @@ class TaskDef:
                             " can't both be required"
                         )
                     self.outputs[output] = (message, False)
+                    self.outputs[opposite] = (message, False)
                 elif (
                     not required and opposite_required
                     or required and not opposite_required
@@ -211,9 +212,10 @@ class TaskDef:
                     if not cylc.flow.flags.cylc7_back_compat:
                         raise TaskDefError(
                             f"If {self.name}:{output} is optional"
-                            f" {self.name}:{opposite} be optional too"
+                            f" {self.name}:{opposite} must be optional too"
                         )
                     self.outputs[output] = (message, False)
+                    self.outputs[opposite] = (message, False)
 
     def tweak_outputs(self):
         """Output consistency checking and tweaking."""

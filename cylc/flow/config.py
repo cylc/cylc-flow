@@ -1955,20 +1955,22 @@ class WorkflowConfig:
                 )
 
                 # RHS quals not needed now (used already for taskdef outputs)
-                right = re.sub(parser._RE_TRIG, '', right)
+                right = re.sub(parser.RE_QUAL, '', right)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers
                 )
 
     def set_required_outputs(self, graph_parser):
-        """Go through task outupts and set optional/required status."""
+        """Go through task outputs and set optional/required status."""
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:
                 try:
-                    # inconsistent opt/req status already caught by parser
+                    # non family member
+                    # (inconsistent opt/req already caught by parser)
                     opt = graph_parser.task_output_opt[(name, output)]
                 except KeyError:
                     try:
+                        # family member
                         opt = graph_parser.memb_output_opt[(name, output)]
                     except KeyError:
                         # Output not used in graph.
