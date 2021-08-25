@@ -770,7 +770,7 @@ with Conf('global.cylc', desc='''
                 systems so for safety there is an upper limit on the number
                 of job submissions which can be batched together.
             ''')
-            with Conf('selection'):
+            with Conf('selection') as Selection:
                 Conf('method', VDR.V_STRING, default='random',
                      options=['random', 'definition order'],
                      desc='''
@@ -785,8 +785,12 @@ with Conf('global.cylc', desc='''
                       be appropriate if following the pattern
                       ``hosts = main, backup, failsafe``.
                 ''')
-        with Conf('localhost', meta=Platform):
+        with Conf('localhost', meta=Platform, desc='''
+            A default platform defining settings for the local computer.
+        '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
+            with Conf('selection', meta=Selection):
+                Conf('method', VDR.V_STRING, default='definition order')
 
     # Platform Groups
     with Conf('platform groups'):  # noqa: SIM117 (keep same format)
