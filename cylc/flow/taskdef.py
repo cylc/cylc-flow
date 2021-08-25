@@ -18,7 +18,6 @@
 
 from collections import deque
 
-import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
@@ -164,58 +163,10 @@ class TaskDef:
             self.outputs[output] = (output, None)
 
     def set_required_output(self, output, required):
-        """Set required/optional type of output."""
-        try:
-            message, old_required = self.outputs[output]
-        except KeyError:
-            raise TaskDefError(
-                f"Undefined custom output: {self.name}:{output}"
-            )
-        else:
-            if old_required in [None, required]:
-                self.outputs[output] = (message, required)
-            elif cylc.flow.flags.cylc7_back_compat:  # noqa: SIM106
-                # Optional for Cylc 7 workflows if any clash
-                self.outputs[output] = (message, False)
-            else:
-                raise TaskDefError(
-                    f"{self.name}:{output} can't be both "
-                    "required and optional"
-                )
-
-        # Check for consistent use of mutually exclusive standard outputs.
-        if output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
-            if output == TASK_OUTPUT_SUCCEEDED:
-                opposite = TASK_OUTPUT_FAILED
-            else:
-                opposite = TASK_OUTPUT_SUCCEEDED
-            try:
-                _, opposite_required = self.outputs[opposite]
-            except KeyError:
-                pass
-            else:
-                if opposite_required is None:
-                    # Not set yet.
-                    return
-                if required and opposite_required:
-                    if not cylc.flow.flags.cylc7_back_compat:
-                        raise TaskDefError(
-                            f"{self.name}:{output} and {self.name}:{opposite}"
-                            " can't both be required"
-                        )
-                    self.outputs[output] = (message, False)
-                    self.outputs[opposite] = (message, False)
-                elif (
-                    not required and opposite_required
-                    or required and not opposite_required
-                ):
-                    if not cylc.flow.flags.cylc7_back_compat:
-                        raise TaskDefError(
-                            f"If {self.name}:{output} is optional"
-                            f" {self.name}:{opposite} must be optional too"
-                        )
-                    self.outputs[output] = (message, False)
-                    self.outputs[opposite] = (message, False)
+        """Set outputs to required or optional."""
+        # (Note outputs and associated messages already defined.)
+        message, _ = self.outputs[output]
+        self.outputs[output] = (message, required)
 
     def tweak_outputs(self):
         """Output consistency checking and tweaking."""
