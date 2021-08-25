@@ -217,11 +217,9 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]UTC mode` are set. Not specifying a
             time zone here is inadvisable as it leads to ambiguity.
 
-            .. note::
-
-               The ISO8601 extended date-time format can be used
-               (``CCYY-MM-DDThh:mm``) but note that the "-" and ":" characters
-               end up in job log directory paths.
+            The ISO8601 extended date-time format cannot be used
+            (``CCYY-MM-DDThh:mm``) as cycle points are used in job-log and work
+            directory paths where the ":" character is invalid.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
             For years below 0 or above 9999, the ISO 8601 standard specifies
