@@ -81,4 +81,5 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           name: '"${{ github.workflow }} ${{ matrix.os }} py-${{ matrix.python-version }}"'
+          flags: fast-tests
           fail_ci_if_error: true
