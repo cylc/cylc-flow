@@ -616,8 +616,8 @@ class GraphParser:
         self._compute_triggers(expr, rights, n_expr, n_info)
 
     def _set_triggers(
-        self, output_map, name, output, optional, suicide, trigs, expr,
-        orig_expr, family_member=False
+        self, name, output, suicide, trigs, expr, orig_expr,
+        family_member=False
     ):
         """Record parsed triggers and outputs."""
 
@@ -643,6 +643,10 @@ class GraphParser:
         self.original.setdefault(name, {})
         self.original[name][expr] = orig_expr
 
+    def _set_output_opt(
+        self, output_map, name, output, optional, suicide, family_member=False
+    ):
+
         if family_member and output == "" or suicide:
             # Do not infer output optionality from suicide triggers
             # or from a family name on the right side.
@@ -651,9 +655,15 @@ class GraphParser:
         if output == TASK_OUTPUT_FINISHED:
             # foo:finished => bar
             #   implies foo:succeeded and foo:failed are optional.
-            output_map[(name, TASK_OUTPUT_SUCCEEDED)] = True
-            output_map[(name, TASK_OUTPUT_FAILED)] = True
-            return
+            optional = True
+            for inferred_output in [
+                TASK_OUTPUT_SUCCEEDED,
+                TASK_OUTPUT_FAILED
+            ]:
+                self._set_output_opt(
+                    output_map, name, inferred_output,
+                    optional, suicide, family_member
+                )
 
         # Add or check {(name, output): optional} in output_map.
         try:
@@ -663,22 +673,30 @@ class GraphParser:
             output_map[(name, output)] = optional
             already = optional
         else:
-            if already != optional and not family_member:
+            # TODO not family_member??
+            err = None
+            if already and not optional and not family_member:
                 err = (
-                    f"Output {name}:{output} can't be both optional "
-                    "and required."
+                    f"Output {name}:{output} is optional"
+                    " so it can't also be required."
                 )
+            elif not already and optional and not family_member:
+                err = (
+                    f"Output {name}:{output} is required"
+                    " so it can't also be optional."
+                )
+            if err is not None:
                 if not cylc.flow.flags.cylc7_back_compat:
                     raise GraphParseError(err)
                 LOG.warning(
                     f"{err}\n"
                     f"...{self.__class__.CYLC7_COMPAT}: "
-                    f"making {name}:{output} optional."
+                    f"making it optional."
                 )
                 output_map[(name, output)] = True  # optional
 
-        # Check consistent use of opposite outputs.
-        # One or other must be required or else both optional.
+        # Check opposite output, if relevant.
+        # Opposites must both be optional if both are referenced.
         for opposites in [
             (TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED),
             (TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED)
@@ -686,44 +704,35 @@ class GraphParser:
             if output not in opposites:
                 continue
             succeed, fail = opposites
-            if output == succeed:
-                opposite = fail
-            else:
-                opposite = succeed
+            opposite = fail if output == succeed else succeed
             try:
                 already_opposite = output_map[(name, opposite)]
             except KeyError:
                 continue
             else:
+                err = None
                 if not already and not already_opposite:
                     err = (
-                        f"Outputs {name}:{output} and {name}:{opposite} "
-                        "can't both be required."
+                        f"Output {name}:{opposite} is required"
+                        f" so {name}:{output} can't also be required."
                     )
-                    if not cylc.flow.flags.cylc7_back_compat:
-                        raise GraphParseError(err)
-                    LOG.warning(
-                        f"{err}\n"
-                        f"...{self.__class__.CYLC7_COMPAT}: making"
-                        f" {name}:{output} and {name}:{opposite} optional."
-                    )
-                    output_map[(name, output)] = True
-                    output_map[(name, opposite)] = True
-                elif (
-                    already and not already_opposite
-                    or not already and already_opposite
-                ):
+                elif already and not already_opposite:
                     err = (
-                        f"Output {name}:{output} is optional "
-                        f"so {name}:{opposite} must be optional too."
+                        f"Output {name}:{opposite} is required"
+                        f" so {name}:{output} can't be optional."
                     )
+                elif not already and already_opposite:
+                    err = (
+                        f"Output {name}:{opposite} is optional"
+                        f" so {name}:{output} can't be required."
+                    )
+                if err is not None:
                     if not cylc.flow.flags.cylc7_back_compat:
                         raise GraphParseError(err)
                     # (can get here after auto-setting opposites to optional)
                     LOG.warning(
-                        f"{err}\n"
-                        f"...{self.__class__.CYLC7_COMPAT}: making"
-                        " {name}:{opposite} optional."
+                        f"{err}\n...{self.__class__.CYLC7_COMPAT}:"
+                        " making both optional."
                     )
                     output_map[(name, output)] = True
                     output_map[(name, opposite)] = True
@@ -758,7 +767,7 @@ class GraphParser:
                 raise GraphParseError(f"Illegal graph node: {right}")
             suicide_char, name, output, opt_char = m.groups()
             suicide = (suicide_char == self.__class__.SUICIDE)
-            opt = (opt_char == self.__class__.OPTIONAL)
+            optional = (opt_char == self.__class__.OPTIONAL)
             if output:
                 output = output.strip(self.__class__.QUALIFIER)
 
@@ -771,12 +780,14 @@ class GraphParser:
                     output = TASK_OUTPUT_SUCCEEDED
 
                 self._set_triggers(
-                    self.task_output_opt, name, output, opt,
-                    suicide, trigs, expr, orig_expr
+                    name, output, suicide, trigs, expr, orig_expr
+                )
+                self._set_output_opt(
+                    self.task_output_opt, name, output, optional, suicide
                 )
             else:
                 # Family.
-                if opt:
+                if optional:
                     raise GraphParseError(
                         "Family triggers can't be optional: "
                         f"{name}:{output}{self.__class__.OPTIONAL}"
@@ -799,6 +810,9 @@ class GraphParser:
                 for member in self.family_map[name]:
                     # Expand to family members.
                     self._set_triggers(
-                        self.memb_output_opt, member, output, optional,
-                        suicide, trigs, expr, orig_expr, family_member=True
+                        member, output, suicide, trigs, expr, orig_expr,
+                        family_member=True
+                    )
+                    self._set_output_opt(
+                        self.memb_output_opt, member, output, optional, suicide
                     )
