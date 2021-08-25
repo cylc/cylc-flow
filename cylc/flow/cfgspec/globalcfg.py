@@ -133,6 +133,10 @@ with Conf('global.cylc', desc='''
             Maximum number of concurrent processes used to execute external job
             submission, event handlers, and job poll and kill commands - see
             :ref:`Managing External Command Execution`.
+
+            .. versionchanged:: 8.0.0
+
+               Moved here from the top level.
         ''')
         Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600),
              desc='''
@@ -142,6 +146,10 @@ with Conf('global.cylc', desc='''
             .. note::
                The default is set quite high to avoid killing important
                processes when the system is under load.
+
+            .. versionchanged:: 8.0.0
+
+               Moved here from the top level.
         ''')
         Conf('auto restart delay', VDR.V_INTERVAL, desc='''
             Relates to Cylc's auto stop-restart mechanism (see
@@ -365,6 +373,10 @@ with Conf('global.cylc', desc='''
             The workflow event log, held under the workflow run directory, is
             maintained as a rolling archive. Logs are rolled over (backed up
             and started anew) when they reach a configurable limit size.
+
+            .. versionchanged:: 8.0.0
+
+               This section was previously ``[suite logging]``.
         '''):
             Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
                 How many rolled logs to retain in the archive.
@@ -374,7 +386,9 @@ with Conf('global.cylc', desc='''
                 file size.
             ''')
 
-    with Conf('install'):
+    with Conf('install', desc='''
+        .. versionadded:: 8.0.0
+    '''):
         Conf('source dirs', VDR.V_STRING_LIST, default=['~/cylc-src'], desc='''
             A list of paths where ``cylc install <flow_name>`` will look for
             a workflow of that name. All workflow source directories in these

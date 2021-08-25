@@ -266,6 +266,11 @@ with Conf(
                It is not recommended to write the time zone with a ":"
                (e.g. ``+05:30``), given that the time zone is used as part of
                task output filenames.
+
+            .. versionchanged:: 7.8.9/7.9.4
+
+               The value set here now persists over reloads/restarts after a
+               system time zone change.
         ''')
 
         with Conf('main loop'):  # noqa: SIM117 (keep same format)
@@ -430,6 +435,10 @@ with Conf(
             specified. Unlike for the final cycle point, the workflow will not
             shut down once all tasks have passed this point. If this item
             is provided you can override it on the command line.
+
+            .. versionchanged:: 8.0.0
+
+               This setting was previously called ``hold after point``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
             Set stop point. Shut down after all tasks have PASSED
@@ -480,6 +489,11 @@ with Conf(
                The runahead limit may be automatically raised if this is
                necessary to allow a future task to be triggered, preventing
                the workflow from stalling.
+
+            .. versionchanged:: 8.0.0
+
+               The ``max active cycle points`` setting was merged into this
+               one.
         ''')
 
         with Conf('queues', desc='''
@@ -1245,6 +1259,12 @@ with Conf(
                        MYNUM = %(i)d
                        MYITEM = %(item)s
                        MYFILE = /path/to/%(i)03d/%(item)s
+
+                    .. versionchanged:: 7.8.7/7.9.2
+
+                       Parameter environment templates (previously in
+                       ``[runtime][X][parameter environment templates]``) have
+                       moved here.
                 ''')
 
             with Conf('directives', desc='''
@@ -1288,17 +1308,18 @@ with Conf(
                 ''')
 
             with Conf('parameter environment templates', desc='''
-                .. note::
+                .. deprecated:: 7.8.7/7.9.2
 
-                   This section is deprecated and will be removed in Cylc 9.
                    Parameter environment templates have moved to
                    :cylc:conf:`flow.cylc[runtime][<namespace>][environment]`.
-                   This was done to allow users to control the order of
-                   definition of the variables.
 
-                   For the time being, the contents of this section will be
-                   prepended to the ``[environment]`` section when running
-                   a workflow.
+                This was done to allow users to control the order of
+                definition of the variables. This section will be removed
+                in Cylc 9.
+
+                For the time being, the contents of this section will be
+                prepended to the ``[environment]`` section when running
+                a workflow.
             '''):
                 Conf('<parameter>', VDR.V_STRING)
 
