@@ -257,7 +257,7 @@ class TestGraphParser(unittest.TestCase):
         gp1 = GraphParser()
         gp1.parse_graph("foo:finished => bar")
         gp2 = GraphParser()
-        gp2.parse_graph("(foo:succeed | foo:fail) => bar")
+        gp2.parse_graph("(foo:succeed? | foo:fail?) => bar")
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_fam_all_to_all(self):
@@ -324,7 +324,7 @@ class TestGraphParser(unittest.TestCase):
         gp1.parse_graph("FAM:finish-all => post")
         gp2 = GraphParser(fam_map)
         gp2.parse_graph(
-            """((m1:succeed | m1:fail) & (m2:succeed | m2:fail)) => post"""
+            """((m1? | m1:fail?) & (m2? | m2:fail?)) => post"""
         )
         self.assertEqual(gp1.triggers, gp2.triggers)
 
@@ -578,6 +578,8 @@ class TestGraphParser(unittest.TestCase):
             c3:succeed? => d3:succeed?
 
             x:fail? => y
+
+            foo:finish => bar
             """
         )
         for i in range(1, 4):
@@ -595,6 +597,16 @@ class TestGraphParser(unittest.TestCase):
 
         self.assertEqual(
             gp.task_output_opt[('x', TASK_OUTPUT_FAILED)],
+            OPTIONAL
+        )
+
+        self.assertEqual(
+            gp.task_output_opt[('foo', TASK_OUTPUT_SUCCEEDED)],
+            OPTIONAL
+        )
+
+        self.assertEqual(
+            gp.task_output_opt[('foo', TASK_OUTPUT_FAILED)],
             OPTIONAL
         )
 
@@ -652,7 +664,7 @@ class TestGraphParser(unittest.TestCase):
             )
         self.assertTrue(
             str(cm.exception) == (
-                "a:x can't be both optional and required"
+                "Output a:x can't be both optional and required."
             )
         )
 
@@ -665,12 +677,41 @@ class TestGraphParser(unittest.TestCase):
             )
         self.assertTrue(
             str(cm.exception) == (
-                "a:succeeded can't be both optional and required"
+                "Output a:succeeded can't be both optional and required."
             )
         )
 
-    def test_graphing_errors(self):
-        """Test various graphing errors are raised as expected."""
+    def test_optional_output_2(self):
+        """TODO"""
+        gp = GraphParser()
+        gp.parse_graph("a:finish => b")
+        gp2 = GraphParser(task_output_opt=gp.task_output_opt)
+        with self.assertRaises(GraphParseError) as cm:
+            gp2.parse_graph("a => c")
+        print(cm.exception)
+        self.assertTrue(
+            str(cm.exception) == (
+                "Outputs a:succeeded and a:failed can't both be required."
+            )
+        )
+
+
+    def test_optional_output_1(self):
+        """Test that """
+        gp = GraphParser()
+        gp.parse_graph("a:fail => b")
+        gp2 = GraphParser(task_output_opt=gp.task_output_opt)
+        with self.assertRaises(GraphParseError) as cm:
+            gp2.parse_graph("a => c")
+        print(cm.exception)
+        self.assertTrue(
+            str(cm.exception) == (
+                "Output a:succeeded can't be both optional and required."
+            )
+        )
+
+    def test_fail_or_on_rhs(self):
+        """Test that OR on RHS raises an error."""
         gp = GraphParser()
         with self.assertRaises(GraphParseError) as cm:
             gp.parse_graph("a => b | c")
@@ -678,6 +719,8 @@ class TestGraphParser(unittest.TestCase):
             str(cm.exception).startswith("Illegal OR on right side")
         )
 
+    def test_fail_bare_family_trigger(self):
+        """Test that "FAM => bar" (no :succeed-all etc.) raises an error."""
         gp = GraphParser({'FAM': ['m1', 'm2']})
         with self.assertRaises(GraphParseError) as cm:
             gp.parse_graph("FAM => f")
@@ -685,15 +728,14 @@ class TestGraphParser(unittest.TestCase):
             str(cm.exception).startswith("Bad family trigger in")
         )
 
+    def test_fail_family_trigger_on_task(self):
+        """Test that not-family:succeed-all raises an error."""
         gp = GraphParser()
-        with self.assertRaises(GraphParseError) as cm:
-            gp.parse_graph("foo:succeed-all => bar")
-        self.assertTrue(
-            str(cm.exception).startswith(
-                "family trigger on non-family namespace"
+        for ftrig in gp.fam_to_mem_trigger_map:
+            with self.assertRaises(GraphParseError) as cm:
+                gp.parse_graph(f"foo:{ftrig} => bar")
+            self.assertTrue(
+                str(cm.exception).startswith(
+                    "family trigger on non-family namespace"
+                )
             )
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -320,11 +320,11 @@ To start a new run, stop the old one first with one or more of these:
 """
 
 SUITERC_DEPR_MSG = (
-    "Cylc 7 backward compatibility ON for deprecated "
-    f"'{WorkflowFiles.SUITE_RC}' filename.\n"
+    f"CYLC 7 BACK-COMPAT ON - deprecated '{WorkflowFiles.SUITE_RC}'"
+    " filename detected.\n"
     "Upgrade to Cylc 8 syntax BEFORE "
     f"renaming the file to '{WorkflowFiles.FLOW_FILE}'.\n"
-    "Backward compatibility has some limits - see Cylc 8 documentation."
+    "Back-compat mode has some limits - see Cylc 8 documentation.\n"
 )
 
 NO_FLOW_FILE_MSG = (
