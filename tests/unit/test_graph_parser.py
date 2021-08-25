@@ -19,6 +19,9 @@ import unittest
 from cylc.flow.exceptions import GraphParseError, ParamExpandError
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
 )
@@ -560,7 +563,7 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp.triggers, triggers)
 
     def test_task_optional_outputs(self):
-        """Test ..."""
+        """Test optional outputs are correctly parsed from graph."""
         OPTIONAL = True
         REQUIRED = False
         gp = GraphParser()
@@ -578,23 +581,17 @@ class TestGraphParser(unittest.TestCase):
             """
         )
         for i in range(1, 4):
-            self.assertEqual(
-                gp.task_output_opt[(f'a{i}', TASK_OUTPUT_SUCCEEDED)],
-                REQUIRED
-            )
-            self.assertEqual(
-                gp.task_output_opt[(f'b{i}', TASK_OUTPUT_SUCCEEDED)],
-                REQUIRED
-            )
+            for task in (f'a{i}', f'b{i}'):
+                self.assertEqual(
+                    gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)],
+                    REQUIRED
+                )
 
-            self.assertEqual(
-                gp.task_output_opt[(f'c{i}', TASK_OUTPUT_SUCCEEDED)],
-                OPTIONAL
-            )
-            self.assertEqual(
-                gp.task_output_opt[(f'd{i}', TASK_OUTPUT_SUCCEEDED)],
-                OPTIONAL
-            )
+            for task in (f'c{i}', f'd{i}'):
+                self.assertEqual(
+                    gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)],
+                    OPTIONAL
+                )
 
         self.assertEqual(
             gp.task_output_opt[('x', TASK_OUTPUT_FAILED)],
@@ -602,59 +599,99 @@ class TestGraphParser(unittest.TestCase):
         )
 
     def test_family_optional_outputs(self):
-        """Test ..."""
+        """Test that member output optionality is correctly inferred
+        from family triggers."""
         fam_map = {
             'FAM': ['f1', 'f2'],
             'BAM': ['b1', 'b2'],
-            'WAM': ['w1', 'w2'],
         }
-        OPTIONAL = True
-        REQUIRED = False
-        gp = GraphParser(fam_map)
-        gp.parse_graph(
-            """
-            FAM:succeed-all => f
-            BAM:succeed-any => b
-            WAM:succeed-all => w?
-            w2?
-            """
-        )
-
-        for member in ['f1', 'f2']:
-            self.assertEqual(
-                gp.memb_output_opt[(member, TASK_OUTPUT_SUCCEEDED)],
-                REQUIRED
+        for fam_qual, task_out in [
+            ('start', TASK_OUTPUT_STARTED),
+            ('finish', TASK_OUTPUT_SUCCEEDED),
+            ('succeed', TASK_OUTPUT_SUCCEEDED),
+            ('submit', TASK_OUTPUT_SUBMITTED),
+            ('submit-fail', TASK_OUTPUT_SUBMIT_FAILED),
+            ('fail', TASK_OUTPUT_FAILED)
+        ]:
+            gp = GraphParser(fam_map)
+            gp.parse_graph(
+                f"""
+                    FAM:{fam_qual}-all => f
+                    f2:{task_out}?
+                    BAM:{fam_qual}-any => b
+                """
             )
-        self.assertEqual(
-            gp.task_output_opt[('f', TASK_OUTPUT_SUCCEEDED)],
-            REQUIRED
-        )
 
-        for member in ['b1', 'b2']:
+            optional = (fam_qual == "finish")
+            for member in ['f1', 'f2']:
+                self.assertEqual(
+                    gp.memb_output_opt[(member, task_out)],
+                    optional
+                )
             self.assertEqual(
-                gp.memb_output_opt[(member, TASK_OUTPUT_SUCCEEDED)],
-                OPTIONAL
+                gp.task_output_opt[('f2', task_out)],
+                True
             )
-        self.assertEqual(
-            gp.task_output_opt[('b', TASK_OUTPUT_SUCCEEDED)],
-            REQUIRED
+
+            optional = (fam_qual != "start")
+            for member in ['b1', 'b2']:
+                self.assertEqual(
+                    gp.memb_output_opt[(member, task_out)],
+                    optional
+                )
+
+    def test_task_optional_output_errors(self):
+        """Test optional output errors are raised as expected."""
+        gp = GraphParser()
+        with self.assertRaises(GraphParseError) as cm:
+            gp.parse_graph(
+                """
+                a:x => b
+                a:x? => c
+                """
+            )
+        self.assertTrue(
+            str(cm.exception) == (
+                "a:x can't be both optional and required"
+            )
         )
 
-        self.assertEqual(
-            gp.memb_output_opt[('w1', TASK_OUTPUT_SUCCEEDED)],
-            REQUIRED
+        with self.assertRaises(GraphParseError) as cm:
+            gp.parse_graph(
+                """
+                a => b
+                a? => c
+                """
+            )
+        self.assertTrue(
+            str(cm.exception) == (
+                "a:succeeded can't be both optional and required"
+            )
         )
-        self.assertEqual(
-            gp.memb_output_opt[('w2', TASK_OUTPUT_SUCCEEDED)],
-            REQUIRED
+
+    def test_graphing_errors(self):
+        """Test various graphing errors are raised as expected."""
+        gp = GraphParser()
+        with self.assertRaises(GraphParseError) as cm:
+            gp.parse_graph("a => b | c")
+        self.assertTrue(
+            str(cm.exception).startswith("Illegal OR on right side")
         )
-        self.assertEqual(
-            gp.task_output_opt[('w', TASK_OUTPUT_SUCCEEDED)],
-            OPTIONAL
+
+        gp = GraphParser({'FAM': ['m1', 'm2']})
+        with self.assertRaises(GraphParseError) as cm:
+            gp.parse_graph("FAM => f")
+        self.assertTrue(
+            str(cm.exception).startswith("Bad family trigger in")
         )
-        self.assertEqual(
-            gp.task_output_opt[('w', TASK_OUTPUT_SUCCEEDED)],
-            OPTIONAL
+
+        gp = GraphParser()
+        with self.assertRaises(GraphParseError) as cm:
+            gp.parse_graph("foo:succeed-all => bar")
+        self.assertTrue(
+            str(cm.exception).startswith(
+                "family trigger on non-family namespace"
+            )
         )
 
 
