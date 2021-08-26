@@ -792,8 +792,8 @@ with Conf('global.cylc', desc='''
             .. attention::
 
                It is common practice to run the Cylc scheduler on a dedicated
-               host: In this case **"localhost" will refer to the host where the
-               scheduler is running and not the computer where you
+               host: In this case **"localhost" will refer to the host where
+               the scheduler is running and not the computer where you
                ran "cylc play"**.
         '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
