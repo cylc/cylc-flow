@@ -850,8 +850,8 @@ with Conf('global.cylc', desc='''
     with Conf('platform groups', desc='''
         .. versionadded:: 8.0.0
 
-        Platforms groups allow you to define sets of platforms which would
-        all be suitable for a given job. At the time Cylc sets up a task job
+        Platform groups allow you to group together platforms which would
+        all be suitable for a given job. When Cylc sets up a task job
         it will pick a platform from a group. Cylc will then use the selected
         platform for all interactions with that job.
 
