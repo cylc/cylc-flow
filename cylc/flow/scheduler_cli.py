@@ -39,7 +39,11 @@ from cylc.flow.pathutil import (
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
-from cylc.flow import workflow_files
+from cylc.flow.workflow_files import (
+    parse_reg,
+    detect_old_contact_file,
+    SUITERC_DEPR_MSG
+)
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -279,9 +283,11 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
     functionality.
 
     """
-    reg, _ = workflow_files.parse_reg(reg)
+    # Parse workflow name but delay Cylc 7 suiter.rc deprecation warning
+    # until after the start-up splash is printed.
+    reg, _ = parse_reg(reg, warn_depr=False)
     try:
-        workflow_files.detect_old_contact_file(reg)
+        detect_old_contact_file(reg)
     except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
         pclient = WorkflowRuntimeClient(reg, timeout=options.comms_timeout)
@@ -307,6 +313,9 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
                 cylc_header()
             )
         )
+
+    if cylc.flow.flags.cylc7_back_compat:
+        LOG.warning(SUITERC_DEPR_MSG)
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
