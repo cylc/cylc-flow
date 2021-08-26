@@ -1051,7 +1051,7 @@ def get_platforms_from_db(run_dir):
         pri_dao.close()
 
 
-def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
+def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
     """Centralised parsing of the workflow argument, to be used by most
     cylc commands (script modules).
 
@@ -1095,11 +1095,11 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
             )
         abs_path, reg = infer_latest_run(abs_path)
 
-    check_deprecation(abs_path)
+    check_deprecation(abs_path, warn=warn_depr)
     return (str(reg), abs_path)
 
 
-def check_deprecation(path):
+def check_deprecation(path, warn=True):
     """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
 
     Path can point to config file or parent directory (i.e. workflow name).
@@ -1109,7 +1109,8 @@ def check_deprecation(path):
         or (path / WorkflowFiles.SUITE_RC).is_file()
     ):
         cylc.flow.flags.cylc7_back_compat = True
-        LOG.warning(SUITERC_DEPR_MSG)
+        if warn:
+            LOG.warning(SUITERC_DEPR_MSG)
 
 
 def _parse_src_reg(reg: Path) -> Tuple[Path, Path]:
@@ -1417,9 +1418,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
         reinstall_log.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         reinstall_log.warning(f" Error: {stderr}")
-    check_deprecation(
-        check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
-    )
+    check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
     print(f'REINSTALLED {named_run} from {source}')
     _close_install_log(reinstall_log)
@@ -1512,6 +1511,7 @@ def install_workflow(
             f"An error occurred when copying files from {source} to {rundir}")
         install_log.warning(f" Error: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
+    print(3)
     check_deprecation(
         check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
     )
