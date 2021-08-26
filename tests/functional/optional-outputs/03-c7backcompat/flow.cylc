@@ -1,0 +1,14 @@
+[scheduler]
+allow implicit tasks = True
+[scheduling]
+   cycling mode = integer
+   initial cycle point = 1
+   final cycle point = 1
+   [[graph]] 
+      # Separate lines to get consistent order of parsing
+      R1 = """
+         foo => bar
+      """
+      P1 = """
+         foo:fail => baz
+      """

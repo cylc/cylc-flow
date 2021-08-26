@@ -678,7 +678,7 @@ def test_syntax_error(graph, error):
             """a => c
             a:fail => b""",
             ("Output a:succeeded is required so a:failed "
-             "can't also be required."),
+             "can't be required."),
             "making both optional."
         ],
         [
