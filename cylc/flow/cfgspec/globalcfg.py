@@ -495,14 +495,59 @@ with Conf('global.cylc', desc='''
                nedit
         ''')
 
-    with Conf('platforms'):
-        with Conf('<platform name>') as Platform:
+    with Conf('platforms', desc='''
+        .. versionadded:: 8.0.0
+
+        Platforms allow you to define compute resources available at your
+        site.
+
+        A platform must allow interaction with the same task job from *any*
+        of its hosts.
+    '''):
+        with Conf('<platform name>', desc='''
+            .. versionadded:: 8.0.0
+
+               Many of the items in platform definitions have been moved from
+               :cylc:conf:`task definitions <flow.cylc[runtime][<namespace>]>`.
+
+            Platform names can be regular expressions: If you have a set of
+            compute resources such as ``bigmachine1, bigmachine02`` or
+            ``desktop0000, .., desktop9999`` one would define platforms with
+            names ``[[bigmachine[12]]]`` and ``[[desktop[0-9]{4}]]``.
+
+            .. note::
+
+               Each possible match to the definition regular expression is
+               considered a separate platform.
+
+               If you had a supercomputer with multiple login nodes this would
+               be a single platform with multiple :cylc:conf:`hosts`
+
+        ''') as Platform:
+            Conf('hosts', VDR.V_STRING_LIST, desc='''
+                .. versionadded:: 8.0.0
+
+                A list of hosts from which the job host can be selected using
+                :cylc:conf:`[..][selection]method`.
+
+                All hosts should share a file system.
+            ''')
             Conf('job runner', VDR.V_STRING, 'background', desc='''
+
+                .. versionchanged:: 8.0.0
+
+                   This item was formerly known as ``batch system``.
+
                 The batch system/job submit method used to run jobs on the
                 platform, e.g., ``background``, ``at``, ``slurm``,
                 ``loadleveler``...
             ''')
-            Conf('job runner command template', VDR.V_STRING)
+            Conf('job runner command template', VDR.V_STRING, desc='''
+                .. versionchanged:: 8.0.0
+
+                   This item was formerly known as
+                   ``batch system command template``.
+            ''')
             Conf('shell', VDR.V_STRING, '/bin/bash')
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
@@ -604,7 +649,6 @@ with Conf('global.cylc', desc='''
                 sourcing ``~/.bashrc`` (or ``~/.cshrc``) to set up the
                 environment.
             ''')
-            Conf('hosts', VDR.V_STRING_LIST)
             Conf('cylc path', VDR.V_STRING, desc='''
                 The path containing the ``cylc`` executable on a remote host.
 
@@ -803,9 +847,27 @@ with Conf('global.cylc', desc='''
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
 
     # Platform Groups
-    with Conf('platform groups'):  # noqa: SIM117 (keep same format)
+    with Conf('platform groups', desc='''
+        .. versionadded:: 8.0.0
+
+        Platforms groups allow you to define sets of platforms which would
+        all be suitable for a given job. At the time Cylc sets up a task job
+        it will pick a platform from a group. Cylc will then use the selected
+        platform for all interactions with that job.
+
+        For example, if you have a group of computers
+        without a shared file system, but otherwise identical called
+        ``bigmachine01..02`` you might set up a platform group
+        ``[[bigmachines]]platforms=bigmachine01, bigmachine02``.
+    '''):  # noqa: SIM117 (keep same format)
         with Conf('<group>'):
-            Conf('platforms', VDR.V_STRING_LIST)
+            Conf('platforms', VDR.V_STRING_LIST, desc='''
+                .. versionadded:: 8.0.0
+
+                A list of platforms which can be selected if
+                :cylc:conf:`flow.cylc[runtime][task]platform` matches the
+                name of this platform group.
+            ''')
     # task
     with Conf('task events', desc='''
         Global site/user defaults for
