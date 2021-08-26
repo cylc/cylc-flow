@@ -786,7 +786,15 @@ with Conf('global.cylc', desc='''
                       ``hosts = main, backup, failsafe``.
                 ''')
         with Conf('localhost', meta=Platform, desc='''
-            A default platform defining settings for the local computer.
+            A default platform defining settings for jobs to be run on the
+            same host as the workflow scheduler.
+
+            .. attention::
+
+               It is common practice to run the Cylc scheduler on a dedicated
+               host: In this case **"localhost" will refer to the host the
+               scheduler is running and not the computer where you
+               ran "cylc play"**.
         '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
             with Conf('selection', meta=Selection):
