@@ -30,22 +30,21 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate_as_c8"
 run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-cmp_ok ${TEST_NAME}.stderr <<__ERR__
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
 GraphParseError: Output foo:succeeded is required so \
 foo:failed can't also be required.
 __ERR__
 
 # Rename config to "suite.rc"
-mv ${WORKFLOW_RUN_DIR}/flow.cylc ${WORKFLOW_RUN_DIR}/suite.rc
-ln -s ${WORKFLOW_RUN_DIR}/suite.rc ${WORKFLOW_RUN_DIR}/flow.cylc 
+mv "${WORKFLOW_RUN_DIR}/flow.cylc" "${WORKFLOW_RUN_DIR}/suite.rc"
+ln -s "${WORKFLOW_RUN_DIR}/suite.rc" "${WORKFLOW_RUN_DIR}/flow.cylc" 
 
 # It should now validate, with a deprecation message
 TEST_NAME="${TEST_NAME_BASE}-validate_as_c7"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 DEPR_MSG=$(python -c \
-  'from cylc.flow.workflow_files import SUITERC_DEPR_MSG; \
-      print(SUITERC_DEPR_MSG)')
+  'from cylc.flow.workflow_files import SUITERC_DEPR_MSG; print(SUITERC_DEPR_MSG)')
 grep_ok "${DEPR_MSG}" "${TEST_NAME}.stderr"
 
 contains_ok "${TEST_NAME}.stderr" <<__ERR__

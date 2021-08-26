@@ -1511,7 +1511,6 @@ def install_workflow(
             f"An error occurred when copying files from {source} to {rundir}")
         install_log.warning(f" Error: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
-    print(3)
     check_deprecation(
         check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
     )
