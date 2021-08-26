@@ -7,10 +7,10 @@
     R1 = """
         a & b & g
         # a & b setup to submit-fail, g (localhost) does not require remote init
-        b:submitted => c
+        b:submitted? => c
         b:start  => d
         # c & d should not be triggered
-        b:submit-fail => e & f
+        b:submit-fail? => e & f
         #  e and f on a same install target but with a different platform name - these should execute
     """
 [runtime]
