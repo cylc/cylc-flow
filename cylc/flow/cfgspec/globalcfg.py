@@ -511,7 +511,7 @@ with Conf('global.cylc', desc='''
                :cylc:conf:`task definitions <flow.cylc[runtime][<namespace>]>`.
 
             Platform names can be regular expressions: If you have a set of
-            compute resources such as ``bigmachine1, bigmachine02`` or
+            compute resources such as ``bigmachine1, bigmachine2`` or
             ``desktop0000, .., desktop9999`` one would define platforms with
             names ``[[bigmachine[12]]]`` and ``[[desktop[0-9]{4}]]``.
 
