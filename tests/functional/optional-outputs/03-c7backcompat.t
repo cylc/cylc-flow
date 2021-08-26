@@ -23,7 +23,7 @@
 # sufficient to check the resulting validation and run time behaviour.
 
 . "$(dirname "$0")/test_header"
-set_test_number 7aul
+set_test_number 7
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -32,7 +32,7 @@ run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
 GraphParseError: Output foo:succeeded is required so \
-foo:failed can't also be required.
+foo:failed can't be required.
 __ERR__
 
 # Rename config to "suite.rc"
@@ -49,7 +49,7 @@ grep_ok "${DEPR_MSG}" "${TEST_NAME}.stderr"
 
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WARNING - Output foo:succeeded is required so \
-foo:failed can't also be required.
+foo:failed can't be required.
 __ERR__
 
 grep_ok "making both optional." "${TEST_NAME}.stderr"
