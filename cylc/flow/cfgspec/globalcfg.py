@@ -784,7 +784,7 @@ with Conf('global.cylc', desc='''
                 systems so for safety there is an upper limit on the number
                 of job submissions which can be batched together.
             ''')
-            with Conf('selection'):
+            with Conf('selection') as Selection:
                 Conf('method', VDR.V_STRING, default='random',
                      options=['random', 'definition order'],
                      desc='''
@@ -799,8 +799,20 @@ with Conf('global.cylc', desc='''
                       be appropriate if following the pattern
                       ``hosts = main, backup, failsafe``.
                 ''')
-        with Conf('localhost', meta=Platform):
+        with Conf('localhost', meta=Platform, desc='''
+            A default platform defining settings for jobs to be run on the
+            same host as the workflow scheduler.
+
+            .. attention::
+
+               It is common practice to run the Cylc scheduler on a dedicated
+               host: In this case **"localhost" will refer to the host where
+               the scheduler is running and not the computer where you
+               ran "cylc play"**.
+        '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
+            with Conf('selection', meta=Selection):
+                Conf('method', VDR.V_STRING, default='definition order')
 
     # Platform Groups
     with Conf('platform groups'):  # noqa: SIM117 (keep same format)
