@@ -865,8 +865,8 @@ with Conf('global.cylc', desc='''
                 .. versionadded:: 8.0.0
 
                 A list of platforms which can be selected if
-                :cylc:conf:`flow.cylc[runtime][task]platform` matches the
-                name of this platform group.
+                :cylc:conf:`flow.cylc[runtime][<namespace>]platform` matches
+                the name of this platform group.
             ''')
     # task
     with Conf('task events', desc='''

@@ -40,6 +40,9 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
 # Cylc8 Deprecation note.
 DEPRECATION_WARN = '''
+.. deprecated:: 8.0.0
+
+
 .. warning::
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
@@ -69,6 +72,8 @@ SCRIPT_COMMON = '''
 '''
 
 DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
+.. deprecated:: 8.0.0
+
 .. warning::
 
    This config item has been moved to a platform setting in the
@@ -731,7 +736,16 @@ with Conf(
             explicitly configured to provide or override default settings for
             all tasks in the workflow.
         '''):
-            Conf('platform', VDR.V_STRING)
+            Conf('platform', VDR.V_STRING, desc='''
+                .. versionadded:: 8.0.0
+
+                The name of a compute resource defined in
+                :cylc:conf:`global.cylc[platforms]` or
+                :cylc:conf:`global.cylc[platform groups]`.
+
+                Platform describes a host or set of hosts upon which this
+                task should run jobs.
+            ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this namespace.
                 If no parents are listed default is ``root``.
