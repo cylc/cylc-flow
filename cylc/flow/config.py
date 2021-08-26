@@ -1893,7 +1893,6 @@ class WorkflowConfig:
         # Parse and process each graph section.
         task_triggers = {}
         task_output_opt = {}
-        memb_output_opt = {}
         for section, graph in sections:
             try:
                 seq = get_sequence(section, icp, fcp)
@@ -1910,16 +1909,14 @@ class WorkflowConfig:
             parser = GraphParser(
                 family_map,
                 self.parameters,
-                task_output_opt=task_output_opt,
-                memb_output_opt=memb_output_opt,
+                task_output_opt=task_output_opt
             )
             parser.parse_graph(graph)
             task_output_opt.update(parser.task_output_opt)
-            memb_output_opt.update(parser.memb_output_opt)
             self.workflow_polling_tasks.update(
                 parser.workflow_state_polling_tasks)
             self._proc_triggers(parser, seq, task_triggers)
-        self.set_required_outputs(task_output_opt, memb_output_opt)
+        self.set_required_outputs(task_output_opt)
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
         overlap = set(self.taskdefs.keys()).intersection(
@@ -1969,26 +1966,21 @@ class WorkflowConfig:
                     expr, lefts, right, seq, suicide, task_triggers
                 )
 
-    def set_required_outputs(self, task_output_opt, memb_output_opt):
+    def set_required_outputs(self, task_output_opt):
         """Go through parsed outputs and set optional/required status."""
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:
                 try:
-                    # non family member
-                    optional = task_output_opt[(name, output)]
+                    optional, _ = task_output_opt[(name, output)]
                 except KeyError:
-                    try:
-                        # family member
-                        optional = memb_output_opt[(name, output)]
-                    except KeyError:
-                        # Output not used in graph.
-                        continue
+                    # Output not used in graph.
+                    continue
                 if (
                     cylc.flow.flags.cylc7_back_compat and
                     output in self.cfg['runtime'][name]['outputs']
                 ):
                     LOG.warning(
-                        f"{GraphParser.CYLC7_COMPAT} making"
+                        f"{GraphParser.CYLC7_COMPAT} making custom output"
                         f" {name}:{output} optional")
                     optional = True
 

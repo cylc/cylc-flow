@@ -67,34 +67,44 @@ def test_parse_graph_fails_null_task_name(graph):
         assert "Null task name in graph:" in str(cm.value)
 
 
-def test_parse_graph_fails_suicide_on_left():
-    """Test fail with suicide trigger on the left."""
-    with pytest.raises(GraphParseError) as cm:
-        GraphParser().parse_graph("!foo => bar")
-    assert (
-        "Suicide markers must be on the right of a trigger:"
-        in str(cm.value)
-    )
-
-
-def test_parse_graph_fails_mismatched_paren():
-    """Test fail mismatched parentheses."""
-    with pytest.raises(GraphParseError) as cm:
-        GraphParser().parse_graph("( foo & bar => baz")
-    assert (
-        "Mismatched parentheses in:" in str(cm.value)
-    )
-
-
-def test_parse_graph_fails_with_suicide_and_not_suicide():
-    """Test graph parser fails with both "expr => !foo"
-    and "expr => !foo" in the same graph."""
-    with pytest.raises(GraphParseError):
-        GraphParser().parse_graph(
+@pytest.mark.parametrize(
+    'graph, expected_err',
+    [
+        [
+            "!foo => bar",
+            "Suicide markers must be on the right of a trigger:"
+        ],
+        [
+            "( foo & bar => baz",
+            "Mismatched parentheses in:"
+        ],
+        [
             """(a | b & c) => d
                foo => bar
-               (a | b & c) => !d
-            """)
+               (a | b & c) => !d""",
+            "can't trigger both d and !d"
+        ],
+        [
+            "a => b | c",
+            "Illegal OR on right side"
+        ],
+        [
+            "foo && bar => baz",
+            "The graph AND operator is '&'"
+        ],
+        [
+            "foo || bar => baz",
+            "The graph OR operator is '|'"
+        ]
+    ]
+)
+def test_graph_syntax_errors(graph, expected_err):
+    """Test various graph syntax errors."""
+    with pytest.raises(GraphParseError) as cm:
+        GraphParser().parse_graph(graph)
+    assert (
+        expected_err in str(cm.value)
+    )
 
 
 def test_parse_graph_simple():
@@ -570,28 +580,28 @@ def test_task_optional_outputs():
         for task in (f'a{i}', f'b{i}'):
             assert (
                 gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)]
-                == REQUIRED
+                == (REQUIRED, False)
             )
 
         for task in (f'c{i}', f'd{i}'):
             assert (
                 gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)]
-                == OPTIONAL
+                == (OPTIONAL, False)
             )
 
     assert (
         gp.task_output_opt[('x', TASK_OUTPUT_FAILED)]
-        == OPTIONAL
+        == (OPTIONAL, False)
     )
 
     assert (
         gp.task_output_opt[('foo', TASK_OUTPUT_SUCCEEDED)]
-        == OPTIONAL
+        == (OPTIONAL, False)
     )
 
     assert (
         gp.task_output_opt[('foo', TASK_OUTPUT_FAILED)]
-        == OPTIONAL
+        == (OPTIONAL, False)
     )
 
 
@@ -607,8 +617,7 @@ def test_task_optional_outputs():
     ]
 )
 def test_family_optional_outputs(fam_qual, task_out):
-    """Test that member output optionality is correctly inferred
-    from family triggers."""
+    """Test member output optionality inferred from family triggers."""
     fam_map = {
         'FAM': ['f1', 'f2'],
         'BAM': ['b1', 'b2'],
@@ -621,41 +630,15 @@ def test_family_optional_outputs(fam_qual, task_out):
         BAM:{fam_qual}-any => b
         """
     )
-
-    optional = (fam_qual == "finish")
+    IS_FAM = True
+    # -all
     for member in ['f1', 'f2']:
-        assert gp.memb_output_opt[(member, task_out)] == optional
-    assert gp.task_output_opt[('f2', task_out)]
-
+        optional = (fam_qual == "finish") or (member == 'f2')
+        assert gp.task_output_opt[(member, task_out)] == (optional, IS_FAM)
+    # -any
     optional = (fam_qual != "start")
     for member in ['b1', 'b2']:
-        assert gp.memb_output_opt[(member, task_out)] == optional
-
-
-@pytest.mark.parametrize(
-    'graph, error',
-    [
-        [
-            "a => b | c",
-            "Illegal OR on right side"
-        ],
-        [
-            "foo && bar => baz",
-            "The graph AND operator is '&'"
-        ],
-        [
-            "foo || bar => baz",
-            "The graph OR operator is '|'"
-        ]
-    ]
-
-)
-def test_syntax_error(graph, error):
-    """Test optional output errors are raised as expected."""
-    gp = GraphParser()
-    with pytest.raises(GraphParseError) as cm:
-        gp.parse_graph(graph)
-    assert error in str(cm.value)
+        assert gp.task_output_opt[(member, task_out)] == (optional, IS_FAM)
 
 
 @pytest.mark.parametrize(
@@ -755,7 +738,7 @@ def test_fail_bare_family_trigger():
     'ftrig',
     GraphParser.fam_to_mem_trigger_map.keys()
 )
-def test_fail_family_trigger_on_task(ftrig):
+def test_fail_family_triggers_on_tasks(ftrig):
     gp = GraphParser()
     with pytest.raises(GraphParseError) as cm:
         gp.parse_graph(f"foo:{ftrig} => bar")
