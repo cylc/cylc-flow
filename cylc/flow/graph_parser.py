@@ -616,8 +616,7 @@ class GraphParser:
         self._compute_triggers(expr, rights, n_expr, n_info)
 
     def _set_triggers(
-        self, name, output, suicide, trigs, expr, orig_expr,
-        family_member=False
+        self, name, output, suicide, trigs, expr, orig_expr, fam_member=False
     ):
         """Record parsed triggers and outputs."""
 
@@ -644,10 +643,15 @@ class GraphParser:
         self.original[name][expr] = orig_expr
 
     def _set_output_opt(
-        self, output_map, name, output, optional, suicide, family_member=False
+        self, output_map, name, output, optional, suicide, fam_member=False
     ):
+        """Set optionality of name:output.
 
-        if family_member and output == "" or suicide:
+        And check consistency with previous settings of the same item, and
+        of its opposite if relevant (succeed/fail).
+
+        """
+        if fam_member and output == "" or suicide:
             # Do not infer output optionality from suicide triggers
             # or from a family name on the right side.
             return
@@ -662,7 +666,7 @@ class GraphParser:
             ]:
                 self._set_output_opt(
                     output_map, name, inferred_output,
-                    optional, suicide, family_member
+                    optional, suicide, fam_member
                 )
 
         # Add or check {(name, output): optional} in output_map.
@@ -673,14 +677,14 @@ class GraphParser:
             output_map[(name, output)] = optional
             already = optional
         else:
-            # TODO not family_member??
+            # TODO not fam_member??
             err = None
-            if already and not optional and not family_member:
+            if already and not optional and not fam_member:
                 err = (
                     f"Output {name}:{output} is optional"
                     " so it can't also be required."
                 )
-            elif not already and optional and not family_member:
+            elif not already and optional and not fam_member:
                 err = (
                     f"Output {name}:{output} is required"
                     " so it can't also be optional."
@@ -714,7 +718,7 @@ class GraphParser:
                 if not already and not already_opposite:
                     err = (
                         f"Output {name}:{opposite} is required"
-                        f" so {name}:{output} can't also be required."
+                        f" so {name}:{output} can't be required."
                     )
                 elif already and not already_opposite:
                     err = (
@@ -811,7 +815,7 @@ class GraphParser:
                     # Expand to family members.
                     self._set_triggers(
                         member, output, suicide, trigs, expr, orig_expr,
-                        family_member=True
+                        fam_member=True
                     )
                     self._set_output_opt(
                         self.memb_output_opt, member, output, optional, suicide
