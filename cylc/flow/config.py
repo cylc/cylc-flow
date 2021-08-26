@@ -1970,17 +1970,16 @@ class WorkflowConfig:
                 )
 
     def set_required_outputs(self, task_output_opt, memb_output_opt):
-        """Go through task outputs and set optional/required status."""
+        """Go through parsed outputs and set optional/required status."""
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:
                 try:
                     # non family member
-                    # (inconsistent opt/req already caught by parser)
-                    opt = task_output_opt[(name, output)]
+                    optional = task_output_opt[(name, output)]
                 except KeyError:
                     try:
                         # family member
-                        opt = memb_output_opt[(name, output)]
+                        optional = memb_output_opt[(name, output)]
                     except KeyError:
                         # Output not used in graph.
                         continue
@@ -1988,10 +1987,12 @@ class WorkflowConfig:
                     cylc.flow.flags.cylc7_back_compat and
                     output in self.cfg['runtime'][name]['outputs']
                 ):
-                    LOG.warning(f"Cylc 7 BACK-COMPAT {name}:{output} OPTIONAL")
-                    opt = True
+                    LOG.warning(
+                        f"{GraphParser.CYLC7_COMPAT} making"
+                        f" {name}:{output} optional")
+                    optional = True
 
-                taskdef.set_required_output(output, not opt)
+                taskdef.set_required_output(output, not optional)
 
     def find_taskdefs(self, name: str) -> List[TaskDef]:
         """Find TaskDef objects in family "name" or matching "name".
