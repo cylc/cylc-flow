@@ -1087,7 +1087,6 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
 
     if src:
         reg, abs_path = _parse_src_reg(reg)
-        check_deprecation(abs_path)
     else:
         abs_path = Path(get_workflow_run_dir(reg))
         if abs_path.is_file():
@@ -1095,22 +1094,19 @@ def parse_reg(reg: str, src: bool = False) -> Tuple[str, Path]:
                 f"Workflow name must refer to a directory, not a file: {reg}"
             )
         abs_path, reg = infer_latest_run(abs_path)
-        check_deprecation(abs_path)
 
+    check_deprecation(abs_path)
     return (str(reg), abs_path)
 
 
 def check_deprecation(path):
+    """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
+
+    Path can point to config file or parent directory (i.e. workflow name).
+    """
     if (
-        (
-            # path to file
-            path.resolve().name == WorkflowFiles.SUITE_RC
-        ) or
-        (
-            # path to run dir
-            Path(path, WorkflowFiles.FLOW_FILE).resolve() ==
-            Path(path, WorkflowFiles.SUITE_RC).resolve()
-        )
+        path.resolve().name == WorkflowFiles.SUITE_RC
+        or (path / WorkflowFiles.SUITE_RC).is_file()
     ):
         cylc.flow.flags.cylc7_back_compat = True
         LOG.warning(SUITERC_DEPR_MSG)
