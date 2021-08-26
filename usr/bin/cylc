@@ -156,24 +156,22 @@ fi
 # ║               ║ not set ║ Use CYLC_VERSION ║  "cylc" ║
 # ╚═══════════════╩═════════╩══════════════════╩═════════╝
 if [[ -z "${CYLC_HOME}" ]]; then
-    if [[ -n "${CYLC_ENV_NAME}" ]]; then
-        CYLC_NAME="${CYLC_ENV_NAME}"
-        export CYLC_ENV_NAME
-    elif [[ -n "${CYLC_VERSION}" ]]; then
-        CYLC_NAME="cylc-$CYLC_VERSION"
+    if [[ -n "${CYLC_VERSION}" && -z "${CYLC_ENV_NAME}" ]]; then
+        CYLC_ENV_NAME="cylc-$CYLC_VERSION"
     elif [[ -z "${CYLC_ENV_NAME}" && -z "${CYLC_VERSION}" ]]; then
         # Default version symlink
-        CYLC_NAME="cylc"
+        CYLC_ENV_NAME="cylc"
     fi
     for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
-        if [[ -d "${ROOT}/${CYLC_NAME}" ]]; then
-            CYLC_HOME="${ROOT}/${CYLC_NAME}"
+        if [[ -d "${ROOT}/${CYLC_ENV_NAME}" ]]; then
+            CYLC_HOME="${ROOT}/${CYLC_ENV_NAME}"
+            export CYLC_ENV_NAME
             break
         fi
     done
 fi
 if [[ -z "${CYLC_HOME}" ]]; then
-    MSG="ERROR: $CYLC_NAME not found in $CYLC_HOME_ROOT"
+    MSG="ERROR: $CYLC_ENV_NAME not found in $CYLC_HOME_ROOT"
     if [[ -n "${CYLC_HOME_ROOT_ALT}" ]]; then
         MSG="${MSG} or ${CYLC_HOME_ROOT_ALT}"
     fi
