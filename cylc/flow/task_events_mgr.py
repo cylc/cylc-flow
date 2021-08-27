@@ -706,7 +706,7 @@ class TaskEventsManager():
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["mail"],
                 itask.tdef.rtconfig["events"],
-                glbl_cfg().get()["task mail"],
+                glbl_cfg().get(["scheduler", "mail"]),
                 glbl_cfg().get()["task events"],
         ]:
             try:
