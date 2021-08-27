@@ -603,7 +603,7 @@ def test_task_optional_outputs():
 
 
 @pytest.mark.parametrize(
-    'fam_qual, task_out',
+    'qual, task_output',
     [
         ('start', TASK_OUTPUT_STARTED),
         ('finish', TASK_OUTPUT_SUCCEEDED),
@@ -613,7 +613,7 @@ def test_task_optional_outputs():
         ('fail', TASK_OUTPUT_FAILED)
     ]
 )
-def test_family_optional_outputs(fam_qual, task_out):
+def test_family_optional_outputs(qual, task_output):
     """Test member output optionality inferred from family triggers."""
     fam_map = {
         'FAM': ['f1', 'f2'],
@@ -622,20 +622,55 @@ def test_family_optional_outputs(fam_qual, task_out):
     gp = GraphParser(fam_map)
     gp.parse_graph(
         f"""
-        FAM:{fam_qual}-all => f
-        f2:{task_out}?
-        BAM:{fam_qual}-any => b
+        # all f:{qual} required (except ":finish"):
+        FAM:{qual}-all => foo
+
+        # except f2:{qual} made optional:
+        f2:{task_output}?
+
+        # all b:{qual} optional (except ":start"):
+        BAM:{qual}-any => bar
         """
     )
-    IS_FAM = True
     # -all
     for member in ['f1', 'f2']:
-        optional = (fam_qual == "finish") or (member == 'f2')
-        assert gp.task_output_opt[(member, task_out)] == (optional, IS_FAM)
+        optional = (qual == "finish") or (member == 'f2')
+        assert gp.task_output_opt[(member, task_output)] == (optional, True)
     # -any
-    optional = (fam_qual != "start")
+    optional = (qual != "start")
     for member in ['b1', 'b2']:
-        assert gp.task_output_opt[(member, task_out)] == (optional, IS_FAM)
+        assert gp.task_output_opt[(member, task_output)] == (optional, True)
+
+
+def test_family_output_clash(caplog: pytest.LogCaptureFixture):
+    """Test member output optionality inferred from family triggers."""
+    fam_map = {
+        'FAM': ['f1', 'f2']
+    }
+    gp = GraphParser(fam_map)
+    gp.parse_graph(
+        """
+        # f:succeeded required:
+        FAM:succeed-all => foo
+        """
+    )
+    # (Parse graph in two chunks for consistent order of results)
+    gp2 = GraphParser(fam_map, task_output_opt=gp.task_output_opt)
+    gp2.parse_graph(
+        """
+        # f:failed required:
+        FAM:fail-all => foo
+        """
+    )
+    for mem in ['f1', 'f2']:
+        assert gp2.task_output_opt[(mem, "succeeded")] == (True, True)
+
+        expected_warning = (
+            f"Output {mem}:succeeded is required so"
+            f" {mem}:failed can't be required.\n"
+            "...BUT by the family trigger exemption: making both optional."
+        )
+        assert expected_warning in caplog.messages
 
 
 @pytest.mark.parametrize(

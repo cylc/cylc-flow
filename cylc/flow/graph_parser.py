@@ -252,7 +252,7 @@ class GraphParser:
 
     def __init__(
         self,
-        family_map: Optional[Dict[str, str]] = None,
+        family_map: Optional[Dict[str, List[str]]] = None,
         parameters: Optional[Dict] = None,
         task_output_opt:
             Optional[Dict[Tuple[str, str], Tuple[bool, bool]]] = None
