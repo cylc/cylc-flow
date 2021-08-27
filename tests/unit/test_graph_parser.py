@@ -119,16 +119,14 @@ def test_parse_graph_simple():
     families = gp.family_map
 
     assert (
-        {'a': {'': ''}, 'b': {'a:succeeded': 'a:succeeded'}}
-        == original
+        original == {'a': {'': ''}, 'b': {'a:succeeded': 'a:succeeded'}}
     )
 
     assert (
-        {
+        triggers == {
             'a': {'': ([], False)},
             'b': {'a:succeeded': (['a:succeeded'], False)}
         }
-        == triggers
     )
     assert not families
 
@@ -142,16 +140,17 @@ def test_parse_graph_simple_with_break_line_01():
     triggers = gp.triggers
     families = gp.family_map
 
-    assert ({'': ''} == original['a'])
-    assert ({'a:succeeded': 'a:succeeded'} == original['b'])
-    assert ({'b:succeeded': 'b:succeeded'} == original['c'])
+    assert original['a'] == {'': ''}
+    assert original['b'] == {'a:succeeded': 'a:succeeded'}
+    assert original['c'] == {'b:succeeded': 'b:succeeded'}
 
-    assert ({'': ([], False)} == triggers['a'])
+    assert triggers['a'] == {'': ([], False)}
     assert (
-        {'a:succeeded': (['a:succeeded'], False)} == triggers['b'])
+        triggers['b'] == {'a:succeeded': (['a:succeeded'], False)}
+    )
     assert (
-        {'b:succeeded': (['b:succeeded'], False)} == triggers['c'])
-
+        triggers['c'] == {'b:succeeded': (['b:succeeded'], False)}
+    )
     assert not families
 
 
@@ -167,18 +166,15 @@ def test_parse_graph_simple_with_break_line_02():
     triggers = gp.triggers
     families = gp.family_map
 
-    assert ({'': ''} == original['a'])
-    assert ({'a:succeeded': 'a:succeeded'} == original['b'])
-    assert ({'b:succeeded': 'b:succeeded'} == original['c'])
-    assert ({'c:succeeded': 'c:succeeded'} == original['d'])
+    assert original['a'] == {'': ''}
+    assert original['b'] == {'a:succeeded': 'a:succeeded'}
+    assert original['c'] == {'b:succeeded': 'b:succeeded'}
+    assert original['d'] == {'c:succeeded': 'c:succeeded'}
 
-    assert ({'': ([], False)} == triggers['a'])
-    assert (
-        {'a:succeeded': (['a:succeeded'], False)} == triggers['b'])
-    assert (
-        {'b:succeeded': (['b:succeeded'], False)} == triggers['c'])
-    assert (
-        {'c:succeeded': (['c:succeeded'], False)} == triggers['d'])
+    assert triggers['a'] == {'': ([], False)}
+    assert triggers['b'] == {'a:succeeded': (['a:succeeded'], False)}
+    assert triggers['c'] == {'b:succeeded': (['b:succeeded'], False)}
+    assert triggers['d'] == {'c:succeeded': (['c:succeeded'], False)}
 
     assert not families
 
@@ -192,13 +188,13 @@ def test_parse_graph_with_parameters():
     triggers = parameterized_parser.triggers
     families = parameterized_parser.family_map
     assert (
-        {'a': {'': ''}, 'b_la_paz': {'a:succeeded': 'a:succeeded'}}
-        == original
+        original == {'a': {'': ''}, 'b_la_paz': {'a:succeeded': 'a:succeeded'}}
     )
     assert (
-        {'a': {'': ([], False)},
-         'b_la_paz': {'a:succeeded': (['a:succeeded'], False)}}
-        == triggers
+        triggers == {
+            'a': {'': ([], False)},
+            'b_la_paz': {'a:succeeded': (['a:succeeded'], False)}
+        }
     )
     assert not families
 
@@ -221,17 +217,18 @@ def test_inter_workflow_dependence_simple():
     families = gp.family_map
     workflow_state_polling_tasks = gp.workflow_state_polling_tasks
     assert (
+        original ==
         {'a': {'': ''}, 'b': {'a:succeeded': 'a:succeeded'}}
-        == original
     )
     assert (
-        {'a': {'': ([], False)},
-         'b': {'a:succeeded': (['a:succeeded'], False)}}
-        == triggers
+        triggers == {
+            'a': {'': ([], False)},
+            'b': {'a:succeeded': (['a:succeeded'], False)}
+        }
     )
     assert (
+        workflow_state_polling_tasks['a'] ==
         ('WORKFLOW', 'TASK', 'failed', '<WORKFLOW::TASK:fail>')
-        == workflow_state_polling_tasks['a']
     )
     assert not families
 
@@ -254,9 +251,9 @@ b => c"""
         'c': {'b:succeeded': (['b:succeeded'], False)},
         'b': {'a:succeeded': (['a:succeeded'], False)}
     }
-    assert (gp1.triggers == res)
-    assert (gp1.triggers == gp2.triggers)
-    assert (gp1.triggers == gp3.triggers)
+    assert res == gp1.triggers
+    assert gp1.triggers == gp2.triggers
+    assert gp1.triggers == gp3.triggers
     graph = """foo => bar
         a => b =>"""
     gp = GraphParser()
@@ -305,7 +302,7 @@ def test_trigger_equivalence(graph1, graph2):
     gp1.parse_graph(graph1)
     gp2 = GraphParser()
     gp2.parse_graph(graph2)
-    assert (gp1.triggers == gp2.triggers)
+    assert gp1.triggers == gp2.triggers
 
 
 @pytest.mark.parametrize(
@@ -378,7 +375,7 @@ def test_parameter_expand():
         bar_n0 => baz
         bar_n0 => bar_n1
         """)
-    assert (gp1.triggers == gp2.triggers)
+    assert gp1.triggers == gp2.triggers
 
 
 def test_parameter_specific():
@@ -395,7 +392,7 @@ def test_parameter_specific():
        bar_i0_j0 => baz_i1_j0
        bar_i0_j1 => baz_i1_j1
        bar_i0_j2 => baz_i1_j2""")
-    assert (gp1.triggers == gp2.triggers)
+    assert gp1.triggers == gp2.triggers
 
 
 def test_parameter_offset():
@@ -409,7 +406,7 @@ def test_parameter_offset():
        bar_i0_j0 => baz_i1_j0
        bar_i0_j1 => baz_i1_j1
        bar_i0_j2 => baz_i1_j2""")
-    assert (gp1.triggers == gp2.triggers)
+    assert gp1.triggers == gp2.triggers
 
 
 def test_conditional():
@@ -428,7 +425,7 @@ def test_conditional():
             '': ([], False)
         }
     }
-    assert (gp1.triggers == res)
+    assert res == gp1.triggers == res
 
 
 @pytest.mark.parametrize(
@@ -538,7 +535,7 @@ def test_parameter_graph_mixing_offset_and_conditional():
             '': ([], False)
         }
     }
-    assert (gp.triggers == triggers)
+    assert gp.triggers == triggers
 
 
 def test_param_expand_graph_parser():
@@ -553,7 +550,7 @@ def test_param_expand_graph_parser():
             '': ([], False)
         }
     }
-    assert (gp.triggers == triggers)
+    assert gp.triggers == triggers
 
 
 def test_task_optional_outputs():
