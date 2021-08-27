@@ -1966,8 +1966,15 @@ class WorkflowConfig:
                     expr, lefts, right, seq, suicide, task_triggers
                 )
 
-    def set_required_outputs(self, task_output_opt):
-        """Go through parsed outputs and set optional/required status."""
+    def set_required_outputs(
+        self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool]]
+    ) -> None:
+        """Go through parsed outputs and set optional/required status.
+
+        Args:
+            task_output_opt: {(task, output): (is-optional, _)}
+
+        """
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:
                 try:

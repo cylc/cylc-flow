@@ -254,19 +254,20 @@ class GraphParser:
         self,
         family_map: Optional[Dict[str, str]] = None,
         parameters: Optional[Dict] = None,
-        task_output_opt: Optional[
-            Dict[
-                Tuple[str, str],
-                Tuple[bool, bool]
-            ]
-        ] = None
+        task_output_opt:
+            Optional[Dict[Tuple[str, str], Tuple[bool, bool]]] = None
     ) -> None:
-        """Initializing the graph string parser.
+        """Initialize the graph string parser.
 
-        family_map (empty or None if no families) is:
-            {family_name: [task member names]}
-        parameters (empty or None if no parameters) is just passed on to the
-        parameter expander classes (documented there).
+        Args:
+            family_map:
+                {family_name: [family member task names]}
+            parameters:
+                task parameters for expansion here
+            task_output_opt:
+                {(task-name, output-name): (is-optional, is-fam-member)}
+                passed in to allow checking across multiple graph strings
+
         """
         self.family_map = family_map or {}
         self.parameters = parameters
@@ -509,7 +510,6 @@ class GraphParser:
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
 
-        print("LEFT", left)
         if not left or (self.__class__.OP_OR in left or '(' in left):
             # Treat conditional or bracketed expressions as a single entity.
             # Can get [None] or [""] here
@@ -611,7 +611,13 @@ class GraphParser:
     ) -> None:
         """Replace all family names with member names, for all/any semantics.
 
-        (Also for graph segments with no family names.)
+        Args:
+            expr: the associated graph expression
+            rights: list of right-side nodes
+            trigs: parsed trigger info
+            info: [(name, offset, trigger-name, optional)] for each node
+            expr: the associated graph expression for this graph line
+
         """
         n_info = []
         n_expr = expr
@@ -648,7 +654,16 @@ class GraphParser:
         expr: str,
         orig_expr: str
     ) -> None:
-        """Record parsed triggers and outputs."""
+        """Record parsed triggers and outputs.
+
+        Args:
+            name: task name
+            output: output name
+            suicide: whether this is a suicide trigger or not
+            trigs: parsed trigger info
+            expr: the associated graph expression
+            orig_expr: the original associated graph expression
+        """
 
         # Check suicide triggers
         with contextlib.suppress(KeyError):
@@ -680,10 +695,17 @@ class GraphParser:
         suicide: bool,
         fam_member: bool = False
     ) -> None:
-        """Set optionality of name:output.
+        """Set optional/required status of a task output.
 
         And check consistency with previous settings of the same item, and
         of its opposite if relevant (succeed/fail).
+
+        Args:
+            name: task name
+            output: task output name
+            optional: is the output optional?
+            suicide: is this from a suicide trigger?
+            fam_member: is this from an expanded family expression?
 
         """
         if fam_member and output == "" or suicide:
@@ -803,8 +825,12 @@ class GraphParser:
     ) -> None:
         """Store trigger info from "expr => right".
 
-        info: [(name, offset, trigger_type)] for each name in expr.
-        rights: include qualifiers like foo? and foo:fail?
+        Args:
+            orig_expr: the original associated graph expression
+            rights: list of right-side nodes including qualifiers like :fail?
+            expr: the associated graph expression
+            info: [(name, offset, trigger-name)] for each name in expr.
+
         """
         trigs = []
         for name, offset, trigger in info:
