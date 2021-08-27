@@ -830,13 +830,6 @@ with Conf('global.cylc', desc='''
         Conf('mail events', VDR.V_STRING_LIST)
         Conf('submission timeout', VDR.V_INTERVAL)
 
-    with Conf('task mail', desc='''
-        Global site/user defaults for
-        :cylc:conf:`flow.cylc[runtime][<namespace>][mail]`.
-    '''):
-        Conf('from', VDR.V_STRING)
-        Conf('to', VDR.V_STRING)
-
 
 def upg(cfg, descr):
     """Upgrader."""
