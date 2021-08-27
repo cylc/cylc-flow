@@ -85,7 +85,7 @@ async def mod_example_flow(
     where the test does not mutate the state of the scheduler or task pool.
     """
     reg = mod_flow(EXAMPLE_FLOW_CFG)
-    schd: Scheduler = mod_scheduler(reg)
+    schd: Scheduler = mod_scheduler(reg, paused_start=True)
     async with mod_run(schd):
         pass
     return schd

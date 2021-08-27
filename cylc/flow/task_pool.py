@@ -1011,6 +1011,7 @@ class TaskPool:
           - partially satisfied prerequisites
           - runahead-limited tasks (held back by the above)
         """
+        print("LOOOOOOOOG")
         self.release_runahead_tasks()
         if any(
             itask.state(
