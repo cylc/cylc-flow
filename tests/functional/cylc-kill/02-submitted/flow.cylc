@@ -8,9 +8,6 @@
         R1="""
 KILLABLE:submit-all => killer
 KILLABLE:submit-fail-all => stopper
-killable-1?
-killable-2?
-killable-3?
 """
 [runtime]
     [[KILLABLE]]
