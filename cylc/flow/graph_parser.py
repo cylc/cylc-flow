@@ -18,6 +18,14 @@
 import re
 import contextlib
 
+from typing import (
+    Set,
+    Dict,
+    List,
+    Tuple,
+    Optional
+)
+
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.exceptions import GraphParseError
@@ -82,7 +90,7 @@ class GraphParser:
     """
 
     CYLC7_COMPAT = "CYLC 7 BACK-COMPAT"
-    FAM_TWEAK = "FAMILY MEMBER OUTPUT CLASH"
+    FAM_TWEAK = "BUT by the family trigger exemption"
 
     OP_AND = '&'
     OP_OR = '|'
@@ -113,7 +121,7 @@ class GraphParser:
     # - "FAM:fail-any => g" means "f1:fail | f2:fail => g".
     # E.g. QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True) simply maps
     #   "FAM:start-all" to "MEMBER:started" and "-all" (all members).
-    fam_to_mem_trigger_map = {
+    fam_to_mem_trigger_map: Dict[str, Tuple[str, bool]] = {
         QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True),
         QUAL_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
         QUAL_FAM_SUCCEED_ALL: (TASK_OUTPUT_SUCCEEDED, True),
@@ -131,7 +139,7 @@ class GraphParser:
     # Map of family trigger type to inferred member success/fail
     # optionality. True means optional, False means required.
     # (Started is never optional; it is only checked at task finish.)
-    fam_to_mem_optional_output_map = {
+    fam_to_mem_optional_output_map: Dict[str, Tuple[str, bool]] = {
         # Required outputs.
         QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, False),
         QUAL_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
@@ -244,10 +252,15 @@ class GraphParser:
 
     def __init__(
         self,
-        family_map=None,
-        parameters=None,
-        task_output_opt=None,
-    ):
+        family_map: Optional[Dict[str, str]] = None,
+        parameters: Optional[Dict] = None,
+        task_output_opt: Optional[
+            Dict[
+                Tuple[str, str],
+                Tuple[bool, bool]
+            ]
+        ] = None
+    ) -> None:
         """Initializing the graph string parser.
 
         family_map (empty or None if no families) is:
@@ -257,9 +270,9 @@ class GraphParser:
         """
         self.family_map = family_map or {}
         self.parameters = parameters
-        self.triggers = {}
-        self.original = {}
-        self.workflow_state_polling_tasks = {}
+        self.triggers: Dict = {}
+        self.original: Dict = {}
+        self.workflow_state_polling_tasks: Dict = {}
 
         # Record task outputs as optional or required:
         #   {(name, output): (is_optional, is_member)}
@@ -269,7 +282,7 @@ class GraphParser:
         else:
             self.task_output_opt = {}
 
-    def parse_graph(self, graph_string):
+    def parse_graph(self, graph_string: str) -> None:
         """Parse the graph string for a single graph section.
 
         (Assumes any general line-continuation markers have been processed).
@@ -393,7 +406,7 @@ class GraphParser:
 
         # Process chains of dependencies as pairs: left => right.
         # Parameterization can duplicate some dependencies, so use a set.
-        pairs = set()
+        pairs: Set[Tuple[Optional[str], str]] = set()
         for line in line_set:
             chain = []
             # "foo => bar => baz" becomes [foo, bar, baz]
@@ -425,10 +438,10 @@ class GraphParser:
                 pairs.add((chain[i], chain[i + 1]))
 
         for pair in pairs:
-            self._proc_dep_pair(pair[0], pair[1])
+            self._proc_dep_pair(pair)
 
     @classmethod
-    def _report_invalid_lines(cls, lines):
+    def _report_invalid_lines(cls, lines: List[str]) -> None:
         """Raise GraphParseError in a consistent format when there are
         lines with bad syntax.
 
@@ -453,18 +466,25 @@ class GraphParser:
             " or\n"
             " NAME(<REMOTE-WORKFLOW-QUALIFIER>)(:QUALIFIER)")
 
-    def _proc_dep_pair(self, left, right):
+    def _proc_dep_pair(
+        self,
+        pair: Tuple[Optional[str], str]
+    ) -> None:
         """Process a single dependency pair 'left => right'.
 
         'left' can be a logical expression of qualified node names.
+        'left' can be None, when triggering a left-side or lone node.
+        'left' can be "", if null task name in graph error (a => => b).
         'right' can be one or more node names joined by AND.
+        'right' can't be None or "".
         A node is an xtrigger, or a task or a family name.
         A qualified name is NAME([CYCLE-POINT-OFFSET])(:QUALIFIER).
         Trigger qualifiers, but not cycle offsets, are ignored on the right to
         allow chaining.
         """
+        left, right = pair
         # Raise error for right-hand-side OR operators.
-        if right and self.__class__.OP_OR in right:
+        if self.__class__.OP_OR in right:
             raise GraphParseError(f"Illegal OR on right side: {right}")
 
         # Raise error if suicide triggers on the left of the trigger.
@@ -475,7 +495,7 @@ class GraphParser:
 
         # Ignore cycle point offsets on the right side.
         # (Note we can't ban this; all nodes get process as left and right.)
-        if right and '[' in right:
+        if '[' in right:
             return
 
         # Check that parentheses match.
@@ -489,12 +509,17 @@ class GraphParser:
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
 
+        print("LEFT", left)
         if not left or (self.__class__.OP_OR in left or '(' in left):
             # Treat conditional or bracketed expressions as a single entity.
-            lefts = [left]
+            # Can get [None] or [""] here
+            lefts: List[Optional[str]] = [left]
         else:
             # Split non-conditional left-side expressions on AND.
-            lefts = left.split(self.__class__.OP_AND)
+            # Can get [""] here too
+            # TODO figure out how to handle this wih mypy:
+            #   assign List[str] to List[Optional[str]]
+            lefts = left.split(self.__class__.OP_AND)  # type: ignore
         if '' in lefts or left and not all(lefts):
             raise GraphParseError(
                 f"Null task name in graph: {left} => {right}")
@@ -511,7 +536,7 @@ class GraphParser:
                 info = []
                 expr = ''
 
-            n_info = []
+            n_info: List[Tuple[str, str, str, bool]] = []
             for name, offset, trig, opt_char in info:
                 opt = opt_char == self.__class__.OPTIONAL
                 if name.startswith(self.__class__.XTRIG):
@@ -577,7 +602,13 @@ class GraphParser:
             expr = re.sub(self.__class__._RE_OPT, '', expr)
             self._families_all_to_all(expr, rights, info, family_trig_map)
 
-    def _families_all_to_all(self, expr, rights, info, family_trig_map):
+    def _families_all_to_all(
+        self,
+        expr: str,
+        rights: List[str],
+        info: List[Tuple[str, str, str, bool]],
+        family_trig_map: Dict[Tuple[str, str], Tuple[str, bool]]
+    ) -> None:
         """Replace all family names with member names, for all/any semantics.
 
         (Also for graph segments with no family names.)
@@ -609,8 +640,14 @@ class GraphParser:
         self._compute_triggers(expr, rights, n_expr, n_info)
 
     def _set_triggers(
-        self, name, output, suicide, trigs, expr, orig_expr
-    ):
+        self,
+        name: str,
+        output: str,
+        suicide: bool,
+        trigs: List[str],
+        expr: str,
+        orig_expr: str
+    ) -> None:
         """Record parsed triggers and outputs."""
 
         # Check suicide triggers
@@ -636,8 +673,13 @@ class GraphParser:
         self.original[name][expr] = orig_expr
 
     def _set_output_opt(
-        self, name, output, optional, suicide, fam_member=False
-    ):
+        self,
+        name: str,
+        output: str,
+        optional: bool,
+        suicide: bool,
+        fam_member: bool = False
+    ) -> None:
         """Set optionality of name:output.
 
         And check consistency with previous settings of the same item, and
@@ -752,7 +794,13 @@ class GraphParser:
                     self.task_output_opt[(name, output)] = (True, is_fam)
                     self.task_output_opt[(name, opposite)] = (True, is_fam)
 
-    def _compute_triggers(self, orig_expr, rights, expr, info):
+    def _compute_triggers(
+        self,
+        orig_expr: str,
+        rights: List[str],
+        expr: str,
+        info: List[Tuple[str, str, str]]
+    ) -> None:
         """Store trigger info from "expr => right".
 
         info: [(name, offset, trigger_type)] for each name in expr.
@@ -817,9 +865,6 @@ class GraphParser:
                         raise GraphParseError(
                             f"Illegal family trigger: {name}:{output}"
                         )
-                    # Unqualified family on the right implies nothing
-                    # about outputs
-                    optional = None
 
                 for member in self.family_map[name]:
                     # Expand to family members.
