@@ -335,15 +335,36 @@ def remove_empty_parents(
             break
 
 
-def get_next_rundir_number(run_path):
-    """Return the new run number"""
-    run_n_path = os.path.expanduser(os.path.join(run_path, "runN"))
-    try:
+def get_next_rundir_number(run_path: Union[str, Path]) -> int:
+    """Return the next run number for a new install.
+
+    Args:
+        run_path: Top level installed workflow dir
+        (often ``~/cylc-run/workflow``).
+
+    """
+    re_runX = re.compile(r'run(\d+)$')
+    run_n_path = Path(os.path.expanduser(os.path.join(run_path, "runN")))
+    if run_n_path.exists() and run_n_path.is_symlink():
         old_run_path = os.readlink(run_n_path)
-        last_run_num = re.search(r'(?:run)(\d*$)', old_run_path).group(1)
-        return int(last_run_num) + 1
-    except OSError:
-        return 1
+        # Line below could in theory not return a match group, so mypy objects.
+        # This function unlikely to be called in circumstances where this will
+        # be a problem.
+        last_run_num = re_runX.search(  # type: ignore
+            old_run_path).group(1)
+        last_run_num = int(last_run_num)
+    else:
+        # If the ``runN`` symlink has been removed, get next numbered run from
+        # file names:
+        paths = Path(run_path).glob('run[0-9]*')
+        run_numbers = (
+            int(m.group(1)) for m in (
+                re_runX.search(i.name) for i in paths
+            ) if m
+        )
+        last_run_num = max(run_numbers, default=0)
+
+    return last_run_num + 1
 
 
 def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
