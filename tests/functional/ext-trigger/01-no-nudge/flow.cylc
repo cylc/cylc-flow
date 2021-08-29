@@ -11,8 +11,8 @@
 
 [scheduler]
     [[events]]
-        abort on timeout = True
-        timeout = PT30S
+        abort on stalled timeout = True
+        stalled timeout = PT30S
         abort on inactivity = True
         inactivity = PT30S
 

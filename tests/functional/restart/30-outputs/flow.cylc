@@ -4,8 +4,6 @@
         abort on inactivity = True
         abort on stalled = True
         inactivity = PT1M
-        abort on timeout = True
-        timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = """

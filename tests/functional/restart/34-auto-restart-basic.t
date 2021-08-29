@@ -30,9 +30,9 @@ BASE_GLOBAL_CONFIG="
             interval = PT2S
     [[events]]
         abort on inactivity = True
-        abort on timeout = True
+        abort on stalled timeout = True
         inactivity = PT1M
-        timeout = PT1M
+        stalled timeout = PT1M
 [scheduler]
     [[run hosts]]
         available = localhost, ${CYLC_TEST_HOST}"
