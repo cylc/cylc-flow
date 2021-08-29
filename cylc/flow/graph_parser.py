@@ -457,7 +457,7 @@ class GraphParser:
         GraphParseError -- always. This is the sole purpose of this method
         """
         raise GraphParseError(
-            "bad graph node format:\n"
+            "Bad graph node format:\n"
             "  " + "\n  ".join(lines) + "\n"
             "Correct format is:\n"
             " @XTRIG or "
@@ -648,17 +648,15 @@ class GraphParser:
     def _set_triggers(
         self,
         name: str,
-        output: str,
         suicide: bool,
         trigs: List[str],
         expr: str,
         orig_expr: str
     ) -> None:
-        """Record parsed triggers and outputs.
+        """Record parsed triggers.
 
         Args:
             name: task name
-            output: output name
             suicide: whether this is a suicide trigger or not
             trigs: parsed trigger info
             expr: the associated graph expression
@@ -868,7 +866,7 @@ class GraphParser:
                     output = TASK_OUTPUT_SUCCEEDED
 
                 self._set_triggers(
-                    name, output, suicide, trigs, expr, orig_expr
+                    name, suicide, trigs, expr, orig_expr
                 )
                 self._set_output_opt(
                     name, output, optional, suicide, False
@@ -895,7 +893,7 @@ class GraphParser:
                 for member in self.family_map[name]:
                     # Expand to family members.
                     self._set_triggers(
-                        member, output, suicide, trigs, expr, orig_expr
+                        member, suicide, trigs, expr, orig_expr
                     )
                     self._set_output_opt(
                         member, output, optional, suicide, True

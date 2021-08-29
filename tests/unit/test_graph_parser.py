@@ -32,24 +32,6 @@ from cylc.flow.task_outputs import (
 )
 
 
-def test_parse_graph_fails_if_starts_with_arrow():
-    """Test fail when the graph starts with an arrow."""
-    with pytest.raises(GraphParseError):
-        GraphParser().parse_graph("=> b")
-
-
-def test_parse_graph_fails_if_ends_with_arrow():
-    """Test fail when the graph ends with an arrow."""
-    with pytest.raises(GraphParseError):
-        GraphParser().parse_graph("a =>")
-
-
-def test_parse_graph_fails_with_spaces_in_task_name():
-    """Test fail when the task name contains spaces."""
-    with pytest.raises(GraphParseError):
-        GraphParser().parse_graph("a b => c")
-
-
 @pytest.mark.parametrize(
     'graph',
     [
@@ -70,6 +52,18 @@ def test_parse_graph_fails_null_task_name(graph):
 @pytest.mark.parametrize(
     'graph, expected_err',
     [
+        [
+            "=> b",
+            "Leading arrow"
+        ],
+        [
+            "a =>",
+            "Trailing arrow"
+        ],
+        [
+            "a b => c",
+            "Bad graph node format"
+        ],
         [
             "!foo => bar",
             "Suicide markers must be on the right of a trigger:"
@@ -456,7 +450,7 @@ def test_bad_node_syntax(graph):
     gp = GraphParser(parameters=(params, templates))
     with pytest.raises(GraphParseError) as cm:
         gp.parse_graph(graph)
-    assert "bad graph node format" in str(cm.value)
+    assert "Bad graph node format" in str(cm.value)
 
 
 def test_spaces_between_tasks_fails():
@@ -763,6 +757,16 @@ def test_fail_bare_family_trigger():
         gp.parse_graph("FAM => f")
     assert (
         str(cm.value).startswith("Bad family trigger in")
+    )
+
+
+def test_fail_family_trigger_optional():
+    """Test that "FAM:fail-all? => bar" raises an error."""
+    gp = GraphParser({'FAM': ['m1', 'm2']})
+    with pytest.raises(GraphParseError) as cm:
+        gp.parse_graph("FAM:fail-all? => f")
+    assert (
+        str(cm.value).startswith("Family triggers can't be optional")
     )
 
 

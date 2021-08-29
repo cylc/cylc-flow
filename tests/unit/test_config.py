@@ -32,6 +32,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
+from cylc.flow.graph_parser import GraphParser
 
 Fixture = Any
 
@@ -943,3 +944,70 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_path):
         assert msg in caplog.text
     else:
         WorkflowConfig__assert_err_raised()
+
+
+def test_undefined_custom_output(tmp_path):
+    """Test error on undefined custom output referenced in graph."""
+    flow_config = """
+    [scheduling]
+        [[graph]]
+            R1 = "foo:x => bar"
+    [runtime]
+        [[foo, bar]]
+    """
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
+    flow_file.write_text(flow_config)
+
+    with pytest.raises(WorkflowConfigError) as cm:
+        WorkflowConfig(
+            workflow='custom_out1', fpath=flow_file, options=None)
+    assert "Undefined custom output" in str(cm.value)
+
+
+def test_invalid_custom_output_msg(tmp_path):
+    """Test invalid output message: colon not allowed."""
+    flow_config = """
+    [scheduling]
+        [[graph]]
+            R1 = "foo:x => bar"
+    [runtime]
+        [[bar]]
+        [[foo]]
+           [[[outputs]]]
+               x = "the quick: brown fox"
+    """
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
+    flow_file.write_text(flow_config)
+
+    with pytest.raises(WorkflowConfigError) as cm:
+        WorkflowConfig(
+            workflow='invalid_output', fpath=flow_file, options=None)
+    assert (
+        'Invalid message trigger "[runtime][foo][outputs]x = '
+        'the quick: brown fox"'
+    ) in str(cm.value)
+
+
+def test_c7_custom_output_optional(tmp_path, monkeypatch, caplog):
+    """Test error on undefined custom output referenced in graph."""
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    monkeypatch.setattr(
+        'cylc.flow.flags.cylc7_back_compat', True)
+    flow_config = """
+    [scheduling]
+        [[graph]]
+            R1 = "foo:x => bar"
+    [runtime]
+        [[bar]]
+        [[foo]]
+           [[[outputs]]]
+                x = x
+    """
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
+    flow_file.write_text(flow_config)
+
+    WorkflowConfig(workflow='custom_out2', fpath=flow_file, options=None)
+    assert (
+        f"{GraphParser.CYLC7_COMPAT} making custom "
+        "output foo:x optional"
+    ) in caplog.text
