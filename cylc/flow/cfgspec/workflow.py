@@ -1449,6 +1449,19 @@ def upg(cfg, descr):
             ['runtime', '__MANY__', job_setting]
         )
 
+    # Workflow timeout is now measured from start of run.
+    # The old timeout was measured from start of stall.
+    for old, new in [
+        ('timeout', 'stalled timeout'),
+        ('abort on timeout', 'abort on stalled timeout'),
+        ('timeout handler', 'stalled timeout handler')
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['cylc', 'events', old],
+            ['cylc', 'events', new]
+        )
+
     u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()
 
