@@ -7,8 +7,8 @@
 {% endif %}{# not GLOBALCFG is not defined #}
     [[events]]
         abort on stalled = False
-        abort on timeout = True
-        timeout = PT1M
+        abort on stalled timeout = True
+        stalled timeout = PT1M
 
 [scheduling]
     [[graph]]

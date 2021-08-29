@@ -5,8 +5,8 @@
     [[events]]
         abort on inactivity = true
         inactivity = PT1M
-        abort on timeout = true
-        timeout = PT1M
+        abort on stalled timeout = true
+        stalled timeout = PT1M
         aborted handler = echo %(event)s %(message)s >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"
 [scheduling]
     [[graph]]

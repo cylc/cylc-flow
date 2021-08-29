@@ -26,9 +26,9 @@ BASE_GLOBAL_CONFIG="
             interval = PT5S
     [[events]]
         abort on inactivity = True
-        abort on timeout = True
+        abort on stalled timeout = True
         inactivity = PT2M
-        timeout = PT2M
+        stalled timeout = PT2M
 "
 #-------------------------------------------------------------------------------
 # test that workflows will not attempt to auto stop-restart if there is no

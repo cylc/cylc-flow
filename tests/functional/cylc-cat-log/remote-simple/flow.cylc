@@ -1,8 +1,8 @@
 #!Jinja2
 [scheduler]
    [[events]]
-       abort on timeout = True
-       timeout = PT1M
+       abort on stalled timeout = True
+       stalled timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = a-task

@@ -3,7 +3,6 @@
     [[events]]
         inactivity = PT10S
         abort on inactivity = True
-        abort on timeout = True
 
 [scheduling]
     [[graph]]

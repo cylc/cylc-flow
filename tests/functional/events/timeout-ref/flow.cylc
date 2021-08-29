@@ -3,8 +3,8 @@
 
 [scheduler]
     [[events]]
-        abort on timeout = True
-        timeout = PT1S
+        abort on stalled timeout = True
+        stalled timeout = PT1S
         expected task failures = foo.1
 
 [scheduling]

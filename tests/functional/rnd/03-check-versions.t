@@ -26,8 +26,8 @@ set_test_number 3
 init_workflow "${TEST_NAME_BASE}" <<__FLOW__
 [scheduler]
     [[events]]
-        abort on timeout = True
-        timeout=PT30S
+        abort on stalled timeout = True
+        stalled timeout=PT30S
 [scheduling]
     [[graph]]
         R1 = foo

@@ -6,8 +6,6 @@
 [scheduler]
     [[events]]
         abort on stalled = True
-        timeout = PT30S
-        abort on timeout = True
         inactivity = PT30S
         abort on inactivity = True
 

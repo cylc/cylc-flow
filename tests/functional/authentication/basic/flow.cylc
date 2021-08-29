@@ -8,8 +8,8 @@
     another_metadata = 1
 [scheduler]
     [[events]]
-        timeout = PT1M
-        abort on timeout = True
+        stalled timeout = PT1M
+        abort on stalled timeout = True
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
