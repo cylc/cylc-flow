@@ -207,7 +207,8 @@ async def myflow(mod_flow, mod_scheduler, mod_one_conf):
 
 def test_module_one(myflow):
     # Ensure a particular scheduler property defaults to False
-    assert myflow.already_timed_out is False
+    assert myflow.workflow_already_timed_out is False
+    assert myflow.stalled_already_timed_out is False
 
 
 def test_module_two(myflow):
