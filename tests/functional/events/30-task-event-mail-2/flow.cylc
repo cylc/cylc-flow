@@ -4,8 +4,8 @@
 
 [scheduler]
     [[events]]
-        abort on timeout = True
-        timeout = PT20S
+        abort on stalled timeout = True
+        stalled timeout = PT20S
         expected task failures = t1.1, t2.1, t3.1, t4.1, t5.1
     [[mail]]
         footer = see: http://localhost/stuff/%(owner)s/%(workflow)s/
