@@ -161,7 +161,8 @@ async def test_filter_task_proxies(
     expected_task_ids: List[str],
     expected_bad_items: List[str],
     expected_warnings: List[str],
-    mod_example_flow: Scheduler, caplog: pytest.LogCaptureFixture
+    mod_example_flow: Scheduler,
+    caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test TaskPool.filter_task_proxies().
 
@@ -174,7 +175,6 @@ async def test_filter_task_proxies(
     """
     caplog.set_level(logging.WARNING, CYLC_LOG)
     task_pool = mod_example_flow.pool
-
     itasks, bad_items = task_pool.filter_task_proxies(items)
     task_ids = [itask.identity for itask in itasks]
     assert sorted(task_ids) == sorted(expected_task_ids)
