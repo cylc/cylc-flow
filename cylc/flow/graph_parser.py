@@ -850,9 +850,8 @@ class GraphParser:
 
         for right in rights:
             m = self.__class__.REC_RHS_NODE.match(right)
-            if not m:
-                raise GraphParseError(f"Illegal graph node: {right}")
-            suicide_char, name, output, opt_char = m.groups()
+            # This will match, bad nodes are detected earlier (type ignore):
+            suicide_char, name, output, opt_char = m.groups()  # type: ignore
             suicide = (suicide_char == self.__class__.SUICIDE)
             optional = (opt_char == self.__class__.OPTIONAL)
             if output:

@@ -719,6 +719,12 @@ def test_family_output_clash(caplog: pytest.LogCaptureFixture):
             "making it optional."
 
         ],
+        [
+            """a:fail? => b
+            a => c""",
+            "Output a:failed is optional so a:succeeded can't be required.",
+            "making both optional."
+        ],
     ]
 )
 def test_task_optional_output_errors_order(
