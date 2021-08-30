@@ -7,7 +7,7 @@
         inactivity = PT1M
         abort on stall timeout = true
         stall timeout = PT1M
-        aborted handler = echo %(event)s %(message)s >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"
+        abort handler = echo %(event)s %(message)s >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"
 [scheduling]
     [[graph]]
         R1 = modify => t2

@@ -285,30 +285,38 @@ with Conf(
             # between: value not set vs value set to empty
             Conf('handlers', VDR.V_STRING_LIST, None)
             Conf('handler events', VDR.V_STRING_LIST, None)
+            Conf('mail events', VDR.V_STRING_LIST, None)
+
             Conf('startup handler', VDR.V_STRING_LIST, None)
-            Conf('timeout handler', VDR.V_STRING_LIST, None)
-            Conf('inactivity handler', VDR.V_STRING_LIST, None)
             Conf('shutdown handler', VDR.V_STRING_LIST, None)
-            Conf('aborted handler', VDR.V_STRING_LIST, None)
-            Conf('stall handler', VDR.V_STRING_LIST, None)
+            Conf('abort handler', VDR.V_STRING_LIST, None)
+
             Conf('timeout', VDR.V_INTERVAL)
+            Conf('timeout handler', VDR.V_STRING_LIST, None)
+            Conf('abort on timeout', VDR.V_BOOLEAN)
+
+
+            Conf('stall handler', VDR.V_STRING_LIST, None)
+            Conf('abort on stall', VDR.V_BOOLEAN)
+            Conf('abort on stall timeout', VDR.V_BOOLEAN)
+
             Conf('stall timeout', VDR.V_INTERVAL)
             Conf('stall timeout handler', VDR.V_STRING_LIST, None)
+
             Conf('inactivity', VDR.V_INTERVAL)
+            Conf('inactivity handler', VDR.V_STRING_LIST, None)
+            Conf('abort on inactivity', VDR.V_BOOLEAN)
+
             Conf('abort if startup handler fails', VDR.V_BOOLEAN)
             Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
             Conf('abort if timeout handler fails', VDR.V_BOOLEAN)
             Conf('abort if inactivity handler fails', VDR.V_BOOLEAN)
             Conf('abort if stall handler fails', VDR.V_BOOLEAN)
             Conf('abort if stall timeout handler fails', VDR.V_BOOLEAN)
-            Conf('abort on stall', VDR.V_BOOLEAN)
-            Conf('abort on timeout', VDR.V_BOOLEAN)
-            Conf('abort on stall timeout', VDR.V_BOOLEAN)
-            Conf('abort on inactivity', VDR.V_BOOLEAN)
-            Conf('mail events', VDR.V_STRING_LIST, None)
+
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
-                (For Cylc developers writing a functional reference test
-                only) List of tasks that are expected to fail in the test.
+                 (For Cylc developers writing a functional tests only)
+                 List of tasks that are expected to fail in the test.
             ''')
 
         with Conf('mail'):
