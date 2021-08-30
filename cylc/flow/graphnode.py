@@ -28,7 +28,6 @@ class GraphNodeParser:
     """Provide graph node parsing and caching service.
 
     Optional outputs are stripped in graph_parser.py before this gets used.
-
     """
     # Match a graph node string.
     REC_NODE = re.compile(

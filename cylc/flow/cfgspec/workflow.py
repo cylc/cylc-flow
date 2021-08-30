@@ -1475,6 +1475,9 @@ def upg(cfg, descr):
         ('abort on timeout', 'abort on stall timeout'),
         ('timeout handler', 'stall timeout handler'),
         ('abort on stalled', 'abort on stall'),
+        ('inactivity', 'inactivity timeout'),
+        ('inactivity handler', 'inactivity timeout handler'),
+        ('aborted handler', 'abort handler'),
     ]:
         u.deprecate(
             '8.0.0',

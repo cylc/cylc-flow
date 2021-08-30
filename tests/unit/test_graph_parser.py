@@ -205,26 +205,40 @@ def test_parse_graph_with_invalid_parameters():
 def test_inter_workflow_dependence_simple():
     """Test invalid inter-workflow dependence"""
     gp = GraphParser()
-    gp.parse_graph('a<WORKFLOW::TASK:fail> => b')
-    original = gp.original
-    triggers = gp.triggers
-    families = gp.family_map
-    workflow_state_polling_tasks = gp.workflow_state_polling_tasks
-    assert (
-        original ==
-        {'a': {'': ''}, 'b': {'a:succeeded': 'a:succeeded'}}
+    gp.parse_graph(
+        """
+        a<WORKFLOW::TASK:fail> => b
+        c<WORKFLOW::TASK> => d
+        """
     )
     assert (
-        triggers == {
-            'a': {'': ([], False)},
-            'b': {'a:succeeded': (['a:succeeded'], False)}
+        gp.original ==
+        {
+            'a': {'': ''},
+            'b': {'a:succeeded': 'a:succeeded'},
+            'c': {'': ''},
+            'd': {'c:succeeded': 'c:succeeded'}
         }
     )
     assert (
-        workflow_state_polling_tasks['a'] ==
-        ('WORKFLOW', 'TASK', 'failed', '<WORKFLOW::TASK:fail>')
+        gp.triggers == {
+            'a': {'': ([], False)},
+            'c': {'': ([], False)},
+            'b': {'a:succeeded': (['a:succeeded'], False)},
+            'd': {'c:succeeded': (['c:succeeded'], False)}
+        }
     )
-    assert not families
+    assert (
+        gp.workflow_state_polling_tasks == {
+            'a': (
+                'WORKFLOW', 'TASK', 'failed', '<WORKFLOW::TASK:fail>'
+            ),
+            'c': (
+                'WORKFLOW', 'TASK', 'succeeded', '<WORKFLOW::TASK>'
+            )
+        }
+    )
+    assert not gp.family_map
 
 
 def test_line_continuation():

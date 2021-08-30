@@ -1490,7 +1490,8 @@ class WorkflowConfig:
             taskdef.workflow_polling_cfg = {
                 'workflow': self.workflow_polling_tasks[name][0],
                 'task': self.workflow_polling_tasks[name][1],
-                'status': self.workflow_polling_tasks[name][2]}
+                'status': self.workflow_polling_tasks[name][2]
+            }
 
     def add_sequence(self, nodes, seq, suicide):
         """Add valid sequences to taskdefs."""
@@ -1740,7 +1741,7 @@ class WorkflowConfig:
                     else:
                         r_id = None
                     if left.startswith('@'):
-                        # @trigger node.
+                        # @xtrigger node.
                         name = left
                         offset_is_from_icp = False
                         offset = None
@@ -1947,7 +1948,7 @@ class WorkflowConfig:
                 self.generate_edges(expr, orig, lefts, right, seq, suicide)
 
                 # Lefts can be null; all appear on RHS once so can generate
-                # taskdefs with right only. Right is never None or an @action.
+                # taskdefs with right only. Right is never None or @xtrigger.
                 self.generate_taskdef(orig, right)
 
                 self.add_sequence(
@@ -1961,7 +1962,7 @@ class WorkflowConfig:
                 )
 
                 # RHS quals not needed now (used already for taskdef outputs)
-                right = re.sub(parser.RE_QUAL, '', right)
+                right = parser.REC_QUAL.sub('', right)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers
                 )
@@ -1969,11 +1970,10 @@ class WorkflowConfig:
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool]]
     ) -> None:
-        """Go through parsed outputs and set optional/required status.
+        """set optional/required status of parsed task outputs.
 
         Args:
             task_output_opt: {(task, output): (is-optional, _)}
-
         """
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:

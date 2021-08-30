@@ -140,7 +140,7 @@ class TaskDef:
         self.expiration_offset = None
         self.namespace_hierarchy = []
         self.dependencies = {}
-        self.outputs = {}  # {output: (message, required)
+        self.outputs = {}  # {output: (message, is_required)}
         self.graph_children = {}
         self.graph_parents = {}
         self.param_var = {}

@@ -65,8 +65,8 @@ EVENTS_DESCR = {
         'Handler(s) to run if the scheduler aborts.'
     ),
     'timeout': (
-        'Scheduler timeout interval. The timer starts'
-        ' counting down at scheduler startup.'
+        'Scheduler timeout interval. The timer starts counting down at'
+        ' scheduler startup.'
     ),
     'timeout handler': (
         'Handler(s) to run if the scheduler times out.'
@@ -81,8 +81,8 @@ EVENTS_DESCR = {
         'Whether to abort if the scheduler stalls.'
     ),
     'stall timeout': (
-        'Stall timeout interval. The timer starts counting'
-        ' when the scheduler stalls.'
+        'Stall timeout interval. The timer starts counting down when the'
+        ' scheduler stalls.'
     ),
     'stall timeout handler': (
         'Handler(s) to run if the scheduler stalls.'
@@ -91,8 +91,8 @@ EVENTS_DESCR = {
         'Whether to abort if the stall timer times out.'
     ),
     'inactivity timeout': (
-        'Scheduler inactivity timeout interval. The'
-        ' timer resets when any workflow activity occurs.'
+        'Scheduler inactivity timeout interval. The timer resets when any'
+        ' workflow activity occurs.'
     ),
     'inactivity timeout handler': (
         'Handler(s) to run if the inactivity timer times out.'
