@@ -2,8 +2,8 @@
 
 [scheduler]
     [[events]]
-        stalled timeout = PT2M
-        abort on stalled timeout = true
+        stall timeout = PT2M
+        abort on stall timeout = true
 [scheduling]
     initial cycle point = 2020-01-01
     final cycle point = 2020-01-01

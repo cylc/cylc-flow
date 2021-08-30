@@ -33,9 +33,9 @@ cat >>'global.cylc' <<__HERE__
     [scheduler]
         [[events]]
             inactivity = PT5M
-            stalled timeout = PT5M
+            stall timeout = PT5M
             abort on inactivity = true
-            abort on stalled timeout = true
+            abort on stall timeout = true
         [[main loop]]
             [[[reset bad hosts]]]
                 interval = PT1S

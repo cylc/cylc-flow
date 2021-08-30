@@ -1,7 +1,7 @@
 # Should not stall at runhead limit with incomplete foo
 [scheduler]
    [[events]]
-      abort on stalled = True
+      abort on stall = True
 [scheduling]
    cycling mode = integer
    initial cycle point = 1

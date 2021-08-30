@@ -9,7 +9,7 @@
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        abort on stalled = True
+        abort on stall = True
         abort on inactivity = True
         inactivity = PT3M
         expected task failures = bar.1, baz.1

@@ -7,7 +7,7 @@ purpose = """
 [scheduler]
     UTC mode = True
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 
 [scheduling]
     [[dependencies]]

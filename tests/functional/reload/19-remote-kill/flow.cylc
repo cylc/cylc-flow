@@ -2,7 +2,7 @@
 
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
         expected task failures = foo.1
 
 [scheduling]

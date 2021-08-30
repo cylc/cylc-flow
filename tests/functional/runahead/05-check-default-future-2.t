@@ -42,6 +42,6 @@ cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1000Z"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-aborted
 LOG="$RUN_DIR/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok 'Workflow shutting down - Abort on workflow inactivity is set' "${LOG}"
+grep_ok 'Workflow shutting down - "abort on inactivity" is set' "${LOG}"
 #-------------------------------------------------------------------------------
 purge

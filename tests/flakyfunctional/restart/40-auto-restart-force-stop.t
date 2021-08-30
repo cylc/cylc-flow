@@ -26,9 +26,9 @@ BASE_GLOBAL_CONFIG="
             interval = PT5S
     [[events]]
         abort on inactivity = True
-        abort on stalled timeout = True
+        abort on stall timeout = True
         inactivity = PT2M
-        stalled timeout = PT2M
+        stall timeout = PT2M
 "
 #-------------------------------------------------------------------------------
 # test the force shutdown option (auto stop, no restart) in condemned hosts

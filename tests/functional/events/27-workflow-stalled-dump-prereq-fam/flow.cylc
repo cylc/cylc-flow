@@ -2,11 +2,11 @@
     UTC mode = True # Ignore DST
     allow implicit tasks = True
     [[events]]
-        abort on stalled = true
+        abort on stall = true
         expected task failures = foo.1
 [scheduling]
     [[graph]]
-        # will abort on stalled with unhandled failed foo
+        # will abort on stall with unhandled failed foo
         R1 = """foo & goo => FAM
             FAM:succeed-any => bar"""
 [runtime]

@@ -1,8 +1,8 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        stalled timeout = PT1M
-        abort on stalled timeout = True
+        stall timeout = PT1M
+        abort on stall timeout = True
 [scheduling]
     initial cycle point = 1990
     final cycle point = 2030

@@ -1,7 +1,7 @@
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 
 [scheduling]
     cycling mode = integer

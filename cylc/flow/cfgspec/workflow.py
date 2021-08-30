@@ -290,20 +290,20 @@ with Conf(
             Conf('inactivity handler', VDR.V_STRING_LIST, None)
             Conf('shutdown handler', VDR.V_STRING_LIST, None)
             Conf('aborted handler', VDR.V_STRING_LIST, None)
-            Conf('stalled handler', VDR.V_STRING_LIST, None)
+            Conf('stall handler', VDR.V_STRING_LIST, None)
             Conf('timeout', VDR.V_INTERVAL)
-            Conf('stalled timeout', VDR.V_INTERVAL)
-            Conf('stalled timeout handler', VDR.V_STRING_LIST, None)
+            Conf('stall timeout', VDR.V_INTERVAL)
+            Conf('stall timeout handler', VDR.V_STRING_LIST, None)
             Conf('inactivity', VDR.V_INTERVAL)
             Conf('abort if startup handler fails', VDR.V_BOOLEAN)
             Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
             Conf('abort if timeout handler fails', VDR.V_BOOLEAN)
             Conf('abort if inactivity handler fails', VDR.V_BOOLEAN)
-            Conf('abort if stalled handler fails', VDR.V_BOOLEAN)
-            Conf('abort if stalled timeout handler fails', VDR.V_BOOLEAN)
-            Conf('abort on stalled', VDR.V_BOOLEAN)
+            Conf('abort if stall handler fails', VDR.V_BOOLEAN)
+            Conf('abort if stall timeout handler fails', VDR.V_BOOLEAN)
+            Conf('abort on stall', VDR.V_BOOLEAN)
             Conf('abort on timeout', VDR.V_BOOLEAN)
-            Conf('abort on stalled timeout', VDR.V_BOOLEAN)
+            Conf('abort on stall timeout', VDR.V_BOOLEAN)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
             Conf('mail events', VDR.V_STRING_LIST, None)
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
@@ -1452,9 +1452,10 @@ def upg(cfg, descr):
     # Workflow timeout is now measured from start of run.
     # The old timeout was measured from start of stall.
     for old, new in [
-        ('timeout', 'stalled timeout'),
-        ('abort on timeout', 'abort on stalled timeout'),
-        ('timeout handler', 'stalled timeout handler')
+        ('timeout', 'stall timeout'),
+        ('abort on timeout', 'abort on stall timeout'),
+        ('timeout handler', 'stall timeout handler'),
+        ('abort on stalled', 'abort on stall'),
     ]:
         u.deprecate(
             '8.0.0',

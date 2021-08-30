@@ -305,15 +305,15 @@ with Conf('global.cylc', desc='''
             Conf('inactivity handler', VDR.V_STRING_LIST)
             Conf('shutdown handler', VDR.V_STRING_LIST)
             Conf('aborted handler', VDR.V_STRING_LIST)
-            Conf('stalled handler', VDR.V_STRING_LIST)
-            Conf('stalled timeout handler', VDR.V_STRING_LIST)
+            Conf('stall handler', VDR.V_STRING_LIST)
+            Conf('stall timeout handler', VDR.V_STRING_LIST)
             Conf('timeout', VDR.V_INTERVAL)
             Conf('abort on timeout', VDR.V_BOOLEAN)
             Conf('inactivity', VDR.V_INTERVAL)
             Conf('abort on inactivity', VDR.V_BOOLEAN)
-            Conf('stalled timeout', VDR.V_INTERVAL, DurationFloat(3600))
-            Conf('abort on stalled timeout', VDR.V_BOOLEAN, True)
-            Conf('abort on stalled', VDR.V_BOOLEAN)
+            Conf('stall timeout', VDR.V_INTERVAL, DurationFloat(3600))
+            Conf('abort on stall timeout', VDR.V_BOOLEAN, True)
+            Conf('abort on stall', VDR.V_BOOLEAN)
 
         with Conf('mail', desc='''
             Options for email handling.

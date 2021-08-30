@@ -1,7 +1,7 @@
 # Should stall at runhead limit with partially satisfied bar
 [scheduler]
    [[events]]
-      abort on stalled = True
+      abort on stall = True
 [scheduling]
    cycling mode = integer
    initial cycle point = 1

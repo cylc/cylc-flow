@@ -3,8 +3,8 @@
 
 [scheduler]
     [[events]]
-        stalled timeout = PT6S
-        abort on stalled timeout = True
+        stall timeout = PT6S
+        abort on stall timeout = True
 
 [scheduling]
     [[graph]]

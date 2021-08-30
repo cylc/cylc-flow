@@ -38,6 +38,7 @@ run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 cmp_ok "${TEST_NAME}.stdout" <<< "20100102T0000Z"
 # i.e. should have spawned 5 cycle points from initial 01T00
 #-------------------------------------------------------------------------------
-grep_ok 'Workflow shutting down - Abort on workflow stalled is set' "${WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_ok 'Workflow shutting down - "abort on stall" is set' \
+  "${WORKFLOW_RUN_DIR}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

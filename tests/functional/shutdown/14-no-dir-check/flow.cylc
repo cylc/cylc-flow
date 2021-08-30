@@ -6,9 +6,9 @@
             interval = PT10S
 {% endif %}{# not GLOBALCFG is not defined #}
     [[events]]
-        abort on stalled = False
-        abort on stalled timeout = True
-        stalled timeout = PT1M
+        abort on stall = False
+        abort on stall timeout = True
+        stall timeout = PT1M
 
 [scheduling]
     [[graph]]

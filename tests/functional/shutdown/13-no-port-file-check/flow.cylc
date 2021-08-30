@@ -6,7 +6,7 @@
             interval = PT10S
 {% endif %}{# not GLOBALCFG is not defined #}
     [[events]]
-        abort on stalled = False
+        abort on stall = False
 
 [scheduling]
     [[graph]]

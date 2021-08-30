@@ -2,7 +2,7 @@
     UTC mode = True
     allow implicit tasks = True
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     initial cycle point = 20000101T00Z
     [[graph]]

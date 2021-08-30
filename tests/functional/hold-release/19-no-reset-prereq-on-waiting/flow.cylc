@@ -2,7 +2,7 @@
     title = Test cylc hold/release remembers satisfied dependencies
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     [[graph]]
         R1 = """

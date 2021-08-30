@@ -22,7 +22,7 @@ set_test_number 3
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
         abort on inactivity = True
         inactivity = PT3M
 [scheduling]

@@ -10,7 +10,7 @@ Tasks
 
 [scheduler]
     [[events]]
-        abort on stalled = true
+        abort on stall = true
 
 
 [scheduling]

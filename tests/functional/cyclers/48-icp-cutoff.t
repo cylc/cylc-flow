@@ -23,7 +23,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__WORKFLOW__'
 [scheduler]
     cycle point time zone = Z
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     initial cycle point = 20171101T0000Z
     [[graph]]

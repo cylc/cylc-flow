@@ -38,7 +38,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     i = 1..10
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
         abort on inactivity = True
         inactivity = P2M
 [scheduling]

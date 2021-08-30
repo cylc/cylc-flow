@@ -2,7 +2,7 @@
 [scheduler]
     [[events]]
         abort on inactivity = True
-        abort on stalled = True
+        abort on stall = True
         inactivity = PT1M
 [scheduling]
     [[graph]]

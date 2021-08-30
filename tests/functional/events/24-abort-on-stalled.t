@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test workflow event handler, abort on stalled setting
+# Test workflow event handler, abort on stall setting
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
@@ -24,7 +24,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${WORKFLOW_NAME}"
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
-grep_ok "Abort on workflow stalled is set" "${TEST_NAME_BASE}-run.stderr"
+grep_ok '"abort on stall" is set' "${TEST_NAME_BASE}-run.stderr"
 
 purge
 exit
