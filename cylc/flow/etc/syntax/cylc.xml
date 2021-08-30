@@ -38,7 +38,7 @@
         <RegExpr attribute='Keyword' String=' stop after cycle point '/>
         <RegExpr attribute='Keyword' String=' startup handler '/>
         <RegExpr attribute='Keyword' String=' started handler '/>
-        <RegExpr attribute='Keyword' String=' stalled handler '/>
+        <RegExpr attribute='Keyword' String=' stall handler '/>
         <RegExpr attribute='Keyword' String=' speedup factor '/>
         <RegExpr attribute='Keyword' String=' special tasks '/>
         <RegExpr attribute='Keyword' String=' simulation '/>
@@ -129,11 +129,11 @@
         <RegExpr attribute='Keyword' String=' allow implicit tasks '/>
         <RegExpr attribute='Keyword' String=' aborted handler '/>
         <RegExpr attribute='Keyword' String=' abort on timeout '/>
-        <RegExpr attribute='Keyword' String=' abort on stalled '/>
+        <RegExpr attribute='Keyword' String=' abort on stall '/>
         <RegExpr attribute='Keyword' String=' abort on inactivity timeout '/>
         <RegExpr attribute='Keyword' String=' abort if timeout handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if startup handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if stalled handler fails '/>
+        <RegExpr attribute='Keyword' String=' abort if stall handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if inactivity timeout handler fails '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>

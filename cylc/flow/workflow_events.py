@@ -37,10 +37,10 @@ class WorkflowEventHandler():
 
     EVENT_STARTUP = 'startup'
     EVENT_SHUTDOWN = 'shutdown'
-    EVENT_ABORTED = 'aborted'
+    EVENT_ABORTED = 'abort'
     EVENT_TIMEOUT = 'timeout'
     EVENT_INACTIVITY_TIMEOUT = 'inactivity timeout'
-    EVENT_STALLED = 'stalled'
+    EVENT_STALLED = 'stall'
     EVENT_STALLED_TIMEOUT = 'stall timeout'
 
     WORKFLOW_EVENT_HANDLER = 'workflow-event-handler'

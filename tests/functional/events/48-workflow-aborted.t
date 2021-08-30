@@ -27,7 +27,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 cylc cat-log "${WORKFLOW_NAME}" >'log'
 grep_ok 'CRITICAL - Workflow shutting down - contact file modified' 'log'
 cmp_ok "${WORKFLOW_RUN_DIR}/handler.out" <<'__OUT__'
-aborted contact file modified
+abort contact file modified
 __OUT__
 
 purge
