@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Validate and run the workflow reference test simulation timeout workflow
+# Validate and run the workflow reference test live stall timeout workflow
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-install_workflow "${TEST_NAME_BASE}" 'timeout-ref'
+install_workflow "${TEST_NAME_BASE}" 'stall-timeout-ref'
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
