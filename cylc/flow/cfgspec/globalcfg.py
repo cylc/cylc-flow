@@ -300,20 +300,25 @@ with Conf('global.cylc', desc='''
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
             Conf('mail events', VDR.V_STRING_LIST)
+
             Conf('startup handler', VDR.V_STRING_LIST)
-            Conf('timeout handler', VDR.V_STRING_LIST)
-            Conf('inactivity handler', VDR.V_STRING_LIST)
             Conf('shutdown handler', VDR.V_STRING_LIST)
-            Conf('aborted handler', VDR.V_STRING_LIST)
-            Conf('stall handler', VDR.V_STRING_LIST)
-            Conf('stall timeout handler', VDR.V_STRING_LIST)
+            Conf('abort handler', VDR.V_STRING_LIST)
+
             Conf('timeout', VDR.V_INTERVAL)
+            Conf('timeout handler', VDR.V_STRING_LIST)
             Conf('abort on timeout', VDR.V_BOOLEAN)
-            Conf('inactivity', VDR.V_INTERVAL)
-            Conf('abort on inactivity', VDR.V_BOOLEAN)
-            Conf('stall timeout', VDR.V_INTERVAL, DurationFloat(3600))
-            Conf('abort on stall timeout', VDR.V_BOOLEAN, True)
+
+            Conf('stall handler', VDR.V_STRING_LIST)
             Conf('abort on stall', VDR.V_BOOLEAN)
+
+            Conf('stall timeout', VDR.V_INTERVAL, DurationFloat(3600))
+            Conf('stall timeout handler', VDR.V_STRING_LIST)
+            Conf('abort on stall timeout', VDR.V_BOOLEAN, True)
+
+            Conf('inactivity', VDR.V_INTERVAL)
+            Conf('inactivity handler', VDR.V_STRING_LIST)
+            Conf('abort on inactivity', VDR.V_BOOLEAN)
 
         with Conf('mail', desc='''
             Options for email handling.
