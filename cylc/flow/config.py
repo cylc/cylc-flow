@@ -1529,7 +1529,7 @@ class WorkflowConfig:
                 continue
             # (GraphParseError checked above)
             (name, offset, output, offset_is_from_icp,
-             offset_is_irregular, offset_is_absolute, _) = (
+             offset_is_irregular, offset_is_absolute) = (
                 GraphNodeParser.get_inst().parse(left))
 
             # Qualifier.
@@ -1745,7 +1745,7 @@ class WorkflowConfig:
                         offset_is_from_icp = False
                         offset = None
                     else:
-                        name, offset, _, offset_is_from_icp, _, _, _ = (
+                        name, offset, _, offset_is_from_icp, _, _ = (
                             GraphNodeParser.get_inst().parse(left))
                     if offset:
                         if offset_is_from_icp:
