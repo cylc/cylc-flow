@@ -4,8 +4,8 @@
     UTC mode = True
     [[events]]
         abort on stall = True
-        abort on inactivity = True
-        inactivity = PT3M
+        abort on inactivity timeout = True
+        inactivity timeout = PT3M
 [scheduling]
     initial cycle point = 20130923T00
     final cycle point   = 20130923T00

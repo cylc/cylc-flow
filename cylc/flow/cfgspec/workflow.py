@@ -295,7 +295,6 @@ with Conf(
             Conf('timeout handler', VDR.V_STRING_LIST, None)
             Conf('abort on timeout', VDR.V_BOOLEAN)
 
-
             Conf('stall handler', VDR.V_STRING_LIST, None)
             Conf('abort on stall', VDR.V_BOOLEAN)
             Conf('abort on stall timeout', VDR.V_BOOLEAN)
@@ -303,14 +302,14 @@ with Conf(
             Conf('stall timeout', VDR.V_INTERVAL)
             Conf('stall timeout handler', VDR.V_STRING_LIST, None)
 
-            Conf('inactivity', VDR.V_INTERVAL)
-            Conf('inactivity handler', VDR.V_STRING_LIST, None)
-            Conf('abort on inactivity', VDR.V_BOOLEAN)
+            Conf('inactivity timeout', VDR.V_INTERVAL)
+            Conf('inactivity timeout handler', VDR.V_STRING_LIST, None)
+            Conf('abort on inactivity timeout', VDR.V_BOOLEAN)
 
             Conf('abort if startup handler fails', VDR.V_BOOLEAN)
             Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
             Conf('abort if timeout handler fails', VDR.V_BOOLEAN)
-            Conf('abort if inactivity handler fails', VDR.V_BOOLEAN)
+            Conf('abort if inactivity timeout handler fails', VDR.V_BOOLEAN)
             Conf('abort if stall handler fails', VDR.V_BOOLEAN)
             Conf('abort if stall timeout handler fails', VDR.V_BOOLEAN)
 

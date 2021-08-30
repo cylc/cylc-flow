@@ -2,8 +2,8 @@
     UTC mode=True
     cycle point format = %Y
     [[events]]
-        abort on inactivity = True
-        inactivity = P2M
+        abort on inactivity timeout = True
+        inactivity timeout = P2M
 [scheduling]
     initial cycle point = 2016
     final cycle point = 2017

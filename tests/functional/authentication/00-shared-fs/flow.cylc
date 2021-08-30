@@ -2,8 +2,8 @@
 [scheduler]
     UTC mode=True
     [[events]]
-        abort on inactivity = True
-        inactivity = P1M
+        abort on inactivity timeout = True
+        inactivity timeout = P1M
         expected task failures = t1.19700101T0000Z
 [scheduling]
     initial cycle point=1970

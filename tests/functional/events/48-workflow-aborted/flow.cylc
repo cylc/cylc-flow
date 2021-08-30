@@ -3,8 +3,8 @@
         [[[health check]]]
             interval = PT1S
     [[events]]
-        abort on inactivity = true
-        inactivity = PT1M
+        abort on inactivity timeout = true
+        inactivity timeout = PT1M
         abort on stall timeout = true
         stall timeout = PT1M
         abort handler = echo %(event)s %(message)s >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"

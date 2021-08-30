@@ -4,8 +4,8 @@
     cycle point format = %Y
     [[events]]
         abort on stall = True
-        abort on inactivity = True
-        inactivity = P1M
+        abort on inactivity timeout = True
+        inactivity timeout = P1M
 [scheduling]
     initial cycle point = 2016
     final cycle point = 2017

@@ -30,9 +30,9 @@ BASE_GLOBAL_CONFIG="
         [[[auto restart]]]
             interval = PT2S
     [[events]]
-        abort on inactivity = True
+        abort on inactivity timeout = True
         abort on stall timeout = True
-        inactivity = PT2M
+        inactivity timeout = PT2M
         stall timeout = PT2M
 "
 

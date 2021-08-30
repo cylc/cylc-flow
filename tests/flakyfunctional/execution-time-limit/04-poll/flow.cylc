@@ -1,8 +1,8 @@
 #!jinja2
 [scheduler]
    [[events]]
-       abort on inactivity = True
-       inactivity = PT2M
+       abort on inactivity timeout = True
+       inactivity timeout = PT2M
 
 [scheduling]
     [[graph]]

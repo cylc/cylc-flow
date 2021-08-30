@@ -1,7 +1,7 @@
 [scheduler]
     [[events]]
         abort on stall = true
-        abort on inactivity = true
+        abort on inactivity timeout = true
 [scheduling]
     [[graph]]
     R1 = """

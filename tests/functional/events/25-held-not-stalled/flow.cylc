@@ -1,9 +1,9 @@
 [scheduler]
     [[events]]
-        abort on inactivity = False
+        abort on inactivity timeout = False
         abort on stall = True
-        inactivity handler = cylc release --all '%(workflow)s'
-        inactivity = PT5S
+        inactivity timeout handler = cylc release --all '%(workflow)s'
+        inactivity timeout = PT5S
 [scheduling]
     [[graph]]
         R1 = t1

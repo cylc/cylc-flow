@@ -11,8 +11,8 @@ trigger, and the workflow to shut down successfully."""
 [scheduler]
    UTC mode = True
    [[events]]
-       abort on inactivity = True
-       inactivity = PT2M
+       abort on inactivity timeout = True
+       inactivity timeout = PT2M
        expected task failures = run_kill.20141207T0000Z,\
                                 run_kill.20141208T0000Z,\
                                 submit_hold.20141207T0000Z,\

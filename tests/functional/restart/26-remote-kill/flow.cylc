@@ -4,8 +4,8 @@
     cycle point format = %Y
     [[events]]
         abort on stall = True
-        abort on inactivity = True
-        inactivity = P6M
+        abort on inactivity timeout = True
+        inactivity timeout = P6M
 [scheduling]
     [[graph]]
         R1 = t1

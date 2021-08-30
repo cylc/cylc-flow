@@ -6,8 +6,8 @@
 [scheduler]
     UTC mode = False
     [[events]]
-        abort on inactivity = True
-        inactivity = PT15S
+        abort on inactivity timeout = True
+        inactivity timeout = PT15S
 [scheduling]
     initial cycle point = {{START}}
     final cycle point = {{START}}

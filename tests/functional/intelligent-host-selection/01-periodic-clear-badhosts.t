@@ -32,9 +32,9 @@ cat >>'global.cylc' <<__HERE__
     # set a default timeout for all flow runs to avoid hanging tests
     [scheduler]
         [[events]]
-            inactivity = PT5M
+            inactivity timeout = PT5M
             stall timeout = PT5M
-            abort on inactivity = true
+            abort on inactivity timeout = true
             abort on stall timeout = true
         [[main loop]]
             [[[reset bad hosts]]]

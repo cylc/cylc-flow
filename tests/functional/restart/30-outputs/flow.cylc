@@ -1,9 +1,9 @@
 # only the t1:hello output is generated
 [scheduler]
     [[events]]
-        abort on inactivity = True
+        abort on inactivity timeout = True
         abort on stall = True
-        inactivity = PT1M
+        inactivity timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = """

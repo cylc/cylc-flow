@@ -28,8 +28,8 @@ pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 cat > 'flow.cylc' <<__FLOW_CONFIG__
 [scheduler]
     [[events]]
-        abort on inactivity = True
-        inactivity = PT3M
+        abort on inactivity timeout = True
+        inactivity timeout = PT3M
 [scheduling]
     [[graph]]
         R1 = t1 

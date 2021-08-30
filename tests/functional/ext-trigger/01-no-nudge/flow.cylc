@@ -13,8 +13,8 @@
     [[events]]
         abort on stall timeout = True
         stall timeout = PT30S
-        abort on inactivity = True
-        inactivity = PT30S
+        abort on inactivity timeout = True
+        inactivity timeout = PT30S
 
 [scheduling]
     [[special tasks]]
