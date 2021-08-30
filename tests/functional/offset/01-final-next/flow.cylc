@@ -2,8 +2,8 @@
     cycle point time zone = +01
     [[events]]
         abort on stall = True
-        abort on inactivity = True
-        inactivity = PT3M
+        abort on inactivity timeout = True
+        inactivity timeout = PT3M
 [scheduling]
     initial cycle point = 20100101T00
     final cycle point   = T06

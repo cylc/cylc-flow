@@ -80,8 +80,8 @@
         <RegExpr attribute='Keyword' String=' init-script '/>
         <RegExpr attribute='Keyword' String=' inherit '/>
         <RegExpr attribute='Keyword' String=' include '/>
-        <RegExpr attribute='Keyword' String=' inactivity handler '/>
-        <RegExpr attribute='Keyword' String=' inactivity '/>
+        <RegExpr attribute='Keyword' String=' inactivity timeout handler '/>
+        <RegExpr attribute='Keyword' String=' inactivity timeout'/>
         <RegExpr attribute='Keyword' String=' host '/>
         <RegExpr attribute='Keyword' String=' hold after cycle point '/>
         <RegExpr attribute='Keyword' String=' handlers '/>
@@ -130,12 +130,12 @@
         <RegExpr attribute='Keyword' String=' aborted handler '/>
         <RegExpr attribute='Keyword' String=' abort on timeout '/>
         <RegExpr attribute='Keyword' String=' abort on stalled '/>
-        <RegExpr attribute='Keyword' String=' abort on inactivity '/>
+        <RegExpr attribute='Keyword' String=' abort on inactivity timeout '/>
         <RegExpr attribute='Keyword' String=' abort if timeout handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if startup handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if stalled handler fails '/>
         <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if inactivity handler fails '/>
+        <RegExpr attribute='Keyword' String=' abort if inactivity timeout handler fails '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>
         <RegExpr attribute='Keyword' String=' URL '/>
         <!--END_TAG_FOR_AUTO_UPDATE-->

@@ -2,8 +2,8 @@
 [scheduler]
     cycle point time zone = Z
     [[events]]
-        abort on inactivity = True
-        inactivity = PT10S
+        abort on inactivity timeout = True
+        inactivity timeout = PT10S
 [scheduling]
     runahead limit = P4
     initial cycle point = 20100101T00

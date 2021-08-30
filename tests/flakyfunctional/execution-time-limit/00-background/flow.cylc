@@ -2,9 +2,9 @@
 
 [scheduler]
    [[events]]
-       abort on inactivity = True
+       abort on inactivity timeout = True
        abort on stall = True
-       inactivity = PT2M
+       inactivity timeout = PT2M
        expected task failures = foo.1
 
 [scheduling]

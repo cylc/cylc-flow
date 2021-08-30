@@ -37,7 +37,7 @@ run_ok "${TEST_NAME}" sqlite3 "${DB}" \
 cmp_ok "${TEST_NAME}.stdout" <<< "20100101T0400Z"
 # i.e. should have spawned 5 cycle points from initial T00 (wibble not spawned)
 #-------------------------------------------------------------------------------
-grep_ok 'Workflow shutting down - "abort on inactivity" is set' \
+grep_ok 'Workflow shutting down - "abort on inactivity timeout" is set' \
   "${WORKFLOW_RUN_DIR}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

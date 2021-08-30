@@ -1626,8 +1626,8 @@ class Scheduler:
                     self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)))
             LOG.warning(message)
             self.run_event_handlers(self.EVENT_INACTIVITY_TIMEOUT, message)
-            if self._get_events_conf('abort on inactivity'):
-                raise SchedulerError('"abort on inactivity" is set')
+            if self._get_events_conf('abort on inactivity timeout'):
+                raise SchedulerError('"abort on inactivity timeout" is set')
 
     def check_workflow_stalled(self):
         """Check if workflow is stalled or not."""

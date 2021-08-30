@@ -26,10 +26,10 @@ set_test_number 2
 init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]
     [[events]]
-        abort on inactivity = False
+        abort on inactivity timeout = False
         abort on stall = True
-        inactivity handler = cylc play '%(workflow)s'
-        inactivity = PT5S
+        inactivity timeout handler = cylc play '%(workflow)s'
+        inactivity timeout = PT5S
 [scheduling]
     [[graph]]
         R1 = t1

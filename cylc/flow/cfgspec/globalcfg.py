@@ -301,24 +301,41 @@ with Conf('global.cylc', desc='''
             Conf('handler events', VDR.V_STRING_LIST)
             Conf('mail events', VDR.V_STRING_LIST)
 
-            Conf('startup handler', VDR.V_STRING_LIST)
-            Conf('shutdown handler', VDR.V_STRING_LIST)
-            Conf('abort handler', VDR.V_STRING_LIST)
+            Conf('startup handler', VDR.V_STRING_LIST,
+                 desc='''Handler to run at scheduler startup.''')
+            Conf('shutdown handler', VDR.V_STRING_LIST,
+                 desc='''Handler to run at scheduler shutdown.''')
+            Conf('abort handler', VDR.V_STRING_LIST,
+                 desc='''Handler to run if scheduler aborts.''')
 
-            Conf('timeout', VDR.V_INTERVAL)
-            Conf('timeout handler', VDR.V_STRING_LIST)
-            Conf('abort on timeout', VDR.V_BOOLEAN)
+            Conf('timeout', VDR.V_INTERVAL,
+                 desc='''Scheduler timeout interval. The timer starts
+                 counting down at scheduler startup.''')
+            Conf('timeout handler', VDR.V_STRING_LIST,
+                 desc='''Handler to run if the scheduler times out.''')
+            Conf('abort on timeout', VDR.V_BOOLEAN,
+                 desc='''Whether to abort if the scheduler times out.''')
 
-            Conf('stall handler', VDR.V_STRING_LIST)
-            Conf('abort on stall', VDR.V_BOOLEAN)
+            Conf('stall handler', VDR.V_STRING_LIST,
+                 desc='''Handler to run if the scheduler stalls.''')
+            Conf('abort on stall', VDR.V_BOOLEAN,
+                 desc='''Whether to abort if the scheduler stalls.''')
 
-            Conf('stall timeout', VDR.V_INTERVAL, DurationFloat(3600))
-            Conf('stall timeout handler', VDR.V_STRING_LIST)
-            Conf('abort on stall timeout', VDR.V_BOOLEAN, True)
+            Conf('stall timeout', VDR.V_INTERVAL, DurationFloat(3600),
+                 desc='''Stall timeout interval. The timer starts counting
+                 when the scheduler stalls.''')
+            Conf('stall timeout handler', VDR.V_STRING_LIST,
+                 desc='''Handler to run if the scheduler stalls.''')
+            Conf('abort on stall timeout', VDR.V_BOOLEAN, True,
+                 desc='''Wheter to abort if the stall timer times out.''')
 
-            Conf('inactivity', VDR.V_INTERVAL)
-            Conf('inactivity handler', VDR.V_STRING_LIST)
-            Conf('abort on inactivity', VDR.V_BOOLEAN)
+            Conf('inactivity timeout', VDR.V_INTERVAL,
+                 desc='''Scheduler inactivity timeout interval. The timer resets
+                 when any workflow activity occurs.''')
+            Conf('inactivity timeout handler', VDR.V_STRING_LIST,
+                 desc='''Handler to run if the inactivity timer times out.''')
+            Conf('abort on inactivity timeout', VDR.V_BOOLEAN,
+                 desc='Whether to abort if the inactivity timer times out.')
 
         with Conf('mail', desc='''
             Options for email handling.

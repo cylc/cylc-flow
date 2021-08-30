@@ -2,9 +2,9 @@
 
 [scheduler]
     [[events]]
-        abort on inactivity = True
+        abort on inactivity timeout = True
         abort on stall = True
-        inactivity = PT10M
+        inactivity timeout = PT10M
 
 [task parameters]
     p = 1..5

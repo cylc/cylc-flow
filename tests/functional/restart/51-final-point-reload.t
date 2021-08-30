@@ -43,8 +43,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     cycle point format = %Y
     [[events]]
         abort on stall = True
-        abort on inactivity = True
-        inactivity = P1M
+        abort on inactivity timeout = True
+        inactivity timeout = P1M
 [scheduling]
     initial cycle point = 2015
     final cycle point = 2018

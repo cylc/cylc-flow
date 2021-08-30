@@ -154,8 +154,8 @@
         <keyword>init-script</keyword>
         <keyword>inherit</keyword>
         <keyword>include</keyword>
-        <keyword>inactivity handler</keyword>
-        <keyword>inactivity</keyword>
+        <keyword>inactivity timeout handler</keyword>
+        <keyword>inactivity timeout</keyword>
         <keyword>host</keyword>
         <keyword>hold after cycle point</keyword>
         <keyword>handlers</keyword>
@@ -205,12 +205,12 @@
         <keyword>aborted handler</keyword>
         <keyword>abort on timeout</keyword>
         <keyword>abort on stalled</keyword>
-        <keyword>abort on inactivity</keyword>
+        <keyword>abort on inactivity timeout</keyword>
         <keyword>abort if timeout handler fails</keyword>
         <keyword>abort if startup handler fails</keyword>
         <keyword>abort if stalled handler fails</keyword>
         <keyword>abort if shutdown handler fails</keyword>
-        <keyword>abort if inactivity handler fails</keyword>
+        <keyword>abort if inactivity timeout handler fails</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
         <!--END_TAG_FOR_AUTO_UPDATE-->

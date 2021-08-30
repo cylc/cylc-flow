@@ -3,8 +3,8 @@
 [scheduler]
     [[events]]
         abort on stall = True
-        abort on inactivity = True
-        inactivity = PT3M
+        abort on inactivity timeout = True
+        inactivity timeout = PT3M
 [scheduling]
     [[graph]]
         R1 = foo:x => bar

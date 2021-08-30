@@ -778,9 +778,9 @@ create_test_global_config() {
     # set a default timeout for all flow runs to avoid hanging tests
     [scheduler]
         [[events]]
-            inactivity = PT5M
+            inactivity timeout = PT5M
             timeout = PT5M
-            abort on inactivity = true
+            abort on inactivity timeout = true
             abort on timeout = true
 __HERE__
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"

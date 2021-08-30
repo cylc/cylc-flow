@@ -42,8 +42,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
         abort on stall = True
-        abort on inactivity = True
-        inactivity = P1M
+        abort on inactivity timeout = True
+        inactivity timeout = P1M
 [scheduling]
     [[graph]]
         R1 = t<i-1> => t<i>

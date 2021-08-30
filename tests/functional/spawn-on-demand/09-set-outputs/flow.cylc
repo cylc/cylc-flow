@@ -6,8 +6,8 @@
 [scheduler]
     [[events]]
         abort on stall = True
-        inactivity = PT30S
-        abort on inactivity = True
+        inactivity timeout = PT30S
+        abort on inactivity timeout = True
 
 [scheduling]
     [[graph]]
