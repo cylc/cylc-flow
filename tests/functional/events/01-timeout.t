@@ -15,21 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Validate and run the workflow reference test live timeout workflow
+# Test workflow timeout
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 4
 #-------------------------------------------------------------------------------
-install_workflow "${TEST_NAME_BASE}" 'timeout-ref'
+install_workflow "${TEST_NAME_BASE}" timeout
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-RUN_MODE="$(basename "$0" | sed "s/.*-ref-\(.*\).t/\1/g")"
-workflow_run_fail "${TEST_NAME}" \
-    cylc play --reference-test --mode="${RUN_MODE}" --debug --no-detach \
-    "${WORKFLOW_NAME}"
-grep_ok "WARNING - stall timed out after PT1S" "${TEST_NAME}.stderr"
+workflow_run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
+grep_ok "WARNING - workflow timed out after PT6S" "${TEST_NAME}.stderr"
+grep_ok "Workflow shutting down - Abort on workflow timeout is set" \
+  "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge
