@@ -5,7 +5,7 @@
 
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
         inactivity = PT30S
         abort on inactivity = True
 

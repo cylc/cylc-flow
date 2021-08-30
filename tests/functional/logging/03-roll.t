@@ -22,7 +22,7 @@ set_test_number 11
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     cycling mode = integer
     initial cycle point = 1

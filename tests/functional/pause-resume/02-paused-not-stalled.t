@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that abort on stalled does not apply to a paused workflow
+# Test that abort on stall does not apply to a paused workflow
 
 # See also tests/functional/events/25-held-not-stalled.t
 
@@ -27,7 +27,7 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]
     [[events]]
         abort on inactivity = False
-        abort on stalled = True
+        abort on stall = True
         inactivity handler = cylc play '%(workflow)s'
         inactivity = PT5S
 [scheduling]

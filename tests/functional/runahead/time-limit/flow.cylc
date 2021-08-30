@@ -2,7 +2,7 @@
     UTC mode = True
     allow implicit tasks = True
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     runahead limit = PT4H
     initial cycle point = 2020-01-01T00

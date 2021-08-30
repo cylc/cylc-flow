@@ -1,6 +1,6 @@
 [scheduler]
     [[events]]
-        abort on stalled = true
+        abort on stall = true
         abort on inactivity = true
 [scheduling]
     [[graph]]

@@ -1,6 +1,6 @@
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     initial cycle point = 1
     cycling mode = integer

@@ -23,7 +23,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     cycle point format = %Y
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     initial cycle point = 2018
     [[graph]]

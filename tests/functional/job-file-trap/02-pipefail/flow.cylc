@@ -1,7 +1,7 @@
 #!jinja2
 [scheduler]
    [[events]]
-       abort on stalled = True
+       abort on stall = True
        expected task failures = t1.1, t2.1
 
 [scheduling]

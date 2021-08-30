@@ -1,8 +1,8 @@
 # Time out with an unhandled failure.
 [scheduler]
     [[events]]
-        abort on stalled timeout = True
-        stalled timeout = PT1S
+        abort on stall timeout = True
+        stall timeout = PT1S
 [scheduling]
     [[graph]]
         R1 = "foo"

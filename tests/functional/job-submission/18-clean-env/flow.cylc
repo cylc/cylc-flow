@@ -2,7 +2,7 @@
     [[events]]
         inactivity = PT30S
         abort on inactivity = True
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     [[graph]]
         R1 = foo

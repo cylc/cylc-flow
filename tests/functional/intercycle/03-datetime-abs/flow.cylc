@@ -1,7 +1,7 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     initial cycle point = 20100101T0000Z
     final cycle point = +P1D

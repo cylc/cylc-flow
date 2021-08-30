@@ -1,8 +1,8 @@
-# Abort on stalled timeout unless we remove unhandled failed and waiting task.
+# Abort on stall timeout unless we remove unhandled failed and waiting task.
 [scheduler]
     [[events]]
-        stalled timeout = PT20S
-        abort on stalled timeout = True
+        stall timeout = PT20S
+        abort on stall timeout = True
         expected task failures = b.1
 [scheduling]
     [[graph]]

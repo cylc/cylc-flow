@@ -27,7 +27,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-grep_ok "Abort on workflow stalled is set" "${TEST_NAME_BASE}-run.stderr"
+grep_ok '"abort on stall" is set' "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
 

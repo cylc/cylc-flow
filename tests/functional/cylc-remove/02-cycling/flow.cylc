@@ -1,10 +1,10 @@
-# Abort on stalled timeout unless we successfully remove some failed and waiting tasks.
+# Abort on stall timeout unless we successfully remove some failed and waiting tasks.
 [scheduler]
     UTC mode = True
     cycle point format = %Y
     [[events]]
-        stalled timeout = PT30S
-        abort on stalled timeout = True
+        stall timeout = PT30S
+        abort on stall timeout = True
         expected task failures = bar.2020, baz.2021
 [scheduling]
     initial cycle point = 2020

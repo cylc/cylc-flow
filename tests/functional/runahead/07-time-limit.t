@@ -34,7 +34,8 @@ run_ok "$TEST_NAME" sqlite3 "$DB" \
     "select max(cycle) from task_states where status!='waiting'"
 cmp_ok "${TEST_NAME}.stdout" <<< "20200101T0400Z"
 #-------------------------------------------------------------------------------
-grep_ok 'Workflow shutting down - Abort on workflow stalled is set' "${WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_ok 'Workflow shutting down - "abort on stall" is set' \
+  "${WORKFLOW_RUN_DIR}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge
 exit

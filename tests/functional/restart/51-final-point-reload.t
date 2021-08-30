@@ -42,7 +42,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     UTC mode=True
     cycle point format = %Y
     [[events]]
-        abort on stalled = True
+        abort on stall = True
         abort on inactivity = True
         inactivity = P1M
 [scheduling]

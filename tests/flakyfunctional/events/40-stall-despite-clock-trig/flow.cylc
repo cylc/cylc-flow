@@ -7,7 +7,7 @@
     UTC mode = True
     cycle point format = %Y%m%d
     [[events]]
-        abort on stalled = True
+        abort on stall = True
         abort on inactivity = True
         inactivity = PT5M
 [scheduling]

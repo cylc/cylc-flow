@@ -24,8 +24,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        stalled timeout = PT1M
-        abort on stalled timeout = True
+        stall timeout = PT1M
+        abort on stall timeout = True
 [scheduling]
     [[graph]]
         R1 = "spawner & holdrelease => STUFF & TOAST & CATS & DOGS & stop"

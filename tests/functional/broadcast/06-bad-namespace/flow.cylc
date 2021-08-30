@@ -3,8 +3,8 @@
     description=Test broadcast to an undefined namespace fails.
 [scheduler]
     [[events]]
-        abort on stalled timeout = True
-        stalled timeout=PT1M
+        abort on stall timeout = True
+        stall timeout=PT1M
 [scheduling]
     initial cycle point = 20150808
     final cycle point = 20150808

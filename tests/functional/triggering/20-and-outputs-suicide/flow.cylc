@@ -1,7 +1,7 @@
 # NOTE this is an explicit test of suicide triggers, not very useful under SoD?
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall = True
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
