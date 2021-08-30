@@ -1003,10 +1003,10 @@ class TaskPool:
         else:
             return False
 
-    def is_stalled(self):
-        """Return True if the workflow is stalled.
+    def is_stalled(self) -> bool:
+        """Return whether the workflow is stalled.
 
-        Stalled if not paused and contains only:
+        Is stalled if not paused and contains only:
           - incomplete tasks
           - partially satisfied prerequisites
           - runahead-limited tasks (held back by the above)

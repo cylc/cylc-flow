@@ -161,8 +161,10 @@ class GraphParser:
     _RE_NODE_OR_XTRIG = r'(?:[!@])?' + TaskID.NAME_RE
     _RE_PARAMS = r'<[\w,=\-+]+>'
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
-    RE_QUAL = QUALIFIER + r'[\w\-]+'  # task or fam trigger
+    _RE_QUAL = QUALIFIER + r'[\w\-]+'  # task or fam trigger
     _RE_OPT = r'\??'  # optional output indicator
+
+    REC_QUAL = re.compile(_RE_QUAL)
 
     # Match if there are any spaces which could lead to graph problems
     REC_GRAPH_BAD_SPACES_LINE = re.compile(
@@ -186,7 +188,7 @@ class GraphParser:
         (?:(?:{TaskID.NAME_RE}             # node name
         (?:{_RE_PARAMS})?|{_RE_PARAMS}))+  # allow task<param> to repeat
         (?:{_RE_OFFSET})?                  # cycle point offset
-        (?:{RE_QUAL})?                     # qualifier
+        (?:{_RE_QUAL})?                     # qualifier
         (?:{_RE_OPT})?                     # optional output indicator
         """,
         re.X
@@ -197,7 +199,7 @@ class GraphParser:
         rf"""
         ({_RE_NODE_OR_XTRIG})  # node name
         ({_RE_OFFSET})?        # cycle point offset
-        ({RE_QUAL})?           # trigger qualifier
+        ({_RE_QUAL})?           # trigger qualifier
         ({_RE_OPT})?           # optional output indicator
         """,
         re.X
@@ -213,7 +215,7 @@ class GraphParser:
         rf"""
         ({TaskID.NAME_RE})
         (<([\w.\-/]+)::({TaskID.NAME_RE})
-        ({RE_QUAL})?>)
+        ({_RE_QUAL})?>)
         """,
         re.X
     )
@@ -244,7 +246,7 @@ class GraphParser:
         rf"""
         (!)?          # suicide mark
         ({_RE_NODE})  # node name
-        ({RE_QUAL})?  # trigger qualifier
+        ({_RE_QUAL})?  # trigger qualifier
         ({_RE_OPT})?  # optional output indicator
         """,
         re.X
@@ -358,6 +360,7 @@ class GraphParser:
                 self.workflow_state_polling_tasks[l_task] = (
                     r_workflow, r_task, r_status, r_all
                 )
+
             full_lines.append(full_line)
             part_lines = []
 
@@ -384,7 +387,7 @@ class GraphParser:
                 ')',
             ]:
                 node_str = node_str.replace(spec, ' ')
-            # Drop all valid @triggers, longest first to avoid sub-strings.
+            # Drop all valid @xtriggers, longest first to avoid sub-strings.
             nodes = self.__class__.REC_XTRIG.findall(node_str)
             nodes.sort(key=len, reverse=True)
             for node in nodes:
@@ -581,7 +584,7 @@ class GraphParser:
             family_trig_map = {}
             for name, _, trig, _ in info:
                 if name.startswith(self.__class__.XTRIG):
-                    # Avoid @trigger nodes.
+                    # Avoid @xtrigger nodes.
                     continue
                 if name in self.family_map:
                     # Family; deal with members

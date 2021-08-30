@@ -30,6 +30,13 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution retry delays] -> [r
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution time limit] -> [runtime][foo, cat, dog][execution time limit] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission polling intervals] -> [runtime][foo, cat, dog][submission polling intervals] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [runtime][foo, cat, dog][submission retry delays] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][timeout] -> [cylc][events][stall timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort on timeout] -> [cylc][events][abort on stall timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][timeout handler] -> [cylc][events][stall timeout handler] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort on stalled] -> [cylc][events][abort on stall] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][inactivity] -> [cylc][events][inactivity timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][inactivity handler] -> [cylc][events][inactivity timeout handler] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][aborted handler] -> [cylc][events][abort handler] - value unchanged
 WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged
 WARNING - deprecated graph items were automatically upgraded in "workflow definition":
 	 * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:

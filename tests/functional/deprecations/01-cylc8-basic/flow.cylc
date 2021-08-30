@@ -16,6 +16,13 @@
         mail from =
         mail smtp =
         mail footer =
+        timeout =
+        abort on timeout =
+        timeout handler =
+        abort on stalled =
+        inactivity =
+        inactivity handler =
+        aborted handler =
     [[reference test]]
         allow task failures =
         live mode suite timeout =
