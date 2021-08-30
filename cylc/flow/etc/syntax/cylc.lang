@@ -112,7 +112,7 @@
         <keyword>stop after cycle point</keyword>
         <keyword>startup handler</keyword>
         <keyword>started handler</keyword>
-        <keyword>stalled handler</keyword>
+        <keyword>stall handler</keyword>
         <keyword>speedup factor</keyword>
         <keyword>special tasks</keyword>
         <keyword>simulation</keyword>
@@ -204,11 +204,11 @@
         <keyword>allow implicit tasks</keyword>
         <keyword>aborted handler</keyword>
         <keyword>abort on timeout</keyword>
-        <keyword>abort on stalled</keyword>
+        <keyword>abort on stall</keyword>
         <keyword>abort on inactivity timeout</keyword>
         <keyword>abort if timeout handler fails</keyword>
         <keyword>abort if startup handler fails</keyword>
-        <keyword>abort if stalled handler fails</keyword>
+        <keyword>abort if stall handler fails</keyword>
         <keyword>abort if shutdown handler fails</keyword>
         <keyword>abort if inactivity timeout handler fails</keyword>
         <keyword>UTC mode</keyword>
