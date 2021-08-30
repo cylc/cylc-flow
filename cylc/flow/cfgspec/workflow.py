@@ -23,6 +23,7 @@ from typing import Any, Dict, Set
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
+from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -287,24 +288,35 @@ with Conf(
             Conf('handler events', VDR.V_STRING_LIST, None)
             Conf('mail events', VDR.V_STRING_LIST, None)
 
-            Conf('startup handler', VDR.V_STRING_LIST, None)
-            Conf('shutdown handler', VDR.V_STRING_LIST, None)
-            Conf('abort handler', VDR.V_STRING_LIST, None)
+            for item in [
+                'startup handler',
+                'shutdown handler',
+                'timeout handler',
+                'abort handler',
+                'stall handler',
+                'stall timeout handler',
+                'inactivity timeout handler'
+            ]:
+                Conf(item, VDR.V_STRING_LIST, None, desc=EVENTS_DESCR[item])
 
-            Conf('timeout', VDR.V_INTERVAL)
-            Conf('timeout handler', VDR.V_STRING_LIST, None)
-            Conf('abort on timeout', VDR.V_BOOLEAN)
+            for item in [
+                'timeout',
+                'inactivity timeout',
+                'stall timeout',
+                'inactivity timeout',
+            ]:
+                Conf(item, VDR.V_INTERVAL, desc=EVENTS_DESCR[item])
 
-            Conf('stall handler', VDR.V_STRING_LIST, None)
-            Conf('abort on stall', VDR.V_BOOLEAN)
-            Conf('abort on stall timeout', VDR.V_BOOLEAN)
+            for item in [
+                'abort on timeout',
+                'abort on inactivity timeout',
+                'abort on stall timeout',
+                'abort on stall'
+            ]:
+                Conf(item, VDR.V_BOOLEAN, desc=EVENTS_DESCR[item])
 
-            Conf('stall timeout', VDR.V_INTERVAL)
-            Conf('stall timeout handler', VDR.V_STRING_LIST, None)
-
-            Conf('inactivity timeout', VDR.V_INTERVAL)
-            Conf('inactivity timeout handler', VDR.V_STRING_LIST, None)
-            Conf('abort on inactivity timeout', VDR.V_BOOLEAN)
+            Conf('abort on stall', VDR.V_BOOLEAN,
+                 desc='Whether to abort if the scheduler stalls.')
 
             Conf('abort if startup handler fails', VDR.V_BOOLEAN)
             Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
