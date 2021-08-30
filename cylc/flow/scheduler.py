@@ -1640,9 +1640,8 @@ class Scheduler:
             self.run_event_handlers(self.EVENT_STALLED, 'workflow stalled')
             if self._get_events_conf('abort on stall'):
                 raise SchedulerError('"abort on stall" is set')
-            # Start workflow timeout timer
-            if self._get_events_conf(self.EVENT_STALLED_TIMEOUT):
-                self.set_stalled_timer()
+            # Start stall timeout timer
+            self.set_stalled_timer()
         return self.is_stalled
 
     async def shutdown(self, reason: Exception) -> None:
