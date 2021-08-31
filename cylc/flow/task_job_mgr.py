@@ -1172,8 +1172,6 @@ class TaskJobManager:
                 )
                 return False
             else:
-                # if not itask.platform:
-                # if itask.platform == get_platform():
                 itask.platform = platform
                 # Submit number not yet incremented
                 itask.submit_num += 1
