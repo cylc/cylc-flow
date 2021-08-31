@@ -89,6 +89,10 @@ def test_parse_graph_fails_null_task_name(graph):
         [
             "foo || bar => baz",
             "The graph OR operator is '|'"
+        ],
+        [
+            "foo:finish? => bar",
+            "The \"finished\" pseudo-output can't be optional"
         ]
     ]
 )

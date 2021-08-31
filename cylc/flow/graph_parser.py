@@ -715,8 +715,12 @@ class GraphParser:
             return
 
         if output == TASK_OUTPUT_FINISHED:
-            # foo:finished => bar
-            #   implies foo:succeeded and foo:failed are optional.
+            if optional:
+                raise GraphParseError(
+                    f"The \"{output}\" pseudo-output can't be optional"
+                )
+            # However, from foo:finished we do infer that foo:succeeded and
+            # foo:failed are optional.
             optional = True
             for inferred_output in [
                 TASK_OUTPUT_SUCCEEDED,
