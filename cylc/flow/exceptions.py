@@ -266,7 +266,7 @@ class NoPlatformsError(CylcError):
     """None of the platforms of a given group were reachable."""
     def __init__(self):
         super().__init__(
-            'Unable to find valid platform.')
+            'Unable to find a reachable platform.')
 
 
 class CylcVersionError(CylcError):
