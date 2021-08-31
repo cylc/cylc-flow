@@ -56,49 +56,125 @@ SYSPATH = [
 # Event config descriptions shared between global and workflow config.
 EVENTS_DESCR = {
     'startup handler': (
-        'Handler(s) to run at scheduler startup.'
+        '''
+        Handler(s) to run at scheduler startup.
+        '''
     ),
     'shutdown handler': (
-        'Handler(s) to run at scheduler shutdown.'
+        '''
+        Handler(s) to run at scheduler shutdown.
+        '''
     ),
     'abort handler': (
-        'Handler(s) to run if the scheduler aborts.'
+        '''
+        Handler(s) to run if the scheduler aborts.'
+
+        .. versionchanged:: 8.0.0
+
+        This item was previously called ``aborted handler``.
+        '''
     ),
     'timeout': (
-        'Scheduler timeout interval. The timer starts counting down at'
-        ' scheduler startup.'
+        '''
+        Workflow timeout interval. The timer starts counting down at
+        scheduler startup.
+
+        .. versionchanged:: 8.0.0
+
+        Workflow timeout was previously implemented as a stall timeout.
+        '''
     ),
     'timeout handler': (
-        'Handler(s) to run if the scheduler times out.'
+        '''
+        Handler(s) to run if the scheduler times out.
+
+        .. versionchanged:: 8.0.0
+
+        Workflow timeout was previously implemented as a stall timeout.
+        '''
     ),
     'abort on timeout': (
-        'Whether to abort if the scheduler times out.'
+        '''
+        Whether to abort if the workflow times out.
+
+        .. versionchanged:: 8.0.0
+
+        Workflow timeout was previously implemented as a stall timeout.
+        '''
     ),
     'stall handler': (
-        'Handler(s) to run if the scheduler stalls.'
+        '''
+        Handler(s) to run if the scheduler stalls.
+
+        .. versionchanged:: 8.0.0
+
+        This item was previously called ``stalled handler``.
+        '''
     ),
     'abort on stall': (
-        'Whether to abort if the scheduler stalls.'
+        '''
+        Whether to abort if the scheduler stalls.
+
+        .. versionchanged:: 8.0.0
+
+        This item was previously called ``abort on stalled``.
+        '''
     ),
     'stall timeout': (
-        'Stall timeout interval. The timer starts counting down when the'
-        ' scheduler stalls.'
+        '''
+        Stall timeout interval. The timer starts counting down when the
+        scheduler stalls.
+
+        .. versionchanged:: 8.0.0
+
+        This item was previously called ``stalled timeout``.
+        '''
     ),
     'stall timeout handler': (
-        'Handler(s) to run if the scheduler stalls.'
+        '''
+        Handler(s) to run if the scheduler stalls.
+
+        .. versionchanged:: 8.0.0
+
+        Workflow timeout was previously implemented as a stall timeout.
+        '''
     ),
     'abort on stall timeout': (
-        'Whether to abort if the stall timer times out.'
+        '''
+        Whether to abort if the stall timer times out.
+
+        .. versionchanged:: 8.0.0
+
+        Workflow timeout was previously implemented as a stall timeout.
+        '''
     ),
     'inactivity timeout': (
-        'Scheduler inactivity timeout interval. The timer resets when any'
-        ' workflow activity occurs.'
+        '''
+        Scheduler inactivity timeout interval. The timer resets when any
+        workflow activity occurs.
+
+        .. versionchanged:: 8.0.0
+
+        This item was previously called ``inactivity``.
+        '''
     ),
     'inactivity timeout handler': (
-        'Handler(s) to run if the inactivity timer times out.'
+        '''
+        Handler(s) to run if the inactivity timer times out.
+
+        .. versionchanged:: 8.0.0
+
+        This item was previously called ``inactivity handler``.
+        '''
     ),
     'abort on inactivity timeout': (
-        'Whether to abort if the inactivity timer times out.'
+        '''
+        Whether to abort if the inactivity timer times out.
+
+        .. versionchanged:: 8.0.0
+
+        This item was previously called ``abort on inactivity``.
+        '''
     )
 }
 
@@ -349,32 +425,21 @@ with Conf('global.cylc', desc='''
             Conf('handler events', VDR.V_STRING_LIST)
             Conf('mail events', VDR.V_STRING_LIST)
 
-            for item in [
-                'startup handler',
-                'shutdown handler',
-                'timeout handler',
-                'abort handler',
-                'stall handler',
-                'stall timeout handler',
-                'inactivity timeout handler'
-            ]:
-                Conf(item, VDR.V_STRING_LIST, None, desc=EVENTS_DESCR[item])
+            for item, desc in EVENTS_DESCR.items():
+                if item.endswith("handler"):
+                    Conf(item, VDR.V_STRING_LIST, desc=desc)
 
-            for item, default in [
-                ('timeout', None),
-                ('inactivity timeout', None),
-                ('stall timeout', DurationFloat(3600)),
-                ('inactivity timeout', None)
-            ]:
-                Conf(item, VDR.V_INTERVAL, default, desc=EVENTS_DESCR[item])
+                elif item.startswith("abort on"):
+                    default = (item == "abort on stall timeout")
+                    Conf(item, VDR.V_BOOLEAN, default, desc=desc)
 
-            for item, default in [
-                ('abort on timeout', False),
-                ('abort on inactivity timeout', False),
-                ('abort on stall timeout', True),
-                ('abort on stall', False)
-            ]:
-                Conf(item, VDR.V_BOOLEAN, default, desc=EVENTS_DESCR[item])
+                elif item.endswith("timeout"):
+                    if item == "stall timeout":
+                        def_intv: Optional['DurationFloat'] = (
+                            DurationFloat(3600))
+                    else:
+                        def_intv = None
+                    Conf(item, VDR.V_INTERVAL, def_intv, desc=desc)
 
         with Conf('mail', desc='''
             Options for email handling.
@@ -440,7 +505,7 @@ with Conf('global.cylc', desc='''
 
             .. versionchanged:: 8.0.0
 
-               This section was previously ``[suite logging]``.
+               This section was previously called ``[suite logging]``.
         '''):
             Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
                 How many rolled logs to retain in the archive.
