@@ -743,8 +743,8 @@ with Conf(
                 :cylc:conf:`global.cylc[platforms]` or
                 :cylc:conf:`global.cylc[platform groups]`.
 
-                Platform describes a host or set of hosts upon which this
-                task should run jobs.
+                The platform specifies the host(s) that the task's jobs
+                will run on.
             ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this namespace.

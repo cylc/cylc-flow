@@ -536,7 +536,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.0.0
 
-                   This item was formerly known as ``batch system``.
+                   This item was called ``batch system`` in Cylc 7.
 
                 The batch system/job submit method used to run jobs on the
                 platform, e.g., ``background``, ``at``, ``slurm``,
