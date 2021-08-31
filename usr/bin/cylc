@@ -145,7 +145,7 @@ fi
 # Note: the code above is only needed if still using standalone Rose 2019
 # versions
 
-# CYLC_NAME construction:
+# CYLC_ENV_NAME construction:
 #                           ╔════════════════════════════╗
 #                           ║        CYLC_VERSION        ║
 #                           ╠══════════════════╦═════════╣
