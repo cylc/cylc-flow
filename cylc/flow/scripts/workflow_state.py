@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-r"""cylc workflow-state REG [OPTIONS]
+r"""cylc workflow-state [OPTIONS] ARGS
 
 Retrieve task states from the workflow database.
 
@@ -63,7 +63,8 @@ from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.pathutil import expand_path, get_workflow_run_dir
+from cylc.flow.pathutil import expand_path, get_cylc_run_dir
+from cylc.flow.workflow_files import parse_reg
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -125,7 +126,10 @@ class WorkflowPoller(Poller):
 
 
 def get_option_parser() -> COP:
-    parser = COP(__doc__)
+    parser = COP(
+        __doc__,
+        argdoc=[('REG', "Workflow name")]
+    )
 
     parser.add_option(
         "-t", "--task", help="Specify a task to check the state of.",
@@ -182,6 +186,8 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', workflow: str) -> None:
+    workflow = parse_reg(workflow)
+
     if options.use_task_point and options.cycle:
         raise UserInputError(
             "cannot specify a cycle point and use environment variable")
@@ -216,7 +222,7 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
     if options.run_dir:
         run_dir = expand_path(options.run_dir)
     else:
-        run_dir = get_workflow_run_dir('')
+        run_dir = get_cylc_run_dir()
 
     pollargs = {
         'workflow': workflow,

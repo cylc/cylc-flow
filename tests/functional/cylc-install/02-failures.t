@@ -20,7 +20,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 37
+set_test_number 39
 
 # Test source directory between runs that are not consistent result in error
 
@@ -38,8 +38,8 @@ pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Source directory between runs are not consistent.
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Source directory not consistent between runs.
 __ERR__
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
 rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
@@ -176,6 +176,18 @@ WorkflowFilesError: "${RND_WORKFLOW_RUNDIR}/olaf" exists. \
 Try using cylc reinstall. Alternatively, install with another name, using the --run-name option.
 __ERR__
 popd || exit 1
+purge_rnd_workflow
+
+# -----------------------------------------------------------------------------
+# Test cylc install fails if installation would result in nested run dirs
+
+TEST_NAME="${TEST_NAME_BASE}-nested-rundir"
+make_rnd_workflow
+mkdir -p "${RND_WORKFLOW_RUNDIR}/.service"
+run_fail "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}/nested"
+cmp_ok "${TEST_NAME}-install.stderr" <<__ERR__
+WorkflowFilesError: Nested run directories not allowed - cannot install workflow name "${RND_WORKFLOW_NAME}/nested" as "${RND_WORKFLOW_RUNDIR}" is already a valid run directory.
+__ERR__
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------

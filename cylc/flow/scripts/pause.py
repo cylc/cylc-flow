@@ -30,11 +30,16 @@ To resume a paused workflow, use 'cylc play'.
 Not to be confused with `cylc hold`.
 """
 
-import os.path
+from typing import TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 MUTATION = '''
 mutation (
@@ -54,13 +59,12 @@ def get_option_parser():
         __doc__, comms=True, multitask=True,
         argdoc=[('REG', "Workflow name")]
     )
-
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow):
-    workflow = os.path.normpath(workflow)
+def main(parser: COP, options: 'Values', workflow: str) -> None:
+    workflow = parse_reg(workflow)
     pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {

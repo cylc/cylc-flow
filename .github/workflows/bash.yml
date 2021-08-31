@@ -2,10 +2,28 @@
 name: bash
 
 on:
-  pull_request:
   workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/bash.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
   push:
     branches: [master]
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/bash.yml'
+      - 'cylc/flow/etc/syntax/**'
+      - 'etc/syntax/**'
+      - 'tests/unit/**'
+      - 'tests/integration/**'
+      - '**.md'
+      - '**/README*/**'
 
 jobs:
   bash-docker:
@@ -22,10 +40,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Build Docker container
+      - name: Run Docker container
         run: |
-          docker build -t bash:test  -m 1G --memory-swap 1G dockerfiles/bash/
-          docker run --name bash -v $(pwd -P):/root/cylc-flow --rm -t -d -m 1G --memory-swap 1G bash:test /bin/bash
+          docker pull ghcr.io/cylc/cylc-bash-testing:master
+          docker run --name bash -v $(pwd -P):/root/cylc-flow --rm -t -d -m 1G --memory-swap 1G ghcr.io/cylc/cylc-bash-testing:master /bin/bash
           docker ps -a
 
       - name: Install Cylc dependencies in the container
@@ -59,7 +77,7 @@ jobs:
         run: |
           docker cp bash:/root/cylc-run .
 
-      - name: Upload
+      - name: Upload artifact
         if: failure()
         uses: actions/upload-artifact@v2
         with:

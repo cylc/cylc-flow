@@ -102,8 +102,6 @@ The resulting formatted directives are:
 import re
 import shlex
 
-from cylc.flow.pathutil import expand_path
-
 
 class SLURMHandler():
     """SLURM job submission and manipulation."""
@@ -149,7 +147,7 @@ class SLURMHandler():
     @classmethod
     def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = expand_path(job_conf['job_file_path'])
+        job_file_path = job_conf['job_file_path']
         directives = job_conf['directives'].__class__()
         directives['--job-name'] = (
             job_conf['task_id'] + '.' + job_conf['workflow_name'])

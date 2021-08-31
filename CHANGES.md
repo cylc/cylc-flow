@@ -48,6 +48,53 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0b3 (<span actions:bind='release-date'>Upcoming 2021</span>)__
+
+Fourth beta release of Cylc 8.
+
+`suite owner` and `workflow owner` option option has been removed.
+
+(See note on cylc-8 backward-incompatible changes, above)
+
+### Enhancements
+
+[#4324](https://github.com/cylc/cylc-flow/pull/4324) -
+Re-implement a basic form of the Cylc 7 `cylc graph` command for static
+graph visualisation.
+
+[#4335](https://github.com/cylc/cylc-flow/pull/4335) -
+Have validation catch erroneous use of both `expr => bar` and `expr => !bar` in
+the same graph.
+
+[#4285](https://github.com/cylc/cylc-flow/pull/4285) - Cylc now automatically
+infers the latest numbered run of the workflow for most commands (e.g. you can
+run `cylc pause foo` instead of having to type out `foo/run3`).
+
+[#4346](https://github.com/cylc/cylc-flow/pull/4346) -
+Use natural sort order for the `cylc scan --sort` option.
+
+[#4313](https://github.com/cylc/cylc-flow/pull/4313) - Change `ignore` to
+`reload` for the cycle point cli options (e.g. `--fcp=reload`), as this more
+accurately reflects what it's doing. Also improve validation of these
+cli options.
+
+### Fixes
+
+[#4341](https://github.com/cylc/cylc-flow/pull/4341) -
+Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
+
+[#4319](https://github.com/cylc/cylc-flow/pull/4319) -
+Update cylc reinstall to skip cylc dirs work and share
+
+[#4289](https://github.com/cylc/cylc-flow/pull/4289) - Make `cylc clean`
+safer by preventing cleaning of dirs that contain more than one workflow
+run dir (use `--force` to override this safeguard).
+
+[#4362](https://github.com/cylc/cylc-flow/pull/4362) -
+When using `cylc clean` on a sequential run directory, remove the `runN` symlink
+if it points to the removed directory.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
 Third beta release of Cylc 8.

@@ -15,36 +15,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation order, installed workflows before current working directory.
+# Test log dev-mode.
+
 . "$(dirname "$0")/test_header"
-set_test_number 2
-
-WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
-
-mkdir -p 'good' "${WORKFLOW_NAME}"
-cat >'good/flow.cylc' <<'__FLOW_CONFIG__'
+set_test_number 5
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 1
     [[graph]]
-        R1 = t0
+        P1 = t1
 [runtime]
-    [[t0]]
+    [[t1]]
         script = true
 __FLOW_CONFIG__
-cat >"${WORKFLOW_NAME}/flow.cylc" <<'__FLOW_CONFIG__'
-[scheduling]
-    [[graph]]
-        R1 = t0
-[runtime]
-    [[t0]]
-        scribble = true
-__FLOW_CONFIG__
 
-# This should validate bad workflow under current directory
-run_fail "${TEST_NAME_BASE}" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate-plain" \
+    cylc validate "${WORKFLOW_NAME}"
 
-# This should validate installed good workflow
-cylc install --flow-name="${WORKFLOW_NAME}" -C "${PWD}/good" --no-run-name
-run_ok "${TEST_NAME_BASE}" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate-vvv" \
+    cylc validate -vvv "${WORKFLOW_NAME}"
+grep_ok " DEBUG - \[config:.*\]" "${TEST_NAME_BASE}-validate-vvv.stderr"
+
+
+run_ok "${TEST_NAME_BASE}-validate-vvv--no-timestamp" \
+    cylc validate -vvv --no-timestamp "${WORKFLOW_NAME}"
+grep_ok "^DEBUG - \[config:.*\]" "${TEST_NAME_BASE}-validate-vvv--no-timestamp.stderr"
 
 purge
 exit

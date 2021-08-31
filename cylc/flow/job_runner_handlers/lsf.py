@@ -72,7 +72,7 @@ class LSFHandler():
     @classmethod
     def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = re.sub(r"\$HOME/", "", job_conf["job_file_path"])
+        job_file_path = job_conf['job_file_path']
         directives = job_conf["directives"].__class__()
         directives["-J"] = (
             job_conf["task_id"] + "." + job_conf["workflow_name"]
