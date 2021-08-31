@@ -46,7 +46,7 @@
 # .bashrc so that task jobs see CYLC_HOME too.
 #
 # CYLC_VERSION does not have to be set by users in their .bashrc because the
-# scheduler propagates its own version to task job scripts. If users do specify 
+# scheduler propagates its own version to task job scripts. If users do specify
 # a version in .bashrc they should make sure it defaults to an existing version
 # to avoid overriding task job version selection (see User Instructions below).
 #
@@ -57,6 +57,7 @@
 #
 # INSTALLING cylc 8+ RELEASES WITH CONDA
 #---------------------------------------
+#
 # Create environments named cylc-$CYLC_VERSION under a root location such as /opt:
 #   $ conda create -p /opt/cylc-8.2.0 cylc=8.2.0
 #
@@ -67,6 +68,23 @@
 # environment and then select it by CYLC_VERSION but that may be misleading
 # if the code is not the true release version. Better to use Python venvs and
 # CYLC_HOME for development and testing.
+#
+# INSTALLING cylc 8+ WITH PIP IN CONDA ENVIRONMENTS WITH ARBITRARY NAMES
+#-----------------------------------------------------------------------
+#
+# You can use CYLC_ENV_NAME to use Cylc from an arbitrary Conda environment:
+#
+# Create environments with arbitrary names and install cylc:
+#   $ conda create cylc-violet-capybara
+#   $ conda activate cylc-violet-capybara
+#   $ pip install -e <path to cylc>
+#   $ conda deactivate
+#
+#   $ CYLC_ENV_NAME=cylc-violet-capybara cylc version --long
+#   > 8.0.whateva (/home/user/miniconda3/envs/cylc-violet-capybara)
+#
+# n.b. if CYLC_VERSION and CYLC_ENV_NAME are both set, CYLC_ENV_NAME will be
+# used and CYLC_VERSION ignored.
 #
 # INSTALLING cylc-flow 8+ WORKING COPIES WITH PIP FOR DEVELOPMENT AND TESTING
 #----------------------------------------------------------------------------
