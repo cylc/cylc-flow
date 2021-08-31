@@ -288,35 +288,13 @@ with Conf(
             Conf('handler events', VDR.V_STRING_LIST, None)
             Conf('mail events', VDR.V_STRING_LIST, None)
 
-            for item in [
-                'startup handler',
-                'shutdown handler',
-                'timeout handler',
-                'abort handler',
-                'stall handler',
-                'stall timeout handler',
-                'inactivity timeout handler'
-            ]:
-                Conf(item, VDR.V_STRING_LIST, None, desc=EVENTS_DESCR[item])
-
-            for item in [
-                'timeout',
-                'inactivity timeout',
-                'stall timeout',
-                'inactivity timeout',
-            ]:
-                Conf(item, VDR.V_INTERVAL, desc=EVENTS_DESCR[item])
-
-            for item in [
-                'abort on timeout',
-                'abort on inactivity timeout',
-                'abort on stall timeout',
-                'abort on stall'
-            ]:
-                Conf(item, VDR.V_BOOLEAN, desc=EVENTS_DESCR[item])
-
-            Conf('abort on stall', VDR.V_BOOLEAN,
-                 desc='Whether to abort if the scheduler stalls.')
+            for item, desc in EVENTS_DESCR.items():
+                if item.endswith("handler"):
+                    Conf(item, VDR.V_STRING_LIST, desc=desc)
+                elif item.startswith("abort on"):
+                    Conf(item, VDR.V_BOOLEAN, desc=desc)
+                elif item.endswith("timeout"):
+                    Conf(item, VDR.V_INTERVAL, desc=desc)
 
             Conf('abort if startup handler fails', VDR.V_BOOLEAN)
             Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
