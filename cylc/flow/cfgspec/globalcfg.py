@@ -511,7 +511,7 @@ with Conf('global.cylc', desc='''
                :cylc:conf:`task definitions <flow.cylc[runtime][<namespace>]>`.
 
             Platform names can be regular expressions: If you have a set of
-            compute resources such as ``bigmachine1, bigmachine02`` or
+            compute resources such as ``bigmachine1, bigmachine2`` or
             ``desktop0000, .., desktop9999`` one would define platforms with
             names ``[[bigmachine[12]]]`` and ``[[desktop[0-9]{4}]]``.
 
@@ -536,7 +536,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.0.0
 
-                   This item was formerly known as ``batch system``.
+                   This item was called ``batch system`` in Cylc 7.
 
                 The batch system/job submit method used to run jobs on the
                 platform, e.g., ``background``, ``at``, ``slurm``,
@@ -853,8 +853,8 @@ with Conf('global.cylc', desc='''
     with Conf('platform groups', desc='''
         .. versionadded:: 8.0.0
 
-        Platforms groups allow you to define sets of platforms which would
-        all be suitable for a given job. At the time Cylc sets up a task job
+        Platform groups allow you to group together platforms which would
+        all be suitable for a given job. When Cylc sets up a task job
         it will pick a platform from a group. Cylc will then use the selected
         platform for all interactions with that job.
 
