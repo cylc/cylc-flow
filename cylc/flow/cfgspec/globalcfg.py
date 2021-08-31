@@ -545,8 +545,11 @@ with Conf('global.cylc', desc='''
             Conf('job runner command template', VDR.V_STRING, desc='''
                 .. versionchanged:: 8.0.0
 
-                   This item was formerly known as
-                   ``batch system command template``.
+                   This item was called
+                   ``batch system command template`` at Cylc 7.
+
+                This allows you to override the actual command used by the chosen job runner.
+                The template’s \%(job)s will be substituted by the job file path.
             ''')
             Conf('shell', VDR.V_STRING, '/bin/bash')
             Conf('communication method',
