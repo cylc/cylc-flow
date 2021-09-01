@@ -137,8 +137,6 @@ DEAD_ENDS = {
         ' use cylc graph <flow1> --diff <flow2>',
     'gscan':
         'cylc gscan has been removed, use the web UI',
-    'gui':
-        'cylc gui has been removed, use the web UI',
     'insert':
         'inserting tasks is now done automatically',
     'jobscript':
@@ -329,7 +327,7 @@ def cli_version(long_fmt=False):
     """Wrapper for get_version."""
     print(get_version(long_fmt))
     if long_fmt:
-        list_plugins()
+        print(list_plugins())
     sys.exit(0)
 
 
@@ -357,23 +355,26 @@ def list_plugins():
         for entry_point in entry_points
     }
 
+    lines = []
     if dists:
-        print('\nPlugins:')
+        lines.append('\nPlugins:')
         maxlen1 = max(len(dist.project_name) for dist in dists) + 2
         maxlen2 = max(len(dist.version) for dist in dists) + 2
         for dist in dists:
-            print(
+            lines.append(
                 f'  {dist.project_name.ljust(maxlen1)}'
                 f' {dist.version.ljust(maxlen2)}'
                 f' {dist.module_path}'
             )
 
-        print('\nEntry Points:')
+        lines.append('\nEntry Points:')
         for entry_point_name, entry_points in entry_point_groups.items():
             if entry_points:
-                print(f'  {entry_point_name}:')
+                lines.append(f'  {entry_point_name}:')
                 for entry_point in entry_points:
-                    print(f'    {entry_point}')
+                    lines.append(f'    {entry_point}')
+
+    return '\n'.join(lines)
 
 
 @contextmanager
