@@ -586,11 +586,18 @@ class TaskEventsManager():
                 )
 
         ):
-            # Ignore polled messages if task has a retry lined up
-            LOG.warning(
-                logfmt,
-                itask, itask.state, self.FLAG_POLLED_IGNORED, message,
-                timestamp, submit_num, itask.flow_label)
+            # Ignore messages if task has a retry lined up
+            # (caused by polling overlapping with task failure)
+            if flag == self.FLAG_RECEIVED:
+                LOG.warning(
+                    logfmt,
+                    itask, itask.state, self.FLAG_RECEIVED_IGNORED, message,
+                    timestamp, submit_num, itask.flow_label)
+            else:
+                LOG.warning(
+                    logfmt,
+                    itask, itask.state, self.FLAG_POLLED_IGNORED, message,
+                    timestamp, submit_num, itask.flow_label)
             return False
         LOG.log(
             LOG_LEVELS.get(severity, INFO), logfmt, itask, itask.state, flag,
@@ -699,7 +706,7 @@ class TaskEventsManager():
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["mail"],
                 itask.tdef.rtconfig["events"],
-                glbl_cfg().get()["task mail"],
+                glbl_cfg().get(["scheduler", "mail"]),
                 glbl_cfg().get()["task events"],
         ]:
             try:

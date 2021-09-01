@@ -52,13 +52,13 @@ to hold future tasks when they spawn, use exact identifiers e.g. "mytask.1234".
 See also 'cylc release'.
 """
 
-import os.path
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -128,7 +128,7 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
 
     _validate(options, *task_globs)
 
-    workflow = os.path.normpath(workflow)
+    workflow = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.hold_point_string:

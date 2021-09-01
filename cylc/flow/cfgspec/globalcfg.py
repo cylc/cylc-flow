@@ -24,11 +24,17 @@ from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
-from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
+from cylc.flow.parsec.config import (
+    ConfigNode as Conf,
+    ParsecConfig,
+)
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
-    DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+    CylcConfigValidator as VDR,
+    DurationFloat,
+    cylc_config_validate,
+)
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -127,6 +133,10 @@ with Conf('global.cylc', desc='''
             Maximum number of concurrent processes used to execute external job
             submission, event handlers, and job poll and kill commands - see
             :ref:`Managing External Command Execution`.
+
+            .. versionchanged:: 8.0.0
+
+               Moved here from the top level.
         ''')
         Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600),
              desc='''
@@ -136,6 +146,10 @@ with Conf('global.cylc', desc='''
             .. note::
                The default is set quite high to avoid killing important
                processes when the system is under load.
+
+            .. versionchanged:: 8.0.0
+
+               Moved here from the top level.
         ''')
         Conf('auto restart delay', VDR.V_INTERVAL, desc='''
             Relates to Cylc's auto stop-restart mechanism (see
@@ -359,6 +373,10 @@ with Conf('global.cylc', desc='''
             The workflow event log, held under the workflow run directory, is
             maintained as a rolling archive. Logs are rolled over (backed up
             and started anew) when they reach a configurable limit size.
+
+            .. versionchanged:: 8.0.0
+
+               This section was previously ``[suite logging]``.
         '''):
             Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
                 How many rolled logs to retain in the archive.
@@ -368,7 +386,9 @@ with Conf('global.cylc', desc='''
                 file size.
             ''')
 
-    with Conf('install'):
+    with Conf('install', desc='''
+        .. versionadded:: 8.0.0
+    '''):
         Conf('source dirs', VDR.V_STRING_LIST, default=['~/cylc-src'], desc='''
             A list of paths where ``cylc install <flow_name>`` will look for
             a workflow of that name. All workflow source directories in these
@@ -709,8 +729,7 @@ with Conf('global.cylc', desc='''
             Conf('install target', VDR.V_STRING, desc='''
                 This defaults to the platform name. This will be used as the
                 target for remote file installation.
-                For example, to indicate to Cylc that Platform_A shares a file
-                system with localhost, we would configure as follows:
+                For example, if Platform_A shares a file system with localhost:
 
                 .. code-block:: cylc
 
@@ -745,13 +764,15 @@ with Conf('global.cylc', desc='''
             Conf('job submission environment pass-through', VDR.V_STRING_LIST,
                  desc='''
                 Minimal list of environment variable names to pass through to
-                job submission subprocesses. $HOME is passed automatically.
+                job submission subprocesses. ``$HOME`` is passed automatically.
                 You are unlikely to need this.
             ''')
-            Conf('job submission executable paths', VDR.V_STRING_LIST, desc='''
+            Conf('job submission executable paths', VDR.V_STRING_LIST,
+                 desc=f'''
                 Additional executable locations to pass to the job
-                submission subprocess beyond the standard locations''' +
-                 ', '.join(SYSPATH) + '''. You are unlikely to need this.
+                submission subprocess beyond the standard locations
+                {", ".join(f"``{i}``" for i in SYSPATH)}.
+                You are unlikely to need this.
             ''')
             Conf('max batch submit size', VDR.V_INTEGER, default=100, desc='''
                 Limits the maximum number of jobs that can be submitted at
@@ -763,24 +784,35 @@ with Conf('global.cylc', desc='''
                 systems so for safety there is an upper limit on the number
                 of job submissions which can be batched together.
             ''')
-            with Conf('selection'):
-                Conf(
-                    'method', VDR.V_STRING, default='random',
-                    options=['random', 'definition order'],
-                    desc='''
-                        Host selection method for the platform. Available
-                        options:
+            with Conf('selection') as Selection:
+                Conf('method', VDR.V_STRING, default='random',
+                     options=['random', 'definition order'],
+                     desc='''
+                    Method for choosing the job host from the platform.
+                    Available options:
 
-                        - random: Suitable for an identical pool of hosts.
-                        - definition order: Take the first host in the list
-                          unless that host has been unreachable. In many cases
-                          this is likely to cause load imbalances, but might
-                          be appropriate if your hosts were
-                          ``main, backup, failsafe``.
-                    '''
-                )
-        with Conf('localhost', meta=Platform):
+                    - ``random``: Choose randomly from the list of hosts.
+                      This is suitable for a pool of identical hosts.
+                    - ``definition order``: Take the first host in the list
+                      unless that host was unreachable. In many cases
+                      this is likely to cause load imbalances, but might
+                      be appropriate if following the pattern
+                      ``hosts = main, backup, failsafe``.
+                ''')
+        with Conf('localhost', meta=Platform, desc='''
+            A default platform defining settings for jobs to be run on the
+            same host as the workflow scheduler.
+
+            .. attention::
+
+               It is common practice to run the Cylc scheduler on a dedicated
+               host: In this case **"localhost" will refer to the host where
+               the scheduler is running and not the computer where you
+               ran "cylc play"**.
+        '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
+            with Conf('selection', meta=Selection):
+                Conf('method', VDR.V_STRING, default='definition order')
 
     # Platform Groups
     with Conf('platform groups'):  # noqa: SIM117 (keep same format)
@@ -813,13 +845,6 @@ with Conf('global.cylc', desc='''
         Conf('handler retry delays', VDR.V_INTERVAL_LIST, None)
         Conf('mail events', VDR.V_STRING_LIST)
         Conf('submission timeout', VDR.V_INTERVAL)
-
-    with Conf('task mail', desc='''
-        Global site/user defaults for
-        :cylc:conf:`flow.cylc[runtime][<namespace>][mail]`.
-    '''):
-        Conf('from', VDR.V_STRING)
-        Conf('to', VDR.V_STRING)
 
 
 def upg(cfg, descr):
@@ -925,15 +950,9 @@ class GlobalConfig(ParsecConfig):
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
                 try:
                     self._load(fname, conf_type)
-                except ParsecError as exc:
-                    if conf_type == upgrader.SITE_CONFIG:
-                        # Warn on bad site file (users can't fix it).
-                        LOG.warning(
-                            f'ignoring bad {conf_type} {fname}:\n{exc}')
-                    else:
-                        # Abort on bad user file (users can fix it).
-                        LOG.error(f'bad {conf_type} {fname}')
-                        raise
+                except ParsecError:
+                    LOG.error(f'bad {conf_type} {fname}')
+                    raise
 
         self._set_default_editors()
 

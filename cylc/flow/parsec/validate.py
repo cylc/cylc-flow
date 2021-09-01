@@ -751,7 +751,19 @@ class CylcConfigValidator(ParsecValidator):
                                    hour_of_day=4, minute_of_hour=30,
                                    second_of_minute=54)
         if '/' in value:
-            raise IllegalValueError('cycle point format', keys, value)
+            raise IllegalValueError(
+                'cycle point format', keys, value, msg=(
+                    'Illegal character: "/".'
+                    ' Datetimes are used in Cylc file paths.'
+                )
+            )
+        if ':' in value:
+            raise IllegalValueError(
+                'cycle point format', keys, value, msg=(
+                    'Illegal character: ":".'
+                    ' Datetimes are used in Cylc file paths.'
+                )
+            )
         if '%' in value:
             try:
                 TimePointDumper().strftime(test_timepoint, value)

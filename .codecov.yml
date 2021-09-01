@@ -2,12 +2,6 @@
 # After modifying this file, it might be worth to validate it with:
 # `curl --data-binary @.codecov.yml https://codecov.io/validate`
 
-# which branch to monitor and whether wait for ci success
-codecov:
-  branch: master
-  notify:
-    require_ci_to_pass: yes
-
 # define the colour bar limits here
 coverage:
   precision: 2
@@ -24,24 +18,17 @@ coverage:
         threshold: '2%'
     patch:
       default:
-        # basic
         target: '95%'
         threshold: '5%'
-        base: auto
-        # advanced
-        branches: null
-        if_no_uploads: error
-        if_not_found: success
-        if_ci_failed: error
-        only_pulls: false
-        flags: null
-        paths: null
-    changes: no
 
 # files to ignore
 ignore:
   - "tests/**"
   - "ws_messages_pb2.py"
 
+flag_management:
+  default_rules:
+    carryforward: true
+
 # turn off comments to pull requests
-comment: off
+comment: false

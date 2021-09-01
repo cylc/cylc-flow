@@ -587,10 +587,10 @@ def test_process_startcp(
                 'final cycle point': '2021',
                 'final cycle point constraints': []
             },
-            'ignore',
+            'reload',
             '20210101T0000+0530',
             None,
-            id="--fcp=ignore"
+            id="--fcp=reload"
         ),
     ]
 )

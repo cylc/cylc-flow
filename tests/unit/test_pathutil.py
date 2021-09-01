@@ -19,6 +19,7 @@ import logging
 import os
 from pathlib import Path
 import pytest
+from pytest import param
 from typing import Callable, Dict, Iterable, List, Set
 from unittest.mock import Mock, patch, call
 
@@ -26,6 +27,7 @@ from cylc.flow.exceptions import UserInputError, WorkflowFilesError
 from cylc.flow.pathutil import (
     expand_path,
     get_dirs_to_symlink,
+    get_next_rundir_number,
     get_remote_workflow_run_dir,
     get_remote_workflow_run_job_dir,
     get_workflow_run_dir,
@@ -41,7 +43,8 @@ from cylc.flow.pathutil import (
     make_workflow_run_tree,
     parse_rm_dirs,
     remove_dir_and_target,
-    remove_dir_or_file
+    remove_dir_or_file,
+    remove_empty_parents,
 )
 
 from .conftest import MonkeyMock
@@ -409,6 +412,55 @@ def test_remove_dir_or_file(tmp_path: Path):
     assert a_dir.exists() is False
 
 
+def test_remove_empty_parents(tmp_path: Path):
+    """Test that _remove_empty_parents() doesn't remove parents containing a
+    sibling."""
+    # -- Setup --
+    reg = 'foo/bar/baz/qux'
+    path = tmp_path.joinpath(reg)
+    tmp_path.joinpath('foo/bar/baz').mkdir(parents=True)
+    # Note qux does not exist, but that shouldn't matter
+    sibling_reg = 'foo/darmok'
+    sibling_path = tmp_path.joinpath(sibling_reg)
+    sibling_path.mkdir()
+    # -- Test --
+    remove_empty_parents(path, reg)
+    assert tmp_path.joinpath('foo/bar').exists() is False
+    assert tmp_path.joinpath('foo').exists() is True
+    # Check it skips non-existent dirs, and stops at the right place too
+    tmp_path.joinpath('foo/bar').mkdir()
+    sibling_path.rmdir()
+    remove_empty_parents(path, reg)
+    assert tmp_path.joinpath('foo').exists() is False
+    assert tmp_path.exists() is True
+
+
+@pytest.mark.parametrize(
+    'path, tail, exc_msg',
+    [
+        pytest.param(
+            'meow/foo/darmok', 'foo/darmok', "path must be absolute",
+            id="relative path"
+        ),
+        pytest.param(
+            '/meow/foo/darmok', '/foo/darmok',
+            "tail must not be an absolute path",
+            id="absolute tail"
+        ),
+        pytest.param(
+            '/meow/foo/darmok', 'foo/jalad',
+            "path '/meow/foo/darmok' does not end with 'foo/jalad'",
+            id="tail not in path"
+        )
+    ]
+)
+def test_remove_empty_parents_bad(path: str, tail: str, exc_msg: str):
+    """Test that _remove_empty_parents() fails appropriately with bad args."""
+    with pytest.raises(ValueError) as exc:
+        remove_empty_parents(path, tail)
+    assert exc_msg in str(exc.value)
+
+
 @pytest.mark.parametrize(
     'dirs, expected',
     [
@@ -441,3 +493,27 @@ def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
     with pytest.raises(UserInputError) as exc:
         parse_rm_dirs(dirs)
     assert err_msg in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    'expect, files, runN',
+    [
+        param(1, [], False, id='1st run (from filenames)'),
+        param(2, ['run1'], False, id='2nd run (from filenames)'),
+        param(
+            1000, ['run20', 'run400', 'run999'], False,
+            id='1000th run (from filenames)'
+        ),
+        param(6, ['run1', 'run5'], False,
+            id='Non-sequential (from filenames)'),
+        param(2, ['run1'], True, id='2nd run (from symlink)'),
+        param(100, ['run1', 'run99'], True, id='100th run (from symlink)'),
+        param(42, ['foo', 'foo12', 'run41'], False, id='with dirs not runX')
+    ]
+)
+def test_get_next_rundir_number(tmp_path, expect, files, runN):
+    for file_ in files:
+        (tmp_path / file_).mkdir()
+    if runN:
+        (tmp_path / 'runN').symlink_to(tmp_path / files[-1])
+    assert get_next_rundir_number(tmp_path) == expect

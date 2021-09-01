@@ -23,9 +23,16 @@ Find out what version of Cylc a running workflow is using.
 To find the version you've invoked at the command line see "cylc version".
 """
 
+from typing import TYPE_CHECKING
+
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 QUERY = '''
 query ($wFlows: [ID]) {
@@ -41,17 +48,17 @@ query ($wFlows: [ID]) {
 
 def get_option_parser():
     parser = COP(__doc__, comms=True)
-
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow):
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+def main(parser: COP, options: 'Values', reg: str) -> None:
+    reg = parse_reg(reg)
+    pclient = get_client(reg, timeout=options.comms_timeout)
 
     query_kwargs = {
         'request_string': QUERY,
-        'variables': {'wFlows': [workflow]}
+        'variables': {'wFlows': [reg]}
     }
 
     result = pclient('graphql', query_kwargs)

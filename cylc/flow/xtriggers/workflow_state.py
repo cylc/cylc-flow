@@ -18,7 +18,7 @@ import sqlite3
 
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
-from cylc.flow.pathutil import expand_path, get_workflow_run_dir
+from cylc.flow.pathutil import expand_path, get_cylc_run_dir
 from metomi.isodatetime.parsers import TimePointParser
 
 
@@ -70,7 +70,7 @@ def workflow_state(workflow, task, point, offset=None, status='succeeded',
     if cylc_run_dir:
         cylc_run_dir = expand_path(cylc_run_dir)
     else:
-        cylc_run_dir = get_workflow_run_dir('')
+        cylc_run_dir = get_cylc_run_dir()
     if offset is not None:
         point = str(add_offset(point, offset))
     try:

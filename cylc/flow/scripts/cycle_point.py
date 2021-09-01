@@ -25,9 +25,9 @@ Filename templating replaces elements of a template string with corresponding
 elements of the current or given cycle point.
 
 Use ISO 8601 or posix date-time format elements:
-  $ cylc cyclepoint 2010080T00 --template foo-CCYY-MM-DD-Thh.nc
+  $ cylc cycle-point 2010080T00 --template foo-CCYY-MM-DD-Thh.nc
   foo-2010-08-08-T00.nc
-  $ cylc cyclepoint 2010080T00 --template foo-%Y-%m-%d-T%H.nc
+  $ cylc cycle-point 2010080T00 --template foo-%Y-%m-%d-T%H.nc
   foo-2010-08-08-T00.nc
 
 Other examples:

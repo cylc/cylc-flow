@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc extract-resources [OPTIONS] [DIR] [RESOURCES...]
+"""cylc extract-resources [OPTIONS] ARGS
 
 Extract resources from the cylc.flow package."""
 

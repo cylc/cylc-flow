@@ -32,7 +32,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # Only t1 should have job.err and job.out retrieved.
 
 sed "/'job-logs-retrieve'/!d" \
-    "${WORKFLOW_RUN_DIR}/log/job/2020-02-02T02:02Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \
+    "${WORKFLOW_RUN_DIR}/log/job/20200202T0202Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<__LOG__
 [(('job-logs-retrieve', 'retry'), 1) ret_code] 0

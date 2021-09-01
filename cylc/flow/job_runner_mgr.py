@@ -116,6 +116,7 @@ job_runner.SUBMIT_CMD_TMPL
 from contextlib import suppress
 import json
 import os
+from pathlib import Path
 import shlex
 import stat
 import sys
@@ -245,6 +246,15 @@ class JobRunnerManager():
         """Format the job directives for a job file, if relevant."""
         job_runner = self._get_sys(job_conf['platform']['job runner'])
         if hasattr(job_runner, "format_directives"):
+            job_conf = {
+                # strip $HOME from the job file path
+                # paths in directives should be interpreted relative to $HOME
+                # https://github.com/cylc/cylc-flow/issues/4247
+                **job_conf,
+                'job_file_path': (
+                    job_conf["job_file_path"].replace(r"$HOME/", "")
+                )
+            }
             return job_runner.format_directives(job_conf)
 
     def get_fail_signals(self, job_conf):
@@ -694,8 +704,17 @@ class JobRunnerManager():
                 command = shlex.split(
                     job_runner.SUBMIT_CMD_TMPL % {"job": job_file_path})
                 try:
-                    proc = procopen(command, stdin=proc_stdin_arg,
-                                    stdoutpipe=True, stderrpipe=True, env=env)
+                    proc = procopen(
+                        command,
+                        stdin=proc_stdin_arg,
+                        stdoutpipe=True,
+                        stderrpipe=True,
+                        env=env,
+                        # paths in directives should be interpreted relative to
+                        # $HOME
+                        # https://github.com/cylc/cylc-flow/issues/4247
+                        cwd=Path('~').expanduser()
+                    )
                 except OSError as exc:
                     # subprocess.Popen has a bad habit of not setting the
                     # filename of the executable when it raises an OSError.
