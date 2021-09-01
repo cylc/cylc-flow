@@ -856,6 +856,11 @@ class Scheduler:
                 pass
         else:
             # immediate shutdown
+            try:
+                mode = StopMode(mode)
+            except ValueError:
+                LOG.error(f'Invalid stop mode {mode}')
+                return
             self._set_stop(mode)
             if mode is StopMode.REQUEST_KILL:
                 self.time_next_kill = time()

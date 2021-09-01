@@ -4,11 +4,11 @@
 
 [scheduler]
     UTC mode = True
-    cycle point format = %Y-%m-%dT%H:%MZ
+    cycle point format = %Y%m%dT%H%MZ
 
 [scheduling]
-    initial cycle point = 2020-02-02T02:02Z
-    final cycle point = 2020-02-02T02:02Z
+    initial cycle point = 20200202T0202Z
+    final cycle point = 20200202T0202Z
     [[graph]]
         R1 = T
 

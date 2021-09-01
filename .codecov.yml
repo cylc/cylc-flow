@@ -26,5 +26,9 @@ ignore:
   - "tests/**"
   - "ws_messages_pb2.py"
 
+flag_management:
+  default_rules:
+    carryforward: true
+
 # turn off comments to pull requests
 comment: false

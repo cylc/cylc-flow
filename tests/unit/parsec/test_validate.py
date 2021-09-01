@@ -225,7 +225,7 @@ def test_parsec_validator_invalid_key_with_many_spaces(sample_spec):
     cfg['section  3000000'] = 'test'
     with pytest.raises(IllegalItemError) as cm:
         parsec_validator.validate(cfg, sample_spec)
-        assert "section  3000000 - (consecutive spaces)" == str(cm.exception)
+        assert str(cm.exception) == "section  3000000 - (consecutive spaces)"
 
 
 def test_parsec_validator_invalid_key_with_many_invalid_values(
@@ -548,7 +548,8 @@ def test_coerce_cycle_point_format():
             == result
         )
     # The bad
-    for value in ['%i%j', 'Y/M/D']:
+    # '/' and ':' not allowed in cylc cycle points (they are used in paths).
+    for value in ['%i%j', 'Y/M/D', '%Y-%m-%dT%H:%MZ']:
         with pytest.raises(IllegalValueError):
             validator.coerce_cycle_point_format(value, ['whatever'])
 

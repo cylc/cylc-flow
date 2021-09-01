@@ -40,6 +40,9 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
 # Cylc8 Deprecation note.
 DEPRECATION_WARN = '''
+.. deprecated:: 8.0.0
+
+
 .. warning::
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
@@ -69,6 +72,8 @@ SCRIPT_COMMON = '''
 '''
 
 DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
+.. deprecated:: 8.0.0
+
 .. warning::
 
    This config item has been moved to a platform setting in the
@@ -217,11 +222,9 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]UTC mode` are set. Not specifying a
             time zone here is inadvisable as it leads to ambiguity.
 
-            .. note::
-
-               The ISO8601 extended date-time format can be used
-               (``CCYY-MM-DDThh:mm``) but note that the "-" and ":" characters
-               end up in job log directory paths.
+            The ISO8601 extended date-time format cannot be used
+            (``CCYY-MM-DDThh:mm``) as cycle points are used in job-log and work
+            directory paths where the ":" character is invalid.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
             For years below 0 or above 9999, the ISO 8601 standard specifies
@@ -731,7 +734,16 @@ with Conf(
             explicitly configured to provide or override default settings for
             all tasks in the workflow.
         '''):
-            Conf('platform', VDR.V_STRING)
+            Conf('platform', VDR.V_STRING, desc='''
+                .. versionadded:: 8.0.0
+
+                The name of a compute resource defined in
+                :cylc:conf:`global.cylc[platforms]` or
+                :cylc:conf:`global.cylc[platform groups]`.
+
+                The platform specifies the host(s) that the task's jobs
+                will run on.
+            ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this namespace.
                 If no parents are listed default is ``root``.
