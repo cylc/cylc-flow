@@ -30,6 +30,6 @@ RUN_MODE="$(basename "$0" | sed "s/.*-ref-\(.*\).t/\1/g")"
 workflow_run_fail "${TEST_NAME}" \
     cylc play --reference-test --mode="${RUN_MODE}" --debug --no-detach \
     "${WORKFLOW_NAME}"
-grep_ok "WARNING - stall timed out after PT1S" "${TEST_NAME}.stderr"
+grep_ok "WARNING - timed out PT1S after stall" "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge
