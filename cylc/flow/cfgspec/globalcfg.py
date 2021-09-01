@@ -67,11 +67,11 @@ EVENTS_DESCR = {
     ),
     'abort handler': (
         '''
-        Handler(s) to run if the scheduler aborts.'
+        Handler(s) to run if the scheduler aborts.
 
         .. versionchanged:: 8.0.0
 
-        This item was previously called ``aborted handler``.
+           This item was previously called ``aborted handler``.
         '''
     ),
     'timeout': (
@@ -81,7 +81,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        Workflow timeout was previously implemented as a stall timeout.
+           Workflow timeout was previously implemented as a stall timeout.
         '''
     ),
     'timeout handler': (
@@ -90,7 +90,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        Workflow timeout was previously implemented as a stall timeout.
+           Workflow timeout was previously implemented as a stall timeout.
         '''
     ),
     'abort on timeout': (
@@ -99,7 +99,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        Workflow timeout was previously implemented as a stall timeout.
+           Workflow timeout was previously implemented as a stall timeout.
         '''
     ),
     'stall handler': (
@@ -108,7 +108,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        This item was previously called ``stalled handler``.
+           This item was previously called ``stalled handler``.
         '''
     ),
     'abort on stall': (
@@ -117,7 +117,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        This item was previously called ``abort on stalled``.
+           This item was previously called ``abort on stalled``.
         '''
     ),
     'stall timeout': (
@@ -127,25 +127,25 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        This item was previously called ``stalled timeout``.
+           This item was previously called ``stalled timeout``.
         '''
     ),
     'stall timeout handler': (
         '''
-        Handler(s) to run if the scheduler stalls.
+        Handler(s) to run if the stall timer times out.
 
-        .. versionchanged:: 8.0.0
+        .. versionadded:: 8.0.0
 
-        Workflow timeout was previously implemented as a stall timeout.
+           This is how ``timeout handler`` previously behaved.
         '''
     ),
     'abort on stall timeout': (
         '''
         Whether to abort if the stall timer times out.
 
-        .. versionchanged:: 8.0.0
+        .. versionadded:: 8.0.0
 
-        Workflow timeout was previously implemented as a stall timeout.
+           This is how ``abort on timeout`` previously behaved.
         '''
     ),
     'inactivity timeout': (
@@ -155,7 +155,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        This item was previously called ``inactivity``.
+           This item was previously called ``inactivity``.
         '''
     ),
     'inactivity timeout handler': (
@@ -164,7 +164,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        This item was previously called ``inactivity handler``.
+           This item was previously called ``inactivity handler``.
         '''
     ),
     'abort on inactivity timeout': (
@@ -173,7 +173,7 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-        This item was previously called ``abort on inactivity``.
+           This item was previously called ``abort on inactivity``.
         '''
     )
 }
