@@ -33,10 +33,15 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [
 WARNING -  * (8.0.0) [cylc][events][timeout] -> [cylc][events][stall timeout] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][abort on timeout] -> [cylc][events][abort on stall timeout] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][timeout handler] -> [cylc][events][stall timeout handler] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][stalled handler] -> [cylc][events][stall handler] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][abort on stalled] -> [cylc][events][abort on stall] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][inactivity] -> [cylc][events][inactivity timeout] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][inactivity handler] -> [cylc][events][inactivity timeout handler] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][aborted handler] -> [cylc][events][abort handler] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort on inactivity] -> [cylc][events][abort on inactivity timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort if inactivity handler fails] -> [cylc][events][abort if inactivity timeout handler fails] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort if stalled handler fails] -> [cylc][events][abort if stall handler fails] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort if timeout handler fails] -> [cylc][events][abort if stall timeout handler fails] - value unchanged
 WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged
 WARNING - deprecated graph items were automatically upgraded in "workflow definition":
 	 * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
