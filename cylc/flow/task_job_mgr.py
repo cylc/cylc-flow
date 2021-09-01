@@ -277,9 +277,8 @@ class TaskJobManager:
                     break
                 else:
                     # If there are no hosts left for this platform.
-                    # See if you can get another platform from the group...
-                    # (if [task config]platform is a group)
-                    # ...else set task to submit failed.
+                    # See if you can get another platform from the group or
+                    # else set task to submit failed.
                     LOG.warning(TaskRemoteMgmtError(
                         (
                             'Tried all the hosts on platform.'
@@ -315,8 +314,8 @@ class TaskJobManager:
                         )
                         # Now that all hosts on all platforms in platform
                         # group selected in task config are exhausted we clear
-                        # bad_hosts or all the hosts we have tried for this
-                        # platform or group.
+                        # bad_hosts or all the hosts we have
+                        # tried for this platform or group.
                         self.bad_hosts = (
                             self.bad_hosts - set(itask.platform['hosts']))
                         self.bad_hosts = (
