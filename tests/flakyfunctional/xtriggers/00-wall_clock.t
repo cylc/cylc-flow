@@ -56,7 +56,7 @@ delete_db
 TEST_NAME="${TEST_NAME_BASE}-future"
 run_fail "${TEST_NAME}" run_workflow "${WORKFLOW_NAME}" "${START}" "${HOUR}" "${OFFSET}"
 LOG="$(cylc cat-log -m p "${WORKFLOW_NAME}")"
-grep_ok "workflow timed out after inactivity" "${LOG}"
+grep_ok "timed out .* of inactivity" "${LOG}"
 
 purge
 exit

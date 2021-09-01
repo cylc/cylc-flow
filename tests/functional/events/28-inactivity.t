@@ -24,6 +24,6 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${WORKFLOW_NAME}"
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
-grep_ok "workflow timed out after inactivity" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "timed out after .* of inactivity" "${TEST_NAME_BASE}-run.stderr"
 purge
 exit
