@@ -686,41 +686,33 @@ def test_family_output_clash(caplog: pytest.LogCaptureFixture):
 
 
 @pytest.mark.parametrize(
-    'graph, c8error, c7backcompat',
+    'graph, c8error',
     [
         [
             """a:x => b
             a:x? => c""",
             "Output a:x is required so it can't also be optional.",
-            "making it optional."
         ],
         [
             """a? => c
             a => b""",
             "Output a:succeeded is optional so it can't also be required.",
-            "making it optional."
-
         ],
         [
             """a => c
             a:fail => b""",
             ("Output a:succeeded is required so a:failed "
              "can't be required."),
-            "making both optional."
         ],
         [
             """a:finish => b
             a => c""",
             "Output a:succeeded is optional so it can't also be required.",
-            "making it optional."
-
         ],
         [
             """a => c
             a:finish => b""",
             "Output a:succeeded is required so it can't also be optional.",
-            "making it optional."
-
         ],
         # The next case is different to the previous case because
         # :succeeded is processed first in the :finished pseudo-output.
@@ -728,25 +720,21 @@ def test_family_output_clash(caplog: pytest.LogCaptureFixture):
             """a:fail => c
             a:finish => b""",
             "Output a:failed is required so a:succeeded can't be optional.",
-            "making both optional."
         ],
         [
             """a:finish => b
             a:fail => c""",
             "Output a:failed is optional so it can't also be required.",
-            "making it optional."
-
         ],
         [
             """a:fail? => b
             a => c""",
             "Output a:failed is optional so a:succeeded can't be required.",
-            "making both optional."
         ],
     ]
 )
 def test_task_optional_output_errors_order(
-    graph, c8error, c7backcompat,
+    graph, c8error,
     caplog: pytest.LogCaptureFixture,
     monkeypatch: pytest.MonkeyPatch
 ):
@@ -764,14 +752,21 @@ def test_task_optional_output_errors_order(
         gp2.parse_graph(graph2)
     assert c8error in str(cm.value)
 
+    # In Cylc 7 back compat mode these graphs should all pass with no warnings.
     monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
     caplog.set_level(logging.WARNING, CYLC_LOG)
     gp1 = GraphParser()
     gp1.parse_graph(graph1)
     gp2 = GraphParser(task_output_opt=gp1.task_output_opt)
     gp2.parse_graph(graph2)
-    assert c8error in caplog.messages[0]
-    assert c7backcompat in caplog.messages[0]
+
+    # No warnings logged:
+    assert not caplog.messages
+
+    # After graph parsing all Cylc 7 back compat outputs should be optional.
+    # (Success outputs are set to required later, in taskdef processing.)
+    for (_, _), (optional, _) in gp2.task_output_opt.items():
+        assert optional
 
 
 def test_fail_bare_family_trigger():
