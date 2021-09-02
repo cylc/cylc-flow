@@ -258,12 +258,17 @@ jobs:
             --exclude='*' \
             >rsyncout
           cat rsyncout
+
+      - name: Fiddle remote coverage paths
+        if: env.REMOTE_PLATFORM == 'true'
+        run: |
           # fiddle the python source location to match the local system
           for db in $(grep --color=never '.coverage\.' rsyncout); do
             sqlite3 "$db" "
               UPDATE file
               SET path = REPLACE(path, '/cylc/cylc/', '$PWD/cylc/')
-            "
+            " || \
+            (echo "::warning::${db}" && sqlite3 "$db" ".schema" && rm "$db")
           done
 
       - name: Shutdown
