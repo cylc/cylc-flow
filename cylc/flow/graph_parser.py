@@ -709,6 +709,12 @@ class GraphParser:
             fam_member: is this from an expanded family expression?
 
         """
+        if cylc.flow.flags.cylc7_back_compat:
+            # Set all outputs optional. Set success requried later.
+            # Family member or not irrelevant here for back compat.
+            self.task_output_opt[(name, output)] = (True, False)
+            return
+
         if fam_member and output == "" or suicide:
             # Do not infer output optionality from suicide triggers
             # or from a family name on the right side.
@@ -753,16 +759,10 @@ class GraphParser:
                     " so it can't also be optional."
                 )
             if err:
-                if (
-                    not cylc.flow.flags.cylc7_back_compat
-                    and not is_fam
-                ):
+                if not is_fam:
                     raise GraphParseError(err)
-                if cylc.flow.flags.cylc7_back_compat:
-                    reason = self.__class__.CYLC7_COMPAT
-                else:
-                    # is_fam
-                    reason = self.__class__.FAM_TWEAK
+                # is_fam
+                reason = self.__class__.FAM_TWEAK
                 LOG.warning(f"{err}\n...{reason}: making it optional.")
                 self.task_output_opt[(name, output)] = (True, is_fam)
             else:
@@ -807,16 +807,10 @@ class GraphParser:
                     )
                 if err is not None:
                     # (can get here after auto-setting opposites to optional)
-                    if (
-                        not cylc.flow.flags.cylc7_back_compat
-                        and not is_fam
-                    ):
+                    if not is_fam:
                         raise GraphParseError(err)
-                    if cylc.flow.flags.cylc7_back_compat:
-                        reason = self.__class__.CYLC7_COMPAT
-                    else:
-                        # is_fam
-                        reason = self.__class__.FAM_TWEAK
+                    # is_fam
+                    reason = self.__class__.FAM_TWEAK
                     LOG.warning(f"{err}\n...{reason}: making both optional.")
                     self.task_output_opt[(name, output)] = (True, is_fam)
                     self.task_output_opt[(name, opposite)] = (True, is_fam)

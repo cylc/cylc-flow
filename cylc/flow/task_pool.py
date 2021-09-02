@@ -23,6 +23,7 @@ import json
 from time import time
 from typing import Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple
 
+import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
@@ -149,6 +150,7 @@ class TaskPool:
     """Task pool of a workflow."""
 
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
+    SUICIDE_MSG = "suicide"
 
     def __init__(
         self,
@@ -641,6 +643,11 @@ class TaskPool:
         if reason:
             msg += " (%s)" % reason
 
+        if reason == self.__class__.SUICIDE_MSG:
+            log = LOG.critical
+        else:
+            log = LOG.debug
+
         try:
             del self.hidden_pool[itask.point][itask.identity]
         except KeyError:
@@ -650,7 +657,7 @@ class TaskPool:
             self.hidden_pool_changed = True
             if not self.hidden_pool[itask.point]:
                 del self.hidden_pool[itask.point]
-            LOG.debug("[%s] -%s", itask, msg)
+            log(f"[{itask}] -{msg}")
             return
 
         try:
@@ -671,7 +678,7 @@ class TaskPool:
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
             self.workflow_db_mgr.put_update_task_state(itask)
-            LOG.debug("[%s] -%s", itask, msg)
+            log(f"[{itask}] -{msg}")
             del itask
 
     def get_all_tasks(self) -> List[TaskProxy]:
@@ -747,6 +754,13 @@ class TaskPool:
             self.data_store_mgr.delta_task_state(itask)
             self.data_store_mgr.delta_task_queued(itask)
             LOG.info(f"Queue released: {itask.identity}")
+
+            if cylc.flow.flags.cylc7_back_compat:
+                # Cylc 7 Back Compat: spawn downstream to cause Cylc 7 style
+                # stalls - with unsatisfied waiting tasks - even with single
+                # prerequisites (which result in incomplete tasks in Cylc 8).
+                self.spawn_on_all_outputs(itask)
+
         return released
 
     def get_min_point(self):
@@ -1026,7 +1040,6 @@ class TaskPool:
         unsatisfied = self.log_unsatisfied_prereqs()
         if incomplete or unsatisfied:
             LOG.critical("Workflow stalled")
-            self.log_task_pool()
             return True
         else:
             return False
@@ -1149,7 +1162,7 @@ class TaskPool:
         return self.abort_task_failed
 
     def spawn_on_output(self, itask, output):
-        """Spawn and update children, remove parent if finished.
+        """Spawn and update itask's children, remove itask if finished.
 
         Also set a the abort-on-task-failed flag if necessary.
         If not itask.reflow update existing children but don't spawn them.
@@ -1201,8 +1214,10 @@ class TaskPool:
                     })
                     self.data_store_mgr.delta_task_prerequisite(t)
                 # Event-driven suicide.
-                if (c_task.state.suicide_prerequisites and
-                        c_task.state.suicide_prerequisites_all_satisfied()):
+                if (
+                    c_task.state.suicide_prerequisites and
+                    c_task.state.suicide_prerequisites_all_satisfied()
+                ):
                     suicide.append(c_task)
                 # Add child to the task pool, if not already there.
                 self.add_to_pool(c_task)
@@ -1214,7 +1229,7 @@ class TaskPool:
                     TASK_STATUS_RUNNING,
                     is_held=False):
                 LOG.warning(f'[{c_task}] -suiciding while active')
-            self.remove(c_task, 'SUICIDE')
+            self.remove(c_task, self.__class__.SUICIDE_MSG)
 
         # Remove the parent task if finished and complete.
         if output in [
@@ -1234,6 +1249,29 @@ class TaskPool:
                 self.remove(itask, 'finished')
                 if itask.identity == self.stop_task_id:
                     self.stop_task_finished = True
+
+    def spawn_on_all_outputs(self, itask):
+        """Spawn on all of itask's outputs regardless of completion.
+
+        Do not set the associated prerequisites of spawned children satisfied.
+        Used in Cylc 7 Back Compat mode for pre-spawning waiting tasks.
+
+        """
+        for output in itask.state.outputs._by_message:
+            try:
+                children = itask.graph_children[output]
+            except KeyError:
+                continue
+
+            for c_name, c_point, _ in children:
+                c_task = self.get_or_spawn_task(
+                    c_name, c_point,
+                    flow_label=itask.flow_label,
+                    parent_id=itask.identity
+                )
+                if c_task is not None:
+                    # Add child to the task pool if not already there.
+                    self.add_to_pool(c_task)
 
     def get_or_spawn_task(
         self, name, point, flow_label=None, reflow=True, parent_id=None
@@ -1645,7 +1683,7 @@ class TaskPool:
             )
         if self.hidden_pool_list:
             LOG.debug(
-                "Prerequisite pool:\n"
+                "Hidden pool:\n"
                 + "\n".join(
                     f"* {itask} status={itask.state.status}"
                     f" runahead={itask.state.is_runahead}"

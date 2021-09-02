@@ -32,7 +32,10 @@ from cylc.flow.exceptions import (
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
-from cylc.flow.graph_parser import GraphParser
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUCCEEDED
+)
 
 Fixture = Any
 
@@ -988,26 +991,39 @@ def test_invalid_custom_output_msg(tmp_path):
     ) in str(cm.value)
 
 
-def test_c7_custom_output_optional(tmp_path, monkeypatch, caplog):
-    """Test error on undefined custom output referenced in graph."""
+def test_c7_back_compat_optional_outputs(tmp_path, monkeypatch, caplog):
+    """Test optional and required outputs Cylc 7 back compat mode.
+
+    Success outputs should be required, others optional. Tested here because
+    success is set to required after graph parsing, in taskdef processing.
+
+    """
     caplog.set_level(logging.WARNING, CYLC_LOG)
     monkeypatch.setattr(
         'cylc.flow.flags.cylc7_back_compat', True)
-    flow_config = """
+    flow_config = '''
     [scheduling]
         [[graph]]
-            R1 = "foo:x => bar"
+            R1 = """
+            foo:x => bar
+            foo:fail = oops
+            foo => spoo
+            """
     [runtime]
-        [[bar]]
+        [[bar, oops, spoo]]
         [[foo]]
            [[[outputs]]]
                 x = x
-    """
+    '''
     flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
     flow_file.write_text(flow_config)
 
-    WorkflowConfig(workflow='custom_out2', fpath=flow_file, options=None)
-    assert (
-        f"{GraphParser.CYLC7_COMPAT} making custom "
-        "output foo:x optional"
-    ) in caplog.text
+    cfg = WorkflowConfig(workflow='custom_out2', fpath=flow_file, options=None)
+    assert WorkflowConfig.CYLC7_GRAPH_COMPAT_MSG in caplog.text
+
+    for taskdef in cfg.taskdefs.values():
+        for output, (_, required) in taskdef.outputs.items():
+            if output in [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUCCEEDED]:
+                assert required
+            else:
+                assert not required

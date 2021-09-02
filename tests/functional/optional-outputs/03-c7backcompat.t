@@ -23,7 +23,7 @@
 # sufficient to check the resulting validation and run time behaviour.
 
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 6
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -43,16 +43,13 @@ ln -s "${WORKFLOW_RUN_DIR}/suite.rc" "${WORKFLOW_RUN_DIR}/flow.cylc"
 TEST_NAME="${TEST_NAME_BASE}-validate_as_c7"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-DEPR_MSG=$(python -c \
+DEPR_MSG_1=$(python -c \
   'from cylc.flow.workflow_files import SUITERC_DEPR_MSG; print(SUITERC_DEPR_MSG)')
-grep_ok "${DEPR_MSG}" "${TEST_NAME}.stderr"
+grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
 
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WARNING - Output foo:succeeded is required so \
-foo:failed can't be required.
-__ERR__
-
-grep_ok "making both optional." "${TEST_NAME}.stderr"
+DEPR_MSG_2=$(python -c \
+  'from cylc.flow.config import WorkflowConfig as cfg; print(cfg.CYLC7_GRAPH_COMPAT_MSG);')
+grep_ok "${DEPR_MSG_2}" "${TEST_NAME}.stderr"
 
 # And it should run without stalling with an incomplete task.
 workflow_run_ok "${TEST_NAME_BASE}-run" \

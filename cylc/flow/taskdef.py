@@ -18,9 +18,11 @@
 
 from collections import deque
 
+import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
@@ -170,6 +172,7 @@ class TaskDef:
 
     def tweak_outputs(self):
         """Output consistency checking and tweaking."""
+
         # If :started is used alone, assume :succeeded is required.
         if (
             self.outputs[TASK_OUTPUT_STARTED][1] is not None
@@ -177,6 +180,14 @@ class TaskDef:
             and self.outputs[TASK_OUTPUT_FAILED][1] is None
         ):
             self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
+
+        # In Cylc 7 back compat mode, make success outputs required.
+        if cylc.flow.flags.cylc7_back_compat:
+            for output in [
+                TASK_OUTPUT_SUBMITTED,
+                TASK_OUTPUT_SUCCEEDED
+            ]:
+                self.set_required_output(output, True)
 
     def add_graph_child(self, trigger, taskname, sequence):
         """Record child task instances that depend on my outputs.

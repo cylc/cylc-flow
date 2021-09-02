@@ -1,5 +1,5 @@
 [scheduler]
-allow implicit tasks = True
+   allow implicit tasks = True
 [scheduling]
    cycling mode = integer
    initial cycle point = 1
@@ -11,4 +11,5 @@ allow implicit tasks = True
       """
       P1 = """
          foo:fail => baz
+         foo => !baz
       """

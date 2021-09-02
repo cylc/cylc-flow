@@ -155,6 +155,13 @@ class WorkflowConfig:
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
     VIS_N_POINTS = 3
 
+    CYLC7_GRAPH_COMPAT_MSG = (
+        "Cylc 7 graph compatibility: making success outputs 'required' (to"
+        " retain failed tasks in the pool) and pre-spawning graph children (to"
+        " replicate Cylc 7 stall behaviour). Please refer to documentation on"
+        " upgrading Cylc 7 graphs to Cylc 8."
+    )
+
     def __init__(
         self,
         workflow: str,
@@ -1892,6 +1899,8 @@ class WorkflowConfig:
                 sections.append((section, value))
 
         # Parse and process each graph section.
+        if cylc.flow.flags.cylc7_back_compat:
+            LOG.warning(self.__class__.CYLC7_GRAPH_COMPAT_MSG)
         task_triggers = {}
         task_output_opt = {}
         for section, graph in sections:
@@ -1931,6 +1940,7 @@ class WorkflowConfig:
 
     def _proc_triggers(self, parser, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
+        suicides = 0
         for right, val in parser.triggers.items():
             for expr, trigs in val.items():
                 orig = parser.original[right][expr]
@@ -1966,6 +1976,14 @@ class WorkflowConfig:
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, task_triggers
                 )
+                if suicide:
+                    suicides += 1
+
+        if suicides and not cylc.flow.flags.cylc7_back_compat:
+            LOG.warning(
+                f"{suicides} suicide triggers detected. These are rarely"
+                " needed in Cylc 8 - have you upgraded from Cylc 7 syntax?"
+            )
 
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool]]
@@ -1982,15 +2000,6 @@ class WorkflowConfig:
                 except KeyError:
                     # Output not used in graph.
                     continue
-                if (
-                    cylc.flow.flags.cylc7_back_compat and
-                    output in self.cfg['runtime'][name]['outputs']
-                ):
-                    LOG.warning(
-                        f"{GraphParser.CYLC7_COMPAT} making custom output"
-                        f" {name}:{output} optional")
-                    optional = True
-
                 taskdef.set_required_output(output, not optional)
 
     def find_taskdefs(self, name: str) -> List[TaskDef]:
