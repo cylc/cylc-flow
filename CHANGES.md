@@ -78,8 +78,8 @@ Use natural sort order for the `cylc scan --sort` option.
 accurately reflects what it's doing. Also improve validation of these
 cli options.
 
-[#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `cylc.flow.processed`
-(or legacy `suite.rc.processed`) is now stored in `log/flow-config/`.
+[#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
+(previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
 
 ### Fixes
 
