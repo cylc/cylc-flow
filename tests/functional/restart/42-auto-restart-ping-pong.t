@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# play a game of Cylc workflow ping pong bouncing a workflow back and forth between
+# Play a game of Cylc workflow ping pong bouncing a workflow back and forth between
 # two servers by condemning them in turn in order to see if anything breaks
+# Ensure that event handlers are not run on restart.
 export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 . "$(dirname "$0")/test_header"
 export CLOWNS="${CYLC_TEST_HOST}"
@@ -36,6 +37,10 @@ BASE_GLOBAL_CONFIG='
 '
 
 init_workflow "${TEST_NAME_BASE}" <<< '
+[scheduler]
+    [[events]]
+        handlers = handler.py
+        handler events = startup
 [scheduling]
     initial cycle point = 2000
     final cycle point = 9999  # test cylc/cylc-flow/issues/2799
@@ -45,6 +50,14 @@ init_workflow "${TEST_NAME_BASE}" <<< '
     [[foo]]
         script = sleep 5
 '
+
+mkdir "${WORKFLOW_RUN_DIR}/bin/"
+cat <<__HERE__ > "${WORKFLOW_RUN_DIR}/bin/handler.py"
+#!/usr/bin/env python3
+raise Exception('This handler is meant to fail')
+__HERE__
+chmod +x "${WORKFLOW_RUN_DIR}/bin/handler.py"
+
 cd "${WORKFLOW_RUN_DIR}" || exit 1
 stuck_in_the_middle() {
     # swap the condemned host forcing the workflow to jump ship
@@ -74,7 +87,7 @@ log_scan2() {
 }
 
 EARS=5  # number of times to bounce the workflow between hosts
-NO_TESTS="$(( EARS * 5 + 1 ))"
+NO_TESTS="$(( EARS * 6 + 2 ))"
 set_test_number "${NO_TESTS}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
@@ -87,6 +100,8 @@ sleep 1
 
 # get the log file
 FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
+
+grep_ok 'Exception: This handler is meant to fail' "$FILE"
 #-------------------------------------------------------------------------------
 for ear in $(seq 1 "${EARS}"); do
     stuck_in_the_middle  # swap the condemned host
@@ -104,6 +119,7 @@ for ear in $(seq 1 "${EARS}"); do
     FILE=$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)
     log_scan2 "${TEST_NAME_BASE}-${ear}-restart" "${FILE}" 20 1 \
         "Scheduler: url=tcp://$(get_fqdn "${JOKERS}")"
+    grep_fail 'Exception: This handler is meant to fail' "$FILE"
     sleep 2
 done
 
