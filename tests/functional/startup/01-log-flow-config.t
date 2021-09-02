@@ -50,6 +50,7 @@ LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
+flow.cylc.processed
 reload.cylc
 restart.cylc
 run.cylc
