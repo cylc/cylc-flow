@@ -746,10 +746,8 @@ def init_clean(reg: str, opts: 'Values') -> None:
     contained_workflows = asyncio.get_event_loop().run_until_complete(
         get_contained_workflows(local_run_dir, MAX_SCAN_DEPTH + 1)
     )  # Note: increased scan depth for safety
-    _suppress_no_db_msg = False
     if len(contained_workflows) == 1:
         init_clean(contained_workflows[0], opts)
-        _suppress_no_db_msg = True
     elif len(contained_workflows) > 1:
         bullet = "\n    - "
         msg = (
@@ -758,9 +756,11 @@ def init_clean(reg: str, opts: 'Values') -> None:
         )
         if not opts.force:
             raise WorkflowFilesError(f"Cannot clean - {msg}")
+        if opts.remote_only:
+            msg = f"Not performing remote clean - {msg}"
         LOG.warning(msg)
 
-    if not opts.local_only:
+    if (not opts.local_only) and (len(contained_workflows) == 0):
         platform_names = None
         try:
             platform_names = get_platforms_from_db(local_run_dir)
@@ -769,8 +769,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
                 raise ServiceFileError(
                     "No workflow database - cannot perform remote clean"
                 )
-            if not _suppress_no_db_msg:
-                LOG.info("No workflow database - will only clean locally")
+            LOG.info("No workflow database - will only clean locally")
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot clean - {exc}")
 
