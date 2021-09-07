@@ -293,12 +293,12 @@ def _construct_ssh_cmd(
 
     # Pass CYLC_VERSION and optionally, CYLC_CONF_PATH & CYLC_UTC through.
     command += ['env', quote(r'CYLC_VERSION=%s' % CYLC_VERSION)]
-    command += [quote(r'CYLC_ENV_NAME=%s' % os.getenv('CYLC_ENV_NAME'))]
 
     for envvar in [
         'CYLC_CONF_PATH',
         'CYLC_COVERAGE',
-        'CLIENT_COMMS_METH'
+        'CLIENT_COMMS_METH',
+        'CYLC_ENV_NAME'
     ]:
         if envvar in os.environ:
             command.append(

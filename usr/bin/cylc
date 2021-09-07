@@ -64,15 +64,7 @@
 # And create a default version symlink "cylc" to the latest version:
 #   $ ln -s cylc-8.2.0 cylc
 #
-# Note you can `pip install` from a cylc-flow git clone into a Conda
-# environment and then select it by CYLC_VERSION but that may be misleading
-# if the code is not the true release version. Better to use Python venvs and
-# CYLC_HOME for development and testing.
-#
-# INSTALLING cylc 8+ WITH PIP IN CONDA ENVIRONMENTS WITH ARBITRARY NAMES
-#-----------------------------------------------------------------------
-#
-# You can use CYLC_ENV_NAME to use Cylc from an arbitrary Conda environment:
+# Alternatively use CYLC_ENV_NAME to use Cylc from an arbitrary Conda environment:
 #
 # Create environments with arbitrary names and install cylc:
 #   $ conda create cylc-violet-capybara
@@ -81,7 +73,7 @@
 #   $ conda deactivate
 #
 #   $ CYLC_ENV_NAME=cylc-violet-capybara cylc version --long
-#   > 8.0.whateva (/home/user/miniconda3/envs/cylc-violet-capybara)
+#   > 8.0.0 (/home/user/miniconda3/envs/cylc-violet-capybara)
 #
 # n.b. if CYLC_VERSION and CYLC_ENV_NAME are both set, CYLC_ENV_NAME will be
 # used and CYLC_VERSION ignored.
@@ -146,8 +138,10 @@ CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
 # Prior to Cylc 8, Rose used a standalone installation
 # Note: assumes Cylc 7 is the default version - once Cylc 8 becomes the default
 # the if test below needs to change to
-# if [[ ${CYLC_VERSION:-} =~ ^7 && ${0##*/} =~ ^rose ]]; then
-if [[ ! ${CYLC_VERSION:-} =~ ^8 && ${0##*/} =~ ^rose ]]; then
+# if [[ ${0##*/} =~ ^rose && ${CYLC_VERSION:-} =~ ^7 ]]; then
+if [[ ${0##*/} =~ ^rose && \
+      ((-n "${CYLC_ENV_NAME}" && ${CYLC_VERSION:-} =~ ^7) || \
+       (-z "${CYLC_ENV_NAME}" && ! ${CYLC_VERSION:-} =~ ^8)) ]]; then
     if [[ -z "${ROSE_HOME:-}" ]]; then
         ROSE_HOME_ROOT="${ROSE_HOME_ROOT:-$CYLC_HOME_ROOT}"
         if [[ -n "${ROSE_VERSION:-}" ]]; then
@@ -174,16 +168,18 @@ fi
 # ║               ║ not set ║ Use CYLC_VERSION ║  "cylc" ║
 # ╚═══════════════╩═════════╩══════════════════╩═════════╝
 if [[ -z "${CYLC_HOME}" ]]; then
-    if [[ -n "${CYLC_VERSION}" && -z "${CYLC_ENV_NAME}" ]]; then
-        CYLC_ENV_NAME="cylc-$CYLC_VERSION"
-    elif [[ -z "${CYLC_ENV_NAME}" && -z "${CYLC_VERSION}" ]]; then
-        # Default version symlink
-        CYLC_ENV_NAME="cylc"
+    if [[ -z "${CYLC_ENV_NAME}" ]]; then
+        if [[ -n "${CYLC_VERSION}" ]]; then
+            CYLC_ENV_NAME="cylc-$CYLC_VERSION"
+        else
+            # Default version symlink - export CYLC_ENV_NAME to ensure it
+            # does nott get overridden by CYLC_VERSION
+            export CYLC_ENV_NAME="cylc"
+        fi
     fi
     for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
         if [[ -d "${ROOT}/${CYLC_ENV_NAME}" ]]; then
             CYLC_HOME="${ROOT}/${CYLC_ENV_NAME}"
-            export CYLC_ENV_NAME
             break
         fi
     done
