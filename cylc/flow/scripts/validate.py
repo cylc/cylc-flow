@@ -23,27 +23,30 @@ Validate a workflow configuration.
 If the workflow definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline WORKFLOW' for comparison."""
-from optparse import Values
+
 from ansimarkup import parse as cparse
+from optparse import Values
 import sys
 import textwrap
 
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.exceptions import (
+    WorkflowConfigError,
+    TaskProxySequenceBoundsError,
+    TriggerExpressionError
+)
 import cylc.flow.flags
-from cylc.flow.profiler import Profiler
-from cylc.flow.terminal import cli_function
-from cylc.flow.exceptions import (WorkflowConfigError,
-                                  TaskProxySequenceBoundsError,
-                                  TriggerExpressionError)
-from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.task_pool import FlowLabelMgr
-from cylc.flow.loggingutil import CylcLogFormatter
-from cylc.flow.templatevars import get_template_vars
+from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
+from cylc.flow.profiler import Profiler
+from cylc.flow.task_pool import FlowLabelMgr
+from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.templatevars import get_template_vars
+from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import parse_reg
 
 
@@ -97,10 +100,7 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
     profiler.start()
 
     if cylc.flow.flags.verbosity < 2:
-        # for readability omit timestamps from logging unless in debug mode
-        for handler in LOG.handlers:
-            if isinstance(handler.formatter, CylcLogFormatter):
-                handler.formatter.configure(timestamp=False)
+        disable_timestamps(LOG)
 
     workflow, flow_file = parse_reg(reg, src=True)
     cfg = WorkflowConfig(

@@ -56,10 +56,10 @@ Examples:
 
 from typing import TYPE_CHECKING
 
-import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.exceptions import UserInputError
-from cylc.flow.loggingutil import CylcLogFormatter
+import cylc.flow.flags
+from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import CylcOptionParser as COP, Options
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import init_clean
@@ -71,14 +71,15 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[('REG', "Workflow name")]
+        argdoc=[('REG', "Workflow name")],
+        segregated_log=True
     )
 
     parser.add_option(
         '--rm', metavar='DIR[:DIR:...]',
         help=("Only clean the specified subdirectories (or files) in the "
               "run directory, rather than the whole run directory. "
-              "Accepts quoted globs."),
+              "Accepts quoted globs. Implies --verbose."),
         action='append', dest='rm_dirs', default=[]
     )
 
@@ -119,12 +120,8 @@ CleanOptions = Options(get_option_parser())
 @cli_function(get_option_parser)
 def main(parser: COP, opts: 'Values', reg: str):
     # Note: do not use workflow_files.parse_reg here
-
     if cylc.flow.flags.verbosity < 2:
-        # for readability omit timestamps from logging unless in debug mode
-        for handler in LOG.handlers:
-            if isinstance(handler.formatter, CylcLogFormatter):
-                handler.formatter.configure(timestamp=False)
+        disable_timestamps(LOG)
 
     if opts.local_only and opts.remote_only:
         raise UserInputError(

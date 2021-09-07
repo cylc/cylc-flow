@@ -29,6 +29,7 @@ import sys
 from textwrap import wrap
 from typing import Any, Callable, Optional
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
@@ -109,7 +110,7 @@ def supports_color():
     return True
 
 
-def ansi_log(name='cylc', stream='stderr'):
+def ansi_log(name=CYLC_LOG, stream='stderr'):
     """Configure log formatter for terminal usage.
 
     Re-configures the formatter of any logging handlers pointing at the

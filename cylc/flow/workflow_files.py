@@ -77,7 +77,7 @@ from cylc.flow.remote import (
     construct_ssh_cmd,
 )
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.loggingutil import CylcLogFormatter, close_log
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import get_current_time_string
@@ -739,7 +739,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
     try:
         _clean_check(opts, reg, local_run_dir)
     except FileNotFoundError as exc:
-        LOG.info(str(exc))
+        LOG.info(exc)
         return
 
     # Check dir does not contain other workflows:
@@ -759,6 +759,10 @@ def init_clean(reg: str, opts: 'Values') -> None:
         if opts.remote_only:
             msg = f"Not performing remote clean - {msg}"
         LOG.warning(msg)
+
+    if opts.rm_dirs and cylc.flow.flags.verbosity == 0:
+        # --rm option implies -v unless -q used
+        cylc.flow.flags.verbosity = opts.verbosity = 1
 
     if (not opts.local_only) and (len(contained_workflows) == 0):
         platform_names = None
@@ -797,7 +801,6 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         run_dir: Absolute path of the workflow's run dir.
         rm_dirs: Set of sub dirs to remove instead of the whole run dir.
     """
-    LOG.info(f"Cleaning on local filesystem: {run_dir}")
     symlink_dirs = get_symlink_dirs(reg, run_dir)
     if rm_dirs is not None:
         # Targeted clean
@@ -805,6 +808,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
             _clean_using_glob(run_dir, pattern, symlink_dirs)
     else:
         # Wholesale clean
+        LOG.info(f"Cleaning {run_dir}")
         for symlink in symlink_dirs:
             # Remove <symlink_dir>/cylc-run/<reg>/<symlink>
             remove_dir_and_target(run_dir / symlink)
@@ -925,6 +929,7 @@ def _clean_using_glob(
     ))
     matches = glob_in_run_dir(run_dir, pattern, abs_symlink_dirs)
     if not matches:
+        LOG.info(f"No files matching '{pattern}' in {run_dir}")
         return
     # First clean any matching symlink dirs
     for path in abs_symlink_dirs:
@@ -979,7 +984,7 @@ def remote_clean(
                 remote_clean_cmd(platform=platforms[0]), target, platforms
             )
         )
-    failed_targets: List[str] = []
+    failed_targets: Dict[str, TaskRemoteMgmtError] = {}
     # Handle subproc pool results almost concurrently:
     while queue:
         item = queue.popleft()
@@ -989,30 +994,36 @@ def remote_clean(
             continue
         out, err = item.proc.communicate()
         if out:
-            LOG.debug(out)
+            LOG.info(f"[{item.install_target}] {out}")
         if ret_code:
             this_platform = item.platforms.pop(0)
-            LOG.debug(TaskRemoteMgmtError(
+            excp = TaskRemoteMgmtError(
                 TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
                 item.proc.args, ret_code, out, err
-            ))
+            )
             if ret_code == 255 and item.platforms:
                 # SSH error; try again using the next platform for this
                 # install target
+                LOG.debug(excp)
                 queue.append(
                     item._replace(
                         proc=remote_clean_cmd(platform=item.platforms[0])
                     )
                 )
             else:  # Exhausted list of platforms
-                failed_targets.append(item.install_target)
+                failed_targets[item.install_target] = excp
         elif err:
-            LOG.debug(err)
+            # Only show stderr from remote host in debug mode if ret code 0
+            # because stderr often contains useless stuff like ssh login
+            # messages
+            LOG.debug(f"[{item.install_target}] {err}")
         time.sleep(0.2)
     if failed_targets:
-        raise CylcError(
-            f"Could not clean on install targets: {', '.join(failed_targets)}"
-        )
+        for target, excp in failed_targets.items():
+            LOG.error(
+                f"Could not clean on install target: {target}\n{excp}"
+            )
+        raise CylcError("Remote clean failed")
 
 
 def _remote_clean_cmd(
@@ -1417,15 +1428,6 @@ def _open_install_log(rund, logger):
     logger.addHandler(handler)
 
 
-def _close_install_log(logger):
-    """Close Cylc log handlers for install/reinstall.
-        Args:
-            logger (constant)"""
-    for handler in logger.handlers:
-        with suppress(IOError):
-            handler.close()
-
-
 def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
     """Create and return the rsync command used for cylc install/re-install.
 
@@ -1506,7 +1508,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
     check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
     print(f'REINSTALLED {named_run} from {source}')
-    _close_install_log(reinstall_log)
+    close_log(reinstall_log)
     return
 
 
@@ -1625,7 +1627,7 @@ def install_workflow(
             "Source directory not consistent between runs.")
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
-    _close_install_log(install_log)
+    close_log(install_log)
     return source, rundir, flow_name
 
 

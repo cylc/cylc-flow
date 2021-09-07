@@ -403,6 +403,9 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
 
+        # Print workflow name to disambiguate in case of inferred run number
+        LOG.info(f"Workflow: {self.workflow}")
+
         self.is_restart = self.workflow_db_mgr.restart_check()
         # Note: since cylc play replaced cylc run/restart, we wait until this
         # point before setting self.is_restart as we couldn't tell if

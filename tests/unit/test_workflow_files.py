@@ -1367,10 +1367,11 @@ PLATFORMS = {
 
 
 @pytest.mark.parametrize(
-    'install_targets_map, failed_platforms, expected_platforms, expected_err',
+    ('install_targets_map', 'failed_platforms', 'expected_platforms',
+     'exc_expected', 'expected_err_msgs'),
     [
         pytest.param(
-            {'localhost': [PLATFORMS['exeter']]}, None, None, None,
+            {'localhost': [PLATFORMS['exeter']]}, None, None, False, [],
             id="Only localhost install target - no remote clean"
         ),
         pytest.param(
@@ -1378,9 +1379,7 @@ PLATFORMS = {
                 'localhost': [PLATFORMS['exeter']],
                 'picard': [PLATFORMS['enterprise']]
             },
-            None,
-            ['enterprise'],
-            None,
+            None, ['enterprise'], False, [],
             id="Localhost and remote install target"
         ),
         pytest.param(
@@ -1388,9 +1387,7 @@ PLATFORMS = {
                 'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
                 'janeway': [PLATFORMS['voyager']]
             },
-            None,
-            ['enterprise', 'voyager'],
-            None,
+            None, ['enterprise', 'voyager'], False, [],
             id="Only remote install targets"
         ),
         pytest.param(
@@ -1400,7 +1397,8 @@ PLATFORMS = {
             },
             {'enterprise': 255},
             ['enterprise', 'stargazer', 'voyager'],
-            None,
+            False,
+            [],
             id="Install target with 1 failed, 1 successful platform"
         ),
         pytest.param(
@@ -1410,7 +1408,8 @@ PLATFORMS = {
             },
             {'enterprise': 255, 'stargazer': 255},
             ['enterprise', 'stargazer', 'voyager'],
-            (CylcError, "Could not clean on install targets: picard"),
+            True,
+            ["Could not clean on install target: picard"],
             id="Install target with all failed platforms"
         ),
         pytest.param(
@@ -1420,7 +1419,9 @@ PLATFORMS = {
             },
             {'enterprise': 255, 'voyager': 255},
             ['enterprise', 'voyager'],
-            (CylcError, "Could not clean on install targets: picard, janeway"),
+            True,
+            ["Could not clean on install target: picard",
+             "Could not clean on install target: janeway"],
             id="All install targets have all failed platforms"
         ),
         pytest.param(
@@ -1429,7 +1430,8 @@ PLATFORMS = {
             },
             {'enterprise': 1},
             ['enterprise'],
-            (CylcError, "Could not clean on install targets: picard"),
+            True,
+            ["Could not clean on install target: picard"],
             id=("Remote clean cmd fails on a platform for non-SSH reason - "
                 "does not retry")
         ),
@@ -1439,9 +1441,10 @@ def test_remote_clean(
     install_targets_map: Dict[str, Any],
     failed_platforms: Optional[Dict[str, int]],
     expected_platforms: Optional[List[str]],
-    expected_err: Optional[Tuple[Type[Exception], str]],
+    exc_expected: bool,
+    expected_err_msgs: List[str],
     monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture
+    caplog: pytest.LogCaptureFixture, log_filter: Callable
 ) -> None:
     """Test remote_clean() logic.
 
@@ -1453,8 +1456,8 @@ def test_remote_clean(
             name, the value is the remote clean cmd return code.
         expected_platforms: If specified, all the platforms that the
             remote clean cmd is expected to run on.
-        expected_err: If specified, a tuple of the form
-            (Exception, str) giving an exception that is expected to be raised.
+        exc_expected: If a CylcError is expected to be raised.
+        expected_err_msgs: List of error messages expected to be in the log.
     """
     # ----- Setup -----
     caplog.set_level(logging.DEBUG, CYLC_LOG)
@@ -1470,7 +1473,7 @@ def test_remote_clean(
             proc_ret_code = failed_platforms[platform['name']]
         return mock.Mock(
             poll=lambda: proc_ret_code,
-            communicate=lambda: ("", ""),
+            communicate=lambda: ("Mocked stdout", "Mocked stderr"),
             args=[]
         )
 
@@ -1483,15 +1486,16 @@ def test_remote_clean(
     reg = 'foo'
     platform_names = (
         "This arg bypassed as we provide the install targets map in the test")
-    if expected_err:
-        err, msg = expected_err
-        with pytest.raises(err) as exc:
+    if exc_expected:
+        with pytest.raises(CylcError) as exc:
             workflow_files.remote_clean(
                 reg, platform_names, rm_dirs, timeout='irrelevant')
-        assert msg in str(exc.value)
+        assert "Remote clean failed" in str(exc.value)
     else:
         workflow_files.remote_clean(
             reg, platform_names, rm_dirs, timeout='irrelevant')
+    for msg in expected_err_msgs:
+        assert log_filter(caplog, level=logging.ERROR, contains=msg)
     if expected_platforms:
         for p_name in expected_platforms:
             mocked_remote_clean_cmd.assert_any_call(
