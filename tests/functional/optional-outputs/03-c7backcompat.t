@@ -30,10 +30,8 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate_as_c8"
 run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-GraphParseError: Output foo:succeeded is required so \
-foo:failed can't be required.
-__ERR__
+ERR="GraphParseError: Opposite outputs .* must both be optional if both are used"
+grep_ok "${ERR}" "${TEST_NAME}.stderr"
 
 # Rename config to "suite.rc"
 mv "${WORKFLOW_RUN_DIR}/flow.cylc" "${WORKFLOW_RUN_DIR}/suite.rc"

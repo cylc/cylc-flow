@@ -35,7 +35,7 @@ cmp_ok "${TEST_NAME}.stderr" - </dev/null
 TEST_NAME="${TEST_NAME_BASE}-section1-section"
 run_ok "${TEST_NAME}" cylc config -d --item=[scheduling][graph] "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
-R1 = OPS:finish-all => VAR
+R1 = OPS:finish-all? => VAR
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ TEST_NAME="${TEST_NAME_BASE}-section1-section-option"
 run_ok "${TEST_NAME}" \
     cylc config -d --item=[scheduling][graph]R1 "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" - <<__OUT__
-OPS:finish-all => VAR
+OPS:finish-all? => VAR
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" - </dev/null
 #-------------------------------------------------------------------------------

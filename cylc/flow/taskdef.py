@@ -23,7 +23,7 @@ from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import (
     TASK_OUTPUT_SUBMITTED,
-    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED
 )
@@ -173,15 +173,18 @@ class TaskDef:
     def tweak_outputs(self):
         """Output consistency checking and tweaking."""
 
-        # If :started is used alone, assume :succeeded is required.
+        # If :succeed or :fail not set, assume success is required.
+        # Unless submit (and submit-fail) is optional (don't stall
+        # because of missing succeed if submit is optional).
         if (
-            self.outputs[TASK_OUTPUT_STARTED][1] is not None
-            and self.outputs[TASK_OUTPUT_SUCCEEDED][1] is None
+            self.outputs[TASK_OUTPUT_SUCCEEDED][1] is None
             and self.outputs[TASK_OUTPUT_FAILED][1] is None
+            and self.outputs[TASK_OUTPUT_SUBMITTED][1] is not False
+            and self.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is not False
         ):
             self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
 
-        # In Cylc 7 back compat mode, make success outputs required.
+        # In Cylc 7 back compat mode, make all success outputs required.
         if cylc.flow.flags.cylc7_back_compat:
             for output in [
                 TASK_OUTPUT_SUBMITTED,

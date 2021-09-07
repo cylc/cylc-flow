@@ -6,8 +6,8 @@
 [scheduling]
     [[graph]]
         R1="""
-KILLABLE:submit-all => killer
-KILLABLE:submit-fail-all => stopper
+KILLABLE:submit-all? => killer
+KILLABLE:submit-fail-all? => stopper
 """
 [runtime]
     [[KILLABLE]]

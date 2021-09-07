@@ -24,7 +24,7 @@ set_test_number 1
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
     [[graph]]
-        R1 = foo-bar:finish => baz
+        R1 = foo-bar:finish? => baz
 [runtime]
     [[foo-bar,baz]]
         script = true

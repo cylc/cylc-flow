@@ -90,10 +90,6 @@ def test_parse_graph_fails_null_task_name(graph):
             "foo || bar => baz",
             "The graph OR operator is '|'"
         ],
-        [
-            "foo:finish? => bar",
-            "The \"finished\" pseudo-output can't be optional"
-        ]
     ]
 )
 def test_graph_syntax_errors(graph, expected_err):
@@ -294,7 +290,7 @@ b => c"""
             foo => bar"""
         ],
         [
-            "foo:finished => bar",  # finish trigger
+            "foo:finished? => bar",  # finish trigger
             "(foo:succeed? | foo:fail?) => bar"
         ],
         [
@@ -350,7 +346,7 @@ def test_trigger_equivalence(graph1, graph2):
         ],
         [
             {'FAM': ['m1', 'm2']},
-            "FAM:finish-all => post",
+            "FAM:finish-all? => post",
             "((m1? | m1:fail?) & (m2? | m2:fail?)) => post"
         ]
     ]
@@ -582,35 +578,35 @@ def test_task_optional_outputs():
 
         x:fail? => y
 
-        foo:finish => bar
+        foo:finish? => bar
         """
     )
     for i in range(1, 4):
         for task in (f'a{i}', f'b{i}'):
             assert (
                 gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)]
-                == (REQUIRED, False)
+                == (REQUIRED, False, True)
             )
 
         for task in (f'c{i}', f'd{i}'):
             assert (
                 gp.task_output_opt[(task, TASK_OUTPUT_SUCCEEDED)]
-                == (OPTIONAL, False)
+                == (OPTIONAL, True, True)
             )
 
     assert (
         gp.task_output_opt[('x', TASK_OUTPUT_FAILED)]
-        == (OPTIONAL, False)
+        == (OPTIONAL, True, True)
     )
 
     assert (
         gp.task_output_opt[('foo', TASK_OUTPUT_SUCCEEDED)]
-        == (OPTIONAL, False)
+        == (OPTIONAL, True, True)
     )
 
     assert (
         gp.task_output_opt[('foo', TASK_OUTPUT_FAILED)]
-        == (OPTIONAL, False)
+        == (OPTIONAL, True, True)
     )
 
 
@@ -618,11 +614,10 @@ def test_task_optional_outputs():
     'qual, task_output',
     [
         ('start', TASK_OUTPUT_STARTED),
-        ('finish', TASK_OUTPUT_SUCCEEDED),
         ('succeed', TASK_OUTPUT_SUCCEEDED),
+        ('fail', TASK_OUTPUT_FAILED),
         ('submit', TASK_OUTPUT_SUBMITTED),
         ('submit-fail', TASK_OUTPUT_SUBMIT_FAILED),
-        ('fail', TASK_OUTPUT_FAILED)
     ]
 )
 def test_family_optional_outputs(qual, task_output):
@@ -634,55 +629,64 @@ def test_family_optional_outputs(qual, task_output):
     gp = GraphParser(fam_map)
     gp.parse_graph(
         f"""
-        # all f:{qual} required (except ":finish"):
+        # required
         FAM:{qual}-all => foo
-
-        # except f2:{qual} made optional:
+        # optional member
         f2:{task_output}?
 
-        # all b:{qual} optional (except ":start"):
+        # required
         BAM:{qual}-any => bar
         """
     )
     # -all
     for member in ['f1', 'f2']:
-        optional = (qual == "finish") or (member == 'f2')
-        assert gp.task_output_opt[(member, task_output)] == (optional, True)
+        optional = (member == 'f2')
+        assert gp.task_output_opt[(member, task_output)][0] == optional
     # -any
-    optional = (qual != "start")
+    optional = False
     for member in ['b1', 'b2']:
-        assert gp.task_output_opt[(member, task_output)] == (optional, True)
+        assert gp.task_output_opt[(member, task_output)][0] == optional
 
 
-def test_family_output_clash(caplog: pytest.LogCaptureFixture):
-    """Test member output optionality inferred from family triggers."""
+@pytest.mark.parametrize(
+    'graph, error',
+    [
+        [
+            """FAM:succeed-all => foo
+            FAM:fail-all => foo""",
+            ("must both be optional if both are used (via family trigger"
+             " defaults")
+        ],
+        [
+            """FAM:succeed-all => foo
+            FAM:succeed-any? => bar""",
+            ("can't default to both optional and required (via family trigger"
+             " defaults)")
+        ],
+        [
+            "FAM:blargh-all => foo",  # LHS
+            "Illegal family trigger"
+        ],
+        [
+            "foo => FAM:blargh-all",  # RHS
+            "Illegal family trigger"
+        ],
+        [
+            "FAM => foo",  # bare family on LHS
+            "Illegal family trigger"
+        ],
+    ]
+)
+def test_family_trigger_errors(graph, error):
+    """Test errors via bad family triggers and member output optionality."""
     fam_map = {
         'FAM': ['f1', 'f2']
     }
     gp = GraphParser(fam_map)
-    gp.parse_graph(
-        """
-        # f:succeeded required:
-        FAM:succeed-all => foo
-        """
-    )
-    # (Parse graph in two chunks for consistent order of results)
-    gp2 = GraphParser(fam_map, task_output_opt=gp.task_output_opt)
-    gp2.parse_graph(
-        """
-        # f:failed required:
-        FAM:fail-all => foo
-        """
-    )
-    for mem in ['f1', 'f2']:
-        assert gp2.task_output_opt[(mem, "succeeded")] == (True, True)
 
-        expected_warning = (
-            f"Output {mem}:succeeded is required so"
-            f" {mem}:failed can't be required.\n"
-            "...BUT by the family trigger exemption: making both optional."
-        )
-        assert expected_warning in caplog.messages
+    with pytest.raises(GraphParseError) as cm:
+        gp.parse_graph(graph)
+    assert error in str(cm.value)
 
 
 @pytest.mark.parametrize(
@@ -691,45 +695,26 @@ def test_family_output_clash(caplog: pytest.LogCaptureFixture):
         [
             """a:x => b
             a:x? => c""",
-            "Output a:x is required so it can't also be optional.",
+            "Output a:x can't be both required and optional",
         ],
         [
             """a? => c
             a => b""",
-            "Output a:succeeded is optional so it can't also be required.",
+            "Output a:succeeded can't be both required and optional",
         ],
         [
             """a => c
             a:fail => b""",
-            ("Output a:succeeded is required so a:failed "
-             "can't be required."),
-        ],
-        [
-            """a:finish => b
-            a => c""",
-            "Output a:succeeded is optional so it can't also be required.",
-        ],
-        [
-            """a => c
-            a:finish => b""",
-            "Output a:succeeded is required so it can't also be optional.",
-        ],
-        # The next case is different to the previous case because
-        # :succeeded is processed first in the :finished pseudo-output.
-        [
-            """a:fail => c
-            a:finish => b""",
-            "Output a:failed is required so a:succeeded can't be optional.",
-        ],
-        [
-            """a:finish => b
-            a:fail => c""",
-            "Output a:failed is optional so it can't also be required.",
+            ("must both be optional if both are used"),
         ],
         [
             """a:fail? => b
             a => c""",
-            "Output a:failed is optional so a:succeeded can't be required.",
+            ("must both be optional if both are used"),
+        ],
+        [
+            "a:finish => b",
+            "Pseudo-output a:finished must be optional",
         ],
     ]
 )
@@ -738,55 +723,25 @@ def test_task_optional_output_errors_order(
     caplog: pytest.LogCaptureFixture,
     monkeypatch: pytest.MonkeyPatch
 ):
-    """Test optional output errors are raised as expected.
-
-    Parse the graph lines separately (as for separate graph strings) to ensure
-    that order is preserved (the error is different depending on whether an
-    output gets set to optional or required first).
-    """
-    graph1, graph2 = graph.split('\n')
-    gp1 = GraphParser()
-    gp1.parse_graph(graph1)
-    gp2 = GraphParser(task_output_opt=gp1.task_output_opt)
+    """Test optional output errors are raised as expected."""
+    gp = GraphParser()
     with pytest.raises(GraphParseError) as cm:
-        gp2.parse_graph(graph2)
+        gp.parse_graph(graph)
     assert c8error in str(cm.value)
 
     # In Cylc 7 back compat mode these graphs should all pass with no warnings.
     monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
     caplog.set_level(logging.WARNING, CYLC_LOG)
-    gp1 = GraphParser()
-    gp1.parse_graph(graph1)
-    gp2 = GraphParser(task_output_opt=gp1.task_output_opt)
-    gp2.parse_graph(graph2)
+    gp = GraphParser()
+    gp.parse_graph(graph)
 
     # No warnings logged:
     assert not caplog.messages
 
     # After graph parsing all Cylc 7 back compat outputs should be optional.
     # (Success outputs are set to required later, in taskdef processing.)
-    for (_, _), (optional, _) in gp2.task_output_opt.items():
+    for (optional, _, _) in gp.task_output_opt.values():
         assert optional
-
-
-def test_fail_bare_family_trigger():
-    """Test that "FAM => bar" (no :succeed-all etc.) raises an error."""
-    gp = GraphParser({'FAM': ['m1', 'm2']})
-    with pytest.raises(GraphParseError) as cm:
-        gp.parse_graph("FAM => f")
-    assert (
-        str(cm.value).startswith("Bad family trigger in")
-    )
-
-
-def test_fail_family_trigger_optional():
-    """Test that "FAM:fail-all? => bar" raises an error."""
-    gp = GraphParser({'FAM': ['m1', 'm2']})
-    with pytest.raises(GraphParseError) as cm:
-        gp.parse_graph("FAM:fail-all? => f")
-    assert (
-        str(cm.value).startswith("Family triggers can't be optional")
-    )
 
 
 @pytest.mark.parametrize(

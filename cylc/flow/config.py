@@ -1926,6 +1926,7 @@ class WorkflowConfig:
             self.workflow_polling_tasks.update(
                 parser.workflow_state_polling_tasks)
             self._proc_triggers(parser, seq, task_triggers)
+
         self.set_required_outputs(task_output_opt)
 
         # Detect use of xtrigger names with '@' prefix (creates a task).
@@ -1951,10 +1952,10 @@ class WorkflowConfig:
                 #    foo|bar => baz
                 #    @x => baz
                 # """
-                # - [] foo
-                # - [], bar
-                # - ['foo:succeeded', 'bar:succeeded'], baz
-                # - ['@x'], baz
+                # - ([], foo)
+                # - ([], bar)
+                # - (['foo:succeeded', 'bar:succeeded'], baz)
+                # - (['@x'], baz)
                 self.generate_edges(expr, orig, lefts, right, seq, suicide)
 
                 # Lefts can be null; all appear on RHS once so can generate
@@ -1974,8 +1975,7 @@ class WorkflowConfig:
                 # RHS quals not needed now (used already for taskdef outputs)
                 right = parser.REC_QUAL.sub('', right)
                 self.generate_triggers(
-                    expr, lefts, right, seq, suicide, task_triggers
-                )
+                    expr, lefts, right, seq, suicide, task_triggers)
                 if suicide:
                     suicides += 1
 
@@ -1986,17 +1986,17 @@ class WorkflowConfig:
             )
 
     def set_required_outputs(
-        self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool]]
+        self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool, bool]]
     ) -> None:
         """set optional/required status of parsed task outputs.
 
         Args:
-            task_output_opt: {(task, output): (is-optional, _)}
+            task_output_opt: {(task, output): (is-optional, default, is_set)}
         """
         for name, taskdef in self.taskdefs.items():
             for output in taskdef.outputs:
                 try:
-                    optional, _ = task_output_opt[(name, output)]
+                    optional, _, _ = task_output_opt[(name, output)]
                 except KeyError:
                     # Output not used in graph.
                     continue
