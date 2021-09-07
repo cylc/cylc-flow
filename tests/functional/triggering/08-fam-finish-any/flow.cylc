@@ -1,6 +1,6 @@
 [scheduling]
     [[graph]]
-        R1 = """FAM:finish-any => foo"""
+        R1 = """FAM:finish-any? => foo"""
 [runtime]
     [[FAM]]
         script = sleep 10

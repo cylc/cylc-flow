@@ -968,7 +968,7 @@ def test_undefined_custom_output(tmp_path):
 
 
 def test_invalid_custom_output_msg(tmp_path):
-    """Test invalid output message: colon not allowed."""
+    """Test invalid output message (colon not allowed)."""
     flow_config = """
     [scheduling]
         [[graph]]
@@ -1027,3 +1027,52 @@ def test_c7_back_compat_optional_outputs(tmp_path, monkeypatch, caplog):
                 assert required
             else:
                 assert not required
+
+
+@pytest.mark.parametrize(
+    'graph',
+    [
+        "foo:x => bar",
+        "foo:start => bar",
+        "foo:submit => bar",
+    ]
+)
+def test_implicit_success_required(tmp_path, graph):
+    """Check foo:succeed is required if success/fail not used in the graph."""
+    flow_config = f"""
+    [scheduling]
+        [[graph]]
+            R1 = {graph}
+    [runtime]
+        [[bar]]
+        [[foo]]
+           [[[outputs]]]
+               x = "the quick brown fox"
+    """
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
+    flow_file.write_text(flow_config)
+    cfg = WorkflowConfig(workflow='blargh', fpath=flow_file, options=None)
+    assert cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]
+
+
+@pytest.mark.parametrize(
+    'graph',
+    [
+        "foo:submit? => bar",
+        "foo:submit-fail? => bar",
+    ]
+)
+def test_success_after_optional_submit(tmp_path, graph):
+    """Check foo:succeed is not required if foo:submit is optional."""
+    flow_config = f"""
+    [scheduling]
+        [[graph]]
+            R1 = {graph}
+    [runtime]
+        [[bar]]
+        [[foo]]
+    """
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
+    flow_file.write_text(flow_config)
+    cfg = WorkflowConfig(workflow='blargh', fpath=flow_file, options=None)
+    assert not cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]

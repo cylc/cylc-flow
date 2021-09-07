@@ -294,7 +294,7 @@ class TaskPool:
 
         Incomplete tasks and partially satisfied prerequisites are counted
         toward the runahead limit, because they represent tasks that will
-        (or may, in the case or prerequisites) yet run at their cycle points.
+        (or may, in the case of prerequisites) yet run at their cycle points.
 
         Note runahead release can cause the task pool to change size because
         we spawn parentless tasks on previous-instance release.

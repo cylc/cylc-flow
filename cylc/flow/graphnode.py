@@ -27,7 +27,8 @@ from cylc.flow.task_trigger import TaskTrigger
 class GraphNodeParser:
     """Provide graph node parsing and caching service.
 
-    Optional outputs are stripped in graph_parser.py before this gets used.
+    Optional output notation is stripped out before this class gets used.
+    TODO is any of this redundant with code in the graph_parser module?
     """
     # Match a graph node string.
     REC_NODE = re.compile(

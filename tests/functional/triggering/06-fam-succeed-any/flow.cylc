@@ -5,7 +5,7 @@
 [scheduling]
     [[graph]]
         R1 = """
-            FAM:succeed-any => foo
+            FAM:succeed-any? => foo
             a:fail? & c:fail? => handled
         """
 [runtime]
