@@ -173,7 +173,7 @@ if [[ -z "${CYLC_HOME}" ]]; then
             CYLC_ENV_NAME="cylc-$CYLC_VERSION"
         else
             # Default version symlink - export CYLC_ENV_NAME to ensure it
-            # does nott get overridden by CYLC_VERSION
+            # does not get overridden by CYLC_VERSION
             export CYLC_ENV_NAME="cylc"
         fi
     fi
