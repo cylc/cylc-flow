@@ -145,10 +145,14 @@ def set_cycling_type(monkeypatch: pytest.MonkeyPatch):
 def xtrigger_mgr() -> XtriggerManager:
     """A fixture to build an XtriggerManager which uses a mocked proc_pool,
     and uses a mocked broadcast_mgr."""
+    workflow_name = "sample_workflow"
+    user = "john-foo"
     return XtriggerManager(
-        workflow="sample_workflow",
-        user="john-foo",
+        workflow=workflow_name,
+        user=user,
         proc_pool=Mock(put_command=lambda *a, **k: True),
         broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),
-        data_store_mgr=DataStoreMgr(create_autospec(Scheduler))
+        data_store_mgr=DataStoreMgr(
+            create_autospec(Scheduler, workflow=workflow_name, owner=user)
+        )
     )

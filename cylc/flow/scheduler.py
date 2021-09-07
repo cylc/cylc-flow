@@ -18,7 +18,6 @@
 import asyncio
 from contextlib import suppress
 from collections import deque
-from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from dataclasses import dataclass
 import logging
 from optparse import Values
@@ -45,7 +44,7 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
 from cylc.flow.exceptions import (
-    CyclingError, CylcError, UserInputError
+    CommandFailedError, CyclingError, CylcError, UserInputError
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
@@ -63,6 +62,7 @@ from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.option_parsers import verbosity_to_env
+from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
@@ -150,6 +150,13 @@ class Scheduler:
         START_PUB_MESSAGE_PREFIX +
         'url=%(comms_method)s://%(host)s:%(port)s')
 
+    # flow information
+    workflow: str
+    owner: str
+    host: str
+    id: str  # noqa: A003 (instance attr not local)
+    uuid_str: str
+
     # managers
     profiler: Profiler
     pool: TaskPool
@@ -168,24 +175,23 @@ class Scheduler:
     ext_trigger_queue: Queue
 
     # configuration
-    config: WorkflowConfig  # flow config
+    options: Values
     cylc_config: DictTree  # [scheduler] config
-    flow_file: Optional[str] = None
-    flow_file_update_time: Optional[float] = None
+
+    # Note: attributes without a default must come before those with defaults
 
     # flow information
-    workflow: Optional[str] = None
-    owner: Optional[str] = None
-    host: Optional[str] = None
-    id: Optional[str] = None  # noqa: A003 (instance attr not local)
-    uuid_str: Optional[str] = None
     contact_data: Optional[dict] = None
     bad_hosts: Optional[Set[str]] = None
+
+    # configuration
+    config: Optional[WorkflowConfig] = None  # flow config
+    flow_file: Optional[str] = None
+    flow_file_update_time: Optional[float] = None
 
     # run options
     is_restart: Optional[bool] = None
     template_vars: Optional[dict] = None
-    options: Optional[Values] = None
 
     # workflow params
     stop_mode: Optional[StopMode] = None
@@ -237,7 +243,7 @@ class Scheduler:
     time_next_kill: Optional[float] = None
     already_timed_out: bool = False
 
-    def __init__(self, reg, options):
+    def __init__(self, reg: str, options: Values) -> None:
         # flow information
         self.workflow = reg
         self.owner = get_user()
@@ -793,9 +799,13 @@ class Scheduler:
             except SchedulerStop:
                 LOG.info(f"Command succeeded: {cmdstr}")
                 raise
-            except Exception as exc:
+            except (CommandFailedError, Exception) as exc:
                 # Don't let a bad command bring the workflow down.
-                LOG.warning(traceback.format_exc())
+                if (
+                    cylc.flow.flags.verbosity > 1 or
+                    not isinstance(exc, CommandFailedError)
+                ):
+                    LOG.warning(traceback.format_exc())
                 LOG.warning(str(exc))
                 LOG.warning(f"Command failed: {cmdstr}")
             else:
@@ -818,14 +828,14 @@ class Scheduler:
         )
 
     def command_stop(
-            self,
-            mode=None,
-            cycle_point=None,
-            # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
-            clock_time=None,
-            task=None,
-            flow_label=None
-    ):
+        self,
+        mode: 'StopMode',
+        cycle_point: Optional[str] = None,
+        # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
+        clock_time: Optional[str] = None,
+        task: Optional[str] = None,
+        flow_label: Optional[str] = None
+    ) -> None:
         if flow_label:
             self.pool.stop_flow(flow_label)
             return
@@ -843,9 +853,9 @@ class Scheduler:
         elif clock_time:
             # schedule shutdown after wallclock time passes provided time
             parser = TimePointParser()
-            clock_time = parser.parse(clock_time)
             self.set_stop_clock(
-                int(clock_time.get("seconds_since_unix_epoch")))
+                int(parser.parse(clock_time).get("seconds_since_unix_epoch"))
+            )
         elif task:
             # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
@@ -859,13 +869,12 @@ class Scheduler:
             try:
                 mode = StopMode(mode)
             except ValueError:
-                LOG.error(f'Invalid stop mode {mode}')
-                return
+                raise CommandFailedError(f"Invalid stop mode: '{mode}'")
             self._set_stop(mode)
             if mode is StopMode.REQUEST_KILL:
                 self.time_next_kill = time()
 
-    def _set_stop(self, stop_mode=None):
+    def _set_stop(self, stop_mode: Optional[StopMode] = None) -> None:
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode

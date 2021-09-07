@@ -91,6 +91,10 @@ class WorkflowEventError(CylcError):
     """Exception for errors in Cylc event handlers."""
 
 
+class CommandFailedError(CylcError):
+    """Exception for when scheduler commands fail."""
+
+
 class ServiceFileError(CylcError):
     """Exception for errors related to workflow service files."""
 
