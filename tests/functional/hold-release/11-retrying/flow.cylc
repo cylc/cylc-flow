@@ -17,14 +17,27 @@ t-retry-able => t-analyse
             execution retry delays = PT15S, 2*PT1S
     [[t-hold-release]]
         script = """
-            cylc__job__poll_grep_workflow_log -F \
-                '[t-retry-able.1] -job(01) failed, retrying in PT15S'
+            cylc__job__poll_grep_workflow_log -E \
+                't-retry-able\.1 running job:01.* \(received\)failed'
+
+            cylc__job__poll_grep_workflow_log -E \
+                't-retry-able\.1 running job:01.* => waiting'
+
+            cylc__job__poll_grep_workflow_log -E \
+                't-retry-able\.1 waiting job:01.* retrying in PT15S'
+
             cylc hold "${CYLC_WORKFLOW_NAME}" 't-retry-able.1'
-            cylc__job__poll_grep_workflow_log -F \
-                '[t-retry-able.1] -running => waiting'
+
+            cylc__job__poll_grep_workflow_log -E \
+                't-retry-able\.1 waiting job:01.* => waiting\(held\)'
+ 
             cylc release "${CYLC_WORKFLOW_NAME}" 't-retry-able.1'
-            cylc__job__poll_grep_workflow_log -F \
-                '[t-retry-able.1] -waiting => waiting (queued)'
+
+            cylc__job__poll_grep_workflow_log -E \
+                't-retry-able\.1 waiting\(held\) job:01.* => waiting'
+ 
+            cylc__job__poll_grep_workflow_log -E \
+                't-retry-able\.1 waiting job:01.* => waiting\(queued\)'
         """
     [[t-analyse]]
         script = """

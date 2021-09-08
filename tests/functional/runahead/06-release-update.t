@@ -27,7 +27,7 @@ CYLC_RUN_PID="$!"
 poll_workflow_running
 YYYY="$(date +%Y)"
 NEXT1=$(( YYYY + 1 ))
-poll_grep_workflow_log -F "spawned bar.${NEXT1}"
+poll_grep_workflow_log -E "bar\.${NEXT1} .* spawned"
 
 # sleep a little to allow the datastore to update (`cylc dump` sees the
 # datastore) TODO can we avoid this flaky sleep somehow?

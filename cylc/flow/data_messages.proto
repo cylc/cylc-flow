@@ -212,8 +212,7 @@ message PbTaskProxy {
     optional bool is_held = 17;
     repeated string edges = 18;
     repeated string ancestors = 19;
-    optional string flow_label = 20;
-    optional bool reflow = 21;
+    optional string flow_nums = 20;
     optional PbClockTrigger clock_trigger = 22;
     map<string, PbTrigger> external_triggers = 23;
     map<string, PbTrigger> xtriggers = 24;
