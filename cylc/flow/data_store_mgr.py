@@ -435,6 +435,7 @@ class DataStoreMgr:
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
         self.updates_pending = False
+        self.publish_pending = False
 
     def initiate_data_model(self, reloaded=False):
         """Initiate or Update data model on start/restart/reload.
@@ -1944,6 +1945,7 @@ class DataStoreMgr:
         result.append(
             (ALL_DELTAS.encode('utf-8'), all_deltas, 'SerializeToString')
         )
+        self.publish_pending = True
         return deepcopy(result)
 
     def get_data_elements(self, element_type):

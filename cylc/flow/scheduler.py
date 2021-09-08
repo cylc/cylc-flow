@@ -1538,7 +1538,10 @@ class Scheduler:
                 reloaded=self.is_reloaded)
             self.is_reloaded = False
             # Publish updates:
-            await self.publisher.publish(self.data_store_mgr.publish_deltas)
+            if self.data_store_mgr.publish_pending:
+                self.data_store_mgr.publish_pending = False
+                await self.publisher.publish(
+                    self.data_store_mgr.publish_deltas)
         if has_updated:
             # Database update
             self.workflow_db_mgr.put_task_pool(self.pool)
