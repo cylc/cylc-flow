@@ -33,7 +33,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --hold-after=0 "${WORKFLOW_NAM
 cylc release "${WORKFLOW_NAME}" foo.1
 # foo.1 should run and spawn bar.1 as waiting and held
 
-poll_grep_workflow_log 'spawned bar\.1'
+poll_grep_workflow_log -E 'bar\.1 .* spawned'
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'SELECT cycle, name, status, is_held FROM task_pool' > task-pool.out

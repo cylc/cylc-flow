@@ -58,16 +58,15 @@ __PYTHON__
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 # Test logging of the "next job poll" message when task starts.
 TEST_NAME="${TEST_NAME_BASE}-log-entry"
-LINE="$(grep -F '[foo.1] -health check settings: execution timeout=PT10S' "${LOG}")"
-run_ok "${TEST_NAME}" grep -q 'health check settings: execution timeout=PT10S' \
-    <<< "${LINE}"
+LINE="$(grep '\[foo\.1 .* execution timeout=PT10S' "${LOG}")"
+run_ok "${TEST_NAME}" grep -q 'health: execution timeout=PT10S' <<< "${LINE}"
 # Determine poll times.
 PREDICTED_POLL_TIME=$(time_offset \
     "$(cut -d ' ' -f 1 <<< "${LINE}")" \
     "$(sed -n 's/^.*execution timeout=\([^,]\+\).*$/\1/p' <<< "${LINE}")")
 ACTUAL_POLL_TIME=$(sed -n \
-    's/\(.*\) INFO - \[foo.1\] status=running: (polled)failed .*/\1/p' \
-    "${LOG}")
+    's/\(.*\) INFO - \[foo.1 running .* (polled)failed .*/\1/p' "${LOG}")
+
 # Test execution timeout polling.
 # Main loop is roughly 1 second, but integer rounding may give an apparent 2
 # seconds delay, so set threshold as 2 seconds.

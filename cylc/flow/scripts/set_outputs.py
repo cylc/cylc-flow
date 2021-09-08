@@ -18,15 +18,13 @@
 
 """cylc set-outputs [OPTIONS] ARGS
 
-Override the outputs of tasks in a running workflow.
-
-Tell the scheduler that specified outputs (the "succeeded" output by default)
+Tell the scheduler that specified (or "succeeded", by default) outputs
 of tasks are complete.
 
 Downstream tasks will be spawned or updated just as if the outputs were
 completed normally.
 
-The --output=OUTPUT option can be used multiple times on the command line.
+The --output option can be used multiple times on the command line.
 
 """
 
@@ -42,11 +40,13 @@ mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
   $outputs: [String],
+  $flowNum: Int,
 ) {
   setOutputs (
     workflows: $wFlows,
     tasks: $tasks,
-    outputs: $outputs
+    outputs: $outputs,
+    flowNum: $flowNum,
   ) {
     result
   }
@@ -60,15 +60,24 @@ def get_option_parser():
         argdoc=[
             ("WORKFLOW", "Workflow name or ID"),
             ('TASK-GLOB [...]', 'Task match pattern')])
+
     parser.add_option(
-        "--output", metavar="OUTPUT",
-        help="Set task output OUTPUT completed, defaults to 'succeeded'.",
+        "-o", "--output", metavar="OUTPUT",
+        help="Set OUTPUT (default \"succeeded\") completed.",
         action="append", dest="outputs")
+
+    parser.add_option(
+        "-f", "--flow", metavar="FLOW",
+        help="Number of the flow to attribute the outputs.",
+        action="store", default=None, dest="flow_num")
+
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', reg: str, *task_globs: str) -> None:
+    if options.flow_num is None:
+        parser.error("--flow=FLOW is required.")
     reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
 
@@ -78,6 +87,7 @@ def main(parser: COP, options: 'Values', reg: str, *task_globs: str) -> None:
             'wFlows': [reg],
             'tasks': list(task_globs),
             'outputs': options.outputs,
+            'flowNum': options.flow_num
         }
     }
 

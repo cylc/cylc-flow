@@ -16,7 +16,7 @@ holder => releaser
         script = true
     [[holder]]
         script = """
-cylc__job__poll_grep_workflow_log -F 'spawned t1.1'
+cylc__job__poll_grep_workflow_log -E 't1\.1 .* spawned'
 cylc hold "${CYLC_WORKFLOW_NAME}" 't1.1'
 """
     [[releaser]]

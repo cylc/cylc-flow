@@ -73,11 +73,13 @@ class WorkflowDatabaseManager:
     KEY_CYCLE_POINT_FORMAT = 'cycle_point_format'
     KEY_CYCLE_POINT_TIME_ZONE = 'cycle_point_tz'
     KEY_RESTART_COUNT = 'n_restart'
+    KEY_FLOW_COUNTER = "flow_counter"
 
     TABLE_BROADCAST_EVENTS = CylcWorkflowDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcWorkflowDAO.TABLE_BROADCAST_STATES
     TABLE_INHERITANCE = CylcWorkflowDAO.TABLE_INHERITANCE
     TABLE_WORKFLOW_PARAMS = CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS
+    TABLE_WORKFLOW_FLOWS = CylcWorkflowDAO.TABLE_WORKFLOW_FLOWS
     TABLE_WORKFLOW_TEMPLATE_VARS = CylcWorkflowDAO.TABLE_WORKFLOW_TEMPLATE_VARS
     TABLE_TASK_ACTION_TIMERS = CylcWorkflowDAO.TABLE_TASK_ACTION_TIMERS
     TABLE_TASK_POOL = CylcWorkflowDAO.TABLE_TASK_POOL
@@ -116,6 +118,7 @@ class WorkflowDatabaseManager:
             self.TABLE_BROADCAST_STATES: [],
             self.TABLE_INHERITANCE: [],
             self.TABLE_WORKFLOW_PARAMS: [],
+            self.TABLE_WORKFLOW_FLOWS: [],
             self.TABLE_WORKFLOW_TEMPLATE_VARS: [],
             self.TABLE_TASK_POOL: [],
             self.TABLE_TASK_ACTION_TIMERS: [],
@@ -424,7 +427,7 @@ class WorkflowDatabaseManager:
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
-            "flow_label": itask.flow_label,
+            "flow_nums": json.dumps(list(itask.flow_nums)),
             "submit_num": itask.submit_num,
         }
         self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
@@ -456,7 +459,7 @@ class WorkflowDatabaseManager:
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
-                "flow_label": itask.flow_label,
+                "flow_nums": json.dumps(list(itask.flow_nums)),
                 "status": itask.state.status,
                 "is_held": itask.state.is_held
             })
@@ -500,7 +503,7 @@ class WorkflowDatabaseManager:
                 where_args = {
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
-                    "flow_label": itask.flow_label
+                    "flow_nums": json.dumps(list(itask.flow_nums))
                 }
                 self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
                 self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -558,6 +561,19 @@ class WorkflowDatabaseManager:
         self.db_inserts_map.setdefault(CylcWorkflowDAO.TABLE_ABS_OUTPUTS, [])
         self.db_inserts_map[CylcWorkflowDAO.TABLE_ABS_OUTPUTS].append(args)
 
+    def put_insert_workflow_flows(self, flow_num, flow_metadata):
+        """Put INSERT statement for a new flow."""
+        self.db_inserts_map.setdefault(
+            CylcWorkflowDAO.TABLE_WORKFLOW_FLOWS, []
+        )
+        self.db_inserts_map[CylcWorkflowDAO.TABLE_WORKFLOW_FLOWS].append(
+            {
+                "flow_num": flow_num,
+                "start_time": flow_metadata["start_time"],
+                "description": flow_metadata["description"],
+            }
+        )
+
     def _put_insert_task_x(self, table_name, itask, args):
         """Put INSERT statement for a task_* table."""
         args.update({
@@ -589,8 +605,8 @@ class WorkflowDatabaseManager:
             "name": itask.tdef.name}
         if "submit_num" not in set_args:
             where_args["submit_num"] = itask.submit_num
-        if "flow_label" not in set_args:
-            where_args["flow_label"] = itask.flow_label
+        if "flow_nums" not in set_args:
+            where_args["flow_nums"] = json.dumps(list(itask.flow_nums))
         self.db_updates_map.setdefault(table_name, [])
         self.db_updates_map[table_name].append((set_args, where_args))
 
