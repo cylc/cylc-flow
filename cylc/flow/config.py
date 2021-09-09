@@ -903,7 +903,16 @@ class WorkflowConfig:
 
     def validate_namespace_names(self):
         """Validate task and family names."""
+        for name in self.implicit_tasks:
+            success, message = TaskNameValidator.validate(name)
+            if not success:
+                raise WorkflowConfigError(
+                    f'invalid task name "{name}"\n{message}'
+                )
         for name in self.cfg['runtime']:
+            if name == 'root':
+                # root is allowed to be defined in the runtime section
+                continue
             success, message = TaskNameValidator.validate(name)
             if not success:
                 raise WorkflowConfigError(
@@ -1866,11 +1875,17 @@ class WorkflowConfig:
         # Generate a map of *task* members of each family.
         # Note we could exclude 'root' from this and disallow use of 'root' in
         # the graph (which would probably be quite reasonable).
-        family_map = {}
-        for family, tasks in self.runtime['descendants'].items():
-            family_map[family] = [t for t in tasks if (
-                t in self.runtime['parents'] and
-                t not in self.runtime['descendants'])]
+        family_map = {
+            family: [
+                task for task in tasks
+                if (
+                    task in self.runtime['parents'] and
+                    task not in self.runtime['descendants']
+                )
+            ]
+            for family, tasks in self.runtime['descendants'].items()
+            if family != 'root'
+        }
 
         graphdict = self.cfg['scheduling']['graph']
         if 'graph' in graphdict:
@@ -2042,7 +2057,9 @@ class WorkflowConfig:
     ) -> TaskDef:
         """Return an instance of TaskDef for task name."""
         if name not in self.taskdefs:
-            if name not in self.cfg['runtime']:
+            if name == 'root':
+                self.implicit_tasks.add(name)
+            elif name not in self.cfg['runtime']:
                 # implicit inheritance from root
                 self.implicit_tasks.add(name)
                 # These can't just be a reference to root runtime as we have to

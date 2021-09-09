@@ -92,7 +92,7 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-invalid-flow-name"
 run_fail "${TEST_NAME}" cylc install --flow-name=".invalid" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`\`.\`\`, \`\`-\`\`
+WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`.\`, \`-\`
 __ERR__
 
 # Test --run-name and --no-run-name options are mutually exclusive

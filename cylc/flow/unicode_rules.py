@@ -128,11 +128,11 @@ def starts_with(*chars):
     )
 
 
-def not_starts_with(*chars):
+def not_starts_with_char(*chars):
     """Restrict first character.
 
     Example:
-        >>> regex, message = not_starts_with('a', 'b', 'c')
+        >>> regex, message = not_starts_with_char('a', 'b', 'c')
         >>> message
         'cannot start with: ``a``, ``b``, ``c``'
         >>> bool(regex.match('def'))
@@ -144,6 +144,60 @@ def not_starts_with(*chars):
     return (
         re.compile(r'^[^%s]' % ''.join(chars)),
         f'cannot start with: {", ".join(regex_chars_to_text(chars))}'
+    )
+
+
+def not_starts_with(string):
+    """Restrict strings starting with ___.
+
+    Example:
+        Regular usage:
+        >>> regex, message = not_starts_with('foo')
+        >>> message
+        'cannot start with: ``foo``'
+        >>> bool(regex.match('tfoo'))
+        True
+        >>> bool(regex.match('foot'))
+        False
+
+        Note regex chars are escaped automatically:
+        >>> regex, message = not_starts_with('...')
+        >>> bool(regex.match('aaa b'))
+        True
+        >>> bool(regex.match('... b'))
+        False
+
+    """
+    return (
+        re.compile(rf'^(?!{re.escape(string)})'),
+        f'cannot start with: ``{string}``'
+    )
+
+
+def not_equals(string):
+    """Restrict entire string.
+
+    Example:
+        Regular usage:
+        >>> regex, message = not_equals('foo')
+        >>> message
+        'cannot be: ``foo``'
+        >>> bool(regex.match('foot'))
+        True
+        >>> bool(regex.match('foo'))
+        False
+
+        Note regex chars are escaped automatically:
+        >>> regex, message = not_equals('...')
+        >>> bool(regex.match('...'))
+        False
+        >>> bool(regex.match('aaa'))
+        True
+
+    """
+    return (
+        re.compile(rf'^(?!{re.escape(string)}$).*$'),
+        f'cannot be: ``{string}``'
     )
 
 
@@ -201,7 +255,12 @@ class UnicodeRuleChecker():
         """
         for rule, message in cls.RULES:
             if not rule.match(string):
-                return (False, message)
+                return (
+                    False,
+                    # convert RST style literals to Markdown for error messages
+                    # (RST used in docs)
+                    message.replace('``', '`'),
+                )
         return (True, None)
 
 
@@ -210,7 +269,7 @@ class WorkflowNameValidator(UnicodeRuleChecker):
 
     RULES = [
         length(1, 254),
-        not_starts_with(r'\.', r'\-'),
+        not_starts_with_char(r'\.', r'\-'),
         allowed_characters(r'\w', r'\/', '_', '+', r'\-', r'\.', '@')
     ]
 
@@ -219,7 +278,8 @@ class XtriggerNameValidator(UnicodeRuleChecker):
     """The rules for valid xtrigger labels:"""
 
     RULES = [
-        allowed_characters(r'a-zA-Z0-9', '_')
+        allowed_characters(r'a-zA-Z0-9', '_'),
+        not_starts_with('_cylc'),
     ]
 
 
@@ -244,5 +304,7 @@ class TaskNameValidator(UnicodeRuleChecker):
 
     RULES = [
         starts_with(_TASK_NAME_PREFIX),
-        allowed_characters(*_TASK_NAME_CHARACTERS)
+        allowed_characters(*_TASK_NAME_CHARACTERS),
+        not_starts_with('_cylc'),
+        not_equals('root'),
     ]

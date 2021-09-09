@@ -23,9 +23,11 @@ from shutil import rmtree
 from typing import List, TYPE_CHECKING, Tuple
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.config import WorkflowConfig
 from cylc.flow.pathutil import get_cylc_run_dir
-from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.rundb import CylcWorkflowDAO
+from cylc.flow.scripts.validate import ValidateOptions
+from cylc.flow.wallclock import get_current_time_string
 
 from .utils import _rm_if_empty
 from .utils.flow_tools import (
@@ -299,3 +301,24 @@ def db_select():
             pri_dao.close()
 
     return _inner
+
+
+@pytest.fixture
+def validate(run_dir):
+    """Provides a function for validating workflow configurations.
+
+    Attempts to load the configuration, will raise exceptions if there are
+    errors.
+
+    Args:
+        reg - The flow to validate
+        kwargs - Arguments to pass to ValidateOptions
+    """
+    def _validate(reg: str, **kwargs) -> None:
+        WorkflowConfig(
+            reg,
+            str(Path(run_dir, reg, 'flow.cylc')),
+            ValidateOptions(**kwargs)
+        )
+
+    return _validate
