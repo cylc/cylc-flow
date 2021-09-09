@@ -85,7 +85,7 @@ def test_get_platform_from_group(monkeypatch, expect, bad_hosts):
             return {'hosts': {'foo', 'bar'}}
 
     monkeypatch.setattr('cylc.flow.platforms.platform_from_name', get_plat)
-    platform = get_platform_from_group(TEST_GROUP, bad_hosts)
+    platform = get_platform_from_group(TEST_GROUP, 'mygroup_name', bad_hosts)
     assert platform == expect
 
 
@@ -93,10 +93,10 @@ def test_get_platform_from_group_fails_no_goodhosts(monkeypatch):
     monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
         lambda _:{'hosts': {'foo', 'bar', 'baz'}})
     with pytest.raises(NoPlatformsError) as err:
-        get_platform_from_group(TEST_GROUP, {'foo', 'bar', 'baz'})
+        get_platform_from_group(TEST_GROUP, 'mygroup_name', {'foo', 'bar', 'baz'})
     assert err.exconly() == (
         'cylc.flow.exceptions.NoPlatformsError: '
-        'Unable to find a reachable platform.'
+        'Unable to find a platform from group mygroup_name.'
     )
 
 
