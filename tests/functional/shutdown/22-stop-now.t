@@ -19,7 +19,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 3
+set_test_number 4
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduling]
@@ -42,6 +42,8 @@ run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach --debug
 
 WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
-grep_ok 'Orphaned task jobs.*\n.*foo.1' "${WORKFLOW_LOG}" -Pz
+log_scan "${TEST_NAME_BASE}-orphaned" "${WORKFLOW_LOG}" 1 1 \
+    'Orphaned task jobs.*' \
+    '.*foo.1'
 
 purge
