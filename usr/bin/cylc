@@ -64,7 +64,8 @@
 # And create a default version symlink "cylc" to the latest version:
 #   $ ln -s cylc-8.2.0 cylc
 #
-# Alternatively use CYLC_ENV_NAME to use Cylc from an arbitrary Conda environment:
+# Alternatively use CYLC_ENV_NAME to use Cylc from an arbitrary Conda or Python
+# virtual environment:
 #
 # Create environments with arbitrary names and install cylc:
 #   $ conda create cylc-violet-capybara
