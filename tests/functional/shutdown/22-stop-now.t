@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Ensure that the Scheduler is able to run in profile mode without falling
-# over. It should produce a profile file at the end.
+# ``cylc stop --now`` shuts down the scheduler leaving orphaned tasks running.
 
 . "$(dirname "$0")/test_header"
 
@@ -31,36 +30,17 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[foo]]
         script = """
-            # Infinite loop:
-            while true; do sleep 10; done
+            cylc stop --now "$CYLC_WORKFLOW_NAME"
+            sleep 60  # if the stop --kill fails then the job succeeds
         """
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${WORKFLOW_NAME}"
 
-cylc play "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach --debug
 
 WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
-
-waitfor() {
-    # Takes a regex and waits for it to appear in log. Times out after 10
-    # seconds.
-    counter=0
-    # shellcheck disable=SC2143
-    while [[ $(grep -q "${1}" "${WORKFLOW_LOG}") && "${counter}" -lt 10 ]]; do
-        sleep 1
-        counter=$(( counter + 1 ))
-    done
-}
-
-# Wait for foo to start:
-waitfor "foo.1.*started"
-
-run_ok "${TEST_NAME_BASE}" cylc stop --now "${WORKFLOW_NAME}"
-
-# Wait for scheduler to stop:
-waitfor "INFO - DONE"
 
 grep_ok 'Orphaned task jobs.*\n.*foo.1' "${WORKFLOW_LOG}" -Pz
 
