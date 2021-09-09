@@ -113,7 +113,8 @@ EVENTS_DESCR = {
     ),
     'abort on stall': (
         '''
-        Whether to abort if the scheduler stalls.
+        Whether to abort if the scheduler stalls. This setting is equivalent
+        to ``abort on stall timeout`` with ``stall timeout = PT0S``.
 
         .. versionchanged:: 8.0.0
 
@@ -141,7 +142,9 @@ EVENTS_DESCR = {
     ),
     'abort on stall timeout': (
         '''
-        Whether to abort if the stall timer times out.
+        Whether to abort if the stall timer times out. Note for immediate abort
+        on stall you can use ``abort on stall = True` instead of this setting
+        with a ``PT0S`` timeout.
 
         .. versionadded:: 8.0.0
 
