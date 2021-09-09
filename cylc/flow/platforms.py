@@ -160,8 +160,10 @@ def platform_from_name(
     for platform_name_re in reversed(list(platform_groups)):
         # Platform is member of a group.
         if re.fullmatch(platform_name_re, platform_name):
+            group_name = platform_name
             platform_name = get_platform_from_group(
-                platform_groups[platform_name_re], bad_hosts=bad_hosts
+                platform_groups[platform_name_re], group_name=group_name,
+                bad_hosts=bad_hosts
             )
 
     # The list is reversed to allow user-set platforms (which are loaded
@@ -205,12 +207,15 @@ def platform_from_name(
 
 
 def get_platform_from_group(
-    group: Dict[str, Any], bad_hosts: Optional[Set[str]] = None
+    group: Dict[str, Any],
+    group_name: str,
+    bad_hosts: Optional[Set[str]] = None
 ) -> str:
     """Get platform name from group, according to the selection method.
 
     Args:
         group: A platform group dictionary.
+        group_name: Name of the group.
         bad_hosts: The set of hosts found to be unreachable.
 
     Returns:
@@ -237,7 +242,7 @@ def get_platform_from_group(
 
     # Return False if there are no platforms available to be selected.
     if not platform_names:
-        raise NoPlatformsError()
+        raise NoPlatformsError(group_name)
 
     # Get the selection method
     method = group['selection']['method']
