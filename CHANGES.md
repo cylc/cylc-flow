@@ -100,6 +100,9 @@ run dir (use `--force` to override this safeguard).
 When using `cylc clean` on a sequential run directory, remove the `runN` symlink
 if it points to the removed directory.
 
+[#4395](https://github.com/cylc/cylc-flow/pull/4362) -
+Fix ``cylc stop --kill`` which was not actually killing task jobs.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 

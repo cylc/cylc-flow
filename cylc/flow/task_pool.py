@@ -902,7 +902,7 @@ class TaskPool:
 
         return not any(
             (
-                stop_mode == StopMode.REQUEST_CLEAN
+                stop_mode in [StopMode.REQUEST_CLEAN, StopMode.REQUEST_KILL]
                 and itask.state(*TASK_STATUSES_ACTIVE)
                 and not itask.state.kill_failed
             )

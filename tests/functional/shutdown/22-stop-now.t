@@ -14,22 +14,34 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test kill command fail on shutdown --kill.
+
+# ``cylc stop --now`` shuts down the scheduler leaving orphaned tasks running.
+
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
 
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
-LOGD="$RUN_DIR/${WORKFLOW_NAME}/log/job"
-JLOGD="${LOGD}/1/t1/01"
-poll_grep 'CYLC_JOB_INIT_TIME' "${JLOGD}/job.status"
-mv "${JLOGD}/job.status" "${JLOGD}/job.status.old"
-run_ok "${TEST_NAME_BASE}-shutdown" \
-    cylc shutdown --kill --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
-mv "${JLOGD}/job.status.old" "${JLOGD}/job.status"
-cylc jobs-kill "${LOGD}" '1/t1/01' 1>'/dev/null' 2>&1
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+[scheduling]
+    initial cycle point = 1
+    cycling mode = integer
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        script = """
+            cylc stop --now "$CYLC_WORKFLOW_NAME"
+            sleep 60  # if the stop --kill fails then the job succeeds
+        """
+__FLOW_CONFIG__
+
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate "${WORKFLOW_NAME}"
+
+run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach --debug
+
+WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+
+grep_ok 'Orphaned task jobs.*\n.*foo.1' "${WORKFLOW_LOG}" -Pz
+
 purge
-exit
