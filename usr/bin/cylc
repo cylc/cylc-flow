@@ -72,7 +72,7 @@
 #   $ conda activate cylc-violet-capybara
 #   $ pip install -e <path to cylc>
 #   $ conda deactivate
-#
+# (or similarly for a native Python venv)
 #   $ CYLC_ENV_NAME=cylc-violet-capybara cylc version --long
 #   > 8.0.0 (/home/user/miniconda3/envs/cylc-violet-capybara)
 #
