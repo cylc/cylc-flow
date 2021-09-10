@@ -6,7 +6,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = t1:finish? => t2
+        R1 = t1:finish => t2
 
 [runtime]
     [[t1]]
