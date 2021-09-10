@@ -89,6 +89,8 @@ class GraphParser:
     FAM_TRIG_EXT_ANY = '-any'
     LEN_FAM_TRIG_EXT_ALL = len(FAM_TRIG_EXT_ALL)
     LEN_FAM_TRIG_EXT_ANY = len(FAM_TRIG_EXT_ANY)
+    CONTINUATION_STRS = [ARROW, OP_AND, OP_OR]
+    BAD_STRS = [OP_AND_ERR, OP_OR_ERR]
 
     _RE_SUICIDE = r'(?:!)?'
     _RE_NODE = _RE_SUICIDE + TaskID.NAME_RE
@@ -229,7 +231,13 @@ class GraphParser:
                     raise GraphParseError(
                         "trailing arrow: %s" % this_line)
             part_lines.append(this_line)
-            if (this_line.endswith(ARROW) or next_line.startswith(ARROW)):
+            if (any(
+                this_line.endswith(seq) or next_line.startswith(seq) for
+                seq in self.CONTINUATION_STRS
+            ) and not (any(
+                this_line.endswith(seq) or next_line.startswith(seq) for
+                seq in self.BAD_STRS
+            ))):
                 continue
             full_line = ''.join(part_lines)
 
