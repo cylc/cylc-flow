@@ -989,7 +989,7 @@ class Scheduler:
         if timeout is None:
             return
         self.workflow_timer_timeout = time() + timeout
-        LOG.info(
+        LOG.warning(
             "%s workflow timer starts NOW: %s",
             get_seconds_as_interval_string(timeout),
             get_current_time_string())
@@ -1582,38 +1582,39 @@ class Scheduler:
 
     def check_workflow_timers(self):
         """Check if workflow or stall timers have timed out."""
+        timeout = self._get_events_conf(self.EVENT_TIMEOUT)
         if (
             self.workflow_timer_active
-            and self._get_events_conf(self.EVENT_TIMEOUT)
+            and timeout is not None  # Note zero intervals are false-y
             and not self.workflow_already_timed_out
             and time() > self.workflow_timer_timeout
         ):
             self.workflow_already_timed_out = True
-            message = 'workflow timed out after %s' % (
-                get_seconds_as_interval_string(
-                    self._get_events_conf(self.EVENT_TIMEOUT)
-                )
+            message = (
+                "workflow timed out after"
+                f" {get_seconds_as_interval_string(timeout)}"
             )
             LOG.warning(message)
             self.run_event_handlers(self.EVENT_TIMEOUT, message)
             if self._get_events_conf('abort on timeout'):
-                raise SchedulerError('"abort on timeout" is set')
+                raise SchedulerStop('"abort on timeout" is set')
+
+        stall_timeout = self._get_events_conf(self.EVENT_STALL_TIMEOUT)
         if (
             self.stall_timer_active
-            and self._get_events_conf(self.EVENT_STALL_TIMEOUT)
+            and stall_timeout is not None
             and not self.stall_already_timed_out
             and time() > self.stall_timer_timeout
         ):
             self.stall_already_timed_out = True
-            message = 'timed out %s after stall' % (
-                get_seconds_as_interval_string(
-                    self._get_events_conf(self.EVENT_STALL_TIMEOUT)
-                )
+            message = (
+                f"timed out {get_seconds_as_interval_string(stall_timeout)}"
+                " after stall"
             )
             LOG.warning(message)
             self.run_event_handlers(self.EVENT_STALL_TIMEOUT, message)
             if self._get_events_conf('abort on stall timeout'):
-                raise SchedulerError('"abort on stall timeout" is set')
+                raise SchedulerStop('"abort on stall timeout" is set')
 
     def check_workflow_inactive(self):
         """Check if workflow is inactive or not."""
