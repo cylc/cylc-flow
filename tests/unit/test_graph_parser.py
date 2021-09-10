@@ -290,7 +290,7 @@ b => c"""
             foo => bar"""
         ],
         [
-            "foo:finished? => bar",  # finish trigger
+            "foo:finished => bar",  # finish trigger
             "(foo:succeed? | foo:fail?) => bar"
         ],
         [
@@ -346,7 +346,7 @@ def test_trigger_equivalence(graph1, graph2):
         ],
         [
             {'FAM': ['m1', 'm2']},
-            "FAM:finish-all? => post",
+            "FAM:finish-all => post",
             "((m1? | m1:fail?) & (m2? | m2:fail?)) => post"
         ]
     ]
@@ -578,7 +578,7 @@ def test_task_optional_outputs():
 
         x:fail? => y
 
-        foo:finish? => bar
+        foo:finish => bar
         """
     )
     for i in range(1, 4):
@@ -713,8 +713,8 @@ def test_family_trigger_errors(graph, error):
             ("must both be optional if both are used"),
         ],
         [
-            "a:finish => b",
-            "Pseudo-output a:finished must be optional",
+            "a:finish? => b",
+            "Pseudo-output a:finished can't be optional",
         ],
     ]
 )

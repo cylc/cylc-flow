@@ -12,7 +12,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = "OPS:finish-all? => VAR"
+        R1 = "OPS:finish-all => VAR"
 
 [runtime]
     [[root]]

@@ -20,7 +20,7 @@
     final cycle point = 20110101T12
     [[graph]]
         T00,T12 = """
-           pre:finish? => model?  # finish trigger
+           pre:finish => model?  # finish trigger
            model:fail? => diagnose => recover # fail trigger
            model:succeed? | recover => post  # conditional and explicit success
         """

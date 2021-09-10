@@ -712,9 +712,11 @@ class GraphParser:
 
         if output == TASK_OUTPUT_FINISHED:
             # Interpret :finish pseudo-output
-            if not optional:
+            if optional:
                 raise GraphParseError(
-                    f"Pseudo-output {name}:{output} must be optional")
+                    f"Pseudo-output {name}:{output} can't be optional")
+            # But implicit optional for the real succeed/fail outputs.
+            optional = True
             for outp in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
                 self._set_output_opt(
                     name, outp, optional, suicide, fam_member)
@@ -834,11 +836,13 @@ class GraphParser:
                     # (Plain family name on RHS).
                     # Make implicit success explicit.
                     output = self.__class__.QUAL_FAM_SUCCEED_ALL
-                else:
-                    if not optional and output.startswith("finish"):
+                elif output.startswith("finish"):
+                    if optional:
                         raise GraphParseError(
-                            f"Family pseudo-output {name}:{output} must be"
+                            f"Family pseudo-output {name}:{output} can't be"
                             " optional")
+                    # But implicit optional for the real succeed/fail outputs.
+                    optional = True
                 try:
                     outputs = self.__class__.fam_to_mem_output_map[output]
                 except KeyError:
