@@ -192,8 +192,15 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
     """
     cmd = [vcs, *args]
     try:
-        proc = Popen(
-            cmd, cwd=cwd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
+        proc = Popen(  # nosec
+            cmd,
+            cwd=cwd,
+            stdin=DEVNULL,
+            stdout=PIPE,
+            stderr=PIPE,
+            text=True,
+        )
+        # commands are defined in constants at top of module
     except FileNotFoundError as exc:
         # This will only be raised if the VCS command is not installed,
         # otherwise Popen() will succeed with a non-zero return code

@@ -71,7 +71,9 @@ class ParsecValidator:
     # Parameterized names containing at least one comma.
     _REC_MULTI_PARAM = re.compile(r'<[\w]+,.*?>')
 
-    SELF_REFERENCE_PATTERNS = ['localhost', '127.0.0.1', '0.0.0.0']
+    SELF_REFERENCE_PATTERNS = ['localhost', '127.0.0.1', '0.0.0.0']  # nosec
+    # * these strings are used for validation purposes
+    # * they are not used for binding
 
     # Value type constants
     V_BOOLEAN = 'V_BOOLEAN'

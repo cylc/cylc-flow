@@ -70,6 +70,10 @@ jobs:
         run: |
           pytest tests/unit
 
+      - name: Bandit
+        run: |
+          bandit -r --ini .bandit cylc/flow
+
       - name: Integration Tests
         run: |
           pytest tests/integration

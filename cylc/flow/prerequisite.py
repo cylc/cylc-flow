@@ -174,7 +174,9 @@ class Prerequisite:
 
         """
         try:
-            res = eval(self.conditional_expression)
+            res = eval(self.conditional_expression)  # nosec
+            # * the expression is constructed internally
+            # * https://github.com/cylc/cylc-flow/issues/4403
         except (SyntaxError, ValueError) as exc:
             err_msg = str(exc)
             if str(exc).find("unexpected EOF") != -1:
