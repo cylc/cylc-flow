@@ -298,7 +298,7 @@ with Conf(
 
             Conf('abort if startup handler fails', VDR.V_BOOLEAN)
             Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
-            Conf('abort if timeout handler fails', VDR.V_BOOLEAN, desc='''
+            Conf('abort if workflow timeout handler fails', VDR.V_BOOLEAN, desc='''
                 .. versionchanged:: 8.0.0
 
                    Workflow timeout was previously implemented as a stall
