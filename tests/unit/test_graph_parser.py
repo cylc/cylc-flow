@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from types import SimpleNamespace
+import pytest
+from pytest import param
 import unittest
 
 from cylc.flow.exceptions import GraphParseError, ParamExpandError
@@ -82,24 +85,6 @@ class TestGraphParser(unittest.TestCase):
              'b': {'a:succeed': (['a:succeed'], False)}},
             triggers
         )
-        self.assertEqual({}, families)
-
-    def test_parse_graph_simple_with_break_line_01(self):
-        """Test parsing graphs."""
-        self.parser.parse_graph('a => b\n'
-                                '=> c')
-        original = self.parser.original
-        triggers = self.parser.triggers
-        families = self.parser.family_map
-
-        self.assertEqual({'': ''}, original['a'])
-        self.assertEqual({'a:succeed': 'a:succeed'}, original['b'])
-        self.assertEqual({'b:succeed': 'b:succeed'}, original['c'])
-
-        self.assertEqual({'': ([], False)}, triggers['a'])
-        self.assertEqual({'a:succeed': (['a:succeed'], False)}, triggers['b'])
-        self.assertEqual({'b:succeed': (['b:succeed'], False)}, triggers['c'])
-
         self.assertEqual({}, families)
 
     def test_parse_graph_simple_with_break_line_02(self):
@@ -508,6 +493,37 @@ class TestGraphParser(unittest.TestCase):
             }
         }
         self.assertEqual(gp.triggers, triggers)
+
+
+@pytest.mark.parametrize(
+    'graph, expect',
+    [
+        param(
+            'a => b\n=> c',
+            SimpleNamespace(
+                original={
+                    'c': {'b:succeed': 'b:succeed'},
+                    'b': {'a:succeed': 'a:succeed'},
+                    'a': {'': ''}
+                },
+                triggers={
+                    'c': {'b:succeed': (['b:succeed'], False)},
+                    'b': {'a:succeed': (['a:succeed'], False)},
+                    'a': {'': ([], False)}
+                },
+                families={}
+            ),
+            id='line break on =>'
+        )
+    ]
+)
+def test_parse_graph_simple_with_break_line_01(graph, expect):
+    """Test parsing graphs."""
+    parser = GraphParser()
+    parser.parse_graph(graph)
+    assert parser.original == expect.original
+    assert parser.triggers == expect.triggers
+    assert parser.family_map == expect.families
 
 
 if __name__ == "__main__":
