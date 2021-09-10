@@ -84,6 +84,9 @@ cli options.
 [#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
 (previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
 
+[#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
+now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
+
 ### Fixes
 
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
