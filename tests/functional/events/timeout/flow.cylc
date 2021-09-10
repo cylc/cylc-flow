@@ -3,8 +3,8 @@
 
 [scheduler]
     [[events]]
-        timeout = PT6S
-        abort on timeout = True
+        workflow timeout = PT6S
+        abort on workflow timeout = True
 
 [scheduling]
     [[graph]]

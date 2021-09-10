@@ -24,13 +24,14 @@ from optparse import Values
 import os
 from pathlib import Path
 from queue import Empty, Queue
+import re
 from shlex import quote
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List, Set
+from typing import Iterable, NoReturn, Optional, List, Set, Dict
 from uuid import uuid4
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
@@ -107,7 +108,7 @@ from cylc.flow.task_state import (
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.wallclock import (
     get_current_time_string,
-    get_seconds_as_interval_string,
+    get_seconds_as_interval_string as get_interval_str,
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -123,6 +124,44 @@ class SchedulerError(CylcError):
     pass
 
 
+class Timer:
+    """Simple timer class to use for various workflow timers.
+
+    """
+    def __init__(self, name, interval, log_reset_func=None):
+        """Initialize a timer."""
+        if log_reset_func is not None:
+            self.log_timer_reset = log_reset_func
+        else:
+            self.log_timer_reset = LOG.warning
+        self.name = re.sub('timeout', 'timer', name)
+        self.interval = get_interval_str(interval)
+        self.interval_float = interval
+        self.timeout = None
+
+    def reset(self):
+        """Start the timer now (by setting a concrete timeout value)."""
+        self.timeout = time() + self.interval_float
+        self.log_timer_reset(f"{self.interval} {self.name} timer starts NOW")
+
+    def stop(self):
+        """Stop the timer."""
+        if self.timeout is None:
+            return
+        LOG.warning(f"{self.name} timer stopped")
+
+    def timed_out(self):
+        """Return whether timed out yet."""
+        if (
+            self.timeout is not None and time() > self.timeout
+        ):
+            LOG.warning(f"{self.name} timed out after {self.interval}")
+            self.timeout = None
+            return True
+        else:
+            return False
+
+
 @dataclass
 class Scheduler:
     """Cylc scheduler server."""
@@ -130,7 +169,7 @@ class Scheduler:
     EVENT_STARTUP = WorkflowEventHandler.EVENT_STARTUP
     EVENT_SHUTDOWN = WorkflowEventHandler.EVENT_SHUTDOWN
     EVENT_ABORTED = WorkflowEventHandler.EVENT_ABORTED
-    EVENT_TIMEOUT = WorkflowEventHandler.EVENT_TIMEOUT
+    EVENT_WORKFLOW_TIMEOUT = WorkflowEventHandler.EVENT_WORKFLOW_TIMEOUT
     EVENT_STALL_TIMEOUT = WorkflowEventHandler.EVENT_STALL_TIMEOUT
     EVENT_INACTIVITY_TIMEOUT = WorkflowEventHandler.EVENT_INACTIVITY_TIMEOUT
     EVENT_STALL = WorkflowEventHandler.EVENT_STALL
@@ -236,16 +275,7 @@ class Scheduler:
     previous_profile_point: float = 0
     count: int = 0
 
-    # timeout:
-    workflow_timer_timeout: float = 0.0
-    stall_timer_timeout: float = 0.0
-    workflow_inactivity_timeout: float = 0.0
-    workflow_timer_active: bool = False
-    stall_timer_active: bool = False
-    already_inactive: bool = False
     time_next_kill: Optional[float] = None
-    workflow_already_timed_out: bool = False
-    stall_already_timed_out: bool = False
 
     def __init__(self, reg: str, options: Values) -> None:
         # flow information
@@ -270,6 +300,8 @@ class Scheduler:
 
         # create thread sync barrier for setup
         self.barrier = Barrier(3, timeout=10)
+
+        self.timers: Dict[str, Timer] = {}
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
@@ -476,20 +508,25 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_template_vars(self.template_vars)
         self.workflow_db_mgr.put_runtime_inheritance(self.config)
 
-        self.workflow_already_timed_out = False
-        self.set_workflow_timer()
-
-        # Inactivity setting
-        self.already_inactive = False
-        key = self.EVENT_INACTIVITY_TIMEOUT
+        # Create and set workflow timers.
+        event = self.EVENT_INACTIVITY_TIMEOUT
         if self.options.reftest:
-            self.config.cfg['scheduler']['events'][f'abort on {key}'] = True
-            if not self.config.cfg['scheduler']['events'][key]:
-                self.config.cfg['scheduler']['events'][key] = DurationFloat(
+            self.config.cfg['scheduler']['events'][f'abort on {event}'] = True
+            if not self.config.cfg['scheduler']['events'][event]:
+                self.config.cfg['scheduler']['events'][event] = DurationFloat(
                     180
                 )
-        if self._get_events_conf(key):
-            self.reset_inactivity_timer()
+        for event, start_now, log_reset_func in [
+            (self.EVENT_INACTIVITY_TIMEOUT, True, LOG.debug),
+            (self.EVENT_WORKFLOW_TIMEOUT, True, None),
+            (self.EVENT_STALL_TIMEOUT, False, None)
+        ]:
+            interval = self._get_events_conf(event)
+            if interval:
+                timer = Timer(event, interval, log_reset_func)
+                if start_now:
+                    timer.reset()
+                self.timers[event] = timer
 
         # Main loop plugins
         self.main_loop_plugins = main_loop.load(
@@ -983,41 +1020,6 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_params(self)
         self.is_updated = True
 
-    def set_workflow_timer(self):
-        """Set workflow's timeout timer."""
-        timeout = self._get_events_conf(self.EVENT_TIMEOUT)
-        if timeout is None:
-            return
-        self.workflow_timer_timeout = time() + timeout
-        LOG.warning(
-            "%s workflow timer starts NOW: %s",
-            get_seconds_as_interval_string(timeout),
-            get_current_time_string())
-        self.workflow_timer_active = True
-
-    def set_stall_timer(self):
-        """Set stall timeout timer."""
-        timeout = self._get_events_conf(self.EVENT_STALL_TIMEOUT)
-        if timeout is None:
-            return
-        self.stall_timer_timeout = time() + timeout
-        LOG.info(
-            "%s stall timer starts NOW: %s",
-            get_seconds_as_interval_string(timeout),
-            get_current_time_string())
-        self.stall_timer_active = True
-
-    def reset_inactivity_timer(self):
-        """Reset workflow inactivity timer."""
-        timeout = self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
-        if timeout is None:
-            return
-        self.workflow_inactivity_timeout = time() + timeout
-        LOG.debug(
-            "%s workflow inactivity timer starts NOW: %s",
-            get_seconds_as_interval_string(timeout),
-            get_current_time_string())
-
     def _configure_contact(self):
         """Create contact file."""
         # Make sure another workflow of the same name hasn't started while this
@@ -1214,7 +1216,7 @@ class Scheduler:
         if key not in self.template_vars:
             self.template_vars[key] = value
 
-    def run_event_handlers(self, event, reason):
+    def run_event_handlers(self, event, reason=""):
         """Run a workflow event handler.
 
         Run workflow events in simulation and dummy mode ONLY if enabled.
@@ -1291,11 +1293,14 @@ class Scheduler:
                     itask, self.task_events_mgr.EVENT_LATE, msg)
                 self.workflow_db_mgr.put_insert_task_late_flags(itask)
 
+    def reset_inactivity_timer(self):
+        """Reset inactivity timer - method passed to task event manager."""
+        with suppress(KeyError):
+            self.timers[self.EVENT_INACTIVITY_TIMEOUT].reset()
+
     def timeout_check(self):
         """Check workflow and task timers."""
         self.check_workflow_timers()
-        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
-            self.check_workflow_inactive()
         # check submission and execution timeout and polling timers
         if not self.config.run_mode('simulation'):
             self.task_job_mgr.check_task_jobs(self.workflow, self.pool)
@@ -1503,6 +1508,9 @@ class Scheduler:
             # Update state summary, database, and uifeed
             self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
             has_updated = await self.update_data_structure()
+            if has_updated:
+                # Workflow can't be stalled, so stop the stalled timer.
+                self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
             self.process_workflow_db_queue()
 
@@ -1570,65 +1578,18 @@ class Scheduler:
             self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
-            # Workflow can't be stalled, so stop the stalled timer.
-            if self.stall_timer_active:
-                self.stall_timer_active = False
-                LOG.info(
-                    "%s stall timer stopped: %s",
-                    get_seconds_as_interval_string(
-                        self._get_events_conf(self.EVENT_STALL_TIMEOUT)),
-                    get_current_time_string())
         return has_updated
 
     def check_workflow_timers(self):
-        """Check if workflow or stall timers have timed out."""
-        timeout = self._get_events_conf(self.EVENT_TIMEOUT)
-        if (
-            self.workflow_timer_active
-            and timeout is not None  # Note zero intervals are false-y
-            and not self.workflow_already_timed_out
-            and time() > self.workflow_timer_timeout
-        ):
-            self.workflow_already_timed_out = True
-            message = (
-                "workflow timed out after"
-                f" {get_seconds_as_interval_string(timeout)}"
-            )
-            LOG.warning(message)
-            self.run_event_handlers(self.EVENT_TIMEOUT, message)
-            if self._get_events_conf('abort on timeout'):
-                raise SchedulerStop('"abort on timeout" is set')
-
-        stall_timeout = self._get_events_conf(self.EVENT_STALL_TIMEOUT)
-        if (
-            self.stall_timer_active
-            and stall_timeout is not None
-            and not self.stall_already_timed_out
-            and time() > self.stall_timer_timeout
-        ):
-            self.stall_already_timed_out = True
-            message = (
-                f"timed out {get_seconds_as_interval_string(stall_timeout)}"
-                " after stall"
-            )
-            LOG.warning(message)
-            self.run_event_handlers(self.EVENT_STALL_TIMEOUT, message)
-            if self._get_events_conf('abort on stall timeout'):
-                raise SchedulerStop('"abort on stall timeout" is set')
-
-    def check_workflow_inactive(self):
-        """Check if workflow is inactive or not."""
-        if self.already_inactive:
-            return
-        if time() > self.workflow_inactivity_timeout:
-            self.already_inactive = True
-            message = 'timed out after %s of inactivity' % (
-                get_seconds_as_interval_string(
-                    self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)))
-            LOG.warning(message)
-            self.run_event_handlers(self.EVENT_INACTIVITY_TIMEOUT, message)
-            if self._get_events_conf('abort on inactivity timeout'):
-                raise SchedulerError('"abort on inactivity timeout" is set')
+        """Check timers, and abort or run event handlers as configured."""
+        for event, timer in self.timers.items():
+            if not timer.timed_out():
+                continue
+            abort_conf = f"abort on {event}"
+            if self._get_events_conf(abort_conf):
+                raise SchedulerStop(f'"{abort_conf}" is set')
+            if self._get_events_conf(f"{event} handler") is not None:
+                self.run_event_handlers(event)
 
     def check_workflow_stalled(self):
         """Check if workflow is stalled or not."""
@@ -1642,7 +1603,7 @@ class Scheduler:
             if self._get_events_conf('abort on stall'):
                 raise SchedulerError('"abort on stall" is set')
             # Start stall timeout timer
-            self.set_stall_timer()
+            self.timers[self.EVENT_STALL_TIMEOUT].reset()
         return self.is_stalled
 
     async def shutdown(self, reason: Exception) -> None:

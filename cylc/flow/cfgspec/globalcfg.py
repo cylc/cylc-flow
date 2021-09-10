@@ -74,32 +74,32 @@ EVENTS_DESCR = {
            This item was previously called ``aborted handler``.
         '''
     ),
-    'timeout': (
+    'workflow timeout': (
         '''
-        Workflow timeout interval. The timer starts counting down at
-        scheduler startup.
+        Workflow timeout interval. The timer starts counting down at scheduler
+        startup.
 
-        .. versionchanged:: 8.0.0
+        .. versionadded:: 8.0.0
 
-           Workflow timeout was previously implemented as a stall timeout.
-        '''
-    ),
-    'timeout handler': (
-        '''
-        Handler(s) to run if the scheduler times out.
-
-        .. versionchanged:: 8.0.0
-
-           Workflow timeout was previously implemented as a stall timeout.
+           Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
-    'abort on timeout': (
+    'workflow timeout handler': (
         '''
-        Whether to abort if the workflow times out.
+        Handler(s) to run if the workflow timer times out.
 
-        .. versionchanged:: 8.0.0
+        .. versionadded:: 8.0.0
 
-           Workflow timeout was previously implemented as a stall timeout.
+           Previously ``timeout`` functioned as a stall timeout.
+        '''
+    ),
+    'abort on workflow timeout': (
+        '''
+        Whether to abort if the workflow timer times out.
+
+        .. versionadded:: 8.0.0
+
+           Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
     'stall handler': (
@@ -126,9 +126,9 @@ EVENTS_DESCR = {
         Stall timeout interval. The timer starts counting down when the
         scheduler stalls.
 
-        .. versionchanged:: 8.0.0
+        .. versionadded:: 8.0.0
 
-           This item was previously called ``stalled timeout``.
+           Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
     'stall timeout handler': (
@@ -137,7 +137,7 @@ EVENTS_DESCR = {
 
         .. versionadded:: 8.0.0
 
-           This is how ``timeout handler`` previously behaved.
+           Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
     'abort on stall timeout': (
@@ -148,7 +148,7 @@ EVENTS_DESCR = {
 
         .. versionadded:: 8.0.0
 
-           This is how ``abort on timeout`` previously behaved.
+           Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
     'inactivity timeout': (
