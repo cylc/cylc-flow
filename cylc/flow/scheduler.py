@@ -1587,7 +1587,8 @@ class Scheduler:
                 continue
             abort_conf = f"abort on {event}"
             if self._get_events_conf(abort_conf):
-                raise SchedulerStop(f'"{abort_conf}" is set')
+                # "cylc play" needs to exit with error status here.
+                raise SchedulerError(f'"{abort_conf}" is set')
             if self._get_events_conf(f"{event} handler") is not None:
                 self.run_event_handlers(event)
 
