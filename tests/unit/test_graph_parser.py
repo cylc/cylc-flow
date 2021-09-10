@@ -514,6 +514,32 @@ class TestGraphParser(unittest.TestCase):
                 families={}
             ),
             id='line break on =>'
+        ),
+        param(
+            'a & b\n& c',
+            SimpleNamespace(
+                original={'b': {'': ''}, 'a': {'': ''}, 'c': {'': ''}},
+                triggers={
+                    'b': {'': ([], False)},
+                    'a': {'': ([], False)},
+                    'c': {'': ([], False)}
+                },
+                families={}
+            ),
+            id='line break on &'
+        ),
+        param(
+            'a | b\n| c',
+            SimpleNamespace(
+                original={'b': {'': ''}, 'c': {'': ''}, 'a': {'': ''}},
+                triggers={
+                    'b': {'': ([], False)},
+                    'c': {'': ([], False)},
+                    'a': {'': ([], False)}
+                },
+                families={}
+            ),
+            id='line break on |'
         )
     ]
 )
