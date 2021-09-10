@@ -27,7 +27,7 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
-grep_ok "WARNING - workflow timed out after PT6S" "${TEST_NAME}.stderr"
+grep_ok "WARNING - workflow timer timed out after PT6S" "${TEST_NAME}.stderr"
 grep_ok 'Workflow shutting down - "abort on workflow timeout" is set' \
   "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
