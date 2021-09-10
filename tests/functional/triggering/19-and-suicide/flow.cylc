@@ -3,7 +3,8 @@
 
 [scheduler]
     [[events]]
-        abort on stall = True
+        abort on stall timeout = True
+        stall timeout = PT0S
         expected task failures = t1.1
 [scheduling]
     [[graph]]

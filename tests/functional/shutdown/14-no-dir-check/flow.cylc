@@ -6,7 +6,8 @@
             interval = PT10S
 {% endif %}{# not GLOBALCFG is not defined #}
     [[events]]
-        abort on stall = False
+        abort on stall timeout = False
+        stall timeout = PT0S
         abort on stall timeout = True
         stall timeout = PT1M
 

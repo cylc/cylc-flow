@@ -1,7 +1,8 @@
 [scheduler]
     UTC mode = True # Ignore DST
     [[events]]
-        abort on stall = true
+        abort on stall timeout = True
+        stall timeout = PT0S
         expected task failures = bar.20100101T0000Z
 [scheduling]
     initial cycle point = 20100101T0000Z

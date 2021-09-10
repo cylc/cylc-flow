@@ -129,15 +129,8 @@
         <RegExpr attribute='Keyword' String=' allow implicit tasks '/>
         <RegExpr attribute='Keyword' String=' aborted handler '/>
         <RegExpr attribute='Keyword' String=' abort on workflow timeout '/>
-        <RegExpr attribute='Keyword' String=' abort on stall '/>
         <RegExpr attribute='Keyword' String=' abort on stall timeout'/>
         <RegExpr attribute='Keyword' String=' abort on inactivity timeout '/>
-        <RegExpr attribute='Keyword' String=' abort if workflow timeout handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if startup handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if stall handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if stall timeout handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if inactivity timeout handler fails '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>
         <RegExpr attribute='Keyword' String=' URL '/>
         <!--END_TAG_FOR_AUTO_UPDATE-->

@@ -24,7 +24,6 @@ from optparse import Values
 import os
 from pathlib import Path
 from queue import Empty, Queue
-import re
 from shlex import quote
 from subprocess import Popen, PIPE, DEVNULL
 import sys
@@ -134,7 +133,7 @@ class Timer:
             self.log_timer_reset = log_reset_func
         else:
             self.log_timer_reset = LOG.warning
-        self.name = re.sub('timeout', 'timer', name)
+        self.name = name.replace('timeout', 'timer')
         self.interval = get_interval_str(interval)
         self.interval_float = interval
         self.timeout = None
@@ -142,13 +141,13 @@ class Timer:
     def reset(self):
         """Start the timer now (by setting a concrete timeout value)."""
         self.timeout = time() + self.interval_float
-        self.log_timer_reset(f"{self.interval} {self.name} timer starts NOW")
+        self.log_timer_reset(f"{self.interval} {self.name} starts NOW")
 
     def stop(self):
         """Stop the timer."""
         if self.timeout is None:
             return
-        LOG.warning(f"{self.name} timer stopped")
+        LOG.warning(f"{self.name} stopped")
 
     def timed_out(self):
         """Return whether timed out yet."""
@@ -522,7 +521,7 @@ class Scheduler:
             (self.EVENT_STALL_TIMEOUT, False, None)
         ]:
             interval = self._get_events_conf(event)
-            if interval:
+            if interval is not None:
                 timer = Timer(event, interval, log_reset_func)
                 if start_now:
                     timer.reset()
@@ -1510,7 +1509,8 @@ class Scheduler:
             has_updated = await self.update_data_structure()
             if has_updated:
                 # Workflow can't be stalled, so stop the stalled timer.
-                self.timers[self.EVENT_STALL_TIMEOUT].stop()
+                with suppress(KeyError):
+                    self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
             self.process_workflow_db_queue()
 
@@ -1601,10 +1601,9 @@ class Scheduler:
         self.is_stalled = self.pool.is_stalled()
         if self.is_stalled:
             self.run_event_handlers(self.EVENT_STALL, 'workflow stalled')
-            if self._get_events_conf('abort on stall'):
-                raise SchedulerError('"abort on stall" is set')
-            # Start stall timeout timer
-            self.timers[self.EVENT_STALL_TIMEOUT].reset()
+            with suppress(KeyError):
+                # Start stall timeout timer
+                self.timers[self.EVENT_STALL_TIMEOUT].reset()
         return self.is_stalled
 
     async def shutdown(self, reason: Exception) -> None:
@@ -1751,7 +1750,6 @@ class Scheduler:
         self.pool.release_runahead_tasks()
 
         if self.check_workflow_stalled():
-            # Don't if stalled, unless "abort on stalled" is set.
             return False
 
         if any(

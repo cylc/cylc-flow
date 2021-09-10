@@ -358,6 +358,16 @@ grep_ok() {
     named_grep_ok "$(basename "${FILE}")-grep-ok" "$BRE" "$FILE" "$OPTS"
 }
 
+grep_workflow_log_ok() {
+    local TEST_NAME="$1"
+    shift
+    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/workflow/log"; then
+      ok "${TEST_NAME}"
+    else
+      fail "${TEST_NAME}"
+    fi
+}
+
 named_grep_ok() {
     # (Put extra grep options like '-E' at end of the command line)
     local NAME="$1"

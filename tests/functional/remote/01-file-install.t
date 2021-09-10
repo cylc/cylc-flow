@@ -119,7 +119,8 @@ init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
 [scheduler]
     install = dir1/, dir2/
     [[events]]
-        abort on stall = true
+        abort on stall timeout = true
+        stall timeout = PT0S
         abort on inactivity timeout = true
 
 [scheduling]

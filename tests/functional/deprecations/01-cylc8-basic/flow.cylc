@@ -19,15 +19,15 @@
         timeout =
         abort on timeout =
         timeout handler =
-        abort on stalled =
         inactivity =
         inactivity handler =
         aborted handler =
         stalled handler =
+        abort on stalled =
         abort on inactivity =
-        abort if inactivity handler fails =
-        abort if stalled handler fails =
         abort if timeout handler fails =
+        abort if stalled handler fails =
+        abort if inactivity handler fails =
     [[reference test]]
         allow task failures =
         live mode suite timeout =

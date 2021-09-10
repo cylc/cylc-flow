@@ -204,15 +204,8 @@
         <keyword>allow implicit tasks</keyword>
         <keyword>aborted handler</keyword>
         <keyword>abort on workflow timeout</keyword>
-        <keyword>abort on stall</keyword>
         <keyword>abort on stall timeout</keyword>
         <keyword>abort on inactivity timeout</keyword>
-        <keyword>abort if workflow timeout handler fails</keyword>
-        <keyword>abort if startup handler fails</keyword>
-        <keyword>abort if stall handler fails</keyword>
-        <keyword>abort if stall timeout handler fails</keyword>
-        <keyword>abort if shutdown handler fails</keyword>
-        <keyword>abort if inactivity timeout handler fails</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
         <!--END_TAG_FOR_AUTO_UPDATE-->
