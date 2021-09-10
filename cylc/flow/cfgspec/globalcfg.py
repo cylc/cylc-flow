@@ -111,16 +111,6 @@ EVENTS_DESCR = {
            This item was previously called ``stalled handler``.
         '''
     ),
-    'abort on stall': (
-        '''
-        Whether to abort if the scheduler stalls. This setting is equivalent
-        to ``abort on stall timeout`` with ``stall timeout = PT0S``.
-
-        .. versionchanged:: 8.0.0
-
-           This item was previously called ``abort on stalled``.
-        '''
-    ),
     'stall timeout': (
         '''
         Stall timeout interval. The timer starts counting down when the
@@ -142,9 +132,7 @@ EVENTS_DESCR = {
     ),
     'abort on stall timeout': (
         '''
-        Whether to abort if the stall timer times out. Note for immediate abort
-        on stall you can use ``abort on stall = True` instead of this setting
-        with a ``PT0S`` timeout.
+        Whether to abort if the stall timer times out.
 
         .. versionadded:: 8.0.0
 

@@ -2,7 +2,8 @@
     [[events]]
         inactivity timeout = PT30S
         abort on inactivity timeout = True
-        abort on stall = True
+        abort on stall timeout = True
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = foo

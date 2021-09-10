@@ -21,7 +21,6 @@ from shlex import quote
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import WorkflowEventError
 from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.log_diagnosis import run_reftest
 from cylc.flow.subprocctx import SubProcContext
@@ -159,8 +158,6 @@ class WorkflowEventHandler():
         for i, handler in enumerate(handlers):
             cmd_key = ('%s-%02d' % (self.WORKFLOW_EVENT_HANDLER, i), ctx.event)
             # Handler command may be a string for substitution
-            abort_on_error = self.get_events_conf(
-                config, 'abort if %s handler fails' % ctx.event)
             # BACK COMPAT: suite, suite_uuid are deprecated
             # url:
             #     https://github.com/cylc/cylc-flow/pull/4174
@@ -187,8 +184,6 @@ class WorkflowEventHandler():
             except KeyError as exc:
                 message = "%s bad template: %s" % (cmd_key, exc)
                 LOG.error(message)
-                if abort_on_error:
-                    raise WorkflowEventError(message)
                 continue
             if cmd == handler:
                 # Nothing substituted, assume classic interface
@@ -196,26 +191,23 @@ class WorkflowEventHandler():
                     handler, ctx.event, ctx.workflow, ctx.reason)
             proc_ctx = SubProcContext(
                 cmd_key, cmd, env=dict(os.environ), shell=True)
-            if abort_on_error or self.proc_pool.closed:
+            if self.proc_pool.closed:
                 # Run command in foreground if abort on failure is set or if
                 # process pool is closed
                 self.proc_pool.run_command(proc_ctx)
-                self._run_event_handlers_callback(
-                    proc_ctx, abort_on_error=abort_on_error)
+                self._run_event_handlers_callback(proc_ctx)
             else:
                 # Run command using process pool otherwise
                 self.proc_pool.put_command(
                     proc_ctx, callback=self._run_event_handlers_callback)
 
     @staticmethod
-    def _run_event_handlers_callback(proc_ctx, abort_on_error=False):
+    def _run_event_handlers_callback(proc_ctx):
         """Callback on completion of a workflow event handler."""
         if proc_ctx.ret_code:
             msg = '%s EVENT HANDLER FAILED' % proc_ctx.cmd_key[1]
             LOG.error(str(proc_ctx))
             LOG.error(msg)
-            if abort_on_error:
-                raise WorkflowEventError(msg)
         else:
             LOG.info(str(proc_ctx))
 

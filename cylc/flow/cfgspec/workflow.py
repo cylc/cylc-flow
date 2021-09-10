@@ -296,35 +296,6 @@ with Conf(
                 elif item.endswith("timeout"):
                     Conf(item, VDR.V_INTERVAL, desc=desc)
 
-            Conf('abort if startup handler fails', VDR.V_BOOLEAN)
-            Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
-            Conf('abort if workflow timeout handler fails', VDR.V_BOOLEAN, desc='''
-                .. versionchanged:: 8.0.0
-
-                   Workflow timeout was previously implemented as a stall
-                   timeout.
-            ''')
-            Conf('abort if inactivity timeout handler fails', VDR.V_BOOLEAN,
-                 desc='''
-                .. versionchanged:: 8.0.0
-
-                   This item was previously called
-                   ``abort if inactivity handler fails``
-            ''')
-            Conf('abort if stall handler fails', VDR.V_BOOLEAN, desc='''
-                .. versionchanged:: 8.0.0
-
-                   This item was previously called
-                   ``abort if stalled handler fails``
-            ''')
-            Conf('abort if stall timeout handler fails', VDR.V_BOOLEAN,
-                 desc='''
-                .. versionadded:: 8.0.0
-
-                   This is how ``abort if timeout handler fails`` previously
-                   behaved.
-            ''')
-
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
                 (For Cylc developers writing a functional tests only)
                 List of tasks that are expected to fail in the test.
@@ -1475,22 +1446,24 @@ def upg(cfg, descr):
         ('abort on timeout', 'abort on stall timeout'),
         ('timeout handler', 'stall timeout handler'),
         ('stalled handler', 'stall handler'),
-        ('abort on stalled', 'abort on stall'),
         ('inactivity', 'inactivity timeout'),
         ('inactivity handler', 'inactivity timeout handler'),
         ('aborted handler', 'abort handler'),
         ('abort on inactivity', 'abort on inactivity timeout'),
-        ('abort if inactivity handler fails',
-         'abort if inactivity timeout handler fails'),
-        ('abort if stalled handler fails', 'abort if stall handler fails'),
-        ('abort if timeout handler fails',
-         'abort if stall timeout handler fails'),
     ]:
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', old],
             ['cylc', 'events', new]
         )
+
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if startup handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if shutdown handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if timeout handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events',
+                         'abort if inactivity handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
 
     u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()

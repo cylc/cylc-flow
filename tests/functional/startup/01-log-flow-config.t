@@ -26,7 +26,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     description = the weather is {{WEATHER | default("bad")}}
 [scheduler]
     [[events]]
-        abort on stall = True
+        abort on stall timeout = True
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = reloader => whatever

@@ -1,7 +1,8 @@
 [scheduler]
     [[events]]
         abort on inactivity timeout = False
-        abort on stall = True
+        abort on stall timeout = True
+        stall timeout = PT0S
         inactivity timeout handler = cylc release --all '%(workflow)s'
         inactivity timeout = PT5S
 [scheduling]

@@ -2,7 +2,7 @@
 [scheduler]
     [[events]]
         abort on stall timeout = True
-        stall timeout = PT1S
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = "foo"

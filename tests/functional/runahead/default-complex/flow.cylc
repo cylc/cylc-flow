@@ -2,7 +2,8 @@
     UTC mode = True
     allow implicit tasks = True
     [[events]]
-        abort on stall = True
+        abort on stall timeout = True
+        stall timeout = PT0S
         stall timeout = PT30S
         abort on stall timeout = True
 [scheduling]

@@ -9,7 +9,8 @@
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        abort on stall = True
+        abort on stall timeout = True
+        stall timeout = PT0S
         abort on inactivity timeout = True
         inactivity timeout = PT3M
         expected task failures = bar.1, baz.1

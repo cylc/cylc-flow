@@ -10,8 +10,8 @@ Tasks
 
 [scheduler]
     [[events]]
-        abort on stall = true
-
+        abort on stall timeout = true
+        stall timeout = PT0S
 
 [scheduling]
     cycling mode = integer

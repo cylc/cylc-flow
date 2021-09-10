@@ -1,6 +1,7 @@
 [scheduler]
     [[events]]
-        abort on stall = True
+        abort on stall timeout = True
+        stall timeout = PT0S
         abort on inactivity timeout = True
         inactivity timeout = PT3M
 [scheduling]
