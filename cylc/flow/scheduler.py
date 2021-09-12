@@ -57,6 +57,7 @@ from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
     ReferenceLogFileHandler
 )
+from cylc.flow.timer import Timer
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
@@ -107,7 +108,6 @@ from cylc.flow.task_state import (
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.wallclock import (
     get_current_time_string,
-    get_seconds_as_interval_string as get_interval_str,
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -121,45 +121,6 @@ class SchedulerStop(CylcError):
 class SchedulerError(CylcError):
     """Scheduler expected error stop."""
     pass
-
-
-class Timer:
-    """Simple timer class to use for various workflow timers.
-
-    """
-    def __init__(self, name, interval, log_reset_func=None):
-        """Initialize a timer."""
-        if log_reset_func is not None:
-            self.log_timer_reset = log_reset_func
-        else:
-            self.log_timer_reset = LOG.warning
-        self.name = name.replace('timeout', 'timer')
-        self.interval = get_interval_str(interval)
-        self.interval_float = interval
-        self.timeout = None
-
-    def reset(self):
-        """Start the timer now (by setting a concrete timeout value)."""
-        self.timeout = time() + self.interval_float
-        self.log_timer_reset(f"{self.interval} {self.name} starts NOW")
-
-    def stop(self):
-        """Stop the timer."""
-        if self.timeout is None:
-            return
-        self.timeout = None
-        LOG.warning(f"{self.name} stopped")
-
-    def timed_out(self):
-        """Return whether timed out yet."""
-        if (
-            self.timeout is not None and time() > self.timeout
-        ):
-            LOG.warning(f"{self.name} timed out after {self.interval}")
-            self.timeout = None
-            return True
-        else:
-            return False
 
 
 @dataclass
