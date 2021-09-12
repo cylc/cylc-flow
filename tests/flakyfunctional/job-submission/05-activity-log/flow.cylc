@@ -16,7 +16,7 @@
             sleep 5 # Prevent the script to run to success before it is killed
         """
         [[[events]]]
-            failed handler = echo
+            failed handlers = echo
     [[t2]]
         script = """
             cylc kill "${CYLC_WORKFLOW_NAME}" 't1'

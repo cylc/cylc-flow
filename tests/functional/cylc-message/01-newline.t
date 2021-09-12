@@ -35,7 +35,7 @@ init_workflow "${TEST_NAME_BASE}" <<__FLOW__
             jumped over the lazy dog"
         """
         [[[events]]]
-            custom handler = echo %(message)s
+            custom handlers = echo %(message)s
 __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

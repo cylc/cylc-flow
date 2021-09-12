@@ -39,7 +39,7 @@ init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
     [[t1]]
         script = true
         [[[events]]]
-            succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" && echo
+            succeeded handlers = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" && echo
 __FLOW_CONFIG__
 cd "$WORKFLOW_RUN_DIR" || exit 1
 cat >'reference.log' <<'__REFLOG__'
@@ -75,7 +75,7 @@ init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
     [[t1]]
         script = true
         [[[events]]]
-            succeeded handler = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" >&2 && echo
+            succeeded handlers = cat "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" "${CYLC_REPO_DIR}/COPYING" >&2 && echo
 __FLOW_CONFIG__
 cd "${WORKFLOW_RUN_DIR}" || exit 1
 cat >'reference.log' <<'__REFLOG__'

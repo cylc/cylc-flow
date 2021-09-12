@@ -1093,7 +1093,7 @@ class TaskEventsManager():
 
     def _setup_custom_event_handlers(self, itask, event, message):
         """Set up custom task event handlers."""
-        handlers = self._get_events_conf(itask, f'{event} handler')
+        handlers = self._get_events_conf(itask, f'{event} handlers')
         if (handlers is None and
                 event in self._get_events_conf(itask, 'handler events', [])):
             handlers = self._get_events_conf(itask, 'handlers')

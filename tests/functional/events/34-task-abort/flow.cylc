@@ -14,6 +14,6 @@ cylc__job_abort "ERROR: rust never sleeps"
 echo TWO"""
         execution retry delays = PT0S
         [[[events]]]
-            failed handler = echo "!!!FAILED!!!" %(event)s %(id)s %(submit_num)s %(message)s
+            failed handlers = echo "!!!FAILED!!!" %(event)s %(id)s %(submit_num)s %(message)s
     [[handled]]
         script = true

@@ -18,7 +18,7 @@ cylc stop --now --now "${CYLC_WORKFLOW_NAME}"
 exit 1
 """
         [[[events]]]
-            started handler = sleep 10 && echo 'Hello %(id)s %(event)s'
-            succeeded handler = echo 'Well done %(id)s %(event)s'
+            started handlers = sleep 10 && echo 'Hello %(id)s %(event)s'
+            succeeded handlers = echo 'Well done %(id)s %(event)s'
     [[t2]]
         script = true

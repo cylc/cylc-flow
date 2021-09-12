@@ -29,7 +29,7 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
         abort on inactivity timeout = False
         abort on stall timeout = True
         stall timeout = PT0S
-        inactivity timeout handler = cylc play '%(workflow)s'
+        inactivity timeout handlers = cylc play '%(workflow)s'
         inactivity timeout = PT5S
 [scheduling]
     [[graph]]

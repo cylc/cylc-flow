@@ -11,6 +11,6 @@
     [[t1]]
         script = false
         [[[events]]]
-            failed handler = echo 'Unfortunately %(id)s %(event)s'
+            failed handlers = echo 'Unfortunately %(id)s %(event)s'
     [[t2]]
         script = true
