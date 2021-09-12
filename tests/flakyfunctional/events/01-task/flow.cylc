@@ -41,19 +41,19 @@
         [[[job]]]
             execution retry delays = PT3S
         [[[events]]]
-            succeeded handler = {{ HANDLER }}
-            warning handler = {{ HANDLER }}
-            critical handler = {{ HANDLER }}
-            retry handler = {{ HANDLER }}
+            succeeded handlers = {{ HANDLER }}
+            warning handlers = {{ HANDLER }}
+            critical handlers = {{ HANDLER }}
+            retry handlers = {{ HANDLER }}
             execution timeout = PT3S
-            execution timeout handler = {{ HANDLER }}
+            execution timeout handlers = {{ HANDLER }}
 
     [[bar]]
         # submission retry and submission failed
         platform = test platform
         [[[events]]]
-            submission failed handler = {{ HANDLER }}
-            submission retry handler = {{ HANDLER }}
+            submission failed handlers = {{ HANDLER }}
+            submission retry handlers = {{ HANDLER }}
         [[[job]]]
             submission retry delays = PT3S
      [[baz]]
@@ -68,8 +68,8 @@
         """
         script = false
         [[[events]]]
-            submitted handler = {{ HANDLER }}
-            started handler = {{ HANDLER }}
-            failed handler = {{ HANDLER }}
+            submitted handlers = {{ HANDLER }}
+            started handlers = {{ HANDLER }}
+            failed handlers = {{ HANDLER }}
             submission timeout = PT3S
-            submission timeout handler = {{ HANDLER }}
+            submission timeout handlers = {{ HANDLER }}

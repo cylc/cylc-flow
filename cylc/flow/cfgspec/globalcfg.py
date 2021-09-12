@@ -55,19 +55,29 @@ SYSPATH = [
 
 # Event config descriptions shared between global and workflow config.
 EVENTS_DESCR = {
-    'startup handler': (
+    'startup handlers': (
         '''
-        Handler(s) to run at scheduler startup.
+        Handlers to run at scheduler startup.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``startup handler``.
+
         '''
     ),
-    'shutdown handler': (
+    'shutdown handlers': (
         '''
-        Handler(s) to run at scheduler shutdown.
+        Handlers to run at scheduler shutdown.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``shutdown handler``.
+
         '''
     ),
-    'abort handler': (
+    'abort handlers': (
         '''
-        Handler(s) to run if the scheduler aborts.
+        Handlers to run if the scheduler aborts.
 
         .. versionchanged:: 8.0.0
 
@@ -84,9 +94,9 @@ EVENTS_DESCR = {
            Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
-    'workflow timeout handler': (
+    'workflow timeout handlers': (
         '''
-        Handler(s) to run if the workflow timer times out.
+        Handlers to run if the workflow timer times out.
 
         .. versionadded:: 8.0.0
 
@@ -102,9 +112,9 @@ EVENTS_DESCR = {
            Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
-    'stall handler': (
+    'stall handlers': (
         '''
-        Handler(s) to run if the scheduler stalls.
+        Handlers to run if the scheduler stalls.
 
         .. versionchanged:: 8.0.0
 
@@ -121,9 +131,9 @@ EVENTS_DESCR = {
            Previously ``timeout`` functioned as a stall timeout.
         '''
     ),
-    'stall timeout handler': (
+    'stall timeout handlers': (
         '''
-        Handler(s) to run if the stall timer times out.
+        Handlers to run if the stall timer times out.
 
         .. versionadded:: 8.0.0
 
@@ -149,9 +159,9 @@ EVENTS_DESCR = {
            This item was previously called ``inactivity``.
         '''
     ),
-    'inactivity timeout handler': (
+    'inactivity timeout handlers': (
         '''
-        Handler(s) to run if the inactivity timer times out.
+        Handlers to run if the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
 
@@ -417,7 +427,7 @@ with Conf('global.cylc', desc='''
             Conf('mail events', VDR.V_STRING_LIST)
 
             for item, desc in EVENTS_DESCR.items():
-                if item.endswith("handler"):
+                if item.endswith("handlers"):
                     Conf(item, VDR.V_STRING_LIST, desc=desc)
 
                 elif item.startswith("abort on"):

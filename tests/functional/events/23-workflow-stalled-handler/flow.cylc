@@ -1,7 +1,7 @@
 [scheduler]
     UTC mode = True # Ignore DST
     [[events]]
-        stall handler = cylc set-outputs %(workflow)s bar.1
+        stall handlers = cylc set-outputs %(workflow)s bar.1
         stall timeout = PT10S
         expected task failures = bar.1
 [scheduling]

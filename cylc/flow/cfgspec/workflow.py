@@ -289,7 +289,7 @@ with Conf(
             Conf('mail events', VDR.V_STRING_LIST, None)
 
             for item, desc in EVENTS_DESCR.items():
-                if item.endswith("handler"):
+                if item.endswith("handlers"):
                     Conf(item, VDR.V_STRING_LIST, desc=desc)
                 elif item.startswith("abort on"):
                     Conf(item, VDR.V_BOOLEAN, desc=desc)
@@ -882,7 +882,7 @@ with Conf(
                    [runtime]
                        [[root]]
                            [[[events]]]
-                               failed handler = """
+                               failed handlers = """
                                    send-help.sh \
                                        %(workflow_title)s \
                                        %(workflow_importance)s \
@@ -1146,21 +1146,21 @@ with Conf(
                     duration/interval, the *submission timeout* event
                     handler(s) will be called.
                 ''')
-                Conf('expired handler', VDR.V_STRING_LIST, None)
+                Conf('expired handlers', VDR.V_STRING_LIST, None)
                 Conf('late offset', VDR.V_INTERVAL, None)
-                Conf('late handler', VDR.V_STRING_LIST, None)
-                Conf('submitted handler', VDR.V_STRING_LIST, None)
-                Conf('started handler', VDR.V_STRING_LIST, None)
-                Conf('succeeded handler', VDR.V_STRING_LIST, None)
-                Conf('failed handler', VDR.V_STRING_LIST, None)
-                Conf('submission failed handler', VDR.V_STRING_LIST, None)
-                Conf('warning handler', VDR.V_STRING_LIST, None)
-                Conf('critical handler', VDR.V_STRING_LIST, None)
-                Conf('retry handler', VDR.V_STRING_LIST, None)
-                Conf('submission retry handler', VDR.V_STRING_LIST, None)
-                Conf('execution timeout handler', VDR.V_STRING_LIST, None)
-                Conf('submission timeout handler', VDR.V_STRING_LIST, None)
-                Conf('custom handler', VDR.V_STRING_LIST, None)
+                Conf('late handlers', VDR.V_STRING_LIST, None)
+                Conf('submitted handlers', VDR.V_STRING_LIST, None)
+                Conf('started handlers', VDR.V_STRING_LIST, None)
+                Conf('succeeded handlers', VDR.V_STRING_LIST, None)
+                Conf('failed handlers', VDR.V_STRING_LIST, None)
+                Conf('submission failed handlers', VDR.V_STRING_LIST, None)
+                Conf('warning handlers', VDR.V_STRING_LIST, None)
+                Conf('critical handlers', VDR.V_STRING_LIST, None)
+                Conf('retry handlers', VDR.V_STRING_LIST, None)
+                Conf('submission retry handlers', VDR.V_STRING_LIST, None)
+                Conf('execution timeout handlers', VDR.V_STRING_LIST, None)
+                Conf('submission timeout handlers', VDR.V_STRING_LIST, None)
+                Conf('custom handlers', VDR.V_STRING_LIST, None)
 
             with Conf('mail', desc='''
                 Settings for mail events.
@@ -1444,17 +1444,39 @@ def upg(cfg, descr):
     for old, new in [
         ('timeout', 'stall timeout'),
         ('abort on timeout', 'abort on stall timeout'),
-        ('timeout handler', 'stall timeout handler'),
-        ('stalled handler', 'stall handler'),
         ('inactivity', 'inactivity timeout'),
-        ('inactivity handler', 'inactivity timeout handler'),
-        ('aborted handler', 'abort handler'),
         ('abort on inactivity', 'abort on inactivity timeout'),
+        ('timeout handler', 'stall timeout handlers'),
+        ('stalled handler', 'stall handlers'),
+        ('aborted handler', 'abort handlers'),
+        ('inactivity handler', 'inactivity timeout handlers'),
     ]:
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', old],
             ['cylc', 'events', new]
+        )
+
+    for old in [
+        "expired handler",
+        "late handler",
+        "submitted handler",
+        "started handler",
+        "succeeded handler",
+        "failed handler",
+        "submission failed handler",
+        "warning handler",
+        "critical handler",
+        "retry handler",
+        "submission retry handler",
+        "execution timeout handler",
+        "submission timeout handler",
+        "custom handler"
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['runtime', '__MANY__', 'events', old],
+            ['runtime', '__MANY__', 'events', f"{old}s"]
         )
 
     u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])

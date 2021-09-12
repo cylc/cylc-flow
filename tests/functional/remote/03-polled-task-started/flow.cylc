@@ -23,8 +23,8 @@
     [[picard]]
         script = true
         [[[events]]]
-            started handler = echo "THERE ARE FOUR LIGHTS"
+            started handlers = echo "THERE ARE FOUR LIGHTS"
     [[janeway]]
         script = false
         [[[events]]]
-            started handler = echo "THERE'S COFFEE IN THAT NEBULA"
+            started handlers = echo "THERE'S COFFEE IN THAT NEBULA"
