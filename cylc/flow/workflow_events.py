@@ -148,7 +148,7 @@ class WorkflowEventHandler():
         # Look for event handlers
         # 1. Handlers for specific event
         # 2. General handlers
-        handlers = self.get_events_conf(config, '%s handler' % ctx.event)
+        handlers = self.get_events_conf(config, '%s handlers' % ctx.event)
         if not handlers and (
                 ctx.event in
                 self.get_events_conf(config, 'handler events', [])):

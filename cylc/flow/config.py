@@ -1410,7 +1410,7 @@ class WorkflowConfig:
                 )
                 for key, values in taskdef.rtconfig['events'].items():
                     if values and (
-                            key == 'handlers' or key.endswith(' handler')):
+                            key == 'handlers' or key.endswith(' handlers')):
                         for handler_template in values:
                             try:
                                 handler_template % handler_data
