@@ -1,0 +1,12 @@
+#!Jinja2
+[scheduler]
+    [[events]]
+        workflow timeout = PT1S
+        workflow timeout handlers = echo "That was quick!"
+        abort on workflow timeout = {{ABORT}}
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        script = sleep 10
