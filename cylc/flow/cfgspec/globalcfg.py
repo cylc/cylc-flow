@@ -53,6 +53,8 @@ SYSPATH = [
     '/usr/local/sbin'
 ]
 
+TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
+
 # Event config descriptions shared between global and workflow config.
 EVENTS_DESCR = {
     'startup handlers': (
@@ -85,31 +87,31 @@ EVENTS_DESCR = {
         '''
     ),
     'workflow timeout': (
-        '''
+        f'''
         Workflow timeout interval. The timer starts counting down at scheduler
-        startup.
+        startup. It resets on workflow restart.
 
         .. versionadded:: 8.0.0
 
-           Previously ``timeout`` functioned as a stall timeout.
+           {TIMEOUT_DESCR}
         '''
     ),
     'workflow timeout handlers': (
-        '''
+        f'''
         Handlers to run if the workflow timer times out.
 
         .. versionadded:: 8.0.0
 
-           Previously ``timeout`` functioned as a stall timeout.
+           {TIMEOUT_DESCR}
         '''
     ),
     'abort on workflow timeout': (
-        '''
+        f'''
         Whether to abort if the workflow timer times out.
 
         .. versionadded:: 8.0.0
 
-           Previously ``timeout`` functioned as a stall timeout.
+           {TIMEOUT_DESCR}
         '''
     ),
     'stall handlers': (
@@ -122,31 +124,35 @@ EVENTS_DESCR = {
         '''
     ),
     'stall timeout': (
-        '''
-        Stall timeout interval. The timer starts counting down when the
-        scheduler stalls.
+        f'''
+        Stall timeout interval. The timer starts counting down if the
+        scheduler stalls: if there are no tasks ready to run and no
+        unsatisifed external triggers, but the presence of incomplete
+        tasks or unsatisified prerequisites indicates that the workflow
+        did not run to completion). The stall timer turns off on any
+        post-stall task activity. It resets on restarting a stalled workflow.
 
         .. versionadded:: 8.0.0
 
-           Previously ``timeout`` functioned as a stall timeout.
+           {TIMEOUT_DESCR}
         '''
     ),
     'stall timeout handlers': (
-        '''
+        f'''
         Handlers to run if the stall timer times out.
 
         .. versionadded:: 8.0.0
 
-           Previously ``timeout`` functioned as a stall timeout.
+           {TIMEOUT_DESCR}
         '''
     ),
     'abort on stall timeout': (
-        '''
+        f'''
         Whether to abort if the stall timer times out.
 
         .. versionadded:: 8.0.0
 
-           Previously ``timeout`` functioned as a stall timeout.
+           {TIMEOUT_DESCR}
         '''
     ),
     'inactivity timeout': (

@@ -672,6 +672,8 @@ class Scheduler:
 
     def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
+        LOG.info("Restart from previous run")
+
         if self.options.startcp:
             self.config.start_point = TaskID.get_standardised_point(
                 self.options.startcp)
