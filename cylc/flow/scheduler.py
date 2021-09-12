@@ -147,6 +147,7 @@ class Timer:
         """Stop the timer."""
         if self.timeout is None:
             return
+        self.timeout = None
         LOG.warning(f"{self.name} stopped")
 
     def timed_out(self):
@@ -1589,7 +1590,7 @@ class Scheduler:
             if self._get_events_conf(abort_conf):
                 # "cylc play" needs to exit with error status here.
                 raise SchedulerError(f'"{abort_conf}" is set')
-            if self._get_events_conf(f"{event} handler") is not None:
+            if self._get_events_conf(f"{event} handlers") is not None:
                 self.run_event_handlers(event)
 
     def check_workflow_stalled(self):

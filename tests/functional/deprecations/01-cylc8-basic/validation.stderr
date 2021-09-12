@@ -32,12 +32,12 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission polling intervals]
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [runtime][foo, cat, dog][submission retry delays] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][timeout] -> [cylc][events][stall timeout] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][abort on timeout] -> [cylc][events][abort on stall timeout] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][timeout handler] -> [cylc][events][stall timeout handler] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][stalled handler] -> [cylc][events][stall handler] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][inactivity] -> [cylc][events][inactivity timeout] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][inactivity handler] -> [cylc][events][inactivity timeout handler] - value unchanged
-WARNING -  * (8.0.0) [cylc][events][aborted handler] -> [cylc][events][abort handler] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][abort on inactivity] -> [cylc][events][abort on inactivity timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][timeout handler] -> [cylc][events][stall timeout handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][stalled handler] -> [cylc][events][stall handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][aborted handler] -> [cylc][events][abort handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][inactivity handler] -> [cylc][events][inactivity timeout handlers] - value unchanged
 WARNING -  * (8.0.0) [cylc][events][abort on stalled] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][events][abort if timeout handler fails] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc][events][abort if inactivity handler fails] - DELETED (OBSOLETE)
