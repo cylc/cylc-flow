@@ -22,6 +22,8 @@ from cylc.flow.wallclock import (
     get_seconds_as_interval_string as get_interval_str
 )
 
+from typing import Callable, Optional
+
 
 class Timer:
     """Simple timer class for workflow timers.
@@ -72,7 +74,9 @@ class Timer:
 
     """
 
-    def __init__(self, name, interval, log_reset_func=None):
+    def __init__(
+        self, name: str, interval: float, log_reset_func: Callable = None
+    ) -> None:
         """Initialize a timer."""
         if log_reset_func is not None:
             self.log_timer_reset = log_reset_func
@@ -81,25 +85,23 @@ class Timer:
         self.name = name.replace('timeout', 'timer')
         self.interval = get_interval_str(interval)
         self.interval_float = interval
-        self.timeout = None
+        self.timeout: Optional[float] = None
 
-    def reset(self):
+    def reset(self) -> None:
         """Start the timer now (by setting a concrete timeout value)."""
         self.timeout = now() + self.interval_float
         self.log_timer_reset(f"{self.interval} {self.name} starts NOW")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the timer."""
         if self.timeout is None:
             return
         self.timeout = None
         LOG.warning(f"{self.name} stopped")
 
-    def timed_out(self):
+    def timed_out(self) -> bool:
         """Return whether timed out yet."""
-        if (
-            self.timeout is not None and now() > self.timeout
-        ):
+        if self.timeout is not None and now() > self.timeout:
             LOG.warning(f"{self.name} timed out after {self.interval}")
             self.timeout = None
             return True
