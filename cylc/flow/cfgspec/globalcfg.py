@@ -127,7 +127,7 @@ EVENTS_DESCR = {
         f'''
         Stall timeout interval. The timer starts counting down if the
         scheduler stalls: if there are no tasks ready to run and no
-        unsatisifed external triggers, but the presence of incomplete
+        unsatisfied external triggers, but the presence of incomplete
         tasks or unsatisified prerequisites indicates that the workflow
         did not run to completion). The stall timer turns off on any
         post-stall task activity. It resets on restarting a stalled workflow.

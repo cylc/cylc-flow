@@ -1007,7 +1007,7 @@ class TaskPool:
                 unsat[itask.identity].append(f"{name}.{point}:{output}")
         if unsat:
             LOG.warning(
-                "Partially satisfied prerequisites:\n"
+                "Unsatisfied prerequisites:\n"
                 + "\n".join(
                     f"  * {id_} is waiting on {others}"
                     for id_, others in unsat.items()
