@@ -60,7 +60,7 @@
 #         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE [$OPTS]
 #         Run "grep [$OPTS] -q -e PATTERN FILE".
-#     grep_workflow_log_ok PATTERN FILE [$OPTS]
+#     grep_workflow_log_ok TEST_NAME PATTERN [$OPTS]
 #         Run "grep [$OPTS] -q -e PATTERN <workflow-log>".
 #     named_grep_ok NAME PATTERN FILE [$OPTS]
 #         Run grep_ok with a custom test name.
