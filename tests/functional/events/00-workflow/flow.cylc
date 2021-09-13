@@ -1,14 +1,14 @@
 # test some workflow event handler hooks
 [scheduler]
    [[events]]
-       startup handler = echo HELLO STARTUP
+       startup handlers = echo HELLO STARTUP
        workflow timeout = PT2S
-       workflow timeout handler = echo HELLO TIMEOUT
+       workflow timeout handlers = echo HELLO TIMEOUT
        abort on workflow timeout = False
        inactivity timeout = PT3S
-       inactivity timeout handler = echo HELLO INACTIVITY
+       inactivity timeout handlers = echo HELLO INACTIVITY
        abort on inactivity timeout = False
-       shutdown handler = echo HELLO SHUTDOWN
+       shutdown handlers = echo HELLO SHUTDOWN
 [scheduling]
     [[graph]]
         R1 = "foo"
