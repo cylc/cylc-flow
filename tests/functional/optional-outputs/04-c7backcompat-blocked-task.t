@@ -14,23 +14,34 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
 
-# Check that partially satisfied prerequisites count toward runahead limit.
+# Cylc 7 stall backward compatibility, single parent case  
+
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 8
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+# It should now validate, with a deprecation message
+TEST_NAME="${TEST_NAME_BASE}-validate_as_c7"
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
+DEPR_MSG_1=$(python -c \
+  'from cylc.flow.workflow_files import SUITERC_DEPR_MSG; print(SUITERC_DEPR_MSG)')
+grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
+
+DEPR_MSG_2=$(python -c \
+  'from cylc.flow.config import WorkflowConfig as cfg; print(cfg.CYLC7_GRAPH_COMPAT_MSG);')
+grep_ok "${DEPR_MSG_2}" "${TEST_NAME}.stderr"
+
+# Should stall and abort with an unsatisfied prerequisite.
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play -n --reference-test --debug "${WORKFLOW_NAME}"
 
-LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
-grep_ok "Unsatisfied prerequisites" "${LOG}"
-grep_ok "bar\.1 is waiting on \['foo\.1:y'\]" "${LOG}"
-grep_ok "Workflow stalled" "${LOG}"
+grep_workflow_log_ok grep-1 "WARNING - Unsatisfied prerequisites"
+grep_workflow_log_ok grep-2 "Workflow stalled"
+grep_workflow_log_ok grep-3 "bar\.1 is waiting on \['foo\.1:x'\]"
+grep_workflow_log_ok grep-4 'Workflow shutting down \- "abort on stall timeout" is set'
 
 purge
 exit

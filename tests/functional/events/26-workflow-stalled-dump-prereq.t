@@ -33,7 +33,7 @@ grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
 grep_ok "bar.20100101T0000Z did not complete required outputs: \['succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Partially satisfied prerequisites:" \
+grep_ok "WARNING - Unsatisfied prerequisites:" \
     "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "foo.20100101T0600Z is waiting on \['bar.20100101T0000Z:succeeded'\]" \
