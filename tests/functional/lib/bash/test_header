@@ -791,7 +791,7 @@ create_test_global_config() {
     [scheduler]
         [[events]]
             inactivity timeout = PT5M
-            workflow timeout = PT5M
+            stall timeout = PT5M
             abort on inactivity timeout = true
             abort on workflow timeout = true
 __HERE__
