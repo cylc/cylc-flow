@@ -1446,6 +1446,8 @@ def upg(cfg, descr):
         ('abort on timeout', 'abort on stall timeout'),
         ('inactivity', 'inactivity timeout'),
         ('abort on inactivity', 'abort on inactivity timeout'),
+        ('startup handler', 'startup handlers'),
+        ('shutdown handler', 'shutdown handlers'),
         ('timeout handler', 'stall timeout handlers'),
         ('stalled handler', 'stall handlers'),
         ('aborted handler', 'abort handlers'),

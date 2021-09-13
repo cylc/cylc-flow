@@ -23,11 +23,15 @@
         inactivity handler =
         aborted handler =
         stalled handler =
+        startup handler =
+        shutdown handler =
         abort on stalled =
         abort on inactivity =
         abort if timeout handler fails =
         abort if stalled handler fails =
         abort if inactivity handler fails =
+        abort if startup handler fails =
+        abort if shutdown handler fails =
     [[reference test]]
         allow task failures =
         live mode suite timeout =

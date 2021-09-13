@@ -9,4 +9,9 @@
         R1 = foo
 [runtime]
     [[foo]]
-        script = sleep 10
+        script = """
+           cylc__job__poll_grep_workflow_log "workflow timer timed out"
+           if [[ "{{ABORT}}" == "True" ]]; then
+               cylc__job__poll_grep_workflow_log "Workflow shutting down"
+           fi
+        """
