@@ -1249,7 +1249,7 @@ class TaskPool:
                 )
                 if c_task is not None:
                     # already spawned
-                    return
+                    continue
                 # Spawn child only if itask.flow_nums is not empty.
                 c_task = self.spawn_task(c_name, c_point, itask.flow_nums)
                 if c_task is not None:
