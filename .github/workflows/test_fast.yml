@@ -17,6 +17,8 @@ jobs:
         include:
           - os: 'macos-latest'
             python-version: '3.7'
+    env:
+      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
 
     steps:
       - name: Checkout
@@ -62,15 +64,15 @@ jobs:
 
       - name: Doctests
         run: |
-          pytest --cov --cov-append -n 5 cylc/flow
+          pytest cylc/flow
 
       - name: Unit Tests
         run: |
-          pytest --cov --cov-append -n 5 tests/unit
+          pytest tests/unit
 
       - name: Integration Tests
         run: |
-          pytest --cov --cov-append -n 5 tests/integration
+          pytest tests/integration
 
       - name: Coverage report
         run: |
