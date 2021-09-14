@@ -1185,11 +1185,9 @@ class TaskEventsManager():
                 # fmt: on
                 cmd = handler % (handler_data)
             except KeyError as exc:
-                LOG.critical(
-                    itask.point, itask.tdef.name, itask.submit_num,
+                LOG.error(
                     f"{itask.point}/{itask.tdef.name}/{itask.submit_num:02d} "
-                    f"{key1} bad template: {exc}"
-                )
+                    f"{key1} bad template: {exc}")
                 continue
 
             if cmd == handler:
