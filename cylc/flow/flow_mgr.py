@@ -17,7 +17,7 @@
 """Manage flow counter and flow metadata."""
 
 from typing import Dict, Set, TYPE_CHECKING
-from datetime import datetime, timedelta
+import datetime
 
 from cylc.flow import LOG
 
@@ -38,8 +38,9 @@ class FlowMgr:
         """Increment flow counter, record flow metadata."""
         self.counter += 1
         # record start time to nearest second
-        now = datetime.now()
-        now_sec: str = str(now - timedelta(microseconds=now.microsecond))
+        now = datetime.datetime.now()
+        now_sec: str = str(
+            now - datetime.timedelta(microseconds=now.microsecond))
         self.flows[self.counter] = {
             "description": description,
             "start_time": now_sec
@@ -54,19 +55,22 @@ class FlowMgr:
             self.flows[self.counter]
         )
         self.db_mgr.put_workflow_params_1("flow_counter", self.counter)
-        self.dump_to_log()
         return self.counter
 
     def load_flows_db(self, flow_nums: Set[int]) -> None:
         """Load metadata for selected flows from DB - on restart."""
         self.flows = self.db_mgr.pri_dao.select_workflow_flows(flow_nums)
-        self.dump_to_log()
+        self._log()
 
-    def dump_to_log(self) -> None:
-        """Dump current flow info to log."""
-        for f in self.flows:
-            LOG.info(
-                f"flow: {f}: "
-                f"({self.flows[f]['description']}) "
-                f"{self.flows[f]['start_time']} "
+    def _log(self) -> None:
+        """Write current flow info to log."""
+        LOG.info(
+            "Flows:\n" + "\n".join(
+                (
+                    f"flow: {f} "
+                    f"({self.flows[f]['description']}) "
+                    f"{self.flows[f]['start_time']}"
+                )
+                for f in self.flows
             )
+        )

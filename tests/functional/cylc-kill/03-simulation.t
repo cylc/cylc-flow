@@ -31,7 +31,7 @@ cylc play --debug -m simulation "${WORKFLOW_NAME}" >/dev/null 2>&1
 poll_grep_workflow_log "foo.1 .* running" -E
 
 # kill it
-run_ok killer cylc kill $WORKFLOW_NAME foo.1
+run_ok killer cylc kill "${WORKFLOW_NAME}" foo.1
 
 # wait for shut down
 poll_grep_workflow_log "INFO - DONE"
