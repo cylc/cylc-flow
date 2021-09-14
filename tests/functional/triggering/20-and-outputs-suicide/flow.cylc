@@ -1,4 +1,3 @@
-# NOTE this is an explicit test of suicide triggers, not very useful under SoD?
 [scheduler]
     [[events]]
         abort on stall timeout = True

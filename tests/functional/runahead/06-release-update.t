@@ -32,10 +32,11 @@ poll_grep_workflow_log -E "bar\.${NEXT1} .* spawned"
 # sleep a little to allow the datastore to update (`cylc dump` sees the
 # datastore) TODO can we avoid this flaky sleep somehow?
 sleep 10
-cylc dump -t "${WORKFLOW_NAME}" | awk '{print $1 $2 $3}' >'log'
+# (gratuitous use of --flows for test coverage)
+cylc dump --flows -t "${WORKFLOW_NAME}" | awk '{print $1 $2 $3 $7}' >'log'
 cmp_ok 'log' - <<__END__
-bar,$NEXT1,waiting,
-foo,$NEXT1,waiting,
+bar,$NEXT1,waiting,[1]
+foo,$NEXT1,waiting,[1]
 __END__
 
 run_ok "${TEST_NAME_BASE}-stop" \
