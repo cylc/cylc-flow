@@ -1447,10 +1447,10 @@ class WorkflowStopMode(Enum):
     # * Graphene requires special enums.
     # * We only want to offer a subset of stop modes (REQUEST_* only).
 
-    Clean = StopMode.REQUEST_CLEAN
-    Kill = StopMode.REQUEST_KILL
-    Now = StopMode.REQUEST_NOW
-    NowNow = StopMode.REQUEST_NOW_NOW
+    Clean = StopMode.REQUEST_CLEAN.value
+    Kill = StopMode.REQUEST_KILL.value
+    Now = StopMode.REQUEST_NOW.value
+    NowNow = StopMode.REQUEST_NOW_NOW.value
 
     @property
     def description(self):
@@ -1724,7 +1724,7 @@ class Stop(Mutation):
     class Arguments:
         workflows = List(WorkflowID, required=True)
         mode = WorkflowStopMode(
-            default_value=WorkflowStopMode.Clean.value
+            default_value=WorkflowStopMode.Clean.name
         )
         cycle_point = CyclePoint(
             description='Stop after the workflow reaches this cycle.'
