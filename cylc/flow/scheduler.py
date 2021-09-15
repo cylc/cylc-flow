@@ -30,7 +30,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List, Set, Dict
+from typing import Iterable, NoReturn, Optional, List, Set, Dict, Union
 from uuid import uuid4
 
 import psutil
@@ -849,7 +849,7 @@ class Scheduler:
 
     def command_stop(
         self,
-        mode: 'StopMode',
+        mode: Union[str, 'StopMode'],
         cycle_point: Optional[str] = None,
         # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
         clock_time: Optional[str] = None,

@@ -21,7 +21,7 @@ from fnmatch import fnmatchcase
 import logging
 import queue
 from time import time
-from typing import Iterable, Optional, Tuple, TYPE_CHECKING
+from typing import Iterable, Optional, Tuple, TYPE_CHECKING, Union
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
@@ -735,7 +735,7 @@ class Resolvers(BaseResolvers):
 
     def stop(
         self,
-        mode: 'StopMode',
+        mode: Union[str, 'StopMode'],
         cycle_point: Optional[str] = None,
         clock_time: Optional[str] = None,
         task: Optional[str] = None,
