@@ -1448,10 +1448,10 @@ class WorkflowStopMode(Enum):
     # * Graphene requires special enums.
     # * We only want to offer a subset of stop modes (REQUEST_* only).
 
-    Clean = StopMode.REQUEST_CLEAN.value
-    Kill = StopMode.REQUEST_KILL.value
-    Now = StopMode.REQUEST_NOW.value
-    NowNow = StopMode.REQUEST_NOW_NOW.value
+    Clean = StopMode.REQUEST_CLEAN.value  # type: Enum
+    Kill = StopMode.REQUEST_KILL.value  # type: Enum
+    Now = StopMode.REQUEST_NOW.value  # type: Enum
+    NowNow = StopMode.REQUEST_NOW_NOW.value  # type: Enum
 
     @property
     def description(self):
