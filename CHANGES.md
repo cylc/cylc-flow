@@ -172,9 +172,6 @@ Add an option for displaying source workflows in `cylc scan`.
 [#4300](https://github.com/cylc/cylc-flow/pull/4300) - Integer flow labels with
 flow metadata, and improved task logging.
 
-[#4291](https://github.com/cylc/cylc-flow/pull/4291)
- - Remove obsolete `cylc edit` and `cylc search` commands.
-
 [#4291](https://github.com/cylc/cylc-flow/pull/4291) -
 Remove obsolete `cylc edit` and `cylc search` commands.
 
