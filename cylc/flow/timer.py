@@ -30,8 +30,12 @@ class Timer:
 
     Examples:
         >>> from time import sleep
+
+        # Patch LOG.warning to capture warning messages
         >>> warnings = []
+        >>> orig_log_warning = LOG.warning
         >>> LOG.warning = lambda msg: warnings.append(msg)
+
         >>> timer = Timer("bob timeout", 1.0)
 
         # timer attributes
@@ -72,6 +76,8 @@ class Timer:
         >>> warnings
         []
 
+        # Un-patch LOG.warning to avoid breaking subsequent unit tests!
+        >>> LOG.warning = orig_log_warning
     """
 
     def __init__(
