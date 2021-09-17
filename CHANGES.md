@@ -58,7 +58,6 @@ Fourth beta release of Cylc 8.
 
 ### Enhancements
 
-
 [#4367](https://github.com/cylc/cylc-flow/pull/4367) -
 Make the central wrapper work with arbitrary virtual environment names.
 
@@ -167,9 +166,6 @@ for choosing to only clean on the local filesystem or remote install targets
 respectively.
 
 ### Fixes
-
-[#4319](https://github.com/cylc/cylc-flow/pull/4319) -
-Update cylc reinstall to skip cylc dirs work and share #4319
 
 [#4296](https://github.com/cylc/cylc-flow/pull/4296) -
 Patches DNS issues with newer versions of Mac OS.
