@@ -19,18 +19,19 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 10
+set_test_number 8
 
-for GRAPH in 't1 => & t2' 't1 => t2 &' '& t1 => t2' 't1 & => t2' 't1 => => t2'
+for GRAPH in 't1 => & t2' '& t1 => t2' 't1 & => t2' 't1 => => t2'
 do
     cat >'flow.cylc' <<__FLOW_CONFIG__
 [scheduling]
     [[graph]]
         R1 = ${GRAPH}
 __FLOW_CONFIG__
-    run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+    TEST_NAME="${TEST_NAME_BASE}-\"${GRAPH}\""
+    run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
     grep_ok 'GraphParseError: null task name in graph: ' \
-        "${TEST_NAME_BASE}.stderr"
+        "${TEST_NAME}.stderr"
 done
 
 exit

@@ -226,10 +226,13 @@ class GraphParser:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
                 next_line = ''
-                if this_line.endswith(ARROW):
-                    # Last line can't end with an arrow.
-                    raise GraphParseError(
-                        "trailing arrow: %s" % this_line)
+                for seq in self.CONTINUATION_STRS:
+                    if this_line.endswith(seq):
+                        # Last line can't end with an arrow, & or |.
+                        raise GraphParseError(
+                            f"Trailing continuation sequence ({seq}):"
+                            f"{this_line}"
+                        )
             part_lines.append(this_line)
             if (any(
                 this_line.endswith(seq) or next_line.startswith(seq) for

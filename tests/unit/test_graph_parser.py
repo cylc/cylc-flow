@@ -552,5 +552,16 @@ def test_parse_graph_simple_with_break_line_01(graph, expect):
     assert parser.family_map == expect.families
 
 
+@pytest.mark.parametrize(
+    'expect', ('&', '|', '=>')
+)
+def test_parse_graph_fails_with_continuation_at_last_line(expect):
+    parser = GraphParser()
+    with pytest.raises(GraphParseError) as raised:
+        parser.parse_graph(f't1 => t2 {expect}')
+    assert isinstance(raised.value, GraphParseError)
+    assert f'Trailing continuation sequence ({expect})' in raised.value.args[0]
+
+
 if __name__ == "__main__":
     unittest.main()
