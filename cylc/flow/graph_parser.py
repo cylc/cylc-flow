@@ -17,6 +17,7 @@
 
 import re
 import contextlib
+from itertools import product
 
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.param_expand import GraphExpander
@@ -234,6 +235,22 @@ class GraphParser:
                             f"{this_line}"
                         )
             part_lines.append(this_line)
+
+            # Check that a continuation sequence doesn't end this line and
+            # begin the next:
+            for sequences in product(self.CONTINUATION_STRS, repeat=2):
+                if (
+                    this_line.endswith(sequences[0])
+                    and next_line.startswith(sequences[1])
+                ):
+                    raise GraphParseError(
+                        'Consecutive lines end and start with continuation '
+                        'sequence:\n'
+                        f'{this_line}\n'
+                        f'{next_line}'
+                    )
+
+            # Check that line ends with a valid continuation sequence:
             if (any(
                 this_line.endswith(seq) or next_line.startswith(seq) for
                 seq in self.CONTINUATION_STRS
@@ -242,6 +259,7 @@ class GraphParser:
                 seq in self.BAD_STRS
             ))):
                 continue
+
             full_line = ''.join(part_lines)
 
             # Record inter-workflow dependence and remove the marker notation.

@@ -556,11 +556,30 @@ def test_parse_graph_simple_with_break_line_01(graph, expect):
     'expect', ('&', '|', '=>')
 )
 def test_parse_graph_fails_with_continuation_at_last_line(expect):
+    """Fails if last line contains a continuation char.
+    """
     parser = GraphParser()
     with pytest.raises(GraphParseError) as raised:
         parser.parse_graph(f't1 => t2 {expect}')
     assert isinstance(raised.value, GraphParseError)
     assert f'Trailing continuation sequence ({expect})' in raised.value.args[0]
+
+
+from itertools import product
+
+@pytest.mark.parametrize(
+    'before, after',
+    product(['&', '|', '=>'], repeat=2)
+)
+def test_parse_graph_fails_with_too_many_continuations(before, after):
+    """Fails if one line ends with continuation char and the next line
+    _also_ starts with one.
+    """
+    parser = GraphParser()
+    with pytest.raises(GraphParseError) as raised:
+        parser.parse_graph(f'foo & bar {before}\n{after}baz')
+    assert isinstance(raised.value, GraphParseError)
+    assert 'Consecutive lines end and start' in raised.value.args[0]
 
 
 if __name__ == "__main__":
