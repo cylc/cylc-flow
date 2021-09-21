@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for the GraphParser."""
 
-from itertools import product
-from types import SimpleNamespace
-from pytest import param
-import unittest
-import pytest
 import logging
+import pytest
+import unittest
+from itertools import product
+from pytest import param
+from types import SimpleNamespace
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import GraphParseError, ParamExpandError
