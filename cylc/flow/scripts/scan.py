@@ -352,9 +352,10 @@ def _format_rich(flow, opts):
 
 
 def sort_function(flow):
-    if flow.get('status') == 'running':
-        state = 0
-    elif flow.get('status') == 'paused':
+    if (
+        flow.get('status') == 'running'
+        or flow.get('status') == 'paused'
+    ):
         state = 0
     elif flow.get('contact'):
         state = 2

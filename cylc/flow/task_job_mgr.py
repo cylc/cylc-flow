@@ -815,7 +815,7 @@ class TaskJobManager:
                 itask, INFO, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
                 jp_ctx.time_run_exit,
                 flag)
-        elif jp_ctx.run_status == 1:
+        elif ((jp_ctx.run_status == 1) or (jp_ctx.time_run)):
             # The job has terminated, but is still managed by job runner.
             # Some job runners may restart a job in this state, so don't
             # mark as failed yet.
@@ -831,10 +831,6 @@ class TaskJobManager:
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_FAILED, get_current_time_string(),
                 flag)
-        elif jp_ctx.time_run:
-            # The job has started, and is still managed by job runner
-            self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_STARTED, jp_ctx.time_run, flag)
         elif jp_ctx.job_runner_exit_polled == 1:
             # The job never ran, and no longer in job runner
             self.task_events_mgr.process_message(
