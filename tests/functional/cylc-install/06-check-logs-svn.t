@@ -47,7 +47,7 @@ touch "${WORKDIR1}/test_file_outside_workflow"
 svnadmin create "myrepo"
 svn import "${WORKDIR1}" "file:///${PWD}/myrepo/trunk" -m "foo"
 svn co "file:///${PWD}/myrepo/trunk" "${PWD}/elephant"
-cd "elephant"
+cd "elephant" || exit
 
 # Make changes since commit:
 echo "Inside workflow" > "${WORKFLOW}/test_file_in_workflow"
