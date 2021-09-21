@@ -625,14 +625,19 @@ class TaskPool:
         if next_point is not None:
             parent_points = itask.tdef.get_parent_points(next_point)
             n_task = None
-            if (not parent_points or
-                    all(x < self.config.start_point for x in parent_points)):
+            if (
+                (
+                    not parent_points
+                    or all(x < self.config.start_point for x in parent_points)
+                )
+                or
+                (
+                    itask.tdef.get_abs_triggers(next_point)
+                )
+            ):
                 # Auto-spawn next instance of tasks with no parents at the next
                 # point (or with all parents before the workflow start point).
-                n_task = self.get_or_spawn_task(
-                    itask.tdef.name, next_point, flow_label=itask.flow_label,
-                    parent_id=itask.identity)
-            elif itask.tdef.get_abs_triggers(next_point):
+                # or
                 # Auto-spawn (if needed) next absolute-triggered instances.
                 n_task = self.get_or_spawn_task(
                     itask.tdef.name, next_point,
