@@ -17,20 +17,20 @@
 
 #------------------------------------------------------------------------------
 # Test that we only log version control info on workflow.
-
 . "$(dirname "$0")/test_header"
 
-git --version || skip_all "git not installed"
+svn --version || skip_all "svn not installed"
 
 set_test_number 2
 
 WORKFLOW=$(date | md5sum | awk '{print $1}')
 RUN_DIR="${HOME}/cylc-run/${WORKFLOW}"
+WORKDIR1="${PWD}/workdir1"
 
 
 # Create a workflow in a subdirectory of the test tmpdir
-mkdir "${WORKFLOW}"
-cat > "${WORKFLOW}/flow.cylc" <<__HEREDOC__
+mkdir -p "${WORKDIR1}/${WORKFLOW}"
+cat > "${WORKDIR1}/${WORKFLOW}/flow.cylc" <<__HEREDOC__
 [scheduler]
 implicit tasks allowed = True
 [scheduling]
@@ -39,14 +39,15 @@ implicit tasks allowed = True
         R1 = foo
 __HEREDOC__
 
-# Touch some non-functional files
-touch "${WORKFLOW}/test_file_in_workflow"
-touch test_file_outside_workflow
+# Touch some non-functional files:
+touch "${WORKDIR1}/${WORKFLOW}/test_file_in_workflow"
+touch "${WORKDIR1}/test_file_outside_workflow"
 
-# Initialize PWD as a git repo
-git init .
-git add .
-git commit -m "commit 0"
+# Create an SVN repo:
+svnadmin create "myrepo"
+svn import "${WORKDIR1}" "file:///${PWD}/myrepo/trunk" -m "foo"
+svn co "file:///${PWD}/myrepo/trunk" "${PWD}/elephant"
+cd "elephant"
 
 # Make changes since commit:
 echo "Inside workflow" > "${WORKFLOW}/test_file_in_workflow"
