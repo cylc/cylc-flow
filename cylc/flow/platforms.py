@@ -88,10 +88,7 @@ def get_platform(
             get_platform() or platform_from_job_info(), but to the
             user these look the same.
     """
-    if (
-        task_conf is None or isinstance(task_conf, str)
-        or get_platform_deprecated_settings(task_conf) == []
-    ):
+    if task_conf is None or isinstance(task_conf, str):  # noqa: SIM 114
         # task_conf is a platform name, or get localhost if None
         return platform_from_name(task_conf)
 
@@ -109,19 +106,23 @@ def get_platform(
         return platform_from_name(task_conf['platform'])
 
     else:
-        # Need to calculate platform
-        task_job_section, task_remote_section = {}, {}
-        if 'job' in task_conf:
-            task_job_section = task_conf['job']
-        if 'remote' in task_conf:
-            task_remote_section = task_conf['remote']
-        return platform_from_name(
-            platform_from_job_info(
-                glbl_cfg(cached=False).get(['platforms']),
-                task_job_section,
-                task_remote_section
+        if get_platform_deprecated_settings(task_conf) == []:
+            # No deprecated items; platform is localhost
+            return platform_from_name()
+        else:
+            # Need to calculate platform
+            task_job_section, task_remote_section = {}, {}
+            if 'job' in task_conf:
+                task_job_section = task_conf['job']
+            if 'remote' in task_conf:
+                task_remote_section = task_conf['remote']
+            return platform_from_name(
+                platform_from_job_info(
+                    glbl_cfg(cached=False).get(['platforms']),
+                    task_job_section,
+                    task_remote_section
+                )
             )
-        )
 
 
 def platform_from_name(
