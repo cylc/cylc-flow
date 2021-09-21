@@ -3,9 +3,10 @@
 
 [scheduler]
     [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = PT3M
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT3M
 
 [scheduling]
     [[graph]]

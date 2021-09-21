@@ -23,6 +23,7 @@ import json
 from time import time
 from typing import Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple
 
+import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
@@ -38,7 +39,7 @@ from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
-    TASK_STATUSES_FAILURE,
+    TASK_STATUSES_FINAL,
     TASK_STATUS_WAITING,
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
@@ -149,6 +150,7 @@ class TaskPool:
     """Task pool of a workflow."""
 
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
+    SUICIDE_MSG = "suicide"
 
     def __init__(
         self,
@@ -263,14 +265,7 @@ class TaskPool:
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
 
-            # Register pool node reference data-store with ID_DELIM format
-            self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
-            # Create new data-store n-distance graph window about this task
-            self.data_store_mgr.increment_graph_window(itask)
-            self.data_store_mgr.delta_task_state(itask)
-            self.data_store_mgr.delta_task_held(itask)
-            self.data_store_mgr.delta_task_queued(itask)
-            self.data_store_mgr.delta_task_runahead(itask)
+            self.create_data_store_elements(itask)
 
         if is_new:
             # Add row to "task_states" table:
@@ -284,27 +279,41 @@ class TaskPool:
                 self.workflow_db_mgr.put_insert_task_outputs(itask)
         return itask
 
+    def create_data_store_elements(self, itask):
+        """Create the node window elements about given task proxy."""
+        # Register pool node reference data-store with ID_DELIM format
+        self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
+        # Create new data-store n-distance graph window about this task
+        self.data_store_mgr.increment_graph_window(itask)
+        self.data_store_mgr.delta_task_state(itask)
+        self.data_store_mgr.delta_task_held(itask)
+        self.data_store_mgr.delta_task_queued(itask)
+        self.data_store_mgr.delta_task_runahead(itask)
+
     def release_runahead_tasks(self):
-        """Release runahead tasks.
+        """Release runahead tasks to restrict active cycle points.
 
-        This serves to restrict the number of active cycle points.
+        Compute runahead limit, and release tasks if they are below the limit
+        point (and <= the stop point, if there is one).
 
-        Compute runahead limit, and release tasks to the main pool if they are
-        below that point (and <= the stop point, if there is a stop point).
+        Incomplete tasks and partially satisfied prerequisites are counted
+        toward the runahead limit, because they represent tasks that will
+        (or may, in the case of prerequisites) yet run at their cycle points.
+
+        Note runahead release can cause the task pool to change size because
+        we spawn parentless tasks on previous-instance release.
+
         Return True if any tasks released, else False.
 
         """
         if not self.main_pool:
-            # (At start-up, in case main pool doesn't exist yet)
+            # (At start-up main pool might not exist yet)
             return False
 
         released = False
 
-        # At restart all tasks are loaded as runahead-limited, but finished and
-        # manually-triggered ones (including --start-task) can be released
-        # immediately. Note runahead release can cause the task pool to change
-        # size because we spawn parentless tasks on previous-instance release.
-
+        # At restart all tasks are runahead-limited but finished and manually
+        # triggered tasks (incl. --start-task's) can be released immediately.
         for itask in (
             itask
             for itask in self.get_tasks()
@@ -321,13 +330,17 @@ class TaskPool:
 
         points = []
         for point, itasks in sorted(self.get_tasks_by_point().items()):
-            if points or any(
-                not itask.state(
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED,
-                    TASK_STATUS_EXPIRED
+            if (
+                points  # got the limit already so this point too
+                or any(
+                    not itask.state(
+                        TASK_STATUS_FAILED,
+                        TASK_STATUS_SUCCEEDED,
+                        TASK_STATUS_EXPIRED
+                    )
+                    or itask.state.outputs.is_incomplete()
+                    for itask in itasks
                 )
-                for itask in itasks
             ):
                 points.append(point)
 
@@ -634,15 +647,21 @@ class TaskPool:
         if reason:
             msg += " (%s)" % reason
 
+        if reason == self.__class__.SUICIDE_MSG:
+            log = LOG.critical
+        else:
+            log = LOG.debug
+
         try:
             del self.hidden_pool[itask.point][itask.identity]
         except KeyError:
             pass
         else:
-            # e.g. for suicide?
+            # e.g. for suicide of partially satisfied task
             self.hidden_pool_changed = True
             if not self.hidden_pool[itask.point]:
                 del self.hidden_pool[itask.point]
+            log(f"[{itask}] -{msg}")
             return
 
         try:
@@ -663,7 +682,7 @@ class TaskPool:
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
             self.workflow_db_mgr.put_update_task_state(itask)
-            LOG.debug("[%s] -%s", itask, msg)
+            log(f"[{itask}] -{msg}")
             del itask
 
     def get_all_tasks(self) -> List[TaskProxy]:
@@ -739,6 +758,13 @@ class TaskPool:
             self.data_store_mgr.delta_task_state(itask)
             self.data_store_mgr.delta_task_queued(itask)
             LOG.info(f"Queue released: {itask.identity}")
+
+            if cylc.flow.flags.cylc7_back_compat:
+                # Cylc 7 Back Compat: spawn downstream to cause Cylc 7 style
+                # stalls - with unsatisfied waiting tasks - even with single
+                # prerequisites (which result in incomplete tasks in Cylc 8).
+                self.spawn_on_all_outputs(itask)
+
         return released
 
     def get_min_point(self):
@@ -845,6 +871,8 @@ class TaskPool:
 
         # Now queue all tasks that are ready to run
         for itask in self.get_tasks():
+            # Recreate data store elements from main pool.
+            self.create_data_store_elements(itask)
             if itask.state.is_queued:
                 # Already queued
                 continue
@@ -854,11 +882,9 @@ class TaskPool:
             if itask.tdef.clocktrigger_offset is not None:
                 self.data_store_mgr.delta_task_clock_trigger(
                     itask, ready_check_items)
-
             if all(ready_check_items) and not itask.state.is_runahead:
                 self.queue_task(itask)
 
-        LOG.info("Reload completed.")
         self.do_reload = False
 
     def set_stop_point(self, stop_point):
@@ -942,72 +968,85 @@ class TaskPool:
             LOG.warning("%s/%s/%s: incomplete task event handler %s" % (
                 point, name, submit_num, key1))
 
-    def is_stalled(self):
-        """Return True if the workflow is stalled.
-
-        A workflow is stalled if it is not held and the active pool contains
-        only unhandled failed tasks and un-released runahead tasks.
-
-        """
-        self.release_runahead_tasks()
-        unhandled_failed = []
+    def log_incomplete_tasks(self):
+        """Log finished but incomplete tasks; return True if there any."""
+        incomplete = []
         for itask in self.get_tasks():
-            if itask.state(*TASK_STATUSES_FAILURE):
-                unhandled_failed.append(itask)
-            elif itask.state.is_runahead:
+            if not itask.state(*TASK_STATUSES_FINAL):
                 continue
-            else:
-                return False
-        if unhandled_failed:
+            outputs = itask.state.outputs.get_incomplete()
+            if outputs:
+                incomplete.append((itask.identity, outputs))
+
+        if incomplete:
             LOG.warning(
-                "Workflow stalled with unhandled failed tasks:\n"
+                "Incomplete tasks:\n"
                 + "\n".join(
-                    f"* {itask.identity} ({itask.state.status})"
-                    for itask in unhandled_failed
+                    f"  * {id_} did not complete required outputs: {outputs}"
+                    for id_, outputs in incomplete
+                )
+            )
+            return True
+        return False
+
+    def log_unsatisfied_prereqs(self):
+        """Log unsatisfied prerequisites in the hidden pool.
+
+        Return True if any, ignoring:
+            - prerequisites beyond the stop point
+            - dependence on tasks beyond the stop point
+            (can be caused by future triggers)
+        """
+        unsat = {}
+        for itask in self.get_hidden_tasks():
+            _, point = TaskID().split(itask.identity)
+            if get_point(point) > self.stop_point:
+                continue
+            for pre in itask.state.get_unsatisfied_prerequisites():
+                name, point, output = pre
+                if get_point(point) > self.stop_point:
+                    continue
+                if itask.identity not in unsat:
+                    unsat[itask.identity] = []
+                unsat[itask.identity].append(f"{name}.{point}:{output}")
+        if unsat:
+            LOG.warning(
+                "Unsatisfied prerequisites:\n"
+                + "\n".join(
+                    f"  * {id_} is waiting on {others}"
+                    for id_, others in unsat.items()
                 )
             )
             return True
         else:
             return False
 
-    def report_unmet_deps(self):
-        """Log unmet dependencies on stall or shutdown."""
-        prereqs_map = {}
-        for itask in self.get_hidden_tasks():
-            prereqs_map[itask.identity] = []
-            for prereq_str, is_met in itask.state.prerequisites_dump():
-                if not is_met:
-                    prereqs_map[itask.identity].append(prereq_str)
+    def is_stalled(self) -> bool:
+        """Return whether the workflow is stalled.
 
-        # prune tree to ignore items that are elsewhere in it
-        for id_, prereqs in list(prereqs_map.copy().items()):
-            if not prereqs:
-                # (tasks in runahead pool that are not unsatisfied)
-                del prereqs_map[id_]
-                continue
-            for prereq in prereqs:
-                prereq_strs = prereq.split()
-                if prereq_strs[0] == "LABEL:":
-                    unsatisfied_id = prereq_strs[3]
-                elif prereq_strs[0] == "CONDITION:":
-                    continue
-                else:
-                    unsatisfied_id = prereq_strs[0]
-                # Clear out tasks with dependencies on other waiting tasks
-                if unsatisfied_id in prereqs_map:
-                    del prereqs_map[id_]
-                    break
+        Is stalled if not paused and contains only:
+          - incomplete tasks
+          - partially satisfied prerequisites
+          - runahead-limited tasks (held back by the above)
+        """
+        if any(
+            itask.state(
+                *TASK_STATUSES_ACTIVE,
+                TASK_STATUS_PREPARING
+            ) or (
+                itask.state(TASK_STATUS_WAITING)
+                and not itask.state.is_runahead
+            ) for itask in self.get_tasks()
+        ):
+            return False
 
-        if prereqs_map:
-            LOG.warning(
-                "Partially satisfied prerequisites left over:\n"
-                + "\n".join(
-                    f"{id_} is waiting on:"
-                    + "\n".join(
-                        f"\n* {prereq}" for prereq in prereqs
-                    ) for id_, prereqs in prereqs_map.items()
-                )
-            )
+        incomplete = self.log_incomplete_tasks()
+        unsatisfied = self.log_unsatisfied_prereqs()
+        if incomplete or unsatisfied:
+            LOG.critical("Workflow stalled")
+            return True
+        else:
+            return False
 
     def hold_active_task(self, itask: TaskProxy) -> None:
         if itask.state.reset(is_held=True):
@@ -1127,7 +1166,7 @@ class TaskPool:
         return self.abort_task_failed
 
     def spawn_on_output(self, itask, output):
-        """Spawn and update children, remove parent if finished.
+        """Spawn and update itask's children, remove itask if finished.
 
         Also set a the abort-on-task-failed flag if necessary.
         If not itask.reflow update existing children but don't spawn them.
@@ -1179,8 +1218,10 @@ class TaskPool:
                     })
                     self.data_store_mgr.delta_task_prerequisite(t)
                 # Event-driven suicide.
-                if (c_task.state.suicide_prerequisites and
-                        c_task.state.suicide_prerequisites_all_satisfied()):
+                if (
+                    c_task.state.suicide_prerequisites and
+                    c_task.state.suicide_prerequisites_all_satisfied()
+                ):
                     suicide.append(c_task)
                 # Add child to the task pool, if not already there.
                 self.add_to_pool(c_task)
@@ -1192,17 +1233,53 @@ class TaskPool:
                     TASK_STATUS_RUNNING,
                     is_held=False):
                 LOG.warning(f'[{c_task}] -suiciding while active')
-            self.remove(c_task, 'SUICIDE')
+            self.remove(c_task, self.__class__.SUICIDE_MSG)
 
-        # Remove the parent task if finished.
-        if (output in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_EXPIRED]
-                or output == TASK_OUTPUT_FAILED and itask.failure_handled):
-            if itask.identity == self.stop_task_id:
-                self.stop_task_finished = True
-            self.remove(itask, 'finished')
+        # Remove the parent task if finished and complete.
+        if output in [
+            TASK_OUTPUT_SUCCEEDED,
+            TASK_OUTPUT_EXPIRED,
+            TASK_OUTPUT_FAILED
+        ]:
+            incomplete = itask.state.outputs.get_incomplete()
+            if incomplete:
+                # Retain as an incomplete task.
+                LOG.warning(
+                    f"[{itask}] did not complete required outputs:"
+                    f" {incomplete}"
+                )
+            else:
+                # Remove as completed.
+                self.remove(itask, 'finished')
+                if itask.identity == self.stop_task_id:
+                    self.stop_task_finished = True
 
-    def get_or_spawn_task(self, name, point, flow_label=None, reflow=True,
-                          parent_id=None):
+    def spawn_on_all_outputs(self, itask):
+        """Spawn on all of itask's outputs regardless of completion.
+
+        Do not set the associated prerequisites of spawned children satisfied.
+        Used in Cylc 7 Back Compat mode for pre-spawning waiting tasks.
+
+        """
+        for output in itask.state.outputs._by_message:
+            try:
+                children = itask.graph_children[output]
+            except KeyError:
+                continue
+
+            for c_name, c_point, _ in children:
+                c_task = self.get_or_spawn_task(
+                    c_name, c_point,
+                    flow_label=itask.flow_label,
+                    parent_id=itask.identity
+                )
+                if c_task is not None:
+                    # Add child to the task pool if not already there.
+                    self.add_to_pool(c_task)
+
+    def get_or_spawn_task(
+        self, name, point, flow_label=None, reflow=True, parent_id=None
+    ):
         """Return existing or spawned task, or None."""
         return (self.get_task(name, point, flow_label)
                 or self.spawn_task(name, point, flow_label, reflow, parent_id))
@@ -1227,7 +1304,7 @@ class TaskPool:
     def get_task_main(self, name, point, flow_label=None):
         """Return task proxy from main pool and merge flow label if found."""
         itask = self._get_task_by_id(TaskID.get(name, point))
-        if itask is not None:
+        if itask is not None and flow_label is not None:
             self._merge_flow_labels(itask, flow_label)
         return itask
 
@@ -1411,13 +1488,17 @@ class TaskPool:
     ) -> int:
         """Trigger matching tasks, with or without reflow.
 
+        Don't get a new flow label for existing task proxies (e.g. incomplete
+        tasks). These can flow on in the original flow if retriggered.
+
+        Otherwise generate a new flow label for a new task proxy, with or
+        without reflow.
+
         Queue the task if not queued, otherwise release it to run.
         """
-        # TODO check reflow from existing tasks - unless unhandled fail?
         n_warnings, task_items = self.match_taskdefs(items)
-        flow_label = self.flow_label_mgr.get_new_label()
         for name, point in task_items.keys():
-            itask = self.get_task_main(name, point, flow_label)
+            itask = self.get_task_main(name, point)
             if itask is not None:
                 # Already in pool: trigger and merge flow labels.
                 itask.is_manual_submit = True
@@ -1427,12 +1508,13 @@ class TaskPool:
                     self.data_store_mgr.delta_task_state(itask)
                 # (No need to set prerequisites satisfied here).
                 if not itask.state.is_queued:
-                    LOG.info("Force-trigger: queueing {itask.identity}")
+                    LOG.info(f"Force-trigger: queueing {itask.identity}")
                     self.queue_task(itask)
                 else:
                     self.task_queue_mgr.force_release_task(itask)
             else:
                 # Spawn with new flow label.
+                flow_label = self.flow_label_mgr.get_new_label()
                 itask = self.spawn_task(
                     name, point, flow_label, reflow=reflow)
                 itask.is_manual_submit = True
@@ -1591,6 +1673,27 @@ class TaskPool:
             itask.flow_label = self.flow_label_mgr.unmerge_labels(
                 to_prune, itask.flow_label)
         self.flow_label_mgr.make_avail(to_prune)
+
+    def log_task_pool(self):
+        """Log content of task and prerequisite pools in debug mode."""
+        if self.main_pool_list:
+            LOG.debug(
+                "Task pool:\n"
+                + "\n".join(
+                    f"* {itask} status={itask.state.status}"
+                    f" runahead={itask.state.is_runahead}"
+                    for itask in self.main_pool_list
+                )
+            )
+        if self.hidden_pool_list:
+            LOG.debug(
+                "Hidden pool:\n"
+                + "\n".join(
+                    f"* {itask} status={itask.state.status}"
+                    f" runahead={itask.state.is_runahead}"
+                    for itask in self.hidden_pool_list
+                )
+            )
 
     @staticmethod
     def _parse_task_item(

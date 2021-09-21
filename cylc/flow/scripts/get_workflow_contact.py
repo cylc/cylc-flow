@@ -38,7 +38,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', reg: str) -> None:
     """CLI for "cylc get-workflow-contact"."""
-    reg = parse_reg(reg)
+    reg, _ = parse_reg(reg)
     try:
         data = load_contact_file(reg)
     except ServiceFileError:

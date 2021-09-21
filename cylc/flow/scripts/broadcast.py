@@ -303,7 +303,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow: str) -> None:
     """Implement cylc broadcast."""
-    workflow = parse_reg(workflow)
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs: Dict[str, Any] = {

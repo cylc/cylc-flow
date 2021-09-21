@@ -3,13 +3,14 @@
 
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall timeout = True
+        stall timeout = PT0S
         expected task failures = t1.1
 [scheduling]
     [[graph]]
         R1 = """
-            t0:failed & t1:failed => !t2
-            t0 | t1 => t2
+            t0:fail? & t1:fail? => !t2
+            t0? | t1? => t2
         """
 [runtime]
     [[t0]]

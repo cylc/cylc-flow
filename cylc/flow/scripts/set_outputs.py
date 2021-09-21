@@ -69,7 +69,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', reg: str, *task_globs: str) -> None:
-    reg = parse_reg(reg)
+    reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
 
     mutation_kwargs = {

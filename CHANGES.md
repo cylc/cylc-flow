@@ -61,6 +61,9 @@ Fourth beta release of Cylc 8.
 [#4367](https://github.com/cylc/cylc-flow/pull/4367) -
 Make the central wrapper work with arbitrary virtual environment names.
 
+[#4343](https://github.com/cylc/cylc-flow/pull/4343) -
+Implement required and optional outputs with new graph notation.
+
 [#4324](https://github.com/cylc/cylc-flow/pull/4324) -
 Re-implement a basic form of the Cylc 7 `cylc graph` command for static
 graph visualisation.
@@ -105,6 +108,9 @@ if it points to the removed directory.
 
 [#4395](https://github.com/cylc/cylc-flow/pull/4362) -
 Fix ``cylc stop --kill`` which was not actually killing task jobs.
+
+[#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
+now works with relative paths.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__

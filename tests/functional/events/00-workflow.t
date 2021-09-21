@@ -15,18 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Validate and run the events/workflow test workflow
+
+# Test workflow event handlers
 . "$(dirname "$0")/test_header"
-set_test_number 2
-install_workflow "${TEST_NAME_BASE}" 'workflow'
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
-        -s "WORKFLOW_SRC_DIR='${TEST_DIR}/${WORKFLOW_NAME}'"
+set_test_number 6
+
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}" \
-        -s "WORKFLOW_SRC_DIR='${TEST_DIR}/${WORKFLOW_NAME}'"
+    cylc play --debug --no-detach "${WORKFLOW_NAME}" 
 
-for SUFFIX in '' '-shutdown' '-startup' '-timeout'; do
-    purge "${WORKFLOW_NAME}${SUFFIX}"
-done
-exit
+grep_workflow_log_ok grep-startup "HELLO STARTUP"
+grep_workflow_log_ok grep-timeout "HELLO TIMEOUT"
+grep_workflow_log_ok grep-inactivity "HELLO INACTIVITY"
+grep_workflow_log_ok grep-shutdown "HELLO SHUTDOWN"

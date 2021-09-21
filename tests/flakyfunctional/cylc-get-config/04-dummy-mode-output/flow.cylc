@@ -4,14 +4,15 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = PT3M
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT3M
 [scheduling]
     initial cycle point = 2000
     final cycle point = 2000
     [[graph]]
-        P1Y = "foo:meet & bar:greet => baz"
+        P1Y = "foo:meet? & bar:greet? => baz"
 [runtime]
     [[root]]
         script = true

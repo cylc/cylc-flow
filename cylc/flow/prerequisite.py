@@ -179,30 +179,6 @@ class Prerequisite:
                 self._all_satisfied = self._conditional_is_satisfied()
         return relevant_messages
 
-    def dump(self):
-        """ Return an array of strings representing each message and its state.
-        """
-        res = []
-        if self.conditional_expression:
-            temp = self.get_raw_conditional_expression()
-            messages = []
-            num_length = math.ceil(len(self.satisfied) / 10)
-            for ind, message_tuple in enumerate(sorted(self.satisfied)):
-                message = self.MESSAGE_TEMPLATE % message_tuple
-                char = '%.{0}d'.format(num_length) % ind
-                messages.append(['\t%s = %s' % (char, message),
-                                 bool(self.satisfied[message_tuple])])
-                temp = temp.replace(message, char)
-            temp = temp.replace('|', ' | ')
-            temp = temp.replace('&', ' & ')
-            res.append([temp, self.is_satisfied()])
-            res.extend(messages)
-        elif self.satisfied:
-            for message, val in self.satisfied.items():
-                res.append([self.MESSAGE_TEMPLATE % message, val])
-        # (Else trigger wiped out by pre-initial simplification.)
-        return res
-
     def api_dump(self, workflow_id):
         """Return list of populated Protobuf data objects."""
         if not self.satisfied:

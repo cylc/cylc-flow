@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test workflow event handler, dump unmet prereqs on stall
 . "$(dirname "$0")/test_header"
-set_test_number 8
+set_test_number 7
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
@@ -26,18 +26,17 @@ run_ok "${TEST_NAME_BASE}-validate" \
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-grep_ok "Abort on workflow stalled is set" "${TEST_NAME_BASE}-run.stderr"
+grep_ok '"abort on stall timeout" is set' "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Workflow stalled with unhandled failed tasks:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* bar.20100101T0000Z (failed)" \
+grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
+
+grep_ok "bar.20100101T0000Z did not complete required outputs: \['succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Partially satisfied prerequisites left over:" \
+grep_ok "WARNING - Unsatisfied prerequisites:" \
     "${TEST_NAME_BASE}-run.stderr"
-grep_ok "foo.20100101T0600Z is waiting on:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "\* bar.20100101T0000Z succeeded" \
+
+grep_ok "foo.20100101T0600Z is waiting on \['bar.20100101T0000Z:succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge

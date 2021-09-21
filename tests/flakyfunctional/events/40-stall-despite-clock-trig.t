@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_fail "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-grep_ok "workflow stalled" "${TEST_NAME}.stderr"
+grep_ok "Workflow stalled" "${TEST_NAME}.stderr"
 
 purge
 exit

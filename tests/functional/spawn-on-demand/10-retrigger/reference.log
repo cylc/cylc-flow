@@ -1,0 +1,7 @@
+Initial point: 1
+Final point: 1
+[foo.1] -triggered off []
+[oops.1] -triggered off ['foo.1']
+[triggerer.1] -triggered off ['foo.1']
+[oops.1] -triggered off ['foo.1']
+[bar.1] -triggered off ['oops.1']

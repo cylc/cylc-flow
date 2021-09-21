@@ -4,10 +4,10 @@
 [scheduling]
     [[graph]]
         R1 = """
-            a | b => c & d
-            c | d => e
-            b:failed => !b
-            c:failed => !c
+            a | b? => c? & d
+            c? | d => e
+            b:failed? => !b
+            c:failed? => !c
         """
 [runtime]
     [[b,c]]

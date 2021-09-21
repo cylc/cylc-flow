@@ -2,7 +2,8 @@
 #
 [scheduler]
    [[events]]
-       abort on stalled = True
+       abort on stall timeout = True
+       stall timeout = PT0S
 
 [scheduling]
     cycling mode = integer

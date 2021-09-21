@@ -30,6 +30,22 @@ WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution retry delays] -> [r
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][execution time limit] -> [runtime][foo, cat, dog][execution time limit] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission polling intervals] -> [runtime][foo, cat, dog][submission polling intervals] - value unchanged
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][job][submission retry delays] -> [runtime][foo, cat, dog][submission retry delays] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][timeout] -> [cylc][events][stall timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort on timeout] -> [cylc][events][abort on stall timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][inactivity] -> [cylc][events][inactivity timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort on inactivity] -> [cylc][events][abort on inactivity timeout] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][startup handler] -> [cylc][events][startup handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][shutdown handler] -> [cylc][events][shutdown handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][timeout handler] -> [cylc][events][stall timeout handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][stalled handler] -> [cylc][events][stall handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][aborted handler] -> [cylc][events][abort handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][inactivity handler] -> [cylc][events][inactivity timeout handlers] - value unchanged
+WARNING -  * (8.0.0) [cylc][events][abort on stalled] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events][abort if startup handler fails] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events][abort if shutdown handler fails] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events][abort if timeout handler fails] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events][abort if inactivity handler fails] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc][events][abort if stalled handler fails] - DELETED (OBSOLETE)
 WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged
 WARNING - deprecated graph items were automatically upgraded in "workflow definition":
 	 * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:

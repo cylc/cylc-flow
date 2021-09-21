@@ -30,7 +30,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-simple-1" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-simple-1.stderr" <<'__ERR__'
-WorkflowConfigError: self-edge detected: a:succeed => a
+WorkflowConfigError: self-edge detected: a:succeeded => a
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -60,7 +60,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-simple-fam" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-simple-fam.stderr" <<'__ERR__'
-WorkflowConfigError: self-edge detected: f:succeed => f
+WorkflowConfigError: self-edge detected: f:succeeded => f
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'

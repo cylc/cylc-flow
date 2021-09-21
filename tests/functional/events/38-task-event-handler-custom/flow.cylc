@@ -10,7 +10,7 @@
     [[root]]
         script = true
         [[[events]]]
-            custom handler = echo !!CUSTOM!! %(name)s.%(point)s %(fish)s %(message)s
+            custom handlers = echo !!CUSTOM!! %(name)s.%(point)s %(fish)s %(message)s
         [[[meta]]]
             fish = trout
     [[foo]]

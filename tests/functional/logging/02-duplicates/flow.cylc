@@ -1,20 +1,21 @@
 [scheduler]
     [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = PT3M
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT3M
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
     [[graph]]
         R1/1 = """
-            foo:fail => bar
-            foo & bar => restart
+            foo:fail? => bar
+            foo? & bar => restart
         """
         R1/2 = """
-            restart[-P1] => foo
-            foo:fail => bar
-            foo & bar => pub
+            restart[-P1] => foo?
+            foo:fail? => bar
+            foo? & bar => pub
         """
 [runtime]
     [[foo]]

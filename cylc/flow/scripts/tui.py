@@ -85,7 +85,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', reg: str) -> None:
-    reg = parse_reg(reg)
+    reg, _ = parse_reg(reg)
     screen = None
     if options.display == 'html':
         TREE_EXPAND_DEPTH[0] = -1  # expand tree fully

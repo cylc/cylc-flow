@@ -1,7 +1,7 @@
 [scheduler]
     [[events]]
-        abort on timeout = True
-        timeout = PT1M
+        abort on stall timeout = True
+        stall timeout = PT1M
 
 [scheduling]
     [[graph]]
@@ -11,6 +11,6 @@
     [[t1]]
         script = false
         [[[events]]]
-            failed handler = echo 'Unfortunately %(id)s %(event)s'
+            failed handlers = echo 'Unfortunately %(id)s %(event)s'
     [[t2]]
         script = true

@@ -4,8 +4,8 @@
     allow implicit tasks = True
 [scheduling]
     [[graph]]
-        R1 = """foo:out1 => fish
-                foo:out2 => fowl
+        R1 = """foo:out1? => fish
+                foo:out2? => fowl
                 fish | fowl => done"""
 [runtime]
     [[foo]]

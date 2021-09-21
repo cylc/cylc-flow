@@ -1,0 +1,15 @@
+[meta]
+    description = This workflow is supposed to time out
+
+[scheduler]
+    [[events]]
+        stall timeout = PT6S
+        abort on stall timeout = True
+
+[scheduling]
+    [[graph]]
+        R1 = "foo"
+
+[runtime]
+    [[foo]]
+        script = false

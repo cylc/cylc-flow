@@ -67,7 +67,7 @@ def main(parser: COP, options: 'Values', reg: str, severity_str: str) -> None:
     except KeyError:
         parser.error("Illegal logging level, %s" % severity_str)
 
-    reg = parse_reg(reg)
+    reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
 
     mutation_kwargs = {

@@ -21,8 +21,8 @@
         <RegExpr attribute='Keyword' String=' user '/>
         <RegExpr attribute='Keyword' String=' to '/>
         <RegExpr attribute='Keyword' String=' title '/>
-        <RegExpr attribute='Keyword' String=' timeout handler '/>
-        <RegExpr attribute='Keyword' String=' timeout '/>
+        <RegExpr attribute='Keyword' String=' workflow timeout handler '/>
+        <RegExpr attribute='Keyword' String=' workflow timeout '/>
         <RegExpr attribute='Keyword' String=' time limit buffer '/>
         <RegExpr attribute='Keyword' String=' templates '/>
         <RegExpr attribute='Keyword' String=' task parameters '/>
@@ -38,7 +38,7 @@
         <RegExpr attribute='Keyword' String=' stop after cycle point '/>
         <RegExpr attribute='Keyword' String=' startup handler '/>
         <RegExpr attribute='Keyword' String=' started handler '/>
-        <RegExpr attribute='Keyword' String=' stalled handler '/>
+        <RegExpr attribute='Keyword' String=' stall handler '/>
         <RegExpr attribute='Keyword' String=' speedup factor '/>
         <RegExpr attribute='Keyword' String=' special tasks '/>
         <RegExpr attribute='Keyword' String=' simulation '/>
@@ -80,8 +80,8 @@
         <RegExpr attribute='Keyword' String=' init-script '/>
         <RegExpr attribute='Keyword' String=' inherit '/>
         <RegExpr attribute='Keyword' String=' include '/>
-        <RegExpr attribute='Keyword' String=' inactivity handler '/>
-        <RegExpr attribute='Keyword' String=' inactivity '/>
+        <RegExpr attribute='Keyword' String=' inactivity timeout handler '/>
+        <RegExpr attribute='Keyword' String=' inactivity timeout'/>
         <RegExpr attribute='Keyword' String=' host '/>
         <RegExpr attribute='Keyword' String=' hold after cycle point '/>
         <RegExpr attribute='Keyword' String=' handlers '/>
@@ -128,14 +128,9 @@
         <RegExpr attribute='Keyword' String=' batch submit command template '/>
         <RegExpr attribute='Keyword' String=' allow implicit tasks '/>
         <RegExpr attribute='Keyword' String=' aborted handler '/>
-        <RegExpr attribute='Keyword' String=' abort on timeout '/>
-        <RegExpr attribute='Keyword' String=' abort on stalled '/>
-        <RegExpr attribute='Keyword' String=' abort on inactivity '/>
-        <RegExpr attribute='Keyword' String=' abort if timeout handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if startup handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if stalled handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if shutdown handler fails '/>
-        <RegExpr attribute='Keyword' String=' abort if inactivity handler fails '/>
+        <RegExpr attribute='Keyword' String=' abort on workflow timeout '/>
+        <RegExpr attribute='Keyword' String=' abort on stall timeout'/>
+        <RegExpr attribute='Keyword' String=' abort on inactivity timeout '/>
         <RegExpr attribute='Keyword' String=' UTC mode '/>
         <RegExpr attribute='Keyword' String=' URL '/>
         <!--END_TAG_FOR_AUTO_UPDATE-->
