@@ -24,4 +24,3 @@ jobs:
             conda env create -f \
               conda-environment.yml \
               python==${{matrix.python}}
-          fi
