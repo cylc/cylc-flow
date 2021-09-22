@@ -1,9 +1,10 @@
 #!jinja2
 [scheduler]
     [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = P1M
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = P1M
 [scheduling]
     [[graph]]
         R1 = t1

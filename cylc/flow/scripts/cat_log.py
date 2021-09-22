@@ -353,7 +353,7 @@ def main(
             sys.exit(res)
         return
 
-    workflow_name = parse_reg(reg)
+    workflow_name, _ = parse_reg(reg)
     # Get long-format mode.
     try:
         mode = MODES[options.mode]

@@ -1,0 +1,22 @@
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+[scheduling]
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+                # Workflow should stall
+                # - Cylc 8: incomplete foo, bar
+                # - Cylc 7 back-compat mode: unsatisfied waiting baz
+                foo:x => baz
+                bar:x => baz
+            """
+[runtime]
+    [[FOOB]]
+        script = true
+        [[[outputs]]]
+            x = x
+    [[foo, bar]]
+        inherit = FOOB
+    [[baz]]

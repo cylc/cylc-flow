@@ -28,7 +28,7 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [runtime]
     [[foo]]
         [[[events]]]
-            started handler = \
+            started handlers = \
                echo "job_id = %(batch_sys_job_id)s; job_runner_name = %(batch_sys_name)s; workflow = %(suite)s; workflow_uuid = %(suite_uuid)s"
 __FLOW__
 

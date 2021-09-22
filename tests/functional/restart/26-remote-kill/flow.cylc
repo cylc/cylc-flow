@@ -3,9 +3,10 @@
     UTC mode = True
     cycle point format = %Y
     [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = P6M
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = P6M
 [scheduling]
     [[graph]]
         R1 = t1
@@ -14,4 +15,4 @@
         script = sleep 300
         platform = {{environ["CYLC_TEST_PLATFORM"]}}
         [[[events]]]
-            started handler = cylc stop --now --now '%(workflow)s'
+            started handlers = cylc stop --now --now '%(workflow)s'

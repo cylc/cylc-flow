@@ -374,14 +374,6 @@ class TaskState:
             prereq.set_not_satisfied()
         self._is_satisfied = None
 
-    def prerequisites_dump(self, list_prereqs=False):
-        """Dump prerequisites."""
-        if list_prereqs:
-            return [Prerequisite.MESSAGE_TEMPLATE % msg for prereq in
-                    self.prerequisites for msg in sorted(prereq.satisfied)]
-        else:
-            return [x for prereq in self.prerequisites for x in prereq.dump()]
-
     def get_resolved_dependencies(self):
         """Return a list of dependencies which have been met for this task.
 
@@ -527,3 +519,15 @@ class TaskState:
                 continue
             for xtrig_label in xtrig_labels:
                 self.add_xtrigger(xtrig_label)
+
+    def get_unsatisfied_prerequisites(self):
+        unsat = []
+        for prereq in self.prerequisites:
+            if prereq.is_satisfied():
+                continue
+            for key, val in prereq.satisfied.items():
+                if val:
+                    continue
+                name, point, output = key
+                unsat.append((name, point, output))
+        return unsat

@@ -1,7 +1,7 @@
 #!jinja2
 [scheduler]
     [[events]]
-        inactivity = PT2S
+        inactivity timeout = PT2S
 
 [scheduling]
     [[graph]]

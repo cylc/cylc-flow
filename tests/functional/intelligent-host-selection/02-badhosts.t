@@ -50,15 +50,14 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach \
-    "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 LOGFILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # Check that badhosttask has submit failed, but not good or mixed
 named_grep_ok "badhost task submit failed" \
-    "	* badhosttask.1 (submit-failed)" "${LOGFILE}"
+    "\[badhosttask.1\] -submission failed" "${LOGFILE}"
 named_grep_ok "goodhost suceeded" \
     "\[mixedhosttask.1\] -running => succeeded" "${LOGFILE}"
 named_grep_ok "mixedhost task suceeded" \

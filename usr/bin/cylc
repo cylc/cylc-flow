@@ -32,63 +32,58 @@
 # Intercept "cylc" and "rose" commands and re-invoke them with the version
 # selected. If $CYLC_HOME is defined it is used as the installation location.
 # Otherwise, the script looks for a directory named "cylc-$CYLC_VERSION"
-# (or just "cylc" if $CYLC_VERSION is not defined) in $CYLC_HOME_ROOT and
+# (or just "cylc" if $CYLC_VERSION is not defined) in $CYLC_HOME_ROOT or
 # $CYLC_HOME_ROOT_ALT.
+#
 # Additional legacy logic is used when calling rose with Cylc 7.
 #
-# CYLC_HOME_ROOT should default to the central release location, in this
-# wrapper (see "EDIT ME" below). This must also be done on job hosts.
+# ENVIRONMENT VARIABLES
+# ---------------------
 #
-# CYLC_HOME_ROOT_ALT can be set by users to their own release location.
+# Location variables must be set on workflow and job hosts, e.g. in .bashrc.
 #
-# CYLC_HOME can be set by users to a specific version outside of the root
-# location(s), e.g. for a venv in a git working copy. This must be set in
-# .bashrc so that task jobs see CYLC_HOME too.
+#> CYLC_HOME_ROOT - location of installed Cylc environments.
+#   E.g. /opt/cylc for centrally installed releases.
 #
-# CYLC_VERSION does not have to be set by users in their .bashrc because the
-# scheduler propagates its own version to task job scripts. If users do specify 
-# a version in .bashrc they should make sure it defaults to an existing version
-# to avoid overriding task job version selection (see User Instructions below).
+#> CYLC_HOME_ROOT_ALT - alternate location of installed Cylc environments. Can
+# be set by users with their own Cylc releases or git clones.
+#   E.g. $HOME/cylc
 #
-# In Cylc 8+ the scheduler sets CYLC_VERSION=cylc.flow.__version__ in task job
-# scripts. __version__ only increments with releases so CYLC_VERSION cannot be
-# used for fine-grained selection among (e.g.) git working copies between
-# releases. Use CYLC_HOME to select a venv in your cylc-flow git clone.
+#> CYLC_VERSION - this wrapper will look for an installed environment called
+# cylc-$CYLC_VERSION in the ROOT locations. The scheduler propagates its own
+# CYLC_VERSION to task job scripts, so if set in (e.g.) .bashrc it should
+# default to scheduler version:
+#   E.g. CYLC_VERSION=${CYLC_VERSION:-8.0.0}
 #
-# INSTALLING cylc 8+ RELEASES WITH CONDA
-#---------------------------------------
-# Create environments named cylc-$CYLC_VERSION under a root location such as /opt:
-#   $ conda create -p /opt/cylc-8.2.0 cylc=8.2.0
+# In Cylc 8 the scheduler sets CYLC_VERSION=cylc.flow.__version__ in task job
+# scripts. This value only increments with cylc-flow releases so CYLC_VERSION
+# cannot be used for fine-grained selection among (e.g.) git clones. For that,
+# use CYLC_HOME to select a specific virtual environment, or CYLC_HOME_ROOT
+# and CYLC_ENV_NAME (below).
 #
-# And create a default version symlink "cylc" to the latest version:
-#   $ ln -s cylc-8.2.0 cylc
+#> CYLC_HOME - can be set to a specific Cylc environment outside of the ROOT
+# locations, e.g. for a venv inside a Cylc git clone. If set, it overrides
+# CYLC_VERSION selection.
 #
-# Note you can `pip install` from a cylc-flow git clone into a Conda
-# environment and then select it by CYLC_VERSION but that may be misleading
-# if the code is not the true release version. Better to use Python venvs and
-# CYLC_HOME for development and testing.
+#> CYLC_ENV_NAME - can be an absolute path to a specific Cylc environment, or
+# a path relative to the ROOT locations. If set, it overrides CYLC_VERSION
+# selection.
 #
-# INSTALLING cylc-flow 8+ WORKING COPIES WITH PIP FOR DEVELOPMENT AND TESTING
-#----------------------------------------------------------------------------
-# Create Python virtual environments in-place in your cylc-flow git clones and
-# select them using CYLC_HOME in your .bashrc.
+# If CYLC_VERSION and CYLC_ENV_NAME are both set, CYLC_ENV_NAME will be used
+# and CYLC_VERSION ignored.
+
+# INSTALLING Cylc 8
+#------------------
 #
-# Create a new venv and install cylc-flow:
-#   $ cd <my-cylc-flow-clone>
-#   $ python -m venv venv
-#   $ . venv/bin/activate
-#   $ pip install -e . 
+# Releases should be installed into environments in the ROOT location, named as
+# cylc-$CYLC_VERSION, either via conda (full system) or pip (for cylc-flow only)
+# for selection by the CYLC_VERSION mechanism.
 #
-# Set CYLC_HOME in .bashrc to select this venv (see explanation above):
+# To work with git clones (developers) `pip install` your clone into a Python
+# or conda environment, and use CYLC_ENV_NAME to select it.
 #
-# Note you can also `pip install` cylc-flow releases under a common root
-# location for CYLC_VERSION based selection, like for Conda:
-#   $ CYLC_HOME_ROOT=$HOME/cylc-flow/releases  # (set in this wrapper too)
-#   $ python -m venv $CYLC_HOME_ROOT/cylc-8.0a2
-#   $ . $CYLC_HOME_ROOT/cylc-8.0a2/bin/activate
-#   $ python -m pip install cylc-flow==8.0a2
-# But there is no need to do this if you also have full system releases (as
-# opposed to cylc-flow only) installed by Conda.
+#   $ CYLC_ENV_NAME=cylc-violet-capybara cylc version --long
+#   > 8.0.0 (/home/user/miniconda3/envs/cylc-violet-capybara)
 #
 # INSTALLING LEGACY cylc 7 RELEASE TARBALLS BY HAND
 #--------------------------------------------------
@@ -99,37 +94,38 @@
 #
 # INSTRUCTIONS FOR USERS
 #-----------------------
-# + Set CYLC_HOME_ROOT_ALT in .bashrc to point any local conda releases, e.g.:
+# + Set CYLC_HOME_ROOT_ALT to point local conda releases, e.g.:
 #     $ export CYLC_HOME_ROOT_ALT=$HOME/miniconda3/envs
-#   (Environments must be named for the cylc version, e.g. "cylc-8.0.2")
-# + Set CYLC_VERSION e.g. "8.0.0" to select a version in the root locations
-#   - CYLC_VERSION is propagated to task jobs by the scheduler. If you set it
-#   in .bashrc it must default to an existing value to avoid overriding jobs:
+# + Set CYLC_VERSION e.g. "8.0.0" to select a specific version in the root
+#     locations. CYLC_VERSION is propagated to task jobs by the scheduler; to
+#     avoid overiding this you should only default to your version:
 #       $ export CYLC_VERSION=${CYLC_VERSION:-8.0.0}
 #   - Do not explicitly select the default "cylc" symlink as a version
-# + Set CYLC_HOME in .bashrc (on scheduler and job hosts) to select a specific
-#   version outside of the ROOT location
-#   - CYLC_HOME should point to a Cylc 8 venv, or a plain Cylc 7 directory. It
-#     must be set in .bashrc so that task jobs see it too
-# + Any of these settings in .bashrc must be replicated on job hosts.
+# + Set CYLC_HOME to select a specific Cylc 8 venv or plain Cylc 7 directory
+#   outside of the ROOT locations
+# + Set CYLC_ENV_NAME to a select a specific arbitrarily name Cylc venv (directly,
+#   or under the ROOT locations).
+# + These settings (e.g. in .bashrc) must be replicated on job hosts too.
 #
 ##############################!!! EDIT ME !!!##################################
 # Centrally installed Cylc releases:
 CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
 
+# Users can set CYLC_HOME_ROOT_ALT as well (see above), e.g.:
+# CYLC_HOME_ROOT_ALT=${HOME}/miniconda3/envs
+
 # Global config locations for Cylc 8 & Rose 2 (defaults: /etc/cylc & /etc/rose)
 # export CYLC_SITE_CONF_PATH="${CYLC_SITE_CONF_PATH:-/etc/cylc}"
 # export ROSE_SITE_CONF_PATH="${ROSE_SITE_CONF_PATH:-/etc/rose}"
-
-# Note users can set CYLC_HOME_ROOT_ALT as well (see above), e.g.:
-# CYLC_HOME_ROOT_ALT=${HOME}/miniconda3/envs
 ###############################################################################
 
 # Prior to Cylc 8, Rose used a standalone installation
 # Note: assumes Cylc 7 is the default version - once Cylc 8 becomes the default
 # the if test below needs to change to
-# if [[ ${CYLC_VERSION:-} =~ ^7 && ${0##*/} =~ ^rose ]]; then
-if [[ ! ${CYLC_VERSION:-} =~ ^8 && ${0##*/} =~ ^rose ]]; then
+# if [[ ${0##*/} =~ ^rose && ${CYLC_VERSION:-} =~ ^7 ]]; then
+if [[ ${0##*/} =~ ^rose && \
+      ((-n "${CYLC_ENV_NAME}" && ${CYLC_VERSION:-} =~ ^7) || \
+       (-z "${CYLC_ENV_NAME}" && ! ${CYLC_VERSION:-} =~ ^8)) ]]; then
     if [[ -z "${ROSE_HOME:-}" ]]; then
         ROSE_HOME_ROOT="${ROSE_HOME_ROOT:-$CYLC_HOME_ROOT}"
         if [[ -n "${ROSE_VERSION:-}" ]]; then
@@ -145,23 +141,35 @@ fi
 # Note: the code above is only needed if still using standalone Rose 2019
 # versions
 
+# CYLC_ENV_NAME construction:
+#                           ╔════════════════════════════╗
+#                           ║        CYLC_VERSION        ║
+#                           ╠══════════════════╦═════════╣
+#                           ║        set       ║ not set ║
+# ╔═══════════════╦═════════╬══════════════════╩═════════╣
+# ║ CYLC_ENV_NAME ║   set   ║      Use CYLC_ENV_NAME     ║
+# ║               ╠═════════╬══════════════════╦═════════╣
+# ║               ║ not set ║ Use CYLC_VERSION ║  "cylc" ║
+# ╚═══════════════╩═════════╩══════════════════╩═════════╝
 if [[ -z "${CYLC_HOME}" ]]; then
-    # Look for specified or default version under the root locations
-    if [[ -n "${CYLC_VERSION}" ]]; then
-        CYLC_NAME="cylc-$CYLC_VERSION"
-    else
-        # Default version symlink
-        CYLC_NAME="cylc"
+    if [[ -z "${CYLC_ENV_NAME}" ]]; then
+        if [[ -n "${CYLC_VERSION}" ]]; then
+            CYLC_ENV_NAME="cylc-$CYLC_VERSION"
+        else
+            # Default version symlink - export CYLC_ENV_NAME to ensure it
+            # does not get overridden by CYLC_VERSION
+            export CYLC_ENV_NAME="cylc"
+        fi
     fi
     for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
-        if [[ -d "${ROOT}/${CYLC_NAME}" ]]; then
-            CYLC_HOME="${ROOT}/${CYLC_NAME}"
+        if [[ -d "${ROOT}/${CYLC_ENV_NAME}" ]]; then
+            CYLC_HOME="${ROOT}/${CYLC_ENV_NAME}"
             break
         fi
     done
 fi
 if [[ -z "${CYLC_HOME}" ]]; then
-    MSG="ERROR: $CYLC_NAME not found in $CYLC_HOME_ROOT"
+    MSG="ERROR: $CYLC_ENV_NAME not found in $CYLC_HOME_ROOT"
     if [[ -n "${CYLC_HOME_ROOT_ALT}" ]]; then
         MSG="${MSG} or ${CYLC_HOME_ROOT_ALT}"
     fi

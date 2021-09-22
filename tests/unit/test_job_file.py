@@ -245,17 +245,28 @@ def test_traps_for_each_job_runner(job_runner: str):
         assert("CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU" in output)
 
 
-def test_write_prelude(monkeypatch, fixture_get_platform):
+@pytest.mark.parametrize(
+    'set_CYLC_ENV_NAME',
+    [
+        pytest.param(True, id='CYLC_ENV_NAME=True'),
+        pytest.param(False, id='CYLC_ENV_NAME=False'),
+    ]
+)
+def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
     """Test the prelude section of job script file is correctly
     written.
     """
+    if set_CYLC_ENV_NAME:
+        monkeypatch.setenv('CYLC_ENV_NAME', 'myenv')
     monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
                 '\nexport CYLC_VERBOSE=true'
                 '\nexport CYLC_DEBUG=true'
-                '\nexport CYLC_VERSION=\'%s\'\nexport ' % __version__
-                + 'CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\'')
+                '\nexport CYLC_VERSION=\'%s\'' % __version__)
+    if set_CYLC_ENV_NAME:
+        expected += '\nexport CYLC_ENV_NAME=\'myenv\''
+    expected += '\nexport CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\''
     job_conf = {
         "platform": fixture_get_platform({
             "job runner": "loadleveler",

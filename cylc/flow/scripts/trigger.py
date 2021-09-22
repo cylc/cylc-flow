@@ -76,7 +76,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
     """CLI for "cylc trigger"."""
-    workflow = parse_reg(workflow)
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {

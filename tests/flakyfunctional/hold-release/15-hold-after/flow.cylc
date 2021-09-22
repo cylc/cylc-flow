@@ -6,7 +6,8 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        abort on stalled = True
+        abort on stall timeout = True
+        stall timeout = PT0S
 
 [scheduling]
     initial cycle point = 20140101T00

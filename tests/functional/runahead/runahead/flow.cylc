@@ -1,9 +1,8 @@
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        abort on stalled = True
-        timeout = PT30S
-        abort on timeout = True
+        stall timeout = PT0S
+        abort on stall timeout = True
 [scheduling]
     cycling mode = integer
     runahead limit = P4

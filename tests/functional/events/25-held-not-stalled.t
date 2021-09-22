@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test abort on stalled does not apply to a workflow started with --hold-after
+# Test abort on stall does not apply to a workflow started with --hold-after
 
 # See also tests/functional/pause-resume/02-paused-not-stalled.t
 

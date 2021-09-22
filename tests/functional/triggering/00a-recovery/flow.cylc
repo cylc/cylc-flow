@@ -1,0 +1,43 @@
+# Spawn on Demand variant of 00-recovery
+# No need for suicide triggers.
+
+[meta]
+    title = "automated failure recovery example"
+    description = """
+        Model task failure triggers diagnosis and recovery tasks, which
+        otherwise take themselves out of the workflow if model succeeds.
+        Model post processing triggers off model or recovery tasks.
+    """
+
+[scheduler]
+    UTC mode = True
+    allow implicit tasks = True
+    [[events]]
+        expected task failures = model.20110101T1200Z
+
+[scheduling]
+    initial cycle point = 20110101T00
+    final cycle point = 20110101T12
+    [[graph]]
+        T00,T12 = """
+           pre:finish => model?  # finish trigger
+           model:fail? => diagnose => recover # fail trigger
+           model:succeed? | recover => post  # conditional and explicit success
+        """
+
+[runtime]
+    [[root]]
+        script = "true" # fast
+    [[model]]
+        script = """
+            echo Hello from $CYLC_TASK_ID
+            if [[ $(cylc cycletime --print-hour) == 12 ]]; then
+                echo "FAILING NOW!"
+                false
+            else
+                echo "Succeeded"
+                true
+            fi
+        """
+        [[[meta]]]
+            description = A task that succeeds at 0 UTC and fails at 12 UTC

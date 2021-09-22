@@ -297,7 +297,8 @@ def _construct_ssh_cmd(
     for envvar in [
         'CYLC_CONF_PATH',
         'CYLC_COVERAGE',
-        'CLIENT_COMMS_METH'
+        'CLIENT_COMMS_METH',
+        'CYLC_ENV_NAME'
     ]:
         if envvar in os.environ:
             command.append(

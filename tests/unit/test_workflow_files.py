@@ -37,7 +37,6 @@ from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     REG_CLASH_MSG,
-    SUITERC_DEPR_MSG,
     WorkflowFiles,
     _clean_using_glob,
     _remote_clean_cmd,
@@ -274,19 +273,19 @@ def setup__test_parse_reg(mod_tmp_run_dir: Callable):
         pytest.param(
             'numbered/workflow',
             'numbered/workflow/run1',
-            '{cylc_run_dir}/numbered/workflow/run1/flow.cylc',
+            '{cylc_run_dir}/numbered/workflow/run1',
             id="numbered workflow"
         ),
         pytest.param(
             'numbered/workflow/runN',
             'numbered/workflow/run1',
-            '{cylc_run_dir}/numbered/workflow/run1/flow.cylc',
+            '{cylc_run_dir}/numbered/workflow/run1',
             id="numbered workflow targeted by runN"
         ),
         pytest.param(
             'non_numbered/workflow',
             'non_numbered/workflow',
-            '{cylc_run_dir}/non_numbered/workflow/flow.cylc',
+            '{cylc_run_dir}/non_numbered/workflow',
             id="non-numbered workflow"
         ),
     ]
@@ -304,17 +303,15 @@ def test_parse_reg__ok(
         src: Arg passed to parse_reg().
         reg: Arg passed to parse_reg().
         expected_reg: Expected reg returned for both src=True|False.
-        expected_path: Expected path returned for src=True only.
+        expected_path: Expected path returned for src=False (for src=True,
+            flow.cylc will be appended).
     """
     paths: dict = setup__test_parse_reg()
-    expected: Union[str, Tuple[str, Path]]
     expected_reg = expected_reg.format(**paths)
+    expected_path: Path = Path(expected_path.format(**paths))
     if src:
-        expected_path = expected_path.format(**paths)
-        expected = (expected_reg, Path(expected_path))
-    else:
-        expected = expected_reg
-    assert parse_reg(reg, src) == expected
+        expected_path = expected_path / WorkflowFiles.FLOW_FILE
+    assert parse_reg(reg, src) == (expected_reg, expected_path)
 
 
 @pytest.mark.parametrize(
@@ -323,7 +320,7 @@ def test_parse_reg__ok(
         pytest.param(
             ('non_exist', False),
             'non_exist',
-            None,
+            '{cylc_run_dir}/non_exist',
             None,
             id="non-existent workflow, src=False"
         ),
@@ -404,7 +401,6 @@ def test_parse_reg__ok(
             None,
             id="reg points to path above, src=True"
         ),
-        # # TODO more tests cases
     ]
 )
 def test_parse_reg__various(
@@ -418,8 +414,8 @@ def test_parse_reg__various(
 
     Params:
         args: Args passed to parse_reg().
-        expected_reg: Expected reg returned for both src=True|False.
-        expected_path: Expected path returned for src=True only.
+        expected_reg: Expected reg returned.
+        expected_path: Expected path returned.
         expected_err_msg: If an exception is expected, text that is expected
             to be contained in the message.
     """
@@ -432,16 +428,11 @@ def test_parse_reg__various(
             parse_reg(reg, src)
         assert expected_err_msg in str(exc_info.value)
     else:
-        expected: Union[str, Tuple[str, Path]]
         assert expected_reg is not None
+        assert expected_path is not None
         expected_reg = expected_reg.format(**paths)
-        if src:
-            assert expected_path is not None
-            expected_path = expected_path.format(**paths)
-            expected = (expected_reg, Path(expected_path))
-        else:
-            expected = expected_reg
-        assert parse_reg(reg, src) == expected
+        expected_path = expected_path.format(**paths)
+        assert parse_reg(reg, src) == (expected_reg, Path(expected_path))
 
 
 @pytest.mark.parametrize(
@@ -1559,17 +1550,24 @@ def test_symlinkrundir_children_that_contain_workflows_raise_error(
         run_dir, srv_dir, monkeypatch):
     """Test that a workflow cannot be contained in a subdir of another
     workflow."""
-    monkeypatch.setattr('cylc.flow.workflow_files.os.path.isdir',
-                        lambda x: False if (
-                            x.find('.service') > 0 and x != srv_dir)
-                        else True)
+    monkeypatch.setattr(
+        'cylc.flow.workflow_files.os.path.isdir',
+        lambda x: not (
+            x.find('.service') > 0 and x != srv_dir
+        )
+    )
     monkeypatch.setattr(
         'cylc.flow.workflow_files.get_cylc_run_abs_path',
         lambda x: x)
-    monkeypatch.setattr('cylc.flow.workflow_files.os.scandir',
-                        lambda x: [
-                            mock.Mock(path=srv_dir[0:len(x) + 2],
-                                      is_symlink=lambda: True)])
+    monkeypatch.setattr(
+        'cylc.flow.workflow_files.os.scandir',
+        lambda x: [
+            mock.Mock(
+                path=srv_dir[0:len(x) + 2],
+                is_symlink=lambda: True
+            )
+        ]
+    )
 
     try:
         check_nested_run_dirs(run_dir, 'placeholder_flow')
@@ -1774,8 +1772,9 @@ def test_check_flow_file_symlink(
         suiterc.touch()
     if flow_file_target:
         flow_file.symlink_to(flow_file_target)
-    log_msg = SUITERC_DEPR_MSG
-    caplog.set_level(logging.WARNING, CYLC_LOG)
+
+    caplog.set_level(logging.INFO, CYLC_LOG)
+    log_msg = ""
 
     if err:
         with pytest.raises(err):
@@ -1787,9 +1786,11 @@ def test_check_flow_file_symlink(
             assert flow_file.samefile(suiterc)
             expected_file = WorkflowFiles.FLOW_FILE
             if flow_file_target != WorkflowFiles.SUITE_RC:
-                log_msg = f'{SUITERC_DEPR_MSG}. Symlink created.'
+                log_msg = "Symlink created: flow.cylc -> suite.rc"
         assert result == tmp_path.joinpath(expected_file)
-        assert caplog.messages == [log_msg]
+
+    if log_msg:
+        assert log_msg in caplog.messages
 
 
 @pytest.mark.parametrize(
@@ -1854,12 +1855,12 @@ def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
     """Test rsync command for cylc install/reinstall excludes cylc dirs.
     """
     cylc_run_dir: Path = tmp_run_dir('rsync_flow', installed=True, named=False)
-    for dir in [
+    for wdir in [
         WorkflowFiles.WORK_DIR,
         WorkflowFiles.SHARE_DIR,
         WorkflowFiles.LOG_DIR,
     ]:
-        cylc_run_dir.joinpath(dir).mkdir(exist_ok=True)
+        cylc_run_dir.joinpath(wdir).mkdir(exist_ok=True)
     actual_cmd = get_rsync_rund_cmd('blah', cylc_run_dir)
     assert actual_cmd == [
         'rsync', '-a', '--checksum', '--out-format=%o %n%L', '--no-t',
@@ -1882,7 +1883,7 @@ def test_delete_runN(tmp_path, expect, dirs):
     """
     for dir_ in dirs:
         (tmp_path / dir_).mkdir()
-    if re.findall('run\d*', dirs[-1]):
+    if re.findall(r'run\d*', dirs[-1]):
         (Path(tmp_path / 'runN')).symlink_to(dirs[-1])
     clean(str(tmp_path.name) + '/' + dirs[-1], tmp_path / dirs[-1])
     assert sorted([i.stem for i in tmp_path.glob('*')]) == sorted(expect)

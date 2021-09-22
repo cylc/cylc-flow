@@ -17,11 +17,10 @@
 #-------------------------------------------------------------------------------
 # Test workflow event handler, flexible interface
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 3
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run1" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
@@ -29,15 +28,6 @@ workflow_run_ok "${TEST_NAME_BASE}-run1" \
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 MESSAGE="('workflow-event-handler-00', 'startup') bad template: 'rubbish'"
 run_ok "${TEST_NAME_BASE}-run1-log" grep -q -F "ERROR - ${MESSAGE}" "${LOG}"
-
-delete_db
-workflow_run_fail "${TEST_NAME_BASE}-run2" \
-    cylc play --reference-test --debug --no-detach \
-        -s 'ABORT="True"' "${WORKFLOW_NAME}"
-
-run_ok "${TEST_NAME_BASE}-run2-grep" \
-    grep -q -F "Workflow shutting down - WorkflowEventError: ${MESSAGE}" \
-    "${TEST_NAME_BASE}-run2.stderr"
 
 purge
 exit

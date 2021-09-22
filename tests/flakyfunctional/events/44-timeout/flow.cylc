@@ -1,13 +1,13 @@
 [scheduler]
    [[events]]
-      abort on timeout = True
-      timeout = PT20S
+      abort on stall timeout = True
+      stall timeout = PT20S
 [scheduling]
     [[graph]]
         R1 = "foo => stopper"
 [runtime]
     [[foo]]
         [[[events]]]
-            started handler = sleeper.sh %(id)s
+            started handlers = sleeper.sh %(id)s
     [[stopper]]
         script = cylc stop "${CYLC_WORKFLOW_NAME}"

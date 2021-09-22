@@ -186,7 +186,7 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', workflow: str) -> None:
-    workflow = parse_reg(workflow)
+    workflow, _ = parse_reg(workflow)
 
     if options.use_task_point and options.cycle:
         raise UserInputError(

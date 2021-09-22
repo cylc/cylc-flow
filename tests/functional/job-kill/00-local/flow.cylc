@@ -6,8 +6,8 @@
     [[graph]]
         R1="""
            t1:start & t2:start => stop1 =>
-              t3:start & t4:start => stop2
-           stop2:fail => shutdown"""
+              t3:start & t4:start => stop2?
+           stop2:fail? => shutdown"""
 [runtime]
     [[T]]
         script=sleep 120 & echo $! >file; wait

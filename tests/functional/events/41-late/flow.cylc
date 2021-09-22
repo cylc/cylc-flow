@@ -11,4 +11,4 @@
         script = true
         [[[events]]]
             late offset = PT1M
-            late handler = my-handler %(message)s
+            late handlers = my-handler %(message)s

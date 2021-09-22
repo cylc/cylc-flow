@@ -29,7 +29,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t1]]
         script=true
         [[[events]]]
-            started handler = echo %(workflow)s, echo %(name)s, echo %(start_time)s
+            started handlers = echo %(workflow)s, echo %(name)s, echo %(start_time)s
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

@@ -1,7 +1,7 @@
 [scheduler]
     [[events]]
-        abort on inactivity = True
-        inactivity = PT30S
+        abort on inactivity timeout = True
+        inactivity timeout = PT30S
 [scheduling]
     [[graph]]
          R1 = """

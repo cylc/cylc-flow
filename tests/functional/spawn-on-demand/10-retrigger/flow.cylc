@@ -1,0 +1,24 @@
+[scheduler]
+   [[events]]
+      expected task failures = oops.1
+[scheduling]
+   [[graph]]
+      R1 = """
+         foo => oops & triggerer
+         oops => bar
+      """
+[runtime]
+   [[oops]]
+      script = """
+         if (( CYLC_TASK_SUBMIT_NUMBER == 1 )); then
+            false
+         else
+            true
+         fi
+      """
+   [[triggerer]]
+      script = """
+         cylc__job__poll_grep_workflow_log '\[oops\.1\].* (received)failed'
+         cylc trigger ${CYLC_WORKFLOW_NAME} oops.1
+       """
+   [[foo, bar]]

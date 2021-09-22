@@ -128,7 +128,7 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
 
     _validate(options, *task_globs)
 
-    workflow = parse_reg(workflow)
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.hold_point_string:

@@ -2,8 +2,8 @@
 [scheduler]
     UTC mode = {{UTC_MODE}}
     [[events]]
-        abort on inactivity = True
-        inactivity = {{TIMEOUT}}
+        abort on inactivity timeout = True
+        inactivity timeout = {{TIMEOUT}}
 [scheduling]
     initial cycle point = {{START}}
     final cycle point   = {{START}}

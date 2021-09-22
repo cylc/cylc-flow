@@ -158,7 +158,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options: 'Values', reg: str, *task_args: str) -> None:
     """Implement "cylc show" CLI."""
-    reg = parse_reg(reg)
+    reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
     json_filter = {}
 
