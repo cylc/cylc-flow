@@ -87,6 +87,9 @@ cli options.
 [#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
 (previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
 
+[#4329](https://github.com/cylc/cylc-flow/pull/4329) - Enable selection of
+platform from platform group at task job initialization.
+
 ### Fixes
 
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
