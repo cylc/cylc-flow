@@ -269,7 +269,7 @@ def get_diff(vcs: str, path: Union[Path, str]) -> Optional[str]:
         path: The path to the repo.
     """
     args_ = DIFF_COMMANDS[vcs]
-    if path.is_absolute():
+    if Path(path).is_absolute():
         args_.append(str(path))
     else:
         args_.append(str(Path().cwd() / path))
