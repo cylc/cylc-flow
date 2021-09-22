@@ -160,9 +160,8 @@ def platform_from_name(
     for platform_name_re in reversed(list(platform_groups)):
         # Platform is member of a group.
         if re.fullmatch(platform_name_re, platform_name):
-            group_name = platform_name
             platform_name = get_platform_from_group(
-                platform_groups[platform_name_re], group_name=group_name,
+                platform_groups[platform_name_re], group_name=platform_name,
                 bad_hosts=bad_hosts
             )
 
@@ -226,9 +225,7 @@ def get_platform_from_group(
         NoPlatformsError: If there are no platforms with any usable
         hosts in the platform group.
 
-    TODO:
-        Currently uses host_selection methods, which is fine, but should
-        also have the ability to use custom selection methods.
+    TODO: Uses host_selection methods; should also allow custom select methods.
     """
     if bad_hosts:
         good_platforms = set()
@@ -248,8 +245,7 @@ def get_platform_from_group(
     method = group['selection']['method']
     if method not in HOST_SELECTION_METHODS:
         raise CylcError(
-            f'method \"{method}\" is not a supported platform '
-            'selection method.'
+            f'\"{method}\" is not a supported platform selection method.'
         )
     else:
         return HOST_SELECTION_METHODS[method](platform_names)
