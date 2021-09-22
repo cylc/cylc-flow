@@ -335,7 +335,7 @@ class GraphParser:
                     if this_line.endswith(seq):
                         # Last line can't end with an arrow, & or |.
                         raise GraphParseError(
-                            f"Trailing continuation sequence ({seq}):"
+                            f"Dangling ({seq}):"
                             f"{this_line}"
                         )
             part_lines.append(this_line)
