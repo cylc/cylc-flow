@@ -625,10 +625,6 @@ def test_parse_graph_fails_with_too_many_continuations(before, after):
     assert 'Consecutive lines end and start' in raised.value.args[0]
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 def test_task_optional_outputs():
     """Test optional outputs are correctly parsed from graph."""
     OPTIONAL = True
