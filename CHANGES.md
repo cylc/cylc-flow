@@ -87,6 +87,9 @@ cli options.
 [#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
 (previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
 
+[#4423](https://github.com/cylc/cylc-flow/pull/4423) - Only changes to the
+workflow directory are recorded by `log/version`.
+
 ### Fixes
 
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
