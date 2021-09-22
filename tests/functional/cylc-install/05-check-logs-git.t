@@ -22,10 +22,10 @@
 
 git --version || skip_all "git not installed"
 
-set_test_number 2
+set_test_number 4
 
 WORKFLOW=$(date | md5sum | awk '{print $1}')
-RUN_DIR="${HOME}/cylc-run/${WORKFLOW}"
+RUN_DIR="${HOME}/cylc-run/${WORKFLOW}/runN"
 
 
 # Create a workflow in a subdirectory of the test tmpdir
@@ -52,10 +52,15 @@ git commit -m "commit 0"
 echo "Inside workflow" > "${WORKFLOW}/test_file_in_workflow"
 echo "Outside workflow" > test_file_outside_workflow
 
-# Carry out actual test:
-cylc install -C "$PWD/${WORKFLOW}" --no-run-name
+# Carry out actual test with abspath:
+cylc install -C "$PWD/${WORKFLOW}"
+named_grep_ok "File inside flow VC'd" "Inside workflow" "${RUN_DIR}/log/version/uncommitted.diff"
+grep_fail "Outside workflow" "${RUN_DIR}/log/version/uncommitted.diff"
+
+# Carry out actual test with relpath:
+cylc install -C "${WORKFLOW}"
 named_grep_ok "File inside flow VC'd" "Inside workflow" "${RUN_DIR}/log/version/uncommitted.diff"
 grep_fail "Outside workflow" "${RUN_DIR}/log/version/uncommitted.diff"
 
 # Clean up installed flow:
-rm -fr "${RUN_DIR}"
+rm -fr "${HOME}/cylc-run/${WORKFLOW}"

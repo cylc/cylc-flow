@@ -269,7 +269,11 @@ def get_diff(vcs: str, path: Union[Path, str]) -> Optional[str]:
         path: The path to the repo.
     """
     args_ = DIFF_COMMANDS[vcs]
-    args_.append(str(path))
+    if path.is_absolute():
+        args_.append(str(path))
+    else:
+        args_.append(str(Path().cwd() / path))
+
     try:
         diff = _run_cmd(vcs, args_, cwd=path)
     except (VCSNotInstalledError, VCSMissingBaseError):
