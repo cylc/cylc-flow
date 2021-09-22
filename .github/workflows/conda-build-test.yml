@@ -1,0 +1,27 @@
+name: conda builds
+
+on:
+  pull_request:
+    paths:
+      - 'conda-environment.yml'
+  schedule:
+    - cron: '17 22 * * 6'
+  workflow_dispatch:
+
+jobs:
+  test_conda_install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: [3.7, 3.8, 3.9]
+    steps:
+      - name: checkout cylc-doc
+        uses: actions/checkout@v2
+
+      - name: build conda env python==${{matrix.python}}
+        run: |
+            conda env create -f \
+              conda-environment.yml \
+              python==${{matrix.python}}
+          fi
