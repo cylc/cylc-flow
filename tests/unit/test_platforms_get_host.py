@@ -108,6 +108,6 @@ def test_get_platform_from_group_fails_bad_method(monkeypatch):
     with pytest.raises(CylcError) as err:
         get_platform_from_group(group, {'foo'})
     assert err.exconly() == (
-        'cylc.flow.exceptions.CylcError: method "roulette" is not a '
+        'cylc.flow.exceptions.CylcError: "roulette" is not a '
         'supported platform selection method.'
     )
