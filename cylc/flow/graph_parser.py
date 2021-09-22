@@ -324,9 +324,10 @@ class GraphParser:
         part_lines = []
         for i, _ in enumerate(non_blank_lines):
             this_line = non_blank_lines[i]
-            if i == 0 and this_line.startswith(self.__class__.ARROW):
-                # First line can't start with an arrow.
-                raise GraphParseError(f"Leading arrow: {this_line}")
+            for seq in self.CONTINUATION_STRS:
+                if i == 0 and this_line.startswith(seq):
+                    # First line can't start with an arrow.
+                    raise GraphParseError(f"Leading {seq}: {this_line}")
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
@@ -335,7 +336,7 @@ class GraphParser:
                     if this_line.endswith(seq):
                         # Last line can't end with an arrow, & or |.
                         raise GraphParseError(
-                            f"Dangling ({seq}):"
+                            f"Dangling {seq}:"
                             f"{this_line}"
                         )
             part_lines.append(this_line)

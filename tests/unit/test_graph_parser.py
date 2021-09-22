@@ -17,7 +17,6 @@
 
 import logging
 import pytest
-import unittest
 from itertools import product
 from pytest import param
 from types import SimpleNamespace
@@ -51,17 +50,42 @@ def test_parse_graph_fails_null_task_name(graph):
         assert "Null task name in graph:" in str(cm.value)
 
 
+@pytest.mark.parametrize('seq', ('&', '|', '=>'))
 @pytest.mark.parametrize(
     'graph, expected_err',
     [
         [
-            "=> b",
-            "Leading arrow"
+            "{0} b",
+            "Leading {0}"
         ],
         [
-            "a =>",
-            "Trailing arrow"
+            "a {0}",
+            "Dangling {0}"
         ],
+        [
+            "{0} b {0} c",
+            "Leading {0}"
+        ],
+        [
+            "a {0} b {0}",
+            "Dangling {0}"
+        ]
+    ]
+)
+def test_graph_syntax_errors_2(seq, graph, expected_err):
+    """Test various graph syntax errors."""
+    graph = graph.format(seq)
+    expected_err = expected_err.format(seq)
+    with pytest.raises(GraphParseError) as cm:
+        GraphParser().parse_graph(graph)
+    assert (
+        expected_err in str(cm.value)
+    )
+
+
+@pytest.mark.parametrize(
+    'graph, expected_err',
+    [
         [
             "a b => c",
             "Bad graph node format"
@@ -607,7 +631,7 @@ def test_parse_graph_fails_with_continuation_at_last_line(expect):
     with pytest.raises(GraphParseError) as raised:
         parser.parse_graph(f't1 => t2 {expect}')
     assert isinstance(raised.value, GraphParseError)
-    assert f'Trailing continuation sequence ({expect})' in raised.value.args[0]
+    assert f'Dangling {expect}' in raised.value.args[0]
 
 
 @pytest.mark.parametrize(
