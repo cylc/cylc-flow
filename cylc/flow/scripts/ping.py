@@ -77,7 +77,7 @@ def main(
     workflow: str,
     task_id: Optional[str] = None
 ) -> None:
-    workflow = parse_reg(workflow)
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if task_id and not TaskID.is_valid_id(task_id):

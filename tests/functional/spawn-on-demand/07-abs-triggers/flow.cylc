@@ -1,8 +1,9 @@
 [scheduler]
     [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = PT2M
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT2M
 [scheduling]
     cycling mode = integer
     initial cycle point = 1

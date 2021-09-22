@@ -20,7 +20,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 39
+set_test_number 43
 
 # Test source directory between runs that are not consistent result in error
 
@@ -38,7 +38,7 @@ pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 
-cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Source directory not consistent between runs.
 __ERR__
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
@@ -188,6 +188,28 @@ run_fail "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-
 cmp_ok "${TEST_NAME}-install.stderr" <<__ERR__
 WorkflowFilesError: Nested run directories not allowed - cannot install workflow name "${RND_WORKFLOW_NAME}/nested" as "${RND_WORKFLOW_RUNDIR}" is already a valid run directory.
 __ERR__
+# Test moving source dir results in error
+
+TEST_NAME="${TEST_NAME_BASE}-install-moving-src-dir"
+make_rnd_workflow
+run_ok "${TEST_NAME}" cylc install -C "${RND_WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_NAME}
+__OUT__
+rm -rf "${RND_WORKFLOW_SOURCE}"
+ALT_SOURCE="${TMPDIR}/${USER}/cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)" 
+mkdir -p "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
+touch "${ALT_SOURCE}/${RND_WORKFLOW_NAME}/flow.cylc"
+
+
+TEST_NAME="${TEST_NAME_BASE}-install-twice-moving-src-dir-raises-error"
+run_fail "${TEST_NAME}" cylc install -C "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stderr" <<__OUT__
+WorkflowFilesError: Workflow source dir is not accessible: "${RND_WORKFLOW_SOURCE}".
+Restore the source or modify the "${RND_WORKFLOW_RUNDIR}/_cylc-install/source" symlink to continue.
+__OUT__
+
+rm -rf "${ALT_SOURCE}"
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------

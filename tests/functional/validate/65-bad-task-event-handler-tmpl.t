@@ -29,7 +29,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[t1]]
         script=true
         [[[events]]]
-            failed handler = echo %(id)s, echo %(rubbish)s
+            failed handlers = echo %(id)s, echo %(rubbish)s
 __FLOW_CONFIG__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'
@@ -45,7 +45,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[t1]]
         script=true
         [[[events]]]
-            failed handler = echo %(ids
+            failed handlers = echo %(ids
 __FLOW_CONFIG__
 run_fail "${TEST_NAME}" cylc validate 'flow.cylc'
 cmp_ok "${TEST_NAME}.stderr" <<'__ERR__'

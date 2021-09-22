@@ -5,7 +5,7 @@
 [scheduling]
     [[graph]]
         R1 = """
-                   reloader => inter => BAR # marker1
+                   reloader => inter => BAR? # marker1
                    BAR:finish-all => FOO # marker2
                 """
 [runtime]
@@ -13,7 +13,7 @@
     [[reloader]]
         script = """
 # change the order of FOO and BAR in the graphing section:
-perl -pi -e 's/(reloader => inter => )BAR( # marker1)/\1FOO\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
+perl -pi -e 's/(reloader => inter => )BAR\?( # marker1)/\1FOO?\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
 perl -pi -e 's/( )BAR:finish-all => FOO( # marker2)/\1FOO:finish-all => BAR\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
 # reload
 cylc reload "${CYLC_WORKFLOW_NAME}"

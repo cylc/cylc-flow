@@ -100,7 +100,7 @@ def main(
     event_msg: str,
     event_id: str
 ) -> None:
-    workflow = parse_reg(workflow)
+    workflow, _ = parse_reg(workflow)
     LOG.info('Send to workflow %s: "%s" (%s)', workflow, event_msg, event_id)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 

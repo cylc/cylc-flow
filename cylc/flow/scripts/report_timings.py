@@ -116,7 +116,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow: str) -> None:
-    workflow = parse_reg(workflow)
+    workflow, _ = parse_reg(workflow)
 
     output_options = [
         options.show_raw, options.show_summary, options.html_summary

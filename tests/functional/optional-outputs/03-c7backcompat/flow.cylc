@@ -1,0 +1,9 @@
+[scheduler]
+   allow implicit tasks = True
+[scheduling]
+   [[graph]] 
+      R1 = """
+         foo => bar
+         foo:fail => baz
+         foo => !baz
+      """

@@ -11,7 +11,7 @@
     [[graph]]
         PT1H = """
             bar => foo
-            foo:start => SHOW
+            foo:start => SHOW?
             SHOW:finish-all => end
         """
 [runtime]

@@ -1,12 +1,7 @@
-#!jinja2
 [scheduler]
     [[events]]
         handlers = echo %(rubbish)s
         handler events = startup
-{% if ABORT is defined %}
-        abort if startup handler fails = True
-{% endif %}
-
 [scheduling]
     [[graph]]
         R1=t1

@@ -1,7 +1,8 @@
 # NOTE this is an explicit test of suicide triggers, not very useful under SoD?
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall timeout = True
+        stall timeout = PT0S
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
@@ -10,9 +11,9 @@
         P1 = """
             fin[-P1] => showdown
 
-            showdown:good => good & ! bad & ! ugly
-            showdown:bad => bad & ! good & ! ugly
-            showdown:ugly => ugly & ! good & ! bad
+            showdown:good? => good & ! bad & ! ugly
+            showdown:bad? => bad & ! good & ! ugly
+            showdown:ugly? => ugly & ! good & ! bad
 
             # Note: The above implies:
             # showdown:good => good

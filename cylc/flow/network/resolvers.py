@@ -21,7 +21,7 @@ from fnmatch import fnmatchcase
 import logging
 import queue
 from time import time
-from typing import Iterable, Tuple, TYPE_CHECKING
+from typing import Iterable, Optional, Tuple, TYPE_CHECKING
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
@@ -38,6 +38,7 @@ from cylc.flow.network.schema import (
 if TYPE_CHECKING:
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.workflow_status import StopMode
 
 
 logger = logging.getLogger(__name__)
@@ -733,29 +734,25 @@ class Resolvers(BaseResolvers):
         return (True, 'Command queued')
 
     def stop(
-            self,
-            mode=None,
-            cycle_point=None,
-            clock_time=None,
-            task=None,
-            flow_label=None
-    ):
+        self,
+        mode: 'StopMode',
+        cycle_point: Optional[str] = None,
+        clock_time: Optional[str] = None,
+        task: Optional[str] = None,
+        flow_label: Optional[str] = None
+    ) -> Tuple[bool, str]:
         """Stop the workflow or specific flow from spawning any further.
 
         Args:
-            mode (StopMode.Value): Stop mode to set
-            cycle_point (str): Cycle point after which to stop.
-            clock_time (str): Wallclock time after which to stop.
-            task (str): Stop after this task succeeds.
-            flow_label (str): The flow to sterilise.
+            mode: Stop mode to set
+            cycle_point: Cycle point after which to stop.
+            clock_time: Wallclock time after which to stop.
+            task: Stop after this task succeeds.
+            flow_label: The flow to sterilise.
 
         Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
+            outcome: True if command successfully queued.
+            message: Information about outcome.
 
         """
         self.schd.command_queue.put((

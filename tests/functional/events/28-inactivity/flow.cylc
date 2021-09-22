@@ -1,9 +1,8 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        inactivity = PT10S
-        abort on inactivity = True
-        abort on timeout = True
+        inactivity timeout = PT10S
+        abort on inactivity timeout = True
 
 [scheduling]
     [[graph]]

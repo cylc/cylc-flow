@@ -2,9 +2,10 @@
     UTC mode = True
     allow implicit tasks = True
     [[events]]
-        abort on stalled = True
-        timeout = PT30S
-        abort on timeout = True
+        abort on stall timeout = True
+        stall timeout = PT0S
+        stall timeout = PT30S
+        abort on stall timeout = True
 [scheduling]
     initial cycle point = 20100101T00
     final cycle point = 20100105T00

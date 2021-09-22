@@ -53,6 +53,137 @@ SYSPATH = [
     '/usr/local/sbin'
 ]
 
+TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
+
+# Event config descriptions shared between global and workflow config.
+EVENTS_DESCR = {
+    'startup handlers': (
+        '''
+        Handlers to run at scheduler startup.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``startup handler``.
+
+        '''
+    ),
+    'shutdown handlers': (
+        '''
+        Handlers to run at scheduler shutdown.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``shutdown handler``.
+
+        '''
+    ),
+    'abort handlers': (
+        '''
+        Handlers to run if the scheduler aborts.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``aborted handler``.
+        '''
+    ),
+    'workflow timeout': (
+        f'''
+        Workflow timeout interval. The timer starts counting down at scheduler
+        startup. It resets on workflow restart.
+
+        .. versionadded:: 8.0.0
+
+           {TIMEOUT_DESCR}
+        '''
+    ),
+    'workflow timeout handlers': (
+        f'''
+        Handlers to run if the workflow timer times out.
+
+        .. versionadded:: 8.0.0
+
+           {TIMEOUT_DESCR}
+        '''
+    ),
+    'abort on workflow timeout': (
+        f'''
+        Whether to abort if the workflow timer times out.
+
+        .. versionadded:: 8.0.0
+
+           {TIMEOUT_DESCR}
+        '''
+    ),
+    'stall handlers': (
+        '''
+        Handlers to run if the scheduler stalls.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``stalled handler``.
+        '''
+    ),
+    'stall timeout': (
+        f'''
+        Stall timeout interval. The timer starts counting down if the
+        scheduler stalls: i.e. if there are no tasks ready to run and no
+        waiting external triggers, but the presence of incomplete
+        tasks or unsatisified prerequisites shows the workflow did not run to
+        completion. The stall timer turns off on any post-stall task activity.
+        It resets on restarting a stalled workflow.
+
+        .. versionadded:: 8.0.0
+
+           {TIMEOUT_DESCR}
+        '''
+    ),
+    'stall timeout handlers': (
+        f'''
+        Handlers to run if the stall timer times out.
+
+        .. versionadded:: 8.0.0
+
+           {TIMEOUT_DESCR}
+        '''
+    ),
+    'abort on stall timeout': (
+        f'''
+        Whether to abort if the stall timer times out.
+
+        .. versionadded:: 8.0.0
+
+           {TIMEOUT_DESCR}
+        '''
+    ),
+    'inactivity timeout': (
+        '''
+        Scheduler inactivity timeout interval. The timer resets when any
+        workflow activity occurs.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``inactivity``.
+        '''
+    ),
+    'inactivity timeout handlers': (
+        '''
+        Handlers to run if the inactivity timer times out.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``inactivity handler``.
+        '''
+    ),
+    'abort on inactivity timeout': (
+        '''
+        Whether to abort if the inactivity timer times out.
+
+        .. versionchanged:: 8.0.0
+
+           This item was previously called ``abort on inactivity``.
+        '''
+    )
+}
 
 with Conf('global.cylc', desc='''
     The global configuration which defines default Cylc Flow settings
@@ -300,17 +431,22 @@ with Conf('global.cylc', desc='''
             Conf('handlers', VDR.V_STRING_LIST)
             Conf('handler events', VDR.V_STRING_LIST)
             Conf('mail events', VDR.V_STRING_LIST)
-            Conf('startup handler', VDR.V_STRING_LIST)
-            Conf('timeout handler', VDR.V_STRING_LIST)
-            Conf('inactivity handler', VDR.V_STRING_LIST)
-            Conf('shutdown handler', VDR.V_STRING_LIST)
-            Conf('aborted handler', VDR.V_STRING_LIST)
-            Conf('stalled handler', VDR.V_STRING_LIST)
-            Conf('timeout', VDR.V_INTERVAL)
-            Conf('inactivity', VDR.V_INTERVAL)
-            Conf('abort on timeout', VDR.V_BOOLEAN)
-            Conf('abort on inactivity', VDR.V_BOOLEAN)
-            Conf('abort on stalled', VDR.V_BOOLEAN)
+
+            for item, desc in EVENTS_DESCR.items():
+                if item.endswith("handlers"):
+                    Conf(item, VDR.V_STRING_LIST, desc=desc)
+
+                elif item.startswith("abort on"):
+                    default = (item == "abort on stall timeout")
+                    Conf(item, VDR.V_BOOLEAN, default, desc=desc)
+
+                elif item.endswith("timeout"):
+                    if item == "stall timeout":
+                        def_intv: Optional['DurationFloat'] = (
+                            DurationFloat(3600))
+                    else:
+                        def_intv = None
+                    Conf(item, VDR.V_INTERVAL, def_intv, desc=desc)
 
         with Conf('mail', desc='''
             Options for email handling.
@@ -376,7 +512,7 @@ with Conf('global.cylc', desc='''
 
             .. versionchanged:: 8.0.0
 
-               This section was previously ``[suite logging]``.
+               This section was previously called ``[suite logging]``.
         '''):
             Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
                 How many rolled logs to retain in the archive.

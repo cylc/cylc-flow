@@ -852,7 +852,7 @@ class TaskJobManager:
                 itask, INFO, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
                 jp_ctx.time_run_exit,
                 flag)
-        elif jp_ctx.run_status == 1:
+        elif jp_ctx.run_status == 1:  # noqa: SIM114
             # The job has terminated, but is still managed by job runner.
             # Some job runners may restart a job in this state, so don't
             # mark as failed yet.

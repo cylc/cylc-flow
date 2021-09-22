@@ -44,6 +44,7 @@ from typing import Optional, TYPE_CHECKING
 from cylc.flow.command_polling import Poller
 from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
@@ -163,7 +164,7 @@ def main(
     if options.flow_label and int(options.max_polls) > 0:
         parser.error("ERROR: --flow is not compatible with --max-polls")
 
-    reg = parse_reg(reg)
+    reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
@@ -182,11 +183,11 @@ def main(
         # not a task ID, may be a cycle point
         cycle_point = shutdown_arg
     elif options.kill:
-        mode = 'Kill'
+        mode = WorkflowStopMode.Kill.name
     elif options.now > 1:
-        mode = 'NowNow'
+        mode = WorkflowStopMode.NowNow.name
     elif options.now:
-        mode = 'Now'
+        mode = WorkflowStopMode.Now.name
 
     mutation_kwargs = {
         'request_string': MUTATION,

@@ -7,8 +7,8 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
     cycle point format = %Y-%m-%dT%H
     allow implicit tasks = True
     [[events]]
-        abort on timeout = True
-        timeout = PT1M
+        abort on stall timeout = True
+        stall timeout = PT1M
 [scheduling]
     initial cycle point = now
     final cycle point = +P3D
@@ -21,7 +21,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
     [[graph]]
         P1D = """
             model[-P1D] => model => copy => proc
-            copy:expired => !proc
+            copy:expired? => !proc
         """
 [runtime]
     [[root]]

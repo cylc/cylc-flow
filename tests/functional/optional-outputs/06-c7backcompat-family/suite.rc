@@ -1,0 +1,64 @@
+# This workflow is not valid at Cylc 8 due to output optionality clashes.
+# In Cylc 7 back compat mode it should stall with all 6 "stall" tasks unsatisfied.
+
+[task parameters]
+    x = 1..12
+    [[templates]]
+        x = %(x)02d
+
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+
+[scheduling]
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+                # run<xx> tasks should all run
+                # stall<xx> tasks should all be blocked
+
+                GOOD:succeed-all => run01
+                GOOD:succeed-any => run02
+                GOOD:fail-all => stall01
+                GOOD:fail-any => stall02
+                GOOD:finish-all => run03
+                GOOD:finish-any => run04
+
+                BAD:succeed-all => stall03
+                BAD:succeed-any => stall04
+                BAD:fail-all => run05
+                BAD:fail-any => run06
+                BAD:finish-all => run07
+                BAD:finish-any => run08
+
+                UGLY:succeed-all => stall05
+                UGLY:succeed-any => run09
+                UGLY:fail-all => stall06
+                UGLY:fail-any => run10
+                UGLY:finish-all => run11
+                UGLY:finish-any => run12
+            """
+
+[runtime]
+    [[GOOD]]  # all pass
+    [[BAD]]   # all fail
+    [[UGLY]]  # some pass, some fail
+
+    [[_good_1, _good_2]]
+        inherit = GOOD
+        script = true
+
+    [[_good_3]]
+        inherit = UGLY
+        script = true
+
+    [[_bad_1, _bad_2]]
+        inherit = BAD
+        script = false
+
+    [[_bad_3]]
+        inherit = UGLY
+        script = false
+
+    [[run<x>, stall<x>]]

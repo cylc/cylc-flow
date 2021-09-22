@@ -18,10 +18,17 @@
 
 from collections import deque
 
+import cylc.flow.flags
 from cylc.flow.exceptions import TaskDefError
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_state import TASK_OUTPUT_SUCCEEDED
+from cylc.flow.task_state import (
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_FAILED
+)
 from cylc.flow import LOG
+from cylc.flow.task_outputs import SORT_ORDERS
 
 
 def generate_graph_children(tdef, point):
@@ -33,8 +40,10 @@ def generate_graph_children(tdef, point):
                 graph_children[output] = []
             for name, trigger in downs:
                 child_point = trigger.get_child_point(point, seq)
-                is_abs = (trigger.offset_is_absolute or
-                          trigger.offset_is_from_icp)
+                is_abs = (
+                    trigger.offset_is_absolute or
+                    trigger.offset_is_from_icp
+                )
                 if is_abs and trigger.get_parent_point(point) != point:
                     # If 'foo[^] => bar' only spawn off of '^'.
                     continue
@@ -133,7 +142,7 @@ class TaskDef:
         self.expiration_offset = None
         self.namespace_hierarchy = []
         self.dependencies = {}
-        self.outputs = set()
+        self.outputs = {}  # {output: (message, is_required)}
         self.graph_children = {}
         self.graph_parents = {}
         self.param_var = {}
@@ -142,6 +151,46 @@ class TaskDef:
 
         self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
+        self._add_std_outputs()
+
+    def add_output(self, output, message):
+        """Add a new task output as defined under [runtime]."""
+        # optional/required is None until defined by the graph
+        self.outputs[output] = (message, None)
+
+    def _add_std_outputs(self):
+        """Add the standard outputs."""
+        # optional/required is None until defined by the graph
+        for output in SORT_ORDERS:
+            self.outputs[output] = (output, None)
+
+    def set_required_output(self, output, required):
+        """Set outputs to required or optional."""
+        # (Note outputs and associated messages already defined.)
+        message, _ = self.outputs[output]
+        self.outputs[output] = (message, required)
+
+    def tweak_outputs(self):
+        """Output consistency checking and tweaking."""
+
+        # If :succeed or :fail not set, assume success is required.
+        # Unless submit (and submit-fail) is optional (don't stall
+        # because of missing succeed if submit is optional).
+        if (
+            self.outputs[TASK_OUTPUT_SUCCEEDED][1] is None
+            and self.outputs[TASK_OUTPUT_FAILED][1] is None
+            and self.outputs[TASK_OUTPUT_SUBMITTED][1] is not False
+            and self.outputs[TASK_OUTPUT_SUBMIT_FAILED][1] is not False
+        ):
+            self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
+
+        # In Cylc 7 back compat mode, make all success outputs required.
+        if cylc.flow.flags.cylc7_back_compat:
+            for output in [
+                TASK_OUTPUT_SUBMITTED,
+                TASK_OUTPUT_SUCCEEDED
+            ]:
+                self.set_required_output(output, True)
 
     def add_graph_child(self, trigger, taskname, sequence):
         """Record child task instances that depend on my outputs.

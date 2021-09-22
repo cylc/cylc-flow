@@ -7,9 +7,10 @@
     UTC mode = True
     cycle point format = %Y%m%d
     [[events]]
-        abort on stalled = True
-        abort on inactivity = True
-        inactivity = PT5M
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT5M
 [scheduling]
     initial cycle point = now
     [[special tasks]]

@@ -27,10 +27,10 @@ BASE_GLOBAL_CONFIG="
         [[[auto restart]]]
             interval = PT15S
     [[events]]
-        abort on inactivity = True
-        abort on timeout = True
-        inactivity = PT2M
-        timeout = PT2M
+        abort on inactivity timeout = True
+        abort on stall timeout = True
+        inactivity timeout = PT2M
+        stall timeout = PT2M
 [scheduler]
     [[run hosts]]
         available = localhost, ${CYLC_TEST_HOST}"

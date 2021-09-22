@@ -1,8 +1,0 @@
-[scheduling]
-    [[graph]]
-                    R1 = """
-                        ( foo & bar => baz
-                    """
-[runtime]
-[[foo, bar, baz]]
-     script = echo "Hello"

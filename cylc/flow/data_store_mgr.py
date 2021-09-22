@@ -268,35 +268,41 @@ def apply_delta(key, delta, data):
         for del_id in delta.pruned:
             if del_id not in data[key]:
                 continue
-            # remove relationships
+            # Remove relationships.
+            # The suppression of key/value errors is to avoid
+            # elements and their relationships missing on reload.
             if key == TASK_PROXIES:
                 # remove relationship from task
                 data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
-                with suppress(KeyError):
+                with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_tasks.remove(del_id)
                 # remove relationship from workflow
-                getattr(data[WORKFLOW], key).remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
                 data[FAMILIES][data[key][del_id].family].proxies.remove(del_id)
-                with suppress(KeyError):
+                with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
                     ].child_families.remove(del_id)
-                getattr(data[WORKFLOW], key).remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).remove(del_id)
             elif key == EDGES:
                 edge = data[key][del_id]
-                if edge.source in data[TASK_PROXIES]:
+                with suppress(KeyError, ValueError):
                     data[TASK_PROXIES][edge.source].edges.remove(del_id)
-                if edge.target in data[TASK_PROXIES]:
+                with suppress(KeyError, ValueError):
                     data[TASK_PROXIES][edge.target].edges.remove(del_id)
-                getattr(data[WORKFLOW], key).edges.remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).edges.remove(del_id)
             elif key == JOBS:
                 # Jobs are only removed if their task is, so only need
                 # to remove relationship from workflow.
-                getattr(data[WORKFLOW], key).remove(del_id)
+                with suppress(KeyError, ValueError):
+                    getattr(data[WORKFLOW], key).remove(del_id)
             # remove/prune element from data-store
             del data[key][del_id]
 
@@ -429,6 +435,7 @@ class DataStoreMgr:
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
         self.updates_pending = False
+        self.publish_pending = False
 
     def initiate_data_model(self, reloaded=False):
         """Initiate or Update data model on start/restart/reload.
@@ -449,14 +456,19 @@ class DataStoreMgr:
         self.update_workflow()
 
         # Apply current deltas
-        self.apply_deltas(reloaded)
+        self.batch_deltas()
+        self.apply_delta_batch()
+
+        if not reloaded:
+            # Gather this batch of deltas for publish
+            self.apply_delta_checksum()
+            self.publish_deltas = self.get_publish_deltas()
+
         self.updates_pending = False
 
-        # Gather this batch of deltas for publish
-        self.publish_deltas = self.get_publish_deltas()
-
         # Clear deltas after application and publishing
-        self.clear_deltas()
+        self.clear_delta_store()
+        self.clear_delta_batch()
 
     def generate_definition_elements(self):
         """Generate static definition data elements.
@@ -664,24 +676,27 @@ class DataStoreMgr:
                 active_id].setdefault(edge_distance, set()).add(s_id)
 
         self.n_window_nodes[active_id].add(s_id)
+
         # Generate task proxy node
-        self.generate_ghost_task(s_id, itask, is_parent)
+        is_orphan = self.generate_ghost_task(s_id, itask, is_parent)
 
         edge_distance += 1
 
-        # TODO: xtrigger is workflow_state edges too
-        # Reference set for workflow relations
-        for items in itask.graph_children.values():
-            if edge_distance == 1:
-                descendant = True
-            self._expand_graph_window(
-                s_id, s_node, items, active_id, itask.flow_label, itask.reflow,
-                edge_distance, descendant, False)
-
-        for items in generate_graph_parents(itask.tdef, itask.point).values():
-            self._expand_graph_window(
-                s_id, s_node, items, active_id, itask.flow_label, itask.reflow,
-                edge_distance, False, True)
+        # Don't expand window about orphan task.
+        if is_orphan is not True:
+            # TODO: xtrigger is workflow_state edges too
+            # Reference set for workflow relations
+            for items in itask.graph_children.values():
+                if edge_distance == 1:
+                    descendant = True
+                self._expand_graph_window(
+                    s_id, s_node, items, active_id, itask.flow_label,
+                    itask.reflow, edge_distance, descendant, False)
+            for items in generate_graph_parents(
+                    itask.tdef, itask.point).values():
+                self._expand_graph_window(
+                    s_id, s_node, items, active_id, itask.flow_label,
+                    itask.reflow, edge_distance, False, True)
 
         if edge_distance == 1:
             levels = self.n_window_boundary_nodes[active_id].keys()
@@ -779,11 +794,18 @@ class DataStoreMgr:
             None
 
         """
-        t_id = f'{self.workflow_id}{ID_DELIM}{itask.tdef.name}'
+        name = itask.tdef.name
+        t_id = f'{self.workflow_id}{ID_DELIM}{name}'
         point_string = f'{itask.point}'
         task_proxies = self.data[self.workflow_id][TASK_PROXIES]
+
+        is_orphan = False
         if tp_id in task_proxies or tp_id in self.added[TASK_PROXIES]:
-            return
+            return is_orphan
+
+        if name not in self.schd.config.taskdefs:
+            is_orphan = True
+            self.generate_orphan_task(itask)
 
         # Most the time the definition node will be in the store,
         # so use try/except.
@@ -800,11 +822,11 @@ class DataStoreMgr:
             task=t_id,
             cycle_point=point_string,
             is_held=(
-                (itask.tdef.name, itask.point)
+                (name, itask.point)
                 in self.schd.pool.tasks_to_hold
             ),
             depth=task_def.depth,
-            name=task_def.name,
+            name=name,
             state=TASK_STATUS_WAITING,
             flow_label=itask.flow_label
         )
@@ -816,10 +838,14 @@ class DataStoreMgr:
             tproxy.reflow = itask.reflow
 
         tproxy.namespace[:] = task_def.namespace
-        tproxy.ancestors[:] = [
-            f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
-            for a_name in self.ancestors[task_def.name]
-            if a_name != task_def.name]
+        if is_orphan:
+            tproxy.ancestors[:] = [
+                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}root']
+        else:
+            tproxy.ancestors[:] = [
+                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
+                for a_name in self.ancestors[task_def.name]
+                if a_name != task_def.name]
         tproxy.first_parent = tproxy.ancestors[0]
 
         for prereq in itask.state.prerequisites:
@@ -873,6 +899,36 @@ class DataStoreMgr:
                 tp_queue.remove(tp_ref)
             self.latest_state_tasks[tproxy.state].appendleft(tp_ref)
         self.updates_pending = True
+
+        return is_orphan
+
+    def generate_orphan_task(self, itask):
+        """Generate orphan task definition."""
+        update_time = time()
+        tdef = itask.tdef
+        name = tdef.name
+        t_id = f'{self.workflow_id}{ID_DELIM}{name}'
+        t_stamp = f'{t_id}@{update_time}'
+        task = PbTask(
+            stamp=t_stamp,
+            id=t_id,
+            name=name,
+            depth=1,
+        )
+        task.namespace[:] = tdef.namespace_hierarchy
+        task.first_parent = f'{self.workflow_id}{ID_DELIM}root'
+        user_defined_meta = {}
+        for key, val in dict(tdef.describe()).items():
+            if key in ['title', 'description', 'URL']:
+                setattr(task.meta, key, val)
+            else:
+                user_defined_meta[key] = val
+        task.meta.user_defined = json.dumps(user_defined_meta)
+        elapsed_time = task_mean_elapsed_time(tdef)
+        if elapsed_time:
+            task.mean_elapsed_time = elapsed_time
+        task.parents[:] = [task.first_parent]
+        self.added[TASKS][t_id] = task
 
     def generate_ghost_family(self, fp_id, child_fam=None, child_task=None):
         """Generate the family-point elements from given ID if non-existent.
@@ -1059,7 +1115,7 @@ class DataStoreMgr:
             tp_delta.jobs.append(j_id)
             self.updates_pending = True
 
-    def update_data_structure(self):
+    def update_data_structure(self, reloaded=False):
         """Workflow batch updates in the data structure."""
 
         # Avoids changing window edge distance during edge/node creation
@@ -1074,14 +1130,25 @@ class DataStoreMgr:
         if self.updates_pending:
             # Update workflow statuses and totals if needed
             self.update_workflow()
-            self.updates_pending = False
 
             # Apply current deltas
-            self.apply_deltas()
+            self.batch_deltas()
+            self.apply_delta_batch()
+
+        if reloaded:
+            self.clear_delta_batch()
+            self.batch_deltas(reloaded=True)
+
+        if self.updates_pending or reloaded:
+            self.apply_delta_checksum()
             # Gather this batch of deltas for publish
             self.publish_deltas = self.get_publish_deltas()
-            # Clear deltas
-            self.clear_deltas()
+
+        self.updates_pending = False
+
+        # Clear deltas
+        self.clear_delta_batch()
+        self.clear_delta_store()
 
     def prune_data_store(self):
         """Remove flagged nodes and edges not in the set of active paths."""
@@ -1770,38 +1837,47 @@ class DataStoreMgr:
                 f'{ID_DELIM}{name}{ID_DELIM}{sub_num}'
             )
             node_type = JOBS
-        if node_id in self.data[self.workflow_id][node_type]:
-            return (node_id, self.data[self.workflow_id][node_type][node_id])
-        elif node_id in self.added[node_type]:
+        if node_id in self.added[node_type]:
             return (node_id, self.added[node_type][node_id])
+        elif node_id in self.data[self.workflow_id][node_type]:
+            return (node_id, self.data[self.workflow_id][node_type][node_id])
         return (node_id, False)
 
-    def apply_deltas(self, reloaded=False):
-        """Gather and apply deltas."""
+    def batch_deltas(self, reloaded=False):
+        """Batch gathered deltas."""
         # Gather cumulative update element
-        for key, elements in self.added.items():
-            if elements:
-                if key == WORKFLOW:
-                    if elements.ListFields():
-                        self.deltas[WORKFLOW].added.CopyFrom(elements)
-                    continue
-                self.deltas[key].added.extend(elements.values())
-        for key, elements in self.updated.items():
-            if elements:
-                if key == WORKFLOW:
-                    if elements.ListFields():
-                        self.deltas[WORKFLOW].updated.CopyFrom(elements)
-                    continue
-                self.deltas[key].updated.extend(elements.values())
+        if reloaded:
+            self.gather_delta_elements(self.data[self.workflow_id], 'added')
+        else:
+            self.gather_delta_elements(self.added, 'added')
+            self.gather_delta_elements(self.updated, 'updated')
 
-        # Apply deltas to local data-store
+        # set reloaded flag on deltas
+        for delta in self.deltas.values():
+            if delta.ListFields() or reloaded:
+                delta.reloaded = reloaded
+
+    def gather_delta_elements(self, store, delta_type):
+        """Gather deltas from store."""
+        for key, elements in store.items():
+            if elements:
+                if key == WORKFLOW:
+                    if elements.ListFields():
+                        getattr(self.deltas[WORKFLOW], delta_type).CopyFrom(
+                            elements)
+                    continue
+                getattr(self.deltas[key], delta_type).extend(elements.values())
+
+    def apply_delta_batch(self):
+        """Apply delta batch to local data-store."""
         data = self.data[self.workflow_id]
         for key, delta in self.deltas.items():
             if delta.ListFields():
-                delta.reloaded = reloaded
                 apply_delta(key, delta, data)
 
-        # Construct checksum on deltas for export
+    def apply_delta_checksum(self):
+        """Construct checksum on deltas for export."""
+        data = self.data[self.workflow_id]
         update_time = time()
         for key, delta in self.deltas.items():
             if delta.ListFields():
@@ -1816,16 +1892,24 @@ class DataStoreMgr:
                          for e in data[key].values()]
                     )
 
-    def clear_deltas(self):
+    def clear_delta_batch(self):
         """Clear current deltas."""
-        for key in self.deltas:
-            self.deltas[key].Clear()
-            if key == WORKFLOW:
-                self.added[key].Clear()
-                self.updated[key].Clear()
-                continue
-            self.added[key].clear()
-            self.updated[key].clear()
+        # Potential shared reference, avoid clearing
+        self.deltas = {
+            EDGES: EDeltas(),
+            FAMILIES: FDeltas(),
+            FAMILY_PROXIES: FPDeltas(),
+            JOBS: JDeltas(),
+            TASKS: TDeltas(),
+            TASK_PROXIES: TPDeltas(),
+            WORKFLOW: WDeltas(),
+        }
+
+    def clear_delta_store(self):
+        """Clear current delta store."""
+        # Potential shared reference, avoid clearing
+        self.added = deepcopy(DATA_TEMPLATE)
+        self.updated = deepcopy(DATA_TEMPLATE)
 
     # Message collation and dissemination methods:
     def get_entire_workflow(self):
@@ -1861,6 +1945,7 @@ class DataStoreMgr:
         result.append(
             (ALL_DELTAS.encode('utf-8'), all_deltas, 'SerializeToString')
         )
+        self.publish_pending = True
         return deepcopy(result)
 
     def get_data_elements(self, element_type):

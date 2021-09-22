@@ -1,10 +1,9 @@
 [cylc]
     [[events]]
-        timeout = PT30S
-        inactivity = PT30S
-        abort on inactivity = True
-        abort on timeout = True
-        abort on stalled = True
+        inactivity timeout = PT30S
+        abort on inactivity timeout = True
+        abort on stall timeout = True
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = foo

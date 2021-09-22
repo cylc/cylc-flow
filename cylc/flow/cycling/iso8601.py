@@ -319,9 +319,10 @@ class ISO8601Sequence(SequenceBase):
             self, dep_section, context_start_point, context_end_point)
         self.dep_section = dep_section
 
-        if context_start_point is None:
-            self.context_start_point = context_start_point
-        elif isinstance(context_start_point, ISO8601Point):
+        if (
+            context_start_point is None
+            or isinstance(context_start_point, ISO8601Point)
+        ):
             self.context_start_point = context_start_point
         else:
             self.context_start_point = ISO8601Point.from_nonstandard_string(

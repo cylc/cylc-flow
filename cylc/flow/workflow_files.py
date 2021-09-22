@@ -33,11 +33,11 @@ from subprocess import Popen, PIPE, DEVNULL
 import time
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
-    Tuple, TYPE_CHECKING, Union, overload
+    Tuple, TYPE_CHECKING, Union
 )
-from typing_extensions import Literal
 import zmq.auth
 
+import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
@@ -320,8 +320,9 @@ To start a new run, stop the old one first with one or more of these:
 """
 
 SUITERC_DEPR_MSG = (
-    f"The filename '{WorkflowFiles.SUITE_RC}' is deprecated "
-    f"in favour of '{WorkflowFiles.FLOW_FILE}'"
+    f"Backward compatibility mode ON for CYLC 7 '{WorkflowFiles.SUITE_RC}'"
+    " files: please address deprecation warnings and upgrade to Cylc 8 graph"
+    f" syntax BEFORE renaming the file to '{WorkflowFiles.FLOW_FILE}'.\n"
 )
 
 NO_FLOW_FILE_MSG = (
@@ -1048,22 +1049,7 @@ def get_platforms_from_db(run_dir):
         pri_dao.close()
 
 
-@overload
-def parse_reg(reg: str, src: Literal[False] = False) -> str:
-    ...
-
-
-@overload
-def parse_reg(reg: str, src: Literal[True]) -> Tuple[str, Path]:
-    ...
-
-
-@overload
-def parse_reg(reg: str, src: bool) -> Union[str, Tuple[str, Path]]:
-    ...  # Need this 3rd overload https://github.com/python/mypy/issues/6113
-
-
-def parse_reg(reg: str, src: bool = False) -> Union[str, Tuple[str, Path]]:
+def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
     """Centralised parsing of the workflow argument, to be used by most
     cylc commands (script modules).
 
@@ -1078,7 +1064,8 @@ def parse_reg(reg: str, src: bool = False) -> Union[str, Tuple[str, Path]]:
 
     Args:
         reg: The workflow arg. Can be one of:
-            - relative path to the run dir from ~/cylc-run;
+            - relative path to the run dir from ~/cylc-run, i.e. the "name"
+                of the workflow;
             - absolute path to a run dir, source dir or workflow file (only
                 if src is True);
             - '.' for the current directory (only if src is True).
@@ -1088,26 +1075,43 @@ def parse_reg(reg: str, src: bool = False) -> Union[str, Tuple[str, Path]]:
 
     Returns:
         reg: The normalised workflow arg.
-        path: (Only if src is True) The absolute path to the workflow file
-            (flow.cylc or suite.rc).
+        path: If src is True, the absolute path to the workflow file
+            (flow.cylc or suite.rc). Otherwise, the absolute path to the
+            workflow run dir.
     """
     if not src:
         validate_workflow_name(reg)
     reg: Path = Path(expand_path(reg))
 
     if src:
-        return _parse_src_reg(reg)
+        reg, abs_path = _parse_src_reg(reg)
+    else:
+        abs_path = Path(get_workflow_run_dir(reg))
+        if abs_path.is_file():
+            raise WorkflowFilesError(
+                f"Workflow name must refer to a directory, not a file: {reg}"
+            )
+        abs_path, reg = infer_latest_run(abs_path)
 
-    abs_path = Path(get_workflow_run_dir(reg))
-    if abs_path.is_file():
-        raise WorkflowFilesError(
-            f"Workflow name must refer to a directory, not a file: {reg}"
-        )
-    abs_path, reg = infer_latest_run(abs_path)
-    return str(reg)
+    check_deprecation(abs_path, warn=warn_depr)
+    return (str(reg), abs_path)
 
 
-def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
+def check_deprecation(path, warn=True):
+    """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
+
+    Path can point to config file or parent directory (i.e. workflow name).
+    """
+    if (
+        path.resolve().name == WorkflowFiles.SUITE_RC
+        or (path / WorkflowFiles.SUITE_RC).is_file()
+    ):
+        cylc.flow.flags.cylc7_back_compat = True
+        if warn:
+            LOG.warning(SUITERC_DEPR_MSG)
+
+
+def _parse_src_reg(reg: Path) -> Tuple[Path, Path]:
     """Helper function for parse_reg() when src=True."""
     if reg.is_absolute():
         abs_path = reg
@@ -1135,9 +1139,9 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
                             abs_path.relative_to(cwd),
                             run_dir_path.relative_to(get_cylc_run_dir())
                         ))
-                    return (str(reg.parent), abs_path)
+                    return (reg.parent, abs_path)
                 if run_dir_path.is_file():
-                    return (str(run_dir_reg.parent), run_dir_path)
+                    return (run_dir_reg.parent, run_dir_path)
                 try:
                     run_dir_path = check_flow_file(run_dir_path)
                 except WorkflowFilesError:
@@ -1151,17 +1155,18 @@ def _parse_src_reg(reg: Path) -> Tuple[str, Path]:
                     try:
                         abs_path = check_flow_file(abs_path, logger=None)
                     except WorkflowFilesError:
-                        return (str(run_dir_reg), run_dir_path)
+                        return (run_dir_reg, run_dir_path)
                     LOG.warning(REG_CLASH_MSG.format(
                         abs_path.relative_to(cwd),
                         run_dir_path.relative_to(get_cylc_run_dir())
                     ))
-                return (str(reg), abs_path)
+                return (reg, abs_path)
     if abs_path.is_file():
         reg = reg.parent
     else:
         abs_path = check_flow_file(abs_path)
-    return (str(reg), abs_path)
+
+    return (reg, abs_path)
 
 
 def validate_workflow_name(name: str) -> None:
@@ -1504,15 +1509,24 @@ def install_workflow(
             f"An error occurred when copying files from {source} to {rundir}")
         install_log.warning(f" Error: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
-    check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
+    check_deprecation(
+        check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
+    )
     if no_run_name:
         cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
     # check source link matches the source symlink from workflow dir.
     cylc_install.mkdir(parents=True, exist_ok=True)
     if not source_link.exists():
+        if source_link.is_symlink():
+            raise WorkflowFilesError(
+                f'Workflow source dir is not accessible:'
+                f' "{source_link.resolve()}".\n'
+                f'Restore the source or modify the "{source_link}" symlink'
+                ' to continue.'
+            )
         install_log.info(f"Creating symlink from {source_link}")
-        source_link.symlink_to(source)
+        source_link.symlink_to(source.resolve())
     elif (  # noqa: SIM106
         source_link.exists()
         and source_link.resolve() == source.resolve()
@@ -1615,21 +1629,20 @@ def check_flow_file(
         if not flow_file_path.is_symlink():
             return flow_file_path
         if flow_file_path.resolve() == suite_rc_path.resolve():
-            # A symlink that points to *existing* suite.rc
-            if logger:
-                logger.warning(SUITERC_DEPR_MSG)
+            # A symlink that points to existing suite.rc
             return flow_file_path
     if suite_rc_path.is_file():
         if not symlink_suiterc:
-            if logger:
-                logger.warning(SUITERC_DEPR_MSG)
             return suite_rc_path
         if flow_file_path.is_symlink():
             # Symlink broken or points elsewhere - replace
             flow_file_path.unlink()
         flow_file_path.symlink_to(WorkflowFiles.SUITE_RC)
         if logger:
-            logger.warning(f'{SUITERC_DEPR_MSG}. Symlink created.')
+            logger.warning(
+                f"Symlink created: "
+                f"{WorkflowFiles.FLOW_FILE} -> {WorkflowFiles.SUITE_RC}"
+            )
         return flow_file_path
     raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
 

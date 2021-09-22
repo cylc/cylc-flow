@@ -95,8 +95,8 @@
         <keyword>user</keyword>
         <keyword>to</keyword>
         <keyword>title</keyword>
-        <keyword>timeout handler</keyword>
-        <keyword>timeout</keyword>
+        <keyword>workflow timeout handler</keyword>
+        <keyword>workflow timeout</keyword>
         <keyword>time limit buffer</keyword>
         <keyword>templates</keyword>
         <keyword>task parameters</keyword>
@@ -112,7 +112,7 @@
         <keyword>stop after cycle point</keyword>
         <keyword>startup handler</keyword>
         <keyword>started handler</keyword>
-        <keyword>stalled handler</keyword>
+        <keyword>stall handler</keyword>
         <keyword>speedup factor</keyword>
         <keyword>special tasks</keyword>
         <keyword>simulation</keyword>
@@ -154,8 +154,8 @@
         <keyword>init-script</keyword>
         <keyword>inherit</keyword>
         <keyword>include</keyword>
-        <keyword>inactivity handler</keyword>
-        <keyword>inactivity</keyword>
+        <keyword>inactivity timeout handler</keyword>
+        <keyword>inactivity timeout</keyword>
         <keyword>host</keyword>
         <keyword>hold after cycle point</keyword>
         <keyword>handlers</keyword>
@@ -203,14 +203,9 @@
         <keyword>batch submit command template</keyword>
         <keyword>allow implicit tasks</keyword>
         <keyword>aborted handler</keyword>
-        <keyword>abort on timeout</keyword>
-        <keyword>abort on stalled</keyword>
-        <keyword>abort on inactivity</keyword>
-        <keyword>abort if timeout handler fails</keyword>
-        <keyword>abort if startup handler fails</keyword>
-        <keyword>abort if stalled handler fails</keyword>
-        <keyword>abort if shutdown handler fails</keyword>
-        <keyword>abort if inactivity handler fails</keyword>
+        <keyword>abort on workflow timeout</keyword>
+        <keyword>abort on stall timeout</keyword>
+        <keyword>abort on inactivity timeout</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
         <!--END_TAG_FOR_AUTO_UPDATE-->

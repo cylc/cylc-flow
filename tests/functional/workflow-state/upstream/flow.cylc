@@ -4,8 +4,8 @@
 [scheduling]
     [[graph]]
         R1 = """
-            good-stuff & bad
-            bad:fail => handler
+            good-stuff & bad?
+            bad:fail? => handler
             messenger:x => done
         """
 

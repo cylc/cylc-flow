@@ -72,7 +72,7 @@ else
 fi
 
 INSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*.log')"
-grep_ok "The filename 'suite.rc' is deprecated in favour of 'flow.cylc'. Symlink created." "${INSTALL_LOG}"
+grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
 rm -rf flow.cylc
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 exists_ok "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc"
@@ -82,7 +82,7 @@ else
     fail "symlink.suite.rc"
 fi
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "The filename 'suite.rc' is deprecated in favour of 'flow.cylc'. Symlink created." "${REINSTALL_LOG}"
+grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
 popd || exit 1
 purge_rnd_workflow
 

@@ -90,7 +90,7 @@ def get_platform(
             get_platform() or platform_from_job_info(), but to the
             user these look the same.
     """
-    if task_conf is None or isinstance(task_conf, str):
+    if task_conf is None or isinstance(task_conf, str):  # noqa: SIM 114
         # task_conf is a platform name, or get localhost if None
         return platform_from_name(task_conf, bad_hosts=bad_hosts)
 
