@@ -1356,8 +1356,6 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'remote', 'suite definition directory']
     )
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
     u.obsolete('8.0.0', ['cylc', 'environment'])
     u.obsolete('8.0.0', ['cylc', 'reference test'])
