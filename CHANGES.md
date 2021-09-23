@@ -87,6 +87,10 @@ cli options.
 [#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
 (previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
 
+[#4430](https://github.com/cylc/cylc-flow/pull/4430) - Log files renamed:
+- `log/flow.cylc.processed` ⇒ `log/flow-processed.cylc`
+- `log/<datetimes>-run.cylc` ⇒ `log/<datetimes>-start.cylc`
+
 ### Fixes
 
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
