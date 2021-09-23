@@ -89,6 +89,10 @@ cli options.
 
 ### Fixes
 
+[#4426](https://github.com/cylc/cylc-flow/pull/4426) -
+Fix bug when a conditional expression in the graph contains one task name that
+is a substring of another.
+
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
 
