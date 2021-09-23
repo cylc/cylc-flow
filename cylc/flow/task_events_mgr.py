@@ -410,7 +410,6 @@ class TaskEventsManager():
             new_msg = f'{message} {self.FLAG_POLLED}'
         else:
             new_msg = message
-        itask.set_summary_message(new_msg)
         self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, submit_num),
             new_msg)
@@ -885,7 +884,6 @@ class TaskEventsManager():
                 delay_msg = "held (%s)" % delay_msg
             msg = "failed, %s" % (delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
-            itask.set_summary_message(msg)
             self.setup_event_handlers(
                 itask, self.EVENT_RETRY, f"{self.JOB_FAILED}, {delay_msg}")
         self._reset_job_timers(itask)
@@ -973,7 +971,6 @@ class TaskEventsManager():
                 delay_msg = f"held ({delay_msg})"
             msg = "%s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
-            itask.set_summary_message(msg)
             self.setup_event_handlers(
                 itask, self.EVENT_SUBMIT_RETRY,
                 f"job {self.EVENT_SUBMIT_FAILED}, {delay_msg}")
@@ -1013,7 +1010,6 @@ class TaskEventsManager():
         # Unset started and finished times in case of resubmission.
         itask.set_summary_time('started')
         itask.set_summary_time('finished')
-        itask.set_summary_message(TASK_OUTPUT_SUBMITTED)
 
         self.reset_inactivity_timer_func()
         if itask.state.status == TASK_STATUS_PREPARING:
