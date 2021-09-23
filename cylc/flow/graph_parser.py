@@ -17,7 +17,6 @@
 
 import re
 import contextlib
-from itertools import product
 
 from typing import (
     Set,
@@ -100,8 +99,8 @@ class GraphParser:
     QUALIFIER = ':'
     ARROW = '=>'
     XTRIG = '@'
-    CONTINUATION_STRS = [ARROW, OP_AND, OP_OR]
-    BAD_STRS = [OP_AND_ERR, OP_OR_ERR]
+    CONTINUATION_STRS = (ARROW, OP_AND, OP_OR)
+    BAD_STRS = (OP_AND_ERR, OP_OR_ERR)
 
     QUAL_FAM_SUCCEED_ALL = "succeed-all"
     QUAL_FAM_SUCCEED_ANY = "succeed-any"
@@ -344,10 +343,10 @@ class GraphParser:
             # Check that a continuation sequence doesn't end this line and
             # begin the next:
             if (
-                this_line.endswith(tuple(self.CONTINUATION_STRS)) and
-                next_line.startswith(tuple(self.CONTINUATION_STRS))
+                this_line.endswith(self.CONTINUATION_STRS) and
+                next_line.startswith(self.CONTINUATION_STRS)
             ):
-               raise GraphParseError(
+                raise GraphParseError(
                     'Consecutive lines end and start with continuation '
                     'characters:\n'  # (not "sequence")
                     f'{this_line}\n'
