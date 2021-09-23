@@ -72,7 +72,7 @@ class CylcReviewService(object):
         'suite.rc',
         'suite.rc.processed',
         'flow.cylc',
-        'flow.cylc.processed',
+        'log/flow-config/flow.cylc.processed',
         'rose-suite.info',
         'opt/rose-suite-cylc-install.conf'
     ]
