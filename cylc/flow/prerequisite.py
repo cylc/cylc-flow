@@ -141,7 +141,7 @@ class Prerequisite:
                 # Use '\b' in case one task name is a substring of another
                 # and escape special chars ('.', timezone '+') in task IDs.
                 expr = re.sub(
-                    r"\b" + re.escape(self.MESSAGE_TEMPLATE % message) + r"\b",
+                    fr"\b{re.escape(self.MESSAGE_TEMPLATE % message)}\b",
                     self.SATISFIED_TEMPLATE % message,
                     expr
                 )
