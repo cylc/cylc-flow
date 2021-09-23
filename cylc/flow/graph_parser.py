@@ -343,17 +343,16 @@ class GraphParser:
 
             # Check that a continuation sequence doesn't end this line and
             # begin the next:
-            for sequences in product(self.CONTINUATION_STRS, repeat=2):
-                if (
-                    this_line.endswith(sequences[0])
-                    and next_line.startswith(sequences[1])
-                ):
-                    raise GraphParseError(
-                        'Consecutive lines end and start with continuation '
-                        'sequence:\n'
-                        f'{this_line}\n'
-                        f'{next_line}'
-                    )
+            if (
+                this_line.endswith(tuple(self.CONTINUATION_STRS)) and
+                next_line.startswith(tuple(self.CONTINUATION_STRS))
+            ):
+               raise GraphParseError(
+                    'Consecutive lines end and start with continuation '
+                    'characters:\n'  # (not "sequence")
+                    f'{this_line}\n'
+                    f'{next_line}'
+                )
 
             # Check that line ends with a valid continuation sequence:
             if (any(
