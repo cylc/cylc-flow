@@ -116,16 +116,16 @@ class Prerequisite:
 
     def set_condition(self, expr):
         """Set the conditional expression for this prerequisite.
-
         Resets the cached state (self._all_satisfied).
 
         Examples:
             # GH #3644 construct conditional expression when one task name
             # is a substring of another: foo | xfoo => bar.
+            # Add 'foo' to the 'satisfied' dict before 'xfoo'.
             >>> preq = Prerequisite(1)
             >>> preq.satisfied = {
-            ...    ('xfoo', '1', 'succeeded'): False,
-            ...    ('foo', '1', 'succeeded'): False
+            ...    ('foo', '1', 'succeeded'): False,
+            ...    ('xfoo', '1', 'succeeded'): False
             ... }
             >>> preq.set_condition("foo.1 succeeded|xfoo.1 succeeded")
             >>> expr = preq.conditional_expression
