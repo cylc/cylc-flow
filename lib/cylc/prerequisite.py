@@ -121,10 +121,11 @@ class Prerequisite(object):
         Examples:
             # GH #3644 construct conditional expression when one task name
             # is a substring of another: foo | xfoo => bar.
+            # Put 'foo' before 'xfoo' in the 'satisified' dict.
             >>> preq = Prerequisite(1)
             >>> preq.satisfied = {
-            ...    ('xfoo', '1', 'succeeded'): False,
-            ...    ('foo', '1', 'succeeded'): False
+            ...    ('foo', '1', 'succeeded'): False,
+            ...    ('xfoo', '1', 'succeeded'): False
             ... }
             >>> preq.set_condition("foo.1 succeeded|xfoo.1 succeeded")
             >>> expr = preq.conditional_expression
