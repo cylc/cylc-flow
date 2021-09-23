@@ -55,7 +55,7 @@ logfile="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # Check workflow fails for the reason we want it to fail
 named_grep_ok "Workflow stalled with bad.1 (submit-failed)"\
-    "bad.1 (submit-failed)" "$logfile"
+    "bad.1 did not complete required outputs" "$logfile"
 
 # Look for message indicating that remote init has failed on each bad_host
 # on every bad platform.

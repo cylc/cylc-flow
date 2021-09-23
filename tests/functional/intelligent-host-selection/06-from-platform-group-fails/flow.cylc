@@ -11,7 +11,7 @@ Fails on all hosts on all plaforms
 """
 [scheduler]
     [[events]]
-        abort on stalled = true
+        stall timeout = PT0S
 
 [scheduling]
     initial cycle point = 1
