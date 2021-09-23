@@ -36,6 +36,10 @@ trying to run Cylc 8 workflows.
 
 ### Fixes
 
+[#4427](https://github.com/cylc/cylc-flow/pull/4427) -
+Fix bug when a conditional expression in the graph contains one task name that
+is a substring of another.
+
 [#4233](https://github.com/cylc/cylc-flow/pull/4233) - Fix bug in Cylc Review
 caused by Cylc 8 workflows (change in terminology from 'suite' to 'workflow').
 

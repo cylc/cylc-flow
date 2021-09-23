@@ -19,6 +19,7 @@
 """Functionality for expressing and evaluating logical triggers."""
 
 import math
+import re
 
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
@@ -117,8 +118,21 @@ class Prerequisite(object):
 
         Resets the cached state (self._all_satisfied).
 
-        """
+        Examples:
+            # GH #3644 construct conditional expression when one task name
+            # is a substring of another: foo | xfoo => bar.
+            >>> preq = Prerequisite(1)
+            >>> preq.satisfied = {
+            ...    ('xfoo', '1', 'succeeded'): False,
+            ...    ('foo', '1', 'succeeded'): False
+            ... }
+            >>> preq.set_condition("foo.1 succeeded|xfoo.1 succeeded")
+            >>> expr = preq.conditional_expression
+            >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
+            ['bool(self.satisfied[("foo", "1", "succeeded")])',
+            'bool(self.satisfied[("xfoo", "1", "succeeded")])']
 
+        """
         drop_these = []
         self._all_satisfied = None
 
@@ -148,8 +162,12 @@ class Prerequisite(object):
                 expr = simpler.get_cleaned()
             # Make a Python expression so we can eval() the logic.
             for message in self.satisfied:
-                expr = expr.replace(self.MESSAGE_TEMPLATE % message,
-                                    self.SATISFIED_TEMPLATE % message)
+                # Use '\b' in case one task name is a substring of another
+                # and escape special chars ('.', timezone '+') in task IDs.
+                pattern = (
+                    r"\b" + re.escape(self.MESSAGE_TEMPLATE % message) + r"\b")
+                replace = self.SATISFIED_TEMPLATE % message
+                expr = re.sub(pattern, replace, expr)
             self.conditional_expression = expr
 
     def is_satisfied(self):
