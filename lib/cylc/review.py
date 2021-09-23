@@ -72,7 +72,6 @@ class CylcReviewService(object):
         'suite.rc',
         'suite.rc.processed',
         'flow.cylc',
-        'log/flow-config/flow.cylc.processed',
         'rose-suite.info',
         'opt/rose-suite-cylc-install.conf'
     ]
@@ -773,7 +772,8 @@ class CylcReviewService(object):
             "log/workflow/file-installation-log.*",
             "log/suite/log*",
             "log/suite/file-installation-log.*",
-            "log/install/*"
+            "log/install/*",
+            "log/flow-config/*"
         ]
         for glob_pattern in EXTRA_FILES:
             for f_name in glob(os.path.join(dir_, glob_pattern)):
