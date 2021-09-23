@@ -16,25 +16,27 @@
 
 """Workflow service files management."""
 
-import aiofiles
 import asyncio
 from collections import deque
 from contextlib import suppress
 from enum import Enum
 from functools import partial
 import glob
+import json
 import logging
 import os
 from pathlib import Path
 from random import shuffle
 import re
 import shutil
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
 import time
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
     Tuple, TYPE_CHECKING, Union
 )
+
+import aiofiles
 import zmq.auth
 
 import cylc.flow.flags
@@ -64,16 +66,20 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_to_platforms_map,
     get_localhost_install_target,
-    get_platform
 )
 from cylc.flow.hostuserutil import (
     get_user,
     is_remote_host
 )
-from cylc.flow.remote import construct_ssh_cmd, DEFAULT_RSYNC_OPTS
+from cylc.flow.remote import (
+    DEFAULT_RSYNC_OPTS,
+    _construct_ssh_cmd,
+    construct_ssh_cmd,
+)
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.unicode_rules import WorkflowNameValidator
+from cylc.flow.util import cli_format
 from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
@@ -262,8 +268,18 @@ class ContactFileFields:
     OWNER = 'CYLC_WORKFLOW_OWNER'
     """The user account under which the scheduler process is running."""
 
-    PROCESS = 'CYLC_WORKFLOW_PROCESS'
+    PID = 'CYLC_WORKFLOW_PID'
     """The process ID of the running workflow on ``CYLC_WORKFLOW_HOST``."""
+
+    COMMAND = 'CYLC_WORKFLOW_COMMAND'
+    """The command that was used to run the workflow on ``CYLC_WORKFLOW_HOST```.
+
+    Note that this command may be affected by:
+
+    * Workflow host selection (this adds the ``--host`` argument).
+    * Auto restart (this reconstructs the command and changes the ``--host``
+      argument.
+    """
 
     PORT = 'CYLC_WORKFLOW_PORT'
     """The port Cylc uses to communicate with this workflow."""
@@ -302,8 +318,6 @@ REG_DELIM = "/"
 NO_TITLE = "No title provided"
 REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
-PS_OPTS = '-wopid,args'
-
 MAX_SCAN_DEPTH = 4  # How many subdir levels down to look for valid run dirs
 
 CONTACT_FILE_EXISTS_MSG = r"""workflow contact file exists: %(fname)s
@@ -336,85 +350,156 @@ REG_CLASH_MSG = (
 )
 
 
-def detect_old_contact_file(reg, check_host_port=None):
-    """Detect old workflow contact file.
+def _is_process_running(
+    host: str,
+    pid: Union[int, str],
+    command: str
+) -> bool:
+    """Check if a workflow process is still running.
 
-    If an old contact file does not exist, do nothing. If one does exist
-    but the workflow process is definitely not alive, remove it. If one exists
-    and the workflow process is still alive, raise ServiceFileError.
-
-    If check_host_port is specified and does not match the (host, port)
-    value in the old contact file, raise AssertionError.
+    * Returns True if the process is still running.
+    * Returns False if it is not.
+    * Raises CylcError if we cannot tell (e.g. due to network issues).
 
     Args:
-        reg (str): workflow name
-        check_host_port (tuple): (host, port) to check against
+        host:
+            The host where you expect it to be running.
+        pid:
+            The process ID you expect it to be running under.
+        command:
+            The command you expect to be running as it would appear in `ps`
+            output` (e.g. `cylc play <flow> --host=localhost`).
 
-    Raise:
-        AssertionError:
-            If old contact file exists but does not have matching
-            (host, port) with value of check_host_port.
-        ServiceFileError:
+    Raises:
+        CylcError:
+            If it is not possible to tell whether the process is running
+            or not.
+
+    Returns:
+        True if the workflow is running else False.
+
+    Examples:
+        >>> import psutil; proc = psutil.Process()
+
+        # check a process that is running (i.e. this one)
+        >>> _is_process_running(
+        ...     'localhost',
+        ...     proc.pid,
+        ...     cli_format(proc.cmdline()),
+        ... )
+        True
+
+        # check a process that is running but with a command line  that
+        # doesn't match
+        >>> _is_process_running('localhost', proc.pid, 'something-else')
+        False
+
+    """
+    # See if the process is still running or not.
+    cmd = ['cylc', 'psutil']
+    metric = f'[["Process", {pid}]]'
+    if is_remote_host(host):
+        cmd = _construct_ssh_cmd(cmd, host)
+    proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
+    try:
+        # Terminate command after 10 seconds to prevent hanging, etc.
+        out, err = proc.communicate(timeout=10, input=metric)
+    except TimeoutExpired:
+        raise CylcError(
+            f'Cannot determine whether workflow is running on {host}.'
+        )
+
+    if proc.returncode == 2:
+        # the psutil call failed to gather metrics on the process
+        # because the process does not exist
+        return False
+
+    if proc.returncode:
+        # the psutil call failed in some other way e.g. network issues
+        LOG.debug(
+            f'$ {cli_format(cmd)}  # returned {proc.returncode}\n{err}'
+        )
+        raise CylcError(
+            f'Cannot determine whether workflow is running on {host}.'
+            f'\n{command}'
+        )
+
+    process = json.loads(out)[0]
+    return cli_format(process['cmdline']) == command
+
+
+def detect_old_contact_file(reg: str, contact_data=None) -> None:
+    """Check if the workflow process is still running.
+
+    As a side-effect this should detect and rectify the situation
+    where an old contact file is still present from a previous run. This can be
+    caused by the uncontrolled teardown of a running Scheduler (e.g. a power
+    off).
+
+    * If an old contact file does not exist, do nothing.
+    * If one does exist but the workflow process is definitely not alive,
+      remove it.
+    * If one exists and the workflow process is still alive, raise
+      ServiceFileError.
+
+    Args:
+        reg: workflow name
+
+    Raises:
+        CylcError:
+            * If it is not possible to tell for sure if the workflow is running
+              or not.
+            * If the workflow is not, however, the contact file cannot be
+              removed.
+        ServiceFileError(CylcError):
             If old contact file exists and the workflow process still alive.
+
     """
     # An old workflow of the same name may be running if a contact file exists
     # and can be loaded.
-    try:
-        data = load_contact_file(reg)
-        old_host = data[ContactFileFields.HOST]
-        old_port = data[ContactFileFields.PORT]
-        old_proc_str = data[ContactFileFields.PROCESS]
-    except (IOError, ValueError, ServiceFileError):
-        # Contact file does not exist or corrupted, should be OK to proceed
-        return
-    if check_host_port and check_host_port != (old_host, int(old_port)):
-        raise AssertionError("%s != (%s, %s)" % (
-            check_host_port, old_host, old_port))
-    # Run the "ps" command to see if the process is still running or not.
-    # If the old workflow process is still running, it should show up with the
-    # same command line as before.
-    # Terminate command after 10 seconds to prevent hanging, etc.
-    old_pid_str = old_proc_str.split(None, 1)[0].strip()
-    cmd = ["timeout", "10", "ps", PS_OPTS, str(old_pid_str)]
-    if is_remote_host(old_host):
-        import shlex
-        ssh_str = get_platform()["ssh command"]
-        cmd = shlex.split(ssh_str) + ["-n", old_host] + cmd
-    from time import sleep, time
-    proc = Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
-    # Terminate command after 10 seconds to prevent hanging SSH, etc.
-    timeout = time() + 10.0
-    while proc.poll() is None:
-        if time() > timeout:
-            proc.terminate()
-        sleep(0.1)
-    fname = get_contact_file(reg)
-    ret_code = proc.wait()
-    out, err = (f.decode() for f in proc.communicate())
-    if ret_code:
-        LOG.debug("$ %s  # return %d\n%s", ' '.join(cmd), ret_code, err)
-    for line in reversed(out.splitlines()):
-        if line.strip() == old_proc_str:
-            # Workflow definitely still running
-            break
-        elif line.split(None, 1)[0].strip() == "PID":
-            # Only "ps" header - "ps" has run, but no matching results.
-            # Workflow not running. Attempt to remove workflow contact file.
-            try:
-                os.unlink(fname)
-                return
-            except OSError:
-                break
+    if not contact_data:
+        try:
+            contact_data = load_contact_file(reg)
+        except (IOError, ValueError, ServiceFileError):
+            # Contact file does not exist or corrupted, workflow should be dead
+            return
 
-    raise ServiceFileError(
-        CONTACT_FILE_EXISTS_MSG % {
-            "host": old_host,
-            "port": old_port,
-            "pid": old_pid_str,
-            "fname": fname,
-            "workflow": reg,
-        }
-    )
+    try:
+        old_host: str = contact_data[ContactFileFields.HOST]
+        old_port: str = contact_data[ContactFileFields.PORT]
+        old_pid: str = contact_data[ContactFileFields.PID]
+        old_cmd: str = contact_data[ContactFileFields.COMMAND]
+    except KeyError as exc:
+        # this shouldn't happen
+        # but if it does re-raise the error as something more informative
+        raise Exception(f'Found contact file with incomplete data:\n{exc}.')
+
+    # check if the workflow process is running ...
+    # NOTE: can raise CylcError
+    process_is_running = _is_process_running(old_host, old_pid, old_cmd)
+
+    fname = get_contact_file(reg)
+    if process_is_running:
+        # ... the process is running, raise an exception
+        raise ServiceFileError(
+            CONTACT_FILE_EXISTS_MSG % {
+                "host": old_host,
+                "port": old_port,
+                "pid": old_cmd,
+                "fname": fname,
+                "workflow": reg,
+            }
+        )
+    else:
+        # ... the process isn't running so the contact file is out of date
+        # remove it
+        try:
+            os.unlink(fname)
+            return
+        except OSError as exc:
+            raise CylcError(
+                f'Failed to remove old contact file: "{fname}"\n{exc}'
+            )
 
 
 def dump_contact_file(reg, data):
@@ -492,14 +577,14 @@ def get_workflow_srv_dir(reg):
     return os.path.join(run_d, WorkflowFiles.Service.DIRNAME)
 
 
-def load_contact_file(reg):
+def load_contact_file(reg: str) -> Dict[str, str]:
     """Load contact file. Return data as key=value dict."""
     file_base = WorkflowFiles.Service.CONTACT
     path = get_workflow_srv_dir(reg)
     file_content = _load_local_item(file_base, path)
     if not file_content:
         raise ServiceFileError("Couldn't load contact file")
-    data = {}
+    data: Dict[str, str] = {}
     for line in file_content.splitlines():
         key, value = [item.strip() for item in line.split("=", 1)]
         # BACK COMPAT: contact pre "suite" to "workflow" conversion.
