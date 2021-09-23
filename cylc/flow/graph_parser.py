@@ -348,7 +348,7 @@ class GraphParser:
             ):
                 raise GraphParseError(
                     'Consecutive lines end and start with continuation '
-                    'characters:\n'  # (not "sequence")
+                    'characters:\n'
                     f'{this_line}\n'
                     f'{next_line}'
                 )
