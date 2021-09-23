@@ -23,8 +23,16 @@ cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
 
+## __cylc-7.8.10 (upcoming, 2021)__
+
+### Fixes
+
+[#4429](https://github.com/cylc/cylc-flow/pull/4429) - Enabled the finding
+and viewing of log files with names changed at Cylc 8.
+
+
 -------------------------------------------------------------------------------
-## __cylc-7.8.9 (upcoming, 2021)__
+## __cylc-7.8.9 (2021-09-23)__
 
 ### Enhancements
 
