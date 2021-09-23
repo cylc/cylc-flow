@@ -120,8 +120,8 @@ class Prerequisite:
         Resets the cached state (self._all_satisfied).
 
         Examples:
-            # GH #3644 construct conditional expression when one task name is a
-            # substring of another: foo | xfoo => bar.
+            # GH #3644 construct conditional expression when one task name
+            # is a substring of another: foo | xfoo => bar.
             >>> preq = Prerequisite(1)
             >>> preq.satisfied = {
             ...    ('xfoo', '1', 'succeeded'): False,
@@ -138,8 +138,8 @@ class Prerequisite:
         if '|' in expr:
             # Make a Python expression so we can eval() the logic.
             for message in self.satisfied:
-                # Use '\b' in case task names are substrings of other tasks
-                # names, and re.escape for '.' and timezone '+' in task IDs.
+                # Use '\b' in case one task name is a substring of another
+                # and escape special chars ('.', timezone '+') in task IDs.
                 pattern = (
                     r"\b" + re.escape(self.MESSAGE_TEMPLATE % message) + r"\b")
                 replace = self.SATISFIED_TEMPLATE % message
