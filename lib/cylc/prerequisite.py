@@ -164,10 +164,11 @@ class Prerequisite(object):
             for message in self.satisfied:
                 # Use '\b' in case one task name is a substring of another
                 # and escape special chars ('.', timezone '+') in task IDs.
-                pattern = (
-                    r"\b" + re.escape(self.MESSAGE_TEMPLATE % message) + r"\b")
-                replace = self.SATISFIED_TEMPLATE % message
-                expr = re.sub(pattern, replace, expr)
+                expr = re.sub(
+                    r"\b" + re.escape(self.MESSAGE_TEMPLATE % message) + r"\b",
+                    self.SATISFIED_TEMPLATE % message,
+                    expr
+                )
             self.conditional_expression = expr
 
     def is_satisfied(self):
