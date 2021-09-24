@@ -203,7 +203,6 @@ message PbTaskProxy {
     optional string cycle_point = 5;
     optional int32 depth = 6;
     optional int32 job_submits = 7;
-    optional string latest_message = 8;
     map<string, PbOutput> outputs = 9;
     repeated string namespace = 11;
     repeated PbPrerequisite prerequisites = 12;
