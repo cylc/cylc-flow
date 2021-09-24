@@ -13,12 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """Unit tests for the GraphParser."""
 
-
-import pytest
 import logging
+import pytest
+from itertools import product
+from pytest import param
+from types import SimpleNamespace
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import GraphParseError, ParamExpandError
@@ -49,17 +50,42 @@ def test_parse_graph_fails_null_task_name(graph):
         assert "Null task name in graph:" in str(cm.value)
 
 
+@pytest.mark.parametrize('seq', ('&', '|', '=>'))
 @pytest.mark.parametrize(
     'graph, expected_err',
     [
         [
-            "=> b",
-            "Leading arrow"
+            "{0} b",
+            "Leading {0}"
         ],
         [
-            "a =>",
-            "Trailing arrow"
+            "a {0}",
+            "Dangling {0}"
         ],
+        [
+            "{0} b {0} c",
+            "Leading {0}"
+        ],
+        [
+            "a {0} b {0}",
+            "Dangling {0}"
+        ]
+    ]
+)
+def test_graph_syntax_errors_2(seq, graph, expected_err):
+    """Test various graph syntax errors."""
+    graph = graph.format(seq)
+    expected_err = expected_err.format(seq)
+    with pytest.raises(GraphParseError) as cm:
+        GraphParser().parse_graph(graph)
+    assert (
+        expected_err in str(cm.value)
+    )
+
+
+@pytest.mark.parametrize(
+    'graph, expected_err',
+    [
         [
             "a b => c",
             "Bad graph node format"
@@ -125,27 +151,61 @@ def test_parse_graph_simple():
     assert not families
 
 
-def test_parse_graph_simple_with_break_line_01():
+@pytest.mark.parametrize(
+    'graph, expect',
+    [
+        param(
+            'a => b\n=> c',
+            SimpleNamespace(
+                original={
+                    'c': {'b:succeeded': 'b:succeeded'},
+                    'b': {'a:succeeded': 'a:succeeded'},
+                    'a': {'': ''}
+                },
+                triggers={
+                    'c': {'b:succeeded': (['b:succeeded'], False)},
+                    'b': {'a:succeeded': (['a:succeeded'], False)},
+                    'a': {'': ([], False)}
+                },
+                families={}
+            ),
+            id='line break on =>'
+        ),
+        param(
+            'a & b\n& c',
+            SimpleNamespace(
+                original={'b': {'': ''}, 'a': {'': ''}, 'c': {'': ''}},
+                triggers={
+                    'b': {'': ([], False)},
+                    'a': {'': ([], False)},
+                    'c': {'': ([], False)}
+                },
+                families={}
+            ),
+            id='line break on &'
+        ),
+        param(
+            'a | b\n| c',
+            SimpleNamespace(
+                original={'b': {'': ''}, 'c': {'': ''}, 'a': {'': ''}},
+                triggers={
+                    'b': {'': ([], False)},
+                    'c': {'': ([], False)},
+                    'a': {'': ([], False)}
+                },
+                families={}
+            ),
+            id='line break on |'
+        )
+    ]
+)
+def test_parse_graph_simple_with_break_line_01(graph, expect):
     """Test parsing graphs."""
-    gp = GraphParser()
-    gp.parse_graph('a => b\n'
-                   '=> c')
-    original = gp.original
-    triggers = gp.triggers
-    families = gp.family_map
-
-    assert original['a'] == {'': ''}
-    assert original['b'] == {'a:succeeded': 'a:succeeded'}
-    assert original['c'] == {'b:succeeded': 'b:succeeded'}
-
-    assert triggers['a'] == {'': ([], False)}
-    assert (
-        triggers['b'] == {'a:succeeded': (['a:succeeded'], False)}
-    )
-    assert (
-        triggers['c'] == {'b:succeeded': (['b:succeeded'], False)}
-    )
-    assert not families
+    parser = GraphParser()
+    parser.parse_graph(graph)
+    assert parser.original == expect.original
+    assert parser.triggers == expect.triggers
+    assert not parser.family_map
 
 
 def test_parse_graph_simple_with_break_line_02():
@@ -559,6 +619,34 @@ def test_param_expand_graph_parser():
         }
     }
     assert gp.triggers == triggers
+
+
+@pytest.mark.parametrize(
+    'expect', ('&', '|', '=>')
+)
+def test_parse_graph_fails_with_continuation_at_last_line(expect):
+    """Fails if last line contains a continuation char.
+    """
+    parser = GraphParser()
+    with pytest.raises(GraphParseError) as raised:
+        parser.parse_graph(f't1 => t2 {expect}')
+    assert isinstance(raised.value, GraphParseError)
+    assert f'Dangling {expect}' in raised.value.args[0]
+
+
+@pytest.mark.parametrize(
+    'before, after',
+    product(['&', '|', '=>'], repeat=2)
+)
+def test_parse_graph_fails_with_too_many_continuations(before, after):
+    """Fails if one line ends with continuation char and the next line
+    _also_ starts with one.
+    """
+    parser = GraphParser()
+    with pytest.raises(GraphParseError) as raised:
+        parser.parse_graph(f'foo & bar {before}\n{after}baz')
+    assert isinstance(raised.value, GraphParseError)
+    assert 'Consecutive lines end and start' in raised.value.args[0]
 
 
 def test_task_optional_outputs():
