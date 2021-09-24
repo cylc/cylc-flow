@@ -1052,7 +1052,7 @@ class Scheduler:
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
                 self.workflow_run_dir, 'log', 'flow-config',
-                'flow-processed.cylc'
+                workflow_files.WorkflowFiles.FLOW_FILE_PROCESSED
             ),
             run_dir=self.workflow_run_dir,
             log_dir=self.workflow_log_dir,
