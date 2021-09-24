@@ -90,7 +90,17 @@ cli options.
 [#4329](https://github.com/cylc/cylc-flow/pull/4329) - Enable selection of
 platform from platform group at task job initialization.
 
+[#4423](https://github.com/cylc/cylc-flow/pull/4423) - Only changes to the
+workflow directory are recorded by `log/version`.
+
+[#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
+now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
+
 ### Fixes
+
+[#4426](https://github.com/cylc/cylc-flow/pull/4426) -
+Fix bug when a conditional expression in the graph contains one task name that
+is a substring of another.
 
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.

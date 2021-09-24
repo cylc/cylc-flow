@@ -99,6 +99,8 @@ class GraphParser:
     QUALIFIER = ':'
     ARROW = '=>'
     XTRIG = '@'
+    CONTINUATION_STRS = (ARROW, OP_AND, OP_OR)
+    BAD_STRS = (OP_AND_ERR, OP_OR_ERR)
 
     QUAL_FAM_SUCCEED_ALL = "succeed-all"
     QUAL_FAM_SUCCEED_ANY = "succeed-any"
@@ -321,23 +323,46 @@ class GraphParser:
         part_lines = []
         for i, _ in enumerate(non_blank_lines):
             this_line = non_blank_lines[i]
-            if i == 0 and this_line.startswith(self.__class__.ARROW):
-                # First line can't start with an arrow.
-                raise GraphParseError(f"Leading arrow: {this_line}")
+            for seq in self.CONTINUATION_STRS:
+                if i == 0 and this_line.startswith(seq):
+                    # First line can't start with an arrow.
+                    raise GraphParseError(f"Leading {seq}: {this_line}")
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
                 next_line = ''
-                if this_line.endswith(self.__class__.ARROW):
-                    # Last line can't end with an arrow.
-                    raise GraphParseError(
-                        f"Trailing arrow: {this_line}")
+                for seq in self.CONTINUATION_STRS:
+                    if this_line.endswith(seq):
+                        # Last line can't end with an arrow, & or |.
+                        raise GraphParseError(
+                            f"Dangling {seq}:"
+                            f"{this_line}"
+                        )
             part_lines.append(this_line)
+
+            # Check that a continuation sequence doesn't end this line and
+            # begin the next:
             if (
-                this_line.endswith(self.__class__.ARROW) or
-                next_line.startswith(self.__class__.ARROW)
+                this_line.endswith(self.CONTINUATION_STRS) and
+                next_line.startswith(self.CONTINUATION_STRS)
             ):
+                raise GraphParseError(
+                    'Consecutive lines end and start with continuation '
+                    'characters:\n'
+                    f'{this_line}\n'
+                    f'{next_line}'
+                )
+
+            # Check that line ends with a valid continuation sequence:
+            if (any(
+                this_line.endswith(seq) or next_line.startswith(seq) for
+                seq in self.CONTINUATION_STRS
+            ) and not (any(
+                this_line.endswith(seq) or next_line.startswith(seq) for
+                seq in self.BAD_STRS
+            ))):
                 continue
+
             full_line = ''.join(part_lines)
 
             # Record inter-workflow dependence and remove the marker notation.
