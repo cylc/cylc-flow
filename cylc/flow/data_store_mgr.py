@@ -1622,7 +1622,6 @@ class DataStoreMgr:
         tp_delta = self.updated[TASK_PROXIES].setdefault(
             tp_id, PbTaskProxy(id=tp_id))
         tp_delta.stamp = f'{tp_id}@{update_time}'
-        tp_delta.latest_message = message
         output = tp_delta.outputs[label]
         output.label = label
         output.message = message

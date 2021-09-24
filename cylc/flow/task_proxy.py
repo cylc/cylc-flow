@@ -93,8 +93,6 @@ class TaskProxy:
                 Jobs' platform by submit number.
             label (str):
                 The .point attribute as string.
-            latest_message (str):
-                Latest job or event message.
             logfiles (list):
                 List of names of (extra) known job log files.
             name (str):
@@ -202,7 +200,6 @@ class TaskProxy:
 
         self.is_manual_submit = False
         self.summary: Dict[str, Any] = {
-            'latest_message': '',
             'submitted_time': None,
             'submitted_time_string': None,
             'started_time': None,
@@ -337,15 +334,6 @@ class TaskProxy:
             self.is_waiting_clock_done(),
             self.is_waiting_prereqs_done()
         )
-
-    def set_summary_message(self, message):
-        """Set `.summary['latest_message']` if necessary.
-
-        Set `.state.is_updated` to `True` if message is updated.
-        """
-        if self.summary['latest_message'] != message:
-            self.summary['latest_message'] = message
-            self.state.is_updated = True
 
     def set_summary_time(self, event_key, time_str=None):
         """Set an event time in self.summary

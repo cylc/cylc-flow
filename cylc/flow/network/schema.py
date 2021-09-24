@@ -912,7 +912,6 @@ class TaskProxy(ObjectType):
     flow_label = String()
     depth = Int()
     job_submits = Int()
-    latest_message = String()
     outputs = List(
         Output,
         description="""Task outputs.""",

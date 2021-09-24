@@ -309,7 +309,6 @@ class TaskJobManager:
                     self.task_remote_mgr.remote_init(
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
-                        itask.set_summary_message(self.REMOTE_INIT_MSG)
                         self.data_store_mgr.delta_job_msg(
                             get_task_job_id(
                                 itask.point,
@@ -327,7 +326,6 @@ class TaskJobManager:
                     # Remote init or file install in progress.
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
-                        itask.set_summary_message(msg)
                         self.data_store_mgr.delta_job_msg(
                             get_task_job_id(
                                 itask.point,
@@ -342,7 +340,6 @@ class TaskJobManager:
                     self.task_remote_mgr.remote_init(
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
-                        itask.set_summary_message(self.REMOTE_INIT_MSG)
                         self.data_store_mgr.delta_job_msg(
                             get_task_job_id(
                                 itask.point,
@@ -367,7 +364,6 @@ class TaskJobManager:
                 self.task_remote_mgr.remote_init(
                     platform, curve_auth, client_pub_key_dir)
                 for itask in itasks:
-                    itask.set_summary_message(self.REMOTE_INIT_MSG)
                     self.data_store_mgr.delta_job_msg(
                         get_task_job_id(
                             itask.point,
@@ -405,11 +401,6 @@ class TaskJobManager:
                 self.task_remote_mgr.file_install(
                     platform)
                 for itask in itasks:
-                    # Consider more informative status eg?:
-                    # REMOTE_FILE_INSTALL_RETRY_...
-                    itask.set_summary_message(
-                        REMOTE_FILE_INSTALL_IN_PROGRESS
-                    )
                     self.data_store_mgr.delta_job_msg(
                         get_task_job_id(
                             itask.point,
@@ -688,7 +679,6 @@ class TaskJobManager:
             log_msg = (
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
-        itask.set_summary_message(log_msg)
         self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, itask.submit_num),
             log_msg)
@@ -790,12 +780,10 @@ class TaskJobManager:
             items = json.loads(context)
             jp_ctx = JobPollContext(job_log_dir, **items)
         except TypeError:
-            itask.set_summary_message(self.POLL_FAIL)
             self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         except ValueError:
-            itask.set_summary_message(self.POLL_FAIL)
             self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
@@ -1099,7 +1087,6 @@ class TaskJobManager:
         else:
             # host/platform select not ready
             if host_n is None and platform_n is None:
-                itask.set_summary_message(self.REMOTE_SELECT_MSG)
                 return
             elif (
                 host_n is None
