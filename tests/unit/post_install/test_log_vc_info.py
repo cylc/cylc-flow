@@ -182,8 +182,8 @@ def test_get_diff_svn(svn_source_repo: Tuple[str, str, str]):
     diff = get_diff('svn', source_dir)
     assert diff is not None
     diff_lines = diff.splitlines()
-    for line in ("--- flow.cylc	(revision 1)",
-                 "+++ flow.cylc	(working copy)",
+    for line in (f"--- {source_dir}/flow.cylc	(revision 1)",
+                 f"+++ {source_dir}/flow.cylc	(working copy)",
                  "-        R1 = foo",
                  "+        R1 = bar"):
         assert line in diff_lines
