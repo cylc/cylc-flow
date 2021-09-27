@@ -34,7 +34,3 @@ jobs:
           if [[ $(cat activates.txt | wc -l) -ne 0 ]]; then
               exit 1
           fi
-
-      - name: check cylc-version
-        run: |
-          /usr/share/miniconda/envs/cylc-dev/bin/cylc version --long
