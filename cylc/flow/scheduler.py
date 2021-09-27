@@ -62,8 +62,9 @@ from cylc.flow.loggingutil import (
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
-from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.network.schema import WorkflowStopMode
+from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from cylc.flow.parsec.OrderedDict import DictTree
@@ -886,6 +887,10 @@ class Scheduler:
                 pass
         else:
             # immediate shutdown
+            with suppress(KeyError):
+                # By default, mode from mutation is a name from the
+                # WorkflowStopMode graphene.Enum, but we need the value
+                mode = WorkflowStopMode[mode]  # type: ignore[misc]
             try:
                 mode = StopMode(mode)
             except ValueError:
