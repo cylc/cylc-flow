@@ -90,13 +90,21 @@ cli options.
 [#4329](https://github.com/cylc/cylc-flow/pull/4329) - Enable selection of
 platform from platform group at task job initialization.
 
+[#4430](https://github.com/cylc/cylc-flow/pull/4430) - Log files renamed:
+- `log/flow.cylc.processed` ⇒ `log/flow-processed.cylc`
+- `log/<datetimes>-run.cylc` ⇒ `log/<datetimes>-start.cylc`
+
 [#4423](https://github.com/cylc/cylc-flow/pull/4423) - Only changes to the
 workflow directory are recorded by `log/version`.
 
 [#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
 now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 
+
 ### Fixes
+
+[#4421](https://github.com/cylc/cylc-flow/pull/4421) -
+Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).
 
 [#4426](https://github.com/cylc/cylc-flow/pull/4426) -
 Fix bug when a conditional expression in the graph contains one task name that

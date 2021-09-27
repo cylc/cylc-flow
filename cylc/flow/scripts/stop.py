@@ -42,7 +42,7 @@ import sys
 from typing import Optional, TYPE_CHECKING
 
 from cylc.flow.command_polling import Poller
-from cylc.flow.exceptions import ClientError, ClientTimeout
+from cylc.flow.exceptions import ClientError, ClientTimeout, CylcError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -100,8 +100,9 @@ class StopPoller(Poller):
         """Return True if workflow has stopped (success) else False"""
         try:
             self.pclient('graphql', self.query)
-        except (ClientError, ClientTimeout):
-            # failed to ping - workflow stopped
+        except (ClientError, ClientTimeout, CylcError):
+            # failed to ping - workflow stopped or (CylcError) restarted on
+            # another host:port (in which case it must have stopped first).
             return True
         else:
             # pinged - workflow must be alive
