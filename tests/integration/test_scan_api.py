@@ -252,7 +252,7 @@ async def test_scan_cleans_stuck_contact_files(
     flow,
     one_conf,
     run_dir,
-    test_dir
+    test_dir,
 ):
     """Ensure scan tidies up contact files from crashed flows."""
     # create a flow
@@ -275,7 +275,7 @@ async def test_scan_cleans_stuck_contact_files(
     # running so we need to change the command so that Cylc sees the flow as
     # having crashed
     contact_info = load_contact_file(reg)
-    contact_info[ContactFileFields.PROCESS] += 'xyz'
+    contact_info[ContactFileFields.COMMAND] += 'xyz'
     dump_contact_file(reg, contact_info)
 
     # make sure this flow shows for a regular filesystem-only scan

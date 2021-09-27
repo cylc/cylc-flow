@@ -22,7 +22,6 @@ import sys
 from time import sleep, time
 
 from cylc.flow.pathutil import get_workflow_run_log_name
-from cylc.flow.workflow_files import PS_OPTS
 
 WORKFLOW_INFO_TMPL = (
     "%(workflow)s: %(host)s PID=%(pid)s\n"
@@ -98,7 +97,6 @@ def daemonize(schd):
                 "host": schd.host,
                 "url": workflow_url,
                 "pub_url": pub_url,
-                "ps_opts": PS_OPTS,
                 "pid": workflow_pid
             }
             if schd.options.format == 'json':

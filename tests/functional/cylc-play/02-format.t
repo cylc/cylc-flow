@@ -51,7 +51,7 @@ import sys
 data = json.load(open(sys.argv[1], "r"))
 print(list(sorted(data)), file=sys.stderr)
 assert list(sorted(data)) == [
-    "host", "pid", "ps_opts", "pub_url", "url", "workflow"]
+    "host", "pid", "pub_url", "url", "workflow"]
 ' "${TEST_NAME}.stdout"
 poll_workflow_stopped
 

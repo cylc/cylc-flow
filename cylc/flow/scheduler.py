@@ -32,6 +32,8 @@ from time import sleep, time
 import traceback
 from typing import Iterable, NoReturn, Optional, List, Set, Dict
 from uuid import uuid4
+
+import psutil
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
@@ -106,6 +108,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_FAILED)
 from cylc.flow.templatevars import load_template_vars
+from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string_from_unix_time as time2str,
@@ -983,31 +986,15 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_params(self)
         self.is_updated = True
 
-    def _configure_contact(self):
-        """Create contact file."""
-        # Make sure another workflow of the same name hasn't started while this
-        # one is starting
-        workflow_files.detect_old_contact_file(self.workflow)
-        # Get "pid,args" process string with "ps"
-        pid_str = str(os.getpid())
-        proc = Popen(
-            ['ps', workflow_files.PS_OPTS, pid_str],
-            stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
-        out, err = (f.decode() for f in proc.communicate())
-        ret_code = proc.wait()
-        process_str = None
-        for line in out.splitlines():
-            if line.split(None, 1)[0].strip() == pid_str:
-                process_str = line.strip()
-                break
-        if ret_code or not process_str:
-            raise RuntimeError(
-                'cannot get process "args" from "ps": %s' % err)
-        # Write workflow contact file.
-        # Preserve contact data in memory, for regular health check.
+    def get_contact_data(self) -> Dict[str, str]:
+        """Extract contact data from this Scheduler.
+
+        This provides the information that is written to the contact file.
+        """
         fields = workflow_files.ContactFileFields
+        proc = psutil.Process()
         # fmt: off
-        contact_data = {
+        return {
             fields.API:
                 str(API),
             fields.HOST:
@@ -1017,12 +1004,14 @@ class Scheduler:
             fields.OWNER:
                 self.owner,
             fields.PORT:
-                str(self.server.port),
-            fields.PROCESS:
-                process_str,
+                str(self.server.port),  # type: ignore
+            fields.PID:
+                str(proc.pid),
+            fields.COMMAND:
+                cli_format(proc.cmdline()),
             fields.PUBLISH_PORT:
-                str(self.publisher.port),
-            fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:
+                str(self.publisher.port),  # type: ignore
+            fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:  # type: ignore
                 self.workflow_run_dir,
             fields.UUID:
                 self.uuid_str,
@@ -1036,6 +1025,19 @@ class Scheduler:
                 str(get_platform()['use login shell'])
         }
         # fmt: on
+
+    def _configure_contact(self) -> None:
+        """Create contact file."""
+        # Make sure another workflow of the same name hasn't started while this
+        # one is starting
+        # NOTE: raises ServiceFileError if workflow is running
+        workflow_files.detect_old_contact_file(self.workflow)
+
+        # Extract contact data.
+        contact_data = self.get_contact_data()
+
+        # Write workflow contact file.
+        # Preserve contact data in memory, for regular health check.
         workflow_files.dump_contact_file(self.workflow, contact_data)
         self.contact_data = contact_data
 
@@ -1678,6 +1680,7 @@ class Scheduler:
             except OSError as exc:
                 LOG.warning(f"failed to remove workflow contact file: {fname}")
                 LOG.exception(exc)
+            LOG.critical("REMOVE")
             if self.task_job_mgr:
                 self.task_job_mgr.task_remote_mgr.remote_tidy()
 

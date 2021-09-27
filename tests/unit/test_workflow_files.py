@@ -510,8 +510,10 @@ def test_clean_check__fail(
         if not stopped:
             raise ServiceFileError('Mocked error')
 
-    monkeypatch.setattr('cylc.flow.workflow_files.detect_old_contact_file',
-                        mocked_detect_old_contact_file)
+    monkeypatch.setattr(
+        'cylc.flow.workflow_files.detect_old_contact_file',
+        mocked_detect_old_contact_file
+    )
 
     with pytest.raises(err) as exc:
         workflow_files._clean_check(CleanOptions(), reg, run_dir)
