@@ -1025,15 +1025,13 @@ with Conf('global.cylc', desc='''
                     'method', VDR.V_STRING, default='random',
                     options=['random', 'definition order'],
                     desc='''
-                        Platform selection method for the group. Available
+                        Method for selecting platform from group.
+
                         options:
 
                         - random: Suitable for an identical pool of platforms.
-                        - definition order: Take the first platform in the list
-                          unless all hosts for that platform are unreachable.
-                          In many cases this is likely to cause load
-                          imbalances, but might be appropriate if your
-                          platforms were ``main, backup, failsafe``.
+                        - definition order: Pick the first available platform
+                          from the list.
                     '''
                 )
     # task
