@@ -1054,7 +1054,8 @@ class Scheduler:
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
                 self.workflow_run_dir, 'log', 'flow-config',
-                workflow_files.WorkflowFiles.FLOW_FILE + '.processed'),
+                workflow_files.WorkflowFiles.FLOW_FILE_PROCESSED
+            ),
             run_dir=self.workflow_run_dir,
             log_dir=self.workflow_log_dir,
             work_dir=self.workflow_work_dir,
@@ -1075,7 +1076,7 @@ class Scheduler:
         elif self.is_restart:
             load_type = "restart"
         else:
-            load_type = "run"
+            load_type = "start"
         file_name = get_workflow_run_config_log_dir(
             self.workflow, f"{time_str}-{load_type}.cylc")
         with open(file_name, "wb") as handle:

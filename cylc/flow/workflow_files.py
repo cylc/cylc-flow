@@ -178,6 +178,9 @@ class WorkflowFiles:
     FLOW_FILE = 'flow.cylc'
     """The workflow configuration file."""
 
+    FLOW_FILE_PROCESSED = 'flow-processed.cylc'
+    """The workflow configuration file after processing."""
+
     SUITE_RC = 'suite.rc'
     """Deprecated workflow configuration file."""
 

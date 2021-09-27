@@ -87,11 +87,16 @@ cli options.
 [#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
 (previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
 
+[#4430](https://github.com/cylc/cylc-flow/pull/4430) - Log files renamed:
+- `log/flow.cylc.processed` ⇒ `log/flow-processed.cylc`
+- `log/<datetimes>-run.cylc` ⇒ `log/<datetimes>-start.cylc`
+
 [#4423](https://github.com/cylc/cylc-flow/pull/4423) - Only changes to the
 workflow directory are recorded by `log/version`.
 
 [#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
 now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
+
 
 ### Fixes
 
