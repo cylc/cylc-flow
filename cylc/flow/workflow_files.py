@@ -741,6 +741,10 @@ def init_clean(reg: str, opts: 'Values') -> None:
     except FileNotFoundError as exc:
         LOG.info(exc)
         return
+    local_run_dir, reg_path = infer_latest_run(
+        local_run_dir, implicit_runN=False
+    )
+    reg = str(reg_path)
 
     # Check dir does not contain other workflows:
     contained_workflows = asyncio.get_event_loop().run_until_complete(
@@ -1289,11 +1293,15 @@ def validate_workflow_name(name: str) -> None:
         )
 
 
-def infer_latest_run(path: Path) -> Tuple[Path, Path]:
+def infer_latest_run(
+    path: Path, implicit_runN: bool = True
+) -> Tuple[Path, Path]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
     Args:
         path: Absolute path to the workflow dir, run dir or runN dir.
+        implicit_runN: If True, add runN on the end of the path if the path
+            doesn't include it.
 
     Returns:
         path: Absolute path of the numbered run dir if applicable, otherwise
@@ -1309,10 +1317,12 @@ def infer_latest_run(path: Path) -> Tuple[Path, Path]:
         raise ValueError(f"{path} is not in the cylc-run directory")
     if path.name == WorkflowFiles.RUN_N:
         runN_path = path
-    else:
+    elif implicit_runN:
         runN_path = path / WorkflowFiles.RUN_N
         if not os.path.lexists(runN_path):
             return (path, reg)
+    else:
+        return (path, reg)
     if not runN_path.is_symlink() or not runN_path.is_dir():
         raise WorkflowFilesError(
             f"runN directory at {runN_path} is a broken or invalid symlink"

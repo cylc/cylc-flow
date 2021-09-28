@@ -45,6 +45,7 @@ from cylc.flow.workflow_files import (
     clean,
     get_rsync_rund_cmd,
     get_symlink_dirs,
+    init_clean,
     is_installed,
     parse_cli_sym_dirs,
     get_workflow_source_dir,
@@ -158,16 +159,21 @@ def test_validate_workflow_name(reg, expected_err, expected_msg):
 
 
 @pytest.mark.parametrize(
-    'path, expected_reg',
+    'path, implicit_runN, expected_reg',
     [
-        ('{cylc_run}/numbered/workflow', 'numbered/workflow/run2'),
-        ('{cylc_run}/numbered/workflow/runN', 'numbered/workflow/run2'),
-        ('{cylc_run}/numbered/workflow/run1', 'numbered/workflow/run1'),
-        ('{cylc_run}/non_numbered/workflow', 'non_numbered/workflow')
+        ('{cylc_run}/numbered/workflow', True, 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow', False, 'numbered/workflow'),
+        ('{cylc_run}/numbered/workflow/runN', True, 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow/runN', False, 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow/run1', True, 'numbered/workflow/run1'),
+        ('{cylc_run}/numbered/workflow/run1', False, 'numbered/workflow/run1'),
+        ('{cylc_run}/non_numbered/workflow', True, 'non_numbered/workflow'),
+        ('{cylc_run}/non_numbered/workflow', False, 'non_numbered/workflow'),
     ]
 )
 def test_infer_latest_run(
     path: str,
+    implicit_runN: bool,
     expected_reg: str,
     tmp_run_dir: Callable,
 ) -> None:
@@ -175,6 +181,7 @@ def test_infer_latest_run(
 
     Params:
         path: Input arg.
+        implict_runN: Input arg.
         expected_reg: The reg part of the expected returned tuple.
     """
     # Setup
@@ -193,7 +200,10 @@ def test_infer_latest_run(
     expected = (cylc_run_dir / expected_reg, Path(expected_reg))
 
     # Test
-    assert infer_latest_run(path) == expected
+    assert infer_latest_run(path, implicit_runN) == expected
+    # Check implicit_runN=True is the default:
+    if implicit_runN:
+        assert infer_latest_run(path) == expected
 
 
 @pytest.mark.parametrize(
@@ -565,7 +575,7 @@ def test_init_clean(
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
                         lambda x: set(db_platforms))
 
-    workflow_files.init_clean(reg, opts=CleanOptions(**opts))
+    init_clean(reg, opts=CleanOptions(**opts))
     assert mock_clean.called is clean_called
     assert mock_remote_clean.called is remote_clean_called
 
@@ -581,7 +591,7 @@ def test_init_clean__no_dir(
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
-    workflow_files.init_clean('foo/bar', opts=CleanOptions())
+    init_clean('foo/bar', opts=CleanOptions())
     assert "No directory to clean" in caplog.text
     assert mock_clean.called is False
     assert mock_remote_clean.called is False
@@ -598,7 +608,7 @@ def test_init_clean__no_db(
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
-    workflow_files.init_clean('bespin', opts=CleanOptions())
+    init_clean('bespin', opts=CleanOptions())
     assert "No workflow database - will only clean locally" in caplog.text
     assert mock_clean.called is True
     assert mock_remote_clean.called is False
@@ -614,7 +624,7 @@ def test_init_clean__remote_only_no_db(
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
     with pytest.raises(ServiceFileError) as exc:
-        workflow_files.init_clean('hoth', opts=CleanOptions(remote_only=True))
+        init_clean('hoth', opts=CleanOptions(remote_only=True))
     assert ("No workflow database - cannot perform remote clean"
             in str(exc.value))
     assert mock_clean.called is False
@@ -633,8 +643,31 @@ def test_init_clean__running_workflow(
     tmp_run_dir('yavin')
 
     with pytest.raises(ServiceFileError) as exc:
-        workflow_files.init_clean('yavin', opts=mock.Mock())
+        init_clean('yavin', opts=CleanOptions())
     assert "Cannot remove running workflow" in str(exc.value)
+
+
+@pytest.mark.asyncio
+def test_init_clean__runN(
+    monkeymock: MonkeyMock, tmp_run_dir: Callable
+):
+    """Test that init_clean() resolves the runN symlink"""
+    # Setup
+    run_dir: Path = tmp_run_dir('coruscant/run2')
+    (run_dir.parent / 'runN').symlink_to(run_dir.name)
+    tmp_run_dir('coruscant/run1')
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean', spec=clean)
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+    # Test
+    # runN should be resolved
+    init_clean('coruscant/runN', opts=CleanOptions())
+    mock_clean.assert_called_once_with('coruscant/run2', run_dir, None)
+    assert mock_remote_clean.called is False
+    # It should not infer run number if runN not explicitly given
+    with pytest.raises(WorkflowFilesError) as exc_info:
+        init_clean('coruscant', opts=CleanOptions())
+    assert "contains the following workflows" in str(exc_info.value)
+
 
 
 @pytest.mark.asyncio
@@ -664,18 +697,18 @@ def test_init_clean__multiple_runs(
     if number_of_runs > 1:
         if force_opt:
             # It should call clean() with 'foo' and log a warning
-            workflow_files.init_clean('foo', opts)
+            init_clean('foo', opts)
             mock_clean.assert_called_once_with('foo', workflow_dir, None)
             msg = caplog.text
         else:
             # It should raise
             with pytest.raises(WorkflowFilesError) as exc_info:
-                workflow_files.init_clean('foo', opts)
+                init_clean('foo', opts)
             msg = str(exc_info.value)
         assert "contains the following workflows" in msg
     else:
         # It should call clean() with 'foo/run1' followed by 'foo'
-        workflow_files.init_clean('foo', opts)
+        init_clean('foo', opts)
         assert mock_clean.call_args_list == [
             mock.call('foo/run1', last_run_dir, None),
             mock.call('foo', workflow_dir, None)
@@ -712,7 +745,7 @@ def test_init_clean__rm_dirs(
                         lambda x: platforms)
     opts = CleanOptions(rm_dirs=rm_dirs) if rm_dirs else CleanOptions()
 
-    workflow_files.init_clean(reg, opts=opts)
+    init_clean(reg, opts=opts)
     mock_clean.assert_called_with(reg, run_dir, expected_clean)
     mock_remote_clean.assert_called_with(
         reg, platforms, expected_remote_clean, opts.remote_timeout)
