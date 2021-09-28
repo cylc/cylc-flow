@@ -1235,11 +1235,11 @@ class Scheduler:
             itask.waiting_on_job_prep
         ]
 
-        if (not self.is_paused and
-                self.stop_mode is None and self.auto_restart_time is None):
+        if self.stop_mode is None and self.auto_restart_time is None:
             # Add newly released tasks to those still preparing.
             self.pre_submit_tasks += self.pool.release_queued_tasks()
-            if self.pre_submit_tasks:
+            # Submit jobs if workflow not paused.
+            if self.pre_submit_tasks and not self.is_paused:
                 self.is_updated = True
                 self.task_job_mgr.task_remote_mgr.rsync_includes = (
                     self.config.get_validated_rsync_includes())
@@ -1249,6 +1249,7 @@ class Scheduler:
                         self.curve_auth,
                         self.client_pub_key_dir,
                         self.config.run_mode('simulation')):
+                    self.pool.spawn_parentless_successors(itask)
                     # TODO log flow labels here (beware effect on ref tests)
                     LOG.info('[%s] -triggered off %s',
                              itask, itask.state.get_resolved_dependencies())
@@ -1424,6 +1425,9 @@ class Scheduler:
         while True:  # MAIN LOOP
             tinit = time()
 
+            # Useful for debugging core scheduler issues:
+            # self.pool.log_task_pool(logging.CRITICAL)
+
             if self.pool.do_reload:
                 # Re-initialise data model on reload
                 self.data_store_mgr.initiate_data_model(reloaded=True)
@@ -1437,7 +1441,7 @@ class Scheduler:
 
             self.process_command_queue()
 
-            if not self.is_paused and self.pool.release_runahead_tasks():
+            if self.pool.release_runahead_tasks():
                 self.is_updated = True
                 self.reset_inactivity_timer()
 

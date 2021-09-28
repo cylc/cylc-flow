@@ -22,6 +22,7 @@ from string import ascii_letters
 import json
 from time import time
 from typing import Dict, Iterable, List, Optional, Set, TYPE_CHECKING, Tuple
+import logging
 
 import cylc.flow.flags
 from cylc.flow import LOG
@@ -300,9 +301,6 @@ class TaskPool:
         toward the runahead limit, because they represent tasks that will
         (or may, in the case of prerequisites) yet run at their cycle points.
 
-        Note runahead release can cause the task pool to change size because
-        we spawn parentless tasks on previous-instance release.
-
         Return True if any tasks released, else False.
 
         """
@@ -410,11 +408,6 @@ class TaskPool:
         if self.stop_point and latest_allowed_point > self.stop_point:
             latest_allowed_point = self.stop_point
 
-        # An intermediate list (release_me) is necessary here because
-        # self.release_runahead_tasks() can change the task pool size
-        # (parentless tasks are spawned when their previous instances are
-        # released from runahead limiting).
-        release_me = []
         for itask in (
             itask
             for point, itask_id_map in self.main_pool.items()
@@ -422,9 +415,6 @@ class TaskPool:
             if point <= latest_allowed_point
             if itask.state.is_runahead
         ):
-            release_me.append(itask)
-
-        for itask in release_me:
             self.release_runahead_task(itask)
             released = True
 
@@ -616,6 +606,14 @@ class TaskPool:
 
         if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
+
+    def spawn_parentless_successors(self, itask):
+        """Spawn itask's successor, if it has no parents at the next point.
+
+        This includes: all parents before the workflow start point, and
+        absolute-triggered tasks.
+
+        """
         if itask.tdef.sequential:
             # implicit prev-instance parent
             return
@@ -635,10 +633,6 @@ class TaskPool:
                     itask.tdef.get_abs_triggers(next_point)
                 )
             ):
-                # Auto-spawn next instance of tasks with no parents at the next
-                # point (or with all parents before the workflow start point).
-                # or
-                # Auto-spawn (if needed) next absolute-triggered instances.
                 n_task = self.get_or_spawn_task(
                     itask.tdef.name, next_point,
                     flow_label=itask.flow_label,
@@ -1679,10 +1673,11 @@ class TaskPool:
                 to_prune, itask.flow_label)
         self.flow_label_mgr.make_avail(to_prune)
 
-    def log_task_pool(self):
+    def log_task_pool(self, log_lvl=logging.DEBUG):
         """Log content of task and prerequisite pools in debug mode."""
         if self.main_pool_list:
-            LOG.debug(
+            LOG.log(
+                log_lvl,
                 "Task pool:\n"
                 + "\n".join(
                     f"* {itask} status={itask.state.status}"
@@ -1691,7 +1686,8 @@ class TaskPool:
                 )
             )
         if self.hidden_pool_list:
-            LOG.debug(
+            LOG.log(
+                log_lvl,
                 "Hidden pool:\n"
                 + "\n".join(
                     f"* {itask} status={itask.state.status}"
