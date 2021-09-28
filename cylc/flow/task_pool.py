@@ -752,7 +752,6 @@ class TaskPool:
         )
         for itask in released:
             itask.state.reset(is_queued=False)
-            itask.state.reset(TASK_STATUS_PREPARING)
             itask.waiting_on_job_prep = True
             self.data_store_mgr.delta_task_state(itask)
             self.data_store_mgr.delta_task_queued(itask)
@@ -1675,26 +1674,21 @@ class TaskPool:
 
     def log_task_pool(self, log_lvl=logging.DEBUG):
         """Log content of task and prerequisite pools in debug mode."""
-        if self.main_pool_list:
-            LOG.log(
-                log_lvl,
-                "Task pool:\n"
-                + "\n".join(
-                    f"* {itask} status={itask.state.status}"
-                    f" runahead={itask.state.is_runahead}"
-                    for itask in self.main_pool_list
+        for pool, name in [
+            (self.main_pool_list, "Main"),
+            (self.hidden_pool_list, "Hidden")
+        ]:
+            if pool:
+                LOG.log(
+                    log_lvl,
+                    f"{name} pool:\n"
+                    + "\n".join(
+                        f"* {itask} status={itask.state.status}"
+                        f" runahead={itask.state.is_runahead}"
+                        f" queued={itask.state.is_queued}"
+                        for itask in pool
+                    )
                 )
-            )
-        if self.hidden_pool_list:
-            LOG.log(
-                log_lvl,
-                "Hidden pool:\n"
-                + "\n".join(
-                    f"* {itask} status={itask.state.status}"
-                    f" runahead={itask.state.is_runahead}"
-                    for itask in self.hidden_pool_list
-                )
-            )
 
     @staticmethod
     def _parse_task_item(

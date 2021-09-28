@@ -25,6 +25,8 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
 
 
+# NOTE: foo & bar have no parents so when released from the hidden pool at
+# start-up (with workflow paused) the next instances are spawned (to hidden).
 EXAMPLE_FLOW_CFG = {
     'scheduler': {
         'allow implicit tasks': True
@@ -116,7 +118,7 @@ async def example_flow(
     'items, expected_task_ids, expected_bad_items, expected_warnings',
     [
         param(
-            ['foo'], ['foo.1'], [], [],
+            ['foo'], ['foo.1', 'foo.2'], [], [],
             id="Basic"
         ),
         param(
@@ -128,20 +130,20 @@ async def example_flow(
             id="Family name"
         ),
         param(
-            ['foo.*'], ['foo.1'], [], [],
+            ['foo.*'], ['foo.1', 'foo.2'], [], [],
             id="Point glob"
         ),
         param(
-            ['*:waiting'], ['foo.1', 'bar.1'], [], [],
+            ['*:waiting'], ['foo.1', 'foo.2', 'bar.1', 'bar.2'], [], [],
             id="Task state"
         ),
         param(
-            ['foo.2'], [], ['foo.2'], ["No active tasks matching: foo.2"],
+            ['foo.3'], [], ['foo.3'], ["No active tasks matching: foo.3"],
             id="Task not yet spawned"
         ),
         param(
-            ['foo.1', 'bar.2'], ['foo.1'], ['bar.2'],
-            ["No active tasks matching: bar.2"],
+            ['foo.1', 'bar.3'], ['foo.1'], ['bar.3'],
+            ["No active tasks matching: bar.3"],
             id="Multiple items"
         ),
         param(
@@ -151,7 +153,7 @@ async def example_flow(
             id="No such task"
         ),
         param(
-            [], ['foo.1', 'bar.1'], [], [],
+            [], ['foo.1', 'bar.1', 'foo.2', 'bar.2'], [], [],
             id="No items given - get all tasks"
         )
     ]
@@ -165,6 +167,9 @@ async def test_filter_task_proxies(
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test TaskPool.filter_task_proxies().
+
+    The NOTE before EXAMPLE_FLOW_CFG above explains which tasks should be
+    expected for the tests here.
 
     Params:
         items: Arg passed to filter_task_proxies().

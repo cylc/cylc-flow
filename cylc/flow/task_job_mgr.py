@@ -101,8 +101,9 @@ from cylc.flow.task_remote_mgr import (
     TaskRemoteMgr
 )
 from cylc.flow.task_state import (
-    TASK_STATUS_RUNNING,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
     TASK_STATUSES_ACTIVE
 )
 from cylc.flow.wallclock import (
@@ -254,7 +255,9 @@ class TaskJobManager:
         if not prepared_tasks:
             return bad_tasks
         auth_itasks = {}  # {platform: [itask, ...], ...}
+
         for itask in prepared_tasks:
+            itask.state.reset(TASK_STATUS_PREPARING)
             platform_name = itask.platform['name']
             auth_itasks.setdefault(platform_name, [])
             auth_itasks[platform_name].append(itask)

@@ -20,6 +20,7 @@
 import io
 import os
 import pytest
+from contextlib import suppress
 from tempfile import NamedTemporaryFile
 from unittest import mock
 
@@ -258,12 +259,16 @@ def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
     """
     if set_CYLC_ENV_NAME:
         monkeypatch.setenv('CYLC_ENV_NAME', 'myenv')
+    else:
+        with suppress(KeyError):
+            monkeypatch.delenv('CYLC_ENV_NAME')
+
     monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
                 '\nexport CYLC_VERBOSE=true'
                 '\nexport CYLC_DEBUG=true'
-                '\nexport CYLC_VERSION=\'%s\'' % __version__)
+                f'\nexport CYLC_VERSION=\'{__version__}\'')
     if set_CYLC_ENV_NAME:
         expected += '\nexport CYLC_ENV_NAME=\'myenv\''
     expected += '\nexport CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\''
