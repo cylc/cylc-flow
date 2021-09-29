@@ -1220,7 +1220,7 @@ def _parse_src_reg(reg: Path) -> Tuple[Path, Path]:
             # run_dir_path not relative to ~/cylc-run
             pass
         else:
-            if abs_path != run_dir_path:
+            if abs_path.resolve() != run_dir_path.resolve():
                 if abs_path.is_file():
                     if run_dir_path.is_file():
                         LOG.warning(REG_CLASH_MSG.format(
