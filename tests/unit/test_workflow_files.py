@@ -716,6 +716,22 @@ def test_init_clean__multiple_runs(
 
 
 @pytest.mark.asyncio
+def test_init_clean__parent_rm_dirs(
+    tmp_run_dir: Callable, monkeymock: MonkeyMock,
+):
+    """Test that init_clean() called on a parent dir containing 1 run dir,
+    with the --rm dirs option, only cleans in the run dir."""
+    # Setup
+    run_dir: Path = tmp_run_dir('naboo/run1')
+    for p in (run_dir, run_dir.parent):
+        (p / 'jarjar').mkdir()
+    # Test
+    init_clean('naboo', opts=CleanOptions(rm_dirs=['jarjar']))
+    assert (run_dir / 'jarjar').exists() is False
+    assert (run_dir.parent / 'jarjar').exists() is True
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'rm_dirs, expected_clean, expected_remote_clean',
     [(None, None, []),

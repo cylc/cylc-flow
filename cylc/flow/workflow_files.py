@@ -751,7 +751,10 @@ def init_clean(reg: str, opts: 'Values') -> None:
         get_contained_workflows(local_run_dir, MAX_SCAN_DEPTH + 1)
     )  # Note: increased scan depth for safety
     if len(contained_workflows) == 1:
+        # Clean the contained workflow followed by the parent dir
         init_clean(contained_workflows[0], opts)
+        if opts.rm_dirs:
+            return  # Do not delete parent dir if --rm dirs specified
     elif len(contained_workflows) > 1:
         bullet = "\n    - "
         msg = (
