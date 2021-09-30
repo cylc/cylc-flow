@@ -605,7 +605,6 @@ class BatchSysManager(object):
                     ctx.batch_sys_exit_polled = 0
                 else:
                     debug_flag = True
-
             # Add information to "job.status"
             if ctx.batch_sys_exit_polled:
                 try:
