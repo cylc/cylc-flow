@@ -111,8 +111,9 @@ renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
 generating an incorrect submit-failed result.
 
 [#4436](https://github.com/cylc/cylc-flow/pull/4436) -
-If the workflow is paused, hold tasks at the waiting state but not before;
-distinguish between succeeded and expired state icons in `cylc tui`.
+If the workflow is paused, hold tasks just before job prep.
+Distinguish between succeeded and expired state icons in `cylc tui`.
+Spawn parentless tasks out the runahead limit immediately.
 
 [#4421](https://github.com/cylc/cylc-flow/pull/4421) -
 Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).

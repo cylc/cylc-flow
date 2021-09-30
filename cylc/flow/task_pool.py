@@ -330,6 +330,8 @@ class TaskPool:
         if not runahead_limit_point:
             return released
 
+        # An intermediate list is needed here: auto-spawning of parentless
+        # tasks can cause the task pool to change size during iteration.
         release_me = []
         for itask in (
             itask
@@ -625,16 +627,17 @@ class TaskPool:
         if not runahead_limit_point:
             return
 
+        # Autospawn successor of itask if parentless.
         n_task = self.spawn_successor(itask)
         if n_task and n_task.point <= runahead_limit_point:
             self.release_runahead_task(n_task, runahead_limit_point)
 
     def spawn_successor(self, itask):
-        """Spawn itask's successor, if it has no parents to do it.
+        """Spawn itask's successor (same task at next point) if parentless.
 
-        This includes tasks with:
-            - no parents at the next point
-            - parents before the workflow start point
+        This includes:
+            - tasks with no parents at the next point
+            - tasks with all parents before the workflow start point
             - absolute-triggered tasks (after the first instance is spawned)
         """
         if itask.tdef.sequential:
