@@ -104,6 +104,9 @@ now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
 `CYLC_WORKFLOW_ID` shorn of any trailing `runX`.
 
+[#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
+of workflows inside other installed workflows.
+
 
 ### Fixes
 

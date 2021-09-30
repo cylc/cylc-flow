@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 13
 
 cat > flow.cylc <<__HEREDOC__
 [scheduler]
@@ -30,36 +30,53 @@ __HEREDOC__
 
 run_ok "$TEST_NAME_BASE" cylc validate "$PWD"/flow.cylc
 
-UUID=$(uuidgen)
+TEST_FOLDERS=()
 
-cylc install -C "$PWD" --flow-name "${UUID}/1"
-run_fail "${TEST_NAME_BASE}-child" cylc install -C "$PWD" --flow-name "${UUID}/1/child"
-# TODO check log message
+TEST_FOLDER=cylctb-$(uuidgen)
+TEST_FOLDERS+=("$TEST_FOLDER")
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
+run_fail "${TEST_NAME_BASE}-child" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-child.stderr"
 
-cylc install -C "$PWD" --flow-name "${UUID}/1/child"
-run_fail "${TEST_NAME_BASE}-parent" cylc install -C "$PWD" --flow-name "${UUID}/1/"
-# TODO check log message
 
-cylc install -C "$PWD" --flow-name "${UUID}/2"
-run_fail "${TEST_NAME_BASE}-grandchild" cylc install -C "$PWD" --flow-name "${UUID}/2/child/grandchild"
-# TODO check log message
+TEST_FOLDER=cylctb-$(uuidgen)
+TEST_FOLDERS+=("$TEST_FOLDER")
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child"
+run_fail "${TEST_NAME_BASE}-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-parent.stderr"
 
-cylc install -C "$PWD" --flow-name "${UUID}/2/child/grandchild"
-run_fail "${TEST_NAME_BASE}-grandparent" cylc install -C "$PWD" --flow-name "${UUID}2/"
-# TODO check log message
 
-cylc install -C "$PWD" --flow-name "${UUID}/3"
-run_fail "${TEST_NAME_BASE}-Nth-child" cylc install -C "$PWD" --flow-name "${UUID}/3/i/cant/believe/how/deep/this/path/is"
-# TODO check log message
-
-cylc install -C "$PWD" --flow-name "${UUID}/3/i/cant/believe/how/deep/this/path/is"
-run_fail "${TEST_NAME_BASE}-Nth-parent" cylc install -C "$PWD" --flow-name "${UUID}/3"
-# TODO check log message
+TEST_FOLDER=cylctb-$(uuidgen)
+TEST_FOLDERS+=("$TEST_FOLDER")
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
+run_fail "${TEST_NAME_BASE}-grandchild" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child/grandchild"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-grandchild.stderr"
 
 
 
-tree "$RUN_DIR/${UUID}/top" >&2
+TEST_FOLDER=cylctb-$(uuidgen)
+TEST_FOLDERS+=("$TEST_FOLDER")
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child/grandchild"
+run_fail "${TEST_NAME_BASE}-grandparent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-grandparent.stderr"
 
-rm -fr "${RUN_DIR}/${UUID}"
+
+TEST_FOLDER=cylctb-$(uuidgen)
+TEST_FOLDERS+=("$TEST_FOLDER")
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
+run_fail "${TEST_NAME_BASE}-Nth-child" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/this/path/longer"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-Nth-child.stderr"
+
+
+
+TEST_FOLDER=cylctb-$(uuidgen)
+TEST_FOLDERS+=("$TEST_FOLDER")
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/longer/this/path"
+run_fail "${TEST_NAME_BASE}-Nth-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-Nth-parent.stderr"
+
+for TEST_FOLDER in ${TEST_FOLDERS[*]}; do
+    rm -fr "${RUN_DIR}/${TEST_FOLDER:-}"
+done
 
 exit
