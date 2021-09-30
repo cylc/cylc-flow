@@ -168,6 +168,11 @@ class JobPollContext(object):
                 else:
                     raise ValueError('Invalid kwarg "%s"' % key)
 
+    def update(self, other):
+        """Update my data from given file context."""
+        for i in self.__slots__:
+            setattr(self, i, getattr(other, i))
+
     def get_summary_str(self):
         """Return the poll context as a summary string delimited by "|"."""
         ret = OrderedDict()
@@ -612,6 +617,14 @@ class BatchSysManager(object):
                     handle.close()
                 except IOError as exc:
                     sys.stderr.write(str(exc) + "\n")
+
+                # Re-read the status file in case the job started and exited
+                # between the file and batch system checks, which would be
+                # interpreted as submit-failed (job exited without starting).
+                # Possible if polling many jobs and/or system heavily loaded.
+                file_ctx = self._jobs_poll_status_files(
+                    job_log_root, ctx.job_log_dir)
+                ctx.update(file_ctx)
 
         if debug_flag:
             ctx.batch_sys_call_no_lines = ', '.join(debug_messages)
