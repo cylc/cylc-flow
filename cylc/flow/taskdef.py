@@ -271,19 +271,23 @@ class TaskDef:
                         parent_points.add(trig.get_parent_point(point))
         return parent_points
 
-    def get_abs_triggers(self, point):
-        """Return my absolute triggers, if any, at point."""
-        abs_triggers = set()
+    def has_only_abs_triggers(self, point):
+        """Return whether I have only absolute triggers at point."""
+        abs_t = []
+        oth_t = []
         for seq in self.sequences:
-            if not seq.is_valid(point):
+            if not seq.is_valid(point) or seq not in self.dependencies:
                 continue
-            if seq in self.dependencies:
-                # task has prereqs in this sequence
-                for dep in self.dependencies[seq]:
-                    for trig in dep.task_triggers:
-                        if trig.offset_is_absolute or trig.offset_is_from_icp:
-                            abs_triggers.add(trig)
-        return abs_triggers
+            for dep in self.dependencies[seq]:
+                for trig in dep.task_triggers:
+                    if (
+                        trig.offset_is_absolute or
+                        trig.offset_is_from_icp
+                    ):
+                        abs_t.append(trig)
+                    else:
+                        oth_t.append(trig)
+        return abs_t and not oth_t
 
     def is_valid_point(self, point):
         """Return True if point is on-sequence and within bounds."""

@@ -1234,6 +1234,7 @@ class Scheduler:
             itask for itask in self.pre_submit_tasks if
             itask.waiting_on_job_prep
         ]
+
         # Add newly released tasks to those still preparing.
         self.pre_submit_tasks += self.pool.release_queued_tasks()
 
@@ -1256,7 +1257,6 @@ class Scheduler:
                 self.client_pub_key_dir,
                 self.config.run_mode('simulation')
             ):
-                self.pool.spawn_parentless_successors(itask)
                 # TODO log flow labels here (beware effect on ref tests)
                 LOG.info(
                     '[%s] -triggered off %s',

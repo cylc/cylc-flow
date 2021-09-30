@@ -326,6 +326,27 @@ class TaskPool:
             self.release_runahead_task(itask)
             released = True
 
+        runahead_limit_point = self.compute_runahead()
+        if not runahead_limit_point:
+            return released
+
+        release_me = []
+        for itask in (
+            itask
+            for point, itask_id_map in self.main_pool.items()
+            for itask in itask_id_map.values()
+            if point <= runahead_limit_point
+            if itask.state.is_runahead
+        ):
+            release_me.append(itask)
+
+        for itask in release_me:
+            self.release_runahead_task(itask, runahead_limit_point)
+            released = True
+
+        return released
+
+    def compute_runahead(self):
         points = []
         for point, itasks in sorted(self.get_tasks_by_point().items()):
             if (
@@ -343,7 +364,7 @@ class TaskPool:
                 points.append(point)
 
         if not points:
-            return False
+            return None
 
         # Get the earliest point with unfinished tasks.
         runahead_base_point = min(points)
@@ -384,14 +405,14 @@ class TaskPool:
         if runahead_number_limit is not None:
             # Calculate which tasks to release based on a maximum number of
             # active cycle points (active meaning non-finished tasks).
-            latest_allowed_point = sorted(points)[:runahead_number_limit][-1]
+            runahead_limit_point = sorted(points)[:runahead_number_limit][-1]
             if self.max_future_offset is not None:
                 # For the first N points, release their future trigger tasks.
-                latest_allowed_point += self.max_future_offset
+                runahead_limit_point += self.max_future_offset
         else:
             # Calculate which tasks to release based on a maximum duration
             # measured from the oldest non-finished task.
-            latest_allowed_point = runahead_base_point + runahead_time_limit
+            runahead_limit_point = runahead_base_point + runahead_time_limit
 
             if (
                 self._prev_runahead_base_point is None
@@ -405,20 +426,10 @@ class TaskPool:
                 )
             self._prev_runahead_base_point = runahead_base_point
 
-        if self.stop_point and latest_allowed_point > self.stop_point:
-            latest_allowed_point = self.stop_point
+        if self.stop_point and runahead_limit_point > self.stop_point:
+            runahead_limit_point = self.stop_point
 
-        for itask in (
-            itask
-            for point, itask_id_map in self.main_pool.items()
-            for itask in itask_id_map.values()
-            if point <= latest_allowed_point
-            if itask.state.is_runahead
-        ):
-            self.release_runahead_task(itask)
-            released = True
-
-        return released
+        return runahead_limit_point
 
     def load_abs_outputs_for_restart(self, row_idx, row):
         cycle, name, output = row
@@ -587,7 +598,11 @@ class TaskPool:
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
-    def release_runahead_task(self, itask: TaskProxy) -> None:
+    def release_runahead_task(
+        self,
+        itask: TaskProxy,
+        runahead_limit_point: Optional['PointBase'] = None
+    ) -> None:
         """Release itask from runahead limiting.
 
         Also auto-spawn next instance if:
@@ -607,18 +622,28 @@ class TaskPool:
         if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
 
-    def spawn_parentless_successors(self, itask):
-        """Spawn itask's successor, if it has no parents at the next point.
+        if not runahead_limit_point:
+            return
 
-        This includes: all parents before the workflow start point, and
-        absolute-triggered tasks.
+        n_task = self.spawn_successor(itask)
+        if n_task and n_task.point <= runahead_limit_point:
+            self.release_runahead_task(n_task, runahead_limit_point)
 
+    def spawn_successor(self, itask):
+        """Spawn itask's successor, if it has no parents to do it.
+
+        This includes tasks with:
+            - no parents at the next point
+            - parents before the workflow start point
+            - absolute-triggered tasks (after the first instance is spawned)
         """
         if itask.tdef.sequential:
             # implicit prev-instance parent
-            return
+            return None
+
         if not itask.reflow:
-            return
+            return None
+
         next_point = itask.next_point()
         if next_point is not None:
             parent_points = itask.tdef.get_parent_points(next_point)
@@ -628,17 +653,18 @@ class TaskPool:
                     not parent_points
                     or all(x < self.config.start_point for x in parent_points)
                 )
-                or
-                (
-                    itask.tdef.get_abs_triggers(next_point)
-                )
+                or itask.tdef.has_only_abs_triggers(next_point)
             ):
                 n_task = self.get_or_spawn_task(
                     itask.tdef.name, next_point,
                     flow_label=itask.flow_label,
                     parent_id=itask.identity)
-            if n_task:
+
+            if n_task is not None:
                 self.add_to_pool(n_task)
+                return n_task
+
+        return None
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool (e.g. after a reload)."""
@@ -1207,7 +1233,10 @@ class TaskPool:
             if c_task is not None:
                 # Update downstream prerequisites directly.
                 if is_abs:
+                    # Update existing children spawned by other tasks.
                     tasks, _ = self.filter_task_proxies([c_name])
+                    if c_task not in tasks:
+                        tasks.append(c_task)
                 else:
                     tasks = [c_task]
                 for t in tasks:
@@ -1215,14 +1244,15 @@ class TaskPool:
                         (itask.tdef.name, str(itask.point), output)
                     })
                     self.data_store_mgr.delta_task_prerequisite(t)
-                # Event-driven suicide.
-                if (
-                    c_task.state.suicide_prerequisites and
-                    c_task.state.suicide_prerequisites_all_satisfied()
-                ):
-                    suicide.append(c_task)
-                # Add child to the task pool, if not already there.
-                self.add_to_pool(c_task)
+                    # Add it to the hidden pool or move it to the main pool.
+                    self.add_to_pool(t)
+
+                    # Event-driven suicide.
+                    if (
+                        t.state.suicide_prerequisites and
+                        t.state.suicide_prerequisites_all_satisfied()
+                    ):
+                        suicide.append(t)
 
         for c_task in suicide:
             if c_task.state(
@@ -1351,6 +1381,7 @@ class TaskPool:
         parent_id: Optional[str] = None
     ) -> Optional[TaskProxy]:
         """Spawn name.point and add to runahead pool. Return it, or None."""
+
         if not self.can_spawn(name, point):
             return None
 
@@ -1404,7 +1435,7 @@ class TaskPool:
                     "task beyond the stop point"
                 )
 
-        # Attempt to satisfy any absolute triggers now.
+        # Attempt to satisfy any absolute triggers.
         # TODO: consider doing this only for tasks with absolute prerequisites.
         if itask.state.prerequisites_are_not_all_satisfied():
             itask.state.satisfy_me(self.abs_outputs_done)
