@@ -127,6 +127,10 @@ Fix ``cylc stop --kill`` which was not actually killing task jobs.
 [#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
 now works with relative paths.
 
+[#4440](https://github.com/cylc/cylc-flow/pull/4440) -
+Fix an error that could occur during remote clean and other `cylc clean`
+improvements.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
