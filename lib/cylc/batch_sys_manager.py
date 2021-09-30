@@ -169,6 +169,7 @@ class JobPollContext(object):
                     raise ValueError('Invalid kwarg "%s"' % key)
 
     def update(self, other):
+        """Update my data from given file context."""
         for i in self.__slots__:
             setattr(self, i, getattr(other, i))
 
