@@ -168,6 +168,10 @@ class JobPollContext(object):
                 else:
                     raise ValueError('Invalid kwarg "%s"' % key)
 
+    def update(self, other):
+        for i in self.__slots__:
+            setattr(self, i, getattr(other, i))
+
     def get_summary_str(self):
         """Return the poll context as a summary string delimited by "|"."""
         ret = OrderedDict()
@@ -601,6 +605,7 @@ class BatchSysManager(object):
                     ctx.batch_sys_exit_polled = 0
                 else:
                     debug_flag = True
+
             # Add information to "job.status"
             if ctx.batch_sys_exit_polled:
                 try:
@@ -612,6 +617,10 @@ class BatchSysManager(object):
                     handle.close()
                 except IOError as exc:
                     sys.stderr.write(str(exc) + "\n")
+
+                file_ctx = self._jobs_poll_status_files(
+                    job_log_root, ctx.job_log_dir)
+                ctx.update(file_ctx)
 
         if debug_flag:
             ctx.batch_sys_call_no_lines = ', '.join(debug_messages)
