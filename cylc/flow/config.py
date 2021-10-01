@@ -79,7 +79,6 @@ from cylc.flow.pathutil import (
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.workflow_files import NO_TITLE
 from cylc.flow.task_events_mgr import (
     EventData,
     get_event_handler_data
@@ -98,6 +97,7 @@ from cylc.flow.unicode_rules import (
 )
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
+from cylc.flow.workflow_files import NO_TITLE, WorkflowFiles
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
@@ -749,24 +749,28 @@ class WorkflowConfig:
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
         queue config, unless allowed by config."""
-        if self.implicit_tasks:
-            print_limit = 10
-            implicit_tasks_str = '\n    * '.join(
-                list(self.implicit_tasks)[:print_limit])
-            num = len(self.implicit_tasks)
-            if num > print_limit:
-                implicit_tasks_str = (
-                    f"{implicit_tasks_str}\n    and {num} more")
-            err_msg = (
-                "implicit tasks detected (no entry under [runtime]):\n"
-                f"    * {implicit_tasks_str}")
-            if not self.cfg['scheduler']['allow implicit tasks']:
-                raise WorkflowConfigError(
-                    f"{err_msg}\n\n"
-                    "To allow implicit tasks, use "
-                    "'flow.cylc[scheduler]allow implicit tasks'")
-            else:
-                LOG.debug(err_msg)
+        if not self.implicit_tasks:
+            return
+        print_limit = 10
+        tasks_str = '\n    * '.join(list(self.implicit_tasks)[:print_limit])
+        num = len(self.implicit_tasks)
+        if num > print_limit:
+            tasks_str += f"\n    and {num} more"
+        msg = (
+            "implicit tasks detected (no entry under [runtime]):\n"
+            f"    * {tasks_str}"
+        )
+        err_msg = (
+            f"{msg}\n"
+            "To allow implicit tasks, use "
+            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+        )
+        if self.cfg['scheduler']['allow implicit tasks']:
+            LOG.debug(msg)
+        else:
+            if not cylc.flow.flags.cylc7_back_compat:
+                raise WorkflowConfigError(err_msg)
+            LOG.warning(err_msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
