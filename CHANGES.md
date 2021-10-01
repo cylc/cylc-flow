@@ -127,6 +127,10 @@ Fix ``cylc stop --kill`` which was not actually killing task jobs.
 [#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
 now works with relative paths.
 
+[#4445](https://github.com/cylc/cylc-flow/pull/4445) - Cylc will prevent you
+using the same name for a platform and a platform group. Which one it should
+pick is ambiguous, and is a setup error.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
