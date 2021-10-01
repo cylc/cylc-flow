@@ -1169,11 +1169,11 @@ def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
     """
     if not src:
         validate_workflow_name(reg)
-    cur_dir = reg.startswith(f'{os.curdir}{os.sep}')  # if starts with './'
+    cur_dir_only = reg.startswith(f'{os.curdir}{os.sep}')  # starts with './'
     reg: Path = Path(expand_path(reg))
 
     if src:
-        reg, abs_path = _parse_src_reg(reg, cur_dir)
+        reg, abs_path = _parse_src_reg(reg, cur_dir_only)
     else:
         abs_path = Path(get_workflow_run_dir(reg))
         if abs_path.is_file():
@@ -1200,13 +1200,13 @@ def check_deprecation(path, warn=True):
             LOG.warning(SUITERC_DEPR_MSG)
 
 
-def _parse_src_reg(reg: Path, cur_dir: bool = False) -> Tuple[Path, Path]:
+def _parse_src_reg(reg: Path, cur_dir_only: bool = False) -> Tuple[Path, Path]:
     """Helper function for parse_reg() when src=True.
 
     Args:
         reg: Reg.
-        cur_dir: Whether the pre-normalised reg began with './', i.e. whether
-            we should only look in the current directory.
+        cur_dir_only: Whether the pre-normalised reg began with './'
+            i.e. whether we should only look in the current directory.
     """
     if reg.is_absolute():
         abs_path = reg
@@ -1227,7 +1227,10 @@ def _parse_src_reg(reg: Path, cur_dir: bool = False) -> Tuple[Path, Path]:
             # run_dir_path not relative to ~/cylc-run
             pass
         else:
-            if not cur_dir and abs_path.resolve() != run_dir_path.resolve():
+            if (
+                not cur_dir_only and
+                abs_path.resolve() != run_dir_path.resolve()
+            ):
                 if abs_path.is_file():
                     if run_dir_path.is_file():
                         LOG.warning(REG_CLASH_MSG.format(
