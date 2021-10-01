@@ -100,6 +100,9 @@ now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 
 ### Fixes
 
+[#4443](https://github.com/cylc/cylc-flow/pull/4443) - fix for slow polling
+generating an incorrect submit-failed result.
+
 [#4421](https://github.com/cylc/cylc-flow/pull/4421) -
 Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).
 
