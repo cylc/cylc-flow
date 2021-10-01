@@ -1154,14 +1154,19 @@ class GlobalConfig(ParsecConfig):
             cfg['editors']['gui'] = os.environ.get('GEDITOR') or 'gvim -fg'
 
     def _no_platform_group_name_overlap(self):
-        names_in_platforms_and_groups = set(
-            self.sparse['platforms'].keys()).intersection(
-                set(self.sparse['platform groups'].keys()))
-        if names_in_platforms_and_groups:
-            msg = (
-                'Platforms and platform groups must not share names. '
-                'The following are in both sets:'
-            )
-            for name in names_in_platforms_and_groups:
-                msg += f'\n * {name}'
-            raise GlobalConfigError(msg)
+        if (
+            'platforms' in self.sparse and
+            'platform groups' in self.sparse
+        ):
+            names_in_platforms_and_groups = set(
+                self.sparse['platforms'].keys()).intersection(
+                    set(self.sparse['platform groups'].keys()))
+
+            if names_in_platforms_and_groups:
+                msg = (
+                    'Platforms and platform groups must not share names. '
+                    'The following are in both sets:'
+                )
+                for name in names_in_platforms_and_groups:
+                    msg += f'\n * {name}'
+                raise GlobalConfigError(msg)
