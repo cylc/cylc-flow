@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
-
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
