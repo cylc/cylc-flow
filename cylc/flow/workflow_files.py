@@ -1351,7 +1351,7 @@ def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
 
     def _check_child_dirs(path: Union[Path, str], depth_count: int = 1):
         for result in os.scandir(path):
-            if result.is_dir() and not result.is_symlink():
+            if result.is_dir():
                 if is_valid_run_dir(result.path):
                     raise WorkflowFilesError(
                         exc_msg.format(flow_name, result.path)
@@ -1484,7 +1484,7 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
 
 
 def reinstall_workflow(named_run, rundir, source, dry_run=False):
-    """ Reinstall workflow.
+    """Reinstall workflow.
 
     Args:
         named_run (str):

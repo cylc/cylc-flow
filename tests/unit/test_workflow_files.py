@@ -100,42 +100,60 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-def test_check_nested_run_dirs_parents(tmp_run_dir: Callable):
+def test_check_nested_run_dirs__parents(tmp_run_dir: Callable):
     """Test that check_nested_run_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
     test_dir = cylc_run_dir.joinpath('a/b/c/d/e')
     test_dir.mkdir(parents=True)
     # Parents are not run dirs - ok:
-    workflow_files.check_nested_run_dirs(test_dir, 'e')
+    check_nested_run_dirs(test_dir, 'e')
     # Parent contains a run dir but that run dir is not direct ancestor
     # of our test dir - ok:
     tmp_run_dir('a/Z')
-    workflow_files.check_nested_run_dirs(test_dir, 'e')
+    check_nested_run_dirs(test_dir, 'e')
     # Now make run dir out of parent - not ok:
     tmp_run_dir('a')
     with pytest.raises(WorkflowFilesError) as exc:
-        workflow_files.check_nested_run_dirs(test_dir, 'e')
+        check_nested_run_dirs(test_dir, 'e')
     assert "Nested run directories not allowed" in str(exc.value)
 
 
-def test_check_nested_run_dirs_children(tmp_run_dir: Callable):
+def test_check_nested_run_dirs__children(tmp_run_dir: Callable):
     """Test that check_nested_run_dirs() raises when a child dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
     cylc_run_dir.joinpath('a/b/c/d/e').mkdir(parents=True)
     test_dir = cylc_run_dir.joinpath('a')
     # No run dir in children - ok:
-    workflow_files.check_nested_run_dirs(test_dir, 'a')
+    check_nested_run_dirs(test_dir, 'a')
     # Run dir in child - not ok:
     d: Path = tmp_run_dir('a/b/c/d/e')
     with pytest.raises(WorkflowFilesError) as exc:
-        workflow_files.check_nested_run_dirs(test_dir, 'a')
+        check_nested_run_dirs(test_dir, 'a')
     assert "Nested run directories not allowed" in str(exc.value)
     shutil.rmtree(d)
     # Run dir in child but below max scan depth - not ideal but passes:
     tmp_run_dir('a/b/c/d/e/f')
-    workflow_files.check_nested_run_dirs(test_dir, 'a')
+    check_nested_run_dirs(test_dir, 'a')
+
+
+def test_check_nested_run_dirs__symlink_children(
+    tmp_path: Path, tmp_run_dir: Callable
+):
+    """Test that check_nested_run_dirs() raises when a child dir is a
+    symlink run directory."""
+    # Setup
+    cylc_run_dir: Path = tmp_run_dir()
+    run_dir: Path = tmp_run_dir('a/b/R')
+    target = tmp_path / 'sideshow_bob'
+    run_dir.rename(target)
+    run_dir.symlink_to(target)
+    # Test
+    test_dir = cylc_run_dir / 'a'
+    with pytest.raises(WorkflowFilesError) as exc:
+        check_nested_run_dirs(test_dir, 'a')
+    assert "Nested run directories not allowed" in str(exc.value)
 
 
 @pytest.mark.parametrize(
@@ -1551,44 +1569,6 @@ def test_remote_clean_cmd(
     args, kwargs = mock_construct_ssh_cmd.call_args
     constructed_cmd = args[0]
     assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
-
-
-@pytest.mark.parametrize(
-    'run_dir, srv_dir',
-    [
-        ('a', 'a/R/.service'),
-        ('d/a', 'd/a/a/R/.service'),
-        ('z/d/a/a', 'z/d/a/a/R/.service')
-    ]
-)
-def test_symlinkrundir_children_that_contain_workflows_raise_error(
-        run_dir, srv_dir, monkeypatch):
-    """Test that a workflow cannot be contained in a subdir of another
-    workflow."""
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files.os.path.isdir',
-        lambda x: not (
-            x.find('.service') > 0 and x != srv_dir
-        )
-    )
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files.get_cylc_run_abs_path',
-        lambda x: x)
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files.os.scandir',
-        lambda x: [
-            mock.Mock(
-                path=srv_dir[0:len(x) + 2],
-                is_symlink=lambda: True
-            )
-        ]
-    )
-
-    try:
-        check_nested_run_dirs(run_dir, 'placeholder_flow')
-    except ServiceFileError:
-        pytest.fail(
-            "Unexpected ServiceFileError, Check symlink logic.")
 
 
 def test_get_workflow_source_dir_numbered_run(tmp_path):
