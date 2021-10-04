@@ -263,7 +263,20 @@ class NoHostsError(CylcError):
     """None of the hosts of a given platform were reachable."""
     def __init__(self, platform):
         self.platform_n = platform['name']
-        super().__init__(f'Unable to find valid host for {self.platform_n}')
+        super().__init__()
+
+    def __str__(self):
+        return f'Unable to find valid host for {self.platform_n}'
+
+
+class NoPlatformsError(CylcError):
+    """None of the platforms of a given group were reachable."""
+    def __init__(self, platform_group):
+        self.platform_group = platform_group
+        super().__init__()
+
+    def __str__(self):
+        return f'Unable to find a platform from group {self.platform_group}.'
 
 
 class CylcVersionError(CylcError):

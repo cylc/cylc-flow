@@ -13,7 +13,7 @@
     [[t2]]
         script = """
             grep -q -F \
-                'bad: Initialisation on platform did not complete' \
+                'bad: initialisation did not complete' \
                 "${CYLC_WORKFLOW_LOG_DIR}/log"
             cylc shutdown "${CYLC_WORKFLOW_NAME}"
         """

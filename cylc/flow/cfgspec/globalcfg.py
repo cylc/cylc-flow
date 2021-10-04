@@ -1020,6 +1020,20 @@ with Conf('global.cylc', desc='''
                 :cylc:conf:`flow.cylc[runtime][<namespace>]platform` matches
                 the name of this platform group.
             ''')
+            with Conf('selection'):
+                Conf(
+                    'method', VDR.V_STRING, default='random',
+                    options=['random', 'definition order'],
+                    desc='''
+                        Method for selecting platform from group.
+
+                        options:
+
+                        - random: Suitable for an identical pool of platforms.
+                        - definition order: Pick the first available platform
+                          from the list.
+                    '''
+                )
     # task
     with Conf('task events', desc='''
         Global site/user defaults for
