@@ -23,7 +23,8 @@ from typing import (
     Any, Dict, Iterable, List, Optional, Tuple, Union, Set, overload
 )
 
-from cylc.flow.exceptions import PlatformLookupError, CylcError, NoHostsError
+from cylc.flow.exceptions import (
+    PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
 
@@ -70,7 +71,8 @@ def get_platform(
 #     Cylc9
 def get_platform(
     task_conf: Union[str, Dict[str, Any], None] = None,
-    task_id: str = UNKNOWN_TASK
+    task_id: str = UNKNOWN_TASK,
+    bad_hosts: Optional[Set[str]] = None
 ) -> Optional[Dict[str, Any]]:
     """Get a platform.
 
@@ -90,7 +92,7 @@ def get_platform(
     """
     if task_conf is None or isinstance(task_conf, str):  # noqa: SIM 114
         # task_conf is a platform name, or get localhost if None
-        return platform_from_name(task_conf)
+        return platform_from_name(task_conf, bad_hosts=bad_hosts)
 
     elif 'platform' in task_conf and task_conf['platform']:
         # Check whether task has conflicting Cylc7 items.
@@ -103,7 +105,7 @@ def get_platform(
             return None
 
         # If platform name exists and doesn't clash with Cylc7 Config items.
-        return platform_from_name(task_conf['platform'])
+        return platform_from_name(task_conf['platform'], bad_hosts=bad_hosts)
 
     else:
         if get_platform_deprecated_settings(task_conf) == []:
@@ -121,13 +123,15 @@ def get_platform(
                     glbl_cfg(cached=False).get(['platforms']),
                     task_job_section,
                     task_remote_section
-                )
+                ),
+                bad_hosts=bad_hosts
             )
 
 
 def platform_from_name(
     platform_name: Optional[str] = None,
-    platforms: Optional[Dict[str, Dict[str, Any]]] = None
+    platforms: Optional[Dict[str, Dict[str, Any]]] = None,
+    bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     """
     Find out which job platform to use given a list of possible platforms and
@@ -154,10 +158,11 @@ def platform_from_name(
 
     platform_group = None
     for platform_name_re in reversed(list(platform_groups)):
+        # Platform is member of a group.
         if re.fullmatch(platform_name_re, platform_name):
-            platform_group = deepcopy(platform_name)
-            platform_name = random.choice(
-                platform_groups[platform_name_re]['platforms']
+            platform_name = get_platform_from_group(
+                platform_groups[platform_name_re], group_name=platform_name,
+                bad_hosts=bad_hosts
             )
 
     # The list is reversed to allow user-set platforms (which are loaded
@@ -198,6 +203,52 @@ def platform_from_name(
 
     raise PlatformLookupError(
         f"No matching platform \"{platform_name}\" found")
+
+
+def get_platform_from_group(
+    group: Dict[str, Any],
+    group_name: str,
+    bad_hosts: Optional[Set[str]] = None
+) -> str:
+    """Get platform name from group, according to the selection method.
+
+    Args:
+        group: A platform group dictionary.
+        group_name: Name of the group.
+        bad_hosts: The set of hosts found to be unreachable.
+
+    Returns:
+        Name of platform selected, or False if all hosts on all platforms are
+        in bad_hosts.
+
+    Raises:
+        NoPlatformsError: If there are no platforms with any usable
+        hosts in the platform group.
+
+    TODO: Uses host_selection methods; should also allow custom select methods.
+    """
+    if bad_hosts:
+        good_platforms = set()
+        for platform in group['platforms']:
+            if set(platform_from_name(platform)['hosts']) - bad_hosts:
+                good_platforms.add(platform)
+
+        platform_names = list(good_platforms)
+    else:
+        platform_names = group['platforms']
+
+    # Return False if there are no platforms available to be selected.
+    if not platform_names:
+        raise NoPlatformsError(group_name)
+
+    # Get the selection method
+    method = group['selection']['method']
+    if method not in HOST_SELECTION_METHODS:
+        raise CylcError(
+            f'\"{method}\" is not a supported platform selection method.'
+        )
+    else:
+        return HOST_SELECTION_METHODS[method](platform_names)
 
 
 def platform_from_job_info(

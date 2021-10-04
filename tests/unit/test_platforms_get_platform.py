@@ -211,14 +211,12 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
         [platform groups]
             [[hebrew_letters]]
                 platforms = aleph, bet
+                [[[selection]]]
+                    method = definition order
         '''
     )
     output = get_platform('hebrew_letters')
-    assert output['group'] == 'hebrew_letters'
-    random.seed(42)
-    assert get_platform('hebrew_letters')['name'] == 'aleph'
-    random.seed(44)
-    assert get_platform('hebrew_letters')['name'] == 'bet'
+    assert output['name'] == 'aleph'
 
 
 @pytest.mark.parametrize(

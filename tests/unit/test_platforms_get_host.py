@@ -17,13 +17,19 @@
 
 import pytest
 
-from cylc.flow.platforms import get_host_from_platform, NoHostsError
+from cylc.flow.exceptions import NoHostsError, NoPlatformsError
+from cylc.flow.platforms import get_host_from_platform, get_platform_from_group
 from cylc.flow.exceptions import CylcError
 
 
 TEST_PLATFORM = {
     'name': 'Elephant',
     'hosts': ['nellie', 'dumbo', 'jumbo'],
+    'selection': {'method': 'definition order'}
+}
+
+TEST_GROUP = {
+    'platforms': ['one', 'two', 'three'],
     'selection': {'method': 'definition order'}
 }
 
@@ -58,4 +64,50 @@ def test_get_host_from_platform_fails_bad_method():
     assert err.exconly() == (
         'cylc.flow.exceptions.CylcError: method "roulette" is not a '
         'supported host selection method.'
+    )
+
+
+@pytest.mark.parametrize(
+    'expect, bad_hosts',
+    [
+        pytest.param(
+            'one', None, id='No bad_hosts get platform one'),
+        pytest.param(
+            'three', {'foo', 'bar'},
+            id='All platforms bad except platform three')
+    ]
+)
+def test_get_platform_from_group(monkeypatch, expect, bad_hosts):
+    def get_plat(name):
+        if name == 'three':
+            return {'hosts': {'foo', 'bar', 'baz'}}
+        else:
+            return {'hosts': {'foo', 'bar'}}
+
+    monkeypatch.setattr('cylc.flow.platforms.platform_from_name', get_plat)
+    platform = get_platform_from_group(TEST_GROUP, 'mygroup_name', bad_hosts)
+    assert platform == expect
+
+
+def test_get_platform_from_group_fails_no_goodhosts(monkeypatch):
+    monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
+        lambda _:{'hosts': {'foo', 'bar', 'baz'}})
+    with pytest.raises(NoPlatformsError) as err:
+        get_platform_from_group(TEST_GROUP, 'mygroup_name', {'foo', 'bar', 'baz'})
+    assert err.exconly() == (
+        'cylc.flow.exceptions.NoPlatformsError: '
+        'Unable to find a platform from group mygroup_name.'
+    )
+
+
+def test_get_platform_from_group_fails_bad_method(monkeypatch):
+    monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
+        lambda _:{'hosts': {'foo', 'bar', 'baz'}})
+    group = TEST_GROUP.copy()
+    group['selection']['method'] = 'roulette'
+    with pytest.raises(CylcError) as err:
+        get_platform_from_group(group, {'foo'})
+    assert err.exconly() == (
+        'cylc.flow.exceptions.CylcError: "roulette" is not a '
+        'supported platform selection method.'
     )
