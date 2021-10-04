@@ -1330,13 +1330,12 @@ def infer_latest_run(path: Path) -> Tuple[Path, Path]:
     return (path, reg)
 
 
-def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
+def check_nested_run_dirs(run_dir: Union[Path, str]) -> None:
     """Disallow nested run dirs e.g. trying to install foo/bar where foo is
     already a valid workflow directory.
 
     Args:
         run_dir: Absolute workflow run directory path.
-        flow_name: Workflow name.
 
     Raise:
         WorkflowFilesError:
@@ -1345,30 +1344,29 @@ def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
                 depth)
     """
     exc_msg = (
-        'Nested run directories not allowed - cannot install workflow name '
-        '"{0}" as "{1}" is already a valid run directory.'
+        "Nested run directories not allowed - cannot install workflow in "
+        "'{0}' as '{1}' is already a valid run directory."
     )
+    reg_path = Path(os.path.normpath(run_dir))
 
     def _check_child_dirs(path: Union[Path, str], depth_count: int = 1):
         for result in os.scandir(path):
             if result.is_dir():
                 if is_valid_run_dir(result.path):
                     raise WorkflowFilesError(
-                        exc_msg.format(flow_name, result.path)
+                        exc_msg.format(reg_path, result.path)
                     )
                 if depth_count < MAX_SCAN_DEPTH:
                     _check_child_dirs(result.path, depth_count + 1)
 
-    reg_path: Union[Path, str] = os.path.normpath(run_dir)
-    parent_dir = os.path.dirname(reg_path)
-    while parent_dir not in {'', os.sep}:
+    for parent_dir in reg_path.parents:
+        if parent_dir == Path(get_cylc_run_dir()):
+            break
         if is_valid_run_dir(parent_dir):
             raise WorkflowFilesError(
-                exc_msg.format(flow_name, get_cylc_run_abs_path(parent_dir))
+                exc_msg.format(reg_path, get_cylc_run_abs_path(parent_dir))
             )
-        parent_dir = os.path.dirname(parent_dir)
 
-    reg_path = get_cylc_run_abs_path(reg_path)
     if os.path.isdir(reg_path):
         _check_child_dirs(reg_path)
 
@@ -1498,7 +1496,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
             be changed.
     """
     validate_source_dir(source, named_run)
-    check_nested_run_dirs(rundir, named_run)
+    check_nested_run_dirs(rundir)
     reinstall_log = _get_logger(rundir, 'cylc-reinstall')
     reinstall_log.info(f"Reinstalling \"{named_run}\", from "
                        f"\"{source}\" to \"{rundir}\"")
@@ -1575,7 +1573,7 @@ def install_workflow(
             f"\"{rundir}\" exists."
             " Try using cylc reinstall. Alternatively, install with another"
             " name, using the --run-name option.")
-    check_nested_run_dirs(rundir, flow_name)
+    check_nested_run_dirs(rundir)
     symlinks_created = {}
     named_run = flow_name
     if run_name:
@@ -1625,15 +1623,12 @@ def install_workflow(
             )
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source.resolve())
-    elif (  # noqa: SIM106
-        source_link.exists()
-        and source_link.resolve() == source.resolve()
-    ):
-        install_log.info(
-            f"Symlink from \"{source_link}\" to \"{source}\" in place.")
     else:
-        raise WorkflowFilesError(
-            "Source directory not consistent between runs.")
+        if not source_link.resolve() == source.resolve():
+            raise WorkflowFilesError(
+                "Source directory not consistent between runs.")
+        install_log.info(
+            f'Symlink from "{source_link}" to "{source}" in place.')
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
     _close_install_log(install_log)

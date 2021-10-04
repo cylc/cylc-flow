@@ -107,15 +107,15 @@ def test_check_nested_run_dirs__parents(tmp_run_dir: Callable):
     test_dir = cylc_run_dir.joinpath('a/b/c/d/e')
     test_dir.mkdir(parents=True)
     # Parents are not run dirs - ok:
-    check_nested_run_dirs(test_dir, 'e')
+    check_nested_run_dirs(test_dir)
     # Parent contains a run dir but that run dir is not direct ancestor
     # of our test dir - ok:
     tmp_run_dir('a/Z')
-    check_nested_run_dirs(test_dir, 'e')
+    check_nested_run_dirs(test_dir)
     # Now make run dir out of parent - not ok:
     tmp_run_dir('a')
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(test_dir, 'e')
+        check_nested_run_dirs(test_dir)
     assert "Nested run directories not allowed" in str(exc.value)
 
 
@@ -126,16 +126,16 @@ def test_check_nested_run_dirs__children(tmp_run_dir: Callable):
     cylc_run_dir.joinpath('a/b/c/d/e').mkdir(parents=True)
     test_dir = cylc_run_dir.joinpath('a')
     # No run dir in children - ok:
-    check_nested_run_dirs(test_dir, 'a')
+    check_nested_run_dirs(test_dir)
     # Run dir in child - not ok:
     d: Path = tmp_run_dir('a/b/c/d/e')
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(test_dir, 'a')
+        check_nested_run_dirs(test_dir)
     assert "Nested run directories not allowed" in str(exc.value)
     shutil.rmtree(d)
     # Run dir in child but below max scan depth - not ideal but passes:
     tmp_run_dir('a/b/c/d/e/f')
-    check_nested_run_dirs(test_dir, 'a')
+    check_nested_run_dirs(test_dir)
 
 
 def test_check_nested_run_dirs__symlink_children(
@@ -152,7 +152,7 @@ def test_check_nested_run_dirs__symlink_children(
     # Test
     test_dir = cylc_run_dir / 'a'
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(test_dir, 'a')
+        check_nested_run_dirs(test_dir)
     assert "Nested run directories not allowed" in str(exc.value)
 
 
