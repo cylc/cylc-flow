@@ -234,7 +234,7 @@ def cli_function(
                 # run the command
                 wrapped_function(*wrapped_args, **wrapped_kwargs)
             except (CylcError, ParsecError) as exc:
-                if cylc.flow.flags.verbosity >= 1:
+                if cylc.flow.flags.verbosity > 1:
                     # raise the full traceback
                     raise
                 # else catch "known" CylcErrors which should have sensible
