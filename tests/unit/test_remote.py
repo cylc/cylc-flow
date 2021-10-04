@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Test the cylc.flow.remote module."""
 
-from cylc.flow.remote import run_cmd
+from cylc.flow.remote import run_cmd, construct_rsync_over_ssh_cmd
 
 
 def test_run_cmd_stdin_str():
@@ -46,3 +46,27 @@ def test_run_cmd_stdin_file(tmp_path):
         b'1bar2',
         b''
     ]
+
+
+def test_construct_rsync_over_ssh_cmd():
+    """Function against known good output.
+    """
+    cmd, host = construct_rsync_over_ssh_cmd(
+        '/foo',
+        '/bar',
+        {
+            'hosts': ['miklegard'],
+            'ssh command': 'strange_ssh',
+            'selection': {'method': 'definition order'},
+            'name': 'testplat'
+        }
+    )
+    assert host == 'miklegard'
+    assert ' '.join(cmd) == (
+        'rsync --delete --rsh=strange_ssh --include=/.service/ '
+        '--include=/.service/server.key -a --checksum '
+        '--out-format=%o %n%L --no-t --exclude=log --exclude=share '
+        '--exclude=work --include=/app/*** --include=/bin/*** '
+        '--include=/etc/*** --include=/lib/*** --exclude=* '
+        '/foo/ miklegard:/bar/'
+    )

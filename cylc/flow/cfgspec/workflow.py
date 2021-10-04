@@ -23,6 +23,7 @@ from typing import Any, Dict, Set
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
+from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -40,6 +41,9 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
 # Cylc8 Deprecation note.
 DEPRECATION_WARN = '''
+.. deprecated:: 8.0.0
+
+
 .. warning::
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
@@ -69,6 +73,8 @@ SCRIPT_COMMON = '''
 '''
 
 DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
+.. deprecated:: 8.0.0
+
 .. warning::
 
    This config item has been moved to a platform setting in the
@@ -217,11 +223,9 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]UTC mode` are set. Not specifying a
             time zone here is inadvisable as it leads to ambiguity.
 
-            .. note::
-
-               The ISO8601 extended date-time format can be used
-               (``CCYY-MM-DDThh:mm``) but note that the "-" and ":" characters
-               end up in job log directory paths.
+            The ISO8601 extended date-time format cannot be used
+            (``CCYY-MM-DDThh:mm``) as cycle points are used in job-log and work
+            directory paths where the ":" character is invalid.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
             For years below 0 or above 9999, the ISO 8601 standard specifies
@@ -266,6 +270,11 @@ with Conf(
                It is not recommended to write the time zone with a ":"
                (e.g. ``+05:30``), given that the time zone is used as part of
                task output filenames.
+
+            .. versionchanged:: 7.8.9/7.9.4
+
+               The value set here now persists over reloads/restarts after a
+               system time zone change.
         ''')
 
         with Conf('main loop'):  # noqa: SIM117 (keep same format)
@@ -277,26 +286,19 @@ with Conf(
             # between: value not set vs value set to empty
             Conf('handlers', VDR.V_STRING_LIST, None)
             Conf('handler events', VDR.V_STRING_LIST, None)
-            Conf('startup handler', VDR.V_STRING_LIST, None)
-            Conf('timeout handler', VDR.V_STRING_LIST, None)
-            Conf('inactivity handler', VDR.V_STRING_LIST, None)
-            Conf('shutdown handler', VDR.V_STRING_LIST, None)
-            Conf('aborted handler', VDR.V_STRING_LIST, None)
-            Conf('stalled handler', VDR.V_STRING_LIST, None)
-            Conf('timeout', VDR.V_INTERVAL)
-            Conf('inactivity', VDR.V_INTERVAL)
-            Conf('abort if startup handler fails', VDR.V_BOOLEAN)
-            Conf('abort if shutdown handler fails', VDR.V_BOOLEAN)
-            Conf('abort if timeout handler fails', VDR.V_BOOLEAN)
-            Conf('abort if inactivity handler fails', VDR.V_BOOLEAN)
-            Conf('abort if stalled handler fails', VDR.V_BOOLEAN)
-            Conf('abort on stalled', VDR.V_BOOLEAN)
-            Conf('abort on timeout', VDR.V_BOOLEAN)
-            Conf('abort on inactivity', VDR.V_BOOLEAN)
             Conf('mail events', VDR.V_STRING_LIST, None)
+
+            for item, desc in EVENTS_DESCR.items():
+                if item.endswith("handlers"):
+                    Conf(item, VDR.V_STRING_LIST, desc=desc)
+                elif item.startswith("abort on"):
+                    Conf(item, VDR.V_BOOLEAN, desc=desc)
+                elif item.endswith("timeout"):
+                    Conf(item, VDR.V_INTERVAL, desc=desc)
+
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
-                (For Cylc developers writing a functional reference test
-                only) List of tasks that are expected to fail in the test.
+                (For Cylc developers writing a functional tests only)
+                List of tasks that are expected to fail in the test.
             ''')
 
         with Conf('mail'):
@@ -430,6 +432,10 @@ with Conf(
             specified. Unlike for the final cycle point, the workflow will not
             shut down once all tasks have passed this point. If this item
             is provided you can override it on the command line.
+
+            .. versionchanged:: 8.0.0
+
+               This setting was previously called ``hold after point``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
             Set stop point. Shut down after all tasks have PASSED
@@ -480,6 +486,11 @@ with Conf(
                The runahead limit may be automatically raised if this is
                necessary to allow a future task to be triggered, preventing
                the workflow from stalling.
+
+            .. versionchanged:: 8.0.0
+
+               The ``max active cycle points`` setting was merged into this
+               one.
         ''')
 
         with Conf('queues', desc='''
@@ -717,7 +728,16 @@ with Conf(
             explicitly configured to provide or override default settings for
             all tasks in the workflow.
         '''):
-            Conf('platform', VDR.V_STRING)
+            Conf('platform', VDR.V_STRING, desc='''
+                .. versionadded:: 8.0.0
+
+                The name of a compute resource defined in
+                :cylc:conf:`global.cylc[platforms]` or
+                :cylc:conf:`global.cylc[platform groups]`.
+
+                The platform specifies the host(s) that the task's jobs
+                will run on.
+            ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this namespace.
                 If no parents are listed default is ``root``.
@@ -862,7 +882,7 @@ with Conf(
                    [runtime]
                        [[root]]
                            [[[events]]]
-                               failed handler = """
+                               failed handlers = """
                                    send-help.sh \
                                        %(workflow_title)s \
                                        %(workflow_importance)s \
@@ -1126,21 +1146,21 @@ with Conf(
                     duration/interval, the *submission timeout* event
                     handler(s) will be called.
                 ''')
-                Conf('expired handler', VDR.V_STRING_LIST, None)
+                Conf('expired handlers', VDR.V_STRING_LIST, None)
                 Conf('late offset', VDR.V_INTERVAL, None)
-                Conf('late handler', VDR.V_STRING_LIST, None)
-                Conf('submitted handler', VDR.V_STRING_LIST, None)
-                Conf('started handler', VDR.V_STRING_LIST, None)
-                Conf('succeeded handler', VDR.V_STRING_LIST, None)
-                Conf('failed handler', VDR.V_STRING_LIST, None)
-                Conf('submission failed handler', VDR.V_STRING_LIST, None)
-                Conf('warning handler', VDR.V_STRING_LIST, None)
-                Conf('critical handler', VDR.V_STRING_LIST, None)
-                Conf('retry handler', VDR.V_STRING_LIST, None)
-                Conf('submission retry handler', VDR.V_STRING_LIST, None)
-                Conf('execution timeout handler', VDR.V_STRING_LIST, None)
-                Conf('submission timeout handler', VDR.V_STRING_LIST, None)
-                Conf('custom handler', VDR.V_STRING_LIST, None)
+                Conf('late handlers', VDR.V_STRING_LIST, None)
+                Conf('submitted handlers', VDR.V_STRING_LIST, None)
+                Conf('started handlers', VDR.V_STRING_LIST, None)
+                Conf('succeeded handlers', VDR.V_STRING_LIST, None)
+                Conf('failed handlers', VDR.V_STRING_LIST, None)
+                Conf('submission failed handlers', VDR.V_STRING_LIST, None)
+                Conf('warning handlers', VDR.V_STRING_LIST, None)
+                Conf('critical handlers', VDR.V_STRING_LIST, None)
+                Conf('retry handlers', VDR.V_STRING_LIST, None)
+                Conf('submission retry handlers', VDR.V_STRING_LIST, None)
+                Conf('execution timeout handlers', VDR.V_STRING_LIST, None)
+                Conf('submission timeout handlers', VDR.V_STRING_LIST, None)
+                Conf('custom handlers', VDR.V_STRING_LIST, None)
 
             with Conf('mail', desc='''
                 Settings for mail events.
@@ -1245,6 +1265,12 @@ with Conf(
                        MYNUM = %(i)d
                        MYITEM = %(item)s
                        MYFILE = /path/to/%(i)03d/%(item)s
+
+                    .. versionchanged:: 7.8.7/7.9.2
+
+                       Parameter environment templates (previously in
+                       ``[runtime][X][parameter environment templates]``) have
+                       moved here.
                 ''')
 
             with Conf('directives', desc='''
@@ -1288,17 +1314,18 @@ with Conf(
                 ''')
 
             with Conf('parameter environment templates', desc='''
-                .. note::
+                .. deprecated:: 7.8.7/7.9.2
 
-                   This section is deprecated and will be removed in Cylc 9.
                    Parameter environment templates have moved to
                    :cylc:conf:`flow.cylc[runtime][<namespace>][environment]`.
-                   This was done to allow users to control the order of
-                   definition of the variables.
 
-                   For the time being, the contents of this section will be
-                   prepended to the ``[environment]`` section when running
-                   a workflow.
+                This was done to allow users to control the order of
+                definition of the variables. This section will be removed
+                in Cylc 9.
+
+                For the time being, the contents of this section will be
+                prepended to the ``[environment]`` section when running
+                a workflow.
             '''):
                 Conf('<parameter>', VDR.V_STRING)
 
@@ -1329,8 +1356,6 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'remote', 'suite definition directory']
     )
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if any task fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'mail retry delays'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
     u.obsolete('8.0.0', ['cylc', 'environment'])
     u.obsolete('8.0.0', ['cylc', 'reference test'])
@@ -1339,6 +1364,7 @@ def upg(cfg, descr):
         ['cylc', 'simulation', 'disable suite event handlers'])
     u.obsolete('8.0.0', ['cylc', 'simulation'])
     u.obsolete('8.0.0', ['visualization'])
+    u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points']),
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],
@@ -1410,6 +1436,56 @@ def upg(cfg, descr):
             ['runtime', '__MANY__', 'job', job_setting],
             ['runtime', '__MANY__', job_setting]
         )
+
+    # Workflow timeout is now measured from start of run.
+    # The old timeout was measured from start of stall.
+    for old, new in [
+        ('timeout', 'stall timeout'),
+        ('abort on timeout', 'abort on stall timeout'),
+        ('inactivity', 'inactivity timeout'),
+        ('abort on inactivity', 'abort on inactivity timeout'),
+        ('startup handler', 'startup handlers'),
+        ('shutdown handler', 'shutdown handlers'),
+        ('timeout handler', 'stall timeout handlers'),
+        ('stalled handler', 'stall handlers'),
+        ('aborted handler', 'abort handlers'),
+        ('inactivity handler', 'inactivity timeout handlers'),
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['cylc', 'events', old],
+            ['cylc', 'events', new]
+        )
+
+    for old in [
+        "expired handler",
+        "late handler",
+        "submitted handler",
+        "started handler",
+        "succeeded handler",
+        "failed handler",
+        "submission failed handler",
+        "warning handler",
+        "critical handler",
+        "retry handler",
+        "submission retry handler",
+        "execution timeout handler",
+        "submission timeout handler",
+        "custom handler"
+    ]:
+        u.deprecate(
+            '8.0.0',
+            ['runtime', '__MANY__', 'events', old],
+            ['runtime', '__MANY__', 'events', f"{old}s"]
+        )
+
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if startup handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if shutdown handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if timeout handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events',
+                         'abort if inactivity handler fails'])
+    u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
 
     u.deprecate('8.0.0', ['cylc'], ['scheduler'])
     u.upgrade()

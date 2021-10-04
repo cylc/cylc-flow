@@ -23,8 +23,10 @@ Reinstall a previously installed workflow.
 Examples:
   # Having previously installed:
   $ cylc install myflow
-  # To reinstall this workflow run:
-  $ cylc reinstall myflow/run1
+  # To reinstall the latest run:
+  $ cylc reinstall myflow
+  # Or, to reinstall a specific run:
+  $ cylc reinstall myflow/run2
 
   # Having previously installed:
   $ cylc install myflow --no-run-name
@@ -34,7 +36,6 @@ Examples:
   # To reinstall a workflow from within the cylc-run directory of a previously
   # installed workflow:
   $ cylc reinstall
-
 """
 
 from pathlib import Path
@@ -43,11 +44,12 @@ from typing import Optional, TYPE_CHECKING
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.pathutil import get_workflow_run_dir
+from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
+    parse_reg,
     reinstall_workflow,
-    WorkflowFiles)
+)
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -56,86 +58,53 @@ if TYPE_CHECKING:
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, prep=True,
-        argdoc=[("[NAMED_RUN]", "Named run. e.g. my-flow/run1")]
+        __doc__, comms=True, argdoc=[('[REG]', 'Workflow name')]
     )
 
-    # If cylc-rose plugin is available ad the --option/-O config
+    parser.add_cylc_rose_options()
     try:
+        # If cylc-rose plugin is available
         __import__('cylc.rose')
-        parser.add_option(
-            "--opt-conf-key", "-O",
-            help=(
-                "Use optional Rose Config Setting "
-                "(if cylc-rose is installed)"
-            ),
-            action="append",
-            default=[],
-            dest="opt_conf_keys"
-        )
-        parser.add_option(
-            "--define", '-D',
-            help=(
-                "Each of these overrides the `[SECTION]KEY` setting in a "
-                "`rose-suite.conf` file. "
-                "Can be used to disable a setting using the syntax "
-                "`--define=[SECTION]!KEY` or even `--define=[!SECTION]`."
-            ),
-            action="append",
-            default=[],
-            dest="defines"
-        )
-        parser.add_option(
-            "--rose-template-variable", '-S',
-            help=(
-                "As `--define`, but with an implicit `[SECTION]` for "
-                "workflow variables."
-            ),
-            action="append",
-            default=[],
-            dest="rose_template_vars"
-        )
+    except ImportError:
+        pass
+    else:
         parser.add_option(
             "--clear-rose-install-options",
-            help=(
-                "Clear options previously set by cylc-rose."
-            ),
+            help="Clear options previously set by cylc-rose.",
             action='store_true',
             default=False,
             dest="clear_rose_install_opts"
         )
-    except ImportError:
-        pass
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(
-    parser: COP, opts: 'Values', named_run: Optional[str] = None
-) -> None:
-    if not named_run:
-        source, _ = get_workflow_source_dir(Path.cwd())
-        if source is None:
+def main(parser: COP, opts: 'Values', reg: Optional[str] = None) -> None:
+    run_dir: Optional[Path]
+    if reg is None:
+        try:
+            reg = str(Path.cwd().relative_to(
+                Path(get_cylc_run_dir()).resolve()
+            ))
+        except ValueError:
             raise WorkflowFilesError(
-                f'"{Path.cwd()}" is not a workflow run directory.')
-        base_run_dir = Path(get_workflow_run_dir(''))
-        named_run = str(Path.cwd().relative_to(base_run_dir.resolve()))
-    run_dir = Path(get_workflow_run_dir(named_run))
-    if not run_dir.exists():
+                "The current working directory is not a workflow run directory"
+            )
+    else:
+        reg, _ = parse_reg(reg)
+    run_dir = Path(get_workflow_run_dir(reg))
+    if not run_dir.is_dir():
         raise WorkflowFilesError(
-            f'"{named_run}" is not an installed workflow.')
-    if run_dir.name in [WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC]:
-        run_dir = run_dir.parent
-        named_run = named_run.rsplit('/', 1)[0]
-    source, source_path = get_workflow_source_dir(run_dir)
+            f'"{reg}" is not an installed workflow.')
+    source, source_symlink = get_workflow_source_dir(run_dir)
     if not source:
         raise WorkflowFilesError(
-            f'"{named_run}" was not installed with cylc install.')
-    if not Path(source).exists():
+            f'"{reg}" was not installed with cylc install.')
+    if not Path(source).is_dir():
         raise WorkflowFilesError(
             f'Workflow source dir is not accessible: "{source}".\n'
-            f'Restore the source or modify the "{source_path}"'
+            f'Restore the source or modify the "{source_symlink}"'
             ' symlink to continue.'
         )
     for entry_point in iter_entry_points(
@@ -153,7 +122,7 @@ def main(
             ) from None
 
     reinstall_workflow(
-        named_run=named_run,
+        named_run=reg,
         rundir=run_dir,
         source=source,
         dry_run=False  # TODO: ready for dry run implementation

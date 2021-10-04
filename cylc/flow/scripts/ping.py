@@ -23,9 +23,9 @@ Test communication with a running workflow.
 If workflow REG is running or TASK in workflow REG is currently running,
 exit with success status, else exit with error status."""
 
-import sys
-
 from ansimarkup import parse as cparse
+import sys
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from cylc.flow import ID_DELIM
 from cylc.flow.exceptions import UserInputError
@@ -35,6 +35,11 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import TASK_STATUS_RUNNING
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 FLOW_QUERY = '''
 query ($wFlows: [ID]) {
@@ -66,7 +71,13 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow, task_id=None):
+def main(
+    parser: COP,
+    options: 'Values',
+    workflow: str,
+    task_id: Optional[str] = None
+) -> None:
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if task_id and not TaskID.is_valid_id(task_id):
@@ -76,7 +87,7 @@ def main(parser, options, workflow, task_id=None):
         'request_string': FLOW_QUERY,
         'variables': {'wFlows': [workflow]}
     }
-    task_kwargs = {
+    task_kwargs: Dict[str, Any] = {
         'request_string': TASK_QUERY,
     }
     # cylc ping WORKFLOW

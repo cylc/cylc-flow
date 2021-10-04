@@ -18,14 +18,14 @@
 #------------------------------------------------------------------------------
 # Test workflow re-installation
 . "$(dirname "$0")/test_header"
-set_test_number 36
+set_test_number 28
 
 # Test basic cylc reinstall, named run given
 TEST_NAME="${TEST_NAME_BASE}-basic-named-run"
 make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}" cylc install
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
+cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 run_ok "basic-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
@@ -35,46 +35,16 @@ grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${R
 popd || exit 1
 purge_rnd_workflow
 
-# Test basic cylc reinstall, named run (including ``flow.cylc``) given
-TEST_NAME="${TEST_NAME_BASE}-flow-as-arg"
-make_rnd_workflow
-pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-run_ok "${TEST_NAME}" cylc install
-run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1/flow.cylc"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
-__OUT__
-REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
-popd || exit 1
-purge_rnd_workflow
-
-# Test basic cylc reinstall, named run (including suite.rc) given
-TEST_NAME="${TEST_NAME_BASE}-suite.rc-as-arg"
-make_rnd_workflow
-pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-rm -rf flow.cylc
-touch suite.rc
-run_ok "${TEST_NAME}" cylc install
-run_ok "${TEST_NAME}-reinstall-suite.rc" cylc reinstall "${RND_WORKFLOW_NAME}/run1/suite.rc"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
-__OUT__
-REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
-popd || exit 1
-purge_rnd_workflow
-
 # Test install/reinstall executed from elsewhere in filesystem
 TEST_NAME="${TEST_NAME_BASE}-named-flow"
 make_rnd_workflow
 pushd "${TMPDIR}" || exit 1
 run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}"
-contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
+cmp_ok "${TEST_NAME}-install.stdout" <<__OUT__
 INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
-contains_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
+cmp_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
 REINSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 popd || exit 1
@@ -87,7 +57,7 @@ make_rnd_workflow
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
+cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 # test symlink not made in source dir
@@ -102,7 +72,7 @@ else
 fi
 
 INSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*.log')"
-grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${INSTALL_LOG}"
+grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
 rm -rf flow.cylc
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 exists_ok "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc"
@@ -112,7 +82,7 @@ else
     fail "symlink.suite.rc"
 fi
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${REINSTALL_LOG}"
+grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
 popd || exit 1
 purge_rnd_workflow
 
@@ -120,7 +90,7 @@ purge_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-no-args"
 make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
-contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
+cmp_ok "${TEST_NAME}-install.stdout" <<__OUT__
 INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
@@ -137,7 +107,7 @@ TEST_NAME="${TEST_NAME_BASE}-no-args-no-run-name"
 make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}-install" cylc install --no-run-name -C "${RND_WORKFLOW_SOURCE}"
-contains_ok "${TEST_NAME}-install.stdout" <<__OUT__
+cmp_ok "${TEST_NAME}-install.stdout" <<__OUT__
 INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE}
 __OUT__
 pushd "${RND_WORKFLOW_RUNDIR}" || exit 1

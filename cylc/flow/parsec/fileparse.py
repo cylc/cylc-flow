@@ -35,7 +35,7 @@ import re
 import sys
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow import LOG
@@ -278,6 +278,50 @@ def process_plugins(fpath):
     return extra_vars
 
 
+def merge_template_vars(
+    native_tvars: Dict[str, Any],
+    plugin_result: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Manage the merger of Cylc Native and Plugin template variables.
+
+    Args:
+        native_tvars: Template variables set on the Cylc command line
+            using ``-s`` or a template variable file.
+        plugin_result: Plugin result which should contain _at least_
+            "templating_detected" and "template_variable" keys.
+
+    Returns:
+        template_variables.
+
+    Strategy:
+        template variables set in a Cylc Native way should override
+        the results of plugins.
+
+    Examples:
+        >>> a = {'FOO': 42, 'BAR': 'Hello World'}
+        >>> tvars = {'FOO': 24, 'BAZ': 3.14159}
+        >>> b = {'templating_detected': 'any', 'template_variables': tvars}
+        >>> merge_template_vars(a, b)
+        {'FOO': 42, 'BAZ': 3.14159, 'BAR': 'Hello World'}
+    """
+    if plugin_result['templating_detected'] is not None:
+        plugin_tvars = plugin_result['template_variables']
+        will_be_overwritten = (
+            native_tvars.keys() &
+            plugin_tvars.keys()
+        )
+        for key in will_be_overwritten:
+            if plugin_tvars[key] != native_tvars[key]:
+                LOG.warning(
+                    f'Overriding {key}: {plugin_tvars[key]} ->'
+                    f' {native_tvars[key]}'
+                )
+        plugin_tvars.update(native_tvars)
+        return plugin_tvars
+    else:
+        return native_tvars
+
+
 def read_and_proc(fpath, template_vars=None, viewcfg=None):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
@@ -328,36 +372,23 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None):
 
     template_vars['CYLC_VERSION'] = __version__
 
-    # Push template_vars into extra_vars so that duplicates come from
-    # template_vars.
-    if extra_vars['templating_detected'] is not None:
-        will_be_overwritten = (
-            template_vars.keys() &
-            extra_vars['template_variables'].keys()
-        )
-        for key in will_be_overwritten:
-            LOG.warning(
-                f'Overriding {key}: {extra_vars["template_variables"][key]} ->'
-                f' {template_vars[key]}'
-            )
-        extra_vars['template_variables'].update(template_vars)
-        template_vars = extra_vars['template_variables']
+    template_vars = merge_template_vars(template_vars, extra_vars)
 
     template_vars['CYLC_TEMPLATE_VARS'] = template_vars
 
     # Fail if templating_detected ≠ hashbang
-    hashbang = hashbang_and_plugin_templating_clash(
+    process_with = hashbang_and_plugin_templating_clash(
         extra_vars['templating_detected'], flines
     )
-
     # process with EmPy
     if do_empy:
         if (
             extra_vars['templating_detected'] == 'empy' and
-            not hashbang and
-            hashbang != 'empy'
+            not process_with and
+            process_with != 'empy'
         ):
             flines.insert(0, '#!empy')
+
         if flines and re.match(r'^#![Ee]m[Pp]y\s*', flines[0]):
             LOG.debug('Processing with EmPy')
             try:
@@ -373,10 +404,11 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None):
     if do_jinja2:
         if (
             extra_vars['templating_detected'] == 'jinja2' and
-            not hashbang and
-            hashbang != 'jinja2'
+            not process_with and
+            process_with != 'jinja2'
         ):
             flines.insert(0, '#!jinja2')
+
         if flines and re.match(r'^#![jJ]inja2\s*', flines[0]):
             LOG.debug('Processing with Jinja2')
             try:
@@ -426,18 +458,13 @@ def hashbang_and_plugin_templating_clash(
             Traceback (most recent call last):
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
-
-        - Function raises if plugin templating engine is generic and hashbang
-          unset:
-            >>> thisfunc('template variables', ['# Some Comment'])
-            Traceback (most recent call last):
-                ...
-            cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
     """
+    # Get hashbang if possible:
     if flines and re.match(r'^#!(.*)\s*', flines[0]):
         hashbang = re.findall(r'^#!(.*)\s*', flines[0])[0].lower()
     else:
         hashbang = None
+
     if (
         hashbang and templating
         and templating != 'template variables'
@@ -447,14 +474,6 @@ def hashbang_and_plugin_templating_clash(
             "Plugins set templating engine = "
             f"{templating}"
             f" which does not match {flines[0]} set in flow.cylc."
-        )
-    elif (
-        hashbang is None
-        and templating == 'template variables'
-    ):
-        raise TemplateVarLanguageClash(
-            'Plugins provided template variables, but workflow definition '
-            'has no hashbang (e.g. #!jinja2): Templating will fail.'
         )
     return hashbang
 

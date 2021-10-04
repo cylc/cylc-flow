@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -e -o pipefail
-
-mkdir /build
-(cd /build; echo "$@" | xargs -n 1 -P 8 build-bash)
-rm -rf /build

@@ -21,11 +21,15 @@ from cylc.flow.cycling.loader import (
     get_interval, get_interval_cls, is_offset_absolute)
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.task_id import TaskID
+from cylc.flow.task_trigger import TaskTrigger
 
 
 class GraphNodeParser:
-    """Provide graph node parsing and caching service"""
+    """Provide graph node parsing and caching service.
 
+    Optional output notation is stripped out before this class gets used.
+    TODO is any of this redundant with code in the graph_parser module?
+    """
     # Match a graph node string.
     REC_NODE = re.compile(
         r"^" +
@@ -117,6 +121,6 @@ class GraphNodeParser:
                 else:
                     offset = self._get_offset(offset)
             self._nodes[node] = (
-                name, offset, output,
+                name, offset, TaskTrigger.standardise_name(output),
                 offset_is_from_icp, offset_is_irregular, offset_is_absolute)
         return self._nodes[node]

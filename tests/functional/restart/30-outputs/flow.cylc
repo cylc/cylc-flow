@@ -1,16 +1,15 @@
 # only the t1:hello output is generated
 [scheduler]
     [[events]]
-        abort on inactivity = True
-        abort on stalled = True
-        inactivity = PT1M
-        abort on timeout = True
-        timeout = PT1M
+        abort on inactivity timeout = True
+        abort on stall timeout = True
+        stall timeout = PT0S
+        inactivity timeout = PT1M
 [scheduling]
     [[graph]]
         R1 = """
 t1:hello => t2
-t1:greet => t3
+t1:greet? => t3
 """
 [runtime]
     [[t1]]

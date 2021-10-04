@@ -60,7 +60,8 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_from_platform,
     get_localhost_install_target,
-    get_platform
+    get_platform,
+    NoHostsError
 )
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
@@ -93,6 +94,8 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_FAILED,
     REMOTE_FILE_INSTALL_IN_PROGRESS,
     REMOTE_INIT_IN_PROGRESS,
+    REMOTE_INIT_255,
+    REMOTE_FILE_INSTALL_255,
     REMOTE_INIT_DONE, REMOTE_INIT_FAILED,
     TaskRemoteMgr
 )
@@ -127,6 +130,7 @@ class TaskJobManager:
     REMOTE_SELECT_MSG = 'waiting for remote host selection'
     REMOTE_INIT_MSG = 'remote host initialising'
     REMOTE_FILE_INSTALL_MSG = 'file installation in progress'
+    REMOTE_INIT_255_MSG = 'remote init failed with an unreachable host'
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
     IN_PROGRESS = {
@@ -135,7 +139,7 @@ class TaskJobManager:
     }
 
     def __init__(self, workflow, proc_pool, workflow_db_mgr,
-                 task_events_mgr, data_store_mgr):
+                 task_events_mgr, data_store_mgr, bad_hosts):
         self.workflow = workflow
         self.proc_pool = proc_pool
         self.workflow_db_mgr = workflow_db_mgr
@@ -143,7 +147,9 @@ class TaskJobManager:
         self.data_store_mgr = data_store_mgr
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
-        self.task_remote_mgr = TaskRemoteMgr(workflow, proc_pool)
+        self.bad_hosts = bad_hosts
+        self.task_remote_mgr = TaskRemoteMgr(
+            workflow, proc_pool, self.bad_hosts)
 
     def check_task_jobs(self, workflow, task_pool):
         """Check submission and execution timeout and polling timers.
@@ -178,7 +184,9 @@ class TaskJobManager:
                 LOG.warning('skipping %s: task not killable' % itask.identity)
         self._run_job_cmd(
             self.JOBS_KILL, workflow, to_kill_tasks,
-            self._kill_task_jobs_callback)
+            self._kill_task_jobs_callback,
+            self._kill_task_jobs_callback_255
+        )
 
     def poll_task_jobs(self, workflow, itasks, msg=None):
         """Poll jobs of specified tasks.
@@ -193,7 +201,9 @@ class TaskJobManager:
                 LOG.info(msg)
             self._run_job_cmd(
                 self.JOBS_POLL, workflow, itasks,
-                self._poll_task_jobs_callback)
+                self._poll_task_jobs_callback,
+                self._poll_task_jobs_callback_255
+            )
 
     def prep_submit_task_jobs(self, workflow, itasks, check_syntax=True):
         """Prepare task jobs for submit.
@@ -252,7 +262,39 @@ class TaskJobManager:
         done_tasks = bad_tasks
 
         for _, itasks in sorted(auth_itasks.items()):
-            platform = itasks[0].platform
+            # Find the first platform where >1 host has not been tried and
+            # found to be unreachable.
+            # If there are no good hosts for a task then the task submit-fails.
+            for itask in itasks:
+                # If there are any hosts left for this platform which we
+                # have not previously failed to contact with a 255 error.
+                if (
+                    set(itask.platform['hosts']) -
+                    self.task_remote_mgr.bad_hosts
+                ):
+                    platform = itask.platform
+                    out_of_hosts = False
+                    break
+                else:
+                    # If there are no hosts left for this platform.
+                    # Set the task state to submit-failed.
+                    itask.waiting_on_job_prep = False
+                    itask.local_job_file_path = None
+                    self._prep_submit_task_job_error(
+                        workflow, itask, '(remote init)', ''
+                    )
+                    self.bad_hosts.difference_update(itask.platform['hosts'])
+                    LOG.critical(TaskRemoteMgmtError(
+                        (
+                            'Initialisation on platform did not complete:'
+                            'no hosts were reachable.'
+                        ), itask.platform['name'], [], 1, '', '',
+                    ))
+                    out_of_hosts = True
+                    done_tasks.append(itask)
+
+            if out_of_hosts is True:
+                continue
             install_target = get_install_target_from_platform(platform)
             ri_map = self.task_remote_mgr.remote_init_map
 
@@ -267,7 +309,6 @@ class TaskJobManager:
                     self.task_remote_mgr.remote_init(
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
-                        itask.set_summary_message(self.REMOTE_INIT_MSG)
                         self.data_store_mgr.delta_job_msg(
                             get_task_job_id(
                                 itask.point,
@@ -285,13 +326,26 @@ class TaskJobManager:
                     # Remote init or file install in progress.
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
-                        itask.set_summary_message(msg)
                         self.data_store_mgr.delta_job_msg(
                             get_task_job_id(
                                 itask.point,
                                 itask.tdef.name,
                                 itask.submit_num),
                             msg)
+                    continue
+                elif (ri_map[install_target] == REMOTE_INIT_255):
+                    # Remote init previously failed becase a host was
+                    # unreachable, so start it again.
+                    del ri_map[install_target]
+                    self.task_remote_mgr.remote_init(
+                        platform, curve_auth, client_pub_key_dir)
+                    for itask in itasks:
+                        self.data_store_mgr.delta_job_msg(
+                            get_task_job_id(
+                                itask.point,
+                                itask.tdef.name,
+                                itask.submit_num),
+                            self.REMOTE_INIT_MSG)
                     continue
 
             # Ensure that localhost background/at jobs are recorded as running
@@ -300,7 +354,24 @@ class TaskJobManager:
             # allows the restart logic to correctly poll the status of the
             # background/at jobs that may still be running on the previous
             # workflow host.
-            host = get_host_from_platform(platform)
+            try:
+                host = get_host_from_platform(
+                    platform,
+                    bad_hosts=self.task_remote_mgr.bad_hosts
+                )
+            except NoHostsError:
+                del ri_map[install_target]
+                self.task_remote_mgr.remote_init(
+                    platform, curve_auth, client_pub_key_dir)
+                for itask in itasks:
+                    self.data_store_mgr.delta_job_msg(
+                        get_task_job_id(
+                            itask.point,
+                            itask.tdef.name,
+                            itask.submit_num),
+                        self.REMOTE_INIT_MSG)
+                continue
+
             if (
                 self.job_runner_mgr.is_job_local_to_host(
                     itask.summary['job_runner_name']
@@ -325,6 +396,19 @@ class TaskJobManager:
                 })
                 itask.is_manual_submit = False
 
+            if ri_map[install_target] == REMOTE_FILE_INSTALL_255:
+                del ri_map[install_target]
+                self.task_remote_mgr.file_install(
+                    platform)
+                for itask in itasks:
+                    self.data_store_mgr.delta_job_msg(
+                        get_task_job_id(
+                            itask.point,
+                            itask.tdef.name,
+                            itask.submit_num),
+                        REMOTE_FILE_INSTALL_IN_PROGRESS)
+                continue
+
             if (ri_map[install_target] in [REMOTE_INIT_FAILED,
                                            REMOTE_FILE_INSTALL_FAILED]):
                 # Remote init or install failed. Set submit-failed for all
@@ -345,8 +429,8 @@ class TaskJobManager:
                     self._prep_submit_task_job_error(
                         workflow, itask, '(remote init)', ''
                     )
-
                 continue
+
             # Build the "cylc jobs-submit" command
             cmd = [self.JOBS_SUBMIT]
             if LOG.isEnabledFor(DEBUG):
@@ -386,7 +470,12 @@ class TaskJobManager:
                 cmd, [len(b) for b in itasks_batches])
 
             if remote_mode:
-                cmd = construct_ssh_cmd(cmd, platform)
+                host = get_host_from_platform(
+                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
+                )
+                cmd = construct_ssh_cmd(
+                    cmd, platform, host
+                )
             else:
                 cmd = ['cylc'] + cmd
 
@@ -419,8 +508,13 @@ class TaskJobManager:
                         cmd + job_log_dirs,
                         stdin_files=stdin_files,
                         job_log_dirs=job_log_dirs,
+                        host=host
                     ),
-                    self._submit_task_jobs_callback, [workflow, itasks_batch])
+                    bad_hosts=self.task_remote_mgr.bad_hosts,
+                    callback=self._submit_task_jobs_callback,
+                    callback_args=[workflow, itasks_batch],
+                    callback_255=self._submit_task_jobs_callback_255,
+                )
         return done_tasks
 
     @staticmethod
@@ -538,6 +632,21 @@ class TaskJobManager:
                 self._job_cmd_out_callback}
         )
 
+    def _kill_task_jobs_callback_255(self, ctx, workflow, itasks):
+        """Callback when kill tasks command exits."""
+        self._manip_task_jobs_callback(
+            ctx,
+            workflow,
+            itasks,
+            self._kill_task_job_callback_255,
+            {self.job_runner_mgr.OUT_PREFIX_COMMAND:
+                self._job_cmd_out_callback}
+        )
+
+    def _kill_task_job_callback_255(self, workflow, itask, cmd_ctx, line):
+        """Helper for _kill_task_jobs_callback, on one task job."""
+        self.kill_task_jobs(workflow, [itask])
+
     def _kill_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _kill_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_KILL, None)
@@ -570,7 +679,6 @@ class TaskJobManager:
             log_msg = (
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
-        itask.set_summary_message(log_msg)
         self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, itask.submit_num),
             log_msg)
@@ -581,7 +689,11 @@ class TaskJobManager:
             self, ctx, workflow, itasks, summary_callback,
             more_callbacks=None):
         """Callback when submit/poll/kill tasks command exits."""
-        if ctx.ret_code:
+        # Swallow SSH 255 (can't contact host) errors unless debugging.
+        if (
+            (ctx.ret_code and LOG.isEnabledFor(DEBUG))
+            or (ctx.ret_code and ctx.ret_code != 255)
+        ):
             LOG.error(ctx)
         else:
             LOG.debug(ctx)
@@ -643,12 +755,24 @@ class TaskJobManager:
             {self.job_runner_mgr.OUT_PREFIX_MESSAGE:
              self._poll_task_job_message_callback})
 
+    def _poll_task_jobs_callback_255(self, ctx, workflow, itasks):
+        """Callback when poll tasks command exits."""
+        self._manip_task_jobs_callback(
+            ctx,
+            workflow,
+            itasks,
+            self._poll_task_job_callback_255,
+            {self.job_runner_mgr.OUT_PREFIX_MESSAGE:
+             self._poll_task_job_message_callback})
+
+    def _poll_task_job_callback_255(self, workflow, itask, cmd_ctx, line):
+        self.poll_task_jobs(workflow, [itask])
+
     def _poll_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _poll_task_jobs_callback, on one task job."""
         ctx = SubProcContext(self.JOBS_POLL, None)
         ctx.out = line
         ctx.ret_code = 0
-
         # See cylc.flow.job_runner_mgr.JobPollContext
         job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
@@ -656,12 +780,10 @@ class TaskJobManager:
             items = json.loads(context)
             jp_ctx = JobPollContext(job_log_dir, **items)
         except TypeError:
-            itask.set_summary_message(self.POLL_FAIL)
             self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
         except ValueError:
-            itask.set_summary_message(self.POLL_FAIL)
             self.data_store_mgr.delta_job_msg(job_d, self.POLL_FAIL)
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
@@ -681,7 +803,7 @@ class TaskJobManager:
                 itask, INFO, FAIL_MESSAGE_PREFIX + jp_ctx.run_signal,
                 jp_ctx.time_run_exit,
                 flag)
-        elif jp_ctx.run_status == 1:
+        elif jp_ctx.run_status == 1:  # noqa: SIM114
             # The job has terminated, but is still managed by job runner.
             # Some job runners may restart a job in this state, so don't
             # mark as failed yet.
@@ -728,7 +850,9 @@ class TaskJobManager:
                 self.task_events_mgr.FLAG_POLLED)
         log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
 
-    def _run_job_cmd(self, cmd_key, workflow, itasks, callback):
+    def _run_job_cmd(
+        self, cmd_key, workflow, itasks, callback, callback_255=None
+    ):
         """Run job commands, e.g. poll, kill, etc.
 
         Group itasks with their platform_name and host.
@@ -759,14 +883,27 @@ class TaskJobManager:
             cmd.append("--")
             cmd.append(get_remote_workflow_run_job_dir(workflow))
             job_log_dirs = []
+            host = 'localhost'
             if remote_mode:
-                cmd = construct_ssh_cmd(cmd, platform)
+                host = get_host_from_platform(
+                    platform, bad_hosts=self.task_remote_mgr.bad_hosts
+                )
+                cmd = construct_ssh_cmd(
+                    cmd, platform, host
+                )
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
             cmd += job_log_dirs
             self.proc_pool.put_command(
-                SubProcContext(cmd_key, cmd), callback, [workflow, itasks])
+                SubProcContext(
+                    cmd_key, cmd, host=host
+                ),
+                bad_hosts=self.task_remote_mgr.bad_hosts,
+                callback=callback,
+                callback_args=[workflow, itasks],
+                callback_255=callback_255,
+            )
 
     @staticmethod
     def _set_retry_timers(itask, rtconfig=None, retry=True):
@@ -827,9 +964,30 @@ class TaskJobManager:
                 self._job_cmd_out_callback}
         )
 
+    def _submit_task_jobs_callback_255(self, ctx, workflow, itasks):
+        """Callback when submit task jobs command exits."""
+        self._manip_task_jobs_callback(
+            ctx,
+            workflow,
+            itasks,
+            self._submit_task_job_callback_255,
+            {self.job_runner_mgr.OUT_PREFIX_COMMAND:
+                self._job_cmd_out_callback}
+        )
+
+    def _submit_task_job_callback_255(
+        self, workflow, itask, cmd_ctx, line
+    ):
+        """Helper for _submit_task_jobs_callback, on one task job."""
+        itask.submit_num -= 1
+        self.task_events_mgr._retry_task(
+            itask, time(), submit_retry=True
+        )
+        return
+
     def _submit_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _submit_task_jobs_callback, on one task job."""
-        ctx = SubProcContext(self.JOBS_SUBMIT, None)
+        ctx = SubProcContext(self.JOBS_SUBMIT, None, cmd_ctx.host)
         ctx.out = line
         items = line.split("|")
         try:
@@ -841,8 +999,8 @@ class TaskJobManager:
             ctx.ret_code = int(ctx.ret_code)
             if ctx.ret_code:
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
-        log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
-
+        if cmd_ctx.ret_code != 255:
+            log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
         if ctx.ret_code == SubProcPool.RET_CODE_WORKFLOW_STOPPING:
             return
 
@@ -929,7 +1087,6 @@ class TaskJobManager:
         else:
             # host/platform select not ready
             if host_n is None and platform_n is None:
-                itask.set_summary_message(self.REMOTE_SELECT_MSG)
                 return
             elif (
                 host_n is None

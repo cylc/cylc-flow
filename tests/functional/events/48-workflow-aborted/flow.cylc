@@ -3,11 +3,11 @@
         [[[health check]]]
             interval = PT1S
     [[events]]
-        abort on inactivity = true
-        inactivity = PT1M
-        abort on timeout = true
-        timeout = PT1M
-        aborted handler = echo %(event)s %(message)s >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"
+        abort on inactivity timeout = true
+        inactivity timeout = PT1M
+        abort on stall timeout = true
+        stall timeout = PT1M
+        abort handlers = echo %(event)s %(message)s >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"
 [scheduling]
     [[graph]]
         R1 = modify => t2

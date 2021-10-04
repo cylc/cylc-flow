@@ -48,7 +48,87 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0b2 (<span actions:bind='release-date'>Upcoming, 2021</span>)__
+## __cylc-8.0b3 (<span actions:bind='release-date'>Upcoming 2021</span>)__
+
+Fourth beta release of Cylc 8.
+
+`suite owner` and `workflow owner` option option has been removed.
+
+(See note on cylc-8 backward-incompatible changes, above)
+
+### Enhancements
+
+[#4367](https://github.com/cylc/cylc-flow/pull/4367) -
+Make the central wrapper work with arbitrary virtual environment names.
+
+[#4343](https://github.com/cylc/cylc-flow/pull/4343) -
+Implement required and optional outputs with new graph notation.
+
+[#4324](https://github.com/cylc/cylc-flow/pull/4324) -
+Re-implement a basic form of the Cylc 7 `cylc graph` command for static
+graph visualisation.
+
+[#4335](https://github.com/cylc/cylc-flow/pull/4335) -
+Have validation catch erroneous use of both `expr => bar` and `expr => !bar` in
+the same graph.
+
+[#4285](https://github.com/cylc/cylc-flow/pull/4285) - Cylc now automatically
+infers the latest numbered run of the workflow for most commands (e.g. you can
+run `cylc pause foo` instead of having to type out `foo/run3`).
+
+[#4346](https://github.com/cylc/cylc-flow/pull/4346) -
+Use natural sort order for the `cylc scan --sort` option.
+
+[#4313](https://github.com/cylc/cylc-flow/pull/4313) - Change `ignore` to
+`reload` for the cycle point cli options (e.g. `--fcp=reload`), as this more
+accurately reflects what it's doing. Also improve validation of these
+cli options.
+
+[#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
+(previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
+
+[#4430](https://github.com/cylc/cylc-flow/pull/4430) - Log files renamed:
+- `log/flow.cylc.processed` ⇒ `log/flow-processed.cylc`
+- `log/<datetimes>-run.cylc` ⇒ `log/<datetimes>-start.cylc`
+
+[#4423](https://github.com/cylc/cylc-flow/pull/4423) - Only changes to the
+workflow directory are recorded by `log/version`.
+
+[#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
+now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
+
+
+### Fixes
+
+[#4421](https://github.com/cylc/cylc-flow/pull/4421) -
+Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).
+
+[#4426](https://github.com/cylc/cylc-flow/pull/4426) -
+Fix bug when a conditional expression in the graph contains one task name that
+is a substring of another.
+
+[#4341](https://github.com/cylc/cylc-flow/pull/4341) -
+Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
+
+[#4319](https://github.com/cylc/cylc-flow/pull/4319) -
+Update cylc reinstall to skip cylc dirs work and share
+
+[#4289](https://github.com/cylc/cylc-flow/pull/4289) - Make `cylc clean`
+safer by preventing cleaning of dirs that contain more than one workflow
+run dir (use `--force` to override this safeguard).
+
+[#4362](https://github.com/cylc/cylc-flow/pull/4362) -
+When using `cylc clean` on a sequential run directory, remove the `runN` symlink
+if it points to the removed directory.
+
+[#4395](https://github.com/cylc/cylc-flow/pull/4362) -
+Fix ``cylc stop --kill`` which was not actually killing task jobs.
+
+[#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
+now works with relative paths.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
 Third beta release of Cylc 8.
 
@@ -59,26 +139,22 @@ Third beta release of Cylc 8.
 [#4286](https://github.com/cylc/cylc-flow/pull/4286) -
 Add an option for displaying source workflows in `cylc scan`.
 
-[#4291](https://github.com/cylc/cylc-flow/pull/4291)
- - Remove obsolete `cylc edit` and `cylc search` commands.
+[#4291](https://github.com/cylc/cylc-flow/pull/4291) -
+Remove obsolete `cylc edit` and `cylc search` commands.
 
-[#4284](https://github.com/cylc/cylc-flow/pull/4284)
- - Make `--color=never` work with `cylc <command> --help`.
+[#4284](https://github.com/cylc/cylc-flow/pull/4284) -
+Make `--color=never` work with `cylc <command> --help`.
 
-[#4259](https://github.com/cylc/cylc-flow/pull/4259)
-- Ignore pre-initial dependencies with `cylc play --start-task`
+[#4259](https://github.com/cylc/cylc-flow/pull/4259) -
+Ignore pre-initial dependencies with `cylc play --start-task`
 
-[#4103](https://github.com/cylc/cylc-flow/pull/4103)
-- Expose runahead limiting to UIs; restore correct force-triggering of queued
+[#4103](https://github.com/cylc/cylc-flow/pull/4103) -
+Expose runahead limiting to UIs; restore correct force-triggering of queued
 tasks for Cylc 8.
 
 [#4250](https://github.com/cylc/cylc-flow/pull/4250) -
 Symlink dirs localhost symlinks are now overridable with cli option
 `--symlink-dirs`.
-
-[#4103](https://github.com/cylc/cylc-flow/pull/4103) -
-Expose runahead limiting to UIs; restore correct force-triggering of queued
-tasks for Cylc 8.
 
 [#4218](https://github.com/cylc/cylc-flow/pull/4218) - Add ability to
 start a new run from specified tasks instead of a cycle point.
@@ -112,14 +188,14 @@ respectively.
 [#4296](https://github.com/cylc/cylc-flow/pull/4296) -
 Patches DNS issues with newer versions of Mac OS.
 
-[#4273](https://github.com/cylc/cylc-flow/pull/4273)
- - Remove obsolete Cylc 7 visualization config section.
+[#4273](https://github.com/cylc/cylc-flow/pull/4273) -
+Remove obsolete Cylc 7 visualization config section.
 
 [#4272](https://github.com/cylc/cylc-flow/pull/4272) - Workflow visualisation
 data (data-store) now constrained by final cycle point.
 
-[#4248](https://github.com/cylc/cylc-flow/pull/4248)
- - Fix parameter expansion in inherited task environments.
+[#4248](https://github.com/cylc/cylc-flow/pull/4248) -
+Fix parameter expansion in inherited task environments.
 
 [#4227](https://github.com/cylc/cylc-flow/pull/4227) - Better error messages
 when initial cycle point is not valid for the cycling type.

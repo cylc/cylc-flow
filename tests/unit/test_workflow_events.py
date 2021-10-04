@@ -27,13 +27,13 @@ from cylc.flow.workflow_events import WorkflowEventHandler
 @pytest.mark.parametrize(
     'key, expected, scheduler_mail_defined',
     [
-        ('handlers', ['stalled'], True),
+        ('handlers', ['stall'], True),
         ('hotel', None, True),
         ('from', 'highway@mixture', True),
-        ('abort on timeout', True, True),
-        ('handlers', ['stalled'], False),
+        ('abort on workflow timeout', True, True),
+        ('handlers', ['stall'], False),
         ('hotel', None, False),
-        ('abort on timeout', True, False),
+        ('abort on workflow timeout', True, False),
     ]
 )
 def test_get_events_handler(
@@ -48,7 +48,7 @@ def test_get_events_handler(
                 [[mail]]
                     from = highway@mixture
                 [[events]]
-                    abort on timeout = True
+                    abort on workflow timeout = True
             '''
         )
     else:
@@ -57,7 +57,7 @@ def test_get_events_handler(
             '''
             [scheduler]
                 [[events]]
-                    abort on timeout = True
+                    abort on workflow timeout = True
             '''
         )
 
@@ -65,7 +65,7 @@ def test_get_events_handler(
     config.cfg = {
         'scheduler': {
             'events': {
-                'handlers': ['stalled']
+                'handlers': ['stall']
             },
         }
     }

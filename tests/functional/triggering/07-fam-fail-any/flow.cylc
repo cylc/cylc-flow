@@ -4,7 +4,7 @@
 
 [scheduling]
     [[graph]]
-        R1 = "FAM:fail-any => foo"
+        R1 = "FAM:fail-any? => foo"
 [runtime]
     [[FAM]]
         script = "true"

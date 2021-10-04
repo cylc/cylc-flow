@@ -28,8 +28,8 @@ set_test_number 3
 init_workflow "${TEST_NAME_BASE}" <<__FLOW_CONFIG__
 [scheduler]
    [[events]]
-      inactivity = PT25S
-      abort on inactivity = True
+      inactivity timeout = PT25S
+      abort on inactivity timeout = True
 [scheduling]
    initial cycle point = 1
    final cycle point = 3

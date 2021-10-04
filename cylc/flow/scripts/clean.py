@@ -76,9 +76,9 @@ def get_option_parser():
 
     parser.add_option(
         '--rm', metavar='DIR[:DIR:...]',
-        help="Only clean the specified subdirectories (or files) in the "
-             "run directory, rather than the whole run directory. "
-             "Accepts quoted globs.",
+        help=("Only clean the specified subdirectories (or files) in the "
+              "run directory, rather than the whole run directory. "
+              "Accepts quoted globs."),
         action='append', dest='rm_dirs', default=[]
     )
 
@@ -95,9 +95,18 @@ def get_option_parser():
     )
 
     parser.add_option(
+        '--force',
+        help=("Allow cleaning of directories that contain workflow run dirs "
+              "(e.g. 'cylc clean foo' when foo contains run1, run2 etc.). "
+              "Warning: this might lead to remote installations and "
+              "symlink dir targets not getting removed."),
+        action='store_true', dest='force'
+    )
+
+    parser.add_option(
         '--timeout',
-        help="The number of seconds to wait for cleaning to take place on "
-             "remote hosts before cancelling.",
+        help=("The number of seconds to wait for cleaning to take place on "
+              "remote hosts before cancelling."),
         action='store', default='120', dest='remote_timeout'
     )
 
@@ -109,6 +118,8 @@ CleanOptions = Options(get_option_parser())
 
 @cli_function(get_option_parser)
 def main(parser: COP, opts: 'Values', reg: str):
+    # Note: do not use workflow_files.parse_reg here
+
     if cylc.flow.flags.verbosity < 2:
         # for readability omit timestamps from logging unless in debug mode
         for handler in LOG.handlers:

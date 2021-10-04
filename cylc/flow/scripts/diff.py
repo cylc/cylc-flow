@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc diff [OPTIONS] WORKFLOW1 WORKFLOW2
+"""cylc diff [OPTIONS] ARGS
 
 Compare two workflow configurations and display any differences.
 
@@ -29,12 +29,17 @@ Files in the workflow bin directory and other sub-directories of the
 run directory are not currently differenced."""
 
 import sys
+from typing import TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 n_oone = 0
 n_otwo = 0
@@ -124,20 +129,23 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, *args):
-    workflow1_name, workflow1_config = parse_workflow_arg(options, args[0])
-    workflow2_name, workflow2_config = parse_workflow_arg(options, args[1])
-    if workflow1_name == workflow2_name:
+def main(parser: COP, options: 'Values', workflow1: str, workflow2: str):
+    workflow1_name, workflow1_fpath = parse_reg(workflow1, src=True)
+    workflow2_name, workflow2_fpath = parse_reg(workflow2, src=True)
+    if workflow1_fpath == workflow2_fpath:
         parser.error("You can't diff a single workflow.")
-    print(f"Parsing {workflow1_name} ({workflow1_config})")
+    print(f"Parsing {workflow1_name} ({workflow1_fpath})")
     template_vars = load_template_vars(
-        options.templatevars, options.templatevars_file)
+        options.templatevars, options.templatevars_file
+    )
     config1 = WorkflowConfig(
-        workflow1_name, workflow1_config, options, template_vars).cfg
-    print(f"Parsing {workflow2_name} ({workflow2_config})")
+        workflow1_name, workflow1_fpath, options, template_vars
+    ).cfg
+    print(f"Parsing {workflow2_name} ({workflow2_fpath})")
     config2 = WorkflowConfig(
-        workflow2_name, workflow2_config, options, template_vars,
-        is_reload=True).cfg
+        workflow2_name, workflow2_fpath, options, template_vars,
+        is_reload=True
+    ).cfg
 
     if config1 == config2:
         print(
@@ -148,9 +156,10 @@ def main(parser, options, *args):
 
     print(f"Workflow definitions {workflow1_name} and {workflow2_name} differ")
 
-    workflow1_only = {}
-    workflow2_only = {}
-    diff_1_2 = {}
+    workflow1_only = {}  # type: ignore
+    workflow2_only = {}  # type: ignore
+    diff_1_2 = {}  # type: ignore
+    # TODO: this whole file could do wih refactoring at some point
 
     diffdict(config1, config2, workflow1_only, workflow2_only, diff_1_2)
 

@@ -27,7 +27,7 @@ from cylc.flow.job_runner_handlers.loadleveler import LoadlevelerHandler
             {
                 'directives': {},
                 'execution_time_limit': 180,
-                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
+                'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },
@@ -48,7 +48,7 @@ from cylc.flow.job_runner_handlers.loadleveler import LoadlevelerHandler
                     '-l mem': '256gb',
                 },
                 'execution_time_limit': 180,
-                'job_file_path': '$HOME/cylc-run/chop/log/job/1/axe/01/job',
+                'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
                 'task_id': 'axe.1',
             },

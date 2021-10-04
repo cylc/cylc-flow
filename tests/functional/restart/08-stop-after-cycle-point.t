@@ -19,33 +19,66 @@
 # on the command line.
 
 . "$(dirname "$0")/test_header"
-set_test_number 9
+
+dumpdbtables() {
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
+        'SELECT value FROM workflow_params WHERE key=="stopcp";' > stopcp.out
+    sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
+        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' > taskpool.out
+}
+
+set_test_number 13
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-# Check that the config stop point works.
-workflow_run_ok "${TEST_NAME_BASE}-no-cmd-line-opts" \
+# Check that the config stop point gets stored in DB
+workflow_run_ok "${TEST_NAME_BASE}-1-run-no-cli-opts" \
+    cylc play --no-detach "${WORKFLOW_NAME}" \
+    -s 'MANUAL_SHUTDOWN="1970"'
+dumpdbtables
+cmp_ok stopcp.out <<< '1972'
+# Note we have manually stopped before the stop point
+cmp_ok taskpool.out << '__OUT__'
+1971|hello|waiting
+__OUT__
+
+# Check that the config stop point works (even after restart)
+workflow_run_ok "${TEST_NAME_BASE}-1-restart" \
     cylc play --no-detach "${WORKFLOW_NAME}"
-WORKFLOWLOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
-# Check task hello@stopped cylc point is spawned but never submitted
-grep_fail "\[hello.19700101T0100Z\] -submit-num=01" "${WORKFLOWLOG}"
+dumpdbtables
+# Task hello.1973 (after stop point) should be spawned but not submitted
+cmp_ok taskpool.out <<'__OUT__'
+1973|hello|waiting
+__OUT__
 
 delete_db
 
-# Check that the command line stop point works.
-workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
-    cylc play --no-detach --stopcp=19700101T0100Z "${WORKFLOW_NAME}"
-grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
+# Check that the command line stop point gets stored in DB.
+workflow_run_ok "${TEST_NAME_BASE}-2-run-cli-stop" \
+    cylc play --no-detach --stopcp=1971 "${WORKFLOW_NAME}" \
+    -s 'MANUAL_SHUTDOWN="1970"'
+dumpdbtables
+cmp_ok stopcp.out <<< '1971'
+# Note we have manually stopped before the stop point
+cmp_ok taskpool.out << '__OUT__'
+1971|hello|waiting
+__OUT__
 
-# Check that stop is preserved on restart ...
-workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
+# Check that the command line stop point works (even after restart)...
+workflow_run_ok "${TEST_NAME_BASE}-2-restart" \
     cylc play --no-detach "${WORKFLOW_NAME}"
-grep_fail "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
+dumpdbtables
+cmp_ok taskpool.out << '__OUT__'
+1972|hello|waiting
+__OUT__
 
-# ... unless we say otherwise.
-workflow_run_ok "${TEST_NAME_BASE}-cmd-line-stop" \
-    cylc play --no-detach --stopcp=ignore "${WORKFLOW_NAME}"
-grep_ok "\[hello.19700101T0200Z\] -submit-num=01" "${WORKFLOWLOG}"
+# ... unless we reload stop point - takes value from final cycle point
+# Note: we might want to rethink that - https://github.com/cylc/cylc-flow/issues/4062
+workflow_run_ok "${TEST_NAME_BASE}-2-restart-cli-reload" \
+    cylc play --no-detach --stopcp=reload "${WORKFLOW_NAME}" \
+    -s 'MANUAL_SHUTDOWN="1973"'
+dumpdbtables
+cmp_ok stopcp.out <<< '1974'
 
 purge

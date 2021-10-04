@@ -17,12 +17,12 @@ jobs:
         include:
           - os: 'macos-latest'
             python-version: '3.7'
+    env:
+      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 2  # required by codecov
 
       - name: Configure Python
         uses: actions/setup-python@v2
@@ -49,32 +49,39 @@ jobs:
 
       - name: Install
         run: |
-          pip install ."[all]"
+          pip install -e ."[all]"
 
       - name: Configure git  # Needed by the odd test
         uses: cylc/release-actions/configure-git@v1
 
-      - name: style
+      - name: Style
         run: |
           flake8
           etc/bin/shellchecker
 
-      - name: typing
+      - name: Typing
         run: mypy
 
       - name: Doctests
         run: |
-          pytest --cov --cov-append -n 5 cylc/flow
+          pytest cylc/flow
 
       - name: Unit Tests
         run: |
-          pytest --cov --cov-append -n 5 tests/unit
+          pytest tests/unit
 
       - name: Integration Tests
         run: |
-          pytest --cov --cov-append -n 5 tests/integration
+          pytest tests/integration
 
-      - name: Coverage
+      - name: Coverage report
         run: |
+          coverage xml
           coverage report
-          bash <(curl -s https://codecov.io/bash)
+
+      - name: Codecov upload
+        uses: codecov/codecov-action@v2
+        with:
+          name: '"${{ github.workflow }} ${{ matrix.os }} py-${{ matrix.python-version }}"'
+          flags: fast-tests
+          fail_ci_if_error: true

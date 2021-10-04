@@ -83,51 +83,6 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-def add_cylc_rose_options(parser):
-    """Add extra options for cylc-rose plugin if it is installed.
-
-    Args:
-        parser: An option parser object
-    """
-    try:
-        __import__('cylc.rose')
-        parser.add_option(
-            "--opt-conf-key", "-O",
-            help=(
-                "Use optional Rose Config Setting "
-                "(If Cylc-Rose is installed)"
-            ),
-            action="append",
-            default=[],
-            dest="opt_conf_keys"
-        )
-        parser.add_option(
-            "--define", '-D',
-            help=(
-                "Each of these overrides the `[SECTION]KEY` setting in a "
-                "`rose-suite.conf` file. "
-                "Can be used to disable a setting using the syntax "
-                "`--define=[SECTION]!KEY` or even `--define=[!SECTION]`."
-            ),
-            action="append",
-            default=[],
-            dest="defines"
-        )
-        parser.add_option(
-            "--rose-template-variable", '-S',
-            help=(
-                "As `--define`, but with an implicit `[SECTION]` for "
-                "workflow variables."
-            ),
-            action="append",
-            default=[],
-            dest="rose_template_vars"
-        )
-    except ImportError:
-        pass
-    return parser
-
-
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, prep=True,
@@ -177,7 +132,7 @@ def get_option_parser():
         default=False,
         dest="no_run_name")
 
-    parser = add_cylc_rose_options(parser)
+    parser.add_cylc_rose_options()
 
     return parser
 

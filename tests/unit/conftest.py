@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Standard pytest fixtures for unit tests."""
 
 from pathlib import Path
@@ -56,10 +57,13 @@ def monkeymock(monkeypatch: pytest.MonkeyPatch):
     return inner
 
 
-@pytest.fixture
-def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """Fixture that patches the cylc-run dir to the tests's {tmp_path}/cylc-run
-    and optionally creates a workflow run dir inside.
+def tmp_run_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Callable[[Optional[str]], Path]:
+    """Fixture that patches the cylc-run dir to the tests's
+    {tmp_path}/cylc-run, and optionally creates a workflow run dir inside.
+
+    (Actually the fixture is below, this is the re-usable meat of it.)
 
     Args:
         reg: Workflow name.
@@ -68,6 +72,11 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         named: If True and installed is True, the _cylc-install dir will
             be created in the parent to make it look like this is a
             named run.
+
+    Example:
+        run_dir = tmp_run_dir('foo')
+        # Or:
+        cylc_run_dir = tmp_run_dir()
     """
     def _tmp_run_dir(
         reg: Optional[str] = None,
@@ -97,6 +106,20 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return _tmp_run_dir
 
 
+@pytest.fixture(name='tmp_run_dir')
+def tmp_run_dir_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    # This is the actual tmp_run_dir fixture
+    return tmp_run_dir(tmp_path, monkeypatch)
+
+
+@pytest.fixture(scope='module')
+def mod_tmp_run_dir(tmp_path_factory: pytest.TempPathFactory):
+    """Module-scoped version of tmp_run_dir()"""
+    tmp_path = tmp_path_factory.getbasetemp()
+    with pytest.MonkeyPatch.context() as mp:
+        return tmp_run_dir(tmp_path, mp)
+
+
 @pytest.fixture
 def set_cycling_type(monkeypatch: pytest.MonkeyPatch):
     """Initialize the Cylc cycling type.
@@ -122,10 +145,14 @@ def set_cycling_type(monkeypatch: pytest.MonkeyPatch):
 def xtrigger_mgr() -> XtriggerManager:
     """A fixture to build an XtriggerManager which uses a mocked proc_pool,
     and uses a mocked broadcast_mgr."""
+    workflow_name = "sample_workflow"
+    user = "john-foo"
     return XtriggerManager(
-        workflow="sample_workflow",
-        user="john-foo",
+        workflow=workflow_name,
+        user=user,
         proc_pool=Mock(put_command=lambda *a, **k: True),
         broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),
-        data_store_mgr=DataStoreMgr(create_autospec(Scheduler))
+        data_store_mgr=DataStoreMgr(
+            create_autospec(Scheduler, workflow=workflow_name, owner=user)
+        )
     )

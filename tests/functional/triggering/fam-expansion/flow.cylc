@@ -1,7 +1,7 @@
 #!Jinja2
 [scheduling]
     [[graph]]
-        R1 = "(FOO:finish-all & FOO:fail-any) => bar"
+        R1 = "(FOO:finish-all & FOO:fail-any?) => bar"
 [runtime]
     [[FOO]]
         script = false

@@ -20,7 +20,7 @@ import os
 from shutil import which
 import socket
 import sys
-from typing import Union
+from typing import Union, Dict
 
 import zmq
 import zmq.asyncio
@@ -29,8 +29,9 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
+    CylcError,
     ServiceFileError,
-    WorkflowStopped
+    WorkflowStopped,
 )
 from cylc.flow.network import (
     encode_,
@@ -40,7 +41,11 @@ from cylc.flow.network import (
 )
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
-from cylc.flow.workflow_files import detect_old_contact_file
+from cylc.flow.workflow_files import (
+    ContactFileFields,
+    detect_old_contact_file,
+    load_contact_file
+)
 
 
 class WorkflowRuntimeClient(ZMQSocketBase):
@@ -272,13 +277,30 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         """
         if workflow is None:
             return
+
+        try:
+            contact_data: Dict[str, str] = load_contact_file(workflow)
+        except (IOError, ValueError, ServiceFileError):
+            # Contact file does not exist or corrupted, workflow should be dead
+            return
+
+        contact_host: str = contact_data.get(ContactFileFields.HOST, '?')
+        contact_port: str = contact_data.get(ContactFileFields.PORT, '?')
+        if (
+            contact_host != host
+            or contact_port != str(port)
+        ):
+            raise CylcError(
+                f'The workflow is no longer running at {host}:{port}\n'
+                f'It has moved to {contact_host}:{contact_port}'
+            )
+
         # Cannot connect, perhaps workflow is no longer running and is leaving
         # behind a contact file?
         try:
-            detect_old_contact_file(workflow, (host, port))
+            detect_old_contact_file(workflow, contact_data)
         except (AssertionError, ServiceFileError):
-            # * contact file not have matching (host, port) to workflow proc
-            # * old contact file exists and the workflow process still alive
+            # old contact file exists and the workflow process still alive
             return
         else:
             # the workflow has stopped

@@ -34,10 +34,11 @@ _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
 
 
 def expand_path(*args: Union[Path, str]) -> str:
-    """Expand both vars and user in path, joining any extra args."""
-    return os.path.expanduser(os.path.expandvars(
+    """Expand both vars and user in path and normalise it, joining any
+    extra args."""
+    return os.path.normpath(os.path.expanduser(os.path.expandvars(
         os.path.join(*args)
-    ))
+    )))
 
 
 def get_remote_workflow_run_dir(
@@ -54,6 +55,11 @@ def get_remote_workflow_run_job_dir(
     """Return remote workflow job log directory, joining any extra args,
     NOT expanding vars or user."""
     return get_remote_workflow_run_dir(flow_name, 'log', 'job', *args)
+
+
+def get_cylc_run_dir() -> str:
+    """Return the cylc-run dir path with vars/user expanded."""
+    return expand_path(_CYLC_RUN_DIR)
 
 
 def get_workflow_run_dir(
@@ -295,15 +301,70 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
         rmtree(path, onerror=handle_rmtree_err)
 
 
-def get_next_rundir_number(run_path):
-    """Return the new run number"""
-    run_n_path = os.path.expanduser(os.path.join(run_path, "runN"))
-    try:
+def remove_empty_parents(
+    path: Union[Path, str], tail: Union[Path, str]
+) -> None:
+    """Work our way up the tail of path, removing empty dirs only.
+
+    Args:
+        path: Absolute path to the directory, e.g. /foo/bar/a/b/c
+        tail: The tail of the path to work our way up, e.g. a/b/c
+
+    Example:
+        remove_empty_parents('/foo/bar/a/b/c', 'a/b/c') would remove
+        /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
+        empty).
+    """
+    path = Path(path)
+    if not path.is_absolute():
+        raise ValueError('path must be absolute')
+    tail = Path(tail)
+    if tail.is_absolute():
+        raise ValueError('tail must not be an absolute path')
+    if not str(path).endswith(str(tail)):
+        raise ValueError(f"path '{path}' does not end with '{tail}'")
+    depth = len(tail.parts) - 1
+    for i in range(depth):
+        parent = path.parents[i]
+        if not parent.is_dir():
+            continue
+        try:
+            parent.rmdir()
+            LOG.debug(f'Removing directory: {parent}')
+        except OSError:
+            break
+
+
+def get_next_rundir_number(run_path: Union[str, Path]) -> int:
+    """Return the next run number for a new install.
+
+    Args:
+        run_path: Top level installed workflow dir
+        (often ``~/cylc-run/workflow``).
+
+    """
+    re_runX = re.compile(r'run(\d+)$')
+    run_n_path = Path(os.path.expanduser(os.path.join(run_path, "runN")))
+    if run_n_path.exists() and run_n_path.is_symlink():
         old_run_path = os.readlink(run_n_path)
-        last_run_num = re.search(r'(?:run)(\d*$)', old_run_path).group(1)
-        return int(last_run_num) + 1
-    except OSError:
-        return 1
+        # Line below could in theory not return a match group, so mypy objects.
+        # This function unlikely to be called in circumstances where this will
+        # be a problem.
+        last_run_num = re_runX.search(  # type: ignore
+            old_run_path).group(1)
+        last_run_num = int(last_run_num)
+    else:
+        # If the ``runN`` symlink has been removed, get next numbered run from
+        # file names:
+        paths = Path(run_path).glob('run[0-9]*')
+        run_numbers = (
+            int(m.group(1)) for m in (
+                re_runX.search(i.name) for i in paths
+            ) if m
+        )
+        last_run_num = max(run_numbers, default=0)
+
+    return last_run_num + 1
 
 
 def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:

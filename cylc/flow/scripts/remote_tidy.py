@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc remote-tidy INSTALL_TARGET RUND
+"""cylc remote-tidy [OPTIONS] ARGS
 
 (This command is for internal use.)
 

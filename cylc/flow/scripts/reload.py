@@ -32,11 +32,16 @@ reload (only changes to the flow.cylc file itself are reloaded).
 If the modified workflow definition does not parse, failure to reload will
 be reported but no harm will be done to the running workflow."""
 
-import os.path
+from typing import TYPE_CHECKING
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 MUTATION = '''
 mutation (
@@ -53,13 +58,12 @@ mutation (
 
 def get_option_parser():
     parser = COP(__doc__, comms=True)
-
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow):
-    workflow = os.path.normpath(workflow)
+def main(parser: COP, options: 'Values', workflow: str) -> None:
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {

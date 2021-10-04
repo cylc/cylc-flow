@@ -38,7 +38,7 @@ from cylc.flow.parsec.config import ItemNotFoundError
 
 from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.hostuserutil import get_host, get_user, is_remote_host
+from cylc.flow.hostuserutil import get_host, get_user, is_remote_platform
 from cylc.flow.pathutil import (
     get_remote_workflow_run_job_dir,
     get_workflow_run_job_dir)
@@ -65,7 +65,7 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED, TASK_OUTPUT_EXPIRED)
+    TASK_OUTPUT_FAILED, TASK_OUTPUT_SUBMIT_FAILED)
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string as intvl_as_str
@@ -180,9 +180,11 @@ class TaskEventsManager():
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
 
-    def __init__(self, workflow, proc_pool, workflow_db_mgr, broadcast_mgr,
-                 xtrigger_mgr, data_store_mgr, timestamp,
-                 reset_inactivity_timer_func):
+    def __init__(
+        self, workflow, proc_pool, workflow_db_mgr, broadcast_mgr,
+        xtrigger_mgr, data_store_mgr, timestamp, bad_hosts,
+        reset_inactivity_timer_func
+    ):
         self.workflow = workflow
         self.workflow_url = None
         self.workflow_cfg = {}
@@ -205,6 +207,7 @@ class TaskEventsManager():
         # To be set by the task pool:
         self.spawn_func = None
         self.timestamp = timestamp
+        self.bad_hosts = bad_hosts
 
     @staticmethod
     def check_poll_time(itask, now=None):
@@ -324,7 +327,9 @@ class TaskEventsManager():
                         (key1, submit_num),
                         timer.ctx.cmd, env=os.environ, shell=True,
                     ),
-                    self._custom_handler_callback, [schd_ctx, id_key])
+                    callback=self._custom_handler_callback,
+                    callback_args=[schd_ctx, id_key]
+                )
             else:
                 # Group together built-in event handlers, where possible
                 if timer.ctx not in ctx_groups:
@@ -405,7 +410,6 @@ class TaskEventsManager():
             new_msg = f'{message} {self.FLAG_POLLED}'
         else:
             new_msg = message
-        itask.set_summary_message(new_msg)
         self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, submit_num),
             new_msg)
@@ -581,11 +585,18 @@ class TaskEventsManager():
                 )
 
         ):
-            # Ignore polled messages if task has a retry lined up
-            LOG.warning(
-                logfmt,
-                itask, itask.state, self.FLAG_POLLED_IGNORED, message,
-                timestamp, submit_num, itask.flow_label)
+            # Ignore messages if task has a retry lined up
+            # (caused by polling overlapping with task failure)
+            if flag == self.FLAG_RECEIVED:
+                LOG.warning(
+                    logfmt,
+                    itask, itask.state, self.FLAG_RECEIVED_IGNORED, message,
+                    timestamp, submit_num, itask.flow_label)
+            else:
+                LOG.warning(
+                    logfmt,
+                    itask, itask.state, self.FLAG_POLLED_IGNORED, message,
+                    timestamp, submit_num, itask.flow_label)
             return False
         LOG.log(
             LOG_LEVELS.get(severity, INFO), logfmt, itask, itask.state, flag,
@@ -670,7 +681,7 @@ class TaskEventsManager():
             SubProcContext(
                 ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
             ),
-            self._event_email_callback, [schd_ctx])
+            callback=self._event_email_callback, callback_args=[schd_ctx])
 
     def _event_email_callback(self, proc_ctx, schd_ctx):
         """Call back when email notification command exits."""
@@ -694,7 +705,7 @@ class TaskEventsManager():
                 self.broadcast_mgr.get_broadcast(itask.identity).get("events"),
                 itask.tdef.rtconfig["mail"],
                 itask.tdef.rtconfig["events"],
-                glbl_cfg().get()["task mail"],
+                glbl_cfg().get(["scheduler", "mail"]),
                 glbl_cfg().get()["task events"],
         ]:
             try:
@@ -709,9 +720,9 @@ class TaskEventsManager():
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
         platform = get_platform(ctx.platform_n)
+        host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
         ssh_str = str(platform["ssh command"])
         rsync_str = str(platform["retrieve job logs command"])
-
         cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_str]
         if LOG.isEnabledFor(DEBUG):
             cmd.append("-v")
@@ -729,17 +740,35 @@ class TaskEventsManager():
         cmd.append("--exclude=/**")  # exclude everything else
         # Remote source
         cmd.append("%s:%s/" % (
-            get_host_from_platform(platform),
+            host,
             get_remote_workflow_run_job_dir(schd_ctx.workflow)))
         # Local target
         cmd.append(get_workflow_run_job_dir(schd_ctx.workflow) + "/")
         self.proc_pool.put_command(
-            SubProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
-            self._job_logs_retrieval_callback, [schd_ctx])
+            SubProcContext(
+                ctx, cmd, env=dict(os.environ), id_keys=id_keys, host=host
+            ),
+            bad_hosts=self.bad_hosts,
+            callback=self._job_logs_retrieval_callback,
+            callback_args=[schd_ctx],
+            callback_255=self._job_logs_retrieval_callback_255
+        )
+
+    def _job_logs_retrieval_callback_255(self, proc_ctx, schd_ctx):
+        """Call back when log job retrieval fails with a 255 error."""
+        self.bad_hosts.add(proc_ctx.host)
+        for id_key in proc_ctx.cmd_kwargs["id_keys"]:
+            key1, point, name, submit_num = id_key
+            for key in proc_ctx.cmd_kwargs['id_keys']:
+                timer = self._event_timers[key]
+                timer.reset()
 
     def _job_logs_retrieval_callback(self, proc_ctx, schd_ctx):
         """Call back when log job retrieval completes."""
-        if proc_ctx.ret_code:
+        if (
+            (proc_ctx.ret_code and LOG.isEnabledFor(DEBUG))
+            or (proc_ctx.ret_code and proc_ctx.ret_code != 255)
+        ):
             LOG.error(proc_ctx)
         else:
             LOG.debug(proc_ctx)
@@ -778,7 +807,7 @@ class TaskEventsManager():
         Args:
             itask (cylc.flow.task_proxy.TaskProxy):
                 The task to retry.
-            wallclick_time (float):
+            wallclock_time (float):
                 Unix time to schedule the retry for.
             submit_retry (bool):
                 False if this is an execution retry.
@@ -855,7 +884,6 @@ class TaskEventsManager():
                 delay_msg = "held (%s)" % delay_msg
             msg = "failed, %s" % (delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
-            itask.set_summary_message(msg)
             self.setup_event_handlers(
                 itask, self.EVENT_RETRY, f"{self.JOB_FAILED}, {delay_msg}")
         self._reset_job_timers(itask)
@@ -899,17 +927,6 @@ class TaskEventsManager():
             itask.tdef.elapsed_times.append(
                 itask.summary['finished_time'] -
                 itask.summary['started_time'])
-        if not itask.state.outputs.all_completed():
-            msg = ""
-            for output in itask.state.outputs.get_not_completed():
-                if output not in [
-                        TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMIT_FAILED,
-                        TASK_OUTPUT_FAILED, TASK_OUTPUT_STARTED]:
-                    msg += "\n  " + output
-            if msg:
-                LOG.info(
-                    f"[{itask}] -Succeeded with outputs not completed: {msg}"
-                )
         if itask.state.reset(TASK_STATUS_SUCCEEDED):
             self.setup_event_handlers(
                 itask, self.EVENT_SUCCEEDED, f"job {self.EVENT_SUCCEEDED}")
@@ -954,7 +971,6 @@ class TaskEventsManager():
                 delay_msg = f"held ({delay_msg})"
             msg = "%s, %s" % (self.EVENT_SUBMIT_FAILED, delay_msg)
             LOG.info("[%s] -job(%02d) %s", itask, itask.submit_num, msg)
-            itask.set_summary_message(msg)
             self.setup_event_handlers(
                 itask, self.EVENT_SUBMIT_RETRY,
                 f"job {self.EVENT_SUBMIT_FAILED}, {delay_msg}")
@@ -994,7 +1010,6 @@ class TaskEventsManager():
         # Unset started and finished times in case of resubmission.
         itask.set_summary_time('started')
         itask.set_summary_time('finished')
-        itask.set_summary_message(TASK_OUTPUT_SUBMITTED)
 
         self.reset_inactivity_timer_func()
         if itask.state.status == TASK_STATUS_PREPARING:
@@ -1018,11 +1033,12 @@ class TaskEventsManager():
             (self.HANDLER_JOB_LOGS_RETRIEVE, event),
             str(itask.point), itask.tdef.name, itask.submit_num)
         events = (self.EVENT_FAILED, self.EVENT_RETRY, self.EVENT_SUCCEEDED)
-        host = get_host_from_platform(itask.platform)
-        if (event not in events or
-                not is_remote_host(host) or
-                not self._get_remote_conf(itask, "retrieve job logs") or
-                id_key in self._event_timers):
+        if (
+            event not in events or
+            not is_remote_platform(itask.platform) or
+            not self._get_remote_conf(itask, "retrieve job logs") or
+            id_key in self._event_timers
+        ):
             return
         retry_delays = self._get_remote_conf(
             itask, "retrieve job logs retry delays")
@@ -1073,7 +1089,7 @@ class TaskEventsManager():
 
     def _setup_custom_event_handlers(self, itask, event, message):
         """Set up custom task event handlers."""
-        handlers = self._get_events_conf(itask, f'{event} handler')
+        handlers = self._get_events_conf(itask, f'{event} handlers')
         if (handlers is None and
                 event in self._get_events_conf(itask, 'handler events', [])):
             handlers = self._get_events_conf(itask, 'handlers')
@@ -1293,3 +1309,13 @@ class TaskEventsManager():
         """
         self._event_timers[id_key].unset_waiting()
         self.event_timers_updated = True
+
+    def reset_bad_hosts(self):
+        """Clear bad_hosts list.
+        """
+        if self.bad_hosts:
+            LOG.info(
+                'Clearing bad hosts: '
+                f'{self.bad_hosts}'
+            )
+            self.bad_hosts.clear()

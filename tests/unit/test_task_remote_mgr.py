@@ -43,9 +43,12 @@ def test_remote_init_skip(
     """
     platform = {
         'install target': install_target,
-        'communication method': CommsMeth.POLL
+        'communication method': CommsMeth.POLL,
+        'hosts': ['localhost'],
+        'selection': {'method': 'random'},
+        'name': 'foo'
     }
-    mock_task_remote_mgr = MagicMock(remote_init_map={})
+    mock_task_remote_mgr = MagicMock(remote_init_map={}, bad_hosts=[])
     mock_construct_ssh_cmd = Mock()
     monkeypatch.setattr('cylc.flow.task_remote_mgr.construct_ssh_cmd',
                         mock_construct_ssh_cmd)
@@ -55,7 +58,7 @@ def test_remote_init_skip(
             'get_dirs_to_symlink'):
         monkeypatch.setattr(f'cylc.flow.task_remote_mgr.{item}', MagicMock())
 
-    TaskRemoteMgr.remote_init(mock_task_remote_mgr, platform, None, None)
+    TaskRemoteMgr.remote_init(mock_task_remote_mgr, platform, None, '')
     call_expected = not skip_expected
     assert mock_task_remote_mgr._remote_init_items.called is call_expected
     assert mock_construct_ssh_cmd.called is call_expected

@@ -26,7 +26,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     description = the weather is {{WEATHER | default("bad")}}
 [scheduler]
     [[events]]
-        abort on stalled = True
+        abort on stall timeout = True
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = reloader => whatever
@@ -50,19 +51,20 @@ LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
+processed.cylc
 reload.cylc
 restart.cylc
-run.cylc
+start.cylc
 __OUT__
 
 LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
-RUN_CONFIG="$(ls "${LOGD}/"*-run.cylc)"
+RUN_CONFIG="$(ls "${LOGD}/"*-start.cylc)"
 REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
 RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"
 # The generated *-run.cylc and *-reload.cylc should be identical
 # The generated *.cylc files should validate
 cmp_ok "${RUN_CONFIG}" "${REL_CONFIG}"
-run_ok "${TEST_NAME_BASE}-validate-run-config" cylc validate "${RUN_CONFIG}"
+run_ok "${TEST_NAME_BASE}-validate-start-config" cylc validate "${RUN_CONFIG}"
 run_ok "${TEST_NAME_BASE}-validate-restart-config" cylc validate "${RES_CONFIG}"
 
 diff -u "${RUN_CONFIG}" "${RES_CONFIG}" >'diff.out'

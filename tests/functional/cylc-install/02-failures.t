@@ -20,7 +20,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 37
+set_test_number 43
 
 # Test source directory between runs that are not consistent result in error
 
@@ -39,7 +39,7 @@ touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Source directory between runs are not consistent.
+WorkflowFilesError: Source directory not consistent between runs.
 __ERR__
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
 rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
@@ -176,6 +176,40 @@ WorkflowFilesError: "${RND_WORKFLOW_RUNDIR}/olaf" exists. \
 Try using cylc reinstall. Alternatively, install with another name, using the --run-name option.
 __ERR__
 popd || exit 1
+purge_rnd_workflow
+
+# -----------------------------------------------------------------------------
+# Test cylc install fails if installation would result in nested run dirs
+
+TEST_NAME="${TEST_NAME_BASE}-nested-rundir"
+make_rnd_workflow
+mkdir -p "${RND_WORKFLOW_RUNDIR}/.service"
+run_fail "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}/nested"
+cmp_ok "${TEST_NAME}-install.stderr" <<__ERR__
+WorkflowFilesError: Nested run directories not allowed - cannot install workflow name "${RND_WORKFLOW_NAME}/nested" as "${RND_WORKFLOW_RUNDIR}" is already a valid run directory.
+__ERR__
+# Test moving source dir results in error
+
+TEST_NAME="${TEST_NAME_BASE}-install-moving-src-dir"
+make_rnd_workflow
+run_ok "${TEST_NAME}" cylc install -C "${RND_WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_NAME}
+__OUT__
+rm -rf "${RND_WORKFLOW_SOURCE}"
+ALT_SOURCE="${TMPDIR}/${USER}/cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)" 
+mkdir -p "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
+touch "${ALT_SOURCE}/${RND_WORKFLOW_NAME}/flow.cylc"
+
+
+TEST_NAME="${TEST_NAME_BASE}-install-twice-moving-src-dir-raises-error"
+run_fail "${TEST_NAME}" cylc install -C "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stderr" <<__OUT__
+WorkflowFilesError: Workflow source dir is not accessible: "${RND_WORKFLOW_SOURCE}".
+Restore the source or modify the "${RND_WORKFLOW_RUNDIR}/_cylc-install/source" symlink to continue.
+__OUT__
+
+rm -rf "${ALT_SOURCE}"
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------

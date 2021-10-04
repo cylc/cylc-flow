@@ -22,11 +22,19 @@ timid = False
 [report]
 exclude_lines =
     pragma: no cover
-    ^\s*raise NotImplementedError\b
-    ^\s*return NotImplemented\b
-    ^\s*if TYPE_CHECKING:
-    ^\s*@overload( |$)
-fail_under = 0
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise NotImplementedError
+    return NotImplemented
+
+    # Ignore type checking code:
+    if (typing\.)?TYPE_CHECKING:
+    @overload( |$)
+
+    # Don't complain about ellipsis (exception classes, typing overloads etc):
+    \.\.\.
+
+fail_under=0
 ignore_errors = False
 omit =
     tests/*

@@ -17,6 +17,7 @@
 """Functionality for expressing and evaluating logical triggers."""
 
 import math
+import re
 
 from cylc.flow import ID_DELIM
 from cylc.flow.cycling.loader import get_point
@@ -115,16 +116,35 @@ class Prerequisite:
 
     def set_condition(self, expr):
         """Set the conditional expression for this prerequisite.
-
         Resets the cached state (self._all_satisfied).
+
+        Examples:
+            # GH #3644 construct conditional expression when one task name
+            # is a substring of another: foo | xfoo => bar.
+            # Add 'foo' to the 'satisfied' dict before 'xfoo'.
+            >>> preq = Prerequisite(1)
+            >>> preq.satisfied = {
+            ...    ('foo', '1', 'succeeded'): False,
+            ...    ('xfoo', '1', 'succeeded'): False
+            ... }
+            >>> preq.set_condition("foo.1 succeeded|xfoo.1 succeeded")
+            >>> expr = preq.conditional_expression
+            >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
+            ['bool(self.satisfied[("foo", "1", "succeeded")])',
+            'bool(self.satisfied[("xfoo", "1", "succeeded")])']
 
         """
         self._all_satisfied = None
         if '|' in expr:
             # Make a Python expression so we can eval() the logic.
             for message in self.satisfied:
-                expr = expr.replace(self.MESSAGE_TEMPLATE % message,
-                                    self.SATISFIED_TEMPLATE % message)
+                # Use '\b' in case one task name is a substring of another
+                # and escape special chars ('.', timezone '+') in task IDs.
+                expr = re.sub(
+                    fr"\b{re.escape(self.MESSAGE_TEMPLATE % message)}\b",
+                    self.SATISFIED_TEMPLATE % message,
+                    expr
+                )
             self.conditional_expression = expr
 
     def is_satisfied(self):
@@ -178,30 +198,6 @@ class Prerequisite:
             else:
                 self._all_satisfied = self._conditional_is_satisfied()
         return relevant_messages
-
-    def dump(self):
-        """ Return an array of strings representing each message and its state.
-        """
-        res = []
-        if self.conditional_expression:
-            temp = self.get_raw_conditional_expression()
-            messages = []
-            num_length = math.ceil(len(self.satisfied) / 10)
-            for ind, message_tuple in enumerate(sorted(self.satisfied)):
-                message = self.MESSAGE_TEMPLATE % message_tuple
-                char = '%.{0}d'.format(num_length) % ind
-                messages.append(['\t%s = %s' % (char, message),
-                                 bool(self.satisfied[message_tuple])])
-                temp = temp.replace(message, char)
-            temp = temp.replace('|', ' | ')
-            temp = temp.replace('&', ' & ')
-            res.append([temp, self.is_satisfied()])
-            res.extend(messages)
-        elif self.satisfied:
-            for message, val in self.satisfied.items():
-                res.append([self.MESSAGE_TEMPLATE % message, val])
-        # (Else trigger wiped out by pre-initial simplification.)
-        return res
 
     def api_dump(self, workflow_id):
         """Return list of populated Protobuf data objects."""

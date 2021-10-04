@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 25
+set_test_number 29
 
 create_test_global_config "" "
 [install]
@@ -87,7 +87,7 @@ readlink "flow.cylc" > "${TEST_NAME}.out"
 cmp_ok "${TEST_NAME}.out" <<< "suite.rc"
 
 INSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*.log')"
-grep_ok "The filename \"suite.rc\" is deprecated in favour of \"flow.cylc\". Symlink created." "${INSTALL_LOG}"
+grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
 popd || exit 1
 
 purge_rnd_workflow
@@ -156,5 +156,21 @@ INSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 popd || exit 1
 purge_rnd_workflow
+
+# -----------------------------------------------------------------------------
+# Test running cylc install twice increments run dirs correctly
+TEST_NAME="${TEST_NAME_BASE}-install-C-twice-1"
+make_rnd_workflow
+run_ok "${TEST_NAME}" cylc install -C "${RND_WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_NAME}
+__OUT__
+TEST_NAME="${TEST_NAME_BASE}-install-C-twice-2"
+run_ok "${TEST_NAME}" cylc install -C "${RND_WORKFLOW_NAME}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_NAME}
+__OUT__
+purge_rnd_workflow
+
 
 exit

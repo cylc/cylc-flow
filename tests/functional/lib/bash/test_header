@@ -60,6 +60,10 @@
 #         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE [$OPTS]
 #         Run "grep [$OPTS] -q -e PATTERN FILE".
+#     grep_workflow_log_ok TEST_NAME PATTERN [$OPTS]
+#         Run "grep [$OPTS] -q -e PATTERN <workflow-log>".
+#     named_grep_ok NAME PATTERN FILE [$OPTS]
+#         Run grep_ok with a custom test name.
 #         OPTS: put grep options like '-E' (extended regex) at end of line.
 #     grep_fail PATTERN FILE
 #         Run "grep -q -e PATTERN FILE", expect no match.
@@ -353,8 +357,28 @@ grep_ok() {
     local FILE="$2"
     shift 2
     OPTS="$*"
+    named_grep_ok "$(basename "${FILE}")-grep-ok" "$BRE" "$FILE" "$OPTS"
+}
+
+grep_workflow_log_ok() {
+    local TEST_NAME="$1"
+    shift
+    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/workflow/log"; then
+      ok "${TEST_NAME}"
+    else
+      fail "${TEST_NAME}"
+    fi
+}
+
+named_grep_ok() {
+    # (Put extra grep options like '-E' at end of the command line)
+    local NAME="$1"
+    local BRE="$2"
+    local FILE="$3"
+    shift 3
+    OPTS="$*"
     local TEST_NAME
-    TEST_NAME="$(basename "${FILE}")-grep-ok"
+    TEST_NAME="grep-ok: ${NAME}"
     # shellcheck disable=SC2086
     if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
@@ -766,10 +790,10 @@ create_test_global_config() {
     # set a default timeout for all flow runs to avoid hanging tests
     [scheduler]
         [[events]]
-            inactivity = PT5M
-            timeout = PT5M
-            abort on inactivity = true
-            abort on timeout = true
+            inactivity timeout = PT5M
+            stall timeout = PT5M
+            abort on inactivity timeout = true
+            abort on workflow timeout = true
 __HERE__
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
     if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
@@ -817,6 +841,7 @@ _get_test_platform () {
     local platform
     local required_platform
     required_platform="$(_parse_platform_spec "${requirement}")"
+
     for platform in "${PLATFORMS[@]}"; do
         # we are purposfully allowing pattern matching here
         # shellcheck disable=SC2053

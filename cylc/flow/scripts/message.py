@@ -73,12 +73,17 @@ identifier.
 from logging import getLevelName, INFO
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.unicode_rules import TaskMessageValidator
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def get_option_parser():
@@ -98,7 +103,7 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, *args):
+def main(parser: COP, options: 'Values', *args: str) -> None:
     """CLI."""
     if not args:
         return parser.error('No message supplied')
@@ -115,6 +120,7 @@ def main(parser, options, *args):
         message_strs = list(args)
     else:
         workflow, task_job, *message_strs = args
+        workflow, _ = parse_reg(workflow)
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''

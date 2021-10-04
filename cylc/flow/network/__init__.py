@@ -28,6 +28,7 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import (
     ClientError,
     CylcError,
+    CylcVersionError,
     ServiceFileError,
     WorkflowStopped
 )
@@ -71,6 +72,7 @@ def get_location(workflow: str):
         Tuple[str, int, int]: tuple with the host name and port numbers.
     Raises:
         ClientError: if the workflow is not running.
+        CylcVersionError: if target is a Cylc 7 (or earlier) workflow.
     """
     try:
         contact = load_contact_file(workflow)
@@ -80,7 +82,12 @@ def get_location(workflow: str):
     host = contact[ContactFileFields.HOST]
     host = get_fqdn_by_host(host)
     port = int(contact[ContactFileFields.PORT])
-    pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
+    if ContactFileFields.PUBLISH_PORT in contact:
+        pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
+    else:
+        version = (
+            contact['CYLC_VERSION'] if 'CYLC_VERSION' in contact else None)
+        raise CylcVersionError(version=version)
     return host, port, pub_port
 
 

@@ -1,0 +1,18 @@
+# Should stall at runhead limit with partially satisfied bar
+[scheduler]
+   [[events]]
+      abort on stall timeout = True
+      stall timeout = PT0S
+[scheduling]
+   cycling mode = integer
+   initial cycle point = 1
+   runahead limit = P1
+   [[graph]]
+      P1 = "foo:x & foo:y? => bar"
+[runtime]
+   [[foo]]
+     script = "cylc message x"
+     [[[outputs]]]
+       x = x
+       y = y
+   [[bar]]

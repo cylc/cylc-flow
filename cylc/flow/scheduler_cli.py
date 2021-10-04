@@ -15,13 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc play" CLI."""
 
+from ansimarkup import parse as cparse
 import asyncio
 from contextlib import suppress
 from functools import lru_cache
-import os
 import sys
-
-from ansimarkup import parse as cparse
+from typing import TYPE_CHECKING
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import ServiceFileError
@@ -40,8 +39,16 @@ from cylc.flow.pathutil import (
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
-from cylc.flow import workflow_files
+from cylc.flow.workflow_files import (
+    parse_reg,
+    detect_old_contact_file,
+    SUITERC_DEPR_MSG
+)
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 PLAY_DOC = r"""cylc play [OPTIONS] ARGS
 
@@ -62,7 +69,7 @@ the cycle point of the earliest task specified by --start-task) will be taken
 as satisfied.
 
 Examples:
-    # Start (at the initial cycle point), or restart, or resume workflow REG.
+    # Start (at the initial cycle point), or restart, or resume workflow REG
     $ cylc play REG
 
     # Start a new run from a cycle point after the initial cycle point
@@ -72,6 +79,10 @@ Examples:
     # Start a new run from specified tasks in the graph
     $ cylc play --start-task=foo.3 REG
     $ cylc play -t foo.3 -t bar.3 REG
+
+    # Start, restart or resume the second installed run of the workflow
+    # "dogs/fido"
+    $ cylc play dogs/fido/run2
 
 At restart, tasks recorded as submitted or running are polled to determine what
 happened to them while the workflow was down.
@@ -231,8 +242,7 @@ DEFAULT_OPTS = {
 }
 
 
-RunOptions = Options(
-    get_option_parser(add_std_opts=True), DEFAULT_OPTS)
+RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
 def _open_logs(reg, no_detach):
@@ -262,7 +272,7 @@ def _close_logs():
             handler.close()
 
 
-def scheduler_cli(parser, options, reg):
+def scheduler_cli(options: 'Values', reg: str) -> None:
     """Run the workflow.
 
     This function should contain all of the command line facing
@@ -273,10 +283,11 @@ def scheduler_cli(parser, options, reg):
     functionality.
 
     """
-    workflow_files.validate_flow_name(reg)
-    reg = os.path.normpath(reg)
+    # Parse workflow name but delay Cylc 7 suiter.rc deprecation warning
+    # until after the start-up splash is printed.
+    reg, _ = parse_reg(reg, warn_depr=False)
     try:
-        workflow_files.detect_old_contact_file(reg)
+        detect_old_contact_file(reg)
     except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
         pclient = WorkflowRuntimeClient(reg, timeout=options.comms_timeout)
@@ -302,6 +313,9 @@ def scheduler_cli(parser, options, reg):
                 cylc_header()
             )
         )
+
+    if cylc.flow.flags.cylc7_back_compat:
+        LOG.warning(SUITERC_DEPR_MSG)
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
@@ -376,6 +390,6 @@ async def _run(scheduler: Scheduler) -> int:
 
 
 @cli_function(get_option_parser)
-def play(parser, options, reg):
+def play(parser: COP, options: 'Values', reg: str):
     """Implement cylc play."""
-    return scheduler_cli(parser, options, reg)
+    return scheduler_cli(options, reg)

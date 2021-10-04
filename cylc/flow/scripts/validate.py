@@ -23,6 +23,7 @@ Validate a workflow configuration.
 If the workflow definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline WORKFLOW' for comparison."""
+from optparse import Values
 from ansimarkup import parse as cparse
 import sys
 import textwrap
@@ -43,8 +44,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     Options
 )
-from cylc.flow.workflow_files import parse_workflow_arg
-from cylc.flow.scripts.install import add_cylc_rose_options
+from cylc.flow.workflow_files import parse_reg
 
 
 def get_option_parser():
@@ -72,7 +72,7 @@ def get_option_parser():
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'dummy-local', 'simulation'])
 
-    parser = add_cylc_rose_options(parser)
+    parser.add_cylc_rose_options()
 
     parser.set_defaults(is_validate=True)
 
@@ -91,7 +91,7 @@ ValidateOptions = Options(
 
 
 @cli_function(get_option_parser)
-def main(_, options, reg):
+def main(parser: COP, options: 'Values', reg: str) -> None:
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
@@ -102,13 +102,15 @@ def main(_, options, reg):
             if isinstance(handler.formatter, CylcLogFormatter):
                 handler.formatter.configure(timestamp=False)
 
-    workflow, flow_file = parse_workflow_arg(options, reg)
+    workflow, flow_file = parse_reg(reg, src=True)
     cfg = WorkflowConfig(
         workflow,
         flow_file,
         options,
-        get_template_vars(options, flow_file, [reg, workflow]),
-        output_fname=options.output, mem_log_func=profiler.log_memory)
+        get_template_vars(options, flow_file),
+        output_fname=options.output,
+        mem_log_func=profiler.log_memory
+    )
 
     # Check bounds of sequences
     out_of_bounds = [str(seq) for seq in cfg.sequences

@@ -30,11 +30,7 @@ from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_action_timer import TimerFlags
-from cylc.flow.task_state import (
-    TaskState,
-    TASK_STATUS_WAITING,
-    TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_SUCCEEDED)
+from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 
@@ -97,8 +93,6 @@ class TaskProxy:
                 Jobs' platform by submit number.
             label (str):
                 The .point attribute as string.
-            latest_message (str):
-                Latest job or event message.
             logfiles (list):
                 List of names of (extra) known job log files.
             name (str):
@@ -131,8 +125,6 @@ class TaskProxy:
             objects.
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
-        .failure_handled:
-            task failure is handled (by children)
         .flow_label:
             flow label
         .reflow:
@@ -176,7 +168,6 @@ class TaskProxy:
         'timeout',
         'try_timers',
         'graph_children',
-        'failure_handled',
         'flow_label',
         'reflow',
         'waiting_on_job_prep',
@@ -209,7 +200,6 @@ class TaskProxy:
 
         self.is_manual_submit = False
         self.summary: Dict[str, Any] = {
-            'latest_message': '',
             'submitted_time': None,
             'submitted_time_string': None,
             'started_time': None,
@@ -244,10 +234,6 @@ class TaskProxy:
 
         # Determine graph children of this task (for spawning).
         self.graph_children = generate_graph_children(tdef, self.point)
-        if TASK_OUTPUT_SUCCEEDED in self.graph_children:
-            self.state.outputs.add(TASK_OUTPUT_SUCCEEDED)
-
-        self.failure_handled: bool = TASK_OUTPUT_FAILED in self.graph_children
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} '{self.identity}'>"
@@ -273,7 +259,6 @@ class TaskProxy:
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
         reload_successor.state.prerequisites = self.state.prerequisites
-        reload_successor.graph_children = self.graph_children
 
     @staticmethod
     def get_offset_as_seconds(offset):
@@ -336,7 +321,7 @@ class TaskProxy:
 
         """
         if self.is_manual_submit:
-            # Manually triggered, ignore unsatisified prerequisites.
+            # Manually triggered, ignore unsatisfied prerequisites.
             return (True,)
         if self.state.is_held:
             # A held task is not ready to run.
@@ -349,15 +334,6 @@ class TaskProxy:
             self.is_waiting_clock_done(),
             self.is_waiting_prereqs_done()
         )
-
-    def set_summary_message(self, message):
-        """Set `.summary['latest_message']` if necessary.
-
-        Set `.state.is_updated` to `True` if message is updated.
-        """
-        if self.summary['latest_message'] != message:
-            self.summary['latest_message'] = message
-            self.state.is_updated = True
 
     def set_summary_time(self, event_key, time_str=None):
         """Set an event time in self.summary

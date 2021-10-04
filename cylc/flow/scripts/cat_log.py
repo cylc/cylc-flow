@@ -53,14 +53,14 @@ Examples:
 """
 
 import os
-import shlex
 from contextlib import suppress
 from glob import glob
-from shlex import quote
+import shlex
 from stat import S_IRUSR
-from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE, DEVNULL
 import sys
+from tempfile import NamedTemporaryFile
+from typing import Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
@@ -83,6 +83,10 @@ from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
 from cylc.flow.platforms import get_platform
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 # Immortal tail-follow processes on job hosts can be cleaned up by killing
@@ -216,8 +220,12 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
 def get_option_parser():
     """Set up the CLI option parser."""
     parser = COP(
-        __doc__, argdoc=[
-            ("REG", "Workflow name"), ("[TASK-ID]", """Task ID""")])
+        __doc__,
+        argdoc=[
+            ("REG", "Workflow name"),
+            ("[TASK-ID]", """Task ID""")
+        ]
+    )
 
     parser.add_option(
         "-f", "--file",
@@ -314,7 +322,13 @@ def tmpfile_edit(tmpfile, geditor=False):
 
 
 @cli_function(get_option_parser)
-def main(parser, options, *args, color=False):
+def main(
+    parser: COP,
+    options: 'Values',
+    reg: str,
+    task_id: Optional[str] = None,
+    color: bool = False
+) -> None:
     """Implement cylc cat-log CLI.
 
     Determine log path, user@host, batchview_cmd, and action (print, dir-list,
@@ -339,14 +353,14 @@ def main(parser, options, *args, color=False):
             sys.exit(res)
         return
 
-    workflow_name = args[0]
+    workflow_name, _ = parse_reg(reg)
     # Get long-format mode.
     try:
         mode = MODES[options.mode]
     except KeyError:
         mode = options.mode
 
-    if len(args) == 1:
+    if not task_id:
         # Cat workflow logs, local only.
         if options.filename is not None:
             raise UserInputError("The '-f' option is for job logs only.")
@@ -370,12 +384,11 @@ def main(parser, options, *args, color=False):
             tmpfile_edit(out, options.geditor)
         return
 
-    if len(args) == 2:
+    if task_id:
         # Cat task job logs, may be on workflow or job host.
         if options.rotation_num is not None:
             raise UserInputError(
                 "only workflow (not job) logs get rotated")
-        task_id = args[1]
         try:
             task, point = TaskID.split(task_id)
         except ValueError:
@@ -430,11 +443,12 @@ def main(parser, options, *args, color=False):
             # Reinvoke the cat-log command on the remote account.
             cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
             for item in [logpath, mode, tail_tmpl]:
-                cmd.append('--remote-arg=%s' % quote(item))
+                cmd.append('--remote-arg=%s' % shlex.quote(item))
             if batchview_cmd:
-                cmd.append('--remote-arg=%s' % quote(batchview_cmd))
+                cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
             cmd.append(workflow_name)
             is_edit_mode = (mode == 'edit')
+            # TODO: Add Intelligent Host selection to this
             try:
                 proc = remote_cylc_cmd(
                     cmd,

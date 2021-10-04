@@ -18,7 +18,13 @@
 
 (This command is for internal use.)
 
-For internal use with the `cylc.flow.host_select` module.
+This is for use in situations where Cylc needs to extract information from
+the `psutil` on remote platforms.
+
+Exits:
+    0 - If successfull.
+    2 - For errors in extracting results from psutil
+    1 - For all other errors.
 """
 
 import json
@@ -42,16 +48,29 @@ def get_option_parser():
 
 def _psutil(metrics_json):
     metrics = parse_dirty_json(metrics_json)
-
-    ret = [
-        getattr(psutil, key[0])(*key[1:])
+    methods = [
+        getattr(psutil, key[0])
         for key in metrics
     ]
+
+    try:
+        ret = [
+            method(*key[1:])
+            for key, method in zip(metrics, methods)
+        ]
+    except Exception as exc:
+        # error extracting metrics from psutil e.g:
+        # * requesting a method which does not exist
+        # * requesting information on a resource which does not exist
+        print(exc, file=sys.stderr)
+        sys.exit(2)
 
     # serialise
     for ind, item in enumerate(ret):
         if hasattr(item, '_asdict'):
             ret[ind] = item._asdict()
+        elif hasattr(item, 'as_dict'):
+            ret[ind] = item.as_dict()
 
     return ret
 

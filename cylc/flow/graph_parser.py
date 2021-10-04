@@ -16,13 +16,29 @@
 """Module for parsing cylc graph strings."""
 
 import re
+import contextlib
 
+from typing import (
+    Set,
+    Dict,
+    List,
+    Tuple,
+    Optional
+)
+
+import cylc.flow.flags
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.param_expand import GraphExpander
 from cylc.flow.task_id import TaskID
-
-
-ARROW = '=>'
+from cylc.flow.task_trigger import TaskTrigger
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_FINISHED,
+    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUBMIT_FAILED
+)
 
 
 class Replacement:
@@ -64,74 +80,126 @@ class GraphParser:
             NODE<i=0,j,k>  # specific parameter value
             NODE<i-1,j,k>  # offset parameter value
         * A parameterized qualified node name looks like this:
-            NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
-        * The default trigger type is ':succeed'.
+            NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:QUALIFIER)
+        * The default trigger type is ':succeeded'.
         * A remote workflow qualified node name looks like this:
-            NODE(<REMOTE-WORKFLOW-TRIGGER>)(:TRIGGER-TYPE)
-        * Trigger qualifiers are ignored on the right to allow chaining:
-               "foo => bar => baz & qux"
-          Think of this as describing the graph structure first, then
-          annotating each node with a trigger type that is only meaningful on
-          the left side of each pair (in the default ':succeed' case the
-          trigger type can be omitted, but it is still there in principle).
+            NODE(<REMOTE-WORKFLOW-QUALIFIER>)(:QUALIFIER)
+        * Outputs (boo:x) are ignored as triggers on the RHS to allow chaining:
+            "foo => bar:x => baz & qux"
     """
+
+    CYLC7_COMPAT = "CYLC 7 BACK-COMPAT"
 
     OP_AND = '&'
     OP_OR = '|'
     OP_AND_ERR = '&&'
     OP_OR_ERR = '||'
-    SUICIDE_MARK = '!'
-    TRIG_SUCCEED = ':succeed'
-    TRIG_FAIL = ':fail'
-    TRIG_FINISH = ':finish'
-    FAM_TRIG_EXT_ALL = '-all'
-    FAM_TRIG_EXT_ANY = '-any'
-    LEN_FAM_TRIG_EXT_ALL = len(FAM_TRIG_EXT_ALL)
-    LEN_FAM_TRIG_EXT_ANY = len(FAM_TRIG_EXT_ANY)
+    SUICIDE = '!'
+    OPTIONAL = '?'
+    QUALIFIER = ':'
+    ARROW = '=>'
+    XTRIG = '@'
+    CONTINUATION_STRS = (ARROW, OP_AND, OP_OR)
+    BAD_STRS = (OP_AND_ERR, OP_OR_ERR)
+
+    QUAL_FAM_SUCCEED_ALL = "succeed-all"
+    QUAL_FAM_SUCCEED_ANY = "succeed-any"
+    QUAL_FAM_FAIL_ALL = "fail-all"
+    QUAL_FAM_FAIL_ANY = "fail-any"
+    QUAL_FAM_FINISH_ALL = "finish-all"
+    QUAL_FAM_FINISH_ANY = "finish-any"
+    QUAL_FAM_START_ALL = "start-all"
+    QUAL_FAM_START_ANY = "start-any"
+    QUAL_FAM_SUBMIT_ALL = "submit-all"
+    QUAL_FAM_SUBMIT_ANY = "submit-any"
+    QUAL_FAM_SUBMIT_FAIL_ALL = "submit-fail-all"
+    QUAL_FAM_SUBMIT_FAIL_ANY = "submit-fail-any"
+
+    # Map family trigger type to (member-trigger, any/all), for use in
+    # expanding family trigger expressions to member trigger expressions.
+    # - "FAM:succeed-all => g" means "f1:succeed & f2:succeed => g"
+    # - "FAM:fail-any => g" means "f1:fail | f2:fail => g".
+    # E.g. QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True) simply maps
+    #   "FAM:start-all" to "MEMBER:started" and "-all" (all members).
+    fam_to_mem_trigger_map: Dict[str, Tuple[str, bool]] = {
+        QUAL_FAM_START_ALL: (TASK_OUTPUT_STARTED, True),
+        QUAL_FAM_START_ANY: (TASK_OUTPUT_STARTED, False),
+        QUAL_FAM_SUCCEED_ALL: (TASK_OUTPUT_SUCCEEDED, True),
+        QUAL_FAM_SUCCEED_ANY: (TASK_OUTPUT_SUCCEEDED, False),
+        QUAL_FAM_FAIL_ALL: (TASK_OUTPUT_FAILED, True),
+        QUAL_FAM_FAIL_ANY: (TASK_OUTPUT_FAILED, False),
+        QUAL_FAM_SUBMIT_ALL: (TASK_OUTPUT_SUBMITTED, True),
+        QUAL_FAM_SUBMIT_ANY: (TASK_OUTPUT_SUBMITTED, False),
+        QUAL_FAM_SUBMIT_FAIL_ALL: (TASK_OUTPUT_SUBMIT_FAILED, True),
+        QUAL_FAM_SUBMIT_FAIL_ANY: (TASK_OUTPUT_SUBMITTED, False),
+        QUAL_FAM_FINISH_ALL: (TASK_OUTPUT_FINISHED, True),
+        QUAL_FAM_FINISH_ANY: (TASK_OUTPUT_FINISHED, False),
+    }
+
+    # Map family pseudo triggers to affected member outputs.
+    fam_to_mem_output_map: Dict[str, List[str]] = {
+        QUAL_FAM_START_ANY: [TASK_OUTPUT_STARTED],
+        QUAL_FAM_START_ALL: [TASK_OUTPUT_STARTED],
+        QUAL_FAM_SUCCEED_ANY: [TASK_OUTPUT_SUCCEEDED],
+        QUAL_FAM_SUCCEED_ALL: [TASK_OUTPUT_SUCCEEDED],
+        QUAL_FAM_FAIL_ANY: [TASK_OUTPUT_FAILED],
+        QUAL_FAM_FAIL_ALL: [TASK_OUTPUT_FAILED],
+        QUAL_FAM_SUBMIT_ANY: [TASK_OUTPUT_SUBMITTED],
+        QUAL_FAM_SUBMIT_ALL: [TASK_OUTPUT_SUBMITTED],
+        QUAL_FAM_SUBMIT_FAIL_ANY: [TASK_OUTPUT_SUBMIT_FAILED],
+        QUAL_FAM_SUBMIT_FAIL_ALL: [TASK_OUTPUT_SUBMIT_FAILED],
+        QUAL_FAM_FINISH_ANY: [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED],
+        QUAL_FAM_FINISH_ALL: [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]
+    }
 
     _RE_SUICIDE = r'(?:!)?'
     _RE_NODE = _RE_SUICIDE + TaskID.NAME_RE
-    _RE_NODE_OR_ACTION = r'(?:[!@])?' + TaskID.NAME_RE
-
+    _RE_NODE_OR_XTRIG = r'(?:[!@])?' + TaskID.NAME_RE
     _RE_PARAMS = r'<[\w,=\-+]+>'
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
-    _RE_TRIG = r':[\w\-]+'
+    _RE_QUAL = QUALIFIER + r'[\w\-]+'  # task or fam trigger
+    _RE_OPT = r'\??'  # optional output indicator
+
+    REC_QUAL = re.compile(_RE_QUAL)
 
     # Match if there are any spaces which could lead to graph problems
     REC_GRAPH_BAD_SPACES_LINE = re.compile(
         TaskID.NAME_RE +
-        r'''
-        (?<![\-+](?=\s*[0-9])) # allow spaces after -+ if numbers follow
-        (?!\s*[\-+]\s*[0-9])   # allow spaces before/after -+ if numbers follow
-        \s+                    # do not allow 'task<space>task'
-        ''' + TaskID.NAME_SUFFIX_RE, re.X)
+        rf"""
+        (?<![\-+](?=\s*[0-9]))  # allow spaces after -+ if numbers follow
+        (?!\s*[\-+]\s*[0-9])    # allow spaces before/after -+ if nums follow
+        \s+                     # do not allow 'task<space>task'
+        {TaskID.NAME_SUFFIX_RE}
+        """,
+        re.X
+    )
 
-    # Match @actions.
-    REC_ACTION = re.compile(r'@[\w\-+%]+')
+    # Match @xtriggers.
+    REC_XTRIG = re.compile(r'@[\w\-+%]+')
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
-        _RE_SUICIDE +
-        r'''
-        (?:(?:''' +
-        TaskID.NAME_RE + r'(?:' + _RE_PARAMS + r')?|' + _RE_PARAMS +
-        ''')                             # node name
-        )+                               # allow task<param> to repeat
-        (?:''' + _RE_OFFSET + r''')?     # optional cycle point offset
-        (?:''' + _RE_TRIG + r''')?       # optional trigger type
-        ''', re.X)                       # end of string
+        rf"""
+        {_RE_SUICIDE}
+        (?:(?:{TaskID.NAME_RE}             # node name
+        (?:{_RE_PARAMS})?|{_RE_PARAMS}))+  # allow task<param> to repeat
+        (?:{_RE_OFFSET})?                  # cycle point offset
+        (?:{_RE_QUAL})?                    # qualifier
+        (?:{_RE_OPT})?                     # optional output indicator
+        """,
+        re.X
+    )
 
-    # Extract node or action from left-side expressions after param expansion.
-    REC_NODES = re.compile(r'''
-        (''' + _RE_NODE_OR_ACTION + r''')      # node name
-        (''' + _RE_OFFSET + r''')?   # optional cycle point offset
-        (''' + _RE_TRIG + r''')?     # optional trigger type
-    ''', re.X)
-
-    REC_TRIG_QUAL = re.compile(r'''
-        (?:''' + _RE_NODE + r''')    # node name (ignore)
-        (''' + _RE_TRIG + r''')?     # optional trigger type
-    ''', re.X)
+    # Extract node or xtrigger from LHS expressions after param expansion.
+    REC_NODES = re.compile(
+        rf"""
+        ({_RE_NODE_OR_XTRIG})  # node name
+        ({_RE_OFFSET})?        # cycle point offset
+        ({_RE_QUAL})?          # trigger qualifier
+        ({_RE_OPT})?           # optional output indicator
+        """,
+        re.X
+    )
 
     REC_COMMENT = re.compile('#.*$')
 
@@ -140,17 +208,25 @@ class GraphParser:
 
     # Detect and extract workflow state polling task info.
     REC_WORKFLOW_STATE = re.compile(
-        r'(' + TaskID.NAME_RE + r')(<([\w.\-/]+)::(' +
-        TaskID.NAME_RE + r')(' + _RE_TRIG + r')?>)')
+        rf"""
+        ({TaskID.NAME_RE})
+        (<([\w.\-/]+)::({TaskID.NAME_RE})
+        ({_RE_QUAL})?>)
+        """,
+        re.X
+    )
 
     # Remove out-of-range nodes
     # <TASK_NAME_PART> : [^\s&\|] # i.e. sequence of not <AND|OR|SPACE>
     # <REMOVE_TOKEN>   : <TASK_NAME_PART> <_REMOVE>
     #                    <TASK_NAME_PART>?
     _TASK_NAME_PART = rf'[^\s{OP_AND}{OP_OR}]'
-    _REMOVE_TOKEN = (rf'{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?'
-                     rf'{_TASK_NAME_PART}+')
-    REC_NODE_OUT_OF_RANGE = re.compile(rf'''
+    _REMOVE_TOKEN = (
+        rf"{_TASK_NAME_PART}+{str(GraphExpander._REMOVE)}?{_TASK_NAME_PART}+"
+    )
+
+    REC_NODE_OUT_OF_RANGE = re.compile(
+        rf"""
         (                                     #
             ^{_REMOVE_TOKEN}[{OP_AND}{OP_OR}] # ^<REMOVE> <AND|OR>
             |                                 #
@@ -158,23 +234,54 @@ class GraphParser:
             |                                 #
             ^{_REMOVE_TOKEN}$                 # ^<REMOVE>$
         )                                     #
-        ''', re.X)
+        """,
+        re.X
+    )
 
-    def __init__(self, family_map=None, parameters=None):
-        """Initializing the graph string parser.
+    REC_RHS_NODE = re.compile(
+        rf"""
+        (!)?           # suicide mark
+        ({_RE_NODE})   # node name
+        ({_RE_QUAL})?  # trigger qualifier
+        ({_RE_OPT})?   # optional output indicator
+        """,
+        re.X
+    )
 
-        family_map (empty or None if no families) is:
-            {family_name: [task member names]}
-        parameters (empty or None if no parameters) is just passed on to the
-        parameter expander classes (documented there).
+    def __init__(
+        self,
+        family_map: Optional[Dict[str, List[str]]] = None,
+        parameters: Optional[Dict] = None,
+        task_output_opt:
+            Optional[Dict[Tuple[str, str], Tuple[bool, bool, bool]]] = None
+    ) -> None:
+        """Initialize the graph string parser.
+
+        Args:
+            family_map:
+                {family_name: [family member task names]}
+            parameters:
+                task parameters for expansion here
+            task_output_opt:
+                {(name, output): (is-optional, is-opt-default, is-fixed)}
+                passed in to allow checking across multiple graph strings
+
         """
         self.family_map = family_map or {}
         self.parameters = parameters
-        self.triggers = {}
-        self.original = {}
-        self.workflow_state_polling_tasks = {}
+        self.triggers: Dict = {}
+        self.original: Dict = {}
+        self.workflow_state_polling_tasks: Dict = {}
 
-    def parse_graph(self, graph_string):
+        # Record task outputs as optional or required:
+        #   {(name, output): (is_optional, is_member)}
+        # (Need to compare across separately-parsed graph strings.)
+        if task_output_opt:
+            self.task_output_opt = task_output_opt
+        else:
+            self.task_output_opt = {}
+
+    def parse_graph(self, graph_string: str) -> None:
         """Parse the graph string for a single graph section.
 
         (Assumes any general line-continuation markers have been processed).
@@ -216,20 +323,46 @@ class GraphParser:
         part_lines = []
         for i, _ in enumerate(non_blank_lines):
             this_line = non_blank_lines[i]
-            if i == 0 and this_line.startswith(ARROW):
-                # First line can't start with an arrow.
-                raise GraphParseError("leading arrow: %s" % this_line)
+            for seq in self.CONTINUATION_STRS:
+                if i == 0 and this_line.startswith(seq):
+                    # First line can't start with an arrow.
+                    raise GraphParseError(f"Leading {seq}: {this_line}")
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
                 next_line = ''
-                if this_line.endswith(ARROW):
-                    # Last line can't end with an arrow.
-                    raise GraphParseError(
-                        "trailing arrow: %s" % this_line)
+                for seq in self.CONTINUATION_STRS:
+                    if this_line.endswith(seq):
+                        # Last line can't end with an arrow, & or |.
+                        raise GraphParseError(
+                            f"Dangling {seq}:"
+                            f"{this_line}"
+                        )
             part_lines.append(this_line)
-            if (this_line.endswith(ARROW) or next_line.startswith(ARROW)):
+
+            # Check that a continuation sequence doesn't end this line and
+            # begin the next:
+            if (
+                this_line.endswith(self.CONTINUATION_STRS) and
+                next_line.startswith(self.CONTINUATION_STRS)
+            ):
+                raise GraphParseError(
+                    'Consecutive lines end and start with continuation '
+                    'characters:\n'
+                    f'{this_line}\n'
+                    f'{next_line}'
+                )
+
+            # Check that line ends with a valid continuation sequence:
+            if (any(
+                this_line.endswith(seq) or next_line.startswith(seq) for
+                seq in self.CONTINUATION_STRS
+            ) and not (any(
+                this_line.endswith(seq) or next_line.startswith(seq) for
+                seq in self.BAD_STRS
+            ))):
                 continue
+
             full_line = ''.join(part_lines)
 
             # Record inter-workflow dependence and remove the marker notation.
@@ -239,11 +372,14 @@ class GraphParser:
             for item in repl.match_groups:
                 l_task, r_all, r_workflow, r_task, r_status = item
                 if r_status:
-                    r_status = r_status[1:]
+                    r_status = r_status.strip(self.__class__.QUALIFIER)
+                    r_status = TaskTrigger.standardise_name(r_status)
                 else:
-                    r_status = self.__class__.TRIG_SUCCEED[1:]
+                    r_status = TASK_OUTPUT_SUCCEEDED
                 self.workflow_state_polling_tasks[l_task] = (
-                    r_workflow, r_task, r_status, r_all)
+                    r_workflow, r_task, r_status, r_all
+                )
+
             full_lines.append(full_line)
             part_lines = []
 
@@ -253,18 +389,25 @@ class GraphParser:
         for line in full_lines:
             if self.__class__.OP_AND_ERR in line:
                 raise GraphParseError(
-                    "the graph AND operator is '%s': %s" % (
-                        self.__class__.OP_AND, line))
+                    "The graph AND operator is "
+                    f"'{self.__class__.OP_AND}': {line}")
             if self.__class__.OP_OR_ERR in line:
                 raise GraphParseError(
-                    "the graph OR operator is '%s': %s" % (
-                        self.__class__.OP_OR, line))
+                    "The graph OR operator is "
+                    f"'{self.__class__.OP_OR}': {line}")
             # Check node syntax. First drop all non-node characters.
             node_str = line
-            for s in ['=>', '|', '&', '(', ')', '!']:
-                node_str = node_str.replace(s, ' ')
-            # Drop all valid @triggers, longest first to avoid sub-strings.
-            nodes = self.__class__.REC_ACTION.findall(node_str)
+            for spec in [
+                self.__class__.ARROW,
+                self.__class__.OP_OR,
+                self.__class__.OP_AND,
+                self.__class__.SUICIDE,
+                '(',
+                ')',
+            ]:
+                node_str = node_str.replace(spec, ' ')
+            # Drop all valid @xtriggers, longest first to avoid sub-strings.
+            nodes = self.__class__.REC_XTRIG.findall(node_str)
             nodes.sort(key=len, reverse=True)
             for node in nodes:
                 node_str = node_str.replace(node, '')
@@ -286,13 +429,13 @@ class GraphParser:
 
         # Process chains of dependencies as pairs: left => right.
         # Parameterization can duplicate some dependencies, so use a set.
-        pairs = set()
+        pairs: Set[Tuple[Optional[str], str]] = set()
         for line in line_set:
             chain = []
             # "foo => bar => baz" becomes [foo, bar, baz]
             # "foo => bar_-32768 => baz" becomes [foo]
             # "foo_-32768 => bar" becomes []
-            for node in line.split(ARROW):
+            for node in line.split(self.__class__.ARROW):
                 # This can happen, e.g. "foo => => bar" produces
                 # "foo, '', bar", so we add so that later it raises
                 # an error
@@ -306,20 +449,22 @@ class GraphParser:
                 else:
                     chain.append(node)
 
-            # Auto-trigger lone nodes and initial nodes in a chain.
             if not chain:
                 continue
-            for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
-                if not offset and not name.startswith('@'):
-                    pairs.add((None, name))
+
+            for item in self.__class__.REC_NODES.findall(chain[0]):
+                # Auto-trigger lone nodes and initial nodes in a chain.
+                if not item[0].startswith(self.__class__.XTRIG):
+                    pairs.add((None, ''.join(item)))
+
             for i in range(0, len(chain) - 1):
                 pairs.add((chain[i], chain[i + 1]))
 
         for pair in pairs:
-            self._proc_dep_pair(pair[0], pair[1])
+            self._proc_dep_pair(pair)
 
     @classmethod
-    def _report_invalid_lines(cls, lines):
+    def _report_invalid_lines(cls, lines: List[str]) -> None:
         """Raise GraphParseError in a consistent format when there are
         lines with bad syntax.
 
@@ -334,179 +479,413 @@ class GraphParser:
         GraphParseError -- always. This is the sole purpose of this method
         """
         raise GraphParseError(
-            "bad graph node format:\n"
+            "Bad graph node format:\n"
             "  " + "\n  ".join(lines) + "\n"
             "Correct format is:\n"
-            " @ACTION or "
-            " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n"
+            " @XTRIG or "
+            " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:QUALIFIER)(?)\n"
             " {NAME(<PARAMS>) can also be: "
             "<PARAMS>NAME or NAME<PARAMS>NAME_CONTINUED}\n"
             " or\n"
-            " NAME(<REMOTE-WORKFLOW-TRIGGER>)(:TRIGGER-TYPE)")
+            " NAME(<REMOTE-WORKFLOW-QUALIFIER>)(:QUALIFIER)")
 
-    def _proc_dep_pair(self, left, right):
+    def _proc_dep_pair(
+        self,
+        pair: Tuple[Optional[str], str]
+    ) -> None:
         """Process a single dependency pair 'left => right'.
 
         'left' can be a logical expression of qualified node names.
+        'left' can be None, when triggering a left-side or lone node.
+        'left' can be "", if null task name in graph error (a => => b).
         'right' can be one or more node names joined by AND.
+        'right' can't be None or "".
         A node is an xtrigger, or a task or a family name.
-        A qualified name is NAME([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE).
+        A qualified name is NAME([CYCLE-POINT-OFFSET])(:QUALIFIER).
         Trigger qualifiers, but not cycle offsets, are ignored on the right to
         allow chaining.
         """
+        left, right = pair
         # Raise error for right-hand-side OR operators.
-        if right and self.__class__.OP_OR in right:
-            raise GraphParseError("illegal OR on RHS: %s" % right)
-
-        # Remove qualifiers from right-side nodes.
-        if right:
-            for qual in self.__class__.REC_TRIG_QUAL.findall(right):
-                right = right.replace(qual, '')
+        if self.__class__.OP_OR in right:
+            raise GraphParseError(f"Illegal OR on right side: {right}")
 
         # Raise error if suicide triggers on the left of the trigger.
-        if left and self.__class__.SUICIDE_MARK in left:
+        if left and self.__class__.SUICIDE in left:
             raise GraphParseError(
-                "suicide markers must be"
-                " on the right of a trigger: %s" % left)
+                "Suicide markers must be"
+                f" on the right of a trigger: {left}")
 
-        # Cycle point offsets are not allowed on the right side (yet).
-        if right and '[' in right:
-            raise GraphParseError(
-                "illegal cycle point offset on the right: %s => %s" % (
-                    left, right))
+        # Ignore cycle point offsets on the right side.
+        # (Note we can't ban this; all nodes get process as left and right.)
+        if '[' in right:
+            return
 
         # Check that parentheses match.
         if left and left.count("(") != left.count(")"):
             raise GraphParseError(
-                "parenthesis mismatch in: \"" + left + "\"")
+                "Mismatched parentheses in: \"" + left + "\"")
 
         # Split right side on AND.
         rights = right.split(self.__class__.OP_AND)
         if '' in rights or right and not all(rights):
             raise GraphParseError(
-                "null task name in graph: %s => %s" % (left, right))
+                f"Null task name in graph: {left} => {right}")
 
         if not left or (self.__class__.OP_OR in left or '(' in left):
             # Treat conditional or bracketed expressions as a single entity.
-            lefts = [left]
+            # Can get [None] or [""] here
+            lefts: List[Optional[str]] = [left]
         else:
             # Split non-conditional left-side expressions on AND.
-            lefts = left.split(self.__class__.OP_AND)
+            # Can get [""] here too
+            # TODO figure out how to handle this wih mypy:
+            #   assign List[str] to List[Optional[str]]
+            lefts = left.split(self.__class__.OP_AND)  # type: ignore
         if '' in lefts or left and not all(lefts):
             raise GraphParseError(
-                "null task name in graph: %s => %s" % (left, right))
+                f"Null task name in graph: {left} => {right}")
 
         for left in lefts:
             # Extract information about all nodes on the left.
+
             if left:
                 info = self.__class__.REC_NODES.findall(left)
                 expr = left
+
             else:
                 # There is no left-hand-side task.
                 info = []
                 expr = ''
 
-            # Make success triggers explicit.
-            n_info = []
-            for name, offset, trig in info:
-                if not trig and not name.startswith('@'):
-                    # (Avoiding @trigger nodes.)
-                    trig = self.__class__.TRIG_SUCCEED
+            n_info: List[Tuple[str, str, str, bool]] = []
+            for name, offset, trig, opt_char in info:
+                opt = opt_char == self.__class__.OPTIONAL
+                if name.startswith(self.__class__.XTRIG):
+                    n_info.append((name, offset, trig, opt))
+                    continue
+                if trig:
+                    # Replace with standard trigger name if necessary
+                    trig = trig.strip(self.__class__.QUALIFIER)
+                    n_trig = TaskTrigger.standardise_name(trig)
+                    if n_trig != trig:
+                        if offset:
+                            this = r'\b%s\b%s:%s(?!:)' % (
+                                re.escape(name),
+                                re.escape(offset),
+                                re.escape(trig)
+                            )
+                        else:
+                            this = r'\b%s:%s\b(?![\[:])' % (
+                                re.escape(name),
+                                re.escape(trig)
+                            )
+                        that = f"{name}{offset}:{n_trig}"
+                        expr = re.sub(this, that, expr)
+                else:
+                    # Make success triggers explicit.
+                    n_trig = TASK_OUTPUT_SUCCEEDED
                     if offset:
                         this = r'\b%s\b%s(?!:)' % (
-                            re.escape(name), re.escape(offset))
+                            re.escape(name),
+                            re.escape(offset)
+                        )
                     else:
                         this = r'\b%s\b(?![\[:])' % re.escape(name)
-
-                    that = name + offset + trig
+                    that = f"{name}{offset}:{n_trig}"
                     expr = re.sub(this, that, expr)
-                n_info.append((name, offset, trig))
+
+                n_info.append((name, offset, n_trig, opt))
+
             info = n_info
 
             # Determine semantics of all family triggers present.
             family_trig_map = {}
-            for name, _, trig in info:
-                if name.startswith('@'):
-                    # (Avoiding @trigger nodes.)
+            for name, _, trig, _ in info:
+                if name.startswith(self.__class__.XTRIG):
+                    # Avoid @xtrigger nodes.
                     continue
                 if name in self.family_map:
-                    if trig.endswith(self.__class__.FAM_TRIG_EXT_ANY):
-                        ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ANY]
-                        ext = self.__class__.FAM_TRIG_EXT_ANY
-                    elif trig.endswith(  # noqa: SIM106
-                        self.__class__.FAM_TRIG_EXT_ALL
-                    ):
-                        ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ALL]
-                        ext = self.__class__.FAM_TRIG_EXT_ALL
-                    else:
-                        # Unqualified (FAM => foo) or bad (FAM:bad => foo).
+                    # Family; deal with members.
+                    try:
+                        family_trig_map[(name, trig)] = (
+                            self.__class__.fam_to_mem_trigger_map[trig]
+                        )
+                    except KeyError:
+                        # "FAM:bad => foo" in LHS (includes "FAM => bar" too).
                         raise GraphParseError(
-                            "bad family trigger in %s" % expr)
-                    family_trig_map[(name, trig)] = (ttype, ext)
+                            f"Illegal family trigger in {expr}")
                 else:
-                    if (trig.endswith(self.__class__.FAM_TRIG_EXT_ANY) or
-                            trig.endswith(self.__class__.FAM_TRIG_EXT_ALL)):
-                        raise GraphParseError("family trigger on non-"
-                                              "family namespace %s" % expr)
+                    # Not a family.
+                    if trig in self.__class__.fam_to_mem_trigger_map:
+                        raise GraphParseError(
+                            "family trigger on non-family namespace {expr}")
+
+            # remove '?' from expr (not needed in logical trigger evaluation)
+            expr = re.sub(self.__class__._RE_OPT, '', expr)
             self._families_all_to_all(expr, rights, info, family_trig_map)
 
-    def _families_all_to_all(self, expr, rights, info, family_trig_map):
+    def _families_all_to_all(
+        self,
+        expr: str,
+        rights: List[str],
+        info: List[Tuple[str, str, str, bool]],
+        family_trig_map: Dict[Tuple[str, str], Tuple[str, bool]]
+    ) -> None:
         """Replace all family names with member names, for all/any semantics.
 
-        (Also for graph segments with no family names.)
+        Args:
+            expr: the associated graph expression
+            rights: list of right-side nodes
+            trigs: parsed trigger info
+            info: [(name, offset, trigger-name, optional)] for each node
+            expr: the associated graph expression for this graph line
+
         """
+        # Process left-side expression for defining triggers.
         n_info = []
         n_expr = expr
-        for name, offset, trig in info:
+        for name, offset, trig, _ in info:
             if (name, trig) in family_trig_map:
-                ttype, extn = family_trig_map[(name, trig)]
+                ttype, mem_all = family_trig_map[(name, trig)]
                 m_info = []
                 m_expr = []
                 for mem in self.family_map[name]:
                     m_info.append((mem, offset, ttype))
-                    m_expr.append("%s%s%s" % (mem, offset, ttype))
-                this = r'\b%s%s%s\b' % (name, re.escape(offset), trig)
-                if extn == self.__class__.FAM_TRIG_EXT_ALL:
+                    m_expr.append(f"{mem}{offset}:{ttype}")
+                this = r'\b%s%s:%s\b' % (
+                    name,
+                    re.escape(offset),
+                    trig
+                )
+                if mem_all:
                     that = '(%s)' % '&'.join(m_expr)
-                elif extn == self.__class__.FAM_TRIG_EXT_ANY:
+                else:
                     that = '(%s)' % '|'.join(m_expr)
                 n_expr = re.sub(this, that, n_expr)
                 n_info += m_info
             else:
                 n_info += [(name, offset, trig)]
-        self._add_trigger(expr, rights, n_expr, n_info)
 
-    def _add_trigger(self, orig_expr, rights, expr, info):
+        self._compute_triggers(expr, rights, n_expr, n_info)
+
+    def _set_triggers(
+        self,
+        name: str,
+        suicide: bool,
+        trigs: List[str],
+        expr: str,
+        orig_expr: str
+    ) -> None:
+        """Record parsed triggers.
+
+        Args:
+            name: task name
+            suicide: whether this is a suicide trigger or not
+            trigs: parsed trigger info
+            expr: the associated graph expression
+            orig_expr: the original associated graph expression
+        """
+
+        # Check suicide triggers
+        with contextlib.suppress(KeyError):
+            osuicide = self.triggers[name][expr][1]
+            # This trigger already exists, so we must have both
+            # "expr => member" and "expr => !member" in the graph,
+            # or simply a duplicate trigger not recognized earlier
+            # because of parameter offsets.
+            if not expr:
+                pass
+            elif suicide is not osuicide:
+                oexp = re.sub(r'(&|\|)', r' \1 ', orig_expr)
+                oexp = re.sub(r':succeeded', '', oexp)
+                raise GraphParseError(
+                    f"{oexp} can't trigger both {name} and !{name}")
+
+        # Record triggers
+        self.triggers.setdefault(name, {})
+        self.triggers[name][expr] = (trigs, suicide)
+        self.original.setdefault(name, {})
+        self.original[name][expr] = orig_expr
+
+    def _set_output_opt(
+        self,
+        name: str,
+        output: str,
+        optional: bool,
+        suicide: bool,
+        fam_member: bool = False
+    ) -> None:
+        """Set or check consistency of optional/required output.
+
+        Args:
+            name: task name
+            output: task output name
+            optional: is the output optional?
+            suicide: is this from a suicide trigger?
+            fam_member: is this from an expanded family trigger?
+
+        """
+        if cylc.flow.flags.cylc7_back_compat:
+            # Set all outputs optional (set :succeed required elsewhere).
+            self.task_output_opt[(name, output)] = (True, True, True)
+            return
+
+        # Do not infer output optionality from suicide triggers:
+        if suicide:
+            return
+
+        if output == TASK_OUTPUT_FINISHED:
+            # Interpret :finish pseudo-output
+            if optional:
+                raise GraphParseError(
+                    f"Pseudo-output {name}:{output} can't be optional")
+            # But implicit optional for the real succeed/fail outputs.
+            optional = True
+            for outp in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
+                self._set_output_opt(
+                    name, outp, optional, suicide, fam_member)
+
+        try:
+            prev_optional, prev_default, prev_fixed = (
+                self.task_output_opt[(name, output)])
+        except KeyError:
+            # Not already set; set it. Fix it if not fam_member.
+            self.task_output_opt[(name, output)] = (
+                optional, optional, not fam_member)
+        else:
+            # Already set; check consistency with previous.
+            if prev_fixed:
+                # optionality fixed already
+                if fam_member:
+                    pass
+                else:
+                    if optional != prev_optional:
+                        raise GraphParseError(
+                            f"Output {name}:{output} can't be both required"
+                            " and optional")
+            else:
+                # optionality not fixed yet (only family default)
+                if fam_member:
+                    # family defaults must be consistent
+                    if optional != prev_default:
+                        raise GraphParseError(
+                            f"Output {name}:{output} can't default to both"
+                            " optional and required (via family trigger"
+                            " defaults)")
+                else:
+                    # fix the optionality now
+                    self.task_output_opt[(name, output)] = (
+                        optional, prev_default, True)
+
+        # Check opposite output where appropriate.
+        for opposites in [
+            (TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED),
+            (TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED)
+        ]:
+            if output not in opposites:
+                continue
+            succeed, fail = opposites
+            opposite = fail if output == succeed else succeed
+            try:
+                opp_optional, opp_default, opp_fixed = (
+                    self.task_output_opt[(name, opposite)]
+                )
+            except KeyError:
+                # opposite not set, no need to check
+                continue
+            else:
+                # opposite already set; check consistency
+                optional, default, oset = (
+                    self.task_output_opt[(name, output)]
+                )
+                msg = (f"Opposite outputs {name}:{output} and {name}:"
+                       f"{opposite} must both be optional if both are used")
+                if fam_member or not opp_fixed:
+                    if not optional or not opp_default:
+                        raise GraphParseError(
+                            msg + " (via family trigger defaults)")
+                    elif not optional or not opp_optional:
+                        raise GraphParseError(
+                            msg + " (via family trigger)")
+                elif not optional or not opp_optional:
+                    raise GraphParseError(msg)
+
+    def _compute_triggers(
+        self,
+        orig_expr: str,
+        rights: List[str],
+        expr: str,
+        info: List[Tuple[str, str, str]]
+    ) -> None:
         """Store trigger info from "expr => right".
 
-        Arg info is [(name, offset, trigger_type)] for each name in expr.
+        Args:
+            orig_expr: the original associated graph expression
+            rights: list of right-side nodes including qualifiers like :fail?
+            expr: the associated graph expression
+            info: [(name, offset, trigger-name)] for each name in expr.
+
         """
         trigs = []
         for name, offset, trigger in info:
             # Replace finish triggers (must be done after member substn).
-            if trigger == self.__class__.TRIG_FINISH:
-                this = "%s%s%s" % (name, offset, trigger)
-                that = "(%s%s%s%s%s%s%s)" % (
-                    name, offset, self.__class__.TRIG_SUCCEED,
+            if name.startswith(self.__class__.XTRIG):
+                trigs += [name]
+            elif trigger == TASK_OUTPUT_FINISHED:
+                this = f"{name}{offset}:{trigger}"
+                that = "(%s%s:%s%s%s%s:%s)" % (
+                    name, offset, TASK_OUTPUT_SUCCEEDED,
                     self.__class__.OP_OR,
-                    name, offset, self.__class__.TRIG_FAIL)
+                    name, offset, TASK_OUTPUT_FAILED)
                 expr = expr.replace(this, that)
                 trigs += [
-                    "%s%s%s" % (name, offset, self.__class__.TRIG_SUCCEED),
-                    "%s%s%s" % (name, offset, self.__class__.TRIG_FAIL)]
+                    "%s%s:%s" % (name, offset, TASK_OUTPUT_SUCCEEDED),
+                    "%s%s:%s" % (name, offset, TASK_OUTPUT_FAILED)]
             else:
-                trigs += ["%s%s%s" % (name, offset, trigger)]
+                trigs += [f"{name}{offset}:{trigger}"]
 
         for right in rights:
-            suicide = right.startswith(self.__class__.SUICIDE_MARK)
-            if suicide:
-                right = right[1:]
-            if right in self.family_map:
-                members = self.family_map[right]
+            m = self.__class__.REC_RHS_NODE.match(right)
+            # This will match, bad nodes are detected earlier (type ignore):
+            suicide_char, name, output, opt_char = m.groups()  # type: ignore
+            suicide = (suicide_char == self.__class__.SUICIDE)
+            optional = (opt_char == self.__class__.OPTIONAL)
+            if output:
+                output = output.strip(self.__class__.QUALIFIER)
+
+            if name in self.family_map:
+                fam = True
+                mems = self.family_map[name]
+                if not output:
+                    # (Plain family name on RHS).
+                    # Make implicit success explicit.
+                    output = self.__class__.QUAL_FAM_SUCCEED_ALL
+                elif output.startswith("finish"):
+                    if optional:
+                        raise GraphParseError(
+                            f"Family pseudo-output {name}:{output} can't be"
+                            " optional")
+                    # But implicit optional for the real succeed/fail outputs.
+                    optional = True
+                try:
+                    outputs = self.__class__.fam_to_mem_output_map[output]
+                except KeyError:
+                    # Illegal family trigger on RHS of a pair.
+                    raise GraphParseError(
+                        f"Illegal family trigger: {name}:{output}")
             else:
-                members = [right]
-            for member in members:
-                self.triggers.setdefault(member, {})
-                self.original.setdefault(member, {})
-                self.triggers[member][expr] = (trigs, suicide)
-                self.original[member][expr] = orig_expr
+                fam = False
+                if not output:
+                    # Make implicit success explicit.
+                    output = TASK_OUTPUT_SUCCEEDED
+                else:
+                    # Convert to standard output names if necessary.
+                    output = TaskTrigger.standardise_name(output)
+                mems = [name]
+                outputs = [output]
+
+            for mem in mems:
+                self._set_triggers(mem, suicide, trigs, expr, orig_expr)
+                for output in outputs:
+                    self._set_output_opt(mem, output, optional, suicide, fam)

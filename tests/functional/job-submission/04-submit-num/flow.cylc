@@ -1,12 +1,12 @@
 [scheduler]
     [[events]]
-        abort on timeout = True
-        timeout = PT30S
+        abort on stall timeout = True
+        stall timeout = PT30S
 [scheduling]
     [[graph]]
         R1 = """
-            foo:fail => bar
-            foo & bar => baz
+            foo:fail? => bar
+            foo? & bar => baz
         """
 
 [runtime]

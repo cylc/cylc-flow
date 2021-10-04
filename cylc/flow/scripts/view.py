@@ -32,20 +32,23 @@ The edit process is spawned in the foreground as follows:
 Where <editor> can be set in cylc global config.
 """
 
-import sys
-
 import os
-from tempfile import NamedTemporaryFile
 import shlex
 from subprocess import call
+import sys
+from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.fileparse import read_and_proc
-from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def get_option_parser():
@@ -109,8 +112,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, reg):
-    workflow, flow_file = parse_workflow_arg(options, reg)
+def main(parser: COP, options: 'Values', reg: str) -> None:
+    workflow, flow_file = parse_reg(reg, src=True)
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
@@ -118,15 +121,16 @@ def main(parser, options, reg):
         editor = glbl_cfg().get(['editors', 'terminal'])
 
     # read in the flow.cylc file
-    viewcfg = {'mark': options.mark,
-               'single': options.single,
-               'label': options.label,
-               'empy': options.empy or options.process,
-               'jinja2': options.jinja2 or options.process,
-               'contin': options.cat or options.process,
-               'inline': (options.inline or options.jinja2 or options.empy
-                          or options.process),
-               }
+    viewcfg = {
+        'mark': options.mark,
+        'single': options.single,
+        'label': options.label,
+        'empy': options.empy or options.process,
+        'jinja2': options.jinja2 or options.process,
+        'contin': options.cat or options.process,
+        'inline': (options.inline or options.jinja2 or options.empy
+                   or options.process),
+    }
     lines = read_and_proc(
         flow_file,
         load_template_vars(options.templatevars, options.templatevars_file),

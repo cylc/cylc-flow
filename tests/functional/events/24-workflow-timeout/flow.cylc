@@ -1,0 +1,17 @@
+#!Jinja2
+[scheduler]
+    [[events]]
+        workflow timeout = PT1S
+        workflow timeout handlers = echo "That was quick!"
+        abort on workflow timeout = {{ABORT}}
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        script = """
+           cylc__job__poll_grep_workflow_log "workflow timer timed out"
+           if [[ "{{ABORT}}" == "True" ]]; then
+               cylc__job__poll_grep_workflow_log "Workflow shutting down"
+           fi
+        """

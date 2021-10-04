@@ -34,17 +34,21 @@ Use -v/--verbose to see the command invoked to determine the remote version
 site dependent -- see cylc global config documentation."""
 
 import sys
+from typing import TYPE_CHECKING
 
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_ssh_cmd
-from cylc.flow.workflow_files import parse_workflow_arg
+from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
+
+if TYPE_CHECKING:
+    from optparse import Values
 
 
 def get_option_parser():
@@ -59,9 +63,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options, *args):
-    # workflow name or file path
-    workflow, flow_file = parse_workflow_arg(options, args[0])
+def main(_, options: 'Values', reg: str) -> None:
+    workflow, flow_file = parse_reg(reg, src=True)
 
     # extract task host platforms from the workflow
     config = WorkflowConfig(
@@ -88,7 +91,15 @@ def main(_, options, *args):
     versions = {}
     for platform_name in sorted(platforms):
         platform = get_platform(platform_name)
-        cmd = construct_ssh_cmd(['version'], platform)
+        host = get_host_from_platform(
+            platform,
+            bad_hosts=None
+        )
+        cmd = construct_ssh_cmd(
+            ['version'],
+            platform,
+            host
+        )
         if verbose:
             print(cmd)
         proc = procopen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)

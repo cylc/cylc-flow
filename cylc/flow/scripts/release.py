@@ -41,7 +41,7 @@ to release future tasks, use exact identifiers e.g. "mytask.1234".
 See also 'cylc hold'.
 """
 
-import os.path
+from cylc.flow.workflow_files import parse_reg
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
@@ -115,7 +115,7 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
 
     _validate(options, *task_globs)
 
-    workflow = os.path.normpath(workflow)
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.release_all:

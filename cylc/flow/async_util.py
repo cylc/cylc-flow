@@ -18,6 +18,7 @@
 import asyncio
 from functools import partial
 from pathlib import Path
+from typing import List, Union
 
 import pyuv
 
@@ -401,9 +402,9 @@ def _scandir(future, path, request):
     ])
 
 
-async def scandir(path):
+async def scandir(path: Union[Path, str]) -> List[Path]:
     """Asynchronous directory listing using pyuv."""
-    ret = asyncio.Future()
+    ret: asyncio.Future[List[Path]] = asyncio.Future()
 
     loop = pyuv.Loop.default_loop()
     pyuv.fs.scandir(loop, str(path), callback=partial(_scandir, ret, path))

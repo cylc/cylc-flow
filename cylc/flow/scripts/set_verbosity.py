@@ -25,12 +25,13 @@ example, if you choose WARNING, only warnings and critical messages will be
 logged.
 """
 
-import os.path
+from optparse import Values
 
 from cylc.flow import LOG_LEVELS
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
 
 MUTATION = '''
 mutation (
@@ -60,19 +61,19 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow, severity_str):
+def main(parser: COP, options: 'Values', reg: str, severity_str: str) -> None:
     try:
         severity = LOG_LEVELS[severity_str]
     except KeyError:
         parser.error("Illegal logging level, %s" % severity_str)
 
-    workflow = os.path.normpath(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    reg, _ = parse_reg(reg)
+    pclient = get_client(reg, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [reg],
             'level': severity,
         }
     }

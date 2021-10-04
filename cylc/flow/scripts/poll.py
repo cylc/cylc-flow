@@ -25,11 +25,16 @@ Examples:
   $ cylc poll REG TASK_GLOB  # poll multiple active tasks or families
 """
 
-import os.path
+from typing import TYPE_CHECKING
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import parse_reg
+
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 MUTATION = '''
 mutation (
@@ -51,14 +56,14 @@ def get_option_parser():
         __doc__, comms=True, multitask=True,
         argdoc=[
             ('REG', 'Workflow name'),
-            ('[TASK_GLOB ...]', 'Task matching patterns')])
-
+            ('[TASK_GLOB ...]', 'Task matching patterns')]
+    )
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, options, workflow, *task_globs):
-    workflow = os.path.normpath(workflow)
+def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
+    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {

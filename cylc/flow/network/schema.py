@@ -912,7 +912,6 @@ class TaskProxy(ObjectType):
     flow_label = String()
     depth = Int()
     job_submits = Int()
-    latest_message = String()
     outputs = List(
         Output,
         description="""Task outputs.""",
@@ -1444,7 +1443,10 @@ LogLevels = Enum(
 class WorkflowStopMode(Enum):
     """The mode used to stop a running workflow."""
 
-    # Note: contains only the REQUEST_* values from StopMode
+    # NOTE: using a different enum because:
+    # * Graphene requires special enums.
+    # * We only want to offer a subset of stop modes (REQUEST_* only).
+
     Clean = StopMode.REQUEST_CLEAN
     Kill = StopMode.REQUEST_KILL
     Now = StopMode.REQUEST_NOW
@@ -1722,7 +1724,7 @@ class Stop(Mutation):
     class Arguments:
         workflows = List(WorkflowID, required=True)
         mode = WorkflowStopMode(
-            default_value=StopMode.REQUEST_CLEAN
+            default_value=WorkflowStopMode.Clean.value
         )
         cycle_point = CyclePoint(
             description='Stop after the workflow reaches this cycle.'
