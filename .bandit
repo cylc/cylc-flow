@@ -1,0 +1,20 @@
+# NOTE: At present Bandit does *not* automatically source the .bandit
+# configuration file, invoke like so:
+#   $ bandit -r --ini .bandit
+# For development it may be convenient to use flake8-bandit.
+
+[bandit]
+targets: cylc/flow
+skips: B404,B607
+# B404: import_subprocess - consider security implications
+#       * Ignored as the use of subprocesses is a project wide decision.
+#       * The purpose of cylc is to run user defined code therefore the use
+#         of subprocesses is unavoidable.
+# B607: Starting a process with a partial executable path
+#       * Ignored as Cylc needs to be able to call out to executables which
+#         may have to be installed into environments so we cannot specify
+#         absolute paths. In some cases this may be required for portability.
+#       * Users can modify their $PATH to get Cylc to call malicious scripts,
+#         however, the purpose of Cylc Flow is to run user-defined code making
+#         this a moot point, note all code is run as the user. Cylc Flow does
+#         *not* provide multi-user functionality.

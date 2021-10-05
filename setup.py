@@ -56,6 +56,7 @@ install_requires = [
 tests_require = [
     'async-timeout>=3.0.0',
     'async_generator',
+    'bandit>=1.7.0',
     'coverage>=5.0.0',
     'flake8-broken-line>=0.3.0',
     'flake8-bugbear>=21.0.0',

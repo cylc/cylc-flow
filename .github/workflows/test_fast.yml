@@ -70,6 +70,12 @@ jobs:
         run: |
           pytest tests/unit
 
+      - name: Bandit
+        if: ${{ matrix.python-version == '3.7' }}
+        # https://github.com/PyCQA/bandit/issues/658
+        run: |
+          bandit -r --ini .bandit cylc/flow
+
       - name: Integration Tests
         run: |
           pytest tests/integration

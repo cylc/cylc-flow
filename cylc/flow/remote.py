@@ -41,7 +41,12 @@ def get_proc_ancestors():
     pid = os.getpid()
     ancestors = []
     while True:
-        p = Popen(["ps", "-p", str(pid), "-oppid="], stdout=PIPE, stderr=PIPE)
+        p = Popen(  # nosec
+            ["ps", "-p", str(pid), "-oppid="],
+            stdout=PIPE,
+            stderr=PIPE,
+        )
+        # * there is no untrusted output
         ppid = p.communicate()[0].decode().strip()
         if not ppid:
             return ancestors
@@ -116,7 +121,13 @@ def run_cmd(
         stdin = read
 
     try:
-        proc = Popen(command, stdin=stdin, stdout=stdout, stderr=stderr)
+        proc = Popen(  # nosec
+            command,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        # * this see CODACY ISSUE comment above
     except OSError as exc:
         sys.exit(r'ERROR: %s: %s' % (
             exc, ' '.join(quote(item) for item in command)))

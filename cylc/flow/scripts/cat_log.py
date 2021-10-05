@@ -137,7 +137,7 @@ def colorise_cat_log(cat_proc, color=False):
 
     """
     if color:
-        color_proc = Popen(
+        color_proc = Popen(  # nosec
             [
                 'python3', '-c',
                 '; '.join([
@@ -145,6 +145,7 @@ def colorise_cat_log(cat_proc, color=False):
                     'from cylc.flow.loggingutil import re_formatter',
                     'print(re_formatter(sys.stdin.read()), end="")'
                 ]),
+                # * there is no untrusted input, everything is hardcoded
             ],
             stdin=PIPE
         )
@@ -199,11 +200,12 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
             cmd = shlex.split(batchview_cmd)
         else:
             cmd = ['cat', logpath]
-        proc1 = Popen(
+        proc1 = Popen(  # nosec
             cmd,
             stdin=DEVNULL,
             stdout=PIPE if color else None
         )
+        # * batchview command is user configurable
         colorise_cat_log(proc1, color=color)
         return 0
     elif mode == 'tail':
@@ -211,7 +213,8 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
             cmd = batchview_cmd
         else:
             cmd = tailer_tmpl % {"filename": logpath}
-        proc = Popen(shlex.split(cmd), stdin=DEVNULL)
+        proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
+        # * batchview command is user configurable
         with suppress(KeyboardInterrupt):
             watch_and_kill(proc)
         return proc.wait()
@@ -308,7 +311,8 @@ def tmpfile_edit(tmpfile, geditor=False):
     modtime1 = os.stat(tmpfile.name).st_mtime
     cmd = shlex.split(editor)
     cmd.append(tmpfile.name)
-    proc = Popen(cmd, stderr=PIPE)
+    proc = Popen(cmd, stderr=PIPE)  # nosec
+    # * editor command is user configurable
     err = proc.communicate()[1].decode()
     ret_code = proc.wait()
     if ret_code == 0 and os.stat(tmpfile.name).st_mtime > modtime1:

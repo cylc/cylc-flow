@@ -325,8 +325,10 @@ class TaskEventsManager():
                 self.proc_pool.put_command(
                     SubProcContext(
                         (key1, submit_num),
-                        timer.ctx.cmd, env=os.environ, shell=True,
-                    ),
+                        timer.ctx.cmd,
+                        env=os.environ,
+                        shell=True,  # nosec
+                    ),  # designed to run user defined code
                     callback=self._custom_handler_callback,
                     callback_args=[schd_ctx, id_key]
                 )

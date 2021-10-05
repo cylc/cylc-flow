@@ -494,16 +494,25 @@ class CylcWorkflowDAO:
 
         E.g. a row might be ['UTC mode', '1']
         """
-        stmt = f"SELECT key, value FROM {self.TABLE_WORKFLOW_PARAMS}"
+        stmt = rf'''
+            SELECT
+                key, value
+            FROM
+                {self.TABLE_WORKFLOW_PARAMS}
+        '''  # nosec (table name is code constant)
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
     def select_workflow_params_restart_count(self):
         """Return number of restarts in workflow_params table."""
-        stmt = f"""
-            SELECT value FROM {self.TABLE_WORKFLOW_PARAMS}
-            WHERE key == 'n_restart';
-        """
+        stmt = rf"""
+            SELECT
+                value
+            FROM
+                {self.TABLE_WORKFLOW_PARAMS}
+            WHERE
+                key == 'n_restart'
+        """  # nosec (table name is code constant)
         result = self.connect().execute(stmt).fetchone()
         return int(result[0]) if result else 0
 
@@ -514,8 +523,13 @@ class CylcWorkflowDAO:
             [key,value]
         """
         for row_idx, row in enumerate(self.connect().execute(
-                r"SELECT key,value FROM %s" % (
-                    self.TABLE_WORKFLOW_TEMPLATE_VARS))):
+                rf'''
+                    SELECT
+                        key, value
+                    FROM
+                        {self.TABLE_WORKFLOW_TEMPLATE_VARS}
+                '''  # nosec (table name is code constant)
+        )):
             callback(row_idx, list(row))
 
     def select_task_action_timers(self, callback):
@@ -526,8 +540,14 @@ class CylcWorkflowDAO:
         attrs = []
         for item in self.TABLES_ATTRS[self.TABLE_TASK_ACTION_TIMERS]:
             attrs.append(item[0])
-        stmt = r"SELECT %s FROM %s" % (
-            ",".join(attrs), self.TABLE_TASK_ACTION_TIMERS)
+        stmt = rf'''
+            SELECT
+                {",".join(attrs)}
+            FROM
+                {self.TABLE_TASK_ACTION_TIMERS}
+        '''  # nosec
+        # * table name is code constant
+        # * attrs are code constants
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
@@ -541,17 +561,33 @@ class CylcWorkflowDAO:
         for column in self.tables[self.TABLE_TASK_JOBS].columns[3:]:
             keys.append(column.name)
         if submit_num in [None, "NN"]:
-            stmt = (r"SELECT %(keys_str)s FROM %(table)s"
-                    r" WHERE cycle==? AND name==?"
-                    r" ORDER BY submit_num DESC LIMIT 1") % {
-                "keys_str": ",".join(keys),
-                "table": self.TABLE_TASK_JOBS}
+            stmt = rf'''
+                SELECT
+                    {",".join(keys)}
+                FROM
+                    {self.TABLE_TASK_JOBS}
+                WHERE
+                    cycle==?
+                    AND name==?
+                ORDER BY
+                    submit_num DESC LIMIT 1
+            '''  # nosec
+            # * table name is code constant
+            # * keys are code constants
             stmt_args = [cycle, name]
         else:
-            stmt = (r"SELECT %(keys_str)s FROM %(table)s"
-                    r" WHERE cycle==? AND name==? AND submit_num==?") % {
-                "keys_str": ",".join(keys),
-                "table": self.TABLE_TASK_JOBS}
+            stmt = rf'''
+                SELECT
+                    {",".join(keys)}
+                FROM
+                    {self.TABLE_TASK_JOBS}
+                WHERE
+                    cycle==?
+                    AND name==?
+                    AND submit_num==?
+            '''  # nosec
+            # * table name is code constant
+            # * keys are code constants
             stmt_args = [cycle, name, submit_num]
         try:
             for row in self.connect().execute(stmt, stmt_args):
@@ -625,7 +661,12 @@ class CylcWorkflowDAO:
 
     def select_task_job_platforms(self):
         """Return the set of platform names from task_jobs table."""
-        stmt = f"SELECT DISTINCT platform_name FROM {self.TABLE_TASK_JOBS}"
+        stmt = rf'''
+            SELECT DISTINCT
+                platform_name
+            FROM
+                {self.TABLE_TASK_JOBS}
+        '''  # nosec (table name is code constant)
         return {i[0] for i in self.connect().execute(stmt)}
 
     def select_submit_nums(self, name, point):
@@ -656,13 +697,23 @@ class CylcWorkflowDAO:
         return ret
 
     def select_xtriggers_for_restart(self, callback):
-        stm = r"SELECT signature,results FROM %s" % self.TABLE_XTRIGGERS
-        for row_idx, row in enumerate(self.connect().execute(stm, [])):
+        stmt = rf'''
+            SELECT
+                signature, results
+            FROM
+                {self.TABLE_XTRIGGERS}
+        '''  # nosec (table name is code constant)
+        for row_idx, row in enumerate(self.connect().execute(stmt, [])):
             callback(row_idx, list(row))
 
     def select_abs_outputs_for_restart(self, callback):
-        stm = r"SELECT cycle,name,output FROM %s" % self.TABLE_ABS_OUTPUTS
-        for row_idx, row in enumerate(self.connect().execute(stm, [])):
+        stmt = rf'''
+            SELECT
+                cycle, name, output
+            FROM
+                {self.TABLE_ABS_OUTPUTS}
+        '''  # nosec (table name is code constant)
+        for row_idx, row in enumerate(self.connect().execute(stmt, [])):
             callback(row_idx, list(row))
 
     def select_task_pool(self, callback):
@@ -739,7 +790,7 @@ class CylcWorkflowDAO:
         self, cycle: str, name: str
     ) -> List[Tuple[str, str, str, str]]:
         """Return prerequisites of a task of the given name & cycle point."""
-        stmt = f"""
+        stmt = rf"""
             SELECT
                 prereq_name,
                 prereq_cycle,
@@ -750,13 +801,18 @@ class CylcWorkflowDAO:
             WHERE
                 cycle == ? AND
                 name == ?
-        """
+        """  # nosec (table name is code constant)
         stmt_args = [cycle, name]
         return list(self.connect().execute(stmt, stmt_args))
 
     def select_tasks_to_hold(self) -> List[Tuple[str, str]]:
         """Return all tasks to hold stored in the DB."""
-        stmt = f"SELECT name, cycle FROM {self.TABLE_TASKS_TO_HOLD}"
+        stmt = rf'''
+            SELECT
+                name, cycle
+            FROM
+                {self.TABLE_TASKS_TO_HOLD}
+        '''  # nosec (table name is code constant)
         return list(self.connect().execute(stmt))
 
     def select_task_times(self):
@@ -765,7 +821,7 @@ class CylcWorkflowDAO:
         To make data interpretation easier, choose the most recent succeeded
         task to sample timings from.
         """
-        q = """
+        stmt = rf"""
             SELECT
                 name,
                 cycle,
@@ -775,18 +831,15 @@ class CylcWorkflowDAO:
                 time_run,
                 time_run_exit
             FROM
-                %(task_jobs)s
+                {self.TABLE_TASK_JOBS}
             WHERE
-                run_status = %(succeeded)d
-        """ % {
-            'task_jobs': self.TABLE_TASK_JOBS,
-            'succeeded': 0,
-        }
+                run_status = 0
+        """  # nosec (table name is code constant)
         columns = (
             'name', 'cycle', 'host', 'job_runner',
             'submit_time', 'start_time', 'succeed_time'
         )
-        return columns, list(self.connect().execute(q))
+        return columns, list(self.connect().execute(stmt))
 
     def vacuum(self):
         """Vacuum to the database."""

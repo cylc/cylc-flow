@@ -635,8 +635,16 @@ class WorkflowDatabaseManager:
         pri_dao = self.get_pri_dao()
         try:
             last_run_ver = pri_dao.connect().execute(
-                f'SELECT value FROM {self.TABLE_WORKFLOW_PARAMS} '
-                f'WHERE key == "{self.KEY_CYLC_VERSION}"').fetchone()[0]
+                rf'''
+                    SELECT
+                        value
+                    FROM
+                        {self.TABLE_WORKFLOW_PARAMS}
+                    WHERE
+                        key == ?
+                ''',  # nosec (table name is a code constant)
+                [self.KEY_CYLC_VERSION]
+            ).fetchone()[0]
         except TypeError:
             raise ServiceFileError(f"{incompat_msg}, or is corrupted")
         finally:
