@@ -67,6 +67,10 @@ class WorkflowConfigError(CylcConfigError):
     """Exception for configuration errors in a Cylc workflow configuration."""
 
 
+class GlobalConfigError(CylcConfigError):
+    """Exception for configuration errors in a Cylc global configuration."""
+
+
 class GraphParseError(WorkflowConfigError):
     """Exception for errors in Cylc workflow graphing."""
 
