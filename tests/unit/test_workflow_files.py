@@ -119,43 +119,6 @@ def test_check_nested_run_dirs__parents(tmp_run_dir: Callable):
     assert "Nested run directories not allowed" in str(exc.value)
 
 
-def test_check_nested_run_dirs__children(tmp_run_dir: Callable):
-    """Test that check_nested_run_dirs() raises when a child dir is a
-    workflow directory."""
-    cylc_run_dir: Path = tmp_run_dir()
-    cylc_run_dir.joinpath('a/b/c/d/e').mkdir(parents=True)
-    test_dir = cylc_run_dir.joinpath('a')
-    # No run dir in children - ok:
-    check_nested_run_dirs(test_dir)
-    # Run dir in child - not ok:
-    d: Path = tmp_run_dir('a/b/c/d/e')
-    with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(test_dir)
-    assert "Nested run directories not allowed" in str(exc.value)
-    shutil.rmtree(d)
-    # Run dir in child but below max scan depth - not ideal but passes:
-    tmp_run_dir('a/b/c/d/e/f')
-    check_nested_run_dirs(test_dir)
-
-
-def test_check_nested_run_dirs__symlink_children(
-    tmp_path: Path, tmp_run_dir: Callable
-):
-    """Test that check_nested_run_dirs() raises when a child dir is a
-    symlink run directory."""
-    # Setup
-    cylc_run_dir: Path = tmp_run_dir()
-    run_dir: Path = tmp_run_dir('a/b/R')
-    target = tmp_path / 'sideshow_bob'
-    run_dir.rename(target)
-    run_dir.symlink_to(target)
-    # Test
-    test_dir = cylc_run_dir / 'a'
-    with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(test_dir)
-    assert "Nested run directories not allowed" in str(exc.value)
-
-
 @pytest.mark.parametrize(
     'reg, expected_err, expected_msg',
     [('foo/bar/', None, None),

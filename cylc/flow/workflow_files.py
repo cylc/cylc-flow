@@ -1337,28 +1337,13 @@ def check_nested_run_dirs(run_dir: Union[Path, str]) -> None:
     Args:
         run_dir: Absolute workflow run directory path.
 
-    Raise:
-        WorkflowFilesError:
-            - reg dir is nested inside a run dir
-            - reg dir contains a nested run dir (if not deeper than max scan
-                depth)
+    Raises WorkflowFilesError if reg dir is nested inside a run dir.
     """
     exc_msg = (
         "Nested run directories not allowed - cannot install workflow in "
         "'{0}' as '{1}' is already a valid run directory."
     )
     reg_path = Path(os.path.normpath(run_dir))
-
-    def _check_child_dirs(path: Union[Path, str], depth_count: int = 1):
-        for result in os.scandir(path):
-            if result.is_dir():
-                if is_valid_run_dir(result.path):
-                    raise WorkflowFilesError(
-                        exc_msg.format(reg_path, result.path)
-                    )
-                if depth_count < MAX_SCAN_DEPTH:
-                    _check_child_dirs(result.path, depth_count + 1)
-
     for parent_dir in reg_path.parents:
         if parent_dir == Path(get_cylc_run_dir()):
             break
@@ -1366,9 +1351,6 @@ def check_nested_run_dirs(run_dir: Union[Path, str]) -> None:
             raise WorkflowFilesError(
                 exc_msg.format(reg_path, get_cylc_run_abs_path(parent_dir))
             )
-
-    if os.path.isdir(reg_path):
-        _check_child_dirs(reg_path)
 
 
 def is_valid_run_dir(path):
