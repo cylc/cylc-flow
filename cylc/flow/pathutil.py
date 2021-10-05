@@ -26,7 +26,6 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     UserInputError, WorkflowFilesError, handle_rmtree_err
 )
-import cylc.flow.flags
 from cylc.flow.platforms import get_localhost_install_target
 
 # Note: do not import this elsewhere, as it might bypass unit test
@@ -261,7 +260,6 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
     Args:
         path: the absolute path of the directory to delete.
     """
-    log = LOG.info if cylc.flow.flags.verbosity == 1 else LOG.debug
     if not os.path.isabs(path):
         raise ValueError('Path must be absolute')
     if os.path.exists(path) and not os.path.isdir(path):
@@ -269,16 +267,18 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
     if os.path.islink(path):
         if os.path.exists(path):
             target = os.path.realpath(path)
-            log(f'Removing symlink target directory: ({path} ->) {target}')
+            LOG.info(
+                f'Removing symlink target directory: ({path} ->) {target}'
+            )
             rmtree(target, onerror=handle_rmtree_err)
-            log(f'Removing symlink: {path}')
+            LOG.info(f'Removing symlink: {path}')
         else:
-            log(f'Removing broken symlink: {path}')
+            LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
     elif not os.path.exists(path):
         raise FileNotFoundError(path)
     else:
-        log(f'Removing directory: {path}')
+        LOG.info(f'Removing directory: {path}')
         rmtree(path, onerror=handle_rmtree_err)
 
 
@@ -289,17 +289,16 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
     Args:
         path: the absolute path of the directory/file/symlink to delete.
     """
-    log = LOG.info if cylc.flow.flags.verbosity == 1 else LOG.debug
     if not os.path.isabs(path):
         raise ValueError("Path must be absolute")
     if os.path.islink(path):
-        log(f"Removing symlink: {path}")
+        LOG.info(f"Removing symlink: {path}")
         os.remove(path)
     elif os.path.isfile(path):
-        log(f"Removing file: {path}")
+        LOG.info(f"Removing file: {path}")
         os.remove(path)
     else:
-        log(f"Removing directory: {path}")
+        LOG.info(f"Removing directory: {path}")
         rmtree(path, onerror=handle_rmtree_err)
 
 
@@ -317,7 +316,6 @@ def remove_empty_parents(
         /foo/bar/a/b (assuming it's empty), then /foo/bar/a (assuming it's
         empty).
     """
-    log = LOG.info if cylc.flow.flags.verbosity == 1 else LOG.debug
     path = Path(path)
     if not path.is_absolute():
         raise ValueError('path must be absolute')
@@ -333,7 +331,7 @@ def remove_empty_parents(
             continue
         try:
             parent.rmdir()
-            log(f'Removing directory: {parent}')
+            LOG.info(f'Removing directory: {parent}')
         except OSError:
             break
 

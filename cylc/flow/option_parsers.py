@@ -404,7 +404,9 @@ TASK_GLOB matches task or family names at a given cycle point.
         #    better choice for the logging stream. This allows us to use STDOUT
         #    for verbosity agnostic outputs.
         # 2. Scheduler will remove this handler when it becomes a daemon.
-        if options.verbosity > 1:
+        if options.verbosity < 0:
+            LOG.setLevel(logging.WARNING)
+        elif options.verbosity > 0:
             LOG.setLevel(logging.DEBUG)
         else:
             LOG.setLevel(logging.INFO)

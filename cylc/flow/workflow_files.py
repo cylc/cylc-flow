@@ -776,10 +776,6 @@ def init_clean(reg: str, opts: 'Values') -> None:
             msg = f"Not performing remote clean - {msg}"
         LOG.warning(msg)
 
-    if opts.rm_dirs and cylc.flow.flags.verbosity == 0:
-        # --rm option implies -v unless -q used
-        cylc.flow.flags.verbosity = opts.verbosity = 1
-
     if (not opts.local_only) and (len(contained_workflows) == 0):
         platform_names = None
         try:
@@ -824,7 +820,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
             _clean_using_glob(run_dir, pattern, symlink_dirs)
     else:
         # Wholesale clean
-        LOG.info(f"Cleaning {run_dir}")
+        LOG.debug(f"Cleaning {run_dir}")
         for symlink in symlink_dirs:
             # Remove <symlink_dir>/cylc-run/<reg>/<symlink>
             remove_dir_and_target(run_dir / symlink)

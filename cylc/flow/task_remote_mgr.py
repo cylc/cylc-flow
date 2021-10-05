@@ -23,6 +23,7 @@ This module provides logic to:
 """
 
 from contextlib import suppress
+from cylc.flow.option_parsers import verbosity_to_opts
 import os
 from shlex import quote
 import re
@@ -204,8 +205,7 @@ class TaskRemoteMgr:
         tmphandle.seek(0)
         # Build the remote-init command to be run over ssh
         cmd = ['remote-init']
-        if cylc.flow.flags.verbosity > 1:
-            cmd.append('--debug')
+        cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
         cmd.append(str(install_target))
         cmd.append(get_remote_workflow_run_dir(self.workflow))
         dirs_to_symlink = get_dirs_to_symlink(install_target, self.workflow)
@@ -257,8 +257,7 @@ class TaskRemoteMgr:
 
         def construct_remote_tidy_ssh_cmd(install_target, platform):
             cmd = ['remote-tidy']
-            if cylc.flow.flags.verbosity > 1:
-                cmd.append('--debug')
+            cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
             cmd.append(install_target)
             cmd.append(get_remote_workflow_run_dir(self.workflow))
             host = get_host_from_platform(
