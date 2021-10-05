@@ -190,7 +190,11 @@ class WorkflowEventHandler():
                 cmd = "%s '%s' '%s' '%s'" % (
                     handler, ctx.event, ctx.workflow, ctx.reason)
             proc_ctx = SubProcContext(
-                cmd_key, cmd, env=dict(os.environ), shell=True)
+                cmd_key,
+                cmd,
+                env=dict(os.environ),
+                shell=True  # nosec (designed to run user defined code)
+            )
             if self.proc_pool.closed:
                 # Run command in foreground if abort on failure is set or if
                 # process pool is closed

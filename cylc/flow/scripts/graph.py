@@ -327,11 +327,13 @@ def dot(opts, lines):
     dot.append('}')
 
     # render graph
-    proc = Popen(
+    proc = Popen(  # nosec
         ['dot', f'-T{fmt}', '-o', filename],
         stdin=PIPE,
         text=True
     )
+    # * filename is generated in code above
+    # * fmt is user specified and quoted (by subprocess)
     proc.communicate('\n'.join(dot))
     proc.wait()
     if proc.returncode:

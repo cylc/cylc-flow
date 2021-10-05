@@ -30,7 +30,7 @@ from random import shuffle
 import re
 import shutil
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
-import time
+from time import sleep
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
     Tuple, TYPE_CHECKING, Union
@@ -403,7 +403,13 @@ def _is_process_running(
     metric = f'[["Process", {pid}]]'
     if is_remote_host(host):
         cmd = _construct_ssh_cmd(cmd, host)
-    proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
+    proc = Popen(  # nosec
+        cmd,
+        stdin=PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        text=True
+    )  # * hardcoded command
     try:
         # Terminate command after 10 seconds to prevent hanging, etc.
         out, err = proc.communicate(timeout=10, input=metric)
@@ -1024,7 +1030,7 @@ def remote_clean(
             # because stderr often contains useless stuff like ssh login
             # messages
             LOG.debug(f"[{item.install_target}] {err}")
-        time.sleep(0.2)
+        sleep(0.2)
     if failed_targets:
         for target, excp in failed_targets.items():
             LOG.error(
@@ -1063,7 +1069,14 @@ def _remote_clean_cmd(
         timeout=timeout, set_verbosity=True
     )
     LOG.debug(" ".join(cmd))
-    return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
+    return Popen(  # nosec
+        cmd,
+        stdin=DEVNULL,
+        stdout=PIPE,
+        stderr=PIPE,
+        text=True,
+    )
+    # * command constructed by internal interface
 
 
 def remove_keys_on_server(keys):
@@ -1186,10 +1199,11 @@ def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
     """
     if not src:
         validate_workflow_name(reg)
+    cur_dir_only = reg.startswith(f'{os.curdir}{os.sep}')  # starts with './'
     reg: Path = Path(expand_path(reg))
 
     if src:
-        reg, abs_path = _parse_src_reg(reg)
+        reg, abs_path = _parse_src_reg(reg, cur_dir_only)
     else:
         abs_path = Path(get_workflow_run_dir(reg))
         if abs_path.is_file():
@@ -1216,8 +1230,14 @@ def check_deprecation(path, warn=True):
             LOG.warning(SUITERC_DEPR_MSG)
 
 
-def _parse_src_reg(reg: Path) -> Tuple[Path, Path]:
-    """Helper function for parse_reg() when src=True."""
+def _parse_src_reg(reg: Path, cur_dir_only: bool = False) -> Tuple[Path, Path]:
+    """Helper function for parse_reg() when src=True.
+
+    Args:
+        reg: Reg.
+        cur_dir_only: Whether the pre-normalised reg began with './'
+            i.e. whether we should only look in the current directory.
+    """
     if reg.is_absolute():
         abs_path = reg
         with suppress(ValueError):
@@ -1237,7 +1257,10 @@ def _parse_src_reg(reg: Path) -> Tuple[Path, Path]:
             # run_dir_path not relative to ~/cylc-run
             pass
         else:
-            if abs_path != run_dir_path:
+            if (
+                not cur_dir_only and
+                abs_path.resolve() != run_dir_path.resolve()
+            ):
                 if abs_path.is_file():
                     if run_dir_path.is_file():
                         LOG.warning(REG_CLASH_MSG.format(
@@ -1289,7 +1312,7 @@ def validate_workflow_name(name: str) -> None:
             f"workflow name cannot be an absolute path: {name}"
         )
     name = os.path.normpath(name)
-    if name.startswith('.'):
+    if name.startswith(os.curdir):
         raise WorkflowFilesError(
             "Workflow name cannot be a path that points to the cylc-run "
             "directory or above"
@@ -1508,7 +1531,8 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
                        f"\"{source}\" to \"{rundir}\"")
     rsync_cmd = get_rsync_rund_cmd(
         source, rundir, reinstall=True, dry_run=dry_run)
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
+    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
+    # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
     reinstall_log.info(
         f"Copying files from {source} to {rundir}"
@@ -1600,7 +1624,8 @@ def install_workflow(
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
+    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
+    # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
     install_log.info(
         f"Copying files from {source} to {rundir}"

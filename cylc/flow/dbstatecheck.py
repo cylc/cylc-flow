@@ -75,9 +75,16 @@ class CylcWorkflowDBChecker:
     def get_remote_point_format(self):
         """Query a remote workflow database for a 'cycle point format' entry"""
         for row in self.conn.execute(
-                r"SELECT value FROM " + CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS +
-                r" WHERE key==?",
-                ['cycle_point_format']):
+            rf'''
+                SELECT
+                    value
+                FROM
+                    {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
+                WHERE
+                    key==?
+            ''',  # nosec (table name is code constant)
+            ['cycle_point_format']
+        ):
             return row[0]
 
     def state_lookup(self, state):
@@ -102,7 +109,14 @@ class CylcWorkflowDBChecker:
         else:
             target_table = CylcWorkflowDAO.TABLE_TASK_STATES
 
-        stmt = "select {0} from {1}".format(mask, target_table)
+        stmt = rf'''
+            SELECT
+                {mask}
+            FROM
+                {target_table}
+        '''  # nosec
+        # * mask is hardcoded
+        # * target_table is a code constant
         if task is not None:
             stmt_wheres.append("name==?")
             stmt_args.append(task)

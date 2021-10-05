@@ -1,0 +1,35 @@
+
+[meta]
+title = "Try out scenarios for intelligent host selection."
+description = """
+Tasks
+=====
+
+Good
+----
+Should pass without problems.
+
+Ugly
+----
+- Fails entirely on a duff platform.
+- Fails on the first host of a mixed platfrom.
+- Succeeds on the second host of the second platform.
+"""
+[scheduler]
+    [[events]]
+        # abort on stalled = true
+
+[scheduling]
+    initial cycle point = 1
+    [[graph]]
+        R1 = good => ugly
+
+[runtime]
+    [[root]]
+        script = true
+
+    [[good]]
+        platform = goodplatformgroup
+
+    [[ugly]]
+        platform = mixedplatformgroup

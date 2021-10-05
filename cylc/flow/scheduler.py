@@ -1362,9 +1362,14 @@ class Scheduler:
             LOG.info(f'Attempting to restart on "{new_host}"')
 
             # proc will start with current env (incl CYLC_HOME etc)
-            proc = Popen(
+            proc = Popen(  # nosec
                 [*cmd, f'--host={new_host}'],
-                stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+                stdin=DEVNULL,
+                stdout=PIPE,
+                stderr=PIPE,
+            )
+            # * new_host comes from internal interface which can only return
+            #   host names
             if proc.wait():
                 msg = 'Could not restart workflow'
                 if attempt_no < max_retries:
@@ -1813,9 +1818,12 @@ class Scheduler:
 
     def _update_cpu_usage(self):
         """Obtain CPU usage statistics."""
-        proc = Popen(
+        proc = Popen(  # nosec
             ["ps", "-o%cpu= ", str(os.getpid())],
-            stdin=DEVNULL, stdout=PIPE)
+            stdin=DEVNULL,
+            stdout=PIPE,
+        )
+        # * there is no untrusted input
         try:
             cpu_frac = float(proc.communicate()[0])
         except (TypeError, OSError, ValueError) as exc:

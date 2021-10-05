@@ -448,7 +448,14 @@ def test_parse_reg__various(
 @pytest.mark.parametrize(
     'reg_includes_flow_file', [True, False]
 )
+@pytest.mark.parametrize(
+    'reg, clash_msg_expected',
+    [('darmok/jalad', True),
+     ('./darmok/jalad', False)]
+)
 def test_parse_reg__clash(
+    reg: str,
+    clash_msg_expected: bool,
     reg_includes_flow_file: bool,
     tmp_run_dir: Callable, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture
@@ -457,12 +464,13 @@ def test_parse_reg__clash(
     and ~/cylc-run
 
     Params:
-        reg_includes_flow_file: Whether the reg arg passed to parse_reg()
-            includes 'flow.cylc' at the end.
+        reg: Workflow reg arg.
+        clash_msg_expected: Whether the reg clash message should get logged.
+        reg_includes_flow_file: Whether to add '/flow.cylc' on the end of the
+            reg arg passed to parse_reg().
     """
     caplog.set_level(logging.WARNING, CYLC_LOG)
     FLOW_FILE = WorkflowFiles.FLOW_FILE
-    reg = 'darmok/jalad'
     run_dir: Path = tmp_run_dir(reg)
     cwd = tmp_path / 'mock-cwd'
     (cwd / reg).mkdir(parents=True)
@@ -470,18 +478,23 @@ def test_parse_reg__clash(
     monkeypatch.chdir(cwd)
 
     reg_arg = os.path.join(reg, FLOW_FILE) if reg_includes_flow_file else reg
+    if reg.startswith(f"{os.curdir}{os.sep}"):
+        reg = reg[2:]
     # The workflow file relative to cwd should take precedence
     assert parse_reg(reg_arg, src=True) == (
         str(cwd / reg),
         cwd / reg / FLOW_FILE
     )
-    # It should warn that it also found a workflow in ~/cylc-run but didn't
-    # use it
-    expected_warning = REG_CLASH_MSG.format(
-        f"{reg}/{FLOW_FILE}",
-        run_dir.relative_to(tmp_path / 'cylc-run') / FLOW_FILE
-    )
-    assert expected_warning in caplog.messages
+    # If reg doesn't begin with './', it should warn that it also found a
+    # workflow in ~/cylc-run but didn't use it
+    if clash_msg_expected:
+        expected_warning = REG_CLASH_MSG.format(
+            os.path.join(reg, FLOW_FILE),
+            run_dir.relative_to(tmp_path / 'cylc-run') / FLOW_FILE
+        )
+        assert expected_warning in caplog.messages
+    else:
+        assert caplog.record_tuples == []
     caplog.clear()
     # Now test that no warning when cwd == ~/cylc-run
     monkeypatch.chdir(tmp_path / 'cylc-run')

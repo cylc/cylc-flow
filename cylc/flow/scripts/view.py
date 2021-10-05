@@ -161,7 +161,7 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
     command_list.append(viewfile.name)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = call(command_list)
+    retcode = call(command_list)  # nosec (editor command is user configurable)
     if retcode != 0:
         # the command returned non-zero exist status
         raise CylcError(f'{command} failed: {retcode}')
