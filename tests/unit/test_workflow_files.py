@@ -1404,6 +1404,32 @@ def test_clean__targeted(
         assert os.path.lexists(file) is False
 
 
+@pytest.mark.parametrize(
+    'rm_dirs',
+    [
+        [".."],
+        ["foo:.."],
+        ["foo/../../meow"]
+    ]
+)
+def test_init_clean__targeted_bad(
+    rm_dirs: List[str],
+    tmp_run_dir: Callable,
+    monkeymock: MonkeyMock
+):
+    """Test init_clean() fails when abusing --rm option."""
+    tmp_run_dir('chalmers')
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+    with pytest.raises(UserInputError) as exc_info:
+        init_clean('chalmers', opts=CleanOptions(rm_dirs=rm_dirs))
+    assert "cannot take paths that point to the run directory or above" in str(
+        exc_info.value
+    )
+    mock_clean.assert_not_called()
+    mock_remote_clean.assert_not_called()
+
+
 PLATFORMS = {
     'enterprise': {
         'hosts': ['kirk', 'picard'],

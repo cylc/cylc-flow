@@ -752,6 +752,9 @@ def init_clean(reg: str, opts: 'Values') -> None:
     )
     reg = str(reg_path)
 
+    # Parse --rm option to make sure it's valid
+    rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
+
     # Check dir does not contain other workflows:
     contained_workflows = asyncio.get_event_loop().run_until_complete(
         get_contained_workflows(local_run_dir, MAX_SCAN_DEPTH + 1)
@@ -796,7 +799,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
             )
 
     if not opts.remote_only:
-        rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
+        # Must be after remote clean
         clean(reg, local_run_dir, rm_dirs)
 
 

@@ -386,7 +386,10 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             part = os.path.normpath(part)
             if os.path.isabs(part):
                 raise UserInputError("--rm option cannot take absolute paths")
-            if part == '.' or part.startswith(f'..{os.sep}'):
+            if (
+                part in {os.curdir, os.pardir} or
+                part.startswith(f"{os.pardir}{os.sep}")  # '../'
+            ):
                 raise UserInputError(
                     "--rm option cannot take paths that point to the "
                     "run directory or above"
