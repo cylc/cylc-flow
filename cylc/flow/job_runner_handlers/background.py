@@ -66,7 +66,7 @@ class BgCommandHandler:
             # process can detach as a process group leader and not subjected to
             # SIGHUP from the current process.
             # TODO: close stdout? Maybe atexit?
-            proc = Popen(
+            proc = Popen(  # nosec
                 [
                     "nohup",
                     "bash",
@@ -81,6 +81,7 @@ class BgCommandHandler:
                 stdout=DEVNULL,
                 stderr=STDOUT
             )
+            # * the purpose of this call is to run user defined code
         except OSError as exc:
             # subprocess.Popen has a bad habit of not setting the
             # filename of the executable when it raises an OSError.

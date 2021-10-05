@@ -30,7 +30,7 @@ from random import shuffle
 import re
 import shutil
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
-import time
+from time import sleep
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
     Tuple, TYPE_CHECKING, Union
@@ -403,7 +403,13 @@ def _is_process_running(
     metric = f'[["Process", {pid}]]'
     if is_remote_host(host):
         cmd = _construct_ssh_cmd(cmd, host)
-    proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
+    proc = Popen(  # nosec
+        cmd,
+        stdin=PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        text=True
+    )  # * hardcoded command
     try:
         # Terminate command after 10 seconds to prevent hanging, etc.
         out, err = proc.communicate(timeout=10, input=metric)
@@ -1009,7 +1015,7 @@ def remote_clean(
                 failed_targets.append(item.install_target)
         elif err:
             LOG.debug(err)
-        time.sleep(0.2)
+        sleep(0.2)
     if failed_targets:
         raise CylcError(
             f"Could not clean on install targets: {', '.join(failed_targets)}"
@@ -1046,7 +1052,14 @@ def _remote_clean_cmd(
         timeout=timeout, set_verbosity=True
     )
     LOG.debug(" ".join(cmd))
-    return Popen(cmd, stdin=DEVNULL, stdout=PIPE, stderr=PIPE, text=True)
+    return Popen(  # nosec
+        cmd,
+        stdin=DEVNULL,
+        stdout=PIPE,
+        stderr=PIPE,
+        text=True,
+    )
+    # * command constructed by internal interface
 
 
 def remove_keys_on_server(keys):
@@ -1504,7 +1517,8 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
                        f"\"{source}\" to \"{rundir}\"")
     rsync_cmd = get_rsync_rund_cmd(
         source, rundir, reinstall=True, dry_run=dry_run)
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
+    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
+    # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
     reinstall_log.info(
         f"Copying files from {source} to {rundir}"
@@ -1596,7 +1610,8 @@ def install_workflow(
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
-    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)
+    proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
+    # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
     install_log.info(
         f"Copying files from {source} to {rundir}"

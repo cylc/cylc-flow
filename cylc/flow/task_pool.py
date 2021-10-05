@@ -466,7 +466,7 @@ class TaskPool:
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING
             ):
-                # update the task proxy with user@host
+                # update the task proxy with platform
                 itask.platform = get_platform(platform_name)
 
                 if time_submit:

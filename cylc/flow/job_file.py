@@ -81,9 +81,13 @@ class JobFileWriter:
         # check syntax
         if check_syntax:
             try:
-                with Popen(
-                        ['/usr/bin/env', 'bash', '-n', tmp_name],
-                        stderr=PIPE, stdin=DEVNULL) as proc:
+                with Popen(  # nosec
+                    ['/usr/bin/env', 'bash', '-n', tmp_name],
+                    stderr=PIPE,
+                    stdin=DEVNULL,
+                    # * the purpose of this is to evaluate user devined code
+                    #   prior to it being executed
+                ) as proc:
                     if proc.wait():
                         # This will leave behind the temporary file,
                         # which is useful for debugging syntax errors, etc.

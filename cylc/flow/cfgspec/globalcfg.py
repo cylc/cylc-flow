@@ -22,6 +22,7 @@ from pkg_resources import parse_version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.parsec.config import (
@@ -1020,6 +1021,20 @@ with Conf('global.cylc', desc='''
                 :cylc:conf:`flow.cylc[runtime][<namespace>]platform` matches
                 the name of this platform group.
             ''')
+            with Conf('selection'):
+                Conf(
+                    'method', VDR.V_STRING, default='random',
+                    options=['random', 'definition order'],
+                    desc='''
+                        Method for selecting platform from group.
+
+                        options:
+
+                        - random: Suitable for an identical pool of platforms.
+                        - definition order: Pick the first available platform
+                          from the list.
+                    '''
+                )
     # task
     with Conf('task events', desc='''
         Global site/user defaults for
@@ -1141,6 +1156,7 @@ class GlobalConfig(ParsecConfig):
                     raise
 
         self._set_default_editors()
+        self._no_platform_group_name_overlap()
 
     def _set_default_editors(self):
         # default to $[G]EDITOR unless an editor is defined in the config
@@ -1150,3 +1166,21 @@ class GlobalConfig(ParsecConfig):
             cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
         if not cfg['editors']['gui']:
             cfg['editors']['gui'] = os.environ.get('GEDITOR') or 'gvim -fg'
+
+    def _no_platform_group_name_overlap(self):
+        if (
+            'platforms' in self.sparse and
+            'platform groups' in self.sparse
+        ):
+            names_in_platforms_and_groups = set(
+                self.sparse['platforms'].keys()).intersection(
+                    set(self.sparse['platform groups'].keys()))
+
+            if names_in_platforms_and_groups:
+                msg = (
+                    'Platforms and platform groups must not share names. '
+                    'The following are in both sets:'
+                )
+                for name in names_in_platforms_and_groups:
+                    msg += f'\n * {name}'
+                raise GlobalConfigError(msg)

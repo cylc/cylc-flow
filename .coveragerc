@@ -34,7 +34,6 @@ omit=
 parallel = True
 plugins=
 source=
-    ./bin
     ./cylc
 timid = False
 

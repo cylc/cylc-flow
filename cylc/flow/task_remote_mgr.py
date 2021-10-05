@@ -292,7 +292,13 @@ class TaskRemoteMgr:
                 procs[platform_n] = (
                     cmd,
                     host,
-                    Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL)
+                    Popen(  # nosec
+                        cmd,
+                        stdout=PIPE,
+                        stderr=PIPE,
+                        stdin=DEVNULL,
+                    )
+                    # * command constructed by internal interface
                 )
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
@@ -325,10 +331,13 @@ class TaskRemoteMgr:
                         procs[platform_n] = (
                             retry_cmd,
                             host,
-                            Popen(
-                                retry_cmd, stdout=PIPE, stderr=PIPE,
-                                stdin=DEVNULL
+                            Popen(  # nosec
+                                retry_cmd,
+                                stdout=PIPE,
+                                stderr=PIPE,
+                                stdin=DEVNULL,
                             )
+                            # * command constructed by internal interface
                         )
                 if proc.wait() and proc.returncode != 255:
                     LOG.warning(TaskRemoteMgmtError(

@@ -87,6 +87,9 @@ cli options.
 [#4389](https://github.com/cylc/cylc-flow/pull/4389) - the `flow.cylc.processed`
 (previously called `suite.rc.processed`) is now stored in `log/flow-config/`.
 
+[#4329](https://github.com/cylc/cylc-flow/pull/4329) - Enable selection of
+platform from platform group at task job initialization.
+
 [#4430](https://github.com/cylc/cylc-flow/pull/4430) - Log files renamed:
 - `log/flow.cylc.processed` ⇒ `log/flow-processed.cylc`
 - `log/<datetimes>-run.cylc` ⇒ `log/<datetimes>-start.cylc`
@@ -126,6 +129,10 @@ Fix ``cylc stop --kill`` which was not actually killing task jobs.
 
 [#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
 now works with relative paths.
+
+[#4445](https://github.com/cylc/cylc-flow/pull/4445) - Cylc will prevent you
+using the same name for a platform and a platform group. Which one it should
+pick is ambiguous, and is a setup error.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
