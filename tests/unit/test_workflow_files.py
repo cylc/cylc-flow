@@ -100,7 +100,7 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-def test_check_nested_run_dirs__parents(tmp_run_dir: Callable):
+def test_check_nested_run_dirs(tmp_run_dir: Callable):
     """Test that check_nested_run_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
