@@ -162,7 +162,7 @@ def test_infer_latest_run(
 
     Params:
         path: Input arg.
-        implict_runN: Input arg.
+        implicit_runN: Input arg.
         expected_reg: The reg part of the expected returned tuple.
     """
     # Setup
