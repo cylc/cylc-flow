@@ -130,8 +130,8 @@ def make_workflow_run_tree(workflow):
         get_workflow_run_share_dir(workflow),
         get_workflow_run_work_dir(workflow),
     ):
-        if dir_:
-            os.makedirs(dir_, exist_ok=True)
+        if not Path(dir_).is_dir():
+            os.makedirs(dir_)
             LOG.debug(f'{dir_}: directory created')
 
 
