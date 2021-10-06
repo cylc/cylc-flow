@@ -1006,7 +1006,7 @@ def remote_clean(
             continue
         out, err = item.proc.communicate()
         if out:
-            LOG.info(f"[{item.install_target}] {out}")
+            LOG.info(f"[{item.install_target}]\n{out}")
         if ret_code:
             this_platform = item.platforms.pop(0)
             excp = TaskRemoteMgmtError(
@@ -1028,7 +1028,7 @@ def remote_clean(
             # Only show stderr from remote host in debug mode if ret code 0
             # because stderr often contains useless stuff like ssh login
             # messages
-            LOG.debug(f"[{item.install_target}] {err}")
+            LOG.debug(f"[{item.install_target}]\n{err}")
         sleep(0.2)
     if failed_targets:
         for target, excp in failed_targets.items():
