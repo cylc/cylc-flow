@@ -17,7 +17,6 @@
 
 from ansimarkup import parse as cparse
 import asyncio
-from contextlib import suppress
 from functools import lru_cache
 import sys
 from typing import TYPE_CHECKING
@@ -27,7 +26,10 @@ from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.loggingutil import (
+    close_log,
+    TimestampRotatingFileHandler,
+)
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
@@ -251,25 +253,15 @@ def _open_logs(reg, no_detach):
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    workflow_log_handler = get_workflow_run_log_name(reg)
+    log_path = get_workflow_run_log_name(reg)
     LOG.addHandler(
-        TimestampRotatingFileHandler(
-            workflow_log_handler,
-            no_detach))
-
+        TimestampRotatingFileHandler(log_path, no_detach)
+    )
     # Add file installation log
     file_install_log_path = get_workflow_file_install_log_name(reg)
-    handler = TimestampRotatingFileHandler(file_install_log_path, no_detach)
-    RSYNC_LOG.addHandler(handler)
-
-
-def _close_logs():
-    """Close Cylc log handlers for a flow run."""
-    for handler in LOG.handlers:
-        with suppress(IOError):
-            # suppress traceback which `logging` might try to write to the
-            # log we are trying to close
-            handler.close()
+    RSYNC_LOG.addHandler(
+        TimestampRotatingFileHandler(file_install_log_path, no_detach)
+    )
 
 
 def scheduler_cli(options: 'Values', reg: str) -> None:
@@ -345,7 +337,7 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
     # NOTE: any threads which include sleep statements could cause
     #       sys.exit to hang if not shutdown properly
     LOG.info("DONE")
-    _close_logs()
+    close_log(LOG)
     sys.exit(ret)
 
 

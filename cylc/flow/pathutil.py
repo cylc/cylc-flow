@@ -267,17 +267,18 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
     if os.path.islink(path):
         if os.path.exists(path):
             target = os.path.realpath(path)
-            LOG.debug(
-                f'Removing symlink target directory: ({path} ->) {target}')
+            LOG.info(
+                f'Removing symlink target directory: ({path} ->) {target}'
+            )
             rmtree(target, onerror=handle_rmtree_err)
-            LOG.debug(f'Removing symlink: {path}')
+            LOG.info(f'Removing symlink: {path}')
         else:
-            LOG.debug(f'Removing broken symlink: {path}')
+            LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
     elif not os.path.exists(path):
         raise FileNotFoundError(path)
     else:
-        LOG.debug(f'Removing directory: {path}')
+        LOG.info(f'Removing directory: {path}')
         rmtree(path, onerror=handle_rmtree_err)
 
 
@@ -291,13 +292,13 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
     if not os.path.isabs(path):
         raise ValueError("Path must be absolute")
     if os.path.islink(path):
-        LOG.debug(f"Removing symlink: {path}")
+        LOG.info(f"Removing symlink: {path}")
         os.remove(path)
     elif os.path.isfile(path):
-        LOG.debug(f"Removing file: {path}")
+        LOG.info(f"Removing file: {path}")
         os.remove(path)
     else:
-        LOG.debug(f"Removing directory: {path}")
+        LOG.info(f"Removing directory: {path}")
         rmtree(path, onerror=handle_rmtree_err)
 
 
@@ -330,7 +331,7 @@ def remove_empty_parents(
             continue
         try:
             parent.rmdir()
-            LOG.debug(f'Removing directory: {parent}')
+            LOG.info(f'Removing directory: {parent}')
         except OSError:
             break
 
@@ -383,7 +384,10 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             part = os.path.normpath(part)
             if os.path.isabs(part):
                 raise UserInputError("--rm option cannot take absolute paths")
-            if part == '.' or part.startswith(f'..{os.sep}'):
+            if (
+                part in {os.curdir, os.pardir} or
+                part.startswith(f"{os.pardir}{os.sep}")  # '../'
+            ):
                 raise UserInputError(
                     "--rm option cannot take paths that point to the "
                     "run directory or above"

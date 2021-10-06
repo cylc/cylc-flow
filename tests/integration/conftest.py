@@ -19,7 +19,6 @@ import asyncio
 from functools import partial
 from pathlib import Path
 import pytest
-import re
 from shutil import rmtree
 from typing import List, TYPE_CHECKING, Tuple
 
@@ -210,20 +209,6 @@ def mod_one(mod_one_conf, mod_flow, mod_scheduler):
     reg = mod_flow(mod_one_conf)
     schd = mod_scheduler(reg)
     return schd
-
-
-@pytest.fixture
-def log_filter():
-    def _log_filter(log, name=None, level=None, contains=None, regex=None):
-        return [
-            (log_name, log_level, log_message)
-            for log_name, log_level, log_message in log.record_tuples
-            if (name is None or name == log_name)
-            and (level is None or level == log_level)
-            and (contains is None or contains in log_message)
-            and (regex is None or re.match(regex, log_message))
-        ]
-    return _log_filter
 
 
 @pytest.fixture(scope='session')

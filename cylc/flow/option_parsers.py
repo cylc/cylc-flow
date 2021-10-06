@@ -22,11 +22,14 @@ import os
 import re
 from ansimarkup import parse as cparse
 import sys
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional, List, Tuple
 
 from cylc.flow import LOG, RSYNC_LOG
 import cylc.flow.flags
-from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.loggingutil import (
+    CylcLogFormatter,
+    setup_segregated_log_streams,
+)
 
 
 def format_shell_examples(string):
@@ -156,9 +159,20 @@ TASK_GLOB matches task or family names at a given cycle point.
     MULTITASK_USAGE = MULTI_USAGE_TEMPLATE.format(
         WITHOUT_CYCLE_GLOBS, WITHOUT_CYCLE_EXAMPLES)
 
-    def __init__(self, usage, argdoc=None, comms=False,
-                 jset=False, multitask=False, multitask_nocycles=False,
-                 prep=False, auto_add=True, icp=False, color=True):
+    def __init__(
+        self,
+        usage: str,
+        argdoc: Optional[List[Tuple[str, str]]] = None,
+        comms: bool = False,
+        jset: bool = False,
+        multitask: bool = False,
+        multitask_nocycles: bool = False,
+        prep: bool = False,
+        auto_add: bool = True,
+        icp: bool = False,
+        color: bool = True,
+        segregated_log: bool = False
+    ) -> None:
 
         self.auto_add = auto_add
         if argdoc is None:
@@ -184,8 +198,10 @@ TASK_GLOB matches task or family names at a given cycle point.
         self.jset = jset
         self.prep = prep
         self.icp = icp
-        self.workflow_info = []
         self.color = color
+        # Whether to log messages that are below warning level to stdout
+        # instead of stderr:
+        self.segregated_log = segregated_log
 
         maxlen = 0
         for arg in argdoc:
@@ -388,21 +404,27 @@ TASK_GLOB matches task or family names at a given cycle point.
         #    better choice for the logging stream. This allows us to use STDOUT
         #    for verbosity agnostic outputs.
         # 2. Scheduler will remove this handler when it becomes a daemon.
-        if options.verbosity > 1:
+        if options.verbosity < 0:
+            LOG.setLevel(logging.WARNING)
+        elif options.verbosity > 0:
             LOG.setLevel(logging.DEBUG)
         else:
             LOG.setLevel(logging.INFO)
-        # Remove NullHandler before add the StreamHandler
         RSYNC_LOG.setLevel(logging.INFO)
-        while LOG.handlers:
-            LOG.handlers[0].close()
-            LOG.removeHandler(LOG.handlers[0])
-        errhandler = logging.StreamHandler(sys.stderr)
-        errhandler.setFormatter(CylcLogFormatter(
+        # Remove NullHandler before add the StreamHandler
+        for log in (LOG, RSYNC_LOG):
+            while log.handlers:
+                log.handlers[0].close()
+                log.removeHandler(log.handlers[0])
+        log_handler = logging.StreamHandler(sys.stderr)
+        log_handler.setFormatter(CylcLogFormatter(
             timestamp=options.log_timestamp,
             dev_info=bool(options.verbosity > 2)
         ))
-        LOG.addHandler(errhandler)
+        LOG.addHandler(log_handler)
+
+        if self.segregated_log:
+            setup_segregated_log_streams(LOG, log_handler)
 
         return (options, args)
 
