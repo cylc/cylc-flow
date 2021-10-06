@@ -540,6 +540,12 @@ class Scheduler:
         else:
             n_restart = 0
 
+        is_quiet = (cylc.flow.flags.verbosity < 0)
+        log_level = LOG.getEffectiveLevel()
+        if is_quiet:
+            # Temporarily change logging level to log important info
+            LOG.setLevel(logging.INFO)
+
         log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
         log_extra_num = {
             TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
@@ -571,6 +577,10 @@ class Scheduler:
             LOG.info(
                 'Start point: %s', self.config.start_point, extra=log_extra)
         LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
+
+        if is_quiet:
+            LOG.info("Quiet mode on")
+            LOG.setLevel(log_level)
 
     async def start_scheduler(self):
         """Start the scheduler main loop."""
