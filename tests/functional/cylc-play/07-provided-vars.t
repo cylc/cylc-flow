@@ -22,7 +22,7 @@
 
 set_test_number 4
 
-init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+cat > flow.cylc <<'__FLOW_CONFIG__'
 [scheduler]
     cycle point format = %Y
     [[events]]
@@ -42,14 +42,16 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         """
 __FLOW_CONFIG__
 
+init_workflow "${TEST_NAME_BASE}" flow.cylc true
+
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-play" cylc play "${WORKFLOW_NAME}" --no-detach
 named_grep_ok \
     "${TEST_NAME_BASE}-check-CYLC_WORKFLOW_NAME" \
     "CYLC_WORKFLOW_NAME is:.* ${WORKFLOW_NAME}" \
-    "${WORKFLOW_RUN_DIR}/log/job/1066/foo/NN/job.out"
+    "${WORKFLOW_RUN_DIR}/runN/log/job/1066/foo/NN/job.out"
 named_grep_ok \
     "${TEST_NAME_BASE}-check-CYLC_WORKFLOW_ID" \
     "CYLC_WORKFLOW_ID is:.* ${WORKFLOW_NAME}/run1" \
-    "${WORKFLOW_RUN_DIR}/log/job/1066/foo/NN/job.out"
+    "${WORKFLOW_RUN_DIR}/runN/log/job/1066/foo/NN/job.out"
 
