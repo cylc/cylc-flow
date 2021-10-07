@@ -411,8 +411,5 @@ def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
     return True
 
 
-def runN_remover(workflow_id: str) -> str:
-    if re.findall(r'(.*)\/run\d+$', workflow_id):
-        return re.findall(r'(.*)\/run\d+$', workflow_id)[0]
-    else:
-        return workflow_id
+def get_workflow_name_from_id(workflow_id: str) -> str:
+    return re.sub(rf'{re.escape(os.sep)}run\d+$', '', workflow_id)
