@@ -588,7 +588,13 @@ class WorkflowConfig:
         Sets:
             self.cfg['scheduler']['cycle point time zone']
         """
+
         cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
+        if (
+            not cylc.flow.flags.cylc7_back_compat
+            and not cfg_cp_tz
+        ):
+            cfg_cp_tz = 'Z'
         # Get the original workflow run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
         if orig_cp_tz is None:
