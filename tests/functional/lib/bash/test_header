@@ -453,12 +453,17 @@ graph_workflow() {
 init_workflow() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
+    local RUN_NUMS="${3:-false}"
     WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
     mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${WORKFLOW_NAME}/flow.cylc"
     cd "${TEST_DIR}/${WORKFLOW_NAME}"
-    cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    if "${RUN_NUMS}"; then
+        cylc install --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    else
+        cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    fi
 }
 
 install_workflow() {
