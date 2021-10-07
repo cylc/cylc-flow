@@ -75,7 +75,7 @@ from cylc.flow.pathutil import (
     get_workflow_run_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
-    runN_remover
+    get_workflow_name_from_id
 )
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
@@ -184,7 +184,7 @@ class WorkflowConfig:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
         self.workflow = workflow  # workflow id
-        self.workflow_name = runN_remover(self.workflow)
+        self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)

@@ -77,7 +77,7 @@ from cylc.flow.pathutil import (
     get_workflow_run_work_dir,
     get_workflow_test_log_name,
     make_workflow_run_tree,
-    runN_remover
+    get_workflow_name_from_id
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,
@@ -246,7 +246,7 @@ class Scheduler:
     def __init__(self, reg: str, options: Values) -> None:
         # flow information
         self.workflow = reg
-        self.workflow_name = runN_remover(self.workflow)
+        self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
         self.id = f'{self.owner}{ID_DELIM}{self.workflow}'
