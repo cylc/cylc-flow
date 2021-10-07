@@ -73,10 +73,11 @@
 #         Test that FILE exists
 #     exists_fail FILE
 #         Test that FILE does not exist
-#     init_workflow TEST_NAME [SOURCE]
+#     init_workflow TEST_NAME [SOURCE] [[RUN_NUMS]]
 #         Create a workflow from SOURCE's "flow.cylc" called:
 #         "cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
 #         Provides WORKFLOW_NAME and WORKFLOW_RUN_DIR variables.
+#         RUN_NUMS (defaults to false): If false run cylc install --no-rundir
 #     install_workflow TEST_NAME SOURCE
 #         Same as init_workflow, but SOURCE must be a directory containing a
 #         "flow.cylc" file.
