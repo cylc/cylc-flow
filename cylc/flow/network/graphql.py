@@ -407,6 +407,22 @@ class IgnoreFieldMiddleware:
                                 parent_path_string]['fields']
                     ):
                         return None
+                # Do not resolve subfields of an empty type
+                # by setting as null in parent/root.
+                elif (
+                        isinstance(root, dict)
+                        and field_name in root
+                ):
+                    field_value = root[field_name]
+                    if (
+                            field_value in EMPTY_VALUES
+                            or (
+                                hasattr(field_value, 'ListFields')
+                                and not field_value.ListFields()
+                            )
+                    ):
+                        root[field_name] = None
+                        return None
                 if (
                         info.operation.operation in self.ASYNC_OPS
                         or iscoroutinefunction(next_)
