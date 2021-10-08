@@ -33,6 +33,9 @@ START="$NOW"
 HOUR="$(date +%H)"
 OFFSET="PT0S"
 
+# Spoof an unusual timezone
+export TZ=Asia/Kathmandu
+
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}" \
    -s "START='${START}'" -s "HOUR='${HOUR}'" -s "OFFSET='${OFFSET}'"
 
