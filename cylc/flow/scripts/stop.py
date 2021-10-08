@@ -112,7 +112,7 @@ class StopPoller(Poller):
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[("REG", "Workflow name"),
+        argdoc=[("WORKFLOW", "Workflow name or ID"),
                 ("[STOP]", "task POINT (cycle point), or TASK (task ID).")]
     )
 

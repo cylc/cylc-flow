@@ -89,7 +89,7 @@ def smart_open(filename=None):
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[('REG', 'Workflow name')]
+        argdoc=[('WORKFLOW', 'Workflow name or ID')]
     )
     parser.add_option(
         "-r", "--raw",

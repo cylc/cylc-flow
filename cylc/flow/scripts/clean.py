@@ -71,7 +71,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[('REG', "Workflow name")],
+        argdoc=[('WORKFLOW', 'Workflow name or ID')],
         segregated_log=True
     )
 

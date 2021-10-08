@@ -44,7 +44,7 @@ INTERNAL = True
 
 def get_option_parser():
     parser = COP(__doc__, comms=True, argdoc=[
-        ('REG', 'Workflow name'),
+        ('WORKFLOW', 'Workflow name or ID'),
         ('METHOD', 'Network API function name')])
 
     parser.add_option(

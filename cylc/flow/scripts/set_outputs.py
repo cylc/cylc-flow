@@ -58,7 +58,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask_nocycles=True,
         argdoc=[
-            ("REG", "Workflow name"),
+            ("WORKFLOW", "Workflow name or ID"),
             ('TASK-GLOB [...]', 'Task match pattern')])
     parser.add_option(
         "--output", metavar="OUTPUT",

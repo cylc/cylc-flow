@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def get_option_parser():
-    return COP(__doc__, argdoc=[('REG', 'Workflow name')])
+    return COP(__doc__, argdoc=[('WORKFLOW', 'Workflow name or ID')])
 
 
 @cli_function(get_option_parser)
