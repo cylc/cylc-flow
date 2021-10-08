@@ -1,6 +1,10 @@
 #!Jinja2
 [scheduler]
+    {% if CPTZ is defined %}
     cycle point time zone = {{CPTZ}}
+    {% else %}
+    cycle point time zone = '+0000'
+    {% endif %}
     [[events]]
         abort on inactivity timeout = True
         inactivity timeout = {{TIMEOUT}}
