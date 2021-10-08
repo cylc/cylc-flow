@@ -13,13 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from functools import partial
-from pathlib import Path
 
 import pytest
 
-from cylc.flow.config import WorkflowConfig
-from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.exceptions import WorkflowConfigError
 
 
@@ -36,12 +32,14 @@ from cylc.flow.exceptions import WorkflowConfigError
         ('a£b', False),
         ('+ab', False),
         ('@ab', False),  # not valid in [runtime]
+        ('_cylc', False),
+        ('_cylcy', False),
     ]
 )
 def test_validate_task_name(
     flow,
     one_conf,
-    run_dir,
+    validate,
     task_name: str,
     valid: bool
 ):
@@ -53,16 +51,51 @@ def test_validate_task_name(
         }
     })
 
-    validate = partial(
-        WorkflowConfig,
-        reg,
-        str(Path(run_dir, reg, 'flow.cylc')),
-        ValidateOptions()
-    )
-
     if valid:
-        validate()
+        validate(reg)
     else:
         with pytest.raises(WorkflowConfigError) as exc_ctx:
-            validate()
+            validate(reg)
         assert task_name in str(exc_ctx.value)
+
+
+@pytest.mark.parametrize(
+    'task_name',
+    [
+        'root',
+        '_cylc',
+        '_cylcy',
+    ]
+)
+def test_validate_implicit_task_name(
+    flow,
+    validate,
+    task_name: str,
+):
+    """It should validate implicit task names in the graph.
+
+    Note that most invalid task names get caught during graph parsing.
+    Here we ensure that names which look like valid graph node names but which
+    are blacklisted get caught and raise errors.
+    """
+    reg = flow({
+        'scheduler': {
+            'allow implicit tasks': 'True'
+        },
+        'scheduling': {
+            'graph': {
+                'R1': task_name
+            }
+        },
+        'runtime': {
+            # having one item in the runtime allows "root" to be expanded
+            # which makes this test more thorough
+            'whatever': {}
+        }
+    })
+
+    with pytest.raises(WorkflowConfigError) as exc_ctx:
+        validate(reg)
+    assert str(exc_ctx.value).splitlines()[0] == (
+        f'invalid task name "{task_name}"'
+    )

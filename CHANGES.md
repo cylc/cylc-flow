@@ -113,6 +113,9 @@ Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).
 Fix bug when a conditional expression in the graph contains one task name that
 is a substring of another.
 
+[#4399](https://github.com/cylc/cylc-flow/pull/4399) -
+Ensure that implicit task names are validated (as opposed to explicit ones).
+
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
 
