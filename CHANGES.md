@@ -100,6 +100,9 @@ workflow directory are recorded by `log/version`.
 [#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
 now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 
+[#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8 
+`cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
+
 
 ### Fixes
 
