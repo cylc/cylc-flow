@@ -1,6 +1,6 @@
 #!Jinja2
 [scheduler]
-    UTC mode = {{UTC_MODE}}
+    cycle point time zone = {{CPTZ}}
     [[events]]
         abort on inactivity timeout = True
         inactivity timeout = {{TIMEOUT}}
