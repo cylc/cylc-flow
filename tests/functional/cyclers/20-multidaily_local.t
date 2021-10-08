@@ -22,10 +22,8 @@ set_test_number 3
 #-------------------------------------------------------------------------------
 CHOSEN_WORKFLOW="$(basename "$0" | sed "s/^.*-\(.*\)\.t/\1/g")"
 install_workflow "${TEST_NAME_BASE}" "${CHOSEN_WORKFLOW}"
-CURRENT_TZ_UTC_OFFSET="$(date +%z)"
-if [[ $CURRENT_TZ_UTC_OFFSET == '+0000' ]]; then
-    CURRENT_TZ_UTC_OFFSET="Z"
-fi
+CURRENT_TZ_UTC_OFFSET="Z"
+
 sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" "${WORKFLOW_RUN_DIR}/reference.log"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
