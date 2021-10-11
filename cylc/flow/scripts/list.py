@@ -161,7 +161,3 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
                 print(result[ns])
             else:
                 print(ns)
-
-
-if __name__ == "__main__":
-    main()

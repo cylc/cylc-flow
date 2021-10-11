@@ -393,7 +393,3 @@ class HTMLTimingSummary(TimingSummary):
                 'Cannot import matplotlib - HTML summary unavailable.'
             )
         super(HTMLTimingSummary, self)._check_imports()
-
-
-if __name__ == "__main__":
-    main()

@@ -49,7 +49,3 @@ def main(parser, opts, *args):
         sys.exit(0)
     target_dir, *resources = args
     extract_resources(target_dir, resources or None)
-
-
-if __name__ == '__main__':
-    main()

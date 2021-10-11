@@ -315,7 +315,3 @@ def main(_, options: 'Values', reg: str, *task_args: str) -> None:
 
     if options.json:
         print(json.dumps(json_filter, indent=4))
-
-
-if __name__ == "__main__":
-    main()

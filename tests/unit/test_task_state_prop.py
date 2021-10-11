@@ -68,7 +68,3 @@ class TestTaskStateProp(unittest.TestCase):
         for status, key, subst, expected in params:
             r = get_status_prop(status=status, key=key, subst=subst)
             self.assertTrue(expected in r)
-
-
-if __name__ == '__main__':
-    unittest.main()

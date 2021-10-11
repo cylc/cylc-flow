@@ -271,7 +271,3 @@ def main(_, options: 'Values', workflow: str) -> None:
     except Exception as exc:
         raise CylcError(
             json.dumps(workflows, indent=4) + '\n' + str(exc) + '\n')
-
-
-if __name__ == "__main__":
-    main()

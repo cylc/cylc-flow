@@ -146,7 +146,3 @@ class TestOrderedDict(unittest.TestCase):
 
         self.assertEqual('year', next(iterator))
         self.assertEqual('key', next(iterator))
-
-
-if __name__ == '__main__':
-    unittest.main()

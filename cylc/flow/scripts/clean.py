@@ -129,7 +129,3 @@ def main(parser: COP, opts: 'Values', reg: str):
         )
 
     init_clean(reg, opts)
-
-
-if __name__ == "__main__":
-    main()

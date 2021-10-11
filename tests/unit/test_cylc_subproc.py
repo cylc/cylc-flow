@@ -98,7 +98,3 @@ class TestSubprocessSafe(unittest.TestCase):
                 call.Popen(command),
                 call.Popen_instance.wait(),
                 ], Popen.mock.method_calls)
-
-
-if __name__ == "__main__":
-    unittest.main()

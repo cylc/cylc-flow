@@ -201,10 +201,6 @@ class TestSubProcPool(unittest.TestCase):
                 get_func("the_sword", temp_dir)
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 @pytest.fixture
 def mock_ctx():
     def inner_(ret_code=None, host=None, cmd_key=None, cmd=None):

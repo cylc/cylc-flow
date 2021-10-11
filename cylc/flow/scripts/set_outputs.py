@@ -82,7 +82,3 @@ def main(parser: COP, options: 'Values', reg: str, *task_globs: str) -> None:
     }
 
     pclient('graphql', mutation_kwargs)
-
-
-if __name__ == "__main__":
-    main()

@@ -170,7 +170,3 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
 
     print(cparse('<green>Valid for cylc-%s</green>' % CYLC_VERSION))
     profiler.stop()
-
-
-if __name__ == "__main__":
-    main()

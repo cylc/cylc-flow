@@ -54,7 +54,3 @@ class TestPkgResources(unittest.TestCase):
             extracted = os.path.join(tmpdir, resource)
             self.assertTrue(os.path.isfile(extracted))
         shutil.rmtree(os.path.join(tmpdir, 'etc'), ignore_errors=True)
-
-
-if __name__ == '__main__':
-    unittest.main()

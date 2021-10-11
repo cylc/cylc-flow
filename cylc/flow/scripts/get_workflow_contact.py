@@ -48,7 +48,3 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
     else:
         for key, value in sorted(data.items()):
             print("%s=%s" % (key, value))
-
-
-if __name__ == "__main__":
-    main()

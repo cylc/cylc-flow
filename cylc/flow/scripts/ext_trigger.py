@@ -130,7 +130,3 @@ def main(
             if i_try > 0:
                 LOG.info(MSG_SEND_SUCCEED, i_try + 1, max_n_tries)
             break
-
-
-if __name__ == "__main__":
-    main()

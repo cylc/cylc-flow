@@ -39,7 +39,3 @@ def main(*api_args):
         print(__doc__)
         sys.exit(0)
     run_function(args[1], args[2], args[3], args[4])
-
-
-if __name__ == "__main__":
-    main()

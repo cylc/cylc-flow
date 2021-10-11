@@ -344,7 +344,3 @@ class TestParamExpand(unittest.TestCase):
                     expected.replace(' ', '') in expanded,
                     f"Expected value {expected.replace(' ', '')} "
                     f"not in {expanded}")
-
-
-if __name__ == "__main__":
-    unittest.main()

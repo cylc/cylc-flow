@@ -175,7 +175,3 @@ def main(parser: COP, options: 'Values', workflow1: str, workflow2: str):
         print(f'\n{n_diff} common items differ {workflow1_name}(<) '
               f'{workflow2_name}(>)')
         prdict(diff_1_2, '', diff=True, nested=options.nested)
-
-
-if __name__ == "__main__":
-    main()
