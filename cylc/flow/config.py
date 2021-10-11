@@ -762,17 +762,22 @@ class WorkflowConfig:
             "implicit tasks detected (no entry under [runtime]):\n"
             f"    * {tasks_str}"
         )
-        err_msg = (
-            f"{msg}\n"
-            "To allow implicit tasks, use "
-            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
-        )
         if self.cfg['scheduler']['allow implicit tasks']:
             LOG.debug(msg)
         else:
-            if not cylc.flow.flags.cylc7_back_compat:
-                raise WorkflowConfigError(err_msg)
-            LOG.warning(err_msg)
+            msg = (
+                f"{msg}\n"
+                "To allow implicit tasks, use "
+                f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+            )
+            # Allow implicit tasks in Cylc 7 back-compat mode (but not if
+            # rose-suite.conf present, to maintain compat with Rose 2019)
+            if (
+                Path(self.run_dir, 'rose-suite.conf').is_file() or
+                not cylc.flow.flags.cylc7_back_compat
+            ):
+                raise WorkflowConfigError(msg)
+            LOG.warning(msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
