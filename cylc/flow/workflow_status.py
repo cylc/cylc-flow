@@ -16,8 +16,12 @@
 """Workflow status constants."""
 
 from enum import Enum
+from typing import Tuple, TYPE_CHECKING
 
 from cylc.flow.wallclock import get_time_string_from_unix_time as time2str
+
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
 
 # Keys for identify API call
 KEY_GROUP = "group"
@@ -39,9 +43,6 @@ WORKFLOW_STATUS_RUNNING_TO_HOLD = "running to hold at %s"
 
 class WorkflowStatus(Enum):
     """The possible statuses of a workflow."""
-
-    INSTALLED = "installed"
-    """Workflow is installed."""
 
     PAUSED = "paused"
     """Workflow will not submit any new jobs."""
@@ -77,37 +78,58 @@ class StopMode(Enum):
     REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
     """External immediate shutdown request."""
 
-    def describe(self):
-        """Return a user-friendly description of this state."""
-        if self == self.AUTO:
+    def explain(self) -> str:
+        """Return an explanation of what a workflow in this state is doing.
+
+        This is used in the workflow status message if the workflow is stopping
+        to clarify what the scheduler is doing.
+        """
+        if self in (self.AUTO, self.REQUEST_CLEAN):  # type: ignore
+            return 'Waiting for active jobs to complete'
+        if self == self.REQUEST_KILL:  # type: ignore
+            return 'Killing active jobs'
+        if self in (
+            self.AUTO_ON_TASK_FAILIURE,  # type: ignore
+            self.REQUEST_NOW,
+            self.REQUEST_NOW_NOW,
+        ):
+            return 'Shutting down'
+        return ''
+
+    def describe(self) -> str:
+        """Return a user-friendly description of this state.
+
+        This is used in the schema to convey what the different stop modes do.
+        """
+        if self == self.AUTO:  # type: ignore
             return 'Wait until workflow has completed.'
-        if self == self.AUTO_ON_TASK_FAILURE:
+        if self == self.AUTO_ON_TASK_FAILURE:  # type: ignore
             return 'Wait until the first task fails.'
-        if self == self.REQUEST_CLEAN:
+        if self == self.REQUEST_CLEAN:  # type: ignore
             return (
                 'Regular shutdown:\n'
                 '* Wait for all active jobs to complete.\n'
                 '* Run workflow event handlers and wait for them to complete.'
             )
-        if self == self.REQUEST_KILL:
+        if self == self.REQUEST_KILL:  # type: ignore
             return (
                 'Kill shutdown:\n'
                 '* Wait for all active jobs to be killed.\n'
                 '* Run workflow event handlers and wait for them to complete.'
             )
-        if self == self.REQUEST_NOW:
+        if self == self.REQUEST_NOW:  # type: ignore
             return (
                 'Immediate shutdown\n'
                 "* Don't kill submitted or running jobs.\n"
                 '* Run workflow event handlers and wait for them to complete.'
             )
-        if self == self.REQUEST_NOW_NOW:
+        if self == self.REQUEST_NOW_NOW:  # type: ignore
             return (
                 'Immediate shutdown\n'
                 "* Don't kill submitted or running jobs.\n"
                 "* Don't run event handlers."
             )
-        return ''
+        raise KeyError(f'No description for {self}.')
 
 
 class AutoRestartMode(Enum):
@@ -120,18 +142,20 @@ class AutoRestartMode(Enum):
     """Workflow will stop immediately but *not* attempt to restart."""
 
 
-def get_workflow_status(schd):
+def get_workflow_status(schd: 'Scheduler') -> Tuple[WorkflowStatus, str]:
     """Return the status of the provided workflow.
 
+    This should be a short, concise description of the workflow state.
+
     Args:
-        schd (cylc.flow.Scheduler): The running workflow
+        schd: The running workflow
 
     Returns:
         tuple - (state, state_msg)
 
-        state (cylc.flow.workflow_status.WorkflowStatus):
+        state:
             The WorkflowState.
-        state_msg (str):
+        state_msg:
             Text describing the current state (may be an empty string).
 
     """
@@ -140,9 +164,10 @@ def get_workflow_status(schd):
 
     if schd.is_paused:
         status = WorkflowStatus.PAUSED
+        status_msg = 'Paused'
     elif schd.stop_mode is not None:
         status = WorkflowStatus.STOPPING
-        status_msg = f'Stopping: {schd.stop_mode.describe()}'
+        status_msg = f'Stopping: {schd.stop_mode.explain()}'
     elif schd.pool.hold_point:
         status_msg = (
             WORKFLOW_STATUS_RUNNING_TO_HOLD %
@@ -159,9 +184,12 @@ def get_workflow_status(schd):
         status_msg = (
             WORKFLOW_STATUS_RUNNING_TO_STOP %
             schd.pool.stop_task_id)
-    elif schd.config.final_point:
+    elif schd.config and schd.config.final_point:
         status_msg = (
             WORKFLOW_STATUS_RUNNING_TO_STOP %
             schd.config.final_point)
+    else:
+        # fallback - running indefinitely
+        status_msg = 'Running'
 
-    return (status.value, status_msg)
+    return (status.value, status_msg)  # type: ignore

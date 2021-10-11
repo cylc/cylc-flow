@@ -214,6 +214,12 @@ class WorkflowFiles:
         For details of the fields see ``ContactFileFields``.
         """
 
+        DB = 'db'
+        """The workflow database.
+
+        Contains information about the execution and status of a workflow.
+        """
+
         PUBLIC_FILE_EXTENSION = '.key'
         PRIVATE_FILE_EXTENSION = '.key_secret'
         """Keyword identifiers used to form the certificate names.

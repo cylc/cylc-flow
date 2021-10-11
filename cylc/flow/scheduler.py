@@ -903,6 +903,7 @@ class Scheduler:
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode
+        self.data_store_mgr.updates_pending = True
 
     def command_release(self, task_globs: Iterable[str]) -> int:
         """Release held tasks."""

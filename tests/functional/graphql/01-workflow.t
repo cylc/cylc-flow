@@ -83,7 +83,7 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
         {
             "name": "${WORKFLOW_NAME}",
             "status": "paused",
-            "statusMsg": "",
+            "statusMsg": "Paused",
             "host": "${HOST}",
             "port": ${PORT},
             "owner": "${USER}",
