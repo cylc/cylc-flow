@@ -67,7 +67,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("[WORKFLOW]", "Workflow name or path")],
+        argdoc=[("[WORKFLOW]", "Workflow name, ID, or path")],
         jset=True, icp=True
     )
 

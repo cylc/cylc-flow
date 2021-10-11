@@ -86,7 +86,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, prep=True,
-        argdoc=[('[WORKFLOW]', 'Workflow name or ID')]
+        argdoc=[('[WORKFLOW_NAME]', 'Workflow name')]
     )
 
     parser.add_option(
@@ -153,7 +153,7 @@ def install(
         source = opts.source
     else:
         if opts.source:
-            parser.error("WORKFLOW and --directory are mutually exclusive.")
+            parser.error("WORKFLOW_NAME and --directory are mutually exclusive.")
         source = search_install_source_dirs(reg)
     flow_name = opts.flow_name or reg
 

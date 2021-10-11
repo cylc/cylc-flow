@@ -57,7 +57,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('WORKFLOW', 'Workflow name or ID')
+            ('WORKFLOW_ID', 'Workflow ID')
         ],
         comms=True
     )
