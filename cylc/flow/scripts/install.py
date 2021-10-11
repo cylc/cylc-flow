@@ -153,7 +153,8 @@ def install(
         source = opts.source
     else:
         if opts.source:
-            parser.error("WORKFLOW_NAME and --directory are mutually exclusive.")
+            parser.error(
+                "WORKFLOW_NAME and --directory are mutually exclusive.")
         source = search_install_source_dirs(reg)
     flow_name = opts.flow_name or reg
 
