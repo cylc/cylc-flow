@@ -75,7 +75,7 @@ mutation (
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[("REG", "Workflow name"),
+        argdoc=[("WORKFLOW", "Workflow name or ID"),
                 ("MSG", "External trigger message"),
                 ("ID", "Unique trigger ID")])
 

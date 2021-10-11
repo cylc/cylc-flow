@@ -75,6 +75,7 @@ from cylc.flow.pathutil import (
     get_workflow_run_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
+    get_workflow_name_from_id
 )
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
@@ -182,7 +183,8 @@ class WorkflowConfig:
         if self.mem_log is None:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
-        self.workflow = workflow  # workflow name
+        self.workflow = workflow  # workflow id
+        self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
@@ -1366,7 +1368,8 @@ class WorkflowConfig:
         """Workflow context is exported to the local environment."""
         for key, value in {
             **verbosity_to_env(cylc.flow.flags.verbosity),
-            'CYLC_WORKFLOW_NAME': self.workflow,
+            'CYLC_WORKFLOW_ID': self.workflow,
+            'CYLC_WORKFLOW_NAME': self.workflow_name,
             'CYLC_WORKFLOW_RUN_DIR': self.run_dir,
             'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
             'CYLC_WORKFLOW_WORK_DIR': self.work_dir,

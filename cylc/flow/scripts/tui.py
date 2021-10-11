@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc tui REG
+"""cylc tui WORKFLOW
 
 View and control running workflows in the terminal.
 
@@ -53,7 +53,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('REG', 'Workflow name')
+            ('WORKFLOW', 'Workflow name or ID')
         ],
         # auto_add=False,  NOTE: at present auto_add can not be turned off
         color=False

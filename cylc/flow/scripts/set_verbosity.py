@@ -52,7 +52,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
-            ('REG', 'Workflow name'),
+            ('WORKFLOW', 'Workflow name or ID'),
             ('LEVEL', ', '.join(LOG_LEVELS.keys()))
         ]
     )

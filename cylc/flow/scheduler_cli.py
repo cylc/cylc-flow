@@ -71,16 +71,18 @@ the cycle point of the earliest task specified by --start-task) will be taken
 as satisfied.
 
 Examples:
-    # Start (at the initial cycle point), or restart, or resume workflow REG
-    $ cylc play REG
+    # Start (at the initial cycle point), restart, or resume workflow WORKFLOW
+    $ cylc play WORKFLOW
 
     # Start a new run from a cycle point after the initial cycle point
-    $ cylc play --start-cycle-point=3 REG  # (integer cycling)
-    $ cylc play --start-cycle-point=20250101T0000Z REG  # (datetime cycling)
+    # (integer cycling)
+    $ cylc play --start-cycle-point=3 WORKFLOW
+    # (datetime cycling):
+    $ cylc play --start-cycle-point=20250101T0000Z WORKFLOW
 
     # Start a new run from specified tasks in the graph
-    $ cylc play --start-task=foo.3 REG
-    $ cylc play -t foo.3 -t bar.3 REG
+    $ cylc play --start-task=foo.3 WORKFLOW
+    $ cylc play -t foo.3 -t bar.3 WORKFLOW
 
     # Start, restart or resume the second installed run of the workflow
     # "dogs/fido"
@@ -91,7 +93,7 @@ happened to them while the workflow was down.
 """
 
 
-FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
+FLOW_NAME_ARG_DOC = ("WORKFLOW", "Workflow name or ID")
 
 RESUME_MUTATION = '''
 mutation (

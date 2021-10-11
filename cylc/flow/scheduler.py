@@ -77,7 +77,8 @@ from cylc.flow.pathutil import (
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
     get_workflow_test_log_name,
-    make_workflow_run_tree
+    make_workflow_run_tree,
+    get_workflow_name_from_id
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,
@@ -246,6 +247,7 @@ class Scheduler:
     def __init__(self, reg: str, options: Values) -> None:
         # flow information
         self.workflow = reg
+        self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
         self.id = f'{self.owner}{ID_DELIM}{self.workflow}'
@@ -1109,7 +1111,8 @@ class Scheduler:
         self.task_job_mgr.job_file_writer.set_workflow_env({
             **verbosity_to_env(cylc.flow.flags.verbosity),
             'CYLC_UTC': str(get_utc_mode()),
-            'CYLC_WORKFLOW_NAME': self.workflow,
+            'CYLC_WORKFLOW_ID': self.workflow,
+            'CYLC_WORKFLOW_NAME': self.workflow_name,
             'CYLC_CYCLING_MODE': str(
                 self.config.cfg['scheduling']['cycling mode']
             ),
