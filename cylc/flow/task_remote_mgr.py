@@ -53,6 +53,7 @@ from cylc.flow.workflow_files import (
     get_contact_file)
 from cylc.flow.platforms import (
     get_host_from_platform,
+    get_install_target_from_platform,
     get_localhost_install_target,
     get_random_platform_for_install_target,
     NoHostsError,
@@ -267,7 +268,7 @@ class TaskRemoteMgr:
         ) -> Tuple[List[str], str]:
             cmd = ['remote-tidy']
             cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
-            cmd.append(platform['install target'])
+            cmd.append(get_install_target_from_platform(platform))
             cmd.append(get_remote_workflow_run_dir(self.workflow))
             host = get_host_from_platform(
                 platform, bad_hosts=self.bad_hosts
