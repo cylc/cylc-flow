@@ -70,17 +70,17 @@ __END__
 # set' ('+') and later '... INFO - Broadcast cancelled:' ('-') line, where we
 # use as a test case an arbitrary task where such setting & cancellation occurs:
 contains_ok "${WORKFLOW_LOG}" << __LOG_BROADCASTS__
-	+ [f1.2015] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-	+ [f1.2015] [environment]upstream_task=foo
-	+ [f1.2015] [environment]upstream_point=2015
-	+ [f1.2015] [environment]upstream_offset=None
-	+ [f1.2015] [environment]upstream_status=succeeded
-	+ [f1.2015] [environment]upstream_message=data ready
-	- [f1.2015] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-	- [f1.2015] [environment]upstream_task=foo
-	- [f1.2015] [environment]upstream_point=2015
-	- [f1.2015] [environment]upstream_status=succeeded
-	- [f1.2015] [environment]upstream_message=data ready
+${LOG_INDENT}+ [f1.2015] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}+ [f1.2015] [environment]upstream_task=foo
+${LOG_INDENT}+ [f1.2015] [environment]upstream_point=2015
+${LOG_INDENT}+ [f1.2015] [environment]upstream_offset=None
+${LOG_INDENT}+ [f1.2015] [environment]upstream_status=succeeded
+${LOG_INDENT}+ [f1.2015] [environment]upstream_message=data ready
+${LOG_INDENT}- [f1.2015] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}- [f1.2015] [environment]upstream_task=foo
+${LOG_INDENT}- [f1.2015] [environment]upstream_point=2015
+${LOG_INDENT}- [f1.2015] [environment]upstream_status=succeeded
+${LOG_INDENT}- [f1.2015] [environment]upstream_message=data ready
 __LOG_BROADCASTS__
 # ... and 2) in the DB.
 TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"

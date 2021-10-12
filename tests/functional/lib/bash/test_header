@@ -141,14 +141,25 @@
 #         Dump stdout and stderr of TEST_NAME to the test log dir.
 #     delete_db [WORKFLOW_RUN_DIR]
 #         Delete private/public workflow databases for a cold start.
+#
+# VARIABLES
+#     LOG_INDENT
+#         indentation width of secondary log lines
+#     # TODO: document other variables used by test scripts
+#
 #-------------------------------------------------------------------------------
+
 set -eu
 shopt -s extglob
+
+# For indented secondary log lines; must match the width in cylc.flow.loggingutil
+export LOG_INDENT="    "
 
 FAILURES=0
 SIGNALS="EXIT INT"
 TEST_DIR=
 TEST_RHOST_CYLC_DIR=
+
 FINALLY() {
     for S in ${SIGNALS}; do
         trap '' "${S}"
