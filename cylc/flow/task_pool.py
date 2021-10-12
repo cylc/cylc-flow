@@ -332,15 +332,13 @@ class TaskPool:
 
         # An intermediate list is needed here: auto-spawning of parentless
         # tasks can cause the task pool to change size during iteration.
-        release_me = []
-        for itask in (
+        release_me = [
             itask
             for point, itask_id_map in self.main_pool.items()
             for itask in itask_id_map.values()
             if point <= runahead_limit_point
             if itask.state.is_runahead
-        ):
-            release_me.append(itask)
+        ]
 
         for itask in release_me:
             self.release_runahead_task(itask, runahead_limit_point)

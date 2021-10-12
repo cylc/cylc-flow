@@ -25,8 +25,8 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
 
 
-# NOTE: foo & bar have no parents so when released from the hidden pool at
-# start-up (with workflow paused) the next instances are spawned (to hidden).
+# NOTE: foo & bar have no parents so at start-up (even with the workflow
+# paused) they are spawned out to the runahead limit.
 EXAMPLE_FLOW_CFG = {
     'scheduler': {
         'allow implicit tasks': True

@@ -282,9 +282,8 @@ class TaskDef:
         """Return whether I have only absolute triggers at point."""
         if not self.has_abs_triggers:
             return False
-        # Has abs triggers somewhere, but need to check the specific point.
+        # Has abs triggers somewhere, but need to check at point.
         has_abs = False
-        has_other = False
         for seq in self.sequences:
             if not seq.is_valid(point) or seq not in self.dependencies:
                 continue
@@ -296,8 +295,8 @@ class TaskDef:
                     ):
                         has_abs = True
                     else:
-                        has_other = True
-        return has_abs and not has_other
+                        return False
+        return has_abs
 
     def is_valid_point(self, point):
         """Return True if point is on-sequence and within bounds."""
