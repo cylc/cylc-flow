@@ -148,6 +148,10 @@ improvements.
 using the same name for a platform and a platform group. Which one it should
 pick is ambiguous, and is a setup error.
 
+[#4465](https://github.com/cylc/cylc-flow/pull/4465) -
+Fix a `ValueError` that could occasionally occur during remote tidy on
+workflow shutdown.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
