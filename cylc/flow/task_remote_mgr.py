@@ -22,6 +22,7 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
+from collections import deque
 from contextlib import suppress
 from cylc.flow.option_parsers import verbosity_to_opts
 import os
@@ -30,7 +31,7 @@ import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
 from time import time
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import TaskRemoteMgmtError
@@ -54,7 +55,8 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_localhost_install_target,
     get_random_platform_for_install_target,
-    NoHostsError
+    NoHostsError,
+    PlatformLookupError
 )
 
 if TYPE_CHECKING:
@@ -69,6 +71,12 @@ REMOTE_FILE_INSTALL_IN_PROGRESS = 'REMOTE FILE INSTALL IN PROGRESS'
 REMOTE_FILE_INSTALL_FAILED = 'REMOTE FILE INSTALL FAILED'
 REMOTE_INIT_255 = 'REMOTE INIT 255'
 REMOTE_FILE_INSTALL_255 = 'REMOTE FILE INSTALL 255'
+
+
+class RemoteTidyQueueTuple(NamedTuple):
+    platform: Dict[str, Any]
+    host: str
+    proc: 'Popen[str]'
 
 
 class TaskRemoteMgr:
@@ -245,114 +253,112 @@ class TaskRemoteMgr:
                 callback_255_args=[platform]
             )
 
-    def remote_tidy(self):
+    def remote_tidy(self) -> None:
         """Remove workflow contact files and keys from initialised remotes.
 
         Call "cylc remote-tidy".
         This method is called on workflow shutdown, so we want nothing to hang.
         Timeout any incomplete commands after 10 seconds.
         """
-        from cylc.flow.platforms import PlatformLookupError
         # Issue all SSH commands in parallel
 
-        def construct_remote_tidy_ssh_cmd(install_target, platform):
+        def construct_remote_tidy_ssh_cmd(
+            platform: Dict[str, Any]
+        ) -> Tuple[List[str], str]:
             cmd = ['remote-tidy']
             cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
-            cmd.append(install_target)
+            cmd.append(platform['install target'])
             cmd.append(get_remote_workflow_run_dir(self.workflow))
             host = get_host_from_platform(
                 platform, bad_hosts=self.bad_hosts
             )
-            cmd = construct_ssh_cmd(
-                cmd, platform, host, timeout='10s'
-            )
+            cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
             return cmd, host
 
-        procs = {}
+        queue: Deque[RemoteTidyQueueTuple] = deque()
         for install_target, message in self.remote_init_map.items():
             if message != REMOTE_FILE_INSTALL_DONE:
                 continue
             if install_target == get_localhost_install_target():
                 continue
             platform = get_random_platform_for_install_target(install_target)
-            platform_n = platform['name']
             try:
-                cmd, host = construct_remote_tidy_ssh_cmd(
-                    install_target, platform)
-            except (NoHostsError, PlatformLookupError):
-                LOG.warning(TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY,
-                    platform_n, 1, '', '', 'remote tidy'
-                ))
+                cmd, host = construct_remote_tidy_ssh_cmd(platform)
+            except (NoHostsError, PlatformLookupError) as exc:
+                LOG.warning(
+                    f"remote tidy on {platform['name']}: "
+                    f"{TaskRemoteMgmtError.MSG_TIDY}\n{exc}"
+                )
             else:
                 LOG.debug(
                     "Removing authentication keys and contact file "
                     f"from remote: \"{install_target}\"")
-                procs[platform_n] = (
-                    cmd,
-                    host,
-                    Popen(  # nosec
-                        cmd,
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        stdin=DEVNULL,
+                queue.append(
+                    RemoteTidyQueueTuple(
+                        platform,
+                        host,
+                        Popen(  # nosec
+                            cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL,
+                            text=True
+                        )  # * command constructed by internal interface
                     )
-                    # * command constructed by internal interface
                 )
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
-        while procs and time() < timeout:
-            for platform_n, (cmd, host, proc) in procs.copy().items():
-                if proc.poll() is None:
-                    continue
-                del procs[platform_n]
-                out, err = (f.decode() for f in proc.communicate())
-                # 255 error has to be handled here becuase remote tidy doesn't
-                # use SubProcPool.
-                if proc.returncode == 255:
-                    timeout = time() + 10.0
-                    self.bad_hosts.add(host)
-                    LOG.warning(
-                        f'Tried to tidy remote platform: \'{platform_n}\' '
-                        f'using host \'{host}\' but failed; '
-                        'trying a different host'
+        while queue and time() < timeout:
+            item = queue.popleft()
+            if item.proc.poll() is None:  # proc still running
+                queue.append(item)
+                continue
+            out, err = item.proc.communicate()
+            # 255 error has to be handled here because remote tidy doesn't
+            # use SubProcPool.
+            if item.proc.returncode == 255:
+                timeout = time() + 10.0
+                self.bad_hosts.add(item.host)
+                LOG.warning(
+                    f"Failed to tidy remote platform: "
+                    f"'{item.platform['name']}' using host '{item.host}'; "
+                    "trying a different host"
+                )
+                try:
+                    retry_cmd, retry_host = construct_remote_tidy_ssh_cmd(
+                        item.platform
                     )
-                    try:
-                        retry_cmd, host = construct_remote_tidy_ssh_cmd(
-                            install_target, platform
+                except (NoHostsError, PlatformLookupError) as exc:
+                    LOG.warning(
+                        f"remote tidy on {item.platform['name']}: "
+                        f"{TaskRemoteMgmtError.MSG_TIDY}\n{exc}"
+                    )
+                else:
+                    queue.append(
+                        item._replace(
+                            host=retry_host,
+                            proc=Popen(  # nosec
+                                retry_cmd, stdout=PIPE, stderr=PIPE,
+                                stdin=DEVNULL, text=True
+                            )  # * command constructed by internal interface
                         )
-                    except (NoHostsError, PlatformLookupError):
-                        LOG.warning(TaskRemoteMgmtError(
-                            TaskRemoteMgmtError.MSG_TIDY, platform_n, '',
-                            '', '', ''
-                        ))
-                    else:
-                        procs[platform_n] = (
-                            retry_cmd,
-                            host,
-                            Popen(  # nosec
-                                retry_cmd,
-                                stdout=PIPE,
-                                stderr=PIPE,
-                                stdin=DEVNULL,
-                            )
-                            # * command constructed by internal interface
-                        )
-                if proc.wait() and proc.returncode != 255:
-                    LOG.warning(TaskRemoteMgmtError(
-                        TaskRemoteMgmtError.MSG_TIDY,
-                        platform_n, ' '.join(quote(item) for item in cmd),
-                        proc.returncode, out, err))
+                    )
+            else:
+                LOG.warning(
+                    TaskRemoteMgmtError(
+                        TaskRemoteMgmtError.MSG_TIDY, item.platform['name'],
+                        item.proc.args, item.proc.returncode, out, err
+                    )
+                )
         # Terminate any remaining commands
-        for platform_n, (cmd, proc) in procs.items():
+        for item in queue:
             with suppress(OSError):
-                proc.terminate()
-            out, err = (f.decode() for f in proc.communicate())
-            if proc.wait():
-                LOG.warning(TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY,
-                    platform_n, ' '.join(quote(item) for item in cmd),
-                    proc.returncode, out, err))
+                item.proc.terminate()
+            out, err = item.proc.communicate()
+            if item.proc.wait():
+                LOG.warning(
+                    TaskRemoteMgmtError(
+                        TaskRemoteMgmtError.MSG_TIDY, item.platform['name'],
+                        item.proc.args, item.proc.returncode, out, err
+                    )
+                )
 
     def _subshell_eval_callback(self, proc_ctx, cmd_str):
         """Callback when subshell eval command exits"""
