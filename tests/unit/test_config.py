@@ -1084,7 +1084,8 @@ def test_success_after_optional_submit(tmp_flow_config, graph):
     'allow_implicit_tasks',
     [
         pytest.param(True, id="allow implicit tasks = True"),
-        pytest.param(None, id="")
+        pytest.param(None, id="allow implicit tasks not set"),
+        pytest.param(False, id="allow implicit tasks = False")
     ]
 )
 @pytest.mark.parametrize(
@@ -1127,10 +1128,10 @@ def test_implicit_tasks(
         cylc7_compat: Whether Cylc 7 backwards compatibility is turned on.
         rose_suite_conf: Whether a rose-suite.conf file is present in run dir.
         expected_exc: Exception expected to be raised only when
-            [scheduler]allow implicit tasks = False.
+            "[scheduler]allow implicit tasks" is not set.
         expected_log_level: Expected logging severity level for the
             "implicit tasks detected" message only when
-            [scheduler]allow implicit tasks = False.
+            "[scheduler]allow implicit tasks" is not set.
     """
     # Setup
     reg = 'rincewind'
@@ -1148,9 +1149,11 @@ def test_implicit_tasks(
     if rose_suite_conf:
         (flow_file.parent / 'rose-suite.conf').touch()
     caplog.set_level(logging.DEBUG, CYLC_LOG)
-    if allow_implicit_tasks:
+    if allow_implicit_tasks is True:
         expected_exc = None
         expected_log_level = logging.DEBUG
+    elif allow_implicit_tasks is False:
+        expected_exc = WorkflowConfigError
     # Test
     args: dict = {'workflow': reg, 'fpath': flow_file, 'options': None}
     expected_msg = "implicit tasks detected"
