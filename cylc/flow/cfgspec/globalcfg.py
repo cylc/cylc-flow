@@ -310,7 +310,7 @@ with Conf('global.cylc', desc='''
                 Hosts specified in ``condemned hosts`` will not be considered
                 as workflow run hosts. If workflows are already running on
                 ``condemned hosts`` they will be automatically shutdown and
-                restarted (see:ref:`auto-stop-restart`).
+                restarted (see :ref:`auto-stop-restart`).
             ''')
             Conf('ranking', VDR.V_STRING, desc='''
                 Rank and filter run hosts based on system information.
