@@ -124,7 +124,3 @@ def test_remove_columns():
         conn = dao.connect()
         data = [row for row in conn.execute(r'SELECT * from foo')]
         assert data == [('PUB',)]
-
-
-if __name__ == '__main__':
-    unittest.main()

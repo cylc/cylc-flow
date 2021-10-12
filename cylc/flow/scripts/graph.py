@@ -411,7 +411,3 @@ def main(
             print(f'Graph rendered to {opts.output}')
         else:
             gui(filename)
-
-
-if __name__ == '__main__':
-    main()

@@ -22,20 +22,21 @@ This module provides:
   because "time.strftime" will handle time zone from "localtime" properly.
 """
 from contextlib import suppress
+from functools import partial
+from glob import glob
+import logging
 import os
 import re
 import sys
-import logging
 import textwrap
-
-from glob import glob
-from functools import partial
+from typing import Optional
 
 from ansimarkup import parse as cparse
 
-from cylc.flow.wallclock import (get_current_time_string,
-                                 get_time_string_from_unix_time)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.wallclock import (
+    get_current_time_string, get_time_string_from_unix_time
+)
 
 
 class CylcLogFormatter(logging.Formatter):
@@ -55,12 +56,16 @@ class CylcLogFormatter(logging.Formatter):
 
     # default hard-coded max width for log entries
     # NOTE: this should be sufficiently long that log entries read by the
-    #       deamonise script (url, pid) are not wrapped
+    #       daemonise script (url, pid) are not wrapped
     MAX_WIDTH = 999
 
     def __init__(
-        self, timestamp=True, color=False, max_width=None, dev_info=False
-    ):
+        self,
+        timestamp: bool = True,
+        color: bool = False,
+        max_width: Optional[int] = None,
+        dev_info: bool = False
+    ) -> None:
         self.timestamp = None
         self.color = None
         self.max_width = self.MAX_WIDTH
@@ -249,3 +254,39 @@ def re_formatter(log_string):
     for sub, repl in LOG_LEVEL_REGEXES:
         log_string = sub.sub(repl, log_string)
     return log_string
+
+
+def disable_timestamps(logger: logging.Logger) -> None:
+    """For readability omit timestamps from logging."""
+    for handler in logger.handlers:
+        if isinstance(handler.formatter, CylcLogFormatter):
+            handler.formatter.configure(timestamp=False)
+
+
+def setup_segregated_log_streams(
+    logger: logging.Logger, stderr_handler: logging.StreamHandler
+) -> None:
+    """Set up a logger so that info and debug messages get printed to stdout,
+    while warnings and above get printed to stderr.
+
+    Args:
+        logger: The logger to modify.
+        stderr_handler: The existing stderr stream handler.
+    """
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    # Filter out >= warnings from stdout
+    stdout_handler.addFilter(lambda rec: int(rec.levelno < logging.WARNING))
+    stdout_handler.setFormatter(stderr_handler.formatter)
+    logger.addHandler(stdout_handler)
+
+    stderr_handler.setLevel(logging.WARNING)
+
+
+def close_log(logger: logging.Logger) -> None:
+    """Close log handlers for the specified logger."""
+    for handler in logger.handlers:
+        with suppress(IOError):
+            # suppress traceback which `logging` might try to write to the
+            # log we are trying to close
+            handler.close()

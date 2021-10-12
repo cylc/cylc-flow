@@ -52,7 +52,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
-            ('REG', 'Workflow name'),
+            ('WORKFLOW', 'Workflow name or ID'),
             ('LEVEL', ', '.join(LOG_LEVELS.keys()))
         ]
     )
@@ -79,7 +79,3 @@ def main(parser: COP, options: 'Values', reg: str, severity_str: str) -> None:
     }
 
     pclient('graphql', mutation_kwargs)
-
-
-if __name__ == "__main__":
-    main()

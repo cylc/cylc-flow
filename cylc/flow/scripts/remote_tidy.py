@@ -43,7 +43,3 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser, _, install_target, rund):
     remote_tidy(install_target, rund)
-
-
-if __name__ == "__main__":
-    main()

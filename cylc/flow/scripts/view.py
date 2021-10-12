@@ -179,7 +179,3 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
         )
     # DONE
     viewfile.close()
-
-
-if __name__ == "__main__":
-    main()

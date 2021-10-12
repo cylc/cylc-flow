@@ -7,8 +7,8 @@
 [scheduling]
     [[graph]]
         R1 = """
-            foo:submit => kill_foo_submit => poll_foo
-            foo:submit-fail => stop
+            foo:submit? => kill_foo_submit => poll_foo
+            foo:submit-fail? => stop
         """
 
 [runtime]

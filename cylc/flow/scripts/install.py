@@ -22,18 +22,18 @@ Install a new workflow.
 
 The workflow can then be started, stopped, and targeted by name.
 
-Normal installation creates a directory "~/cylc-run/REG/", with a run
-directory "~/cylc-run/REG/run1". A "_cylc-install/source" symlink to the source
-directory will be created in the REG directory.
+Normal installation creates a directory "~/cylc-run/WORKFLOW_NAME/", with a run
+directory "~/cylc-run/WORKFLOW_NAME/run1". A "_cylc-install/source" symlink to
+the source directory will be created in the WORKFLOW_NAME directory.
 Any files or directories (excluding .git, .svn) from the source directory are
 copied to the new run directory.
 A ".service" directory will also be created and used for server authentication
 files at run time.
 
-If the argument REG is used, Cylc will search for the workflow in the list of
-directories given by "global.cylc[install]source dirs", and install the first
-match. Otherwise, the workflow in the current working directory, or the one
-specified by the "--directory" option, will be installed.
+If the argument WORKFLOW_NAME is used, Cylc will search for the workflow in the
+list of directories given by "global.cylc[install]source dirs", and install the
+first match. Otherwise, the workflow in the current working directory, or the
+one specified by the "--directory" option, will be installed.
 
 Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
 
@@ -86,7 +86,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, prep=True,
-        argdoc=[("[REG]", "Workflow name")]
+        argdoc=[('[WORKFLOW_NAME]', 'Workflow name')]
     )
 
     parser.add_option(
@@ -153,7 +153,8 @@ def install(
         source = opts.source
     else:
         if opts.source:
-            parser.error("REG and --directory are mutually exclusive.")
+            parser.error(
+                "WORKFLOW_NAME and --directory are mutually exclusive.")
         source = search_install_source_dirs(reg)
     flow_name = opts.flow_name or reg
 
@@ -204,7 +205,3 @@ def install(
                 entry_point.name,
                 exc
             ) from None
-
-
-if __name__ == "__main__":
-    main()

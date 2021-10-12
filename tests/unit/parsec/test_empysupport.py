@@ -85,7 +85,3 @@ class TestEmpysupport1(unittest.TestCase):
             sys.stdout.getvalue = lambda: ''
 
         sys.stdout.getvalue = lambda: ''
-
-
-if __name__ == '__main__':
-    unittest.main()

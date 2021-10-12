@@ -71,7 +71,3 @@ class TestParseExclusion(unittest.TestCase):
         self.assertRaises(Exception, parse_exclusion, expression2)
         self.assertRaises(Exception, parse_exclusion, expression3)
         self.assertRaises(Exception, parse_exclusion, expression4)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -21,9 +21,9 @@
 Display workflow and task information.
 
 Query a running workflow for:
-  $ cylc show REG  # workflow metadata
-  $ cylc show REG TASK_NAME  # task metadata
-  $ cylc show REG TASK_GLOB  # prerequisites and outputs of task instances
+  $ cylc show WORKFLOW  # workflow metadata
+  $ cylc show WORKFLOW TASK_NAME  # task metadata
+  $ cylc show WORKFLOW TASK_GLOB  # prerequisites and outputs of task instances
 
 Prerequisite and output status is indicated for current active tasks.
 """
@@ -143,7 +143,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ('REG', 'Workflow name'),
+            ('WORKFLOW', 'Workflow name or ID'),
             ('[TASK_NAME or TASK_GLOB ...]', 'Task names or match patterns')])
 
     parser.add_option('--list-prereqs', action="store_true", default=False,
@@ -315,7 +315,3 @@ def main(_, options: 'Values', reg: str, *task_args: str) -> None:
 
     if options.json:
         print(json.dumps(json_filter, indent=4))
-
-
-if __name__ == "__main__":
-    main()

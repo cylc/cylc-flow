@@ -75,7 +75,7 @@ mutation (
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[("REG", "Workflow name"),
+        argdoc=[("WORKFLOW", "Workflow name or ID"),
                 ("MSG", "External trigger message"),
                 ("ID", "Unique trigger ID")])
 
@@ -130,7 +130,3 @@ def main(
             if i_try > 0:
                 LOG.info(MSG_SEND_SUCCEED, i_try + 1, max_n_tries)
             break
-
-
-if __name__ == "__main__":
-    main()

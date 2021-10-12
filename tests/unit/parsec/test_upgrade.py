@@ -244,7 +244,3 @@ class TestUpgrade(unittest.TestCase):
         expanded = self.u.expand(upg)
         self.assertEqual(1, len(expanded))
         self.assertTrue(expanded[0]['new'] is None)
-
-
-if __name__ == '__main__':
-    unittest.main()

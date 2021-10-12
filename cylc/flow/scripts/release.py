@@ -84,7 +84,7 @@ def get_option_parser() -> COP:
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ('REG', "Workflow name"),
+            ('WORKFLOW', 'Workflow name or ID'),
             ('[TASK_GLOB ...]', "Task matching patterns")]
     )
 
@@ -134,7 +134,3 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
     }
 
     pclient('graphql', mutation_kwargs)
-
-
-if __name__ == "__main__":
-    main()

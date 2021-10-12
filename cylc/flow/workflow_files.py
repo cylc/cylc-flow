@@ -77,7 +77,7 @@ from cylc.flow.remote import (
     construct_ssh_cmd,
 )
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.loggingutil import CylcLogFormatter
+from cylc.flow.loggingutil import CylcLogFormatter, close_log
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import get_current_time_string
@@ -745,17 +745,25 @@ def init_clean(reg: str, opts: 'Values') -> None:
     try:
         _clean_check(opts, reg, local_run_dir)
     except FileNotFoundError as exc:
-        LOG.info(str(exc))
+        LOG.info(exc)
         return
+    local_run_dir, reg_path = infer_latest_run(
+        local_run_dir, implicit_runN=False
+    )
+    reg = str(reg_path)
+
+    # Parse --rm option to make sure it's valid
+    rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
 
     # Check dir does not contain other workflows:
     contained_workflows = asyncio.get_event_loop().run_until_complete(
         get_contained_workflows(local_run_dir, MAX_SCAN_DEPTH + 1)
     )  # Note: increased scan depth for safety
-    _suppress_no_db_msg = False
     if len(contained_workflows) == 1:
+        # Clean the contained workflow followed by the parent dir
         init_clean(contained_workflows[0], opts)
-        _suppress_no_db_msg = True
+        if opts.rm_dirs:
+            return  # Do not delete parent dir if --rm dirs specified
     elif len(contained_workflows) > 1:
         bullet = "\n    - "
         msg = (
@@ -764,9 +772,11 @@ def init_clean(reg: str, opts: 'Values') -> None:
         )
         if not opts.force:
             raise WorkflowFilesError(f"Cannot clean - {msg}")
+        if opts.remote_only:
+            msg = f"Not performing remote clean - {msg}"
         LOG.warning(msg)
 
-    if not opts.local_only:
+    if (not opts.local_only) and (len(contained_workflows) == 0):
         platform_names = None
         try:
             platform_names = get_platforms_from_db(local_run_dir)
@@ -775,8 +785,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
                 raise ServiceFileError(
                     "No workflow database - cannot perform remote clean"
                 )
-            if not _suppress_no_db_msg:
-                LOG.info("No workflow database - will only clean locally")
+            LOG.info("No workflow database - will only clean locally")
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot clean - {exc}")
 
@@ -786,7 +795,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
             )
 
     if not opts.remote_only:
-        rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
+        # Must be after remote clean
         clean(reg, local_run_dir, rm_dirs)
 
 
@@ -804,7 +813,6 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         run_dir: Absolute path of the workflow's run dir.
         rm_dirs: Set of sub dirs to remove instead of the whole run dir.
     """
-    LOG.info(f"Cleaning on local filesystem: {run_dir}")
     symlink_dirs = get_symlink_dirs(reg, run_dir)
     if rm_dirs is not None:
         # Targeted clean
@@ -812,6 +820,7 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
             _clean_using_glob(run_dir, pattern, symlink_dirs)
     else:
         # Wholesale clean
+        LOG.debug(f"Cleaning {run_dir}")
         for symlink in symlink_dirs:
             # Remove <symlink_dir>/cylc-run/<reg>/<symlink>
             remove_dir_and_target(run_dir / symlink)
@@ -932,6 +941,7 @@ def _clean_using_glob(
     ))
     matches = glob_in_run_dir(run_dir, pattern, abs_symlink_dirs)
     if not matches:
+        LOG.info(f"No files matching '{pattern}' in {run_dir}")
         return
     # First clean any matching symlink dirs
     for path in abs_symlink_dirs:
@@ -986,7 +996,7 @@ def remote_clean(
                 remote_clean_cmd(platform=platforms[0]), target, platforms
             )
         )
-    failed_targets: List[str] = []
+    failed_targets: Dict[str, TaskRemoteMgmtError] = {}
     # Handle subproc pool results almost concurrently:
     while queue:
         item = queue.popleft()
@@ -996,30 +1006,36 @@ def remote_clean(
             continue
         out, err = item.proc.communicate()
         if out:
-            LOG.debug(out)
+            LOG.info(f"[{item.install_target}]\n{out}")
         if ret_code:
             this_platform = item.platforms.pop(0)
-            LOG.debug(TaskRemoteMgmtError(
+            excp = TaskRemoteMgmtError(
                 TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
                 item.proc.args, ret_code, out, err
-            ))
+            )
             if ret_code == 255 and item.platforms:
                 # SSH error; try again using the next platform for this
                 # install target
+                LOG.debug(excp)
                 queue.append(
                     item._replace(
                         proc=remote_clean_cmd(platform=item.platforms[0])
                     )
                 )
             else:  # Exhausted list of platforms
-                failed_targets.append(item.install_target)
+                failed_targets[item.install_target] = excp
         elif err:
-            LOG.debug(err)
+            # Only show stderr from remote host in debug mode if ret code 0
+            # because stderr often contains useless stuff like ssh login
+            # messages
+            LOG.debug(f"[{item.install_target}]\n{err}")
         sleep(0.2)
     if failed_targets:
-        raise CylcError(
-            f"Could not clean on install targets: {', '.join(failed_targets)}"
-        )
+        for target, excp in failed_targets.items():
+            LOG.error(
+                f"Could not clean on install target: {target}\n{excp}"
+            )
+        raise CylcError("Remote clean failed")
 
 
 def _remote_clean_cmd(
@@ -1302,11 +1318,15 @@ def validate_workflow_name(name: str) -> None:
         )
 
 
-def infer_latest_run(path: Path) -> Tuple[Path, Path]:
+def infer_latest_run(
+    path: Path, implicit_runN: bool = True
+) -> Tuple[Path, Path]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
     Args:
         path: Absolute path to the workflow dir, run dir or runN dir.
+        implicit_runN: If True, add runN on the end of the path if the path
+            doesn't include it.
 
     Returns:
         path: Absolute path of the numbered run dir if applicable, otherwise
@@ -1322,10 +1342,12 @@ def infer_latest_run(path: Path) -> Tuple[Path, Path]:
         raise ValueError(f"{path} is not in the cylc-run directory")
     if path.name == WorkflowFiles.RUN_N:
         runN_path = path
-    else:
+    elif implicit_runN:
         runN_path = path / WorkflowFiles.RUN_N
         if not os.path.lexists(runN_path):
             return (path, reg)
+    else:
+        return (path, reg)
     if not runN_path.is_symlink() or not runN_path.is_dir():
         raise WorkflowFilesError(
             f"runN directory at {runN_path} is a broken or invalid symlink"
@@ -1343,47 +1365,27 @@ def infer_latest_run(path: Path) -> Tuple[Path, Path]:
     return (path, reg)
 
 
-def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
+def check_nested_run_dirs(run_dir: Union[Path, str]) -> None:
     """Disallow nested run dirs e.g. trying to install foo/bar where foo is
     already a valid workflow directory.
 
     Args:
         run_dir: Absolute workflow run directory path.
-        flow_name: Workflow name.
 
-    Raise:
-        WorkflowFilesError:
-            - reg dir is nested inside a run dir
-            - reg dir contains a nested run dir (if not deeper than max scan
-                depth)
+    Raises WorkflowFilesError if reg dir is nested inside a run dir.
     """
     exc_msg = (
-        'Nested run directories not allowed - cannot install workflow name '
-        '"{0}" as "{1}" is already a valid run directory.'
+        "Nested run directories not allowed - cannot install workflow in "
+        "'{0}' as '{1}' is already a valid run directory."
     )
-
-    def _check_child_dirs(path: Union[Path, str], depth_count: int = 1):
-        for result in os.scandir(path):
-            if result.is_dir() and not result.is_symlink():
-                if is_valid_run_dir(result.path):
-                    raise WorkflowFilesError(
-                        exc_msg.format(flow_name, result.path)
-                    )
-                if depth_count < MAX_SCAN_DEPTH:
-                    _check_child_dirs(result.path, depth_count + 1)
-
-    reg_path: Union[Path, str] = os.path.normpath(run_dir)
-    parent_dir = os.path.dirname(reg_path)
-    while parent_dir not in {'', os.sep}:
+    reg_path = Path(os.path.normpath(run_dir))
+    for parent_dir in reg_path.parents:
+        if parent_dir == Path(get_cylc_run_dir()):
+            break
         if is_valid_run_dir(parent_dir):
             raise WorkflowFilesError(
-                exc_msg.format(flow_name, get_cylc_run_abs_path(parent_dir))
+                exc_msg.format(reg_path, get_cylc_run_abs_path(parent_dir))
             )
-        parent_dir = os.path.dirname(parent_dir)
-
-    reg_path = get_cylc_run_abs_path(reg_path)
-    if os.path.isdir(reg_path):
-        _check_child_dirs(reg_path)
 
 
 def is_valid_run_dir(path):
@@ -1441,15 +1443,6 @@ def _open_install_log(rund, logger):
     logger.addHandler(handler)
 
 
-def _close_install_log(logger):
-    """Close Cylc log handlers for install/reinstall.
-        Args:
-            logger (constant)"""
-    for handler in logger.handlers:
-        with suppress(IOError):
-            handler.close()
-
-
 def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
     """Create and return the rsync command used for cylc install/re-install.
 
@@ -1497,7 +1490,7 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
 
 
 def reinstall_workflow(named_run, rundir, source, dry_run=False):
-    """ Reinstall workflow.
+    """Reinstall workflow.
 
     Args:
         named_run (str):
@@ -1511,7 +1504,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
             be changed.
     """
     validate_source_dir(source, named_run)
-    check_nested_run_dirs(rundir, named_run)
+    check_nested_run_dirs(rundir)
     reinstall_log = _get_logger(rundir, 'cylc-reinstall')
     reinstall_log.info(f"Reinstalling \"{named_run}\", from "
                        f"\"{source}\" to \"{rundir}\"")
@@ -1531,7 +1524,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
     check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
     print(f'REINSTALLED {named_run} from {source}')
-    _close_install_log(reinstall_log)
+    close_log(reinstall_log)
     return
 
 
@@ -1589,7 +1582,7 @@ def install_workflow(
             f"\"{rundir}\" exists."
             " Try using cylc reinstall. Alternatively, install with another"
             " name, using the --run-name option.")
-    check_nested_run_dirs(rundir, flow_name)
+    check_nested_run_dirs(rundir)
     symlinks_created = {}
     named_run = flow_name
     if run_name:
@@ -1640,18 +1633,15 @@ def install_workflow(
             )
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source.resolve())
-    elif (  # noqa: SIM106
-        source_link.exists()
-        and source_link.resolve() == source.resolve()
-    ):
-        install_log.info(
-            f"Symlink from \"{source_link}\" to \"{source}\" in place.")
     else:
-        raise WorkflowFilesError(
-            "Source directory not consistent between runs.")
+        if not source_link.resolve() == source.resolve():
+            raise WorkflowFilesError(
+                "Source directory not consistent between runs.")
+        install_log.info(
+            f'Symlink from "{source_link}" to "{source}" in place.')
     install_log.info(f'INSTALLED {named_run} from {source}')
     print(f'INSTALLED {named_run} from {source}')
-    _close_install_log(install_log)
+    close_log(install_log)
     return source, rundir, flow_name
 
 

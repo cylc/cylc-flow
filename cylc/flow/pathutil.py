@@ -130,8 +130,8 @@ def make_workflow_run_tree(workflow):
         get_workflow_run_share_dir(workflow),
         get_workflow_run_work_dir(workflow),
     ):
-        if dir_:
-            os.makedirs(dir_, exist_ok=True)
+        if not Path(dir_).is_dir():
+            os.makedirs(dir_)
             LOG.debug(f'{dir_}: directory created')
 
 
@@ -267,17 +267,18 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
     if os.path.islink(path):
         if os.path.exists(path):
             target = os.path.realpath(path)
-            LOG.debug(
-                f'Removing symlink target directory: ({path} ->) {target}')
+            LOG.info(
+                f'Removing symlink target directory: ({path} ->) {target}'
+            )
             rmtree(target, onerror=handle_rmtree_err)
-            LOG.debug(f'Removing symlink: {path}')
+            LOG.info(f'Removing symlink: {path}')
         else:
-            LOG.debug(f'Removing broken symlink: {path}')
+            LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
     elif not os.path.exists(path):
         raise FileNotFoundError(path)
     else:
-        LOG.debug(f'Removing directory: {path}')
+        LOG.info(f'Removing directory: {path}')
         rmtree(path, onerror=handle_rmtree_err)
 
 
@@ -291,13 +292,13 @@ def remove_dir_or_file(path: Union[Path, str]) -> None:
     if not os.path.isabs(path):
         raise ValueError("Path must be absolute")
     if os.path.islink(path):
-        LOG.debug(f"Removing symlink: {path}")
+        LOG.info(f"Removing symlink: {path}")
         os.remove(path)
     elif os.path.isfile(path):
-        LOG.debug(f"Removing file: {path}")
+        LOG.info(f"Removing file: {path}")
         os.remove(path)
     else:
-        LOG.debug(f"Removing directory: {path}")
+        LOG.info(f"Removing directory: {path}")
         rmtree(path, onerror=handle_rmtree_err)
 
 
@@ -330,7 +331,7 @@ def remove_empty_parents(
             continue
         try:
             parent.rmdir()
-            LOG.debug(f'Removing directory: {parent}')
+            LOG.info(f'Removing directory: {parent}')
         except OSError:
             break
 
@@ -383,7 +384,10 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             part = os.path.normpath(part)
             if os.path.isabs(part):
                 raise UserInputError("--rm option cannot take absolute paths")
-            if part == '.' or part.startswith(f'..{os.sep}'):
+            if (
+                part in {os.curdir, os.pardir} or
+                part.startswith(f"{os.pardir}{os.sep}")  # '../'
+            ):
                 raise UserInputError(
                     "--rm option cannot take paths that point to the "
                     "run directory or above"
@@ -405,3 +409,15 @@ def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
     except ValueError:
         return False
     return True
+
+
+def get_workflow_name_from_id(workflow_id: str) -> str:
+    """Workflow name is the ID shorn of the runN directory name.
+
+    Examples:
+    >>> get_workflow_name_from_id('my_workflow/run42')
+    'my_workflow'
+    >>> get_workflow_name_from_id('my_other_workflow')
+    'my_other_workflow'
+    """
+    return re.sub(rf'{re.escape(os.sep)}run\d+$', '', workflow_id)

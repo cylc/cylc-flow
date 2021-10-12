@@ -45,7 +45,3 @@ def get_option_parser():
 def main(parser, options, job_log_root, *job_log_dirs):
     """CLI main."""
     JobRunnerManager().jobs_poll(job_log_root, job_log_dirs)
-
-
-if __name__ == "__main__":
-    main()

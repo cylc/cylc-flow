@@ -104,10 +104,6 @@ class TestTemplatevars(unittest.TestCase):
         self.assertEqual(expected, load_template_vars(template_vars=pairs))
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 @pytest.fixture(scope='module')
 def provide_opts():
     """Provide a fake opts"""

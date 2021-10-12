@@ -470,6 +470,7 @@ def test_remove_empty_parents_bad(path: str, tail: str, exc_msg: str):
         ([" :foo :bar:"], {"foo", "bar"}),
         (["foo/:bar//baz "], {"foo/", "bar/baz"}),
         ([".foo", "..bar", " ./gah"], {".foo", "..bar", "gah"})
+        # Note '..bar' is a valid filename (doesn't point to parent dir)
     ]
 )
 def test_parse_rm_dirs(dirs: List[str], expected: Set[str]):
@@ -482,6 +483,8 @@ def test_parse_rm_dirs(dirs: List[str], expected: Set[str]):
     [
         (["foo:/bar"],
          "--rm option cannot take absolute paths"),
+        ([".."],
+         "cannot take paths that point to the run directory or above"),
         (["foo:../bar"],
          "cannot take paths that point to the run directory or above"),
         (["foo:bar/../../gah"],

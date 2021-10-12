@@ -100,8 +100,15 @@ workflow directory are recorded by `log/version`.
 [#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
 now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 
+[#4455](https://github.com/cylc/cylc-flow/pull/4455) - `CYLC_WORKFLOW_NAME`
+renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
+`CYLC_WORKFLOW_ID` shorn of any trailing `runX`.
+
 
 ### Fixes
+
+[#4443](https://github.com/cylc/cylc-flow/pull/4443) - fix for slow polling
+generating an incorrect submit-failed result.
 
 [#4421](https://github.com/cylc/cylc-flow/pull/4421) -
 Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).
@@ -109,6 +116,9 @@ Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).
 [#4426](https://github.com/cylc/cylc-flow/pull/4426) -
 Fix bug when a conditional expression in the graph contains one task name that
 is a substring of another.
+
+[#4399](https://github.com/cylc/cylc-flow/pull/4399) -
+Ensure that implicit task names are validated (as opposed to explicit ones).
 
 [#4341](https://github.com/cylc/cylc-flow/pull/4341) -
 Remove obsolete Cylc 7 `[scheduling]spawn to max active cycle points` config.
@@ -129,6 +139,10 @@ Fix ``cylc stop --kill`` which was not actually killing task jobs.
 
 [#4338](https://github.com/cylc/cylc-flow/pull/4338) - Cylc install -C option
 now works with relative paths.
+
+[#4440](https://github.com/cylc/cylc-flow/pull/4440) -
+Fix an error that could occur during remote clean and other `cylc clean`
+improvements.
 
 [#4445](https://github.com/cylc/cylc-flow/pull/4445) - Cylc will prevent you
 using the same name for a platform and a platform group. Which one it should

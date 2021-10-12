@@ -174,7 +174,3 @@ class TestIntegerSequence(unittest.TestCase):
         self.assertEqual(sequence1, sequence2)
         sequence2.set_offset(IntegerInterval('-P1'))
         self.assertNotEqual(sequence1, sequence2)
-
-
-if __name__ == '__main__':
-    unittest.main()

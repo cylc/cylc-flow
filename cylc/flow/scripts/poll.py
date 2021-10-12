@@ -21,8 +21,8 @@
 Poll (query) task jobs to verify and update their statuses.
 
 Examples:
-  $ cylc poll REG  # poll all active tasks
-  $ cylc poll REG TASK_GLOB  # poll multiple active tasks or families
+  $ cylc poll WORKFLOW  # poll all active tasks
+  $ cylc poll WORKFLOW TASK_GLOB  # poll multiple active tasks or families
 """
 
 from typing import TYPE_CHECKING
@@ -55,7 +55,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ('REG', 'Workflow name'),
+            ('WORKFLOW', 'Workflow name or ID'),
             ('[TASK_GLOB ...]', 'Task matching patterns')]
     )
     return parser
@@ -75,7 +75,3 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
     }
 
     pclient('graphql', mutation_kwargs)
-
-
-if __name__ == "__main__":
-    main()

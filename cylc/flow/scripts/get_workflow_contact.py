@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def get_option_parser():
-    return COP(__doc__, argdoc=[('REG', 'Workflow name')])
+    return COP(__doc__, argdoc=[('WORKFLOW', 'Workflow name or ID')])
 
 
 @cli_function(get_option_parser)
@@ -48,7 +48,3 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
     else:
         for key, value in sorted(data.items()):
             print("%s=%s" % (key, value))
-
-
-if __name__ == "__main__":
-    main()

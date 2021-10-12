@@ -30,7 +30,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List, Set, Dict
+from typing import Iterable, NoReturn, Optional, List, Set, Dict, Union
 from uuid import uuid4
 
 import psutil
@@ -62,8 +62,9 @@ from cylc.flow.loggingutil import (
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
-from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.network.schema import WorkflowStopMode
+from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from cylc.flow.parsec.OrderedDict import DictTree
@@ -76,7 +77,8 @@ from cylc.flow.pathutil import (
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
     get_workflow_test_log_name,
-    make_workflow_run_tree
+    make_workflow_run_tree,
+    get_workflow_name_from_id
 )
 from cylc.flow.platforms import (
     get_install_target_from_platform,
@@ -245,6 +247,7 @@ class Scheduler:
     def __init__(self, reg: str, options: Values) -> None:
         # flow information
         self.workflow = reg
+        self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
         self.id = f'{self.owner}{ID_DELIM}{self.workflow}'
@@ -403,6 +406,9 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
 
+        # Print workflow name to disambiguate in case of inferred run number
+        LOG.info(f"Workflow: {self.workflow}")
+
         self.is_restart = self.workflow_db_mgr.restart_check()
         # Note: since cylc play replaced cylc run/restart, we wait until this
         # point before setting self.is_restart as we couldn't tell if
@@ -537,6 +543,12 @@ class Scheduler:
         else:
             n_restart = 0
 
+        is_quiet = (cylc.flow.flags.verbosity < 0)
+        log_level = LOG.getEffectiveLevel()
+        if is_quiet:
+            # Temporarily change logging level to log important info
+            LOG.setLevel(logging.INFO)
+
         log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
         log_extra_num = {
             TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
@@ -568,6 +580,10 @@ class Scheduler:
             LOG.info(
                 'Start point: %s', self.config.start_point, extra=log_extra)
         LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
+
+        if is_quiet:
+            LOG.info("Quiet mode on")
+            LOG.setLevel(log_level)
 
     async def start_scheduler(self):
         """Start the scheduler main loop."""
@@ -836,7 +852,7 @@ class Scheduler:
 
     def command_stop(
         self,
-        mode: 'StopMode',
+        mode: Union[str, 'StopMode'],
         cycle_point: Optional[str] = None,
         # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
         clock_time: Optional[str] = None,
@@ -873,6 +889,10 @@ class Scheduler:
                 pass
         else:
             # immediate shutdown
+            with suppress(KeyError):
+                # By default, mode from mutation is a name from the
+                # WorkflowStopMode graphene.Enum, but we need the value
+                mode = WorkflowStopMode[mode]  # type: ignore[misc]
             try:
                 mode = StopMode(mode)
             except ValueError:
@@ -1091,7 +1111,8 @@ class Scheduler:
         self.task_job_mgr.job_file_writer.set_workflow_env({
             **verbosity_to_env(cylc.flow.flags.verbosity),
             'CYLC_UTC': str(get_utc_mode()),
-            'CYLC_WORKFLOW_NAME': self.workflow,
+            'CYLC_WORKFLOW_ID': self.workflow,
+            'CYLC_WORKFLOW_NAME': self.workflow_name,
             'CYLC_CYCLING_MODE': str(
                 self.config.cfg['scheduling']['cycling mode']
             ),

@@ -35,15 +35,15 @@ site/user config. For other workflows, e.g. those owned by others, or
 mirrored workflow databases, use --run-dir=DIR to specify the location.
 
 Examples:
-  $ cylc workflow-state REG --task=TASK --point=POINT --status=STATUS
+  $ cylc workflow-state WORKFLOW --task=TASK --point=POINT --status=STATUS
   # returns 0 if TASK.POINT reaches STATUS before the maximum number of
   # polls, otherwise returns 1.
 
-  $ cylc workflow-state REG --task=TASK --point=POINT --status=STATUS \
+  $ cylc workflow-state WORKFLOW --task=TASK --point=POINT --status=STATUS \
   > --offset=PT6H
   # adds 6 hours to the value of CYCLE for carrying out the polling operation.
 
-  $ cylc workflow-state REG --task=TASK --status=STATUS --task-point
+  $ cylc workflow-state WORKFLOW --task=TASK --status=STATUS --task-point
   # uses CYLC_TASK_CYCLE_POINT environment variable as the value for the
   # CYCLE to poll. This is useful when you want to use cylc workflow-state in a
   # cylc task.
@@ -128,7 +128,7 @@ class WorkflowPoller(Poller):
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
-        argdoc=[('REG', "Workflow name")]
+        argdoc=[('WORKFLOW', "Workflow name or ID")]
     )
 
     parser.add_option(
@@ -150,7 +150,7 @@ def get_option_parser() -> COP:
     parser.add_option(
         "-d", "--run-dir",
         help="The top level cylc run directory if non-standard. The "
-             "database should be DIR/REG/log/db. Use to interrogate "
+             "database should be DIR/WORKFLOW_ID/log/db. Use to interrogate "
              "workflows owned by others, etc.; see note above.",
         metavar="DIR", action="store", dest="run_dir", default=None)
 
@@ -260,7 +260,3 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
                 task=options.task,
                 cycle=formatted_pt,
                 status=options.status))
-
-
-if __name__ == "__main__":
-    main()

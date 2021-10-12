@@ -98,11 +98,12 @@ with Conf(
         must to be valid. See also :ref:`FlowConfigFile` for a descriptive
         overview of flow.cylc files, including syntax (:ref:`Syntax`).
 
-        .. note::
+        .. versionchanged:: 8.0.0
 
-           Prior to Cylc 8, this was named ``suite.rc``, but that
-           name is now deprecated. The ``cylc play`` command will automatically
-           symlink an existing ``suite.rc`` file to ``flow.cylc``.
+           The configuration file was previously named ``suite.rc``, but that
+           name is now deprecated. Please take action on any deprecation
+           warnings before renaming ``suite.rc`` configuration files
+           to ``flow.cylc``.
     '''
 ) as SPEC:
 
@@ -142,18 +143,27 @@ with Conf(
             passed to workflow event handlers to be interpreted according to
             your needs. For example, "workflow-priority".
         ''')
-    with Conf('scheduler'):
+    with Conf('scheduler', desc='''
+        .. versionchanged:: 8.0.0
+
+           This section was previously called ``[cylc]``.
+    '''):
         Conf('UTC mode', VDR.V_BOOLEAN)
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
             :term:`Implicit tasks <implicit task>` are tasks without explicit
             runtime definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
             these are not allowed, as they are often typos. However,
-            this setting can be set to ``True`` to allow implict tasks.
-            It is recommended to set this to ``True`` if required during
+            this setting can be set to ``True`` to allow implicit tasks.
+            It is recommended to only set this to ``True`` if required during
             development/prototyping of a workflow graph, but set it to
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
+
+           Note it is not possible to disallow implicit tasks in
+            :ref:`Cylc 7 backwards compatiblity mode <BackCompat>`.
+
+            .. versionadded:: 8.0.0
         ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''

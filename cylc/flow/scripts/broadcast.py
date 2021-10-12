@@ -48,20 +48,20 @@ member_n (there is no direct broadcast to member_n to cancel).
 
 Examples:
   # To broadcast a variable to all tasks (quote items with internal spaces):
-  $ cylc broadcast -s "[environment]VERSE = the quick brown fox" REG
+  $ cylc broadcast -s "[environment]VERSE = the quick brown fox" WORKFLOW
 
   # To do the same with a file:
   $ cat >'broadcast.cylc' <<'__FLOW__'
   $ [environment]
   $     VERSE = the quick brown fox
   $ __FLOW__
-  $ cylc broadcast -F 'broadcast.cylc' REG
+  $ cylc broadcast -F 'broadcast.cylc' WORKFLOW
 
   # To cancel the same broadcast:
-  $ cylc broadcast --cancel "[environment]VERSE" REG
+  $ cylc broadcast --cancel "[environment]VERSE" WORKFLOW
 
   # If -F FILE was used, the same file can be used to cancel the broadcast:
-  $ cylc broadcast -G 'broadcast.cylc' REG
+  $ cylc broadcast -G 'broadcast.cylc' WORKFLOW
 
 Use -d/--display to see active broadcasts. Multiple --cancel options or
 multiple --set and --set-file options can be used on the same command line.
@@ -224,7 +224,7 @@ def get_option_parser():
     """CLI for "cylc broadcast"."""
     parser = COP(
         __doc__, comms=True,
-        argdoc=[('REG', "Workflow name")]
+        argdoc=[('WORKFLOW', 'Workflow name or ID')]
     )
 
     parser.add_option(
@@ -409,7 +409,3 @@ def main(_, options: 'Values', workflow: str) -> None:
             print(get_broadcast_change_report(
                 modified_settings, is_cancel=report_cancel))
     sys.exit(report_bad_options(bad_options, is_set=report_set))
-
-
-if __name__ == "__main__":
-    main()

@@ -818,7 +818,7 @@ class TaskEventsManager():
         """
         # derive an xtrigger label for this retry
         label = '_'.join((
-            'cylc',
+            '_cylc',
             'submit_retry' if submit_retry else 'retry',
             itask.identity
         ))

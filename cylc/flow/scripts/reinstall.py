@@ -58,7 +58,7 @@ if TYPE_CHECKING:
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, argdoc=[('[REG]', 'Workflow name')]
+        __doc__, comms=True, argdoc=[('[WORKFLOW]', 'Workflow name or ID')]
     )
 
     parser.add_cylc_rose_options()
@@ -145,7 +145,3 @@ def main(parser: COP, opts: 'Values', reg: Optional[str] = None) -> None:
                 entry_point.name,
                 exc
             ) from None
-
-
-if __name__ == "__main__":
-    main()

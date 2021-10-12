@@ -45,6 +45,7 @@ from cylc.flow.workflow_files import (
     clean,
     get_rsync_rund_cmd,
     get_symlink_dirs,
+    init_clean,
     is_installed,
     parse_cli_sym_dirs,
     get_workflow_source_dir,
@@ -100,42 +101,23 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-def test_check_nested_run_dirs_parents(tmp_run_dir: Callable):
+def test_check_nested_run_dirs(tmp_run_dir: Callable):
     """Test that check_nested_run_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
     test_dir = cylc_run_dir.joinpath('a/b/c/d/e')
     test_dir.mkdir(parents=True)
     # Parents are not run dirs - ok:
-    workflow_files.check_nested_run_dirs(test_dir, 'e')
+    check_nested_run_dirs(test_dir)
     # Parent contains a run dir but that run dir is not direct ancestor
     # of our test dir - ok:
     tmp_run_dir('a/Z')
-    workflow_files.check_nested_run_dirs(test_dir, 'e')
+    check_nested_run_dirs(test_dir)
     # Now make run dir out of parent - not ok:
     tmp_run_dir('a')
     with pytest.raises(WorkflowFilesError) as exc:
-        workflow_files.check_nested_run_dirs(test_dir, 'e')
+        check_nested_run_dirs(test_dir)
     assert "Nested run directories not allowed" in str(exc.value)
-
-
-def test_check_nested_run_dirs_children(tmp_run_dir: Callable):
-    """Test that check_nested_run_dirs() raises when a child dir is a
-    workflow directory."""
-    cylc_run_dir: Path = tmp_run_dir()
-    cylc_run_dir.joinpath('a/b/c/d/e').mkdir(parents=True)
-    test_dir = cylc_run_dir.joinpath('a')
-    # No run dir in children - ok:
-    workflow_files.check_nested_run_dirs(test_dir, 'a')
-    # Run dir in child - not ok:
-    d: Path = tmp_run_dir('a/b/c/d/e')
-    with pytest.raises(WorkflowFilesError) as exc:
-        workflow_files.check_nested_run_dirs(test_dir, 'a')
-    assert "Nested run directories not allowed" in str(exc.value)
-    shutil.rmtree(d)
-    # Run dir in child but below max scan depth - not ideal but passes:
-    tmp_run_dir('a/b/c/d/e/f')
-    workflow_files.check_nested_run_dirs(test_dir, 'a')
 
 
 @pytest.mark.parametrize(
@@ -158,16 +140,21 @@ def test_validate_workflow_name(reg, expected_err, expected_msg):
 
 
 @pytest.mark.parametrize(
-    'path, expected_reg',
+    'path, implicit_runN, expected_reg',
     [
-        ('{cylc_run}/numbered/workflow', 'numbered/workflow/run2'),
-        ('{cylc_run}/numbered/workflow/runN', 'numbered/workflow/run2'),
-        ('{cylc_run}/numbered/workflow/run1', 'numbered/workflow/run1'),
-        ('{cylc_run}/non_numbered/workflow', 'non_numbered/workflow')
+        ('{cylc_run}/numbered/workflow', True, 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow', False, 'numbered/workflow'),
+        ('{cylc_run}/numbered/workflow/runN', True, 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow/runN', False, 'numbered/workflow/run2'),
+        ('{cylc_run}/numbered/workflow/run1', True, 'numbered/workflow/run1'),
+        ('{cylc_run}/numbered/workflow/run1', False, 'numbered/workflow/run1'),
+        ('{cylc_run}/non_numbered/workflow', True, 'non_numbered/workflow'),
+        ('{cylc_run}/non_numbered/workflow', False, 'non_numbered/workflow'),
     ]
 )
 def test_infer_latest_run(
     path: str,
+    implicit_runN: bool,
     expected_reg: str,
     tmp_run_dir: Callable,
 ) -> None:
@@ -175,6 +162,7 @@ def test_infer_latest_run(
 
     Params:
         path: Input arg.
+        implicit_runN: Input arg.
         expected_reg: The reg part of the expected returned tuple.
     """
     # Setup
@@ -193,7 +181,10 @@ def test_infer_latest_run(
     expected = (cylc_run_dir / expected_reg, Path(expected_reg))
 
     # Test
-    assert infer_latest_run(path) == expected
+    assert infer_latest_run(path, implicit_runN) == expected
+    # Check implicit_runN=True is the default:
+    if implicit_runN:
+        assert infer_latest_run(path) == expected
 
 
 @pytest.mark.parametrize(
@@ -578,7 +569,7 @@ def test_init_clean(
     monkeypatch.setattr('cylc.flow.workflow_files.get_platforms_from_db',
                         lambda x: set(db_platforms))
 
-    workflow_files.init_clean(reg, opts=CleanOptions(**opts))
+    init_clean(reg, opts=CleanOptions(**opts))
     assert mock_clean.called is clean_called
     assert mock_remote_clean.called is remote_clean_called
 
@@ -594,7 +585,7 @@ def test_init_clean__no_dir(
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
-    workflow_files.init_clean('foo/bar', opts=CleanOptions())
+    init_clean('foo/bar', opts=CleanOptions())
     assert "No directory to clean" in caplog.text
     assert mock_clean.called is False
     assert mock_remote_clean.called is False
@@ -611,7 +602,7 @@ def test_init_clean__no_db(
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
-    workflow_files.init_clean('bespin', opts=CleanOptions())
+    init_clean('bespin', opts=CleanOptions())
     assert "No workflow database - will only clean locally" in caplog.text
     assert mock_clean.called is True
     assert mock_remote_clean.called is False
@@ -627,7 +618,7 @@ def test_init_clean__remote_only_no_db(
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
     with pytest.raises(ServiceFileError) as exc:
-        workflow_files.init_clean('hoth', opts=CleanOptions(remote_only=True))
+        init_clean('hoth', opts=CleanOptions(remote_only=True))
     assert ("No workflow database - cannot perform remote clean"
             in str(exc.value))
     assert mock_clean.called is False
@@ -646,8 +637,31 @@ def test_init_clean__running_workflow(
     tmp_run_dir('yavin')
 
     with pytest.raises(ServiceFileError) as exc:
-        workflow_files.init_clean('yavin', opts=mock.Mock())
+        init_clean('yavin', opts=CleanOptions())
     assert "Cannot remove running workflow" in str(exc.value)
+
+
+@pytest.mark.asyncio
+def test_init_clean__runN(
+    monkeymock: MonkeyMock, tmp_run_dir: Callable
+):
+    """Test that init_clean() resolves the runN symlink"""
+    # Setup
+    run_dir: Path = tmp_run_dir('coruscant/run2')
+    (run_dir.parent / 'runN').symlink_to(run_dir.name)
+    tmp_run_dir('coruscant/run1')
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean', spec=clean)
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+    # Test
+    # runN should be resolved
+    init_clean('coruscant/runN', opts=CleanOptions())
+    mock_clean.assert_called_once_with('coruscant/run2', run_dir, None)
+    assert mock_remote_clean.called is False
+    # It should not infer run number if runN not explicitly given
+    with pytest.raises(WorkflowFilesError) as exc_info:
+        init_clean('coruscant', opts=CleanOptions())
+    assert "contains the following workflows" in str(exc_info.value)
+
 
 
 @pytest.mark.asyncio
@@ -677,22 +691,38 @@ def test_init_clean__multiple_runs(
     if number_of_runs > 1:
         if force_opt:
             # It should call clean() with 'foo' and log a warning
-            workflow_files.init_clean('foo', opts)
+            init_clean('foo', opts)
             mock_clean.assert_called_once_with('foo', workflow_dir, None)
             msg = caplog.text
         else:
             # It should raise
             with pytest.raises(WorkflowFilesError) as exc_info:
-                workflow_files.init_clean('foo', opts)
+                init_clean('foo', opts)
             msg = str(exc_info.value)
         assert "contains the following workflows" in msg
     else:
         # It should call clean() with 'foo/run1' followed by 'foo'
-        workflow_files.init_clean('foo', opts)
+        init_clean('foo', opts)
         assert mock_clean.call_args_list == [
             mock.call('foo/run1', last_run_dir, None),
             mock.call('foo', workflow_dir, None)
         ]
+
+
+@pytest.mark.asyncio
+def test_init_clean__parent_rm_dirs(
+    tmp_run_dir: Callable, monkeymock: MonkeyMock,
+):
+    """Test that init_clean() called on a parent dir containing 1 run dir,
+    with the --rm dirs option, only cleans in the run dir."""
+    # Setup
+    run_dir: Path = tmp_run_dir('naboo/run1')
+    for p in (run_dir, run_dir.parent):
+        (p / 'jarjar').mkdir()
+    # Test
+    init_clean('naboo', opts=CleanOptions(rm_dirs=['jarjar']))
+    assert (run_dir / 'jarjar').exists() is False
+    assert (run_dir.parent / 'jarjar').exists() is True
 
 
 @pytest.mark.asyncio
@@ -725,7 +755,7 @@ def test_init_clean__rm_dirs(
                         lambda x: platforms)
     opts = CleanOptions(rm_dirs=rm_dirs) if rm_dirs else CleanOptions()
 
-    workflow_files.init_clean(reg, opts=opts)
+    init_clean(reg, opts=opts)
     mock_clean.assert_called_with(reg, run_dir, expected_clean)
     mock_remote_clean.assert_called_with(
         reg, platforms, expected_remote_clean, opts.remote_timeout)
@@ -1355,6 +1385,32 @@ def test_clean__targeted(
         assert os.path.lexists(file) is False
 
 
+@pytest.mark.parametrize(
+    'rm_dirs',
+    [
+        [".."],
+        ["foo:.."],
+        ["foo/../../meow"]
+    ]
+)
+def test_init_clean__targeted_bad(
+    rm_dirs: List[str],
+    tmp_run_dir: Callable,
+    monkeymock: MonkeyMock
+):
+    """Test init_clean() fails when abusing --rm option."""
+    tmp_run_dir('chalmers')
+    mock_clean = monkeymock('cylc.flow.workflow_files.clean')
+    mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
+    with pytest.raises(UserInputError) as exc_info:
+        init_clean('chalmers', opts=CleanOptions(rm_dirs=rm_dirs))
+    assert "cannot take paths that point to the run directory or above" in str(
+        exc_info.value
+    )
+    mock_clean.assert_not_called()
+    mock_remote_clean.assert_not_called()
+
+
 PLATFORMS = {
     'enterprise': {
         'hosts': ['kirk', 'picard'],
@@ -1380,10 +1436,11 @@ PLATFORMS = {
 
 
 @pytest.mark.parametrize(
-    'install_targets_map, failed_platforms, expected_platforms, expected_err',
+    ('install_targets_map', 'failed_platforms', 'expected_platforms',
+     'exc_expected', 'expected_err_msgs'),
     [
         pytest.param(
-            {'localhost': [PLATFORMS['exeter']]}, None, None, None,
+            {'localhost': [PLATFORMS['exeter']]}, None, None, False, [],
             id="Only localhost install target - no remote clean"
         ),
         pytest.param(
@@ -1391,9 +1448,7 @@ PLATFORMS = {
                 'localhost': [PLATFORMS['exeter']],
                 'picard': [PLATFORMS['enterprise']]
             },
-            None,
-            ['enterprise'],
-            None,
+            None, ['enterprise'], False, [],
             id="Localhost and remote install target"
         ),
         pytest.param(
@@ -1401,9 +1456,7 @@ PLATFORMS = {
                 'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
                 'janeway': [PLATFORMS['voyager']]
             },
-            None,
-            ['enterprise', 'voyager'],
-            None,
+            None, ['enterprise', 'voyager'], False, [],
             id="Only remote install targets"
         ),
         pytest.param(
@@ -1413,7 +1466,8 @@ PLATFORMS = {
             },
             {'enterprise': 255},
             ['enterprise', 'stargazer', 'voyager'],
-            None,
+            False,
+            [],
             id="Install target with 1 failed, 1 successful platform"
         ),
         pytest.param(
@@ -1423,7 +1477,8 @@ PLATFORMS = {
             },
             {'enterprise': 255, 'stargazer': 255},
             ['enterprise', 'stargazer', 'voyager'],
-            (CylcError, "Could not clean on install targets: picard"),
+            True,
+            ["Could not clean on install target: picard"],
             id="Install target with all failed platforms"
         ),
         pytest.param(
@@ -1433,7 +1488,9 @@ PLATFORMS = {
             },
             {'enterprise': 255, 'voyager': 255},
             ['enterprise', 'voyager'],
-            (CylcError, "Could not clean on install targets: picard, janeway"),
+            True,
+            ["Could not clean on install target: picard",
+             "Could not clean on install target: janeway"],
             id="All install targets have all failed platforms"
         ),
         pytest.param(
@@ -1442,7 +1499,8 @@ PLATFORMS = {
             },
             {'enterprise': 1},
             ['enterprise'],
-            (CylcError, "Could not clean on install targets: picard"),
+            True,
+            ["Could not clean on install target: picard"],
             id=("Remote clean cmd fails on a platform for non-SSH reason - "
                 "does not retry")
         ),
@@ -1452,9 +1510,10 @@ def test_remote_clean(
     install_targets_map: Dict[str, Any],
     failed_platforms: Optional[Dict[str, int]],
     expected_platforms: Optional[List[str]],
-    expected_err: Optional[Tuple[Type[Exception], str]],
+    exc_expected: bool,
+    expected_err_msgs: List[str],
     monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture
+    caplog: pytest.LogCaptureFixture, log_filter: Callable
 ) -> None:
     """Test remote_clean() logic.
 
@@ -1466,8 +1525,8 @@ def test_remote_clean(
             name, the value is the remote clean cmd return code.
         expected_platforms: If specified, all the platforms that the
             remote clean cmd is expected to run on.
-        expected_err: If specified, a tuple of the form
-            (Exception, str) giving an exception that is expected to be raised.
+        exc_expected: If a CylcError is expected to be raised.
+        expected_err_msgs: List of error messages expected to be in the log.
     """
     # ----- Setup -----
     caplog.set_level(logging.DEBUG, CYLC_LOG)
@@ -1483,7 +1542,7 @@ def test_remote_clean(
             proc_ret_code = failed_platforms[platform['name']]
         return mock.Mock(
             poll=lambda: proc_ret_code,
-            communicate=lambda: ("", ""),
+            communicate=lambda: ("Mocked stdout", "Mocked stderr"),
             args=[]
         )
 
@@ -1496,15 +1555,16 @@ def test_remote_clean(
     reg = 'foo'
     platform_names = (
         "This arg bypassed as we provide the install targets map in the test")
-    if expected_err:
-        err, msg = expected_err
-        with pytest.raises(err) as exc:
+    if exc_expected:
+        with pytest.raises(CylcError) as exc:
             workflow_files.remote_clean(
                 reg, platform_names, rm_dirs, timeout='irrelevant')
-        assert msg in str(exc.value)
+        assert "Remote clean failed" in str(exc.value)
     else:
         workflow_files.remote_clean(
             reg, platform_names, rm_dirs, timeout='irrelevant')
+    for msg in expected_err_msgs:
+        assert log_filter(caplog, level=logging.ERROR, contains=msg)
     if expected_platforms:
         for p_name in expected_platforms:
             mocked_remote_clean_cmd.assert_any_call(
@@ -1551,44 +1611,6 @@ def test_remote_clean_cmd(
     args, kwargs = mock_construct_ssh_cmd.call_args
     constructed_cmd = args[0]
     assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
-
-
-@pytest.mark.parametrize(
-    'run_dir, srv_dir',
-    [
-        ('a', 'a/R/.service'),
-        ('d/a', 'd/a/a/R/.service'),
-        ('z/d/a/a', 'z/d/a/a/R/.service')
-    ]
-)
-def test_symlinkrundir_children_that_contain_workflows_raise_error(
-        run_dir, srv_dir, monkeypatch):
-    """Test that a workflow cannot be contained in a subdir of another
-    workflow."""
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files.os.path.isdir',
-        lambda x: not (
-            x.find('.service') > 0 and x != srv_dir
-        )
-    )
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files.get_cylc_run_abs_path',
-        lambda x: x)
-    monkeypatch.setattr(
-        'cylc.flow.workflow_files.os.scandir',
-        lambda x: [
-            mock.Mock(
-                path=srv_dir[0:len(x) + 2],
-                is_symlink=lambda: True
-            )
-        ]
-    )
-
-    try:
-        check_nested_run_dirs(run_dir, 'placeholder_flow')
-    except ServiceFileError:
-        pytest.fail(
-            "Unexpected ServiceFileError, Check symlink logic.")
 
 
 def test_get_workflow_source_dir_numbered_run(tmp_path):

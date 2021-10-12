@@ -225,7 +225,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ("REG", "Workflow name"),
+            ("WORKFLOW", "Workflow name or ID"),
             ("[TASK-ID]", """Task ID""")
         ]
     )
@@ -486,7 +486,3 @@ def main(
                 sys.exit(out)
         if mode == 'edit':
             tmpfile_edit(out, options.geditor)
-
-
-if __name__ == "__main__":
-    main()

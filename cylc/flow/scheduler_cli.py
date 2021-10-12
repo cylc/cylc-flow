@@ -17,7 +17,6 @@
 
 from ansimarkup import parse as cparse
 import asyncio
-from contextlib import suppress
 from functools import lru_cache
 import sys
 from typing import TYPE_CHECKING
@@ -27,7 +26,10 @@ from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.loggingutil import TimestampRotatingFileHandler
+from cylc.flow.loggingutil import (
+    close_log,
+    TimestampRotatingFileHandler,
+)
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
@@ -69,16 +71,18 @@ the cycle point of the earliest task specified by --start-task) will be taken
 as satisfied.
 
 Examples:
-    # Start (at the initial cycle point), or restart, or resume workflow REG
-    $ cylc play REG
+    # Start (at the initial cycle point), restart, or resume workflow WORKFLOW
+    $ cylc play WORKFLOW
 
     # Start a new run from a cycle point after the initial cycle point
-    $ cylc play --start-cycle-point=3 REG  # (integer cycling)
-    $ cylc play --start-cycle-point=20250101T0000Z REG  # (datetime cycling)
+    # (integer cycling)
+    $ cylc play --start-cycle-point=3 WORKFLOW
+    # (datetime cycling):
+    $ cylc play --start-cycle-point=20250101T0000Z WORKFLOW
 
     # Start a new run from specified tasks in the graph
-    $ cylc play --start-task=foo.3 REG
-    $ cylc play -t foo.3 -t bar.3 REG
+    $ cylc play --start-task=foo.3 WORKFLOW
+    $ cylc play -t foo.3 -t bar.3 WORKFLOW
 
     # Start, restart or resume the second installed run of the workflow
     # "dogs/fido"
@@ -89,7 +93,7 @@ happened to them while the workflow was down.
 """
 
 
-FLOW_NAME_ARG_DOC = ("REG", "Workflow name")
+FLOW_NAME_ARG_DOC = ("WORKFLOW", "Workflow name or ID")
 
 RESUME_MUTATION = '''
 mutation (
@@ -251,25 +255,15 @@ def _open_logs(reg, no_detach):
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    workflow_log_handler = get_workflow_run_log_name(reg)
+    log_path = get_workflow_run_log_name(reg)
     LOG.addHandler(
-        TimestampRotatingFileHandler(
-            workflow_log_handler,
-            no_detach))
-
+        TimestampRotatingFileHandler(log_path, no_detach)
+    )
     # Add file installation log
     file_install_log_path = get_workflow_file_install_log_name(reg)
-    handler = TimestampRotatingFileHandler(file_install_log_path, no_detach)
-    RSYNC_LOG.addHandler(handler)
-
-
-def _close_logs():
-    """Close Cylc log handlers for a flow run."""
-    for handler in LOG.handlers:
-        with suppress(IOError):
-            # suppress traceback which `logging` might try to write to the
-            # log we are trying to close
-            handler.close()
+    RSYNC_LOG.addHandler(
+        TimestampRotatingFileHandler(file_install_log_path, no_detach)
+    )
 
 
 def scheduler_cli(options: 'Values', reg: str) -> None:
@@ -345,7 +339,7 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
     # NOTE: any threads which include sleep statements could cause
     #       sys.exit to hang if not shutdown properly
     LOG.info("DONE")
-    _close_logs()
+    close_log(LOG)
     sys.exit(ret)
 
 

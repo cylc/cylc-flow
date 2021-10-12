@@ -75,11 +75,11 @@ from cylc.flow.pathutil import (
     get_workflow_run_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
+    get_workflow_name_from_id
 )
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
 from cylc.flow.subprocctx import SubFuncContext
-from cylc.flow.workflow_files import NO_TITLE
 from cylc.flow.task_events_mgr import (
     EventData,
     get_event_handler_data
@@ -98,6 +98,7 @@ from cylc.flow.unicode_rules import (
 )
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
+from cylc.flow.workflow_files import NO_TITLE, WorkflowFiles
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
@@ -182,7 +183,8 @@ class WorkflowConfig:
         if self.mem_log is None:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
-        self.workflow = workflow  # workflow name
+        self.workflow = workflow  # workflow id
+        self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
@@ -749,24 +751,28 @@ class WorkflowConfig:
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
         queue config, unless allowed by config."""
-        if self.implicit_tasks:
-            print_limit = 10
-            implicit_tasks_str = '\n    * '.join(
-                list(self.implicit_tasks)[:print_limit])
-            num = len(self.implicit_tasks)
-            if num > print_limit:
-                implicit_tasks_str = (
-                    f"{implicit_tasks_str}\n    and {num} more")
-            err_msg = (
-                "implicit tasks detected (no entry under [runtime]):\n"
-                f"    * {implicit_tasks_str}")
-            if not self.cfg['scheduler']['allow implicit tasks']:
-                raise WorkflowConfigError(
-                    f"{err_msg}\n\n"
-                    "To allow implicit tasks, use "
-                    "'flow.cylc[scheduler]allow implicit tasks'")
-            else:
-                LOG.debug(err_msg)
+        if not self.implicit_tasks:
+            return
+        print_limit = 10
+        tasks_str = '\n    * '.join(list(self.implicit_tasks)[:print_limit])
+        num = len(self.implicit_tasks)
+        if num > print_limit:
+            tasks_str += f"\n    and {num} more"
+        msg = (
+            "implicit tasks detected (no entry under [runtime]):\n"
+            f"    * {tasks_str}"
+        )
+        err_msg = (
+            f"{msg}\n"
+            "To allow implicit tasks, use "
+            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+        )
+        if self.cfg['scheduler']['allow implicit tasks']:
+            LOG.debug(msg)
+        else:
+            if not cylc.flow.flags.cylc7_back_compat:
+                raise WorkflowConfigError(err_msg)
+            LOG.warning(err_msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
@@ -899,7 +905,16 @@ class WorkflowConfig:
 
     def validate_namespace_names(self):
         """Validate task and family names."""
+        for name in self.implicit_tasks:
+            success, message = TaskNameValidator.validate(name)
+            if not success:
+                raise WorkflowConfigError(
+                    f'invalid task name "{name}"\n{message}'
+                )
         for name in self.cfg['runtime']:
+            if name == 'root':
+                # root is allowed to be defined in the runtime section
+                continue
             success, message = TaskNameValidator.validate(name)
             if not success:
                 raise WorkflowConfigError(
@@ -1353,7 +1368,8 @@ class WorkflowConfig:
         """Workflow context is exported to the local environment."""
         for key, value in {
             **verbosity_to_env(cylc.flow.flags.verbosity),
-            'CYLC_WORKFLOW_NAME': self.workflow,
+            'CYLC_WORKFLOW_ID': self.workflow,
+            'CYLC_WORKFLOW_NAME': self.workflow_name,
             'CYLC_WORKFLOW_RUN_DIR': self.run_dir,
             'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
             'CYLC_WORKFLOW_WORK_DIR': self.work_dir,
@@ -1862,11 +1878,17 @@ class WorkflowConfig:
         # Generate a map of *task* members of each family.
         # Note we could exclude 'root' from this and disallow use of 'root' in
         # the graph (which would probably be quite reasonable).
-        family_map = {}
-        for family, tasks in self.runtime['descendants'].items():
-            family_map[family] = [t for t in tasks if (
-                t in self.runtime['parents'] and
-                t not in self.runtime['descendants'])]
+        family_map = {
+            family: [
+                task for task in tasks
+                if (
+                    task in self.runtime['parents'] and
+                    task not in self.runtime['descendants']
+                )
+            ]
+            for family, tasks in self.runtime['descendants'].items()
+            if family != 'root'
+        }
 
         graphdict = self.cfg['scheduling']['graph']
         if 'graph' in graphdict:
@@ -2038,7 +2060,9 @@ class WorkflowConfig:
     ) -> TaskDef:
         """Return an instance of TaskDef for task name."""
         if name not in self.taskdefs:
-            if name not in self.cfg['runtime']:
+            if name == 'root':
+                self.implicit_tasks.add(name)
+            elif name not in self.cfg['runtime']:
                 # implicit inheritance from root
                 self.implicit_tasks.add(name)
                 # These can't just be a reference to root runtime as we have to

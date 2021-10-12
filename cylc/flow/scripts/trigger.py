@@ -20,8 +20,9 @@
 Manually trigger tasks.
 
 Examples:
-  $ cylc trigger REG  # trigger all tasks in a running workflow
-  $ cylc trigger REG TASK_GLOB ...  # trigger some tasks in a running workflow
+  $ cylc trigger WORKFLOW  # trigger all tasks in a running workflow
+  # trigger some tasks in a running workflow:
+  $ cylc trigger WORKFLOW TASK_GLOB ...
 
 NOTE waiting tasks that are queue-limited will be queued if triggered, to
 submit as normal when released by the queue; queued tasks will submit
@@ -62,7 +63,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask_nocycles=True,
         argdoc=[
-            ('REG', 'Workflow name'),
+            ('WORKFLOW', 'Workflow name or ID'),
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     parser.add_option(
@@ -89,7 +90,3 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
     }
 
     pclient('graphql', mutation_kwargs)
-
-
-if __name__ == "__main__":
-    main()

@@ -33,7 +33,6 @@ run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
 cmp_ok "${TEST_NAME_BASE}.stderr" << '__ERR__'
 WorkflowConfigError: implicit tasks detected (no entry under [runtime]):
     * foo
-
 To allow implicit tasks, use 'flow.cylc[scheduler]allow implicit tasks'
 __ERR__
 exit

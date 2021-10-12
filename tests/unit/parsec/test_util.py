@@ -395,7 +395,3 @@ class TestUtil(unittest.TestCase):
     def test_itemstr_no_parents_no_value(self):
         text = itemstr(parents=None, item="Value", value=None)
         self.assertEqual('Value', text)
-
-
-if __name__ == '__main__':
-    unittest.main()

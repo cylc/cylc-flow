@@ -44,7 +44,7 @@ INTERNAL = True
 
 def get_option_parser():
     parser = COP(__doc__, comms=True, argdoc=[
-        ('REG', 'Workflow name'),
+        ('WORKFLOW', 'Workflow name or ID'),
         ('METHOD', 'Network API function name')])
 
     parser.add_option(
@@ -75,7 +75,3 @@ def main(_, options: 'Values', workflow: str, func: str) -> None:
     else:
         res_msg = res
     sys.stdout.write(json.dumps(res_msg, indent=4) + '\n')
-
-
-if __name__ == '__main__':
-    main()

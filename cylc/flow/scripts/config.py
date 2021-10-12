@@ -20,8 +20,9 @@
 
 Parse and print Cylc configuration files.
 
-Print parsed configuration, after runtime inheritance. If REG is specified,
-print the workflow configuration, otherwise print the global configuration.
+Print parsed configuration, after runtime inheritance. If WORKFLOW is
+specified, print the workflow configuration, otherwise print the global
+configuration.
 
 Note:
   This is different to `cylc view` which doesn't parse the configuration,
@@ -66,7 +67,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("[REG]", "Workflow name or path")],
+        argdoc=[("[WORKFLOW]", "Workflow name, ID, or path")],
         jset=True, icp=True
     )
 
@@ -143,7 +144,3 @@ def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
         oneline=options.oneline,
         none_str=options.none_str
     )
-
-
-if __name__ == "__main__":
-    main()

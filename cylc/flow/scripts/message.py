@@ -90,7 +90,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
-            ('[REG]', 'Workflow name'),
+            ('[WORKFLOW]', 'Workflow name or ID'),
             ('[TASK-JOB]', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM'),
             ('[[SEVERITY:]MESSAGE ...]', 'Messages')])
     parser.add_option(
@@ -156,7 +156,3 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
     record_messages(workflow, task_job, messages)
-
-
-if __name__ == '__main__':
-    main()

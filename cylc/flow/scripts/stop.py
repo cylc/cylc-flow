@@ -112,7 +112,7 @@ class StopPoller(Poller):
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[("REG", "Workflow name"),
+        argdoc=[("WORKFLOW", "Workflow name or ID"),
                 ("[STOP]", "task POINT (cycle point), or TASK (task ID).")]
     )
 
@@ -207,7 +207,3 @@ def main(
     if int(options.max_polls) > 0 and not spoller.poll():
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
