@@ -775,9 +775,10 @@ class TaskJobManager:
                         itask = tasks[(point, name, submit_num)]
                         callback(workflow, itask, ctx, line)
                     except (LookupError, ValueError) as exc:
+                        # (Note this catches KeyError too).
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
-                        LOG.exception(exc)
+                        LOG.warning(str(exc))
         # Task jobs that are in the original command but did not get a status
         # in the output. Handle as failures.
         for key, itask in sorted(bad_tasks.items()):

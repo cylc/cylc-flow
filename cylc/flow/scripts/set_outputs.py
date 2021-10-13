@@ -18,8 +18,7 @@
 
 """cylc set-outputs [OPTIONS] ARGS
 
-Tell the scheduler that specified (or "succeeded", by default) outputs
-of tasks are complete.
+Set specified task outputs ("succeeded" by default) to complete.
 
 Downstream tasks will be spawned or updated just as if the outputs were
 completed normally.
