@@ -50,23 +50,23 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLO
 
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 sed -n -e 's/^.* \([A-Z]* - \[foo.1\] status=running: (received).*$\)/\1/p' \
-       -e '/\tbadness\|\tslowness\|\tand other incorrectness/p' \
+       -e '/badness\|slowness\|and other incorrectness/p' \
     "${LOG}" >'sed.out'
 sed -i 's/\(^.*\) at .*$/\1/;' 'sed.out'
 
 # Note: the continuation bit gets printed twice, because the message gets a
 # warning as being unhandled.
-cmp_ok 'sed.out' <<'__LOG__'
+cmp_ok 'sed.out' <<__LOG__
 WARNING - [foo.1] status=running: (received)Warn this
 INFO - [foo.1] status=running: (received)Greeting
 WARNING - [foo.1] status=running: (received)Warn that
 DEBUG - [foo.1] status=running: (received)Remove stuffs such as
-	badness
-	slowness
-	and other incorrectness.
-	badness
-	slowness
-	and other incorrectness.
+${LOG_INDENT}badness
+${LOG_INDENT}slowness
+${LOG_INDENT}and other incorrectness.
+${LOG_INDENT}badness
+${LOG_INDENT}slowness
+${LOG_INDENT}and other incorrectness.
 INFO - [foo.1] status=running: (received)whatever
 INFO - [foo.1] status=running: (received)succeeded
 __LOG__

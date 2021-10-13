@@ -22,7 +22,6 @@ This module provides:
   because "time.strftime" will handle time zone from "localtime" properly.
 """
 from contextlib import suppress
-from functools import partial
 from glob import glob
 import logging
 import os
@@ -69,7 +68,6 @@ class CylcLogFormatter(logging.Formatter):
         self.timestamp = None
         self.color = None
         self.max_width = self.MAX_WIDTH
-        self.wrapper = None
         self.configure(timestamp, color, max_width)
         prefix = '%(asctime)s %(levelname)-2s - '
         if dev_info is True:
@@ -88,10 +86,6 @@ class CylcLogFormatter(logging.Formatter):
             self.color = color
         if max_width is not None:
             self.max_width = max_width
-        if self.max_width is None:
-            self.wrapper = lambda x: [x]
-        else:
-            self.wrapper = partial(textwrap.wrap, width=self.max_width)
 
     def format(self, record):  # noqa: A003 (method name not local)
         """Indent continuation lines in multi-line messages."""
@@ -100,11 +94,19 @@ class CylcLogFormatter(logging.Formatter):
             _, text = text.split(' ', 1)  # ISO8601 time points have no spaces
         if self.color and record.levelname in self.COLORS:
             text = self.COLORS[record.levelname].format(text)
-        return '\n\t'.join((
-            wrapped_line
-            for line in text.splitlines()
-            for wrapped_line in self.wrapper(line)
-        ))
+        if self.max_width:
+            return '\n'.join(
+                line
+                for part_num, part in enumerate(text.splitlines())
+                for line in textwrap.wrap(
+                    part,
+                    width=self.max_width,
+                    initial_indent='' if part_num == 0 else '    ',
+                    subsequent_indent='    ',
+                )
+            )
+        else:
+            return '\n    '.join(text.splitlines())
 
     def formatTime(self, record, datefmt=None):
         """Formats the record time as an ISO date time with correct time zone.
