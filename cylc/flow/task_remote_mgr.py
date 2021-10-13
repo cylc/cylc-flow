@@ -30,7 +30,7 @@ from shlex import quote
 import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
-from time import time
+from time import sleep, time
 from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
 
 from cylc.flow import LOG, RSYNC_LOG
@@ -344,6 +344,7 @@ class TaskRemoteMgr:
                         item.proc.args, item.proc.returncode, out, err
                     )
                 )
+            sleep(0.1)
         # Terminate any remaining commands
         for item in queue:
             with suppress(OSError):
