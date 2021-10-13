@@ -938,11 +938,12 @@ class Scheduler:
         self.resume_workflow()
 
     def command_poll_tasks(self, items=None):
-        """Poll pollable tasks or a task/family if options are provided."""
+        """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
             return
         itasks, bad_items = self.pool.filter_task_proxies(items)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
+        # (Could filter itasks by state here if needed)
         return len(bad_items)
 
     def command_kill_tasks(self, items=None):
