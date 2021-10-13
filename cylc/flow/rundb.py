@@ -511,11 +511,14 @@ class CylcWorkflowDAO:
 
     def select_workflow_flows(self, flow_nums):
         """Return flow data for selected flows."""
-        stmt = (
-            f"SELECT flow_num, start_time, description "
-            f"FROM {self.TABLE_WORKFLOW_FLOWS} "
-            f"WHERE flow_num in ({','.join(str(f) for f in flow_nums)})"
-        )
+        stmt = rf'''
+            SELECT
+                flow_num, start_time, description
+            FROM
+                {self.TABLE_WORKFLOW_FLOWS}
+            WHERE
+                flow_num in ({','.join(str(f) for f in flow_nums)})
+        '''  # nosec (table name is code constant, flow_nums just integers)
         flows = {}
         for flow_num, start_time, descr in self.connect().execute(stmt):
             flows[flow_num] = {
