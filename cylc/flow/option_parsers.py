@@ -177,7 +177,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         self.auto_add = auto_add
         if argdoc is None:
             if prep:
-                argdoc = [('WORKFLOW | PATH', 'Workflow name or path')]
+                argdoc = [('WORKFLOW | PATH', 'Workflow name, ID or path')]
             else:
                 argdoc = [('WORKFLOW', 'Workflow name')]
 
