@@ -21,8 +21,8 @@
 Kill running or submitted jobs.
 
 Examples:
-  $ cylc kill REG  # kill all active tasks in the workflow
-  $ cylc kill REG TASK_GLOB ...  # kill one or more active tasks
+  $ cylc kill WORKFLOW  # kill all active tasks in the workflow
+  $ cylc kill WORKFLOW TASK_GLOB ...  # kill one or more active tasks
 """
 
 from typing import TYPE_CHECKING
@@ -55,7 +55,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
-            ('REG', 'Workflow name'),
+            ('WORKFLOW', 'Workflow name or ID'),
             ('[TASK_GLOB ...]', 'Task matching patterns')])
 
     return parser

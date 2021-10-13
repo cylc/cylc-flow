@@ -409,3 +409,15 @@ def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
     except ValueError:
         return False
     return True
+
+
+def get_workflow_name_from_id(workflow_id: str) -> str:
+    """Workflow name is the ID shorn of the runN directory name.
+
+    Examples:
+    >>> get_workflow_name_from_id('my_workflow/run42')
+    'my_workflow'
+    >>> get_workflow_name_from_id('my_other_workflow')
+    'my_other_workflow'
+    """
+    return re.sub(rf'{re.escape(os.sep)}run\d+$', '', workflow_id)

@@ -20,7 +20,7 @@
 
 Test communication with a running workflow.
 
-If workflow REG is running or TASK in workflow REG is currently running,
+If workflow WORKFLOW is running or TASK in WORKFLOW is currently running,
 exit with success status, else exit with error status."""
 
 from ansimarkup import parse as cparse
@@ -65,7 +65,11 @@ query ($tProxy: ID!) {
 def get_option_parser():
     parser = COP(
         __doc__, comms=True,
-        argdoc=[('REG', 'Workflow name'), ('[TASK]', 'Task ' + TaskID.SYNTAX)])
+        argdoc=[
+            ('WORKFLOW', 'Workflow name or ID'),
+            ('[TASK]', 'Task ' + TaskID.SYNTAX)
+        ]
+    )
 
     return parser
 

@@ -43,12 +43,18 @@ from metomi.isodatetime.parsers import DurationParser
 from metomi.isodatetime.exceptions import IsodatetimeError
 from metomi.isodatetime.timezone import get_local_time_zone_format
 from metomi.isodatetime.dumpers import TimePointDumper
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.util import replicate
 
 from cylc.flow import LOG
 from cylc.flow.c3mro import C3
-from cylc.flow.listify import listify
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.cfgspec.workflow import RawWorkflowConfig
+from cylc.flow.cycling.loader import (
+    get_point, get_point_relative, get_interval, get_interval_cls,
+    get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
+    INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
+)
+from cylc.flow.cycling.integer import IntegerInterval
+from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 from cylc.flow.exceptions import (
     CylcError,
     WorkflowConfigError,
@@ -57,24 +63,21 @@ from cylc.flow.exceptions import (
     ParamExpandError,
     UserInputError
 )
-from cylc.flow.graph_parser import GraphParser
-from cylc.flow.param_expand import NameExpander
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.cfgspec.workflow import RawWorkflowConfig
-from cylc.flow.cycling.loader import (
-    get_point, get_point_relative, get_interval, get_interval_cls,
-    get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
-    INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE)
-from cylc.flow.cycling.integer import IntegerInterval
-from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 import cylc.flow.flags
+from cylc.flow.graph_parser import GraphParser
+from cylc.flow.listify import listify
 from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.graphnode import GraphNodeParser
+from cylc.flow.param_expand import NameExpander
+from cylc.flow.parsec.exceptions import ItemNotFoundError
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+from cylc.flow.parsec.util import replicate
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
     get_workflow_run_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
+    get_workflow_name_from_id
 )
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.print_tree import print_tree
@@ -182,7 +185,8 @@ class WorkflowConfig:
         if self.mem_log is None:
             self.mem_log = lambda x: None
         self.mem_log("config.py:config.py: start init config")
-        self.workflow = workflow  # workflow name
+        self.workflow = workflow  # workflow id
+        self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
@@ -760,17 +764,34 @@ class WorkflowConfig:
             "implicit tasks detected (no entry under [runtime]):\n"
             f"    * {tasks_str}"
         )
-        err_msg = (
+        if self.cfg['scheduler']['allow implicit tasks']:
+            LOG.debug(msg)
+            return
+
+        # Check if implicit tasks explicitly disallowed
+        try:
+            is_disallowed = self.pcfg.get(
+                ['scheduler', 'allow implicit tasks'], sparse=True
+            ) is False
+        except ItemNotFoundError:
+            is_disallowed = False
+        if is_disallowed:
+            raise WorkflowConfigError(msg)
+
+        # Otherwise "[scheduler]allow implicit tasks" is not set
+        msg = (
             f"{msg}\n"
             "To allow implicit tasks, use "
             f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
         )
-        if self.cfg['scheduler']['allow implicit tasks']:
-            LOG.debug(msg)
-        else:
-            if not cylc.flow.flags.cylc7_back_compat:
-                raise WorkflowConfigError(err_msg)
-            LOG.warning(err_msg)
+        # Allow implicit tasks in Cylc 7 back-compat mode (but not if
+        # rose-suite.conf present, to maintain compat with Rose 2019)
+        if (
+            Path(self.run_dir, 'rose-suite.conf').is_file() or
+            not cylc.flow.flags.cylc7_back_compat
+        ):
+            raise WorkflowConfigError(msg)
+        LOG.warning(msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
@@ -1366,7 +1387,8 @@ class WorkflowConfig:
         """Workflow context is exported to the local environment."""
         for key, value in {
             **verbosity_to_env(cylc.flow.flags.verbosity),
-            'CYLC_WORKFLOW_NAME': self.workflow,
+            'CYLC_WORKFLOW_ID': self.workflow,
+            'CYLC_WORKFLOW_NAME': self.workflow_name,
             'CYLC_WORKFLOW_RUN_DIR': self.run_dir,
             'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
             'CYLC_WORKFLOW_WORK_DIR': self.work_dir,

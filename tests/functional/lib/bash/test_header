@@ -73,10 +73,11 @@
 #         Test that FILE exists
 #     exists_fail FILE
 #         Test that FILE does not exist
-#     init_workflow TEST_NAME [SOURCE]
+#     init_workflow TEST_NAME [SOURCE] [[RUN_NUMS]]
 #         Create a workflow from SOURCE's "flow.cylc" called:
 #         "cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
 #         Provides WORKFLOW_NAME and WORKFLOW_RUN_DIR variables.
+#         RUN_NUMS (defaults to false): If false run cylc install --no-rundir
 #     install_workflow TEST_NAME SOURCE
 #         Same as init_workflow, but SOURCE must be a directory containing a
 #         "flow.cylc" file.
@@ -453,12 +454,17 @@ graph_workflow() {
 init_workflow() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
+    local RUN_NUMS="${3:-false}"
     WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
     WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
     mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${WORKFLOW_NAME}/flow.cylc"
     cd "${TEST_DIR}/${WORKFLOW_NAME}"
-    cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    if "${RUN_NUMS}"; then
+        cylc install --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    else
+        cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    fi
 }
 
 install_workflow() {

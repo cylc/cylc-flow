@@ -100,6 +100,10 @@ workflow directory are recorded by `log/version`.
 [#4404](https://github.com/cylc/cylc-flow/pull/4404) - The Cylc Graph section
 now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 
+[#4455](https://github.com/cylc/cylc-flow/pull/4455) - `CYLC_WORKFLOW_NAME`
+renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
+`CYLC_WORKFLOW_ID` shorn of any trailing `runX`.
+
 
 ### Fixes
 

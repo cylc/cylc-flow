@@ -4,7 +4,7 @@
 Skip a daily post-processing workflow if the 'copy' task has expired."""
 
 [scheduler]
-    cycle point format = %Y-%m-%dT%H
+    # cycle point format = %Y-%m-%dT%H%M
     allow implicit tasks = True
     [[events]]
         abort on stall timeout = True

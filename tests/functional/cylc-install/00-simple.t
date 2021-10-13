@@ -40,23 +40,23 @@ popd || exit 1
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
-# Test default name: "cylc install REG" (flow in confgured source dir)
+# Test default name: "cylc install WORKFLOW_NAME" (flow in confgured source dir)
 make_rnd_workflow
 # Before adding workflow to ~/cylc-src/, check install fails:
-TEST_NAME="${TEST_NAME_BASE}-REG-fail-no-src-dir"
+TEST_NAME="${TEST_NAME_BASE}-WORKFLOW_NAME-fail-no-src-dir"
 run_fail "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}"
 # Now add workflow to ~/cylc-src/
 RND_WORKFLOW_SOURCE="${PWD}/cylc-src/${RND_WORKFLOW_NAME}"
 mv "$RND_WORKFLOW_NAME" "${PWD}/cylc-src/"
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-# Test REG and --directory are mutually exclusive
-TEST_NAME="${TEST_NAME_BASE}-REG-and--directory-forbidden"
+# Test WORKFLOW_NAME and --directory are mutually exclusive
+TEST_NAME="${TEST_NAME_BASE}-WORKFLOW_NAME-and--directory-forbidden"
 run_fail "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-cylc: error: REG and --directory are mutually exclusive.
+cylc: error: WORKFLOW_NAME and --directory are mutually exclusive.
 __ERR__
 # Finally test normal case
-TEST_NAME="${TEST_NAME_BASE}-REG-install-ok"
+TEST_NAME="${TEST_NAME_BASE}-WORKFLOW_NAME-install-ok"
 run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
