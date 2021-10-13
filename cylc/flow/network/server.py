@@ -24,7 +24,8 @@ from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.network import encode_, decode_, ZMQSocketBase
+from cylc.flow.network import (
+    encode_, decode_, ZMQSocketBase, get_authenticated_user)
 from cylc.flow.network.authorisation import authorise
 from cylc.flow.network.graphql import (
     CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
@@ -176,6 +177,17 @@ class WorkflowRuntimeServer(ZMQSocketBase):
         if self.queue is not None:
             self.queue.put('STOP')
 
+    @staticmethod
+    def parse_request_string(message):
+        """Returns mutation name from request string for logging"""
+        try:
+            req_str = message['args']['request_string']
+
+            before, _after = req_str.split('(', 1)
+            return before
+        except Exception:
+            return None
+
     def _listener(self):
         """The server main loop, listen for and serve requests."""
         while True:
@@ -201,6 +213,14 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             # process
             try:
                 message = decode_(msg)
+                auth_user = get_authenticated_user(message)
+                mutation_message = WorkflowRuntimeServer.parse_request_string(message)
+                if auth_user and mutation_message:
+                    LOG.info(
+                    f"Authenticated user: {auth_user} has submitted "
+                    f"request: {mutation_message}"
+                )
+
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication

@@ -37,6 +37,8 @@ from cylc.flow.network import (
     encode_,
     decode_,
     get_location,
+    get_authenticated_user,
+    set_authenticated_user,
     ZMQSocketBase
 )
 from cylc.flow.network.client_factory import CommsMeth
@@ -78,6 +80,8 @@ class WorkflowRuntimeClient(ZMQSocketBase):
 
             If both host and port are provided it is not necessary to load
             the contact file.
+        auth_user(str):
+            The authenticated user who has executed the command.
 
     Attributes:
         host (str):
@@ -123,7 +127,8 @@ class WorkflowRuntimeClient(ZMQSocketBase):
             port: int = None,
             context: object = None,
             timeout: Union[float, str] = None,
-            srv_public_key_loc: str = None
+            srv_public_key_loc: str = None,
+            auth_user: str = None
     ):
         super().__init__(zmq.REQ, context=context)
         self.workflow = workflow
@@ -143,8 +148,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         self.poller = None
         # Connect the ZMQ socket on instantiation
         self.start(self.host, self.port, srv_public_key_loc)
-        # gather header info post start
-        self.header = self.get_header()
+        self.header = self.get_header(auth_user)
 
     def _socket_options(self):
         """Set socket options after socket instantiation before connect.
@@ -159,7 +163,13 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-    async def async_request(self, command, args=None, timeout=None):
+    async def async_request(
+        self,
+        command,
+        args=None,
+        timeout=None,
+        auth_user=None
+    ):
         """Send an asynchronous request using asyncio.
 
         Has the same arguments and return values as ``serial_request``.
@@ -175,6 +185,8 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         # there is no need to encrypt messages ourselves before sending.
 
         # send message
+        if auth_user:
+            set_authenticated_user(self.header, auth_user)
         msg = {'command': command, 'args': args}
         msg.update(self.header)
         LOG.debug('zmq:send %s', msg)
@@ -205,7 +217,13 @@ class WorkflowRuntimeClient(ZMQSocketBase):
             error = response['error']
             raise ClientError(error['message'], error.get('traceback'))
 
-    def serial_request(self, command, args=None, timeout=None):
+    def serial_request(
+        self,
+        command,
+        args=None,
+        timeout=None,
+        auth_user=None
+    ):
         """Send a request.
 
         For convenience use ``__call__`` to call this method.
@@ -229,8 +247,10 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         self.loop.run_until_complete(task)
         return task.result()
 
-    def get_header(self) -> dict:
+    def get_header(self, auth_user) -> dict:
         """Return "header" data to attach to each request for traceability.
+        Args:
+            auth_user: Authenticated user executing the command.
 
         Returns:
             dict: dictionary with the header information, such as
@@ -260,7 +280,8 @@ class WorkflowRuntimeClient(ZMQSocketBase):
                     os.getenv(
                         "CLIENT_COMMS_METH",
                         default=CommsMeth.ZMQ.value
-                    )
+                    ),
+                'auth_user': auth_user,
             }
         }
 
