@@ -780,7 +780,6 @@ class TaskPool:
         for itask in released:
             itask.state.reset(is_queued=False)
             itask.waiting_on_job_prep = True
-            self.data_store_mgr.delta_task_state(itask)
             self.data_store_mgr.delta_task_queued(itask)
             LOG.info(f"Queue released: {itask.identity}")
 

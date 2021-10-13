@@ -220,8 +220,11 @@ class TaskJobManager:
         prepared_tasks = []
         bad_tasks = []
         for itask in itasks:
-            prep_task = self._prep_submit_task_job(workflow, itask,
-                                                   check_syntax=check_syntax)
+            if itask.state.reset(TASK_STATUS_PREPARING):
+                self.data_store_mgr.delta_task_state(itask)
+                self.workflow_db_mgr.put_update_task_state(itask)
+            prep_task = self._prep_submit_task_job(
+                workflow, itask, check_syntax=check_syntax)
             if prep_task:
                 prepared_tasks.append(itask)
             elif prep_task is False:
@@ -257,7 +260,6 @@ class TaskJobManager:
         auth_itasks = {}  # {platform: [itask, ...], ...}
 
         for itask in prepared_tasks:
-            itask.state.reset(TASK_STATUS_PREPARING)
             platform_name = itask.platform['name']
             auth_itasks.setdefault(platform_name, [])
             auth_itasks[platform_name].append(itask)
