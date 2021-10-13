@@ -1369,7 +1369,7 @@ def check_nested_run_path_base(path_: Union[Path, str]) -> None:
     """Disallow nested installation directories:
 
     Do not allow installation into a directory whose parents and children
-    contain _cylc-install files.
+    contain _cylc_install files.
 
     Args:
         path_: The path to check
@@ -1404,7 +1404,7 @@ def check_nested_run_path_base(path_: Union[Path, str]) -> None:
         )
 
 
-def check_nested_run_dirs(run_dir: Union[Path, str], flow_name: str) -> None:
+def check_nested_run_dirs(run_dir: Union[Path, str]) -> None:
     """Disallow nested run dirs e.g. trying to install foo/bar where foo is
     already a valid workflow directory.
 
