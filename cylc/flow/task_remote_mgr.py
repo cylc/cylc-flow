@@ -282,14 +282,13 @@ class TaskRemoteMgr:
                 continue
             if install_target == get_localhost_install_target():
                 continue
-            platform = get_random_platform_for_install_target(install_target)
             try:
+                platform = get_random_platform_for_install_target(
+                    install_target
+                )
                 cmd, host = construct_remote_tidy_ssh_cmd(platform)
             except (NoHostsError, PlatformLookupError) as exc:
-                LOG.warning(
-                    f"remote tidy on {platform['name']}: "
-                    f"{TaskRemoteMgmtError.MSG_TIDY}\n{exc}"
-                )
+                LOG.warning(f"{exc}; {TaskRemoteMgmtError.MSG_TIDY}")
             else:
                 LOG.debug(
                     "Removing authentication keys and contact file "
@@ -317,21 +316,18 @@ class TaskRemoteMgr:
             if item.proc.returncode == 255:
                 timeout = time() + 10.0
                 self.bad_hosts.add(item.host)
-                LOG.warning(
-                    f"Failed to tidy remote platform: "
-                    f"'{item.platform['name']}' using host '{item.host}'; "
-                    "trying a different host"
-                )
                 try:
                     retry_cmd, retry_host = construct_remote_tidy_ssh_cmd(
                         item.platform
                     )
                 except (NoHostsError, PlatformLookupError) as exc:
-                    LOG.warning(
-                        f"remote tidy on {item.platform['name']}: "
-                        f"{TaskRemoteMgmtError.MSG_TIDY}\n{exc}"
-                    )
+                    LOG.warning(f"{exc}; {TaskRemoteMgmtError.MSG_TIDY}")
                 else:
+                    LOG.debug(
+                        "Failed to tidy remote platform "
+                        f"'{item.platform['name']}' using host '{item.host}'; "
+                        f"trying new host '{retry_host}'"
+                    )
                     queue.append(
                         item._replace(
                             host=retry_host,
