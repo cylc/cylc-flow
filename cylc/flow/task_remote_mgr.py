@@ -341,7 +341,7 @@ class TaskRemoteMgr:
                             )  # * command constructed by internal interface
                         )
                     )
-            else:
+            elif item.proc.returncode:
                 LOG.warning(
                     TaskRemoteMgmtError(
                         TaskRemoteMgmtError.MSG_TIDY, item.platform['name'],
