@@ -16,13 +16,11 @@
 
 """Manage flow counter and flow metadata."""
 
-from typing import Dict, Set, TYPE_CHECKING
+from typing import Dict, Set
 import datetime
 
 from cylc.flow import LOG
-
-if TYPE_CHECKING:
-    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
 class FlowMgr:
@@ -54,7 +52,9 @@ class FlowMgr:
             self.counter,
             self.flows[self.counter]
         )
-        self.db_mgr.put_workflow_params_1("flow_counter", self.counter)
+        self.db_mgr.put_workflow_params_1(
+            WorkflowDatabaseManager.KEY_FLOW_COUNTER,
+            self.counter)
         return self.counter
 
     def load_flows_db(self, flow_nums: Set[int]) -> None:
