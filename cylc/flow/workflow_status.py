@@ -88,8 +88,8 @@ class StopMode(Enum):
             return 'Waiting for active jobs to complete'
         if self == self.REQUEST_KILL:  # type: ignore
             return 'Killing active jobs'
-        if self in (
-            self.AUTO_ON_TASK_FAILIURE,  # type: ignore
+        if self in (  # type: ignore
+            self.AUTO_ON_TASK_FAILURE,  # type: ignore
             self.REQUEST_NOW,
             self.REQUEST_NOW_NOW,
         ):
