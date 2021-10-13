@@ -14,7 +14,7 @@
         init-script = cylc__job__disable_fail_signals ERR EXIT
         script = """
 sleep 1
-cylc stop --now --now "${CYLC_WORKFLOW_NAME}"
+cylc stop --now --now "${CYLC_WORKFLOW_ID}"
 exit 1
 """
         [[[events]]]

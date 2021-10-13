@@ -6,5 +6,5 @@
         script = false
     [[stopper]]
         script = """
-            cylc stop "${CYLC_WORKFLOW_NAME}"
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """

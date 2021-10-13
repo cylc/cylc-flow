@@ -13,7 +13,7 @@ fail, unless the first reloads the workflow definition after modifying it."""
 # change the value of $FALSE to "true" in foo's environment:
 perl -pi -e 's/(FALSE = )false( # marker)/\1true\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
 # reload
-cylc reload $CYLC_WORKFLOW_NAME
+cylc reload $CYLC_WORKFLOW_ID
 """
     [[foo]]
         script = "$FALSE"

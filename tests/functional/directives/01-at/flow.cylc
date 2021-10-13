@@ -21,4 +21,4 @@
         inherit = ATSETTINGS
         script = "sleep 30"
     [[killer]]
-        script = cylc kill "$CYLC_WORKFLOW_NAME" 'rem2'; sleep 10
+        script = cylc kill "$CYLC_WORKFLOW_ID" 'rem2'; sleep 10

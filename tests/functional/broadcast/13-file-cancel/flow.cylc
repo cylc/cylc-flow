@@ -6,8 +6,8 @@
 [runtime]
     [[t1]]
         script = """
-cylc broadcast -n 't2' -F "${CYLC_WORKFLOW_RUN_DIR}/broadcast-1.cylc" "${CYLC_WORKFLOW_NAME}"
-cylc broadcast -n 't2' -G "${CYLC_WORKFLOW_RUN_DIR}/broadcast-2.cylc" "${CYLC_WORKFLOW_NAME}"
+cylc broadcast -n 't2' -F "${CYLC_WORKFLOW_RUN_DIR}/broadcast-1.cylc" "${CYLC_WORKFLOW_ID}"
+cylc broadcast -n 't2' -G "${CYLC_WORKFLOW_RUN_DIR}/broadcast-2.cylc" "${CYLC_WORKFLOW_ID}"
 """
     [[t2]]
         script = false

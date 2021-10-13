@@ -15,4 +15,4 @@
             resources=ConsumableCpus(1) ConsumableMemory(64mb)
             wall_clock_limit=180,120
     [[b]]
-        script = cylc poll "$CYLC_WORKFLOW_NAME" 'a'
+        script = cylc poll "$CYLC_WORKFLOW_ID" 'a'

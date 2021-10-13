@@ -34,7 +34,7 @@
     [[shutdown]]
         inherit = OUTPUT
         post-script = """
-            cylc shutdown $CYLC_WORKFLOW_NAME
+            cylc shutdown $CYLC_WORKFLOW_ID
             sleep 5
         """
         [[[meta]]]

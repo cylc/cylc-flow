@@ -40,40 +40,40 @@ generated reference version.
 set +x
 {
     # broadcast to all cycles and namespaces:
-        cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_WORKFLOW_NAME
+        cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_WORKFLOW_ID
     # broadcast to foo.20100808T00:
-        cylc broadcast -p 20100808T00 -n foo -s "[environment]BCAST = FOO" $CYLC_WORKFLOW_NAME
+        cylc broadcast -p 20100808T00 -n foo -s "[environment]BCAST = FOO" $CYLC_WORKFLOW_ID
     # broadcast to bar at all cycles:
-        cylc broadcast -n bar -s "[environment]BCAST = BAR" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n bar -s "[environment]BCAST = BAR" $CYLC_WORKFLOW_ID
     # broadcast to baz at 20100809T00:
-        cylc broadcast -n baz -p 20100809T00 -s "[environment]BCAST = BAZ" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n baz -p 20100809T00 -s "[environment]BCAST = BAZ" $CYLC_WORKFLOW_ID
     # broadcast to qux at 20100809T00, then cancel it:
-        cylc broadcast -n qux -p 20100809T00 -s "[environment]BCAST = QUX" $CYLC_WORKFLOW_NAME
-        cylc broadcast -n qux -p 20100809T00 --cancel "[environment]BCAST" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n qux -p 20100809T00 -s "[environment]BCAST = QUX" $CYLC_WORKFLOW_ID
+        cylc broadcast -n qux -p 20100809T00 --cancel "[environment]BCAST" $CYLC_WORKFLOW_ID
     # broadcast to wibble at all cycles, then clear it:
-        cylc broadcast -n wibble -s "[environment]BCAST = WIBBLE" $CYLC_WORKFLOW_NAME
-        cylc broadcast -n wibble --clear $CYLC_WORKFLOW_NAME
+        cylc broadcast -n wibble -s "[environment]BCAST = WIBBLE" $CYLC_WORKFLOW_ID
+        cylc broadcast -n wibble --clear $CYLC_WORKFLOW_ID
     # broadcast to all members of ENS, all cycles:
-        cylc broadcast -n ENS -s "[environment]BCAST = ENS" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n ENS -s "[environment]BCAST = ENS" $CYLC_WORKFLOW_ID
     # broadcast to all members of ENS1, all cycles:
-        cylc broadcast -n ENS1 -s "[environment]BCAST = ENS1" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n ENS1 -s "[environment]BCAST = ENS1" $CYLC_WORKFLOW_ID
     # broadcast to a single member m2 of ENS1, in 20100809T00:
-        cylc broadcast -n m2 -p 20100809T00 -s "[environment]BCAST = M2" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n m2 -p 20100809T00 -s "[environment]BCAST = M2" $CYLC_WORKFLOW_ID
     # cancel broadcast to m4 of ENS1, in 20100809T00 (will not work):
-        ! cylc broadcast -n m4 -p 20100809T00 --cancel "[environment]BCAST" $CYLC_WORKFLOW_NAME
+        ! cylc broadcast -n m4 -p 20100809T00 --cancel "[environment]BCAST" $CYLC_WORKFLOW_ID
     # cancel broadcast to m5 of ENS1 at all cycles (will not work):
-        ! cylc broadcast -n m5 --cancel "[environment]BCAST" $CYLC_WORKFLOW_NAME
+        ! cylc broadcast -n m5 --cancel "[environment]BCAST" $CYLC_WORKFLOW_ID
     # clear broadcast to m6 of ENS1 at all cycles (will not work):
-        ! cylc broadcast -n m6 --clear $CYLC_WORKFLOW_NAME
+        ! cylc broadcast -n m6 --clear $CYLC_WORKFLOW_ID
     # clear, then reset, broadcast to m7 of ENS1 at all cycles:
-        ! cylc broadcast -n m7 --clear $CYLC_WORKFLOW_NAME
-        cylc broadcast -n m7 -s "[environment]BCAST = M7" $CYLC_WORKFLOW_NAME
+        ! cylc broadcast -n m7 --clear $CYLC_WORKFLOW_ID
+        cylc broadcast -n m7 -s "[environment]BCAST = M7" $CYLC_WORKFLOW_ID
     # reset broadcast to m8 of ENS1 at 20100809T00
-        cylc broadcast -n m8 -s "[environment]BCAST = M8" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n m8 -s "[environment]BCAST = M8" $CYLC_WORKFLOW_ID
     # reset broadcast to m9 of ENS1 at all cycles
-        cylc broadcast -n m9 -s "[environment]BCAST = M9" $CYLC_WORKFLOW_NAME
+        cylc broadcast -n m9 -s "[environment]BCAST = M9" $CYLC_WORKFLOW_ID
     # clear broadcast for ENS3 (will not work):
-        ! cylc broadcast -n ENS3 --clear $CYLC_WORKFLOW_NAME
+        ! cylc broadcast -n ENS3 --clear $CYLC_WORKFLOW_ID
 } 1>${PREPLOG}.out 2>${PREPLOG}.err
 """
     [[check]]
@@ -82,7 +82,7 @@ set +x
         # gives time for the datastore to update broadcast data).
         script = """
            # list the result to prep task stdout:
-           cylc bcast --display $CYLC_WORKFLOW_NAME \
+           cylc bcast --display $CYLC_WORKFLOW_ID \
              1>>${PREPLOG}.out 2>>${PREPLOG}.err
            set -x
            sed -i '/DEBUG -/d' ${PREPLOG}.out

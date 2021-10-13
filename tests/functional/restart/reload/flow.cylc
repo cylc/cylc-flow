@@ -20,7 +20,7 @@ which should run to completion on restarting."""
     [[foo]]
         script = """
 if [[ "$CYLC_TASK_CYCLE_POINT" == "$CYLC_WORKFLOW_INITIAL_CYCLE_POINT" ]]; then
-    cylc reload "${CYLC_WORKFLOW_NAME}"
+    cylc reload "${CYLC_WORKFLOW_ID}"
     cylc__job__poll_grep_workflow_log -F 'Reload completed'
-    cylc stop "${CYLC_WORKFLOW_NAME}"
+    cylc stop "${CYLC_WORKFLOW_ID}"
 fi"""

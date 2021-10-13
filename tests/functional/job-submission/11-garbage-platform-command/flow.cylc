@@ -12,7 +12,7 @@
         platform = badhost
     [[t2]]
         script = """
-            cylc broadcast "${CYLC_WORKFLOW_NAME}" \
+            cylc broadcast "${CYLC_WORKFLOW_ID}" \
                 -n 't1' -p '1' -s 'platform=localhost'
-            cylc trigger "${CYLC_WORKFLOW_NAME}" 't1.1'
+            cylc trigger "${CYLC_WORKFLOW_ID}" 't1.1'
         """

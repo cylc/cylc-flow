@@ -16,11 +16,11 @@
     [[stop1]]
         script="""
 # Kill t1.1 and t2.1 explicitly.
-cylc kill $CYLC_WORKFLOW_NAME t1.1 t2.1 || true"""
+cylc kill $CYLC_WORKFLOW_ID t1.1 t2.1 || true"""
     [[stop2]]
         script="""
 # Kill t3.1, t4.1, and myself! implicitly (kill all active tasks).
-cylc kill $CYLC_WORKFLOW_NAME || true
+cylc kill $CYLC_WORKFLOW_ID || true
 sleep 30"""
     [[shutdown]]
-        script = "cylc stop $CYLC_WORKFLOW_NAME"
+        script = "cylc stop $CYLC_WORKFLOW_ID"

@@ -23,8 +23,8 @@
     [[pause_resume]]
         # When this task runs foo will be held beyond the workflow stop point.
         script = """
-            cylc pause $CYLC_WORKFLOW_NAME
-            cylc play $CYLC_WORKFLOW_NAME
+            cylc pause $CYLC_WORKFLOW_ID
+            cylc play $CYLC_WORKFLOW_ID
         """
     [[foo]]
         script = true

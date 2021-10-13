@@ -20,7 +20,7 @@
         script = """
 cylc__job__wait_cylc_message_started
 sleep 1
-cylc shutdown --now --max-polls=30 --interval=1 "${CYLC_WORKFLOW_NAME}"
+cylc shutdown --now --max-polls=30 --interval=1 "${CYLC_WORKFLOW_ID}"
 """
     [[foo, p2]]
         script = true

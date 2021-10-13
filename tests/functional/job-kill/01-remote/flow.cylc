@@ -21,6 +21,6 @@
         inherit=T
     [[stop]]
         script="""
-            cylc kill "$CYLC_WORKFLOW_NAME" 't1.1' 't2.1' || true
-            cylc stop $CYLC_WORKFLOW_NAME
+            cylc kill "$CYLC_WORKFLOW_ID" 't1.1' 't2.1' || true
+            cylc stop $CYLC_WORKFLOW_ID
         """

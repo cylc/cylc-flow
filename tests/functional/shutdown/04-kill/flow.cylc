@@ -11,7 +11,7 @@
         script = sleep 60
     [[t2]]
         script = """
-cylc shutdown "${CYLC_WORKFLOW_NAME}"
+cylc shutdown "${CYLC_WORKFLOW_ID}"
 sleep 1
-cylc kill "${CYLC_WORKFLOW_NAME}" 't1'
+cylc kill "${CYLC_WORKFLOW_ID}" 't1'
 """

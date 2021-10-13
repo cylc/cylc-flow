@@ -10,7 +10,7 @@
 [runtime]
     [[t1]]
         script = """
-            cylc broadcast -v -v --debug "${CYLC_WORKFLOW_NAME}" \
+            cylc broadcast -v -v --debug "${CYLC_WORKFLOW_ID}" \
                 -n t2 -s 'script=true'
         """
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}

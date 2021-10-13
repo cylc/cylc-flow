@@ -19,6 +19,6 @@
     [[b-task]]
         script = """
             sleep 10  # wait for buffer to flush?
-            cylc cat-log --debug -f o "${CYLC_WORKFLOW_NAME}" 'a-task.1' | grep 'rubbish'
-            cylc cat-log --debug -f e "${CYLC_WORKFLOW_NAME}" 'a-task.1' | grep 'garbage'
+            cylc cat-log --debug -f o "${CYLC_WORKFLOW_ID}" 'a-task.1' | grep 'rubbish'
+            cylc cat-log --debug -f e "${CYLC_WORKFLOW_ID}" 'a-task.1' | grep 'garbage'
         """
