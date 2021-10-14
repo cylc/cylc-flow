@@ -11,7 +11,7 @@
         inherit = METASYNTACTIC
         script = """
             cylc__job__wait_cylc_message_started
-            cylc trigger $CYLC_WORKFLOW_NAME bar 1
+            cylc trigger $CYLC_WORKFLOW_ID bar 1
         """
     [[bar]]
         inherit = METASYNTACTIC

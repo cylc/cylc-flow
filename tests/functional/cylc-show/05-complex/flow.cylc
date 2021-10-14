@@ -15,6 +15,6 @@
         script = """
 # show myself.
 sleep 4
-cylc show ${CYLC_WORKFLOW_NAME} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
-cylc show --list-prereqs ${CYLC_WORKFLOW_NAME} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
+cylc show ${CYLC_WORKFLOW_ID} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
+cylc show --list-prereqs ${CYLC_WORKFLOW_ID} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
 """

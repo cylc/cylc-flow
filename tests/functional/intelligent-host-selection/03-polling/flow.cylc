@@ -37,12 +37,12 @@ Tasks
     [[stop_g]]
         script="""
             sleep 5  # Give the badhosts list time to empty
-            cylc kill "$CYLC_WORKFLOW_NAME" 'goodhosttask.1' || true
+            cylc kill "$CYLC_WORKFLOW_ID" 'goodhosttask.1' || true
         """
 
     [[stop_m]]
         script="""
             sleep 5  # Give the badhosts list time to empty
-            cylc kill "$CYLC_WORKFLOW_NAME" 'mixedhosttask.1' || true
-            cylc stop $CYLC_WORKFLOW_NAME
+            cylc kill "$CYLC_WORKFLOW_ID" 'mixedhosttask.1' || true
+            cylc stop $CYLC_WORKFLOW_ID
         """

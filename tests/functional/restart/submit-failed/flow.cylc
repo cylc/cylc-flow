@@ -29,7 +29,7 @@
             description = "Submit-failed task (runs before restart)"
     [[remove]]
         script = """
-            cylc remove ${CYLC_WORKFLOW_NAME} submit_failed_task.${CYLC_TASK_CYCLE_POINT}
+            cylc remove ${CYLC_WORKFLOW_ID} submit_failed_task.${CYLC_TASK_CYCLE_POINT}
         """
 
 {% include 'flow-runtime-restart.cylc' %}

@@ -7,7 +7,7 @@
         script = """
 cylc__job__wait_cylc_message_started
 sleep 2
-cylc shutdown "${CYLC_WORKFLOW_NAME}"
+cylc shutdown "${CYLC_WORKFLOW_ID}"
 rm -f "${CYLC_WORKFLOW_RUN_DIR}"
 exit 1
 """

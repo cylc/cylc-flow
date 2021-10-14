@@ -7,4 +7,4 @@
         script = sleep 20
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[b]]
-        script = cylc poll "$CYLC_WORKFLOW_NAME" 'a'
+        script = cylc poll "$CYLC_WORKFLOW_ID" 'a'

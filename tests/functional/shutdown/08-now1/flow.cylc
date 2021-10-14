@@ -11,7 +11,7 @@
 
 [runtime]
     [[t1]]
-        script = cylc__job__wait_cylc_message_started; cylc stop --now "${CYLC_WORKFLOW_NAME}"
+        script = cylc__job__wait_cylc_message_started; cylc stop --now "${CYLC_WORKFLOW_ID}"
         [[[events]]]
             started handlers = sleep 10 && echo 'Hello %(id)s %(event)s'
             succeeded handlers = echo 'Well done %(id)s %(event)s'
