@@ -40,11 +40,11 @@ from time import time
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
 from cylc.flow.exceptions import (
+    NoHostsError,
+    NoPlatformsError,
+    PlatformError,
     PlatformLookupError,
     WorkflowConfigError,
-    TaskRemoteMgmtError,
-    NoPlatformsError,
-    NoHostsError
 )
 from cylc.flow.hostuserutil import (
     get_host,
@@ -284,11 +284,7 @@ class TaskJobManager:
                     # If there are no hosts left for this platform.
                     # See if you can get another platform from the group or
                     # else set task to submit failed.
-                    LOG.warning(TaskRemoteMgmtError(
-                        (
-                            'Tried all the hosts on platform.'
-                        ), itask.platform['name'], [], 1, '', '',
-                    ))
+
                     # Get another platform, if task config platform is a group
                     use_next_platform_in_group = False
                     try:
@@ -326,12 +322,15 @@ class TaskJobManager:
                         self.bad_hosts = (
                             self.bad_hosts - self.bad_hosts_to_clear)
                         self.bad_hosts_to_clear.clear()
-                        LOG.critical(TaskRemoteMgmtError(
-                            (
-                                'Initialisation on platform did not complete:'
-                                'no hosts were reachable.'
-                            ), itask.tdef.rtconfig['platform'], [], 1, '', '',
-                        ))
+                        LOG.critical(
+                            PlatformError(
+                                (
+                                    f'{PlatformError.MSG_INIT}'
+                                    ' (no hosts were reachable)'
+                                ),
+                                itask.platform['name'],
+                            )
+                        )
                         out_of_hosts = True
                         done_tasks.append(itask)
 
@@ -906,14 +905,14 @@ class TaskJobManager:
         # sort itasks into lists based upon where they were run.
         auth_itasks = {}
         for itask in itasks:
-            platform_n = itask.platform['name']
-            if platform_n not in auth_itasks:
-                auth_itasks[platform_n] = []
-            auth_itasks[platform_n].append(itask)
+            platform_name = itask.platform['name']
+            if platform_name not in auth_itasks:
+                auth_itasks[platform_name] = []
+            auth_itasks[platform_name].append(itask)
 
         # Go through each list of itasks and carry out commands as required.
-        for platform_n, itasks in sorted(auth_itasks.items()):
-            platform = get_platform(platform_n)
+        for platform_name, itasks in sorted(auth_itasks.items()):
+            platform = get_platform(platform_name)
             if is_remote_platform(platform):
                 remote_mode = True
                 cmd = [cmd_key]
@@ -937,6 +936,7 @@ class TaskJobManager:
                 job_log_dirs.append(get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num))
             cmd += job_log_dirs
+            LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
             self.proc_pool.put_command(
                 SubProcContext(
                     cmd_key, cmd, host=host
@@ -1091,7 +1091,7 @@ class TaskJobManager:
         #    by the platforms module it's probably worth putting it here too
         #    to prevent trying to run the remote_host/platform_select logic for
         #    tasks which will fail anyway later.
-        # - Platform exists, host doesn't = eval platform_n
+        # - Platform exists, host doesn't = eval platform_name
         # - host exists - eval host_n
         # remove at:
         #     Cylc9
@@ -1105,17 +1105,17 @@ class TaskJobManager:
                 f"\"{itask.identity}\" the following are not compatible:\n"
             )
 
-        host_n, platform_n = None, None
+        host_n, platform_name = None, None
         try:
             if rtconfig['remote']['host'] is not None:
                 host_n = self.task_remote_mgr.subshell_eval(
                     rtconfig['remote']['host'], HOST_REC_COMMAND
                 )
             else:
-                platform_n = self.task_remote_mgr.subshell_eval(
+                platform_name = self.task_remote_mgr.subshell_eval(
                     rtconfig['platform'], PLATFORM_REC_COMMAND
                 )
-        except TaskRemoteMgmtError as exc:
+        except PlatformError as exc:
             # Submit number not yet incremented
             itask.waiting_on_job_prep = False
             itask.submit_num += 1
@@ -1128,19 +1128,22 @@ class TaskJobManager:
             return False
         else:
             # host/platform select not ready
-            if host_n is None and platform_n is None:
+            if host_n is None and platform_name is None:
                 return
             elif (
                 host_n is None
                 and rtconfig['platform']
-                and rtconfig['platform'] != platform_n
+                and rtconfig['platform'] != platform_name
             ):
                 LOG.debug(
                     f"for task {itask.identity}: platform = "
-                    f"{rtconfig['platform']} evaluated as {platform_n}"
+                    f"{rtconfig['platform']} evaluated as {platform_name}"
                 )
-                rtconfig['platform'] = platform_n
-            elif platform_n is None and rtconfig['remote']['host'] != host_n:
+                rtconfig['platform'] = platform_name
+            elif (
+                platform_name is None
+                and rtconfig['remote']['host'] != host_n
+            ):
                 LOG.debug(
                     f"for task {itask.identity}: host = "
                     f"{rtconfig['remote']['host']} evaluated as {host_n}"

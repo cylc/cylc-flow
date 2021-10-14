@@ -83,7 +83,7 @@ TaskEventMailContext = namedtuple(
 
 TaskJobLogsRetrieveContext = namedtuple(
     "TaskJobLogsRetrieveContext",
-    ["key", "ctx_type", "platform_n", "max_size"])
+    ["key", "ctx_type", "platform_name", "max_size"])
 
 
 def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
@@ -721,7 +721,7 @@ class TaskEventsManager():
 
     def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
-        platform = get_platform(ctx.platform_n)
+        platform = get_platform(ctx.platform_name)
         host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
         ssh_str = str(platform["ssh command"])
         rsync_str = str(platform["retrieve job logs command"])
@@ -1119,7 +1119,7 @@ class TaskEventsManager():
             # Note: user@host may not always be set for a submit number, e.g.
             # on late event or if host select command fails. Use null string to
             # prevent issues in this case.
-            platform_n = itask.summary['platforms_used'].get(
+            platform_name = itask.summary['platforms_used'].get(
                 itask.submit_num, ''
             )
             # Custom event handler can be a command template string
@@ -1145,7 +1145,7 @@ class TaskEventsManager():
                     EventData.TaskName.value:
                         quote(itask.tdef.name),
                     EventData.PlatformName.value:
-                        quote(platform_n),
+                        quote(platform_name),
                     EventData.StartTime.value:
                         quote(str(itask.summary['started_time_string'])),
                     EventData.SubmitNum.value:

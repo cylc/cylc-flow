@@ -16,8 +16,6 @@
 
 """Functionality to assist working with terminals"""
 
-from ansimarkup import parse as cparse
-from colorama import init as color_init
 from functools import wraps
 import inspect
 import json
@@ -28,6 +26,9 @@ from subprocess import PIPE, Popen  # nosec
 import sys
 from textwrap import wrap
 from typing import Any, Callable, Optional
+
+from ansimarkup import parse as cparse
+from colorama import init as color_init
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcError
@@ -55,23 +56,6 @@ def get_width(default=80):
         return int(proc.communicate()[0].split()[1]) or default
     except (IndexError, ValueError):
         return default
-
-
-def centered(string, width=None):
-    """Print centered text.
-
-    Examples:
-        >>> centered('foo', 9)
-        '   foo'
-
-    """
-    if not width:
-        width = get_width()
-    return '\n'.join(
-        ' ' * int((width - len(line)) / 2)
-        + line
-        for line in string.splitlines()
-    )
 
 
 def print_contents(contents, padding=5, char='.', indent=0):

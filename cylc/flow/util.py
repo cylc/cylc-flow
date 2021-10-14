@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -15,11 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Misc functionality."""
 
 from contextlib import suppress
 from functools import partial
 import re
-from typing import List, Any
+from typing import (
+    Any,
+    List,
+    Tuple,
+    Union,
+)
 
 
 _NAT_SORT_SPLIT = re.compile(r'([\d\.]+)')
@@ -70,6 +74,29 @@ def natural_sort(items: List[str], fcns=(int, str)) -> None:
 
     """
     items.sort(key=partial(natural_sort_key, fcns=fcns))
+
+
+def format_cmd(cmd: Union[List[str], Tuple[str]], maxlen: int = 60) -> str:
+    r"""Convert a shell command list to a user-friendly represenation.
+
+    Examples:
+        >>> format_cmd(['echo', 'hello', 'world'])
+        'echo hello world'
+        >>> format_cmd(['echo', 'hello', 'world'], 5)
+        'echo \\ \n    hello \\ \n    world'
+
+    """
+    ret = []
+    line = cmd[0]
+    for part in cmd[1:]:
+        if line and (len(line) + len(part) + 3) > maxlen:
+            ret.append(line)
+            line = part
+        else:
+            line += f' {part}'
+    if line:
+        ret.append(line)
+    return ' \\ \n    '.join(ret)
 
 
 def cli_format(cmd: List[str]):
