@@ -1393,9 +1393,6 @@ class WorkflowConfig:
             'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
             'CYLC_WORKFLOW_WORK_DIR': self.work_dir,
             'CYLC_WORKFLOW_SHARE_DIR': self.share_dir,
-            # BACK COMPAT: CYLC_WORKFLOW_DEF_PATH
-            #   from: Cylc7
-            'CYLC_WORKFLOW_DEF_PATH': self.run_dir,
         }.items():
             os.environ[key] = value
 
