@@ -905,6 +905,7 @@ class Scheduler:
         """Set shutdown mode."""
         self.proc_pool.set_stopping()
         self.stop_mode = stop_mode
+        self.update_data_store()
 
     def command_release(self, task_globs: Iterable[str]) -> int:
         """Release held tasks."""
@@ -1234,23 +1235,33 @@ class Scheduler:
             itask.waiting_on_job_prep
         ]
 
-        if (not self.is_paused and
-                self.stop_mode is None and self.auto_restart_time is None):
-            # Add newly released tasks to those still preparing.
-            self.pre_submit_tasks += self.pool.release_queued_tasks()
-            if self.pre_submit_tasks:
-                self.is_updated = True
-                self.task_job_mgr.task_remote_mgr.rsync_includes = (
-                    self.config.get_validated_rsync_includes())
-                for itask in self.task_job_mgr.submit_task_jobs(
-                        self.workflow,
-                        self.pre_submit_tasks,
-                        self.curve_auth,
-                        self.client_pub_key_dir,
-                        self.config.run_mode('simulation')):
-                    # TODO log flow labels here (beware effect on ref tests)
-                    LOG.info('[%s] -triggered off %s',
-                             itask, itask.state.get_resolved_dependencies())
+        # Add newly released tasks to those still preparing.
+        self.pre_submit_tasks += self.pool.release_queued_tasks()
+
+        if (
+            self.pre_submit_tasks and
+            not self.is_paused and
+            self.stop_mode is None and
+            self.auto_restart_time is None
+        ):
+            # Start the job submission process.
+            self.is_updated = True
+
+            self.task_job_mgr.task_remote_mgr.rsync_includes = (
+                self.config.get_validated_rsync_includes())
+
+            for itask in self.task_job_mgr.submit_task_jobs(
+                self.workflow,
+                self.pre_submit_tasks,
+                self.curve_auth,
+                self.client_pub_key_dir,
+                self.config.run_mode('simulation')
+            ):
+                # TODO log flow labels here (beware effect on ref tests)
+                LOG.info(
+                    '[%s] -triggered off %s',
+                    itask, itask.state.get_resolved_dependencies()
+                )
 
     def process_workflow_db_queue(self):
         """Update workflow DB."""
@@ -1423,6 +1434,9 @@ class Scheduler:
         while True:  # MAIN LOOP
             tinit = time()
 
+            # Useful for debugging core scheduler issues:
+            # self.pool.log_task_pool(logging.CRITICAL)
+
             if self.pool.do_reload:
                 # Re-initialise data model on reload
                 self.data_store_mgr.initiate_data_model(reloaded=True)
@@ -1436,7 +1450,7 @@ class Scheduler:
 
             self.process_command_queue()
 
-            if not self.is_paused and self.pool.release_runahead_tasks():
+            if self.pool.release_runahead_tasks():
                 self.is_updated = True
                 self.reset_inactivity_timer()
 
@@ -1487,6 +1501,7 @@ class Scheduler:
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
             self.pool.set_expired_tasks()
+
             self.release_queued_tasks()
 
             if self.pool.sim_time_check(self.message_queue):
@@ -1579,6 +1594,7 @@ class Scheduler:
             self.is_stalled = False
             for itask in updated_tasks:
                 itask.state.is_updated = False
+            self.update_data_store()
         return has_updated
 
     def check_workflow_timers(self):
@@ -1599,7 +1615,10 @@ class Scheduler:
             return True
         if self.is_paused:  # cannot be stalled it's not even running
             return False
-        self.is_stalled = self.pool.is_stalled()
+        is_stalled = self.pool.is_stalled()
+        if is_stalled != self.is_stalled:
+            self.update_data_store()
+            self.is_stalled = is_stalled
         if self.is_stalled:
             self.run_event_handlers(self.EVENT_STALL, 'workflow stalled')
             with suppress(KeyError):
@@ -1727,6 +1746,7 @@ class Scheduler:
             unix_time)
         self.stop_clock_time = unix_time
         self.workflow_db_mgr.put_workflow_stop_clock_time(self.stop_clock_time)
+        self.update_data_store()
 
     def stop_clock_done(self):
         """Return True if wall clock stop time reached."""
@@ -1738,6 +1758,7 @@ class Scheduler:
                 self.stop_clock_time))
             self.stop_clock_time = None
             self.workflow_db_mgr.delete_workflow_stop_clock_time()
+            self.update_data_store()
             return True
         LOG.debug("stop time=%d; current time=%d", self.stop_clock_time, now)
         return False
@@ -1772,6 +1793,7 @@ class Scheduler:
             self.options.stopcp = None
             self.pool.stop_point = None
             self.workflow_db_mgr.delete_workflow_stop_cycle_point()
+            self.update_data_store()
 
         return True
 
@@ -1783,6 +1805,7 @@ class Scheduler:
         LOG.info("PAUSING the workflow now")
         self.is_paused = True
         self.workflow_db_mgr.put_workflow_paused()
+        self.update_data_store()
 
     def resume_workflow(self, quiet: bool = False) -> None:
         """Resume the workflow.
@@ -1798,6 +1821,7 @@ class Scheduler:
             LOG.info("RESUMING the workflow now")
         self.is_paused = False
         self.workflow_db_mgr.delete_workflow_paused()
+        self.update_data_store()
 
     def command_force_trigger_tasks(self, items, reflow=False):
         """Trigger tasks."""
@@ -1907,6 +1931,7 @@ class Scheduler:
             self.options.stopcp = str(stoppoint)
             self.pool.set_stop_point(get_point(self.options.stopcp))
             self.validate_finalcp()
+            self.update_data_store()
 
     async def handle_exception(self, exc: Exception) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
@@ -1929,3 +1954,16 @@ class Scheduler:
                 f"Stop cycle point '{self.options.stopcp}' will have no "
                 "effect as it is after the final cycle "
                 f"point '{self.config.final_point}'.")
+
+    def update_data_store(self):
+        """Sets the update flag on the data store.
+
+        Call this method whenever the Scheduler's state has changed in a way
+        that requires a data store update.
+
+        This call should often be associated with a database update.
+
+        Note that must updates e.g. task / job states are handled elsewhere,
+        this applies to changes made directly to scheduler attributes etc.
+        """
+        self.data_store_mgr.updates_pending = True

@@ -1,0 +1,31 @@
+# This workflow spawns instances of c (as partially satsified prerequisites)
+# out to the runahead limit before the suicide trigger gets activated. If the
+# suicide trigger cleans up all c instances the scheduler can shut down
+# cleanly. Otherwise it will abort on stall with unsatisfied prerequisites.
+
+[scheduler]
+  [[events]]
+     stall timeout = PT0S
+     abort on stall timeout = True
+     expected task failures = a.1
+
+[scheduling]
+   cycling mode = integer
+   initial cycle point = 1
+   final cycle point = 5
+   runahead limit = P5
+   [[graph]]
+      R1 = "a?"
+      P1 = """
+         a[^]? => c & !x
+         a[^]:fail? => x & !c
+         b => c & x
+      """
+[runtime]
+   [[b,c,x]]
+   [[a]]
+      # Fail after c is spawned out to the runahead limit.
+      script = """
+         cylc__job__poll_grep_workflow_log "spawned c\.5"
+         false
+      """

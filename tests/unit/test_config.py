@@ -42,16 +42,18 @@ Fixture = Any
 
 
 @pytest.fixture
-def tmp_flow_config(tmp_path: Path):
+def tmp_flow_config(tmp_run_dir: Callable):
     """Create a temporary flow config file for use in init'ing WorkflowConfig.
 
     Args:
+        reg: Workflow name.
         config: The flow file content.
 
     Returns the path to the flow file.
     """
-    def _tmp_flow_config(config: str) -> Path:
-        flow_file = tmp_path / WorkflowFiles.FLOW_FILE
+    def _tmp_flow_config(reg: str, config: str) -> Path:
+        run_dir: Path = tmp_run_dir(reg)
+        flow_file = run_dir / WorkflowFiles.FLOW_FILE
         flow_file.write_text(config)
         return flow_file
     return _tmp_flow_config
@@ -219,7 +221,8 @@ def test_family_inheritance_and_quotes(
                 hosts = localhost
         '''
     )
-    file_path = tmp_flow_config(f'''
+    reg = 'test'
+    file_path = tmp_flow_config(reg, f'''
         [scheduler]
             allow implicit tasks = True
         [task parameters]
@@ -238,10 +241,7 @@ def test_family_inheritance_and_quotes(
                 inherit = 'MAINFAM<major, minor>', {fam_txt}
     ''')
     config = WorkflowConfig(
-        'test',
-        file_path,
-        template_vars={},
-        options=Mock(spec=[])
+        reg, file_path, template_vars={}, options=Values()
     )
     assert ('goodbye_0_major1_minor10' in
             config.runtime['descendants']['MAINFAM_major1_minor10'])
@@ -841,8 +841,8 @@ def test_cycle_point_tz(caplog, monkeypatch):
 
 
 def test_rsync_includes_will_not_accept_sub_directories(tmp_flow_config):
-
-    flow_file = tmp_flow_config("""
+    reg = 'rsynctest'
+    flow_file = tmp_flow_config(reg, """
     [scheduling]
         initial cycle point = 2020-01-01
         [[dependencies]]
@@ -853,17 +853,15 @@ def test_rsync_includes_will_not_accept_sub_directories(tmp_flow_config):
 
     with pytest.raises(WorkflowConfigError) as exc:
         WorkflowConfig(
-            workflow="rsynctest",
-            fpath=flow_file,
-            options=Mock(spec=[])
+            workflow=reg, fpath=flow_file, options=Values()
         )
     assert "Directories can only be from the top level" in str(exc.value)
 
 
 def test_valid_rsync_includes_returns_correct_list(tmp_flow_config):
     """Test that the rsync includes in the correct """
-
-    flow_file = tmp_flow_config("""
+    reg = 'rsynctest'
+    flow_file = tmp_flow_config(reg, """
     [scheduling]
         initial cycle point = 2020-01-01
         [[dependencies]]
@@ -873,8 +871,9 @@ def test_valid_rsync_includes_returns_correct_list(tmp_flow_config):
         allow implicit tasks = True
     """)
 
-    config = WorkflowConfig(workflow="rsynctest", fpath=flow_file,
-                            options=Mock(spec=[]))
+    config = WorkflowConfig(
+        workflow=reg, fpath=flow_file, options=Values()
+    )
 
     rsync_includes = WorkflowConfig.get_validated_rsync_includes(config)
     assert rsync_includes == ['dir/', 'dir2/', 'file1', 'file2']
@@ -928,7 +927,8 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
     if opt:
         setattr(options, opt, True)
 
-    flow_file = tmp_flow_config("""
+    reg = 'circular'
+    flow_file = tmp_flow_config(reg, """
     [scheduling]
         cycling mode = integer
         [[graph]]
@@ -940,8 +940,7 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
 
     def WorkflowConfig__assert_err_raised():
         with pytest.raises(WorkflowConfigError) as exc:
-            WorkflowConfig(
-                workflow='circular', fpath=flow_file, options=options)
+            WorkflowConfig(workflow=reg, fpath=flow_file, options=options)
         assert "circular edges detected" in str(exc.value)
 
     # ----- The actual test -----
@@ -960,7 +959,8 @@ def test_check_circular(opt, monkeypatch, caplog, tmp_flow_config):
 
 def test_undefined_custom_output(tmp_flow_config: Callable):
     """Test error on undefined custom output referenced in graph."""
-    flow_file = tmp_flow_config("""
+    reg = 'custom_out1'
+    flow_file = tmp_flow_config(reg, """
     [scheduling]
         [[graph]]
             R1 = "foo:x => bar"
@@ -969,14 +969,14 @@ def test_undefined_custom_output(tmp_flow_config: Callable):
     """)
 
     with pytest.raises(WorkflowConfigError) as cm:
-        WorkflowConfig(
-            workflow='custom_out1', fpath=flow_file, options=Values())
+        WorkflowConfig(workflow=reg, fpath=flow_file, options=Values())
     assert "Undefined custom output" in str(cm.value)
 
 
 def test_invalid_custom_output_msg(tmp_flow_config: Callable):
     """Test invalid output message (colon not allowed)."""
-    flow_file = tmp_flow_config("""
+    reg = 'invalid_output'
+    flow_file = tmp_flow_config(reg, """
     [scheduling]
         [[graph]]
             R1 = "foo:x => bar"
@@ -989,7 +989,7 @@ def test_invalid_custom_output_msg(tmp_flow_config: Callable):
 
     with pytest.raises(WorkflowConfigError) as cm:
         WorkflowConfig(
-            workflow='invalid_output', fpath=flow_file, options=Values())
+            workflow=reg, fpath=flow_file, options=Values())
     assert (
         'Invalid message trigger "[runtime][foo][outputs]x = '
         'the quick: brown fox"'
@@ -1006,7 +1006,8 @@ def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch, caplog):
     caplog.set_level(logging.WARNING, CYLC_LOG)
     monkeypatch.setattr(
         'cylc.flow.flags.cylc7_back_compat', True)
-    flow_file = tmp_flow_config('''
+    reg = 'custom_out2'
+    flow_file = tmp_flow_config(reg, '''
     [scheduling]
         [[graph]]
             R1 = """
@@ -1021,7 +1022,7 @@ def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch, caplog):
                 x = x
     ''')
 
-    cfg = WorkflowConfig(workflow='custom_out2', fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
     assert WorkflowConfig.CYLC7_GRAPH_COMPAT_MSG in caplog.text
 
     for taskdef in cfg.taskdefs.values():
@@ -1042,7 +1043,8 @@ def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch, caplog):
 )
 def test_implicit_success_required(tmp_flow_config, graph):
     """Check foo:succeed is required if success/fail not used in the graph."""
-    flow_file = tmp_flow_config(f"""
+    reg = 'blargh'
+    flow_file = tmp_flow_config(reg, f"""
     [scheduling]
         [[graph]]
             R1 = {graph}
@@ -1052,7 +1054,7 @@ def test_implicit_success_required(tmp_flow_config, graph):
            [[[outputs]]]
                x = "the quick brown fox"
     """)
-    cfg = WorkflowConfig(workflow='blargh', fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
     assert cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]
 
 
@@ -1065,7 +1067,8 @@ def test_implicit_success_required(tmp_flow_config, graph):
 )
 def test_success_after_optional_submit(tmp_flow_config, graph):
     """Check foo:succeed is not required if foo:submit is optional."""
-    flow_file = tmp_flow_config(f"""
+    reg = 'blargh'
+    flow_file = tmp_flow_config(reg, f"""
     [scheduling]
         [[graph]]
             R1 = {graph}
@@ -1073,26 +1076,44 @@ def test_success_after_optional_submit(tmp_flow_config, graph):
         [[bar]]
         [[foo]]
     """)
-    cfg = WorkflowConfig(workflow='blargh', fpath=flow_file, options=None)
+    cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
     assert not cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]
 
 
 @pytest.mark.parametrize(
-    'allow_implicit_tasks, cylc7_compat, err_expected, expected_log_level',
+    'allow_implicit_tasks',
     [
-        pytest.param(None, False, True, None,
-                     id="Default"),
-        pytest.param(True, False, False, logging.DEBUG,
-                     id="Allow implicit tasks = True"),
-        pytest.param(None, True, False, logging.WARNING,
-                     id="Cylc 7 back-compat"),
-        pytest.param(True, True, False, logging.DEBUG,
-                     id="Both True")]
+        pytest.param(True, id="allow implicit tasks = True"),
+        pytest.param(None, id="allow implicit tasks not set"),
+        pytest.param(False, id="allow implicit tasks = False")
+    ]
+)
+@pytest.mark.parametrize(
+    'cylc7_compat, rose_suite_conf, expected_exc, expected_log_level',
+    [
+        pytest.param(
+            False, False, WorkflowConfigError, None,
+            id="Default"
+        ),
+        pytest.param(
+            False, True, WorkflowConfigError, None,
+            id="rose-suite.conf present"
+        ),
+        pytest.param(
+            True, False, None, logging.WARNING,
+            id="Cylc 7 back-compat"
+        ),
+        pytest.param(
+            True, True, WorkflowConfigError, None,
+            id="Cylc 7 back-compat, rose-suite.conf present"
+        ),
+    ]
 )
 def test_implicit_tasks(
     allow_implicit_tasks: Optional[bool],
     cylc7_compat: bool,
-    err_expected: bool,
+    rose_suite_conf: bool,
+    expected_exc: Optional[Type[Exception]],
     expected_log_level: Optional[int],
     caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
@@ -1105,12 +1126,16 @@ def test_implicit_tasks(
     Params:
         allow_implicit_tasks: Value of "[scheduler]allow implicit tasks".
         cylc7_compat: Whether Cylc 7 backwards compatibility is turned on.
-        err_expected: Whether an exception is expected to be raised.
+        rose_suite_conf: Whether a rose-suite.conf file is present in run dir.
+        expected_exc: Exception expected to be raised only when
+            "[scheduler]allow implicit tasks" is not set.
         expected_log_level: Expected logging severity level for the
-            "implicit tasks detected" message.
+            "implicit tasks detected" message only when
+            "[scheduler]allow implicit tasks" is not set.
     """
     # Setup
-    flow_file = tmp_flow_config(f"""
+    reg = 'rincewind'
+    flow_file: Path = tmp_flow_config(reg, f"""
     [scheduler]
         {
             f'allow implicit tasks = {allow_implicit_tasks}'
@@ -1121,12 +1146,19 @@ def test_implicit_tasks(
             R1 = foo
     """)
     monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', cylc7_compat)
+    if rose_suite_conf:
+        (flow_file.parent / 'rose-suite.conf').touch()
     caplog.set_level(logging.DEBUG, CYLC_LOG)
+    if allow_implicit_tasks is True:
+        expected_exc = None
+        expected_log_level = logging.DEBUG
+    elif allow_implicit_tasks is False:
+        expected_exc = WorkflowConfigError
     # Test
-    args = {'workflow': 'rincewind', 'fpath': flow_file, 'options': None}
+    args: dict = {'workflow': reg, 'fpath': flow_file, 'options': None}
     expected_msg = "implicit tasks detected"
-    if err_expected:
-        with pytest.raises(WorkflowConfigError) as exc:
+    if expected_exc:
+        with pytest.raises(expected_exc) as exc:
             WorkflowConfig(**args)
         assert expected_msg in str(exc.value)
     else:

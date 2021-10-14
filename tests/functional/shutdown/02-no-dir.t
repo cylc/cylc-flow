@@ -15,40 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-
-# Test that timed out event handlers get killed and recorded as failed.
-
+# Test workflow can shutdown successfully if its run dir is deleted
 . "$(dirname "$0")/test_header"
-
-set_test_number 4
-
-create_test_global_config "" "
-[scheduler]
-    process pool timeout = PT10S
-"
+set_test_number 3
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+create_test_global_config "" "
+[scheduler]
+    [[main loop]]
+        [[[health check]]]
+            interval = PT10S"
+
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+# Workflow run directory is now a symbolic link, so we can easily delete it.
+SYM_WORKFLOW_RUND="${WORKFLOW_RUN_DIR}-sym"
+SYM_WORKFLOW_NAME="${WORKFLOW_NAME}-sym"
+ln -s "$(basename "${WORKFLOW_NAME}")" "${SYM_WORKFLOW_RUND}"
+run_fail "${TEST_NAME_BASE}-run" cylc play "${SYM_WORKFLOW_NAME}" --debug --no-detach
+grep_ok 'CRITICAL - Workflow shutting down - unable to open database file' "${WORKFLOW_RUN_DIR}/log/workflow/log".*
 
-workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
-
-sed -e 's/^.* \([EW]\)/\1/' "${WORKFLOW_RUN_DIR}/log/workflow/log" >'log'
-
-contains_ok 'log' <<__END__
-ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh foo.1
-${LOG_INDENT}[(('event-handler-00', 'started'), 1) ret_code] -9
-${LOG_INDENT}[(('event-handler-00', 'started'), 1) err] killed on timeout (PT10S)
-WARNING - 1/foo/01 ('event-handler-00', 'started') failed
-__END__
-
-cylc workflow-state "${WORKFLOW_NAME}" >'workflow-state.log'
-
-contains_ok 'workflow-state.log' << __END__
-stopper, 1, succeeded
-foo, 1, succeeded
-__END__
-
+rm -f "${SYM_WORKFLOW_RUND}"
 purge
 exit

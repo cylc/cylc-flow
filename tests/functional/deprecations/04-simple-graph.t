@@ -35,8 +35,8 @@ TEST_NAME="${TEST_NAME_BASE}-cmp"
 cylc validate "$WORKFLOW_NAME" 2> 'val.out'
 cmp_ok val.out <<__END__
 WARNING - deprecated graph items were automatically upgraded in "workflow definition":
-	 * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
-	       graph
+${LOG_INDENT} * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
+${LOG_INDENT}       graph
 __END__
 
 purge
