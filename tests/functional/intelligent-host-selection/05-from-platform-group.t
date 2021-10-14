@@ -70,7 +70,7 @@ named_grep_ok "job submit fails for badhostplatform" "badhostplatform: Tried all
     "${WORKFLOW_RUN_DIR}/log/workflow/log"
 named_grep_ok "job submit fails for unreachable_host" "\"jobs-submit\" failed.*\"bad_host1\"" \
     "${WORKFLOW_RUN_DIR}/log/workflow/log"
-named_grep_ok "job submit _finally_ works" "[ugly.1].*preparing => submitted" \
+named_grep_ok "job submit _finally_ works" "\[ugly\.1 preparing job:01 flows:1\] => submitted" \
     "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 purge
