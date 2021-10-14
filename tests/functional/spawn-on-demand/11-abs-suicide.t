@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,24 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
 
-"""A Cylc xtrigger function."""
+# Check that absolute suicide triggers clean up unsatisfied prerequisites.
+# See explanatory comments in the workflow config.
 
-from contextlib import suppress
-
-
-def echo(*args, **kwargs):
-    """Prints args to stdout and return success only if kwargs['succeed'] is True.
-
-    This may be a useful aid to understanding how xtriggers work.
-
-    Returns
-        tuple: (True/False, kwargs)
-
-    """
-    print("echo: ARGS:", args)
-    print("echo: KWARGS:", kwargs)
-    result = False
-    with suppress(KeyError):
-        result = kwargs["succeed"] is True
-    return result, kwargs
+. "$(dirname "$0")/test_header"
+set_test_number 2
+reftest
+exit

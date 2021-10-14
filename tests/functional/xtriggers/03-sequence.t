@@ -20,7 +20,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 3
+set_test_number 2
 
 # Test workflow uses built-in 'echo' xtrigger.
 init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
@@ -30,7 +30,7 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
    initial cycle point = 2025
    final cycle point = +P1Y
    [[xtriggers]]
-       e1 = echo(name='bob')
+       e1 = echo(name='bob', succeed=True)
        e2 = echo(name='alice')
    [[dependencies]]
       [[[R1]]]
@@ -51,13 +51,7 @@ cylc play "${WORKFLOW_NAME}"
 
 poll_grep_workflow_log 'start.2025.*succeeded'
 
-cylc show "${WORKFLOW_NAME}" foo.2025 | grep -E '^  - xtrigger' > foo.2025.log
 cylc show "${WORKFLOW_NAME}" foo.2026 | grep -E '^  - xtrigger' > foo.2026.log
-
-# foo.2025 should get only xtrigger e1.
-cmp_ok foo.2025.log - <<__END__
-  - xtrigger "e1 = echo(name=bob)"
-__END__
 
 # foo.2026 should get only xtrigger e2.
 cmp_ok foo.2026.log - <<__END__
