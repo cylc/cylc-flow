@@ -36,12 +36,13 @@ from cylc.flow.exceptions import (
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
+    MAX_SCAN_DEPTH,
     REG_CLASH_MSG,
     WorkflowFiles,
     _clean_using_glob,
     _remote_clean_cmd,
     check_flow_file,
-    check_nested_run_dirs,
+    check_nested_dirs,
     clean,
     get_rsync_rund_cmd,
     get_symlink_dirs,
@@ -101,23 +102,46 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-def test_check_nested_run_dirs(tmp_run_dir: Callable):
-    """Test that check_nested_run_dirs() raises when a parent dir is a
+def test_check_nested_dirs(tmp_run_dir: Callable):
+    """Test that check_nested_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
     test_dir = cylc_run_dir.joinpath('a/b/c/d/e')
     test_dir.mkdir(parents=True)
     # Parents are not run dirs - ok:
-    check_nested_run_dirs(test_dir)
+    check_nested_dirs(test_dir)
     # Parent contains a run dir but that run dir is not direct ancestor
     # of our test dir - ok:
     tmp_run_dir('a/Z')
-    check_nested_run_dirs(test_dir)
+    check_nested_dirs(test_dir)
     # Now make run dir out of parent - not ok:
     tmp_run_dir('a')
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(test_dir)
+        check_nested_dirs(test_dir)
     assert "Nested run directories not allowed" in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    'test_install_path, existing_install_path',
+[
+    (f'{"child/"*i}', '') for i in range(1,MAX_SCAN_DEPTH)
+] + [
+    ('', f'{"child/"*i}') for i in range(1,MAX_SCAN_DEPTH)
+]
+)
+def test_check_nested_dirs_install_dirs(
+    tmp_path: Path, test_install_path: str, existing_install_path: str
+):
+    """Test that check nested dirs looks both up and down a tree for
+    WorkflowFiles.Install.DIRNAME."""
+    testdir = tmp_path / test_install_path
+    testdir.mkdir(parents=True, exist_ok=True)
+    (tmp_path / existing_install_path / WorkflowFiles.Install.DIRNAME).mkdir(
+        parents=True
+    )
+    with pytest.raises(WorkflowFilesError) as exc:
+        check_nested_dirs(testdir, look_down=True)
+    assert "Nested install directories not allowed" in str(exc.value)
 
 
 @pytest.mark.parametrize(
