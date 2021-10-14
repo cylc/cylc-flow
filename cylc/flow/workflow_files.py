@@ -1573,7 +1573,7 @@ def install_workflow(
     validate_workflow_name(flow_name)
     if run_name in WorkflowFiles.RESERVED_NAMES:
         raise WorkflowFilesError(f'Run name cannot be "{run_name}".')
-    if len(Path(run_name).parts) != 1:
+    if run_name is not None and len(Path(run_name).parts) != 1:
         raise WorkflowFilesError(
             f'Run name cannot be a path. (You used {run_name})'
         )
