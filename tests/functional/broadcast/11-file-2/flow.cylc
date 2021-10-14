@@ -9,7 +9,7 @@
 cylc broadcast -n 't2' \
     -F "${CYLC_WORKFLOW_RUN_DIR}/broadcast-1.cylc" \
     -F "${CYLC_WORKFLOW_RUN_DIR}/broadcast-2.cylc" \
-    "${CYLC_WORKFLOW_NAME}"
+    "${CYLC_WORKFLOW_ID}"
 """
     [[t2]]
         script = false

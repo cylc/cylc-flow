@@ -13,15 +13,15 @@
 [runtime]
     [[broadcast_all]]
         script="""
-cylc broadcast -s "[environment]ALL_0=true" -n F1 $CYLC_WORKFLOW_NAME
-cylc broadcast -s "[environment]ALL_1=true" -n t1 $CYLC_WORKFLOW_NAME
+cylc broadcast -s "[environment]ALL_0=true" -n F1 $CYLC_WORKFLOW_ID
+cylc broadcast -s "[environment]ALL_1=true" -n t1 $CYLC_WORKFLOW_ID
 """
     [[broadcast_tag]]
         script="""
 cylc broadcast -s "[environment]TAG_0=true" -n F1 -p $CYLC_TASK_CYCLE_POINT \
-    $CYLC_WORKFLOW_NAME
+    $CYLC_WORKFLOW_ID
 cylc broadcast -s "[environment]TAG_1=true" -n t1 -p $CYLC_TASK_CYCLE_POINT \
-    $CYLC_WORKFLOW_NAME
+    $CYLC_WORKFLOW_ID
 """
     [[F1]]
         script="""

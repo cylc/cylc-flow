@@ -13,7 +13,7 @@
 [runtime]
     [[send_broadcast]]
         script = """
-            cylc broadcast -n timeout --point=20100808T0000Z --set='[events]execution timeout=PT1S' $CYLC_WORKFLOW_NAME
+            cylc broadcast -n timeout --point=20100808T0000Z --set='[events]execution timeout=PT1S' $CYLC_WORKFLOW_ID
         """
     [[timeout]]
         script = """
