@@ -1405,7 +1405,10 @@ def check_nested_dirs(
                 exc_msgs['run_dir'].format(
                     path, get_cylc_run_abs_path(parent_dir)))
         # Check for install directories:
-        if (parent_dir / WorkflowFiles.Install.DIRNAME).is_dir():
+        if (
+            (parent_dir / WorkflowFiles.Install.DIRNAME).is_dir()
+            and parent_dir != path.parent
+        ):
             raise WorkflowFilesError(
                 exc_msgs['install_dir'].format(
                     get_cylc_run_abs_path(parent_dir)))
