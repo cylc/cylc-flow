@@ -529,7 +529,7 @@ def test_get_next_rundir_number(tmp_path, expect, files, runN):
         param('my_workflow1', 'my_workflow1', False, id='--no-run-name'),
         param('my_workflow2', 'my_workflow2/run22', False, id='installed'),
         param('my_workflow3', 'my_workflow3/foo', False, id='--run-name="foo"'),
-        param('my_workflow4', 'my_workflow4', True, id='not installed')
+        param('my_workflow4', 'my_workflow4', True, id='not installed'),
     )
 )
 def test_get_workflow_name_from_id(
