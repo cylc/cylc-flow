@@ -39,4 +39,4 @@ cylc__job__poll_grep_workflow_log -F '[speaker2.1] status=running: (polled)greet
     [[finisher]]
         script=true
     [[poller]]
-        script=cylc poll "${CYLC_WORKFLOW_ID}" 'speaker[12]'
+        script=cylc poll "${CYLC_WORKFLOW_NAME}" 'speaker[12]'

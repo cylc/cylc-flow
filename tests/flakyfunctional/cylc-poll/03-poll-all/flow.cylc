@@ -36,7 +36,7 @@ trigger, and the workflow to shut down successfully."""
         script = exit 1
     [[poll_check_kill]]
         script = """
-cylc poll "${CYLC_WORKFLOW_ID}"
+cylc poll "${CYLC_WORKFLOW_NAME}"
 
 cylc__job__poll_grep_workflow_log -F \
     "[submit_hold.${CYLC_TASK_CYCLE_POINT}] -preparing => submitted"
@@ -45,7 +45,7 @@ st_file="${CYLC_WORKFLOW_RUN_DIR}/log/job/${CYLC_TASK_CYCLE_POINT}/submit_hold/N
 pkill -g "$(awk -F= '$1 == "CYLC_JOB_ID" {print $2}' "${st_file}")"
 """
     [[poll_now]]
-        script = cylc poll "${CYLC_WORKFLOW_ID}"
+        script = cylc poll "${CYLC_WORKFLOW_NAME}"
 
     [[submit_hold]]
         init-script = sleep 120

@@ -19,10 +19,10 @@ t-retry-able => t-analyse
         script = """
             cylc__job__poll_grep_workflow_log -F \
                 '[t-retry-able.1] -job(01) failed, retrying in PT15S'
-            cylc hold "${CYLC_WORKFLOW_ID}" 't-retry-able.1'
+            cylc hold "${CYLC_WORKFLOW_NAME}" 't-retry-able.1'
             cylc__job__poll_grep_workflow_log -F \
                 '[t-retry-able.1] -running => waiting'
-            cylc release "${CYLC_WORKFLOW_ID}" 't-retry-able.1'
+            cylc release "${CYLC_WORKFLOW_NAME}" 't-retry-able.1'
             cylc__job__poll_grep_workflow_log -F \
                 '[t-retry-able.1] -waiting => waiting (queued)'
         """

@@ -52,10 +52,10 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
 CLOCKTIME="$(($(date +%s) + 60))"
 echo "${CLOCKTIME}" >"${CYLC_WORKFLOW_RUN_DIR}/clocktime"
-cylc stop -w "$(date --date="@${CLOCKTIME}" +%FT%T%:z)" "${CYLC_WORKFLOW_ID}"
+cylc stop -w "$(date --date="@${CLOCKTIME}" +%FT%T%:z)" "${CYLC_WORKFLOW_NAME}"
 """
     [[t<i=2>]]
-        script = cylc stop "${CYLC_WORKFLOW_ID}"
+        script = cylc stop "${CYLC_WORKFLOW_NAME}"
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

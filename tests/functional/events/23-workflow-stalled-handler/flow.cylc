@@ -14,4 +14,4 @@
     [[bar]]
         script = false
     [[baz]]
-        script = cylc remove $CYLC_WORKFLOW_ID bar.1
+        script = cylc remove $CYLC_WORKFLOW_NAME bar.1

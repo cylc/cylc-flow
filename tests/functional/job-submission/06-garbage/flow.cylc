@@ -15,5 +15,5 @@
             grep -q -F \
                 'bad: initialisation did not complete' \
                 "${CYLC_WORKFLOW_LOG_DIR}/log"
-            cylc shutdown "${CYLC_WORKFLOW_ID}"
+            cylc shutdown "${CYLC_WORKFLOW_NAME}"
         """

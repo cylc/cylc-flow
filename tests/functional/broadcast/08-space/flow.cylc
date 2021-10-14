@@ -14,7 +14,7 @@
 [runtime]
     [[broadcast]]
         script="""
-cylc broadcast -s '[environment] FOO=${FOO:-foo}' -n 'test-env' "${CYLC_WORKFLOW_ID}"
+cylc broadcast -s '[environment] FOO=${FOO:-foo}' -n 'test-env' "${CYLC_WORKFLOW_NAME}"
 """
     [[test-env]]
         script="""

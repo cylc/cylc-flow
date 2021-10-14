@@ -1,3 +1,4 @@
+[scheduling]
     [[graph]]
         R1 = """
 # previously "t1:submit": flaky? recover-1 could possibly start executing first.
@@ -11,7 +12,7 @@ t1:start => recover-t1
             HELLO=
     [[recover-t1]]
         script="""
-cylc broadcast -p 1 -n t1 -s'[environment]HELLO=Hello' "${CYLC_WORKFLOW_ID}"
+cylc broadcast -p 1 -n t1 -s'[environment]HELLO=Hello' "${CYLC_WORKFLOW_NAME}"
 sleep 1
-cylc trigger "${CYLC_WORKFLOW_ID}" 1/t1
+cylc trigger "${CYLC_WORKFLOW_NAME}" 1/t1
 """

@@ -13,7 +13,7 @@
     [[foo]]
          script = """
 if (( CYLC_TASK_CYCLE_POINT == 3 )); then
-    cylc trigger --reflow ${CYLC_WORKFLOW_ID} foo.1
+    cylc trigger --reflow ${CYLC_WORKFLOW_NAME} foo.1
     cylc__job__poll_grep_workflow_log 'merged flow'
 fi
          """

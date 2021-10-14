@@ -793,7 +793,7 @@ with Conf(
                 before the ``script`` item (just below). It can be an
                 external command or script, or inlined scripting.
             ''' + SCRIPT_COMMON.format(
-                'echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'))
+                'echo "Hello from workflow ${CYLC_WORKFLOW_NAME}!"'))
 
             Conf('script', VDR.V_STRING, desc='''
                 The main custom script invoked from the task job script. It

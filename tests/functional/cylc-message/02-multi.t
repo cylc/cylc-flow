@@ -31,7 +31,7 @@ init_workflow "${TEST_NAME_BASE}" <<__FLOW__
         platform = $CYLC_TEST_PLATFORM
         script = """
             cylc__job__wait_cylc_message_started
-            cylc message -p WARNING "\${CYLC_WORKFLOW_ID}" "\${CYLC_TASK_JOB}" \
+            cylc message -p WARNING "\${CYLC_WORKFLOW_NAME}" "\${CYLC_TASK_JOB}" \
                 "Warn this" "INFO: Greeting" - <<'__MESSAGES__'
             Warn that
 
