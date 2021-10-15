@@ -1,6 +1,6 @@
 #!jinja2
 [scheduler]
-cycle point time zone = +0100
+cycle point time zone = {{ TZ_OFFSET_BASIC }}
 [scheduling]
     initial cycle point = 20140808T09
     final cycle point = 20140808T09
