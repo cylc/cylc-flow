@@ -13,7 +13,12 @@
     [[t2]]
         script = """
             grep -q -F \
-                'bad: initialisation did not complete' \
+                'platform: bad - Could not connect to bad' \
                 "${CYLC_WORKFLOW_LOG_DIR}/log"
+
+            grep -q -F \
+                'remote-init will retry if another host is available' \
+                "${CYLC_WORKFLOW_LOG_DIR}/log"
+
             cylc shutdown "${CYLC_WORKFLOW_NAME}"
         """

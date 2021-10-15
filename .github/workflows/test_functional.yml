@@ -134,6 +134,8 @@ jobs:
             [platforms]
                 [[_local_at_indep_tcp]]
                     hosts = localhost
+                    install target = localhost
+                    job runner = at
           __HERE__
           cp "${PTH}/global.cylc" "${PTH}/global-tests.cylc"
 

@@ -193,7 +193,7 @@ done
 
 TEST_NUMBER=0
 
-if command -v lsof; then
+if command -v lsof >/dev/null; then
     HAS_LSOF=true
 else
     HAS_LSOF=false

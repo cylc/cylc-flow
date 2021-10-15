@@ -49,8 +49,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate \
     "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play \
     "${WORKFLOW_NAME}" \
-    --no-detach \
-    --debug
+    --no-detach
 
 KEYS_FILE="$(cylc cat-log -m p "$WORKFLOW_NAME" 'keys.1' -f job-find-out)"
 if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
@@ -71,7 +70,11 @@ fi
 if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
     skip 1
 else
-    grep_ok "Removing authentication keys and contact file from remote: \"${CYLC_TEST_INSTALL_TARGET}\"" "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    # NOTE: remote tidy happens on a random platform picked from the install
+    # target so might not be $CYLC_TEST_PLATFORM
+    grep_ok \
+        "platform: .* - remote tidy (on $CYLC_TEST_HOST)" \
+        "${WORKFLOW_RUN_DIR}/log/workflow/log"
 fi
 
 # ensure the keys got removed again afterwards

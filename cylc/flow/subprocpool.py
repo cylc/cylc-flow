@@ -448,7 +448,7 @@ class SubProcPool:
             )
             return None
         else:
-            LOG.debug(format_cmd(ctx.cmd, 40))
+            LOG.debug(ctx.cmd)
             return proc
 
     @classmethod

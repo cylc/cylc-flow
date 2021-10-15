@@ -383,8 +383,10 @@ class TaskRemoteMgr:
             # Bad status
             LOG.error(proc_ctx)
             self.remote_command_map[cmd_str] = PlatformError(
-                PlatformError.MSG_SELECT, (cmd_str, None), cmd_str,
-                proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
+                PlatformError.MSG_SELECT,
+                None,
+                ctx=proc_ctx,
+            )
 
     def _remote_init_callback_255(self, proc_ctx, platform):
         """Callback when "cylc remote-init" exits with 255 error.
