@@ -664,7 +664,7 @@ class Scheduler:
         self.pool.force_trigger_tasks(
             self.options.starttask,
             reflow=True,
-            flow_descr=f"original, from {self.options.starttask}"
+            flow_descr=f"original flow from {self.options.starttask}"
         )
 
     def _load_pool_from_point(self):
@@ -683,7 +683,7 @@ class Scheduler:
             LOG.info(f"{start_type} start from {self.config.start_point}")
 
         flow_num = self.flow_mgr.get_new_flow(
-            f"original from {self.config.start_point}"
+            f"original flow from {self.config.start_point}"
         )
         for name in self.config.get_task_name_list():
             if self.config.start_point is None:
@@ -1150,7 +1150,6 @@ class Scheduler:
         * Workflow UUID.
         * A flag to indicate if the workflow should be paused or not.
         * Original workflow run time zone.
-        * flow counter
         """
         if row_idx == 0:
             LOG.info('LOADING workflow parameters')
@@ -1214,9 +1213,6 @@ class Scheduler:
         elif key == self.workflow_db_mgr.KEY_CYCLE_POINT_TIME_ZONE:
             self.options.cycle_point_tz = value
             LOG.info(f"+ cycle point time zone = {value}")
-        elif key == self.workflow_db_mgr.KEY_FLOW_COUNTER:
-            self.flow_mgr.counter = int(value)
-            LOG.info(f"+ flow counter = {value}")
 
     def _load_template_vars(self, _, row):
         """Load workflow start up template variables."""

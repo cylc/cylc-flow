@@ -28,7 +28,7 @@ reftest_run
 mv "${WORKFLOW_RUN_DIR}/reference.restart.log" "${WORKFLOW_RUN_DIR}/reference.log"
 reftest_run
 
-grep_workflow_log_ok flow-1 "flow: 1 (original from 1)"
+grep_workflow_log_ok flow-1 "flow: 1 (original flow from 1)"
 grep_workflow_log_ok flow-2 "flow: 2 (cheese wizard)"
 
 purge

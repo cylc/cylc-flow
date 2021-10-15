@@ -360,7 +360,7 @@ class TaskPool:
         flow_nums_seen = set()
         for itask in self.get_all_tasks():
             flow_nums_seen.update(itask.flow_nums)
-        self.flow_mgr.load_flows_db(flow_nums_seen)
+        self.flow_mgr.load_from_db(flow_nums_seen)
 
     def load_abs_outputs_for_restart(self, row_idx, row):
         cycle, name, output = row
