@@ -23,9 +23,11 @@
 
 set_test_number 6
 
-init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
+CPTZ=$(date +%z)
+
+init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduler]
-    UTC mode = False
+    cycle point time zone = ${CPTZ}
     allow implicit tasks = True
 [scheduling]
     initial cycle point = now
@@ -34,7 +36,7 @@ init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
 __FLOW__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-
+cat "${TEST_NAME_BASE}-validate.stderr" >&2
 # Set time zone to +01:00
 export TZ=BST-1
 
