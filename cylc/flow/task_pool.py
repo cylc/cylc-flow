@@ -521,7 +521,7 @@ class TaskPool:
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
 
-    def load_db_tasks_to_hold(self) -> None:
+    def load_db_tasks_to_hold(self):
         """Update the tasks_to_hold set with the tasks stored in the
         database."""
         self.tasks_to_hold.update(
@@ -529,7 +529,7 @@ class TaskPool:
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
-    def spawn_successor(self, itask):
+    def spawn_successor(self, itask: TaskProxy) -> Optional[TaskProxy]:
         """Spawn next-cycle instance of itask if parentless.
 
         This includes:
@@ -538,22 +538,26 @@ class TaskPool:
             - absolute-triggered tasks (after the first instance is spawned)
         """
         next_point = itask.next_point()
-        if next_point is not None:
-            parent_points = itask.tdef.get_parent_points(next_point)
-            if (
-                not parent_points
-                or all(x < self.config.start_point for x in parent_points)
-                or itask.tdef.get_abs_triggers(next_point)
-            ):
-                taskid = TaskID.get(itask.tdef.name, next_point)
-                next_task = (
-                    self._get_hidden_task_by_id(taskid)
-                    or self._get_main_task_by_id(taskid)
-                    or self.spawn_task(
-                        itask.tdef.name, next_point, itask.flow_nums)
-                )
-                if next_task:
-                    self.add_to_pool(next_task)
+        if next_point is None:
+            return None
+
+        parent_points = itask.tdef.get_parent_points(next_point)
+        if (
+            not parent_points
+            or all(x < self.config.start_point for x in parent_points)
+            or itask.tdef.has_only_abs_triggers(next_point)
+        ):
+            taskid = TaskID.get(itask.tdef.name, next_point)
+            next_task = (
+                self._get_hidden_task_by_id(taskid)
+                or self._get_main_task_by_id(taskid)
+                or self.spawn_task(
+                    itask.tdef.name, next_point, itask.flow_nums)
+            )
+            if next_task:
+                self.add_to_pool(next_task)
+                return next_task
+        return None
 
     def release_runahead_task(
         self,
@@ -577,15 +581,15 @@ class TaskPool:
         if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
 
-        if not runahead_limit_point:
-            return
-
         if itask.tdef.sequential:
             # implicit prev-instance parent
             return
 
         if not itask.flow_nums:
             # No reflow
+            return
+
+        if not runahead_limit_point:
             return
 
         # Autospawn successor of itask if parentless.
