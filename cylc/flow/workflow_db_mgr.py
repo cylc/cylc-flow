@@ -73,7 +73,6 @@ class WorkflowDatabaseManager:
     KEY_CYCLE_POINT_FORMAT = 'cycle_point_format'
     KEY_CYCLE_POINT_TIME_ZONE = 'cycle_point_tz'
     KEY_RESTART_COUNT = 'n_restart'
-    KEY_FLOW_COUNTER = "flow_counter"
 
     TABLE_BROADCAST_EVENTS = CylcWorkflowDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcWorkflowDAO.TABLE_BROADCAST_STATES

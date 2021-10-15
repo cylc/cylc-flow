@@ -527,6 +527,16 @@ class CylcWorkflowDAO:
             }
         return flows
 
+    def select_workflow_flows_max_flow_num(self):
+        """Return max flow number in the workflow_flows table."""
+        stmt = rf'''
+            SELECT
+                MAX(flow_num)
+            FROM
+                {self.TABLE_WORKFLOW_FLOWS}
+        '''  # nosec (table name is code constant)
+        return self.connect().execute(stmt).fetchone()[0]
+
     def select_workflow_params_restart_count(self):
         """Return number of restarts in workflow_params table."""
         stmt = rf"""

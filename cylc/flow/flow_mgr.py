@@ -29,10 +29,10 @@ class FlowMgr:
     def __init__(self, db_mgr: "WorkflowDatabaseManager") -> None:
         """Initialise the flow manager."""
         self.db_mgr = db_mgr
-        self.counter = 0
         self.flows: Dict[int, Dict[str, str]] = {}
+        self.counter: int = 0
 
-    def get_new_flow(self, description: str = "no description") -> int:
+    def get_new_flow(self, description: str) -> int:
         """Increment flow counter, record flow metadata."""
         self.counter += 1
         # record start time to nearest second
@@ -40,7 +40,7 @@ class FlowMgr:
         now_sec: str = str(
             now - datetime.timedelta(microseconds=now.microsecond))
         self.flows[self.counter] = {
-            "description": description,
+            "description": description or "no description",
             "start_time": now_sec
         }
         LOG.info(
@@ -52,13 +52,16 @@ class FlowMgr:
             self.counter,
             self.flows[self.counter]
         )
-        self.db_mgr.put_workflow_params_1(
-            WorkflowDatabaseManager.KEY_FLOW_COUNTER,
-            self.counter)
         return self.counter
 
-    def load_flows_db(self, flow_nums: Set[int]) -> None:
-        """Load metadata for selected flows from DB - on restart."""
+    def load_from_db(self, flow_nums: Set[int]) -> None:
+        """Load flow data for scheduler restart.
+
+        Sets the flow counter to the max flow number in the DB.
+        Loads metadata for selected flows (those in the task pool at startup).
+
+        """
+        self.counter = self.db_mgr.pri_dao.select_workflow_flows_max_flow_num()
         self.flows = self.db_mgr.pri_dao.select_workflow_flows(flow_nums)
         self._log()
 
