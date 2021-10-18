@@ -17,11 +17,13 @@
 from copy import deepcopy
 import re
 from textwrap import dedent
+from typing import Union
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
     ItemNotFoundError,
-    NotSingleItemError
+    NotSingleItemError,
+    NotAConfigItemError,
 )
 from cylc.flow.parsec.fileparse import parse
 from cylc.flow.parsec.util import printcfg
@@ -44,6 +46,8 @@ class ParsecConfig:
         if validator is None:
             validator = parsec_validate
         self.validator = validator
+        # Get a list of config items which have a private name ``__MANY__``:
+        self.manyparents = self._get_namespace_parents()
 
     def loadcfg(self, rcfile, title=""):
         """Parse a config file, upgrade or deprecate items if necessary,
@@ -110,12 +114,18 @@ class ParsecConfig:
         parents = []
         if keys:
             for key in keys:
-                try:
-                    cfg = cfg[key]
-                except (KeyError, TypeError):
-                    raise ItemNotFoundError(itemstr(parents, key))
+                if (
+                    key not in self.dense
+                    and not parents or parents in self.manyparents
+                ):
+                    raise NotAConfigItemError(key)
                 else:
-                    parents.append(key)
+                    try:
+                        cfg = cfg[key]
+                    except (KeyError, TypeError):
+                        raise ItemNotFoundError(itemstr(parents, key))
+                    else:
+                        parents.append(key)
 
         return cfg
 
@@ -161,6 +171,30 @@ class ParsecConfig:
             keys = []
         cfg = self.get(keys, sparse)
         printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
+
+    def _get_namespace_parents(self) -> Union[list, None]:
+        """get a list of the parents of config items which can be user defined.
+
+        For example, where
+
+        .. code-block:: cylc
+
+           [runtime]
+               [[my_task]]  # Custom task names.
+               [[my_other_task]]
+
+        this function will return ``[runtime]``.
+        """
+        manyparents: Union[list, None]
+        try:
+            manyparents = [
+                list(key[1].parents())[0].name
+                for key in self.spec.walk()
+                if key[1].name == '__MANY__'
+            ]
+        except AttributeError:
+            manyparents = None
+        return manyparents
 
 
 class ConfigNode(ContextNode):

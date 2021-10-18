@@ -35,7 +35,17 @@ class ItemNotFoundError(ParsecError, KeyError):
         self.item = item
 
     def __str__(self):
-        return f'item not found: {self.item}'
+        return f'You have not set \"{self.item}\" in this config.'
+
+
+class NotAConfigItemError(ParsecError, KeyError):
+    """Error raised for missing configuration items."""
+
+    def __init__(self, item):
+        self.item = item
+
+    def __str__(self):
+        return f'You cannot set  \"{self.item}\" in this config.'
 
 
 class NotSingleItemError(ParsecError, TypeError):

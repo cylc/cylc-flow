@@ -14,12 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from os import spawnl
 import tempfile
+from _pytest.config import Config
 
 import pytest
 
 from cylc.flow.parsec import config
-from cylc.flow.parsec.config import ConfigNode as Conf
+from cylc.flow.parsec.config import (
+    ConfigNode as Conf,
+    ParsecConfig
+)
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
@@ -256,7 +261,7 @@ def test_get_item(sample_spec_2):
 
 def test_item_not_found_error():
     error = config.ItemNotFoundError("internal error")
-    assert 'item not found: internal error' == str(error)
+    assert 'You have not set "internal error" in this config.' == str(error)
 
 
 def test_not_single_item_error():
@@ -314,3 +319,15 @@ def test_mdump_oneline(parse_config, sample_spec, capsys):
 def test_get_none(parse_config):
     cfg = parse_config(sample_spec, '')  # blank config
     assert cfg.get(sparse=True) == {}
+
+
+def test__get_namespace_parents(parse_config):
+    """It returns a list of parents and nothing else"""
+    def spec_():
+        with Conf('myconfig') as myconf:
+            with Conf('manythings'):
+                Conf('<thing>')
+
+        return myconf
+    cfg = ParsecConfig(spec_())
+    assert cfg.manyparents == ['manythings']
