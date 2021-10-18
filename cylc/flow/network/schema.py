@@ -27,7 +27,7 @@ from typing import AsyncGenerator, Any
 from graphene import (
     Boolean, Field, Float, ID, InputObjectType, Int,
     List, Mutation, ObjectType, Schema, String, Union, Enum,
-    Argument
+    Argument, Interface
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
@@ -1963,9 +1963,15 @@ class Pruned(ObjectType):
     edges = List(String, default_value=[])
 
 
-class Added(ObjectType):
-    class Meta:
-        description = """Added node/edge deltas."""
+class Delta(Interface):
+    """Interface for delta types.
+
+    Since we usually subscribe to the same fields for both added/updated
+    deltas this interface makes writing fragments easier.
+
+    NOTE: This interface is specialised to the "added" type, other types must
+    override fields as required.
+    """
 
     families = List(
         Family,
@@ -2033,9 +2039,16 @@ class Added(ObjectType):
     )
 
 
+class Added(ObjectType):
+    class Meta:
+        description = """Added node/edge deltas."""
+        interfaces = (Delta,)
+
+
 class Updated(ObjectType):
     class Meta:
         description = """Updated node/edge deltas."""
+        interfaces = (Delta,)
 
     families = List(
         Family,
