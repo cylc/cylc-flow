@@ -1420,8 +1420,9 @@ def check_nested_dirs(
             for depth in range(MAX_SCAN_DEPTH)
         ]
         for search_pattern in search_patterns:
-            if list(path.glob(search_pattern)):
-                parent_dir = list(path.glob(search_pattern))[0].parent
+            results = list(path.glob(search_pattern))
+            if results:
+                parent_dir = results[0].parent
                 raise WorkflowFilesError(
                     exc_msgs['install_dir'].format(
                         get_cylc_run_abs_path(parent_dir))
