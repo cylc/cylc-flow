@@ -23,11 +23,11 @@
 
 set_test_number 6
 
-CPTZ=$(date +%z)
-
-init_workflow "${TEST_NAME_BASE}" << __FLOW__
+init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
+#!jinja2
 [scheduler]
-    cycle point time zone = ${CPTZ}
+    cycle point time zone = {{ CPTZ }}
+    UTC mode = False
     allow implicit tasks = True
 [scheduling]
     initial cycle point = now
@@ -35,12 +35,9 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
         R1 = foo
 __FLOW__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-cat "${TEST_NAME_BASE}-validate.stderr" >&2
-# Set time zone to +01:00
-export TZ=BST-1
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" -s "CPTZ='Z'"
 
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --pause
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --pause -s "CPTZ='+0100'"
 poll_workflow_running
 cylc stop "${WORKFLOW_NAME}"
 poll_workflow_stopped
