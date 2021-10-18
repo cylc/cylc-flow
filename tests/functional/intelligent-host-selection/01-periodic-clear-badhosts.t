@@ -82,7 +82,7 @@ __HERE__
 
 # remote tidy fails definition order time round"
 named_grep_ok "definition order remote tidy fails" \
-    "Tried to tidy remote platform: 'mixedhostplatform' using host 'unreachable_host' but failed; trying a different host" \
+    "Failed to tidy remote platform 'mixedhostplatform' using host 'unreachable_host'; trying new host '${CYLC_TEST_HOST}'" \
     "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 purge "${WORKFLOW_NAME}" "mixedhostplatform"

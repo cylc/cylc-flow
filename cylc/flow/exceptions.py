@@ -152,7 +152,7 @@ class TaskRemoteMgmtError(CylcError):
         if isinstance(cmd, list):
             self.cmd = " ".join(cmd)
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret = (f"{self.platform_n}: {self.msg}:\n"
                f"COMMAND FAILED ({self.ret_code}): {self.cmd}\n")
         for label, item in ('STDOUT', self.out), ('STDERR', self.err):
