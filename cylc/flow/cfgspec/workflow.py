@@ -112,9 +112,15 @@ with Conf(
 ) as SPEC:
 
     with Conf('meta', desc='''
-        Section for metadata items for this workflow. Cylc defines and uses
-        some terms (title, description, URL). Users can define more terms,
-        and use these in event handlers.
+        Section containing metadata for this workflow. Cylc defines and uses
+        the terms "title", "description" and "URL").
+        Users can define more terms, and use these in event handlers.
+
+        .. note::
+
+           A user could define "workflow-priority". An event handler
+           would then respond to failure events in a way set by
+           "workflow-priority".
     '''):
         Conf('description', VDR.V_STRING, '', desc='''
             A multi-line description of the workflow. It can be retrieved at
@@ -150,9 +156,17 @@ with Conf(
 
            This section was previously called ``[cylc]``.
     '''):
-        Conf('UTC mode', VDR.V_BOOLEAN)
+        Conf('UTC mode', VDR.V_BOOLEAN, desc='''
+        .. versionchanged:: 8.0.0
+
+           Now defaults to ``true``.
+
+        ''')
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
+
+            .. versionadded:: 8.0.0
+
             :term:`Implicit tasks <implicit task>` are tasks without explicit
             runtime definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
             these are not allowed, as they are often typos. However,
@@ -165,11 +179,12 @@ with Conf(
             In :ref:`Cylc 7 backward compatibility mode <BackCompat>`,
             implicit tasks are still allowed unless you explicitly set
             this to ``False``.
-
-            .. versionadded:: 8.0.0
         ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''
+
+            .. versionadded:: 8.0.0
+
             Configure the directories and files to be included in the remote
             file installation.
 
