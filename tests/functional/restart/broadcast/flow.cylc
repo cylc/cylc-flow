@@ -18,8 +18,8 @@
 [runtime]
     [[send_a_broadcast_task]]
         script = """
-            cylc broadcast -n broadcast_task -p $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_WORKFLOW_NAME
-            cylc broadcast -d $CYLC_WORKFLOW_NAME
+            cylc broadcast -n broadcast_task -p $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_WORKFLOW_ID
+            cylc broadcast -d $CYLC_WORKFLOW_ID
         """
         [[[meta]]]
             description = "Broadcast setup task"

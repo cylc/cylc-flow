@@ -17,10 +17,10 @@
     [[poll_foo]]
         script = """
            cylc__job__wait_cylc_message_started
-           cylc poll "$CYLC_WORKFLOW_NAME" 'foo'
+           cylc poll "$CYLC_WORKFLOW_ID" 'foo'
         """
     [[stop]]
-        script = cylc stop $CYLC_WORKFLOW_NAME
+        script = cylc stop $CYLC_WORKFLOW_ID
     [[kill_foo_submit]]
         script = """
             cylc__job__wait_cylc_message_started

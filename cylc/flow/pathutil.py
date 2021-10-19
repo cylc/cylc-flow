@@ -413,11 +413,20 @@ def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
 
 def get_workflow_name_from_id(workflow_id: str) -> str:
     """Workflow name is the ID shorn of the runN directory name.
-
-    Examples:
-    >>> get_workflow_name_from_id('my_workflow/run42')
-    'my_workflow'
-    >>> get_workflow_name_from_id('my_other_workflow')
-    'my_other_workflow'
     """
-    return re.sub(rf'{re.escape(os.sep)}run\d+$', '', workflow_id)
+    cylc_run_dir = Path(get_cylc_run_dir())
+    if Path(workflow_id).is_absolute():
+        # this is a source directory, not an install dir:
+        return workflow_id
+    else:
+        id_path = cylc_run_dir / workflow_id
+    name_path = id_path
+
+    # Look for ``id_path.parent/_cylc_install`` first because expected to
+    # be most common:
+    if (id_path.parent / '_cylc-install').is_dir():
+        name_path = Path(id_path).parent
+    elif (id_path / '_cylc-install').is_dir():
+        name_path = id_path
+
+    return str(name_path.relative_to(cylc_run_dir))

@@ -27,7 +27,7 @@
         script = """
             cylc__job__wait_cylc_message_started
             for TASK in local-task.1 remote-task.1; do
-                cylc cat-log --debug -f o "${CYLC_WORKFLOW_NAME}" $TASK | grep 'rubbish'
-                cylc cat-log --debug -f e "${CYLC_WORKFLOW_NAME}" $TASK | grep 'garbage'
+                cylc cat-log --debug -f o "${CYLC_WORKFLOW_ID}" $TASK | grep 'rubbish'
+                cylc cat-log --debug -f e "${CYLC_WORKFLOW_ID}" $TASK | grep 'garbage'
             done
         """

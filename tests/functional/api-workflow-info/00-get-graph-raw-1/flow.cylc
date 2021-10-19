@@ -5,7 +5,7 @@
     [[t1]]
         script = """
             cylc client \
-                "$CYLC_WORKFLOW_NAME" \
+                "$CYLC_WORKFLOW_ID" \
                 get_graph_raw \
                 >"${CYLC_WORKFLOW_RUN_DIR}/ctb-get-graph-raw.out" \
                 <<__HERE__
