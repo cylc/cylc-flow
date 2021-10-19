@@ -38,7 +38,7 @@ class ItemNotFoundError(ParsecError, KeyError):
         return f'You have not set \"{self.item}\" in this config.'
 
 
-class NotAConfigItemError(ParsecError, KeyError):
+class InvalidConfigError(ParsecError, KeyError):
     """Error raised for missing configuration items."""
 
     def __init__(self, item):

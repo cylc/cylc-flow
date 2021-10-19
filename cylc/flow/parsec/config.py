@@ -118,7 +118,7 @@ class ParsecConfig:
                     key not in self.dense
                     and not parents or parents in self.manyparents
                 ):
-                    raise NotAConfigItemError(key)
+                    raise InvalidConfigError(key)
                 else:
                     try:
                         cfg = cfg[key]

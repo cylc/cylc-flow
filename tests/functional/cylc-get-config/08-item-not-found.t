@@ -33,7 +33,7 @@ run_ok "${TEST_NAME_BASE}-ok" cylc config -i "[platforms]foo"
 
 # If item not settable in config (platforms is mis-spelled):
 run_fail "${TEST_NAME_BASE}-not-in-config-spec" cylc config -i "[platfroms]foo"
-grep_ok "NotAConfigItemError" "${TEST_NAME_BASE}-not-in-config-spec.stderr"
+grep_ok "InvalidConfigError" "${TEST_NAME_BASE}-not-in-config-spec.stderr"
 
 # If item not defined, item not found.
 run_fail "${TEST_NAME_BASE}-not-defined" cylc config -i "[scheduler]"
