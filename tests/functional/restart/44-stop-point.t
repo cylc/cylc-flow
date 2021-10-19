@@ -58,16 +58,16 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
 case "${CYLC_TASK_CYCLE_POINT}" in
 2015)
-    cylc stop "${CYLC_WORKFLOW_NAME}"
+    cylc stop "${CYLC_WORKFLOW_ID}"
     :;;
 2016)
     sed -i 's/\(final cycle point =\) 2024/\1 2025/' "${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
-    cylc reload "${CYLC_WORKFLOW_NAME}"
+    cylc reload "${CYLC_WORKFLOW_ID}"
     cylc__job__poll_grep_workflow_log "Reload completed"
     :;;
 2019)
-    cylc stop "${CYLC_WORKFLOW_NAME}" '2021'
-    cylc stop "${CYLC_WORKFLOW_NAME}"
+    cylc stop "${CYLC_WORKFLOW_ID}" '2021'
+    cylc stop "${CYLC_WORKFLOW_ID}"
     :;;
 esac
 """

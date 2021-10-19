@@ -24,5 +24,5 @@
             grep '\[jobs-submit cmd\] ssh .* {{CYLC_TEST_HOST}} .*cylc jobs-submit.*' \
                 "${A_LOG}"
             # Stop the workflow cleanly
-            cylc stop "${CYLC_WORKFLOW_NAME}"
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """

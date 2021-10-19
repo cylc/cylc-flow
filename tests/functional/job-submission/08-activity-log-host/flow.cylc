@@ -16,6 +16,6 @@
         [[[job]]]
             execution retry delays = PT1S
     [[killer]]
-        script = cylc kill "${CYLC_WORKFLOW_NAME}" sleeper.1999
+        script = cylc kill "${CYLC_WORKFLOW_ID}" sleeper.1999
     [[releaser]]
-        script = cylc__job__wait_cylc_message_started; cylc release "${CYLC_WORKFLOW_NAME}" sleeper.1999
+        script = cylc__job__wait_cylc_message_started; cylc release "${CYLC_WORKFLOW_ID}" sleeper.1999

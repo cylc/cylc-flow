@@ -20,6 +20,6 @@
             -l select=1:ncpus=1:mem=15mb
     [[stop]]
         script="""
-            cylc kill "$CYLC_WORKFLOW_NAME" 't1'
-            cylc stop "$CYLC_WORKFLOW_NAME"
+            cylc kill "$CYLC_WORKFLOW_ID" 't1'
+            cylc stop "$CYLC_WORKFLOW_ID"
         """

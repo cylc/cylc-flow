@@ -16,7 +16,7 @@
 perl -pi -e 's/(reloader => inter => )BAR\?( # marker1)/\1FOO?\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
 perl -pi -e 's/( )BAR:finish-all => FOO( # marker2)/\1FOO:finish-all => BAR\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
 # reload
-cylc reload "${CYLC_WORKFLOW_NAME}"
+cylc reload "${CYLC_WORKFLOW_ID}"
 cylc__job__poll_grep_workflow_log -F 'Reload completed'
 """
     [[FOO, BAR]]

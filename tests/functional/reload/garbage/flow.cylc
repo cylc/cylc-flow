@@ -8,7 +8,7 @@ sleep 5
 # change the dependencies section name to garbage:
 perl -pi -e 's/(\[\[)graph(\]\] # marker)/\1garbage\2/' $CYLC_WORKFLOW_RUN_DIR/flow.cylc
 # reload
-cylc reload $CYLC_WORKFLOW_NAME
+cylc reload $CYLC_WORKFLOW_ID
 """
     [[foo]]
         script = true

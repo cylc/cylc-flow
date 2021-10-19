@@ -18,10 +18,10 @@
 [runtime]
     [[t-pause]]
         script = """
-            cylc pause "${CYLC_WORKFLOW_NAME}"
+            cylc pause "${CYLC_WORKFLOW_ID}"
             cylc__job__poll_grep_workflow_log -F 'Command succeeded: pause'
             # Poll t-submit-retry-able, should return submit-fail
-            cylc poll "${CYLC_WORKFLOW_NAME}" 't-submit-retry-able'
+            cylc poll "${CYLC_WORKFLOW_ID}" 't-submit-retry-able'
             # Allow t-retry-able to continue
             rm -f "${CYLC_WORKFLOW_RUN_DIR}/file"
             cylc__job__poll_grep_workflow_log -F \
@@ -29,7 +29,7 @@
             cylc__job__poll_grep_workflow_log -F \
                 '[t-submit-retry-able.1] -submitted => waiting'
             # Resume the workflow
-            cylc play "${CYLC_WORKFLOW_NAME}"
+            cylc play "${CYLC_WORKFLOW_ID}"
             cylc__job__poll_grep_workflow_log -F \
                 '[t-retry-able.1] -waiting => waiting (queued)'
             cylc__job__poll_grep_workflow_log -F \

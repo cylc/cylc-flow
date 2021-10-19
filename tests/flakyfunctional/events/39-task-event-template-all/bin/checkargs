@@ -8,7 +8,7 @@ from subprocess import Popen, PIPE
 
 args = dict([arg.split('=', 1) for arg in sys.argv[1:]])
 
-workflow = os.environ['CYLC_WORKFLOW_NAME']
+workflow = os.environ['CYLC_WORKFLOW_ID']
 proc = Popen(['cylc', 'cat-log', '-m', 'p', '-f', 'a', workflow, 'foo.1'],
              stdout=PIPE, stdin=open(os.devnull))
 alog = proc.communicate()[0].decode().strip()

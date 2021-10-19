@@ -16,8 +16,8 @@
         N_SUCCEDED=0
         while ((N_SUCCEDED < 12)); do
             sleep 1
-            N_RUNNING=$(cylc workflow-state $CYLC_WORKFLOW_NAME -S running | wc -l)
+            N_RUNNING=$(cylc workflow-state $CYLC_WORKFLOW_ID -S running | wc -l)
             ((N_RUNNING <= {{q_size}})) # check
-            N_SUCCEDED=$(cylc workflow-state $CYLC_WORKFLOW_NAME -S succeeded | wc -l)
+            N_SUCCEDED=$(cylc workflow-state $CYLC_WORKFLOW_ID -S succeeded | wc -l)
         done
 """

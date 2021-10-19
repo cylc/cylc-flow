@@ -7,4 +7,4 @@
     [[foo]]
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[stopper]]
-        script = cylc stop "${CYLC_WORKFLOW_NAME}"
+        script = cylc stop "${CYLC_WORKFLOW_ID}"
