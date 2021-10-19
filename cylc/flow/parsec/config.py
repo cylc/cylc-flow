@@ -23,7 +23,7 @@ from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
     ItemNotFoundError,
     NotSingleItemError,
-    NotAConfigItemError,
+    InvalidConfigError
 )
 from cylc.flow.parsec.fileparse import parse
 from cylc.flow.parsec.util import printcfg
