@@ -45,7 +45,7 @@ class NotAConfigItemError(ParsecError, KeyError):
         self.item = item
 
     def __str__(self):
-        return f'You cannot set  \"{self.item}\" in this config.'
+        return f'"{self.item}" is not a valid configuration for ${self.spec}.'
 
 
 class NotSingleItemError(ParsecError, TypeError):
