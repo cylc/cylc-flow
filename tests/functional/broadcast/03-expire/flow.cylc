@@ -19,7 +19,7 @@ cylc broadcast \
     -s "[environment]ORGANISM=sheep" \
     -p "${CYLC_TASK_CYCLE_POINT}" \
     -n 'F1' \
-    "${CYLC_WORKFLOW_NAME}" \
+    "${CYLC_WORKFLOW_ID}" \
     | tee 'broadcast.out'
 """
         post-script="""
@@ -32,7 +32,7 @@ __OUT__
     [[broadcast-expire]]
         script="""
 NEXT_CYCLE_POINT=$(cylc cycletime --offset=P5Y)
-cylc broadcast --expire="${NEXT_CYCLE_POINT}" "${CYLC_WORKFLOW_NAME}" \
+cylc broadcast --expire="${NEXT_CYCLE_POINT}" "${CYLC_WORKFLOW_ID}" \
     | tee 'broadcast.out'
 """
         post-script="""

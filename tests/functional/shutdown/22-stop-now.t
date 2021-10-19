@@ -30,7 +30,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[foo]]
         script = """
-            cylc stop --now "$CYLC_WORKFLOW_NAME"
+            cylc stop --now "$CYLC_WORKFLOW_ID"
             sleep 60  # if the stop --kill fails then the job succeeds
         """
 __FLOW_CONFIG__

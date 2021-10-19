@@ -7,7 +7,7 @@
 [runtime]
     [[broadcast]]
         script="""
-cylc broadcast -s '[environment]EMPTY=' -p '1' -n 't1' "${CYLC_WORKFLOW_NAME}" \
+cylc broadcast -s '[environment]EMPTY=' -p '1' -n 't1' "${CYLC_WORKFLOW_ID}" \
     | tee 'broadcast.out'
 diff -u - 'broadcast.out' <<__OUT__
 Broadcast set:

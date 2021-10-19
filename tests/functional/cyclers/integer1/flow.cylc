@@ -34,7 +34,7 @@
     [[foo]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" "the cheese is ready"
+            cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "the cheese is ready"
         """
         [[[outputs]]]
             out1 = "the cheese is ready"

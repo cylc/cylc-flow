@@ -31,8 +31,8 @@ Tasks
     [[mystop]]
         script="""
             sleep 5  # Give the badhosts list time to empty
-            cylc kill "$CYLC_WORKFLOW_NAME" "$TASK" || true
-            cylc stop $CYLC_WORKFLOW_NAME
+            cylc kill "$CYLC_WORKFLOW_ID" "$TASK" || true
+            cylc stop $CYLC_WORKFLOW_ID
         """
 
     [[goodhosttask]]
