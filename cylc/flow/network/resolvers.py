@@ -715,9 +715,12 @@ class Resolvers(BaseResolvers):
     def force_spawn_children(self, tasks, outputs, flow_num):
         """Spawn children of given task outputs.
 
+        User-facing method name: set_outputs.
+
         Args:
             tasks (list): List of identifiers, see `task globs`
             outputs (list): List of outputs to spawn on
+            flow_num (int): Flow number to attribute the outputs.
 
         Returns:
             tuple: (outcome, message)
