@@ -1367,7 +1367,6 @@ def infer_latest_run(
 
 def check_nested_dirs(
     path: Union[Path, str],
-    look_down: bool = False
 ) -> None:
     """Disallow nested dirs:
 
@@ -1377,8 +1376,6 @@ def check_nested_dirs(
     Args:
         path: Absolute workflow run directory path or workflow install
             directory path.
-        look_down: Search child dirs for recursion. (n.b. This is potentially
-            computationally expensive.)
 
     Raises:
         WorkflowFilesError if reg dir is nested inside a run dir, or an
@@ -1414,19 +1411,18 @@ def check_nested_dirs(
                     get_cylc_run_abs_path(parent_dir)))
 
     # Search child tree for install directories:
-    if look_down:
-        search_patterns = [
-            f'*/{"*/"*depth}{WorkflowFiles.Install.DIRNAME}'
-            for depth in range(MAX_SCAN_DEPTH)
-        ]
-        for search_pattern in search_patterns:
-            results = list(path.glob(search_pattern))
-            if results:
-                parent_dir = results[0].parent
-                raise WorkflowFilesError(
-                    exc_msgs['install_dir'].format(
-                        get_cylc_run_abs_path(parent_dir))
-                )
+    search_patterns = [
+        f'*/{"*/"*depth}{WorkflowFiles.Install.DIRNAME}'
+        for depth in range(MAX_SCAN_DEPTH)
+    ]
+    for search_pattern in search_patterns:
+        results = list(path.glob(search_pattern))
+        if results:
+            parent_dir = results[0].parent
+            raise WorkflowFilesError(
+                exc_msgs['install_dir'].format(
+                    get_cylc_run_abs_path(parent_dir))
+            )
 
 
 def is_valid_run_dir(path):
@@ -1616,7 +1612,7 @@ def install_workflow(
         raise WorkflowFilesError(f'Run name cannot be "{run_name}".')
     validate_source_dir(source, flow_name)
     run_path_base = Path(get_workflow_run_dir(flow_name))
-    check_nested_dirs(run_path_base, look_down=True)
+    check_nested_dirs(run_path_base)
     relink, run_num, rundir = get_run_dir_info(
         run_path_base, run_name, no_run_name)
     if Path(rundir).exists():
