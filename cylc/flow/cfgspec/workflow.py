@@ -112,7 +112,9 @@ with Conf(
 ) as SPEC:
 
     with Conf('meta', desc='''
-        Section containing metadata for this workflow. Cylc defines and uses
+        Metadata for this workflow.
+
+        Cylc defines and uses
         the terms "title", "description" and "URL").
         Users can define more terms, and use these in event handlers.
 
@@ -123,19 +125,21 @@ with Conf(
            "workflow-priority".
     '''):
         Conf('description', VDR.V_STRING, '', desc='''
-            A multi-line description of the workflow. It can be retrieved at
-            run time with the ``cylc show`` command.
+            A multi-line description of the workflow.
+
+            It can be retrieved at run time with the ``cylc show`` command.
         ''')
         Conf('title', VDR.V_STRING, '', desc='''
-            A single line description of the workflow. It can be retrieved at
-            run time with the ``cylc show`` command.
+            A single line description of the workflow.
 
+            It can be retrieved at run time with the ``cylc show`` command.
         ''')
         Conf('URL', VDR.V_STRING, '', desc='''
-            A web URL to workflow documentation.  It can be retrieved at
-            run time with the ``cylc show`` command. The template
-            ``%(workflow_name)s`` will be replaced with the actual workflow
-            name.
+            A web URL to workflow documentation.
+
+            It can be retrieved at run time with the ``cylc show`` command.
+            The template ``%(workflow_name)s`` will be replaced with the actual
+            workflow name.
 
             .. seealso::
 
@@ -147,7 +151,9 @@ with Conf(
 
         ''')
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
-            Any user-defined metadata item. These, like title, URL, etc. can be
+            Any user-defined metadata item.
+
+            Like title, description and URL these can be
             passed to workflow event handlers to be interpreted according to
             your needs.
 
@@ -156,19 +162,24 @@ with Conf(
             failure events in a way set by "workflow-priority".
         ''')
     with Conf('scheduler', desc='''
+        Settings for the scheduler.
+
         .. versionchanged:: 8.0.0
 
            This section was previously called ``[cylc]``.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, desc='''
-        .. versionchanged:: 8.0.0
+            If true, workflow will use UTC as the time zone.
 
-           Now defaults to ``true``, unless running in
-           :ref:`Cylc 7 compatibility mode <backCompat>`
+            .. versionchanged:: 8.0.0
+
+               Now defaults to ``true``, unless running in
+               :ref:`Cylc 7 compatibility mode <backCompat>`
 
         ''')
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
+            Allow tasks not defined in ``[runtime]``.
 
             .. versionadded:: 8.0.0
 
@@ -187,11 +198,9 @@ with Conf(
         ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''
+            Configure directories and files to be installed on remote hosts.
 
             .. versionadded:: 8.0.0
-
-            Configure the directories and files to be included in the remote
-            file installation.
 
             .. note::
 
@@ -261,6 +270,8 @@ with Conf(
             directory paths where the ":" character is invalid.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
+            Extend ISO date format to allow years beyond 9999.
+
             For years below 0 or above 9999, the ISO 8601 standard specifies
             that an extra number of year digits and a sign should be used.
             This extra number needs to be written down somewhere (here).
@@ -274,6 +285,9 @@ with Conf(
             This number defaults to 0 (no sign or extra digits used).
         ''')
         Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE, desc='''
+            Time zone to be used for date-time cycle points if not otherwise
+            specified.
+
             You may set your own time zone choice here, which will be used for
             date-time cycle point dumping and inferring the time zone of cycle
             points that are input without time zones.
@@ -314,6 +328,7 @@ with Conf(
             'main loop',
             desc='''
                 Allows the specification of main loop plugins for Cylc.
+
                 For a list of built in plugins see :ref:`BuiltInPlugins`.
             '''
         ):
@@ -970,7 +985,7 @@ with Conf(
                 ''')
                 Conf(
                     'URL', VDR.V_STRING, '', desc='''
-                        A web URL to task documentation for this workflow.  If
+                        A web URL to task documentation for this workflow. If
                         present it can be browsed with the ``cylc doc``
                         command.  The templates ``%(workflow_name)s`` and
                         ``%(task_name)s`` will be replaced with the actual
