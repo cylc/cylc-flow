@@ -132,10 +132,14 @@ with Conf(
 
         ''')
         Conf('URL', VDR.V_STRING, '', desc='''
-            A web URL to workflow documentation.  If present it can be browsed
-            with the ``cylc doc`` command. The template ``%(workflow_name)s``
-            will be replaced with the actual workflow name.
-            See also :cylc:conf:`flow.cylc[runtime][<namespace>][meta]URL`.
+            A web URL to workflow documentation.  It can be retrieved at
+            run time with the ``cylc show`` command. The template
+            ``%(workflow_name)s`` will be replaced with the actual workflow
+            name.
+
+            .. seealso::
+
+               :cylc:conf:`flow.cylc[runtime][<namespace>][meta]URL`.
 
             Example:
 
@@ -159,7 +163,8 @@ with Conf(
         Conf('UTC mode', VDR.V_BOOLEAN, desc='''
         .. versionchanged:: 8.0.0
 
-           Now defaults to ``true``.
+           Now defaults to ``true``, unless running in
+           :ref:`Cylc 7 compatibility mode <backCompat>`
 
         ''')
 
@@ -331,6 +336,11 @@ with Conf(
 
         with Conf('mail'):
             Conf('footer', VDR.V_STRING, desc='''
+
+                .. versionchanged:: 8.0.0
+
+                   moved from ``[cylc][events]mail footer``.
+
                 Specify a string or string template for footers of
                 emails sent for both workflow and task events.
 
@@ -349,14 +359,29 @@ with Conf(
 
             ''')
             Conf('to', VDR.V_STRING, desc='''
+
+                .. versionchanged:: 8.0.0
+
+                   moved from ``[cylc][events]mail to``.
+
                 A string containing a list of addresses which can be accepted
                 by the ``mail`` command.
             ''')
             Conf('from', VDR.V_STRING, desc='''
+
+                .. versionchanged:: 8.0.0
+
+                   moved from ``[cylc][events]mail from``.
+
                 Specify an alternative ``from`` email address for workflow
                 event notifications.
             ''')
             Conf('task event batch interval', VDR.V_INTERVAL, desc='''
+
+                .. versionchanged:: 8.0.0
+
+                   moved from ``[cylc]mail interval``.
+
                 Gather all task event notifications in the given interval
                 into a single email.
 
@@ -364,6 +389,9 @@ with Conf(
             ''')
 
     with Conf('task parameters', desc='''
+
+        .. version
+
         Define parameter values here for use in expanding
         :ref:`parameterized tasks <User Guide Param>`.
     '''):
