@@ -36,17 +36,17 @@ logfile="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # Check that host = $(hostname) is correctly evaluated
 grep_ok \
-    "platform_subshell.1.*evaluated as improbable platform name" \
+    "platform_subshell\.1.*evaluated as improbable platform name" \
     "${logfile}"
 
 # Check that host = `hostname` is correctly evaluated
 grep_ok \
-    "host_subshell_backticks.1:.*\`hostname\` evaluated as localhost" \
+    "host_subshell_backticks\.1.*\`hostname\` evaluated as localhost" \
     "${logfile}"
 
 # Check that platform = $(echo "improbable platform name") correctly evaluated
 grep_ok \
-    "platform_subshell.1:.*evaluated as improbable platform name" \
+    "platform_subshell\.1.*evaluated as improbable platform name" \
     "${logfile}"
 
 purge

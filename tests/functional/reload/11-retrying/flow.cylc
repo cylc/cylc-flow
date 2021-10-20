@@ -15,14 +15,14 @@ if ((CYLC_TASK_TRY_NUMBER == 1)); then
     cylc kill "${CYLC_WORKFLOW_ID}" 'retrier.1'
     sleep 120  # Does not matter how long as the job will be killed
 fi
-"""
+        """
         [[[job]]]
             execution retry delays = PT0S
     [[reloader]]
         script = """
-cylc__job__poll_grep_workflow_log -F '[retrier.1] -running (held) => waiting (held)'
+cylc__job__poll_grep_workflow_log -E 'retrier\.1 running\(held\) .* => waiting\(held\)'
 cylc reload "${CYLC_WORKFLOW_ID}"
 cylc reload "${CYLC_WORKFLOW_ID}"
 cylc__job__poll_grep_workflow_log -F 'Reload completed'
 cylc release "${CYLC_WORKFLOW_ID}" 'retrier.1'
-"""
+        """

@@ -281,7 +281,7 @@ def test_delta_task_prerequisite(harness):
     schd.pool.force_spawn_children([
         t.identity
         for t in schd.pool.get_all_tasks()
-    ], (TASK_STATUS_SUCCEEDED,))
+    ], (TASK_STATUS_SUCCEEDED,), "flow1")
     assert all({
         p.satisfied
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()

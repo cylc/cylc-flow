@@ -627,8 +627,6 @@ class DataStoreMgr:
                 Task name.
             point (cylc.flow.cycling.PointBase):
                 PointBase derived object.
-            flow_label (str):
-                Flow label used to distinguish multiple runs.
             edge_distance (int):
                 Graph distance from active/origin node.
             active_id (str):
@@ -690,13 +688,15 @@ class DataStoreMgr:
                 if edge_distance == 1:
                     descendant = True
                 self._expand_graph_window(
-                    s_id, s_node, items, active_id, itask.flow_label,
-                    itask.reflow, edge_distance, descendant, False)
+                    s_id, s_node, items, active_id, itask.flow_nums,
+                    edge_distance, descendant, False)
+
             for items in generate_graph_parents(
-                    itask.tdef, itask.point).values():
+                itask.tdef, itask.point
+            ).values():
                 self._expand_graph_window(
-                    s_id, s_node, items, active_id, itask.flow_label,
-                    itask.reflow, edge_distance, False, True)
+                    s_id, s_node, items, active_id, itask.flow_nums,
+                    edge_distance, False, True)
 
         if edge_distance == 1:
             levels = self.n_window_boundary_nodes[active_id].keys()
@@ -714,7 +714,7 @@ class DataStoreMgr:
                     self.n_window_edges[active_id])
 
     def _expand_graph_window(
-            self, s_id, s_node, items, active_id, flow_label, reflow,
+            self, s_id, s_node, items, active_id, flow_nums,
             edge_distance, descendant=False, is_parent=False):
         """Construct nodes/edges for children/parents of source node."""
         final_point = self.schd.config.final_point
@@ -756,8 +756,8 @@ class DataStoreMgr:
             self.increment_graph_window(
                 TaskProxy(
                     self.schd.config.get_taskdef(t_name),
-                    t_point, flow_label,
-                    submit_num=0, reflow=reflow),
+                    t_point, flow_nums, submit_num=0
+                ),
                 edge_distance, active_id, descendant, is_parent)
 
     def remove_pool_node(self, name, point):
@@ -828,14 +828,13 @@ class DataStoreMgr:
             depth=task_def.depth,
             name=name,
             state=TASK_STATUS_WAITING,
-            flow_label=itask.flow_label
+            flow_nums=json.dumps(list(itask.flow_nums))
         )
         if is_parent and tp_id not in self.n_window_nodes:
             # TODO: Load task info from DB, including itask prerequisites
             tproxy.state = TASK_STATUS_EXPIRED
         else:
             tproxy.state = TASK_STATUS_WAITING
-            tproxy.reflow = itask.reflow
 
         tproxy.namespace[:] = task_def.namespace
         if is_orphan:

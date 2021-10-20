@@ -166,8 +166,9 @@ class TaskJobManager:
                 poll_tasks.add(itask)
                 if itask.poll_timer.delay is not None:
                     LOG.info(
-                        '[%s] -poll now, (next in %s)',
-                        itask, itask.poll_timer.delay_timeout_as_str())
+                        f"[{itask}] poll now, (next in "
+                        f"{itask.poll_timer.delay_timeout_as_str()})"
+                    )
         if poll_tasks:
             self.poll_task_jobs(workflow, poll_tasks)
 
@@ -180,11 +181,11 @@ class TaskJobManager:
         to_kill_tasks = []
         for itask in itasks:
             if itask.state(*TASK_STATUSES_ACTIVE):
-                itask.state.reset(is_held=True)
+                itask.state_reset(is_held=True)
                 self.data_store_mgr.delta_task_held(itask)
                 to_kill_tasks.append(itask)
             else:
-                LOG.warning('skipping %s: task not killable' % itask.identity)
+                LOG.warning(f"[{itask}] not killable")
         self._run_job_cmd(
             self.JOBS_KILL, workflow, to_kill_tasks,
             self._kill_task_jobs_callback,
@@ -426,9 +427,7 @@ class TaskJobManager:
             done_tasks.extend(itasks)
             for itask in itasks:
                 # Log and persist
-                LOG.info(
-                    '[%s] -submit-num=%02d, host=%s',
-                    itask, itask.submit_num, host)
+                LOG.info(f"[{itask}] host={host}")
                 self.workflow_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
@@ -661,7 +660,7 @@ class TaskJobManager:
                 handle.write((host + line).encode())
         except IOError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
-            LOG.warning("[%s] -%s%s", itask, host, line)
+            LOG.warning(f"[{itask}] {host}{line}")
 
     def _kill_task_jobs_callback(self, ctx, workflow, itasks):
         """Callback when kill tasks command exits."""
@@ -703,11 +702,11 @@ class TaskJobManager:
             if ctx.ret_code:
                 ctx.cmd = cmd_ctx.cmd  # print original command on failure
         log_task_job_activity(ctx, workflow, itask.point, itask.tdef.name)
-        log_lvl = INFO
-        log_msg = 'killed'
+        log_lvl = WARNING
+        log_msg = 'job killed'
         if ctx.ret_code:  # non-zero exit status
             log_lvl = WARNING
-            log_msg = 'kill failed'
+            log_msg = 'job kill failed'
             itask.state.kill_failed = True
         elif itask.state(TASK_STATUS_SUBMITTED):
             self.task_events_mgr.process_message(
@@ -724,8 +723,7 @@ class TaskJobManager:
         self.data_store_mgr.delta_job_msg(
             get_task_job_id(itask.point, itask.tdef.name, itask.submit_num),
             log_msg)
-        LOG.log(log_lvl, "[%s] -job(%02d) %s" % (
-            itask.identity, itask.submit_num, log_msg))
+        LOG.log(log_lvl, f"[{itask}] {log_msg}")
 
     def _manip_task_jobs_callback(
             self, ctx, workflow, itasks, summary_callback,
@@ -777,9 +775,10 @@ class TaskJobManager:
                         itask = tasks[(point, name, submit_num)]
                         callback(workflow, itask, ctx, line)
                     except (LookupError, ValueError) as exc:
+                        # (Note this catches KeyError too).
                         LOG.warning(
                             'Unhandled %s output: %s', ctx.cmd_key, line)
-                        LOG.exception(exc)
+                        LOG.warning(str(exc))
         # Task jobs that are in the original command but did not get a status
         # in the output. Handle as failures.
         for key, itask in sorted(bad_tasks.items()):
@@ -1136,13 +1135,13 @@ class TaskJobManager:
                 and rtconfig['platform'] != platform_n
             ):
                 LOG.debug(
-                    f"for task {itask.identity}: platform = "
+                    f"[{itask}] platform = "
                     f"{rtconfig['platform']} evaluated as {platform_n}"
                 )
                 rtconfig['platform'] = platform_n
             elif platform_n is None and rtconfig['remote']['host'] != host_n:
                 LOG.debug(
-                    f"for task {itask.identity}: host = "
+                    f"[{itask}] host = "
                     f"{rtconfig['remote']['host']} evaluated as {host_n}"
                 )
                 rtconfig['remote']['host'] = host_n
@@ -1196,7 +1195,6 @@ class TaskJobManager:
 
     def _prep_submit_task_job_error(self, workflow, itask, action, exc):
         """Helper for self._prep_submit_task_job. On error."""
-        LOG.debug("submit_num %s" % itask.submit_num)
         log_task_job_activity(
             SubProcContext(self.JOBS_SUBMIT, action, err=exc, ret_code=1),
             workflow,
@@ -1257,7 +1255,7 @@ class TaskJobManager:
             'pre-script': scripts[0],
             'script': scripts[1],
             'submit_num': itask.submit_num,
-            'flow_label': itask.flow_label,
+            'flow_nums': itask.flow_nums,
             'workflow_name': workflow,
             'task_id': itask.identity,
             'try_num': itask.get_try_num(),
