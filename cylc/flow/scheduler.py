@@ -1845,7 +1845,11 @@ class Scheduler:
         return self.pool.force_trigger_tasks(items, reflow, flow_descr)
 
     def command_force_spawn_children(self, items, outputs, flow_num):
-        """Force spawn task successors."""
+        """Force spawn task successors.
+
+        User-facing method name: set_outputs.
+
+        """
         return self.pool.force_spawn_children(items, outputs, flow_num)
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
