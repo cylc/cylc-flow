@@ -800,7 +800,7 @@ class TaskPool:
                     # Keep active orphaned task, but stop it from spawning.
                     itask.graph_children = {}
                     LOG.warning(
-                        "f[{itask}] will not spawn children "
+                        f"[{itask}] will not spawn children "
                         "- task definition removed"
                     )
             else:
