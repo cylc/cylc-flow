@@ -409,36 +409,37 @@ with Conf(
             ''')
 
     with Conf('task parameters', desc='''
+        Set task parameters and parameter templates.
 
-        .. version
+        .. versionchanged:: 8.0.0
+
+           Moved from ``[cylc][parameters]`` and
+           ``[cylc][parameter templates]``.
 
         Define parameter values here for use in expanding
         :ref:`parameterized tasks <User Guide Param>`.
     '''):
         Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
+            A custom parameter to use in a workflow.
+
             Examples:
             - ``run = control, test1, test2``
             - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
             - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
         ''')
         with Conf('templates', desc='''
-            Parameterized task names are expanded, for each parameter value,
-            using string templates.
+            Cylc will expand each parameterized task name  using a string
+            template.
 
-            You can assign templates to parameter names here to override the
-            default templates.
+            You can set templates for any parameter name here to override the
+            default template.
         '''):
             Conf('<parameter>', VDR.V_STRING, desc='''
-                Default for integer parameters:
-                   ``_p%(p)0Nd``
-                   where ``N`` is the number of digits of the maximum integer
-                   value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
-                   value ``3``.
-                Default for non-integer parameters:
-                    ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
-                    ``run`` value ``top``.
+                A template for a parameter.
 
-                Example:
+                For example:
+
+                If you set ``[task parameters]myparameter = 1..3
 
                 ``run = -R%(run)s`` e.g. ``foo<run>`` becomes ``foo-R3`` for
                 ``run`` value ``3``.
@@ -449,6 +450,18 @@ with Conf(
                    ``%(p)s``.  In ``_run%(run)s`` the first "run" is a string
                    literal, and the second gets substituted with each value of
                    the parameter.
+
+
+                Default for integer parameters:
+                   ``_p%(p)0Nd``
+                   where ``N`` is the number of digits of the maximum integer
+                   value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
+                   value ``3``.
+                Default for non-integer parameters:
+                    ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
+                    ``run`` value ``top``.
+
+
             ''')
 
     with Conf('scheduling', desc='''
