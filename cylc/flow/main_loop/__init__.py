@@ -29,6 +29,7 @@ Cylc Flow provides the following plugins:
    cylc.flow.main_loop.log_data_store
    cylc.flow.main_loop.log_main_loop
    cylc.flow.main_loop.log_memory
+   cylc.flow.main_loop.reset_bad_hosts
 
 .. Note: Autosummary generates files in this directory, these are cleaned
          up by `make clean`.
