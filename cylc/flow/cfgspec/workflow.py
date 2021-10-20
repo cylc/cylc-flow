@@ -439,35 +439,39 @@ with Conf(
 
                 For example:
 
-                If you set ``[task parameters]myparameter = 1..3
+                If you set:
 
-                ``run = -R%(run)s`` e.g. ``foo<run>`` becomes ``foo-R3`` for
-                ``run`` value ``3``.
+                .. code-block:: cylc
+
+                [task parameters]
+                    myparameter = 1..3
+                    [[templates]]
+                        myparameter = _run_%(myparameter)s
+
+                task name ``foo<myparameter>`` becomes ``foo_run_3`` for
+                ``run == 3``.
 
                 .. note::
 
-                   The values of a parameter named ``p`` are substituted for
-                   ``%(p)s``.  In ``_run%(run)s`` the first "run" is a string
-                   literal, and the second gets substituted with each value of
-                   the parameter.
+                   The default parameter templates are:
 
+                   For integer parameters:
+                      ``_p%(p)0Nd``
+                      where ``N`` is the number of digits of the maximum
+                      integer value, i.e. If the largest parameter value is
+                      3142 then N = 4.
 
-                Default for integer parameters:
-                   ``_p%(p)0Nd``
-                   where ``N`` is the number of digits of the maximum integer
-                   value, e.g. ``foo<run>`` becomes ``foo_run3`` for ``run``
-                   value ``3``.
-                Default for non-integer parameters:
-                    ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
-                    ``run`` value ``top``.
-
-
+                   Default for non-integer parameters:
+                      ``_%(p)s`` e.g. ``foo<run>`` becomes ``foo_top`` for
+                      ``run`` value ``top``.
             ''')
 
     with Conf('scheduling', desc='''
-        This section allows cylc to determine when tasks are ready to run.
+        This section allows Cylc to determine when tasks are ready to run.
     '''):
         Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
+            The earliest cycle point at which any task can run.
+
             In a cold start each cycling task (unless specifically excluded
             under :cylc:conf:`[..][special tasks]`) will be loaded into the
             workflow with this cycle point, or with the closest subsequent
@@ -477,10 +481,14 @@ with Conf(
             In integer cycling, the default is ``1``.
 
             In date-time cycling, if you do not provide time zone information
-            for this, it will be assumed to be local time, or in UTC if
-            :cylc:conf:`flow.cylc[scheduler]UTC mode` is set, or in the time
+            for this, it will be assumed to be UTC or in the time
             zone determined by
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
+
+            .. admonition:: Compatibility mode
+
+               In :ref:`backwards compatibility mode <backcompat>`
+               the time zone defaults to local time rather than UTC.
 
             The string ``now`` converts to the current datetime on the workflow
             host (adjusted to UTC if workflow is in UTC mode but the host is
@@ -493,6 +501,8 @@ with Conf(
             to the current time see :ref:`setting-the-icp-relative-to-now`.
         ''')
         Conf('final cycle point', VDR.V_STRING, desc='''
+            The (optional) last cycle point at which tasks are run.
+
             Cycling tasks are held once they pass the final cycle point, if
             one is specified. Once all tasks have achieved this state the
             workflow will shut down. If this item is set you can override it
@@ -505,18 +515,26 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
-            in a cycling workflow it is possible to restrict the initial cycle
+            Rules restricting permitted initial cycle points.
+
+            In a cycling workflow it is possible to restrict the initial cycle
             point by defining a list of truncated time points under the
             initial cycle point constraints.
 
-            Examples: T00, T06, T-30).
+            Examples: ``T00``, ``T06``, ``T-30``.
+
+            .. is it worth mentioning that this doesn't coerce icp = now?
         ''')
         Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
+            Rules restricting permitted final cycle points.
+
             In a cycling workflow it is possible to restrict the final cycle
             point by defining a list of truncated time points under the final
             cycle point constraints.
         ''')
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
+            Hold all tasks once they pass this cycle point.
+
             Cycling tasks are held once they pass this cycle point, if
             specified. Unlike for the final cycle point, the workflow will not
             shut down once all tasks have passed this point. If this item
@@ -527,9 +545,10 @@ with Conf(
                This setting was previously called ``hold after point``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
-            Set stop point. Shut down after all tasks have PASSED
-            this cycle point. Will be over-ridden by command line
-            ``--stop-cycle-point=POINT``
+            Shut down workflow after all tasks **pass** this cycle point.
+
+            The stop cycle point can be over-ridden on the command line using
+            ``cylc play --stop-cycle-point=POINT``
 
             .. note:
 
@@ -541,6 +560,8 @@ with Conf(
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
+            Choice of integer cycling or one of several calendars.
+
             Cylc runs using the proleptic Gregorian calendar by default.
             This allows you to run the workflow with the 360 day
             calendar (12 months of 30 days in a year) OR integer cycling. It
@@ -548,6 +569,8 @@ with Conf(
             leap year) calendars.
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
+            How many cycles ahead of the slowest tasks the fastest may run.
+
             Runahead limiting prevents the fastest tasks in a workflow from
             getting too far ahead of the slowest ones, as documented in
             :ref:`RunaheadLimit`.
