@@ -16,7 +16,7 @@
     [[modify]]
         script = """
             # Pause the workflow, so it does not shutdown
-            cylc pause "${CYLC_WORKFLOW_NAME}"
+            cylc pause "${CYLC_WORKFLOW_ID}"
             # Extra content in workflow contact file should cause health check to fail
             echo 'TIME=MONEY' >>"${CYLC_WORKFLOW_RUN_DIR}/.service/contact"
         """

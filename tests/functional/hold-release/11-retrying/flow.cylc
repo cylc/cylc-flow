@@ -26,12 +26,12 @@ t-retry-able => t-analyse
             cylc__job__poll_grep_workflow_log -E \
                 't-retry-able\.1 waiting job:01.* retrying in PT15S'
 
-            cylc hold "${CYLC_WORKFLOW_NAME}" 't-retry-able.1'
+            cylc hold "${CYLC_WORKFLOW_ID}" 't-retry-able.1'
 
             cylc__job__poll_grep_workflow_log -E \
                 't-retry-able\.1 waiting job:01.* => waiting\(held\)'
  
-            cylc release "${CYLC_WORKFLOW_NAME}" 't-retry-able.1'
+            cylc release "${CYLC_WORKFLOW_ID}" 't-retry-able.1'
 
             cylc__job__poll_grep_workflow_log -E \
                 't-retry-able\.1 waiting\(held\) job:01.* => waiting'

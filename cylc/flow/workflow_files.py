@@ -271,7 +271,7 @@ class ContactFileFields:
     HOST = 'CYLC_WORKFLOW_HOST'
     """The name of the host the scheduler process is running on."""
 
-    NAME = 'CYLC_WORKFLOW_NAME'
+    NAME = 'CYLC_WORKFLOW_ID'
     """The name of the workflow."""
 
     OWNER = 'CYLC_WORKFLOW_OWNER'
@@ -585,7 +585,7 @@ def get_workflow_srv_dir(reg):
     run_d = os.getenv("CYLC_WORKFLOW_RUN_DIR")
     if (
         not run_d
-        or os.getenv("CYLC_WORKFLOW_NAME") != reg
+        or os.getenv("CYLC_WORKFLOW_ID") != reg
         or os.getenv("CYLC_WORKFLOW_OWNER") != get_user()
     ):
         run_d = get_workflow_run_dir(reg)

@@ -11,12 +11,12 @@
     [[t1]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc stop --now "${CYLC_WORKFLOW_NAME}"
+            cylc stop --now "${CYLC_WORKFLOW_ID}"
         """
     [[t2]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc reload "${CYLC_WORKFLOW_NAME}"
+            cylc reload "${CYLC_WORKFLOW_ID}"
         """
     [[t3]]
         script = true
