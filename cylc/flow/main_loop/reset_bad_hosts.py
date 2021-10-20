@@ -13,7 +13,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Reset the list of bad hosts."""
+"""Resets the list of bad hosts.
+
+The scheduler stores a set of hosts which it has been unable to contact to
+save contacting these hosts again.
+
+This list is cleared if a task cannot be submitted because all of the hosts it
+might use cannot be reached.
+
+If a task succeeds in submitting a job on the second host it tries the first
+host remains in the set of unreachable (bad) hosts, even though the
+failure might have been transitory. In this case this plugin periodically
+clears the set.
+
+Suggested interval - on the order of an hour.
+"""
 
 from cylc.flow.main_loop import periodic
 

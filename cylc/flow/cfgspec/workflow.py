@@ -310,7 +310,13 @@ with Conf(
                system time zone change.
         ''')
 
-        with Conf('main loop'):  # noqa: SIM117 (keep same format)
+        with Conf(   # noqa: SIM117 (keep same format)
+            'main loop',
+            desc='''
+                Allows the specification of main loop plugins for Cylc.
+                For a list of built in plugins see :ref:`BuiltInPlugins`.
+            '''
+        ):
             with Conf('<plugin name>'):
                 Conf('interval', VDR.V_INTERVAL)
 

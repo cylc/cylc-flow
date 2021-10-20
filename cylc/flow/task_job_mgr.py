@@ -316,7 +316,7 @@ class TaskJobManager:
                         )
                         # Now that all hosts on all platforms in platform
                         # group selected in task config are exhausted we clear
-                        # bad_hosts or all the hosts we have
+                        # bad_hosts for all the hosts we have
                         # tried for this platform or group.
                         self.bad_hosts = (
                             self.bad_hosts - set(itask.platform['hosts']))

@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Plugins for running Python code inside of the Cylc scheduler.
 
+.. _BuiltInPlugins:
+
 Built In Plugins
 ----------------
 
