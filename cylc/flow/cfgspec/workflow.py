@@ -333,7 +333,9 @@ with Conf(
             '''
         ):
             with Conf('<plugin name>'):
-                Conf('interval', VDR.V_INTERVAL)
+                Conf('interval', VDR.V_INTERVAL, desc='''
+                    Interval (in seconds) at which the plugin is invoked.
+                ''')
 
         with Conf('events'):
             # Note: default of None for V_STRING_LIST is used to differentiate
@@ -355,15 +357,16 @@ with Conf(
                 List of tasks that are expected to fail in the test.
             ''')
 
-        with Conf('mail'):
+        with Conf('mail', desc='''
+            Settings for the scheduler to send event emails.
+        '''):
             Conf('footer', VDR.V_STRING, desc='''
+                Specify a string or string template for footers of
+                emails sent for both workflow and task events.
 
                 .. versionchanged:: 8.0.0
 
                    moved from ``[cylc][events]mail footer``.
-
-                Specify a string or string template for footers of
-                emails sent for both workflow and task events.
 
                 ================ ======================
                 Syntax           Description
@@ -380,31 +383,27 @@ with Conf(
 
             ''')
             Conf('to', VDR.V_STRING, desc='''
+                A string containing a list of email addresses.
 
                 .. versionchanged:: 8.0.0
 
                    moved from ``[cylc][events]mail to``.
-
-                A string containing a list of addresses which can be accepted
-                by the ``mail`` command.
             ''')
             Conf('from', VDR.V_STRING, desc='''
+                Specify an alternative ``from`` email address for workflow
+                event notifications.
 
                 .. versionchanged:: 8.0.0
 
                    moved from ``[cylc][events]mail from``.
-
-                Specify an alternative ``from`` email address for workflow
-                event notifications.
             ''')
             Conf('task event batch interval', VDR.V_INTERVAL, desc='''
+                Gather all task event notifications in the given interval
+                into a single email.
 
                 .. versionchanged:: 8.0.0
 
                    moved from ``[cylc]mail interval``.
-
-                Gather all task event notifications in the given interval
-                into a single email.
 
                 Useful to prevent being overwhelmed by emails.
             ''')
