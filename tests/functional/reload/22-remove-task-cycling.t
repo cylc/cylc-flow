@@ -51,7 +51,7 @@ $(declare -f poll_grep)
 # Remove bar and tell the server to reload.
 if (( CYLC_TASK_CYCLE_POINT == CYLC_WORKFLOW_INITIAL_CYCLE_POINT )); then
    sed -i 's/^.*remove*$//g' "\${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
-   cylc reload "\${CYLC_WORKFLOW_NAME}"
+   cylc reload "\${CYLC_WORKFLOW_ID}"
    poll_grep -F 'Reload complete' "\${CYLC_WORKFLOW_RUN_DIR}/log/workflow/log"
    # kill the long-running orphaned bar task.
    kill "\$(cat "\${CYLC_WORKFLOW_RUN_DIR}/work/1/bar/pid")"

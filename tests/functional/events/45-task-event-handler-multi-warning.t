@@ -30,10 +30,10 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
    [[foo]]
       script = """
-cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "cat"
-cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "dog"
-cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "fish"
-cylc message -s WARNING -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} "guinea pig"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_ID} ${CYLC_TASK_JOB} "cat"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_ID} ${CYLC_TASK_JOB} "dog"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_ID} ${CYLC_TASK_JOB} "fish"
+cylc message -s WARNING -- ${CYLC_WORKFLOW_ID} ${CYLC_TASK_JOB} "guinea pig"
 """
       [[[events]]]
         handler events = warning

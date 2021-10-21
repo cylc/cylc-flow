@@ -33,7 +33,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 #-------------------------------------------------------------------------------
 LOG_FILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
-PRE_MSG='-health check settings:'
+PRE_MSG='health:'
 for INDEX in 1 2; do
     for STAGE in 'submission' 'execution'; do
         POLL_INT='PT2S,6\*PT10S,'
@@ -41,7 +41,7 @@ for INDEX in 1 2; do
             POLL_INT='2\*PT1S,10\*PT6S,'
         fi
         POST_MSG=".*, polling intervals=${POLL_INT}..."
-        grep_ok "\[t${INDEX}\.1\] ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}"
+        grep_ok "t${INDEX}\.1 .* ${PRE_MSG} ${STAGE}${POST_MSG}" "${LOG_FILE}" -E
     done
 done
 #-------------------------------------------------------------------------------

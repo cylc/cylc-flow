@@ -16,83 +16,46 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check that reflows merge correctly if they catch up, AND that redundant flow
-# labels get merged.
+# Check that flows merge correctly.
 
 . "$(dirname "$0")/test_header"
 install_workflow "${TEST_NAME_BASE}"
 
-set_test_number 6
+set_test_number 4
 
-# validate
 TEST_NAME="${TEST_NAME_BASE}"-validate
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-# Set frequent pruning of merged flow labels.
-create_test_global_config "" "
-[scheduler]
-   [[main loop]]
-       [[[prune flow labels]]]
-            interval = PT10S"
-
-# reference test
 TEST_NAME="${TEST_NAME_BASE}"-run
-workflow_run_ok "${TEST_NAME}" cylc play --reference-test --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --reference-test \
+   --debug --no-detach "${WORKFLOW_NAME}"
 
-# extract flow labels from job files
-# shellcheck disable=SC2046
-eval $(cylc cat-log -s 1 -f j "${WORKFLOW_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
-FLOW_ONE="${CYLC_TASK_FLOW_LABEL}"
-
-# shellcheck disable=SC2046
-eval $(cylc cat-log -s 2 -f j "${WORKFLOW_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
-FLOW_TWO="${CYLC_TASK_FLOW_LABEL}"
-
-# shellcheck disable=SC2046
-eval $(cylc cat-log -s 1 -f j "${WORKFLOW_NAME}" bar.3 | grep CYLC_TASK_FLOW_LABEL)
-FLOW_MERGED="${CYLC_TASK_FLOW_LABEL}"
-
-# shellcheck disable=SC2046
-eval $(cylc cat-log -s 1 -f j "${WORKFLOW_NAME}" baz.3 | grep CYLC_TASK_FLOW_LABEL)
-FLOW_PRUNED="${CYLC_TASK_FLOW_LABEL}"
-
-# compare with expected tasks in each flow (original, reflow, merged, pruned)
+# check the DB as well
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-   "SELECT name, cycle, flow_label FROM task_states \
+   "SELECT name, cycle, flow_nums FROM task_states \
        WHERE submit_num is 1 order by cycle" \
           > flow-one.db
 
-run_ok check_merged_label eval "test $FLOW_MERGED == $FLOW_ONE$FLOW_TWO || \
-                        test $FLOW_MERGED == $FLOW_TWO$FLOW_ONE"
-
-run_ok check_pruned_label eval "test $FLOW_PRUNED == $FLOW_ONE || \
-                        test $FLOW_PRUNED == $FLOW_TWO"
-
 cmp_ok flow-one.db - << __OUT__
-foo|1|${FLOW_ONE}
-bar|1|${FLOW_ONE}
-baz|1|${FLOW_ONE}
-foo|2|${FLOW_ONE}
-bar|2|${FLOW_ONE}
-baz|2|${FLOW_ONE}
-foo|3|${FLOW_ONE}
-foo|3|${FLOW_MERGED}
-bar|3|${FLOW_MERGED}
-baz|3|${FLOW_PRUNED}
+foo|1|[1]
+bar|1|[1]
+foo|2|[1]
+bar|2|[1]
+foo|3|[1]
+foo|3|[1, 2]
+bar|3|[1, 2]
 __OUT__
 
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
-   "SELECT name, cycle, flow_label FROM task_states \
+   "SELECT name, cycle, flow_nums FROM task_states \
        WHERE submit_num is 2 order by cycle" \
           > flow-two.db
 
 cmp_ok flow-two.db - << __OUT__
-foo|1|${FLOW_TWO}
-bar|1|${FLOW_TWO}
-baz|1|${FLOW_TWO}
-foo|2|${FLOW_TWO}
-bar|2|${FLOW_TWO}
-baz|2|${FLOW_TWO}
+foo|1|[2]
+bar|1|[2]
+foo|2|[2]
+bar|2|[2]
 __OUT__
 
 purge

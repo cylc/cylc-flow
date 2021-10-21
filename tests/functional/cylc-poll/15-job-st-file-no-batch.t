@@ -26,11 +26,9 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 run_ok "${TEST_NAME_BASE}-log-1" \
-    grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete job runner info' \
-    "${LOG}"
+    grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete job runner info' "${LOG}"
 run_ok "${TEST_NAME_BASE}-log-2" \
-    grep -F '[t1.1] status=running: (polled)failed' \
-    "${LOG}"
+    grep -E 't1\.1 running .*\(polled\)failed' "${LOG}"
 
 purge
 exit

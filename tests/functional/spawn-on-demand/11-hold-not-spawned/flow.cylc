@@ -1,0 +1,20 @@
+# Test holding a task that hasn't spawned yet.
+[scheduler]
+    [[events]]
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
+[scheduling]
+    [[graph]]
+        R1 = "holder => holdee & stopper"
+[runtime]
+    [[holder]]
+        script = """
+            cylc hold $CYLC_WORKFLOW_NAME holdee.1
+        """
+    [[holdee]]
+        script = true
+    [[stopper]]
+        script = """
+            cylc__job__poll_grep_workflow_log "\[holdee\.1 .* holding \(as requested earlier\)" -E
+            cylc stop $CYLC_WORKFLOW_NAME
+        """

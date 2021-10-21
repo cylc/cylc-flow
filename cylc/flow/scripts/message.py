@@ -34,14 +34,14 @@ separated by empty lines.
 
 Examples:
   # Single message as an argument:
-  $ cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'Hello world!'
+  $ cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'Hello world!'
 
   # Multiple messages as arguments:
-  $ cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" \
+  $ cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" \
   >     'Hello world!' 'Hi' 'WARNING:Hey!'
 
   # Multiple messages on STDIN:
-  $ cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
+  $ cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" - <<'__STDIN__'
   > Hello
   > world!
   >
@@ -50,7 +50,7 @@ Examples:
   > WARNING:Hey!
   >__STDIN__
 
-Note "${CYLC_WORKFLOW_NAME}" and "${CYLC_TASK_JOB}" are available in task job
+Note "${CYLC_WORKFLOW_ID}" and "${CYLC_TASK_JOB}" are available in task job
 environments - you do not need to write their actual values in task scripting.
 
 Each message can be prefixed with a severity level using the syntax 'SEVERITY:
@@ -115,7 +115,7 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         #     9.0?
         # (As of Dec 2020 some functional tests still use the classic
         # two arg interface)
-        workflow = os.getenv('CYLC_WORKFLOW_NAME')
+        workflow = os.getenv('CYLC_WORKFLOW_ID')
         task_job = os.getenv('CYLC_TASK_JOB')
         message_strs = list(args)
     else:

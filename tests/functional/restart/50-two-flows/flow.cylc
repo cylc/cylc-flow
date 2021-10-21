@@ -1,0 +1,28 @@
+# A workflow that triggers a new flow in the graph and then shuts down
+# so that we can restart with two active flows present.
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
+[scheduling]
+    [[graph]]
+        R1 = "a => b => c => d"
+[runtime]
+    [[root]]
+        pre-script = sleep 2
+    [[a]]
+       script = """
+           if ((CYLC_TASK_FLOWS == 2)); then
+               cylc__job__poll_grep_workflow_log "\[c\.1 .* succeeded"
+           fi
+       """
+    [[b, d]]
+    [[c]]
+       script = """
+           if ((CYLC_TASK_FLOWS == 1)); then
+               cylc trigger --reflow --meta="cheese wizard" $CYLC_WORKFLOW_NAME a.1
+               cylc__job__poll_grep_workflow_log "\[a\.1 submitted job:02 flows:2\] => running"
+               cylc stop $CYLC_WORKFLOW_NAME
+           fi
+       """

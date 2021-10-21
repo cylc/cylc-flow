@@ -16,7 +16,7 @@
    [[reloader]]
       script = """
 do_reload() {
-    cylc reload "${CYLC_WORKFLOW_NAME}"
+    cylc reload "${CYLC_WORKFLOW_ID}"
     while test "$(grep -cF 'Reload completed' "${CYLC_WORKFLOW_LOG_DIR}/log")" -ne "$1"
     do
         sleep 1

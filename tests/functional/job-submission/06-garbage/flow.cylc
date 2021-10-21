@@ -20,5 +20,5 @@
                 'remote-init will retry if another host is available' \
                 "${CYLC_WORKFLOW_LOG_DIR}/log"
 
-            cylc shutdown "${CYLC_WORKFLOW_NAME}"
+            cylc shutdown "${CYLC_WORKFLOW_ID}"
         """

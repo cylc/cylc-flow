@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check that triggering with --reflow does cause reflow.
+# Check that triggering with --flow starts a new flow.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest

@@ -21,5 +21,5 @@ cycling workflow.  The workflow will time out and abort if the ext trigger fails
         script = echo $CYLC_EXT_TRIGGER_ID
     [[trig]]
         # Task to do the "external" triggering.
-        script = cylc ext-trigger $CYLC_WORKFLOW_NAME \
+        script = cylc ext-trigger $CYLC_WORKFLOW_ID \
             "cheese on toast for $CYLC_TASK_CYCLE_POINT" "blarghh!"

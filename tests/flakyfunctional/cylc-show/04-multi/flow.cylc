@@ -16,8 +16,8 @@ if [[ "${CYLC_TASK_CYCLE_POINT}" == '2018' ]]; then
     cylc__job__wait_cylc_message_started
     sleep 5
     # Test alternate syntaxes
-    cylc show "${CYLC_WORKFLOW_NAME}" 't1.*' >"${CYLC_WORKFLOW_RUN_DIR}/show1.txt"
-    cylc show "${CYLC_WORKFLOW_NAME}" '*/t1' >"${CYLC_WORKFLOW_RUN_DIR}/show2.txt"
+    cylc show "${CYLC_WORKFLOW_ID}" 't1.*' >"${CYLC_WORKFLOW_RUN_DIR}/show1.txt"
+    cylc show "${CYLC_WORKFLOW_ID}" '*/t1' >"${CYLC_WORKFLOW_RUN_DIR}/show2.txt"
 else
     while [[ ! -s "${CYLC_WORKFLOW_RUN_DIR}/show2.txt" ]]; do
         sleep 1

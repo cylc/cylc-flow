@@ -111,7 +111,7 @@ if TYPE_CHECKING:
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
 RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
-RE_WORKFLOW_NAME_VAR = re.compile(r'\${?CYLC_WORKFLOW_(REG_)?NAME}?')
+RE_WORKFLOW_ID_VAR = re.compile(r'\${?CYLC_WORKFLOW_(REG_)?ID}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
 RE_VARNAME = re.compile(r'^[a-zA-Z_][\w]*$')
 
@@ -508,7 +508,7 @@ class WorkflowConfig:
         #     Cylc8
         # remove at:
         #     Cylc9
-        self.cfg['meta']['URL'] = RE_WORKFLOW_NAME_VAR.sub(
+        self.cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
             self.workflow, self.cfg['meta']['URL'])
         for name, cfg in self.cfg['runtime'].items():
             cfg['meta']['URL'] = cfg['meta']['URL'] % {
@@ -520,7 +520,7 @@ class WorkflowConfig:
             #     Cylc8
             # remove at:
             #     Cylc9
-            cfg['meta']['URL'] = RE_WORKFLOW_NAME_VAR.sub(
+            cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
                 self.workflow, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])

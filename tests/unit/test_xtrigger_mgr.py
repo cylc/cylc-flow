@@ -19,7 +19,6 @@ import pytest
 from cylc.flow.cycling.iso8601 import ISO8601Point, ISO8601Sequence, init
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.task_pool import FlowLabelMgr
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.xtrigger_mgr import RE_STR_TMPL
 
@@ -141,8 +140,7 @@ def test_housekeeping_with_xtrigger_satisfied(xtrigger_mgr):
     sequence = ISO8601Sequence('P1D', '2019')
     tdef.xtrig_labels[sequence] = ["get_name"]
     start_point = ISO8601Point('2019')
-    itask = TaskProxy(
-        tdef, start_point, FlowLabelMgr().get_new_label())
+    itask = TaskProxy(tdef, start_point)
     # pretend the function has been activated
     xtrigger_mgr.active.append(xtrig.get_signature())
     xtrigger_mgr.callback(xtrig)
@@ -189,8 +187,7 @@ def test__call_xtriggers_async(xtrigger_mgr):
     init()
     start_point = ISO8601Point('2019')
     # create task proxy
-    itask = TaskProxy(
-        tdef, start_point, FlowLabelMgr().get_new_label())
+    itask = TaskProxy(tdef, start_point)
 
     # we start with no satisfied xtriggers, and nothing active
     assert len(xtrigger_mgr.sat_xtrig) == 0
@@ -291,8 +288,7 @@ def test_check_xtriggers(xtrigger_mgr):
     sequence = ISO8601Sequence('P1D', '2019')
     tdef1.xtrig_labels[sequence] = ["get_name"]
     start_point = ISO8601Point('2019')
-    itask1 = TaskProxy(
-        tdef1, start_point, FlowLabelMgr().get_new_label())
+    itask1 = TaskProxy(tdef1, start_point)
     itask1.state.xtriggers["get_name"] = False  # satisfied?
 
     # add a clock xtrigger
@@ -316,8 +312,7 @@ def test_check_xtriggers(xtrigger_mgr):
     init()
     start_point = ISO8601Point('20000101T0000+05')
     # create task proxy
-    itask2 = TaskProxy(
-        tdef2, start_point, FlowLabelMgr().get_new_label())
+    TaskProxy(tdef2, start_point)
 
     xtrigger_mgr.check_xtriggers(itask1, lambda foo: None)
     # won't be satisfied, as it is async, we are are not calling callback
