@@ -15,75 +15,65 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test mainloop plugin periodically clears badhosts.
-# By setting the interval to << small we can also test whether job log retrieval
-# and remote tidy work.
-export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
+# Test mainloop plugin periodically clears badhosts:
+# * simulate remote-init failure due to SSH issues
+# * ensure that "reset bad hosts" allows this task to auto "submit retry"
+#   once the bad host is cleared
 
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 3
 
-# We don't use the usual ``create_test_global_config`` because we need to pin
-# the result of ``get_random_platform_for_install_target(install_target)`` to
-# mixedhostplatform.
-cat >>'global.cylc' <<__HERE__
-    # set a default timeout for all flow runs to avoid hanging tests
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+create_test_global_config '' "
     [scheduler]
-        [[events]]
-            inactivity timeout = PT5M
-            stall timeout = PT5M
-            abort on inactivity timeout = true
-            abort on stall timeout = true
         [[main loop]]
             [[[reset bad hosts]]]
                 interval = PT1S
     [platforms]
-        [[mixedhostplatform]]
-            hosts = unreachable_host, ${CYLC_TEST_HOST}
-            install target = ${CYLC_TEST_INSTALL_TARGET}
-            retrieve job logs = True
-            [[[selection]]]
-                method = 'definition order'
-__HERE__
-
-export CYLC_CONF_PATH="${PWD}"
-
+        [[fake-platform]]
+            hosts = localhost
+            # we set the install target to make it look like a remote platform
+            # (and so trigger remote-init)
+            install target = fake-install-target
+            # we botch the SSH command so we can simulate SSH failure
+            ssh command = $HOME/cylc-run/$WORKFLOW_NAME/bin/mock-ssh
+"
 #-------------------------------------------------------------------------------
-
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+workflow_run_fail "${TEST_NAME_BASE}-run" \
+    cylc play \
+        --debug \
+        --no-detach \
+        --abort-if-any-task-fails \
+        "${WORKFLOW_NAME}"
 
-# Periodic clearance of badhosts happened:
-named_grep_ok "periodic clearance message" \
-    "Clearing bad hosts: {'unreachable_host'}" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
+# scrape platform events from the log
+sed -n \
+    's/.* - \(platform: .*\)/\1/p' \
+    "${WORKFLOW_RUN_DIR}/log/workflow/log" \
+    > platform-log
 
-# job log retrieval failed on the definition order attempt (us):
-named_grep_ok "definition order job log retrieval fails" \
-    "\"job-logs-retrieve\" failed because \"unreachable_host\" is not available right now" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
-
-# job-log retrival actually works:
-ls "${WORKFLOW_RUN_DIR}/log/job/1/mixedhosttask/NN/" > "mixedhosttask.log.ls"
-cmp_ok "mixedhosttask.log.ls" <<__HERE__
-job
-job-activity.log
-job.err
-job.out
-job.status
-job.xtrace
+# check this matches expectations
+# we would expect:
+# * the task will attempt to remote-init
+# * this will fail (because we made it fail)
+# * the task will retry (because of the retry delays)
+# * the task will attempt to remote-init again
+# * the remote init will succeed this time
+# * the task will attempt file-installation
+# * file installation will fail because the install target is incorrect
+cmp_ok platform-log <<__HERE__
+platform: fake-platform - remote init (on localhost)
+platform: fake-platform - initialisation did not complete
+platform: fake-platform - remote init (on localhost)
+platform: fake-platform - file install (on localhost)
+platform: fake-platform - initialisation did not complete
 __HERE__
 
-# remote tidy fails definition order time round"
-named_grep_ok "definition order remote tidy fails" \
-    "Failed to tidy remote platform 'mixedhostplatform' using host 'unreachable_host'; trying new host '${CYLC_TEST_HOST}'" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
-
-purge "${WORKFLOW_NAME}" "mixedhostplatform"
+purge
 exit 0

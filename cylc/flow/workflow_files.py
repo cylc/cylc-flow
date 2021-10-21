@@ -44,12 +44,12 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     CylcError,
+    PlatformError,
     PlatformLookupError,
     ServiceFileError,
-    TaskRemoteMgmtError,
-    handle_rmtree_err,
     UserInputError,
-    WorkflowFilesError
+    WorkflowFilesError,
+    handle_rmtree_err,
 )
 from cylc.flow.pathutil import (
     expand_path,
@@ -1002,7 +1002,7 @@ def remote_clean(
                 remote_clean_cmd(platform=platforms[0]), target, platforms
             )
         )
-    failed_targets: Dict[str, TaskRemoteMgmtError] = {}
+    failed_targets: Dict[str, PlatformError] = {}
     # Handle subproc pool results almost concurrently:
     while queue:
         item = queue.popleft()
@@ -1015,9 +1015,13 @@ def remote_clean(
             LOG.info(f"[{item.install_target}]\n{out}")
         if ret_code:
             this_platform = item.platforms.pop(0)
-            excp = TaskRemoteMgmtError(
-                TaskRemoteMgmtError.MSG_TIDY, this_platform['name'],
-                item.proc.args, ret_code, out, err
+            excp = PlatformError(
+                PlatformError.MSG_TIDY,
+                this_platform['name'],
+                cmd=item.proc.args,
+                ret_code=ret_code,
+                out=out,
+                err=err,
             )
             if ret_code == 255 and item.platforms:
                 # SSH error; try again using the next platform for this

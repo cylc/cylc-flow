@@ -1,7 +1,7 @@
-2016-07-08T14:53:12+01 INFO - Initial point: 1
-2016-07-08T14:53:12+01 INFO - Final point: 5
-2016-07-08T14:53:12+01 INFO - [set-stop-point.1] -triggered off []
-2016-07-08T14:53:19+01 INFO - [reload.1] -triggered off ['set-stop-point.1']
-2016-07-08T14:53:19+01 INFO - [t1.1] -triggered off ['reload.1']
-2016-07-08T14:53:19+01 INFO - [t1.2] -triggered off ['t1.1']
-2016-07-08T14:53:19+01 INFO - [t1.3] -triggered off ['t1.2']
+INFO - Initial point: 1
+INFO - Final point: 5
+INFO - [set-stop-point.1] -triggered off []
+INFO - [reload.1] -triggered off ['set-stop-point.1']
+INFO - [t1.1] -triggered off ['reload.1', 't1.0']
+INFO - [t1.2] -triggered off ['t1.1']
+INFO - [t1.3] -triggered off ['t1.2']

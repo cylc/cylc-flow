@@ -51,7 +51,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # produced by Intelligent Host Selection Logic have happened.
 
 named_grep_ok "unreachable host warning" \
-    "\"jobs-submit\" failed because \"unreachable_host\" is not available right now." \
+    'unreachable_host has been added to the list of unreachable hosts' \
     "${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # Ensure that retrying in this context doesn't increment try number:
