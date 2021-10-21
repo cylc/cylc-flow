@@ -515,15 +515,28 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules restricting permitted initial cycle points.
+            Rules restricting permitted initial datetime cycle points.
 
-            In a cycling workflow it is possible to restrict the initial cycle
-            point by defining a list of truncated time points under the
-            initial cycle point constraints.
+            .. admonition:: use case
 
-            Examples: ``T00``, ``T06``, ``T-30``.
+               Use case: Writing a workflow where users may change the initial
+               cycle point, but where only some initial cycle points are
+               reasonable.
 
-            .. is it worth mentioning that this doesn't coerce icp = now?
+            Set by defining a list of truncated time points, such as
+
+            Examples:
+            - ``T00, T06, T12, T18`` - only at 6 hourly intervals
+            -  ``T-30`` - only at half-past an hour
+            - ``01T00`` - only at midnight on the first day of a month.
+
+            .. seealso::
+
+               :ref:`Recurrance tutorial <tutorial-inferred-recurrance>`.
+
+            .. note::
+
+               This setting does not coerce ``initial cycle point == now``.
         ''')
         Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules restricting permitted final cycle points.
