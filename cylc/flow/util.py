@@ -77,7 +77,7 @@ def natural_sort(items: List[str], fcns=(int, str)) -> None:
 
 
 def format_cmd(cmd: Union[List[str], Tuple[str]], maxlen: int = 60) -> str:
-    r"""Convert a shell command list to a user-friendly represenation.
+    r"""Convert a shell command list to a user-friendly representation.
 
     Examples:
         >>> format_cmd(['echo', 'hello', 'world'])
