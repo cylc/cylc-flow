@@ -266,7 +266,7 @@ with Conf(
             is also not set), then it will default to:
 
             - If your workflow is defined in a ``suite.rc`` file (Cylc 7
-              comatibility mode): To the local time zone at the time of running
+              compatibility mode): To the local time zone at the time of running
               the workflow.
             - If your workflow is defined in a ``flow.cylc`` file: To "Z" (UTC)
 
