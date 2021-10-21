@@ -18,7 +18,8 @@
 import contextlib
 from itertools import product
 import re
-from typing import Any, Dict, Set
+from textwrap import dedent
+from typing import Any, Dict, Optional, Set
 
 from metomi.isodatetime.data import Calendar
 
@@ -43,7 +44,6 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 DEPRECATION_WARN = '''
 .. deprecated:: 8.0.0
 
-
 .. warning::
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
@@ -51,25 +51,6 @@ DEPRECATION_WARN = '''
    **It will not be available at Cylc 9**.
 
    Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
-'''
-
-SCRIPT_COMMON = '''
-
-                See also :ref:`JobScripts`.
-
-                User-defined script items:
-
-                * :cylc:conf:`[..]init-script`
-                * :cylc:conf:`[..]env-script`
-                * :cylc:conf:`[..]pre-script`
-                * :cylc:conf:`[..]script`
-                * :cylc:conf:`[..]post-script`
-                * :cylc:conf:`[..]err-script`
-                * :cylc:conf:`[..]exit-script`
-
-                Example::
-
-                   {}
 '''
 
 DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
@@ -86,6 +67,29 @@ DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
    and you will only need to pick a suitable
    :cylc:conf:`flow.cylc[runtime][<namespace>]platform`.
 '''
+
+
+def get_script_common_text(this: str, example: Optional[str] = None):
+    text = dedent('''
+
+    See also :ref:`JobScripts`.
+
+    Other user-defined script items:
+
+    ''')
+    for item in [
+        'init-script', 'env-script', 'pre-script', 'script', 'post-script',
+        'err-script', 'exit-script'
+    ]:
+        if item != this:
+            text += f"* :cylc:conf:`[..]{item}`\n"
+    text += dedent(f'''
+
+    Example::
+
+        {example if example else 'echo "Hello World"'}
+    ''')
+    return text
 
 
 with Conf(
@@ -111,12 +115,6 @@ with Conf(
         Section for metadata items for this workflow. Cylc defines and uses
         some terms (title, description, URL). Users can define more terms,
         and use these in event handlers.
-
-        .. note::
-
-           A user could define "workflow-priority". An event handler
-           would then respond to failure events in a way set by
-           "workflow-priority".
     '''):
         Conf('description', VDR.V_STRING, '', desc='''
             A multi-line description of the workflow. It can be retrieved at
@@ -141,7 +139,11 @@ with Conf(
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
             Any user-defined metadata item. These, like title, URL, etc. can be
             passed to workflow event handlers to be interpreted according to
-            your needs. For example, "workflow-priority".
+            your needs.
+
+            For example, a user could define an item called
+            "workflow-priority". An event handler could then respond to
+            failure events in a way set by "workflow-priority".
         ''')
     with Conf('scheduler', desc='''
         .. versionchanged:: 8.0.0
@@ -727,7 +729,7 @@ with Conf(
                See :ref:`task namespace rules. <namespace-names>`
 
 
-            legal values:
+            Example legal values:
 
             - ``[foo]``
             - ``[foo, bar, baz]``
@@ -740,20 +742,20 @@ with Conf(
             all tasks in the workflow.
         '''):
             Conf('platform', VDR.V_STRING, desc='''
-                .. versionadded:: 8.0.0
-
                 The name of a compute resource defined in
                 :cylc:conf:`global.cylc[platforms]` or
                 :cylc:conf:`global.cylc[platform groups]`.
 
                 The platform specifies the host(s) that the task's jobs
                 will run on.
+
+                .. versionadded:: 8.0.0
             ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this namespace.
                 If no parents are listed default is ``root``.
             ''')
-            Conf('init-script', VDR.V_STRING, desc='''
+            Conf('init-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script before the task
                 execution environment is configured - so it does not have
                 access to any workflow or task environment variables. It can be
@@ -761,49 +763,56 @@ with Conf(
                 original intention for this item was to allow remote tasks to
                 source login scripts to configure their access to cylc, but
                 this should no longer be necessary.
-            ''' + SCRIPT_COMMON.format('echo "Hello World"'))
-            Conf('env-script', VDR.V_STRING, desc='''
+            ''') + get_script_common_text(this='init-script'))
+            Conf('env-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script between the
                 cylc-defined environment (workflow and task identity, etc.) and
                 the user-defined task runtime environment - so it has access
                 to the cylc environment (and the task environment has access
                 to variables defined by this scripting). It can be an
                 external command or script, or inlined scripting.
-            ''' + SCRIPT_COMMON.format('echo "Hello World"'))
-            Conf('err-script', VDR.V_STRING, desc='''
+            ''') + get_script_common_text(this='env-script'))
+            Conf('err-script', VDR.V_STRING, desc=dedent('''
                 Custom script to be invoked at the end of the error trap,
                 which is triggered due to failure of a command in the task job
                 script or trappable job kill. The output of this will always
                 be sent to STDERR and ``$1`` is set to the name of the signal
                 caught by the error trap. The script should be fast and use
                 very little system resource to ensure that the error trap can
-                return quickly.  Companion of ``exit-script``, which is
-                executed on job success.  It can be an external command or
-                script, or inlined scripting.
-            ''' + SCRIPT_COMMON.format('echo "Hello World"'))
-            Conf('exit-script', VDR.V_STRING, desc='''
+                return quickly.  Companion of :cylc:conf:`[..]exit-script`,
+                which is executed on job success.  It can be an external
+                command or script, or inlined scripting.
+            ''') + get_script_common_text(
+                this='err-script', example='echo "Uh oh, received ${1}"'
+            ))
+            Conf('exit-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked at the very end of *successful* job
                 execution, just before the job script exits. It should
-                execute very quickly. Companion of ``err-script``, which is
-                executed on job failure. It can be an external command or
-                script, or inlined scripting.
-            ''' + SCRIPT_COMMON.format('rm -f "$TMP_FILES"'))
-            Conf('pre-script', VDR.V_STRING, desc='''
+                execute very quickly. Companion of :cylc:conf:`[..]err-script`,
+                which is executed on job failure. It can be an external
+                command or script, or inlined scripting.
+            ''') + get_script_common_text(
+                this='exit-script', example='rm -f "$TMP_FILES"'
+            ))
+            Conf('pre-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script immediately
-                before the ``script`` item (just below). It can be an
+                before :cylc:conf:`[..]script` (just below). It can be an
                 external command or script, or inlined scripting.
-            ''' + SCRIPT_COMMON.format(
-                'echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'))
-
-            Conf('script', VDR.V_STRING, desc='''
+            ''') + get_script_common_text(
+                this='pre-script',
+                example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
+            ))
+            Conf('script', VDR.V_STRING, desc=dedent('''
                 The main custom script invoked from the task job script. It
                 can be an external command or script, or inlined scripting.
-            ''' + SCRIPT_COMMON)
-            Conf('post-script', VDR.V_STRING, desc='''
+            ''') + get_script_common_text(
+                this='script', example='my_script.sh'
+            ))
+            Conf('post-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script immediately
-                after the ``script`` item. It can be an external
+                after :cylc:conf:`[..]script` It can be an external
                 command or script, or inlined scripting.
-            ''' + SCRIPT_COMMON)
+            ''') + get_script_common_text(this='post-script'))
 
             Conf('work sub-directory', VDR.V_STRING, desc='''
                 Task job scripts are executed from within *work directories*
@@ -1013,11 +1022,11 @@ with Conf(
                     excluded by omission from an ``include`` list.
                 ''')
 
-            with Conf('job', desc='''
+            with Conf('job', desc=dedent('''
                 This section configures the means by which cylc submits task
                 job scripts to run.
 
-            ''' + DEPRECATION_WARN):
+            ''') + DEPRECATION_WARN):
                 Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
 
@@ -1074,17 +1083,17 @@ with Conf(
                 ``%(finish_time)s``
                    Date-time when task job exits
                 ``%(platform_name)s``
-                   name of platform where the task job is submitted
+                   Name of platform where the task job is submitted
                 ``%(message)s``
                    Event message, if any
-                any task [meta] item, e.g.:
+                Any task [meta] item, e.g.:
                    ``%(title)s``
                       Task title
                    ``%(URL)s``
                       Task URL
                    ``%(importance)s``
                       Example custom task metadata
-                any workflow ``[meta]`` item, prefixed with ``workflow_``
+                Any workflow ``[meta]`` item, prefixed with ``workflow_``
                    ``%(workflow_title)s``
                       Workflow title
                    ``%(workflow_URL)s``
@@ -1093,9 +1102,7 @@ with Conf(
                       Example custom workflow metadata.
 
                 Otherwise, the command line will be called with the following
-                default
-
-                Arguments:
+                default arguments:
 
                 .. code-block:: none
 
