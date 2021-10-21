@@ -476,7 +476,8 @@ with Conf(
             under :cylc:conf:`[..][special tasks]`) will be loaded into the
             workflow with this cycle point, or with the closest subsequent
             valid cycle point for the task. This item can be overridden on the
-            command line.
+            command line, using ``cylc play --initial-cycle-point`` or
+            ``--icp``.
 
             In integer cycling, the default is ``1``.
 
@@ -506,7 +507,8 @@ with Conf(
             Cycling tasks are held once they pass the final cycle point, if
             one is specified. Once all tasks have achieved this state the
             workflow will shut down. If this item is set you can override it
-            on the command line.
+            on the command line using ``cylc play --final-cycle-point`` or
+            ``--fcp``.
 
             In date-time cycling, if you do not provide time zone information
             for this, it will be assumed to be local time, or in UTC if
@@ -515,7 +517,7 @@ with Conf(
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules restricting permitted initial datetime cycle points.
+            Rules to allow only some initial datetime cycle points.
 
             .. admonition:: use case
 
@@ -544,21 +546,28 @@ with Conf(
             In a cycling workflow it is possible to restrict the final cycle
             point by defining a list of truncated time points under the final
             cycle point constraints.
+
+            .. seealso::
+
+               :ref:`Recurrance tutorial <tutorial-inferred-recurrance>`.
+
         ''')
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
             Hold all tasks once they pass this cycle point.
 
-            Cycling tasks are held once they pass this cycle point, if
-            specified. Unlike for the final cycle point, the workflow will not
-            shut down once all tasks have passed this point. If this item
-            is provided you can override it on the command line.
-
             .. versionchanged:: 8.0.0
 
                This setting was previously called ``hold after point``.
+
+            Hold workflow once tasks pass this cycle point. Unlike the final
+            cycle point, the workflow does not shut down once all tasks have
+            passed this point. If this item is set you can override it on the
+            command line using ``--hold-after``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
             Shut down workflow after all tasks **pass** this cycle point.
+
+            .. versionadded:: 8.0.0
 
             The stop cycle point can be over-ridden on the command line using
             ``cylc play --stop-cycle-point=POINT``
@@ -619,40 +628,55 @@ with Conf(
         ''')
 
         with Conf('queues', desc='''
-            Configuration of internal queues, by which the number of
-            simultaneously active tasks (submitted or running) can be limited,
-            per queue. By default a single queue called *default* is defined,
+            Configuration of internal queues of tasks.
+
+            This section will allow you to limit the number of simultaneously
+            active tasks (submitted or running) by assigning tasks to queus.
+
+            By default a single queue called *default* is defined,
             with all tasks assigned to it and no limit. To use a single queue
             for the whole workflow just set the limit on the *default* queue as
-            required. See also :ref:`InternalQueues`.
-        '''):
-            with Conf('default'):
-                Conf('limit', VDR.V_INTEGER, 0, desc='''
-                    The maximum number of active tasks allowed at any one
-                    time, for this queue.
-                ''')
-                Conf('members', VDR.V_STRING_LIST, desc='All tasks.''')
+            required.
 
+            To add additional queues define additional sections:
+
+            .. code-block:: cylc
+
+               [[queues]]
+                   [[[user_defined_queue]]]
+                       limit = 2
+                       members = TASK_FAMILY_NAME
+
+            .. seealso::
+
+               See also :ref:`InternalQueues`.
+        '''):
             with Conf('<queue name>', desc='''
                 Section heading for configuration of a single queue.
-            '''):
+            ''') as Queue:
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
                     The maximum number of active tasks allowed at any one
                     time, for this queue.
                 ''')
                 Conf('members', VDR.V_STRING_LIST, desc='''
-                    A list of member tasks, or task family names, to assign to
-                    this queue (assigned tasks will automatically be removed
-                    from the default queue).
+                    A list of member tasks, or task family names to assign to
+                    this queue.
+
+                    Assigned tasks will automatically be removed
+                    from the default queue.
                 ''')
+            Conf('default', meta=Queue)
 
         with Conf('special tasks', desc='''
             This section is used to identify tasks with special behaviour.
+
             Family names can be used in special task lists as shorthand for
             listing all member tasks.
         '''):
             Conf('clock-trigger', VDR.V_STRING_LIST, desc='''
-            .. note::
+            Legacy clock trigger definitions.
+
+            .. admonition:: Deprecated
 
                Please read :ref:`Section External Triggers` before
                using the older clock triggers described in this section.
@@ -665,7 +689,9 @@ with Conf(
             ``foo(PT1H30M), bar(PT1.5H), baz``
             ''')
             Conf('external-trigger', VDR.V_STRING_LIST, desc='''
-                .. note::
+                Legacy External Trigger definition section.
+
+                .. admonition:: Deprecated
 
                    Please read :ref:`Section External Triggers` before
                    using the older mechanism described in this section.
@@ -678,9 +704,13 @@ with Conf(
                 ``cylc ext-trigger`` command.
             ''')
             Conf('clock-expire', VDR.V_STRING_LIST, desc='''
+                Don't submit jobs if they are very late in wall clock time.
+
                 Clock-expire tasks enter the ``expired`` state and skip job
                 submission if too far behind the wall clock when they become
-                ready to run.  The expiry time is specified as an offset from
+                ready to run.
+
+                The expiry time is specified as an offset from
                 wall-clock time; typically it should be negative - see
                 :ref:`ClockExpireTasks`.
 
@@ -695,14 +725,13 @@ with Conf(
                 ``PT1H`` - 1 hour
             ''')
             Conf('sequential', VDR.V_STRING_LIST, desc='''
-                Sequential tasks automatically depend on their own
-                previous-cycle instance.  This declaration is deprecated in
-                favour of explicit inter-cycle triggers - see
-                :ref:`SequentialTasks`.
+                A list of tasks which automatically depend on their own
+                previous-cycle instance.
 
-                Example:
+                .. admonition:: deprecated
 
-                ``foo, bar``
+                   This declaration is deprecated in favour of explicit
+                   inter-cycle triggers - see :ref:`SequentialTasks`.
             ''')
 
         with Conf('xtriggers', desc='''
@@ -715,22 +744,40 @@ with Conf(
 
                 See :ref:`Section External Triggers` for details.
 
-                Example = ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+                .. admonition:: Example
+
+                   ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
             ''')
 
         with Conf('graph', desc='''
-            The workflow graph is defined under this section.  You can
-            plot the dependency graph as you work on it, with ``cylc graph``
-            or by right clicking on the workflow in the db viewer.  See also
-            :ref:`User Guide Scheduling`.
+            The workflow graph is defined under this section.
+
+            .. versionchanged:: 8.0.0
+
+               Previously ``[runtime][dependencies][graph]``.
+
+            You can plot the dependency graph as you work on it, with
+            ``cylc graph`` or by right clicking on the workflow in the db
+            viewer.
+
+            .. seealso::
+
+               :ref:`User Guide Scheduling`.
+
+            .. question - what is the db viewer?
         '''):
             Conf('<recurrence>', VDR.V_STRING, desc='''
                 The recurrence defines the sequence of cycle points
-                for which the dependency graph is valid. These should be
-                specified in our ISO 8601 derived sequence syntax, or
-                similar for integer cycling:
+                for which the dependency graph is valid.
 
-                Example Recurrences:
+                .. seealso::
+
+                   :ref:`User Guide Scheduling`
+
+                Cycle points should be specified in our ISO 8601 derived
+                sequence syntax, or as integers, in integer cycling mode:
+
+                Example
 
                 date-time cycling:
                    * ``R1`` - once at the initial cycle point
@@ -818,15 +865,27 @@ with Conf(
 
     with Conf('runtime',  # noqa: SIM117 (keep same format)
               desc='''
-        This section is used to specify how, where, and what to execute when
-        tasks are ready to run. Common configuration can be factored out in a
-        multiple-inheritance hierarchy of runtime namespaces that culminates
-        in the tasks of the workflow. Precedence is determined by the same C3
+        This section is used to specify settings for tasks to be run.
+
+        You can specify:
+        - What task you want to execute.
+        - Which compute resource (platform) you wish to use.
+        - How to run your task.
+
+        If multiple tasks need the same settings tasks can share settings by
+        inheriting them from one or more other tasks.
+
+        Precedence is determined by the same C3
         linearization algorithm used to find the *method resolution order*
-        in Python language class hierarchies. For details and examples see
-        :ref:`User Guide Runtime`.
+        in Python language class hierarchies.
+
+        .. seealso::
+
+           For details and examples see :ref:`User Guide Runtime`.
     '''):
         with Conf('<namespace>', desc='''
+            The name(s) of one or more tasks or task families.
+
             A namespace (i.e. task or family name) or a comma-separated list
             of namespace names, and repeat as needed to define all tasks in
             the workflow. Names may contain letters, digits, underscores, and
@@ -841,7 +900,7 @@ with Conf(
                See :ref:`task namespace rules. <namespace-names>`
 
 
-            Example legal values:
+            Examples of legal values:
 
             - ``[foo]``
             - ``[foo, bar, baz]``
@@ -858,18 +917,23 @@ with Conf(
                 :cylc:conf:`global.cylc[platforms]` or
                 :cylc:conf:`global.cylc[platform groups]`.
 
-                The platform specifies the host(s) that the task's jobs
-                will run on.
+                The platform specifies the host(s) that the tasks' jobs
+                will run on and where (if necessary) files need to be
+                installed.
 
                 .. versionadded:: 8.0.0
             ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this namespace.
+
                 If no parents are listed default is ``root``.
             ''')
             Conf('init-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script before the task
-                execution environment is configured - so it does not have
+                execution environment is configured.
+                
+                By running before the task execution environment is configured
+                this script does not have
                 access to any workflow or task environment variables. It can be
                 an external command or script, or inlined scripting. The
                 original intention for this item was to allow remote tasks to
@@ -879,15 +943,20 @@ with Conf(
             Conf('env-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script between the
                 cylc-defined environment (workflow and task identity, etc.) and
-                the user-defined task runtime environment - so it has access
-                to the cylc environment (and the task environment has access
-                to variables defined by this scripting). It can be an
-                external command or script, or inlined scripting.
+                the user-defined task runtime environment.
+
+                The env-script has access to the cylc environment (and the task
+                environment has access to variables defined by this scripting).
+                It can be an external command or script, or inlined scripting.
             ''') + get_script_common_text(this='env-script'))
-            Conf('err-script', VDR.V_STRING, desc=dedent('''
+            Conf('err-script', VDR.V_STRING, desc='''
+                Script run when a task job error is detected.
+
                 Custom script to be invoked at the end of the error trap,
                 which is triggered due to failure of a command in the task job
-                script or trappable job kill. The output of this will always
+                script or trappable job kill.
+
+                The output of this script will always
                 be sent to STDERR and ``$1`` is set to the name of the signal
                 caught by the error trap. The script should be fast and use
                 very little system resource to ensure that the error trap can
@@ -896,11 +965,13 @@ with Conf(
                 command or script, or inlined scripting.
             ''') + get_script_common_text(
                 this='err-script', example='echo "Uh oh, received ${1}"'
-            ))
+            )
             Conf('exit-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked at the very end of *successful* job
-                execution, just before the job script exits. It should
-                execute very quickly. Companion of :cylc:conf:`[..]err-script`,
+                execution, just before the job script exits. 
+
+                The exit-script should execute very quickly.
+                Companion of :cylc:conf:`[..]err-script`,
                 which is executed on job failure. It can be an external
                 command or script, or inlined scripting.
             ''') + get_script_common_text(
@@ -908,41 +979,48 @@ with Conf(
             ))
             Conf('pre-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script immediately
-                before :cylc:conf:`[..]script` (just below). It can be an
-                external command or script, or inlined scripting.
+                before :cylc:conf:`[..]script`.
+
+                The pre-script can be an external command or script, or
+                inlined scripting.
             ''') + get_script_common_text(
                 this='pre-script',
                 example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
             ))
             Conf('script', VDR.V_STRING, desc=dedent('''
-                The main custom script invoked from the task job script. It
-                can be an external command or script, or inlined scripting.
+                The main custom script invoked from the task job script.
+
+                It can be an external command or script, or inlined scripting.
             ''') + get_script_common_text(
                 this='script', example='my_script.sh'
             ))
             Conf('post-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script immediately
-                after :cylc:conf:`[..]script` It can be an external
+                after :cylc:conf:`[..]script`.
+
+                The post-script can be an external
                 command or script, or inlined scripting.
             ''') + get_script_common_text(this='post-script'))
 
             Conf('work sub-directory', VDR.V_STRING, desc='''
+                The directory from which tasks are executed.
+
                 Task job scripts are executed from within *work directories*
                 created automatically under the workflow run directory. A task
                 can get its own work directory from ``$CYLC_TASK_WORK_DIR``
-                (or simply ``$PWD`` if it does not ``cd`` elsewhere at
+                (or ``$PWD`` if it does not ``cd`` elsewhere at
                 runtime). The default directory path contains task name and
                 cycle point, to provide a unique workspace for every instance
                 of every task. If several tasks need to exchange files and
                 simply read and write from their from current working
-                directory, this item can be used to override the default to
-                make them all use the same workspace.
+                directory, setting ``work sub-directory`` can be used to
+                override the default to make them all use the same workspace.
 
                 The top level share and work directory location can be changed
                 (e.g. to a large data area) by a global config setting (see
                 :cylc:conf:`global.cylc[install][symlink dirs]`).
 
-                .. note::
+                .. caution::
 
                    If you omit cycle point from the work sub-directory path
                    successive instances of the task will share the same
@@ -997,8 +1075,10 @@ with Conf(
                 desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
             )
             with Conf('meta', desc=r'''
-                Section containing metadata items for this task or family
-                namespace.  Several items (title, description, URL) are
+                Metadata for the task or task family.
+
+                The ``meta`` section containins metadata items for this task or
+                family namespace. Several items (title, description, URL) are
                 pre-defined and are used by Cylc. Others can be user-defined
                 and passed to task event handlers to be interpreted according
                 to your needs. For example, the value of an "importance" item
@@ -1022,20 +1102,23 @@ with Conf(
                                 """
             '''):
                 Conf('title', VDR.V_STRING, '', desc='''
-                    A single line description of this namespace. It is
-                    displayed by the ``cylc list`` command and can be
+                    A single line description of this namespace.
+
+                    It is displayed by the ``cylc list`` command and can be
                     retrieved from running tasks with the ``cylc show``
                     command.
                 ''')
                 Conf('description', VDR.V_STRING, '', desc='''
-                    A multi-line description of this namespace, retrievable
-                    from running tasks with the ``cylc show`` command.
+                    A multi-line description of this namespace.
+
+                    It is retrievable from running tasks with the
+                    ``cylc show`` command.
                 ''')
                 Conf(
                     'URL', VDR.V_STRING, '', desc='''
-                        A web URL to task documentation for this workflow. If
-                        present it can be browsed with the ``cylc doc``
-                        command.  The templates ``%(workflow_name)s`` and
+                        A web URL to task documentation for this workflow.
+                        
+                        The templates ``%(workflow_name)s`` and
                         ``%(task_name)s`` will be replaced with the actual
                         workflow and task names.
 
@@ -1047,6 +1130,7 @@ with Conf(
                     '%(task_name)s.html``')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
+
                     These, like title, URL, etc. can be passed to task event
                     handlers to be interpreted according to your needs. For
                     example, the value of an "importance" item could determine
