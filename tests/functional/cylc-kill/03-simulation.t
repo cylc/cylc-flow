@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,12 +14,29 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Prune excess common flow labels."""
 
-from cylc.flow.main_loop import periodic
+# Test kill a running simulation job
 
+. "$(dirname "$0")/test_header"
 
-@periodic
-async def prune_flow_labels(scheduler, _):
-    """Prune flow labels."""
-    scheduler.pool.prune_flow_labels()
+set_test_number 3
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+
+# run workflow in background
+cylc play --debug -m simulation "${WORKFLOW_NAME}" >/dev/null 2>&1
+
+# wait for simulated job start
+poll_grep_workflow_log "foo.1 .* running" -E
+
+# kill it
+run_ok killer cylc kill "${WORKFLOW_NAME}" foo.1
+
+# wait for shut down
+poll_grep_workflow_log "INFO - DONE"
+
+# check the sim job was kiled
+grep_workflow_log_ok killed "foo.1 .* failed" -E
+
+purge

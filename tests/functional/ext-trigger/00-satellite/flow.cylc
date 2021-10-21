@@ -64,7 +64,7 @@
                 ((COUNT += 1))
                 # (required to distinguish fast-arriving messages).
                 # Trigger downstream processing in the workflow.
-                cylc ext-trigger $CYLC_WORKFLOW_NAME \
+                cylc ext-trigger $CYLC_WORKFLOW_ID \
                    "new dataset ready for processing" $DATA_ID
             done
         """

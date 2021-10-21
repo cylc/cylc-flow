@@ -22,6 +22,7 @@ This module provides logic to:
 - Implement basic host select functionality.
 """
 
+from collections import deque
 from contextlib import suppress
 from cylc.flow.option_parsers import verbosity_to_opts
 import os
@@ -29,32 +30,37 @@ from shlex import quote
 import re
 from subprocess import Popen, PIPE, DEVNULL
 import tarfile
-from time import time
-from typing import Any, Dict, TYPE_CHECKING
+from time import sleep, time
+from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
 
 from cylc.flow import LOG, RSYNC_LOG
-from cylc.flow.exceptions import TaskRemoteMgmtError
+from cylc.flow.exceptions import PlatformError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.pathutil import (
-    get_remote_workflow_run_dir,
     get_dirs_to_symlink,
-    get_workflow_run_dir)
+    get_remote_workflow_run_dir,
+    get_workflow_run_dir,
+)
+from cylc.flow.platforms import (
+    NoHostsError,
+    PlatformLookupError,
+    get_host_from_platform,
+    get_install_target_from_platform,
+    get_localhost_install_target,
+    get_random_platform_for_install_target,
+    log_platform_event,
+)
 from cylc.flow.remote import construct_rsync_over_ssh_cmd, construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.workflow_files import (
-    WorkflowFiles,
     KeyInfo,
     KeyOwner,
     KeyType,
+    WorkflowFiles,
+    get_contact_file,
     get_workflow_srv_dir,
-    get_contact_file)
-from cylc.flow.platforms import (
-    get_host_from_platform,
-    get_localhost_install_target,
-    get_random_platform_for_install_target,
-    NoHostsError
 )
 
 if TYPE_CHECKING:
@@ -71,13 +77,19 @@ REMOTE_INIT_255 = 'REMOTE INIT 255'
 REMOTE_FILE_INSTALL_255 = 'REMOTE FILE INSTALL 255'
 
 
+class RemoteTidyQueueTuple(NamedTuple):
+    platform: Dict[str, Any]
+    host: str
+    proc: 'Popen[str]'
+
+
 class TaskRemoteMgr:
     """Manage task job remote initialisation, tidy, selection."""
 
     def __init__(self, workflow, proc_pool, bad_hosts):
         self.workflow = workflow
         self.proc_pool = proc_pool
-        # self.remote_command_map = {command: host|TaskRemoteMgmtError|None}
+        # self.remote_command_map = {command: host|PlatformError|None}
         self.remote_command_map = {}
         # self.remote_init_map = {(install target): status, ...}
         self.remote_init_map = {}
@@ -109,7 +121,7 @@ class TaskRemoteMgr:
               'localhost'
             - Otherwise, return the evaluated host name on success.
 
-        Raise TaskRemoteMgmtError on error.
+        Raise PlatformError on error.
 
         """
         # BACK COMPAT: references to "host"
@@ -125,7 +137,7 @@ class TaskRemoteMgr:
             if cmd_str in self.remote_command_map:
                 # Command recently launched
                 value = self.remote_command_map[cmd_str]
-                if isinstance(value, TaskRemoteMgmtError):
+                if isinstance(value, PlatformError):
                     raise value  # command failed
                 elif value is None:
                     return  # command not yet ready
@@ -217,17 +229,19 @@ class TaskRemoteMgr:
             host = get_host_from_platform(
                 platform, bad_hosts=self.bad_hosts
             )
-        except NoHostsError:
-            LOG.error(TaskRemoteMgmtError(
-                TaskRemoteMgmtError.MSG_INIT,
-                install_target, ' '.join(
-                    quote(item) for item in cmd),
-                42, '', ''))
+        except NoHostsError as exc:
+            LOG.error(
+                PlatformError(
+                    f'{PlatformError.MSG_INIT}\n{exc}',
+                    platform['name'],
+                )
+            )
             self.remote_init_map[
                 platform['install target']] = REMOTE_INIT_FAILED
             self.bad_hosts -= set(platform['hosts'])
             self.ready = True
         else:
+            log_platform_event('remote init', platform, host)
             cmd = construct_ssh_cmd(cmd, platform, host)
             self.proc_pool.put_command(
                 SubProcContext(
@@ -245,114 +259,120 @@ class TaskRemoteMgr:
                 callback_255_args=[platform]
             )
 
-    def remote_tidy(self):
+    def remote_tidy(self) -> None:
         """Remove workflow contact files and keys from initialised remotes.
 
         Call "cylc remote-tidy".
         This method is called on workflow shutdown, so we want nothing to hang.
         Timeout any incomplete commands after 10 seconds.
         """
-        from cylc.flow.platforms import PlatformLookupError
         # Issue all SSH commands in parallel
 
-        def construct_remote_tidy_ssh_cmd(install_target, platform):
+        def construct_remote_tidy_ssh_cmd(
+            platform: Dict[str, Any]
+        ) -> Tuple[List[str], str]:
             cmd = ['remote-tidy']
             cmd.extend(verbosity_to_opts(cylc.flow.flags.verbosity))
-            cmd.append(install_target)
+            cmd.append(get_install_target_from_platform(platform))
             cmd.append(get_remote_workflow_run_dir(self.workflow))
             host = get_host_from_platform(
                 platform, bad_hosts=self.bad_hosts
             )
-            cmd = construct_ssh_cmd(
-                cmd, platform, host, timeout='10s'
-            )
+            cmd = construct_ssh_cmd(cmd, platform, host, timeout='10s')
             return cmd, host
 
-        procs = {}
+        queue: Deque[RemoteTidyQueueTuple] = deque()
         for install_target, message in self.remote_init_map.items():
             if message != REMOTE_FILE_INSTALL_DONE:
                 continue
             if install_target == get_localhost_install_target():
                 continue
-            platform = get_random_platform_for_install_target(install_target)
-            platform_n = platform['name']
             try:
-                cmd, host = construct_remote_tidy_ssh_cmd(
-                    install_target, platform)
-            except (NoHostsError, PlatformLookupError):
-                LOG.warning(TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY,
-                    platform_n, 1, '', '', 'remote tidy'
-                ))
-            else:
-                LOG.debug(
-                    "Removing authentication keys and contact file "
-                    f"from remote: \"{install_target}\"")
-                procs[platform_n] = (
-                    cmd,
-                    host,
-                    Popen(  # nosec
-                        cmd,
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        stdin=DEVNULL,
+                platform = get_random_platform_for_install_target(
+                    install_target
+                )
+                cmd, host = construct_remote_tidy_ssh_cmd(platform)
+            except (NoHostsError, PlatformLookupError) as exc:
+                LOG.warning(
+                    PlatformError(
+                        f'{PlatformError.MSG_TIDY}\n{exc}',
+                        platform['name'],
                     )
-                    # * command constructed by internal interface
+                )
+            else:
+                log_platform_event('remote tidy', platform, host)
+                queue.append(
+                    RemoteTidyQueueTuple(
+                        platform,
+                        host,
+                        Popen(  # nosec
+                            cmd, stdout=PIPE, stderr=PIPE, stdin=DEVNULL,
+                            text=True
+                        )  # * command constructed by internal interface
+                    )
                 )
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
-        while procs and time() < timeout:
-            for platform_n, (cmd, host, proc) in procs.copy().items():
-                if proc.poll() is None:
-                    continue
-                del procs[platform_n]
-                out, err = (f.decode() for f in proc.communicate())
-                # 255 error has to be handled here becuase remote tidy doesn't
-                # use SubProcPool.
-                if proc.returncode == 255:
-                    timeout = time() + 10.0
-                    self.bad_hosts.add(host)
-                    LOG.warning(
-                        f'Tried to tidy remote platform: \'{platform_n}\' '
-                        f'using host \'{host}\' but failed; '
-                        'trying a different host'
+        while queue and time() < timeout:
+            item = queue.popleft()
+            if item.proc.poll() is None:  # proc still running
+                queue.append(item)
+                continue
+            out, err = item.proc.communicate()
+            # 255 error has to be handled here because remote tidy doesn't
+            # use SubProcPool.
+            if item.proc.returncode == 255:
+                timeout = time() + 10.0
+                self.bad_hosts.add(item.host)
+                try:
+                    retry_cmd, retry_host = construct_remote_tidy_ssh_cmd(
+                        item.platform
                     )
-                    try:
-                        retry_cmd, host = construct_remote_tidy_ssh_cmd(
-                            install_target, platform
+                except (NoHostsError, PlatformLookupError) as exc:
+                    LOG.warning(
+                        PlatformError(
+                            f'{PlatformError.MSG_TIDY}\n{exc}',
+                            item.platform['name']
                         )
-                    except (NoHostsError, PlatformLookupError):
-                        LOG.warning(TaskRemoteMgmtError(
-                            TaskRemoteMgmtError.MSG_TIDY, platform_n, '',
-                            '', '', ''
-                        ))
-                    else:
-                        procs[platform_n] = (
-                            retry_cmd,
-                            host,
-                            Popen(  # nosec
-                                retry_cmd,
-                                stdout=PIPE,
-                                stderr=PIPE,
-                                stdin=DEVNULL,
-                            )
-                            # * command constructed by internal interface
+                    )
+                else:
+                    queue.append(
+                        item._replace(
+                            host=retry_host,
+                            proc=Popen(  # nosec
+                                retry_cmd, stdout=PIPE, stderr=PIPE,
+                                stdin=DEVNULL, text=True
+                            )  # * command constructed by internal interface
                         )
-                if proc.wait() and proc.returncode != 255:
-                    LOG.warning(TaskRemoteMgmtError(
-                        TaskRemoteMgmtError.MSG_TIDY,
-                        platform_n, ' '.join(quote(item) for item in cmd),
-                        proc.returncode, out, err))
+                    )
+            elif item.proc.returncode:
+                LOG.warning(
+                    PlatformError(
+                        PlatformError.MSG_TIDY,
+                        item.platform['name'],
+                        cmd=item.proc.args,
+                        ret_code=item.proc.returncode,
+                        out=out,
+                        err=err
+                    )
+                )
+            sleep(0.1)
         # Terminate any remaining commands
-        for platform_n, (cmd, proc) in procs.items():
+        for item in queue:
             with suppress(OSError):
-                proc.terminate()
-            out, err = (f.decode() for f in proc.communicate())
-            if proc.wait():
-                LOG.warning(TaskRemoteMgmtError(
-                    TaskRemoteMgmtError.MSG_TIDY,
-                    platform_n, ' '.join(quote(item) for item in cmd),
-                    proc.returncode, out, err))
+                item.proc.terminate()
+            out, err = item.proc.communicate()
+            if item.proc.wait():
+                LOG.warning(
+                    PlatformError(
+                        PlatformError.MSG_TIDY,
+                        item.platform['name'],
+                        cmd=item.proc.args,
+                        ret_code=item.proc.returncode,
+                        out=out,
+                        err=err,
+                    )
+                )
 
     def _subshell_eval_callback(self, proc_ctx, cmd_str):
         """Callback when subshell eval command exits"""
@@ -362,9 +382,11 @@ class TaskRemoteMgr:
         else:
             # Bad status
             LOG.error(proc_ctx)
-            self.remote_command_map[cmd_str] = TaskRemoteMgmtError(
-                TaskRemoteMgmtError.MSG_SELECT, (cmd_str, None), cmd_str,
-                proc_ctx.ret_code, proc_ctx.out, proc_ctx.err)
+            self.remote_command_map[cmd_str] = PlatformError(
+                PlatformError.MSG_SELECT,
+                None,
+                ctx=proc_ctx,
+            )
 
     def _remote_init_callback_255(self, proc_ctx, platform):
         """Callback when "cylc remote-init" exits with 255 error.
@@ -416,11 +438,16 @@ class TaskRemoteMgr:
             self.ready = True
             return
         # Bad status
-        LOG.error(TaskRemoteMgmtError(
-            TaskRemoteMgmtError.MSG_INIT,
-            install_target, ' '.join(
-                quote(item) for item in proc_ctx.cmd),
-            proc_ctx.ret_code, proc_ctx.out, proc_ctx.err))
+        LOG.error(
+            PlatformError(
+                PlatformError.MSG_INIT,
+                platform['name'],
+                cmd=proc_ctx.cmd,
+                ret_code=proc_ctx.ret_code,
+                out=proc_ctx.out,
+                err=proc_ctx.err,
+            )
+        )
 
         self.remote_init_map[platform['install target']] = REMOTE_INIT_FAILED
         self.ready = True
@@ -455,25 +482,28 @@ class TaskRemoteMgr:
                 cmd,
                 host
             )
-        except NoHostsError:
-            LOG.error(TaskRemoteMgmtError(
-                TaskRemoteMgmtError.MSG_INIT,
-                install_target, '', '', '', ''))
+        except NoHostsError as exc:
+            LOG.error(
+                PlatformError(
+                    f'{PlatformError.MSG_INIT}\n{exc}',
+                    platform['name'],
+                )
+            )
             self.remote_init_map[
                 platform['install target']] = REMOTE_FILE_INSTALL_FAILED
             self.bad_hosts -= set(platform['hosts'])
             self.ready = True
         else:
-            LOG.debug(f"Begin file installation on {install_target}")
+            log_platform_event('file install', platform, host)
             self.proc_pool.put_command(
                 ctx,
                 bad_hosts=self.bad_hosts,
                 callback=self._file_install_callback,
-                callback_args=[install_target, platform],
+                callback_args=[platform, install_target],
                 callback_255=self._file_install_callback_255,
             )
 
-    def _file_install_callback_255(self, ctx, install_target):
+    def _file_install_callback_255(self, ctx, platform, install_target):
         """Callback when file installation exits.
 
         Sets remote_init_map to REMOTE_FILE_INSTALL_DONE on success and to
@@ -482,7 +512,7 @@ class TaskRemoteMgr:
         self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_255
         self.ready = True
 
-    def _file_install_callback(self, ctx, install_target):
+    def _file_install_callback(self, ctx, platform, install_target):
         """Callback when file installation exits.
 
         Sets remote_init_map to REMOTE_FILE_INSTALL_DONE on success and to
@@ -494,19 +524,19 @@ class TaskRemoteMgr:
                 f'{install_target}:\n{ctx.out}')
         if ctx.ret_code == 0:
             # Both file installation and remote init success
-            LOG.debug(ctx)
             LOG.debug(f"File installation complete for {install_target}")
             self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_DONE
             self.ready = True
             return
         else:
             self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_FAILED
-            LOG.error(TaskRemoteMgmtError(
-                TaskRemoteMgmtError.MSG_INIT,
-                install_target, ' '.join(
-                    quote(item) for item in ctx.cmd),
-                ctx.ret_code, ctx.out, ctx.err))
-            LOG.error(ctx)
+            LOG.error(
+                PlatformError(
+                    PlatformError.MSG_INIT,
+                    platform['name'],
+                    ctx=ctx,
+                )
+            )
             self.ready = True
 
     def _remote_init_items(self, comms_meth: CommsMeth):

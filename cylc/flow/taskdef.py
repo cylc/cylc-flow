@@ -114,7 +114,7 @@ class TaskDef:
         "sequential", "is_coldstart",
         "workflow_polling_cfg", "clocktrigger_offset", "expiration_offset",
         "namespace_hierarchy", "dependencies", "outputs", "param_var",
-        "graph_children", "graph_parents",
+        "graph_children", "graph_parents", "has_abs_triggers",
         "external_triggers", "xtrig_labels", "name", "elapsed_times"]
 
     # Store the elapsed times for a maximum of 10 cycles
@@ -152,6 +152,7 @@ class TaskDef:
         self.name = name
         self.elapsed_times = deque(maxlen=self.MAX_LEN_ELAPSED_TIMES)
         self._add_std_outputs()
+        self.has_abs_triggers = False
 
     def add_output(self, output, message):
         """Add a new task output as defined under [runtime]."""
@@ -226,6 +227,12 @@ class TaskDef:
 
         """
         self.dependencies.setdefault(sequence, []).append(dependency)
+        if any(
+            trig.offset_is_from_icp or
+            trig.offset_is_absolute
+            for trig in dependency.task_triggers
+        ):
+            self.has_abs_triggers = True
 
     def add_xtrig_label(self, xtrig_label, sequence):
         """Add an xtrigger to a named sequence.
@@ -271,19 +278,25 @@ class TaskDef:
                         parent_points.add(trig.get_parent_point(point))
         return parent_points
 
-    def get_abs_triggers(self, point):
-        """Return my absolute triggers, if any, at point."""
-        abs_triggers = set()
+    def has_only_abs_triggers(self, point):
+        """Return whether I have only absolute triggers at point."""
+        if not self.has_abs_triggers:
+            return False
+        # Has abs triggers somewhere, but need to check at point.
+        has_abs = False
         for seq in self.sequences:
-            if not seq.is_valid(point):
+            if not seq.is_valid(point) or seq not in self.dependencies:
                 continue
-            if seq in self.dependencies:
-                # task has prereqs in this sequence
-                for dep in self.dependencies[seq]:
-                    for trig in dep.task_triggers:
-                        if trig.offset_is_absolute or trig.offset_is_from_icp:
-                            abs_triggers.add(trig)
-        return abs_triggers
+            for dep in self.dependencies[seq]:
+                for trig in dep.task_triggers:
+                    if (
+                        trig.offset_is_absolute or
+                        trig.offset_is_from_icp
+                    ):
+                        has_abs = True
+                    else:
+                        return False
+        return has_abs
 
     def is_valid_point(self, point):
         """Return True if point is on-sequence and within bounds."""

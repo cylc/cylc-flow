@@ -10,5 +10,5 @@
 [runtime]
     [[foo]]
         script = """
-diff -u <(cylc --version) <(cylc get-cylc-version "${CYLC_WORKFLOW_NAME}")
+diff -u <(cylc --version) <(cylc get-cylc-version "${CYLC_WORKFLOW_ID}")
 """

@@ -16,4 +16,4 @@ __STATUS__
 exit 1
 """
     [[w2]]
-        script=cylc__job__wait_cylc_message_started; cylc poll "${CYLC_WORKFLOW_NAME}" 'w1.1'
+        script=cylc__job__wait_cylc_message_started; cylc poll "${CYLC_WORKFLOW_ID}" 'w1.1'

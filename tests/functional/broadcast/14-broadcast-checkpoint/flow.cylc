@@ -6,11 +6,11 @@
 [runtime]
     [[t1]]
         script = """
-cylc broadcast -s "[environment]VERSE = the quick brown fox" "${CYLC_WORKFLOW_NAME}"
-cylc checkpoint "${CYLC_WORKFLOW_NAME}" test1
+cylc broadcast -s "[environment]VERSE = the quick brown fox" "${CYLC_WORKFLOW_ID}"
+cylc checkpoint "${CYLC_WORKFLOW_ID}" test1
 """
     [[t2]]
         script = """
-cylc broadcast -s "[environment]PHRASE = the quick brown fox" "${CYLC_WORKFLOW_NAME}"
-cylc checkpoint "${CYLC_WORKFLOW_NAME}" test2
+cylc broadcast -s "[environment]PHRASE = the quick brown fox" "${CYLC_WORKFLOW_ID}"
+cylc checkpoint "${CYLC_WORKFLOW_ID}" test2
 """

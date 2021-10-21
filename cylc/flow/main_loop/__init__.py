@@ -90,7 +90,7 @@ Here is the "hello world" of main loop plugins:
       # write Hello <workflow name> to the Cylc log.
       LOG.info(f'Hello {schd.workflow}')
 
-Plugins are registered by registering them with the `cylc.main_loop`
+Plugins are registered by registering them with the ``cylc.main_loop``
 entry point:
 
 .. code-block:: python
@@ -291,8 +291,8 @@ def periodic(fcn):
 
     Configuration:
 
-        * The interval of execution can be altered using the
-          `cylc[main loop][plugin name]interval` setting.
+        * The interval of execution can be altered using
+          :cylc:conf:`global.cylc[scheduler][main loop][<plugin name>]interval`
 
     """
     fcn.main_loop = CoroTypes.Periodic

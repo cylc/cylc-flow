@@ -14,17 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""A Cylc xtrigger function."""
+
+from contextlib import suppress
+
 
 def echo(*args, **kwargs):
-    """An xtrigger function that prints its arguments and never succeeds.
+    """Prints args to stdout and return success only if kwargs['succeed'] is True.
 
-    This may be a useful aid to understanding how xtriggers work. Try returning
-    True (success) and some results dict to pass on to dependent tasks.
+    This may be a useful aid to understanding how xtriggers work.
 
     Returns
-        tuple: (False, {})
+        tuple: (True/False, kwargs)
 
     """
     print("echo: ARGS:", args)
     print("echo: KWARGS:", kwargs)
-    return False, {}
+    result = False
+    with suppress(KeyError):
+        result = kwargs["succeed"] is True
+    return result, kwargs

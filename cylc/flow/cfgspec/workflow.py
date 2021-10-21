@@ -160,8 +160,9 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-           Note it is not possible to disallow implicit tasks in
-            :ref:`Cylc 7 backwards compatiblity mode <BackCompat>`.
+            In :ref:`Cylc 7 backward compatibility mode <BackCompat>`,
+            implicit tasks are still allowed unless you explicitly set
+            this to ``False``.
 
             .. versionadded:: 8.0.0
         ''')
@@ -792,7 +793,7 @@ with Conf(
                 before the ``script`` item (just below). It can be an
                 external command or script, or inlined scripting.
             ''' + SCRIPT_COMMON.format(
-                'echo "Hello from workflow ${CYLC_WORKFLOW_NAME}!"'))
+                'echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'))
 
             Conf('script', VDR.V_STRING, desc='''
                 The main custom script invoked from the task job script. It

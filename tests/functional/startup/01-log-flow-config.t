@@ -33,7 +33,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = reloader => whatever
 [runtime]
     [[reloader]]
-        script = cylc reload "${CYLC_WORKFLOW_NAME}"
+        script = cylc reload "${CYLC_WORKFLOW_ID}"
     [[whatever]]
         script = true
 __FLOW_CONFIG__

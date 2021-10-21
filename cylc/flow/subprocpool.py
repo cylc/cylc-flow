@@ -32,6 +32,10 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
 from cylc.flow.hostuserutil import is_remote_host
+from cylc.flow.platforms import (
+    log_platform_event,
+    get_platform,
+)
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.wallclock import get_current_time_string
 
@@ -482,15 +486,17 @@ class SubProcPool:
         # If cmd is fileinstall, which uses rsync, get a platform so
         # that you can use that platform's ssh command.
         platform = None
-        if (
-            ctx.cmd_key == 'file-install'
-            and isinstance(callback_args, list)
-        ):
-            platform = callback_args[-1]
-            callback_args = callback_args[:-1]
-        elif isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
-            from cylc.flow.platforms import get_platform
-            platform = get_platform(ctx.cmd_key.platform_n)
+        if isinstance(ctx.cmd_key, TaskJobLogsRetrieveContext):
+            platform = get_platform(ctx.cmd_key.platform_name)
+        elif callback_args:
+            platform = callback_args[0]
+            if not (
+                isinstance(platform, dict)
+                and 'ssh command' in platform
+                and 'name' in platform
+            ):
+                # the first argument is not a platform
+                platform = None
 
         if cls.ssh_255_fail(ctx) or cls.rsync_255_fail(ctx, platform) is True:
             # Job log retrieval passes a special object as a command key
@@ -499,11 +505,16 @@ class SubProcPool:
                 cmd_key = ctx.cmd_key.key
             else:
                 cmd_key = ctx.cmd_key
-            LOG.warning(
-                f'"{cmd_key}" failed because "{ctx.host}" is not '
-                f'available right now. "{ctx.host}" has been added to the '
-                f'list of unreachable hosts and {cmd_key} will retry '
-                'if another host is available.'
+            log_platform_event(
+                # NOTE: the failure of the command should be logged elsewhere
+                (
+                    f'Could not connect to {ctx.host}.'
+                    f'\n* {ctx.host} has been added to the list of'
+                    ' unreachable hosts'
+                    f'\n* {cmd_key} will retry if another host is available.'
+                ),
+                platform or {'name': None},
+                level='warning',
             )
 
             # If callback_255 takes the same args as callback, we don't

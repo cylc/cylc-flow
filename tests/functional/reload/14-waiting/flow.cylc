@@ -23,8 +23,8 @@ done
         script = true
     [[reloader]]
         script = """
-cylc reload "${CYLC_WORKFLOW_NAME}"
-cylc__job__poll_grep_workflow_log -F '[waiter.1] -reloaded task definition'
+cylc reload "${CYLC_WORKFLOW_ID}"
+cylc__job__poll_grep_workflow_log -E 'waiter\.1 .* reloaded task definition'
 rm -f "${CYLC_WORKFLOW_WORK_DIR}/1/sleeping-waiter/file"
 rm -f "${CYLC_WORKFLOW_WORK_DIR}/1/starter/file"
-"""
+        """

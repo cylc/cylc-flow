@@ -57,7 +57,7 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.
 named_grep_ok "job kill fails" \
-    "\"jobs-kill\" failed because \"unreachable_host\" is not available right now." \
+    "unreachable_host has been added to the list of unreachable hosts" \
     "${LOGFILE}" "-P"
 
 named_grep_ok "job kill retries & succeeds" \

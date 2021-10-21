@@ -1,0 +1,4 @@
+Initial point: 1
+Final point: 1
+[holder.1] -triggered off []
+[stopper.1] -triggered off ['holder.1']

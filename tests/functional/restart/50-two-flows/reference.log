@@ -1,0 +1,6 @@
+Initial point: 1
+Final point: 1
+[a.1] -triggered off []
+[b.1] -triggered off ['a.1']
+[c.1] -triggered off ['b.1']
+[a.1] -triggered off []

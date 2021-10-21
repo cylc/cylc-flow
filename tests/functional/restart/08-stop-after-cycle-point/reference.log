@@ -1,0 +1,4 @@
+Initial point: 19700101T0000Z
+Final point: 19700101T0300Z
+[hello.19700101T0000Z] -triggered off ['hello.19691231T2300Z']
+[hello.19700101T0100Z] -triggered off ['hello.19700101T0000Z']

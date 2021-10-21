@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------
 
-# test the export of CYLC_WORKFLOW_ID and CYLC_WORKFLOW_NAME
+# test the export of CYLC_WORKFLOW_ID and CYLC_WORKFLOW_ID
 
 . "$(dirname "$0")/test_header"
 
@@ -37,7 +37,7 @@ cat > flow.cylc <<'__FLOW_CONFIG__'
 [runtime]
     [[foo]]
         script = """
-            echo "CYLC_WORKFLOW_NAME is: ${CYLC_WORKFLOW_NAME}"
+            echo "CYLC_WORKFLOW_ID is: ${CYLC_WORKFLOW_ID}"
             echo "CYLC_WORKFLOW_ID is: ${CYLC_WORKFLOW_ID}"
         """
 __FLOW_CONFIG__
@@ -47,8 +47,8 @@ init_workflow "${TEST_NAME_BASE}" flow.cylc true
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-play" cylc play "${WORKFLOW_NAME}" --no-detach
 named_grep_ok \
-    "${TEST_NAME_BASE}-check-CYLC_WORKFLOW_NAME" \
-    "CYLC_WORKFLOW_NAME is:.* ${WORKFLOW_NAME}" \
+    "${TEST_NAME_BASE}-check-CYLC_WORKFLOW_ID" \
+    "CYLC_WORKFLOW_ID is:.* ${WORKFLOW_NAME}" \
     "${WORKFLOW_RUN_DIR}/runN/log/job/1066/foo/NN/job.out"
 named_grep_ok \
     "${TEST_NAME_BASE}-check-CYLC_WORKFLOW_ID" \

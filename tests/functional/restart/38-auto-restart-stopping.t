@@ -43,7 +43,7 @@ init_workflow "${TEST_NAME}" - <<'__FLOW_CONFIG__'
         R1 = foo => bar
 [runtime]
     [[foo]]
-        script = cylc stop "${CYLC_WORKFLOW_NAME}"; sleep 15
+        script = cylc stop "${CYLC_WORKFLOW_ID}"; sleep 15
     [[bar]]
 __FLOW_CONFIG__
 

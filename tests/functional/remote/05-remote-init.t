@@ -55,12 +55,9 @@ f|0|0|ariel
 g|0|0|localhost
 __SELECT__
 
-grep_ok "WARNING - Incomplete tasks:" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "a.1 did not complete required outputs" \
-    "${TEST_NAME_BASE}-run.stderr"
-grep_ok "b.1 did not complete required outputs" \
-    "${TEST_NAME_BASE}-run.stderr"
+grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "a.1 did not complete required outputs" "${TEST_NAME_BASE}-run.stderr"
+grep_ok "b.1 did not complete required outputs" "${TEST_NAME_BASE}-run.stderr"
 
 purge
 exit

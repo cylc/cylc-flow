@@ -16,5 +16,5 @@
     [[show]]
         script = """
 sleep 4
-cylc show "$CYLC_WORKFLOW_NAME" foo.20141106T0900Z >{{ TEST_OUTPUT_PATH }}
+cylc show "$CYLC_WORKFLOW_ID" foo.20141106T0900Z >{{ TEST_OUTPUT_PATH }}
 """

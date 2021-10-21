@@ -17,6 +17,6 @@ reloader => stopper
         platform = platypus
 
     [[reloader]]
-        script=cylc reload "${CYLC_WORKFLOW_NAME}"
+        script=cylc reload "${CYLC_WORKFLOW_ID}"
     [[stopper]]
-        script=cylc stop "${CYLC_WORKFLOW_NAME}"
+        script=cylc stop "${CYLC_WORKFLOW_ID}"

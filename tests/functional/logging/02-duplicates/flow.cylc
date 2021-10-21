@@ -22,16 +22,16 @@
         script = false
     [[bar]]
         script = """
-cylc set-outputs "${CYLC_WORKFLOW_NAME}" "foo.${CYLC_TASK_CYCLE_POINT}"
-"""
+cylc set-outputs --flow=1 "${CYLC_WORKFLOW_ID}" "foo.${CYLC_TASK_CYCLE_POINT}"
+        """
     [[restart]]
         script = """
-cylc stop "${CYLC_WORKFLOW_NAME}"
-"""
+            cylc stop "${CYLC_WORKFLOW_ID}"
+        """
     [[pub]]
         script = """
 # Extract timestamp lines from logs
 for file in $(find "${CYLC_WORKFLOW_RUN_DIR}/log/workflow/" -name '*.*'); do
     grep '.*-.*-.*' "${file}" | sort -u || true
 done | sort | uniq -d > 'log-duplication'
-"""
+        """

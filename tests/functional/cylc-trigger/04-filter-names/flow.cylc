@@ -22,12 +22,12 @@ FIXABLES:succeed-all & loser:fail => Z
     [[fixer]]
         script = """
 cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_workflow_log '\[fixable-1a\.1\].* (received)failed'
-cylc__job__poll_grep_workflow_log '\[fixable-1b\.1\].* (received)failed'
-cylc__job__poll_grep_workflow_log '\[fixable-2a\.1\].* (received)failed'
-cylc__job__poll_grep_workflow_log '\[fixable-2b\.1\].* (received)failed'
-cylc__job__poll_grep_workflow_log '\[fixable-3\.1\].* (received)failed'
-cylc trigger "${CYLC_WORKFLOW_NAME}" '1/FIXABLE-1' '1/fixable-2*' '1/fixable-3'
+cylc__job__poll_grep_workflow_log -E 'fixable-1a\.1 .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable-1b\.1 .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable-2a\.1 .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable-2b\.1 .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E 'fixable-3\.1 .* \(received\)failed'
+cylc trigger "${CYLC_WORKFLOW_ID}" '1/FIXABLE-1' '1/fixable-2*' '1/fixable-3'
 """
     [[loser]]
         script = false

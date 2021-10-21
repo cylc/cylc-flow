@@ -1,25 +1,30 @@
-# foo.3 triggers a reflow at foo.1 and waits for it to catch up and merge.
-# This results in a completely merged flow, e.g. u, V -> uV at foo.3 and bar.3.
-# Then bar.3 waits for the merged labels to be pruned, e.g. uV -> u (or V).
-[scheduler]
-    allow implicit tasks = True
+# foo.3 triggers a new flow at foo.1 and waits for it to catch up and merge.
+# bar checks for the expected flow names at each cycle point.
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
     final cycle point = 3
     [[graph]]
-        P1 = "foo[-P1] => foo => bar => baz"
+        P1 = "foo[-P1] => foo => bar"
 [runtime]
     [[foo]]
-         script = """
-if (( CYLC_TASK_CYCLE_POINT == 3 )); then
-    cylc trigger --reflow ${CYLC_WORKFLOW_NAME} foo.1
-    cylc__job__poll_grep_workflow_log 'merged flow'
-fi
-         """
+        script = """
+            if (( CYLC_TASK_CYCLE_POINT == 3 )); then
+                cylc trigger --reflow --meta=other ${CYLC_WORKFLOW_ID} foo.1
+                cylc__job__poll_grep_workflow_log 'Merged in'
+            fi
+        """
     [[bar]]
-         script = """
-if (( CYLC_TASK_CYCLE_POINT == 3 )); then
-    cylc__job__poll_grep_workflow_log 'returning flow label(s)'
-fi
-         """
+        script = """
+            if [[ $CYLC_TASK_JOB == *01 ]]; then
+                # job(01)
+                if (( CYLC_TASK_CYCLE_POINT == 3 )); then
+                    test $CYLC_TASK_FLOWS == "1,2"
+                else
+                    test $CYLC_TASK_FLOWS == "1"
+                fi
+            else
+                # job(02)
+                test $CYLC_TASK_FLOWS == "2"
+            fi
+        """

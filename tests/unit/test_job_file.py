@@ -20,6 +20,7 @@
 import io
 import os
 import pytest
+from contextlib import suppress
 from tempfile import NamedTemporaryFile
 from unittest import mock
 
@@ -87,7 +88,7 @@ def test_write(mocked_get_remote_workflow_run_dir, fixture_get_platform):
                             'duck': '~quack'},
             "job_d": "1/baa/01",
             "try_num": 1,
-            "flow_label": "aZ",
+            "flow_nums": {1},
             # "job_runner_name": "background",
             "param_var": {"duck": "quack",
                           "mouse": "squeak"},
@@ -258,12 +259,16 @@ def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
     """
     if set_CYLC_ENV_NAME:
         monkeypatch.setenv('CYLC_ENV_NAME', 'myenv')
+    else:
+        with suppress(KeyError):
+            monkeypatch.delenv('CYLC_ENV_NAME')
+
     monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
     expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
                 'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
                 '\nexport CYLC_VERBOSE=true'
                 '\nexport CYLC_DEBUG=true'
-                '\nexport CYLC_VERSION=\'%s\'' % __version__)
+                f'\nexport CYLC_VERSION=\'{__version__}\'')
     if set_CYLC_ENV_NAME:
         expected += '\nexport CYLC_ENV_NAME=\'myenv\''
     expected += '\nexport CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\''
@@ -377,7 +382,7 @@ def test_write_task_environment():
                 'CYLC_TASK_NAMESPACE_HIERARCHY="baa moo"\n    export '
                 'CYLC_TASK_DEPENDENCIES="moo neigh quack"\n    export '
                 'CYLC_TASK_TRY_NUMBER=1\n    export '
-                'CYLC_TASK_FLOW_LABEL=aZ\n    export '
+                'CYLC_TASK_FLOWS=1\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
                 'CYLC_TASK_WORK_DIR_BASE=\'farm_noises/work_d\'\n}')
@@ -387,7 +392,7 @@ def test_write_task_environment():
         "namespace_hierarchy": ["baa", "moo"],
         "dependencies": ['moo', 'neigh', 'quack'],
         "try_num": 1,
-        "flow_label": "aZ",
+        "flow_nums": {1},
         "param_var": {"duck": "quack",
                       "mouse": "squeak"},
         "work_d": "farm_noises/work_d"

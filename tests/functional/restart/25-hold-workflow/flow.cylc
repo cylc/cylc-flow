@@ -13,8 +13,8 @@
     [[t1]]
         script = """
             if [[ "${CYLC_TASK_CYCLE_POINT}" == '2016' ]]; then
-                cylc hold --after=1900 "${CYLC_WORKFLOW_NAME}"
-                cylc stop "${CYLC_WORKFLOW_NAME}"
+                cylc hold --after=1900 "${CYLC_WORKFLOW_ID}"
+                cylc stop "${CYLC_WORKFLOW_ID}"
             fi
         """
     [[t2]]

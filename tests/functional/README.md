@@ -91,6 +91,23 @@ Each platform is named using this convention:
 `comms` "task communication method" - `{tcp, ssh, poll}`
   The task communication method to use.
 
+Define any test platforms in your global config e.g:
+
+```
+# ~/.cylc/global.cylc
+[platforms]
+    [[_remote_background_indep_tcp]]
+        hosts = my_remote_host
+```
+
+## Test Global Config
+
+Cylc supports a `global-tests.cylc` file which can be used to define some
+top-level configurations to run tests with.
+
+Do not use this file to define test platforms, put them in your regular global
+config where they can also be used for interactive work.
+
 ## How To Configure "Non-Generic" Tests?
 
 By default tests require the platform `_local_background_indep_tcp`.

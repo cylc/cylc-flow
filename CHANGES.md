@@ -113,6 +113,11 @@ of workflows inside other installed workflows.
 [#4443](https://github.com/cylc/cylc-flow/pull/4443) - fix for slow polling
 generating an incorrect submit-failed result.
 
+[#4436](https://github.com/cylc/cylc-flow/pull/4436) -
+If the workflow is paused, hold tasks just before job prep.
+Distinguish between succeeded and expired state icons in `cylc tui`.
+Spawn parentless tasks out the runahead limit immediately.
+
 [#4421](https://github.com/cylc/cylc-flow/pull/4421) -
 Remove use of the `ps` system call (fixes a bug reported with Alpine Linux).
 
@@ -151,6 +156,10 @@ improvements.
 using the same name for a platform and a platform group. Which one it should
 pick is ambiguous, and is a setup error.
 
+[#4465](https://github.com/cylc/cylc-flow/pull/4465) -
+Fix a `ValueError` that could occasionally occur during remote tidy on
+workflow shutdown.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b2 (<span actions:bind='release-date'>Released 2021-07-28</span>)__
 
@@ -162,6 +171,9 @@ Third beta release of Cylc 8.
 
 [#4286](https://github.com/cylc/cylc-flow/pull/4286) -
 Add an option for displaying source workflows in `cylc scan`.
+
+[#4300](https://github.com/cylc/cylc-flow/pull/4300) - Integer flow labels with
+flow metadata, and improved task logging.
 
 [#4291](https://github.com/cylc/cylc-flow/pull/4291) -
 Remove obsolete `cylc edit` and `cylc search` commands.

@@ -11,4 +11,4 @@
     [[root]]
         script = true
     [[stop]]
-        script = cylc shutdown "${CYLC_WORKFLOW_NAME}" '20140107'
+        script = cylc shutdown "${CYLC_WORKFLOW_ID}" '20140107'

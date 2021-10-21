@@ -909,7 +909,7 @@ class TaskProxy(ObjectType):
     is_held = Boolean()
     is_queued = Boolean()
     is_runahead = Boolean()
-    flow_label = String()
+    flow_nums = String()
     depth = Int()
     job_submits = Int()
     outputs = List(
@@ -1735,8 +1735,8 @@ class Stop(Mutation):
         task = TaskID(
             description='Stop after this task succeeds.'
         )
-        flow_label = String(
-            description='Label of flow to sterilise.'
+        flow_num = Int(
+            description='Number of flow to stop.'
         )
 
     result = GenericScalar()
@@ -1860,6 +1860,7 @@ class SetOutputs(Mutation, TaskMutation):
             default_value=[TASK_OUTPUT_SUCCEEDED],
             description='List of task outputs to satisfy.'
         )
+        flow_num = Int()
 
 
 class Trigger(Mutation, TaskMutation):
@@ -1877,6 +1878,7 @@ class Trigger(Mutation, TaskMutation):
 
     class Arguments(TaskMutation.Arguments):
         reflow = Boolean()
+        flow_descr = String()
 
 
 def _mut_field(cls):

@@ -52,9 +52,9 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t<i>]]
         script = true
     [[t<i=1>]]
-        script = cylc stop "${CYLC_WORKFLOW_NAME}" 't_i5.1'
+        script = cylc stop "${CYLC_WORKFLOW_ID}" 't_i5.1'
     [[t<i=2>]]
-        script = cylc stop "${CYLC_WORKFLOW_NAME}"
+        script = cylc stop "${CYLC_WORKFLOW_ID}"
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

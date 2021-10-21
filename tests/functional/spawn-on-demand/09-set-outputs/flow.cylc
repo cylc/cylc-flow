@@ -16,7 +16,7 @@
             foo & bar & setter
 
             # Task scripting below ensures that foo is still in the pool, but
-            # but bar is gone, when its outputs get set - just to make it clear
+            # bar is gone, when its outputs get set - just to make it clear
             # the target task doesn't have to exist.
 
             foo:out1? => qux
@@ -35,7 +35,7 @@
     [[foo]]
         # Hang about until setter is finished.
         script = """
-            cylc__job__poll_grep_workflow_log "\[setter\.1\].*succeeded"
+            cylc__job__poll_grep_workflow_log -E "setter\.1 .* => succeeded"
         """
     [[bar]]
         script = true
@@ -43,11 +43,11 @@
         # (To the rescue).
         script = """
             # Set foo outputs while it still exists in the pool.
-            cylc set-outputs --output=out1 --output=out2 "${CYLC_WORKFLOW_NAME}" 1/foo
+            cylc set-outputs --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}" 1/foo
 
             # Set bar outputs after it is gone from the pool.
-            cylc__job__poll_grep_workflow_log "\[bar\.1\] -task proxy removed"
-            cylc set-outputs --output=out1 --output=out2 "${CYLC_WORKFLOW_NAME}" 1/bar
+            cylc__job__poll_grep_workflow_log -E "bar\.1 .*task proxy removed"
+            cylc set-outputs --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}" 1/bar
         """
     [[qux, quw, fux, fuw]]
         script = true

@@ -10,4 +10,4 @@ do
 done
 """
     [[b]]
-        script = cylc poll "$CYLC_WORKFLOW_NAME" 'a.1'
+        script = cylc poll "$CYLC_WORKFLOW_ID" 'a.1'

@@ -25,6 +25,8 @@ from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
 
 
+# NOTE: foo & bar have no parents so at start-up (even with the workflow
+# paused) they are spawned out to the runahead limit.
 EXAMPLE_FLOW_CFG = {
     'scheduler': {
         'allow implicit tasks': True
@@ -32,7 +34,8 @@ EXAMPLE_FLOW_CFG = {
     'scheduling': {
         'cycling mode': 'integer',
         'initial cycle point': 1,
-        'final cycle point': 4,
+        'final cycle point': 10,
+        'runahead limit': 'P4',
         'graph': {
             'P1': 'foo & bar',
             'R1/2': 'foo[1] => pub'  # pub.2 doesn't spawn at start
@@ -116,11 +119,12 @@ async def example_flow(
     'items, expected_task_ids, expected_bad_items, expected_warnings',
     [
         param(
-            ['foo'], ['foo.1'], [], [],
+            ['foo'], ['foo.1', 'foo.2', 'foo.3', 'foo.4', 'foo.5'], [], [],
             id="Basic"
         ),
         param(
-            ['*.1'], ['foo.1', 'bar.1'], [], [],
+            ['*.1'],
+            ['foo.1', 'bar.1'], [], [],
             id="Name glob"
         ),
         param(
@@ -128,20 +132,22 @@ async def example_flow(
             id="Family name"
         ),
         param(
-            ['foo.*'], ['foo.1'], [], [],
+            ['foo.*'], ['foo.1', 'foo.2', 'foo.3', 'foo.4', 'foo.5'], [], [],
             id="Point glob"
         ),
         param(
-            ['*:waiting'], ['foo.1', 'bar.1'], [], [],
+            ['*:waiting'],
+            ['foo.1', 'bar.1', 'foo.2', 'bar.2', 'foo.3', 'bar.3', 'foo.4',
+             'bar.4', 'foo.5', 'bar.5'], [], [],
             id="Task state"
         ),
         param(
-            ['foo.2'], [], ['foo.2'], ["No active tasks matching: foo.2"],
+            ['foo.8'], [], ['foo.8'], ["No active tasks matching: foo.8"],
             id="Task not yet spawned"
         ),
         param(
-            ['foo.1', 'bar.2'], ['foo.1'], ['bar.2'],
-            ["No active tasks matching: bar.2"],
+            ['foo.1', 'bar.8'], ['foo.1'], ['bar.8'],
+            ["No active tasks matching: bar.8"],
             id="Multiple items"
         ),
         param(
@@ -151,7 +157,9 @@ async def example_flow(
             id="No such task"
         ),
         param(
-            [], ['foo.1', 'bar.1'], [], [],
+            [],
+            ['foo.1', 'bar.1', 'foo.2', 'bar.2', 'foo.3', 'bar.3', 'foo.4',
+             'bar.4', 'foo.5', 'bar.5'], [], [],
             id="No items given - get all tasks"
         )
     ]
@@ -165,6 +173,9 @@ async def test_filter_task_proxies(
     caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test TaskPool.filter_task_proxies().
+
+    The NOTE before EXAMPLE_FLOW_CFG above explains which tasks should be
+    expected for the tests here.
 
     Params:
         items: Arg passed to filter_task_proxies().
@@ -216,8 +227,8 @@ async def test_filter_task_proxies(
             id="Multiple items"
         ),
         param(
-            ['foo.5', 'pub.1'], [],
-            ["Invalid cycle point for task: foo, 5",
+            ['foo.20', 'pub.1'], [],
+            ["Invalid cycle point for task: foo, 20",
              "Invalid cycle point for task: pub, 1"],
             id="Task not in graph at given cycle point"
         ),
@@ -232,9 +243,12 @@ async def test_match_taskdefs(
     items: List[str],
     expected_task_ids: List[str],
     expected_warnings: List[str],
-    mod_example_flow: Scheduler, caplog: pytest.LogCaptureFixture
+    mod_example_flow: Scheduler,
+    caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test TaskPool.match_taskdefs().
+
+    This looks for taskdefs at their valid cycle points, not the task pool.
 
     Params:
         items: Arg passed to match_taskdefs().
@@ -278,10 +292,10 @@ async def test_match_taskdefs(
             id="Point globs/point omitted hold active tasks only"
         ),
         param(
-            ['grogu.1', 'foo.H', 'foo.5', 'pub.1'], [],
+            ['grogu.1', 'foo.H', 'foo.20', 'pub.1'], [],
             ["No matching tasks found: grogu",
              "foo.H - invalid cycle point: H",
-             "Invalid cycle point for task: foo, 5",
+             "Invalid cycle point for task: foo, 20",
              "Invalid cycle point for task: pub, 1"],
             id="Non-existent task name or invalid cycle point"
         ),
