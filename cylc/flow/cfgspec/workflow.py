@@ -534,7 +534,7 @@ with Conf(
 
             .. seealso::
 
-               :ref:`Recurrance tutorial <tutorial-inferred-recurrance>`.
+               :ref:`Recurrance tutorial <tutorial-inferred-recurrence>`.
 
             .. note::
 
@@ -549,7 +549,7 @@ with Conf(
 
             .. seealso::
 
-               :ref:`Recurrance tutorial <tutorial-inferred-recurrance>`.
+               :ref:`Recurrance tutorial <tutorial-inferred-recurrence>`.
 
         ''')
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
