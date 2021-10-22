@@ -908,30 +908,30 @@ with Conf(
             If multiple names are listed the subsequent settings apply to
             all.
 
-            All namespaces inherit initially from ``root``, which can be
-            explicitly configured to provide or override default settings for
-            all tasks in the workflow.
+            All tasks or task families inherit initially from ``root``, which
+            can be explicitly configured to provide or override default
+            settings for all tasks in the workflow.
         '''):
             Conf('platform', VDR.V_STRING, desc='''
                 The name of a compute resource defined in
                 :cylc:conf:`global.cylc[platforms]` or
                 :cylc:conf:`global.cylc[platform groups]`.
 
+                .. versionadded:: 8.0.0
+
                 The platform specifies the host(s) that the tasks' jobs
                 will run on and where (if necessary) files need to be
                 installed.
-
-                .. versionadded:: 8.0.0
             ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
-                A list of the immediate parent(s) of this namespace.
+                A list of the immediate parent(s) of this task or task family.
 
                 If no parents are listed default is ``root``.
             ''')
             Conf('init-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script before the task
                 execution environment is configured.
-                
+
                 By running before the task execution environment is configured
                 this script does not have
                 access to any workflow or task environment variables. It can be
@@ -968,7 +968,7 @@ with Conf(
             )
             Conf('exit-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked at the very end of *successful* job
-                execution, just before the job script exits. 
+                execution, just before the job script exits.
 
                 The exit-script should execute very quickly.
                 Companion of :cylc:conf:`[..]err-script`,
@@ -1116,8 +1116,8 @@ with Conf(
                 ''')
                 Conf(
                     'URL', VDR.V_STRING, '', desc='''
-                        A web URL to task documentation for this workflow.
-                        
+                        A URL link to task documentation for this workflow.
+
                         The templates ``%(workflow_name)s`` and
                         ``%(task_name)s`` will be replaced with the actual
                         workflow and task names.
@@ -1131,41 +1131,42 @@ with Conf(
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
 
-                    These, like title, URL, etc. can be passed to task event
-                    handlers to be interpreted according to your needs. For
-                    example, the value of an "importance" item could determine
-                    how an event handler responds to task failure events.
+                    These, like title, description and URL. can be passed to
+                    task event handlers to be interpreted according to your
+                    needs. For example, the value of an "importance" item could
+                    determine how an event handler responds to task failure
+                    events.
                 ''')
 
             with Conf('simulation', desc='''
                 Task configuration for workflow *simulation* and *dummy* run
-                modes described in :ref:`SimulationMode`.
+                modes.
+
+                For a full discripting of simulation and dummy run modes seee
+                :ref:`SimulationMode`.
             '''):
                 Conf('default run length', VDR.V_INTERVAL, DurationFloat(10),
                      desc='''
-                    The default simulated job run length, if
-                    ``[job]execution time limit`` and
+                    The default simulated job run length.
+
+                    Used if ``[job]execution time limit`` and
                     ``[simulation]speedup factor`` are not set.
                 ''')
                 Conf('speedup factor', VDR.V_FLOAT, desc='''
+                    Simulated run length = speedup factor * execution time
+                    limit.
+
                     If ``[job]execution time limit`` is set, the task
                     simulated run length is computed by dividing it by this
                     factor.
-
-                    Example:
-
-                    ``10.0``
                 ''')
                 Conf('time limit buffer', VDR.V_INTERVAL, DurationFloat(30),
                      desc='''
-                    For dummy jobs, a new ``[job]execution time limit`` is set
-                    to the simulated task run length plus this buffer
-                    interval, to avoid job kill due to exceeding the time
-                    limit.
+                    For dummy jobs ``[job]execution time limit`` is extended
+                    by ``time limit buffer``.
 
-                    Example:
-
-                    ``PT10S``
+                    The time limit buffer is added to prevent dummy jobs
+                    being killed after exceeding the ``execution time limit``.
                 ''')
                 Conf('fail cycle points', VDR.V_STRING_LIST, desc='''
                     Configure simulated or dummy jobs to fail at certain cycle
@@ -1178,27 +1179,32 @@ with Conf(
                       the task will fail
                 ''')
                 Conf('fail try 1 only', VDR.V_BOOLEAN, True, desc='''
-                    If this is set to ``True`` only the first run of the task
+                    If ``True`` only the first run of the task
                     instance will fail, otherwise retries will fail too.
                 ''')
                 Conf('disable task event handlers', VDR.V_BOOLEAN, True,
                      desc='''
-                    If this is set to ``True`` configured task event handlers
+                    If ``True`` configured task event handlers
                     will not be called in simulation or dummy modes.
                 ''')
 
             with Conf('environment filter', desc='''
                 This section contains environment variable inclusion and
                 exclusion lists that can be used to filter the inherited
-                environment. *This is not intended as an alternative to a
+                environment.
+
+                *This is not intended as an alternative to a
                 well-designed inheritance hierarchy that provides each task
-                with just the variables it needs.* Filters can, however,
-                improve workflows with tasks that inherit a lot of environment
-                they don't need, by making it clear which tasks use which
-                variables.  They can optionally be used routinely as explicit
-                "task environment interfaces" too, at some cost to brevity,
-                because they guarantee that variables filtered out of the
-                inherited task environment are not used.
+                with just the variables it needs.*
+
+                Filters can improve workflows with tasks which inherit a lot
+                of environment variables: Filters can make it clear which
+                variables each task uses.
+
+                You can use Filters as explicit "task environment interfaces".
+                They make sure that variables filtered out of the inherited
+                environment are not used. But using filters in this way will
+                make your workflow definition longer.
 
                 .. note::
                    Environment filtering is done after inheritance is
@@ -1207,14 +1213,17 @@ with Conf(
                    if they are not overridden by descendants.
             '''):
                 Conf('include', VDR.V_STRING_LIST, desc='''
-                    If given, only variables named in this list will be
-                    included from the inherited environment, others will be
-                    filtered out. Variables may also be explicitly excluded by
-                    an ``exclude`` list.
+                    If given, **only** variables named in this list will be
+                    included from the inherited environment.
+
+                    Other variables will be filtered out. Variables may also
+                    be explicitly excluded by an ``exclude`` list.
                 ''')
                 Conf('exclude', VDR.V_STRING_LIST, desc='''
                     Variables named in this list will be filtered out of the
-                    inherited environment.  Variables may also be implicitly
+                    inherited environment.
+
+                    Variables may also be implicitly
                     excluded by omission from an ``include`` list.
                 ''')
 
