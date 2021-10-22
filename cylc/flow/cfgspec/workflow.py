@@ -949,7 +949,7 @@ with Conf(
                 environment has access to variables defined by this scripting).
                 It can be an external command or script, or inlined scripting.
             ''') + get_script_common_text(this='env-script'))
-            Conf('err-script', VDR.V_STRING, desc='''
+            Conf('err-script', VDR.V_STRING, desc=('''
                 Script run when a task job error is detected.
 
                 Custom script to be invoked at the end of the error trap,
@@ -965,7 +965,7 @@ with Conf(
                 command or script, or inlined scripting.
             ''') + get_script_common_text(
                 this='err-script', example='echo "Uh oh, received ${1}"'
-            )
+            ))
             Conf('exit-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked at the very end of *successful* job
                 execution, just before the job script exits.
@@ -1244,6 +1244,9 @@ with Conf(
                      VDR.V_INTERVAL_LIST, None)
 
             with Conf('events', desc='''
+                Configure :term:`event handlers` to be called when task events
+                occur.
+
                 Cylc can call :term:`event handlers` when certain task
                 events occur. This section configures specific task event
                 handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
@@ -1349,7 +1352,9 @@ with Conf(
                      desc='''
                     Specify an initial delay before running an event handler
                     command and any retry delays in case the command returns a
-                    non-zero code. The default behaviour is to run an event
+                    non-zero code.
+
+                    The default behaviour is to run an event
                     handler command once without any delay.
 
                     Example:
@@ -1387,6 +1392,11 @@ with Conf(
 
             with Conf('mail', desc='''
                 Settings for mail events.
+
+                .. versionchanged:: 8.0.0
+
+                   Both ``mail to`` and ``mail from`` moved from
+                   ``[runtime][task][events]mail to``
             '''):
                 Conf('from', VDR.V_STRING, desc='''
                     Specify an alternate ``from:`` email address for event
@@ -1394,30 +1404,42 @@ with Conf(
                 ''')
                 Conf('to', VDR.V_STRING, desc='''
                     A list of email addresses to send task event
-                    notifications. The list can be anything accepted by the
+                    notifications.
+
+                    The list can be anything accepted by the
                     ``mail`` command.
                 ''')
 
             with Conf('workflow state polling', desc='''
                 Configure automatic workflow polling tasks as described in
-                :ref:`WorkflowStatePolling`. The items in this section reflect
+                :ref:`WorkflowStatePolling`.
+
+                .. versionchanged:: 8.0.0::
+
+                   Previously called ``suite state polling``.
+
+
+                The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,
                 except that the target workflow name and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
             '''):
                 Conf('user', VDR.V_STRING, desc='''
-                    Username of your account on the workflow host. The polling
+                    Username of your account on the workflow host.
+
+                    The polling
                     ``cylc workflow-state`` command will be
                     invoked on the remote account.
                 ''')
                 Conf('host', VDR.V_STRING, desc='''
-                    The hostname of the target workflow. The polling
+                    The hostname of the target workflow.
+
+                    The polling
                     ``cylc workflow-state`` command will be invoked there.
                 ''')
                 Conf('interval', VDR.V_INTERVAL, desc='''
-                    Polling interval expressed as an ISO 8601
-                    duration/interval.
+                    Polling interval.
                 ''')
                 Conf('max-polls', VDR.V_INTEGER, desc='''
                     The maximum number of polls before timing out and entering
@@ -1428,12 +1450,14 @@ with Conf(
                     specified message rather than achieve a state.
                 ''')
                 Conf('run-dir', VDR.V_STRING, desc='''
+                    Specify the location of the top level cylc run directory.
+
                     For your own workflows the run database location is
                     determined by your site/user config. For other workflows,
-                    e.g. those owned by others, or mirrored workflow databases,
+                    (e.g those owned by others), or mirrored workflow databases
                     use this item to specify the location of the top level
-                    cylc run directory (the database should be a workflow-name
-                    sub-directory of this location).
+                    cylc run directory (the database should be in a the same
+                    place relative to this location for each workflow).
                 ''')
                 Conf('verbose mode', VDR.V_BOOLEAN, desc='''
                     Run the polling ``cylc workflow-state`` command in verbose
@@ -1441,20 +1465,24 @@ with Conf(
                 ''')
 
             with Conf('environment', desc='''
-                The user defined task execution environment. Variables
-                defined here can refer to cylc workflow and task identity
-                variables, which are exported earlier in the task job
-                script, and variable assignment expressions can use cylc
+                The user defined task execution environment.
+
+                Variables defined here can refer to cylc workflow and task
+                identity variables, which are exported earlier in the task job
+                script. Variable assignment expressions can use cylc
                 utility commands because access to cylc is also configured
-                earlier in the script.  See also
+                earlier in the script. See also
                 :ref:`TaskExecutionEnvironment`.
 
                 You can also specify job environment templates here for
                 :ref:`parameterized tasks <User Guide Param>`.
             '''):
                 Conf('<variable>', VDR.V_STRING, desc='''
-                    The order of definition is
-                    preserved so values can refer to previously defined
+                    A custom user defined variable for a task execution
+                    environment.
+
+                    The order of definition is preserved that each variable can
+                    refer to previously defined
                     variables. Values are passed through to the task job
                     script without evaluation or manipulation by Cylc
                     (with the exception of valid Python string templates
@@ -1473,6 +1501,7 @@ with Conf(
                        NEXT_CYCLE = $( cylc cycle-point --offset=PT6H )
                        ZAZ = "${FOO#bar}"
                        # ^ quoted to escape the flow.cylc comment character
+                       DICE = [$((($RANDOM % 6) + 1)) $((($RANDOM % 6) + 1))]
 
                     For parameter environment templates, use Python string
                     templates for parameter substitution. This is only
@@ -1497,19 +1526,27 @@ with Conf(
                 ''')
 
             with Conf('directives', desc='''
-                Batch queue scheduler directives.  Whether or not these are
-                used depends on the batch system/job runner. For the built-in
-                methods  support directives (``loadleveler``, ``lsf``,
-                ``pbs``, ``sge``, ``slurm``, ``slurm_packjob``, ``moab``),
-                directives  written to the
-                top of the task job script in the correct format for the
-                method. Specifying directives individually like this allows
-                use of default directives that can be individually overridden
-                at lower levels of the runtime namespace hierarchy.
+                Job runner (batch scheduler) directives.
+
+                Supported for use with job runners:
+
+                - pbs
+                - slurm
+                - loadleveler
+                - lsf
+                - sge
+                - slurm_packjob
+                - moab
+
+                directives are written to the top of the task job script
+                in the correct format for the jor runner.
+
+                Specifying directives individually like this allows
+                use of default directives for task families which can be
+                individually overridden at lower levels of the runtime
+                namespace hierarchy.
             '''):
                 Conf('<directive>', VDR.V_STRING, desc='''
-                    e.g. ``class = parallel``.
-
                     Example directives for the built-in job runner handlers
                     are shown in :ref:`AvailableMethods`.
                 ''')
@@ -1519,8 +1556,9 @@ with Conf(
                 this section (:ref:`MessageTriggers`)
             '''):
                 Conf('<output>', VDR.V_STRING, desc='''
-                    Task output messages (:ref:`MessageTriggers`). The
-                    item name is used to select the custom output
+                    Task output messages (:ref:`MessageTriggers`).
+
+                    The item name is used to select the custom output
                     message in graph trigger notation.
 
                     Examples:
