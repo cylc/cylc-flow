@@ -21,7 +21,15 @@ from fnmatch import fnmatchcase
 import logging
 import queue
 from time import time
-from typing import Iterable, Optional, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Tuple,
+    TYPE_CHECKING,
+    Union,
+)
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
@@ -448,6 +456,19 @@ class Resolvers(BaseResolvers):
     """Workflow Service context GraphQL query and mutation resolvers."""
 
     schd: 'Scheduler'
+    general_commands = {
+        'hold',
+        'kill_tasks',
+        'pause',
+        'poll_tasks',
+        'release',
+        'release_hold_point',
+        'reload_workflow',
+        'remove_tasks',
+        'resume',
+        'set_hold_point',
+        'set_verbosity',
+    }
 
     def __init__(self, data: 'DataStoreMgr', schd: 'Scheduler') -> None:
         super().__init__(data)
@@ -500,10 +521,17 @@ class Resolvers(BaseResolvers):
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
-    async def _mutation_mapper(self, command, kwargs):
+    async def _mutation_mapper(
+        self, command: str, kwargs: Dict[str, Any]
+    ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
-        method = getattr(self, command)
-        return method(**kwargs)
+        method = getattr(self, command, None)
+        if method is not None:
+            return method(**kwargs)
+        if command not in self.general_commands:
+            raise ValueError(f"Command '{command}' not found")
+        self.schd.command_queue.put((command, tuple(kwargs.values()), {}))
+        return None
 
     def broadcast(
             self,
@@ -524,77 +552,6 @@ class Resolvers(BaseResolvers):
             return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
                 cutoff)
         raise ValueError('Unsupported broadcast mode')
-
-    def hold(self, tasks: Iterable[str]) -> Tuple[bool, str]:
-        """Hold tasks."""
-        self.schd.command_queue.put(('hold', (tasks,), {}))
-        return (True, 'Command queued')
-
-    def set_hold_point(self, point: str) -> Tuple[bool, str]:
-        """Set workflow hold after cycle point."""
-        self.schd.command_queue.put(('set_hold_point', (point,), {}))
-        return (True, 'Command queued')
-
-    def pause(self) -> Tuple[bool, str]:
-        """Pause the workflow."""
-        self.schd.command_queue.put(('pause', (), {}))
-        return (True, 'Command queued')
-
-    def kill_tasks(self, tasks):
-        """Kill task jobs.
-
-        Args:
-            tasks (list): List of identifiers, see `task globs`_
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("kill_tasks", (tasks,), {}))
-        return (True, 'Command queued')
-
-    def remove_tasks(self, tasks):
-        """Remove tasks from the task pool.
-
-        Args:
-            tasks (list):
-                List of identifiers, see `task globs`
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("remove_tasks", (tasks,), {}))
-        return (True, 'Command queued')
-
-    def poll_tasks(self, tasks=None):
-        """Request the workflow to poll task jobs.
-
-        Args:
-            tasks (list, optional):
-                List of identifiers, see `task globs`_
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(
-            ("poll_tasks", (tasks,), {}))
-        return (True, 'Command queued')
 
     def put_ext_trigger(self, message, id):  # noqa: A002 (graphql interface)
         """Server-side external event trigger interface.
@@ -642,54 +599,6 @@ class Resolvers(BaseResolvers):
                 (task_job, event_time, severity, message))
         return (True, 'Messages queued: %d' % len(messages))
 
-    def reload_workflow(self):
-        """Tell workflow to reload the workflow definition.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("reload_workflow", (), {}))
-        return (True, 'Command queued')
-
-    def release(self, tasks: Iterable[str]) -> Tuple[bool, str]:
-        """Release held tasks."""
-        self.schd.command_queue.put(('release', (tasks,), {}))
-        return (True, 'Command queued')
-
-    def release_hold_point(self) -> Tuple[bool, str]:
-        """Release all tasks and unset workflow hold point."""
-        self.schd.command_queue.put(('release_hold_point', (), {}))
-        return (True, 'Command queued')
-
-    def resume(self) -> Tuple[bool, str]:
-        """Resume the workflow."""
-        self.schd.command_queue.put(('resume', (), {}))
-        return (True, 'Command queued')
-
-    def set_verbosity(self, level):
-        """Set workflow verbosity to new level (for workflow logs).
-
-        Args:
-            level (str): A logging level e.g. ``INFO`` or ``ERROR``.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("set_verbosity", (level,), {}))
-        return (True, 'Command queued')
-
     def set_graph_window_extent(self, n_edge_distance):
         """Set data-store graph window to new max edge distance.
 
@@ -712,24 +621,17 @@ class Resolvers(BaseResolvers):
         else:
             return (False, 'Edge distance cannot be negative')
 
-    def force_spawn_children(self, tasks, outputs, flow_num):
+    def force_spawn_children(
+        self, tasks: Iterable[str], outputs: Iterable[str], flow_num: int
+    ) -> Tuple[bool, str]:
         """Spawn children of given task outputs.
 
         User-facing method name: set_outputs.
 
         Args:
-            tasks (list): List of identifiers, see `task globs`
-            outputs (list): List of outputs to spawn on
-            flow_num (int): Flow number to attribute the outputs.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
+            tasks: List of identifiers, see `task globs`
+            outputs: List of outputs to spawn on
+            flow_num: Flow number to attribute the outputs.
         """
         self.schd.command_queue.put(
             (
