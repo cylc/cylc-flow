@@ -172,7 +172,7 @@ class ParsecConfig:
         cfg = self.get(keys, sparse)
         printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
 
-    def _get_namespace_parents(self) -> Union[list, None]:
+    def _get_namespace_parents(self) -> Optional[List[str]]:
         """get a list of the parents of config items which can be user defined.
 
         For example, where
