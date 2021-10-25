@@ -17,7 +17,7 @@
 from copy import deepcopy
 import re
 from textwrap import dedent
-from typing import Union
+from typing import Union, Optional, List
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
@@ -115,10 +115,11 @@ class ParsecConfig:
         if keys:
             for key in keys:
                 if (
-                    key not in self.dense
-                    and not parents or parents in self.manyparents
+                    key not in self.get(parents) and
+                    parents[-1] not in self.manyparents
                 ):
-                    raise InvalidConfigError(key)
+                    raise InvalidConfigError(
+                        itemstr(parents, key), self.spec.name)
                 else:
                     try:
                         cfg = cfg[key]

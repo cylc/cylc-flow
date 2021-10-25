@@ -41,11 +41,15 @@ class ItemNotFoundError(ParsecError, KeyError):
 class InvalidConfigError(ParsecError, KeyError):
     """Error raised for missing configuration items."""
 
-    def __init__(self, item):
+    def __init__(self, item, specname):
         self.item = item
+        self.specname = specname
 
     def __str__(self):
-        return f'"{self.item}" is not a valid configuration for ${self.spec}.'
+        return (
+            f'"{self.item}" is not a valid '
+            f'configuration for {self.specname}.'
+        )
 
 
 class NotSingleItemError(ParsecError, TypeError):
