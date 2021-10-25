@@ -130,7 +130,11 @@ mutation (
     settings: $bSettings,
     cutoff: $bCutoff
   ) {
-    result
+    results {
+      workflowId
+      success
+      message
+    }
   }
 }
 '''
@@ -431,9 +435,9 @@ async def run(options: 'Values', workflow_id):
 
     results = await pclient.async_request('graphql', mutation_kwargs)
     try:
-        for result in results['broadcast']['result']:
-            modified_settings = result['response'][0]
-            bad_options = result['response'][1]
+        for result in results['data']['broadcast']['results']:
+            modified_settings = result['message'][0]
+            bad_options = result['message'][1]
             if modified_settings:
                 ret['stdout'].append(
                     get_broadcast_change_report(

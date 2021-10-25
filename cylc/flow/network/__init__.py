@@ -16,9 +16,7 @@
 """Package for network interfaces to Cylc scheduler objects."""
 
 import asyncio
-import getpass
-import json
-from typing import Optional, Tuple
+from typing import NamedTuple, Optional, Tuple
 
 import zmq
 import zmq.asyncio
@@ -46,19 +44,16 @@ API = 5  # cylc API version
 MSG_TIMEOUT = "TIMEOUT"
 
 
-def encode_(message):
-    """Convert the structure holding a message field from JSON to a string."""
-    try:
-        return json.dumps(message)
-    except TypeError as exc:
-        return json.dumps({'errors': [{'message': str(exc)}]})
+class ResponseTuple(NamedTuple):
+    """Structure of server response messages."""
+    content: Optional[object] = None
+    err: Optional['ResponseErrTuple'] = None
+    user: Optional[str] = None
 
 
-def decode_(message):
-    """Convert an encoded message string to JSON with an added 'user' field."""
-    msg = json.loads(message)
-    msg['user'] = getpass.getuser()  # assume this is the user
-    return msg
+class ResponseErrTuple(NamedTuple):
+    message: str
+    traceback: Optional[str] = None
 
 
 def get_location(workflow: str) -> Tuple[str, int, int]:

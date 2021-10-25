@@ -62,9 +62,11 @@ async def test_workflows(harness):
     schd, client, query = harness
     ret = await query('workflows(ids: ["%s"]) { id }' % schd.workflow)
     assert ret == {
-        'workflows': [
-            {'id': f'~{schd.owner}/{schd.workflow}'}
-        ]
+        'data': {
+            'workflows': [
+                {'id': f'~{schd.owner}/{schd.workflow}'}
+            ]
+        }
     }
 
 
@@ -73,7 +75,9 @@ async def test_jobs(harness):
     schd, client, query = harness
     ret = await query('workflows(ids: ["%s"]) { id }' % schd.workflow)
     assert ret == {
-        'workflows': [
-            {'id': f'~{schd.owner}/{schd.workflow}'}
-        ]
+        'data': {
+            'workflows': [
+                {'id': f'~{schd.owner}/{schd.workflow}'}
+            ]
+        }
     }

@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import AsyncGenerator, Callable
+from typing import Callable
 from unittest.mock import Mock
 
 import pytest
@@ -55,7 +55,7 @@ async def mock_flow(
     mod_flow: Callable[..., str],
     mod_scheduler: Callable[..., Scheduler],
     mod_start,
-) -> AsyncGenerator[Scheduler, None]:
+):
     ret = Mock()
     ret.id_ = mod_flow({
         'scheduler': {
@@ -203,14 +203,15 @@ async def test_mutator(mock_flow, flow_args):
     })
     args = {}
     meta = {}
-    response = await mock_flow.resolvers.mutator(
+    resolvers: Resolvers = mock_flow.resolvers
+    response = await resolvers.mutator(
         None,
         'pause',
         flow_args,
         args,
         meta
     )
-    assert response[0]['id'] == mock_flow.id
+    assert response[0].workflowId == mock_flow.id
 
 
 async def test_mutation_mapper(mock_flow):

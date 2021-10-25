@@ -51,7 +51,7 @@ def test_graphql(myflow):
             }}
         }}
     '''
-    data = call_server_method(myflow.server.graphql, request_string)
+    data = call_server_method(myflow.server.graphql, request_string)['data']
     assert myflow.id == data['workflows'][0]['id']
 
 
@@ -91,33 +91,30 @@ async def test_stop(one: Scheduler, start):
 
 async def test_receiver(one: Scheduler, start):
     """Test the receiver with different message objects."""
+    user = 'troi'
     async with timeout(5):
         async with start(one):
             # start with a message that works
-            msg = {'command': 'api', 'user': '', 'args': {}}
-            assert 'error' not in one.server.receiver(msg)
-            assert 'data' in one.server.receiver(msg)
-
-            # remove the user field - should error
-            msg2 = dict(msg)
-            msg2.pop('user')
-            assert 'error' in one.server.receiver(msg2)
+            msg = {'command': 'api', 'args': {}}
+            response = one.server.receiver(msg, user)
+            assert response.err is None
+            assert response.content is not None
 
             # remove the command field - should error
             msg3 = dict(msg)
             msg3.pop('command')
-            assert 'error' in one.server.receiver(msg3)
+            assert one.server.receiver(msg3, user).err is not None
 
             # provide an invalid command - should error
             msg4 = {**msg, 'command': 'foobar'}
-            assert 'error' in one.server.receiver(msg4)
+            assert one.server.receiver(msg4, user).err is not None
 
             # simulate a command failure with the original message
             # (the one which worked earlier) - should error
             def _api(*args, **kwargs):
                 raise Exception('foo')
             one.server.api = _api
-            assert 'error' in one.server.receiver(msg)
+            assert one.server.receiver(msg, user).err is not None
 
 
 async def test_publish_before_shutdown(

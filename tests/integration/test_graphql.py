@@ -115,11 +115,11 @@ async def test_workflows(harness):
         {'request_string': 'query { workflows { id } }'}
     )
     assert ret == {
-        'workflows': [
-            {
-                'id': f'{w_tokens}'
-            }
-        ]
+        'data': {
+            'workflows': [
+                {'id': f'{w_tokens}'}
+            ]
+        }
     }
 
 
@@ -131,6 +131,7 @@ async def test_tasks(harness):
         'graphql',
         {'request_string': 'query { tasks { id } }'}
     )
+    ret = ret['data']
     ids = [
         w_tokens.duplicate(cycle=f'$namespace|{namespace}').id
         for namespace in ('a', 'b', 'c', 'd')
@@ -149,7 +150,7 @@ async def test_tasks(harness):
             'graphql',
             {'request_string': 'query { task(id: "%s") { id } }' % id_}
         )
-        assert ret == {
+        assert ret['data'] == {
             'task': {'id': id_}
         }
 
@@ -162,6 +163,7 @@ async def test_families(harness):
         'graphql',
         {'request_string': 'query { families { id } }'}
     )
+    ret = ret['data']
     ids = [
         w_tokens.duplicate(
             cycle=f'$namespace|{namespace}'
@@ -182,7 +184,7 @@ async def test_families(harness):
             'graphql',
             {'request_string': 'query { family(id: "%s") { id } }' % id_}
         )
-        assert ret == {
+        assert ret['data'] == {
             'family': {'id': id_}
         }
 
@@ -195,6 +197,7 @@ async def test_task_proxies(harness):
         'graphql',
         {'request_string': 'query { taskProxies { id } }'}
     )
+    ret = ret['data']
     ids = [
         w_tokens.duplicate(
             cycle='1',
@@ -216,7 +219,7 @@ async def test_task_proxies(harness):
         'graphql',
         {'request_string': 'query { taskProxy(id: "%s") { id } }' % ids[0]}
     )
-    assert ret == {
+    assert ret['data'] == {
         'taskProxy': {'id': ids[0]}
     }
 
@@ -229,6 +232,7 @@ async def test_family_proxies(harness):
         'graphql',
         {'request_string': 'query { familyProxies { id } }'}
     )
+    ret = ret['data']
     ids = [
         w_tokens.duplicate(
             cycle='1',
@@ -251,7 +255,7 @@ async def test_family_proxies(harness):
             'graphql',
             {'request_string': 'query { familyProxy(id: "%s") { id } }' % id_}
         )
-        assert ret == {
+        assert ret['data'] == {
             'familyProxy': {'id': id_}
         }
 
@@ -287,7 +291,7 @@ async def test_edges(harness):
         'graphql',
         {'request_string': 'query { edges { id } }'}
     )
-    assert ret == {
+    assert ret['data'] == {
         'edges': [
             {'id': id_}
             for id_ in e_ids
@@ -299,6 +303,7 @@ async def test_edges(harness):
         'graphql',
         {'request_string': 'query { nodesEdges { nodes {id}\nedges {id} } }'}
     )
+    ret = ret['data']
     ret['nodesEdges']['nodes'].sort(key=lambda x: x['id'])
     ret['nodesEdges']['edges'].sort(key=lambda x: x['id'])
     assert ret == {
@@ -333,7 +338,7 @@ async def test_jobs(harness):
         'graphql',
         {'request_string': 'query { jobs { id } }'}
     )
-    assert ret == {
+    assert ret['data'] == {
         'jobs': [
             {'id': f'{j_id}'}
         ]
@@ -344,6 +349,6 @@ async def test_jobs(harness):
         'graphql',
         {'request_string': 'query { job(id: "%s") { id } }' % j_id}
     )
-    assert ret == {
+    assert ret['data'] == {
         'job': {'id': f'{j_id}'}
     }

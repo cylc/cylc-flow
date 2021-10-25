@@ -17,11 +17,12 @@
 
 from abc import ABCMeta, abstractmethod
 import asyncio
+import json
 import os
 from shutil import which
 import socket
 import sys
-from typing import Any, Optional, Union, Dict
+from typing import Any, Optional, Union, Dict, cast
 
 import zmq
 import zmq.asyncio
@@ -36,9 +37,8 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network import (
-    encode_,
-    decode_,
     get_location,
+    ResponseTuple,
     ZMQSocketBase
 )
 from cylc.flow.network.client_factory import CommsMeth
@@ -270,7 +270,7 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         args: Optional[Dict[str, Any]] = None,
         timeout: Optional[float] = None,
         req_meta: Optional[Dict[str, Any]] = None
-    ) -> object:
+    ) -> Union[bytes, object]:
         """Send an asynchronous request using asyncio.
 
         Has the same arguments and return values as ``serial_request``.
@@ -292,12 +292,12 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         if req_meta:
             msg['meta'].update(req_meta)
         LOG.debug('zmq:send %s', msg)
-        message = encode_(msg)
+        message = json.dumps(msg)
         self.socket.send_string(message)
 
         # receive response
         if self.poller.poll(timeout):
-            res = await self.socket.recv()
+            res = cast('bytes', await self.socket.recv())
         else:
             self.timeout_handler()
             raise ClientTimeout(
@@ -307,26 +307,50 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
                 ' --comms-timeout option;'
                 '\n* or check the workflow log.'
             )
+        LOG.debug('zmq:recv %s', res)
 
-        if msg['command'] in PB_METHOD_MAP:
-            response = {'data': res}
-        else:
-            response = decode_(
-                res.decode() if isinstance(res, bytes) else res
-            )
-        LOG.debug('zmq:recv %s', response)
+        if command in PB_METHOD_MAP:
+            return res
 
-        try:
-            return response['data']
-        except KeyError:
-            error = response.get(
-                'error',
-                {'message': f'Received invalid response: {response}'},
-            )
-            raise ClientError(
-                error.get('message'),  # type: ignore
-                error.get('traceback'),  # type: ignore
-            )
+        response = ResponseTuple(  # type: ignore[misc]
+            *json.loads(res.decode())
+        )
+
+        if response.content is not None:
+            return response.content
+        if response.err:
+            raise ClientError(*response.err)
+        raise ClientError(f"Received invalid response: {response}")
+
+    def serial_request(
+        self,
+        command: str,
+        args: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+        req_meta: Optional[Dict[str, Any]] = None
+    ) -> Union[bytes, object]:
+        """Send a request.
+
+        For convenience use ``__call__`` to call this method.
+
+        Args:
+            command: The name of the endpoint to call.
+            args: Arguments to pass to the endpoint function.
+            timeout: Override the default timeout (seconds).
+
+        Raises:
+            ClientTimeout: If a response takes longer than timeout to arrive.
+            ClientError: Coverall for all other issues including failed auth.
+
+        Returns:
+            object: The data exactly as returned from the endpoint function,
+                nothing more, nothing less.
+
+        """
+        task = self.loop.create_task(
+            self.async_request(command, args, timeout, req_meta))
+        self.loop.run_until_complete(task)
+        return task.result()
 
     def get_header(self) -> dict:
         """Return "header" data to attach to each request for traceability.

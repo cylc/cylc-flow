@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from async_timeout import timeout
-from cylc.flow.network import decode_
+import json
+from cylc.flow.network import ResponseTuple
 from cylc.flow.network.client import WorkflowRuntimeClient
 import asyncio
 
+from async_timeout import timeout
 import pytest
 
 
@@ -28,7 +29,9 @@ async def test_listener(one, start, ):
         client = WorkflowRuntimeClient(one.workflow)
         client.socket.send_string(r'Not JSON')
         res = await client.socket.recv()
-        assert 'error' in decode_(res.decode())
+        response = ResponseTuple(*json.loads(res.decode()))
+        assert response.content is None
+        assert 'failed to decode message' in response.err[0]
 
         one.server.replier.queue.put('STOP')
         async with timeout(2):

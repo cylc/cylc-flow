@@ -59,6 +59,7 @@ from typing import (
     cast,
 )
 
+from graphql.execution import ExecutionResult
 from packaging.version import parse as parse_version
 from packaging.specifiers import SpecifierSet
 
@@ -431,7 +432,9 @@ def format_query(fields, filters=None):
 
 
 @pipe(preproc=format_query)
-async def graphql_query(flow: dict, fields: Iterable, filters=None):
+async def graphql_query(
+    flow: dict, fields: Iterable[str], filters: Optional[list] = None
+) -> Union[bool, dict]:
     """Obtain information from a GraphQL request to the flow.
 
     Requires:
@@ -449,7 +452,7 @@ async def graphql_query(flow: dict, fields: Iterable, filters=None):
             One level of nesting is supported e.g::
 
                {'name': None, 'meta': ['title']}
-        filters (list):
+        filters:
             Filter by the data returned from the query.
             List in the form ``[(key, ...), value]``, e.g::
 
@@ -497,13 +500,20 @@ async def graphql_query(flow: dict, fields: Iterable, filters=None):
         LOG.exception(exc)
         return False
     else:
+        response = ExecutionResult(**ret)
         # stick the result into the flow object
-        for item in ret:
-            if 'error' in item:
-                LOG.exception(item['error']['message'])
-                return False
-            for workflow in ret.get('workflows', []):
-                flow.update(workflow)
+        if not response.data:
+            if response.errors:
+                LOG.error("Scan error(s)")
+                for err in response.errors:
+                    LOG.error(err)
+            else:
+                LOG.exception("Scan error: empty response")
+            return False
+        for workflow in response.data.get('workflows', []):
+            flow.update(workflow)
+            # TODO: what if no items in workflows list, will this cause
+            # KeyError below when trying to access flow[field_]?
 
         # process filters
         for field, value in filters or []:

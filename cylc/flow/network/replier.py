@@ -15,13 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for workflow runtime API."""
 
+import getpass
+import json
 from queue import Queue
 from typing import TYPE_CHECKING, Optional
 
+from typing_extensions import Literal
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.network import encode_, decode_, ZMQSocketBase
+from cylc.flow.network import (
+    ResponseErrTuple, ResponseTuple, ZMQSocketBase
+)
 
 if TYPE_CHECKING:
     from cylc.flow.network.server import WorkflowRuntimeServer
@@ -58,7 +63,7 @@ class WorkflowReplier(ZMQSocketBase):
             zmq.REP, server.schd.workflow, bind=True, context=context
         )
         self.server = server
-        self.queue: 'Queue[str]' = Queue()
+        self.queue: Queue[Literal['STOP']] = Queue()
 
     def _bespoke_stop(self) -> None:
         """Stop the listener and Authenticator.
@@ -69,7 +74,7 @@ class WorkflowReplier(ZMQSocketBase):
         LOG.debug('stopping zmq replier...')
         self.queue.put('STOP')
 
-    def listener(self):
+    def listener(self) -> None:
         """The server main loop, listen for and serve requests.
 
         When called, this method will receive and respond until there are no
@@ -99,27 +104,39 @@ class WorkflowReplier(ZMQSocketBase):
                 continue
             # attempt to decode the message, authenticating the user in the
             # process
+            response: bytes
             try:
-                message = decode_(msg)
+                message = json.loads(msg)
+                user = getpass.getuser()  # assume this is the user
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
-                LOG.exception('failed to decode message: "%s"', exc)
+                LOG.exception(exc)
+                LOG.error('failed to decode message: "%s"', msg)
                 import traceback
-                response = encode_(
-                    {
-                        'error': {
-                            'message': 'failed to decode message: "%s"' % msg,
-                            'traceback': traceback.format_exc(),
-                        }
-                    }
+                response = json.dumps(
+                    ResponseTuple(
+                        err=ResponseErrTuple(
+                            f'failed to decode message: {msg}"',
+                            traceback.format_exc(),
+                        )
+                    )
                 ).encode()
             else:
                 # success case - serve the request
-                res = self.server.receiver(message)
-                # send back the string to bytes response
-                if isinstance(res.get('data'), bytes):
-                    response = res['data']
+                res = self.server.receiver(message, user)
+                if isinstance(res.content, bytes):  # is protobuf method
+                    # just return bytes, as cannot serialize bytes to JSON
+                    response = res.content
                 else:
-                    response = encode_(res).encode()
+                    try:
+                        response = json.dumps(res).encode()
+                    except TypeError as exc:
+                        err_msg = f"failed to encode response: {res}\n{exc}"
+                        LOG.warning(err_msg)
+                        res = ResponseTuple(
+                            err=ResponseErrTuple(err_msg)
+                        )
+                        response = json.dumps(res).encode()
+            # send back the string to bytes response
             self.socket.send(response)

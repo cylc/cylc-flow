@@ -21,15 +21,20 @@ from textwrap import dedent
 from time import sleep
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
+from graphql.error import GraphQLError
 from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
 from cylc.flow import LOG, workflow_files
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.network import ResponseErrTuple, ResponseTuple
 from cylc.flow.network.authorisation import authorise
 from cylc.flow.network.graphql import (
-    CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
+    CylcGraphQLBackend,
+    IgnoreFieldMiddleware,
+    format_execution_result,
+    instantiate_middleware
 )
 from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.replier import WorkflowReplier
@@ -267,44 +272,56 @@ class WorkflowRuntimeServer:
             articles = self.publish_queue.get()
             await self.publisher.publish(*articles)
 
-    def receiver(self, message):
+    def receiver(
+        self, message: Dict[str, Any], user: str
+    ) -> ResponseTuple:
         """Process incoming messages and coordinate response.
 
         Wrap incoming messages, dispatch them to exposed methods and/or
         coordinate a publishing stream.
 
         Args:
-            message (dict): message contents
+            message: message contents
         """
         # TODO: If requested, coordinate publishing response/stream.
 
         # determine the server method to call
+        if not isinstance(message, dict):
+            return ResponseTuple(
+                err=ResponseErrTuple(
+                    f'Expected dict but request is: {message}'
+                )
+            )
         try:
             method = getattr(self, message['command'])
-            args = message['args']
-            args.update({'user': message['user']})
+            args: dict = message['args']
+            args.update({'user': user})
             if 'meta' in message:
                 args['meta'] = message['meta']
         except KeyError:
             # malformed message
-            return {'error': {
-                'message': 'Request missing required field(s).'}}
+            return ResponseTuple(
+                err=ResponseErrTuple('Request missing required field(s).')
+            )
         except AttributeError:
             # no exposed method by that name
-            return {'error': {
-                'message': 'No method by the name "%s"' % message['command']}}
-
+            return ResponseTuple(
+                err=ResponseErrTuple(
+                    f"No method by the name '{message['command']}'"
+                )
+            )
         # generate response
         try:
             response = method(**args)
         except Exception as exc:
             # includes incorrect arguments (TypeError)
-            LOG.exception(exc)  # note the error server side
+            LOG.exception(exc)  # log the error server side
             import traceback
-            return {'error': {
-                'message': str(exc), 'traceback': traceback.format_exc()}}
+            return ResponseTuple(
+                err=ResponseErrTuple(str(exc), traceback.format_exc())
+            )
 
-        return {'data': response}
+        return ResponseTuple(content=response)
 
     def register_endpoints(self):
         """Register all exposed methods."""
@@ -356,16 +373,13 @@ class WorkflowRuntimeServer:
         request_string: Optional[str] = None,
         variables: Optional[Dict[str, Any]] = None,
         meta: Optional[Dict[str, Any]] = None
-    ):
+    ) -> Dict[str, Any]:
         """Return the GraphQL schema execution result.
 
         Args:
             request_string: GraphQL request passed to Graphene.
             variables: Dict of variables passed to Graphene.
             meta: Dict containing auth user etc.
-
-        Returns:
-            object: Execution result, or a list with errors.
         """
         try:
             executed: 'ExecutionResult' = schema.execute(
@@ -382,27 +396,25 @@ class WorkflowRuntimeServer:
                 return_promise=False,
             )
         except Exception as exc:
-            return 'ERROR: GraphQL execution error \n%s' % exc
+            raise GraphQLError(f"ERROR: GraphQL execution error \n{exc}")
         if executed.errors:
-            errors: List[Any] = []
-            for error in executed.errors:
-                LOG.error(error)
-                if hasattr(error, '__traceback__'):
+            for i, excp in enumerate(executed.errors):
+                LOG.error(excp)
+                if isinstance(excp, GraphQLError):
+                    error = excp
+                else:
+                    error = GraphQLError(message=str(excp))
+                if hasattr(excp, '__traceback__'):
                     import traceback
+                    extensions = error.extensions or {}
                     formatted_tb = traceback.format_exception(
-                        type(error), error, error.__traceback__
+                        type(excp), excp, excp.__traceback__
                     )
                     LOG.error("".join(formatted_tb))
-                    errors.append({
-                        'error': {
-                            'message': str(error),
-                            'traceback': formatted_tb
-                        }
-                    })
-                    continue
-                errors.append(getattr(error, 'message', None))
-            return errors
-        return executed.data
+                    extensions['traceback'] = formatted_tb
+                    error.extensions = extensions
+                executed.errors[i] = error
+        return format_execution_result(executed)
 
     # UIServer Data Commands
     @authorise()

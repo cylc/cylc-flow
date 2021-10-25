@@ -166,7 +166,7 @@ class _AsyncPipe:
                 ret = await coro.func(item, *coro.args, **coro.kwargs)
             except Exception as exc:
                 # if something goes wrong log the error and skip the item
-                LOG.warning(exc)
+                LOG.warning(f"{type(exc).__name__}: {exc}")
                 ret = False
             if ret is True:
                 # filter passed -> continue

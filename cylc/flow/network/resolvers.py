@@ -49,6 +49,7 @@ import cylc.flow.flags
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
+    GenericResponse,
     RUNTIME_FIELD_TO_CFG_MAP,
     NodesEdges,
     PROXY_NODES,
@@ -681,7 +682,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
         meta: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[GenericResponse]:
         ...
 
 
@@ -702,17 +703,20 @@ class Resolvers(BaseResolvers):
         w_args: Dict[str, Any],
         kwargs: Dict[str, Any],
         meta: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[GenericResponse]:
         """Mutate workflow."""
         w_ids = [flow[WORKFLOW].id
                  for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
             workflows = list(self.data_store_mgr.data.keys())
-            return [{
-                'response': (False, f'No matching workflow in {workflows}')}]
+            ret = GenericResponse(
+                success=False, message=f'No matching workflow in {workflows}'
+            )
+            return [ret]
         w_id = w_ids[0]
         result = await self._mutation_mapper(command, kwargs, meta)
-        return [{'id': w_id, 'response': result}]
+        ret = GenericResponse(w_id, *result)
+        return [ret]
 
     async def _mutation_mapper(
         self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]

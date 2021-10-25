@@ -254,7 +254,7 @@ async def workflow_meta_query(workflow_id, pclient, options, json_filter):
     }
     # Print workflow info.
     results = await pclient.async_request('graphql', query_kwargs)
-    for workflow_id in results['workflows']:
+    for workflow_id in results['data']['workflows']:
         flat_data = flatten_data(workflow_id)
         if options.json:
             json_filter.update(flat_data)

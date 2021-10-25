@@ -37,7 +37,7 @@ async def test_graphql(harness):
         'graphql',
         {'request_string': 'query { workflows { id } }'}
     )
-    workflows = ret['workflows']
+    workflows = ret['data']['workflows']
     assert len(workflows) == 1
     workflow = workflows[0]
     assert schd.workflow in workflow['id']
@@ -67,24 +67,29 @@ async def test_command_validation_failure(harness):
         'graphql',
         {
             'request_string': '''
-                 mutation {
-                   set(
-                     workflows: ["*"],
-                     tasks: ["*"],
-                     # this list of prerequisites fails validation:
-                     prerequisites: ["1/a", "all"]
-                   ) {
-                     result
-                   }
-                 }
+                mutation {
+                    set(
+                        workflows: ["*"],
+                        tasks: ["*"],
+                        # this list of prerequisites fails validation:
+                        prerequisites: ["1/a", "all"]
+                    ) {
+                        results {
+                            workflowId
+                            success
+                            message
+                        }
+                    }
+                }
         '''
         },
     )
 
     # the validation error should be returned to the client
-    assert response['set']['result'] == [
+    assert response['data']['set']['results'] == [
         {
-            'id': schd.id,
-            'response': [False, '--pre=all must be used alone'],
+            'workflowId': schd.id,
+            'success': False,
+            'message': '--pre=all must be used alone',
         }
     ]
