@@ -255,7 +255,7 @@ def test_get_item(sample_spec_2):
             cfg = parsec_config.get(keys=['section', 'name'], sparse=True)
             assert 'test' == cfg
 
-            with pytest.raises(config.ItemNotFoundError):
+            with pytest.raises(config.InvalidConfigError):
                 parsec_config.get(keys=['section', 'a'], sparse=True)
 
 
