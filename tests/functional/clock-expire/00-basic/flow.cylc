@@ -1,3 +1,5 @@
+#!Jinja2
+
 [meta]
     title = task expire example workflow
     description = """
@@ -6,6 +8,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
 [scheduler]
     # cycle point format = %Y-%m-%dT%H%M
     allow implicit tasks = True
+    cycle point time zone = {{CPTZ}}
     [[events]]
         abort on stall timeout = True
         stall timeout = PT1M
