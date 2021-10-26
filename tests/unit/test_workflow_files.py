@@ -140,7 +140,7 @@ def test_check_nested_dirs_install_dirs(
         parents=True
     )
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_dirs(testdir, look_down=True)
+        check_nested_dirs(testdir)
     assert "Nested install directories not allowed" in str(exc.value)
 
 
