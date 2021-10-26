@@ -188,11 +188,6 @@ EVENTS_DESCR = {
 }
 
 
-UNLIKELY = """
-.. admonition:: You are unlikely to need to override this.
-"""
-
-
 with Conf('global.cylc', desc='''
     The global configuration which defines default Cylc Flow settings
     for a user or site.
