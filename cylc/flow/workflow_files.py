@@ -1791,9 +1791,9 @@ def validate_source_dir(source, workflow_name):
     cylc_run_dir = Path(get_cylc_run_dir())
     if (os.path.abspath(os.path.realpath(cylc_run_dir))
             in os.path.abspath(os.path.realpath(source))):
-        raise WorkflowFilesError(
-            f"{workflow_name} installation failed. Source directory "
-            f"should not be in {cylc_run_dir}")
+        LOG.warning(
+            f"{workflow_name} source found in {cylc_run_dir}. This is OK"
+            f" for installed sub-workflow definitions.")
     check_flow_file(source, logger=None)
 
 
