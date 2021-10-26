@@ -116,7 +116,10 @@ class ParsecConfig:
             for key in keys:
                 if (
                     key not in self.get(parents) and
-                    parents[-1] not in self.manyparents
+                    (
+                        (parents and parents[-1] not in self.manyparents) or
+                        (not parents and key not in self.manyparents)
+                    )
                 ):
                     raise InvalidConfigError(
                         itemstr(parents, key), self.spec.name)
