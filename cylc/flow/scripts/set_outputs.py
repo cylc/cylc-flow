@@ -18,10 +18,12 @@
 
 """cylc set-outputs [OPTIONS] ARGS
 
-Set specified task outputs ("succeeded" by default) to complete.
+Artificially mark task outputs as completed.
 
-Downstream tasks will be spawned or updated just as if the outputs were
-completed normally.
+This allows you to manually intervene with Cylc's scheduling
+algorithm by artificially satisfying outputs of tasks.
+
+By default this makes tasks appear as if they succeeded.
 
 The --output option can be used multiple times on the command line.
 

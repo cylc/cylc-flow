@@ -18,7 +18,7 @@
 
 """cylc release [OPTIONS] ARGS
 
-Release held tasks.
+Release held tasks within a workflow.
 
 Examples:
   # Release mytask at cycle 1234 in my_flow

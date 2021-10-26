@@ -18,7 +18,11 @@
 
 """cylc stop [OPTIONS] ARGS
 
-Stop a running workflow.
+Tell a workflow to shut down.
+
+By default stopping workflows wait for submitted and running tasks
+to complete before shutting down. You can change this behaviour
+with the "mode" option.
 
 There are several shutdown methods:
 

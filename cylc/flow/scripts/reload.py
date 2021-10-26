@@ -20,10 +20,10 @@
 
 Reload the configuration of a running workflow.
 
-Tell a workflow to reload its definition at run time. All settings including
-task definitions, with the exception of workflow log configuration, can be
-changed on reload. Changes to task definitions take effect immediately, unless
-a task is already running at reload time.
+All settings including task definitions, with the exception of
+workflow log config, can be changed on reload. Changes to task
+definitions take effect immediately, unless a task is already
+running at reload time.
 
 If the workflow was started with Jinja2 template variables set on the command
 line (cylc play --set 'FOO="bar"' WORKFLOW) the same template settings apply to
