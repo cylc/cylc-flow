@@ -285,8 +285,8 @@ with Conf('global.cylc', desc='''
         ''')
         Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600),
              desc='''
-            Interval after which long-running commands in the process pool
-            will be killed
+            After this interval Cylc will kill long running commands in the
+            process pool.
 
             .. versionchanged:: 8.0.0
 
