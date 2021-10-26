@@ -41,9 +41,9 @@ grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-child.stderr
 
 TEST_FOLDER=cylctb-$(uuidgen)
 TEST_FOLDERS+=("$TEST_FOLDER")
-cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child"
-run_fail "${TEST_NAME_BASE}-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
-grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-parent.stderr"
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child" --no-run-name
+run_fail "${TEST_NAME_BASE}-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/" --no-run-name
+grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-parent.stderr"
 
 
 TEST_FOLDER=cylctb-$(uuidgen)
@@ -53,12 +53,11 @@ run_fail "${TEST_NAME_BASE}-grandchild" cylc install -C "$PWD" --flow-name "${TE
 grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-grandchild.stderr"
 
 
-
 TEST_FOLDER=cylctb-$(uuidgen)
 TEST_FOLDERS+=("$TEST_FOLDER")
-cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child/grandchild"
-run_fail "${TEST_NAME_BASE}-grandparent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
-grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-grandparent.stderr"
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child/grandchild" --no-run-name
+run_fail "${TEST_NAME_BASE}-grandparent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/" --no-run-name
+grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-grandparent.stderr"
 
 
 TEST_FOLDER=cylctb-$(uuidgen)
@@ -68,13 +67,12 @@ run_fail "${TEST_NAME_BASE}-Nth-child" cylc install -C "$PWD" --flow-name "${TES
 grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-Nth-child.stderr"
 
 
-
 TEST_FOLDER=cylctb-$(uuidgen)
 TEST_FOLDERS+=("$TEST_FOLDER")
-cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/longer/this/path"
-run_fail "${TEST_NAME_BASE}-Nth-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
-grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-Nth-parent.stderr"
-
+cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/longer/this/path" --no-run-name
+run_fail "${TEST_NAME_BASE}-Nth-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/" --no-run-name
+grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-Nth-parent.stderr"
+exit
 for TEST_FOLDER in ${TEST_FOLDERS[*]}; do
     rm -fr "${RUN_DIR}/${TEST_FOLDER:-}"
 done

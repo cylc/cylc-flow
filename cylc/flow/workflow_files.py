@@ -1420,20 +1420,6 @@ def check_nested_dirs(
                 exc_msgs['install_dir'].format(
                     get_cylc_run_abs_path(parent_dir)))
 
-    # Search child tree for install directories:
-    search_patterns = [
-        f'*/{"*/"*depth}{WorkflowFiles.Install.DIRNAME}'
-        for depth in range(MAX_SCAN_DEPTH)
-    ]
-    for search_pattern in search_patterns:
-        results = list(path.glob(search_pattern))
-        if results:
-            parent_dir = results[0].parent
-            raise WorkflowFilesError(
-                exc_msgs['install_dir'].format(
-                    get_cylc_run_abs_path(parent_dir))
-            )
-
 
 def is_valid_run_dir(path):
     """Return True if path is a valid, existing run directory, else False.
