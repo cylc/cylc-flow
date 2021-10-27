@@ -170,13 +170,13 @@ with Conf(
 
             .. versionchanged:: 8.0.0
 
-               Now defaults to ``true``, unless running in
+               Now defaults to ``True``, unless running in
                :ref:`Cylc 7 compatibility mode <backCompat>`
 
         ''')
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
-            Allow tasks not defined in ``[runtime]``.
+            Allow tasks not defined in :cylc:conf:`flow.cylc[runtime]`.
 
             .. versionadded:: 8.0.0
 
@@ -1194,20 +1194,24 @@ with Conf(
                      desc='''
                     The default simulated job run length.
 
-                    Used if ``[job]execution time limit`` and
-                    ``[simulation]speedup factor`` are not set.
+                    Used if :cylc:conf:`flow.cylc[runtime][<namespace>]
+                    execution time limit` **and**
+                    :cylc:conf:`flow.cylc[runtime][<namespace>][simulation]
+                    speedup factor` are not set.
                 ''')
                 Conf('speedup factor', VDR.V_FLOAT, desc='''
                     Simulated run length = speedup factor * execution time
                     limit.
 
-                    If ``[job]execution time limit`` is set, the task
+                    If :cylc:conf:`flow.cylc[runtime][<namespace>]
+                    execution time limit` is set, the task
                     simulated run length is computed by dividing it by this
                     factor.
                 ''')
                 Conf('time limit buffer', VDR.V_INTERVAL, DurationFloat(30),
                      desc='''
-                    For dummy jobs ``[job]execution time limit`` is extended
+                    For dummy jobs :cylc:conf:`flow.cylc[runtime][<namespace>]
+                    execution time limit` is extended
                     by ``time limit buffer``.
 
                     The time limit buffer is added to prevent dummy jobs

@@ -771,7 +771,8 @@ with Conf('global.cylc', desc='''
             .. versionadded:: 8.0.0
 
                Many of the items in platform definitions have been moved from
-               :cylc:conf:`task definitions <flow.cylc[runtime][<namespace>]>`.
+               ``flow.cylc[runtime][<namespace>][job]`` and
+               ``flow.cylc[runtime][<namespace>][remote]``
 
             Platform names can be regular expressions: If you have a set of
             compute resources such as ``bigmachine1, bigmachine2`` or
