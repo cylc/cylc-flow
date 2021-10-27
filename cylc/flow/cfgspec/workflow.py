@@ -577,7 +577,7 @@ with Conf(
 
             .. note::
 
-               This setting does not coerce ``initial cycle point == now``.
+               This setting does not coerce :cylc:conf:`[..]initial cycle point = now`.
         ''')
         Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules restricting permitted final cycle points.
@@ -676,7 +676,7 @@ with Conf(
             tasks which may be active.
 
             To use a single queue for the whole workflow but limit the number
-            of active tasks set ``[scheduling][queues][default]limit``.
+            of active tasks set `:cylc:conf:[..][queues][default]limit`.
 
             To add additional queues define additional sections:
 
@@ -799,14 +799,12 @@ with Conf(
                Previously ``[runtime][dependencies][graph]``.
 
             You can plot the dependency graph as you work on it, with
-            ``cylc graph`` or by right clicking on the workflow in the db
-            viewer.
+            ``cylc graph``.
 
             .. seealso::
 
                :ref:`User Guide Scheduling`.
 
-            .. question - what is the db viewer?
         '''):
             Conf('<recurrence>', VDR.V_STRING, desc='''
                 The recurrence defines the sequence of cycle points
@@ -819,7 +817,7 @@ with Conf(
                 Cycle points should be specified in our ISO 8601 derived
                 sequence syntax, or as integers, in integer cycling mode:
 
-                Example
+                Example Recurrences:
 
                 date-time cycling:
                    * ``R1`` - once at the initial cycle point
@@ -1461,7 +1459,6 @@ with Conf(
                 .. versionchanged:: 8.0.0::
 
                    Previously called ``suite state polling``.
-
 
                 The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,

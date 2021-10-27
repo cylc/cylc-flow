@@ -265,8 +265,8 @@ with Conf('global.cylc', desc='''
 
         .. note::
 
-           ``scheduler`` should not be confused with ``scheduling`` in the
-           ``flow.cylc`` file.
+           :cylc:conf:`global.cylc[scheduler]` should not be confused with
+           :cylc:conf:`flow.cylc[scheduling]`.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, True, desc='''
             Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
@@ -280,6 +280,7 @@ with Conf('global.cylc', desc='''
                Moved into the ``[scheduler]`` section from the top level.
 
             .. seealso::
+
                 :ref:`Managing External Command Execution`.
 
         ''')
@@ -306,7 +307,7 @@ with Conf('global.cylc', desc='''
 
             .. versionchanged:: 8.0.0
 
-               Moved here from ``[suite servers]`` section.
+               Moved from ``global.rc[suite servers]auto restart delay``.
 
             When a host is set to automatically
             shutdown/restart it waits a random period of time
@@ -810,9 +811,11 @@ with Conf('global.cylc', desc='''
 
                    This item was called ``batch system`` in Cylc 7.
 
-                Example::
+                Examples:
 
-                    ``background``, ``at``, ``slurm``, ``loadleveler``, ``pbs``
+                 * ``background``
+                 * ``slurm``
+                 *  ``pbs``
             ''')
             Conf('job runner command template', VDR.V_STRING, desc='''
                 Set the command used by the chosen job runner.
