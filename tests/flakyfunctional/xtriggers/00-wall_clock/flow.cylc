@@ -4,7 +4,7 @@
 # clock trigger is not satisfied, else stall and abort.
 
 [scheduler]
-    UTC mode = False
+    cycle point time zone = '+0530'
     [[events]]
         abort on inactivity timeout = True
         inactivity timeout = PT15S

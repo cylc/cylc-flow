@@ -107,6 +107,9 @@ renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
 [#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
 of workflows inside other installed workflows.
 
+[#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8 
+`cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
+
 
 ### Fixes
 
