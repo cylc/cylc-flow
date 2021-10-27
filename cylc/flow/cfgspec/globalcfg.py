@@ -55,6 +55,8 @@ SYSPATH = [
 ]
 
 TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
+REPLACES = 'Replaces the cylc 7 configuration '
+
 
 # Event config descriptions shared between global and workflow config.
 EVENTS_DESCR = {
@@ -64,9 +66,9 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-           This item was previously called ``startup handler``.
+           {}``startup handler``.
 
-        '''
+        '''.format(REPLACES)
     ),
     'shutdown handlers': (
         '''
@@ -74,9 +76,9 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-           This item was previously called ``shutdown handler``.
+           {}``shutdown handler``.
 
-        '''
+        '''.format(REPLACES)
     ),
     'abort handlers': (
         '''
@@ -84,8 +86,8 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-           This item was previously called ``aborted handler``.
-        '''
+           {}``aborted handler``.
+        '''.format(REPLACES)
     ),
     'workflow timeout': (
         f'''
@@ -121,8 +123,8 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-           This item was previously called ``stalled handler``.
-        '''
+           {}``stalled handler``.
+        '''.format(REPLACES)
     ),
     'stall timeout': (
         f'''
@@ -164,8 +166,8 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-           This item was previously called ``inactivity``.
-        '''
+           {} ``inactivity``.
+        '''.format(REPLACES)
     ),
     'inactivity timeout handlers': (
         '''
@@ -173,8 +175,8 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-           This item was previously called ``inactivity handler``.
-        '''
+           {}``inactivity handler``.
+        '''.format(REPLACES)
     ),
     'abort on inactivity timeout': (
         '''
@@ -182,8 +184,8 @@ EVENTS_DESCR = {
 
         .. versionchanged:: 8.0.0
 
-           This item was previously called ``abort on inactivity``.
-        '''
+           {}``abort on inactivity``.
+        '''.format(REPLACES)
     )
 }
 
@@ -261,13 +263,13 @@ with Conf('global.cylc', desc='''
 
         .. versionchanged:: 8.0.0
 
-           This config item was called ``cylc`` at Cylc 7.
+           {}``[cylc]``.
 
         .. note::
 
            :cylc:conf:`global.cylc[scheduler]` should not be confused with
            :cylc:conf:`flow.cylc[scheduling]`.
-    '''):
+    '''.format(REPLACES)):
         Conf('UTC mode', VDR.V_BOOLEAN, True, desc='''
             Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
         ''')
@@ -307,7 +309,7 @@ with Conf('global.cylc', desc='''
 
             .. versionchanged:: 8.0.0
 
-               Moved from ``global.rc[suite servers]auto restart delay``.
+               {}``global.rc[suite servers]auto restart delay``.
 
             When a host is set to automatically
             shutdown/restart it waits a random period of time
@@ -319,44 +321,44 @@ with Conf('global.cylc', desc='''
 
                :ref:`auto-stop-restart`
 
-        ''')
+        '''.format(REPLACES))
         with Conf('run hosts', desc='''
             Configure workflow hosts and ports for starting workflows.
 
             .. versionchanged:: 8.0.0
 
-               This section replaces settings from ``[suite servers]``.
+               {}``[suite servers]``.
 
             Additionally configure host selection settings specifying how to
             determine the most suitable run host at any given time from those
             configured.
-        '''):
+        '''.format(REPLACES)):
             Conf('available', VDR.V_SPACELESS_STRING_LIST, desc='''
                 A list of workflow run hosts.
 
                 .. versionchanged:: 8.0.0
 
-                   Replaces ``[suite servers]run hosts``.
+                   {}``[suite servers]run hosts``.
 
                Cylc will choose one of these hosts for a workflow to start on.
                (Unless an explicit host is provided as an option to the
                ``cylc play --host=<myhost>`` command.)
-            ''')
+            '''.format(REPLACES))
             Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
                  desc='''
                 A list of allowed ports for Cylc to use to run workflows.
 
                 .. versionchanged:: 8.0.0
 
-                   Replaces ``[suite servers]run ports``
-            ''')
+                   {}``[suite servers]run ports``
+            '''.format(REPLACES))
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc='''
                 Hosts set in ``condemned`` will not be used as workflow run
                 hosts.
 
                 .. versionchanged:: 8.0.0
 
-                   Replaces ``[suite servers]condemned hosts``.
+                   {}``[suite servers]condemned hosts``.
 
                 If workflows are already running on
                 ``condemned`` hosts Cylc will shut them down and
@@ -365,13 +367,13 @@ with Conf('global.cylc', desc='''
                 .. seealso::
 
                    :ref:`auto-stop-restart`
-            ''')
+            '''.format(REPLACES))
             Conf('ranking', VDR.V_STRING, desc='''
                 Rank and filter run hosts based on system information.
 
                 .. versionchanged:: 8.0.0
 
-                   Replaces ``[suite servers][run host select]rank``.
+                   {}``[suite servers][run host select]rank``.
 
                 Ranking can be used to provide load balancing to ensure no one
                 run host is overloaded. It also provides thresholds beyond
@@ -434,19 +436,19 @@ with Conf('global.cylc', desc='''
                    # if two hosts have the same CPU count
                    # then rank them by CPU usage
                    cpu_percent()
-            ''')
+            '''.format(REPLACES))
 
         with Conf('host self-identification', desc='''
             How Cylc determines and shares the identity of the workflow host.
 
             .. versionchanged:: 8.0.0
 
-               Replaces ``[suite host self-identification]``.
+               {}``[suite host self-identification]``.
 
             The workflow host's identity must be determined locally by cylc and
             passed to running tasks (via ``$CYLC_WORKFLOW_HOST``) so that task
             messages can target the right workflow on the right host.
-        '''):
+        '''.format(REPLACES)):
             # TODO
             # Is it conceivable that different remote task hosts at the same
             # site might see the workflow host differently? If so we'd need to
@@ -460,7 +462,7 @@ with Conf('global.cylc', desc='''
 
                     .. versionchanged:: 8.0.0
 
-                       Moved from ``[suite host self-identification]``.
+                       {}``[suite host self-identification]``.
 
                     Options:
 
@@ -479,7 +481,7 @@ with Conf('global.cylc', desc='''
                        (only to be used as a last resort) Manually specified
                        host name or IP address (requires *host*) of the
                        workflow host.
-            ''')
+            '''.format(REPLACES))
             Conf('target', VDR.V_STRING, 'google.com', desc='''
                 Target for use by the *address* self-identification method.
 
@@ -489,16 +491,16 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.0.0
 
-                   Moved from ``[suite host self-identification]``.
-            ''')
+                   {}``[suite host self-identification]``.
+            '''.format(REPLACES))
             Conf('host', VDR.V_STRING, desc='''
                 The name or IP address of the workflow host used by the
                 *hardwired* self-identification method.
 
                 .. versionchanged:: 8.0.0
 
-                   Moved from ``[suite host self-identification]``.
-            ''')
+                   {}``[suite host self-identification]``.
+            '''.format(REPLACES))
 
         with Conf('events', desc='''
             Define site defaults for :cylc:conf:`flow.cylc[scheduler][events]`.
@@ -528,8 +530,8 @@ with Conf('global.cylc', desc='''
 
             .. versionchanged:: 8.0.0
 
-               Moved from ``[cylc][events]mail <item>``.
-        '''):
+               {}``[cylc][events]mail <item>``.
+        '''.format(REPLACES)):
             Conf('from', VDR.V_STRING)
             Conf('smtp', VDR.V_STRING)
             Conf('to', VDR.V_STRING)
@@ -602,8 +604,8 @@ with Conf('global.cylc', desc='''
 
             .. versionchanged:: 8.0.0
 
-               This section was previously called ``[suite logging]``.
-        '''):
+               {}``[suite logging]``.
+        '''.format(REPLACES)):
             Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
                 How many rolled logs to retain in the archive.
             ''')
@@ -709,10 +711,8 @@ with Conf('global.cylc', desc='''
         Conf('terminal', VDR.V_STRING, desc='''
             An in-terminal text editor to be used by the Cylc command line.
 
-            .. deprecated:: 8.0.0::
-
-               If unspecified Cylc will use the environment variable
-               ``$EDITOR`` which is the preferred way to set your text editor.
+            If unspecified Cylc will use the environment variable
+            ``$EDITOR`` which is the preferred way to set your text editor.
 
             .. Note::
 
@@ -732,10 +732,8 @@ with Conf('global.cylc', desc='''
         Conf('gui', VDR.V_STRING, desc='''
             A graphical text editor to be used by cylc.
 
-            .. deprecated:: 8.0.0
-
-               If unspecified Cylc will use the environment variable
-               ``$GEDITOR`` which is the preferred way to set your text editor.
+            If unspecified Cylc will use the environment variable
+            ``$GEDITOR`` which is the preferred way to set your text editor.
 
             .. Note::
 
@@ -809,25 +807,24 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.0.0
 
-                   This item was called ``batch system`` in Cylc 7.
+                   {}``batch system``.
 
                 Examples:
 
                  * ``background``
                  * ``slurm``
                  *  ``pbs``
-            ''')
+            '''.format(REPLACES))
             Conf('job runner command template', VDR.V_STRING, desc='''
                 Set the command used by the chosen job runner.
 
                 .. versionchanged:: 8.0.0
 
-                   This item was called
-                   ``batch system command template`` at Cylc 7.
+                   {}``batch system command template``.
 
                 The template's ``%(job)s`` will be
                 substituted by the job file path.
-            ''')
+            '''.format(REPLACES))
             Conf('shell', VDR.V_STRING, '/bin/bash')
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
@@ -944,7 +941,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.0.0
 
-                   Replaces ``cylc executable``.
+                   {}``cylc executable``.
 
                 This may be necessary if the ``cylc`` executable is not in the
                 ``$PATH`` for an ``ssh`` call.
@@ -970,7 +967,7 @@ with Conf('global.cylc', desc='''
 
                    See :ref:`managing environments` for more information on
                    the wrapper script.
-            ''')
+            '''.format(REPLACES))
             Conf('global init-script', VDR.V_STRING, desc='''
                 Add a script before the init-script of all jobs on this
                 platform.
@@ -986,8 +983,8 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs', VDR.V_BOOLEAN, desc='''
                 Global default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve \
-job logs`.
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]
+                retrieve job logs`.
             ''')
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a',
                  desc='''
@@ -996,17 +993,16 @@ job logs`.
                 specify a suitable command.
             ''')
             Conf('retrieve job logs max size', VDR.V_STRING, desc='''
-                Global default for the
-                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve \
-job logs max size`.
-                this platform.
+                Global default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]
+                retrieve job logs max size` for this platform.
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc='''
-                Global default for the
-                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]retrieve \
-job logs retry delays`.
-                setting for this platform.
+                Global default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]
+                retrieve job logs retry delays`.
+                for this platform.
             ''')
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc='''
