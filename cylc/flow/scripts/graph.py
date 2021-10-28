@@ -18,7 +18,7 @@
 
 """cylc graph [OPTIONS] ARGS
 
-Produces graphical and textural representations of workflow dependencies.
+Produces graphical and textual representations of workflow dependencies.
 
 Examples:
     # generate a graphical representation of workflow dependencies
