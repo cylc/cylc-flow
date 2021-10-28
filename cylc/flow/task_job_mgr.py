@@ -221,7 +221,7 @@ class TaskJobManager:
         prepared_tasks = []
         bad_tasks = []
         for itask in itasks:
-            if itask.state.reset(TASK_STATUS_PREPARING):
+            if itask.state_reset(TASK_STATUS_PREPARING):
                 self.data_store_mgr.delta_task_state(itask)
                 self.workflow_db_mgr.put_update_task_state(itask)
             prep_task = self._prep_submit_task_job(
