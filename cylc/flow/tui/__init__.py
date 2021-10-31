@@ -72,7 +72,7 @@ WORKFLOW_COLOURS = {
 # unicode task icons
 TASK_ICONS = {
     f'{TASK_STATUS_WAITING}': '\u25cb',
-    f'{TASK_STATUS_PREPARING}': '\u229D',
+    f'{TASK_STATUS_PREPARING}': '\u229A',
     f'{TASK_STATUS_SUBMITTED}': '\u2299',
     f'{TASK_STATUS_RUNNING}': '\u2299',
     f'{TASK_STATUS_RUNNING}:0': '\u2299',
