@@ -16,7 +16,7 @@
 
 """Manage flow counter and flow metadata."""
 
-from typing import Dict, Set
+from typing import Dict, Set, Optional
 import datetime
 
 from cylc.flow import LOG
@@ -32,15 +32,16 @@ class FlowMgr:
         self.flows: Dict[int, Dict[str, str]] = {}
         self.counter: int = 0
 
-    def get_new_flow(self, description: str) -> int:
+    def get_new_flow(self, description: Optional[str] = None) -> int:
         """Increment flow counter, record flow metadata."""
         self.counter += 1
         # record start time to nearest second
         now = datetime.datetime.now()
         now_sec: str = str(
             now - datetime.timedelta(microseconds=now.microsecond))
+        description = description or "no description"
         self.flows[self.counter] = {
-            "description": description or "no description",
+            "description": description,
             "start_time": now_sec
         }
         LOG.info(
