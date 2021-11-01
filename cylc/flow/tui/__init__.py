@@ -97,7 +97,6 @@ JOB_ICON = '\u25A0'
 
 # job colour coding
 JOB_COLOURS = {
-    'preparing': 'brown',
     'submitted': 'dark cyan',
     'running': 'light blue',
     'succeeded': 'dark green',
