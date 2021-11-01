@@ -1413,7 +1413,7 @@ class TaskPool:
     def force_trigger_tasks(
         self, items: Iterable[str],
         reflow: bool = False,
-        flow_descr: str = "no description"
+        flow_descr: Optional[str] = None
     ) -> int:
         """Trigger matching tasks, with or without reflow.
 
