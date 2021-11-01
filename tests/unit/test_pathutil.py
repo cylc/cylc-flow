@@ -45,6 +45,7 @@ from cylc.flow.pathutil import (
     remove_dir_and_target,
     remove_dir_or_file,
     remove_empty_parents,
+    get_workflow_name_from_id
 )
 
 from .conftest import MonkeyMock
@@ -520,3 +521,35 @@ def test_get_next_rundir_number(tmp_path, expect, files, runN):
     if runN:
         (tmp_path / 'runN').symlink_to(tmp_path / files[-1])
     assert get_next_rundir_number(tmp_path) == expect
+
+
+@pytest.mark.parametrize(
+    'name, id_, src',
+    (
+        param('my_workflow1', 'my_workflow1', False, id='--no-run-name'),
+        param('my_workflow2', 'my_workflow2/run22', False, id='installed'),
+        param('my_workflow3', 'my_workflow3/foo', False, id='--run-name="foo"'),
+        param('my_workflow4', 'my_workflow4', True, id='not installed'),
+    )
+)
+def test_get_workflow_name_from_id(
+    tmp_path, monkeypatch,
+    name: str, id_: str, src: bool
+) -> None:
+    """It gets the correct name.
+
+    args:
+        name: Workflow name
+        id: Workflow id
+        src: Is this workflow a source or installed workflow.
+    """
+    monkeypatch.setattr(
+        'cylc.flow.pathutil.get_cylc_run_dir', lambda: tmp_path)
+
+    (tmp_path / name).mkdir(exist_ok=True)
+    if not src:
+        (tmp_path / name / '_cylc-install').mkdir(exist_ok=True)
+    (tmp_path / id_).mkdir(exist_ok=True)
+
+    result = get_workflow_name_from_id(id_)
+    assert result == name

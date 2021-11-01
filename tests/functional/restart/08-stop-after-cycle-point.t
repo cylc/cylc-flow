@@ -64,7 +64,6 @@ cmp_ok stopcp.out <<< '1971'
 cmp_ok taskpool.out << '__OUT__'
 1971|hello|waiting
 __OUT__
-
 # Check that the command line stop point works (even after restart)...
 workflow_run_ok "${TEST_NAME_BASE}-2-restart" \
     cylc play --no-detach "${WORKFLOW_NAME}"

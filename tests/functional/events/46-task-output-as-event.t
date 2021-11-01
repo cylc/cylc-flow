@@ -28,7 +28,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[t1]]
         script="""
-cylc message -- ${CYLC_WORKFLOW_NAME} ${CYLC_TASK_JOB} \
+cylc message -- ${CYLC_WORKFLOW_ID} ${CYLC_TASK_JOB} \
     'rose' 'lily' 'iris' 'WARNING:poison ivy'
 """
         [[[outputs]]]

@@ -27,7 +27,7 @@
     [[spawner]]
         script = """
             # spawn wibble
-            cylc set-outputs $CYLC_WORKFLOW_NAME foo.20100101T0800Z
+            cylc set-outputs --flow=1 $CYLC_WORKFLOW_ID foo.20100101T0800Z
         """
     [[foo]]
         script = false

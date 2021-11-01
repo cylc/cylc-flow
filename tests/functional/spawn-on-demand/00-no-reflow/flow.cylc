@@ -11,5 +11,5 @@
     [[triggerer]]
          script = """
 # Cause only bar.1 to run again.
-cylc trigger ${CYLC_WORKFLOW_NAME} bar.1
+cylc trigger ${CYLC_WORKFLOW_ID} bar.1
          """

@@ -33,23 +33,23 @@ done
     [[SHOW]]
     [[show-workflow]]
         inherit = SHOW
-        script = cylc show "$CYLC_WORKFLOW_NAME" >>{{ TEST_OUTPUT_PATH }}-workflow
+        script = cylc show "$CYLC_WORKFLOW_ID" >>{{ TEST_OUTPUT_PATH }}-workflow
     [[show-task]]
         inherit = SHOW
-        script = cylc show "$CYLC_WORKFLOW_NAME" foo >>{{ TEST_OUTPUT_PATH }}-task
+        script = cylc show "$CYLC_WORKFLOW_ID" foo >>{{ TEST_OUTPUT_PATH }}-task
     [[show-taskinstance]]
         inherit = SHOW
-        script = cylc show "$CYLC_WORKFLOW_NAME" foo.20141106T0900Z \
+        script = cylc show "$CYLC_WORKFLOW_ID" foo.20141106T0900Z \
             >>{{ TEST_OUTPUT_PATH }}-taskinstance
     [[show-workflow-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_WORKFLOW_NAME" \
+        script = cylc show --json "$CYLC_WORKFLOW_ID" \
             >>{{ TEST_OUTPUT_PATH }}-json-workflow
     [[show-task-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_WORKFLOW_NAME" foo \
+        script = cylc show --json "$CYLC_WORKFLOW_ID" foo \
             >>{{ TEST_OUTPUT_PATH }}-json-task
     [[show-taskinstance-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_WORKFLOW_NAME" foo.20141106T0900Z \
+        script = cylc show --json "$CYLC_WORKFLOW_ID" foo.20141106T0900Z \
             >>{{ TEST_OUTPUT_PATH }}-json-taskinstance

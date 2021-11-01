@@ -20,7 +20,7 @@
     [[t-shutdown]]
         script = """
             # Shutdown and wait
-            cylc shutdown --now --max-polls=10 --interval=1 "${CYLC_WORKFLOW_NAME}"
+            cylc shutdown --now --max-polls=10 --interval=1 "${CYLC_WORKFLOW_ID}"
         """
     [[t-remote-2]]
         script = """
@@ -32,5 +32,5 @@
         script = """
             grep -q 'ERROR - garbage: initialisation did not complete' \
                 "${CYLC_WORKFLOW_LOG_DIR}/log"
-            cylc shutdown --now "${CYLC_WORKFLOW_NAME}"
+            cylc shutdown --now "${CYLC_WORKFLOW_ID}"
         """

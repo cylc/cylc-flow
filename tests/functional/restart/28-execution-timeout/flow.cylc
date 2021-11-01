@@ -9,7 +9,7 @@
         script="""
 cylc__job__wait_cylc_message_started
 sleep 1
-cylc stop --now --now "${CYLC_WORKFLOW_NAME}"
+cylc stop --now --now "${CYLC_WORKFLOW_ID}"
 sleep 60
 """
         [[[events]]]

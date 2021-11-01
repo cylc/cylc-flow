@@ -15,5 +15,5 @@
         script="""
 # Broadcast to an undefined namespace; fail if the broadcast succeeds (it
 # should fail).
-! cylc broadcast -s 'title=foo' -n 'zilch' "${CYLC_WORKFLOW_NAME}"
+! cylc broadcast -s 'title=foo' -n 'zilch' "${CYLC_WORKFLOW_ID}"
 """

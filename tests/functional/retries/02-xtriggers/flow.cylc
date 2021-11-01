@@ -7,7 +7,7 @@
     [[retry]]
         # capture task info - incl xtriggers
         pre-script = """
-            cylc show "${CYLC_WORKFLOW_NAME}" \
+            cylc show "${CYLC_WORKFLOW_ID}" \
                 "${CYLC_TASK_NAME}.${CYLC_TASK_CYCLE_POINT}" \
                 > "${CYLC_TASK_LOG_ROOT}-show"
         """
@@ -22,7 +22,7 @@
 
     [[test]]
         script = """
-            cylc cat-log "${CYLC_WORKFLOW_NAME}" > log
+            cylc cat-log "${CYLC_WORKFLOW_ID}" > log
 
             # get a list of the times cylc says tasks will retry after
             mapfile -t RETRY_TIMES \

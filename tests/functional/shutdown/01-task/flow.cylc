@@ -10,4 +10,4 @@
         script = "true"
     [[stopper]]
         script = """
-cylc shutdown $CYLC_WORKFLOW_NAME a.20100101T06; sleep 5"""
+cylc shutdown $CYLC_WORKFLOW_ID a.20100101T06; sleep 5"""

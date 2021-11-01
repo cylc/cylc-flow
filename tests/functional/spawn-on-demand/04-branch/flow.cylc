@@ -1,4 +1,4 @@
-# Check branching without SoS suicide triggers.
+# Check SOD branching without suicide triggers.
 # Scheduler should shut down normally even though one branch does not run.
 [scheduler]
     allow implicit tasks = True

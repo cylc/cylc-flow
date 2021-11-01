@@ -19,30 +19,20 @@
 # accessible hosts is selected.
 # n.b. We don't care about definition order in this test becuase all
 # hosts and platforms fail.
-export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
-
 . "$(dirname "$0")/test_header"
-
+set_test_number 12
 #-------------------------------------------------------------------------------
-set_test_number 9
-
 create_test_global_config "" "
 [platforms]
     [[badhostplatform1]]
         hosts = bad_host1, bad_host2
-        install target = ${CYLC_TEST_INSTALL_TARGET}
     [[badhostplatform2]]
         hosts = bad_host3, bad_host4
-        install target = ${CYLC_TEST_INSTALL_TARGET}
 
 [platform groups]
     [[badplatformgroup]]
         platforms = badhostplatform1, badhostplatform2
-    "
-#-------------------------------------------------------------------------------
-# Uncomment to print config for manual testing of workflow.
-# cylc config -i '[platforms]' >&2
-# cylc config -i '[platform groups]' >&2
+"
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -54,24 +44,37 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 logfile="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # Check workflow fails for the reason we want it to fail
-named_grep_ok "Workflow stalled with bad.1 (submit-failed)"\
-    "bad.1 did not complete required outputs" "$logfile"
+named_grep_ok \
+    "Workflow stalled with bad.1 (submit-failed)" \
+    "bad.1 did not complete required outputs" \
+    "$logfile"
 
 # Look for message indicating that remote init has failed on each bad_host
 # on every bad platform.
-for host in {1..4}; do
-    named_grep_ok "job submit fails for bad_host${host}"\
-        "\"remote-init\" failed.*\"bad_host${host}\"" \
-        "$logfile"
+platform='badhostplatform1'
+for host in {1..2}; do
+    host="bad_host${host}"
+    log_scan \
+        "${TEST_NAME_BASE}-remote-init-fail-${host}" \
+        "${logfile}" 1 0 \
+        "platform: ${platform} - remote init (on ${host})" \
+        "platform: ${platform} - Could not connect to ${host}."
+done
+platform='badhostplatform2'
+for host in {3..4}; do
+    host="bad_host${host}"
+    log_scan \
+        "${TEST_NAME_BASE}-remote-init-fail-${host}" \
+        "${logfile}" 1 0 \
+        "platform: ${platform} - remote init (on ${host})" \
+        "platform: ${platform} - Could not connect to ${host}."
 done
 
-# Look for message indicating that remote init has failed on both bad platforms
-# in the platform group.
-for platform in {1..2}; do
-    named_grep_ok "job submit fails for badplatform${platform}"\
-    "badhostplatform${platform}: Tried all the hosts"\
-    "$logfile"
-done
+# Look for message indicating that remote init has failed.
+named_grep_ok \
+    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
+    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
+    "${logfile}"
 
-# purge
+purge
 exit 0

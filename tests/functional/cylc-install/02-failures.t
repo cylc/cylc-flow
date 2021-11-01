@@ -20,7 +20,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 43
+set_test_number 45
 
 # Test source directory between runs that are not consistent result in error
 
@@ -222,6 +222,22 @@ touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: ${TEST_NAME} installation failed. Source directory should not be in ${RUN_DIR}
+__ERR__
+
+cd "${RUN_DIR}" || exit
+rm -rf "${BASE_NAME}"
+purge_rnd_workflow
+
+# -----------------------------------------------------------------------------
+# --run-name cannot be a path
+
+TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"
+BASE_NAME="test-install-${CYLC_TEST_TIME_INIT}"
+mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$_" || exit
+touch flow.cylc
+run_fail "${TEST_NAME}" cylc install --run-name=foo/bar/baz
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Run name cannot be a path. (You used foo/bar/baz)
 __ERR__
 
 cd "${RUN_DIR}" || exit

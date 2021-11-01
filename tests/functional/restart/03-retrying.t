@@ -33,7 +33,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
             cylc__job__wait_cylc_message_started
             if ((CYLC_TASK_TRY_NUMBER == 1)); then
-                cylc stop "${CYLC_WORKFLOW_NAME}"
+                cylc stop "${CYLC_WORKFLOW_ID}"
                 exit 1
             fi
         """

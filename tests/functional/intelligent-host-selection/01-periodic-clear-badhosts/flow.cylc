@@ -1,18 +1,15 @@
-
-[meta]
-title = "Try out scenarios for intelligent host selection."
-description = """
-Tasks
-- mixedhost contains some hosts that will and won't fail
-"""
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
 
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
     [[graph]]
-        R1 = mixedhosttask
+        R1 = a
 
 [runtime]
-    [[mixedhosttask]]
-        platform = mixedhostplatform
-        script = true
+    [[a]]
+        platform = fake-platform
+        submission retry delays = 1*PT1S

@@ -24,6 +24,6 @@
         platform = {{CYLC_TEST_PLATFORM}}
     [[killer]]
         script = """
-            cylc kill "${CYLC_WORKFLOW_NAME}" KILLABLE 1
-            cylc stop "${CYLC_WORKFLOW_NAME}"
+            cylc kill "${CYLC_WORKFLOW_ID}" KILLABLE 1
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """

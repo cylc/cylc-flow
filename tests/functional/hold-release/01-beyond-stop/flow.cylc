@@ -23,8 +23,8 @@
     [[holdrelease]]
         # When this task runs foo will be held beyond the stop point.
         script = """
-            cylc hold --after=1900 $CYLC_WORKFLOW_NAME
-            cylc release --all $CYLC_WORKFLOW_NAME
+            cylc hold --after=1900 $CYLC_WORKFLOW_ID
+            cylc release --all $CYLC_WORKFLOW_ID
         """
     [[foo]]
         script = true

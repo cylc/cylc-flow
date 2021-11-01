@@ -6,7 +6,7 @@
         R1 = t1 => t2
 [runtime]
     [[t1]]
-        script = cylc stop --now "${CYLC_WORKFLOW_NAME}"; sleep 61
+        script = cylc stop --now "${CYLC_WORKFLOW_ID}"; sleep 61
     [[t2]]
         script = true
         [[[events]]]

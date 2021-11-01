@@ -111,7 +111,7 @@ if TYPE_CHECKING:
 RE_CLOCK_OFFSET = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 RE_EXT_TRIGGER = re.compile(r'(.*)\s*\(\s*(.+)\s*\)\s*')
 RE_SEC_MULTI_SEQ = re.compile(r'(?![^(]+\)),')
-RE_WORKFLOW_NAME_VAR = re.compile(r'\${?CYLC_WORKFLOW_(REG_)?NAME}?')
+RE_WORKFLOW_ID_VAR = re.compile(r'\${?CYLC_WORKFLOW_(REG_)?ID}?')
 RE_TASK_NAME_VAR = re.compile(r'\${?CYLC_TASK_NAME}?')
 RE_VARNAME = re.compile(r'^[a-zA-Z_][\w]*$')
 
@@ -508,7 +508,7 @@ class WorkflowConfig:
         #     Cylc8
         # remove at:
         #     Cylc9
-        self.cfg['meta']['URL'] = RE_WORKFLOW_NAME_VAR.sub(
+        self.cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
             self.workflow, self.cfg['meta']['URL'])
         for name, cfg in self.cfg['runtime'].items():
             cfg['meta']['URL'] = cfg['meta']['URL'] % {
@@ -520,7 +520,7 @@ class WorkflowConfig:
             #     Cylc8
             # remove at:
             #     Cylc9
-            cfg['meta']['URL'] = RE_WORKFLOW_NAME_VAR.sub(
+            cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
                 self.workflow, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
@@ -588,7 +588,13 @@ class WorkflowConfig:
         Sets:
             self.cfg['scheduler']['cycle point time zone']
         """
+
         cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
+        if (
+            not cylc.flow.flags.cylc7_back_compat
+            and not cfg_cp_tz
+        ):
+            cfg_cp_tz = 'Z'
         # Get the original workflow run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
         if orig_cp_tz is None:
@@ -1393,9 +1399,6 @@ class WorkflowConfig:
             'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
             'CYLC_WORKFLOW_WORK_DIR': self.work_dir,
             'CYLC_WORKFLOW_SHARE_DIR': self.share_dir,
-            # BACK COMPAT: CYLC_WORKFLOW_DEF_PATH
-            #   from: Cylc7
-            'CYLC_WORKFLOW_DEF_PATH': self.run_dir,
         }.items():
             os.environ[key] = value
 

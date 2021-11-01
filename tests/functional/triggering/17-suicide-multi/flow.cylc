@@ -27,11 +27,11 @@
     [[showdown]]
         script = """
             if ! (( ${CYLC_TASK_CYCLE_POINT} % 3 )); then
-                cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'The-Good'
+                cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'The-Good'
             elif ! (( ( ${CYLC_TASK_CYCLE_POINT} + 1 ) % 3 )); then
-                cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'The-Bad'
+                cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'The-Bad'
             else
-                cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'The-Ugly'
+                cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'The-Ugly'
             fi
         """
         [[[outputs]]]

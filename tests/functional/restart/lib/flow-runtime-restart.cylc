@@ -11,7 +11,7 @@
         """
     [[shutdown]]
         inherit = OUTPUT
-        post-script = cylc shutdown "${CYLC_WORKFLOW_NAME}"
+        post-script = cylc shutdown "${CYLC_WORKFLOW_ID}"
         [[[meta]]]
             description = "Force a shutdown of the workflow"
         [[[environment]]]

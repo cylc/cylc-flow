@@ -40,6 +40,6 @@
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[poller]]
         script = """
-            cylc poll "${CYLC_WORKFLOW_NAME}" 'POLLABLE'
-            cylc stop "${CYLC_WORKFLOW_NAME}"
+            cylc poll "${CYLC_WORKFLOW_ID}" 'POLLABLE'
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """

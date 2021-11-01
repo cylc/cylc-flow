@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+shift # the first argument to SSH is the host we are connecting to (ignore it)
+
+COUNT_FILE="$(dirname "$0")/count"
+
+echo 'x' >> "$COUNT_FILE"
+
+if [[ $(wc -l "$COUNT_FILE" | cut -d ' ' -f 1) -eq 1 ]]; then
+    # the first time we make it look like an SSH failure
+    exit 255
+else
+    # from then on we make it look like SSH is working fine
+
+    # do the bare minimum to make it look like remote-init worked
+    echo 'KEYSTARTxxxxKEYEND'
+    echo 'REMOTE INIT DONE'
+    exit 0
+fi

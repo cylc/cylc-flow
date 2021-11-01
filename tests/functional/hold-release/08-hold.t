@@ -33,18 +33,18 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[holdrelease]]
         script = """
 cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_workflow_log -F 'spawned foo.1'
-cylc__job__poll_grep_workflow_log -F 'spawned bar.1'
-cylc__job__poll_grep_workflow_log -F 'spawned cheese.1'
-cylc__job__poll_grep_workflow_log -F 'spawned jam.1'
-cylc__job__poll_grep_workflow_log -F 'spawned cat1.1'
-cylc__job__poll_grep_workflow_log -F 'spawned cat2.1'
-cylc__job__poll_grep_workflow_log -F 'spawned dog1.1'
-cylc__job__poll_grep_workflow_log -F 'spawned dog2.1'
-cylc hold ${CYLC_WORKFLOW_NAME} '*FF.1'  # inexact fam
-cylc hold ${CYLC_WORKFLOW_NAME} 'TOAST.1'  # exact fam
-cylc hold ${CYLC_WORKFLOW_NAME} 'cat*.1'  # inexact tasks
-cylc hold ${CYLC_WORKFLOW_NAME} 'dog1.1'  # exact tasks
+cylc__job__poll_grep_workflow_log -E 'foo\.1 .* spawned'
+cylc__job__poll_grep_workflow_log -E 'bar\.1 .* spawned'
+cylc__job__poll_grep_workflow_log -E 'cheese\.1 .* spawned'
+cylc__job__poll_grep_workflow_log -E 'jam\.1 .* spawned'
+cylc__job__poll_grep_workflow_log -E 'cat1\.1 .* spawned'
+cylc__job__poll_grep_workflow_log -E 'cat2\.1 .* spawned'
+cylc__job__poll_grep_workflow_log -E 'dog1\.1 .* spawned'
+cylc__job__poll_grep_workflow_log -E 'dog2\.1 .* spawned'
+cylc hold ${CYLC_WORKFLOW_ID} '*FF.1'  # inexact fam
+cylc hold ${CYLC_WORKFLOW_ID} 'TOAST.1'  # exact fam
+cylc hold ${CYLC_WORKFLOW_ID} 'cat*.1'  # inexact tasks
+cylc hold ${CYLC_WORKFLOW_ID} 'dog1.1'  # exact tasks
 """
     [[STUFF]]
     [[TOAST]]
@@ -64,7 +64,7 @@ cylc hold ${CYLC_WORKFLOW_NAME} 'dog1.1'  # exact tasks
         inherit = STOP
         script = """
         sleep 5
-        cylc stop "${CYLC_WORKFLOW_NAME}"
+        cylc stop "${CYLC_WORKFLOW_ID}"
         """
 __FLOW_CONFIG__
 

@@ -9,4 +9,4 @@
     [[a,c]]
         script = "true"
     [[stopper]]
-        script = "cylc shutdown $CYLC_WORKFLOW_NAME 2010-01-01; sleep 5"
+        script = "cylc shutdown $CYLC_WORKFLOW_ID 2010-01-01; sleep 5"

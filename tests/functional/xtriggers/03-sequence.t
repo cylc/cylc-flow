@@ -49,7 +49,7 @@ run_ok "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
 # Run workflow; it will stall waiting on the never-satisfied xtriggers.
 cylc play "${WORKFLOW_NAME}"
 
-poll_grep_workflow_log 'start.2025.*succeeded'
+poll_grep_workflow_log -E 'start\.2025 .* => succeeded'
 
 cylc show "${WORKFLOW_NAME}" foo.2026 | grep -E '^  - xtrigger' > foo.2026.log
 

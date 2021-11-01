@@ -1,0 +1,4 @@
+Initial point: 1
+Final point: 1
+[good.1] -triggered off []
+[ugly.1] -triggered off ['good.1']

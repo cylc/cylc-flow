@@ -25,7 +25,7 @@ set_test_number 5
 
 init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
 [scheduler]
-    UTC mode = False
+    cycle point time zone = +0100
     allow implicit tasks = True
 [scheduling]
     initial cycle point = now

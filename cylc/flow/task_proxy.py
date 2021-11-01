@@ -20,11 +20,12 @@ from collections import Counter
 from contextlib import suppress
 from fnmatch import fnmatchcase
 from time import time
-from typing import Any, Dict, List, Tuple, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
 import cylc.flow.cycling.iso8601
+from cylc.flow import LOG
 from cylc.flow.cycling.loader import standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import get_platform
@@ -125,10 +126,8 @@ class TaskProxy:
             objects.
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
-        .flow_label:
-            flow label
-        .reflow:
-            flow on from outputs
+        .flow_nums:
+            flow_nums
         .waiting_on_job_prep:
             task waiting on job prep
 
@@ -136,12 +135,11 @@ class TaskProxy:
         tdef: The definition object of this task.
         start_point: Start point to calculate the task's cycle point on
             start-up or the cycle point for subsequent tasks.
-        flow_label: Which flow within the scheduler this task belongs to.
+        flow_nums: Which flow within the scheduler this task belongs to.
         status: Task state string.
         is_held: True if the task is held, else False.
         submit_num: Number of times the task has attempted job submission.
         is_late: Is the task late?
-        reflow: Flow on from outputs. TODO: better description for arg?
     """
 
     # Memory optimization - constrain possible attributes to this list.
@@ -168,8 +166,7 @@ class TaskProxy:
         'timeout',
         'try_timers',
         'graph_children',
-        'flow_label',
-        'reflow',
+        'flow_nums',
         'waiting_on_job_prep',
     ]
 
@@ -177,12 +174,11 @@ class TaskProxy:
         self,
         tdef: 'TaskDef',
         start_point: 'PointBase',
-        flow_label: Optional[str],
+        flow_nums: Optional[Set[int]] = None,
         status: str = TASK_STATUS_WAITING,
         is_held: bool = False,
         submit_num: int = 0,
         is_late: bool = False,
-        reflow: bool = True
     ) -> None:
 
         self.tdef = tdef
@@ -190,8 +186,10 @@ class TaskProxy:
             submit_num = 0
         self.submit_num = submit_num
         self.jobs: List[str] = []
-        self.flow_label = flow_label
-        self.reflow = reflow
+        if flow_nums is None:
+            self.flow_nums = set()
+        else:
+            self.flow_nums = flow_nums
         self.point = start_point
         self.identity: str = TaskID.get(self.tdef.name, self.point)
 
@@ -211,7 +209,7 @@ class TaskProxy:
             'execution_time_limit': None,
             'job_runner_name': None,
             'submit_method_id': None,
-            'flow_label': None
+            'flow_nums': set()
         }
 
         self.local_job_file_path: Optional[str] = None
@@ -239,8 +237,18 @@ class TaskProxy:
         return f"<{self.__class__.__name__} '{self.identity}'>"
 
     def __str__(self) -> str:
-        """Stringify using "self.identity"."""
-        return self.identity
+        """Stringify using identity, state, submit_num, and flow_nums.
+
+        Ignore flow_nums if only the original flow is present.
+        """
+        res = (
+            f"{self.identity} "
+            f"{self.state} "
+            f"job:{self.submit_num:02d}"
+        )
+        if self.flow_nums:
+            res += f" flows:{','.join(str(i) for i in self.flow_nums)}"
+        return res
 
     def copy_to_reload_successor(self, reload_successor):
         """Copy attributes to successor on reload of this task proxy."""
@@ -402,3 +410,17 @@ class TaskProxy:
         return any(
             fnmatchcase(ns, name) for ns in self.tdef.namespace_hierarchy
         )
+
+    def merge_flows(self, flow_nums: Set) -> None:
+        """Merge another set of flow_nums with mine."""
+        self.flow_nums.update(flow_nums)
+
+    def state_reset(
+        self, status=None, is_held=None, is_queued=None, is_runahead=None
+    ) -> bool:
+        """Set new state and log the change. Return whether it changed."""
+        before = str(self)
+        if self.state.reset(status, is_held, is_queued, is_runahead):
+            LOG.info(f"[{before}] => {self.state}")
+            return True
+        return False

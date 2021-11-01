@@ -10,4 +10,4 @@
         [[[events]]]
             started handlers = sleeper.sh %(id)s
     [[stopper]]
-        script = cylc stop "${CYLC_WORKFLOW_NAME}"
+        script = cylc stop "${CYLC_WORKFLOW_ID}"

@@ -199,7 +199,8 @@ async def test_nodes_mutator(mock_flow, flow_args):
     flow_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
     ids = [parse_node_id(n, TASK_PROXIES) for n in mock_flow.node_ids]
     response = await mock_flow.resolvers.nodes_mutator(
-        None, 'force_trigger_tasks', ids, flow_args, {}
+        None, 'force_trigger_tasks', ids, flow_args,
+        {"reflow": False, "flow_descr": ""}
     )
     assert response[0]['id'] == mock_flow.id
 

@@ -18,8 +18,8 @@ cylc__job__wait_cylc_message_started
     echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello1"
     echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello2"
 } >>"${CYLC_TASK_LOG_ROOT}.status"
-cylc__job__poll_grep_workflow_log -F '[speaker1.1] status=running: (polled)hello1'
-cylc__job__poll_grep_workflow_log -F '[speaker1.1] status=running: (polled)hello2'
+cylc__job__poll_grep_workflow_log -E 'speaker1\.1 running .* \(polled\)hello1'
+cylc__job__poll_grep_workflow_log -E 'speaker1\.1 running .* \(polled\)hello2'
 """
         [[[outputs]]]
             hello1 = "hello1"
@@ -32,11 +32,11 @@ cylc__job__wait_cylc_message_started
 # get sent back to the workflow
 echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|greet" \
     >>"${CYLC_TASK_LOG_ROOT}.status"
-cylc__job__poll_grep_workflow_log -F '[speaker2.1] status=running: (polled)greet'
+cylc__job__poll_grep_workflow_log -E 'speaker2\.1 running .* \(polled\)greet'
 """
         [[[outputs]]]
             greet = "greet"
     [[finisher]]
         script=true
     [[poller]]
-        script=cylc poll "${CYLC_WORKFLOW_NAME}" 'speaker[12]'
+        script=cylc poll "${CYLC_WORKFLOW_ID}" 'speaker[12]'

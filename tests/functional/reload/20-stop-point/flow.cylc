@@ -15,11 +15,11 @@
 
 [runtime]
     [[set-stop-point]]
-        script = cylc stop "${CYLC_WORKFLOW_NAME}" '3'
+        script = cylc stop "${CYLC_WORKFLOW_ID}" '3'
     [[reload]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc reload "${CYLC_WORKFLOW_NAME}"
+            cylc reload "${CYLC_WORKFLOW_ID}"
             cylc__job__poll_grep_workflow_log -F 'Reload completed'
         """
         [[[job]]]

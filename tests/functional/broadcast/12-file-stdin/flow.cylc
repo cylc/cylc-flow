@@ -6,7 +6,7 @@
 [runtime]
     [[t1]]
         script = """
-cylc broadcast -n 't2' -F - "${CYLC_WORKFLOW_NAME}" \
+cylc broadcast -n 't2' -F - "${CYLC_WORKFLOW_ID}" \
     <"${CYLC_WORKFLOW_RUN_DIR}/broadcast.cylc"
 """
     [[t2]]
