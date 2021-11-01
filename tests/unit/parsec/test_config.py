@@ -14,10 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from decimal import InvalidContext
-from os import spawnl
 import tempfile
-from _pytest.config import Config
 
 import pytest
 
@@ -262,6 +259,9 @@ def test_get_item(sample_spec_2):
             with pytest.raises(config.InvalidConfigError):
                 parsec_config.get(keys=['section', 'a'], sparse=True)
 
+            with pytest.raises(config.ItemNotFoundError):
+                parsec_config.get(keys=['allow_many', 'a'], sparse=True)
+
 
 def test_not_single_item_error():
     error = config.NotSingleItemError("internal error")
@@ -324,9 +324,10 @@ def test__get_namespace_parents(parse_config):
     """It returns a list of parents and nothing else"""
     def spec_():
         with Conf('myconfig') as myconf:
-            with Conf('manythings'):
-                Conf('<thing>')
+            with Conf('some_parent'):
+                with Conf('manythings'):
+                    Conf('<thing>')
 
         return myconf
     cfg = ParsecConfig(spec_())
-    assert cfg.manyparents == ['manythings']
+    assert cfg.manyparents == [['some_parent', 'manythings']]

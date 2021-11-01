@@ -17,7 +17,7 @@
 from copy import deepcopy
 import re
 from textwrap import dedent
-from typing import Optional, List
+from typing import List
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
@@ -114,22 +114,16 @@ class ParsecConfig:
         parents = []
         if keys:
             for key in keys:
-                if (
-                    key not in self.get(parents) and
-                    (
-                        (parents and parents[-1] not in self.manyparents) or
-                        (not parents and key not in self.manyparents)
-                    )
-                ):
-                    raise InvalidConfigError(
-                        itemstr(parents, key), self.spec.name)
-                else:
-                    try:
-                        cfg = cfg[key]
-                    except (KeyError, TypeError):
+                try:
+                    cfg = cfg[key]
+                except (KeyError, TypeError):
+                    if parents in self.manyparents or key in self.get(parents):
                         raise ItemNotFoundError(itemstr(parents, key))
-                    else:
-                        parents.append(key)
+                    raise InvalidConfigError(
+                        itemstr(parents, key), self.spec.name
+                    )
+                else:
+                    parents.append(key)
 
         return cfg
 
@@ -176,8 +170,8 @@ class ParsecConfig:
         cfg = self.get(keys, sparse)
         printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
 
-    def _get_namespace_parents(self) -> Optional[List[str]]:
-        """get a list of the parents of config items which can be user defined.
+    def _get_namespace_parents(self) -> List[List[str]]:
+        """Get a list of the parents of config items which can be user defined.
 
         For example, where
 
@@ -189,16 +183,15 @@ class ParsecConfig:
 
         this function will return ``[runtime]``.
         """
-        manyparents: Optional[List[str]]
         try:
-            manyparents = [
-                list(key[1].parents())[0].name
-                for key in self.spec.walk()
-                if key[1].name == '__MANY__'
+            return [
+                [parent.name for parent in key.parents()][-2::-1]
+                # that slice removes the top-level name and reverses
+                for _, key in self.spec.walk()
+                if key.name == '__MANY__'
             ]
         except AttributeError:
-            manyparents = None
-        return manyparents
+            return []
 
 
 class ConfigNode(ContextNode):
