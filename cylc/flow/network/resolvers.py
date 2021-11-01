@@ -721,7 +721,7 @@ class Resolvers(BaseResolvers):
         ))
         return (True, 'Command queued')
 
-    def force_trigger_tasks(self, tasks, reflow, flow_descr):
+    def force_trigger_tasks(self, tasks, reflow=False, flow_descr=None):
         """Trigger submission of task jobs where possible.
 
         Args:
