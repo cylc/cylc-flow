@@ -66,7 +66,7 @@ class WorkflowSpecifics:
     point_parser: 'TimePointParser' = None
     recurrence_parser: 'TimeRecurrenceParser' = None
     iso8601_parsers: Optional[
-        Tuple['DurationParser', 'TimePointParser', 'TimeRecurrenceParser']
+        Tuple['TimePointParser', 'DurationParser', 'TimeRecurrenceParser']
     ] = None
 
 
