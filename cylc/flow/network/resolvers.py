@@ -17,6 +17,7 @@
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
 import asyncio
+from contextlib import suppress
 from fnmatch import fnmatchcase
 import logging
 import queue
@@ -52,6 +53,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DELTA_SLEEP_INTERVAL = 0.5
+# Delay before carrying on with the next delta,
+# rougly DELTA_PROC_WAIT*DELTA_SLEEP_INTERVAL seconds (if queue is empty).
+DELTA_PROC_WAIT = 10
 
 
 def filter_none(dictionary):
@@ -194,10 +198,11 @@ def get_flow_data_from_ids(data_store, native_ids):
 
 def get_data_elements(flow, nat_ids, element_type):
     """Return data elements by id."""
+    flow_element = flow[element_type]
     return [
-        flow[element_type][n_id]
+        flow_element[n_id]
         for n_id in nat_ids
-        if n_id in flow[element_type]
+        if n_id in flow_element
     ]
 
 
@@ -206,7 +211,12 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
 
     def __init__(self, data_store_mgr):
         self.data_store_mgr = data_store_mgr
+        # Used with subscriptions for a temporary delta-store,
+        # [sub_id][w_id] = store
         self.delta_store = {}
+        # Used to serialised deltas from a single workflow, needed for
+        # the management of a common data object.
+        self.delta_processing_flows = {}
 
     # Query resolvers
     async def get_workflow_by_id(self, args):
@@ -383,8 +393,21 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
         sub_id = uuid4()
         info.variable_values['backend_sub_id'] = sub_id
         self.delta_store[sub_id] = {}
+
+        op_id = root
+        if 'ops_queue' not in info.context:
+            info.context['ops_queue'] = {}
+        info.context['ops_queue'][op_id] = queue.Queue()
+        op_queue = info.context['ops_queue'][op_id]
+        self.delta_processing_flows[sub_id] = set()
+        delta_processing_flows = self.delta_processing_flows[sub_id]
+
         delta_queues = self.data_store_mgr.delta_queues
         deltas_queue = queue.Queue()
+
+        counters = {}
+        delta_yield_queue = queue.Queue()
+        flow_delta_queues = {}
         try:
             # Iterate over the queue yielding deltas
             w_ids = workflow_ids
@@ -408,27 +431,50 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
                                     workflow_id=w_id)
                                 delta_store[DELTA_ADDED] = (
                                     self.data_store_mgr.data[w_id])
-                                self.delta_store[sub_id][w_id] = delta_store
-                                if sub_resolver is None:
-                                    yield delta_store
-                                else:
-                                    result = await sub_resolver(
-                                        root, info, **args)
-                                    if result:
-                                        yield result
+                                deltas_queue.put(
+                                    (w_id, 'initial_burst', delta_store))
                     elif w_id in self.delta_store[sub_id]:
                         del self.delta_store[sub_id][w_id]
                 try:
-                    w_id, topic, delta_store = deltas_queue.get(False)
-                    if topic != 'shutdown':
+                    with suppress(queue.Empty):
+                        w_id, topic, delta_store = deltas_queue.get(False)
+
+                        if w_id not in flow_delta_queues:
+                            counters[w_id] = 0
+                            flow_delta_queues[w_id] = queue.Queue()
+                        flow_delta_queues[w_id].put((topic, delta_store))
+
+                    # Only yield deltas from the same workflow if previous
+                    # delta has finished processing.
+                    for flow_id, flow_queue in flow_delta_queues.items():
+                        if flow_queue.empty():
+                            continue
+                        elif flow_id in delta_processing_flows:
+                            if counters[flow_id] < DELTA_PROC_WAIT:
+                                if delta_yield_queue.empty():
+                                    counters[flow_id] += 1
+                                    await asyncio.sleep(DELTA_SLEEP_INTERVAL)
+                                continue
+                            delta_processing_flows.remove(flow_id)
+                        counters[flow_id] = 0
+                        topic, delta_store = flow_queue.get()
+                        delta_yield_queue.put((flow_id, topic, delta_store))
+
+                    w_id, topic, delta_store = delta_yield_queue.get(False)
+
+                    # Handle shutdown delta, don't ignore.
+                    if topic == 'shutdown':
+                        delta_store['shutdown'] = True
+                    else:
+                        # ignore deltas that are more frequent than interval.
                         new_time = time()
                         elapsed = new_time - old_time
-                        # ignore deltas that are more frequent than interval.
                         if elapsed <= interval:
                             continue
                         old_time = new_time
-                    else:
-                        delta_store['shutdown'] = True
+
+                    delta_processing_flows.add(w_id)
+                    op_queue.put((sub_id, w_id))
                     self.delta_store[sub_id][w_id] = delta_store
                     if sub_resolver is None:
                         yield delta_store
@@ -450,6 +496,12 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
             if sub_id in self.delta_store:
                 del self.delta_store[sub_id]
             yield None
+
+    async def flow_delta_processed(self, context, op_id):
+        if 'ops_queue' in context:
+            with suppress(queue.Empty, KeyError):
+                sub_id, w_id = context['ops_queue'][op_id].get(False)
+                self.delta_processing_flows[sub_id].remove(w_id)
 
 
 class Resolvers(BaseResolvers):

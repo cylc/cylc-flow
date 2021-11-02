@@ -421,7 +421,6 @@ class IgnoreFieldMiddleware:
                                 and not field_value.ListFields()
                             )
                     ):
-                        root[field_name] = None
                         return None
                 if (
                         info.operation.operation in self.ASYNC_OPS
