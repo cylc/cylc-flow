@@ -26,7 +26,7 @@ first host remains in the set of unreachable (bad) hosts, even though the
 failure might have been transitory. For this reason, this plugin periodically
 clears the set.
 
-Suggested interval - on the order of an hour.
+Suggested interval - an hour.
 """
 
 from cylc.flow.main_loop import periodic

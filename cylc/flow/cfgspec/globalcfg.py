@@ -653,7 +653,7 @@ with Conf('global.cylc', desc='''
                     Alternative location for the run dir.
 
                     If specified, the workflow run directory will
-                    be created in ``<this-path>/cylc-run/<workflow-name>``
+                    be created in ``<this config>/cylc-run/<workflow-name>``
                     and a symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-name>``.
                     If not specified the workflow run directory will be created

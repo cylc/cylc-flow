@@ -257,7 +257,7 @@ with Conf(
 
             The time zone you specify here will be used only for
             writing/dumping cycle points. Cycle points that are input without
-            time zones will to UTC (``Z``) unless
+            time zones will default to UTC (``Z``) unless
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone` or
             is set or
             :ref:`Cylc 7 back compatibility mode is enabled <backcompat>`.
@@ -460,7 +460,7 @@ with Conf(
             - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
         ''')
         with Conf('templates', desc='''
-            Cylc will expand each parameterized task name  using a string
+            Cylc will expand each parameterized task name using a string
             template.
 
             You can set templates for any parameter name here to override the
@@ -554,9 +554,9 @@ with Conf(
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules to allow only some initial datetime cycle points.
 
-            .. admonition:: use case
+            .. admonition:: Use Case
 
-               Use case: Writing a workflow where users may change the initial
+               Writing a workflow where users may change the initial
                cycle point, but where only some initial cycle points are
                reasonable.
 
@@ -730,7 +730,7 @@ with Conf(
             ``foo(PT1H30M), bar(PT1.5H), baz``
             ''')
             Conf('external-trigger', VDR.V_STRING_LIST, desc='''
-                Legacy External Trigger definition section.
+                Legacy external trigger definition section.
 
                 .. deprecated:: 8.0.0
 
@@ -976,7 +976,7 @@ with Conf(
                 Custom script invoked by the task job script before the task
                 execution environment is configured.
 
-                By running before the task execution environment is configured
+                By running before the task execution environment is configured,
                 this script does not have
                 access to any workflow or task environment variables. It can be
                 an external command or script, or inlined scripting. The
@@ -989,7 +989,7 @@ with Conf(
                 cylc-defined environment (workflow and task identity, etc.) and
                 the user-defined task runtime environment.
 
-                The env-script has access to the cylc environment (and the task
+                The env-script has access to the Cylc environment (and the task
                 environment has access to variables defined by this scripting).
                 It can be an external command or script, or inlined scripting.
             ''') + get_script_common_text(this='env-script'))
@@ -1187,7 +1187,7 @@ with Conf(
                 Task configuration for workflow *simulation* and *dummy* run
                 modes.
 
-                For a full discripting of simulation and dummy run modes seee
+                For a full description of simulation and dummy run modes see
                 :ref:`SimulationMode`.
             '''):
                 Conf('default run length', VDR.V_INTERVAL, DurationFloat(10),
