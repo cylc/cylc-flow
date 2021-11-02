@@ -125,6 +125,8 @@ def test_check_nested_dirs(tmp_run_dir: Callable):
     'test_install_path, existing_install_path',
     [
         (f'{"child/"*i}', '') for i in range(2, MAX_SCAN_DEPTH + 3)
+    ] + [
+        ('', f'{"child/"*1}')
     ]
 )
 def test_check_nested_dirs_install_dirs(
