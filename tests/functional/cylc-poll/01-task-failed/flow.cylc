@@ -22,7 +22,7 @@ suicide via a :fail trigger, and the workflow to shut down successfully."""
            exit 1
         """
     [[b]]
-        script = cylc poll "$CYLC_WORKFLOW_NAME" 'a'
+        script = cylc poll "$CYLC_WORKFLOW_ID" 'a'
     [[handled]]
         # (allows a:fail to be removed as handled)
         script = true

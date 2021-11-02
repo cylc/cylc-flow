@@ -56,7 +56,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
             case "${CYLC_TASK_CYCLE_POINT}" in
             2015)
-                cylc stop "${CYLC_WORKFLOW_NAME}"
+                cylc stop "${CYLC_WORKFLOW_ID}"
                 :;;
             esac
         """

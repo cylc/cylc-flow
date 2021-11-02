@@ -16,8 +16,8 @@
     [[foo]]
         script = """
 cylc__job__wait_cylc_message_started
-cylc message -- "${CYLC_WORKFLOW_NAME} "${CYLC_TASK_JOB} "file 1 done"
-cylc message -- "${CYLC_WORKFLOW_NAME} "${CYLC_TASK_JOB} "file 2 done"
+cylc message -- "${CYLC_WORKFLOW_ID} "${CYLC_TASK_JOB} "file 1 done"
+cylc message -- "${CYLC_WORKFLOW_ID} "${CYLC_TASK_JOB} "file 2 done"
 """
         [[[outputs]]]
             out1 = "file 1 done"

@@ -3,6 +3,6 @@
         R1 = foo => bar
 [runtime]
     [[foo]]
-        script = cylc trigger "${CYLC_WORKFLOW_NAME}" 'bar.1'
+        script = cylc trigger "${CYLC_WORKFLOW_ID}" 'bar.1'
     [[bar]]
         script = true

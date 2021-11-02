@@ -58,7 +58,7 @@ fragment tProxy on TaskProxy {
   isHeld
   isQueued
   isRunahead
-  flowLabel
+  flowNums
   firstParent {
     id
   }
@@ -152,8 +152,8 @@ def get_option_parser():
         "-t", "--tasks", help="Task states only.",
         action="store_const", const="tasks", dest="disp_form")
     parser.add_option(
-        "-f", "--flow", help="Print flow label with tasks.",
-        action="store_true", default=False, dest="flow")
+        "-f", "--flows", help="Print flow numbers with tasks.",
+        action="store_true", default=False, dest="show_flows")
     parser.add_option(
         "-r", "--raw", "--raw-format",
         help='Display raw format.',
@@ -265,8 +265,8 @@ def main(_, options: 'Values', workflow: str) -> None:
                                       else 'not-queued')
                         values.append('runahead' if item['isRunahead']
                                       else 'not-runahead')
-                        if options.flow:
-                            values.append(item['flowLabel'])
+                        if options.show_flows:
+                            values.append(item['flowNums'])
                         print(', '.join(values))
     except Exception as exc:
         raise CylcError(

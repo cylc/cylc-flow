@@ -65,7 +65,7 @@ cylc__job__main() {
     # Developer Note:
     # We were using a HERE document for writing info here until we notice that
     # Bash uses temporary files for HERE documents, which can be inefficient.
-    echo "Workflow : ${CYLC_WORKFLOW_NAME}"
+    echo "Workflow : ${CYLC_WORKFLOW_ID}"
     echo "Task Job : ${CYLC_TASK_JOB} (try ${CYLC_TASK_TRY_NUMBER})"
     echo "User@Host: ${USER}@${host}"
     echo
@@ -113,7 +113,7 @@ cylc__job__main() {
     #     Cylc9
     export CYLC_SUITE_SHARE_DIR="${CYLC_WORKFLOW_SHARE_DIR}"
     export CYLC_SUITE_SHARE_PATH="${CYLC_WORKFLOW_SHARE_DIR}"
-    export CYLC_SUITE_NAME="${CYLC_WORKFLOW_NAME}"
+    export CYLC_SUITE_NAME="${CYLC_WORKFLOW_ID}"
     export CYLC_SUITE_LOG_DIR="${CYLC_WORKFLOW_LOG_DIR}"
     export CYLC_SUITE_INITIAL_CYCLE_POINT="${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}"
     export CYLC_SUITE_INITIAL_CYCLE_TIME="${CYLC_WORKFLOW_INITIAL_CYCLE_POINT}"
@@ -123,12 +123,11 @@ cylc__job__main() {
     export CYLC_SUITE_UUID="${CYLC_WORKFLOW_UUID}"
     export CYLC_SUITE_RUN_DIR="${CYLC_WORKFLOW_RUN_DIR}"
     export CYLC_SUITE_DEF_PATH="${CYLC_WORKFLOW_RUN_DIR}"
-    export CYLC_WORKFLOW_DEF_PATH="${CYLC_WORKFLOW_RUN_DIR}"
     export CYLC_TASK_CYCLE_TIME="${CYLC_TASK_CYCLE_POINT}"
     export CYLC_TASK_WORK_PATH="${CYLC_TASK_WORK_DIR}"
 
     # Send task started message
-    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'started' &
+    cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'started' &
     CYLC_TASK_MESSAGE_STARTED_PID=$!
     # System paths:
     # * workflow directory (installed run-dir first).
@@ -162,7 +161,7 @@ cylc__job__main() {
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
-    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" 'succeeded' || true
+    cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'succeeded' || true
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
@@ -279,7 +278,7 @@ cylc__job_finish_err() {
         kill -s "${signal}" -- "${CYLC_TASK_USER_SCRIPT_PID}" 2>'/dev/null' || true
     fi
     grep -q "^CYLC_JOB_EXIT=" "${CYLC_TASK_LOG_ROOT}.status" ||
-    cylc message -- "${CYLC_WORKFLOW_NAME}" "${CYLC_TASK_JOB}" "$@" &
+    cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" "$@" &
     CYLC_TASK_MESSAGE_FINISHED_PID=$!
     if "${run_err_script}"; then
         cylc__job__run_inst_func 'err_script' "${signal}" >&2

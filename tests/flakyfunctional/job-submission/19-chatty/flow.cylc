@@ -21,7 +21,7 @@
         # the HOPEFUL tasks from launching normally.
         R1 = "starter:start => NOHOPE"
         R1 = "starter => HOPEFUL"
-        R1 = HOPEFUL:succeeded-all
+        R1 = HOPEFUL:succeed-all
         R1 = "NOHOPE:submit-fail-all => stopper"
 
 [runtime]
@@ -36,4 +36,4 @@
     [[h0, h1, h2, h3, h4, h5, h6, h7, h8, h9]]
         inherit = HOPEFUL
     [[stopper]]
-        script = cylc stop "${CYLC_WORKFLOW_NAME}"
+        script = cylc stop "${CYLC_WORKFLOW_ID}"

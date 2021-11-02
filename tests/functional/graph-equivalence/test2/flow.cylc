@@ -6,17 +6,17 @@
 [runtime]
     [[a]]
         script = """
-cylc show "${CYLC_WORKFLOW_NAME}" 'a.1' \
+cylc show "${CYLC_WORKFLOW_ID}" 'a.1' \
     | sed -n "/prerequisites/,/outputs/p" > {{TEST_OUTPUT_PATH}}/a-prereqs
 """
     [[b]]
         script = """
-cylc show "${CYLC_WORKFLOW_NAME}" 'b.1' \
+cylc show "${CYLC_WORKFLOW_ID}" 'b.1' \
     | sed -n "/prerequisites/,/outputs/p" > {{TEST_OUTPUT_PATH}}/b-prereqs
 """
     [[c]]
         script = """
-cylc show "${CYLC_WORKFLOW_NAME}" 'c.1' \
+cylc show "${CYLC_WORKFLOW_ID}" 'c.1' \
     | sed -n "/prerequisites/,/outputs/p" > {{TEST_OUTPUT_PATH}}/c-prereqs
 """
 

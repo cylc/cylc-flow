@@ -5,9 +5,9 @@
 [runtime]
     [[foo]]
         script="""
-cylc broadcast "${CYLC_WORKFLOW_NAME}" -s '[environment]CYLC_TEST_VAR=1'
+cylc broadcast "${CYLC_WORKFLOW_ID}" -s '[environment]CYLC_TEST_VAR=1'
 cp -p "${CYLC_WORKFLOW_RUN_DIR}/flow-2.cylc" "${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
-cylc reload "${CYLC_WORKFLOW_NAME}"
+cylc reload "${CYLC_WORKFLOW_ID}"
 sleep 5
-cylc trigger "${CYLC_WORKFLOW_NAME}" 'bar.1'
+cylc trigger "${CYLC_WORKFLOW_ID}" 'bar.1'
 """

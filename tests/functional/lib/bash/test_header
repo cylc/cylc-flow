@@ -129,7 +129,12 @@
 #         Install a reference workflow using `install_workflow`, run a validation
 #         test on the workflow and run the reference workflow with `workflow_run_ok`.
 #         Expect 2 OK tests.
-#
+#     install_and_validate
+#         The first part of reftest, to allow separate use.
+#         Expect 1 OK test.
+#     reftest_run
+#         The guts of reftest, to allow separate use.
+#         Expect 1 OK test.
 #     create_test_global_config [PRE [POST]]
 #         Create a new global config file $PWD/etc from global-tests.cylc
 #         with PRE and POST pre- and ap-pended (PRE for e.g. jinja2 shebang).
@@ -193,7 +198,7 @@ done
 
 TEST_NUMBER=0
 
-if command -v lsof; then
+if command -v lsof >/dev/null; then
     HAS_LSOF=true
 else
     HAS_LSOF=false
@@ -754,19 +759,34 @@ mock_smtpd_kill() {  # Logic borrowed from Rose
     fi
 }
 
-reftest() {
-    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
+install_and_validate() {
+    # First part of the reftest function, to allow separate use.
+    # Expect 1 OK test.
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}-validate"
     install_workflow "$@"
     run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
+}
+
+reftest_run() {
+    # Guts of the reftest function, to allow separate use.
+    # Expect 1 OK test.
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}-run"
     if [[ -n "${REFTEST_OPTS:-}" ]]; then
-        workflow_run_ok "${TEST_NAME}-run" \
+        workflow_run_ok "${TEST_NAME}" \
             cylc play --reference-test --debug --no-detach \
             "${REFTEST_OPTS}" "${WORKFLOW_NAME}"
     else
-        workflow_run_ok "${TEST_NAME}-run" \
+        workflow_run_ok "${TEST_NAME}" \
             cylc play --reference-test --debug --no-detach \
             "${WORKFLOW_NAME}"
     fi
+}
+
+reftest() {
+    # Install, validate, run, and purge, a reference test.
+    # Expect 2 OK tests.
+    install_and_validate "$@"
+    reftest_run "$@"
     # shellcheck disable=SC2119
     purge
 }
@@ -803,6 +823,7 @@ create_test_global_config() {
     mkdir 'etc'
     # Scheduler host self-identification method.
     echo "$PRE" >'etc/global.cylc'
+    # add defaults
     cat >>'etc/global.cylc' <<__HERE__
     # set a default timeout for all flow runs to avoid hanging tests
     [scheduler]
@@ -812,9 +833,14 @@ create_test_global_config() {
             abort on inactivity timeout = true
             abort on workflow timeout = true
 __HERE__
+    # add global-tests.cylc
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
     if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
+    fi
+    # add platform config
+    if [[ -n "${CYLC_TEST_PLATFORM:-}" ]]; then
+        _add_platform_to_test_global_conf "$CYLC_TEST_PLATFORM"
     fi
     echo "$POST" >>'etc/global.cylc'
     export CYLC_CONF_PATH="${PWD}/etc"
@@ -922,7 +948,7 @@ get_fqdn () {
 }
 
 _get_test_platforms () {
-    cylc config -i '[platforms]' \
+    CYLC_CONF_PATH='' cylc config -i '[platforms]' \
         | sed -n 's/\[\[\(_.*\)\]\]/\1/p'
 }
 
@@ -983,6 +1009,23 @@ _check_test_requirements () {
     if ! _get_test_platform "${REQUIRE_PLATFORM}"; then
         skip_all "requires $REQUIRE_PLATFORM"
     fi
+    _add_platform_to_test_global_conf "$CYLC_TEST_PLATFORM"
+}
+
+_add_platform_to_test_global_conf () {
+    # add a test platform from the global config to the test global config
+    # NOTE: Uses global.cylc NOT global-tests.cylc
+    #       Do not configure test platforms in the global-tests.cylc file
+    PLATFORM="$1"
+    cat >> "${CYLC_CONF_PATH}/global.cylc" <<__HERE__
+[platforms]
+    [[$PLATFORM]]
+$(
+    CYLC_CONF_PATH='' cylc config \
+        -i "[platforms][$PLATFORM]" \
+        | sed 's/^/        /'
+)
+__HERE__
 }
 
 delete_db() {

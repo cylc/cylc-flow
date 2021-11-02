@@ -16,7 +16,18 @@
 """Exceptions for "expected" errors."""
 
 import errno
-from typing import Callable, Iterable, NoReturn, Tuple, Type
+from typing import (
+    Callable,
+    Iterable,
+    NoReturn,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
+
+from cylc.flow.subprocctx import SubFuncContext
+from cylc.flow.util import format_cmd
 
 
 class CylcError(Exception):
@@ -132,33 +143,78 @@ class FileRemovalError(CylcError):
         )
 
 
-class TaskRemoteMgmtError(CylcError):
-    """Exceptions initialising workflow run directory of remote job host."""
+class PlatformError(CylcError):
+    """Error in the management of a remote platform.
+
+    If the exception represents a command failure, provide either the ctx OR
+    manually populate the remaining kwargs. Otherwise leave the kwargs blank.
+
+    Args:
+        message:
+            Short description.
+        platform_name:
+            Name of the platform.
+        ctx:
+            SubFuncContext object if available.
+            The other kwargs are derived from this.
+        cmd:
+            The remote command.
+        ret_code:
+            The command's return code.
+        out:
+            The command's stdout.
+        err:
+            The command's stderr.
+
+    """
 
     MSG_INIT = "initialisation did not complete"
     MSG_SELECT = "host selection failed"
     MSG_TIDY = "clean up did not complete"
 
     def __init__(
-        self, message: str, platform_name: str, cmd: Iterable,
-        ret_code: int, out: str, err: str
+        self,
+        message: str,
+        platform_name: str,
+        *,
+        ctx: SubFuncContext = None,
+        cmd: Optional[Union[str, Iterable]] = None,
+        ret_code: Optional[int] = None,
+        out: Optional[str] = None,
+        err: Optional[str] = None
     ) -> None:
         self.msg = message
-        self.platform_n = platform_name
-        self.ret_code = ret_code
-        self.out = out
-        self.err = err
-        self.cmd = cmd
-        if isinstance(cmd, list):
-            self.cmd = " ".join(cmd)
+        self.platform_name = platform_name
+        if ctx:
+            self.cmd = ctx.cmd
+            self.ret_code = ctx.ret_code
+            self.out = ctx.out
+            self.err = ctx.err
+        else:
+            self.cmd = cmd
+            self.ret_code = ret_code
+            self.out = out
+            self.err = err
+        # convert the cmd object to a str if needed
+        if self.cmd and not isinstance(self.cmd, str):
+            self.cmd = format_cmd(self.cmd)
 
-    def __str__(self) -> str:
-        ret = (f"{self.platform_n}: {self.msg}:\n"
-               f"COMMAND FAILED ({self.ret_code}): {self.cmd}\n")
-        for label, item in ('STDOUT', self.out), ('STDERR', self.err):
-            if item:
-                for line in item.splitlines(True):  # keep newline chars
-                    ret += f"COMMAND {label}: {line}"
+    def __str__(self):
+        # matches cylc.flow.platforms.log_platform_event format
+        if self.platform_name:
+            ret = f'platform: {self.platform_name} - {self.msg}'
+        else:
+            ret = f'{self.msg}'
+        for label, item in [
+            ('COMMAND', self.cmd),
+            ('RETURN CODE', self.ret_code),
+            ('STDOUT', self.out),
+            ('STDERR', self.err)
+        ]:
+            if item is not None:
+                ret += f'\n{label}:'
+                for line in str(item).splitlines(True):  # keep newline chars
+                    ret += f"\n    {line}"
         return ret
 
 
@@ -266,11 +322,11 @@ class HostSelectException(CylcError):
 class NoHostsError(CylcError):
     """None of the hosts of a given platform were reachable."""
     def __init__(self, platform):
-        self.platform_n = platform['name']
+        self.platform_name = platform['name']
         super().__init__()
 
     def __str__(self):
-        return f'Unable to find valid host for {self.platform_n}'
+        return f'Unable to find valid host for {self.platform_name}'
 
 
 class NoPlatformsError(CylcError):

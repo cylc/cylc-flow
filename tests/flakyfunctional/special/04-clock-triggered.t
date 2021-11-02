@@ -25,7 +25,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
     -s "START='$(date '+%Y%m%dT%H')'" \
     -s "HOUR='$(date '+%H')'" \
-    -s 'UTC_MODE="False"' \
+    -s "CPTZ='$(date '+%z')'" \
     -s 'OFFSET="PT0S"' \
     -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ run_ok "${TEST_NAME_BASE}-run-now" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}" \
     -s "START='$(date '+%Y%m%dT%H')'" \
     -s "HOUR='$(date '+%H')'" \
-    -s 'UTC_MODE="False"' \
+    -s "CPTZ='$(date '+%z')'" \
     -s 'OFFSET="PT0S"' \
     -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ run_ok "${TEST_NAME_BASE}-run-past" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}" \
     -s "START='$(cylc cycle-point "${NOW}" --offset-hour='-10')'" \
     -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='-10' --print-hour)'" \
-    -s 'UTC_MODE="False"' \
+    -s "CPTZ='$(date '+%z')'" \
     -s 'OFFSET="PT0S"' \
     -s 'TIMEOUT="PT1M"'
 #-------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ run_fail "${TEST_NAME_BASE}-run-later" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}" \
     -s "START='$(cylc cycle-point "${NOW}" --offset-hour='10')'" \
     -s "HOUR='$(cylc cycle-point "${NOW}" --offset-hour='10' --print-hour)'" \
-    -s 'UTC_MODE="False"' \
+    -s "CPTZ='$(date '+%z')'" \
     -s 'OFFSET="PT0S"' \
     -s 'TIMEOUT="PT12S"'
 #-------------------------------------------------------------------------------

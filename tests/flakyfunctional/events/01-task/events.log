@@ -5,7 +5,7 @@ failed               baz.1    job failed
 retry                foo.1    job failed, retrying in PT3S
 started              baz.1    job started
 submission failed    bar.1    job submission failed
-submission retry     bar.1    job submission failed, submit-retrying in PT3S
+submission retry     bar.1    job submission failed, retrying in PT3S
 submission timeout   baz.1    submission timeout after PT3S
 submitted            baz.1    job submitted
 succeeded            foo.1    job succeeded

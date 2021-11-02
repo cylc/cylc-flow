@@ -810,7 +810,7 @@ def test_cycle_point_tz(caplog, monkeypatch):
         {
             'cp_tz': {'workflow': None, 'stored': None},
             'utc_mode': False,
-            'expected': local_tz
+            'expected': 'Z'
         },
         {
             'cp_tz': {'workflow': '+0530', 'stored': None},
@@ -821,7 +821,8 @@ def test_cycle_point_tz(caplog, monkeypatch):
             # On restart
             'cp_tz': {'workflow': None, 'stored': '+0530'},
             'utc_mode': True,
-            'expected': '+0530'
+            'expected': '+0530',
+            'expected_warnings': 1
         },
         {
             # Changed config value between restarts

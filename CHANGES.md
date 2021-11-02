@@ -107,6 +107,9 @@ renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
 [#4471](https://github.com/cylc/cylc-flow/pull/4471) - Users now get a different
 error for a config item that isn't valid, to one that isn't set.
 
+[#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
+`cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
+
 ### Fixes
 
 [#4443](https://github.com/cylc/cylc-flow/pull/4443) - fix for slow polling
@@ -170,6 +173,9 @@ Third beta release of Cylc 8.
 
 [#4286](https://github.com/cylc/cylc-flow/pull/4286) -
 Add an option for displaying source workflows in `cylc scan`.
+
+[#4300](https://github.com/cylc/cylc-flow/pull/4300) - Integer flow labels with
+flow metadata, and improved task logging.
 
 [#4291](https://github.com/cylc/cylc-flow/pull/4291) -
 Remove obsolete `cylc edit` and `cylc search` commands.

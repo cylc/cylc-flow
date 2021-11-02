@@ -5,4 +5,4 @@
     [[a,c]]
         script = "true"
     [[b]]
-        script = "cylc reload $CYLC_WORKFLOW_NAME; sleep 5"
+        script = "cylc reload $CYLC_WORKFLOW_ID; sleep 5"

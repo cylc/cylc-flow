@@ -392,10 +392,9 @@ class TuiApp:
         snapshot = self.get_snapshot()
         if snapshot is False:
             return False
-        data = snapshot['data']
 
         # update the workflow status message
-        header = [get_workflow_status_str(data)]
+        header = [get_workflow_status_str(snapshot['data'])]
         status_summary = get_task_status_summary(snapshot['data'])
         if status_summary:
             header.extend([' ('] + status_summary + [' )'])

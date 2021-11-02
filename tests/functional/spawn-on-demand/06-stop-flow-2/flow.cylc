@@ -13,15 +13,14 @@
     [[bar]]
          script = """
 if (( CYLC_TASK_SUBMIT_NUMBER == 2 )); then
-   eval $(cylc cat-log -f j -s 2 "${CYLC_WORKFLOW_NAME}" foo.1 | grep CYLC_TASK_FLOW_LABEL)
-   cylc stop --flow=${CYLC_TASK_FLOW_LABEL} ${CYLC_WORKFLOW_NAME}
-   cylc__job__poll_grep_workflow_log "Command succeeded: stop(.*flow_label=$CYLC_TASK_FLOW_LABEL"
+   cylc stop --flow=1 ${CYLC_WORKFLOW_ID}
+   cylc__job__poll_grep_workflow_log "Command succeeded: stop"
 fi
          """
     [[baz]]
          script = """
 if (( CYLC_TASK_SUBMIT_NUMBER == 1 )); then
-   cylc trigger --reflow ${CYLC_WORKFLOW_NAME} foo.1
-   cylc__job__poll_grep_workflow_log "\[bar\.1\].*succeeded.*job(02)"
+   cylc trigger --reflow --meta=other ${CYLC_WORKFLOW_ID} foo.1
+   cylc__job__poll_grep_workflow_log -E "bar\.1 running job:02.* => succeeded"
 fi
          """

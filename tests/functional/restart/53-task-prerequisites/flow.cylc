@@ -14,7 +14,9 @@
         """
 [runtime]
     [[foo]]
-        script = if [[ "$CYLC_TASK_JOB" == '1/foo/01' ]]; then false; else true; fi
+        script = """
+            [[ "$CYLC_TASK_JOB" != '1/foo/01' ]]
+        """
     [[apollo]]
         script = cylc message -- "The Eagle has landed"
         [[[outputs]]]

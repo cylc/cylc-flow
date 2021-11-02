@@ -471,7 +471,7 @@ with Conf('global.cylc', desc='''
             Configuration of the Cylc Scheduler's main loop.
         '''):
             Conf('plugins', VDR.V_STRING_LIST,
-                 ['health check', 'prune flow labels', 'reset bad hosts'],
+                 ['health check', 'reset bad hosts'],
                  desc='''
                      Configure the default main loop plugins to use when
                      starting new workflows.
@@ -486,13 +486,6 @@ with Conf('global.cylc', desc='''
 
             with Conf('health check', meta=MainLoopPlugin, desc='''
                 Checks the integrity of the workflow run directory.
-            '''):
-                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
-                    The interval with which this plugin is run.
-                ''')
-
-            with Conf('prune flow labels', meta=MainLoopPlugin, desc='''
-                Prune redundant flow labels.
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     The interval with which this plugin is run.
@@ -527,9 +520,9 @@ with Conf('global.cylc', desc='''
         .. versionadded:: 8.0.0
     '''):
         Conf('source dirs', VDR.V_STRING_LIST, default=['~/cylc-src'], desc='''
-            A list of paths where ``cylc install <flow_name>`` will look for
-            a workflow of that name. All workflow source directories in these
-            locations will also show up in the GUI, ready for installation.
+            A list of paths for ``cylc install <name>`` to search for workflow
+            <name>. All workflow source directories in these locations will
+            also show up in the GUI, ready for installation.
 
             .. note::
                If workflow source directories of the same name exist in more
@@ -1145,7 +1138,7 @@ class GlobalConfig(ParsecConfig):
             # Explicit config file override.
             fname = os.path.join(conf_path_str, self.CONF_BASENAME)
             self._load(fname, upgrader.USER_CONFIG)
-        elif conf_path_str is None:
+        else:
             # Use default locations.
             for conf_type, conf_dir in self.conf_dir_hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)

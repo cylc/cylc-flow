@@ -23,31 +23,30 @@ export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
-set_test_number 7
+set_test_number 11
 
 create_test_global_config "" "
 [platforms]
-    [[mixedhostplatform]]
+    [[${CYLC_TEST_PLATFORM}]]
+        # mixed host platform
         hosts = unreachable_host, ${CYLC_TEST_HOST}
-        install target = ${CYLC_TEST_INSTALL_TARGET}
-        retrieve job logs = True
         [[[selection]]]
             method = 'definition order'
     [[badhostplatform]]
         hosts = bad_host1, bad_host2
-        install target = ${CYLC_TEST_INSTALL_TARGET}
-        retrieve job logs = True
+        [[[selection]]]
+            method = 'definition order'
 
 [platform groups]
     [[mixedplatformgroup]]
-        platforms = badhostplatform, mixedhostplatform
+        platforms = badhostplatform, ${CYLC_TEST_PLATFORM}
         [[[selection]]]
             method = definition order
     [[goodplatformgroup]]
-        platforms = mixedhostplatform
+        platforms = ${CYLC_TEST_PLATFORM}
         [[[selection]]]
             method = definition order
-    "
+"
 #-------------------------------------------------------------------------------
 # Uncomment to print config for manual testing of workflow.
 # cylc config -i '[platforms]' >&2
@@ -58,20 +57,26 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
+    cylc play --debug --no-detach "${WORKFLOW_NAME}" --reference-test
 
-# Task where platform = mixedplatformgroup fails totally on badhostplatform,
-# fails on the first host of mixedhostplatform, then, finally suceeds.
-named_grep_ok "job submit fails for bad_host1" "\"jobs-submit\" failed.*\"bad_host1\"" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
-named_grep_ok "job submit fails for bad_host2" "\"jobs-submit\" failed.*\"bad_host2\"" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
-named_grep_ok "job submit fails for badhostplatform" "badhostplatform: Tried all the hosts" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
-named_grep_ok "job submit fails for unreachable_host" "\"jobs-submit\" failed.*\"bad_host1\"" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
-named_grep_ok "job submit _finally_ works" "[ugly.1].*preparing => submitted" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
+# should try remote-init on bad_host{1,2} then fail
+log_scan \
+    "${TEST_NAME_BASE}-badhostplatformgroup" \
+    "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
+    'platform: badhostplatform - remote init (on bad_host1)' \
+    'platform: badhostplatform - Could not connect to bad_host1.' \
+    'platform: badhostplatform - remote init (on bad_host2)' \
+    'platform: badhostplatform - Could not connect to bad_host2.' \
+
+# should try remote-init on unreachable_host, then $CYLC_TEST_HOST then pass
+log_scan \
+    "${TEST_NAME_BASE}-goodplatformgroup" \
+    "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
+    "platform: ${CYLC_TEST_PLATFORM} - remote init (on unreachable_host)" \
+    "platform: ${CYLC_TEST_PLATFORM} - Could not connect to unreachable_host." \
+    "platform: ${CYLC_TEST_PLATFORM} - remote init (on ${CYLC_TEST_HOST})" \
+    "platform: ${CYLC_TEST_PLATFORM} - file install (on ${CYLC_TEST_HOST})" \
+    "\[ugly\.1 preparing job:01 flows:1\] => submitted"
 
 purge
 exit 0

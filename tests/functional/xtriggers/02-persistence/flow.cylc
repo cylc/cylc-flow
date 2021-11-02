@@ -12,4 +12,4 @@
     [[foo]]
         script = "echo NAME is $x1_name"
     [[shutdown]]
-        script = "cylc shutdown $CYLC_WORKFLOW_NAME"
+        script = "cylc shutdown $CYLC_WORKFLOW_ID"

@@ -31,7 +31,7 @@ init_workflow "${TEST_NAME_BASE}" <<__FLOW__
         platform = $CYLC_TEST_PLATFORM
         script = """
             cylc__job__wait_cylc_message_started
-            cylc message -p WARNING "\${CYLC_WORKFLOW_NAME}" "\${CYLC_TASK_JOB}" \
+            cylc message -p WARNING "\${CYLC_WORKFLOW_ID}" "\${CYLC_TASK_JOB}" \
                 "Warn this" "INFO: Greeting" - <<'__MESSAGES__'
             Warn that
 
@@ -49,26 +49,27 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
-sed -n -e 's/^.* \([A-Z]* - \[foo.1\] status=running: (received).*$\)/\1/p' \
-       -e '/badness\|slowness\|and other incorrectness/p' \
+sed -r -n -e 's/^.* ([A-Z]+ .* \(received\).*$)/\1/p' \
+       -e '/badness|slowness|and other incorrectness/p' \
     "${LOG}" >'sed.out'
 sed -i 's/\(^.*\) at .*$/\1/;' 'sed.out'
 
 # Note: the continuation bit gets printed twice, because the message gets a
 # warning as being unhandled.
 cmp_ok 'sed.out' <<__LOG__
-WARNING - [foo.1] status=running: (received)Warn this
-INFO - [foo.1] status=running: (received)Greeting
-WARNING - [foo.1] status=running: (received)Warn that
-DEBUG - [foo.1] status=running: (received)Remove stuffs such as
+INFO - [foo.1 submitted job:01 flows:1] (received)started
+WARNING - [foo.1 running job:01 flows:1] (received)Warn this
+INFO - [foo.1 running job:01 flows:1] (received)Greeting
+WARNING - [foo.1 running job:01 flows:1] (received)Warn that
+DEBUG - [foo.1 running job:01 flows:1] (received)Remove stuffs such as
 ${LOG_INDENT}badness
 ${LOG_INDENT}slowness
 ${LOG_INDENT}and other incorrectness.
 ${LOG_INDENT}badness
 ${LOG_INDENT}slowness
 ${LOG_INDENT}and other incorrectness.
-INFO - [foo.1] status=running: (received)whatever
-INFO - [foo.1] status=running: (received)succeeded
+INFO - [foo.1 running job:01 flows:1] (received)whatever
+INFO - [foo.1 running job:01 flows:1] (received)succeeded
 __LOG__
 
 purge

@@ -241,16 +241,13 @@ def _test_callback_255(ctx, foo=''):
         pytest.param('callback called', 0, 'ssh something', id="return 0"),
         pytest.param('callback called', 1, 'ssh something', id="return 1"),
         pytest.param(
-            '"ssh" failed because "mouse" is not available',
+            'platform: None - Could not connect to mouse.',
             255,
             'ssh',
             id="return 255"
         ),
         pytest.param(
-            (
-                '"[\'ssh\', \'something\']" failed because "mouse" is '
-                'not available'
-            ),
+            'platform: localhost - Could not connect to mouse.',
             255,
             TaskJobLogsRetrieveContext(['ssh', 'something'], None, None, None),
             id="return 255 (log-ret)"
@@ -311,7 +308,13 @@ def test__run_command_exit_rsync_fails(mock_ctx):
         ctx=ctx,
         bad_hosts=badhosts,
         callback=print,
-        callback_args=['Welcome to Magrathea', {'ssh command': 'ssh'}]
+        callback_args=[
+            'Welcome to Magrathea',
+            {
+                'name': 'Magrathea',
+                'ssh command': 'ssh',
+            }
+        ]
     )
     assert badhosts == {'foo', 'bar', 'mouse'}
 

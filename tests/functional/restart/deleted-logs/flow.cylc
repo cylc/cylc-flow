@@ -9,7 +9,7 @@
     [[one]]
         script = """
 # Tell the workflow to stop after I've finished.
-cylc stop $CYLC_WORKFLOW_NAME
+cylc stop $CYLC_WORKFLOW_ID
 sleep 10"""
     [[two]]
         script = true

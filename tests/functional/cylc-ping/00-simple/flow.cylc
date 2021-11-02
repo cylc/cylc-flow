@@ -4,8 +4,8 @@
 [runtime]
     [[foo]]
         script = """
-            cylc ping $CYLC_WORKFLOW_NAME
-            cylc ping --verbose $CYLC_WORKFLOW_NAME
+            cylc ping $CYLC_WORKFLOW_ID
+            cylc ping --verbose $CYLC_WORKFLOW_ID
         """
     [[bar]]
-        script = [[ ! $(cylc ping $CYLC_WORKFLOW_NAME-non-existent) ]]
+        script = [[ ! $(cylc ping $CYLC_WORKFLOW_ID-non-existent) ]]

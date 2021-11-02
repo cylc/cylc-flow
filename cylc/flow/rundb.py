@@ -173,6 +173,7 @@ class CylcWorkflowDAO:
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
     TABLE_WORKFLOW_PARAMS = "workflow_params"
+    TABLE_WORKFLOW_FLOWS = "workflow_flows"
     TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_EVENTS = "task_events"
@@ -209,6 +210,11 @@ class CylcWorkflowDAO:
         TABLE_WORKFLOW_PARAMS: [
             ["key", {"is_primary_key": True}],
             ["value"],
+        ],
+        TABLE_WORKFLOW_FLOWS: [
+            ["flow_num", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["start_time"],
+            ["description"],
         ],
         TABLE_WORKFLOW_TEMPLATE_VARS: [
             ["key", {"is_primary_key": True}],
@@ -262,7 +268,7 @@ class CylcWorkflowDAO:
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
-            ["flow_label", {"is_primary_key": True}],
+            ["flow_nums", {"is_primary_key": True}],
             ["status"],
             ["is_held", {"datatype": "INTEGER"}],
         ],
@@ -281,7 +287,7 @@ class CylcWorkflowDAO:
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
             ["cycle", {"is_primary_key": True}],
-            ["flow_label", {"is_primary_key": True}],
+            ["flow_nums", {"is_primary_key": True}],
             ["time_created"],
             ["time_updated"],
             ["submit_num", {"datatype": "INTEGER"}],
@@ -503,6 +509,34 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
+    def select_workflow_flows(self, flow_nums):
+        """Return flow data for selected flows."""
+        stmt = rf'''
+            SELECT
+                flow_num, start_time, description
+            FROM
+                {self.TABLE_WORKFLOW_FLOWS}
+            WHERE
+                flow_num in ({','.join(str(f) for f in flow_nums)})
+        '''  # nosec (table name is code constant, flow_nums just integers)
+        flows = {}
+        for flow_num, start_time, descr in self.connect().execute(stmt):
+            flows[flow_num] = {
+                "start_time": start_time,
+                "description": descr
+            }
+        return flows
+
+    def select_workflow_flows_max_flow_num(self):
+        """Return max flow number in the workflow_flows table."""
+        stmt = rf'''
+            SELECT
+                MAX(flow_num)
+            FROM
+                {self.TABLE_WORKFLOW_FLOWS}
+        '''  # nosec (table name is code constant)
+        return self.connect().execute(stmt).fetchone()[0]
+
     def select_workflow_params_restart_count(self):
         """Return number of restarts in workflow_params table."""
         stmt = rf"""
@@ -670,12 +704,12 @@ class CylcWorkflowDAO:
         return {i[0] for i in self.connect().execute(stmt)}
 
     def select_submit_nums(self, name, point):
-        """Select submit_num and flow_label from task_states table.
+        """Select submit_num and flow_nums from task_states table.
 
-        Fetch submit number and flow label for spawning task name.point.
+        Fetch submit number and flow_nums for spawning task name.point.
         Return:
         {
-            flow_label: submit_num,
+            flow_nums: submit_num,
             ...,
         }
 
@@ -687,13 +721,13 @@ class CylcWorkflowDAO:
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
         stmt = (  # nosec
-            r"SELECT flow_label,submit_num FROM %(name)s"
+            r"SELECT flow_nums,submit_num FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
-        for flow_label, submit_num in self.connect().execute(
+        for flow_nums, submit_num in self.connect().execute(
                 stmt, (name, point,)):
-            ret[flow_label] = submit_num
+            ret[flow_nums] = submit_num
         return ret
 
     def select_xtriggers_for_restart(self, callback):
@@ -738,7 +772,7 @@ class CylcWorkflowDAO:
             SELECT
                 %(task_pool)s.cycle,
                 %(task_pool)s.name,
-                %(task_pool)s.flow_label,
+                %(task_pool)s.flow_nums,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
                 %(task_pool)s.is_held,
@@ -755,7 +789,7 @@ class CylcWorkflowDAO:
                 %(task_states)s
             ON  %(task_pool)s.cycle == %(task_states)s.cycle AND
                 %(task_pool)s.name == %(task_states)s.name AND
-                %(task_pool)s.flow_label == %(task_states)s.flow_label
+                %(task_pool)s.flow_nums == %(task_states)s.flow_nums
             LEFT OUTER JOIN
                 %(task_late_flags)s
             ON  %(task_pool)s.cycle == %(task_late_flags)s.cycle AND

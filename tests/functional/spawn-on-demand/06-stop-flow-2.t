@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check that stopping the only flow causes the scheduler to shut down.
+# Check that other flows can be stopped without affecting the main flow.
 
 . "$(dirname "$0")/test_header"
 set_test_number 2

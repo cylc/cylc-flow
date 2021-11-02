@@ -18,7 +18,7 @@
     [[stopper]]
         script = """
             cylc__job__poll_grep_workflow_log -F 'holding (beyond workflow hold point: 20100102T0000Z)'
-            cylc stop "${CYLC_WORKFLOW_NAME}"
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """
     [[foo]]
         script = true

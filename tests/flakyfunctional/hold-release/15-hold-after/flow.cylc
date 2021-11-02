@@ -20,11 +20,11 @@
         T00, T12 = foo[-PT12H] => foo => bar
 [runtime]
     [[holdafter]]
-        script = cylc hold --after '20140101T12' "${CYLC_WORKFLOW_NAME}"
+        script = cylc hold --after '20140101T12' "${CYLC_WORKFLOW_ID}"
     [[stopper]]
         script = """
-            cylc__job__poll_grep_workflow_log '\[bar\.20140101T1200Z\].* (received)succeeded'
-            cylc stop "${CYLC_WORKFLOW_NAME}"
+            cylc__job__poll_grep_workflow_log -E 'bar\.20140101T1200Z .* \(received\)succeeded'
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """
         [[[job]]]
             execution time limit = PT1M

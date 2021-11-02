@@ -16,6 +16,6 @@
             --time=03:00
     [[stop]]
         script="""
-            cylc kill "$CYLC_WORKFLOW_NAME" 't1'
-            cylc stop "$CYLC_WORKFLOW_NAME"
+            cylc kill "$CYLC_WORKFLOW_ID" 't1'
+            cylc stop "$CYLC_WORKFLOW_ID"
         """

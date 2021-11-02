@@ -42,19 +42,19 @@ def expand_path(*args: Union[Path, str]) -> str:
 
 
 def get_remote_workflow_run_dir(
-    flow_name: Union[Path, str], *args: Union[Path, str]
+    workflow_name: Union[Path, str], *args: Union[Path, str]
 ) -> str:
     """Return remote workflow run directory, joining any extra args,
     NOT expanding vars or user."""
-    return os.path.join(_CYLC_RUN_DIR, flow_name, *args)
+    return os.path.join(_CYLC_RUN_DIR, workflow_name, *args)
 
 
 def get_remote_workflow_run_job_dir(
-    flow_name: Union[Path, str], *args: Union[Path, str]
+    workflow_name: Union[Path, str], *args: Union[Path, str]
 ) -> str:
     """Return remote workflow job log directory, joining any extra args,
     NOT expanding vars or user."""
-    return get_remote_workflow_run_dir(flow_name, 'log', 'job', *args)
+    return get_remote_workflow_run_dir(workflow_name, 'log', 'job', *args)
 
 
 def get_cylc_run_dir() -> str:
@@ -63,14 +63,14 @@ def get_cylc_run_dir() -> str:
 
 
 def get_workflow_run_dir(
-    flow_name: Union[Path, str], *args: Union[Path, str]
+    workflow_name: Union[Path, str], *args: Union[Path, str]
 ) -> str:
     """Return local workflow run directory, joining any extra args, and
     expanding vars and user.
 
     Does not check that the directory exists.
     """
-    return expand_path(_CYLC_RUN_DIR, flow_name, *args)
+    return expand_path(_CYLC_RUN_DIR, workflow_name, *args)
 
 
 def get_workflow_run_job_dir(workflow, *args):
@@ -143,7 +143,7 @@ def make_localhost_symlinks(
     """Creates symlinks for any configured symlink dirs from glbl_cfg.
     Args:
         rund: the entire run directory path
-        named_sub_dir: e.g flow_name/run1
+        named_sub_dir: e.g workflow_name/run1
         symlink_conf: Symlinks dirs configuration passed from cli
 
     Returns:
@@ -179,7 +179,7 @@ def make_localhost_symlinks(
 
 def get_dirs_to_symlink(
     install_target: str,
-    flow_name: str,
+    workflow_name: str,
     symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """Returns dictionary of directories to symlink.
@@ -202,12 +202,14 @@ def get_dirs_to_symlink(
         return dirs_to_symlink
     base_dir = symlink_conf[install_target]['run']
     if base_dir:
-        dirs_to_symlink['run'] = os.path.join(base_dir, 'cylc-run', flow_name)
+        dirs_to_symlink['run'] = os.path.join(
+            base_dir, 'cylc-run', workflow_name)
     for dir_ in ['log', 'share', 'share/cycle', 'work']:
         link = symlink_conf[install_target].get(dir_, None)
         if (not link) or link == base_dir:
             continue
-        dirs_to_symlink[dir_] = os.path.join(link, 'cylc-run', flow_name, dir_)
+        dirs_to_symlink[dir_] = os.path.join(
+            link, 'cylc-run', workflow_name, dir_)
     return dirs_to_symlink
 
 
@@ -413,11 +415,20 @@ def is_relative_to(path1: Union[Path, str], path2: Union[Path, str]) -> bool:
 
 def get_workflow_name_from_id(workflow_id: str) -> str:
     """Workflow name is the ID shorn of the runN directory name.
-
-    Examples:
-    >>> get_workflow_name_from_id('my_workflow/run42')
-    'my_workflow'
-    >>> get_workflow_name_from_id('my_other_workflow')
-    'my_other_workflow'
     """
-    return re.sub(rf'{re.escape(os.sep)}run\d+$', '', workflow_id)
+    cylc_run_dir = Path(get_cylc_run_dir())
+    if Path(workflow_id).is_absolute():
+        # this is a source directory, not an install dir:
+        return workflow_id
+    else:
+        id_path = cylc_run_dir / workflow_id
+    name_path = id_path
+
+    # Look for ``id_path.parent/_cylc_install`` first because expected to
+    # be most common:
+    if (id_path.parent / '_cylc-install').is_dir():
+        name_path = Path(id_path).parent
+    elif (id_path / '_cylc-install').is_dir():
+        name_path = id_path
+
+    return str(name_path.relative_to(cylc_run_dir))
