@@ -358,8 +358,7 @@ with Conf('global.cylc', desc='''
                    {}``[suite servers]run ports``
             '''.format(REPLACES))
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc='''
-                Hosts set in ``condemned`` will not be used as workflow run
-                hosts.
+                These hosts will not be used to run jobs.
 
                 .. versionchanged:: 8.0.0
 
