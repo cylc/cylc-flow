@@ -130,7 +130,7 @@ EVENTS_DESCR = {
         f'''
         The length of a timer which starts if the scheduler stalls.
 
-        A stalled state occurs if there are no tasks ready to run and no
+        A workflow will stall if there are no tasks ready to run and no
         waiting external triggers, but the presence of incomplete
         tasks or unsatisified prerequisites shows the workflow did not run to
         completion. The stall timer turns off on any post-stall task activity.
@@ -252,7 +252,7 @@ with Conf('global.cylc', desc='''
        The ``global.cylc`` file can be templated using Jinja2 variables.
        See :ref:`Jinja`.
 
-    .. deprecated:: 8.0.0
+    .. versionchanged:: 8.0.0
 
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
        is no longer supported.
@@ -361,8 +361,8 @@ with Conf('global.cylc', desc='''
                    {}``[suite servers]condemned hosts``.
 
                 If workflows are already running on
-                ``condemned`` hosts Cylc will shut them down and
-                restart them.
+                condemned hosts, Cylc will shut them down and
+                restart them on different hosts.
 
                 .. seealso::
 
@@ -375,7 +375,7 @@ with Conf('global.cylc', desc='''
 
                    {}``[suite servers][run host select]rank``.
 
-                Ranking can be used to provide load balancing to ensure no one
+                Ranking can be used to provide load balancing to ensure no single
                 run host is overloaded. It also provides thresholds beyond
                 which Cylc will not attempt to start new schedulers on a host.
 
@@ -545,7 +545,9 @@ with Conf('global.cylc', desc='''
                     :cylc:conf:`flow.cylc
                     [scheduler][mail]task event batch interval`
 
-                    .. versionadded:: 8.0.0
+                    .. versionchanged:: 8.0.0
+                    
+                       This item was previously ``[cylc]task event mail interval``
                 '''
             )
 
@@ -645,7 +647,7 @@ with Conf('global.cylc', desc='''
                     Alternative location for the run dir.
 
                     If specified, the workflow run directory will
-                    be created in ``<this config>/cylc-run/<workflow-name>``
+                    be created in ``<this-path>/cylc-run/<workflow-name>``
                     and a symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-name>``.
                     If not specified the workflow run directory will be created
@@ -905,7 +907,7 @@ with Conf('global.cylc', desc='''
                 Whether to use a login shell or not for remote command
                 invocation.
 
-                By default cylc runs remote ssh commands using a login shell:
+                By default, Cylc runs remote SSH commands using a login shell:
 
                 .. code-block:: bash
 
@@ -1001,7 +1003,7 @@ with Conf('global.cylc', desc='''
                  desc='''
                 Global default for
                 :cylc:conf:`flow.cylc[runtime][<namespace>][remote]
-                retrieve job logs retry delays`.
+                retrieve job logs retry delays`
                 for this platform.
             ''')
             Conf('tail command template',
@@ -1089,8 +1091,8 @@ with Conf('global.cylc', desc='''
                 different ways.
 
                 We recommend using a clean job submission environment for
-                consistent handling of local and remote jobs. Using a clean job
-                submission environment is not the default behavior. It prevents
+                consistent handling of local and remote jobs. However,
+                this is not the default behavior because it prevents
                 local task jobs from running, unless ``$PATH`` contains the
                 ``cylc`` wrapper script.
 
