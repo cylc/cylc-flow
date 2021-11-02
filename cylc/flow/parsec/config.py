@@ -17,7 +17,7 @@
 from copy import deepcopy
 import re
 from textwrap import dedent
-from typing import Union, Optional, List
+from typing import Optional, List
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
