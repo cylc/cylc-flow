@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from decimal import InvalidContext
 from os import spawnl
 import tempfile
 from _pytest.config import Config
@@ -25,11 +26,11 @@ from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig
 )
+from cylc.flow.parsec.exceptions import IllegalItemError, InvalidConfigError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     cylc_config_validate,
-    IllegalItemError,
     CylcConfigValidator as VDR
 )
 
@@ -252,16 +253,14 @@ def test_get_item(sample_spec_2):
             cfg = parsec_config.get(keys=['section'], sparse=True)
             assert parsec_config.sparse['section'] == cfg
 
+            with pytest.raises(InvalidConfigError):
+                cfg = parsec_config.get(keys=['allow-many', 'a'], sparse=True)
+
             cfg = parsec_config.get(keys=['section', 'name'], sparse=True)
-            assert 'test' == cfg
+            assert cfg == 'test'
 
             with pytest.raises(config.InvalidConfigError):
                 parsec_config.get(keys=['section', 'a'], sparse=True)
-
-
-def test_item_not_found_error():
-    error = config.ItemNotFoundError("internal error")
-    assert 'You have not set "internal error" in this config.' == str(error)
 
 
 def test_not_single_item_error():
