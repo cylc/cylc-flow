@@ -18,14 +18,32 @@
 
 """cylc set-outputs [OPTIONS] ARGS
 
-Artificially mark task outputs as completed.
+Artificially mark task outputs as completed and spawn downstream tasks that
+depend on those outputs. By default it marks tasks as succeeded.
 
-This allows you to manually intervene with Cylc's scheduling
-algorithm by artificially satisfying outputs of tasks.
+This allows you to manually intervene with Cylc's scheduling algorithm by
+artificially satisfying outputs of tasks.
 
-By default this makes tasks appear as if they succeeded.
+If a flow number is given, the child tasks will start (or continue) that flow,
+otherwise no reflow will occur.
 
-The --output option can be used multiple times on the command line.
+For example, for the following dependency graph:
+
+  R1 = '''
+     a => b & c => d
+     foo:x => bar => baz
+  '''
+
+$ cylc set-outputs <workflow> a.1
+  will spawn b.1 and c.1, but d.1 will not subsequently run
+
+$ cylc set-outputs --flow=2 <workflow> a.1
+  will spawn b.1 and c.1 as flow 2, followed by d.1
+
+$ cylc set-outputs --flow=3 --output=x <workflow> foo.1
+  will spawn bar.1 as flow 3, followed by baz.1
+
+Use --output multiple times to spawn off of several outputs at once.
 
 """
 
@@ -65,7 +83,7 @@ def get_option_parser():
     parser.add_option(
         "-o", "--output", metavar="OUTPUT",
         help="Set OUTPUT (default \"succeeded\") completed.",
-        action="append", dest="outputs")
+        action="append", default=None, dest="outputs")
 
     parser.add_option(
         "-f", "--flow", metavar="FLOW",
@@ -77,8 +95,6 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', reg: str, *task_globs: str) -> None:
-    if options.flow_num is None:
-        parser.error("--flow=FLOW is required.")
     reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
 

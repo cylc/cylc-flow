@@ -662,7 +662,10 @@ class Resolvers(BaseResolvers):
             return (False, 'Edge distance cannot be negative')
 
     def force_spawn_children(
-        self, tasks: Iterable[str], outputs: Iterable[str], flow_num: int
+        self,
+        tasks: Iterable[str],
+        outputs: Optional[Iterable[str]] = None,
+        flow_num: Optional[int] = None
     ) -> Tuple[bool, str]:
         """Spawn children of given task outputs.
 

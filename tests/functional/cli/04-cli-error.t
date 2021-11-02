@@ -19,7 +19,7 @@
 # Get coverage up for some CLI parser errors. 
 
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 2
 
 init_workflow "${TEST_NAME_BASE}" << __CONFIG__
 [scheduling]
@@ -28,14 +28,6 @@ init_workflow "${TEST_NAME_BASE}" << __CONFIG__
 [runtime]
    [[foo]]
 __CONFIG__
-
-# "cylc set-outputs" requires a flow number.
-TEST_NAME="set-outputs-fail"
-run_fail "${TEST_NAME}"  \
-    cylc set-outputs "${WORKFLOW_NAME}"  foo.1
-contains_ok "${TEST_NAME}".stderr <<__END__
-cylc: error: --flow=FLOW is required.
-__END__
 
 # "cylc trigger --meta" requires --reflow
 TEST_NAME="set-trigger-fail"
