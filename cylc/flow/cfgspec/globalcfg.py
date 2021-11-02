@@ -56,6 +56,11 @@ SYSPATH = [
 
 TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
 REPLACES = 'Replaces the cylc 7 configuration '
+MOVEDFROMJOB = '''
+.. versionchanged:: 8.0.0
+
+   Moved from ``suite.rc[runtime][<namespace>]job``.
+'''
 
 
 # Event config descriptions shared between global and workflow config.
@@ -270,7 +275,7 @@ with Conf('global.cylc', desc='''
            :cylc:conf:`global.cylc[scheduler]` should not be confused with
            :cylc:conf:`flow.cylc[scheduling]`.
     '''.format(REPLACES)):
-        Conf('UTC mode', VDR.V_BOOLEAN, True, desc='''
+        Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
             Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
         ''')
         Conf('process pool size', VDR.V_INTEGER, 4, desc='''
@@ -375,9 +380,10 @@ with Conf('global.cylc', desc='''
 
                    {}``[suite servers][run host select]rank``.
 
-                Ranking can be used to provide load balancing to ensure no single
-                run host is overloaded. It also provides thresholds beyond
-                which Cylc will not attempt to start new schedulers on a host.
+                Ranking can be used to provide load balancing to ensure no
+                single run host is overloaded. It also provides thresholds
+                beyond which Cylc will not attempt to start new schedulers on
+                a host.
 
                 .. _psutil: https://psutil.readthedocs.io/en/latest/
 
@@ -546,8 +552,9 @@ with Conf('global.cylc', desc='''
                     [scheduler][mail]task event batch interval`
 
                     .. versionchanged:: 8.0.0
-                    
-                       This item was previously ``[cylc]task event mail interval``
+
+                       This item was previously
+                       ``[cylc]task event mail interval``
                 '''
             )
 
@@ -810,7 +817,7 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.0.0
 
-                   {}``batch system``.
+                   {}``suite.rc[runtime][<namespace>][job]batch system``.
 
                 Examples:
 
@@ -823,12 +830,17 @@ with Conf('global.cylc', desc='''
 
                 .. versionchanged:: 8.0.0
 
-                   {}``batch system command template``.
+                   {}``suite.rc[runtime][<namespace>][job]
+                   batch system command template``.
 
                 The template's ``%(job)s`` will be
                 substituted by the job file path.
             '''.format(REPLACES))
-            Conf('shell', VDR.V_STRING, '/bin/bash')
+            Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
+
+                {movedfrom}
+
+            '''.format(movedfrom=MOVEDFROMJOB))
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
                  options=[meth.value for meth in CommsMeth], desc='''
@@ -849,6 +861,8 @@ with Conf('global.cylc', desc='''
             Conf('submission polling intervals', VDR.V_INTERVAL_LIST, desc='''
                 List of intervals at which to poll status of job submission.
 
+                {movedfrom}
+
                 Cylc can poll submitted jobs to catch problems that
                 prevent the submitted job from executing at all, such as
                 deletion from an external job runner queue. Routine
@@ -861,10 +875,14 @@ with Conf('global.cylc', desc='''
                 Example::
 
                    5*PT1M, 10*PT5M
-            ''')
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None)
+            '''.format(movedfrom=MOVEDFROMJOB))
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+            {movedfrom}
+            '''.format(movedfrom=MOVEDFROMJOB))
             Conf('execution polling intervals', VDR.V_INTERVAL_LIST, desc='''
                 List of intervals at which to poll status of job execution.
+
+                {movedfrom}
 
                 Cylc can poll running jobs to catch problems that prevent task
                 messages from being sent back to the workflow, such as hard job
@@ -880,7 +898,7 @@ with Conf('global.cylc', desc='''
                 Example::
 
                    5*PT1M, 10*PT5M
-            ''')
+            '''.format(movedfrom=MOVEDFROMJOB))
             Conf('execution time limit polling intervals',
                  VDR.V_INTERVAL_LIST, desc='''
                 List of intervals after execution time limit to poll jobs.

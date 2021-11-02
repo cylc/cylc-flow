@@ -21,8 +21,8 @@ save contacting these hosts again.
 This list is cleared if a task cannot be submitted because all of the hosts it
 might use cannot be reached.
 
-If a task succeeds in submitting a job on the second host it tries, then the first
-host remains in the set of unreachable (bad) hosts, even though the
+If a task succeeds in submitting a job on the second host it tries, then the
+first host remains in the set of unreachable (bad) hosts, even though the
 failure might have been transitory. For this reason, this plugin periodically
 clears the set.
 
