@@ -1376,7 +1376,7 @@ def infer_latest_run(
 
 
 def check_nested_dirs(
-    path: Union[Path, str],
+    path: Union[Path, str], reinstall: bool = False
 ) -> None:
     """Disallow nested dirs:
 
@@ -1410,6 +1410,8 @@ def check_nested_dirs(
             raise WorkflowFilesError(
                 exc_msgs['run_dir'].format(
                     path, get_cylc_run_abs_path(parent_dir)))
+        if reinstall:
+            continue
         # Check for install directories:
         if (
             (parent_dir / WorkflowFiles.Install.DIRNAME).is_dir()
@@ -1419,19 +1421,20 @@ def check_nested_dirs(
                 exc_msgs['install_dir'].format(
                     get_cylc_run_abs_path(parent_dir)))
 
-    # Search child tree for install directories:
-    search_patterns = [
-        f'*/{"*/"*depth}{WorkflowFiles.Install.DIRNAME}'
-        for depth in range(MAX_SCAN_DEPTH)
-    ]
-    for search_pattern in search_patterns:
-        results = list(path.parent.glob(search_pattern))
-        if results:
-            parent_dir = results[0].parent
-            raise WorkflowFilesError(
-                exc_msgs['install_dir'].format(
-                    get_cylc_run_abs_path(parent_dir))
-            )
+    if not reinstall:
+        # Search child tree for install directories:
+        search_patterns = [
+            f'*/{"*/"*depth}{WorkflowFiles.Install.DIRNAME}'
+            for depth in range(MAX_SCAN_DEPTH)
+        ]
+        for search_pattern in search_patterns:
+            results = list(path.parent.glob(search_pattern))
+            if results:
+                parent_dir = results[0].parent
+                raise WorkflowFilesError(
+                    exc_msgs['install_dir'].format(
+                        get_cylc_run_abs_path(parent_dir))
+                )
 
 
 def is_valid_run_dir(path):
@@ -1550,7 +1553,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
             be changed.
     """
     validate_source_dir(source, named_run)
-    check_nested_dirs(rundir)
+    check_nested_dirs(rundir, reinstall=True)
     reinstall_log = _get_logger(rundir, 'cylc-reinstall')
     reinstall_log.info(f"Reinstalling \"{named_run}\", from "
                        f"\"{source}\" to \"{rundir}\"")
