@@ -1578,19 +1578,6 @@ class Pause(Mutation):
     result = GenericScalar()
 
 
-class Ping(Mutation):
-    class Meta:
-        description = sstrip('''
-            Send a test message to a running workflow.
-        ''')
-        resolver = partial(mutator, command='ping_workflow')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
-
-    result = GenericScalar()
-
-
 class Message(Mutation):
     class Meta:
         description = sstrip('''
@@ -1905,7 +1892,6 @@ class Mutations(ObjectType):
     ext_trigger = _mut_field(ExtTrigger)
     message = _mut_field(Message)
     pause = _mut_field(Pause)
-    ping = _mut_field(Ping)
     reload = _mut_field(Reload)
     resume = _mut_field(Resume)
     set_verbosity = _mut_field(SetVerbosity)

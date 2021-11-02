@@ -104,7 +104,7 @@ now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
 `CYLC_WORKFLOW_ID` shorn of any trailing `runX`.
 
-[#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8 
+[#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
 `cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
 
 
@@ -151,6 +151,9 @@ now works with relative paths.
 [#4440](https://github.com/cylc/cylc-flow/pull/4440) -
 Fix an error that could occur during remote clean and other `cylc clean`
 improvements.
+
+[#4481](https://github.com/cylc/cylc-flow/pull/4481) -
+Removed non-functional ping command from GUI.
 
 [#4445](https://github.com/cylc/cylc-flow/pull/4445) - Cylc will prevent you
 using the same name for a platform and a platform group. Which one it should
