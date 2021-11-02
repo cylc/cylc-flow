@@ -55,7 +55,7 @@ SYSPATH = [
 ]
 
 TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
-REPLACES = 'Replaces the cylc 7 configuration '
+REPLACES = 'This item was previously called '
 MOVEDFROMJOB = '''
 .. versionchanged:: 8.0.0
 
