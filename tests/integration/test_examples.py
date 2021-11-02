@@ -219,7 +219,7 @@ async def test_db_select(one, run, db_select):
         pass
     # Now we can query the DB
     # Select all from workflow_params table:
-    assert ('UTC_mode', '1') in db_select(schd, False, 'workflow_params')
+    assert ('UTC_mode', '0') in db_select(schd, False, 'workflow_params')
     # Select name & status columns from task_states table:
     results = db_select(schd, False, 'task_states', 'name', 'status')
     assert results[0] == ('one', 'waiting')
