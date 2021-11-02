@@ -162,7 +162,7 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-            In :ref:`Cylc 7 backward compatibility mode <BackCompat>`,
+            In :ref:`Cylc 7 backward compatibility mode <Cylc_7_compat_mode>`,
             implicit tasks are still allowed unless you explicitly set
             this to ``False``.
 
