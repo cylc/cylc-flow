@@ -189,7 +189,7 @@ class ParsecConfig:
 
         this function will return ``[runtime]``.
         """
-        manyparents: Union[list, None]
+        manyparents: Optional[List[str]]
         try:
             manyparents = [
                 list(key[1].parents())[0].name
