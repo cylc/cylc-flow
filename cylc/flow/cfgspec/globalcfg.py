@@ -270,7 +270,7 @@ with Conf('global.cylc', desc='''
            :cylc:conf:`global.cylc[scheduler]` should not be confused with
            :cylc:conf:`flow.cylc[scheduling]`.
     '''.format(REPLACES)):
-        Conf('UTC mode', VDR.V_BOOLEAN, True, desc='''
+        Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
             Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
         ''')
         Conf('process pool size', VDR.V_INTEGER, 4, desc='''
