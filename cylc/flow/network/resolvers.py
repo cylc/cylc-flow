@@ -456,19 +456,6 @@ class Resolvers(BaseResolvers):
     """Workflow Service context GraphQL query and mutation resolvers."""
 
     schd: 'Scheduler'
-    general_commands = {
-        'hold',
-        'kill_tasks',
-        'pause',
-        'poll_tasks',
-        'release',
-        'release_hold_point',
-        'reload_workflow',
-        'remove_tasks',
-        'resume',
-        'set_hold_point',
-        'set_verbosity',
-    }
 
     def __init__(self, data: 'DataStoreMgr', schd: 'Scheduler') -> None:
         super().__init__(data)
@@ -528,7 +515,9 @@ class Resolvers(BaseResolvers):
         method = getattr(self, command, None)
         if method is not None:
             return method(**kwargs)
-        if command not in self.general_commands:
+        try:
+            self.schd.get_command_method(command)
+        except AttributeError:
             raise ValueError(f"Command '{command}' not found")
         self.schd.command_queue.put((command, tuple(kwargs.values()), {}))
         return None
