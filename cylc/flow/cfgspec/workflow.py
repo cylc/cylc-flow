@@ -161,10 +161,10 @@ with Conf(
             "workflow-priority". An event handler could then respond to
             failure events in a way set by "workflow-priority".
         ''')
-    with Conf('scheduler', desc='''
+    with Conf('scheduler', desc=f'''
         Settings for the scheduler.
-        {} ``[cylc]``
-    '''.format(REPLACES)):
+        {REPLACES} ``[cylc]``
+    '''):
         Conf('UTC mode', VDR.V_BOOLEAN, desc='''
             If true, workflow will use UTC as the time zone and for
             logging timestamps.
@@ -391,13 +391,13 @@ with Conf(
 
             .. versionadded:: 8.0.0
         '''):
-            Conf('footer', VDR.V_STRING, desc='''
+            Conf('footer', VDR.V_STRING, desc=f'''
                 Specify a string or string template for footers of
                 emails sent for both workflow and task events.
 
                 .. versionchanged:: 8.0.0
 
-                   {} ``[cylc][events]mail footer``.
+                   {REPLACES} ``[cylc][events]mail footer``.
 
                 ================ ======================
                 Syntax           Description
@@ -412,45 +412,45 @@ with Conf(
 
                 ``mail footer = see http://ahost/%(owner)s/notes/%(workflow)s``
 
-            '''.format(REPLACES))
-            Conf('to', VDR.V_STRING, desc='''
+            ''')
+            Conf('to', VDR.V_STRING, desc=f'''
                 A list of email addresses that event notifications
                 should be sent to.
 
                 .. versionchanged:: 8.0.0
 
-                   {}``[cylc][events]mail to``.
-            '''.format(REPLACES))
-            Conf('from', VDR.V_STRING, desc='''
+                   {REPLACES}``[cylc][events]mail to``.
+            ''')
+            Conf('from', VDR.V_STRING, desc=f'''
                 Specify an alternative ``from`` email address for workflow
                 event notifications.
 
                 .. versionchanged:: 8.0.0
 
-                   {}``[cylc][events]mail from``.
-            '''.format(REPLACES))
-            Conf('task event batch interval', VDR.V_INTERVAL, desc='''
+                   {REPLACES}``[cylc][events]mail from``.
+            ''')
+            Conf('task event batch interval', VDR.V_INTERVAL, desc=f'''
                 Gather all task event notifications in the given interval
                 into a single email.
 
                 .. versionchanged:: 8.0.0
 
-                   {}``[cylc]mail interval``.
+                   {REPLACES}``[cylc]mail interval``.
 
                 Useful to prevent being overwhelmed by emails.
-            '''.format(REPLACES))
+            ''')
 
-    with Conf('task parameters', desc='''
+    with Conf('task parameters', desc=f'''
         Set task parameters and parameter templates.
 
         .. versionchanged:: 8.0.0
 
-           {}``[cylc][parameters]`` and
+           {REPLACES}``[cylc][parameters]`` and
            ``[cylc][parameter templates]``.
 
         Define parameter values here for use in expanding
         :ref:`parameterized tasks <User Guide Param>`.
-    '''.format(REPLACES)):
+    '''):
         Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
             A custom parameter to use in a workflow.
 
@@ -592,18 +592,18 @@ with Conf(
                :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
 
         ''')
-        Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
+        Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
             .. versionchanged:: 8.0.0
 
-               {}``[scheduling]hold after point``.
+               {REPLACES}``[scheduling]hold after point``.
 
             Unlike the final
             cycle point, the workflow does not shut down once all tasks have
             passed this point. If this item is set you can override it on the
             command line using ``--hold-after``.
-        '''.format(REPLACES))
+        ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
             Shut down workflow after all tasks **pass** this cycle point.
 
@@ -797,12 +797,12 @@ with Conf(
                    ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
             ''')
 
-        with Conf('graph', desc='''
+        with Conf('graph', desc=f'''
             The workflow graph is defined under this section.
 
             .. versionchanged:: 8.0.0
 
-               {}``[runtime][dependencies][graph]``.
+               {REPLACES}``[runtime][dependencies][graph]``.
 
             You can plot the dependency graph as you work on it, with
             ``cylc graph``.
@@ -811,7 +811,7 @@ with Conf(
 
                :ref:`User Guide Scheduling`.
 
-        '''.format(REPLACES)):
+        '''):
             Conf('<recurrence>', VDR.V_STRING, desc='''
                 The recurrence defines the sequence of cycle points
                 for which the dependency graph is valid.
@@ -1446,40 +1446,40 @@ with Conf(
 
                 .. versionadded:: 8.0.0
             '''):
-                Conf('from', VDR.V_STRING, desc='''
+                Conf('from', VDR.V_STRING, desc=f'''
                     Specify an alternate ``from:`` email address for event
                     notifications.
 
                     .. versionchanged:: 8.0.0
 
-                       {}``[runtime][task][events]mail to``
-                '''.format(REPLACES))
-                Conf('to', VDR.V_STRING, desc='''
+                       {REPLACES}``[runtime][task][events]mail to``
+                ''')
+                Conf('to', VDR.V_STRING, desc=f'''
                     A list of email addresses to send task event
                     notifications.
 
                     .. versionchanged:: 8.0.0
 
-                       {}``[runtime][task][events]mail from``
+                       {REPLACES}``[runtime][task][events]mail from``
 
                     The list can be any address accepted by the
                     ``mail`` command.
-                '''.format(REPLACES))
+                ''')
 
-            with Conf('workflow state polling', desc='''
+            with Conf('workflow state polling', desc=f'''
                 Configure automatic workflow polling tasks as described in
                 :ref:`WorkflowStatePolling`.
 
                 .. versionchanged:: 8.0.0
 
-                   {}``[runtime][<namespace>]suite state polling``.
+                   {REPLACES}``[runtime][<namespace>]suite state polling``.
 
                 The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,
                 except that the target workflow name and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
-            '''.format(REPLACES)):
+            '''):
                 Conf('user', VDR.V_STRING, desc='''
                     Username of your account on the workflow host.
 
