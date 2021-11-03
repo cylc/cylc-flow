@@ -110,6 +110,9 @@ error for a config item that isn't valid, to one that isn't set.
 [#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
 `cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
 
+[#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
+`cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
+
 ### Fixes
 
 [#4443](https://github.com/cylc/cylc-flow/pull/4443) - fix for slow polling
@@ -153,6 +156,9 @@ now works with relative paths.
 [#4440](https://github.com/cylc/cylc-flow/pull/4440) -
 Fix an error that could occur during remote clean and other `cylc clean`
 improvements.
+
+[#4481](https://github.com/cylc/cylc-flow/pull/4481) -
+Removed non-functional ping command from GUI.
 
 [#4445](https://github.com/cylc/cylc-flow/pull/4445) - Cylc will prevent you
 using the same name for a platform and a platform group. Which one it should

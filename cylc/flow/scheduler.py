@@ -815,6 +815,10 @@ class Scheduler:
         self.task_job_mgr.poll_task_jobs(
             self.workflow, to_poll_tasks)
 
+    def get_command_method(self, command_name):
+        """Return a command processing method or raise AttributeError."""
+        return getattr(self, f'command_{command_name}')
+
     def process_command_queue(self) -> None:
         """Process queued commands."""
         qsize = self.command_queue.qsize()
@@ -833,7 +837,7 @@ class Scheduler:
             sep = ', ' if kwargs_string and args_string else ''
             cmdstr = f"{name}({args_string}{sep}{kwargs_string})"
             try:
-                n_warnings: Optional[int] = getattr(self, f'command_{name}')(
+                n_warnings: Optional[int] = self.get_command_method(name)(
                     *args, **kwargs)
             except SchedulerStop:
                 LOG.info(f"Command succeeded: {cmdstr}")

@@ -209,4 +209,6 @@ async def test_nodes_mutator(mock_flow, flow_args):
 async def test_mutation_mapper(mock_flow):
     """Test the mapping of mutations to internal command methods."""
     response = await mock_flow.resolvers._mutation_mapper('pause', {})
-    assert response is not None
+    assert response is None
+    with pytest.raises(ValueError):
+        await mock_flow.resolvers._mutation_mapper('non_exist', {})

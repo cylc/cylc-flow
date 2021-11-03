@@ -17,11 +17,20 @@
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
 import asyncio
+from contextlib import suppress
 from fnmatch import fnmatchcase
 import logging
 import queue
 from time import time
-from typing import Iterable, Optional, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Tuple,
+    TYPE_CHECKING,
+    Union,
+)
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
@@ -44,6 +53,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DELTA_SLEEP_INTERVAL = 0.5
+# Delay before carrying on with the next delta,
+# rougly DELTA_PROC_WAIT*DELTA_SLEEP_INTERVAL seconds (if queue is empty).
+DELTA_PROC_WAIT = 10
 
 
 def filter_none(dictionary):
@@ -186,10 +198,11 @@ def get_flow_data_from_ids(data_store, native_ids):
 
 def get_data_elements(flow, nat_ids, element_type):
     """Return data elements by id."""
+    flow_element = flow[element_type]
     return [
-        flow[element_type][n_id]
+        flow_element[n_id]
         for n_id in nat_ids
-        if n_id in flow[element_type]
+        if n_id in flow_element
     ]
 
 
@@ -198,7 +211,12 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
 
     def __init__(self, data_store_mgr):
         self.data_store_mgr = data_store_mgr
+        # Used with subscriptions for a temporary delta-store,
+        # [sub_id][w_id] = store
         self.delta_store = {}
+        # Used to serialised deltas from a single workflow, needed for
+        # the management of a common data object.
+        self.delta_processing_flows = {}
 
     # Query resolvers
     async def get_workflow_by_id(self, args):
@@ -375,8 +393,21 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
         sub_id = uuid4()
         info.variable_values['backend_sub_id'] = sub_id
         self.delta_store[sub_id] = {}
+
+        op_id = root
+        if 'ops_queue' not in info.context:
+            info.context['ops_queue'] = {}
+        info.context['ops_queue'][op_id] = queue.Queue()
+        op_queue = info.context['ops_queue'][op_id]
+        self.delta_processing_flows[sub_id] = set()
+        delta_processing_flows = self.delta_processing_flows[sub_id]
+
         delta_queues = self.data_store_mgr.delta_queues
         deltas_queue = queue.Queue()
+
+        counters = {}
+        delta_yield_queue = queue.Queue()
+        flow_delta_queues = {}
         try:
             # Iterate over the queue yielding deltas
             w_ids = workflow_ids
@@ -400,27 +431,50 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
                                     workflow_id=w_id)
                                 delta_store[DELTA_ADDED] = (
                                     self.data_store_mgr.data[w_id])
-                                self.delta_store[sub_id][w_id] = delta_store
-                                if sub_resolver is None:
-                                    yield delta_store
-                                else:
-                                    result = await sub_resolver(
-                                        root, info, **args)
-                                    if result:
-                                        yield result
+                                deltas_queue.put(
+                                    (w_id, 'initial_burst', delta_store))
                     elif w_id in self.delta_store[sub_id]:
                         del self.delta_store[sub_id][w_id]
                 try:
-                    w_id, topic, delta_store = deltas_queue.get(False)
-                    if topic != 'shutdown':
+                    with suppress(queue.Empty):
+                        w_id, topic, delta_store = deltas_queue.get(False)
+
+                        if w_id not in flow_delta_queues:
+                            counters[w_id] = 0
+                            flow_delta_queues[w_id] = queue.Queue()
+                        flow_delta_queues[w_id].put((topic, delta_store))
+
+                    # Only yield deltas from the same workflow if previous
+                    # delta has finished processing.
+                    for flow_id, flow_queue in flow_delta_queues.items():
+                        if flow_queue.empty():
+                            continue
+                        elif flow_id in delta_processing_flows:
+                            if counters[flow_id] < DELTA_PROC_WAIT:
+                                if delta_yield_queue.empty():
+                                    counters[flow_id] += 1
+                                    await asyncio.sleep(DELTA_SLEEP_INTERVAL)
+                                continue
+                            delta_processing_flows.remove(flow_id)
+                        counters[flow_id] = 0
+                        topic, delta_store = flow_queue.get()
+                        delta_yield_queue.put((flow_id, topic, delta_store))
+
+                    w_id, topic, delta_store = delta_yield_queue.get(False)
+
+                    # Handle shutdown delta, don't ignore.
+                    if topic == 'shutdown':
+                        delta_store['shutdown'] = True
+                    else:
+                        # ignore deltas that are more frequent than interval.
                         new_time = time()
                         elapsed = new_time - old_time
-                        # ignore deltas that are more frequent than interval.
                         if elapsed <= interval:
                             continue
                         old_time = new_time
-                    else:
-                        delta_store['shutdown'] = True
+
+                    delta_processing_flows.add(w_id)
+                    op_queue.put((sub_id, w_id))
                     self.delta_store[sub_id][w_id] = delta_store
                     if sub_resolver is None:
                         yield delta_store
@@ -442,6 +496,12 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
             if sub_id in self.delta_store:
                 del self.delta_store[sub_id]
             yield None
+
+    async def flow_delta_processed(self, context, op_id):
+        if 'ops_queue' in context:
+            with suppress(queue.Empty, KeyError):
+                sub_id, w_id = context['ops_queue'][op_id].get(False)
+                self.delta_processing_flows[sub_id].remove(w_id)
 
 
 class Resolvers(BaseResolvers):
@@ -500,10 +560,19 @@ class Resolvers(BaseResolvers):
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
-    async def _mutation_mapper(self, command, kwargs):
+    async def _mutation_mapper(
+        self, command: str, kwargs: Dict[str, Any]
+    ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
-        method = getattr(self, command)
-        return method(**kwargs)
+        method = getattr(self, command, None)
+        if method is not None:
+            return method(**kwargs)
+        try:
+            self.schd.get_command_method(command)
+        except AttributeError:
+            raise ValueError(f"Command '{command}' not found")
+        self.schd.command_queue.put((command, tuple(kwargs.values()), {}))
+        return None
 
     def broadcast(
             self,
@@ -524,77 +593,6 @@ class Resolvers(BaseResolvers):
             return self.schd.task_events_mgr.broadcast_mgr.expire_broadcast(
                 cutoff)
         raise ValueError('Unsupported broadcast mode')
-
-    def hold(self, tasks: Iterable[str]) -> Tuple[bool, str]:
-        """Hold tasks."""
-        self.schd.command_queue.put(('hold', (tasks,), {}))
-        return (True, 'Command queued')
-
-    def set_hold_point(self, point: str) -> Tuple[bool, str]:
-        """Set workflow hold after cycle point."""
-        self.schd.command_queue.put(('set_hold_point', (point,), {}))
-        return (True, 'Command queued')
-
-    def pause(self) -> Tuple[bool, str]:
-        """Pause the workflow."""
-        self.schd.command_queue.put(('pause', (), {}))
-        return (True, 'Command queued')
-
-    def kill_tasks(self, tasks):
-        """Kill task jobs.
-
-        Args:
-            tasks (list): List of identifiers, see `task globs`_
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("kill_tasks", (tasks,), {}))
-        return (True, 'Command queued')
-
-    def remove_tasks(self, tasks):
-        """Remove tasks from the task pool.
-
-        Args:
-            tasks (list):
-                List of identifiers, see `task globs`
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("remove_tasks", (tasks,), {}))
-        return (True, 'Command queued')
-
-    def poll_tasks(self, tasks=None):
-        """Request the workflow to poll task jobs.
-
-        Args:
-            tasks (list, optional):
-                List of identifiers, see `task globs`_
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(
-            ("poll_tasks", (tasks,), {}))
-        return (True, 'Command queued')
 
     def put_ext_trigger(self, message, id):  # noqa: A002 (graphql interface)
         """Server-side external event trigger interface.
@@ -642,54 +640,6 @@ class Resolvers(BaseResolvers):
                 (task_job, event_time, severity, message))
         return (True, 'Messages queued: %d' % len(messages))
 
-    def reload_workflow(self):
-        """Tell workflow to reload the workflow definition.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("reload_workflow", (), {}))
-        return (True, 'Command queued')
-
-    def release(self, tasks: Iterable[str]) -> Tuple[bool, str]:
-        """Release held tasks."""
-        self.schd.command_queue.put(('release', (tasks,), {}))
-        return (True, 'Command queued')
-
-    def release_hold_point(self) -> Tuple[bool, str]:
-        """Release all tasks and unset workflow hold point."""
-        self.schd.command_queue.put(('release_hold_point', (), {}))
-        return (True, 'Command queued')
-
-    def resume(self) -> Tuple[bool, str]:
-        """Resume the workflow."""
-        self.schd.command_queue.put(('resume', (), {}))
-        return (True, 'Command queued')
-
-    def set_verbosity(self, level):
-        """Set workflow verbosity to new level (for workflow logs).
-
-        Args:
-            level (str): A logging level e.g. ``INFO`` or ``ERROR``.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
-        """
-        self.schd.command_queue.put(("set_verbosity", (level,), {}))
-        return (True, 'Command queued')
-
     def set_graph_window_extent(self, n_edge_distance):
         """Set data-store graph window to new max edge distance.
 
@@ -712,24 +662,17 @@ class Resolvers(BaseResolvers):
         else:
             return (False, 'Edge distance cannot be negative')
 
-    def force_spawn_children(self, tasks, outputs, flow_num):
+    def force_spawn_children(
+        self, tasks: Iterable[str], outputs: Iterable[str], flow_num: int
+    ) -> Tuple[bool, str]:
         """Spawn children of given task outputs.
 
         User-facing method name: set_outputs.
 
         Args:
-            tasks (list): List of identifiers, see `task globs`
-            outputs (list): List of outputs to spawn on
-            flow_num (int): Flow number to attribute the outputs.
-
-        Returns:
-            tuple: (outcome, message)
-
-            outcome (bool)
-                True if command successfully queued.
-            message (str)
-                Information about outcome.
-
+            tasks: List of identifiers, see `task globs`
+            outputs: List of outputs to spawn on
+            flow_num: Flow number to attribute the outputs.
         """
         self.schd.command_queue.put(
             (
