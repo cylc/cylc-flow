@@ -76,7 +76,6 @@ from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
-    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -146,7 +145,6 @@ DELTAS_MAP = {
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 
 JOB_STATUSES_ALL = [
-    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -999,7 +997,7 @@ class DataStoreMgr:
         elif child_fam not in fp_parent.child_families:
             fp_parent.child_families.append(child_fam)
 
-    def insert_job(self, name, point_string, job_conf):
+    def insert_job(self, name, point_string, status, job_conf):
         """Insert job into data-store.
 
         Args:
@@ -1025,30 +1023,30 @@ class DataStoreMgr:
             stamp=f'{j_id}@{update_time}',
             id=j_id,
             submit_num=sub_num,
-            state=JOB_STATUSES_ALL[0],
+            state=status,
             task_proxy=tp_id,
-            job_runner_name=job_conf['job_runner_name'],
-            env_script=job_conf['env-script'],
-            err_script=job_conf['err-script'],
-            exit_script=job_conf['exit-script'],
-            execution_time_limit=job_conf['execution_time_limit'],
-            platform=job_conf['platform']['name'],
-            init_script=job_conf['init-script'],
-            post_script=job_conf['post-script'],
-            pre_script=job_conf['pre-script'],
-            script=job_conf['script'],
-            work_sub_dir=job_conf['work_d'],
             name=tproxy.name,
             cycle_point=tproxy.cycle_point,
-            directives=json.dumps(job_conf['directives']),
-            environment=json.dumps(job_conf['environment']),
-            param_var=json.dumps(job_conf['param_var'])
+            job_runner_name=job_conf.get('job_runner_name'),
+            env_script=job_conf.get('env-script'),
+            err_script=job_conf.get('err-script'),
+            exit_script=job_conf.get('exit-script'),
+            execution_time_limit=job_conf.get('execution_time_limit'),
+            platform=job_conf.get('platform')['name'],
+            init_script=job_conf.get('init-script'),
+            post_script=job_conf.get('post-script'),
+            pre_script=job_conf.get('pre-script'),
+            script=job_conf.get('script'),
+            work_sub_dir=job_conf.get('work_d'),
+            directives=json.dumps(job_conf.get('directives')),
+            environment=json.dumps(job_conf.get('environment')),
+            param_var=json.dumps(job_conf.get('param_var'))
         )
 
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
             self.schd.workflow, tproxy.cycle_point, tproxy.name, sub_num)
-        j_buf.extra_logs.extend(job_conf['logfiles'])
+        j_buf.extra_logs.extend(job_conf.get('logfiles', []))
 
         self.added[JOBS][j_id] = j_buf
         getattr(self.updated[WORKFLOW], JOBS).append(j_id)

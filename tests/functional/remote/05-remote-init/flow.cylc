@@ -1,3 +1,5 @@
+#!Jinja2
+
 [scheduler]
     [[events]]
         abort on stall timeout = true
@@ -18,23 +20,25 @@
     [[task]]
         script="sleep 1; echo hello"
     [[a]]
-        inherit=task
-        platform=belle
+        inherit = task
+        platform = belle
     [[b]]
-        inherit=task
-        platform=belle
+        inherit = task
+        platform = belle
     [[c]]
-        inherit=task
-        platform=belle
+        inherit = task
+        platform = belle
     [[d]]
         inherit=task
-        platform= belle
+        platform = belle
     [[e]]
         inherit=task
-        platform=ariel
+        # ariel
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[f]]
         inherit=task
-        platform=ariel
+        # ariel
+        platform = {{ environ['CYLC_TEST_PLATFORM'] }}
     [[g]]
         inherit=task
-        platform=localhost
+        platform = localhost

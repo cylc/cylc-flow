@@ -24,9 +24,6 @@ export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 set_test_number 6
 create_test_global_config "" "
 [platforms]
-    [[ariel]]
-        hosts = ${CYLC_TEST_HOST}
-        install target = ${CYLC_TEST_INSTALL_TARGET}
     [[belle]]
         hosts = ${CYLC_TEST_HOST}
         install target = ${CYLC_TEST_INSTALL_TARGET}
@@ -48,10 +45,10 @@ sqlite3 "${DB_FILE}" \
      FROM task_jobs ORDER BY name' \
     >"${NAME}"
 cmp_ok "${NAME}" <<__SELECT__
-a|1||
-b|1||
-e|0|0|ariel
-f|0|0|ariel
+a|1||belle
+b|1||belle
+e|0|0|${CYLC_TEST_PLATFORM}
+f|0|0|${CYLC_TEST_PLATFORM}
 g|0|0|localhost
 __SELECT__
 
