@@ -451,9 +451,6 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
                             continue
                         elif flow_id in delta_processing_flows:
                             if counters[flow_id] < DELTA_PROC_WAIT:
-                                if delta_yield_queue.empty():
-                                    counters[flow_id] += 1
-                                    await asyncio.sleep(DELTA_SLEEP_INTERVAL)
                                 continue
                             delta_processing_flows.remove(flow_id)
                         counters[flow_id] = 0
@@ -484,6 +481,8 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
                             yield result
                 except queue.Empty:
                     await asyncio.sleep(DELTA_SLEEP_INTERVAL)
+                    for flow_id in delta_processing_flows:
+                        counters[flow_id] += 1
         except (GeneratorExit, asyncio.CancelledError):
             raise
         except Exception:
