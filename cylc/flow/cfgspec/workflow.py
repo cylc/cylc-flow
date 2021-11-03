@@ -185,7 +185,7 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-            In :ref:`Cylc 7 backward compatibility mode <BackCompat>`,
+            In :ref:`Cylc 7 backward compatibility mode <Cylc_7_compat_mode>`,
             implicit tasks are still allowed unless you explicitly set
             this to ``False``.
         ''')
@@ -256,7 +256,7 @@ with Conf(
             time zones will default to UTC (``Z``) unless
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone` or
             is set or
-            :ref:`Cylc 7 back compatibility mode is enabled <backcompat>`.
+            :ref:` <Cylc_7_compat_mode>` is enabled.
             Not specifying a time zone here is inadvisable as it leads to
             ambiguity.
 
@@ -336,7 +336,7 @@ with Conf(
                 Allows the specification of main loop plugins for Cylc.
 
                 For a list of built in plugins see :ref:`BuiltInPlugins`.
-                
+
                 .. versionadded:: 8.0.0
             '''
         ):
@@ -386,9 +386,9 @@ with Conf(
 
         with Conf('mail', desc='''
             Settings for the scheduler to send event emails.
-            
+
             These settings are used for both workflow and task events.
-            
+
             .. versionadded:: 8.0.0
         '''):
             Conf('footer', VDR.V_STRING, desc='''
@@ -547,9 +547,9 @@ with Conf(
             for this, it will be assumed to be UTC, or the time zone
             determined by
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-            
+
             .. admonition:: Compatibility mode
-               
+
                In :ref:`backwards compatibility mode <Cylc_7_compat_mode>`
                the time zone defaults to local time rather than UTC.
         ''')
@@ -1255,8 +1255,8 @@ with Conf(
 
                 You can use filters as explicit "task environment interfaces".
                 They make sure that variables filtered out of the inherited
-                environment are not used. However, using filters in this way will
-                make your workflow definition longer.
+                environment are not used. However, using filters in this way
+                will make your workflow definition longer.
 
                 .. note::
                    Environment filtering is done after inheritance is
@@ -1296,8 +1296,8 @@ with Conf(
                      VDR.V_INTERVAL_LIST, None)
 
             with Conf('events', desc='''
-                Configure :term:`event handlers` that run when certain task events
-                occur.
+                Configure :term:`event handlers` that run when certain task
+                events occur.
 
                 This section configures specific task event
                 handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
@@ -1509,7 +1509,7 @@ with Conf(
                     for the other workflow.
 
                     For your own workflows, there is no need to set this as it
-                    is always `~/cylc-run/`. But for other workflows,
+                    is always ``~/cylc-run/``. But for other workflows,
                     (e.g those owned by others), or mirrored workflow databases
                     use this item to specify the location of the top level
                     cylc run directory (the database should be in a the same
