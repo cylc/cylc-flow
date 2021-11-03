@@ -628,10 +628,9 @@ with Conf('global.cylc', desc='''
         .. versionadded:: 8.0.0
     '''):
         Conf('source dirs', VDR.V_STRING_LIST, default=['~/cylc-src'], desc='''
-            List of paths for cylc to search for workflows to install.
+            List of paths that Cylc searches for workflows to install.
 
-            A list of paths for ``cylc install <name>`` to search for workflow
-            <name>. All workflow source directories in these locations will
+            All workflow source directories in these locations will
             also show up in the GUI, ready for installation.
 
             .. caution::
@@ -653,7 +652,7 @@ with Conf('global.cylc', desc='''
                     Alternative location for the run dir.
 
                     If specified, the workflow run directory will
-                    be created in ``<this config>/cylc-run/<workflow-name>``
+                    be created in ``<this-path>/cylc-run/<workflow-name>``
                     and a symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-name>``.
                     If not specified the workflow run directory will be created
@@ -667,7 +666,7 @@ with Conf('global.cylc', desc='''
                     Alternative location for the log dir.
 
                     If specified the workflow log directory will be created in
-                    ``<this config>/cylc-run/<workflow-name>/log`` and a
+                    ``<this-path>/cylc-run/<workflow-name>/log`` and a
                     symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-name>/log``. If not specified
                     the workflow log directory will be created in
@@ -679,7 +678,7 @@ with Conf('global.cylc', desc='''
                     Alternative location for the share dir.
 
                     If specified the workflow share directory will be
-                    created in ``<this config>/cylc-run/<workflow-name>/share``
+                    created in ``<this-path>/cylc-run/<workflow-name>/share``
                     and a symbolic link will be created from
                     ``<$HOME/cylc-run/<workflow-name>/share``. If not specified
                     the workflow share directory will be created in
@@ -692,7 +691,7 @@ with Conf('global.cylc', desc='''
 
                     If specified the workflow share/cycle directory
                     will be created in
-                    ``<this config>/cylc-run/<workflow-name>/share/cycle``
+                    ``<this-path>/cylc-run/<workflow-name>/share/cycle``
                     and a symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-name>/share/cycle``. If not
                     specified the workflow share/cycle directory will be
@@ -704,7 +703,7 @@ with Conf('global.cylc', desc='''
                     Alternative directory for the work dir.
 
                     If specified the workflow work directory will be created in
-                    ``<this config>/cylc-run/<workflow-name>/work`` and a
+                    ``<this-path>/cylc-run/<workflow-name>/work`` and a
                     symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-name>/work``. If not specified
                     the workflow work directory will be created in

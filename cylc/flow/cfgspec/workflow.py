@@ -166,12 +166,8 @@ with Conf(
         {} ``[cylc]``
     '''.format(REPLACES)):
         Conf('UTC mode', VDR.V_BOOLEAN, desc='''
-            If true, workflow will use UTC as the time zone.
-
-            .. versionchanged:: 8.0.0
-
-               Now defaults to ``True``, unless running in
-               :ref:`Cylc 7 compatibility mode <backCompat>`
+            If true, workflow will use UTC as the time zone and for
+            logging timestamps.
 
         ''')
 
@@ -269,7 +265,7 @@ with Conf(
             directory paths where the ":" character is invalid.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
-            Extend ISO date format to allow years outside 1 - 9999.
+            Enable negative years or years more than four digits long.
 
             For years below 0 or above 9999, the ISO 8601 standard specifies
             that an extra number of year digits and a sign should be used.
@@ -340,6 +336,8 @@ with Conf(
                 Allows the specification of main loop plugins for Cylc.
 
                 For a list of built in plugins see :ref:`BuiltInPlugins`.
+                
+                .. versionadded:: 8.0.0
             '''
         ):
             with Conf('<plugin name>'):
@@ -351,12 +349,10 @@ with Conf(
             # Note: default of None for V_STRING_LIST is used to differentiate
             # between: value not set vs value set to empty
             Conf('handlers', VDR.V_STRING_LIST, None, desc='''
-                Configure :term:`event handlers` to be called when workflow
-                events occur.
+                Configure :term:`event handlers` that run when certain
+                workflow events occur.
 
-                Cylc can call :term:`event handlers` when certain workflow
-                events occur. This section configures workflow event
-                handlers; see
+                This section configures workflow event handlers; see
                 :cylc:conf:`flow.cylc[runtime][<namespace>][events]` for
                 task event handlers.
 
@@ -390,6 +386,10 @@ with Conf(
 
         with Conf('mail', desc='''
             Settings for the scheduler to send event emails.
+            
+            These settings are used for both workflow and task events.
+            
+            .. versionadded:: 8.0.0
         '''):
             Conf('footer', VDR.V_STRING, desc='''
                 Specify a string or string template for footers of
@@ -414,7 +414,8 @@ with Conf(
 
             '''.format(REPLACES))
             Conf('to', VDR.V_STRING, desc='''
-                A string containing a list of email addresses.
+                A list of email addresses that event notifications
+                should be sent to.
 
                 .. versionchanged:: 8.0.0
 
@@ -520,7 +521,7 @@ with Conf(
 
             .. admonition:: Compatibility mode
 
-               In :ref:`backwards compatibility mode <backcompat>`
+               In :ref:`backwards compatibility mode <Cylc_7_compat_mode>`
                the time zone defaults to local time rather than UTC.
 
             The string ``now`` converts to the current datetime on the workflow
@@ -543,13 +544,14 @@ with Conf(
             ``--fcp``.
 
             In date-time cycling, if you do not provide time zone information
-            for this, it will be assumed to be UTC if
-            :cylc:conf:`flow.cylc[scheduler]UTC mode`  or in the time zone
+            for this, it will be assumed to be UTC, or the time zone
             determined by
-            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`, unless
-            you are working in
-            :ref:`Cylc 7 backwards comapatibility mode <backcompat>`, in which
-            case the local time of the workflow host will be used.
+            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
+            
+            .. admonition:: Compatibility mode
+               
+               In :ref:`backwards compatibility mode <Cylc_7_compat_mode>`
+               the time zone defaults to local time rather than UTC.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules to allow only some initial datetime cycle points.
@@ -560,7 +562,8 @@ with Conf(
                cycle point, but where only some initial cycle points are
                reasonable.
 
-            Set by defining a list of truncated time points, such as
+            Set by defining a list of truncated time points, which
+            the initial cycle point must match.
 
             Examples:
 
@@ -570,7 +573,7 @@ with Conf(
 
             .. seealso::
 
-               :ref:`Recurrance tutorial <tutorial-inferred-recurrence>`.
+               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
 
             .. note::
 
@@ -586,17 +589,17 @@ with Conf(
 
             .. seealso::
 
-               :ref:`Recurrance tutorial <tutorial-inferred-recurrence>`.
+               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
 
         ''')
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc='''
-            Hold all tasks once they pass this cycle point.
+            Hold all tasks that pass this cycle point.
 
             .. versionchanged:: 8.0.0
 
                {}``[scheduling]hold after point``.
 
-            Hold workflow once tasks pass this cycle point. Unlike the final
+            Unlike the final
             cycle point, the workflow does not shut down once all tasks have
             passed this point. If this item is set you can override it on the
             command line using ``--hold-after``.
@@ -606,7 +609,7 @@ with Conf(
 
             .. versionadded:: 8.0.0
 
-            The stop cycle point can be over-ridden on the command line using
+            The stop cycle point can be overridden on the command line using
             ``cylc play --stop-cycle-point=POINT``
 
             .. note:
@@ -632,7 +635,7 @@ with Conf(
 
             .. versionchanged:: 8.0.0
 
-               Replaces ``[scheduling]max active cycle points``.
+               Merged with ``[scheduling]max active cycle points``.
 
             Runahead limiting prevents the fastest tasks in a workflow from
             getting too far ahead of the slowest ones, as documented in
@@ -669,12 +672,12 @@ with Conf(
             This section will allow you to limit the number of simultaneously
             active tasks (submitted or running) by assigning tasks to queues.
 
-            By default a single queue called *default* is defined,
+            By default, a single queue called ``default`` is defined,
             with all tasks assigned to it and no limit to the number of those
             tasks which may be active.
 
-            To use a single queue for the whole workflow but limit the number
-            of active tasks set :cylc:conf:`[default]limit`.
+            To use a single queue for the whole workflow, but limit the number
+            of active tasks, set :cylc:conf:`[default]limit`.
 
             To add additional queues define additional sections:
 
@@ -912,11 +915,11 @@ with Conf(
 
         You can specify:
 
-        - What task you want to execute.
+        - What scripts or commands you want to execute.
         - Which compute resource (platform) you wish to use.
         - How to run your task.
 
-        If multiple tasks need the same settings tasks can share settings by
+        If multiple tasks need the same settings, they can share settings by
         inheriting them from one or more other tasks.
 
         Precedence is determined by the same C3
@@ -1250,9 +1253,9 @@ with Conf(
                 of environment variables: Filters can make it clear which
                 variables each task uses.
 
-                You can use Filters as explicit "task environment interfaces".
+                You can use filters as explicit "task environment interfaces".
                 They make sure that variables filtered out of the inherited
-                environment are not used. But using filters in this way will
+                environment are not used. However, using filters in this way will
                 make your workflow definition longer.
 
                 .. note::
@@ -1293,11 +1296,10 @@ with Conf(
                      VDR.V_INTERVAL_LIST, None)
 
             with Conf('events', desc='''
-                Configure :term:`event handlers` to be called when task events
+                Configure :term:`event handlers` that run when certain task events
                 occur.
 
-                Cylc can call :term:`event handlers` when certain task
-                events occur. This section configures specific task event
+                This section configures specific task event
                 handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
                 workflow event handlers.
 
@@ -1440,7 +1442,7 @@ with Conf(
                 Conf('custom handlers', VDR.V_STRING_LIST, None)
 
             with Conf('mail', desc='''
-                Settings for mail events.
+                Email notification settings for task events.
 
                 .. versionadded:: 8.0.0
             '''):
@@ -1468,7 +1470,7 @@ with Conf(
                 Configure automatic workflow polling tasks as described in
                 :ref:`WorkflowStatePolling`.
 
-                .. versionchanged:: 8.0.0::
+                .. versionchanged:: 8.0.0
 
                    {}``[runtime][<namespace>]suite state polling``.
 
@@ -1503,10 +1505,11 @@ with Conf(
                     specified message rather than achieve a state.
                 ''')
                 Conf('run-dir', VDR.V_STRING, desc='''
-                    Specify the location of the top level cylc run directory.
+                    Specify the location of the top level cylc-run directory
+                    for the other workflow.
 
-                    For your own workflows the run database location is
-                    determined by your site/user config. For other workflows,
+                    For your own workflows, there is no need to set this as it
+                    is always `~/cylc-run/`. But for other workflows,
                     (e.g those owned by others), or mirrored workflow databases
                     use this item to specify the location of the top level
                     cylc run directory (the database should be in a the same
@@ -1591,8 +1594,8 @@ with Conf(
                 - slurm_packjob
                 - moab
 
-                directives are written to the top of the task job script
-                in the correct format for the jor runner.
+                Directives are written to the top of the task job script
+                in the correct format for the job runner.
 
                 Specifying directives individually like this allows
                 use of default directives for task families which can be
