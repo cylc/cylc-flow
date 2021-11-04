@@ -1466,7 +1466,8 @@ class WorkflowStopMode(Enum):
 class Broadcast(Mutation):
     class Meta:
         description = sstrip('''
-            Override or add new `[runtime]` configurations in a running workflow.
+            Override or add new `[runtime]` configurations in a running
+            workflow.
 
             Uses for broadcast include making temporary changes to task
             behaviour, and task-to-downstream-task communication via
