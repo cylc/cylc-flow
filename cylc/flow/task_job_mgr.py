@@ -1050,10 +1050,8 @@ class TaskJobManager:
         if ctx.ret_code == SubProcPool.RET_CODE_WORKFLOW_STOPPING:
             return
 
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
             itask.summary['submit_method_id'] = items[3]
-            self.data_store_mgr.delta_job_attr(job_d, 'job_id', items[3])
         except IndexError:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] == "None":

@@ -1037,6 +1037,8 @@ class TaskEventsManager():
 
         # register the newly submitted job with the data base and data store
         self._insert_task_job(itask, event_time, submit_num, 0)
+        self.data_store_mgr.delta_job_attr(job_d, 'job_id',
+                                           itask.summary['submit_method_id'])
 
     def _insert_task_job(self, itask, event_time, submit_num, submit_status):
         job_conf = itask.jobs[submit_num - 1]
