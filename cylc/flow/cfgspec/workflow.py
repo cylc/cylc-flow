@@ -335,7 +335,8 @@ with Conf(
             desc='''
                 Allows the specification of main loop plugins for Cylc.
 
-                For a list of built in plugins see :ref:`BuiltInPlugins`.
+                For a list of built in plugins see
+                :ref:`Main Loop Plugins <BuiltInPlugins>`.
 
                 .. versionadded:: 8.0.0
             '''
