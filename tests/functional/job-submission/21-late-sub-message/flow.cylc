@@ -1,0 +1,9 @@
+# Test delayed job submission.
+[scheduling]
+    [[graph]]
+        R1 = foo => bar
+[runtime]
+    [[bar]]
+    [[foo]]
+        platform = wobblygibblets
+        script = sleep 20
