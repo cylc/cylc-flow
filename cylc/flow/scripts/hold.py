@@ -18,7 +18,7 @@
 
 """cylc hold [OPTIONS] ARGS
 
-Hold tasks within a workflow.
+Hold task(s) in a workflow.
 
 Held tasks do not submit their jobs even if ready to run.
 

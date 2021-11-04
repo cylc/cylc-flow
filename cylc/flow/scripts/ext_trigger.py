@@ -20,7 +20,7 @@
 
 Report an external event message to a scheduler.
 
-Cylc external trigger allows any program to send
+External triggers allow any program to send
 a message to the Cylc scheduler. Cylc can use this
 message as a signal that an external prerequisite has
 been satisfied and trigger the task accordingly.

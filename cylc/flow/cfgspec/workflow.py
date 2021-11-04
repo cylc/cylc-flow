@@ -636,7 +636,8 @@ with Conf(
 
             .. versionchanged:: 8.0.0
 
-               Merged with ``[scheduling]max active cycle points``.
+               The deprecated ``[scheduling]max active cycle points`` setting
+               was merged into this one.
 
             Runahead limiting prevents the fastest tasks in a workflow from
             getting too far ahead of the slowest ones, as documented in

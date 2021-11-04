@@ -1466,7 +1466,7 @@ class WorkflowStopMode(Enum):
 class Broadcast(Mutation):
     class Meta:
         description = sstrip('''
-            Override or add new [runtime] configurations in a running workflow.
+            Override or add new `[runtime]` configurations in a running workflow.
 
             Uses for broadcast include making temporary changes to task
             behaviour, and task-to-downstream-task communication via
@@ -1718,8 +1718,9 @@ class SetGraphWindowExtent(Mutation):
 
 class Stop(Mutation):
     class Meta:
-        description = sstrip('''
-            Tell a workflow to shut down.
+        description = sstrip(f'''
+            Tell a workflow to shut down or stop a specified
+            flow from spawning any further.
 
             By default stopping workflows wait for submitted and running tasks
             to complete before shutting down. You can change this behaviour
@@ -1729,7 +1730,7 @@ class Stop(Mutation):
             submitted immediately if the workflow is restarted.
             Remaining task event handlers, job poll and kill commands, will
             be executed prior to shutdown, unless
-            ``mode==WorkflowStopMode.Now.name``.
+            the stop mode is `{WorkflowStopMode.Now.name}`.
         ''')
         resolver = partial(mutator, command='stop')
 
@@ -1759,9 +1760,9 @@ class ExtTrigger(Mutation):
         description = sstrip('''
             Report an external event message to a scheduler.
 
-            Cylc external trigger allows any program to send
+            External triggers allow any program to send
             messages to the Cylc scheduler. Cylc can use such
-            messages as signals than an external perquisite has
+            messages as signals that an external prerequisite has
             been satisfied.
 
             The ID argument should be unique to each external

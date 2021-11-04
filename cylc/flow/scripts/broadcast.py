@@ -25,7 +25,7 @@ and task-to-downstream-task communication via environment variables.
 
 A broadcast can target any [runtime] namespace (task or task family) for all
 cycles or for a specific cycle. If a task is affected by specific-cycle and
-all-cycle broadcasts at once, the specific takes precedence. If a task is
+all-cycle broadcasts at the same time, the specific takes precedence. If a task is
 affected by broadcasts to multiple ancestor namespaces, the result is
 determined by normal [runtime] inheritance. In other words, it follows this
 order:
