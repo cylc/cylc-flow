@@ -444,6 +444,14 @@ class TaskEventsManager():
                     and itask.state.is_gt(TASK_STATUS_RUNNING)
             ):
                 return True
+            if itask.state.status == TASK_STATUS_PREPARING:
+                # The started message must have arrived before the submitted
+                # one (rare by possible), so assume that a successful
+                # submission must have occurred and act accordingly.
+                self._process_message_submitted(
+                    itask, event_time, itask.submit_num)
+                self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
+
             self._process_message_started(itask, event_time)
             self.spawn_func(itask, TASK_OUTPUT_STARTED)
         elif message == self.EVENT_SUCCEEDED:
@@ -476,8 +484,24 @@ class TaskEventsManager():
                     and itask.state.is_gt(TASK_STATUS_SUBMITTED)
             ):
                 return True
-            self._process_message_submitted(itask, event_time, submit_num)
-            self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
+            if (
+                itask.state.status == TASK_STATUS_PREPARING
+                or itask.tdef.run_mode == 'simulation'
+            ):
+                # If not in the preparing state we already assumed and handled
+                # job submission under the started event above...
+                # (sim mode does not have the job prep state)
+                self._process_message_submitted(itask, event_time, submit_num)
+                self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
+
+            # ... but either way update the job ID in the job proxy (it only
+            # comes in via the submission message).
+            if itask.tdef.run_mode != 'simulation':
+                job_d = get_task_job_id(
+                    itask.point, itask.tdef.name, itask.submit_num)
+                self.data_store_mgr.delta_job_attr(
+                    job_d, 'job_id', itask.summary['submit_method_id'])
+
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
             if (
@@ -1009,10 +1033,7 @@ class TaskEventsManager():
         else:
             itask.set_summary_time('submitted', event_time)
             job_d = get_task_job_id(
-                itask.point,
-                itask.tdef.name,
-                itask.submit_num,
-            )
+                itask.point, itask.tdef.name, itask.submit_num)
             self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
             self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
             # Unset started and finished times in case of resubmission.
@@ -1037,8 +1058,6 @@ class TaskEventsManager():
 
         # register the newly submitted job with the data base and data store
         self._insert_task_job(itask, event_time, submit_num, 0)
-        self.data_store_mgr.delta_job_attr(job_d, 'job_id',
-                                           itask.summary['submit_method_id'])
 
     def _insert_task_job(self, itask, event_time, submit_num, submit_status):
         job_conf = itask.jobs[submit_num - 1]
