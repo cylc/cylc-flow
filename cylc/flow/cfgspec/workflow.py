@@ -256,7 +256,7 @@ with Conf(
             time zones will default to UTC (``Z``) unless
             :cylc:conf:`flow.cylc[scheduler]cycle point time zone` or
             is set or
-            :ref:` <Cylc_7_compat_mode>` is enabled.
+            :ref:`Cylc_7_compat_mode` is enabled.
             Not specifying a time zone here is inadvisable as it leads to
             ambiguity.
 
