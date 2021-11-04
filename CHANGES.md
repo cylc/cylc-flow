@@ -110,6 +110,9 @@ renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
 
 ### Fixes
 
+[#4493](https://github.com/cylc/cylc-flow/pull/4493) - handle late job
+submission message properly.
+
 [#4443](https://github.com/cylc/cylc-flow/pull/4443) - fix for slow polling
 generating an incorrect submit-failed result.
 
