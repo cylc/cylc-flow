@@ -464,7 +464,11 @@ class TaskEventsManager():
                     and itask.state.is_gt(TASK_STATUS_SUBMIT_FAILED)
             ):
                 return True
-            if self._process_message_submit_failed(itask, event_time):
+            if self._process_message_submit_failed(
+                itask,
+                event_time,
+                submit_num
+            ):
                 self.spawn_func(itask, TASK_OUTPUT_SUBMIT_FAILED)
         elif message == self.EVENT_SUBMITTED:
             if (
@@ -472,7 +476,7 @@ class TaskEventsManager():
                     and itask.state.is_gt(TASK_STATUS_SUBMITTED)
             ):
                 return True
-            self._process_message_submitted(itask, event_time)
+            self._process_message_submitted(itask, event_time, submit_num)
             self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
@@ -937,7 +941,7 @@ class TaskEventsManager():
             self.data_store_mgr.delta_task_state(itask)
         self._reset_job_timers(itask)
 
-    def _process_message_submit_failed(self, itask, event_time):
+    def _process_message_submit_failed(self, itask, event_time, submit_num):
         """Helper for process_message, handle a submit-failed message.
 
         Return True if no retries (hence go to the submit-failed state).
@@ -975,9 +979,14 @@ class TaskEventsManager():
             msg = f"job {self.EVENT_SUBMIT_FAILED}, {delay_msg}"
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
         self._reset_job_timers(itask)
+
+        # register the newly submit-failed job with the data base and data
+        # store
+        self._insert_task_job(itask, event_time, submit_num, 1)
+
         return no_retries
 
-    def _process_message_submitted(self, itask, event_time):
+    def _process_message_submitted(self, itask, event_time, submit_num):
         """Helper for process_message, handle a submit-succeeded message."""
         with suppress(KeyError):
             summary = itask.summary
@@ -987,10 +996,6 @@ class TaskEventsManager():
                 f"{summary['job_runner_name']}"
                 f"[{summary['submit_method_id']}]"
             )
-        self.workflow_db_mgr.put_update_task_jobs(itask, {
-            "time_submit_exit": event_time,
-            "submit_status": 0,
-            "job_id": itask.summary.get('submit_method_id')})
 
         if itask.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
@@ -1000,27 +1005,70 @@ class TaskEventsManager():
                 self.data_store_mgr.delta_task_state(itask)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
-            return
 
-        itask.set_summary_time('submitted', event_time)
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
-        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
-        # Unset started and finished times in case of resubmission.
-        itask.set_summary_time('started')
-        itask.set_summary_time('finished')
+        else:
+            itask.set_summary_time('submitted', event_time)
+            job_d = get_task_job_id(
+                itask.point,
+                itask.tdef.name,
+                itask.submit_num,
+            )
+            self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
+            self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
+            # Unset started and finished times in case of resubmission.
+            itask.set_summary_time('started')
+            itask.set_summary_time('finished')
 
-        self.reset_inactivity_timer_func()
-        if itask.state.status == TASK_STATUS_PREPARING:
-            # The job started message can (rarely) come in before the submit
-            # command returns - in which case do not go back to 'submitted'.
-            if itask.state_reset(TASK_STATUS_SUBMITTED):
-                itask.state_reset(is_queued=False)
-                self.setup_event_handlers(
-                    itask, self.EVENT_SUBMITTED, f'job {self.EVENT_SUBMITTED}')
-                self.data_store_mgr.delta_task_state(itask)
-                self.data_store_mgr.delta_task_queued(itask)
-            self._reset_job_timers(itask)
+            self.reset_inactivity_timer_func()
+            if itask.state.status == TASK_STATUS_PREPARING:
+                # The job started message can (rarely) come in before the
+                # submit command returns - in which case do not go back to
+                # 'submitted'.
+                if itask.state_reset(TASK_STATUS_SUBMITTED):
+                    itask.state_reset(is_queued=False)
+                    self.setup_event_handlers(
+                        itask,
+                        self.EVENT_SUBMITTED,
+                        f'job {self.EVENT_SUBMITTED}',
+                    )
+                    self.data_store_mgr.delta_task_state(itask)
+                    self.data_store_mgr.delta_task_queued(itask)
+                self._reset_job_timers(itask)
+
+        # register the newly submitted job with the data base and data store
+        self._insert_task_job(itask, event_time, submit_num, 0)
+
+    def _insert_task_job(self, itask, event_time, submit_num, submit_status):
+        job_conf = itask.jobs[submit_num - 1]
+
+        # insert job into data store
+        self.data_store_mgr.insert_job(
+            itask.tdef.name,
+            itask.point,
+            itask.state.status,
+            {
+                **job_conf,
+                # NOTE: the platform name may have changed since task
+                # preparation started due to intelligent host (and or
+                # platform) selection
+                'platform': itask.platform,
+            },
+        )
+        # update job in data base
+        # NOTE: the job must be added to the DB earlier so that Cylc can
+        # reconnect with job submissions if the scheduler is restarted
+        self.workflow_db_mgr.put_update_task_jobs(
+            itask,
+            {
+                'submit_status': submit_status,
+                'time_submit_exit': event_time,
+                'job_id': itask.summary.get('submit_method_id'),
+                # NOTE: the platform name may have changed since task
+                # preparation started due to intelligent host (and or
+                # platform) selection
+                'platform_name': itask.platform['name'],
+            }
+        )
 
     def _setup_job_logs_retrieval(self, itask, event):
         """Set up remote job logs retrieval.

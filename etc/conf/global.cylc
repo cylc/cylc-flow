@@ -20,14 +20,14 @@
         hosts = _remote_background_indep_poll
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
-        submission polling intervals = PT1S
+        submission polling intervals = PT3S
     [[_remote_at_indep_poll]]
         # NOTE: at submission uses the same container as background
         job runner = at
         hosts = _remote_background_indep_poll
         communication method = poll
         execution polling intervals = 5*PT1S, PT5S
-        submission polling intervals = PT1S
+        submission polling intervals = PT3S
     #[[_remote_background_shared_tcp]]
     #    hosts = _remote_background_shared_tcp
     #[[_remote_background_shared_ssh]]
