@@ -766,6 +766,7 @@ class TaskJobManager:
                 if line.startswith(prefix):
                     line = line[len(prefix):].strip()
                     try:
+                        # TODO this massive try block should be unpacked.
                         path = line.split("|", 2)[1]  # timestamp, path, status
                         point, name, submit_num = path.split(os.sep, 2)
                         if prefix == self.job_runner_mgr.OUT_PREFIX_SUMMARY:

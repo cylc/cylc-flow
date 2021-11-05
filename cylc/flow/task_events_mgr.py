@@ -179,6 +179,8 @@ class TaskEventsManager():
     FLAG_POLLED_IGNORED = "(polled-ignored)"
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
+    JOB_SUBMIT_SUCCESS_FLAG = 0
+    JOB_SUBMIT_FAIL_FLAG = 1
 
     def __init__(
         self, workflow, proc_pool, workflow_db_mgr, broadcast_mgr,
@@ -1004,9 +1006,8 @@ class TaskEventsManager():
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
         self._reset_job_timers(itask)
 
-        # register the newly submit-failed job with the data base and data
-        # store
-        self._insert_task_job(itask, event_time, submit_num, 1)
+        # Register newly submit-failed job with the data base and datastore.
+        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
 
         return no_retries
 
@@ -1056,11 +1057,16 @@ class TaskEventsManager():
                     self.data_store_mgr.delta_task_queued(itask)
                 self._reset_job_timers(itask)
 
-        # register the newly submitted job with the data base and data store
-        self._insert_task_job(itask, event_time, submit_num, 0)
+        # Register the newly submitted job with the data base and datastore.
+        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
 
-    def _insert_task_job(self, itask, event_time, submit_num, submit_status):
-        job_conf = itask.jobs[submit_num - 1]
+    def _insert_task_job(self, itask, event_time, submit_status):
+        """Insert a new job proxy into the datastore."""
+
+        # itask.jobs appends for automatic retries (which reuse the same task
+        # proxy) but a retriggered task that was not already in the pool will
+        # not see previous submissions (so can't use itask.jobs[submit_num-1]).
+        job_conf = itask.jobs[-1]
 
         # insert job into data store
         self.data_store_mgr.insert_job(
