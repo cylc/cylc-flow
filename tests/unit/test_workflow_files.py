@@ -663,7 +663,6 @@ def test_init_clean__runN(
     assert "contains the following workflows" in str(exc_info.value)
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize('number_of_runs', [1, 2])
 @pytest.mark.parametrize(
@@ -1724,7 +1723,7 @@ def test_search_install_source_dirs_empty(mock_glbl_cfg: Callable):
 @pytest.mark.parametrize(
     'flow_file_exists, suiterc_exists, expected_file',
     [(True, False, WorkflowFiles.FLOW_FILE),
-     (True, True, WorkflowFiles.FLOW_FILE),
+     (True, True, None),
      (False, True, WorkflowFiles.SUITE_RC)]
 )
 def test_check_flow_file(
@@ -1742,8 +1741,16 @@ def test_check_flow_file(
         tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
     if suiterc_exists:
         tmp_path.joinpath(WorkflowFiles.SUITE_RC).touch()
+    if expected_file is None:
+        with pytest.raises(WorkflowFilesError) as exc:
+            check_flow_file(tmp_path)
+        assert str(exc.value) == (
+            "Both flow.cylc and suite.rc files are present in the "
+            "source directory. Please remove one and try again."
+        )
 
-    assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
+    else:
+        assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
 
 
 @pytest.mark.parametrize(
