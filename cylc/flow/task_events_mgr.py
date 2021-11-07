@@ -33,6 +33,7 @@ import os
 from shlex import quote
 import shlex
 from time import time
+from typing import TYPE_CHECKING
 
 from cylc.flow.parsec.config import ItemNotFoundError
 
@@ -70,6 +71,11 @@ from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string as intvl_as_str
 )
+
+
+if TYPE_CHECKING:
+    from cylc.flow.task_proxy import TaskProxy
+
 
 CustomTaskEventHandlerContext = namedtuple(
     "CustomTaskEventHandlerContext",
@@ -448,14 +454,16 @@ class TaskEventsManager():
                 return True
             if itask.state.status == TASK_STATUS_PREPARING:
                 # The started message must have arrived before the submitted
-                # one (rare by possible), so assume that a successful
-                # submission must have occurred and act accordingly.
+                # one, so assume that a successful submission occurred and act
+                # accordingly. Note the submitted message is internal, whereas
+                # the started message comes in on the network.
                 self._process_message_submitted(
                     itask, event_time, itask.submit_num)
                 self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
 
             self._process_message_started(itask, event_time)
             self.spawn_func(itask, TASK_OUTPUT_STARTED)
+
         elif message == self.EVENT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
             self.spawn_func(itask, TASK_OUTPUT_SUCCEEDED)
@@ -1006,7 +1014,7 @@ class TaskEventsManager():
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
         self._reset_job_timers(itask)
 
-        # Register newly submit-failed job with the data base and datastore.
+        # Register newly submit-failed job with the database and datastore.
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
 
         return no_retries
@@ -1057,12 +1065,23 @@ class TaskEventsManager():
                     self.data_store_mgr.delta_task_queued(itask)
                 self._reset_job_timers(itask)
 
-        # Register the newly submitted job with the data base and datastore.
+        # Register the newly submitted job with the database and datastore.
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
 
-    def _insert_task_job(self, itask, event_time, submit_status):
-        """Insert a new job proxy into the datastore."""
+    def _insert_task_job(
+        self,
+        itask: 'TaskProxy',
+        event_time: str,
+        submit_status: int
+    ):
+        """Insert a new job proxy into the datastore.
 
+        Args:
+            itask: create a job proxy for this task proxy
+            event_time: time of job submission
+            submit_status: 0 (success), 1 (fail)
+
+        """
         # itask.jobs appends for automatic retries (which reuse the same task
         # proxy) but a retriggered task that was not already in the pool will
         # not see previous submissions (so can't use itask.jobs[submit_num-1]).
@@ -1081,7 +1100,7 @@ class TaskEventsManager():
                 'platform': itask.platform,
             },
         )
-        # update job in data base
+        # update job in database
         # NOTE: the job must be added to the DB earlier so that Cylc can
         # reconnect with job submissions if the scheduler is restarted
         self.workflow_db_mgr.put_update_task_jobs(

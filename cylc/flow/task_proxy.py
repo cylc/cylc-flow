@@ -185,7 +185,7 @@ class TaskProxy:
         if submit_num is None:
             submit_num = 0
         self.submit_num = submit_num
-        self.jobs: List[str] = []
+        self.jobs: List[dict] = []
         if flow_nums is None:
             self.flow_nums = set()
         else:
