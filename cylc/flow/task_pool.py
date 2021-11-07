@@ -1123,13 +1123,21 @@ class TaskPool:
         """Spawn and update itask's children, remove itask if finished.
 
         Also set a the abort-on-task-failed flag if necessary.
-        If not reflow update existing children but don't spawn them.
+
+        If not reflow:
+            - update existing children but don't spawn new ones
+            - unless forced (manual command): spawn but with no flow number
 
         If an absolute output is completed update the store of completed abs
         outputs, and update the prerequisites of every instance of the child
         in the pool. (And in self.spawn() use the store of completed abs
         outputs to satisfy any tasks with abs prerequisites).
 
+        Args:
+            tasks: List of identifiers, see `task globs`
+            outputs: List of outputs to spawn on
+            flow_num: Flow number to attribute the outputs
+            forced: whether this is a manual spawn command or not
         """
         if (
             output == TASK_OUTPUT_FAILED
@@ -1399,6 +1407,13 @@ class TaskPool:
 
         User-facing command name: set_outputs. Creates a transient parent just
         for the purpose of spawning children.
+
+        Args:
+            items: Identifiers for matching task definitions, each with the
+                form "name[.point][:state]" or "[point/]name[:state]".
+                Glob-like patterns will give a warning and be skipped.
+            outputs: List of outputs to spawn on
+            flow_num: Flow number to attribute the outputs
 
         """
         outputs = outputs or [TASK_OUTPUT_SUCCEEDED]

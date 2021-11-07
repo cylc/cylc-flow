@@ -674,7 +674,7 @@ class Resolvers(BaseResolvers):
         Args:
             tasks: List of identifiers, see `task globs`
             outputs: List of outputs to spawn on
-            flow_num: Flow number to attribute the outputs.
+            flow_num: Flow number to attribute the outputs
         """
         self.schd.command_queue.put(
             (
