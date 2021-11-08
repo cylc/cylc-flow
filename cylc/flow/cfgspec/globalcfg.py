@@ -955,13 +955,14 @@ with Conf('global.cylc', desc='''
                 sourcing ``~/.bashrc`` (or ``~/.cshrc``) to set up the
                 environment.
             ''')
-            Conf('cylc path', VDR.V_STRING, desc=f'''
+            Conf('cylc path', VDR.V_STRING, desc='''
                 The path containing the ``cylc`` executable on a remote
                 platform.
 
                 .. versionchanged:: 8.0.0
 
-                   {MOVEDFROMJOB}``cylc executable``.
+                   Moved from ``suite.rc[runtime][<namespace>][job]
+                   cylc executable``.
 
                 This may be necessary if the ``cylc`` executable is not in the
                 ``$PATH`` for an ``ssh`` call.
