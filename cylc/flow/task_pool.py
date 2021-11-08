@@ -1119,16 +1119,25 @@ class TaskPool:
         """
         return self.abort_task_failed
 
-    def spawn_on_output(self, itask, output):
+    def spawn_on_output(self, itask, output, forced=False):
         """Spawn and update itask's children, remove itask if finished.
 
         Also set a the abort-on-task-failed flag if necessary.
-        If not reflow update existing children but don't spawn them.
+
+        If not reflow:
+            - update existing children but don't spawn new ones
+            - unless forced (manual command): spawn but with no flow number
 
         If an absolute output is completed update the store of completed abs
         outputs, and update the prerequisites of every instance of the child
         in the pool. (And in self.spawn() use the store of completed abs
         outputs to satisfy any tasks with abs prerequisites).
+
+        Args:
+            tasks: List of identifiers or task globs.
+            outputs: List of outputs to spawn on.
+            flow_num: Flow number to attribute the outputs.
+            forced: If True this is a manual spawn command.
 
         """
         if (
@@ -1174,8 +1183,7 @@ class TaskPool:
                 )
                 # self.workflow_db_mgr.process_queued_ops()
 
-            elif itask.flow_nums:
-                # Spawn child only if itask.flow_nums is not empty.
+            elif itask.flow_nums or forced:
                 c_task = self.spawn_task(
                     c_name, c_point, itask.flow_nums,
                 )
@@ -1213,24 +1221,27 @@ class TaskPool:
                 LOG.warning(f"[{c_task}] suiciding while active")
             self.remove(c_task, self.__class__.SUICIDE_MSG)
 
-        # Remove the parent task if finished and complete.
-        if output in [
+        if not forced and output in [
             TASK_OUTPUT_SUCCEEDED,
             TASK_OUTPUT_EXPIRED,
             TASK_OUTPUT_FAILED
         ]:
-            incomplete = itask.state.outputs.get_incomplete()
-            if incomplete:
-                # Retain as an incomplete task.
-                LOG.warning(
-                    f"[{itask}] did not complete required outputs:"
-                    f" {incomplete}"
-                )
-            else:
-                # Remove as completed.
-                self.remove(itask, 'finished')
-                if itask.identity == self.stop_task_id:
-                    self.stop_task_finished = True
+            self.remove_if_complete(itask)
+
+    def remove_if_complete(self, itask):
+        """Remove itask if finished and required outputs are complete."""
+        incomplete = itask.state.outputs.get_incomplete()
+        if incomplete:
+            # Retain as incomplete.
+            LOG.warning(
+                f"[{itask}] did not complete required outputs:"
+                f" {incomplete}"
+            )
+        else:
+            # Remove as completed.
+            self.remove(itask, 'finished')
+            if itask.identity == self.stop_task_id:
+                self.stop_task_finished = True
 
     def spawn_on_all_outputs(self, itask):
         """Spawn on all of itask's outputs regardless of completion.
@@ -1387,21 +1398,40 @@ class TaskPool:
                     continue
         return n_warnings, task_items
 
-    def force_spawn_children(self, items, outputs, flow_num):
-        """Spawn downstream children of given task outputs on user command.
+    def force_spawn_children(
+        self,
+        items: Iterable[str],
+        outputs: Optional[List[str]] = None,
+        flow_num: Optional[int] = None
+    ):
+        """Spawn downstream children of given outputs, on user command.
 
-        User-facing method name: set_outputs.
+        User-facing command name: set_outputs. Creates a transient parent just
+        for the purpose of spawning children.
+
+        Args:
+            items: Identifiers for matching task definitions, each with the
+                form "name[.point][:state]" or "[point/]name[:state]".
+                Glob-like patterns will give a warning and be skipped.
+            outputs: List of outputs to spawn on
+            flow_num: Flow number to attribute the outputs
 
         """
+        outputs = outputs or [TASK_OUTPUT_SUCCEEDED]
+        if flow_num is None:
+            flow_nums = None
+        else:
+            flow_nums = {flow_num}
+
         n_warnings, task_items = self.match_taskdefs(items)
         for (_, point), taskdef in sorted(task_items.items()):
-            # This the upstream target task:
-            itask = TaskProxy(taskdef, point, flow_nums={flow_num})
-            # Spawn downstream on selected outputs.
+            # This the parent task:
+            itask = TaskProxy(taskdef, point, flow_nums=flow_nums)
+            # Spawn children of selected outputs.
             for trig, out, _ in itask.state.outputs.get_all():
                 if trig in outputs:
                     LOG.info(f"[{itask}] Forced spawning on {out}")
-                    self.spawn_on_output(itask, out)
+                    self.spawn_on_output(itask, out, forced=True)
 
     def remove_tasks(self, items):
         """Remove tasks from the pool."""
@@ -1424,6 +1454,7 @@ class TaskPool:
         without reflow.
 
         Queue the task if not queued, otherwise release it to run.
+
         """
         n_warnings, task_items = self.match_taskdefs(items)
         for name, point in task_items.keys():

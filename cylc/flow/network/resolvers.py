@@ -662,15 +662,18 @@ class Resolvers(BaseResolvers):
             return (False, 'Edge distance cannot be negative')
 
     def force_spawn_children(
-        self, tasks: Iterable[str], outputs: Iterable[str], flow_num: int
+        self,
+        tasks: Iterable[str],
+        outputs: Optional[Iterable[str]] = None,
+        flow_num: Optional[int] = None
     ) -> Tuple[bool, str]:
         """Spawn children of given task outputs.
 
         User-facing method name: set_outputs.
 
         Args:
-            tasks: List of identifiers, see `task globs`
-            outputs: List of outputs to spawn on
+            tasks: List of identifiers or task globs.
+            outputs: List of outputs to spawn on.
             flow_num: Flow number to attribute the outputs.
         """
         self.schd.command_queue.put(
@@ -726,7 +729,7 @@ class Resolvers(BaseResolvers):
 
         Args:
             tasks (list):
-                List of identifiers, see `task globs`_
+                List of identifiers or task globs.
             reflow (bool):
                 Start new flow from triggered tasks.
             flow_descr (str):
