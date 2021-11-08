@@ -57,9 +57,9 @@ cylc__job__main() {
     if [[ -z "${host}" ]]; then
         if [[ "$(uname)" == 'AIX' ]]; then
             # On AIX the hostname command has no '-f' option
-            typeset host="$(hostname).$(namerslv -sn 2>'/dev/null' | awk '{print $2}')"
+            host="$(hostname).$(namerslv -sn 2>'/dev/null' | awk '{print $2}')"
         else
-            typeset host="$(hostname -f)"
+            host="$(hostname -f)"
         fi
     fi
     # Developer Note:
