@@ -1134,10 +1134,11 @@ class TaskPool:
         outputs to satisfy any tasks with abs prerequisites).
 
         Args:
-            tasks: List of identifiers, see `task globs`
-            outputs: List of outputs to spawn on
-            flow_num: Flow number to attribute the outputs
-            forced: whether this is a manual spawn command or not
+            tasks: List of identifiers or task globs.
+            outputs: List of outputs to spawn on.
+            flow_num: Flow number to attribute the outputs.
+            forced: If True this is a manual spawn command.
+
         """
         if (
             output == TASK_OUTPUT_FAILED
@@ -1453,6 +1454,7 @@ class TaskPool:
         without reflow.
 
         Queue the task if not queued, otherwise release it to run.
+
         """
         n_warnings, task_items = self.match_taskdefs(items)
         for name, point in task_items.keys():
