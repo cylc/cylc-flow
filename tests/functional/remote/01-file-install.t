@@ -45,7 +45,7 @@ init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
     [[foo]]
         platform = $CYLC_TEST_PLATFORM
 __FLOW_CONFIG__
-RUN_DIR_REL="${WORKFLOW_RUN_DIR#$HOME/}"
+RUN_DIR_REL="${WORKFLOW_RUN_DIR#"${HOME}"/}"
 
 create_files
 
@@ -82,7 +82,7 @@ init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
     [[foo]]
         platform = $CYLC_TEST_PLATFORM
 __FLOW_CONFIG__
-RUN_DIR_REL="${WORKFLOW_RUN_DIR#$HOME/}"
+RUN_DIR_REL="${WORKFLOW_RUN_DIR#"${HOME}"/}"
 
 create_files
 
