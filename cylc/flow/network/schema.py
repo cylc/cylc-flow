@@ -24,10 +24,10 @@ from operator import attrgetter
 from textwrap import dedent
 from typing import AsyncGenerator, Any
 
+import graphene
 from graphene import (
     Boolean, Field, Float, ID, InputObjectType, Int,
-    List, Mutation, ObjectType, Schema, String, Union, Enum,
-    Argument, Interface
+    Mutation, ObjectType, Schema, String, Argument, Interface
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
@@ -134,7 +134,7 @@ DEF_TYPES = [
 
 # Field args (i.e. for queries etc):
 class SortArgs(InputObjectType):
-    keys = List(String, default_value=['id'])
+    keys = graphene.List(String, default_value=['id'])
     reverse = Boolean(default_value=False)
 
 
@@ -148,46 +148,46 @@ DELTA_STORE_DEFAULT = Boolean(default_value=False)
 DELTA_TYPE_DEFAULT = String(default_value='added')
 
 JOB_ARGS = {
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
-    'states': List(String, default_value=[]),
-    'exstates': List(String, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
+    'states': graphene.List(String, default_value=[]),
+    'exstates': graphene.List(String, default_value=[]),
     'sort': SortArgs(default_value=None),
 }
 
 ALL_JOB_ARGS = {
-    'workflows': List(ID, default_value=[]),
-    'exworkflows': List(ID, default_value=[]),
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
-    'states': List(String, default_value=[]),
-    'exstates': List(String, default_value=[]),
+    'workflows': graphene.List(ID, default_value=[]),
+    'exworkflows': graphene.List(ID, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
+    'states': graphene.List(String, default_value=[]),
+    'exstates': graphene.List(String, default_value=[]),
     'sort': SortArgs(default_value=None),
 }
 
 DEF_ARGS = {
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
 }
 
 ALL_DEF_ARGS = {
-    'workflows': List(ID, default_value=[]),
-    'exworkflows': List(ID, default_value=[]),
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
+    'workflows': graphene.List(ID, default_value=[]),
+    'exworkflows': graphene.List(ID, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
 }
 
 PROXY_ARGS = {
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
-    'states': List(String, default_value=[]),
-    'exstates': List(String, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
+    'states': graphene.List(String, default_value=[]),
+    'exstates': graphene.List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
     'is_runahead': Boolean(),
@@ -197,12 +197,12 @@ PROXY_ARGS = {
 }
 
 ALL_PROXY_ARGS = {
-    'workflows': List(ID, default_value=[]),
-    'exworkflows': List(ID, default_value=[]),
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
-    'states': List(String, default_value=[]),
-    'exstates': List(String, default_value=[]),
+    'workflows': graphene.List(ID, default_value=[]),
+    'exworkflows': graphene.List(ID, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
+    'states': graphene.List(String, default_value=[]),
+    'exstates': graphene.List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
     'is_runahead': Boolean(),
@@ -212,26 +212,26 @@ ALL_PROXY_ARGS = {
 }
 
 EDGE_ARGS = {
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
-    'states': List(String, default_value=[]),
-    'exstates': List(String, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
+    'states': graphene.List(String, default_value=[]),
+    'exstates': graphene.List(String, default_value=[]),
     'mindepth': Int(default_value=-1),
     'maxdepth': Int(default_value=-1),
     'sort': SortArgs(default_value=None),
 }
 
 ALL_EDGE_ARGS = {
-    'workflows': List(ID, default_value=[]),
-    'exworkflows': List(ID, default_value=[]),
+    'workflows': graphene.List(ID, default_value=[]),
+    'exworkflows': graphene.List(ID, default_value=[]),
     'sort': SortArgs(default_value=None),
 }
 
 NODES_EDGES_ARGS = {
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
-    'states': List(String, default_value=[]),
-    'exstates': List(String, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
+    'states': graphene.List(String, default_value=[]),
+    'exstates': graphene.List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
     'is_runahead': Boolean(),
@@ -242,12 +242,12 @@ NODES_EDGES_ARGS = {
 }
 
 NODES_EDGES_ARGS_ALL = {
-    'workflows': List(ID, default_value=[]),
-    'exworkflows': List(ID, default_value=[]),
-    'ids': List(ID, default_value=[]),
-    'exids': List(ID, default_value=[]),
-    'states': List(String, default_value=[]),
-    'exstates': List(String, default_value=[]),
+    'workflows': graphene.List(ID, default_value=[]),
+    'exworkflows': graphene.List(ID, default_value=[]),
+    'ids': graphene.List(ID, default_value=[]),
+    'exids': graphene.List(ID, default_value=[]),
+    'states': graphene.List(String, default_value=[]),
+    'exstates': graphene.List(String, default_value=[]),
     'is_held': Boolean(),
     'is_queued': Boolean(),
     'is_runahead': Boolean(),
@@ -291,7 +291,7 @@ def process_resolver_info(root, info, args):
 
     field_name = to_snake_case(info.field_name)
     # root is the parent data object.
-    # i.e. PbWorkflow or list of IDs List(String)
+    # i.e. PbWorkflow or list of IDs graphene.List(String)
     if isinstance(root, dict):
         root_value = root.get(field_name, None)
     else:
@@ -603,7 +603,7 @@ class Workflow(ObjectType):
     port = Int()
     pub_port = Int()
     owner = String()
-    tasks = List(
+    tasks = graphene.List(
         lambda: Task,
         description="""Task definitions.""",
         args=DEF_ARGS,
@@ -611,7 +611,7 @@ class Workflow(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    families = List(
+    families = graphene.List(
         lambda: Family,
         description="""Family definitions.""",
         args=DEF_ARGS,
@@ -619,7 +619,7 @@ class Workflow(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    task_proxies = List(
+    task_proxies = graphene.List(
         lambda: TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
@@ -628,7 +628,7 @@ class Workflow(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    family_proxies = List(
+    family_proxies = graphene.List(
         lambda: FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
@@ -637,7 +637,7 @@ class Workflow(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    jobs = List(
+    jobs = graphene.List(
         lambda: Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
@@ -673,7 +673,7 @@ class Workflow(ObjectType):
     is_runahead_total = Int()
     state_totals = GenericScalar(resolver=resolve_state_totals)
     latest_state_tasks = GenericScalar(
-        states=List(
+        states=graphene.List(
             String,
             description="List of task states to show",
             default_value=TASK_STATUSES_ORDERED),
@@ -681,11 +681,11 @@ class Workflow(ObjectType):
     workflow_log_dir = String()
     time_zone_info = Field(TimeZone)
     tree_depth = Int()
-    ns_def_order = List(String)
-    job_log_names = List(String)
-    states = List(String)
+    ns_def_order = graphene.List(String)
+    job_log_names = graphene.List(String)
+    states = graphene.List(String)
     broadcasts = GenericScalar(
-        ids=List(
+        ids=graphene.List(
             ID,
             description=sstrip('''
                 Node IDs, cycle point and/or-just family/task namespace:
@@ -731,8 +731,8 @@ class Job(ObjectType):
     environment = GenericScalar(resolver=resolve_json_dump)
     directives = GenericScalar(resolver=resolve_json_dump)
     param_var = GenericScalar(resolver=resolve_json_dump)
-    extra_logs = List(String)
-    messages = List(String)
+    extra_logs = graphene.List(String)
+    messages = graphene.List(String)
 
 
 class Task(ObjectType):
@@ -743,7 +743,7 @@ class Task(ObjectType):
     meta = Field(NodeMeta)
     mean_elapsed_time = Float()
     depth = Int()
-    proxies = List(
+    proxies = graphene.List(
         lambda: TaskProxy,
         description="""Associated cycle point proxies""",
         args=PROXY_ARGS,
@@ -752,7 +752,7 @@ class Task(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    parents = List(
+    parents = graphene.List(
         lambda: Family,
         description="""Family definition parent.""",
         args=DEF_ARGS,
@@ -760,7 +760,7 @@ class Task(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    namespace = List(String)
+    namespace = graphene.List(String)
     first_parent = Field(
         lambda: Family,
         description="""Task first parent.""",
@@ -804,10 +804,10 @@ class Prerequisite(ObjectType):
     class Meta:
         description = """Task prerequisite."""
     expression = String()
-    conditions = List(
+    conditions = graphene.List(
         Condition,
         description="""Condition monomers of a task prerequisites.""")
-    cycle_points = List(String)
+    cycle_points = graphene.List(String)
     satisfied = Boolean()
 
 
@@ -857,11 +857,11 @@ class TaskProxy(ObjectType):
     flow_nums = String()
     depth = Int()
     job_submits = Int()
-    outputs = List(
+    outputs = graphene.List(
         Output,
         description="""Task outputs.""",
         sort=SortArgs(default_value=None),
-        sort_order=List(
+        sort_order=graphene.List(
             String,
             default_value=list(SORT_ORDERS)
         ),
@@ -869,28 +869,28 @@ class TaskProxy(ObjectType):
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
     clock_trigger = Field(ClockTrigger)
-    external_triggers = List(
+    external_triggers = graphene.List(
         XTrigger,
         description="""Task external trigger prerequisites.""",
         sort=SortArgs(default_value=None),
-        sort_order=List(String),
+        sort_order=graphene.List(String),
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
-    xtriggers = List(
+    xtriggers = graphene.List(
         XTrigger,
         description="""Task xtrigger prerequisites.""",
         sort=SortArgs(default_value=None),
-        sort_order=List(String),
+        sort_order=graphene.List(String),
         limit=Int(default_value=0),
         satisfied=Boolean(),
         resolver=resolve_mapping_to_list)
     extras = GenericScalar(resolver=resolve_json_dump)
     # name & namespace for filtering/sorting
     name = String()
-    namespace = List(String)
-    prerequisites = List(Prerequisite)
-    jobs = List(
+    namespace = graphene.List(String)
+    prerequisites = graphene.List(Prerequisite)
+    jobs = graphene.List(
         Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
@@ -898,7 +898,7 @@ class TaskProxy(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    parents = List(
+    parents = graphene.List(
         lambda: FamilyProxy,
         description="""Task parents.""",
         args=PROXY_ARGS,
@@ -916,7 +916,7 @@ class TaskProxy(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
-    ancestors = List(
+    ancestors = graphene.List(
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
         args=PROXY_ARGS,
@@ -934,7 +934,7 @@ class Family(ObjectType):
     name = String()
     meta = Field(NodeMeta)
     depth = Int()
-    proxies = List(
+    proxies = graphene.List(
         lambda: FamilyProxy,
         description="""Associated cycle point proxies""",
         args=PROXY_ARGS,
@@ -943,7 +943,7 @@ class Family(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    parents = List(
+    parents = graphene.List(
         lambda: Family,
         description="""Family definition parent.""",
         args=DEF_ARGS,
@@ -951,7 +951,7 @@ class Family(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    child_tasks = List(
+    child_tasks = graphene.List(
         Task,
         description="""Descendant definition tasks.""",
         args=DEF_ARGS,
@@ -959,7 +959,7 @@ class Family(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    child_families = List(
+    child_families = graphene.List(
         lambda: Family,
         description="""Descendant desc families.""",
         args=DEF_ARGS,
@@ -991,7 +991,7 @@ class FamilyProxy(ObjectType):
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
     state = String()
-    states = List(String)
+    states = graphene.List(String)
     state_totals = GenericScalar(resolver=resolve_state_totals)
     is_held = Boolean()
     is_held_total = Int()
@@ -1000,7 +1000,7 @@ class FamilyProxy(ObjectType):
     is_runahead = Boolean()
     is_runahead_total = Int()
     depth = Int()
-    child_tasks = List(
+    child_tasks = graphene.List(
         TaskProxy,
         description="""Descendant task proxies.""",
         args=PROXY_ARGS,
@@ -1009,7 +1009,7 @@ class FamilyProxy(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    child_families = List(
+    child_families = graphene.List(
         lambda: FamilyProxy,
         description="""Descendant family proxies.""",
         args=PROXY_ARGS,
@@ -1027,7 +1027,7 @@ class FamilyProxy(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
-    ancestors = List(
+    ancestors = graphene.List(
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
         args=PROXY_ARGS,
@@ -1038,7 +1038,7 @@ class FamilyProxy(ObjectType):
         resolver=get_nodes_by_ids)
 
 
-class Node(Union):
+class Node(graphene.Union):
     class Meta:
         types = (TaskProxy, FamilyProxy)
 
@@ -1074,25 +1074,25 @@ class Edge(ObjectType):
 class Edges(ObjectType):
     class Meta:
         description = """Dependency edge"""
-    edges = List(
+    edges = graphene.List(
         Edge,
         args=EDGE_ARGS,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_edges_by_ids)
-    workflow_polling_tasks = List(PollTask)
-    leaves = List(String)
-    feet = List(String)
+    workflow_polling_tasks = graphene.List(PollTask)
+    leaves = graphene.List(String)
+    feet = graphene.List(String)
 
 
 class NodesEdges(ObjectType):
     class Meta:
         description = """Related Nodes & Edges."""
-    nodes = List(
+    nodes = graphene.List(
         TaskProxy,
         description="""Task nodes from and including root.""")
-    edges = List(
+    edges = graphene.List(
         Edge,
         description="""Edges associated with the nodes.""")
 
@@ -1101,11 +1101,11 @@ class NodesEdges(ObjectType):
 class Queries(ObjectType):
     class Meta:
         description = """Multi-Workflow root level queries."""
-    workflows = List(
+    workflows = graphene.List(
         Workflow,
         description=Workflow._meta.description,
-        ids=List(ID, default_value=[]),
-        exids=List(ID, default_value=[]),
+        ids=graphene.List(ID, default_value=[]),
+        exids=graphene.List(ID, default_value=[]),
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_workflows)
     job = Field(
@@ -1114,7 +1114,7 @@ class Queries(ObjectType):
         id=ID(required=True),
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
-    jobs = List(
+    jobs = graphene.List(
         Job,
         description=Job._meta.description,
         args=ALL_JOB_ARGS,
@@ -1126,7 +1126,7 @@ class Queries(ObjectType):
         id=ID(required=True),
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
-    tasks = List(
+    tasks = graphene.List(
         Task,
         description=Task._meta.description,
         args=ALL_DEF_ARGS,
@@ -1138,7 +1138,7 @@ class Queries(ObjectType):
         id=ID(required=True),
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
-    task_proxies = List(
+    task_proxies = graphene.List(
         TaskProxy,
         description=TaskProxy._meta.description,
         args=ALL_PROXY_ARGS,
@@ -1151,7 +1151,7 @@ class Queries(ObjectType):
         id=ID(required=True),
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
-    families = List(
+    families = graphene.List(
         Family,
         description=Family._meta.description,
         args=ALL_DEF_ARGS,
@@ -1163,14 +1163,14 @@ class Queries(ObjectType):
         id=ID(required=True),
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_node_by_id)
-    family_proxies = List(
+    family_proxies = graphene.List(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         args=ALL_PROXY_ARGS,
         ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
-    edges = List(
+    edges = graphene.List(
         Edge,
         description=Edge._meta.description,
         args=ALL_EDGE_ARGS,
@@ -1247,7 +1247,7 @@ class RuntimeConfiguration(String):
     """A configuration item for a task or family e.g. `script`."""
 
 
-class BroadcastMode(Enum):
+class BroadcastMode(graphene.Enum):
     Set = 'put_broadcast'
     Clear = 'clear_broadcast'
     Expire = 'expire_broadcast'
@@ -1280,7 +1280,7 @@ class BroadcastSetting(GenericScalar):
     """
 
 
-class TaskStatus(Enum):
+class TaskStatus(graphene.Enum):
     """The status of a task in a workflow."""
 
     # NOTE: this is an enumeration purely for the GraphQL schema
@@ -1347,7 +1347,7 @@ class TimePoint(String):
     """A date-time in the ISO8601 format."""
 
 
-LogLevels = Enum(
+LogLevels = graphene.Enum(
     'LogLevels',
     list(logging._nameToLevel.items()),
     description=lambda x: f'Python logging level: {x.name} = {x.value}.'
@@ -1355,17 +1355,17 @@ LogLevels = Enum(
 )
 
 
-class WorkflowStopMode(Enum):
+class WorkflowStopMode(graphene.Enum):
     """The mode used to stop a running workflow."""
 
     # NOTE: using a different enum because:
     # * Graphene requires special enums.
     # * We only want to offer a subset of stop modes (REQUEST_* only).
 
-    Clean = StopMode.REQUEST_CLEAN.value  # type: Enum
-    Kill = StopMode.REQUEST_KILL.value  # type: Enum
-    Now = StopMode.REQUEST_NOW.value  # type: Enum
-    NowNow = StopMode.REQUEST_NOW_NOW.value  # type: Enum
+    Clean = StopMode.REQUEST_CLEAN.value  # type: graphene.Enum
+    Kill = StopMode.REQUEST_KILL.value  # type: graphene.Enum
+    Now = StopMode.REQUEST_NOW.value  # type: graphene.Enum
+    NowNow = StopMode.REQUEST_NOW_NOW.value  # type: graphene.Enum
 
     @property
     def description(self):
@@ -1417,7 +1417,7 @@ class Broadcast(Mutation):
         resolver = partial(mutator, command='broadcast')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
 
         mode = BroadcastMode(
             # use the enum name as the default value
@@ -1426,19 +1426,19 @@ class Broadcast(Mutation):
             description='What type of broadcast is this?',
             required=True
         )
-        cycle_points = List(
+        cycle_points = graphene.List(
             CyclePoint,
             description=sstrip('''
                 List of cycle points to target or `*` to cancel all all-cycle
                 broadcasts without canceling all specific-cycle broadcasts.
             '''),
             default_value=['*'])
-        namespaces = List(
+        namespaces = graphene.List(
             NamespaceName,
             description='Target namespaces.',
             default_value=['root']
         )
-        settings = List(
+        settings = graphene.List(
             BroadcastSetting,
             description=sstrip('''
                 The cylc namespace for the setting to modify.
@@ -1453,7 +1453,7 @@ class Broadcast(Mutation):
         #       handled client-side which makes it slightly awkward in
         #       api-on-the-fly land
 
-        # files = List(
+        # files = graphene.List(
         #    String,
         #    description=sstrip('''
         #        File with config to broadcast. Can be used multiple times
@@ -1472,7 +1472,7 @@ class SetHoldPoint(Mutation):
         resolver = partial(mutator, command='set_hold_point')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
         point = CyclePoint(
             description='Hold all tasks after the specified cycle point.',
             required=True
@@ -1491,7 +1491,7 @@ class Pause(Mutation):
         resolver = partial(mutator, command='pause')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1514,11 +1514,11 @@ class Message(Mutation):
         resolver = partial(mutator, command='put_messages')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
         task_job = String(required=True)
         event_time = String(default_value=None)
-        messages = List(
-            List(String),
+        messages = graphene.List(
+            graphene.List(String),
             description="""List in the form `[[severity, message], ...]`.""",
             default_value=None
         )
@@ -1536,7 +1536,7 @@ class ReleaseHoldPoint(Mutation):
         resolver = partial(mutator, command='release_hold_point')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1551,7 +1551,7 @@ class Resume(Mutation):
         resolver = partial(mutator, command='resume')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1577,7 +1577,7 @@ class Reload(Mutation):
         resolver = partial(mutator, command='reload_workflow')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
 
     result = GenericScalar()
 
@@ -1594,7 +1594,7 @@ class SetVerbosity(Mutation):
         resolver = partial(mutator, command='set_verbosity')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
         level = LogLevels(required=True)
 
     result = GenericScalar()
@@ -1610,7 +1610,7 @@ class SetGraphWindowExtent(Mutation):
         resolver = partial(mutator, command='set_graph_window_extent')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
         n_edge_distance = Int(required=True)
 
     result = GenericScalar()
@@ -1635,7 +1635,7 @@ class Stop(Mutation):
         resolver = partial(mutator, command='stop')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
         mode = WorkflowStopMode(
             default_value=WorkflowStopMode.Clean.name
         )
@@ -1683,7 +1683,7 @@ class ExtTrigger(Mutation):
         resolver = partial(mutator, command='put_ext_trigger')
 
     class Arguments:
-        workflows = List(WorkflowID, required=True)
+        workflows = graphene.List(WorkflowID, required=True)
         message = String(
             description='External trigger message.',
             required=True
@@ -1698,11 +1698,11 @@ class ExtTrigger(Mutation):
 
 class TaskMutation:
     class Arguments:
-        workflows = List(
+        workflows = graphene.List(
             WorkflowID,
             required=True
         )
-        tasks = List(
+        tasks = graphene.List(
             NamespaceIDGlob,
             required=True
         )
@@ -1779,7 +1779,7 @@ class SetOutputs(Mutation, TaskMutation):
         resolver = partial(mutator, command='force_spawn_children')
 
     class Arguments(TaskMutation.Arguments):
-        outputs = List(
+        outputs = graphene.List(
             String,
             default_value=[TASK_OUTPUT_SUCCEEDED],
             description='List of task outputs to satisfy.'
@@ -1880,12 +1880,12 @@ class Pruned(ObjectType):
     class Meta:
         description = """WFS Nodes/Edges that have been removed."""
     workflow = String()
-    families = List(String, default_value=[])
-    family_proxies = List(String, default_value=[])
-    jobs = List(String, default_value=[])
-    tasks = List(String, default_value=[])
-    task_proxies = List(String, default_value=[])
-    edges = List(String, default_value=[])
+    families = graphene.List(String, default_value=[])
+    family_proxies = graphene.List(String, default_value=[])
+    jobs = graphene.List(String, default_value=[])
+    tasks = graphene.List(String, default_value=[])
+    task_proxies = graphene.List(String, default_value=[])
+    edges = graphene.List(String, default_value=[])
 
 
 class Delta(Interface):
@@ -1898,7 +1898,7 @@ class Delta(Interface):
     override fields as required.
     """
 
-    families = List(
+    families = graphene.List(
         Family,
         description="""Family definitions.""",
         args=DEF_ARGS,
@@ -1907,7 +1907,7 @@ class Delta(Interface):
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
-    family_proxies = List(
+    family_proxies = graphene.List(
         FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
@@ -1917,7 +1917,7 @@ class Delta(Interface):
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
-    jobs = List(
+    jobs = graphene.List(
         Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
@@ -1926,7 +1926,7 @@ class Delta(Interface):
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
-    tasks = List(
+    tasks = graphene.List(
         Task,
         description="""Task definitions.""",
         args=DEF_ARGS,
@@ -1935,7 +1935,7 @@ class Delta(Interface):
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
-    task_proxies = List(
+    task_proxies = graphene.List(
         TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
@@ -1945,7 +1945,7 @@ class Delta(Interface):
         delta_type=String(default_value=DELTA_ADDED),
         resolver=get_nodes_by_ids
     )
-    edges = List(
+    edges = graphene.List(
         Edge,
         description="""Graph edges""",
         args=EDGE_ARGS,
@@ -1975,7 +1975,7 @@ class Updated(ObjectType):
         description = """Updated node/edge deltas."""
         interfaces = (Delta,)
 
-    families = List(
+    families = graphene.List(
         Family,
         description="""Family definitions.""",
         args=DEF_ARGS,
@@ -1984,7 +1984,7 @@ class Updated(ObjectType):
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
-    family_proxies = List(
+    family_proxies = graphene.List(
         FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
@@ -1994,7 +1994,7 @@ class Updated(ObjectType):
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
-    jobs = List(
+    jobs = graphene.List(
         Job,
         description="""Task jobs.""",
         args=JOB_ARGS,
@@ -2003,7 +2003,7 @@ class Updated(ObjectType):
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
-    tasks = List(
+    tasks = graphene.List(
         Task,
         description="""Task definitions.""",
         args=DEF_ARGS,
@@ -2012,7 +2012,7 @@ class Updated(ObjectType):
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
-    task_proxies = List(
+    task_proxies = graphene.List(
         TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
@@ -2022,7 +2022,7 @@ class Updated(ObjectType):
         delta_type=String(default_value=DELTA_UPDATED),
         resolver=get_nodes_by_ids
     )
-    edges = List(
+    edges = graphene.List(
         Edge,
         description="""Graph edges""",
         args=EDGE_ARGS,
@@ -2071,17 +2071,19 @@ class Subscriptions(ObjectType):
     deltas = Field(
         Deltas,
         description=Deltas._meta.description,
-        workflows=List(ID, description="List of full ID, i.e. `owner|name`"),
+        workflows=graphene.List(
+            ID, description="List of full ID, i.e. `owner|name`"
+        ),
         strip_null=Boolean(default_value=False),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
-    workflows = List(
+    workflows = graphene.List(
         Workflow,
         description=Workflow._meta.description,
-        ids=List(ID, default_value=[]),
-        exids=List(ID, default_value=[]),
+        ids=graphene.List(ID, default_value=[]),
+        exids=graphene.List(ID, default_value=[]),
         # TODO: Change these defaults post #3500 in coordination with WUI
         strip_null=Boolean(default_value=False),
         delta_store=Boolean(default_value=False),
@@ -2101,7 +2103,7 @@ class Subscriptions(ObjectType):
         ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
-    jobs = List(
+    jobs = graphene.List(
         Job,
         description=Job._meta.description,
         args=ALL_JOB_ARGS,
@@ -2123,7 +2125,7 @@ class Subscriptions(ObjectType):
         ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
-    tasks = List(
+    tasks = graphene.List(
         Task,
         description=Task._meta.description,
         args=ALL_DEF_ARGS,
@@ -2146,7 +2148,7 @@ class Subscriptions(ObjectType):
         ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
-    task_proxies = List(
+    task_proxies = graphene.List(
         TaskProxy,
         description=TaskProxy._meta.description,
         args=ALL_PROXY_ARGS,
@@ -2169,7 +2171,7 @@ class Subscriptions(ObjectType):
         ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
-    families = List(
+    families = graphene.List(
         Family,
         description=Family._meta.description,
         args=ALL_DEF_ARGS,
@@ -2192,7 +2194,7 @@ class Subscriptions(ObjectType):
         ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
-    family_proxies = List(
+    family_proxies = graphene.List(
         FamilyProxy,
         description=FamilyProxy._meta.description,
         args=ALL_PROXY_ARGS,
@@ -2204,7 +2206,7 @@ class Subscriptions(ObjectType):
         ignore_interval=Float(default_value=0.0),
         resolver=delta_subs
     )
-    edges = List(
+    edges = graphene.List(
         Edge,
         description=Edge._meta.description,
         args=ALL_EDGE_ARGS,
