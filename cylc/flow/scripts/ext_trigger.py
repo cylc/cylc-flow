@@ -20,15 +20,19 @@
 
 Report an external event message to a scheduler.
 
-It is expected that a task in the workflow has registered the same message as
-an external trigger - a special prerequisite to be satisfied by an external
-system, via this command, rather than by triggering off other tasks.
+External triggers allow any program to send
+a message to the Cylc scheduler. Cylc can use this
+message as a signal that an external prerequisite has
+been satisfied and trigger the task accordingly.
 
-The ID argument should uniquely distinguish one external trigger event from the
-next. When a task's external trigger is satisfied by an incoming message, the
-message ID is broadcast to all downstream tasks in the cycle point as
-$CYLC_EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file
-that the external triggering system is responding to.
+The ID argument should be unique to each external
+trigger event. When an incoming message satisfies
+a task's external trigger the message ID is broadcast
+to all downstream tasks in the cycle point as
+``$CYLC_EXT_TRIGGER_ID``.  Tasks can use
+``$CYLC_EXT_TRIGGER_ID``, for example,  to
+identify a new data file that the external
+triggering system is responding to.
 
 Use the retry options in case the target workflow is down or out of contact.
 

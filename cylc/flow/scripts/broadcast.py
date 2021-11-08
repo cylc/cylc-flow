@@ -18,16 +18,17 @@
 
 """cylc broadcast [OPTIONS] ARGS
 
-Override [runtime] configuration items in a running workflow.
+Override or add new [runtime] configuration items in a running workflow.
 
 Uses for broadcast include making temporary changes to task behaviour,
 and task-to-downstream-task communication via environment variables.
 
-A broadcast can target any [runtime] namespace for all cycles or for a
-specific cycle.  If a task is affected by specific-cycle and all-cycle
-broadcasts at once, the specific takes precedence. If a task is affected
-by broadcasts to multiple ancestor namespaces, the result is determined
-by normal [runtime] inheritance. In other words, it follows this order:
+A broadcast can target any [runtime] namespace (task or task family) for all
+cycles or for a specific cycle. If a task is affected by specific-cycle and
+all-cycle broadcasts at the same time, the specific takes precedence. If a task
+is affected by broadcasts to multiple ancestor namespaces, the result is
+determined by normal [runtime] inheritance. In other words, it follows this
+order:
 
 all:root -> all:FAM -> all:task -> tag:root -> tag:FAM -> tag:task
 
