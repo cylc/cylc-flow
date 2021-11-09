@@ -1220,7 +1220,7 @@ def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
                 f"Workflow name must refer to a directory, not a file: {reg}"
             )
         abs_path, reg = infer_latest_run(abs_path)
-
+    detect_both_flow_and_suite(abs_path)
     check_deprecation(abs_path, warn=warn_depr)
     return (str(reg), abs_path)
 
@@ -1698,6 +1698,25 @@ def get_run_dir_info(
     return relink, run_num, rundir
 
 
+def detect_both_flow_and_suite(path):
+    """Detects if both suite.rc and flow.cylc are in directory.
+    Raises:
+        WorkflowFilesError: If both flow.cylc and suite.rc are in directory
+    """
+    msg = (f"Both {WorkflowFiles.FLOW_FILE} and {WorkflowFiles.SUITE_RC} "
+           "files are present in the run directory. Please remove one and"
+           " try again. For more information visit: https://cylc.github.io/"
+           "cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility")
+    if path.resolve().name == WorkflowFiles.SUITE_RC:
+        flow_cylc = path.parent / WorkflowFiles.FLOW_FILE
+        if flow_cylc.is_file() and not flow_cylc.is_symlink():
+            raise WorkflowFilesError(msg)
+    elif (path / WorkflowFiles.SUITE_RC).is_file():
+        flow_cylc = path / WorkflowFiles.FLOW_FILE
+        if flow_cylc.is_file() and not flow_cylc.is_symlink():
+            raise WorkflowFilesError(msg)
+
+
 def detect_flow_exists(
     run_path_base: Union[Path, str], numbered: bool
 ) -> bool:
@@ -1744,7 +1763,15 @@ def check_flow_file(
     suite_rc_path = Path(expand_path(path), WorkflowFiles.SUITE_RC)
     if flow_file_path.is_file():
         if not flow_file_path.is_symlink():
-            return flow_file_path
+            if not suite_rc_path.is_file():
+                return flow_file_path
+            raise WorkflowFilesError(
+                f"Both {WorkflowFiles.FLOW_FILE} and "
+                f"{WorkflowFiles.SUITE_RC} files are present in the source "
+                "directory. Please remove one and try again. For more "
+                "information visit: https://cylc.github.io/cylc-doc/latest/"
+                "html/7-to-8/summary.html#backward-compatibility"
+            )
         if flow_file_path.resolve() == suite_rc_path.resolve():
             # A symlink that points to existing suite.rc
             return flow_file_path

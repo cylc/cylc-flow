@@ -43,6 +43,7 @@ from cylc.flow.workflow_files import (
     check_flow_file,
     check_nested_run_dirs,
     clean,
+    detect_both_flow_and_suite,
     get_rsync_rund_cmd,
     get_symlink_dirs,
     get_workflow_source_dir,
@@ -661,7 +662,6 @@ def test_init_clean__runN(
     with pytest.raises(WorkflowFilesError) as exc_info:
         init_clean('coruscant', opts=CleanOptions())
     assert "contains the following workflows" in str(exc_info.value)
-
 
 
 @pytest.mark.asyncio
@@ -1724,7 +1724,7 @@ def test_search_install_source_dirs_empty(mock_glbl_cfg: Callable):
 @pytest.mark.parametrize(
     'flow_file_exists, suiterc_exists, expected_file',
     [(True, False, WorkflowFiles.FLOW_FILE),
-     (True, True, WorkflowFiles.FLOW_FILE),
+     (True, True, None),
      (False, True, WorkflowFiles.SUITE_RC)]
 )
 def test_check_flow_file(
@@ -1742,9 +1742,34 @@ def test_check_flow_file(
         tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
     if suiterc_exists:
         tmp_path.joinpath(WorkflowFiles.SUITE_RC).touch()
+    if expected_file is None:
+        with pytest.raises(WorkflowFilesError) as exc:
+            check_flow_file(tmp_path)
+        assert str(exc.value) == (
+            "Both flow.cylc and suite.rc files are present in the "
+            "source directory. Please remove one and try again. "
+            "For more information visit: "
+            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
+            "#backward-compatibility"
+        )
 
-    assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
+    else:
+        assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
 
+def test_detect_both_flow_and_suite(tmp_path):
+    """Test flow.cylc and suite.rc together in dir raises error."""
+    tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
+    tmp_path.joinpath(WorkflowFiles.SUITE_RC).touch()
+
+    with pytest.raises(WorkflowFilesError) as exc:
+        detect_both_flow_and_suite(tmp_path)
+        assert str(exc.value) == (
+            "Both flow.cylc and suite.rc files are present in the "
+            "source directory. Please remove one and try again. "
+            "For more information visit: "
+            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
+            "#backward-compatibility"
+        )
 
 @pytest.mark.parametrize(
     'flow_file_target, suiterc_exists, err, expected_file',
