@@ -58,6 +58,9 @@ Fourth beta release of Cylc 8.
 
 ### Enhancements
 
+[#4501](https://github.com/cylc/cylc-flow/pull/4501) -
+Allow job scripts to run in environments without access to `$HOME`.
+
 [#4367](https://github.com/cylc/cylc-flow/pull/4367) -
 Make the central wrapper work with arbitrary virtual environment names.
 

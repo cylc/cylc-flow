@@ -338,6 +338,11 @@ class JobFileWriter:
     @staticmethod
     def _write_epilogue(handle, job_conf, run_d):
         """Write epilogue."""
-        handle.write(f'\n\n. "{run_d}/.service/etc/job.sh"\ncylc__job__main')
+        # NOTE: don't use $HOME to locate the job.sh file as some systems might
+        # not have acess to $HOME on compute nodes
+        handle.write(
+            '\n\n. "$(dirname "$0")/../../../../../.service/etc/job.sh"'
+            '\ncylc__job__main'
+        )
         handle.write("\n\n%s%s\n" % (
             JobRunnerManager.LINE_PREFIX_EOF, job_conf['job_d']))

@@ -423,8 +423,15 @@ def test_write_runtime_environment():
 def test_write_epilogue():
     """Test epilogue is correctly written in jobscript"""
 
-    expected = ('\n\n. \"cylc-run/farm_noises/.service/etc/job.sh\"\n'
-                'cylc__job__main\n\n#EOF: 1/moo/01\n')
+    expected = (
+        '\n\n'
+        '. "$(dirname "$0")/../../../../../.service/etc/job.sh"'
+        '\n'
+        'cylc__job__main'
+        '\n\n'
+        '#EOF: 1/moo/01'
+        '\n'
+    )
     job_conf = {'job_d': "1/moo/01"}
     run_d = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:
