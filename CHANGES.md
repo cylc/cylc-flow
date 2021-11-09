@@ -56,6 +56,9 @@ First Release Candidate for Cylc 8.
 
 ### Enhancements
 
+[#](https://github.com/cylc/cylc-flow/pull/) -
+Cylc no longer creates a `flow.cylc` symlink to a `suite.rc` file.
+
 [#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent runN and run\d+
 being allowed as installation target names.
 

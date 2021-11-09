@@ -84,7 +84,6 @@ from cylc.flow.wallclock import get_current_time_string
 
 if TYPE_CHECKING:
     from optparse import Values
-    from logging import Logger
 
 
 class KeyType(Enum):
@@ -551,8 +550,8 @@ def get_flow_file(reg: str) -> str:
     Creates a flow.cylc symlink to suite.rc if only suite.rc exists.
     """
     run_dir = get_workflow_run_dir(reg)
-    check_flow_file(run_dir, symlink_suiterc=True)
-    return os.path.join(run_dir, WorkflowFiles.FLOW_FILE)
+    path = check_flow_file(run_dir)
+    return path
 
 
 def get_workflow_source_dir(
@@ -678,7 +677,7 @@ def register(
         source = os.getcwd()
     # flow.cylc must exist so we can detect accidentally reversed args.
     source = os.path.abspath(source)
-    check_flow_file(source, symlink_suiterc=True, logger=None)
+    check_flow_file(source)
     if not is_installed(get_workflow_run_dir(workflow_name)):
         symlinks_created = make_localhost_symlinks(
             get_workflow_run_dir(workflow_name), workflow_name)
@@ -1297,7 +1296,7 @@ def _parse_src_reg(reg: Path, cur_dir_only: bool = False) -> Tuple[Path, Path]:
                         ))
                 else:
                     try:
-                        abs_path = check_flow_file(abs_path, logger=None)
+                        abs_path = check_flow_file(abs_path)
                     except WorkflowFilesError:
                         return (run_dir_reg, run_dir_path)
                     LOG.warning(REG_CLASH_MSG.format(
@@ -1587,7 +1586,7 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
         reinstall_log.warning(
             f"An error occurred when copying files from {source} to {rundir}")
         reinstall_log.warning(f" Error: {stderr}")
-    check_flow_file(rundir, symlink_suiterc=True, logger=reinstall_log)
+    check_flow_file(rundir)
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
     print(f'REINSTALLED {named_run} from {source}')
     close_log(reinstall_log)
@@ -1691,7 +1690,7 @@ def install_workflow(
         install_log.warning(f" Warning: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
     check_deprecation(
-        check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
+        check_flow_file(rundir)
     )
     if no_run_name:
         cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
@@ -1761,11 +1760,13 @@ def get_run_dir_info(
 
 def detect_both_flow_and_suite(path):
     """Detects if both suite.rc and flow.cylc are in directory.
+
+    Permits flow.cylc to be a symlink.
     Raises:
         WorkflowFilesError: If both flow.cylc and suite.rc are in directory
     """
     msg = (f"Both {WorkflowFiles.FLOW_FILE} and {WorkflowFiles.SUITE_RC} "
-           "files are present in the run directory. Please remove one and"
+           f"files are present in {path}. Please remove one and"
            " try again. For more information visit: https://cylc.github.io/"
            "cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility")
     if path.resolve().name == WorkflowFiles.SUITE_RC:
@@ -1806,53 +1807,30 @@ def detect_flow_exists(
 
 def check_flow_file(
     path: Union[Path, str],
-    symlink_suiterc: bool = False,
-    logger: Optional['Logger'] = LOG
 ) -> Path:
-    """Raises WorkflowFilesError if no flow file in path sent.
+    """Checks the path for a suite.rc or flow.cylc file.
+
+    Raises:
+        WorkflowFilesError
+            - if no flow file in path sent
+            - both suite.rc and flow.cylc in path sent.
 
     Args:
         path: Absolute path to check for a flow.cylc and/or suite.rc file.
-        symlink_suiterc: If True and suite.rc exists, create flow.cylc as a
-            symlink to suite.rc. If a flow.cylc symlink already exists but
-            points elsewhere, it will be replaced.
-        logger: A custom logger to use to log warnings.
 
     Returns the path of the flow file if present.
     """
     flow_file_path = Path(expand_path(path), WorkflowFiles.FLOW_FILE)
     suite_rc_path = Path(expand_path(path), WorkflowFiles.SUITE_RC)
     if flow_file_path.is_file():
-        if not flow_file_path.is_symlink():
-            if not suite_rc_path.is_file():
-                return flow_file_path
-            raise WorkflowFilesError(
-                f"Both {WorkflowFiles.FLOW_FILE} and "
-                f"{WorkflowFiles.SUITE_RC} files are present in the source "
-                "directory. Please remove one and try again. For more "
-                "information visit: https://cylc.github.io/cylc-doc/latest/"
-                "html/7-to-8/summary.html#backward-compatibility"
-            )
-        if flow_file_path.resolve() == suite_rc_path.resolve():
-            # A symlink that points to existing suite.rc
-            return flow_file_path
-    if suite_rc_path.is_file():
-        if not symlink_suiterc:
-            return suite_rc_path
-        if flow_file_path.is_symlink():
-            # Symlink broken or points elsewhere - replace
-            flow_file_path.unlink()
-        flow_file_path.symlink_to(WorkflowFiles.SUITE_RC)
-        if logger:
-            logger.warning(
-                f"Symlink created: "
-                f"{WorkflowFiles.FLOW_FILE} -> {WorkflowFiles.SUITE_RC}"
-            )
+        detect_both_flow_and_suite(Path(path))
         return flow_file_path
+    if suite_rc_path.is_file():
+        return suite_rc_path
     raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
 
 
-def create_workflow_srv_dir(rundir=None, source=None):
+def create_workflow_srv_dir(rundir=None):
     """Create workflow service directory"""
 
     workflow_srv_d = rundir.joinpath(WorkflowFiles.Service.DIRNAME)
@@ -1882,7 +1860,7 @@ def validate_source_dir(source, workflow_name):
         raise WorkflowFilesError(
             f"{workflow_name} installation failed. Source directory "
             f"should not be in {cylc_run_dir}.")
-    check_flow_file(source, logger=None)
+    check_flow_file(source)
 
 
 def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
@@ -1964,7 +1942,7 @@ def search_install_source_dirs(workflow_name: str) -> Path:
             "does not contain any paths")
     for path in search_path:
         try:
-            flow_file = check_flow_file(Path(path, workflow_name), logger=None)
+            flow_file = check_flow_file(Path(path, workflow_name))
             return flow_file.parent
         except WorkflowFilesError:
             continue

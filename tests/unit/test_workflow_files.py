@@ -1805,8 +1805,8 @@ def test_check_flow_file(
         with pytest.raises(WorkflowFilesError) as exc:
             check_flow_file(tmp_path)
         assert str(exc.value) == (
-            "Both flow.cylc and suite.rc files are present in the "
-            "source directory. Please remove one and try again. "
+            "Both flow.cylc and suite.rc files are present in "
+            f"{tmp_path}. Please remove one and try again. "
             "For more information visit: "
             "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
             "#backward-compatibility"

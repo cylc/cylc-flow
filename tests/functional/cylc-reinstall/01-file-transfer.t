@@ -21,7 +21,7 @@
 if ! command -v 'tree' >'/dev/null'; then
     skip_all '"tree" command not available'
 fi
-set_test_number 14
+set_test_number 9
 
 # Test cylc install copies files to run dir successfully.
 TEST_NAME="${TEST_NAME_BASE}-basic"
@@ -85,22 +85,6 @@ __OUT__
 # Test cylc reinstall affects only named run, i.e. run1 should be unaffected in this case
 tree -a -v -I "${tree_excludes}" --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/run1" > 'after-reinstall-run1-tree.out'
 cmp_ok 'after-reinstall-run1-tree.out' '01-file-transfer-basic-tree.out'
-popd || exit 1
-purge_rnd_workflow
-
-
-# Test cylc reinstall creates flow.cylc given suite.rc.
-TEST_NAME="${TEST_NAME_BASE}-reinstall-creates-flow.cylc-given-suite.rc"
-make_rnd_workflow
-pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-rm -f flow.cylc
-touch suite.rc
-run_ok "${TEST_NAME}-install" cylc install --no-run-name --flow-name="${RND_WORKFLOW_NAME}"
-rm -f "${RND_WORKFLOW_RUNDIR}/flow.cylc"
-exists_fail "${RND_WORKFLOW_RUNDIR}/flow.cylc"
-run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"
-exists_ok "${RND_WORKFLOW_RUNDIR}/flow.cylc"
-exists_fail "${RND_WORKFLOW_SOURCE}/flow.cylc"
 popd || exit 1
 purge_rnd_workflow
 
