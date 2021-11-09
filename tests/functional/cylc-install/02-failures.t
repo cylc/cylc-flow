@@ -66,7 +66,9 @@ TEST_NAME="${TEST_NAME_BASE}-both-suite-and-flow-file"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Both flow.cylc and suite.rc files are present in the source directory. Please remove one and try again.
+WorkflowFilesError: Both flow.cylc and suite.rc files are present in the source \
+directory. Please remove one and try again. For more information visit: \
+https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility
 __ERR__
 
 # Test fail no workflow source dir

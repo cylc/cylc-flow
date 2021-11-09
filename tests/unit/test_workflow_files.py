@@ -43,6 +43,7 @@ from cylc.flow.workflow_files import (
     check_flow_file,
     check_nested_run_dirs,
     clean,
+    detect_both_flow_and_suite,
     get_rsync_rund_cmd,
     get_symlink_dirs,
     get_workflow_source_dir,
@@ -1746,12 +1747,29 @@ def test_check_flow_file(
             check_flow_file(tmp_path)
         assert str(exc.value) == (
             "Both flow.cylc and suite.rc files are present in the "
-            "source directory. Please remove one and try again."
+            "source directory. Please remove one and try again. "
+            "For more information visit: "
+            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
+            "#backward-compatibility"
         )
 
     else:
         assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
 
+def test_detect_both_flow_and_suite(tmp_path):
+    """Test flow.cylc and suite.rc together in dir raises error."""
+    tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
+    tmp_path.joinpath(WorkflowFiles.SUITE_RC).touch()
+
+    with pytest.raises(WorkflowFilesError) as exc:
+        detect_both_flow_and_suite(tmp_path)
+        assert str(exc.value) == (
+            "Both flow.cylc and suite.rc files are present in the "
+            "source directory. Please remove one and try again. "
+            "For more information visit: "
+            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
+            "#backward-compatibility"
+        )
 
 @pytest.mark.parametrize(
     'flow_file_target, suiterc_exists, err, expected_file',

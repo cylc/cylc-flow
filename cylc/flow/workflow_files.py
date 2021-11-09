@@ -1705,7 +1705,8 @@ def detect_both_flow_and_suite(path):
     """
     msg = (f"Both {WorkflowFiles.FLOW_FILE} and {WorkflowFiles.SUITE_RC} "
            "files are present in the run directory. Please remove one and"
-           " try again.")
+           " try again. For more information visit: https://cylc.github.io/"
+           "cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility")
     if path.resolve().name == WorkflowFiles.SUITE_RC:
         flow_cylc = path.parent / WorkflowFiles.FLOW_FILE
         if flow_cylc.is_file() and not flow_cylc.is_symlink():
@@ -1767,7 +1768,9 @@ def check_flow_file(
             raise WorkflowFilesError(
                 f"Both {WorkflowFiles.FLOW_FILE} and "
                 f"{WorkflowFiles.SUITE_RC} files are present in the source "
-                "directory. Please remove one and try again."
+                "directory. Please remove one and try again. For more "
+                "information visit: https://cylc.github.io/cylc-doc/latest/"
+                "html/7-to-8/summary.html#backward-compatibility"
             )
         if flow_file_path.resolve() == suite_rc_path.resolve():
             # A symlink that points to existing suite.rc
