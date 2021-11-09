@@ -519,7 +519,9 @@ class Resolvers(BaseResolvers):
         w_ids = [flow[WORKFLOW].id
                  for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
-            return 'Error: No matching Workflow'
+            flows = list(self.data_store_mgr.data.keys())
+            return [{
+                'response': (False, f'No matching workflow in {flows}')}]
         w_id = w_ids[0]
         result = await self._mutation_mapper(command, args)
         if result is None:
@@ -532,7 +534,9 @@ class Resolvers(BaseResolvers):
         w_ids = [flow[WORKFLOW].id
                  for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
-            return 'Error: No matching Workflow'
+            flows = list(self.data_store_mgr.data.keys())
+            return [{
+                'response': (False, f'No matching workflow in {flows}')}]
         w_id = w_ids[0]
         # match proxy ID args with workflows
         items = []
