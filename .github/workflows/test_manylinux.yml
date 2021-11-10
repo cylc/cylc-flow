@@ -23,11 +23,12 @@ on:
     paths:
       - 'setup.py'
       - 'setup.cfg'
+      - '.github/workflows/test_manylinux.yml'
 
 jobs:
   test:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -62,7 +63,7 @@ jobs:
             >> _manylinux.py
 
       - name: Install
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
           PYTHONPATH="$PWD:$PYTHONPATH" pip install ."[all]"
 
