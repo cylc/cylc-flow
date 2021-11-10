@@ -202,7 +202,7 @@ def test_insert_job(harness):
     """Test method that adds a new job to the store."""
     schd, data = harness
     assert len(schd.data_store_mgr.added[JOBS]) == 0
-    schd.data_store_mgr.insert_job('foo', '1', job_config(schd))
+    schd.data_store_mgr.insert_job('foo', '1', 'submitted', job_config(schd))
     assert len(schd.data_store_mgr.added[JOBS]) == 1
     assert ext_id(schd) in schd.data_store_mgr.added[JOBS]
 

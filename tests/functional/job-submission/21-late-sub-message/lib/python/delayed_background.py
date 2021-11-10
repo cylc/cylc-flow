@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,27 +15,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
 
-# Get coverage up for some CLI parser errors. 
+from time import sleep
+from cylc.flow.job_runner_handlers.background import BgCommandHandler
 
-. "$(dirname "$0")/test_header"
-set_test_number 2
 
-init_workflow "${TEST_NAME_BASE}" << __CONFIG__
-[scheduling]
-   [[graph]]
-       R1 = foo
-[runtime]
-   [[foo]]
-__CONFIG__
+class DelayedBgCommandHandler(BgCommandHandler):
 
-# "cylc trigger --meta" requires --reflow
-TEST_NAME="set-trigger-fail"
-run_fail "${TEST_NAME}"  \
-    cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}"  foo.1
-contains_ok "${TEST_NAME}".stderr <<__END__
-cylc: error: --meta requires --reflow
-__END__
+    @classmethod
+    def submit(cls, job_file_path, submit_opts):
+        result = super().submit(job_file_path, submit_opts)
+        sleep(10)
+        return result
 
-purge
+
+JOB_RUNNER_HANDLER = DelayedBgCommandHandler()

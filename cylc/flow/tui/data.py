@@ -47,6 +47,7 @@ QUERY = '''
           jobRunnerName
           jobId
           startedTime
+          finishedTime
         }
         task {
           meanElapsedTime

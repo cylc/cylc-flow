@@ -33,6 +33,7 @@ import os
 from shlex import quote
 import shlex
 from time import time
+from typing import TYPE_CHECKING
 
 from cylc.flow.parsec.config import ItemNotFoundError
 
@@ -70,6 +71,11 @@ from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string as intvl_as_str
 )
+
+
+if TYPE_CHECKING:
+    from cylc.flow.task_proxy import TaskProxy
+
 
 CustomTaskEventHandlerContext = namedtuple(
     "CustomTaskEventHandlerContext",
@@ -179,6 +185,8 @@ class TaskEventsManager():
     FLAG_POLLED_IGNORED = "(polled-ignored)"
     KEY_EXECUTE_TIME_LIMIT = 'execution_time_limit'
     NON_UNIQUE_EVENTS = ('warning', 'critical', 'custom')
+    JOB_SUBMIT_SUCCESS_FLAG = 0
+    JOB_SUBMIT_FAIL_FLAG = 1
 
     def __init__(
         self, workflow, proc_pool, workflow_db_mgr, broadcast_mgr,
@@ -444,8 +452,18 @@ class TaskEventsManager():
                     and itask.state.is_gt(TASK_STATUS_RUNNING)
             ):
                 return True
+            if itask.state.status == TASK_STATUS_PREPARING:
+                # The started message must have arrived before the submitted
+                # one, so assume that a successful submission occurred and act
+                # accordingly. Note the submitted message is internal, whereas
+                # the started message comes in on the network.
+                self._process_message_submitted(
+                    itask, event_time, itask.submit_num)
+                self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
+
             self._process_message_started(itask, event_time)
             self.spawn_func(itask, TASK_OUTPUT_STARTED)
+
         elif message == self.EVENT_SUCCEEDED:
             self._process_message_succeeded(itask, event_time)
             self.spawn_func(itask, TASK_OUTPUT_SUCCEEDED)
@@ -464,7 +482,11 @@ class TaskEventsManager():
                     and itask.state.is_gt(TASK_STATUS_SUBMIT_FAILED)
             ):
                 return True
-            if self._process_message_submit_failed(itask, event_time):
+            if self._process_message_submit_failed(
+                itask,
+                event_time,
+                submit_num
+            ):
                 self.spawn_func(itask, TASK_OUTPUT_SUBMIT_FAILED)
         elif message == self.EVENT_SUBMITTED:
             if (
@@ -472,8 +494,24 @@ class TaskEventsManager():
                     and itask.state.is_gt(TASK_STATUS_SUBMITTED)
             ):
                 return True
-            self._process_message_submitted(itask, event_time)
-            self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
+            if (
+                itask.state.status == TASK_STATUS_PREPARING
+                or itask.tdef.run_mode == 'simulation'
+            ):
+                # If not in the preparing state we already assumed and handled
+                # job submission under the started event above...
+                # (sim mode does not have the job prep state)
+                self._process_message_submitted(itask, event_time, submit_num)
+                self.spawn_func(itask, TASK_OUTPUT_SUBMITTED)
+
+            # ... but either way update the job ID in the job proxy (it only
+            # comes in via the submission message).
+            if itask.tdef.run_mode != 'simulation':
+                job_d = get_task_job_id(
+                    itask.point, itask.tdef.name, itask.submit_num)
+                self.data_store_mgr.delta_job_attr(
+                    job_d, 'job_id', itask.summary['submit_method_id'])
+
         elif message.startswith(FAIL_MESSAGE_PREFIX):
             # Task received signal.
             if (
@@ -937,7 +975,7 @@ class TaskEventsManager():
             self.data_store_mgr.delta_task_state(itask)
         self._reset_job_timers(itask)
 
-    def _process_message_submit_failed(self, itask, event_time):
+    def _process_message_submit_failed(self, itask, event_time, submit_num):
         """Helper for process_message, handle a submit-failed message.
 
         Return True if no retries (hence go to the submit-failed state).
@@ -975,9 +1013,13 @@ class TaskEventsManager():
             msg = f"job {self.EVENT_SUBMIT_FAILED}, {delay_msg}"
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
         self._reset_job_timers(itask)
+
+        # Register newly submit-failed job with the database and datastore.
+        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
+
         return no_retries
 
-    def _process_message_submitted(self, itask, event_time):
+    def _process_message_submitted(self, itask, event_time, submit_num):
         """Helper for process_message, handle a submit-succeeded message."""
         with suppress(KeyError):
             summary = itask.summary
@@ -987,10 +1029,6 @@ class TaskEventsManager():
                 f"{summary['job_runner_name']}"
                 f"[{summary['submit_method_id']}]"
             )
-        self.workflow_db_mgr.put_update_task_jobs(itask, {
-            "time_submit_exit": event_time,
-            "submit_status": 0,
-            "job_id": itask.summary.get('submit_method_id')})
 
         if itask.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
@@ -1000,27 +1038,83 @@ class TaskEventsManager():
                 self.data_store_mgr.delta_task_state(itask)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
-            return
 
-        itask.set_summary_time('submitted', event_time)
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
-        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
-        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
-        # Unset started and finished times in case of resubmission.
-        itask.set_summary_time('started')
-        itask.set_summary_time('finished')
+        else:
+            itask.set_summary_time('submitted', event_time)
+            job_d = get_task_job_id(
+                itask.point, itask.tdef.name, itask.submit_num)
+            self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
+            self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
+            # Unset started and finished times in case of resubmission.
+            itask.set_summary_time('started')
+            itask.set_summary_time('finished')
 
-        self.reset_inactivity_timer_func()
-        if itask.state.status == TASK_STATUS_PREPARING:
-            # The job started message can (rarely) come in before the submit
-            # command returns - in which case do not go back to 'submitted'.
-            if itask.state_reset(TASK_STATUS_SUBMITTED):
-                itask.state_reset(is_queued=False)
-                self.setup_event_handlers(
-                    itask, self.EVENT_SUBMITTED, f'job {self.EVENT_SUBMITTED}')
-                self.data_store_mgr.delta_task_state(itask)
-                self.data_store_mgr.delta_task_queued(itask)
-            self._reset_job_timers(itask)
+            self.reset_inactivity_timer_func()
+            if itask.state.status == TASK_STATUS_PREPARING:
+                # The job started message can (rarely) come in before the
+                # submit command returns - in which case do not go back to
+                # 'submitted'.
+                if itask.state_reset(TASK_STATUS_SUBMITTED):
+                    itask.state_reset(is_queued=False)
+                    self.setup_event_handlers(
+                        itask,
+                        self.EVENT_SUBMITTED,
+                        f'job {self.EVENT_SUBMITTED}',
+                    )
+                    self.data_store_mgr.delta_task_state(itask)
+                    self.data_store_mgr.delta_task_queued(itask)
+                self._reset_job_timers(itask)
+
+        # Register the newly submitted job with the database and datastore.
+        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
+
+    def _insert_task_job(
+        self,
+        itask: 'TaskProxy',
+        event_time: str,
+        submit_status: int
+    ):
+        """Insert a new job proxy into the datastore.
+
+        Args:
+            itask: create a job proxy for this task proxy
+            event_time: time of job submission
+            submit_status: 0 (success), 1 (fail)
+
+        """
+        # itask.jobs appends for automatic retries (which reuse the same task
+        # proxy) but a retriggered task that was not already in the pool will
+        # not see previous submissions (so can't use itask.jobs[submit_num-1]).
+        job_conf = itask.jobs[-1]
+
+        # insert job into data store
+        self.data_store_mgr.insert_job(
+            itask.tdef.name,
+            itask.point,
+            itask.state.status,
+            {
+                **job_conf,
+                # NOTE: the platform name may have changed since task
+                # preparation started due to intelligent host (and or
+                # platform) selection
+                'platform': itask.platform,
+            },
+        )
+        # update job in database
+        # NOTE: the job must be added to the DB earlier so that Cylc can
+        # reconnect with job submissions if the scheduler is restarted
+        self.workflow_db_mgr.put_update_task_jobs(
+            itask,
+            {
+                'submit_status': submit_status,
+                'time_submit_exit': event_time,
+                'job_id': itask.summary.get('submit_method_id'),
+                # NOTE: the platform name may have changed since task
+                # preparation started due to intelligent host (and or
+                # platform) selection
+                'platform_name': itask.platform['name'],
+            }
+        )
 
     def _setup_job_logs_retrieval(self, itask, event):
         """Set up remote job logs retrieval.

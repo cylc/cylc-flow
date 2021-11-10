@@ -18,7 +18,7 @@
 
 """cylc remove [OPTIONS] ARGS
 
-Remove task instances from the scheduler task pool.
+Remove one or more task instances from a running workflow.
 
 """
 

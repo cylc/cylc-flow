@@ -1,6 +1,4 @@
 This directory contains specification modules for cylc parsec config files:
 
- * workflow definition files
- * site/user config files
-
- * test config file - to test parsec parsing and validation
+ * workflow definition files (workflow.py)
+ * site/user config files (globalconfig.py)

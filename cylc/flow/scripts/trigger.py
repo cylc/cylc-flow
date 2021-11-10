@@ -76,7 +76,7 @@ def get_option_parser():
 
     parser.add_option(
         "--meta", metavar="DESCRIPTION", action="store",
-        dest="flow_descr", default="",
+        dest="flow_descr", default=None,
         help="(with --reflow) a descriptive string for the new flow."
     )
 

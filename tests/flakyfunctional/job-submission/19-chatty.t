@@ -57,7 +57,7 @@ __OUT__
 sed -n 's/\(\[jobs-submit out\]\) .*\(|1\/\)/\1 \2/p' 'log' >'log2'
 N=0
 while read -r; do
-    TAIL="${REPLY#${WORKFLOW_RUN_DIR}/log/job/}"
+    TAIL="${REPLY#"${WORKFLOW_RUN_DIR}"/log/job/}"
     TASK_JOB="${TAIL%/job}"
     contains_ok 'log2' <<<"[jobs-submit out] |${TASK_JOB}|1|None"
     ((N += 1))

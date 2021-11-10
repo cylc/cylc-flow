@@ -27,7 +27,7 @@ from typing import AsyncGenerator, Any
 from graphene import (
     Boolean, Field, Float, ID, InputObjectType, Int,
     List, Mutation, ObjectType, Schema, String, Union, Enum,
-    Argument
+    Argument, Interface
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
@@ -650,7 +650,7 @@ class TimeZone(ObjectType):
 class Workflow(ObjectType):
     class Meta:
         description = """Global workflow info."""
-    id = ID(required=True)  # noqa: A003 (required for definition)
+    id = ID()  # noqa: A003 (required for definition)
     name = String()
     status = String()
     status_msg = String()
@@ -754,7 +754,7 @@ class Workflow(ObjectType):
 class Job(ObjectType):
     class Meta:
         description = """Jobs."""
-    id = ID(required=True)  # noqa: A003 (required for definition)
+    id = ID()  # noqa: A003 (required for definition)
     submit_num = Int()
     state = String()
     # name and cycle_point for filtering/sorting
@@ -793,7 +793,7 @@ class Job(ObjectType):
 class Task(ObjectType):
     class Meta:
         description = """Task definition, static fields"""
-    id = ID(required=True)  # noqa: A003 (required for definition)
+    id = ID()  # noqa: A003 (required for definition)
     name = String()
     meta = Field(NodeMeta)
     mean_elapsed_time = Float()
@@ -828,9 +828,9 @@ class Task(ObjectType):
 class PollTask(ObjectType):
     class Meta:
         description = """Polling task edge"""
-    local_proxy = ID(required=True)
+    local_proxy = ID()
     workflow = String()
-    remote_proxy = ID(required=True)
+    remote_proxy = ID()
     req_state = String()
     graph_string = String()
 
@@ -896,7 +896,7 @@ class XTrigger(ObjectType):
 class TaskProxy(ObjectType):
     class Meta:
         description = """Task cycle instance."""
-    id = ID(required=True)  # noqa: A003 (required for schema definition)
+    id = ID()  # noqa: A003 (required for schema definition)
     task = Field(
         Task,
         description="""Task definition""",
@@ -985,7 +985,7 @@ class TaskProxy(ObjectType):
 class Family(ObjectType):
     class Meta:
         description = """Task definition, static fields"""
-    id = ID(required=True)  # noqa: A003 (required for schema definition)
+    id = ID()  # noqa: A003 (required for schema definition)
     name = String()
     meta = Field(NodeMeta)
     depth = Int()
@@ -1034,7 +1034,7 @@ class Family(ObjectType):
 class FamilyProxy(ObjectType):
     class Meta:
         description = """Family composite."""
-    id = ID(required=True)  # noqa: A003 (required for schema definition)
+    id = ID()  # noqa: A003 (required for schema definition)
     cycle_point = String()
     # name & namespace for filtering/sorting
     name = String()
@@ -1107,7 +1107,7 @@ class Node(Union):
 class Edge(ObjectType):
     class Meta:
         description = """Dependency edge task/family proxies"""
-    id = ID(required=True)  # noqa: A003 (required for schema definition)
+    id = ID()  # noqa: A003 (required for schema definition)
     source = ID()
     source_node = Field(
         Node,
@@ -1466,7 +1466,8 @@ class WorkflowStopMode(Enum):
 class Broadcast(Mutation):
     class Meta:
         description = sstrip('''
-            Override or add new [runtime] config in targeted namespaces.
+            Override or add new `[runtime]` configurations in a running
+            workflow.
 
             Uses for broadcast include making temporary changes to task
             behaviour, and task-to-downstream-task communication via
@@ -1569,21 +1570,10 @@ class Pause(Mutation):
     class Meta:
         description = sstrip('''
             Pause a workflow.
+
+            This prevents submission of any task jobs.
         ''')
         resolver = partial(mutator, command='pause')
-
-    class Arguments:
-        workflows = List(WorkflowID, required=True)
-
-    result = GenericScalar()
-
-
-class Ping(Mutation):
-    class Meta:
-        description = sstrip('''
-            Send a test message to a running workflow.
-        ''')
-        resolver = partial(mutator, command='ping_workflow')
 
     class Arguments:
         workflows = List(WorkflowID, required=True)
@@ -1625,6 +1615,8 @@ class ReleaseHoldPoint(Mutation):
     class Meta:
         description = sstrip('''
             Release all tasks and unset the workflow hold point, if set.
+
+            Held tasks do not submit their jobs even if ready to run.
         ''')
         resolver = partial(mutator, command='release_hold_point')
 
@@ -1652,7 +1644,7 @@ class Resume(Mutation):
 class Reload(Mutation):
     class Meta:
         description = sstrip('''
-            Tell a workflow to reload its definition at run time.
+            Reload the configuration of a running workflow.
 
             All settings including task definitions, with the exception of
             workflow log config, can be changed on reload. Changes to task
@@ -1711,13 +1703,19 @@ class SetGraphWindowExtent(Mutation):
 
 class Stop(Mutation):
     class Meta:
-        description = sstrip('''
-            Tell a scheduler to shut down,
-            or stop a specified flow from spawning any further.
+        description = sstrip(f'''
+            Tell a workflow to shut down or stop a specified
+            flow from spawning any further.
 
             By default stopping workflows wait for submitted and running tasks
             to complete before shutting down. You can change this behaviour
             with the "mode" option.
+
+            Tasks that become ready after the shutdown is ordered will be
+            submitted immediately if the workflow is restarted.
+            Remaining task event handlers, job poll and kill commands, will
+            be executed prior to shutdown, unless
+            the stop mode is `{WorkflowStopMode.Now.name}`.
         ''')
         resolver = partial(mutator, command='stop')
 
@@ -1747,16 +1745,18 @@ class ExtTrigger(Mutation):
         description = sstrip('''
             Report an external event message to a scheduler.
 
-            It is expected that a task in the workflow has registered the same
-            message as an external trigger - a special prerequisite to be
-            satisfied by an external system, via this command, rather than by
-            triggering off other tasks.
+            External triggers allow any program to send
+            messages to the Cylc scheduler. Cylc can use such
+            messages as signals that an external prerequisite has
+            been satisfied.
 
-            The ID argument should uniquely distinguish one external trigger
-            event from the next. When a task's external trigger is satisfied by
-            an incoming message, the message ID is broadcast to all downstream
-            tasks in the cycle point as `$CYLC_EXT_TRIGGER_ID` so that they can
-            use it - e.g. to identify a new data file that the external
+            The ID argument should be unique to each external
+            trigger event. When an incoming message satisfies
+            a task's external trigger the message ID is broadcast
+            to all downstream tasks in the cycle point as
+            ``$CYLC_EXT_TRIGGER_ID``.  Tasks can use
+            ``$CYLC_EXT_TRIGGER_ID``, for example,  to
+            identify a new data file that the external
             triggering system is responding to.
 
             Use the retry options in case the target workflow is down or out of
@@ -1799,6 +1799,8 @@ class Hold(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Hold tasks within a workflow.
+
+            Held tasks do not submit their jobs even if ready to run.
         ''')
         resolver = partial(mutator, command='hold')
 
@@ -1817,7 +1819,7 @@ class Kill(Mutation, TaskMutation):
     # TODO: This should be a job mutation?
     class Meta:
         description = sstrip('''
-            Kill jobs of active tasks and update their statuses accordingly.
+            Kill running or submitted jobs.
         ''')
         resolver = partial(mutator, command='kill_tasks')
 
@@ -1826,6 +1828,13 @@ class Poll(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
             Poll (query) task jobs to verify and update their statuses.
+
+            This checks the job status file and queries the
+            job runner on the job platform.
+
+            Pollable tasks are those in the n=0 window with
+            an associated job ID, including incomplete finished
+            tasks.
         ''')
         resolver = partial(mutator, command='poll_tasks')
 
@@ -1905,7 +1914,6 @@ class Mutations(ObjectType):
     ext_trigger = _mut_field(ExtTrigger)
     message = _mut_field(Message)
     pause = _mut_field(Pause)
-    ping = _mut_field(Ping)
     reload = _mut_field(Reload)
     resume = _mut_field(Resume)
     set_verbosity = _mut_field(SetVerbosity)
@@ -1965,9 +1973,15 @@ class Pruned(ObjectType):
     edges = List(String, default_value=[])
 
 
-class Added(ObjectType):
-    class Meta:
-        description = """Added node/edge deltas."""
+class Delta(Interface):
+    """Interface for delta types.
+
+    Since we usually subscribe to the same fields for both added/updated
+    deltas this interface makes writing fragments easier.
+
+    NOTE: This interface is specialised to the "added" type, other types must
+    override fields as required.
+    """
 
     families = List(
         Family,
@@ -2035,9 +2049,16 @@ class Added(ObjectType):
     )
 
 
+class Added(ObjectType):
+    class Meta:
+        description = """Added node/edge deltas."""
+        interfaces = (Delta,)
+
+
 class Updated(ObjectType):
     class Meta:
         description = """Updated node/edge deltas."""
+        interfaces = (Delta,)
 
     families = List(
         Family,
@@ -2108,7 +2129,7 @@ class Updated(ObjectType):
 class Deltas(ObjectType):
     class Meta:
         description = """Grouped deltas of the WFS publish"""
-    id = ID(required=True)  # noqa: A003 (required for schema definition)
+    id = ID()  # noqa: A003 (required for schema definition)
     shutdown = Boolean(default_value=False)
     added = Field(
         Added,

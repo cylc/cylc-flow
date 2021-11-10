@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow reinstallation expected failures
 . "$(dirname "$0")/test_header"
-set_test_number 23
+set_test_number 26
 
 # Test fail no workflow source dir
 
@@ -54,6 +54,20 @@ rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: no flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+__ERR__
+purge_rnd_workflow
+
+# Test fail both flow.cylc and suite.rc file
+
+TEST_NAME="${TEST_NAME_BASE}-both-flow-and-suite-file"
+make_rnd_workflow
+run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
+touch "${RND_WORKFLOW_SOURCE}/suite.rc"
+run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Both flow.cylc and suite.rc files are present in the source \
+directory. Please remove one and try again. For more information visit: \
+https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility
 __ERR__
 purge_rnd_workflow
 

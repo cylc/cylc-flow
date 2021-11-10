@@ -185,7 +185,7 @@ class TaskProxy:
         if submit_num is None:
             submit_num = 0
         self.submit_num = submit_num
-        self.jobs: List[str] = []
+        self.jobs: List[dict] = []
         if flow_nums is None:
             self.flow_nums = set()
         else:
@@ -237,18 +237,13 @@ class TaskProxy:
         return f"<{self.__class__.__name__} '{self.identity}'>"
 
     def __str__(self) -> str:
-        """Stringify using identity, state, submit_num, and flow_nums.
-
-        Ignore flow_nums if only the original flow is present.
-        """
-        res = (
+        """Stringify with identity, state, submit_num, and flow_nums."""
+        return (
             f"{self.identity} "
             f"{self.state} "
             f"job:{self.submit_num:02d}"
+            f" flows:{','.join(str(i) for i in self.flow_nums) or 'none'}"
         )
-        if self.flow_nums:
-            res += f" flows:{','.join(str(i) for i in self.flow_nums)}"
-        return res
 
     def copy_to_reload_successor(self, reload_successor):
         """Copy attributes to successor on reload of this task proxy."""

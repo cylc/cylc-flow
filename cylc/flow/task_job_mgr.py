@@ -221,7 +221,7 @@ class TaskJobManager:
         prepared_tasks = []
         bad_tasks = []
         for itask in itasks:
-            if itask.state.reset(TASK_STATUS_PREPARING):
+            if itask.state_reset(TASK_STATUS_PREPARING):
                 self.data_store_mgr.delta_task_state(itask)
                 self.workflow_db_mgr.put_update_task_state(itask)
             prep_task = self._prep_submit_task_job(
@@ -249,7 +249,7 @@ class TaskJobManager:
         Return (list): list of tasks that attempted submission.
         """
         if is_simulation:
-            return self._simulation_submit_task_jobs(itasks)
+            return self._simulation_submit_task_jobs(itasks, workflow)
         # Prepare tasks for job submission
         prepared_tasks, bad_tasks = self.prep_submit_task_jobs(
             workflow, itasks)
@@ -316,7 +316,7 @@ class TaskJobManager:
                         )
                         # Now that all hosts on all platforms in platform
                         # group selected in task config are exhausted we clear
-                        # bad_hosts or all the hosts we have
+                        # bad_hosts for all the hosts we have
                         # tried for this platform or group.
                         self.bad_hosts = (
                             self.bad_hosts - set(itask.platform['hosts']))
@@ -422,7 +422,6 @@ class TaskJobManager:
             ):
                 host = get_host()
 
-            now_str = get_current_time_string()
             done_tasks.extend(itasks)
             for itask in itasks:
                 # Log and persist
@@ -430,7 +429,7 @@ class TaskJobManager:
                 self.workflow_db_mgr.put_insert_task_jobs(itask, {
                     'is_manual_submit': itask.is_manual_submit,
                     'try_num': itask.get_try_num(),
-                    'time_submit': now_str,
+                    'time_submit': get_current_time_string(),
                     'platform_name': itask.platform['name'],
                     'job_runner_name': itask.summary['job_runner_name'],
                 })
@@ -767,6 +766,7 @@ class TaskJobManager:
                 if line.startswith(prefix):
                     line = line[len(prefix):].strip()
                     try:
+                        # TODO this massive try block should be unpacked.
                         path = line.split("|", 2)[1]  # timestamp, path, status
                         point, name, submit_num = path.split(os.sep, 2)
                         if prefix == self.job_runner_mgr.OUT_PREFIX_SUMMARY:
@@ -981,17 +981,23 @@ class TaskJobManager:
                 except KeyError:
                     itask.try_timers[key] = TaskActionTimer(delays=delays)
 
-    def _simulation_submit_task_jobs(self, itasks):
+    def _simulation_submit_task_jobs(self, itasks, workflow):
         """Simulation mode task jobs submission."""
         for itask in itasks:
             itask.waiting_on_job_prep = False
             self._set_retry_timers(itask)
-            itask.platform = 'SIMULATION'
+            itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
             itask.summary[self.KEY_EXECUTE_TIME_LIMIT] = (
-                itask.tdef.rtconfig['job']['simulated run length'])
+                itask.tdef.rtconfig['job']['simulated run length']
+            )
+            itask.jobs.append(
+                self.get_simulation_job_conf(itask, workflow)
+            )
             self.task_events_mgr.process_message(
-                itask, INFO, TASK_OUTPUT_SUBMITTED)
+                itask, INFO, TASK_OUTPUT_SUBMITTED
+            )
+
         return itasks
 
     def _submit_task_jobs_callback(self, ctx, workflow, itasks):
@@ -1045,10 +1051,8 @@ class TaskJobManager:
         if ctx.ret_code == SubProcPool.RET_CODE_WORKFLOW_STOPPING:
             return
 
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
         try:
             itask.summary['submit_method_id'] = items[3]
-            self.data_store_mgr.delta_job_attr(job_d, 'job_id', items[3])
         except IndexError:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] == "None":
@@ -1123,7 +1127,8 @@ class TaskJobManager:
             self._create_job_log_path(workflow, itask)
             self._set_retry_timers(itask, rtconfig)
             self._prep_submit_task_job_error(
-                workflow, itask, '(remote host select)', exc)
+                workflow, itask, '(remote host select)', exc
+            )
             return False
         else:
             # host/platform select not ready
@@ -1161,8 +1166,7 @@ class TaskJobManager:
                 self._create_job_log_path(workflow, itask)
                 self._set_retry_timers(itask, rtconfig, False)
                 self._prep_submit_task_job_error(
-                    workflow, itask, '(platform not defined)', exc
-                )
+                    workflow, itask, '(platform not defined)', exc)
                 return False
             else:
                 itask.platform = platform
@@ -1172,20 +1176,25 @@ class TaskJobManager:
                 self._set_retry_timers(itask, rtconfig)
 
         try:
-            job_conf = self._prep_submit_task_job_impl(
-                workflow, itask, rtconfig)
-
-            # Job pool insertion
-            job_config = deepcopy(job_conf)
-            job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
-            itask.jobs.append(job_config['job_d'])
-            self.data_store_mgr.insert_job(
-                itask.tdef.name, itask.point, job_config)
+            job_conf = {
+                **self._prep_submit_task_job_impl(
+                    workflow, itask, rtconfig
+                ),
+                'logfiles': deepcopy(itask.summary['logfiles']),
+            }
+            itask.jobs.append(job_conf)
 
             local_job_file_path = get_task_job_job_log(
-                workflow, itask.point, itask.tdef.name, itask.submit_num)
-            self.job_file_writer.write(local_job_file_path, job_conf,
-                                       check_syntax=check_syntax)
+                workflow,
+                itask.point,
+                itask.tdef.name,
+                itask.submit_num,
+            )
+            self.job_file_writer.write(
+                local_job_file_path,
+                job_conf,
+                check_syntax=check_syntax,
+            )
         except Exception as exc:
             # Could be a bad command template, IOError, etc
             itask.waiting_on_job_prep = False
@@ -1205,14 +1214,29 @@ class TaskJobManager:
             itask.tdef.name,
             submit_num=itask.submit_num
         )
-        # Persist
-        self.workflow_db_mgr.put_insert_task_jobs(itask, {
-            'is_manual_submit': itask.is_manual_submit,
-            'try_num': itask.get_try_num(),
-            'time_submit': get_current_time_string(),
-            'job_runner_name': itask.summary.get('job_runner_name'),
-        })
         itask.is_manual_submit = False
+        # job failed in preparation i.e. is really preparation-failed rather
+        # than submit-failed
+        # provide a dummy job config - this info will be added to the data
+        # store
+        itask.jobs.append({
+            'task_id': itask.identity,
+            'platform': itask.platform,
+            'submit_num': itask.submit_num,
+            'try_num': itask.get_try_num(),
+        })
+        # create a DB entry for the submit-failed job
+        self.workflow_db_mgr.put_insert_task_jobs(
+            itask,
+            {
+                'job_id': itask.summary.get('submit_method_id'),
+                'is_manual_submit': itask.is_manual_submit,
+                'try_num': itask.get_try_num(),
+                'time_submit': get_current_time_string(),
+                'platform_name': itask.platform['name'],
+                'job_runner_name': itask.summary['job_runner_name'],
+            }
+        )
         self.task_events_mgr.process_message(
             itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
 
@@ -1228,15 +1252,37 @@ class TaskJobManager:
                 rtconfig['execution time limit']
             )
 
-        scripts = self._get_job_scripts(itask, rtconfig)
-
         # Location of job file, etc
         self._create_job_log_path(workflow, itask)
         job_d = get_task_job_id(
             itask.point, itask.tdef.name, itask.submit_num)
         job_file_path = get_remote_workflow_run_job_dir(
             workflow, job_d, JOB_LOG_JOB)
+
+        return self.get_job_conf(
+            workflow,
+            itask,
+            rtconfig,
+            job_file_path=job_file_path,
+            job_d=job_d
+        )
+
+    def get_job_conf(
+        self,
+        workflow,
+        itask,
+        rtconfig,
+        job_file_path=None,
+        job_d=None,
+    ):
+        """Return a job config.
+
+        Note that rtconfig should have any broadcasts applied.
+        """
+        scripts = self._get_job_scripts(itask, rtconfig)
         return {
+            # NOTE: these fields should match get_simulation_job_conf
+            # TODO: turn this into a namedtuple or similar
             'job_runner_name': itask.platform['job runner'],
             'job_runner_command_template': (
                 itask.platform['job runner command template']
@@ -1264,4 +1310,39 @@ class TaskJobManager:
             'try_num': itask.get_try_num(),
             'uuid_str': self.task_remote_mgr.uuid_str,
             'work_d': rtconfig['work sub-directory'],
+            # this field is populated retrospectively for regular job subs
+            'logfiles': [],
+        }
+
+    def get_simulation_job_conf(self, itask, workflow):
+        """Return a job config for a simulated task."""
+        return {
+            # NOTE: these fields should match _prep_submit_task_job_impl
+            'job_runner_name': 'SIMULATION',
+            'job_runner_command_template': '',
+            'dependencies': itask.state.get_resolved_dependencies(),
+            'directives': {},
+            'environment': {},
+            'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
+            'env-script': 'SIMULATION',
+            'err-script': 'SIMULATION',
+            'exit-script': 'SIMULATION',
+            'platform': itask.platform,
+            'init-script': 'simulation',
+            'job_file_path': 'simulation',
+            'job_d': 'SIMULATION',
+            'namespace_hierarchy': itask.tdef.namespace_hierarchy,
+            'param_var': itask.tdef.param_var,
+            'post-script': 'SIMULATION',
+            'pre-script': 'SIMULATION',
+            'script': 'SIMULATION',
+            'submit_num': itask.submit_num,
+            'flow_nums': itask.flow_nums,
+            'workflow_name': workflow,
+            'task_id': itask.identity,
+            'try_num': itask.get_try_num(),
+            'uuid_str': self.task_remote_mgr.uuid_str,
+            'work_d': 'SIMULATION',
+            # this field is populated retrospectively for regular job subs
+            'logfiles': [],
         }

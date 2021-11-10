@@ -18,12 +18,14 @@
 
 """cylc poll [OPTIONS] ARGS
 
-Poll pollable task jobs to verify and update their statuses in the scheduler.
+Poll (query) task jobs to verify and update their statuses.
 
-This checks the job status file and queries the job runner on the job platform.
+This checks the job status file and queries the
+job runner on the job platform.
 
-Pollable tasks are those in the n=0 window with an associated job ID, including
-incomplete finished tasks.
+Pollable tasks are those in the n=0 window with
+an associated job ID, including incomplete finished
+tasks.
 
 Examples:
   $ cylc poll WORKFLOW  # poll all pollable tasks

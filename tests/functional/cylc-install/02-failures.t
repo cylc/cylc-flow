@@ -20,7 +20,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 45
+set_test_number 47
 
 # Test source directory between runs that are not consistent result in error
 
@@ -55,6 +55,20 @@ rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: no flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+__ERR__
+
+# -----------------------------------------------------------------------------
+# Test fail both flow.cylc and suite.rc file
+
+make_rnd_workflow
+
+TEST_NAME="${TEST_NAME_BASE}-both-suite-and-flow-file"
+touch "${RND_WORKFLOW_SOURCE}/suite.rc"
+run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
+contains_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Both flow.cylc and suite.rc files are present in the source \
+directory. Please remove one and try again. For more information visit: \
+https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility
 __ERR__
 
 # Test fail no workflow source dir
@@ -190,6 +204,7 @@ run_fail "${TEST_NAME}-install" cylc install --no-run-name \
 cmp_ok "${TEST_NAME}-install.stderr" <<__ERR__
 WorkflowFilesError: Nested run directories not allowed - cannot install workflow in '${RND_WORKFLOW_RUNDIR}/nested' as '${RND_WORKFLOW_RUNDIR}' is already a valid run directory.
 __ERR__
+
 # Test moving source dir results in error
 
 TEST_NAME="${TEST_NAME_BASE}-install-moving-src-dir"
