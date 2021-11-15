@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 15
+set_test_number 13
 
 cat > flow.cylc <<__HEREDOC__
 [scheduler]
@@ -37,13 +37,6 @@ TEST_FOLDERS+=("$TEST_FOLDER")
 cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/"
 run_fail "${TEST_NAME_BASE}-child" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child"
 grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-child.stderr"
-
-
-TEST_FOLDER=cylctb-$(uuidgen)
-TEST_FOLDERS+=("$TEST_FOLDER")
-cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child" --no-run-name
-run_fail "${TEST_NAME_BASE}-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/" --no-run-name
-grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-parent.stderr"
 
 
 TEST_FOLDER=cylctb-$(uuidgen)

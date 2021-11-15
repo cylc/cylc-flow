@@ -1386,6 +1386,8 @@ def check_nested_dirs(
     Args:
         path: Absolute workflow run directory path or workflow install
             directory path.
+        reinstall: Flag indictating whether check is being run by
+        ``cylc install`` or ``cylc reinstall``.
 
     Raises:
         WorkflowFilesError if reg dir is nested inside a run dir, or an
