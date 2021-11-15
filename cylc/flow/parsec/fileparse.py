@@ -221,12 +221,34 @@ def multiline(flines, value, index, maxline):
 
 
 def process_plugins(fpath, opts):
-    # Load Rose Vars, if a ``rose-suite.conf`` file is present.
+    """Run a Cylc pre-configuration plugin.
+
+    Plugins should return a dictionary containing:
+        'env': A dictionary of environment variables.
+        'template_variables': A dictionary of template variables.
+        'templating_detected': Where the plugin identifies a templating
+            language this is specified here. Expected values are ``jinja2``
+            or ``empy``.
+
+    args:
+        fpath: Directory where the plugin will look for a config.
+        opts: Command line options to be passed to the plugin.
+
+    Returns: Dictionary in the form:
+        extra_vars = {
+            'env': {},
+            'template_variables': {},
+            'templating_detected': None
+        }
+    """
+    # Set out blank dictionary for return:
     extra_vars = {
         'env': {},
         'template_variables': {},
         'templating_detected': None
     }
+
+    # Run entry point pre_configure items, trying to merge values with each.:
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):

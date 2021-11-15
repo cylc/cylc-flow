@@ -37,6 +37,18 @@ class ParsecConfig:
 
     def __init__(self, spec, upgrader=None, output_fname=None, tvars=None,
                  validator=None, options=None):
+        """Instatiate a parsec config object.
+
+        Args:
+            spec: Specification for the config.
+            upgrader: An upgrader function, which converts old config items
+                to new ones, or returns errors for obselete items.
+            output_fname: Filename to dump parsed config to.
+            tvars: Template variables.
+            validator: Function checkin that config is valid; defaults to
+                ``parsec_validate``.
+            options: Command line options.
+        """
         self.sparse = OrderedDictWithDefaults()
         self.dense = OrderedDictWithDefaults()
         self.upgrader = upgrader
