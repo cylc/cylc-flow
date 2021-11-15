@@ -125,9 +125,16 @@ def test_check_nested_dirs(tmp_run_dir: Callable):
 @pytest.mark.parametrize(
     'test_install_path, existing_install_path',
     [
-        (f'{"child/"*i}', '') for i in range(2, MAX_SCAN_DEPTH + 3)
-    ] + [
-        ('', f'{"child/"*1}')
+        pytest.param(
+            f'{"child/" * (MAX_SCAN_DEPTH + 3)}',
+            '',
+            id="Check parents (beyond max scan depth)"
+        ),    
+        pytest.param(
+            '',
+            f'{"child/" * MAX_SCAN_DEPTH}',
+            id="Check children up to max scan depth"
+        )
     ]
 )
 def test_check_nested_dirs_install_dirs(
