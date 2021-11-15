@@ -67,13 +67,6 @@ run_fail "${TEST_NAME_BASE}-Nth-parent" cylc install -C "$PWD" --flow-name "${TE
 grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-Nth-parent.stderr"
 
 
-TEST_NAME="${TEST_NAME_BASE}-run-dir-sibling"
-TEST_FOLDER=cylctb-$(uuidgen)
-TEST_FOLDERS+=("$TEST_FOLDER")
-cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/bar"
-run_fail "${TEST_NAME}" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}"
-grep_ok "Nested install directories not allowed" "${TEST_NAME}.stderr"
-
 # Cleanup all the test folders added to the array.
 for TEST_FOLDER in ${TEST_FOLDERS[*]}; do
     rm -fr "${RUN_DIR}/${TEST_FOLDER:-}"
