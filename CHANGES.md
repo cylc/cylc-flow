@@ -52,11 +52,12 @@ ones in. -->
 
 Fourth beta release of Cylc 8.
 
-`suite owner` and `workflow owner` option option has been removed.
-
 (See note on cylc-8 backward-incompatible changes, above)
 
 ### Enhancements
+
+[#4355](https://github.com/cylc/cylc-flow/pull/4355) -
+The `--workflow-owner` command line option has been removed.
 
 [#4367](https://github.com/cylc/cylc-flow/pull/4367) -
 Make the central wrapper work with arbitrary virtual environment names.
