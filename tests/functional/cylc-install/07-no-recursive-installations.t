@@ -68,7 +68,7 @@ grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-Nth-parent.stderr"
 
 
 # Cleanup all the test folders added to the array.
-for TEST_FOLDER in ${TEST_FOLDERS[*]}; do
+for TEST_FOLDER in "${TEST_FOLDERS[*]}"; do
     rm -fr "${RUN_DIR}/${TEST_FOLDER:-}"
 done
 
