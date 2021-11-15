@@ -82,7 +82,7 @@ class XtriggerManager:
     previous one has returned via the xtrigger callback. The interval (in
     "name(args):INTVL") determines frequency of calls (default PT10S).
 
-    Once a trigger is satisfied, remember it until the cleanup cutoff point.
+    Delete satisfied xtriggers no longer needed by any current tasks.
 
     Clock triggers are treated separately and called synchronously in the main
     process, because they are guaranteed to be quick (but they are still
@@ -247,18 +247,32 @@ class XtriggerManager:
         }
         farg_templ.update(self.farg_templ)
         ctx = deepcopy(self.functx_map[label])
-        kwargs = {}
+
         args = []
-        for val in ctx.func_args:
-            with suppress(TypeError):
-                val = val % farg_templ
-            args.append(val)
-        for key, val in ctx.func_kwargs.items():
-            with suppress(TypeError):
-                val = val % farg_templ
-            kwargs[key] = val
+        kwargs = {}
+        if ctx.func_name == 'wall_clock':
+            # Handle clock xtriggers.
+            if "trigger_time" not in ctx.func_kwargs:
+                # External (clock xtrigger) convert offset to trigger_time.
+                kwargs["trigger_time"] = itask.get_clock_trigger_time(
+                    ctx.func_kwargs["offset"]
+                )
+            else:
+                # Internal (retry timer) we set trigger_time directly.
+                kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
+        else:
+            # Other xtrig functions: substitute template values.
+            for val in ctx.func_args:
+                with suppress(TypeError):
+                    val = val % farg_templ
+                args.append(val)
+            for key, val in ctx.func_kwargs.items():
+                with suppress(TypeError):
+                    val = val % farg_templ
+                kwargs[key] = val
         ctx.func_args = args
         ctx.func_kwargs = kwargs
+
         ctx.update_command(self.workflow_run_dir)
         return ctx
 
@@ -267,19 +281,12 @@ class XtriggerManager:
 
         ...if previous call not still in-process and retry period is up.
 
-
         Args:
             itask: task proxy to check.
         """
         for label, sig, ctx, _ in self._get_xtrigs(itask, unsat_only=True):
             if sig.startswith("wall_clock"):
                 # Special case: quick synchronous clock check.
-                if 'absolute_as_seconds' not in ctx.func_kwargs:
-                    ctx.func_kwargs.update(
-                        {
-                            'point_as_seconds': itask.get_point_as_seconds()
-                        }
-                    )
                 if wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     itask.state.xtriggers[label] = True
                     self.sat_xtrig[sig] = {}
@@ -359,7 +366,7 @@ class XtriggerManager:
         Return True if satisfied, else False
 
         Args:
-            itasks: task proxs to check
+            itasks: task proxies to check
             db_update_func: method to update xtriggers in the DB
         """
         if itask.state.xtriggers_all_satisfied():

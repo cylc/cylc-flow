@@ -1,10 +1,10 @@
 #!Jinja2
 
 # Test wall_clock xtrigger: workflow will run to completion and exit if the
-# clock trigger is not satisfied, else stall and abort.
+# clock trigger is not satisfied, else abort on inactivity.
 
 [scheduler]
-    cycle point time zone = '+0530'
+    # Default to time zone Z
     [[events]]
         abort on inactivity timeout = True
         inactivity timeout = PT15S
