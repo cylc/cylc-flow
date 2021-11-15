@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 13
+set_test_number 11
 
 cat > flow.cylc <<__HEREDOC__
 [scheduler]
