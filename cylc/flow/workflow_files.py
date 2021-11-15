@@ -1393,10 +1393,11 @@ def check_nested_dirs(
         WorkflowFilesError if reg dir is nested inside a run dir, or an
             install dirs are nested.
     """
-    exc_msg = '''
-        Nested {dir_type} directories not allowed - cannot install workflow
-        in '{dest}' as '{existing}' is already a valid {dir_type} directory.
-    '''
+    exc_msg = (
+        'Nested {dir_type} directories not allowed - cannot install workflow'
+        ' in \'{dest}\' as \'{existing}\' is already a valid {dir_type} '
+        'directory.'
+    )
     path = Path(os.path.normpath(path))
     # Check parents:
     for parent_dir in path.parents:
@@ -1434,7 +1435,12 @@ def check_nested_dirs(
             for depth in range(MAX_SCAN_DEPTH)
         ]
         for search_pattern in search_patterns:
-            results = list(path.parent.glob(search_pattern))
+            # Don't search for siblings if parent path is Cylc-Run dir:
+            if str(path.parent) == get_cylc_run_dir():
+                results = list(path.glob(search_pattern))
+            else:
+                results = list(path.parent.glob(search_pattern))
+
             if results:
                 parent_dir = results[0].parent
                 raise WorkflowFilesError(
