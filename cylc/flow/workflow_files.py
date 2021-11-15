@@ -1393,14 +1393,10 @@ def check_nested_dirs(
         WorkflowFilesError if reg dir is nested inside a run dir, or an
             install dirs are nested.
     """
-    exc_msgs = {
-        'run_dir': (
-            "Nested run directories not allowed - cannot install workflow in "
-            "'{0}' as '{1}' is already a valid run directory."),
-        'install_dir': (
-            'Nested install directories not allowed - cannot install '
-            'workflow as "{0}" is already a valid workflow install directory.')
-    }
+    exc_msg = '''
+        Nested {dir_type} directories not allowed - cannot install workflow
+        in '{dest}' as '{existing}' is already a valid {dir_type} directory.
+    '''
     path = Path(os.path.normpath(path))
     # Check parents:
     for parent_dir in path.parents:
@@ -1410,8 +1406,12 @@ def check_nested_dirs(
         # check for run directories:
         if is_valid_run_dir(parent_dir):
             raise WorkflowFilesError(
-                exc_msgs['run_dir'].format(
-                    path, get_cylc_run_abs_path(parent_dir)))
+                exc_msg.format(
+                    dir_type='run',
+                    dest=path,
+                    existing=get_cylc_run_abs_path(parent_dir)
+                )
+            )
         if reinstall:
             continue
         # Check for install directories:
@@ -1420,8 +1420,12 @@ def check_nested_dirs(
             and parent_dir != path.parent
         ):
             raise WorkflowFilesError(
-                exc_msgs['install_dir'].format(
-                    get_cylc_run_abs_path(parent_dir)))
+                exc_msg.format(
+                    dir_type='install',
+                    dest=path,
+                    existing=get_cylc_run_abs_path(parent_dir)
+                )
+            )
 
     if not reinstall:
         # Search child tree for install directories:
@@ -1434,8 +1438,11 @@ def check_nested_dirs(
             if results:
                 parent_dir = results[0].parent
                 raise WorkflowFilesError(
-                    exc_msgs['install_dir'].format(
-                        get_cylc_run_abs_path(parent_dir))
+                    exc_msg.format(
+                        dir_type='install',
+                        dest=path,
+                        existing=get_cylc_run_abs_path(parent_dir)
+                    )
                 )
 
 
