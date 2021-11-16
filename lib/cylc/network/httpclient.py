@@ -259,7 +259,7 @@ class SuiteRuntimeServiceClient(object):
                 event_time (str): Event time as string.
                 messages (list): List in the form [[severity, message], ...].
         """
-        self._load_contact_info()
+        func_name = self._compat('put_messages')
         retry_intvl = float(self.comms1.get(
             self.srv_files_mgr.KEY_TASK_MSG_RETRY_INTVL,
             self.MSG_RETRY_INTVL))
@@ -271,7 +271,8 @@ class SuiteRuntimeServiceClient(object):
             if self.timeout is None:
                 self.timeout = self.MSG_TIMEOUT
             try:
-                func_name = self._compat('put_messages')
+                if not func_name:
+                    func_name = self._compat('put_messages')
                 if func_name == 'put_messages':
                     results = self._call_server(func_name, payload=payload)
                 elif func_name == 'put_message':  # API 1, 7.5.0 compat
@@ -315,6 +316,8 @@ class SuiteRuntimeServiceClient(object):
                 return results
             finally:
                 self.timeout = orig_timeout
+                self.comms1 = {}
+                func_name = None
 
     def reset(self):
         """Compat method, does nothing."""
