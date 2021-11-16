@@ -52,6 +52,11 @@ def generate_graph_children(tdef, point):
                     #   PT6H = "waz"
                     #   T06 = "waz[-PT6H] => foo"
                     graph_children[output].append((name, child_point, is_abs))
+                else:
+                    LOG.warning(
+                        f"{tdef.name}.{point}: ignoring child on invalid"
+                        f" cycle point: {name}.{child_point}"
+                    )
 
     if tdef.sequential:
         # Add next-instance child.
