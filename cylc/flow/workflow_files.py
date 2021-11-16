@@ -1435,8 +1435,12 @@ def check_nested_dirs(
             for depth in range(MAX_SCAN_DEPTH)
         ]
         for search_pattern in search_patterns:
-            # Don't search for siblings if parent path is Cylc-Run dir:
-            results = list(path.glob(search_pattern))
+            if path.parent != Path(get_cylc_run_dir()):
+                results = list(path.parent.glob(search_pattern))
+            else:
+                results = list(path.glob(search_pattern))
+            for result in results:
+                LOG.critical(result)
             if results:
                 parent_dir = results[0].parent
                 raise WorkflowFilesError(
