@@ -82,8 +82,6 @@ def get_template_vars(options: Values) -> Dict[str, Any]:
     Returns:
         template_vars: Template variables to give to a Cylc config.
     """
-    template_vars = None
-    template_vars = load_template_vars(
+    return load_template_vars(
         options.templatevars, options.templatevars_file
     )
-    return template_vars
