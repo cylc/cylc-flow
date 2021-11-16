@@ -17,11 +17,13 @@
 from copy import deepcopy
 import re
 from textwrap import dedent
+from typing import List
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
     ItemNotFoundError,
-    NotSingleItemError
+    NotSingleItemError,
+    InvalidConfigError
 )
 from cylc.flow.parsec.fileparse import parse
 from cylc.flow.parsec.util import printcfg
@@ -44,6 +46,8 @@ class ParsecConfig:
         if validator is None:
             validator = parsec_validate
         self.validator = validator
+        # Get a list of config items which have a private name ``__MANY__``:
+        self.manyparents = self._get_namespace_parents()
 
     def loadcfg(self, rcfile, title=""):
         """Parse a config file, upgrade or deprecate items if necessary,
@@ -113,7 +117,11 @@ class ParsecConfig:
                 try:
                     cfg = cfg[key]
                 except (KeyError, TypeError):
-                    raise ItemNotFoundError(itemstr(parents, key))
+                    if parents in self.manyparents or key in self.get(parents):
+                        raise ItemNotFoundError(itemstr(parents, key))
+                    raise InvalidConfigError(
+                        itemstr(parents, key), self.spec.name
+                    )
                 else:
                     parents.append(key)
 
@@ -161,6 +169,29 @@ class ParsecConfig:
             keys = []
         cfg = self.get(keys, sparse)
         printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
+
+    def _get_namespace_parents(self) -> List[List[str]]:
+        """Get a list of the parents of config items which can be user defined.
+
+        For example, where
+
+        .. code-block:: cylc
+
+           [runtime]
+               [[my_task]]  # Custom task names.
+               [[my_other_task]]
+
+        this function will return ``[runtime]``.
+        """
+        try:
+            return [
+                [parent.name for parent in key.parents()][-2::-1]
+                # that slice removes the top-level name and reverses
+                for _, key in self.spec.walk()
+                if key.name == '__MANY__'
+            ]
+        except AttributeError:
+            return []
 
 
 class ConfigNode(ContextNode):
