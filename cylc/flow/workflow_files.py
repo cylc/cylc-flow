@@ -1435,10 +1435,7 @@ def check_nested_dirs(
             for depth in range(MAX_SCAN_DEPTH)
         ]
         for search_pattern in search_patterns:
-            if path.parent != Path(get_cylc_run_dir()):
-                results = list(path.parent.glob(search_pattern))
-            else:
-                results = list(path.glob(search_pattern))
+            results = list(path.glob(search_pattern))
             for result in results:
                 LOG.critical(result)
             if results:
@@ -1645,6 +1642,7 @@ def install_workflow(
     run_path_base = Path(get_workflow_run_dir(workflow_name))
     relink, run_num, rundir = get_run_dir_info(
         run_path_base, run_name, no_run_name)
+    check_nested_dirs(run_path_base)
     if Path(rundir).exists():
         raise WorkflowFilesError(
             f"\"{rundir}\" exists."

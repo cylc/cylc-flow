@@ -50,7 +50,7 @@ TEST_FOLDER=cylctb-$(uuidgen)
 TEST_FOLDERS+=("$TEST_FOLDER")
 cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/child/grandchild" --no-run-name
 run_fail "${TEST_NAME_BASE}-grandparent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/" --no-run-name
-grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-grandparent.stderr"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-grandparent.stderr"
 
 
 TEST_FOLDER=cylctb-$(uuidgen)
@@ -64,14 +64,14 @@ TEST_FOLDER=cylctb-$(uuidgen)
 TEST_FOLDERS+=("$TEST_FOLDER")
 cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/longer/this/path" --no-run-name
 run_fail "${TEST_NAME_BASE}-Nth-parent" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/" --no-run-name
-grep_ok "WorkflowFilesError.*exists" "${TEST_NAME_BASE}-Nth-parent.stderr"
+grep_ok "Nested install directories not allowed" "${TEST_NAME_BASE}-Nth-parent.stderr"
 
 
 TEST_NAME="${TEST_NAME_BASE}-run-dir-sibling"
 TEST_FOLDER=cylctb-$(uuidgen)
 TEST_FOLDERS+=("$TEST_FOLDER")
 cylc install -C "$PWD" --flow-name "${TEST_FOLDER}/bar"
-run_fail "${TEST_NAME}" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}"
+run_fail "${TEST_NAME}" cylc install -C "$PWD" --flow-name "${TEST_FOLDER}" --no-run-name
 grep_ok "Nested install directories not allowed" "${TEST_NAME}.stderr"
 
 
