@@ -105,6 +105,9 @@ now accepts ``&`` and ``|`` as valid line breaks in the same way as ``=>``.
 renamed to `CYLC_WORKFLOW_ID`. `CYLC_WORKFLOW_NAME` re-added as
 `CYLC_WORKFLOW_ID` shorn of any trailing `runX`.
 
+[#4471](https://github.com/cylc/cylc-flow/pull/4471) - Users now get a different
+error for a config item that isn't valid, to one that isn't set.
+
 [#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
 `cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
 
