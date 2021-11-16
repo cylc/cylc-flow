@@ -259,6 +259,7 @@ class SuiteRuntimeServiceClient(object):
                 event_time (str): Event time as string.
                 messages (list): List in the form [[severity, message], ...].
         """
+        self._load_contact_info()
         retry_intvl = float(self.comms1.get(
             self.srv_files_mgr.KEY_TASK_MSG_RETRY_INTVL,
             self.MSG_RETRY_INTVL))
