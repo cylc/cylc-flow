@@ -61,20 +61,6 @@ def decode_(message):
     return msg
 
 
-def get_authenticated_user(message):
-    """Returns the authenticated user associated with the message.
-
-    auth_user is sent from ui server in meta data.
-    """
-    return message.get('meta', {}).get('auth_user')
-
-
-def set_authenticated_user(header_message, username):
-    "Sets the authenticated user associated with the message header"
-    header_message['meta']['auth_user'] = username
-    return header_message
-
-
 def get_location(workflow: str):
     """Extract host and port from a workflow's contact file.
 

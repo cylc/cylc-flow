@@ -823,6 +823,15 @@ class Scheduler:
         """Return a command processing method or raise AttributeError."""
         return getattr(self, f'command_{command_name}')
 
+    def queue_command(self, command, kwargs, meta):
+        if not meta:
+            meta = {"auth_user": "unknown"}
+        self.command_queue.put((
+            command,
+            tuple(kwargs.values()), {},
+            meta
+        ))
+
     def process_command_queue(self) -> None:
         """Process queued commands."""
         qsize = self.command_queue.qsize()
@@ -831,7 +840,16 @@ class Scheduler:
         LOG.info(f"Processing {qsize} queued command(s)")
         while True:
             try:
-                name, args, kwargs = self.command_queue.get(False)
+                command = (self.command_queue.get(False))
+                if len(command) == 4:
+                    name, args, kwargs, meta = command
+                else:
+                    name, args, kwargs = command
+                    meta = {}
+                LOG.info(
+                    f"Authenticated user {meta.get('auth_user', '?')} "
+                    f"has submitted request {name}"
+                )
             except Empty:
                 break
             args_string = ', '.join(str(a) for a in args)
@@ -840,6 +858,11 @@ class Scheduler:
             )
             sep = ', ' if kwargs_string and args_string else ''
             cmdstr = f"{name}({args_string}{sep}{kwargs_string})"
+            # print("moooooo")
+            # if 'tasks' in kwargs:
+            #     import mdb
+            #     print("atttttttatchchhc")
+            #     mdb.debug(ui_server=True)
             try:
                 n_warnings: Optional[int] = self.get_command_method(name)(
                     *args, **kwargs)

@@ -24,8 +24,7 @@ from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 
 from cylc.flow import LOG
-from cylc.flow.network import (
-    encode_, decode_, ZMQSocketBase, get_authenticated_user)
+from cylc.flow.network import encode_, decode_, ZMQSocketBase
 from cylc.flow.network.authorisation import authorise
 from cylc.flow.network.graphql import (
     CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
@@ -177,17 +176,6 @@ class WorkflowRuntimeServer(ZMQSocketBase):
         if self.queue is not None:
             self.queue.put('STOP')
 
-    @staticmethod
-    def parse_request_string(message):
-        """Returns mutation name from request string for logging"""
-        try:
-            req_str = message['args']['request_string']
-
-            before, _after = req_str.split('(', 1)
-            return before
-        except Exception:
-            return None
-
     def _listener(self):
         """The server main loop, listen for and serve requests."""
         while True:
@@ -213,14 +201,6 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             # process
             try:
                 message = decode_(msg)
-                auth_user = get_authenticated_user(message)
-                mutation_message = WorkflowRuntimeServer.parse_request_string(message)
-                if auth_user and mutation_message:
-                    LOG.info(
-                    f"Authenticated user: {auth_user} has submitted "
-                    f"request: {mutation_message}"
-                )
-
             except Exception as exc:  # purposefully catch generic exception
                 # failed to decode message, possibly resulting from failed
                 # authentication
@@ -284,7 +264,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def api(self, endpoint=None):
+    def api(self, endpoint=None, meta=None):
         """Return information about this API.
 
         Returns a list of callable endpoints.
@@ -317,7 +297,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def graphql(self, request_string=None, variables=None):
+    def graphql(self, request_string=None, variables=None, meta=None):
         """Return the GraphQL scheme execution result.
 
         Args:
@@ -335,6 +315,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
                 variable_values=variables,
                 context={
                     'resolvers': self.resolvers,
+                    'meta': meta or {},
                 },
                 backend=CylcGraphQLBackend(),
                 middleware=list(instantiate_middleware(self.middleware)),
@@ -361,7 +342,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
     @authorise()
     @expose
     def get_graph_raw(
-            self, start_point_str, stop_point_str, grouping=None
+            self, start_point_str, stop_point_str, grouping=None, meta=None
     ):
         """Return a textual representation of the workflow graph.
 
@@ -406,7 +387,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
     # UIServer Data Commands
     @authorise()
     @expose
-    def pb_entire_workflow(self):
+    def pb_entire_workflow(self, meta=None):
         """Send the entire data-store in a single Protobuf message.
 
         Returns:
@@ -419,7 +400,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def pb_data_elements(self, element_type):
+    def pb_data_elements(self, element_type, meta=None):
         """Send the specified data elements in delta form.
 
         Args:

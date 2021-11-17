@@ -50,7 +50,7 @@ def authorise():
                 '[client-command] %s %s://%s@%s:%s',
                 fcn.__name__, comms_method, user, host, prog
             )
-            return fcn(self, *args, **kwargs)
+            return fcn(self, *args, meta=meta, **kwargs)
 
         return _call
     return wrapper

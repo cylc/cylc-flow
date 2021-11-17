@@ -1218,7 +1218,8 @@ async def mutator(root, info, command=None, workflows=None,
         args.update(args.get('args', {}))
         args.pop('args')
     resolvers = info.context.get('resolvers')
-    res = await resolvers.mutator(info, command, w_args, args)
+    meta = info.context.get('meta')
+    res = await resolvers.mutator(info, command, w_args, args, meta)
     return GenericResponse(result=res)
 
 
@@ -1243,12 +1244,14 @@ async def nodes_mutator(root, info, command, ids, workflows=None,
         args.update(args.get('args', {}))
         args.pop('args')
     resolvers = info.context.get('resolvers')
+    meta = info.context.get('meta')
     res = await resolvers.nodes_mutator(
         info,
         command,
         tokens_list,
         w_args,
-        args
+        args,
+        meta
     )
     return GenericResponse(result=res)
 

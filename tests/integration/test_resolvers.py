@@ -209,11 +209,13 @@ async def test_mutator(mock_flow, flow_args):
         'workflow_sel': None
     })
     args = {}
+    meta = {}
     response = await mock_flow.resolvers.mutator(
         None,
         'pause',
         flow_args,
-        args
+        args,
+        meta
     )
     assert response[0]['id'] == mock_flow.id
 
@@ -227,9 +229,10 @@ async def test_nodes_mutator(mock_flow, flow_args):
         'workflow_sel': None,
     })
     ids = [Tokens(n) for n in mock_flow.node_ids]
+    meta = {}
     response = await mock_flow.resolvers.nodes_mutator(
         None, 'force_trigger_tasks', ids, flow_args,
-        {"reflow": False, "flow_descr": ""}
+        {"reflow": False, "flow_descr": ""}, meta
     )
     assert response[0]['id'] == mock_flow.id
 
@@ -237,7 +240,8 @@ async def test_nodes_mutator(mock_flow, flow_args):
 @pytest.mark.asyncio
 async def test_mutation_mapper(mock_flow):
     """Test the mapping of mutations to internal command methods."""
-    response = await mock_flow.resolvers._mutation_mapper('pause', {})
+    meta = {}
+    response = await mock_flow.resolvers._mutation_mapper('pause', {}, meta)
     assert response is None
     with pytest.raises(ValueError):
-        await mock_flow.resolvers._mutation_mapper('non_exist', {})
+        await mock_flow.resolvers._mutation_mapper('non_exist', {}, meta)

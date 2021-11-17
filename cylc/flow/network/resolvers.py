@@ -592,7 +592,7 @@ class Resolvers(BaseResolvers):
     # Mutations
     async def mutator(self, *m_args):
         """Mutate workflow."""
-        _, command, w_args, args = m_args
+        _, command, w_args, args, meta = m_args
         w_ids = [flow[WORKFLOW].id
                  for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
@@ -600,14 +600,14 @@ class Resolvers(BaseResolvers):
             return [{
                 'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
-        result = await self._mutation_mapper(command, args)
+        result = await self._mutation_mapper(command, args, meta)
         if result is None:
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
     async def nodes_mutator(self, *m_args):
         """Mutate node items of associated workflows."""
-        _, command, tokens_list, w_args, args = m_args
+        _, command, tokens_list, w_args, args, meta = m_args
         w_ids = [
             workflow[WORKFLOW].id
             for workflow in await self.get_workflows_data(w_args)
@@ -639,23 +639,29 @@ class Resolvers(BaseResolvers):
                 args['task_job'] = items[0]
             else:
                 args['tasks'] = items
-        result = await self._mutation_mapper(command, args)
+        result = await self._mutation_mapper(command, args, meta)
         if result is None:
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
     async def _mutation_mapper(
-        self, command: str, kwargs: Dict[str, Any]
+        self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]
     ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
         method = getattr(self, command, None)
         if method is not None:
-            return method(**kwargs)
+            return method(**kwargs, meta=meta)
         try:
             self.schd.get_command_method(command)
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
-        self.schd.command_queue.put((command, tuple(kwargs.values()), {}))
+        if not meta:
+            meta = {"auth_user": "unknown user"}
+        self.schd.queue_command(
+            command,
+            kwargs,
+            meta,
+        )
         return None
 
     def broadcast(
@@ -664,7 +670,8 @@ class Resolvers(BaseResolvers):
             cycle_points=None,
             namespaces=None,
             settings=None,
-            cutoff=None
+            cutoff=None,
+            meta=None
     ):
         """Put or clear broadcasts."""
         if mode == 'put_broadcast':
@@ -678,7 +685,12 @@ class Resolvers(BaseResolvers):
                 cutoff)
         raise ValueError('Unsupported broadcast mode')
 
-    def put_ext_trigger(self, message, id):  # noqa: A002 (graphql interface)
+    def put_ext_trigger(
+        self,
+        message,
+        id,  # noqa: A002 (graphql interface)
+        meta=None
+    ):
         """Server-side external event trigger interface.
 
         Args:
@@ -697,7 +709,13 @@ class Resolvers(BaseResolvers):
         self.schd.ext_trigger_queue.put((message, id))
         return (True, 'Event queued')
 
-    def put_messages(self, task_job=None, event_time=None, messages=None):
+    def put_messages(
+        self,
+        task_job=None,
+        event_time=None,
+        messages=None,
+        meta=None
+    ):
         """Put task messages in queue for processing later by the main loop.
 
         Arguments:
@@ -750,7 +768,8 @@ class Resolvers(BaseResolvers):
         self,
         tasks: Iterable[str],
         outputs: Optional[Iterable[str]] = None,
-        flow_num: Optional[int] = None
+        flow_num: Optional[int] = None,
+        meta: Optional[Dict[str, Any]] = None
     ) -> Tuple[bool, str]:
         """Spawn children of given task outputs.
 
@@ -768,7 +787,8 @@ class Resolvers(BaseResolvers):
                 {
                     "outputs": outputs,
                     "flow_num": flow_num
-                }
+                },
+                meta
             )
         )
         return (True, 'Command queued')
@@ -779,7 +799,8 @@ class Resolvers(BaseResolvers):
         cycle_point: Optional[str] = None,
         clock_time: Optional[str] = None,
         task: Optional[str] = None,
-        flow_num: Optional[int] = None
+        flow_num: Optional[int] = None,
+        meta: Optional[Dict[str, Any]] = None
     ) -> Tuple[bool, str]:
         """Stop the workflow or specific flow from spawning any further.
 
@@ -805,11 +826,18 @@ class Resolvers(BaseResolvers):
                 'clock_time': clock_time,
                 'task': task,
                 'flow_num': flow_num,
-            })
-        ))
+            }),
+            meta)
+        )
         return (True, 'Command queued')
 
-    def force_trigger_tasks(self, tasks=None, reflow=False, flow_descr=None):
+    def force_trigger_tasks(
+        self,
+        tasks=None,
+        reflow=False,
+        flow_descr=None,
+        meta=None
+    ):
         """Trigger submission of task jobs where possible.
 
         Args:
@@ -831,11 +859,13 @@ class Resolvers(BaseResolvers):
         """
         self.schd.command_queue.put(
             (
-                "force_trigger_tasks", (tasks or [],),
+                "force_trigger_tasks",
+                (tasks or [],),
                 {
                     "reflow": reflow,
                     "flow_descr": flow_descr
-                }
-            )
+                },
+                meta
+            ),
         )
         return (True, 'Command queued')
