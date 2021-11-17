@@ -71,7 +71,6 @@ from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from cylc.flow.parsec.OrderedDict import DictTree
-from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
@@ -1123,7 +1122,7 @@ class Scheduler:
             self.workflow, f"{time_str}-{load_type}.cylc")
         with open(file_name, "wb") as handle:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
-            printcfg(self.config.cfg, none_str=None, handle=handle)
+            self.config.pcfg.idump(sparse=True, handle=handle)
 
         if not self.config.initial_point and not self.is_restart:
             LOG.warning('No initial cycle point provided - no cycling tasks '
