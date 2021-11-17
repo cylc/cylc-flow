@@ -19,12 +19,15 @@ import tempfile
 import pytest
 
 from cylc.flow.parsec import config
-from cylc.flow.parsec.config import ConfigNode as Conf
+from cylc.flow.parsec.config import (
+    ConfigNode as Conf,
+    ParsecConfig
+)
+from cylc.flow.parsec.exceptions import IllegalItemError, InvalidConfigError
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     cylc_config_validate,
-    IllegalItemError,
     CylcConfigValidator as VDR
 )
 
@@ -247,16 +250,17 @@ def test_get_item(sample_spec_2):
             cfg = parsec_config.get(keys=['section'], sparse=True)
             assert parsec_config.sparse['section'] == cfg
 
-            cfg = parsec_config.get(keys=['section', 'name'], sparse=True)
-            assert 'test' == cfg
+            with pytest.raises(InvalidConfigError):
+                cfg = parsec_config.get(keys=['allow-many', 'a'], sparse=True)
 
-            with pytest.raises(config.ItemNotFoundError):
+            cfg = parsec_config.get(keys=['section', 'name'], sparse=True)
+            assert cfg == 'test'
+
+            with pytest.raises(config.InvalidConfigError):
                 parsec_config.get(keys=['section', 'a'], sparse=True)
 
-
-def test_item_not_found_error():
-    error = config.ItemNotFoundError("internal error")
-    assert 'item not found: internal error' == str(error)
+            with pytest.raises(config.ItemNotFoundError):
+                parsec_config.get(keys=['allow_many', 'a'], sparse=True)
 
 
 def test_not_single_item_error():
@@ -314,3 +318,16 @@ def test_mdump_oneline(parse_config, sample_spec, capsys):
 def test_get_none(parse_config):
     cfg = parse_config(sample_spec, '')  # blank config
     assert cfg.get(sparse=True) == {}
+
+
+def test__get_namespace_parents(parse_config):
+    """It returns a list of parents and nothing else"""
+    def spec_():
+        with Conf('myconfig') as myconf:
+            with Conf('some_parent'):
+                with Conf('manythings'):
+                    Conf('<thing>')
+
+        return myconf
+    cfg = ParsecConfig(spec_())
+    assert cfg.manyparents == [['some_parent', 'manythings']]
