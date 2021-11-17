@@ -37,6 +37,7 @@ from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     MAX_SCAN_DEPTH,
+    NESTED_DIRS_MSG,
     REG_CLASH_MSG,
     WorkflowFiles,
     _clean_using_glob,
@@ -107,7 +108,8 @@ def test_check_nested_dirs(tmp_run_dir: Callable):
     """Test that check_nested_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
-    test_dir = cylc_run_dir.joinpath('a/b/c/d/e')
+    test_dir = cylc_run_dir.joinpath('a/' * (MAX_SCAN_DEPTH + 3))
+    # note we check beyond max scan depth (because we're checking upwards)
     test_dir.mkdir(parents=True)
     # Parents are not run dirs - ok:
     check_nested_dirs(test_dir)
@@ -119,9 +121,14 @@ def test_check_nested_dirs(tmp_run_dir: Callable):
     tmp_run_dir('a')
     with pytest.raises(WorkflowFilesError) as exc:
         check_nested_dirs(test_dir)
-    assert "Nested run directories not allowed" in str(exc.value)
+    assert str(exc.value) == NESTED_DIRS_MSG.format(
+        dir_type='run', dest=test_dir, existing=(cylc_run_dir / 'a')
+    )
 
 
+@pytest.mark.parametrize(
+    'named_run', [True, False]
+)
 @pytest.mark.parametrize(
     'test_install_path, existing_install_path',
     [
@@ -129,7 +136,7 @@ def test_check_nested_dirs(tmp_run_dir: Callable):
             f'{"child/" * (MAX_SCAN_DEPTH + 3)}',
             '',
             id="Check parents (beyond max scan depth)"
-        ),    
+        ),
         pytest.param(
             '',
             f'{"child/" * MAX_SCAN_DEPTH}',
@@ -138,18 +145,33 @@ def test_check_nested_dirs(tmp_run_dir: Callable):
     ]
 )
 def test_check_nested_dirs_install_dirs(
-    tmp_path: Path, test_install_path: str, existing_install_path: str
+    tmp_run_dir: Callable,
+    test_install_path: str,
+    existing_install_path: str,
+    named_run: bool
 ):
     """Test that check nested dirs looks both up and down a tree for
-    WorkflowFiles.Install.DIRNAME."""
-    testdir = tmp_path / test_install_path
-    testdir.mkdir(parents=True, exist_ok=True)
-    (tmp_path / existing_install_path / WorkflowFiles.Install.DIRNAME).mkdir(
-        parents=True
-    )
+    WorkflowFiles.Install.DIRNAME.
+
+    Params:
+        test_install_path: Path relative to ~/cylc-run/thing where we are
+            trying to install a workflow.
+        existing_install_path: Path relative to ~/cylc-run/thing where there
+            is an existing install dir.
+        named_run: Whether the workflow we are trying to install has
+            named/numbered run.
+    """
+    cylc_run_dir: Path = tmp_run_dir()
+    existing_install: Path = tmp_run_dir(
+        f'thing/{existing_install_path}/run1', installed=True, named=True
+    ).parent
+    test_install_dir = cylc_run_dir / 'thing' / test_install_path
+    test_run_dir = test_install_dir / 'run1' if named_run else test_install_dir
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_dirs(testdir)
-    assert "Nested install directories not allowed" in str(exc.value)
+        check_nested_dirs(test_run_dir, test_install_dir)
+    assert str(exc.value) == NESTED_DIRS_MSG.format(
+        dir_type='install', dest=test_run_dir, existing=existing_install
+    )
 
 
 @pytest.mark.parametrize(
