@@ -111,6 +111,9 @@ error for a config item that isn't valid, to one that isn't set.
 [#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
 `cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
 
+[#4521](https://github.com/cylc/cylc-flow/pull/4521) - Make timestamped records
+of configs on workflow start/restart/reload sparse (in ``log/flow-config/``).
+
 
 ### Fixes
 
