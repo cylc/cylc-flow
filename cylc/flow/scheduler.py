@@ -1120,8 +1120,8 @@ class Scheduler:
             load_type = "start"
         file_name = get_workflow_run_config_log_dir(
             self.workflow, f"{time_str}-{load_type}.cylc")
-        with open(file_name, "wb") as handle:
-            handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
+        with open(file_name, "w") as handle:
+            handle.write("# cylc-version: %s\n" % CYLC_VERSION)
             self.config.pcfg.idump(sparse=True, handle=handle)
 
         if not self.config.initial_point and not self.is_restart:
