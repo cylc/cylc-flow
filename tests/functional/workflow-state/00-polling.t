@@ -27,7 +27,7 @@ install_workflow "${TEST_NAME_BASE}" 'polling'
 # copy the upstream workflow to the test directory and install it
 cp -r "${TEST_SOURCE_DIR}/upstream" "${TEST_DIR}/"
 # use full range of characters in the workflow-to-be-polled name:
-UPSTREAM="cylctb-$(uuidgen)-up_stre.am"
+UPSTREAM="${WORKFLOW_NAME}-up_stre.am"
 cylc install --flow-name="${UPSTREAM}" -C "${TEST_DIR}/upstream" --no-run-name
 #-------------------------------------------------------------------------------
 # validate both workflows as tests

@@ -198,11 +198,10 @@ purge_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-nested-rundir"
 make_rnd_workflow
 mkdir -p "${RND_WORKFLOW_RUNDIR}/.service"
-run_fail "${TEST_NAME}-install" cylc install --no-run-name \
-    -C "${RND_WORKFLOW_SOURCE}" \
+run_fail "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" \
     --flow-name="${RND_WORKFLOW_NAME}/nested"
 cmp_ok "${TEST_NAME}-install.stderr" <<__ERR__
-WorkflowFilesError: Nested run directories not allowed - cannot install workflow in '${RND_WORKFLOW_RUNDIR}/nested' as '${RND_WORKFLOW_RUNDIR}' is already a valid run directory.
+WorkflowFilesError: Nested run directories not allowed - cannot install workflow in '${RND_WORKFLOW_RUNDIR}/nested/run1' as '${RND_WORKFLOW_RUNDIR}' is already a valid run directory.
 __ERR__
 
 # Test moving source dir results in error
