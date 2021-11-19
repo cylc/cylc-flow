@@ -169,7 +169,7 @@ def graph_inheritance(config, write=print):
 def get_config(workflow: str, opts: 'Values') -> WorkflowConfig:
     """Return a WorkflowConfig object for the provided reg / path."""
     workflow, flow_file = parse_reg(workflow, src=True)
-    template_vars = get_template_vars(opts, flow_file)
+    template_vars = get_template_vars(opts)
     return WorkflowConfig(
         workflow, flow_file, opts, template_vars=template_vars
     )

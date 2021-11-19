@@ -135,7 +135,7 @@ def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
         workflow,
         flow_file,
         options,
-        get_template_vars(options, flow_file)
+        get_template_vars(options)
     )
 
     config.pcfg.idump(
