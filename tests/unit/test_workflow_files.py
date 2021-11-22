@@ -128,7 +128,11 @@ def test_check_nested_run_dirs(tmp_run_dir: Callable):
      ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
      ('./foo', WorkflowFilesError, "invalid workflow name"),
      ('meow/..', WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above")]
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('run6', WorkflowFilesError, "cannot end with a folder called 'runN'"),
+     ('e/run6', WorkflowFilesError, "cannot end with a folder called 'runN'"),
+     ('runN', WorkflowFilesError, "cannot end with a folder called 'runN'"),
+     ('e/runN', WorkflowFilesError, "cannot end with a folder called 'runN'")]
 )
 def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
