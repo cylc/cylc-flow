@@ -228,13 +228,13 @@ class Scheduler:
     auto_restart_time: Optional[float] = None
 
     # tcp / zmq
-    zmq_context: zmq.Context = None
+    zmq_context: Optional[zmq.Context] = None
     port: Optional[int] = None
     pub_port: Optional[int] = None
     server: Optional[WorkflowRuntimeServer] = None
     publisher: Optional[WorkflowPublisher] = None
     barrier: Optional[Barrier] = None
-    curve_auth: ThreadAuthenticator = None
+    curve_auth: Optional[ThreadAuthenticator] = None
     client_pub_key_dir: Optional[str] = None
 
     # queue-released tasks still in prep
@@ -1718,7 +1718,8 @@ class Scheduler:
                 [(b'shutdown', str(reason).encode('utf-8'))]
             )
             self.publisher.stop()
-        self.curve_auth.stop()  # stop the authentication thread
+        if self.curve_auth:
+            self.curve_auth.stop()  # stop the authentication thread
 
         # Flush errors and info before removing workflow contact file
         sys.stdout.flush()
