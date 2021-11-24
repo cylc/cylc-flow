@@ -50,7 +50,7 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'></span>)__
 
-First release candidate for Cylc 8.
+First Release Candidate for Cylc 8.
 
 (See note on cylc-8 backward-incompatible changes, above)
 
@@ -58,6 +58,11 @@ First release candidate for Cylc 8.
 
 [#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent runN and run\d+
 being allowed as installation target names.
+
+[#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
+of workflows inside other installed workflows.
+
+### Fixes
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b3 (<span actions:bind='release-date'>Released 2021-11-10</span>)__
