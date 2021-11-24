@@ -118,11 +118,6 @@ jobs:
         # Sets up mocked mail command & any other custom executables
         run: echo "${{ github.workspace }}/.github/bin" >> $GITHUB_PATH
 
-      - name: Install Rose
-        run: |
-          git clone https://github.com/metomi/rose ../rose
-          pip install -e ../rose
-
       - name: Install
         run: |
           pip install -e ."[all]"
