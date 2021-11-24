@@ -349,7 +349,7 @@ SUITERC_DEPR_MSG = (
 )
 
 NO_FLOW_FILE_MSG = (
-    f"no {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "
+    f"No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "
     "in {}"
 )
 
@@ -776,15 +776,15 @@ def init_clean(reg: str, opts: 'Values') -> None:
         if opts.rm_dirs:
             return  # Do not delete parent dir if --rm dirs specified
     elif len(contained_workflows) > 1:
-        bullet = "\n    - "
         msg = (
             f"{local_run_dir} contains the following workflows:"
-            f"{bullet}{bullet.join(contained_workflows)}"
+            f"{WorkflowFilesError.bullet}"
+            f"{WorkflowFilesError.bullet.join(contained_workflows)}"
         )
         if not opts.force:
-            raise WorkflowFilesError(f"Cannot clean - {msg}")
+            raise WorkflowFilesError(f"Cannot clean because {msg}")
         if opts.remote_only:
-            msg = f"Not performing remote clean - {msg}"
+            msg = f"Not performing remote clean because {msg}"
         LOG.warning(msg)
 
     if (not opts.local_only) and (len(contained_workflows) == 0):
@@ -871,13 +871,14 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
             target = path.resolve()
             if target.exists() and not target.is_dir():
                 raise WorkflowFilesError(
-                    f'Invalid Cylc symlink directory {path} -> {target}\n'
-                    f'Target is not a directory')
+                    f'Invalid symlink to workflow source at {path}\n'
+                    f'Link target is not a directory: {target}')
             expected_end = str(Path('cylc-run', reg, _dir))
             if not str(target).endswith(expected_end):
                 raise WorkflowFilesError(
-                    f'Invalid Cylc symlink directory {path} -> {target}\n'
-                    f'Expected target to end with "{expected_end}"')
+                    f'Invalid symlink to workflow source at {path}\n'
+                    f'Target should end with "{expected_end}"'
+                    f'but was {target}.')
             ret[_dir] = target
     return ret
 
@@ -1222,7 +1223,8 @@ def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
         abs_path = Path(get_workflow_run_dir(reg))
         if abs_path.is_file():
             raise WorkflowFilesError(
-                f"Workflow name must refer to a directory, not a file: {reg}"
+                "Workflow name must refer to a directory, "
+                f"but '{reg}' is a file."
             )
         abs_path, reg = infer_latest_run(abs_path)
     detect_both_flow_and_suite(abs_path)
@@ -1628,7 +1630,8 @@ def install_workflow(
         workflow_name = source.name
     validate_workflow_name(workflow_name)
     if run_name in WorkflowFiles.RESERVED_NAMES:
-        raise WorkflowFilesError(f'Run name cannot be "{run_name}".')
+        raise WorkflowFilesError(
+            f'Run name cannot be "{run_name}": That name is reserved.')
     if run_name is not None and len(Path(run_name).parts) != 1:
         raise WorkflowFilesError(
             f'Run name cannot be a path. (You used {run_name})'
@@ -1640,9 +1643,10 @@ def install_workflow(
     check_nested_dirs(rundir, run_path_base)
     if Path(rundir).exists():
         raise WorkflowFilesError(
-            f"\"{rundir}\" exists."
-            " Try using cylc reinstall. Alternatively, install with another"
-            " name, using the --run-name option.")
+            f"\"{rundir}\" exists.\n"
+            " To install a new run use `cylc install --run-name`\n"
+            " To reinstall use cylc reinstall."
+        )
     symlinks_created = {}
     named_run = workflow_name
     if run_name:
@@ -1655,10 +1659,7 @@ def install_workflow(
     if symlinks_created:
         for src, dst in symlinks_created.items():
             install_log.info(f"Symlink created from {src} to {dst}")
-    try:
-        rundir.mkdir(exist_ok=True)
-    except FileExistsError:
-        raise WorkflowFilesError("Run directory already exists")
+    rundir.mkdir(exist_ok=True)
     if relink:
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
@@ -1673,7 +1674,7 @@ def install_workflow(
     if proc.returncode != 0:
         install_log.warning(
             f"An error occurred when copying files from {source} to {rundir}")
-        install_log.warning(f" Error: {stderr}")
+        install_log.warning(f" Warning: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
     check_deprecation(
         check_flow_file(rundir, symlink_suiterc=True, logger=install_log)
@@ -1684,13 +1685,6 @@ def install_workflow(
     # check source link matches the source symlink from workflow dir.
     cylc_install.mkdir(parents=True, exist_ok=True)
     if not source_link.exists():
-        if source_link.is_symlink():
-            raise WorkflowFilesError(
-                f'Workflow source dir is not accessible:'
-                f' "{source_link.resolve()}".\n'
-                f'Restore the source or modify the "{source_link}" symlink'
-                ' to continue.'
-            )
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source.resolve())
     else:
@@ -1730,15 +1724,15 @@ def get_run_dir_info(
         if (run_path_base.exists() and
                 detect_flow_exists(run_path_base, True)):
             raise WorkflowFilesError(
-                f"This path: \"{run_path_base}\" contains installed numbered"
-                " runs. Try again, using cylc install without --run-name.")
+                f"Path: \"{run_path_base}\" contains installed numbered"
+                " runs. Don't use --run-name.")
     else:
         run_num = get_next_rundir_number(run_path_base)
         rundir = Path(run_path_base, f'run{run_num}')
         if run_path_base.exists() and detect_flow_exists(run_path_base, False):
             raise WorkflowFilesError(
-                f"This path: \"{run_path_base}\" contains an installed"
-                " workflow. Try again, using --run-name.")
+                f"Path: \"{run_path_base}\" contains an installed"
+                " workflow. Use --run-name to create a new run.")
         unlink_runN(run_path_base)
         relink = True
     return relink, run_num, rundir
@@ -1866,7 +1860,7 @@ def validate_source_dir(source, workflow_name):
             in os.path.abspath(os.path.realpath(source))):
         raise WorkflowFilesError(
             f"{workflow_name} installation failed. Source directory "
-            f"should not be in {cylc_run_dir}")
+            f"should not be in {cylc_run_dir}.")
     check_flow_file(source, logger=None)
 
 
