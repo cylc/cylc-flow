@@ -118,9 +118,13 @@ jobs:
         # Sets up mocked mail command & any other custom executables
         run: echo "${{ github.workspace }}/.github/bin" >> $GITHUB_PATH
 
+      - name: Install Rose
+        run: |
+          git clone https://github.com/metomi/rose ../rose
+          pip install -e ../rose
+
       - name: Install
         run: |
-          pip install git+https://github.com/metomi/rose@master
           pip install -e ."[all]"
           # pip install --no-deps git+https://github.com/cylc/cylc-rose.git@master
           mkdir "$HOME/cylc-run"
