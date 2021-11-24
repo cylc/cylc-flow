@@ -1306,7 +1306,7 @@ def _parse_src_reg(reg: Path, cur_dir_only: bool = False) -> Tuple[Path, Path]:
     return (reg, abs_path)
 
 
-def validate_workflow_name(name: str) -> None:
+def validate_workflow_name(name: str, runNcheck=False) -> None:
     """Check workflow name is valid and not an absolute path.
 
     Raise WorkflowFilesError if not valid.
@@ -1326,7 +1326,7 @@ def validate_workflow_name(name: str) -> None:
             "Workflow name cannot be a path that points to the cylc-run "
             "directory or above"
         )
-    if re.findall(r'^run(N|\d+)$', Path(name).name):
+    if runNcheck and re.findall(r'^run(N|\d+)$', Path(name).name):
         raise WorkflowFilesError(
             "Workflow name cannot be a folder called 'runN' or "
             "'run<number>'."
@@ -1585,7 +1585,7 @@ def install_workflow(
     source = Path(expand_path(source))
     if not workflow_name:
         workflow_name = source.name
-    validate_workflow_name(workflow_name)
+    validate_workflow_name(workflow_name, runNcheck=True)
     if run_name in WorkflowFiles.RESERVED_NAMES:
         raise WorkflowFilesError(f'Run name cannot be "{run_name}".')
     if run_name is not None and len(Path(run_name).parts) != 1:
