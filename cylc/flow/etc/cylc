@@ -182,6 +182,9 @@ if [[ ! -x "${CYLC_HOME}/bin/${0##*/}" ]]; then
     echo 1>&2 "ERROR: ${0##*/} not found in ${CYLC_HOME}"
     exit 1
 fi
+# Add CYLC_HOME to the start of the path to ensure the right version of python is used.
+PATH=${CYLC_HOME}/bin:${PATH}
+
 # Execute Cylc from the selected installation.
 # n.b. If CYLC_HOME points to a cylc binary inside a
 # ``conda/envs/bin directory``this is sufficent without using
