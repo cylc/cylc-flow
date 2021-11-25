@@ -13,8 +13,7 @@ This is a small change with no associated Issue.
 - [ ] I have read `CONTRIBUTING.md` and added my name as a Code Contributor.
 - [ ] Contains logically grouped changes (else tidy your branch by rebase).
 - [ ] Does not contain off-topic changes (use other PRs for other changes).
-- [ ] Applied any dependency changes to both `setup.py` and
-  `conda-environment.yml`.
+- [ ] Applied any dependency changes to both `setup.cfg` and `conda-environment.yml`.
 <!-- choose one: -->
 - [ ] Appropriate tests are included (unit and/or functional).
 - [ ] Already covered by existing tests.
