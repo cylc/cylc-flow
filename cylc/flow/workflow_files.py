@@ -1644,8 +1644,8 @@ def install_workflow(
     if Path(rundir).exists():
         raise WorkflowFilesError(
             f"\"{rundir}\" exists.\n"
-            " To install a new run use `cylc install --run-name`\n"
-            " To reinstall use cylc reinstall."
+            " To install a new run use `cylc install --run-name`,"
+            " or to reinstall use `cylc reinstall`."
         )
     symlinks_created = {}
     named_run = workflow_name
@@ -1684,15 +1684,15 @@ def install_workflow(
     source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
     # check source link matches the source symlink from workflow dir.
     cylc_install.mkdir(parents=True, exist_ok=True)
-    if not source_link.exists() and source_link.is_symlink():
-        # Condition represents a broken symlink.
-        raise WorkflowFilesError(
-            f'Workflow source dir is not accessible:'
-            f' "{source_link.resolve()}".\n'
-            f'Restore the source or modify the "{source_link}" symlink'
-            ' to continue.'
-        )
-    elif not source_link.exists():
+    if not source_link.exists():
+        if source_link.is_symlink():
+            # Condition represents a broken symlink.
+            raise WorkflowFilesError(
+                f'Workflow source dir is not accessible:'
+                f' "{source_link.resolve()}".\n'
+                f'Restore the source or modify the "{source_link}" symlink'
+                ' to continue.'
+            )
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source.resolve())
     else:
@@ -1732,8 +1732,8 @@ def get_run_dir_info(
         if (run_path_base.exists() and
                 detect_flow_exists(run_path_base, True)):
             raise WorkflowFilesError(
-                f"Path: \"{run_path_base}\" contains installed numbered"
-                " runs. Don't use --run-name.")
+                f"--run-name option not allowed as '{run_path_base}' contains "
+                "installed numbered runs.")
     else:
         run_num = get_next_rundir_number(run_path_base)
         rundir = Path(run_path_base, f'run{run_num}')
