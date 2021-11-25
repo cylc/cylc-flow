@@ -182,15 +182,15 @@ def test_check_nested_dirs_install_dirs(
      ('./foo', WorkflowFilesError, "invalid workflow name"),
      ('meow/..', WorkflowFilesError,
       "cannot be a path that points to the cylc-run directory or above"),
-     ('run6', WorkflowFilesError, "cannot be a folder called 'runN'"),
-     ('e/run6', WorkflowFilesError, "cannot be a folder called 'runN'"),
-     ('runN', WorkflowFilesError, "cannot be a folder called 'runN'"),
-     ('e/runN', WorkflowFilesError, "cannot be a folder called 'runN'")]
+     ('run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('e/run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('runN', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('e/runN', WorkflowFilesError, "cannot contain a folder called 'runN'")]
 )
 def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            runNcheck = 'cannot be a folder called' in expected_msg
+            runNcheck = 'cannot contain a folder called' in expected_msg
             workflow_files.validate_workflow_name(reg, runNcheck=runNcheck)
         if expected_msg:
             assert expected_msg in str(exc.value)
