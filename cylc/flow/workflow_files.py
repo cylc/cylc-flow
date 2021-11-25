@@ -877,8 +877,7 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
             if not str(target).endswith(expected_end):
                 raise WorkflowFilesError(
                     f'Invalid symlink at {path}\n'
-                    f'Target should end with "{expected_end}"'
-                    f'but was {target}.')
+                    f'Target should end with "{expected_end}".'
             ret[_dir] = target
     return ret
 
