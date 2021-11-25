@@ -1331,9 +1331,12 @@ def validate_workflow_name(name: str, runNcheck=False) -> None:
             "Workflow name cannot be a path that points to the cylc-run "
             "directory or above"
         )
-    if runNcheck and re.findall(r'^run(N|\d+)$', Path(name).name):
+    if runNcheck and any(
+        re.match(r'^run(N|\d+)$', dir_name)
+        for dir_name in Path(name).parts
+    ):
         raise WorkflowFilesError(
-            "Workflow name cannot be a folder called 'runN' or "
+            "Workflow name cannot contain a folder called 'runN' or "
             "'run<number>'."
         )
 
