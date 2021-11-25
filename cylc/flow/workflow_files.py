@@ -878,6 +878,7 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
                 raise WorkflowFilesError(
                     f'Invalid symlink at {path}\n'
                     f'{target} should end with "{expected_end}"'
+                )
             ret[_dir] = target
     return ret
 
@@ -1694,17 +1695,17 @@ def install_workflow(
         if source_link.is_symlink():
             # Condition represents a broken symlink.
             raise WorkflowFilesError(
-                f'Workflow source dir is not accessible:'
-                f' "{source_link.resolve()}".\n'
-                f'Restore the source or modify the "{source_link}" symlink'
-                ' to continue.'
+                f'Workflow source, "{source_link}" is a broken '
+                f'symlink to "{source_link.resolve()}".'
             )
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source.resolve())
     else:
-        if not source_link.resolve() == source.resolve():
+        if source_link.resolve() != source.resolve():
             raise WorkflowFilesError(
-                "Source directory not consistent between runs.")
+                f"Failed to install from {source.resolve()}: "
+                f"previous installations were from {source_link.resolve()}"
+            )
         install_log.info(
             f'Symlink from "{source_link}" to "{source}" in place.')
     install_log.info(f'INSTALLED {named_run} from {source}')
