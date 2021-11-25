@@ -47,6 +47,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: setup.cfg
 
       - name: Configure Manylinux Compatibility
         # Make this platform look older than it is. For info see:
