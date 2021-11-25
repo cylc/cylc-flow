@@ -977,7 +977,7 @@ def test_clean__bad_symlink_dir_wrong_type(
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean(reg, run_dir)
-    assert "Invalid symlink to workflow source" in str(exc.value)
+    assert "Invalid symlink at" in str(exc.value)
     assert symlink.exists() is True
 
 

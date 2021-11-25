@@ -168,7 +168,7 @@ __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2-2nd-install"
 run_fail "${TEST_NAME}" cylc install --run-name=olaf
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Path: "${RND_WORKFLOW_RUNDIR}" contains installed numbered runs. Don't use --run-name.
+WorkflowFilesError: --run-name option not allowed as '${RND_WORKFLOW_RUNDIR}' contains installed numbered runs.
 __ERR__
 popd || exit 1
 purge_rnd_workflow

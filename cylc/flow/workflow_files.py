@@ -871,12 +871,12 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
             target = path.resolve()
             if target.exists() and not target.is_dir():
                 raise WorkflowFilesError(
-                    f'Invalid symlink to workflow source at {path}\n'
+                    f'Invalid symlink at {path}.\n'
                     f'Link target is not a directory: {target}')
             expected_end = str(Path('cylc-run', reg, _dir))
             if not str(target).endswith(expected_end):
                 raise WorkflowFilesError(
-                    f'Invalid symlink to workflow source at {path}\n'
+                    f'Invalid symlink at {path}\n'
                     f'Target should end with "{expected_end}"'
                     f'but was {target}.')
             ret[_dir] = target
@@ -1659,7 +1659,14 @@ def install_workflow(
     if symlinks_created:
         for src, dst in symlinks_created.items():
             install_log.info(f"Symlink created from {src} to {dst}")
-    rundir.mkdir(exist_ok=True)
+    try:
+        rundir.mkdir(exist_ok=True)
+    except FileExistsError:
+        # This occurs when the file exists but is _not_ a directory.
+        raise WorkflowFilesError(
+            f"Cannot install in {rundir} because that path exists, "
+            "and is not a directory."
+        )
     if relink:
         link_runN(rundir)
     create_workflow_srv_dir(rundir)
