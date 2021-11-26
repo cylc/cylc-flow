@@ -38,9 +38,7 @@ pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Source directory not consistent between runs.
-__ERR__
+grep_ok "previous installations were from" "${TEST_NAME}.stderr"
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
 rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
 popd || exit
@@ -54,7 +52,7 @@ TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: no flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 
 # -----------------------------------------------------------------------------
@@ -77,7 +75,7 @@ TEST_NAME="${TEST_NAME_BASE}-nodir"
 rm -rf "${RND_WORKFLOW_SOURCE}"
 run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --no-run-name -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: no flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 
 purge_rnd_workflow
@@ -98,7 +96,7 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-run-name-forbidden"
 run_fail "${TEST_NAME}" cylc install --run-name=_cylc-install -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Run name cannot be "_cylc-install".
+WorkflowFilesError: Run name cannot be "_cylc-install": That name is reserved.
 __ERR__
 
 # Test cylc install invalid flow-name
@@ -150,7 +148,7 @@ __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-1-2nd-install"
 run_fail "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: This path: "${RND_WORKFLOW_RUNDIR}" contains an installed workflow. Try again, using --run-name.
+WorkflowFilesError: Path: "${RND_WORKFLOW_RUNDIR}" contains an installed workflow. Use --run-name to create a new run.
 __ERR__
 popd || exit 1
 purge_rnd_workflow
@@ -168,7 +166,7 @@ __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-mix-options-2-2nd-install"
 run_fail "${TEST_NAME}" cylc install --run-name=olaf
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: This path: "${RND_WORKFLOW_RUNDIR}" contains installed numbered runs. Try again, using cylc install without --run-name.
+WorkflowFilesError: --run-name option not allowed as '${RND_WORKFLOW_RUNDIR}' contains installed numbered runs.
 __ERR__
 popd || exit 1
 purge_rnd_workflow
@@ -186,8 +184,7 @@ __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name-2nd-install"
 run_fail "${TEST_NAME}" cylc install --run-name=olaf
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: "${RND_WORKFLOW_RUNDIR}/olaf" exists. \
-Try using cylc reinstall. Alternatively, install with another name, using the --run-name option.
+WorkflowFilesError: "${RND_WORKFLOW_RUNDIR}/olaf" exists.
 __ERR__
 popd || exit 1
 purge_rnd_workflow
@@ -220,10 +217,7 @@ touch "${ALT_SOURCE}/${RND_WORKFLOW_NAME}/flow.cylc"
 
 TEST_NAME="${TEST_NAME_BASE}-install-twice-moving-src-dir-raises-error"
 run_fail "${TEST_NAME}" cylc install -C "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
-contains_ok "${TEST_NAME}.stderr" <<__OUT__
-WorkflowFilesError: Workflow source dir is not accessible: "${RND_WORKFLOW_SOURCE}".
-Restore the source or modify the "${RND_WORKFLOW_RUNDIR}/_cylc-install/source" symlink to continue.
-__OUT__
+grep_ok "WorkflowFilesError: Symlink broken" "${TEST_NAME}.stderr"
 
 rm -rf "${ALT_SOURCE}"
 purge_rnd_workflow
@@ -237,7 +231,7 @@ mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$
 touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: ${TEST_NAME} installation failed. Source directory should not be in ${RUN_DIR}
+WorkflowFilesError: ${TEST_NAME} installation failed. Source directory should not be in ${RUN_DIR}.
 __ERR__
 
 cd "${RUN_DIR}" || exit

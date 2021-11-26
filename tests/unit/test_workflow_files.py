@@ -373,14 +373,14 @@ def test_parse_reg__ok(
             ('non_exist', True),
             None,
             None,
-            "no flow.cylc or suite.rc in ",
+            "No flow.cylc or suite.rc in ",
             id="non-existent workflow, src=True"
         ),
         pytest.param(
             ('empty', True),
             None,
             None,
-            "no flow.cylc or suite.rc in ",
+            "No flow.cylc or suite.rc in ",
             id="empty run dir, src=True"
         ),
         pytest.param(
@@ -401,7 +401,7 @@ def test_parse_reg__ok(
             ('non_numbered/workflow/flow.cylc', False),
             None,
             None,
-            "Workflow name must refer to a directory, not a file",
+            "Workflow name must refer to a directory",
             id="reg refers to a file, src=False"
         ),
         pytest.param(
@@ -977,7 +977,7 @@ def test_clean__bad_symlink_dir_wrong_type(
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean(reg, run_dir)
-    assert "Target is not a directory" in str(exc.value)
+    assert "Invalid symlink at" in str(exc.value)
     assert symlink.exists() is True
 
 
@@ -994,7 +994,7 @@ def test_clean__bad_symlink_dir_wrong_form(
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean('foo', run_dir)
-    assert 'Expected target to end with "cylc-run/foo/log"' in str(exc.value)
+    assert 'should end with "cylc-run/foo/log"' in str(exc.value)
     assert symlink.exists() is True
 
 
@@ -1845,11 +1845,11 @@ def test_detect_both_flow_and_suite(tmp_path):
         ),
         pytest.param(
             None, True, None, WorkflowFiles.SUITE_RC,
-            id="no flow.cylc, suite.rc exists"
+            id="No flow.cylc, suite.rc exists"
         ),
         pytest.param(
             None, False, WorkflowFilesError, None,
-            id="no flow.cylc, no suite.rc"
+            id="No flow.cylc, no suite.rc"
         ),
     ]
 )

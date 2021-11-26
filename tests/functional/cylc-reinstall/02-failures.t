@@ -53,7 +53,7 @@ run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-na
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: no flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 purge_rnd_workflow
 
