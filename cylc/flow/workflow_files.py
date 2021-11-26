@@ -877,7 +877,7 @@ def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
             if not str(target).endswith(expected_end):
                 raise WorkflowFilesError(
                     f'Invalid symlink at {path}\n'
-                    f'{target} should end with "{expected_end}"'
+                    f'The target should end with "{expected_end}"'
                 )
             ret[_dir] = target
     return ret
@@ -1664,8 +1664,7 @@ def install_workflow(
     except FileExistsError:
         # This occurs when the file exists but is _not_ a directory.
         raise WorkflowFilesError(
-            f"Cannot install in {rundir} because that path exists, "
-            "and is not a directory."
+            f"Cannot install as there is an existing file at {rundir}."
         )
     if relink:
         link_runN(rundir)
@@ -1695,8 +1694,7 @@ def install_workflow(
         if source_link.is_symlink():
             # Condition represents a broken symlink.
             raise WorkflowFilesError(
-                f'Workflow source, "{source_link}" is a broken '
-                f'symlink to "{source_link.resolve()}".'
+                f'Symlink broken: {source_link} -> {source_link.resolve()}.'
             )
         install_log.info(f"Creating symlink from {source_link}")
         source_link.symlink_to(source.resolve())
