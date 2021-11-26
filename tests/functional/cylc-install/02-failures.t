@@ -217,7 +217,7 @@ touch "${ALT_SOURCE}/${RND_WORKFLOW_NAME}/flow.cylc"
 
 TEST_NAME="${TEST_NAME_BASE}-install-twice-moving-src-dir-raises-error"
 run_fail "${TEST_NAME}" cylc install -C "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
-grep_ok "Workflow source,.* is a broken symlink to" "${TEST_NAME}.stderr"
+grep_ok "WorkflowFilesError: Symlink broken" "${TEST_NAME}.stderr"
 
 rm -rf "${ALT_SOURCE}"
 purge_rnd_workflow
