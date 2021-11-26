@@ -34,22 +34,33 @@ resource_names = [
 ]
 
 
-def list_resources():
+def list_resources(tutorials=False):
     """List available cylc.flow package resources.
 
     The API has a "listdir" function but no automatic recursion capability,
     and we have few resources, so listing them explicitly for the moment.
     """
+    if tutorials:
+        raise NotImplementedError(
+            'Placeholder: Logic in this section should get a list only of '
+            'tutorials, shorn of leading paths, and ideally, with metadata.'
+        )
     return resource_names
 
 
-def extract_resources(target_dir, resources=None):
+def extract_resources(target_dir, resources=None, tutorial=False):
     """Extract cylc.flow resources and write them to a target directory.
 
     Arguments:
         target_dir - where to put extracted resources, created if necessary
         resources - list of name resources, e.g. ['etc/foo.bar']
     """
+    if tutorial:
+        raise NotImplementedError(
+            'Placeholder: If tutorial is True will set the resource path'
+            'to the tutorial source and destination path to '
+            '~/cylc-src/<tutorial>'
+        )
     if resources is None:
         resources = resource_names
     for resource in resources:
