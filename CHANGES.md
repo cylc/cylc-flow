@@ -64,6 +64,9 @@ This only affects you if you have used a prior Cylc 8 pre-release.
 now configurable in `global.cylc[install]max depth`, and `cylc install` will
 fail if the workflow ID would exceed this depth.
 
+[#4534](https://github.com/cylc/cylc-flow/pull/4534)
+- Permit jobs to be run on platforms with no $HOME directory.
+
 [#4536](https://github.com/cylc/cylc-flow/pull/4536) - `cylc extract-resources`
 renamed `cylc get-resources` and small changes made:
 - Cylc wrapper script made available.

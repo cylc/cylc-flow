@@ -17,14 +17,18 @@
 # Tests for functions contained in cylc.flow.job_file.
 # TODO remove the unittest dependency - it should not be necessary.
 
+from contextlib import suppress
 import io
 import os
+from pathlib import Path
 import pytest
-from contextlib import suppress
 from tempfile import NamedTemporaryFile
-from unittest import mock
+from textwrap import dedent
 
-from cylc.flow import __version__
+from cylc.flow import (
+    __version__,
+    __file__ as cylc_flow_file,
+)
 from cylc.flow.job_file import JobFileWriter
 from cylc.flow.platforms import platform_from_name
 
@@ -67,8 +71,7 @@ def fixture_get_platform():
     yield inner_func
 
 
-@mock.patch("cylc.flow.job_file.get_remote_workflow_run_dir")
-def test_write(mocked_get_remote_workflow_run_dir, fixture_get_platform):
+def test_write(fixture_get_platform):
     """Test write function outputs jobscript file correctly."""
     with NamedTemporaryFile() as local_job_file_path:
         local_job_file_path = local_job_file_path.name
@@ -103,7 +106,6 @@ def test_write(mocked_get_remote_workflow_run_dir, fixture_get_platform):
             "post-script": "This is the post script",
             "exit-script": "This is the exit script",
         }
-        mocked_get_remote_workflow_run_dir.return_value = "run/dir"
         JobFileWriter().write(local_job_file_path, job_conf)
 
         assert (os.path.exists(local_job_file_path))
@@ -237,7 +239,8 @@ def test_traps_for_each_job_runner(job_runner: str):
     })
     job_conf = {
         "platform": platform,
-        "directives": {}
+        "directives": {},
+        "workflow_name": 'test_traps_for_each_job_runner',
     }
 
     with io.StringIO() as fake_file:
@@ -271,8 +274,10 @@ def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
                 f'\nexport CYLC_VERSION=\'{__version__}\'')
     if set_CYLC_ENV_NAME:
         expected += '\nexport CYLC_ENV_NAME=\'myenv\''
+    expected += '\nexport CYLC_WORKFLOW_ID="test_write_prelude"'
     expected += '\nexport CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\''
     job_conf = {
+        "workflow_name": "test_write_prelude",
         "platform": fixture_get_platform({
             "job runner": "loadleveler",
             "job runner command template": "test_workflow",
@@ -303,8 +308,8 @@ def test_write_workflow_environment(fixture_get_platform, monkeypatch):
     # workflow env not correctly setting...check this
     expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC WORKFLOW '
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
-                '  export CYLC_UTC="True"\n    export TZ="UTC"\n\n   '
-                ' export CYLC_WORKFLOW_RUN_DIR="cylc-run/farm_noises"\n   '
+                '  export CYLC_UTC="True"\n    export TZ="UTC"'
+                '\n   '
                 ' export CYLC_WORKFLOW_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
@@ -313,9 +318,8 @@ def test_write_workflow_environment(fixture_get_platform, monkeypatch):
         "workflow_name": "farm_noises",
         "uuid_str": "neigh"
     }
-    rund = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:
-        job_file_writer._write_workflow_environment(fake_file, job_conf, rund)
+        job_file_writer._write_workflow_environment(fake_file, job_conf)
         result = fake_file.getvalue()
         assert result == expected
 
@@ -343,6 +347,7 @@ def test_write_script():
         "script": "This is the script",
         "post-script": "This is the post script",
         "exit-script": "This is the exit script",
+        "workflow_name": "test_write_script",
     }
 
     with io.StringIO() as fake_file:
@@ -362,7 +367,8 @@ def test_no_script_section_with_comment_only_script():
         "pre-script": "#This is the pre script/n #moo /n#baa",
         "script": "",
         "post-script": "",
-        "exit-script": ""
+        "exit-script": "",
+        "workflow_name": "test_no_script_section_with_comment_only_script"
     }
 
     with io.StringIO() as fake_file:
@@ -395,7 +401,8 @@ def test_write_task_environment():
         "flow_nums": {1},
         "param_var": {"duck": "quack",
                       "mouse": "squeak"},
-        "work_d": "farm_noises/work_d"
+        "work_d": "farm_noises/work_d",
+        "workflow_name": "test_write_task_environment",
     }
     with io.StringIO() as fake_file:
         JobFileWriter()._write_task_environment(fake_file, job_conf)
@@ -411,9 +418,12 @@ def test_write_runtime_environment():
         '    cow=~/"moo"\n    sheep=~baa/"baa"\n    '
         'duck=~quack\n}')
     job_conf = {
-        'environment': {'cow': '~/moo',
-                        'sheep': '~baa/baa',
-                        'duck': '~quack'}
+        'environment': {
+            'cow': '~/moo',
+            'sheep': '~baa/baa',
+            'duck': '~quack'
+        },
+        "workflow_name": "test_write_runtime_environment",
     }
     with io.StringIO() as fake_file:
         JobFileWriter()._write_runtime_environment(fake_file, job_conf)
@@ -422,13 +432,16 @@ def test_write_runtime_environment():
 
 def test_write_epilogue():
     """Test epilogue is correctly written in jobscript"""
+    expected = '\n' + dedent('''
+        CYLC_RUN_DIR="${CYLC_RUN_DIR:-$HOME/cylc-run}"
+        . "${CYLC_RUN_DIR}/${CYLC_WORKFLOW_ID}/.service/etc/job.sh"
+        cylc__job__main
 
-    expected = ('\n\n. \"cylc-run/farm_noises/.service/etc/job.sh\"\n'
-                'cylc__job__main\n\n#EOF: 1/moo/01\n')
+        #EOF: 1/moo/01
+    ''')
     job_conf = {'job_d': "1/moo/01"}
-    run_d = "cylc-run/farm_noises"
     with io.StringIO() as fake_file:
-        JobFileWriter()._write_epilogue(fake_file, job_conf, run_d)
+        JobFileWriter()._write_epilogue(fake_file, job_conf)
         assert(fake_file.getvalue() == expected)
 
 
@@ -438,16 +451,76 @@ def test_write_global_init_scripts(fixture_get_platform):
     job_conf = {
         "platform": fixture_get_platform({
             "global init-script": (
-                'global init-script = \n'
                 'export COW=moo\n'
                 'export PIG=oink\n'
                 'export DONKEY=HEEHAW\n'
             )
         })
     }
-    expected = ('\n\ncylc__job__inst__global_init_script() {\n'
-                '# GLOBAL-INIT-SCRIPT:\nglobal init-script = \nexport '
-                'COW=moo\nexport PIG=oink\nexport DONKEY=HEEHAW\n\n}')
+    expected = '\n' + dedent('''
+        # GLOBAL INIT-SCRIPT:
+        export COW=moo
+        export PIG=oink
+        export DONKEY=HEEHAW
+    ''')
     with io.StringIO() as fake_file:
         JobFileWriter()._write_global_init_script(fake_file, job_conf)
         assert(fake_file.getvalue() == expected)
+
+
+def test_homeless_platform(fixture_get_platform):
+    """Ensure there are no uses of $HOME before the global init-script.
+
+    This is to allow users to configure a $HOME on machines with no $HOME
+    directory.
+    """
+    job_conf = {
+        "platform": fixture_get_platform({
+            'global init-script': 'some-script'
+        }),
+        "task_id": "a",
+        "workflow_name": "b",
+        "work_d": "c/d",
+        "uuid_str": "e",
+        'environment': {},
+        'cow': '~/moo',
+        "job_d": "1/a/01",
+        "try_num": 1,
+        "flow_nums": {1},
+        # "job_runner_name": "background",
+        "param_var": {},
+        "execution_time_limit": None,
+        "namespace_hierarchy": [],
+        "dependencies": [],
+        "init-script": "",
+        "env-script": "",
+        "err-script": "",
+        "pre-script": "",
+        "script": "",
+        "post-script": "",
+        "exit-script": "",
+    }
+
+    with NamedTemporaryFile() as local_job_file_path:
+        local_job_file_path = local_job_file_path.name
+        JobFileWriter().write(local_job_file_path, job_conf)
+        with open(local_job_file_path, 'r') as local_job_file:
+            job_script = local_job_file.read()
+
+    # ensure that $HOME is not used before the global init-script
+    for line in job_script.splitlines():
+        if line.startswith(' '):
+            # ignore env/script functions which aren't run until later
+            continue
+        if line == '# GLOBAL INIT-SCRIPT:':
+            # quit once we've hit the global init-script
+            break
+        if 'HOME' in line:
+            # bail if $HOME is used
+            raise Exception(f'$HOME found in {line}\n{job_script}')
+
+    # also ensure there is no use of $HOME in the job.sh script
+    with open(Path(cylc_flow_file).parent / 'etc/job.sh', 'r') as job_sh:
+        job_sh_txt = job_sh.read()
+        if 'HOME' in job_sh_txt:
+            raise Exception('$HOME found in job.sh\n{job_sh_txt}')
