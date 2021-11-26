@@ -544,7 +544,7 @@ def get_contact_file(reg):
         get_workflow_srv_dir(reg), WorkflowFiles.Service.CONTACT)
 
 
-def get_flow_file(reg: str) -> str:
+def get_flow_file(reg: str) -> Path:
     """Return the path of a workflow's flow.cylc file.
 
     Creates a flow.cylc symlink to suite.rc if only suite.rc exists.
@@ -1758,25 +1758,46 @@ def get_run_dir_info(
     return relink, run_num, rundir
 
 
-def detect_both_flow_and_suite(path):
+def detect_both_flow_and_suite(path: Path) -> None:
     """Detects if both suite.rc and flow.cylc are in directory.
 
     Permits flow.cylc to be a symlink.
+    Return true if present, raises error if flow.cylc path sent is a forbidden
+    symlink.
     Raises:
         WorkflowFilesError: If both flow.cylc and suite.rc are in directory
     """
+    flow_cylc = None
     msg = (f"Both {WorkflowFiles.FLOW_FILE} and {WorkflowFiles.SUITE_RC} "
            f"files are present in {path}. Please remove one and"
            " try again. For more information visit: https://cylc.github.io/"
            "cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility")
     if path.resolve().name == WorkflowFiles.SUITE_RC:
         flow_cylc = path.parent / WorkflowFiles.FLOW_FILE
-        if flow_cylc.is_file() and not flow_cylc.is_symlink():
-            raise WorkflowFilesError(msg)
     elif (path / WorkflowFiles.SUITE_RC).is_file():
         flow_cylc = path / WorkflowFiles.FLOW_FILE
-        if flow_cylc.is_file() and not flow_cylc.is_symlink():
-            raise WorkflowFilesError(msg)
+    if flow_cylc and flow_cylc.is_file() and is_forbidden(flow_cylc):
+        raise WorkflowFilesError(msg)
+
+
+def is_forbidden(flow_file: Path) -> bool:
+    """Returns True for a forbidden file structure scenario.
+
+    Forbidden criteria:
+        A symlink elsewhere on file system but suite.rc also exists in the
+        directory.
+        flow.cylc and suite.rc in same directory but no symlink
+    Args:
+        flow_file : Absolute Path to the flow.cylc file
+    """
+    if not flow_file.is_symlink():
+        if flow_file.parent.joinpath(WorkflowFiles.SUITE_RC).exists():
+            return True
+        return False
+    link = flow_file.resolve()
+    if Path(link).parent == flow_file.parent:  # link points within dir
+        return False
+    return True
 
 
 def detect_flow_exists(
