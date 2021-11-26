@@ -16,6 +16,7 @@ coverage:
         target: '85%'
         # how much we allow the coverage to drop
         threshold: '2%'
+      if_ci_failed: success
     patch:
       default:
         target: '95%'
