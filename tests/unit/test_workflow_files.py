@@ -994,7 +994,7 @@ def test_clean__bad_symlink_dir_wrong_form(
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean('foo', run_dir)
-    assert 'Target should end with "cylc-run/foo/log"' in str(exc.value)
+    assert 'should end with "cylc-run/foo/log"' in str(exc.value)
     assert symlink.exists() is True
 
 

@@ -38,9 +38,7 @@ pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
 run_fail "${TEST_NAME}" cylc install
 
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Source directory not consistent between runs.
-__ERR__
+grep_ok "previous installations were from" "${TEST_NAME}.stderr"
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
 rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
 popd || exit
@@ -219,10 +217,7 @@ touch "${ALT_SOURCE}/${RND_WORKFLOW_NAME}/flow.cylc"
 
 TEST_NAME="${TEST_NAME_BASE}-install-twice-moving-src-dir-raises-error"
 run_fail "${TEST_NAME}" cylc install -C "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
-contains_ok "${TEST_NAME}.stderr" <<__OUT__
-WorkflowFilesError: Workflow source dir is not accessible: "${RND_WORKFLOW_SOURCE}".
-Restore the source or modify the "${RND_WORKFLOW_RUNDIR}/_cylc-install/source" symlink to continue.
-__OUT__
+grep_ok "Workflow source,.* is a broken symlink to" "${TEST_NAME}.stderr"
 
 rm -rf "${ALT_SOURCE}"
 purge_rnd_workflow
