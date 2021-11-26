@@ -306,7 +306,8 @@ class Scheduler:
 
         # Extract job.sh from library, for use in job scripts.
         extract_resources(
-            workflow_files.get_workflow_srv_dir(self.workflow),
+            os.path.join(
+                workflow_files.get_workflow_srv_dir(self.workflow), 'etc',),
             ['etc/job.sh'])
         # Add python dirs to sys.path
         for sub_dir in ["python", os.path.join("lib", "python")]:

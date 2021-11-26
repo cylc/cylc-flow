@@ -147,7 +147,8 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
     oldcwd = os.getcwd()
     os.chdir(rund)
     # Extract job.sh from library, for use in job scripts.
-    extract_resources(WorkflowFiles.Service.DIRNAME, ['etc/job.sh'])
+    extract_resources(
+        os.path.join(WorkflowFiles.Service.DIRNAME, 'etc'), ['etc/job.sh'])
     try:
         tarhandle = tarfile.open(fileobj=sys.stdin.buffer, mode='r|')
         tarhandle.extractall()

@@ -24,14 +24,17 @@ import pkg_resources as pr
 from cylc.flow import LOG
 
 
-resource_names = [
-    'etc/syntax/cylc-mode.el',
-    'etc/syntax/cylc.lang',
-    'etc/syntax/cylc.vim',
-    'etc/syntax/cylc.xml',
-    'etc/cylc-bash-completion',
-    'etc/job.sh'
-]
+# {resource: brief description}
+resource_names = {
+    'etc/syntax/cylc-mode.el': 'Emacs syntax hihglighting.',
+    'etc/syntax/cylc.lang': 'Gedit (gtksourceview) syntax highlighting.',
+    'etc/syntax/cylc.vim': 'Vim syntax highlighting.',
+    'etc/syntax/cylc.xml': 'Kate syntax highlighting.',
+    'etc/cylc-bash-completion':
+        'Sets up bash auto-completion for Cylc commands',
+    'etc/job.sh': 'Bash functions for Cylc task jobs.',
+    'etc/cylc': 'Cylc wrapper script.',
+}
 
 
 def list_resources():
@@ -40,7 +43,12 @@ def list_resources():
     The API has a "listdir" function but no automatic recursion capability,
     and we have few resources, so listing them explicitly for the moment.
     """
-    return resource_names
+    width = len(max(resource_names, key=len))
+    result = [
+        f'{resource + (width - len(resource)) * " "}    {meta}'
+        for resource, meta in resource_names.items()
+    ]
+    return result
 
 
 def extract_resources(target_dir, resources=None):
@@ -55,8 +63,8 @@ def extract_resources(target_dir, resources=None):
     for resource in resources:
         if resource not in resource_names:
             raise ValueError(f"Invalid resource name {resource}")
-        path = Path(target_dir, resource)
-        LOG.debug(f"Extracting {resource} to {path}")
+        path = Path(target_dir) / Path(resource).name
+        LOG.info(f"Extracting {resource} to {path}")
         pdir = path.parent
         if not pdir.exists():
             pdir.mkdir(parents=True)

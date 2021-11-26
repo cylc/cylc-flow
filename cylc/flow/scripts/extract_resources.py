@@ -29,8 +29,8 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('[DIR]', 'Target directory.'),
-            ('[RESOURCES...]', 'Resources to extract (default all).')
+            ('[RESOURCES...]', 'Resources to extract (default all).'),
+            ('[DIR]', 'Target directory.')
         ]
     )
 
@@ -47,5 +47,6 @@ def main(parser, opts, *args):
     elif not args:
         print(parser.usage)
         sys.exit(0)
-    target_dir, *resources = args
+    target_dir = args[-1]
+    resources = args[:-1]
     extract_resources(target_dir, resources or None)
