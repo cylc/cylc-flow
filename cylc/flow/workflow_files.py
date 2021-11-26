@@ -545,10 +545,7 @@ def get_contact_file(reg):
 
 
 def get_flow_file(reg: str) -> Path:
-    """Return the path of a workflow's flow.cylc file.
-
-    Creates a flow.cylc symlink to suite.rc if only suite.rc exists.
-    """
+    """Return the path of a workflow's flow.cylc file."""
     run_dir = get_workflow_run_dir(reg)
     path = check_flow_file(run_dir)
     return path
@@ -1851,7 +1848,7 @@ def check_flow_file(
     raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
 
 
-def create_workflow_srv_dir(rundir=None):
+def create_workflow_srv_dir(rundir: Path) -> None:
     """Create workflow service directory"""
 
     workflow_srv_d = rundir.joinpath(WorkflowFiles.Service.DIRNAME)

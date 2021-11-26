@@ -1920,19 +1920,14 @@ def test_check_flow_file_symlink(
 
 def test_detect_both_flow_and_suite_symlinked(tmp_path):
     """Test flow.cylc symlinked to suite.rc together in dir is permitted."""
-    Path(tmp_path)
     (tmp_path / WorkflowFiles.SUITE_RC).touch()
     flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
     flow_file.symlink_to(WorkflowFiles.SUITE_RC)
-    try:
-        detect_both_flow_and_suite(tmp_path)
-    except WorkflowFilesError:
-        pytest.fail("Unexpected WorkflowFilesError")
+    detect_both_flow_and_suite(tmp_path)
 
 
-def test_flow_symlinked_elsewhere_and_suite_present(tmp_path):
+def test_flow_symlinked_elsewhere_and_suite_present(tmp_path: Path):
     """flow.cylc symlinked to suite.rc elsewhere, and suite.rc in dir raises"""
-    tmp_path = Path(tmp_path)
     tmp_path.joinpath('some_other_dir').mkdir(exist_ok=True)
     suite_file = tmp_path.joinpath('some_other_dir', WorkflowFiles.SUITE_RC)
     suite_file.touch()
