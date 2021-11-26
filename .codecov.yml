@@ -2,6 +2,10 @@
 # After modifying this file, it might be worth to validate it with:
 # `curl --data-binary @.codecov.yml https://codecov.io/validate`
 
+codecov:
+  notify:
+    require_ci_to_pass: yes
+
 # define the colour bar limits here
 coverage:
   precision: 2
@@ -16,7 +20,6 @@ coverage:
         target: '85%'
         # how much we allow the coverage to drop
         threshold: '2%'
-      if_ci_failed: success
     patch:
       default:
         target: '95%'
