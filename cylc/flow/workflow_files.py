@@ -1686,9 +1686,7 @@ def install_workflow(
             f"An error occurred when copying files from {source} to {rundir}")
         install_log.warning(f" Warning: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
-    check_deprecation(
-        check_flow_file(rundir)
-    )
+    check_deprecation(check_flow_file(rundir))
     if no_run_name:
         cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
@@ -1792,9 +1790,13 @@ def is_forbidden(flow_file: Path) -> bool:
             return True
         return False
     link = flow_file.resolve()
-    if Path(link).parent == flow_file.parent:  # link points within dir
+    if link.parent == flow_file.parent:
+        # link points within dir (permitted)
         return False
-    return True
+    # link points elsewhere, check that suite.rc does not also exist in dir
+    if flow_file.parent.joinpath(WorkflowFiles.SUITE_RC).exists():
+        return True
+    return False
 
 
 def detect_flow_exists(
@@ -1823,9 +1825,7 @@ def detect_flow_exists(
     return False
 
 
-def check_flow_file(
-    path: Union[Path, str],
-) -> Path:
+def check_flow_file(path: Union[Path, str]) -> Path:
     """Checks the path for a suite.rc or flow.cylc file.
 
     Raises:

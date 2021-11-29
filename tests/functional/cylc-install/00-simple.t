@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 25
+set_test_number 26
 
 create_test_global_config "" "
 [install]
@@ -71,10 +71,17 @@ make_rnd_workflow
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
-
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
+
+# Test deprecation message is displayed on installing a suite.rc file
+MSG=$(python -c 'from cylc.flow.workflow_files import SUITERC_DEPR_MSG;
+print(SUITERC_DEPR_MSG)')
+
+grep_ok "$MSG" "${TEST_NAME}.stderr"
+
+
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------

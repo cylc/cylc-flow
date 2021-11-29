@@ -1835,89 +1835,6 @@ def test_detect_both_flow_and_suite(tmp_path):
         )
 
 
-@pytest.mark.parametrize(
-    'flow_file_target, suiterc_exists, err, expected_file',
-    [
-        pytest.param(
-            WorkflowFiles.SUITE_RC, True, None, WorkflowFiles.FLOW_FILE,
-            id="flow.cylc symlinked to suite.rc"
-        ),
-        pytest.param(
-            WorkflowFiles.SUITE_RC, False, WorkflowFilesError, None,
-            id="flow.cylc symlinked to non-existent suite.rc"
-        ),
-        pytest.param(
-            'other-path', True, None, WorkflowFiles.SUITE_RC,
-            id="flow.cylc symlinked to other file, suite.rc exists"
-        ),
-        pytest.param(
-            'other-path', False, WorkflowFilesError, None,
-            id="flow.cylc symlinked to other file, no suite.rc"
-        ),
-        pytest.param(
-            None, True, None, WorkflowFiles.SUITE_RC,
-            id="No flow.cylc, suite.rc exists"
-        ),
-        pytest.param(
-            None, False, WorkflowFilesError, None,
-            id="No flow.cylc, no suite.rc"
-        ),
-    ]
-)
-@pytest.mark.parametrize(
-    'symlink_suiterc_arg',
-    [pytest.param(False, id="symlink_suiterc=False "),
-     pytest.param(True, id="symlink_suiterc=True ")]
-)
-def test_check_flow_file_symlink(
-    flow_file_target: Optional[str],
-    suiterc_exists: bool,
-    err: Optional[Type[Exception]],
-    expected_file: Optional[str],
-    symlink_suiterc_arg: bool,
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Test check_flow_file() when flow.cylc is a symlink or doesn't exist.
-
-    Params:
-        flow_file_target: Relative path of the flow.cylc symlink's target, or
-            None if the symlink doesn't exist.
-        suiterc_exists: Whether there is a suite.rc file in the dir.
-        err: Type of exception if expected to get raised.
-        expected_file: Which file's path should get returned, when
-            symlink_suiterc_arg is FALSE (otherwise it will always be
-            flow.cylc, assuming no exception occurred).
-        symlink_suiterc_arg: Value of the symlink_suiterc arg passed to
-            check_flow_file().
-    """
-    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
-    suiterc = tmp_path.joinpath(WorkflowFiles.SUITE_RC)
-    tmp_path.joinpath('other-path').touch()
-    if suiterc_exists:
-        suiterc.touch()
-    if flow_file_target:
-        flow_file.symlink_to(flow_file_target)
-
-    caplog.set_level(logging.INFO, CYLC_LOG)
-    log_msg = ""
-
-    if err:
-        with pytest.raises(err):
-            check_flow_file(tmp_path, symlink_suiterc_arg)
-    else:
-        assert expected_file is not None  # otherwise test is wrong
-        result = check_flow_file(tmp_path, symlink_suiterc_arg)
-        if symlink_suiterc_arg is True:
-            assert flow_file.samefile(suiterc)
-            expected_file = WorkflowFiles.FLOW_FILE
-            if flow_file_target != WorkflowFiles.SUITE_RC:
-                log_msg = "Symlink created: flow.cylc -> suite.rc"
-        assert result == tmp_path.joinpath(expected_file)
-
-    if log_msg:
-        assert log_msg in caplog.messages
-
-
 def test_detect_both_flow_and_suite_symlinked(tmp_path):
     """Test flow.cylc symlinked to suite.rc together in dir is permitted."""
     (tmp_path / WorkflowFiles.SUITE_RC).touch()
@@ -1935,6 +1852,8 @@ def test_flow_symlinked_elsewhere_and_suite_present(tmp_path: Path):
     run_dir.mkdir(exist_ok=True)
     flow_file = (run_dir / WorkflowFiles.FLOW_FILE)
     flow_file.symlink_to(suite_file)
+    forbidden_external = is_forbidden(flow_file)
+    assert forbidden_external is False
     (run_dir / WorkflowFiles.SUITE_RC).touch()
     forbidden = is_forbidden(flow_file)
     assert forbidden is True
@@ -1951,7 +1870,6 @@ def test_flow_symlinked_elsewhere_and_suite_present(tmp_path: Path):
 
 def test_is_forbidden_symlink_returns_false_for_non_symlink(tmp_path):
     """Test sending a non symlink path is not marked as forbidden"""
-    Path(tmp_path)
     flow_file = (tmp_path / WorkflowFiles.FLOW_FILE)
     flow_file.touch()
     forbidden = is_forbidden(Path(flow_file))
