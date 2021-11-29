@@ -56,6 +56,9 @@ First Release Candidate for Cylc 8.
 
 ### Enhancements
 
+[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent runN and run\d+
+being allowed as installation target names.
+
 [#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
 of workflows inside other installed workflows.
 

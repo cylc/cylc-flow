@@ -181,12 +181,17 @@ def test_check_nested_dirs_install_dirs(
      ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
      ('./foo', WorkflowFilesError, "invalid workflow name"),
      ('meow/..', WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above")]
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('e/run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('runN', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('e/runN', WorkflowFilesError, "cannot contain a folder called 'runN'")]
 )
 def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            workflow_files.validate_workflow_name(reg)
+            runNcheck = 'cannot contain a folder called' in expected_msg
+            workflow_files.validate_workflow_name(reg, runNcheck=runNcheck)
         if expected_msg:
             assert expected_msg in str(exc.value)
     else:
@@ -1628,6 +1633,7 @@ def test_remote_clean(
         for p_name in failed_platforms:
             assert f"{p_name} - {PlatformError.MSG_TIDY}" in caplog.text
 
+
 @pytest.mark.parametrize(
     'rm_dirs, expected_args',
     [
@@ -1809,6 +1815,7 @@ def test_check_flow_file(
     else:
         assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
 
+
 def test_detect_both_flow_and_suite(tmp_path):
     """Test flow.cylc and suite.rc together in dir raises error."""
     tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
@@ -1823,6 +1830,7 @@ def test_detect_both_flow_and_suite(tmp_path):
             "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
             "#backward-compatibility"
         )
+
 
 @pytest.mark.parametrize(
     'flow_file_target, suiterc_exists, err, expected_file',
