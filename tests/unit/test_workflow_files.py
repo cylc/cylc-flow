@@ -1858,13 +1858,10 @@ def test_flow_symlinked_elsewhere_and_suite_present(tmp_path: Path):
     assert forbidden is True
     with pytest.raises(WorkflowFilesError) as exc:
         detect_both_flow_and_suite(run_dir)
-        assert str(exc.value) == (
-            "Both flow.cylc and suite.rc files are present in the "
-            "source directory. Please remove one and try again. "
-            "For more information visit: "
-            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
-            "#backward-compatibility"
-        )
+    assert str(exc.value).startswith(
+        "Both flow.cylc and suite.rc files are present in the "
+        "source directory. Please remove one and try again."
+    )
 
 
 def test_is_forbidden_symlink_returns_false_for_non_symlink(tmp_path):
