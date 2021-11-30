@@ -1859,8 +1859,8 @@ def test_flow_symlinked_elsewhere_and_suite_present(tmp_path: Path):
     with pytest.raises(WorkflowFilesError) as exc:
         detect_both_flow_and_suite(run_dir)
     assert str(exc.value).startswith(
-        "Both flow.cylc and suite.rc files are present in the "
-        "source directory. Please remove one and try again."
+        "Both flow.cylc and suite.rc files are present in "
+        f"{run_dir}. Please remove one and try again."
     )
 
 
