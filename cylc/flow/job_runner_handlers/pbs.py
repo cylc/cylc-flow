@@ -87,8 +87,11 @@ class PBSHandler:
         """Format the job directives for a job file."""
         job_file_path = job_conf['job_file_path']
         directives = job_conf["directives"].__class__()  # an ordereddict
+        # Change task/runM to task-runM in the job name
+        # (PBS 19.2.1+ does not allow '/' in job names)
         directives["-N"] = (
-            job_conf["task_id"] + "." + job_conf["workflow_name"]
+            f"{job_conf['task_id']}."
+            f"{job_conf['workflow_name'].replace('/', '-')}"
         )
         job_name_len_max = job_conf['platform']["job name length maximum"]
         if job_name_len_max:
