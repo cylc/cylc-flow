@@ -36,12 +36,14 @@ from cylc.flow.exceptions import (
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
+    MAX_SCAN_DEPTH,
+    NESTED_DIRS_MSG,
     REG_CLASH_MSG,
     WorkflowFiles,
     _clean_using_glob,
     _remote_clean_cmd,
     check_flow_file,
-    check_nested_run_dirs,
+    check_nested_dirs,
     clean,
     detect_both_flow_and_suite,
     get_rsync_rund_cmd,
@@ -102,23 +104,74 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-def test_check_nested_run_dirs(tmp_run_dir: Callable):
-    """Test that check_nested_run_dirs() raises when a parent dir is a
+def test_check_nested_dirs(tmp_run_dir: Callable):
+    """Test that check_nested_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
-    test_dir = cylc_run_dir.joinpath('a/b/c/d/e')
+    test_dir = cylc_run_dir.joinpath('a/' * (MAX_SCAN_DEPTH + 3))
+    # note we check beyond max scan depth (because we're checking upwards)
     test_dir.mkdir(parents=True)
     # Parents are not run dirs - ok:
-    check_nested_run_dirs(test_dir)
+    check_nested_dirs(test_dir)
     # Parent contains a run dir but that run dir is not direct ancestor
     # of our test dir - ok:
     tmp_run_dir('a/Z')
-    check_nested_run_dirs(test_dir)
+    check_nested_dirs(test_dir)
     # Now make run dir out of parent - not ok:
     tmp_run_dir('a')
     with pytest.raises(WorkflowFilesError) as exc:
-        check_nested_run_dirs(test_dir)
-    assert "Nested run directories not allowed" in str(exc.value)
+        check_nested_dirs(test_dir)
+    assert str(exc.value) == NESTED_DIRS_MSG.format(
+        dir_type='run', dest=test_dir, existing=(cylc_run_dir / 'a')
+    )
+
+
+@pytest.mark.parametrize(
+    'named_run', [True, False]
+)
+@pytest.mark.parametrize(
+    'test_install_path, existing_install_path',
+    [
+        pytest.param(
+            f'{"child/" * (MAX_SCAN_DEPTH + 3)}',
+            '',
+            id="Check parents (beyond max scan depth)"
+        ),
+        pytest.param(
+            '',
+            f'{"child/" * MAX_SCAN_DEPTH}',
+            id="Check children up to max scan depth"
+        )
+    ]
+)
+def test_check_nested_dirs_install_dirs(
+    tmp_run_dir: Callable,
+    test_install_path: str,
+    existing_install_path: str,
+    named_run: bool
+):
+    """Test that check nested dirs looks both up and down a tree for
+    WorkflowFiles.Install.DIRNAME.
+
+    Params:
+        test_install_path: Path relative to ~/cylc-run/thing where we are
+            trying to install a workflow.
+        existing_install_path: Path relative to ~/cylc-run/thing where there
+            is an existing install dir.
+        named_run: Whether the workflow we are trying to install has
+            named/numbered run.
+    """
+    cylc_run_dir: Path = tmp_run_dir()
+    existing_install: Path = tmp_run_dir(
+        f'thing/{existing_install_path}/run1', installed=True, named=True
+    ).parent
+    test_install_dir = cylc_run_dir / 'thing' / test_install_path
+    test_run_dir = test_install_dir / 'run1' if named_run else test_install_dir
+    with pytest.raises(WorkflowFilesError) as exc:
+        check_nested_dirs(test_run_dir, test_install_dir)
+    assert str(exc.value) == NESTED_DIRS_MSG.format(
+        dir_type='install', dest=test_run_dir, existing=existing_install
+    )
 
 
 @pytest.mark.parametrize(
@@ -128,12 +181,17 @@ def test_check_nested_run_dirs(tmp_run_dir: Callable):
      ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
      ('./foo', WorkflowFilesError, "invalid workflow name"),
      ('meow/..', WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above")]
+      "cannot be a path that points to the cylc-run directory or above"),
+     ('run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('e/run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('runN', WorkflowFilesError, "cannot contain a folder called 'runN'"),
+     ('e/runN', WorkflowFilesError, "cannot contain a folder called 'runN'")]
 )
 def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            workflow_files.validate_workflow_name(reg)
+            runNcheck = 'cannot contain a folder called' in expected_msg
+            workflow_files.validate_workflow_name(reg, runNcheck=runNcheck)
         if expected_msg:
             assert expected_msg in str(exc.value)
     else:
@@ -320,14 +378,14 @@ def test_parse_reg__ok(
             ('non_exist', True),
             None,
             None,
-            "no flow.cylc or suite.rc in ",
+            "No flow.cylc or suite.rc in ",
             id="non-existent workflow, src=True"
         ),
         pytest.param(
             ('empty', True),
             None,
             None,
-            "no flow.cylc or suite.rc in ",
+            "No flow.cylc or suite.rc in ",
             id="empty run dir, src=True"
         ),
         pytest.param(
@@ -348,7 +406,7 @@ def test_parse_reg__ok(
             ('non_numbered/workflow/flow.cylc', False),
             None,
             None,
-            "Workflow name must refer to a directory, not a file",
+            "Workflow name must refer to a directory",
             id="reg refers to a file, src=False"
         ),
         pytest.param(
@@ -924,7 +982,7 @@ def test_clean__bad_symlink_dir_wrong_type(
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean(reg, run_dir)
-    assert "Target is not a directory" in str(exc.value)
+    assert "Invalid symlink at" in str(exc.value)
     assert symlink.exists() is True
 
 
@@ -941,7 +999,7 @@ def test_clean__bad_symlink_dir_wrong_form(
 
     with pytest.raises(WorkflowFilesError) as exc:
         workflow_files.clean('foo', run_dir)
-    assert 'Expected target to end with "cylc-run/foo/log"' in str(exc.value)
+    assert 'should end with "cylc-run/foo/log"' in str(exc.value)
     assert symlink.exists() is True
 
 
@@ -1575,6 +1633,7 @@ def test_remote_clean(
         for p_name in failed_platforms:
             assert f"{p_name} - {PlatformError.MSG_TIDY}" in caplog.text
 
+
 @pytest.mark.parametrize(
     'rm_dirs, expected_args',
     [
@@ -1756,6 +1815,7 @@ def test_check_flow_file(
     else:
         assert check_flow_file(tmp_path) == tmp_path.joinpath(expected_file)
 
+
 def test_detect_both_flow_and_suite(tmp_path):
     """Test flow.cylc and suite.rc together in dir raises error."""
     tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
@@ -1770,6 +1830,7 @@ def test_detect_both_flow_and_suite(tmp_path):
             "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
             "#backward-compatibility"
         )
+
 
 @pytest.mark.parametrize(
     'flow_file_target, suiterc_exists, err, expected_file',
@@ -1792,11 +1853,11 @@ def test_detect_both_flow_and_suite(tmp_path):
         ),
         pytest.param(
             None, True, None, WorkflowFiles.SUITE_RC,
-            id="no flow.cylc, suite.rc exists"
+            id="No flow.cylc, suite.rc exists"
         ),
         pytest.param(
             None, False, WorkflowFilesError, None,
-            id="no flow.cylc, no suite.rc"
+            id="No flow.cylc, no suite.rc"
         ),
     ]
 )

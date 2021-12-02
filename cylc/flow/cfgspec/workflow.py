@@ -1968,8 +1968,10 @@ def warn_about_depr_event_handler_tmpl(cfg):
 class RawWorkflowConfig(ParsecConfig):
     """Raw workflow configuration."""
 
-    def __init__(self, fpath, output_fname, tvars):
+    def __init__(self, fpath, output_fname, tvars, options):
         """Return the default instance."""
         ParsecConfig.__init__(
-            self, SPEC, upg, output_fname, tvars, cylc_config_validate)
+            self, SPEC, upg, output_fname, tvars, cylc_config_validate,
+            options
+        )
         self.loadcfg(fpath, "workflow definition")

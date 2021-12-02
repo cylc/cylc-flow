@@ -35,7 +35,7 @@ def test_read_and_proc_raises_TemplateVarLanguageClash(
     """func fails when diffn't templating engines set in hashbang and plugin.
     """
 
-    def fake_process_plugins(_):
+    def fake_process_plugins(_, __):
         extra_vars = {
             'env': {},
             'template_variables': {'foo': 52},

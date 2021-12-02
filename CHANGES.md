@@ -48,18 +48,26 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0rc1 (<span actions:bind='release-date'></span>)__
+## __cylc-8.0rc1 (<span actions:bind='release-date'>Upcoming</span>)__
 
-First Release Candidate of Cylc 8.
+First Release Candidate for Cylc 8.
 
-[#4521](https://github.com/cylc/cylc-flow/pull/4521) - Make timestamped records
-of configs on workflow start/restart/reload sparse (in ``log/flow-config/``).
+(See note on cylc-8 backward-incompatible changes, above)
 
-<!-- The topmost release date is automatically updated by GitHub Actions. When
-creating a new release entry be sure to copy & paste the span tag with the
-`actions:bind` attribute, which is used by a regex to find the text to be
-updated. Only the first match gets replaced, so it's fine to leave the old
-ones in. -->
+### Enhancements
+
+[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent `runN` and
+`run\d+` being allowed as installation target names.
+
+[#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
+of workflows inside other installed workflows.
+
+[#4521](https://github.com/cylc/cylc-flow/pull/4521) - The workflow config
+logs (that get written in `log/flow-config/` on start/restart/reload) 
+are now sparse, i.e. they will no longer be fleshed-out with defaults.
+
+### Fixes
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b3 (<span actions:bind='release-date'>Released 2021-11-10</span>)__
 

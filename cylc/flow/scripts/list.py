@@ -92,7 +92,7 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', reg: str) -> None:
     workflow, flow_file = parse_reg(reg, src=True)
-    template_vars = get_template_vars(options, flow_file)
+    template_vars = get_template_vars(options)
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")
