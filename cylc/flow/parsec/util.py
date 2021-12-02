@@ -132,8 +132,7 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
         prefix (str): Prefix each line with this.
         none_str (str): Value to insert instead of blank if no value is set in
             config.
-        handle (stream handler): Where to write the output. Must be opened
-            in bytes mode.
+        handle (stream handler): Where to write the output.
 
     As returned by parse.config.get().
     """
