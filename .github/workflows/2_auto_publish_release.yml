@@ -29,7 +29,8 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        # return to 3.x once compatible with 3.10+ (pyuv)
+        python-version: '3.9'
 
     - name: Get the version number
       uses: cylc/release-actions/stage-2/get-version-from-pr@v1
