@@ -1790,13 +1790,10 @@ def is_forbidden(flow_file: Path) -> bool:
             return True
         return False
     link = flow_file.resolve()
-    if link.parent == flow_file.parent:
-        # link points within dir (permitted)
-        return False
-    # link points elsewhere, check that suite.rc does not also exist in dir
-    if flow_file.parent.joinpath(WorkflowFiles.SUITE_RC).exists():
-        return True
-    return False
+    suite_rc = flow_file.parent / WorkflowFiles.SUITE_RC
+    if suite_rc.exists():
+        return link != suite_rc
+    return True
 
 
 def detect_flow_exists(
