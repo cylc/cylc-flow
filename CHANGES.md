@@ -48,6 +48,19 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0rc1 (<span actions:bind='release-date'></span>)__
+
+First Release Candidate of Cylc 8.
+
+[#4521](https://github.com/cylc/cylc-flow/pull/4521) - Make timestamped records
+of configs on workflow start/restart/reload sparse (in ``log/flow-config/``).
+
+<!-- The topmost release date is automatically updated by GitHub Actions. When
+creating a new release entry be sure to copy & paste the span tag with the
+`actions:bind` attribute, which is used by a regex to find the text to be
+updated. Only the first match gets replaced, so it's fine to leave the old
+ones in. -->
+-------------------------------------------------------------------------------
 ## __cylc-8.0b3 (<span actions:bind='release-date'>Released 2021-11-10</span>)__
 
 Fourth beta release of Cylc 8.
@@ -110,10 +123,6 @@ error for a config item that isn't valid, to one that isn't set.
 
 [#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
 `cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
-
-[#4521](https://github.com/cylc/cylc-flow/pull/4521) - Make timestamped records
-of configs on workflow start/restart/reload sparse (in ``log/flow-config/``).
-
 
 ### Fixes
 
