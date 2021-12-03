@@ -678,17 +678,15 @@ class Scheduler:
         released from runhead.)
 
         """
-        if self.config.start_point is not None:
-            start_type = "Warm" if self.options.startcp else "Cold"
-            LOG.info(f"{start_type} start from {self.config.start_point}")
+        start_type = "Cold"
+        if self.config.start_point > self.config.initial_point:
+            start_type = "Warm"
+        LOG.info(f"{start_type} start from {self.config.start_point}")
 
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}"
         )
         for name in self.config.get_task_name_list():
-            if self.config.start_point is None:
-                # No start cycle point at which to load cycling tasks.
-                continue
             tdef = self.config.get_taskdef(name)
             try:
                 point = sorted([
@@ -708,9 +706,6 @@ class Scheduler:
 
     def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
-        if self.options.startcp:
-            self.config.start_point = TaskID.get_standardised_point(
-                self.options.startcp)
         self.workflow_db_mgr.pri_dao.select_broadcast_states(
             self.broadcast_mgr.load_db_broadcast_states)
         self.workflow_db_mgr.pri_dao.select_task_job_run_times(
@@ -1125,10 +1120,6 @@ class Scheduler:
             handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
             printcfg(self.config.cfg, none_str=None, handle=handle)
 
-        if not self.config.initial_point and not self.is_restart:
-            LOG.warning('No initial cycle point provided - no cycling tasks '
-                        'will be loaded.')
-
         # Pass static cylc and workflow variables to job script generation code
         self.task_job_mgr.job_file_writer.set_workflow_env({
             **verbosity_to_env(cylc.flow.flags.verbosity),
@@ -1159,23 +1150,17 @@ class Scheduler:
             LOG.info('LOADING workflow parameters')
         key, value = row
         if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.icp == 'reload':
-                LOG.debug(f"- initial point = {value} (ignored)")
-            elif self.options.icp is None:
-                self.options.icp = value
-                LOG.info(f"+ initial point = {value}")
+            self.options.icp = value
+            LOG.info(f"+ initial point = {value}")
         elif key in self.workflow_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.startcp == 'reload':
-                LOG.debug(f"- start point = {value} (ignored)")
-            elif self.options.startcp is None:
-                self.options.startcp = value
-                LOG.info(f"+ start point = {value}")
+            self.options.startcp = value
+            LOG.info(f"+ start point = {value}")
         elif key in self.workflow_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
             if self.is_restart and self.options.fcp == 'reload':
-                LOG.debug(f"- override final point = {value} (ignored)")
+                LOG.debug(f"- final point = {value} (ignored)")
             elif self.options.fcp is None:
                 self.options.fcp = value
-                LOG.info(f"+ override final point = {value}")
+                LOG.info(f"+ final point = {value}")
         elif key == self.workflow_db_mgr.KEY_STOP_CYCLE_POINT:
             if self.is_restart and self.options.stopcp == 'reload':
                 LOG.debug(f"- stop point = {value} (ignored)")
