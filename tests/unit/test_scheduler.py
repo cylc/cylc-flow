@@ -36,8 +36,8 @@ Fixture = Any
                 'cli_stop_point': 'reload',
                 'db_stop_point': '1991'  # DB value should be ignored
             },
-            '2000',
-            id="From FCP if --stopcp=reload on restart"
+            '1993',
+            id="From cfg if --stopcp=reload on restart"
         ),
         pytest.param(
             {

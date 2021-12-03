@@ -1933,24 +1933,23 @@ class Scheduler:
         """Set stop after cycle point.
 
         In decreasing priority, stop cycle point (``stopcp``) is set:
-        * From the final point for ``cylc play --stopcp=reload``.
         * From the command line (``cylc play --stopcp=XYZ``).
         * From the database.
         * From the flow.cylc file (``[scheduling]stop after cycle point``).
+
+        However, if ``--stopcp=reload`` on the command line during restart,
+        the ``[scheduling]stop after cycle point`` value is used.
         """
-        stoppoint = None
-        if self.is_restart and self.options.stopcp == 'reload':
-            stoppoint = self.config.final_point
-        elif self.options.stopcp:
-            stoppoint = self.options.stopcp
-        # Tests whether pool has stopcp from database on restart.
-        elif (
-            self.pool.stop_point and
-            self.pool.stop_point != self.config.final_point
-        ):
-            stoppoint = self.pool.stop_point
-        elif 'stop after cycle point' in self.config.cfg['scheduling']:
-            stoppoint = self.config.cfg['scheduling']['stop after cycle point']
+        stoppoint = self.config.cfg['scheduling'].get('stop after cycle point')
+        if self.options.stopcp != 'reload':
+            if self.options.stopcp:
+                stoppoint = self.options.stopcp
+            # Tests whether pool has stopcp from database on restart.
+            elif (
+                self.pool.stop_point and
+                self.pool.stop_point != self.config.final_point
+            ):
+                stoppoint = self.pool.stop_point
 
         if stoppoint is not None:
             self.options.stopcp = str(stoppoint)
