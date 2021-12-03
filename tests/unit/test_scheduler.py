@@ -22,6 +22,7 @@ from unittest.mock import create_autospec, Mock, patch
 
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler_cli import RunOptions
 
 Fixture = Any
 
@@ -29,84 +30,85 @@ Fixture = Any
 @pytest.mark.parametrize(
     'options, expected',
     [
-        (
+        pytest.param(
             {
-                'self.is_restart': True,
-                'self.options.stopcp': 'reload',
+                'is_restart': True,
+                'cli_stop_point': 'reload',
+                'db_stop_point': '1991'  # DB value should be ignored
             },
-            '2000'
+            '2000',
+            id="From FCP if --stopcp=reload on restart"
         ),
-        (
+        pytest.param(
             {
-                'self.options.stopcp': '1066'
+                'cli_stop_point': '1066'
             },
-            '1066'
+            '1066',
+            id="From CLI if --stopcp used"
         ),
-        (
+        pytest.param(
             {
-                'self.options.stopcp': None
+                'is_restart': True,
+                'cli_stop_point': '1066',
+                'db_stop_point': '1991'  # DB value should be ignored
             },
-            '1991'
+            '1066',
+            id="From CLI if --stopcp used on restart"
         ),
-        (
+        pytest.param(
             {
-                'self.pool.stop_point': '1998',
-                'self.options.stopcp': False
+                'is_restart': True,
+                'db_stop_point': '1991'
             },
-            '1998'
+            '1991',
+            id="From DB on restart"
         ),
-        (
+        pytest.param(
+            {},
+            '1993',
+            id="From flow.cylc value by default"
+        ),
+        pytest.param(
             {
-                'self.config.cfg': {
-                    'scheduling': {
-                        'stop after cycle point': '1995'
-                    }
-                },
-                'self.options.stopcp': False,
-                'self.pool.stop_point': False
+                'cfg': {
+                    'scheduling': {}
+                }
             },
-            '1995'
+            None,
+            id="None if not set anywhere"
         )
     ]
 )
 @patch('cylc.flow.scheduler.get_point')
-def test_process_cylc_stop_point(get_point, options, expected):
+def test_process_stop_cycle_point(get_point, options, expected):
     # Mock the get_point function - we don't care here
     get_point.return_value = None
     inputs = {
-        'self.is_restart': False,
-        'self.options.stopcp': '1990',
-        'self.pool.stop_point': '1991',
-        'self.config.final_point': '2000',
-        "self.config.cfg": '1993',
+        'is_restart': False,
+        'cfg': {
+            'scheduling': {
+                'stop after cycle point': '1993'
+            }
+        },
+        'final_point': '2000',
     }
-    for key, value in options.items():
-        inputs[key] = value
+    inputs.update(options)
 
     # Create a mock scheduler object and assign values to it.
     scheduler = create_autospec(Scheduler)
-
-    # Add the method we want to test to our mock Scheduler class
-    scheduler.process_cylc_stop_point = Scheduler.process_cylc_stop_point
-
-    # Add various options to our scheduler.
-    scheduler.is_restart = inputs['self.is_restart']
-    # Set-up a fake options object.
-    scheduler.options = SimpleNamespace(
-        stopcp=inputs['self.options.stopcp']
-    )
+    scheduler.is_restart = inputs.get('is_restart')
+    scheduler.options = RunOptions(stopcp=inputs.get('cli_stop_point'))
     # Set-up fake config object
     scheduler.config = SimpleNamespace(
-        final_point=inputs['self.config.final_point'],
-        cfg=inputs['self.config.cfg']
+        final_point=inputs.get('final_point'),
+        cfg=inputs.get('cfg')
     )
     # Set up fake taskpool
-    scheduler.pool = SimpleNamespace(
-        stop_point=inputs['self.pool.stop_point'],
-        set_stop_point=lambda x: x
+    scheduler.pool = Mock(
+        stop_point=inputs.get('db_stop_point')
     )
 
-    scheduler.process_cylc_stop_point(scheduler)
+    Scheduler.process_stop_cycle_point(scheduler)
     assert scheduler.options.stopcp == expected
 
 

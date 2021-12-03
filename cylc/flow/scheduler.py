@@ -480,7 +480,7 @@ class Scheduler:
         else:
             self._load_pool_from_point()
 
-        self.process_cylc_stop_point()
+        self.process_stop_cycle_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.workflow_db_mgr.put_workflow_params(self)
@@ -1929,9 +1929,8 @@ class Scheduler:
                         f"option --{opt}=reload is only valid for restart"
                     )
 
-    def process_cylc_stop_point(self):
-        """
-        Set stop point.
+    def process_stop_cycle_point(self):
+        """Set stop after cycle point.
 
         In decreasing priority, stop cycle point (``stopcp``) is set:
         * From the final point for ``cylc play --stopcp=reload``.

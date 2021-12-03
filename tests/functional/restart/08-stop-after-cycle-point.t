@@ -27,7 +27,7 @@ dumpdbtables() {
         'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' > taskpool.out
 }
 
-set_test_number 13
+set_test_number 15
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
@@ -47,11 +47,14 @@ __OUT__
 workflow_run_ok "${TEST_NAME_BASE}-1-restart" \
     cylc play --no-detach "${WORKFLOW_NAME}"
 dumpdbtables
+# Stop point should be removed from DB once reached
+cmp_ok stopcp.out < /dev/null
 # Task hello.1973 (after stop point) should be spawned but not submitted
 cmp_ok taskpool.out <<'__OUT__'
 1973|hello|waiting
 __OUT__
 
+# Start over
 delete_db
 
 # Check that the command line stop point gets stored in DB.
@@ -64,10 +67,12 @@ cmp_ok stopcp.out <<< '1971'
 cmp_ok taskpool.out << '__OUT__'
 1971|hello|waiting
 __OUT__
+
 # Check that the command line stop point works (even after restart)...
 workflow_run_ok "${TEST_NAME_BASE}-2-restart" \
     cylc play --no-detach "${WORKFLOW_NAME}"
 dumpdbtables
+cmp_ok stopcp.out < /dev/null
 cmp_ok taskpool.out << '__OUT__'
 1972|hello|waiting
 __OUT__
