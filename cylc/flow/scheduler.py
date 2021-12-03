@@ -185,6 +185,7 @@ class Scheduler:
     ext_trigger_queue: Queue
 
     # configuration
+    config: WorkflowConfig  # flow config
     options: Values
     cylc_config: DictTree  # [scheduler] config
 
@@ -195,7 +196,6 @@ class Scheduler:
     bad_hosts: Optional[Set[str]] = None
 
     # configuration
-    config: Optional[WorkflowConfig] = None  # flow config
     flow_file: Optional[str] = None
     flow_file_update_time: Optional[float] = None
 
@@ -1929,7 +1929,7 @@ class Scheduler:
                         f"option --{opt}=reload is only valid for restart"
                     )
 
-    def process_stop_cycle_point(self):
+    def process_stop_cycle_point(self) -> None:
         """Set stop after cycle point.
 
         In decreasing priority, stop cycle point (``stopcp``) is set:
@@ -1968,7 +1968,7 @@ class Scheduler:
         await self.shutdown(exc)
         raise exc from None
 
-    def validate_finalcp(self):
+    def validate_finalcp(self) -> None:
         """Warn if Stop Cycle point is on or after the final cycle point
         """
         if self.config.final_point is None:
