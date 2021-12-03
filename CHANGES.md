@@ -64,6 +64,10 @@ of workflows inside other installed workflows.
 
 ### Fixes
 
+[#4543](https://github.com/cylc/cylc-flow/pull/4543) -
+`cylc play --stopcp=reload` now takes its value from
+`[scheduling]stop after cycle point` instead of using the final cycle point.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0b3 (<span actions:bind='release-date'>Released 2021-11-10</span>)__
 
