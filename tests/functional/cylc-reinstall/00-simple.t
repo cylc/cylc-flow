@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow re-installation
 . "$(dirname "$0")/test_header"
-set_test_number 28
+set_test_number 21
 
 # Test basic cylc reinstall, named run given
 TEST_NAME="${TEST_NAME_BASE}-basic-named-run"
@@ -60,30 +60,8 @@ run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_
 cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
-# test symlink not made in source dir
-exists_fail "flow.cylc"
-# test symlink correctly made in run dir
-pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
-exists_ok "flow.cylc"
-if [[ $(readlink "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc") == "suite.rc" ]] ; then
-    ok "symlink.suite.rc"
-else
-    fail "symlink.suite.rc"
-fi
 
-INSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*.log')"
-grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
-rm -rf flow.cylc
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
-exists_ok "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc"
-if [[ $(readlink "${RND_WORKFLOW_RUNDIR}/run1/flow.cylc") == "suite.rc" ]] ; then
-    ok "symlink.suite.rc"
-else
-    fail "symlink.suite.rc"
-fi
-REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "Symlink created: flow.cylc -> suite.rc" "${INSTALL_LOG}"
-popd || exit 1
 purge_rnd_workflow
 
 # Test cylc reinstall from within rundir, no args given
