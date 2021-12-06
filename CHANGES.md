@@ -59,6 +59,13 @@ First Release Candidate for Cylc 8.
 [#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent `runN` and
 `run\d+` being allowed as installation target names.
 
+[#4506](https://github.com/cylc/cylc-flow/pull/4506) -
+Cylc no longer creates a `flow.cylc` symlink to a `suite.rc` file.
+This only affects you if you have used a prior Cylc 8 pre-release.
+
+[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent runN and run\d+
+being allowed as installation target names.
+
 [#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
 of workflows inside other installed workflows.
 
