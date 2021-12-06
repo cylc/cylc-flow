@@ -142,7 +142,7 @@ class ParsecConfig:
         return cfg
 
     def idump(self, items=None, sparse=False, prefix='',
-              oneline=False, none_str=''):
+              oneline=False, none_str='', handle=None):
         """
         items is a list of --item style inputs:
            '[runtime][foo]script'.
@@ -158,10 +158,10 @@ class ParsecConfig:
                 mkeys.append(j)
         if null:
             mkeys = [[]]
-        self.mdump(mkeys, sparse, prefix, oneline, none_str)
+        self.mdump(mkeys, sparse, prefix, oneline, none_str, handle=handle)
 
     def mdump(self, mkeys=None, sparse=False, prefix='',
-              oneline=False, none_str=''):
+              oneline=False, none_str='', handle=None):
         if oneline:
             items = []
             if mkeys:
@@ -176,13 +176,18 @@ class ParsecConfig:
             print(prefix + ' '.join(items))
         elif mkeys:
             for keys in mkeys:
-                self.dump(keys, sparse, prefix, none_str)
+                self.dump(keys, sparse, prefix, none_str, handle=handle)
 
-    def dump(self, keys=None, sparse=False, prefix='', none_str=''):
+    def dump(
+        self, keys=None, sparse=False, prefix='', none_str='', handle=None
+    ):
         if not keys:
             keys = []
         cfg = self.get(keys, sparse)
-        printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
+        printcfg(
+            cfg, prefix=prefix, level=len(keys),
+            none_str=none_str, handle=handle
+        )
 
     def _get_namespace_parents(self) -> List[List[str]]:
         """Get a list of the parents of config items which can be user defined.
