@@ -29,7 +29,7 @@ from cylc.flow.workflow_files import (
     WorkflowFiles
 )
 from cylc.flow.pathutil import make_symlink
-from cylc.flow.resources import extract_resources
+from cylc.flow.resources import get_resources
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_DONE,
     REMOTE_INIT_FAILED
@@ -147,7 +147,7 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
     oldcwd = os.getcwd()
     os.chdir(rund)
     # Extract job.sh from library, for use in job scripts.
-    extract_resources(
+    get_resources(
         os.path.join(WorkflowFiles.Service.DIRNAME, 'etc'), ['etc/job.sh'])
     try:
         tarhandle = tarfile.open(fileobj=sys.stdin.buffer, mode='r|')

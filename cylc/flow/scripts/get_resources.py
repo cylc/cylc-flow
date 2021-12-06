@@ -21,7 +21,7 @@ Extract resources from the cylc.flow package."""
 import sys
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.resources import extract_resources, list_resources
+from cylc.flow.resources import get_resources, list_resources
 from cylc.flow.terminal import cli_function
 
 
@@ -49,4 +49,4 @@ def main(parser, opts, *args):
         sys.exit(0)
     target_dir = args[-1]
     resources = args[:-1]
-    extract_resources(target_dir, resources or None)
+    get_resources(target_dir, resources or None)

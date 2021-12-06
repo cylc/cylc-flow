@@ -51,7 +51,7 @@ def list_resources():
     return result
 
 
-def extract_resources(target_dir, resources=None):
+def get_resources(target_dir, resources=None):
     """Extract cylc.flow resources and write them to a target directory.
 
     Arguments:

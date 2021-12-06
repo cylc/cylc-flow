@@ -21,7 +21,7 @@ from shlex import split
 from subprocess import run
 
 from cylc.flow.resources import (
-    resource_names, list_resources, extract_resources)
+    resource_names, list_resources, get_resources)
 
 
 def test_list_resources():
@@ -31,14 +31,14 @@ def test_list_resources():
         assert item in result
 
 
-def test_extract_resources_one(tmpdir):
+def test_get_resources_one(tmpdir):
     """Test extraction of a specific resource.
 
     Check that a file of the right name gets extracted.
     Do not check file content becuase there is no assurance that it will
     remain constant.
     """
-    extract_resources(tmpdir, resources=['etc/job.sh'])
+    get_resources(tmpdir, resources=['etc/job.sh'])
     assert (tmpdir / 'job.sh').isfile()
 
 
@@ -46,8 +46,8 @@ def test_extract_resources_one(tmpdir):
     'resource',
     resource_names.keys()
 )
-def test_extract_resources_all(resource, tmpdir):
-    extract_resources(tmpdir, None)
+def test_get_resources_all(resource, tmpdir):
+    get_resources(tmpdir, None)
     assert (tmpdir / Path(resource).name).exists()
 
 
