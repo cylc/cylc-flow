@@ -143,7 +143,8 @@ def get_option_parser(add_std_opts=False):
         help=(
             "Set the final cycle point. "
             "This command line option overrides the workflow "
-            "config option '[scheduling]final cycle point'."
+            "config option '[scheduling]final cycle point'. "
+            "Use a value of 'reload' to reload from flow.cylc in a restart."
         ),
         metavar="CYCLE_POINT", action="store", dest="fcp")
 
@@ -154,7 +155,8 @@ def get_option_parser(add_std_opts=False):
             "Shut down after all tasks have PASSED this cycle point. "
             "(Not to be confused with the final cycle point.) "
             "This command line option overrides the workflow "
-            "config option '[scheduling]stop after cycle point'."
+            "config option '[scheduling]stop after cycle point'. "
+            "Use a value of 'reload' to reload from flow.cylc in a restart."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
