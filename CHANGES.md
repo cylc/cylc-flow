@@ -59,8 +59,8 @@ First Release Candidate for Cylc 8.
 [#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
 of workflows inside other installed workflows.
 
-[#4536](https://github.com/cylc/cylc-flow/pull/4536) - ``cylc extract-resource``
-renamed ``cylc resource`` and small changes made:
+[#4536](https://github.com/cylc/cylc-flow/pull/4536) - `cylc extract-resources`
+renamed `cylc get-resources` and small changes made:
 - Cylc wrapper script made available.
 - Source argument now before target.
 - Metadata as well as names from ``--list`` option.
