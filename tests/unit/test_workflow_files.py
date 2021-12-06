@@ -1873,6 +1873,81 @@ def test_is_forbidden_symlink_returns_false_for_non_symlink(tmp_path):
 
 
 @pytest.mark.parametrize(
+    'flow_file_target, suiterc_exists, err, expected_file',
+    [
+        pytest.param(
+            WorkflowFiles.SUITE_RC, True, None, WorkflowFiles.FLOW_FILE,
+            id="flow.cylc symlinked to suite.rc"
+        ),
+        pytest.param(
+            WorkflowFiles.SUITE_RC, False, WorkflowFilesError, None,
+            id="flow.cylc symlinked to non-existent suite.rc"
+        ),
+        pytest.param(
+            'inside.cylc', True, WorkflowFilesError, None,
+            id="flow.cylc symlinked to file in run dir, suite.rc exists"
+        ),
+        pytest.param(
+            'inside.cylc', False, None, WorkflowFiles.FLOW_FILE,
+            id="flow.cylc symlinked to file in run dir, no suite.rc"
+        ),
+        pytest.param(
+            '../outside.cylc', True, WorkflowFilesError, None,
+            id="flow.cylc symlinked to file outside, suite.rc exists"
+        ),
+        pytest.param(
+            '../outside.cylc', False, None, WorkflowFiles.FLOW_FILE,
+            id="flow.cylc symlinked to file outside, no suite.rc"
+        ),
+        pytest.param(
+            None, True, None, WorkflowFiles.SUITE_RC,
+            id="No flow.cylc, suite.rc exists"
+        ),
+        pytest.param(
+            None, False, WorkflowFilesError, None,
+            id="No flow.cylc, no suite.rc"
+        ),
+    ]
+)
+def test_check_flow_file_symlink(
+    flow_file_target: Optional[str],
+    suiterc_exists: bool,
+    err: Optional[Type[Exception]],
+    expected_file: Optional[str],
+    tmp_path: Path
+) -> None:
+    """Test check_flow_file() when flow.cylc is a symlink or doesn't exist.
+
+    Params:
+        flow_file_target: Relative path of the flow.cylc symlink's target,
+            or None if the symlink doesn't exist.
+        suiterc_exists: Whether there is a suite.rc file in the dir.
+        err: Type of exception if expected to get raised.
+        expected_file: Which file's path should get returned, when
+            symlink_suiterc_arg is FALSE (otherwise it will always be
+            flow.cylc, assuming no exception occurred).
+    """
+    run_dir = tmp_path / 'espresso'
+    flow_file = run_dir / WorkflowFiles.FLOW_FILE
+    suiterc = run_dir / WorkflowFiles.SUITE_RC
+    run_dir.mkdir()
+    (run_dir / '../outside.cylc').touch()
+    (run_dir / 'inside.cylc').touch()
+    if suiterc_exists:
+        suiterc.touch()
+    if flow_file_target:
+        flow_file.symlink_to(flow_file_target)
+
+    if err:
+        with pytest.raises(err):
+            check_flow_file(run_dir)
+    else:
+        assert expected_file is not None  # otherwise test is wrong
+        result = check_flow_file(run_dir)
+        assert result == run_dir / expected_file
+
+
+@pytest.mark.parametrize(
     'symlink_dirs, err_msg, expected',
     [
         ('log=$shortbread, share= $bourbon,share/cycle= $digestive, ',
