@@ -124,7 +124,7 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
 
     Args:
         cfg: The config to be printed.
-        level: Each level of the hierachy is printed with this many extra
+        level: Each level of the hierarchy is printed with this many extra
             square brackets: E.g. if ``indent=2`` then ``[runtime]`` will be
             printed as ``[[[runtime]]].
         indent (int): Indentation of top level sections - if set the whole
