@@ -48,7 +48,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0rc1 (<span actions:bind='release-date'></span>)__
+## __cylc-8.0rc1 (<span actions:bind='release-date'>Upcoming</span>)__
 
 First Release Candidate for Cylc 8.
 
@@ -65,6 +65,10 @@ being allowed as installation target names.
 
 [#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
 of workflows inside other installed workflows.
+
+[#4521](https://github.com/cylc/cylc-flow/pull/4521) - The workflow config
+logs (that get written in `log/flow-config/` on start/restart/reload) 
+are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
 
@@ -131,7 +135,6 @@ error for a config item that isn't valid, to one that isn't set.
 
 [#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
 `cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
-
 
 ### Fixes
 
