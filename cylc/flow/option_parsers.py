@@ -263,8 +263,8 @@ TASK_GLOB matches task or family names at a given cycle point.
                 '--color', '--colour', metavar='WHEN', action='store',
                 default='auto', choices=['never', 'auto', 'always'],
                 help=(
-                    "Determine when to use color/bold text in terminal output."
-                    " Options available are 'never', 'auto' and 'always'."
+                    "When to use color/bold text in terminal output."
+                    " Options are 'never', 'auto' and 'always'."
                 )
             )
 
