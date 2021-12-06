@@ -87,7 +87,7 @@ from cylc.flow.platforms import (
     get_platform,
     is_platform_with_target_in_list)
 from cylc.flow.profiler import Profiler
-from cylc.flow.resources import extract_resources
+from cylc.flow.resources import get_resources
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_events import (
@@ -304,8 +304,9 @@ class Scheduler:
         )
 
         # Extract job.sh from library, for use in job scripts.
-        extract_resources(
-            workflow_files.get_workflow_srv_dir(self.workflow),
+        get_resources(
+            os.path.join(
+                workflow_files.get_workflow_srv_dir(self.workflow), 'etc',),
             ['etc/job.sh'])
         # Add python dirs to sys.path
         for sub_dir in ["python", os.path.join("lib", "python")]:

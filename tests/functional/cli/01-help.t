@@ -43,6 +43,7 @@ __STDERR__
 run_fail "${TEST_NAME_BASE}-get" cylc get
 cmp_ok "${TEST_NAME_BASE}-get.stderr" <<'__STDERR__'
 cylc get: is ambiguous for:
+    cylc get-resources
     cylc get-workflow-contact
     cylc get-workflow-version
 __STDERR__
