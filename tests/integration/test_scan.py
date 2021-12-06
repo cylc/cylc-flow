@@ -138,7 +138,7 @@ def run_dir_with_nasty_symlinks():
 
 
 @pytest.fixture(scope='session')
-def nested_run_dir():
+def nested_dir():
     tmp_path = Path(TemporaryDirectory().name)
     tmp_path.mkdir()
     init_flows(
@@ -284,20 +284,38 @@ async def test_is_active(sample_run_dir):
 
 
 @pytest.mark.asyncio
-async def test_max_depth(nested_run_dir):
+async def test_max_depth(nested_dir):
     """It should descend only as far as permitted."""
     assert await listify(
-        scan(nested_run_dir, max_depth=1)
+        scan(nested_dir, max_depth=1)
     ) == [
         'a'
     ]
 
     assert await listify(
-        scan(nested_run_dir, max_depth=3)
+        scan(nested_dir, max_depth=3)
     ) == [
         'a',
         'b/c',
         'd/e/f'
+    ]
+
+
+@pytest.mark.asyncio
+async def test_max_depth_configurable(nested_dir, mock_glbl_cfg):
+    """Default scan depth should be configurable in global.cylc."""
+    mock_glbl_cfg(
+        'cylc.flow.network.scan.glbl_cfg',
+        '''
+        [install]
+            max depth = 2
+        '''
+    )
+    assert await listify(
+        scan(nested_dir)
+    ) == [
+        'a',
+        'b/c',
     ]
 
 

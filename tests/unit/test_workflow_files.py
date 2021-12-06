@@ -36,7 +36,6 @@ from cylc.flow.exceptions import (
 from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
-    MAX_SCAN_DEPTH,
     NESTED_DIRS_MSG,
     REG_CLASH_MSG,
     WorkflowFiles,
@@ -69,6 +68,21 @@ from .filetree import (
     create_filetree,
     get_filetree_as_list
 )
+
+
+# global.cylc[install]scan depth for these tests:
+MAX_SCAN_DEPTH = 3
+
+
+@pytest.fixture
+def glbl_cfg_max_scan_depth(mock_glbl_cfg: Callable) -> None:
+    mock_glbl_cfg(
+        'cylc.flow.workflow_files.glbl_cfg',
+        f'''
+        [install]
+            max depth = {MAX_SCAN_DEPTH}
+        '''
+    )
 
 
 @pytest.mark.parametrize(
@@ -105,7 +119,7 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-def test_check_nested_dirs(tmp_run_dir: Callable):
+def test_check_nested_dirs(tmp_run_dir: Callable, glbl_cfg_max_scan_depth):
     """Test that check_nested_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
@@ -147,6 +161,7 @@ def test_check_nested_dirs(tmp_run_dir: Callable):
 )
 def test_check_nested_dirs_install_dirs(
     tmp_run_dir: Callable,
+    glbl_cfg_max_scan_depth,
     test_install_path: str,
     existing_install_path: str,
     named_run: bool

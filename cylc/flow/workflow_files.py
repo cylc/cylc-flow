@@ -326,8 +326,6 @@ REG_DELIM = "/"
 NO_TITLE = "No title provided"
 REC_TITLE = re.compile(r"^\s*title\s*=\s*(.*)\s*$")
 
-MAX_SCAN_DEPTH = 4  # How many subdir levels down to look for valid run dirs
-
 CONTACT_FILE_EXISTS_MSG = r"""workflow contact file exists: %(fname)s
 
 Workflow "%(workflow)s" is already running, listening at "%(host)s:%(port)s".
@@ -716,9 +714,8 @@ async def get_contained_workflows(
         scan_depth: How many levels deep to look inside the dir.
     """
     from cylc.flow.network.scan import scan
-    kwargs = {'max_depth': scan_depth} if scan_depth is not None else {}
     return sorted(
-        [i['name'] async for i in scan(scan_dir=path, **kwargs)]
+        [i['name'] async for i in scan(scan_dir=path, max_depth=scan_depth)]
     )
 
 
@@ -763,8 +760,9 @@ def init_clean(reg: str, opts: 'Values') -> None:
     rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
 
     # Check dir does not contain other workflows:
+    scan_depth = glbl_cfg().get(['install', 'max depth']) + 1
     contained_workflows = asyncio.get_event_loop().run_until_complete(
-        get_contained_workflows(local_run_dir, MAX_SCAN_DEPTH + 1)
+        get_contained_workflows(local_run_dir, scan_depth)
     )  # Note: increased scan depth for safety
     if len(contained_workflows) == 1:
         # Clean the contained workflow followed by the parent dir
@@ -1438,7 +1436,7 @@ def check_nested_dirs(
 
     if install_dir:
         # Search child tree for install directories:
-        for depth in range(MAX_SCAN_DEPTH):
+        for depth in range(glbl_cfg().get(['install', 'max depth'])):
             search_pattern = f'*/{"*/" * depth}{WorkflowFiles.Install.DIRNAME}'
             for result in install_dir.glob(search_pattern):
                 raise WorkflowFilesError(
