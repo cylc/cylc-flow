@@ -172,6 +172,8 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow: str) -> None:
+    # TODO:
+    # Note this one will require a little more thought
     workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 

@@ -53,6 +53,8 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', reg: str) -> None:
+    # TODO: ???
+    # I guess don't multi this one
     reg, _ = parse_reg(reg)
     pclient = get_client(reg, timeout=options.comms_timeout)
 

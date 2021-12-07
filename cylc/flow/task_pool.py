@@ -1598,10 +1598,10 @@ class TaskPool:
 
         Return (itasks, bad_items).
         """
+        if not items:
+            return [], []
         itasks: List[TaskProxy] = []
         bad_items: List[str] = []
-        if not items:
-            itasks = self.get_all_tasks()
         else:
             for item in items:
                 point_str, name_str, status = self._parse_task_item(item)

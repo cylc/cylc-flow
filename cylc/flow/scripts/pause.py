@@ -23,19 +23,22 @@ Pause a workflow.
 This prevents submission of any task jobs.
 
 Examples:
+  # pause my_flow
   $ cylc pause my_flow
 
-To resume a paused workflow, use 'cylc play'.
+  # un-pause my_flow
+  $ cylc play my_flow
 
 Not to be confused with `cylc hold`.
 """
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.multi import call_multi
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -56,15 +59,15 @@ mutation (
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
-        argdoc=[('WORKFLOW', 'Workflow name or ID')]
+        __doc__,
+        comms=True,
+        multitask=True,
+        argdoc=[('ID [ID ...]', 'Workflow ID(s)')],
     )
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str) -> None:
-    workflow, _ = parse_reg(workflow)
+async def run(options: 'Values', workflow: str) -> None:
     pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
@@ -74,4 +77,13 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids) -> None:
+    call_multi(
+        partial(run, options),
+        *ids,
+        constraint='workflows',
+    )

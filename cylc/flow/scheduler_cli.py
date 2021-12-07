@@ -281,6 +281,7 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
     """
     # Parse workflow name but delay Cylc 7 suiter.rc deprecation warning
     # until after the start-up splash is printed.
+    # TODO: singleton
     reg, _ = parse_reg(reg, warn_depr=False)
     try:
         detect_old_contact_file(reg)

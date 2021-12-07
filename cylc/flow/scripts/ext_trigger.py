@@ -104,6 +104,7 @@ def main(
     event_msg: str,
     event_id: str
 ) -> None:
+    # TODO: make this one a singleton
     workflow, _ = parse_reg(workflow)
     LOG.info('Send to workflow %s: "%s" (%s)', workflow, event_msg, event_id)
     pclient = get_client(workflow, timeout=options.comms_timeout)

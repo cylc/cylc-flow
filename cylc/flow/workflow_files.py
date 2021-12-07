@@ -1208,10 +1208,10 @@ def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
     """
     if not src:
         validate_workflow_name(reg)
-    cur_dir_only = reg.startswith(f'{os.curdir}{os.sep}')  # starts with './'
-    reg: Path = Path(expand_path(reg))
 
     if src:
+        # starts with './'
+        cur_dir_only = reg.startswith(f'{os.curdir}{os.sep}')
         reg, abs_path = _parse_src_reg(reg, cur_dir_only)
     else:
         abs_path = Path(get_workflow_run_dir(reg))
@@ -1222,6 +1222,7 @@ def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
             )
         abs_path, reg = infer_latest_run(abs_path)
     detect_both_flow_and_suite(abs_path)
+    # TODO check_deprecation?
     check_deprecation(abs_path, warn=warn_depr)
     return (str(reg), abs_path)
 

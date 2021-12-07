@@ -1,4 +1,4 @@
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -275,7 +275,7 @@ def tokenise(identifier):
     raise ValueError(f'Invalid Cylc identifier: {identifier}')
 
 
-def detokenise(tokens, selectors=False):
+def detokenise(tokens, selectors=False, relative=False):
     """Convert Cylc tokens into a string identifier.
 
     Args:
@@ -283,6 +283,9 @@ def detokenise(tokens, selectors=False):
             Tokens as returned by tokenise.
         selectors (bool):
             If true selectors (i.e. :sel) will be included in the output.
+        relative (bool):
+            If true relative references are not given the `//` prefix.
+            TODO: remove this?
 
     Returns:
         str - Identifier i.e. ~user/flow//cycle/task/job
@@ -307,6 +310,8 @@ def detokenise(tokens, selectors=False):
         # relative references:
         >>> detokenise(tokenise('//cycle/task/job'))
         '//cycle/task/job'
+        >>> detokenise(tokenise('//cycle/task/job'), relative=True)
+        'cycle/task/job'
 
         # selectors are enabled using the selectors kwarg:
         >>> detokenise(tokenise('flow:a//cycle:b/task:c/job:d'))
@@ -350,7 +355,9 @@ def detokenise(tokens, selectors=False):
 
     if is_relative:
         highest_token = Tokens.Cycle
-        identifier = ['/']
+        identifier = []
+        if not relative:
+            identifier = ['/']
     else:
         highest_token = Tokens.User
         identifier = []
@@ -435,6 +442,73 @@ def upgrade_legacy_ids(*ids):
         f'Cylc7 format is deprecated using: {" ".join(legacy_ids)}'
     )
     return legacy_ids
+
+
+def strip_flow(tokens):
+    ret = {**tokens}
+    ret.pop('user')
+    ret.pop('flow')
+    ret.pop('flow_sel')
+    return ret
+
+
+def is_null(tokens):
+    """Returns True if no tokens are set.
+
+    Examples:
+        >>> is_null({})
+        True
+        >>> is_null({'job_sel': 'x'})
+        True
+        >>> is_null({'job': 'x'})
+        False
+
+    """
+    return not any(
+        bool(tokens.get(token.value))
+        for token in Tokens
+    )
+
+
+def contains_task_like(tokens):
+    """Returns True if any task-like objects are present in the ID.
+
+    Task like == cycles or tasks or jobs.
+
+    Examples:
+        >>> contains_task_like(tokenise('flow//'))
+        False
+        >>> contains_task_like(tokenise('flow//cycle'))
+        True
+
+    """
+    return any(
+        bool(tokens.get(token.value))
+        for token in Tokens
+        if token not in {Tokens.User, Tokens.Flow}
+    )
+
+
+def contains_multiple_workflows(tokens_list):
+    """Returns True if multiple workflows are contained in the tokens list.
+
+    Examples:
+        >>> a_1 = tokenise('a//1')
+        >>> a_2 = tokenise('a//2')
+        >>> b_1 = tokenise('b//1')
+
+        >>> contains_multiple_workflows([a_1])
+        False
+        >>> contains_multiple_workflows([a_1, a_2])
+        False
+        >>> contains_multiple_workflows([a_1, b_1])
+        True
+
+    """
+    return len({
+        (tokens['user'], tokens['flow'])
+        for tokens in tokens_list
+    }) > 1
 
 
 def parse_cli(*ids):
@@ -551,3 +625,20 @@ def parse_cli(*ids):
         tokens_list.append(tokens)
 
     return tokens_list
+
+
+def parse_ids(*ids):
+    tokens_list = parse_cli(*ids)
+    workflows = {}
+    for tokens in tokens_list:
+        if tokens['user']:
+            # TODO
+            raise Exception('Changing user not supported')
+        if tokens['flow_sel']:
+            # TODO
+            raise Exception('Multi workflow requests not supported')
+        key = tokens['flow']
+        workflows.setdefault(key, []).append(
+            detokenise(strip_flow(tokens), relative=True)
+        )
+    return workflows

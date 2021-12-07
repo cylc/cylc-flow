@@ -129,6 +129,7 @@ def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
         )
         return
 
+    # TODO:
     workflow, flow_file = parse_reg(reg, src=True)
 
     config = WorkflowConfig(

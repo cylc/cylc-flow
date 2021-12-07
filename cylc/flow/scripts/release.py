@@ -22,13 +22,13 @@ Release held tasks in a workflow.
 
 Examples:
   # Release mytask at cycle 1234 in my_flow
-  $ cylc release my_flow mytask.1234
+  $ cylc release my_flow//1234/mytask
 
   # Release all active tasks at cycle 1234 in my_flow
-  $ cylc release my_flow '*.1234'
+  $ cylc release 'my_flow//1234/*'
 
   # Release all active instances of mytask in my_flow
-  $ cylc release my_flow 'mytask.*'
+  $ cylc release 'my_flow//*/mytask'
 
   # Release all held tasks and remove the hold point
   $ cylc release my_flow --all
@@ -36,16 +36,17 @@ Examples:
 Held tasks do not submit their jobs even if ready to run.
 
 Note: globs and ":<state>" selectors will only match active tasks;
-to release future tasks, use exact identifiers e.g. "mytask.1234".
+to release future tasks, use exact identifiers e.g. "1234/mytask".
 
 See also 'cylc hold'.
 """
 
-from cylc.flow.workflow_files import parse_reg
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -82,10 +83,10 @@ mutation (
 
 def get_option_parser() -> COP:
     parser = COP(
-        __doc__, comms=True, multitask=True,
-        argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('[TASK_GLOB ...]', "Task matching patterns")]
+        __doc__,
+        comms=True,
+        multitask=True,
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
     )
 
     parser.add_option(
@@ -110,12 +111,9 @@ def _validate(options: 'Values', *task_globs: str) -> None:
                 "See `cylc release --help`.")
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
+async def run(options: 'Values', workflow, *ids):
+    _validate(options, *ids)
 
-    _validate(options, *task_globs)
-
-    workflow, _ = parse_reg(workflow)
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     if options.release_all:
@@ -123,7 +121,7 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
         args = {}
     else:
         mutation = RELEASE_MUTATION
-        args = {'tasks': list(task_globs)}
+        args = {'tasks': list(ids)}
 
     mutation_kwargs = {
         'request_string': mutation,
@@ -133,4 +131,12 @@ def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids):
+    call_multi(
+        partial(run, options),
+        *ids,
+    )

@@ -64,6 +64,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', reg: str) -> None:
+    # TODO:
     workflow, flow_file = parse_reg(reg, src=True)
 
     # extract task host platforms from the workflow

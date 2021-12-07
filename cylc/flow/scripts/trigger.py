@@ -20,23 +20,33 @@
 Manually trigger tasks.
 
 Examples:
-  $ cylc trigger WORKFLOW  # trigger all tasks in a running workflow
-  # trigger some tasks in a running workflow:
-  $ cylc trigger WORKFLOW TASK_GLOB ...
+  # trigger task foo in cycle 1234 in my_flow
+  $ cylc trigger my_flow//1234/foo
 
-NOTE waiting tasks that are queue-limited will be queued if triggered, to
+  # trigger all failed tasks in my_flow
+  $ cylc trigger 'my_flow//*:failed'
+
+  # start a new "flow" by triggering 1234/foo
+  $ cylc trigger --reflow my_flow//1234/foo
+
+Note: globs and ":<state>" selectors will only match active tasks;
+to release future tasks, use exact identifiers e.g. "1234/mytask".
+
+Note: waiting tasks that are queue-limited will be queued if triggered, to
 submit as normal when released by the queue; queued tasks will submit
 immediately if triggered, even if that violates the queue limit (so you may
 need to trigger a queue-limited task twice to get it to submit immediately).
 
 """
 
+from functools import partial
 from typing import TYPE_CHECKING
 
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -63,10 +73,11 @@ mutation (
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask_nocycles=True,
-        argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('[TASK_GLOB ...]', 'Task matching patterns')])
+        __doc__,
+        comms=True,
+        multitask_nocycles=True,
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+    )
 
     parser.add_option(
         "--reflow", action="store_true",
@@ -83,22 +94,28 @@ def get_option_parser():
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
-    """CLI for "cylc trigger"."""
-    if options.flow_descr and not options.reflow:
-        parser.error("--meta requires --reflow")
-    workflow, _ = parse_reg(workflow)
+async def run(options: 'Values', workflow: str, *ids):
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
             'wFlows': [workflow],
-            'tasks': list(task_globs),
+            'tasks': list(ids),
             'reflow': options.reflow,
             'flowDescr': options.flow_descr,
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids: str):
+    """CLI for "cylc trigger"."""
+    if options.flow_descr and not options.reflow:
+        raise UserInputError("--meta requires --reflow")
+    call_multi(
+        partial(run, options),
+        *ids,
+    )

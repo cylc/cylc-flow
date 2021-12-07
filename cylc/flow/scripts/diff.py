@@ -130,6 +130,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow1: str, workflow2: str):
+    # TODO:
     workflow1_name, workflow1_fpath = parse_reg(workflow1, src=True)
     workflow2_name, workflow2_fpath = parse_reg(workflow2, src=True)
     if workflow1_fpath == workflow2_fpath:

@@ -92,6 +92,7 @@ def main(parser: COP, opts: 'Values', reg: Optional[str] = None) -> None:
                 "The current working directory is not a workflow run directory"
             )
     else:
+        # TODO: ?
         reg, _ = parse_reg(reg, warn_depr=False)
     run_dir = Path(get_workflow_run_dir(reg))
     if not run_dir.is_dir():

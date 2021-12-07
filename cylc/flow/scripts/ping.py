@@ -21,21 +21,22 @@
 Test communication with a running workflow.
 
 If workflow WORKFLOW is running or TASK in WORKFLOW is currently running,
-exit with success status, else exit with error status."""
+exit with success status, else exit with error status.
+"""
 
 from ansimarkup import parse as cparse
+from functools import partial
 import sys
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING
 
 from cylc.flow import ID_DELIM
-from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
+from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.task_id import TaskID
 from cylc.flow.task_state import TASK_STATUS_RUNNING
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -64,28 +65,26 @@ query ($tProxy: ID!) {
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True,
-        argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('[TASK]', 'Task ' + TaskID.SYNTAX)
-        ]
+        __doc__,
+        comms=True,
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
     )
 
     return parser
 
 
-@cli_function(get_option_parser)
-def main(
-    parser: COP,
+async def run(
     options: 'Values',
     workflow: str,
-    task_id: Optional[str] = None
-) -> None:
-    workflow, _ = parse_reg(workflow)
+    *ids,
+) -> Dict:
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
-    if task_id and not TaskID.is_valid_id(task_id):
-        raise UserInputError("Invalid task ID: %s" % task_id)
+    ret = {
+        'stdout': [],
+        'stderr': [],
+        'exit': 0
+    }
 
     flow_kwargs = {
         'request_string': FLOW_QUERY,
@@ -94,30 +93,63 @@ def main(
     task_kwargs: Dict[str, Any] = {
         'request_string': TASK_QUERY,
     }
-    # cylc ping WORKFLOW
-    result = pclient('graphql', flow_kwargs)
+    # ping called on the workflow
+    result = await pclient.async_request('graphql', flow_kwargs)
     msg = ""
     for flow in result['workflows']:
         w_name = flow['name']
         w_port = flow['port']
         w_pub_port = flow['pubPort']
         if cylc.flow.flags.verbosity > 0:
-            sys.stdout.write(
+            ret['stdout'].append(
                 f'{w_name} running on '
                 f'{pclient.host}:{w_port} {w_pub_port}\n'
             )
-        # cylc ping WORKFLOW TASKID
-        if task_id:
-            task, point = TaskID.split(task_id)
+
+        # ping called with task-like objects
+        for tokens in ids:
+            task = tokens['task']
+            cycle = tokens['cycle']
             w_id = flow['id']
             task_kwargs['variables'] = {
-                'tProxy': f'{w_id}{ID_DELIM}{point}{ID_DELIM}{task}'
+                'tProxy': f'{w_id}{ID_DELIM}{cycle}{ID_DELIM}{task}'
             }
-            task_result = pclient('graphql', task_kwargs)
+            task_result = await pclient.async_request('graphql', task_kwargs)
+            string_id = detokenise(tokens, relative=True)
             if not task_result.get('taskProxy'):
-                msg = "task not found"
+                msg = f"task not found: {string_id}"
             elif task_result['taskProxy']['state'] != TASK_STATUS_RUNNING:
-                msg = f"task not {TASK_STATUS_RUNNING}"
+                msg = f"task not {TASK_STATUS_RUNNING}: {string_id}"
             if msg:
-                print(cparse(f'<red>{msg}</red>'))
-                sys.exit(1)
+                ret['stderr'].append(cparse(f'<red>{msg}</red>'))
+                ret['exit'] = 1
+
+    return ret
+
+
+def report(ret):
+    for line in ret['stdout']:
+        print(line)
+    for line in ret['stderr']:
+        print(line, file=sys.stderr)
+
+
+@cli_function(get_option_parser)
+def main(
+    parser: COP,
+    options: 'Values',
+    *ids,
+) -> None:
+    rets = call_multi(
+        partial(run, options),
+        *ids,
+        report=report,
+        constraint='mixed',
+    )
+
+    if all(
+        ret['exit'] == 0
+        for ret in rets
+    ):
+        sys.exit(0)
+    sys.exit(1)

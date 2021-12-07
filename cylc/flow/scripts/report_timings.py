@@ -116,6 +116,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow: str) -> None:
+    # TODO: singleton
     workflow, _ = parse_reg(workflow)
 
     output_options = [

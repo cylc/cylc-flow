@@ -357,6 +357,7 @@ def main(
             sys.exit(res)
         return
 
+    # TODO:
     workflow_name, _ = parse_reg(reg)
     # Get long-format mode.
     try:

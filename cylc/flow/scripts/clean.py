@@ -119,6 +119,7 @@ CleanOptions = Options(get_option_parser())
 
 @cli_function(get_option_parser)
 def main(parser: COP, opts: 'Values', reg: str):
+    # TODO:
     # Note: do not use workflow_files.parse_reg here
     if cylc.flow.flags.verbosity < 2:
         disable_timestamps(LOG)

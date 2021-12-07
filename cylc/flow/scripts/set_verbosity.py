@@ -25,13 +25,15 @@ example, if you choose WARNING, only warnings and critical messages will be
 logged.
 """
 
+from functools import partial
 from optparse import Values
 
 from cylc.flow import LOG_LEVELS
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 MUTATION = '''
 mutation (
@@ -52,30 +54,36 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True,
         argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('LEVEL', ', '.join(LOG_LEVELS.keys()))
+            ('LEVEL', ', '.join(LOG_LEVELS.keys())),
+            ('ID [ID ...]', 'Workflow ID(s)'),
         ]
     )
 
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: str, severity_str: str) -> None:
-    try:
-        severity = LOG_LEVELS[severity_str]
-    except KeyError:
-        parser.error("Illegal logging level, %s" % severity_str)
-
-    reg, _ = parse_reg(reg)
-    pclient = get_client(reg, timeout=options.comms_timeout)
+async def run(options: 'Values', severity, workflow) -> None:
+    pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [reg],
+            'wFlows': [workflow],
             'level': severity,
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', severity_str: str, *ids) -> None:
+    try:
+        severity = LOG_LEVELS[severity_str]
+    except KeyError:
+        raise UserInputError("Illegal logging level, %s" % severity_str)
+    call_multi(
+        partial(run, options, severity),
+        *ids,
+        constraint='workflows',
+    )

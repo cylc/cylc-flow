@@ -57,6 +57,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow: str, func: str) -> None:
+    # TODO:
     workflow, _ = parse_reg(workflow)
     pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
     if options.no_input:

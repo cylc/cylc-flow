@@ -21,16 +21,23 @@
 Kill running or submitted jobs.
 
 Examples:
-  $ cylc kill WORKFLOW  # kill all active tasks in the workflow
-  $ cylc kill WORKFLOW TASK_GLOB ...  # kill one or more active tasks
+  # kill a specific task in my_flow
+  $ cylc kill my_flow//1/a
+
+  # kill multiple tasks in my_flow
+  $ cylc kill myflow// //1/a //1/b //1/c
+
+  # kill all active tasks in the my_flow
+  $ cylc kill 'my_flow//*'
 """
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -53,26 +60,33 @@ mutation (
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
-        argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('[TASK_GLOB ...]', 'Task matching patterns')])
+        __doc__,
+        comms=True,
+        multitask=True,
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+    )
 
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
-    """CLI of "cylc kill"."""
-    workflow, _ = parse_reg(workflow)
+async def run(options: 'Values', workflow: str, *ids: str):
     pclient = get_client(workflow, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
             'wFlows': [workflow],
-            'tasks': list(task_globs),
+            'tasks': list(ids),
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids: str):
+    """CLI of "cylc kill"."""
+    call_multi(
+        partial(run, options),
+        *ids,
+    )
