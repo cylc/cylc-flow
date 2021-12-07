@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc extract-resources [OPTIONS] ARGS
+"""cylc get-resources [OPTIONS] ARGS
 
 Extract resources from the cylc.flow package."""
 
@@ -34,7 +34,12 @@ def get_option_parser():
         ]
     )
 
-    parser.add_option('--list', default=False, action='store_true')
+    parser.add_option(
+        '--list',
+        help="List available package resources.",
+        default=False,
+        action='store_true'
+    )
 
     return parser
 
