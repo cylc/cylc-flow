@@ -73,8 +73,11 @@ renamed `cylc get-resources` and small changes made:
 - Metadata as well as names from ``--list`` option.
 - Files extracted to to ``target/source_name`` rather than ``target/full/source/path``.
 
+[#4548](https://github.com/cylc/cylc-flow/pull/4548) - Changed the
+workflow version control info log file format from modified-INI to JSON.
+
 [#4521](https://github.com/cylc/cylc-flow/pull/4521) - The workflow config
-logs (that get written in `log/flow-config/` on start/restart/reload) 
+logs (that get written in `log/flow-config/` on start/restart/reload)
 are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
