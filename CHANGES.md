@@ -60,11 +60,9 @@ First Release Candidate for Cylc 8.
 Cylc no longer creates a `flow.cylc` symlink to a `suite.rc` file.
 This only affects you if you have used a prior Cylc 8 pre-release.
 
-[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent runN and run\d+
-being allowed as installation target names.
-
-[#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
-of workflows inside other installed workflows.
+[#4547](https://github.com/cylc/cylc-flow/pull/4547) - The max scan depth is
+now configurable in `global.cylc[install]max depth`, and `cylc install` will
+fail if the workflow ID would exceed this depth.
 
 [#4536](https://github.com/cylc/cylc-flow/pull/4536) - `cylc extract-resources`
 renamed `cylc get-resources` and small changes made:
@@ -74,10 +72,16 @@ renamed `cylc get-resources` and small changes made:
 - Files extracted to to ``target/source_name`` rather than ``target/full/source/path``.
 
 [#4521](https://github.com/cylc/cylc-flow/pull/4521) - The workflow config
-logs (that get written in `log/flow-config/` on start/restart/reload) 
+logs (that get written in `log/flow-config/` on start/restart/reload)
 are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
+
+[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent `runN` and
+`run<number>` being allowed as installation target names.
+
+[#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
+of workflows inside other installed workflows.
 
 [#4543](https://github.com/cylc/cylc-flow/pull/4543) -
 `cylc play --stopcp=reload` now takes its value from
