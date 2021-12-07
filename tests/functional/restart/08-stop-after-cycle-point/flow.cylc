@@ -14,8 +14,8 @@ description = """
 [scheduling]
     runahead limit = P1
     initial cycle point = 1970
-    final cycle point = 1974
-    stop after cycle point = 1972
+    final cycle point = 1976
+    stop after cycle point = {{ STOPCP if STOPCP is defined else 1972 }}
     [[graph]]
         P1Y = hello
 

@@ -52,6 +52,7 @@ from cylc.flow.workflow_files import (
     glob_in_run_dir,
     infer_latest_run,
     init_clean,
+    is_forbidden,
     is_installed,
     parse_cli_sym_dirs,
     parse_reg,
@@ -1805,8 +1806,8 @@ def test_check_flow_file(
         with pytest.raises(WorkflowFilesError) as exc:
             check_flow_file(tmp_path)
         assert str(exc.value) == (
-            "Both flow.cylc and suite.rc files are present in the "
-            "source directory. Please remove one and try again. "
+            "Both flow.cylc and suite.rc files are present in "
+            f"{tmp_path}. Please remove one and try again. "
             "For more information visit: "
             "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
             "#backward-compatibility"
@@ -1817,19 +1818,58 @@ def test_check_flow_file(
 
 
 def test_detect_both_flow_and_suite(tmp_path):
-    """Test flow.cylc and suite.rc together in dir raises error."""
+    """Test flow.cylc and suite.rc (as files) together in dir raises error."""
     tmp_path.joinpath(WorkflowFiles.FLOW_FILE).touch()
     tmp_path.joinpath(WorkflowFiles.SUITE_RC).touch()
 
+    forbidden = is_forbidden(tmp_path / WorkflowFiles.FLOW_FILE)
+    assert forbidden is True
     with pytest.raises(WorkflowFilesError) as exc:
         detect_both_flow_and_suite(tmp_path)
-        assert str(exc.value) == (
-            "Both flow.cylc and suite.rc files are present in the "
-            "source directory. Please remove one and try again. "
-            "For more information visit: "
-            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
-            "#backward-compatibility"
-        )
+    assert str(exc.value) == (
+        f"Both flow.cylc and suite.rc files are present in {tmp_path}. Please "
+        "remove one and try again. For more information visit: "
+        "https://cylc.github.io/cylc-doc/latest/html/7-to-8/"
+        "summary.html#backward-compatibility"
+    )
+
+
+def test_detect_both_flow_and_suite_symlinked(tmp_path):
+    """Test flow.cylc symlinked to suite.rc together in dir is permitted."""
+    (tmp_path / WorkflowFiles.SUITE_RC).touch()
+    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
+    flow_file.symlink_to(WorkflowFiles.SUITE_RC)
+    detect_both_flow_and_suite(tmp_path)
+
+
+def test_flow_symlinked_elsewhere_and_suite_present(tmp_path: Path):
+    """flow.cylc symlinked to suite.rc elsewhere, and suite.rc in dir raises"""
+    tmp_path.joinpath('some_other_dir').mkdir(exist_ok=True)
+    suite_file = tmp_path.joinpath('some_other_dir', WorkflowFiles.SUITE_RC)
+    suite_file.touch()
+    run_dir = tmp_path.joinpath('run_dir')
+    run_dir.mkdir(exist_ok=True)
+    flow_file = (run_dir / WorkflowFiles.FLOW_FILE)
+    flow_file.symlink_to(suite_file)
+    forbidden_external = is_forbidden(flow_file)
+    assert forbidden_external is False
+    (run_dir / WorkflowFiles.SUITE_RC).touch()
+    forbidden = is_forbidden(flow_file)
+    assert forbidden is True
+    with pytest.raises(WorkflowFilesError) as exc:
+        detect_both_flow_and_suite(run_dir)
+    assert str(exc.value).startswith(
+        "Both flow.cylc and suite.rc files are present in "
+        f"{run_dir}. Please remove one and try again."
+    )
+
+
+def test_is_forbidden_symlink_returns_false_for_non_symlink(tmp_path):
+    """Test sending a non symlink path is not marked as forbidden"""
+    flow_file = (tmp_path / WorkflowFiles.FLOW_FILE)
+    flow_file.touch()
+    forbidden = is_forbidden(Path(flow_file))
+    assert forbidden is False
 
 
 @pytest.mark.parametrize(
@@ -1844,12 +1884,20 @@ def test_detect_both_flow_and_suite(tmp_path):
             id="flow.cylc symlinked to non-existent suite.rc"
         ),
         pytest.param(
-            'other-path', True, None, WorkflowFiles.SUITE_RC,
-            id="flow.cylc symlinked to other file, suite.rc exists"
+            'inside.cylc', True, WorkflowFilesError, None,
+            id="flow.cylc symlinked to file in run dir, suite.rc exists"
         ),
         pytest.param(
-            'other-path', False, WorkflowFilesError, None,
-            id="flow.cylc symlinked to other file, no suite.rc"
+            'inside.cylc', False, None, WorkflowFiles.FLOW_FILE,
+            id="flow.cylc symlinked to file in run dir, no suite.rc"
+        ),
+        pytest.param(
+            '../outside.cylc', True, WorkflowFilesError, None,
+            id="flow.cylc symlinked to file outside, suite.rc exists"
+        ),
+        pytest.param(
+            '../outside.cylc', False, None, WorkflowFiles.FLOW_FILE,
+            id="flow.cylc symlinked to file outside, no suite.rc"
         ),
         pytest.param(
             None, True, None, WorkflowFiles.SUITE_RC,
@@ -1861,58 +1909,42 @@ def test_detect_both_flow_and_suite(tmp_path):
         ),
     ]
 )
-@pytest.mark.parametrize(
-    'symlink_suiterc_arg',
-    [pytest.param(False, id="symlink_suiterc=False "),
-     pytest.param(True, id="symlink_suiterc=True ")]
-)
 def test_check_flow_file_symlink(
     flow_file_target: Optional[str],
     suiterc_exists: bool,
     err: Optional[Type[Exception]],
     expected_file: Optional[str],
-    symlink_suiterc_arg: bool,
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path
 ) -> None:
     """Test check_flow_file() when flow.cylc is a symlink or doesn't exist.
 
     Params:
-        flow_file_target: Relative path of the flow.cylc symlink's target, or
-            None if the symlink doesn't exist.
+        flow_file_target: Relative path of the flow.cylc symlink's target,
+            or None if the symlink doesn't exist.
         suiterc_exists: Whether there is a suite.rc file in the dir.
         err: Type of exception if expected to get raised.
         expected_file: Which file's path should get returned, when
             symlink_suiterc_arg is FALSE (otherwise it will always be
             flow.cylc, assuming no exception occurred).
-        symlink_suiterc_arg: Value of the symlink_suiterc arg passed to
-            check_flow_file().
     """
-    flow_file = tmp_path.joinpath(WorkflowFiles.FLOW_FILE)
-    suiterc = tmp_path.joinpath(WorkflowFiles.SUITE_RC)
-    tmp_path.joinpath('other-path').touch()
+    run_dir = tmp_path / 'espresso'
+    flow_file = run_dir / WorkflowFiles.FLOW_FILE
+    suiterc = run_dir / WorkflowFiles.SUITE_RC
+    run_dir.mkdir()
+    (run_dir / '../outside.cylc').touch()
+    (run_dir / 'inside.cylc').touch()
     if suiterc_exists:
         suiterc.touch()
     if flow_file_target:
         flow_file.symlink_to(flow_file_target)
 
-    caplog.set_level(logging.INFO, CYLC_LOG)
-    log_msg = ""
-
     if err:
         with pytest.raises(err):
-            check_flow_file(tmp_path, symlink_suiterc_arg)
+            check_flow_file(run_dir)
     else:
         assert expected_file is not None  # otherwise test is wrong
-        result = check_flow_file(tmp_path, symlink_suiterc_arg)
-        if symlink_suiterc_arg is True:
-            assert flow_file.samefile(suiterc)
-            expected_file = WorkflowFiles.FLOW_FILE
-            if flow_file_target != WorkflowFiles.SUITE_RC:
-                log_msg = "Symlink created: flow.cylc -> suite.rc"
-        assert result == tmp_path.joinpath(expected_file)
-
-    if log_msg:
-        assert log_msg in caplog.messages
+        result = check_flow_file(run_dir)
+        assert result == run_dir / expected_file
 
 
 @pytest.mark.parametrize(

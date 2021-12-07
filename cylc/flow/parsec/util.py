@@ -122,6 +122,18 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
              handle=None):
     """Pretty-print a parsec config item or section (nested dict).
 
+    Args:
+        cfg: The config to be printed.
+        level: Each level of the hierarchy is printed with this many extra
+            square brackets: E.g. if ``indent=2`` then ``[runtime]`` will be
+            printed as ``[[[runtime]]].
+        indent (int): Indentation of top level sections - if set the whole
+            document will have a left margin this many 4 space indents wide.
+        prefix (str): Prefix each line with this.
+        none_str (str): Value to insert instead of blank if no value is set in
+            config.
+        handle (stream handler): Where to write the output.
+
     As returned by parse.config.get().
     """
     # Note: default handle=sys.stdout, but explicitly setting this as a kwarg

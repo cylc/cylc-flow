@@ -35,8 +35,7 @@ grep_ok "${ERR}" "${TEST_NAME}.stderr"
 
 # Rename config to "suite.rc"
 mv "${WORKFLOW_RUN_DIR}/flow.cylc" "${WORKFLOW_RUN_DIR}/suite.rc"
-ln -s "${WORKFLOW_RUN_DIR}/suite.rc" "${WORKFLOW_RUN_DIR}/flow.cylc" 
-
+ln -s "${WORKFLOW_RUN_DIR}/suite.rc" "${WORKFLOW_RUN_DIR}/flow.cylc"
 # It should now validate, with a deprecation message
 TEST_NAME="${TEST_NAME_BASE}-validate_as_c7"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"

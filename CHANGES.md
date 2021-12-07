@@ -48,7 +48,7 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0rc1 (<span actions:bind='release-date'></span>)__
+## __cylc-8.0rc1 (<span actions:bind='release-date'>Upcoming</span>)__
 
 First Release Candidate for Cylc 8.
 
@@ -56,16 +56,37 @@ First Release Candidate for Cylc 8.
 
 ### Enhancements
 
+[#4506](https://github.com/cylc/cylc-flow/pull/4506) -
+Cylc no longer creates a `flow.cylc` symlink to a `suite.rc` file.
+This only affects you if you have used a prior Cylc 8 pre-release.
+
 [#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent runN and run\d+
 being allowed as installation target names.
 
 [#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
 of workflows inside other installed workflows.
 
+[#4536](https://github.com/cylc/cylc-flow/pull/4536) - `cylc extract-resources`
+renamed `cylc get-resources` and small changes made:
+- Cylc wrapper script made available.
+- Source argument now before target.
+- Metadata as well as names from ``--list`` option.
+- Files extracted to to ``target/source_name`` rather than ``target/full/source/path``.
+
+[#4521](https://github.com/cylc/cylc-flow/pull/4521) - The workflow config
+logs (that get written in `log/flow-config/` on start/restart/reload) 
+are now sparse, i.e. they will no longer be fleshed-out with defaults.
+
 ### Fixes
+
 
 [#4540](https://github.com/cylc/cylc-flow/pull/4540) - Handle the `/` character
 in job names, for PBS 19.2.1+.
+
+[#4543](https://github.com/cylc/cylc-flow/pull/4543) -
+`cylc play --stopcp=reload` now takes its value from
+`[scheduling]stop after cycle point` instead of using the final cycle point.
+
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0b3 (<span actions:bind='release-date'>Released 2021-11-10</span>)__
@@ -130,7 +151,6 @@ error for a config item that isn't valid, to one that isn't set.
 
 [#4457](https://github.com/cylc/cylc-flow/pull/4457) - Cylc 8
 `cycle point time zone` now defaults to UTC, except in Cylc 7 compatibility mode.
-
 
 ### Fixes
 

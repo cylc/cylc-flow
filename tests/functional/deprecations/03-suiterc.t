@@ -18,13 +18,12 @@
 # Test backwards compatibility for suite.rc files
 
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 2
 
 init_suiterc() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
     WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
-    WORKFLOW_RUN_DIR="$RUN_DIR/$WORKFLOW_NAME"
     mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${WORKFLOW_NAME}/suite.rc"
     cd "${TEST_DIR}/${WORKFLOW_NAME}" || exit
@@ -44,19 +43,3 @@ print(SUITERC_DEPR_MSG)')
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .
 grep_ok "$MSG" "${TEST_NAME_BASE}-validate.stderr"
-
-# Test install suite.rc
-# See also tests/functional/cylc-install/00-simple.t
-TEST_NAME="${TEST_NAME_BASE}-install-after-validate"
-run_ok "${TEST_NAME}" cylc install --flow-name="${WORKFLOW_NAME}" --no-run-name
-
-cd "${WORKFLOW_RUN_DIR}" || exit 1
-exists_ok "flow.cylc"
-
-TEST_NAME="flow.cylc-readlink"
-readlink "flow.cylc" > "${TEST_NAME}.out"
-cmp_ok "${TEST_NAME}.out" <<< "suite.rc"
-
-cd "${TEST_DIR}" || exit 1
-rm -rf "${TEST_DIR:?}/${WORKFLOW_NAME}/"
-purge
