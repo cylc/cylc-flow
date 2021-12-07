@@ -678,10 +678,9 @@ class Scheduler:
         released from runhead.)
 
         """
-        start_type = "Cold"
-        if self.config.start_point > self.config.initial_point:
-            start_type = "Warm"
-        LOG.info(f"{start_type} start from {self.config.start_point}")
+        LOG.info(
+            f"{'warm' if self.options.startcp else 'cold'} start from"
+            f"{self.config.start_point}.")
 
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}"
