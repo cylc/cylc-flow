@@ -33,7 +33,7 @@ from cylc.flow import ID_DELIM
 import cylc.flow.flags
 from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.network.multi import call_multi
+from cylc.flow.id_cli import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_state import TASK_STATUS_RUNNING
 from cylc.flow.terminal import cli_function

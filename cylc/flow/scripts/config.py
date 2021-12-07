@@ -54,11 +54,11 @@ from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import WorkflowFiles, parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -67,7 +67,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("[WORKFLOW]", "Workflow name, ID, or path")],
+        argdoc=[("[WORKFLOW]", "Workflow ID or path to source")],
         jset=True, icp=True
     )
 
@@ -129,8 +129,7 @@ def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
         )
         return
 
-    # TODO:
-    workflow, flow_file = parse_reg(reg, src=True)
+    workflow, flow_file = parse_id(reg, src=True)
 
     config = WorkflowConfig(
         workflow,

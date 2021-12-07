@@ -1176,57 +1176,6 @@ def get_platforms_from_db(run_dir):
         pri_dao.close()
 
 
-def parse_reg(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
-    """Centralised parsing of the workflow argument, to be used by most
-    cylc commands (script modules).
-
-    Infers the latest numbered run if a specific one is not given (e.g.
-    foo -> foo/run3, foo/runN -> foo/run3).
-
-    "Offline" commands (e.g. cylc validate) can usually be used on
-    workflow sources so will need src = True.
-
-    "Online" commands (e.g. cylc stop) are usually only used on workflows in
-    the cylc-run dir so will need src = False.
-
-    Args:
-        reg: The workflow arg. Can be one of:
-            - relative path to the run dir from ~/cylc-run, i.e. the "name"
-                of the workflow;
-            - absolute path to a run dir, source dir or workflow file (only
-                if src is True);
-            - '.' for the current directory (only if src is True).
-        src: Whether the workflow arg can be a workflow source (i.e. an
-            absolute path (which might not be in ~/cylc-run) and/or a
-            flow.cylc file (or any file really), or '.' for cwd).
-
-    Returns:
-        reg: The normalised workflow arg.
-        path: If src is True, the absolute path to the workflow file
-            (flow.cylc or suite.rc). Otherwise, the absolute path to the
-            workflow run dir.
-    """
-    if not src:
-        validate_workflow_name(reg)
-
-    if src:
-        # starts with './'
-        cur_dir_only = reg.startswith(f'{os.curdir}{os.sep}')
-        reg, abs_path = _parse_src_reg(reg, cur_dir_only)
-    else:
-        abs_path = Path(get_workflow_run_dir(reg))
-        if abs_path.is_file():
-            raise WorkflowFilesError(
-                "Workflow name must refer to a directory, "
-                f"but '{reg}' is a file."
-            )
-        abs_path, reg = infer_latest_run(abs_path)
-    detect_both_flow_and_suite(abs_path)
-    # TODO check_deprecation?
-    check_deprecation(abs_path, warn=warn_depr)
-    return (str(reg), abs_path)
-
-
 def check_deprecation(path, warn=True):
     """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
 

@@ -57,6 +57,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, UserInputError
 import cylc.flow.flags
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.command_polling import Poller
@@ -64,7 +65,6 @@ from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.pathutil import expand_path, get_cylc_run_dir
-from cylc.flow.workflow_files import parse_reg
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -128,7 +128,7 @@ class WorkflowPoller(Poller):
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
-        argdoc=[('WORKFLOW', "Workflow name or ID")]
+        argdoc=[('WORKFLOW', "Workflow ID")]
     )
 
     parser.add_option(
@@ -185,8 +185,8 @@ def get_option_parser() -> COP:
 
 
 @cli_function(get_option_parser, remove_opts=["--db"])
-def main(parser: COP, options: 'Values', workflow: str) -> None:
-    workflow, _ = parse_reg(workflow)
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, _ = parse_id(workflow_id)
 
     if options.use_task_point and options.cycle:
         raise UserInputError(
@@ -225,7 +225,7 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
         run_dir = get_cylc_run_dir()
 
     pollargs = {
-        'workflow': workflow,
+        'workflow_id': workflow_id,
         'run_dir': run_dir,
         'task': options.task,
         'cycle': options.cycle,
@@ -241,7 +241,7 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
     connected, formatted_pt = spoller.connect()
 
     if not connected:
-        raise CylcError("cannot connect to the workflow DB")
+        raise CylcError("cannot connect to the workflow_id DB")
 
     if options.status and options.task and options.cycle:
         # check a task status

@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import WorkflowRuntimeClient
-from cylc.flow.network.multi import call_multi
+from cylc.flow.id_cli import call_multi
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:

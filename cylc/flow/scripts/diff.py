@@ -31,9 +31,9 @@ run directory are not currently differenced."""
 import sys
 from typing import TYPE_CHECKING
 
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -117,8 +117,11 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
 def get_option_parser():
     parser = COP(
         __doc__, jset=True, prep=True, icp=True,
-        argdoc=[('WORKFLOW1', 'Workflow name or path'),
-                ('WORKFLOW2', 'Workflow name or path')])
+        argdoc=[
+            ('WORKFLOW1', 'Workflow ID or path to source'),
+            ('WORKFLOW2', 'Workflow ID or path to source')
+        ]
+    )
 
     parser.add_option(
         "-n", "--nested",
@@ -130,9 +133,8 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow1: str, workflow2: str):
-    # TODO:
-    workflow1_name, workflow1_fpath = parse_reg(workflow1, src=True)
-    workflow2_name, workflow2_fpath = parse_reg(workflow2, src=True)
+    workflow1_name, workflow1_fpath = parse_id(workflow1, src=True)
+    workflow2_name, workflow2_fpath = parse_id(workflow2, src=True)
     if workflow1_fpath == workflow2_fpath:
         parser.error("You can't diff a single workflow.")
     print(f"Parsing {workflow1_name} ({workflow1_fpath})")

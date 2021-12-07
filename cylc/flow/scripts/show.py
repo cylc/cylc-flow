@@ -35,11 +35,11 @@ import sys
 from ansimarkup import ansiprint
 
 from cylc.flow import ID_DELIM
+from cylc.flow.id_cli import parse_id
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 
 WORKFLOW_META_QUERY = '''
@@ -143,6 +143,7 @@ def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
         argdoc=[
+            # TODO
             ('WORKFLOW', 'Workflow name or ID'),
             ('[TASK_NAME or TASK_GLOB ...]', 'Task names or match patterns')])
 
@@ -156,23 +157,22 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options: 'Values', reg: str, *task_args: str) -> None:
+def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
     """Implement "cylc show" CLI."""
-    # TODO: singleton
-    reg, _ = parse_reg(reg)
-    pclient = get_client(reg, timeout=options.comms_timeout)
+    workflow_id, _ = parse_id(workflow_id)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
     json_filter = {}
 
     if not task_args:
         query = WORKFLOW_META_QUERY
         query_kwargs = {
             'request_string': query,
-            'variables': {'wFlows': [reg]}
+            'variables': {'wFlows': [workflow_id]}
         }
         # Print workflow info.
         results = pclient('graphql', query_kwargs)
-        for reg in results['workflows']:
-            flat_data = flatten_data(reg)
+        for workflow_id in results['workflows']:
+            flat_data = flatten_data(workflow_id)
             if options.json:
                 json_filter.update(flat_data)
             else:
@@ -187,7 +187,7 @@ def main(_, options: 'Values', reg: str, *task_args: str) -> None:
         tasks_query = TASK_META_QUERY
         tasks_kwargs = {
             'request_string': tasks_query,
-            'variables': {'wFlows': [reg], 'taskIds': task_names}
+            'variables': {'wFlows': [workflow_id], 'taskIds': task_names}
         }
         # Print workflow info.
         results = pclient('graphql', tasks_kwargs)
@@ -208,7 +208,7 @@ def main(_, options: 'Values', reg: str, *task_args: str) -> None:
         tp_kwargs = {
             'request_string': tp_query,
             'variables': {
-                'wFlows': [reg],
+                'wFlows': [workflow_id],
                 'taskIds': [
                     f'{c}{ID_DELIM}{n}'
                     for n, c in [

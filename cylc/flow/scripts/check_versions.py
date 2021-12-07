@@ -41,9 +41,9 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.id_cli import parse_id
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_ssh_cmd
-from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -52,7 +52,12 @@ if TYPE_CHECKING:
 
 
 def get_option_parser():
-    parser = COP(__doc__, prep=True, jset=True)
+    parser = COP(
+        __doc__,
+        prep=True,
+        jset=True,
+        argdoc=[('WORKFLOW', 'Workflow ID or path to source')],
+    )
 
     parser.add_option(
         "-e", "--error", help="Exit with error status "
@@ -65,11 +70,11 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options: 'Values', reg: str) -> None:
     # TODO:
-    workflow, flow_file = parse_reg(reg, src=True)
+    workflow_id, flow_file = parse_id(reg, src=True)
 
-    # extract task host platforms from the workflow
+    # extract task host platforms from the workflow_id
     config = WorkflowConfig(
-        workflow,
+        workflow_id,
         flow_file,
         options,
         load_template_vars(options.templatevars, options.templatevars_file))

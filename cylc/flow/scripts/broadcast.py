@@ -94,16 +94,14 @@ from cylc.flow.broadcast_report import (
 )
 from cylc.flow.cfgspec.workflow import SPEC, upg
 from cylc.flow.exceptions import UserInputError
-from cylc.flow.id import Tokens
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.network.multi import call_multi
+from cylc.flow.id_cli import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 from cylc.flow.print_tree import get_tree
 from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values

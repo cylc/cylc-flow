@@ -23,8 +23,9 @@ Print contact information of a running workflow."""
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, ServiceFileError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.workflow_files import load_contact_file, parse_reg
+from cylc.flow.workflow_files import load_contact_file
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -32,19 +33,18 @@ if TYPE_CHECKING:
 
 
 def get_option_parser():
-    return COP(__doc__, argdoc=[('WORKFLOW', 'Workflow name or ID')])
+    return COP(__doc__, argdoc=[('WORKFLOW', 'Workflow ID')])
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: str) -> None:
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     """CLI for "cylc get-workflow-contact"."""
-    # TODO: make this one a singleton
-    reg, _ = parse_reg(reg)
+    workflow_id, _ = parse_id(workflow_id)
     try:
-        data = load_contact_file(reg)
+        data = load_contact_file(workflow_id)
     except ServiceFileError:
         raise CylcError(
-            f"{reg}: cannot get contact info, workflow not running?"
+            f"{workflow_id}: cannot get contact info, workflow not running?"
         )
     else:
         for key, value in sorted(data.items()):

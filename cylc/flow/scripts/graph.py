@@ -42,10 +42,10 @@ from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -168,7 +168,7 @@ def graph_inheritance(config, write=print):
 
 def get_config(workflow: str, opts: 'Values') -> WorkflowConfig:
     """Return a WorkflowConfig object for the provided reg / path."""
-    workflow, flow_file = parse_reg(workflow, src=True)
+    workflow, flow_file = parse_id(workflow, src=True)
     template_vars = get_template_vars(opts)
     return WorkflowConfig(
         workflow, flow_file, opts, template_vars=template_vars
@@ -178,15 +178,17 @@ def get_config(workflow: str, opts: 'Values') -> WorkflowConfig:
 def get_option_parser():
     """CLI."""
     parser = COP(
-        __doc__, jset=True, prep=True,
+        __doc__,
+        jset=True,
+        prep=True,
         argdoc=[
-            ('[WORKFLOW]', 'Workflow name or path'),
+            ('[WORKFLOW]', 'Workflow ID or path to source'),
             ('[START]', 'Graph start; defaults to initial cycle point'),
             (
                 '[STOP]',
                 'Graph stop point or interval; defaults to 3 points from START'
             )
-        ]
+        ],
     )
 
     parser.add_option(
@@ -357,7 +359,7 @@ def gui(filename):
 def main(
     parser: COP,
     opts: 'Values',
-    workflow: str,
+    workflow_id: str,
     start: Optional[str] = None,
     stop: Optional[str] = None
 ) -> None:
@@ -371,7 +373,7 @@ def main(
     else:
         write = print
 
-    flows: List[Tuple[str, List[str]]] = [(workflow, [])]
+    flows: List[Tuple[str, List[str]]] = [(workflow_id, [])]
     if opts.diff:
         flows.append((opts.diff, []))
 

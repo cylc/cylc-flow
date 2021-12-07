@@ -1590,11 +1590,13 @@ class TaskPool:
         """Return task proxies that match names, points, states in items.
 
         Args:
-            items: strings for matching task proxies, each with the
-                general form name[.point][:state] or [point/]name[:state]
+            items:
+                ID strings for matching task proxies, each with the
+                general form `point[:state][/name[:state]]`
                 where name is a glob-like pattern for matching a task name or
                 a family name.
-            warn: whether to log a warning if no matching tasks are found.
+            warn:
+                Whether to log a warning if no matching tasks are found.
 
         Return (itasks, bad_items).
         """
@@ -1602,20 +1604,19 @@ class TaskPool:
             return [], []
         itasks: List[TaskProxy] = []
         bad_items: List[str] = []
-        else:
-            for item in items:
-                point_str, name_str, status = self._parse_task_item(item)
-                tasks_found = False
-                for itask in self.get_all_tasks():
-                    if (itask.point_match(point_str) and
-                            itask.name_match(name_str) and
-                            itask.status_match(status)):
-                        itasks.append(itask)
-                        tasks_found = True
-                if not tasks_found:
-                    if warn:
-                        LOG.warning(f"No active tasks matching: {item}")
-                    bad_items.append(item)
+        for item in items:
+            point_str, name_str, status = self._parse_task_item(item)
+            tasks_found = False
+            for itask in self.get_all_tasks():
+                if (itask.point_match(point_str) and
+                        itask.name_match(name_str) and
+                        itask.status_match(status)):
+                    itasks.append(itask)
+                    tasks_found = True
+            if not tasks_found:
+                if warn:
+                    LOG.warning(f"No active tasks matching: {item}")
+                bad_items.append(item)
         return itasks, bad_items
 
     def stop_flow(self, flow_num):

@@ -13,12 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Cylc univeral identifier system for referencing Cylc "objets"."""
+
+"""Cylc univeral identifier system for referencing Cylc "objets".
+
+This module contains the abstract ID tokenising/detokenising code.
+"""
 
 from enum import Enum
 import re
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import UserInputError
 
 
 class Tokens(Enum):
@@ -512,6 +517,7 @@ def contains_multiple_workflows(tokens_list):
 
 
 def parse_cli(*ids):
+    # TOOD move?
     """Parse a list of Cylc identifiers as provided on the CLI.
 
     * Validates identifiers.
@@ -633,12 +639,15 @@ def parse_ids(*ids):
     for tokens in tokens_list:
         if tokens['user']:
             # TODO
-            raise Exception('Changing user not supported')
+            raise UserInputError('Changing user not supported')
         if tokens['flow_sel']:
-            # TODO
-            raise Exception('Multi workflow requests not supported')
+            raise UserInputError('Selectors cannot be used on workflows')
         key = tokens['flow']
         workflows.setdefault(key, []).append(
             detokenise(strip_flow(tokens), relative=True)
         )
     return workflows
+
+
+def parse_id(id_, src=False):
+    return parse_cli(id_)[0]

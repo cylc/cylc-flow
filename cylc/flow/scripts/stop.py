@@ -73,7 +73,7 @@ from cylc.flow.exceptions import (
     UserInputError,
 )
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.network.multi import call_multi
+from cylc.flow.id_cli import call_multi
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function

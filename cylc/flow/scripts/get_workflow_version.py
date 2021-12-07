@@ -25,10 +25,10 @@ To find the version you've invoked at the command line see "cylc version".
 
 from typing import TYPE_CHECKING
 
+from cylc.flow.id_cli import parse_id
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -47,20 +47,24 @@ query ($wFlows: [ID]) {
 
 
 def get_option_parser():
-    parser = COP(__doc__, comms=True)
+    parser = COP(
+        __doc__,
+        comms=True,
+        argdoc=[('WORKFLOW', 'Workflow ID')],
+    )
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: str) -> None:
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     # TODO: ???
     # I guess don't multi this one
-    reg, _ = parse_reg(reg)
-    pclient = get_client(reg, timeout=options.comms_timeout)
+    workflow_id, _ = parse_id(workflow_id)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     query_kwargs = {
         'request_string': QUERY,
-        'variables': {'wFlows': [reg]}
+        'variables': {'wFlows': [workflow_id]}
     }
 
     result = pclient('graphql', query_kwargs)

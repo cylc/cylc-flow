@@ -40,10 +40,10 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -144,7 +144,11 @@ fragment wFlow on Workflow {
 
 
 def get_option_parser():
-    parser = COP(__doc__, comms=True)
+    parser = COP(
+        __doc__,
+        comms=True,
+        argdoc=[('WORKFLOW', 'Workflow ID')],
+    )
     parser.add_option(
         "-g", "--global", help="Global information only.",
         action="store_const", const="global", dest="disp_form")
@@ -171,11 +175,11 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options: 'Values', workflow: str) -> None:
+def main(_, options: 'Values', workflow_id: str) -> None:
     # TODO:
     # Note this one will require a little more thought
-    workflow, _ = parse_reg(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    workflow_id, _ = parse_id(workflow_id)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if options.sort_by_cycle:
         sort_args = {'keys': ['cyclePoint', 'name']}
@@ -219,7 +223,7 @@ def main(_, options: 'Values', workflow: str) -> None:
 
     query_kwargs = {
         'request_string': query,
-        'variables': {'wFlows': [workflow], 'sortBy': sort_args}
+        'variables': {'wFlows': [workflow_id], 'sortBy': sort_args}
     }
 
     workflows = pclient('graphql', query_kwargs)
@@ -242,7 +246,7 @@ def main(_, options: 'Values', workflow: str) -> None:
                         for node_name in summary['namespaceDefinitionOrder']
                         if node_name in node_urls
                     }
-                    summary['workflowUrls']['workflow'] = (
+                    summary['workflowUrls']['workflow_id'] = (
                         summary['meta']['URL'])
                     del summary['tasks']
                     del summary['families']

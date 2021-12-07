@@ -82,12 +82,12 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options, *args):
-    workflow = args[0]
+    workflow_id = args[0]
 
     try:
         while True:
             try:
-                host, _, port = get_location(workflow)
+                host, _, port = get_location(workflow_id)
             except (ClientError, IOError, TypeError, ValueError) as exc:
                 print(exc)
                 time.sleep(3)
@@ -103,7 +103,7 @@ def main(_, options, *args):
         topic_set.add(topic.encode('utf-8'))
 
     subscriber = WorkflowSubscriber(
-        workflow,
+        workflow_id,
         host=host,
         port=port,
         topics=topic_set

@@ -56,11 +56,11 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_pub_db_name
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -89,7 +89,7 @@ def smart_open(filename=None):
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[('WORKFLOW', 'Workflow name or ID')]
+        argdoc=[('WORKFLOW', 'Workflow ID')]
     )
     parser.add_option(
         "-r", "--raw",
@@ -115,9 +115,8 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str) -> None:
-    # TODO: singleton
-    workflow, _ = parse_reg(workflow)
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, _ = parse_id(workflow_id)
 
     output_options = [
         options.show_raw, options.show_summary, options.html_summary
@@ -128,7 +127,7 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
         # No output specified - choose summary by default
         options.show_summary = True
 
-    run_db = _get_dao(workflow)
+    run_db = _get_dao(workflow_id)
     row_buf = format_rows(*run_db.select_task_times())
     with smart_open(options.output_filename) as output:
         if options.show_raw:
