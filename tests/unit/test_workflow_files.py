@@ -51,6 +51,7 @@ from cylc.flow.workflow_files import (
     glob_in_run_dir,
     infer_latest_run,
     init_clean,
+    install_workflow,
     is_forbidden,
     is_installed,
     parse_cli_sym_dirs,
@@ -68,6 +69,8 @@ from .filetree import (
     create_filetree,
     get_filetree_as_list
 )
+
+NonCallableFixture = Any
 
 
 # global.cylc[install]scan depth for these tests:
@@ -119,7 +122,10 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
 
-def test_check_nested_dirs(tmp_run_dir: Callable, glbl_cfg_max_scan_depth):
+def test_check_nested_dirs(
+    tmp_run_dir: Callable,
+    glbl_cfg_max_scan_depth: NonCallableFixture
+):
     """Test that check_nested_dirs() raises when a parent dir is a
     workflow directory."""
     cylc_run_dir: Path = tmp_run_dir()
@@ -161,7 +167,7 @@ def test_check_nested_dirs(tmp_run_dir: Callable, glbl_cfg_max_scan_depth):
 )
 def test_check_nested_dirs_install_dirs(
     tmp_run_dir: Callable,
-    glbl_cfg_max_scan_depth,
+    glbl_cfg_max_scan_depth: NonCallableFixture,
     test_install_path: str,
     existing_install_path: str,
     named_run: bool
@@ -2065,3 +2071,31 @@ def test_delete_runN_skipif_cleanedrun_not_runN(tmp_path):
     (tmp_path / 'runN').symlink_to(tmp_path / 'run2')
     clean(str(tmp_path.name) + '/' + 'run1', tmp_path / 'run1')
     assert sorted([i.stem for i in tmp_path.glob('*')]) == ['run2', 'runN']
+
+
+@pytest.mark.parametrize(
+    'workflow_name, err_expected',
+    [
+        ('foo/' * (MAX_SCAN_DEPTH - 1), False),
+        ('foo/' * MAX_SCAN_DEPTH, True)  # /run1 takes it beyond max depth
+    ]
+)
+def test_install_workflow__max_depth(
+    workflow_name: str,
+    err_expected: bool,
+    tmp_path: Path,
+    tmp_run_dir: Callable,
+    tmp_src_dir: Callable,
+    glbl_cfg_max_scan_depth: NonCallableFixture
+):
+    """Test that trying to install beyond max depth fails."""
+    tmp_run_dir()
+    src_dir = tmp_src_dir('bar')
+    if err_expected:
+        with pytest.raises(WorkflowFilesError) as exc_info:
+            install_workflow(workflow_name, src_dir)
+        assert "would exceed global.cylc[install]max depth" in str(
+            exc_info.value
+        )
+    else:
+        install_workflow(workflow_name, src_dir)

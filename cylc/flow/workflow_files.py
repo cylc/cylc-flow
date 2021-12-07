@@ -1642,6 +1642,13 @@ def install_workflow(
     run_path_base = Path(get_workflow_run_dir(workflow_name))
     relink, run_num, rundir = get_run_dir_info(
         run_path_base, run_name, no_run_name)
+    max_scan_depth = glbl_cfg().get(['install', 'max depth'])
+    workflow_id = rundir.relative_to(get_cylc_run_dir())
+    if len(workflow_id.parts) > max_scan_depth:
+        raise WorkflowFilesError(
+            f"Cannot install: workflow ID '{workflow_id}' would exceed "
+            f"global.cylc[install]max depth = {max_scan_depth}"
+        )
     check_nested_dirs(rundir, run_path_base)
     if Path(rundir).exists():
         raise WorkflowFilesError(
@@ -1662,7 +1669,7 @@ def install_workflow(
         for src, dst in symlinks_created.items():
             install_log.info(f"Symlink created from {src} to {dst}")
     try:
-        rundir.mkdir(exist_ok=True)
+        rundir.mkdir(exist_ok=True, parents=True)
     except FileExistsError:
         # This occurs when the file exists but is _not_ a directory.
         raise WorkflowFilesError(
