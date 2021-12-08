@@ -2083,7 +2083,6 @@ def test_delete_runN_skipif_cleanedrun_not_runN(tmp_path):
 def test_install_workflow__max_depth(
     workflow_name: str,
     err_expected: bool,
-    tmp_path: Path,
     tmp_run_dir: Callable,
     tmp_src_dir: Callable,
     glbl_cfg_max_scan_depth: NonCallableFixture
