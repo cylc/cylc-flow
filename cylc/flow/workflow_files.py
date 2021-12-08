@@ -1401,8 +1401,8 @@ def infer_latest_run(
 
 
 def check_nested_dirs(
-    run_dir: Union[Path, str],
-    install_dir: Union[Path, str, None] = None
+    run_dir: Path,
+    install_dir: Optional[Path] = None
 ) -> None:
     """Disallow nested dirs:
 
@@ -1419,7 +1419,6 @@ def check_nested_dirs(
         WorkflowFilesError if reg dir is nested inside a run dir, or an
             install dirs are nested.
     """
-    run_dir = Path(os.path.normpath(run_dir))
     if install_dir is not None:
         install_dir = Path(os.path.normpath(install_dir))
     # Check parents:
@@ -1658,9 +1657,9 @@ def install_workflow(
     relink, run_num, rundir = get_run_dir_info(
         run_path_base, run_name, no_run_name)
     check_nested_dirs(rundir, run_path_base)
-    if Path(rundir).exists():
+    if rundir.exists():
         raise WorkflowFilesError(
-            f"\"{rundir}\" exists.\n"
+            f'"{rundir}" exists.\n'
             " To install a new run use `cylc install --run-name`,"
             " or to reinstall use `cylc reinstall`."
         )
@@ -1870,7 +1869,10 @@ def create_workflow_srv_dir(rundir: Path) -> None:
 
 
 def validate_source_dir(source, workflow_name):
-    """Ensure the source directory is valid.
+    """Ensure the source directory is valid:
+        - has flow file
+        - does not contain reserved dir names
+        - is not inside ~/cylc-run.
 
     Args:
         source (path): Path to source directory
