@@ -22,6 +22,11 @@
 
 set_test_number 4
 
+create_test_global_config '' "
+[install]
+    max depth = 5
+"
+
 cat > flow.cylc <<'__FLOW_CONFIG__'
 [scheduler]
     cycle point format = %Y
@@ -54,4 +59,3 @@ named_grep_ok \
     "${TEST_NAME_BASE}-check-CYLC_WORKFLOW_ID" \
     "CYLC_WORKFLOW_ID is:.* ${WORKFLOW_NAME}/run1" \
     "${WORKFLOW_RUN_DIR}/runN/log/job/1066/foo/NN/job.out"
-

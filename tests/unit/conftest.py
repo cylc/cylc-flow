@@ -17,7 +17,7 @@
 """Standard pytest fixtures for unit tests."""
 
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 from unittest.mock import create_autospec, Mock
 
 import pytest
@@ -116,6 +116,40 @@ def mod_tmp_run_dir(tmp_path_factory: pytest.TempPathFactory):
     tmp_path = tmp_path_factory.getbasetemp()
     with pytest.MonkeyPatch.context() as mp:
         return tmp_run_dir(tmp_path, mp)
+
+
+def tmp_src_dir(tmp_path: Path):
+    """Fixture that creates a temporary workflow source dir.
+
+    (Actually the fixture is below, this is the re-usable meat of it.)
+
+    Args:
+        path: Path of source dir relative to cylc-src/.
+
+    Example:
+        src_dir = tmp_src_dir('foo')
+    """
+    def _tmp_src_dir(path: Union[Path, str]) -> Path:
+        cylc_src_dir = tmp_path / 'cylc-src'
+        cylc_src_dir.mkdir(exist_ok=True)
+        src_dir = cylc_src_dir / path
+        src_dir.mkdir(parents=True)
+        (src_dir / WorkflowFiles.FLOW_FILE).touch()
+        return src_dir
+    return _tmp_src_dir
+
+
+@pytest.fixture(name='tmp_src_dir')
+def tmp_src_dir_fixture(tmp_path: Path):
+    # This is the actual tmp_src_dir fixture
+    return tmp_src_dir(tmp_path)
+
+
+@pytest.fixture(scope='module')
+def mod_tmp_src_dir(tmp_path_factory: pytest.TempPathFactory):
+    """Module-scoped version of tmp_src_dir()"""
+    tmp_path = tmp_path_factory.getbasetemp()
+    return tmp_src_dir(tmp_path)
 
 
 @pytest.fixture

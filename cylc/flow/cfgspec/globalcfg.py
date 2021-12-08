@@ -627,15 +627,37 @@ with Conf('global.cylc', desc='''
 
         .. versionadded:: 8.0.0
     '''):
+        Conf('max depth', VDR.V_INTEGER, default=4, desc='''
+            How many directory levels deep Cylc should look for installed
+            workflows in the :term:`cylc-run directory`.
+
+            This also sets the limit on how deep a :term:`workflow ID` can be
+            before ``cylc install`` will refuse to install it. For example,
+            if set to 4, ``cylc install one/two/three/four`` will fail,
+            because the resultant workflow ID would be
+            ``one/two/three/four/run1``, which is 5 levels deep. (However,
+            ``cylc install one/two/three/four --no-run-name`` would work.)
+
+            .. note::
+               A high value may cause a slowdown of Cylc commands such
+               ``install``, ``scan`` and ``clean`` if there are many
+               :term:`run directories <run directory>` in the
+               cylc-run directory for Cylc to check, or if the filesystem
+               is slow (e.g. NFS).
+
+            .. versionadded:: 8.0.0
+        ''')
         Conf('source dirs', VDR.V_STRING_LIST, default=['~/cylc-src'], desc='''
             List of paths that Cylc searches for workflows to install.
 
             All workflow source directories in these locations will
             also show up in the GUI, ready for installation.
 
-            .. caution::
+            .. note::
                If workflow source directories of the same name exist in more
                than one of these paths, only the first one will be picked up.
+
+            .. versionadded:: 8.0.0
         ''')
         # Symlink Dirs
         with Conf('symlink dirs',  # noqa: SIM117 (keep same format)
