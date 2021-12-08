@@ -19,43 +19,50 @@ installation.
 
 If the workflow source directory is a supported repository/working copy
 (git or svn), information about the working copy will be saved in
-``<run-dir>/log/version/vcs.conf``.
+``<run-dir>/log/version/vcs.json``.
 
 An example of this information for a git repo:
 
-.. code-block:: cylc
+.. code-block:: json
 
-   version control system = "git"
-   repository version = "2.8.0-dirty"
-   commit = "e5dc6573dd70cabd8f973d1535c17c29c026d553"
-   working copy root path = "~/cylc-src/my-workflow-git"
-   status = \"\"\"
-   M flow.cylc
-   \"\"\"
+   {
+       "version control system": "git",
+       "repository version": "2.8.0-dirty",
+       "commit": "e5dc6573dd70cabd8f973d1535c17c29c026d553",
+       "working copy root path": "~/cylc-src/my-workflow-git",
+       "status": [
+           " M flow.cylc",
+           "M  bin/thing.sh"
+       ]
+   }
 
 And for an svn working copy:
 
-.. code-block:: cylc
+.. code-block:: json
 
-   version control system = "svn"
-   working copy root path = "~/cylc-src/my-workflow-svn"
-   url = "file:///home/my-workflow-svn/trunk"
-   repository uuid = "219f5687-8eb8-44b1-beb6-e8220fa964d3"
-   revision = "14"
-   status = \"\"\"
-   M       flow.cylc
-   \"\"\"
-
+   {
+       "version control system": "svn",
+       "working copy root path": "~/cylc-src/my-workflow-svn",
+       "url": "file:///home/my-workflow-svn/trunk",
+       "repository uuid": "219f5687-8eb8-44b1-beb6-e8220fa964d3",
+       "revision": "14",
+       "status": [
+           "M       readme.txt"
+       ]
+   }
 
 Any uncommitted changes will also be saved as a diff in
-``<run-dir>/log/version/uncommitted.diff``. (Note that git does not include
-untracked files in the diff.)
+``<run-dir>/log/version/uncommitted.diff``.
+
+.. note::
+
+   Git does not include untracked files in the diff.
 """
 
-from collections import OrderedDict
+import json
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
-from typing import Dict, Iterable, List, Optional, TYPE_CHECKING, Union
+from typing import Any, Dict, Iterable, List, Optional, TYPE_CHECKING, Union
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
@@ -107,6 +114,9 @@ SVN_INFO_KEYS: List[str] = [
 
 
 LOG_VERSION_DIR = Path(WorkflowFiles.LOG_DIR, 'version')
+DIFF_FILENAME = 'uncommitted.diff'
+INFO_FILENAME = 'vcs.json'
+JSON_INDENT = 4
 
 
 class VCSNotInstalledError(CylcError):
@@ -139,10 +149,10 @@ class VCSMissingBaseError(CylcError):
         return f"{self.vcs} repository at {self.path} is missing a base commit"
 
 
-def get_vc_info(path: Union[Path, str]) -> Optional['OrderedDict[str, str]']:
+def get_vc_info(path: Union[Path, str]) -> Optional[Dict[str, Any]]:
     """Return the version control information for a repository, given its path.
     """
-    info = OrderedDict()
+    info: Dict[str, Any] = {}
     missing_base = False
     for vcs, args in INFO_COMMANDS.items():
         try:
@@ -200,7 +210,7 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
             stderr=PIPE,
             text=True,
         )
-        # commands are defined in constants at top of module
+        # (nosec because commands are defined in constants at top of module)
     except FileNotFoundError as exc:
         # This will only be raised if the VCS command is not installed,
         # otherwise Popen() will succeed with a non-zero return code
@@ -217,7 +227,7 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
 
 
 def write_vc_info(
-    info: 'OrderedDict[str, str]', run_dir: Union[Path, str]
+    info: Dict[str, Any], run_dir: Union[Path, str]
 ) -> None:
     """Write version control info to the workflow's vcs log dir.
 
@@ -227,16 +237,12 @@ def write_vc_info(
     """
     if not info:
         raise ValueError("Nothing to write")
-    info_file = Path(run_dir, LOG_VERSION_DIR, 'vcs.conf')
-    info_file.parent.mkdir(exist_ok=True)
+    info_file = Path(run_dir, LOG_VERSION_DIR, INFO_FILENAME)
+    info_file.parent.mkdir(exist_ok=True, parents=True)
     with open(info_file, 'w') as f:
-        for key, value in info.items():
-            if key == 'status':
-                f.write(f"{key} = \"\"\"\n")
-                f.write(f"{value}\n")
-                f.write("\"\"\"\n")
-            else:
-                f.write(f"{key} = \"{value}\"\n")
+        f.write(
+            json.dumps(info, indent=JSON_INDENT)
+        )
 
 
 def _get_git_commit(path: Union[Path, str]) -> str:
@@ -245,20 +251,20 @@ def _get_git_commit(path: Union[Path, str]) -> str:
     return _run_cmd(GIT, args, cwd=path).splitlines()[0]
 
 
-def get_status(vcs: str, path: Union[Path, str]) -> str:
-    """Return the short status of a repo.
+def get_status(vcs: str, path: Union[Path, str]) -> List[str]:
+    """Return the short status of a repo, as a list of lines.
 
     Args:
         vcs: The version control system.
         path: The path to the repository.
     """
     args = STATUS_COMMANDS[vcs]
-    return _run_cmd(vcs, args, cwd=path).rstrip('\n')
+    return _run_cmd(vcs, args, cwd=path).rstrip('\n').split('\n')
 
 
-def _parse_svn_info(info_text: str) -> 'OrderedDict[str, str]':
+def _parse_svn_info(info_text: str) -> Dict[str, Any]:
     """Return OrderedDict of certain info parsed from svn info raw output."""
-    ret = OrderedDict()
+    ret: Dict[str, Any] = {}
     for line in info_text.splitlines():
         if line:
             key, value = (ln.strip() for ln in line.split(':', 1))
@@ -299,7 +305,7 @@ def write_diff(diff: str, run_dir: Union[Path, str]) -> None:
         diff: The diff.
         run_dir: The workflow run directory.
     """
-    diff_file = Path(run_dir, LOG_VERSION_DIR, 'uncommitted.diff')
+    diff_file = Path(run_dir, LOG_VERSION_DIR, DIFF_FILENAME)
     diff_file.parent.mkdir(exist_ok=True)
     with open(diff_file, 'w') as f:
         f.write(diff)
