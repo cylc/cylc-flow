@@ -1309,8 +1309,15 @@ def _parse_src_reg(reg: Path, cur_dir_only: bool = False) -> Tuple[Path, Path]:
     return (reg, abs_path)
 
 
-def validate_workflow_name(name: str, runNcheck=False) -> None:
-    """Check workflow name is valid and not an absolute path.
+def validate_workflow_name(
+    name: str, check_reserved_names: bool = False
+) -> None:
+    """Check workflow name/ID is valid and not an absolute path.
+
+    Args:
+        name: Workflow name or ID.
+        check_reserved_names: If True, check that the name does not
+            contain reserved dir names.
 
     Raise WorkflowFilesError if not valid.
     """
@@ -1329,14 +1336,21 @@ def validate_workflow_name(name: str, runNcheck=False) -> None:
             "Workflow name cannot be a path that points to the cylc-run "
             "directory or above"
         )
-    if runNcheck and any(
-        re.match(r'^run(N|\d+)$', dir_name)
-        for dir_name in Path(name).parts
-    ):
-        raise WorkflowFilesError(
-            "Workflow name cannot contain a folder called 'runN' or "
-            "'run<number>'."
-        )
+    if check_reserved_names:
+        check_reserved_dir_names(name)
+
+
+def check_reserved_dir_names(name: Union[Path, str]) -> None:
+    """Check workflow/run name does not contain reserved dir names."""
+    err_msg = (
+        "Workflow/run name cannot contain a directory named '{}' "
+        "(that filename is reserved)"
+    )
+    for dir_name in Path(name).parts:
+        if dir_name in WorkflowFiles.RESERVED_NAMES:
+            raise WorkflowFilesError(err_msg.format(dir_name))
+        if re.match(r'^run\d+$', dir_name):
+            raise WorkflowFilesError(err_msg.format('run<number>'))
 
 
 def infer_latest_run(
@@ -1632,14 +1646,13 @@ def install_workflow(
     source = Path(expand_path(source))
     if not workflow_name:
         workflow_name = source.name
-    validate_workflow_name(workflow_name, runNcheck=True)
-    if run_name in WorkflowFiles.RESERVED_NAMES:
-        raise WorkflowFilesError(
-            f'Run name cannot be "{run_name}": That name is reserved.')
-    if run_name is not None and len(Path(run_name).parts) != 1:
-        raise WorkflowFilesError(
-            f'Run name cannot be a path. (You used {run_name})'
-        )
+    validate_workflow_name(workflow_name, check_reserved_names=True)
+    if run_name is not None:
+        if len(Path(run_name).parts) != 1:
+            raise WorkflowFilesError(
+                f'Run name cannot be a path. (You used {run_name})'
+            )
+        check_reserved_dir_names(run_name)
     validate_source_dir(source, workflow_name)
     run_path_base = Path(get_workflow_run_dir(workflow_name))
     relink, run_num, rundir = get_run_dir_info(
