@@ -44,6 +44,7 @@ from cylc.flow.workflow_files import (
     _remote_clean_cmd,
     check_flow_file,
     check_nested_dirs,
+    check_reserved_dir_names,
     clean,
     detect_both_flow_and_suite,
     get_rsync_rund_cmd,
@@ -57,7 +58,8 @@ from cylc.flow.workflow_files import (
     parse_cli_sym_dirs,
     parse_reg,
     reinstall_workflow,
-    search_install_source_dirs
+    search_install_source_dirs,
+    validate_workflow_name
 )
 
 from .conftest import MonkeyMock
@@ -182,21 +184,51 @@ def test_check_nested_dirs_install_dirs(
      ('$HOME/alone', WorkflowFilesError, "invalid workflow name"),
      ('./foo', WorkflowFilesError, "invalid workflow name"),
      ('meow/..', WorkflowFilesError,
-      "cannot be a path that points to the cylc-run directory or above"),
-     ('run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
-     ('e/run6', WorkflowFilesError, "cannot contain a folder called 'runN'"),
-     ('runN', WorkflowFilesError, "cannot contain a folder called 'runN'"),
-     ('e/runN', WorkflowFilesError, "cannot contain a folder called 'runN'")]
+      "cannot be a path that points to the cylc-run directory or above")]
 )
 def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
             runNcheck = 'cannot contain a folder called' in expected_msg
-            workflow_files.validate_workflow_name(reg, runNcheck=runNcheck)
+            validate_workflow_name(reg)
         if expected_msg:
             assert expected_msg in str(exc.value)
     else:
-        workflow_files.validate_workflow_name(reg)
+        validate_workflow_name(reg)
+
+
+@pytest.mark.parametrize(
+    'name, err_expected',
+    [
+        # Basic ok:
+        ('foo/bar/baz', False),
+        # Reserved dir names:
+        ('foo/log/baz', True),
+        ('foo/runN/baz', True),
+        ('foo/run9000/baz', True),
+        ('work', True),
+        # If not exact match, but substring, that's fine:
+        ('foo/underrunN/baz', False),
+        ('foo/overrun2', False),
+        ('slog', False)
+    ]
+)
+def test_check_reserved_dir_names(name: str, err_expected: bool):
+    if err_expected:
+        with pytest.raises(WorkflowFilesError) as exc_inf:
+            check_reserved_dir_names(name)
+        assert "cannot contain a directory named" in str(exc_inf.value)
+    else:
+        check_reserved_dir_names(name)
+
+
+def test_validate_workflow_name__reserved_name():
+    """Check that validate_workflow_name() doesn't check for reserved dir names
+    unless we tell it to with the arg."""
+    name = 'foo/runN'
+    validate_workflow_name(name)
+    with pytest.raises(WorkflowFilesError):
+        validate_workflow_name(name, check_reserved_names=True)
 
 
 @pytest.mark.parametrize(

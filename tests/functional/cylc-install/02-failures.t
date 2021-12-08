@@ -95,8 +95,8 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-run-name-forbidden"
 run_fail "${TEST_NAME}" cylc install --run-name=_cylc-install -C "${RND_WORKFLOW_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Run name cannot be "_cylc-install": That name is reserved.
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+WorkflowFilesError: Workflow/run name cannot contain a directory named '_cylc-install' (that filename is reserved)
 __ERR__
 
 # Test cylc install invalid flow-name

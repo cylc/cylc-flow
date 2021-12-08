@@ -50,16 +50,14 @@ def monkeymock(monkeypatch: pytest.MonkeyPatch):
         something()  # calls workflow_files.clean
         assert mock_clean.called is True
     """
-    def inner(pypath: str, **kwargs: Any) -> Mock:
+    def _monkeymock(pypath: str, **kwargs: Any) -> Mock:
         _mock = Mock(**kwargs)
         monkeypatch.setattr(pypath, _mock)
         return _mock
-    return inner
+    return _monkeymock
 
 
-def tmp_run_dir(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Callable[[Optional[str]], Path]:
+def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Fixture that patches the cylc-run dir to the tests's
     {tmp_path}/cylc-run, and optionally creates a workflow run dir inside.
 
