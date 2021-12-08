@@ -56,7 +56,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_pub_db_name
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -116,7 +116,11 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, _ = parse_id(workflow_id)
+    (workflow_id,), _ = parse_ids(
+        workflow_id,
+        constraint='workflows',
+        max_workflows=1,
+    )
 
     output_options = [
         options.show_raw, options.show_summary, options.html_summary

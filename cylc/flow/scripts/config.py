@@ -54,7 +54,7 @@ from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
@@ -106,21 +106,27 @@ def get_option_parser():
     return parser
 
 
-def get_config_file_hierarchy(reg: Optional[str] = None) -> List[str]:
+def get_config_file_hierarchy(workflow_id: Optional[str] = None) -> List[str]:
     filepaths = [os.path.join(path, glbl_cfg().CONF_BASENAME)
                  for _, path in glbl_cfg().conf_dir_hierarchy]
-    if reg is not None:
-        filepaths.append(get_workflow_run_dir(reg, WorkflowFiles.FLOW_FILE))
+    if workflow_id is not None:
+        filepaths.append(
+            get_workflow_run_dir(workflow_id, WorkflowFiles.FLOW_FILE)
+        )
     return filepaths
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
+def main(
+    parser: COP,
+    options: 'Values',
+    workflow_id: Optional[str] = None
+) -> None:
     if options.print_hierarchy:
-        print("\n".join(get_config_file_hierarchy(reg)))
+        print("\n".join(get_config_file_hierarchy(workflow_id)))
         return
 
-    if reg is None:
+    if workflow_id is None:
         glbl_cfg().idump(
             options.item,
             not options.defaults,
@@ -129,7 +135,12 @@ def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
         )
         return
 
-    workflow, flow_file = parse_id(reg, src=True)
+    (workflow,), flow_file = parse_ids(
+        workflow_id,
+        src=True,
+        constraint='workflows',
+        max_workflows=1,
+    )
 
     config = WorkflowConfig(
         workflow,

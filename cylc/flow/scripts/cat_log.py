@@ -39,17 +39,17 @@ The correct cycle point format of the workflow must be used for task job logs,
 but can be discovered with '--mode=d' (print-dir).
 
 Examples:
-  # for a task "bar.2020" in workflow "foo"
+  # for a task "2020/bar" in workflow "foo"
 
   # Print workflow log:
   $ cylc cat-log foo
 
   # Print task stdout:
-  $ cylc cat-log foo bar.2020
-  $ cylc cat-log -f o foo bar.2020
+  $ cylc cat-log foo//2020/bar
+  $ cylc cat-log -f o foo//2020/bar
 
   # Print task stderr:
-  $cylc cat-log -f e foo bar.2020
+  $cylc cat-log -f e foo//2020/bar
 """
 
 import os
@@ -224,9 +224,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            # TODO
-            ("WORKFLOW", "Workflow name or ID"),
-            ("[TASK-ID]", """Task ID""")
+            ("ID ...", "Workflow/Cycle/Task ID"),
         ]
     )
 
@@ -356,13 +354,18 @@ def main(
             sys.exit(res)
         return
 
-    tokens = parse_ids(
+    workflow_tokens = parse_ids(
         *ids,
         constraint='mixed',
         max_workflows=1,
         max_tasks=1,
-    )[0][0]
-    workflow_id = tokens['flow']
+    )[0]
+    workflow_id = list(workflow_tokens.keys())[0]
+    tokens_list = list(workflow_tokens.values())[0]
+    tokens = {}
+    if tokens_list:
+        # if a cycle/task was specified it will be in these tokens
+        tokens = tokens_list[0]
 
     # Get long-format mode.
     try:

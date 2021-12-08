@@ -69,16 +69,15 @@ async def parse_ids_async(
 ):
     tokens_list = []
     src_path = None
+    src_file_path = None
     multi_mode = False
 
     if src:
-        # check if the first ID is a source workflow as a path
-        # if len(ids) != 1:
-        #     raise UserInputError()  # TODO
+        max_workflows = 1
         ret = _parse_src_path(ids[0])
         if ret:
             # yes, replace the path with an ID and continue
-            workflow_id, src_path = ret
+            workflow_id, src_path, src_file_path = ret
             ids = (
                 detokenise({
                     'user': None,
@@ -95,13 +94,13 @@ async def parse_ids_async(
     # ensure the IDS are compatible with the constraint
     _validate_constraint(*tokens_list, constraint=constraint)
 
-    # check the workflow part of the IDs are vaild
-    _validate_workflow_ids(*tokens_list, src_path=src_path)
-
     if match_workflows:
         # match workflow IDs via cylc-scan
         # if any patterns are present switch to multi_mode for clarity
-        multi_mode = await _expand_workflow_tokens(*tokens_list)
+        multi_mode = await _expand_workflow_tokens(tokens_list)
+
+    # check the workflow part of the IDs are vaild
+    _validate_workflow_ids(*tokens_list, src_path=src_path)
 
     if not multi_mode:
         # check how many workflows we are working on
@@ -123,7 +122,7 @@ async def parse_ids_async(
         ret = _batch_tokens_by_workflow(*tokens_list, constraint=constraint)
 
     if src:
-        return ret, src_path
+        return ret[0], src_file_path
     return ret, multi_mode
 
 
@@ -226,7 +225,8 @@ def _contains_fnmatch(string):
     return bool(FN_CHARS.search(string))
 
 
-async def _expand_workflow_tokens(*tokens_list):
+async def _expand_workflow_tokens(tokens_list):
+    multi_mode = False
     for tokens in list(tokens_list):
         workflow = tokens['flow']
         if not _contains_fnmatch(workflow):
@@ -234,11 +234,13 @@ async def _expand_workflow_tokens(*tokens_list):
             continue
         else:
             # remove the original entry
+            multi_mode = True
             tokens_list.remove(tokens)
             async for tokens in _expand_workflow_tokens_impl(tokens):
                 # add the expanded tokens back onto the list
                 # TODO: insert into the same location to preserve order?
                 tokens_list.append(tokens)
+    return multi_mode
 
 
 async def _expand_workflow_tokens_impl(tokens):
@@ -255,7 +257,7 @@ async def _expand_workflow_tokens_impl(tokens):
 
     # iter the results
     async for flow in pipe:
-        yield True, {**tokens, 'flow': flow['name']}
+        yield {**tokens, 'flow': flow['name']}
 
 
 # changes:
@@ -277,11 +279,11 @@ def _parse_src_path(id_):
         if src_path.name == 'flow.cylc':  # TODO constantize
             src_path = src_path.parent
         try:
-            check_flow_file(src_path)
+            src_file_path = check_flow_file(src_path)
         except WorkflowFilesError:
             raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
         workflow_id = src_path.name
-        return workflow_id, src_path
+        return workflow_id, src_path, src_file_path
     return None
 
 

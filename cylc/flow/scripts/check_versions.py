@@ -41,7 +41,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.templatevars import load_template_vars
@@ -68,9 +68,12 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options: 'Values', reg: str) -> None:
-    # TODO:
-    workflow_id, flow_file = parse_id(reg, src=True)
+def main(_, options: 'Values', workflow_id: str) -> None:
+    workflow_id, flow_file = parse_ids(
+        workflow_id,
+        src=True,
+        constraint='workflows',
+    )
 
     # extract task host platforms from the workflow_id
     config = WorkflowConfig(

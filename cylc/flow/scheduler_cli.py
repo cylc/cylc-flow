@@ -26,7 +26,7 @@ from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.loggingutil import (
     close_log,
     TimestampRotatingFileHandler,
@@ -268,7 +268,7 @@ def _open_logs(id_, no_detach):
     )
 
 
-def scheduler_cli(options: 'Values', id_: str) -> None:
+def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     """Run the workflow.
 
     This function should contain all of the command line facing
@@ -282,16 +282,21 @@ def scheduler_cli(options: 'Values', id_: str) -> None:
     # Parse workflow name but delay Cylc 7 suiter.rc deprecation warning
     # until after the start-up splash is printed.
     # TODO: singleton
-    id_, _ = parse_id(id_, warn_depr=False)
+    (workflow_id,), _ = parse_ids(
+        workflow_id,
+        constraint='workflows',
+        max_workflows=1,
+        warn_depr=False,  # TODO
+    )
     try:
-        detect_old_contact_file(id_)
+        detect_old_contact_file(workflow_id)
     except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
-        pclient = WorkflowRuntimeClient(id_, timeout=options.comms_timeout)
+        pclient = WorkflowRuntimeClient(workflow_id, timeout=options.comms_timeout)
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
             'variables': {
-                'wFlows': [id_]
+                'wFlows': [workflow_id]
             }
         }
         pclient('graphql', mutation_kwargs)
@@ -317,7 +322,7 @@ def scheduler_cli(options: 'Values', id_: str) -> None:
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
     #       then shutdown async generators and closes the event loop
-    scheduler = Scheduler(id_, options)
+    scheduler = Scheduler(workflow_id, options)
     asyncio.run(
         _setup(scheduler)
     )
@@ -330,7 +335,7 @@ def scheduler_cli(options: 'Values', id_: str) -> None:
         daemonize(scheduler)
 
     # setup loggers
-    _open_logs(id_, options.no_detach)
+    _open_logs(workflow_id, options.no_detach)
 
     # run the workflow
     ret = asyncio.run(

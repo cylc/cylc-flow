@@ -35,7 +35,7 @@ import sys
 from ansimarkup import ansiprint
 
 from cylc.flow import ID_DELIM
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_id import TaskID
@@ -159,7 +159,11 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
     """Implement "cylc show" CLI."""
-    workflow_id, _ = parse_id(workflow_id)
+    workflow_id, _ = parse_ids(
+        workflow_id,
+        constraint='workflows',
+        max_workflows=1,
+    )
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
     json_filter = {}
 

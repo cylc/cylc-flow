@@ -31,7 +31,7 @@ run directory are not currently differenced."""
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.templatevars import load_template_vars
@@ -132,9 +132,17 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow1: str, workflow2: str):
-    workflow1_name, workflow1_fpath = parse_id(workflow1, src=True)
-    workflow2_name, workflow2_fpath = parse_id(workflow2, src=True)
+def main(parser: COP, options: 'Values', workflow_id1: str, workflow_id2: str):
+    workflow1_name, workflow1_fpath = parse_ids(
+        workflow_id1,
+        src=True,
+        constraint='workflows',
+    )
+    workflow2_name, workflow2_fpath = parse_ids(
+        workflow_id2,
+        src=True,
+        constraint='workflows',
+    )
     if workflow1_fpath == workflow2_fpath:
         parser.error("You can't diff a single workflow.")
     print(f"Parsing {workflow1_name} ({workflow1_fpath})")

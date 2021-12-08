@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, ClientError
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
@@ -109,8 +109,14 @@ def main(
     event_id: str
 ) -> None:
     # TODO: make this one a singleton
-    workflow_id, _ = parse_id(workflow_id)
-    LOG.info('Send to workflow %s: "%s" (%s)', workflow_id, event_msg, event_id)
+    (workflow_id,), _ = parse_ids(
+        workflow_id,
+        constraint='workflows',
+        max_workflows=1,
+    )
+    LOG.info(
+        'Send to workflow %s: "%s" (%s)', workflow_id, event_msg, event_id
+    )
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     max_n_tries = int(options.max_n_tries)

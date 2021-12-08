@@ -34,7 +34,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
@@ -97,7 +97,11 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, flow_file = parse_id(workflow_id, src=True)
+    workflow_id, flow_file = parse_ids(
+        workflow_id,
+        src=True,
+        constraint='workflows',
+    )
     template_vars = get_template_vars(options)
 
     if options.all_tasks and options.all_namespaces:

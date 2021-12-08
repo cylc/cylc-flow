@@ -75,7 +75,7 @@ import os
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
@@ -122,7 +122,11 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         message_strs = list(args)
     else:
         workflow, task_job, *message_strs = args
-        workflow, _ = parse_id(workflow)
+        (workflow,), _ = parse_ids(
+            workflow,
+            constraint='workflows',
+            max_workflows=1,
+        )
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''
