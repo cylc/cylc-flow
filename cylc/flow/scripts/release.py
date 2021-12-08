@@ -44,9 +44,10 @@ See also 'cylc hold'.
 from functools import partial
 from typing import TYPE_CHECKING
 
+from cylc.flow.id import detokenise
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -99,34 +100,39 @@ def get_option_parser() -> COP:
     return parser
 
 
-def _validate(options: 'Values', *task_globs: str) -> None:
+def _validate(options: 'Values', *tokens_list: str) -> None:
     """Check combination of options and task globs is valid."""
     if options.release_all:
-        if task_globs:
-            raise UserInputError("Cannot combine --all with TASK_GLOB(s).")
+        if tokens_list:
+            raise UserInputError("Cannot combine --all with defined tasks")
     else:
-        if not task_globs:
+        if not tokens_list:
             raise UserInputError(
-                "Missing arguments: TASK_GLOB [...]. "
-                "See `cylc release --help`.")
+                'Must provide one or more tasks to release or use --all.'
+            )
 
 
-async def run(options: 'Values', workflow, *ids):
-    _validate(options, *ids)
+async def run(options: 'Values', workflow_id, *tokens_list):
+    _validate(options, *tokens_list)
 
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if options.release_all:
         mutation = RELEASE_HOLD_POINT_MUTATION
-        args = {}
+        args = {'tasks': ['*/*']}
     else:
         mutation = RELEASE_MUTATION
-        args = {'tasks': list(ids)}
+        args = {
+            'tasks': [
+                detokenise(tokens, relative=True)
+                for tokens in tokens_list
+            ]
+        }
 
     mutation_kwargs = {
         'request_string': mutation,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             **args
         }
     }
@@ -139,4 +145,5 @@ def main(parser: COP, options: 'Values', *ids):
     call_multi(
         partial(run, options),
         *ids,
+        constraint='mixed',
     )

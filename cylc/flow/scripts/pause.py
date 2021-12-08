@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import WorkflowRuntimeClient
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -67,13 +67,13 @@ def get_option_parser():
     return parser
 
 
-async def run(options: 'Values', workflow: str) -> None:
-    pclient = WorkflowRuntimeClient(workflow, timeout=options.comms_timeout)
+async def run(options: 'Values', workflow_id: str) -> None:
+    pclient = WorkflowRuntimeClient(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
         }
     }
 

@@ -95,7 +95,7 @@ from cylc.flow.broadcast_report import (
 from cylc.flow.cfgspec.workflow import SPEC, upg
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
@@ -309,9 +309,9 @@ def get_option_parser():
     return parser
 
 
-async def run(options: 'Values', workflow):
+async def run(options: 'Values', workflow_id):
     """Implement cylc broadcast."""
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     ret = {
         'stdout': [],
@@ -322,7 +322,7 @@ async def run(options: 'Values', workflow):
     mutation_kwargs: Dict[str, Any] = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             'bMode': 'Set',
             'cPoints': options.point_strings,
             'nSpaces': options.namespaces,
@@ -334,7 +334,7 @@ async def run(options: 'Values', workflow):
     query_kwargs: Dict[str, Any] = {
         'request_string': QUERY,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             'nIds': []
         }
 

@@ -450,11 +450,11 @@ def upgrade_legacy_ids(*ids):
 
 
 def strip_flow(tokens):
-    ret = {**tokens}
-    ret.pop('user')
-    ret.pop('flow')
-    ret.pop('flow_sel')
-    return ret
+    return {
+        key: value
+        for key, value in tokens.items()
+        if key not in ('user', 'flow', 'flow_sel')
+    }
 
 
 def is_null(tokens):

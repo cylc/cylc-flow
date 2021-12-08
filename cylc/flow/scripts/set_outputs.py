@@ -51,8 +51,9 @@ Use --output multiple times to spawn off of several outputs at once.
 from functools import partial
 from optparse import Values
 
+from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -96,14 +97,17 @@ def get_option_parser():
     return parser
 
 
-async def run(options: 'Values', workflow: str, *ids) -> None:
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+async def run(options: 'Values', workflow_id: str, *tokens_list) -> None:
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
-            'tasks': list(ids),
+            'wFlows': [workflow_id],
+            'tasks': [
+                detokenise(tokens, relative=True)
+                for tokens in tokens_list
+            ],
             'outputs': options.outputs,
             'flowNum': options.flow_num
         }

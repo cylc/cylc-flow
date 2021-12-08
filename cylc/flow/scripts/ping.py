@@ -33,7 +33,7 @@ from cylc.flow import ID_DELIM
 import cylc.flow.flags
 from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_state import TASK_STATUS_RUNNING
 from cylc.flow.terminal import cli_function
@@ -75,10 +75,10 @@ def get_option_parser():
 
 async def run(
     options: 'Values',
-    workflow: str,
-    *ids,
+    workflow_id: str,
+    *tokens_list,
 ) -> Dict:
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     ret = {
         'stdout': [],
@@ -88,7 +88,7 @@ async def run(
 
     flow_kwargs = {
         'request_string': FLOW_QUERY,
-        'variables': {'wFlows': [workflow]}
+        'variables': {'wFlows': [workflow_id]}
     }
     task_kwargs: Dict[str, Any] = {
         'request_string': TASK_QUERY,
@@ -107,12 +107,9 @@ async def run(
             )
 
         # ping called with task-like objects
-        for tokens in ids:
-            task = tokens['task']
-            cycle = tokens['cycle']
-            w_id = flow['id']
+        for tokens in tokens_list:
             task_kwargs['variables'] = {
-                'tProxy': f'{w_id}{ID_DELIM}{cycle}{ID_DELIM}{task}'
+                'tProxy': detokenise(tokens, relative=True)
             }
             task_result = await pclient.async_request('graphql', task_kwargs)
             string_id = detokenise(tokens, relative=True)

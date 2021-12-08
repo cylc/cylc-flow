@@ -60,13 +60,13 @@ from stat import S_IRUSR
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from tempfile import NamedTemporaryFile
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
-from cylc.flow.id import parse_id
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     verbosity_to_opts,
@@ -79,7 +79,6 @@ from cylc.flow.pathutil import (
     get_workflow_run_pub_db_name)
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 from cylc.flow.rundb import CylcWorkflowDAO
-from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
@@ -330,8 +329,7 @@ def tmpfile_edit(tmpfile, geditor=False):
 def main(
     parser: COP,
     options: 'Values',
-    reg: str,
-    task_id: Optional[str] = None,
+    *ids,
     color: bool = False
 ) -> None:
     """Implement cylc cat-log CLI.
@@ -358,7 +356,13 @@ def main(
             sys.exit(res)
         return
 
-    workflow_id = parse_id(reg)['flow']
+    tokens = parse_ids(
+        *ids,
+        constraint='mixed',
+        max_workflows=1,
+        max_tasks=1,
+    )[0][0]
+    workflow_id = tokens['flow']
 
     # Get long-format mode.
     try:
@@ -366,7 +370,7 @@ def main(
     except KeyError:
         mode = options.mode
 
-    if not task_id:
+    if not tokens.get('task'):
         # Cat workflow logs, local only.
         if options.filename is not None:
             raise UserInputError("The '-f' option is for job logs only.")
@@ -390,15 +394,13 @@ def main(
             tmpfile_edit(out, options.geditor)
         return
 
-    if task_id:
+    else:
         # Cat task job logs, may be on workflow or job host.
         if options.rotation_num is not None:
             raise UserInputError(
                 "only workflow (not job) logs get rotated")
-        try:
-            task, point = TaskID.split(task_id)
-        except ValueError:
-            parser.error("Illegal task ID: %s" % task_id)
+        task = tokens['task']
+        point = tokens['cycle']
         if options.submit_num != NN:
             try:
                 options.submit_num = "%02d" % int(options.submit_num)

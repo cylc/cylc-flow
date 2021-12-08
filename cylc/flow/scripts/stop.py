@@ -73,7 +73,7 @@ from cylc.flow.exceptions import (
     UserInputError,
 )
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
@@ -178,19 +178,19 @@ def get_option_parser():
 
 async def run(
     options: 'Values',
-    workflow,
-    *ids,
+    workflow_id,
+    *tokens_list,
 ) -> int:
     # parse the stop-task or stop-cycle if provided
     stop_task = stop_cycle = None
-    if len(ids) > 1:
+    if len(tokens_list) > 1:
         raise Exception('Multiple TODO')
-    elif len(ids) == 1:
-        tokens = ids[0]
+    elif len(tokens_list) == 1:
+        tokens = tokens_list[0]
         if tokens.get('task'):
-            stop_task = ids[0]
+            stop_task = tokens['task']
         elif tokens.get('cycle'):
-            stop_cycle = ids[0]
+            stop_cycle = tokens['cycle']
 
     # handle orthogonal options
     if stop_task is not None and options.kill:
@@ -208,7 +208,7 @@ async def run(
     if options.flow_num and int(options.max_polls) > 0:
         raise UserInputError("--flow is not compatible with --max-polls")
 
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
@@ -230,7 +230,7 @@ async def run(
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             'stopMode': mode,
             'cyclePoint': stop_cycle,
             'clockTime': options.wall_clock,

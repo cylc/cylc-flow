@@ -31,7 +31,7 @@ from optparse import Values
 from cylc.flow import LOG_LEVELS
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
@@ -62,13 +62,13 @@ def get_option_parser():
     return parser
 
 
-async def run(options: 'Values', severity, workflow) -> None:
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+async def run(options: 'Values', severity, workflow_id) -> None:
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             'level': severity,
         }
     }

@@ -14,11 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Cylc univeral identifier system for referencing Cylc "objets".
-
-This module contains the implementations for parsing IDs parsed in
-by users on the CLI.
-"""
+# TODO: move check_deprecation into the relevant scripts
 
 import asyncio
 import fnmatch
@@ -47,8 +43,9 @@ from cylc.flow.network.scan import (
     scan,
 )
 from cylc.flow.workflow_files import (
-    _parse_src_reg,
+    NO_FLOW_FILE_MSG,
     check_deprecation,
+    check_flow_file,
     detect_both_flow_and_suite,
     get_workflow_run_dir,
     infer_latest_run,
@@ -58,185 +55,159 @@ from cylc.flow.workflow_files import (
 FN_CHARS = re.compile(r'[\*\?\[\]\!]')
 
 
-def parse_id(id_, constraint='workflows', src=False, warn_depr=True):
-    tokens = parse_cli(id_)[0]
-    if tokens['user']:
-        raise UserInputError()
-    if tokens['flow_sel']:
-        raise UserInputError()
-
-    return _parse_id(tokens['flow'], src=src, warn_depr=warn_depr)
+def parse_ids(*args, **kwargs):
+    return asyncio.run(parse_ids_async(*args, **kwargs))
 
 
-async def parse_ids(
+async def parse_ids_async(
     *ids,
+    src=False,
+    match_workflows=False,
     constraint='tasks',
+    max_workflows=None,
+    max_tasks=None,
 ):
-    """Call a function for each workflow in a list of IDs.
+    tokens_list = []
+    src_path = None
+    multi_mode = False
 
-    Args:
-        ids:
-            The list of universal identifiers to parse.
-        constraint:
-            The type of objects IDs must identify.
+    if src:
+        # check if the first ID is a source workflow as a path
+        # if len(ids) != 1:
+        #     raise UserInputError()  # TODO
+        ret = _parse_src_path(ids[0])
+        if ret:
+            # yes, replace the path with an ID and continue
+            workflow_id, src_path = ret
+            ids = (
+                detokenise({
+                    'user': None,
+                    'flow': workflow_id
+                }) + '//',
+                *ids[1:]
+            )
 
-            tasks:
-                For task-like objects i.e. cycles/tasks/jobs.
-            workflow:
-                For workflow-like objects i.e. [user/]workflows.
-            mixed:
-                No constraint.
-
-    """
-    tokens_list = parse_cli(*ids)
-
-    # if only one workflow is defined in the tokens we are only performing
-    # one request so don't need to adjust the output format
-    multi_mode = contains_multiple_workflows(tokens_list)
+    tokens_list.extend(parse_cli(*ids))
 
     if constraint not in {'tasks', 'workflows', 'mixed'}:
         raise Exception(f'Invalid constraint: {constraint}')
 
+    # ensure the IDS are compatible with the constraint
+    _validate_constraint(*tokens_list, constraint=constraint)
+
+    # check the workflow part of the IDs are vaild
+    _validate_workflow_ids(*tokens_list, src_path=src_path)
+
+    if match_workflows:
+        # match workflow IDs via cylc-scan
+        # if any patterns are present switch to multi_mode for clarity
+        multi_mode = await _expand_workflow_tokens(*tokens_list)
+
+    if not multi_mode:
+        # check how many workflows we are working on
+        multi_mode = contains_multiple_workflows(tokens_list)
+
+    # infer the run number if not specified the ID (and if possible)
+    _infer_latest_runs(*tokens_list, src_path=src_path)
+
+    _validate_number(*tokens_list, max_workflows=max_workflows, max_tasks=max_tasks)
+
+    if constraint == 'workflows':
+        ret = []
+        for tokens in tokens_list:
+            # detokenise, but remove duplicates
+            id_ = detokenise(tokens)
+            if id_ not in ret:
+                ret.append(id_)
+    elif constraint in ('tasks', 'mixed'):
+        ret = _batch_tokens_by_workflow(*tokens_list, constraint=constraint)
+
+    if src:
+        return ret, src_path
+    return ret, multi_mode
+
+
+def _validate_constraint(*tokens_list, constraint=None):
     if constraint == 'workflows':
         for tokens in tokens_list:
             if contains_task_like(tokens):
-                raise UserInputError()
+                raise UserInputError()  # TODO
+        return
+    if constraint == 'tasks':
+        for tokens in tokens_list:
+            if not contains_task_like(tokens):
+                raise UserInputError()  # TODO
+        return
+    if constraint == 'mixed':
+        for tokens in tokens_list:
+            if is_null(tokens):
+                raise UserInputError()  # TODO
+        return
+    raise Exception(f'Invalid constraint: {constraint}')
 
-    # expand workflow patterns
-    expanded_tokens_list = []
-    for tokens in tokens_list:
-        async for expanded, expanded_tokens in _expand_workflow_tokens(tokens):
-            expanded_tokens_list.append(expanded_tokens)
-            if expanded:
-                # one or more of the workflows were patterns
-                # change the output mode (even if we are only performing
-                # one request) to make it clear what we've done
-                multi_mode = True
 
-    # batch ids by workflow
-    workflows = {}
-    for tokens in expanded_tokens_list:
+def _validate_workflow_ids(*tokens_list, src_path):
+    for ind, tokens in enumerate(tokens_list):
         if tokens['user']:
-            raise UserInputError('Changing user not supported')
-        key, _ = _parse_id(tokens['flow'], src=False, warn_depr=False)
-        workflows.setdefault(key, []).append(strip_flow(tokens))
+            raise UserInputError('Operating on others workflows is not supported')  # TODO
+        validate_workflow_name(tokens['flow'])
+        if ind == 0 and src_path:
+            # source workflow passed in as a path
+            pass
+        else:
+            src_path = Path(get_workflow_run_dir(tokens['flow']))
+        if not src_path.exists():
+            raise UserInputError()  # TODO ???
+        if src_path.is_file():
+            raise UserInputError(f'Workflow ID cannot be a file: {tokens["flow"]}')
+        detect_both_flow_and_suite(src_path)
 
-    return (
-        {
-            workflow_id: _get_call_ids(workflow_id, ids, constraint)
-            for workflow_id, ids in workflows.items()
-        },
-        multi_mode,
-    )
+
+def _infer_latest_runs(*tokens_list, src_path):
+    for ind, tokens in enumerate(tokens_list):
+        if ind == 0 and src_path:
+            # source workflow passed in as a path
+            continue
+        # TODO: infer_latest_run is expecting a path not an ID
+        # infer_latest_run(tokens['flow'])
+        pass
 
 
-async def call_multi_async(
-    fcn,
-    *ids,
-    constraint='tasks',
-    report=None,
-):
-    """Call a function for each workflow in a list of IDs.
+def _validate_number(*tokens_list, max_workflows=None, max_tasks=None):
+    if not max_workflows and not max_tasks:
+        return
+    workflows_count = 0
+    tasks_count = 0
+    for tokens in tokens_list:
+        if contains_task_like(tokens):
+            tasks_count += 1
+        else:
+            workflows_count += 1
+    if max_workflows and workflows_count > max_workflows:
+        raise UserInputError()  # TODO
+    if max_tasks and tasks_count > max_tasks:
+        raise UserInputError()  # TODO
 
-    Args:
-        fcn:
-            The function to call for each workflow.
-        ids:
-            The list of universal identifiers to parse.
-        constraint:
-            The type of objects IDs must identify.
 
-            tasks:
-                For task-like objects i.e. cycles/tasks/jobs.
-            workflow:
-                For workflow-like objects i.e. [user/]workflows.
-            mixed:
-                No constraint.
-        report:
-            Override the default stdout output.
-            This function is provided with the return value of fcn.
+def _batch_tokens_by_workflow(*tokens_list, constraint=None):
+    """Sorts tokens into lists by workflow ID.
+
+    Example:
+        >>> _batch_tokens_by_workflow(
+        ...     {'flow': 'x', 'cycle': '1'},
+        ...     {'flow': 'x', 'cycle': '2'},
+        ... )
+        {'x': [{'cycle': '1'}, {'cycle': '2'}]}
 
     """
-    # parse ids
-    workflow_args, multi_mode = await parse_ids(*ids, constraint=constraint)
-
-    # configure reporting
-    if not report:
-        report = _report
-    if multi_mode:
-        reporter = partial(_report_multi, report)
-    else:
-        reporter = partial(_report_single, report)
-
-    # run coros
-    results = []
-    async for (workflow_id, *args), result in unordered_map(
-        fcn,
-        (
-            (workflow_id, *args)
-            for workflow_id, args in workflow_args.items()
-        ),
-    ):
-        reporter(workflow_id, result)
-        results.append(result)
-    return results
-
-
-def call_multi(*args, **kwargs):
-    """Call a function for each workflow in a list of IDs.
-
-    See call_multi_async for arg docs.
-    """
-    return asyncio.run(call_multi_async(*args, **kwargs))
-
-
-def _parse_id(reg: str, src: bool = False, warn_depr=True) -> Tuple[str, Path]:
-    """Centralised parsing of the workflow argument, to be used by most
-    cylc commands (script modules).
-
-    Infers the latest numbered run if a specific one is not given (e.g.
-    foo -> foo/run3, foo/runN -> foo/run3).
-
-    "Offline" commands (e.g. cylc validate) can usually be used on
-    workflow sources so will need src = True.
-
-    "Online" commands (e.g. cylc stop) are usually only used on workflows in
-    the cylc-run dir so will need src = False.
-
-    Args:
-        reg: The workflow arg. Can be one of:
-            - relative path to the run dir from ~/cylc-run, i.e. the "name"
-                of the workflow;
-            - absolute path to a run dir, source dir or workflow file (only
-                if src is True);
-            - '.' for the current directory (only if src is True).
-        src: Whether the workflow arg can be a workflow source (i.e. an
-            absolute path (which might not be in ~/cylc-run) and/or a
-            flow.cylc file (or any file really), or '.' for cwd).
-
-    Returns:
-        reg: The normalised workflow arg.
-        path: If src is True, the absolute path to the workflow file
-            (flow.cylc or suite.rc). Otherwise, the absolute path to the
-            workflow run dir.
-    """
-    if src:
-        # starts with './'
-        cur_dir_only = reg.startswith(f'{os.curdir}{os.sep}')
-        reg, abs_path = _parse_src_reg(reg, cur_dir_only)
-    else:
-        validate_workflow_name(reg)
-        abs_path = Path(get_workflow_run_dir(reg))
-        if abs_path.is_file():
-            raise WorkflowFilesError(
-                "Workflow name must refer to a directory, "
-                f"but '{reg}' is a file."
-            )
-        abs_path, reg = infer_latest_run(abs_path)
-    detect_both_flow_and_suite(abs_path)
-    # TODO check_deprecation?
-    check_deprecation(abs_path, warn=warn_depr)
-    return (str(reg), abs_path)
+    workflow_tokens = {}
+    for tokens in tokens_list:
+        w_tokens = workflow_tokens.setdefault(tokens['flow'], [])
+        relative_tokens = strip_flow(tokens)
+        if constraint == 'mixed' and is_null(relative_tokens):
+            continue
+        w_tokens.append(relative_tokens)
+    return workflow_tokens
 
 
 def _contains_fnmatch(string):
@@ -255,16 +226,23 @@ def _contains_fnmatch(string):
     return bool(FN_CHARS.search(string))
 
 
-async def _expand_workflow_tokens(tokens):
+async def _expand_workflow_tokens(*tokens_list):
+    for tokens in list(tokens_list):
+        workflow = tokens['flow']
+        if not _contains_fnmatch(workflow):
+            # no expansion to perform
+            continue
+        else:
+            # remove the original entry
+            tokens_list.remove(tokens)
+            async for tokens in _expand_workflow_tokens_impl(tokens):
+                # add the expanded tokens back onto the list
+                # TODO: insert into the same location to preserve order?
+                tokens_list.append(tokens)
+
+
+async def _expand_workflow_tokens_impl(tokens):
     """Use "cylc scan" to expand workflow patterns."""
-    workflow = tokens['flow']
-
-    if not _contains_fnmatch(workflow):
-        # no expansion to perform
-        yield False, tokens
-        return
-
-    # use cylc-scan output to filter workflows
     workflow_sel = tokens['flow_sel']
     if workflow_sel and workflow_sel != 'running':
         raise UserInputError(
@@ -273,46 +251,205 @@ async def _expand_workflow_tokens(tokens):
         )
 
     # construct the pipe
-    pipe = scan | filter_name(fnmatch.translate(workflow)) | is_active(True)
+    pipe = scan | filter_name(fnmatch.translate(tokens['flow'])) | is_active(True)
 
     # iter the results
     async for flow in pipe:
         yield True, {**tokens, 'flow': flow['name']}
 
 
-def _report_multi(report, workflow, result):
-    print(workflow)
-    report(result)
+# changes:
+# * src paths must start "./" or be absolte
+#   * remove ambigious name check (no longer needed)
+# * run paths cannot be absolute (use the workflow ID)
+#   * no infering latest runs for paths (no longer needed)
 
 
-def _report_single(report, workflow, result):
-    report(result)
+def _parse_src_path(id_):
+    src_path = Path(id_)
+    if (
+        id_.startswith(f'{os.curdir}{os.sep}')
+        or Path(id_).is_absolute()
+    ):
+        src_path.resolve()
+        if not src_path.exists():
+            raise UserInputError(src_path)
+        if src_path.name == 'flow.cylc':  # TODO constantize
+            src_path = src_path.parent
+        try:
+            check_flow_file(src_path)
+        except WorkflowFilesError:
+            raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
+        workflow_id = src_path.name
+        return workflow_id, src_path
+    return None
 
 
-def _report(_):
-    print('Done')
+import os
+import pytest
 
 
-def _get_call_ids(workflow, ids, constraint):
-    """Return the ids for calling the function with."""
-    if constraint == 'workflows':
-        # no internal IDs for working with workflows
-        call_ids = []
-    elif constraint == 'tasks':
-        for id_ in ids:
-            if not contains_task_like(id_):
-                raise UserInputError(
-                    # TODO: rephrase
-                    f'ID must define an object within workflow: {workflow}'
-                )
-        call_ids = [
-            detokenise(id_, relative=True)
-            for id_ in ids
-        ]
-    elif constraint == 'mixed':
-        call_ids = [
-            id_
-            for id_ in ids
-            if not is_null(id_)
-        ]
-    return call_ids
+@pytest.fixture(scope='module')
+def abc_src_dir(tmp_path_factory):
+    cwd_before = Path.cwd()
+    tmp_path = tmp_path_factory.getbasetemp()
+    os.chdir(tmp_path)
+    for name in ('a', 'b', 'c'):
+        Path(tmp_path, name).mkdir()
+        Path(tmp_path, name, 'flow.cylc').touch()  # TODO: const
+    yield tmp_path
+    os.chdir(cwd_before)
+
+
+@pytest.mark.parametrize(
+    'ids_in,ids_out',
+    [
+        (('a//',), ['a']),
+        (('a//', 'a//'), ['a']),
+        (('a//', 'b//'), ['a', 'b']),
+    ]
+)
+async def test_parse_ids_workflows(ids_in, ids_out):
+    ret = await parse_ids_async(*ids_in, constraint='workflows')
+    assert ret[0] == ids_out
+
+
+@pytest.mark.parametrize(
+    'ids_in,ids_out',
+    [
+        (('./a',), ['a']),
+    ]
+)
+async def test_parse_ids_workflows_src(ids_in, ids_out, abc_src_dir):
+    ret = await parse_ids_async(*ids_in, constraint='workflows', src=True)
+    assert ret[0] == ids_out
+
+
+@pytest.mark.parametrize(
+    'ids_in,ids_out',
+    [
+        (
+            ('a//i',),
+            {'a': ['//i']},
+        ),
+        (
+            ('a//i', 'a//j'),
+            {'a': ['//i', '//j']},
+        ),
+        (
+            ('a//i', 'b//i'),
+            {'a': ['//i'], 'b': ['//i']},
+        ),
+        (
+            ('a//', '//i', 'b//', '//i'),
+            {'a': ['//i'], 'b': ['//i']},
+        ),
+    ]
+)
+async def test_parse_ids_tasks(ids_in, ids_out):
+    ret = await parse_ids_async(*ids_in, constraint='tasks')
+    assert {
+        workflow_id: [detokenise(tokens) for tokens in tokens_list]
+        for workflow_id, tokens_list in ret[0].items()
+    } == ids_out
+
+
+@pytest.mark.parametrize(
+    'ids_in,ids_out',
+    [
+        (
+            ('./a', '//i'),
+            {'a': ['//i']}
+        ),
+        (
+            ('./a', '//i', '//j', '//k'),
+            {'a': ['//i', '//j', '//k']}
+        ),
+    ]
+)
+async def test_parse_ids_tasks_src(ids_in, ids_out, abc_src_dir):
+    ret = await parse_ids_async(*ids_in, constraint='tasks', src=True)
+    assert {
+        workflow_id: [detokenise(tokens) for tokens in tokens_list]
+        for workflow_id, tokens_list in ret[0].items()
+    } == ids_out
+
+
+@pytest.mark.parametrize(
+    'ids_in,ids_out',
+    [
+        (('a//',), {'a': []}),
+        (
+            ('a//', 'b//', 'c//'),
+            {'a': [], 'b': [], 'c': []}
+        ),
+        (('a//i',), {'a': ['//i']}),
+        (('a//', '//i'), {'a': ['//i']}),
+        (
+            ('a//', '//i', '//j', '//k'),
+            {'a': ['//i', '//j', '//k']},
+        ),
+        (('a//', '//i', 'b//'), {'a': ['//i'], 'b': []}),
+    ]
+)
+async def test_parse_ids_mixed(ids_in, ids_out):
+    ret = await parse_ids_async(*ids_in, constraint='mixed')
+    assert {
+        workflow_id: [detokenise(tokens) for tokens in tokens_list]
+        for workflow_id, tokens_list in ret[0].items()
+    } == ids_out
+
+
+@pytest.mark.parametrize(
+    'ids_in,ids_out',
+    [
+        (('./a',), {'a': []}),
+        (('./a', '//i'), {'a': ['//i']}),
+        (('./a', '//i', '//j', '//k'), {'a': ['//i', '//j', '//k']}),
+        (('./a', 'b//'), {'a': [], 'b': []}),  # TODO (debatable)
+    ]
+)
+async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir):
+    ret = await parse_ids_async(*ids_in, constraint='mixed', src=True)
+    assert {
+        workflow_id: [detokenise(tokens) for tokens in tokens_list]
+        for workflow_id, tokens_list in ret[0].items()
+    } == ids_out
+
+
+@pytest.mark.parametrize(
+    'ids_in,errors',
+    [
+        (('a//',), False),
+        (('a//', 'b//'), False),
+        (('a//', 'b//', 'c//'), True),
+    ]
+)
+async def test_parse_ids_max_workflows(ids_in, errors):
+    try:
+        await parse_ids_async(*ids_in, constraint='workflows', max_workflows=2)
+    except UserInputError:
+        if not errors:
+            raise
+    else:
+        if errors:
+            raise Exception('Should have raised UserInputError')
+
+
+@pytest.mark.parametrize(
+    'ids_in,errors',
+    [
+        (('a//', '//i'), False),
+        (('a//', '//i', '//j'), False),
+        (('a//', '//i', '//j', '//k'), True),
+    ]
+)
+async def test_parse_ids_max_tasks(ids_in, errors):
+    try:
+        await parse_ids_async(*ids_in, constraint='tasks', max_tasks=2)
+    except UserInputError:
+        if not errors:
+            raise
+    else:
+        if errors:
+            raise Exception('Should have raised UserInputError')

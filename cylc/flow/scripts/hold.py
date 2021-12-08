@@ -62,10 +62,11 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
+from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.id_cli import call_multi
+from cylc.flow.network.multi import call_multi
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -129,22 +130,27 @@ def _validate(options: 'Values', *task_globs: str) -> None:
             "Missing arguments: TASK_GLOB [...]. See `cylc hold --help`.")
 
 
-async def run(options, workflow, *ids):
-    _validate(options, *ids)
+async def run(options, workflow_id, *tokens_list):
+    _validate(options, *tokens_list)
 
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if options.hold_point_string:
         mutation = SET_HOLD_POINT_MUTATION
         args = {'point': options.hold_point_string}
     else:
         mutation = HOLD_MUTATION
-        args = {'tasks': list(ids)}
+        args = {
+            'tasks': [
+                detokenise(id_, relative=True)
+                for id_ in tokens_list
+            ]
+        }
 
     mutation_kwargs = {
         'request_string': mutation,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             **args
         }
     }
