@@ -28,8 +28,8 @@ import cylc.flow.cycling.iso8601
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import standardise_point_string
 from cylc.flow.exceptions import PointParsingError
+from cylc.flow.id import detokenise
 from cylc.flow.platforms import get_platform
-from cylc.flow.task_id import TaskID
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
 from cylc.flow.taskdef import generate_graph_children
@@ -50,7 +50,9 @@ class TaskProxy:
         .expire_time:
             Time in seconds since epoch when this task is considered expired.
         .identity:
-            Task ID in NAME.POINT syntax.
+            Task ID in POINT/NAME syntax.
+        .tokens:
+            Task ID tokens.
         .is_late:
             Is the task late?
         .is_manual_submit:
@@ -191,8 +193,11 @@ class TaskProxy:
         else:
             self.flow_nums = flow_nums
         self.point = start_point
-        self.identity: str = TaskID.get(self.tdef.name, self.point)
-
+        self.tokens = {
+            'cycle': str(self.point),  # TODO?
+            'name': self.tdef.name,
+        }
+        self.identity = detokenise(self.tokens, relative=True)
         self.reload_successor: Optional['TaskProxy'] = None
         self.point_as_seconds: Optional[int] = None
 
@@ -234,12 +239,12 @@ class TaskProxy:
         self.graph_children = generate_graph_children(tdef, self.point)
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} '{self.identity}'>"
+        return f"<{self.__class__.__name__} '{self.tokens}'>"
 
     def __str__(self) -> str:
-        """Stringify with identity, state, submit_num, and flow_nums."""
+        """Stringify with tokens, state, submit_num, and flow_nums."""
         return (
-            f"{self.identity} "
+            f"{self.tokens} "
             f"{self.state} "
             f"job:{self.submit_num:02d}"
             f" flows:{','.join(str(i) for i in self.flow_nums) or 'none'}"

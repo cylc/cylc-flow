@@ -20,12 +20,14 @@ from threading import RLock
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import (
-    CHANGE_FMT, CHANGE_PREFIX_SET,
+    CHANGE_FMT,
+    CHANGE_PREFIX_SET,
     get_broadcast_change_report,
-    get_broadcast_bad_options_report)
+    get_broadcast_bad_options_report,
+)
+from cylc.flow.id import tokenise
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
-from cylc.flow.task_id import TaskID
 
 ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
@@ -154,7 +156,9 @@ class BroadcastMgr:
             # all broadcasts requested
             return self.broadcasts
         try:
-            name, point_string = TaskID.split(task_id)
+            tokens = tokenise(task_id)
+            name = tokens['task']
+            point_string = tokens['cycle']
         except ValueError:
             raise Exception("Can't split task_id %s" % task_id)
 
@@ -206,7 +210,7 @@ class BroadcastMgr:
                 if trig != qmsg:
                     continue
                 # Matched.
-                point_string = TaskID.split(itask.identity)[1]
+                point_string = itask.tokens['cycle']
                 # Set trigger satisfied.
                 itask.state.external_triggers[trig] = True
                 # Broadcast the event ID to the cycle point.

@@ -1,13 +1,4 @@
-# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
@@ -64,12 +55,13 @@ from time import time
 from typing import Union, Tuple, TYPE_CHECKING
 import zlib
 
-from cylc.flow import __version__ as CYLC_VERSION, LOG, ID_DELIM
-from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow import __version__ as CYLC_VERSION, LOG
 from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbEdge, PbEntireWorkflow, PbFamily, PbFamilyProxy, PbJob, PbTask,
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)
+from cylc.flow.exceptions import WorkflowConfigError
+from cylc.flow.id import detokenise, tokenise
 from cylc.flow.network import API
 from cylc.flow.workflow_status import get_workflow_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
@@ -395,7 +387,11 @@ class DataStoreMgr:
 
     def __init__(self, schd):
         self.schd = schd
-        self.workflow_id = f'{self.schd.owner}{ID_DELIM}{self.schd.workflow}'
+        self.id_ = {
+            'owner': self.schd.owner,
+            'workflow': schd.schd.workflow,
+        }
+        self.workflow_id = detokenise(self.id_)
         self.ancestors = {}
         self.descendants = {}
         self.parents = {}
@@ -504,7 +500,7 @@ class DataStoreMgr:
 
         # Create definition elements for graphed tasks.
         for name, tdef in config.taskdefs.items():
-            t_id = f'{self.workflow_id}{ID_DELIM}{name}'
+            t_id = self.definition_id(name)
             t_stamp = f'{t_id}@{update_time}'
             task = PbTask(
                 stamp=t_stamp,
@@ -513,8 +509,7 @@ class DataStoreMgr:
                 depth=len(ancestors[name]) - 1,
             )
             task.namespace[:] = tdef.namespace_hierarchy
-            task.first_parent = (
-                f'{self.workflow_id}{ID_DELIM}{ancestors[name][1]}')
+            task.first_parent = self.definition_id(ancestors[name][1])
             user_defined_meta = {}
             for key, val in dict(tdef.describe()).items():
                 if key in ['title', 'description', 'URL']:
@@ -525,9 +520,10 @@ class DataStoreMgr:
             elapsed_time = task_mean_elapsed_time(tdef)
             if elapsed_time:
                 task.mean_elapsed_time = elapsed_time
-            task.parents.extend(
-                [f'{self.workflow_id}{ID_DELIM}{p_name}'
-                 for p_name in parents[name]])
+            task.parents.extend([
+                self.definition_id(p_name)
+                for p_name in parents[name]
+            ])
             tasks[t_id] = task
 
         # Created family definition elements for first parent
@@ -539,7 +535,7 @@ class DataStoreMgr:
                         name in families
                 ):
                     continue
-                f_id = f'{self.workflow_id}{ID_DELIM}{name}'
+                f_id = self.definition_id(name)
                 f_stamp = f'{f_id}@{update_time}'
                 family = PbFamily(
                     stamp=f_stamp,
@@ -556,20 +552,22 @@ class DataStoreMgr:
                         user_defined_meta[key] = val
                 family.meta.user_defined = json.dumps(user_defined_meta)
                 family.parents.extend(
-                    [f'{self.workflow_id}{ID_DELIM}{p_name}'
-                     for p_name in parents[name]])
+                    self.definition_id(p_name)
+                    for p_name in parents[name]
+                )
                 with suppress(IndexError):
                     family.first_parent = (
-                        f'{self.workflow_id}{ID_DELIM}{ancestors[name][1]}')
+                        self.definition_id(ancestors[name][1])
+                    )
                 families[f_id] = family
 
         for name, parent_list in parents.items():
             if not parent_list:
                 continue
             fam = parent_list[0]
-            f_id = f'{self.workflow_id}{ID_DELIM}{fam}'
+            f_id = self.definition_id(fam)
             if f_id in families:
-                ch_id = f'{self.workflow_id}{ID_DELIM}{name}'
+                ch_id = self.definition_id(name)
                 if name in config.taskdefs:
                     families[f_id].child_tasks.append(ch_id)
                 else:
@@ -641,10 +639,11 @@ class DataStoreMgr:
         """
         # Create this source node
         s_node = f'{itask.tdef.name}.{itask.point}'
-        s_id = (
-            f'{self.workflow_id}{ID_DELIM}'
-            f'{itask.point}{ID_DELIM}{itask.tdef.name}'
-        )
+        s_id = detokenise({
+            **self.id_,
+            'cycle': itask.point,
+            'task': itask.tdef.name
+        })
         if active_id is None:
             active_id = s_id
 
@@ -722,15 +721,24 @@ class DataStoreMgr:
             if t_point > final_point:
                 continue
             t_node = f'{t_name}.{t_point}'
-            t_id = (
-                f'{self.workflow_id}{ID_DELIM}{t_point}{ID_DELIM}{t_name}')
+            t_id = detokenise({
+                **self.id_,
+                'cycle': t_point,
+                'task': t_name,
+            })
             # Initiate edge element.
             if is_parent:
-                e_id = (
-                    f'{self.workflow_id}{ID_DELIM}{t_node}{ID_DELIM}{s_node}')
+                e_id = detokenise({
+                    **self.id_,
+                    'cycle': t_node,
+                    'task': s_node,
+                })
             else:
-                e_id = (
-                    f'{self.workflow_id}{ID_DELIM}{s_node}{ID_DELIM}{t_node}')
+                e_id = detokenise({
+                    **self.id_,
+                    'cycle': s_node,
+                    'task': t_node,
+                })
             if e_id in self.n_window_edges[active_id]:
                 continue
             if (
@@ -762,7 +770,11 @@ class DataStoreMgr:
 
     def remove_pool_node(self, name, point):
         """Remove ID reference and flag isolate node/branch for pruning."""
-        tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
+        tp_id = detokenise({
+            **self.id_,
+            'cycle': point,
+            'task': name,
+        })
         if tp_id in self.all_task_pool:
             self.all_task_pool.remove(tp_id)
         # flagged isolates/end-of-branch nodes for pruning on removal
@@ -775,7 +787,11 @@ class DataStoreMgr:
 
     def add_pool_node(self, name, point):
         """Add external ID reference for internal task pool node."""
-        tp_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
+        tp_id = detokenise({
+            **self.id_,
+            'cycle': point,
+            'task': name,
+        })
         self.all_task_pool.add(tp_id)
 
     def generate_ghost_task(self, tp_id, itask, is_parent=False):
@@ -795,7 +811,7 @@ class DataStoreMgr:
 
         """
         name = itask.tdef.name
-        t_id = f'{self.workflow_id}{ID_DELIM}{name}'
+        t_id = self.definition_id(name)
         point_string = f'{itask.point}'
         task_proxies = self.data[self.workflow_id][TASK_PROXIES]
 
@@ -839,17 +855,27 @@ class DataStoreMgr:
         tproxy.namespace[:] = task_def.namespace
         if is_orphan:
             tproxy.ancestors[:] = [
-                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}root']
+                detokenise({
+                    **self.id_,
+                    'cycle': point_string,
+                    'task': 'root',
+                })
+            ]
         else:
             tproxy.ancestors[:] = [
-                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
+                detokenise({
+                    **self.id_,
+                    'cycle': point_string,
+                    'task': a_name,
+                })
                 for a_name in self.ancestors[task_def.name]
-                if a_name != task_def.name]
+                if a_name != task_def.name
+            ]
         tproxy.first_parent = tproxy.ancestors[0]
 
         for prereq in itask.state.prerequisites:
             # Protobuf messages populated within
-            prereq_obj = prereq.api_dump(self.workflow_id)
+            prereq_obj = prereq.api_dump(self.id_)
             if prereq_obj:
                 tproxy.prerequisites.append(prereq_obj)
 
@@ -906,7 +932,7 @@ class DataStoreMgr:
         update_time = time()
         tdef = itask.tdef
         name = tdef.name
-        t_id = f'{self.workflow_id}{ID_DELIM}{name}'
+        t_id = self.definition_id(name)
         t_stamp = f'{t_id}@{update_time}'
         task = PbTask(
             stamp=t_stamp,
@@ -915,7 +941,7 @@ class DataStoreMgr:
             depth=1,
         )
         task.namespace[:] = tdef.namespace_hierarchy
-        task.first_parent = f'{self.workflow_id}{ID_DELIM}root'
+        task.first_parent = self.definition_id('root')
         user_defined_meta = {}
         for key, val in dict(tdef.describe()).items():
             if key in ['title', 'description', 'URL']:
@@ -963,8 +989,10 @@ class DataStoreMgr:
             fp_delta = fp_added[fp_id]
             fp_parent = fp_added.setdefault(fp_id, PbFamilyProxy(id=fp_id))
         else:
-            _, _, point_string, name = fp_id.split(ID_DELIM)
-            fam = families[f'{self.workflow_id}{ID_DELIM}{name}']
+            tokens = tokenise(fp_id)
+            point_string = tokens['cycle']
+            name = tokens['task']
+            fam = families[self.definition_id(name)]
             fp_delta = PbFamilyProxy(
                 stamp=f'{fp_id}@{update_time}',
                 id=fp_id,
@@ -974,9 +1002,14 @@ class DataStoreMgr:
                 depth=fam.depth,
             )
             fp_delta.ancestors[:] = [
-                f'{self.workflow_id}{ID_DELIM}{point_string}{ID_DELIM}{a_name}'
+                detokenise({
+                    **self.id_,
+                    'cycle': point_string,
+                    'task': a_name,
+                })
                 for a_name in self.ancestors[fam.name]
-                if a_name != fam.name]
+                if a_name != fam.name
+            ]
             if fp_delta.ancestors:
                 fp_delta.first_parent = fp_delta.ancestors[0]
             self.added[FAMILY_PROXIES][fp_id] = fp_delta
@@ -1018,7 +1051,12 @@ class DataStoreMgr:
         if not tproxy:
             return
         update_time = time()
-        j_id = f'{tp_id}{ID_DELIM}{sub_num}'
+        tp_tokens = tokenise(tp_id)
+        j_tokens = {
+            **tp_tokens,
+            'job': sub_num
+        }
+        j_id = detokenise(j_tokens)
         j_buf = PbJob(
             stamp=f'{j_id}@{update_time}',
             id=j_id,
@@ -1072,7 +1110,12 @@ class DataStoreMgr:
         tp_id, tproxy = self.store_node_fetcher(name, point_string)
         if not tproxy:
             return
-        j_id = f'{tp_id}{ID_DELIM}{submit_num}'
+        tp_tokens = tokenise(tp_id)
+        j_tokens = {
+            **tp_tokens,
+            'job': submit_num
+        }
+        j_id = detokenise(j_tokens)
         try:
             update_time = time()
             j_buf = PbJob(
@@ -1523,7 +1566,7 @@ class DataStoreMgr:
         if tp_delta.state in TASK_STATUSES_FINAL:
             elapsed_time = task_mean_elapsed_time(itask.tdef)
             if elapsed_time:
-                t_id = f'{self.workflow_id}{ID_DELIM}{tproxy.name}'
+                t_id = self.definition_id(tproxy.name)
                 t_delta = PbTask(
                     stamp=f'{t_id}@{update_time}',
                     mean_elapsed_time=elapsed_time
@@ -1825,15 +1868,21 @@ class DataStoreMgr:
             self, name, point=None, sub_num=None, node_type=TASK_PROXIES):
         """Check that task proxy is in or being added to the store"""
         if point is None:
-            node_id = f'{self.workflow_id}{ID_DELIM}{name}'
+            node_id = self.definition_id(name)
             node_type = TASKS
         elif sub_num is None:
-            node_id = f'{self.workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}'
+            node_id = detokenise({
+                **self.id_,
+                'cycle': point,
+                'task': name,
+            })
         else:
-            node_id = (
-                f'{self.workflow_id}{ID_DELIM}{point}'
-                f'{ID_DELIM}{name}{ID_DELIM}{sub_num}'
-            )
+            node_id = detokenise({
+                **self.id_,
+                'cycle': point,
+                'task': name,
+                'job': sub_num,
+            })
             node_type = JOBS
         if node_id in self.added[node_type]:
             return (node_id, self.added[node_type][node_id])
@@ -1968,3 +2017,10 @@ class DataStoreMgr:
         else:
             pb_msg.added.extend(data[element_type].values())
         return pb_msg
+
+    def definition_id(self, namespace):
+        return detokenise({
+            **self.id_,
+            'cycle': '*',
+            'task': namespace,
+        })

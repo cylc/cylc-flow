@@ -159,15 +159,18 @@ def get_option_parser():
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
     """Implement "cylc show" CLI."""
-    workflow_id, _ = parse_ids(
+    workflow_args, _ = parse_ids(
         workflow_id,
-        constraint='workflows',
+        constraint='mixed',
         max_workflows=1,
     )
+    workflow_id = list(workflow_args)[0]
+    tokens_list = workflow_args[workflow_id]
+
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
     json_filter = {}
 
-    if not task_args:
+    if not tokens_list:
         query = WORKFLOW_META_QUERY
         query_kwargs = {
             'request_string': query,
@@ -183,6 +186,10 @@ def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
                 for key, value in sorted(flat_data.items(), reverse=True):
                     ansiprint(
                         f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
+
+    return
+
+    # TODO !!!
 
     task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
     task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]

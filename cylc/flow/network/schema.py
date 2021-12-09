@@ -32,8 +32,12 @@ from graphene import (
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
-from cylc.flow import ID_DELIM
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
+from cylc.flow.id import (
+    detokenise,
+    strip_task,
+    tokenise,
+)
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
     TASK_OUTPUT_SUCCEEDED,
@@ -128,78 +132,6 @@ DEF_TYPES = [
     'tasks',
     'task',
 ]
-
-
-def parse_workflow_id(item):
-    """Split workflow id argument to individual workflow attributes.
-    Args:
-        item (owner|workflow:status):
-            It's possible to traverse workflows,
-            defaults to UI Server owner, and ``*`` glob for workflow.
-
-    Returns:
-        A tuple of id components in respective order. For example:
-
-        (owner, name, status)
-    """
-    owner, workflow, status = (None, None, None)
-    if ':' in item:
-        head, status = item.rsplit(':', 1)
-    else:
-        head, status = (item, None)
-    if head.count(ID_DELIM):
-        owner, workflow = head.split(ID_DELIM, 1)
-    else:
-        # more common to filter on workflow (with owner constant)
-        workflow = head
-    return (owner, workflow, status)
-
-
-def parse_node_id(item, node_type=None):
-    """Parse definition, job, or proxy id argument returning components.
-
-    Args:
-        item (str): A string representing a node ID. Jobs fill out
-            cycle|name|num first, cycle is irrelevant to Def
-            owner|workflow is always last.
-            For example:
-
-            name
-            cycle|na*
-            workflow|cycle|name
-            owner|workflow|cycle|name|submit_num:state
-            cycle|*|submit_num
-        node_type (str):
-            the type of the node to be parsed.
-
-    Returns:
-        A tuple of string id components in respective order. For example:
-
-        (owner, workflow, cycle, name, submit_num, state)
-
-        None type is set for missing components.
-    """
-    if ':' in item:
-        head, state = item.rsplit(':', 1)
-    else:
-        head, state = (item, None)
-    if ID_DELIM in head:
-        dil_count = head.count(ID_DELIM)
-        parts = head.split(ID_DELIM, dil_count)
-    else:
-        return (None, None, None, head, None, state)
-    if node_type in DEF_TYPES:
-        owner, workflow, name = [None] * (2 - dil_count) + parts
-        parts = [owner, workflow, None, name, None]
-    elif node_type in PROXY_TYPES:
-        parts = [None] * (3 - dil_count) + parts + [None]
-    elif dil_count < 4:
-        if dil_count < 3:
-            parts = [None, None] + parts + [None] * (2 - dil_count)
-        else:
-            parts = [None] * (4 - dil_count) + parts
-    parts += [state]
-    return tuple(parts)
 
 
 # ** Query Related **#
@@ -388,8 +320,8 @@ async def get_workflows(root, info, **args):
     if workflow is not None:
         args['ids'] = [workflow.id]
 
-    args['workflows'] = [parse_workflow_id(w_id) for w_id in args['ids']]
-    args['exworkflows'] = [parse_workflow_id(w_id) for w_id in args['exids']]
+    args['workflows'] = [tokenise(w_id) for w_id in args['ids']]
+    args['exworkflows'] = [tokenise(w_id) for w_id in args['exids']]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_workflows(args)
 
@@ -424,12 +356,12 @@ async def get_nodes_all(root, info, **args):
 
     node_type = NODE_MAP[get_type_str(info.return_type)]
 
-    args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
-    args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
+    args['ids'] = [tokenise(n_id, node_type) for n_id in args['ids']]
+    args['exids'] = [tokenise(n_id, node_type) for n_id in args['exids']]
     args['workflows'] = [
-        parse_workflow_id(w_id) for w_id in args['workflows']]
+        tokenise(w_id) for w_id in args['workflows']]
     args['exworkflows'] = [
-        parse_workflow_id(w_id) for w_id in args['exworkflows']]
+        tokenise(w_id) for w_id in args['exworkflows']]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_nodes_all(node_type, args)
 
@@ -462,8 +394,8 @@ async def get_nodes_by_ids(root, info, **args):
 
     node_type = NODE_MAP[get_type_str(info.return_type)]
 
-    args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
-    args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
+    args['ids'] = [tokenise(n_id, node_type) for n_id in args['ids']]
+    args['exids'] = [tokenise(n_id, node_type) for n_id in args['exids']]
     return await resolvers.get_nodes_by_ids(node_type, args)
 
 
@@ -510,9 +442,11 @@ async def get_edges_all(root, info, **args):
     process_resolver_info(root, info, args)
 
     args['workflows'] = [
-        parse_workflow_id(w_id) for w_id in args['workflows']]
+        tokenise(w_id) for w_id in args['workflows']
+    ]
     args['exworkflows'] = [
-        parse_workflow_id(w_id) for w_id in args['exworkflows']]
+        tokenise(w_id) for w_id in args['exworkflows']
+    ]
     resolvers = info.context.get('resolvers')
     return await resolvers.get_edges_all(args)
 
@@ -537,17 +471,19 @@ async def get_nodes_edges(root, info, **args):
     process_resolver_info(root, info, args)
 
     if hasattr(root, 'id'):
-        args['workflows'] = [parse_workflow_id(root.id)]
+        args['workflows'] = [tokenise(root.id)]
         args['exworkflows'] = []
     else:
         args['workflows'] = [
-            parse_workflow_id(w_id) for w_id in args['workflows']]
+            tokenise(w_id) for w_id in args['workflows']
+        ]
         args['exworkflows'] = [
-            parse_workflow_id(w_id) for w_id in args['exworkflows']]
+            tokenise(w_id) for w_id in args['exworkflows']
+        ]
 
     node_type = NODE_MAP['TaskProxy']
-    args['ids'] = [parse_node_id(n_id, node_type) for n_id in args['ids']]
-    args['exids'] = [parse_node_id(n_id, node_type) for n_id in args['exids']]
+    args['ids'] = [tokenise(n_id) for n_id in args['ids']]
+    args['exids'] = [tokenise(n_id) for n_id in args['exids']]
 
     resolvers = info.context.get('resolvers')
     root_nodes = await resolvers.get_nodes_all(node_type, args)
@@ -581,10 +517,11 @@ async def resolve_broadcasts(root, info, **args):
 
     result = {}
     t_type = NODE_MAP['Task']
-    t_args = {'workflows': [parse_workflow_id(root.id)]}
-    tp_type = NODE_MAP['TaskProxy']
+    t_args = {'workflows': [tokenise(root.id)]}
     for n_id in args['ids']:
-        _, _, point_string, name, _, _ = parse_node_id(n_id, tp_type)
+        tokens = tokenise(n_id)
+        point_string = tokens['cycle']
+        name = tokens['task']
         if point_string is None:
             point_string = '*'
         for cycle in set(ALL_CYCLE_POINTS_STRS + [point_string]):
@@ -1267,8 +1204,8 @@ async def mutator(root, info, command=None, workflows=None,
     if exworkflows is None:
         exworkflows = []
     w_args = {}
-    w_args['workflows'] = [parse_workflow_id(w_id) for w_id in workflows]
-    w_args['exworkflows'] = [parse_workflow_id(w_id) for w_id in exworkflows]
+    w_args['workflows'] = [tokenise(w_id) for w_id in workflows]
+    w_args['exworkflows'] = [tokenise(w_id) for w_id in exworkflows]
     if args.get('args', False):
         args.update(args.get('args', {}))
         args.pop('args')
@@ -1285,27 +1222,30 @@ async def nodes_mutator(root, info, command, ids, workflows=None,
         node_type = 'jobs'
     else:
         node_type = 'task_proxy'
-    ids = [parse_node_id(n_id, node_type) for n_id in ids]
+    tokens_list = [tokenise(n_id, node_type) for n_id in ids]
     # if the workflows arg is empty extract from proxy args
     if workflows is None:
         workflows = set()
-        for owner, workflow, _, _, _, _ in ids:
-            if owner and workflow:
-                workflows.add(f'{owner}{ID_DELIM}{workflow}')
-            elif workflow:
-                workflows.add(workflow)
+        for tokens in tokens_list:
+            workflows.add(detokenise(strip_task(tokens)))
     if not workflows:
         return GenericResponse(result="Error: No given Workflow(s)")
     if exworkflows is None:
         exworkflows = []
     w_args = {}
-    w_args['workflows'] = [parse_workflow_id(w_id) for w_id in workflows]
-    w_args['exworkflows'] = [parse_workflow_id(w_id) for w_id in exworkflows]
+    w_args['workflows'] = [tokenise(w_id) for w_id in workflows]
+    w_args['exworkflows'] = [tokenise(w_id) for w_id in exworkflows]
     if args.get('args', False):
         args.update(args.get('args', {}))
         args.pop('args')
     resolvers = info.context.get('resolvers')
-    res = await resolvers.nodes_mutator(info, command, ids, w_args, args)
+    res = await resolvers.nodes_mutator(
+        info,
+        command,
+        tokens_list,
+        w_args,
+        args
+    )
     return GenericResponse(result=res)
 
 # Input types:

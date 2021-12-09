@@ -20,7 +20,8 @@ from itertools import zip_longest
 import re
 from time import time
 
-from cylc.flow import ID_DELIM
+from cylc.flow.id import (
+    tokenise, detokenise, pop_token,)
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
 )
@@ -91,13 +92,16 @@ def get_task_icon(
 def idpop(id_):
     """Remove the last element of a node id.
 
-    Example:
-        >>> id_ = ID_DELIM.join(['a', 'b', 'c'])
-        >>> idpop(id_).split(ID_DELIM)
-        ['a', 'b']
+    Examples:
+        >>> idpop('~u/w//c/t/j')
+        '~u/w//c/t'
+        >>> idpop('~u/w//c/t')
+        '~u/w//c'
 
     """
-    return id_.rsplit(ID_DELIM, 1)[0]
+    tokens = tokenise(id_)
+    pop_token(tokens)
+    return detokenise(tokens)
 
 
 def compute_tree(flow):
@@ -432,10 +436,10 @@ def render_node(node, data, type_):
                 is_runahead=data['isRunahead']
             ),
             ' ',
-            data['id'].rsplit(ID_DELIM, 1)[-1]
+            pop_token(tokenise(data['id']))[1]
         ]
 
-    return data['id'].rsplit(ID_DELIM, 1)[-1]
+    return pop_token(tokenise(data['id']))[1]
 
 
 PARTS = [
@@ -455,22 +459,24 @@ def extract_context(selection):
             List of element id's as extracted from the data store / graphql.
 
     Examples:
-        >>> extract_context(['a|b', 'a|c'])
+        >>> extract_context(['~a/b', '~a/c'])
         {'user': ['a'], 'workflow': ['b', 'c']}
 
-        >>> extract_context(['a|b|c|d|e']
+        >>> extract_context(['~a/b//c/d/e']
         ... )  # doctest: +NORMALIZE_WHITESPACE
-        {'user': ['a'], 'workflow': ['b'], 'cycle_point': ['c'],
+        {'user': ['a'], 'workflow': ['b'], 'cycle': ['c'],
         'task': ['d'], 'job': ['e']}
 
     """
-    context = {type_: set() for type_ in PARTS}
+    ret = {}
     for item in selection:
-        parts = item.split(ID_DELIM)
-        for type_, part in zip(PARTS, parts):
-            context[type_].add(part)
-    return {
-        key: sorted(value)
-        for key, value in context.items()
-        if value
-    }
+        tokens = tokenise(item)
+        for key, value in tokens.items():
+            if (
+                value
+                and not key.endswith('_sel')  # ignore selectors
+            ):
+                lst = ret.setdefault(key, [])
+                if value not in lst:
+                    lst.append(value)
+    return ret

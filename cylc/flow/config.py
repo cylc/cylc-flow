@@ -53,6 +53,7 @@ from cylc.flow.cycling.loader import (
     get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
     INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
 )
+from cylc.flow.id import detokenise
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 from cylc.flow.exceptions import (
@@ -690,7 +691,7 @@ class WorkflowConfig:
             # Select the earliest start point for use in pre-initial ignore.
             self.start_point = min(
                 get_point(
-                    TaskID.split(taskid)[1]
+                    tokenise(taskid)['cycle']
                 ).standardise()
                 for taskid in self.options.starttask
             )
@@ -828,7 +829,21 @@ class WorkflowConfig:
             for rhs, lhss in sorted(rhs2lhss.items()):
                 for lhs in sorted(lhss):
                     err_msg += '  %s => %s' % (
-                        TaskID.get(*lhs), TaskID.get(*rhs))
+                        detokenise(
+                            {
+                                'cycle': lhs[1],
+                                'task': lhs[0]
+                            },
+                            relative=True
+                        ),
+                        detokenise(
+                            {
+                                'cycle': rhs[1],
+                                'task': rhs[0]
+                            },
+                            relative=True
+                        ),
+                    )
             if err_msg:
                 raise WorkflowConfigError(
                     'circular edges detected:' + err_msg)
@@ -1872,25 +1887,61 @@ class WorkflowConfig:
         lname, lpoint = None, None
         if l_id:
             lname, lpoint = l_id
-            lret = TaskID.get(lname, lpoint)
+            lret = detokenise(
+                {
+                    'cycle': lpoint,
+                    'task': lname,
+                },
+                relative=True
+            )
         rret = None
         rname, rpoint = None, None
         if r_id:
             rname, rpoint = r_id
-            rret = TaskID.get(rname, rpoint)
+            rret = detokenise(
+                {
+                    'cycle': rpoint,
+                    'task': rname,
+                },
+                relative=True
+            )
 
         for fam_name, fam_members in clf_map.items():
             if lname in fam_members and rname in fam_members:
                 # l and r are both members
-                lret = TaskID.get(fam_name, lpoint)
-                rret = TaskID.get(fam_name, rpoint)
+                lret = detokenise(
+                    {
+                        'cycle': lpoint,
+                        'task': fam_name,
+                    },
+                    relative=True
+                )
+                rret = detokenise(
+                    {
+                        'cycle': rpoint,
+                        'task': fam_name,
+                    },
+                    relative=True
+                )
                 break
             elif lname in fam_members:
                 # l is a member
-                lret = TaskID.get(fam_name, lpoint)
+                lret = detokenise(
+                    {
+                        'cycle': lpoint,
+                        'task': fam_name,
+                    },
+                    relative=True
+                )
             elif rname in fam_members:
                 # r is a member
-                rret = TaskID.get(fam_name, rpoint)
+                rret = detokenise(
+                    {
+                        'cycle': rpoint,
+                        'task': fam_name,
+                    },
+                    relative=True
+                )
 
         return lret, rret
 

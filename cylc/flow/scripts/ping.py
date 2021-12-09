@@ -29,7 +29,6 @@ from functools import partial
 import sys
 from typing import Any, Dict, TYPE_CHECKING
 
-from cylc.flow import ID_DELIM
 import cylc.flow.flags
 from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client

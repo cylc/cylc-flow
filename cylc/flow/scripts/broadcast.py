@@ -86,8 +86,6 @@ import sys
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, TYPE_CHECKING
 
-from cylc.flow import ID_DELIM
-
 from cylc.flow.broadcast_report import (
     get_broadcast_bad_options_report,
     get_broadcast_change_report,
@@ -100,7 +98,6 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 from cylc.flow.print_tree import get_tree
-from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -291,8 +288,10 @@ def get_option_parser():
 
     parser.add_option(
         "-k", "--display-task", metavar="TASK_GLOB",
-        help="Print active broadcasts for a given task "
-             "(" + TaskID.SYNTAX + ").",
+        help=(
+            "Print active broadcasts for a given task "
+            "(cycle/task)."
+        ),
         action="store", default=None, dest="showtask")
 
     parser.add_option(
@@ -343,11 +342,12 @@ async def run(options: 'Values', workflow_id):
     if options.show or options.showtask:
         if options.showtask:
             try:
-                task, point = TaskID.split(options.showtask)
-                query_kwargs['variables']['nIds'] = [
-                    f'{point}{ID_DELIM}{task}']
+                showtask = options.showtask
+                if not showtask.startswith('//'):
+                    showtask = f'//{showtask}'
+                query_kwargs['variables']['nIds'] = [showtask]
             except ValueError:
-                raise UserInputError("TASKID must be " + TaskID.SYNTAX)
+                raise UserInputError("TASKID must be cycle/taask")
         result = await pclient.async_request('graphql', query_kwargs)
         for wflow in result['workflows']:
             settings = wflow['broadcasts']

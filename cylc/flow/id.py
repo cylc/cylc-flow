@@ -30,7 +30,7 @@ class Tokens(Enum):
     """Cylc object identifier tokens."""
 
     User = 'user'
-    Flow = 'flow'
+    Workflow = 'workflow'
     Cycle = 'cycle'
     Task = 'task'
     Job = 'job'
@@ -71,7 +71,7 @@ RELATIVE_ID = re.compile(
     re.X
 )
 
-# ~user[/flow[:sel][//cycle[:sel][/task[:sel][/job[:sel]]]]]
+# ~user[/workflow[:sel][//cycle[:sel][/task[:sel][/job[:sel]]]]]
 UNIVERSAL_ID = re.compile(
     rf'''
         # don't match an empty string
@@ -87,10 +87,10 @@ UNIVERSAL_ID = re.compile(
           |^
         )
         (?:
-          (?P<{Tokens.Flow.value}>[^\/:\n~]+)
+          (?P<{Tokens.Workflow.value}>[^\/:\n~]+)
           (?:
             :
-            (?P<{Tokens.Flow.value}_sel>[^\/:\n]+)
+            (?P<{Tokens.Workflow.value}_sel>[^\/:\n]+)
           )?
           (?:
             (?:
@@ -177,7 +177,7 @@ def legacy_tokenise(identifier):
         dict - {token: value}
 
     Warning:
-        The tokenise() function will parse a legacy token as a "flow".
+        The tokenise() function will parse a legacy token as a Workflow.
 
     Raises:
         ValueError:
@@ -218,7 +218,7 @@ def tokenise(identifier):
         dict - {token: value}
 
     Warning:
-        Will parse a legacy (task and or cycle) token as a "flow".
+        Will parse a legacy (task and or cycle) token as a Workflow.
 
     Raises:
         ValueError:
@@ -227,12 +227,12 @@ def tokenise(identifier):
     Examples:
         # absolute identifiers
         >>> tokenise(
-        ...     '~user/flow:flow_sel//'
+        ...     '~user/workflow:workflow_sel//'
         ...     'cycle:cycle_sel/task:task_sel/job:job_sel'
         ... ) # doctest: +NORMALIZE_WHITESPACE
         {'user': 'user',
-         'flow': 'flow',
-         'flow_sel': 'flow_sel',
+         'workflow': 'workflow',
+         'workflow_sel': 'workflow_sel',
          'cycle': 'cycle',
          'cycle_sel': 'cycle_sel',
          'task': 'task',
@@ -245,16 +245,16 @@ def tokenise(identifier):
         ...         token: value for token, value in tokens.items() if value}
 
         # "full" identifiers
-        >>> _(tokenise('flow//cycle'))
-        {'flow': 'flow', 'cycle': 'cycle'}
+        >>> _(tokenise('workflow//cycle'))
+        {'workflow': 'workflow', 'cycle': 'cycle'}
 
         # "partial" identifiers:
         >>> _(tokenise('~user'))
         {'user': 'user'}
-        >>> _(tokenise('~user/flow'))
-        {'user': 'user', 'flow': 'flow'}
-        >>> _(tokenise('flow'))
-        {'flow': 'flow'}
+        >>> _(tokenise('~user/workflow'))
+        {'user': 'user', 'workflow': 'workflow'}
+        >>> _(tokenise('workflow'))
+        {'workflow': 'workflow'}
 
         # "relative" identifiers (new syntax):
         >>> _(tokenise('//cycle'))
@@ -263,8 +263,8 @@ def tokenise(identifier):
         {'cycle': 'cycle', 'task': 'task', 'job': 'job'}
 
         # whitespace stripping is employed on all values:
-        >>> _(tokenise(' flow // cycle '))
-        {'flow': 'flow', 'cycle': 'cycle'}
+        >>> _(tokenise(' workflow // cycle '))
+        {'workflow': 'workflow', 'cycle': 'cycle'}
 
         # illegal identifiers:
         >>> tokenise('a///')
@@ -293,7 +293,7 @@ def detokenise(tokens, selectors=False, relative=False):
             TODO: remove this?
 
     Returns:
-        str - Identifier i.e. ~user/flow//cycle/task/job
+        str - Identifier i.e. ~user/workflow//cycle/task/job
 
     Raises:
         ValueError:
@@ -303,40 +303,40 @@ def detokenise(tokens, selectors=False, relative=False):
         # absolute references:
         >>> detokenise(tokenise('~user'))
         '~user'
-        >>> detokenise(tokenise('~user/flow'))
-        '~user/flow'
-        >>> detokenise(tokenise('~user/flow//cycle'))
-        '~user/flow//cycle'
-        >>> detokenise(tokenise('~user/flow//cycle/task'))
-        '~user/flow//cycle/task'
-        >>> detokenise(tokenise('~user/flow//cycle/task/job'))
-        '~user/flow//cycle/task/job'
+        >>> detokenise(tokenise('~user/workflow'))
+        '~user/workflow'
+        >>> detokenise(tokenise('~user/workflow//cycle'))
+        '~user/workflow//cycle'
+        >>> detokenise(tokenise('~user/workflow//cycle/task'))
+        '~user/workflow//cycle/task'
+        >>> detokenise(tokenise('~user/workflow//cycle/task/4'))
+        '~user/workflow//cycle/task/04'
 
         # relative references:
-        >>> detokenise(tokenise('//cycle/task/job'))
-        '//cycle/task/job'
-        >>> detokenise(tokenise('//cycle/task/job'), relative=True)
-        'cycle/task/job'
+        >>> detokenise(tokenise('//cycle/task/4'))
+        '//cycle/task/04'
+        >>> detokenise(tokenise('//cycle/task/4'), relative=True)
+        'cycle/task/04'
 
         # selectors are enabled using the selectors kwarg:
-        >>> detokenise(tokenise('flow:a//cycle:b/task:c/job:d'))
-        'flow//cycle/task/job'
-        >>> detokenise(tokenise('flow:a//cycle:b/task:c/job:d'), True)
-        'flow:a//cycle:b/task:c/job:d'
+        >>> detokenise(tokenise('workflow:a//cycle:b/task:c/01:d'))
+        'workflow//cycle/task/01'
+        >>> detokenise(tokenise('workflow:a//cycle:b/task:c/01:d'), True)
+        'workflow:a//cycle:b/task:c/01:d'
 
         # missing tokens expand to '*' (absolute):
-        >>> tokens = tokenise('~user/flow//cycle/task/job')
+        >>> tokens = tokenise('~user/workflow//cycle/task/01')
         >>> tokens.pop('task')
         'task'
         >>> detokenise(tokens)
-        '~user/flow//cycle/*/job'
+        '~user/workflow//cycle/*/01'
 
         # missing tokens expand to '*' (relative):
-        >>> tokens = tokenise('//cycle/task/job')
+        >>> tokens = tokenise('//cycle/task/01')
         >>> tokens.pop('task')
         'task'
         >>> detokenise(tokens)
-        '//cycle/*/job'
+        '//cycle/*/01'
 
         # empty tokens result in traceback:
         >>> detokenise({})
@@ -349,7 +349,7 @@ def detokenise(tokens, selectors=False, relative=False):
         for token in Tokens
         if tokens.get(token.value)
     }
-    is_relative = not toks & {'user', 'flow'}
+    is_relative = not toks & {'user', 'workflow'}
     is_partial = not toks & {'cycle', 'task', 'job'}
     if is_relative and is_partial:
         raise ValueError('No tokens provided')
@@ -377,11 +377,13 @@ def detokenise(tokens, selectors=False, relative=False):
             continue
         elif token == Tokens.User:
             value = f'~{value}'
+        elif token == Tokens.Job and value != 'NN':
+            value = f'{int(value):02}'
         value = value or '*'
         if selectors and tokens.get(token.value + '_sel'):
             # include selectors
             value = f'{value}:{tokens[token.value + "_sel"]}'
-        if token == Tokens.Flow and not is_partial:
+        if token == Tokens.Workflow and not is_partial:
             value += '/'
         identifier.append(value)
 
@@ -403,27 +405,27 @@ def upgrade_legacy_ids(*ids):
         tuple/list - Identifier list.
 
         # do nothing to contemporary ids:
-        >>> upgrade_legacy_ids('flow')
-        ('flow',)
+        >>> upgrade_legacy_ids('workflow')
+        ('workflow',)
 
-        >>> upgrade_legacy_ids('flow', '//cycle')
-        ('flow', '//cycle')
+        >>> upgrade_legacy_ids('workflow', '//cycle')
+        ('workflow', '//cycle')
 
         # upgrade legacy task.cycle ids:
-        >>> upgrade_legacy_ids('flow', 'task.123', 'task.234')
-        ['flow', '//123/task', '//234/task']
+        >>> upgrade_legacy_ids('workflow', 'task.123', 'task.234')
+        ['workflow', '//123/task', '//234/task']
 
         # upgrade legacy cycle/task ids:
-        >>> upgrade_legacy_ids('flow', '123/task', '234/task')
-        ['flow', '//123/task', '//234/task']
+        >>> upgrade_legacy_ids('workflow', '123/task', '234/task')
+        ['workflow', '//123/task', '//234/task']
 
         # upgrade mixed legacy ids:
-        >>> upgrade_legacy_ids('flow', 'task.123', '234/task')
-        ['flow', '//123/task', '//234/task']
+        >>> upgrade_legacy_ids('workflow', 'task.123', '234/task')
+        ['workflow', '//123/task', '//234/task']
 
         # upgrade legacy task states:
-        >>> upgrade_legacy_ids('flow', 'task.123:abc', '234/task:def')
-        ['flow', '//123/task:abc', '//234/task:def']
+        >>> upgrade_legacy_ids('workflow', 'task.123:abc', '234/task:def')
+        ['workflow', '//123/task:abc', '//234/task:def']
 
     """
     if len(ids) < 2:
@@ -449,11 +451,47 @@ def upgrade_legacy_ids(*ids):
     return legacy_ids
 
 
-def strip_flow(tokens):
+def strip_workflow(tokens):
+    """Remove the workflow portion of the tokens.
+
+    Examples:
+        >>> detokenise(strip_workflow(tokenise(
+        ...     '~user/workflow//cycle/task/01'
+        ... )))
+        '~user/workflow'
+
+    """
     return {
         key: value
         for key, value in tokens.items()
-        if key not in ('user', 'flow', 'flow_sel')
+        if key not in (
+            enum.value
+            for enum in (
+                {*Tokens} - {Tokens.User, Tokens.Workflow}
+            )
+        )
+    }
+
+
+def strip_task(tokens):
+    """Remove the task portion of the tokens.
+
+    Examples:
+        >>> detokenise(strip_task(tokenise(
+        ...     '~user/workflow//cycle/task/01'
+        ... )))
+        '//cycle/task/01'
+
+    """
+    return {
+        key: value
+        for key, value in tokens.items()
+        if key in (
+            enum.value
+            for enum in (
+                {*Tokens} - {Tokens.User, Tokens.Workflow}
+            )
+        )
     }
 
 
@@ -465,7 +503,7 @@ def is_null(tokens):
         True
         >>> is_null({'job_sel': 'x'})
         True
-        >>> is_null({'job': 'x'})
+        >>> is_null({'job': '01'})
         False
 
     """
@@ -481,16 +519,16 @@ def contains_task_like(tokens):
     Task like == cycles or tasks or jobs.
 
     Examples:
-        >>> contains_task_like(tokenise('flow//'))
+        >>> contains_task_like(tokenise('workflow//'))
         False
-        >>> contains_task_like(tokenise('flow//cycle'))
+        >>> contains_task_like(tokenise('workflow//cycle'))
         True
 
     """
     return any(
         bool(tokens.get(token.value))
         for token in Tokens
-        if token not in {Tokens.User, Tokens.Flow}
+        if token not in {Tokens.User, Tokens.Workflow}
     )
 
 
@@ -511,9 +549,32 @@ def contains_multiple_workflows(tokens_list):
 
     """
     return len({
-        (tokens['user'], tokens['flow'])
+        (tokens['user'], tokens['workflow'])
         for tokens in tokens_list
     }) > 1
+
+
+def pop_token(tokens):
+    """
+        >>> tokens = tokenise('~u/w//c/t/01')
+        >>> pop_token(tokens)
+        ('job', '01')
+        >>> pop_token(tokens)
+        ('task', 't')
+        >>> pop_token(tokens)
+        ('cycle', 'c')
+        >>> pop_token(tokens)
+        ('workflow', 'w')
+        >>> pop_token(tokens)
+        ('user', 'u')
+        >>> tokens
+        {'workflow_sel': None, 'cycle_sel': None, 'task_sel': None, 'job_sel': None}
+
+    """
+    for token_name in reversed(Tokens):
+        token_name = token_name.value
+        if token_name in tokens and tokens[token_name]:
+            return (token_name, tokens.pop(token_name))
 
 
 def parse_cli(*ids):
@@ -538,27 +599,27 @@ def parse_cli(*ids):
         >>> parse_back = lambda *ids: list(map(detokenise, parse_cli(*ids)))
 
         # list of workflows:
-        >>> parse_back('flow')
-        ['flow']
+        >>> parse_back('workworkflow')
+        ['workworkflow']
 
-        >>> parse_back('flow1', 'flow2')
-        ['flow1', 'flow2']
+        >>> parse_back('workworkflow1', 'workworkflow2')
+        ['workworkflow1', 'workworkflow2']
 
         # sbsolute references
-        >>> parse_back('flow1//cycle1', 'flow2//cycle2')
-        ['flow1//cycle1', 'flow2//cycle2']
+        >>> parse_back('workworkflow1//cycle1', 'workworkflow2//cycle2')
+        ['workworkflow1//cycle1', 'workworkflow2//cycle2']
 
         # relative references:
-        >>> parse_back('flow', '//cycle1', '//cycle2')
-        ['flow//cycle1', 'flow//cycle2']
+        >>> parse_back('workworkflow', '//cycle1', '//cycle2')
+        ['workworkflow//cycle1', 'workworkflow//cycle2']
 
         # mixed references
-        >>> parse_back('flow1', '//cycle', 'flow2', '//cycle', 'flow3//cycle')
-        ['flow1//cycle', 'flow2//cycle', 'flow3//cycle']
+        >>> parse_back('workworkflow1', '//cycle', 'workworkflow2', '//cycle', 'workworkflow3//cycle')
+        ['workworkflow1//cycle', 'workworkflow2//cycle', 'workworkflow3//cycle']
 
         # legacy ids:
-        >>> parse_back('flow', 'task.123', 'a.b.c.234', '345/task')
-        ['flow//123/task', 'flow//234/a.b.c', 'flow//345/task']
+        >>> parse_back('workworkflow', 'task.123', 'a.b.c.234', '345/task')
+        ['workworkflow//123/task', 'workworkflow//234/a.b.c', 'workworkflow//345/task']
 
         # errors:
         >>> parse_cli('////')
@@ -568,12 +629,12 @@ def parse_cli(*ids):
         >>> parse_back('//cycle')
         Traceback (most recent call last):
         ValueError: Relative reference must follow an incomplete one.
-        E.G: flow //cycle/task
+        E.G: workflow //cycle/task
 
-        >>> parse_back('flow//cycle', '//cycle')
+        >>> parse_back('workflow//cycle', '//cycle')
         Traceback (most recent call last):
         ValueError: Relative reference must follow an incomplete one.
-        E.G: flow //cycle/task
+        E.G: workflow //cycle/task
 
     """
     # upgrade legacy ids if required
@@ -584,17 +645,17 @@ def parse_cli(*ids):
     tokens_list = []
     for id_ in ids:
         tokens = tokenise(id_)
-        is_partial = tokens.get('flow') and not tokens.get('cycle')
-        is_relative = not tokens.get('flow')
+        is_partial = tokens.get('workflow') and not tokens.get('cycle')
+        is_relative = not tokens.get('workflow')
 
         if partials:
-            # we previously encountered a flow ID which did not specify a
+            # we previously encountered a workflow ID which did not specify a
             # cycle
             if is_partial:
                 # this is an absolute ID
                 if not partials_expended:
                     # no relative references were made to the previous ID
-                    # so add the whole flow to the tokens list
+                    # so add the whole workflow to the tokens list
                     tokens_list.append(partials)
                 partials = tokens
                 partials_expended = False
@@ -621,7 +682,7 @@ def parse_cli(*ids):
                 # so a relative reference is an error
                 raise ValueError(
                     'Relative reference must follow an incomplete one.'
-                    '\nE.G: flow //cycle/task'
+                    '\nE.G: workflow //cycle/task'
                 )
             else:
                 tokens_list.append(tokens)
@@ -640,11 +701,11 @@ def parse_ids(*ids):
         if tokens['user']:
             # TODO
             raise UserInputError('Changing user not supported')
-        if tokens['flow_sel']:
+        if tokens['workflow_sel']:
             raise UserInputError('Selectors cannot be used on workflows')
-        key = tokens['flow']
+        key = tokens['workflow']
         workflows.setdefault(key, []).append(
-            detokenise(strip_flow(tokens), relative=True)
+            detokenise(strip_workflow(tokens), relative=True)
         )
     return workflows
 

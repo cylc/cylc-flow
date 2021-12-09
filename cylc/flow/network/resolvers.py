@@ -35,11 +35,11 @@ from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
 
-from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
     DELTA_ADDED, create_delta_store
 )
+from cylc.flow.id import tokenise, strip_task
 from cylc.flow.network.schema import (
     NodesEdges, PROXY_NODES, SUB_RESOLVERS, parse_node_id, sort_elements
 )
@@ -118,7 +118,9 @@ def workflow_filter(flow, args, w_atts=None):
 
 def collate_node_atts(node):
     """Collate node filter attributes, setting defaults if non-existent."""
-    owner, workflow, _ = node.id.split(ID_DELIM, 2)
+    tokens = tokenise(node.id)
+    owner = tokens['user']
+    workflow = tokens['workflow']
     # Append new atts to the end of the list,
     # this will retain order used in index access
     # 0 - owner
@@ -186,9 +188,7 @@ def get_flow_data_from_ids(data_store, native_ids):
     """Return workflow data by id."""
     w_ids = set()
     for native_id in native_ids:
-        o_name, w_name, _ = native_id.split(ID_DELIM, 2)
-        flow_id = f'{o_name}{ID_DELIM}{w_name}'
-        w_ids.add(flow_id)
+        w_ids.add(strip_task(tokenise(native_id)))
     return [
         data_store[w_id]
         for w_id in w_ids
@@ -290,8 +290,7 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
     async def get_node_by_id(self, node_type, args):
         """Return protobuf node object for given id."""
         n_id = args.get('id')
-        o_name, w_name, _ = n_id.split(ID_DELIM, 2)
-        w_id = f'{o_name}{ID_DELIM}{w_name}'
+        w_id = detokenise(strip_task(tokenise(n_id)))
         # Both cases just as common so 'if' not 'try'
         try:
             if 'sub_id' in args and args.get('delta_store'):
@@ -543,8 +542,16 @@ class Resolvers(BaseResolvers):
         for owner, workflow, cycle, name, submit_num, state in ids:
             if workflow and owner is None:
                 owner = "*"
-            if (not (owner and workflow) or
-                    fnmatchcase(w_id, f'{owner}{ID_DELIM}{workflow}')):
+            if (
+                not (owner and workflow)
+                or fnmatchcase(
+                    w_id,
+                    detokenise({
+                        'user': owner,
+                        'workflow': workflow,
+                    }),
+                )
+            ):
                 if cycle is None:
                     cycle = '*'
                 id_arg = f'{cycle}/{name}'

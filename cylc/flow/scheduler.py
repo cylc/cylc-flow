@@ -40,13 +40,14 @@ from zmq.auth.thread import ThreadAuthenticator
 from metomi.isodatetime.parsers import TimePointParser
 
 from cylc.flow import (
-    LOG, main_loop, ID_DELIM, __version__ as CYLC_VERSION
+    LOG, main_loop, __version__ as CYLC_VERSION
 )
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
+from cylc.flow.id import detokenise
 from cylc.flow.flow_mgr import FlowMgr
 from cylc.flow.exceptions import (
     CommandFailedError, CyclingError, CylcError, UserInputError
@@ -253,7 +254,10 @@ class Scheduler:
         self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
-        self.id = f'{self.owner}{ID_DELIM}{self.workflow}'
+        self.id = detokenise({
+            'user': self.owner,
+            'workflow': self.workflow,
+        })
         self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = load_template_vars(
@@ -786,7 +790,13 @@ class Scheduler:
                 break
             self.message_queue.task_done()
             cycle, task_name, submit_num = parse_job_item(task_job)
-            task_id = TaskID.get(task_name, cycle)
+            task_id = detokenise(
+                {
+                    'cycle': cycle,
+                    'task': task_name,
+                },
+                relative=True,
+            )
             messages.setdefault(task_id, [])
             messages[task_id].append(
                 (submit_num, event_time, severity, message))
@@ -896,11 +906,13 @@ class Scheduler:
         elif task:
             # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
-            if TaskID.is_valid_id(task_id):
-                self.pool.set_stop_task(task_id)
-            else:
+
+            try:
+                tokenise(f'//{task_id]')
+            except ValueError:
                 # TODO: yield warning
-                pass
+            else:
+                self.pool.set_stop_task(task_id)
         else:
             # immediate shutdown
             with suppress(KeyError):

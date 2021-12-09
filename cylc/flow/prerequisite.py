@@ -19,11 +19,13 @@
 import math
 import re
 
-from cylc.flow import ID_DELIM
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.data_messages_pb2 import (  # type: ignore
-    PbPrerequisite, PbCondition)
+    PbPrerequisite,
+    PbCondition,
+)
+from cylc.flow.id import detokenise
 
 
 class Prerequisite:
@@ -201,7 +203,7 @@ class Prerequisite:
                 self._all_satisfied = self._conditional_is_satisfied()
         return relevant_messages
 
-    def api_dump(self, workflow_id):
+    def api_dump(self, workflow_tokens):
         """Return list of populated Protobuf data objects."""
         if not self.satisfied:
             return None
@@ -216,7 +218,11 @@ class Prerequisite:
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             name, point = message_tuple[0:2]
-            t_id = f"{workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}"
+            t_id = detokenise({
+                **workflow_tokens,
+                'cycle': point,
+                'task': name,
+            })
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]

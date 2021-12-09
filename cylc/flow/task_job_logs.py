@@ -16,6 +16,8 @@
 """Define task job log filenames and option names."""
 
 import os
+
+from cylc.flow.id import detokenise
 from cylc.flow.pathutil import get_workflow_run_job_dir
 
 # Task job log filenames.
@@ -38,20 +40,20 @@ JOB_LOG_OPTS = {
 NN = "NN"
 
 
-def get_task_job_id(point, name, submit_num=None):
-    """Return the job log path from cycle point down."""
-    try:
-        submit_num = "%02d" % submit_num
-    except TypeError:
-        submit_num = NN
-    return os.path.join(str(point), name, submit_num)
-
-
 def get_task_job_log(workflow, point, name, submit_num=None, suffix=None):
     """Return the full job log path."""
     args = [
         get_workflow_run_job_dir(workflow),
-        get_task_job_id(point, name, submit_num)]
+        detokenise(
+            {
+                'workflow': workflow,
+                'cycle': point,
+                'task': name,
+                'job': submit_num,
+            },
+            relative=True,
+        )
+    ]
     if suffix is not None:
         args.append(suffix)
     return os.path.join(*args)

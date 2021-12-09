@@ -125,7 +125,8 @@ class TaskPool:
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
-        name = TaskID.split(task_id)[0]
+        tokens = tokenise(f'//{task_id')
+        name = tokens['task']
         if name in self.config.get_task_name_list():
             task_id = TaskID.get_standardised_taskid(task_id)
             LOG.info("Setting stop task: " + task_id)
@@ -207,7 +208,7 @@ class TaskPool:
 
     def create_data_store_elements(self, itask):
         """Create the node window elements about given task proxy."""
-        # Register pool node reference data-store with ID_DELIM format
+        # Register pool node reference
         self.data_store_mgr.add_pool_node(itask.tdef.name, itask.point)
         # Create new data-store n-distance graph window about this task
         self.data_store_mgr.increment_graph_window(itask)
@@ -449,7 +450,13 @@ class TaskPool:
             LOG.info("LOADING task action timers")
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
-        id_ = TaskID.get(name, cycle)
+        id_ = detokenise(
+            {
+                'cycle': cycle,
+                'name': name,
+            },
+            relative=True,
+        )
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
@@ -547,7 +554,13 @@ class TaskPool:
             or all(x < self.config.start_point for x in parent_points)
             or itask.tdef.has_only_abs_triggers(next_point)
         ):
-            taskid = TaskID.get(itask.tdef.name, next_point)
+            taskid = detokenise(
+                {
+                    'cycle': next_point,
+                    'name': itask.tdef.name,
+                },
+                relative=True
+            )
             next_task = (
                 self._get_hidden_task_by_id(taskid)
                 or self._get_main_task_by_id(taskid)
@@ -953,7 +966,7 @@ class TaskPool:
         """
         unsat = {}
         for itask in self.get_hidden_tasks():
-            _, point = TaskID().split(itask.identity)
+            point = itask.point
             if get_point(point) > self.stop_point:
                 continue
             for pre in itask.state.get_unsatisfied_prerequisites():
@@ -1162,7 +1175,13 @@ class TaskPool:
                     str(itask.point), itask.tdef.name, output)
                 self.workflow_db_mgr.process_queued_ops()
 
-            c_taskid = TaskID.get(c_name, c_point)
+            c_taskid = detokenise(
+                {
+                    'cycle': c_point,
+                    'task': c_name,
+                },
+                relative=True
+            )
             c_task = (
                 self._get_hidden_task_by_id(c_taskid)
                 or self._get_main_task_by_id(c_taskid)
@@ -1257,7 +1276,13 @@ class TaskPool:
                 continue
 
             for c_name, c_point, _ in children:
-                c_taskid = TaskID.get(c_name, c_point)
+                c_taskid = detokenise(
+                    {
+                        'cycle': c_point,
+                        'task': c_name,
+                    },
+                    relative=True
+                )
                 c_task = (
                     self._get_hidden_task_by_id(c_taskid)
                     or self._get_main_task_by_id(c_taskid)
@@ -1458,7 +1483,13 @@ class TaskPool:
         """
         n_warnings, task_items = self.match_taskdefs(items)
         for name, point in task_items.keys():
-            task_id = TaskID.get(name, point)
+            task_id = detokenise(
+                {
+                    'cycle': point,
+                    'task': name,
+                },
+                relative=True
+            )
             itask = (
                 self._get_main_task_by_id(task_id)
                 or self._get_hidden_task_by_id(task_id)
