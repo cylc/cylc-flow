@@ -29,13 +29,13 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
+from cylc.flow.id import detokenise
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
     CustomTaskEventHandlerContext, TaskEventMailContext,
     TaskJobLogsRetrieveContext)
 from cylc.flow.task_id import TaskID
-from cylc.flow.task_job_logs import get_task_job_id
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUSES_ACTIVE,
@@ -125,7 +125,7 @@ class TaskPool:
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
-        tokens = tokenise(f'//{task_id')
+        tokens = tokenise(f'//{task_id}')
         name = tokens['task']
         if name in self.config.get_task_name_list():
             task_id = TaskID.get_standardised_taskid(task_id)
@@ -426,7 +426,7 @@ class TaskPool:
                 itask.summary['platforms_used'][
                     int(submit_num)] = platform_name
             LOG.info(
-                f"+ {name}.{cycle} {status}{' (held)' if is_held else ''}")
+                f"+ {cycle}/{name} {status}{' (held)' if is_held else ''}")
 
             # Update prerequisite satisfaction status from DB
             sat = {}
@@ -453,7 +453,7 @@ class TaskPool:
         id_ = detokenise(
             {
                 'cycle': cycle,
-                'name': name,
+                'task': name,
             },
             relative=True,
         )
@@ -556,8 +556,8 @@ class TaskPool:
         ):
             taskid = detokenise(
                 {
-                    'cycle': next_point,
-                    'name': itask.tdef.name,
+                    'cycle': str(next_point),
+                    'task': itask.tdef.name,
                 },
                 relative=True
             )
@@ -1177,7 +1177,7 @@ class TaskPool:
 
             c_taskid = detokenise(
                 {
-                    'cycle': c_point,
+                    'cycle': str(c_point),
                     'task': c_name,
                 },
                 relative=True
@@ -1278,7 +1278,7 @@ class TaskPool:
             for c_name, c_point, _ in children:
                 c_taskid = detokenise(
                     {
-                        'cycle': c_point,
+                        'cycle': str(c_point),
                         'task': c_name,
                     },
                     relative=True
@@ -1551,8 +1551,13 @@ class TaskPool:
                        itask.tdef.rtconfig['job']['simulated run length'])
             if now > timeout:
                 conf = itask.tdef.rtconfig['simulation']
-                job_d = get_task_job_id(
-                    itask.point, itask.tdef.name, itask.submit_num)
+                job_d = detokenise(
+                    {
+                        **itask.tokens,
+                        'job': itask.submit_num,
+                    },
+                    relative=True,
+                )
                 now_str = get_current_time_string()
                 if (itask.point in conf['fail cycle points'] and
                         (itask.get_try_num() == 1 or

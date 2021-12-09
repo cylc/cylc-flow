@@ -1,4 +1,13 @@
-
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
@@ -389,7 +398,7 @@ class DataStoreMgr:
         self.schd = schd
         self.id_ = {
             'owner': self.schd.owner,
-            'workflow': schd.schd.workflow,
+            'workflow': self.schd.workflow,
         }
         self.workflow_id = detokenise(self.id_)
         self.ancestors = {}
@@ -641,8 +650,8 @@ class DataStoreMgr:
         s_node = f'{itask.tdef.name}.{itask.point}'
         s_id = detokenise({
             **self.id_,
-            'cycle': itask.point,
-            'task': itask.tdef.name
+            'cycle': str(itask.point),
+            'task': itask.tdef.name,
         })
         if active_id is None:
             active_id = s_id
@@ -723,20 +732,20 @@ class DataStoreMgr:
             t_node = f'{t_name}.{t_point}'
             t_id = detokenise({
                 **self.id_,
-                'cycle': t_point,
+                'cycle': str(t_point),
                 'task': t_name,
             })
             # Initiate edge element.
             if is_parent:
                 e_id = detokenise({
                     **self.id_,
-                    'cycle': t_node,
+                    'cycle': str(t_node),
                     'task': s_node,
                 })
             else:
                 e_id = detokenise({
                     **self.id_,
-                    'cycle': s_node,
+                    'cycle': str(s_node),
                     'task': t_node,
                 })
             if e_id in self.n_window_edges[active_id]:
@@ -772,7 +781,7 @@ class DataStoreMgr:
         """Remove ID reference and flag isolate node/branch for pruning."""
         tp_id = detokenise({
             **self.id_,
-            'cycle': point,
+            'cycle': str(point),
             'task': name,
         })
         if tp_id in self.all_task_pool:
@@ -789,7 +798,7 @@ class DataStoreMgr:
         """Add external ID reference for internal task pool node."""
         tp_id = detokenise({
             **self.id_,
-            'cycle': point,
+            'cycle': str(point),
             'task': name,
         })
         self.all_task_pool.add(tp_id)
@@ -1715,7 +1724,7 @@ class DataStoreMgr:
         prereq_list = []
         for prereq in itask.state.prerequisites:
             # Protobuf messages populated within
-            prereq_obj = prereq.api_dump(self.workflow_id)
+            prereq_obj = prereq.api_dump(self.id_)
             if prereq_obj:
                 prereq_list.append(prereq_obj)
         del tp_delta.prerequisites[:]
@@ -1873,13 +1882,13 @@ class DataStoreMgr:
         elif sub_num is None:
             node_id = detokenise({
                 **self.id_,
-                'cycle': point,
+                'cycle': str(point),
                 'task': name,
             })
         else:
             node_id = detokenise({
                 **self.id_,
-                'cycle': point,
+                'cycle': str(point),
                 'task': name,
                 'job': sub_num,
             })

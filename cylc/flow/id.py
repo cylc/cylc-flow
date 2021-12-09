@@ -458,13 +458,13 @@ def strip_workflow(tokens):
         >>> detokenise(strip_workflow(tokenise(
         ...     '~user/workflow//cycle/task/01'
         ... )))
-        '~user/workflow'
+        '//cycle/task/01'
 
     """
     return {
         key: value
         for key, value in tokens.items()
-        if key not in (
+        if key in (
             enum.value
             for enum in (
                 {*Tokens} - {Tokens.User, Tokens.Workflow}
@@ -480,13 +480,13 @@ def strip_task(tokens):
         >>> detokenise(strip_task(tokenise(
         ...     '~user/workflow//cycle/task/01'
         ... )))
-        '//cycle/task/01'
+        '~user/workflow'
 
     """
     return {
         key: value
         for key, value in tokens.items()
-        if key in (
+        if key not in (
             enum.value
             for enum in (
                 {*Tokens} - {Tokens.User, Tokens.Workflow}

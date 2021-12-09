@@ -792,7 +792,7 @@ class Scheduler:
             cycle, task_name, submit_num = parse_job_item(task_job)
             task_id = detokenise(
                 {
-                    'cycle': cycle,
+                    'cycle': str(cycle),
                     'task': task_name,
                 },
                 relative=True,
@@ -908,9 +908,10 @@ class Scheduler:
             task_id = TaskID.get_standardised_taskid(task)
 
             try:
-                tokenise(f'//{task_id]')
+                tokenise(f'//{task_id}')
             except ValueError:
                 # TODO: yield warning
+                pass
             else:
                 self.pool.set_stop_task(task_id)
         else:

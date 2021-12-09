@@ -156,7 +156,7 @@ class BroadcastMgr:
             # all broadcasts requested
             return self.broadcasts
         try:
-            tokens = tokenise(task_id)
+            tokens = tokenise(f'//{task_id}')
             name = tokens['task']
             point_string = tokens['cycle']
         except ValueError:

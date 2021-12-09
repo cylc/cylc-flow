@@ -220,7 +220,7 @@ class Prerequisite:
             name, point = message_tuple[0:2]
             t_id = detokenise({
                 **workflow_tokens,
-                'cycle': point,
+                'cycle': str(point),
                 'task': name,
             })
             char = 'c%.{0}d'.format(num_length) % ind

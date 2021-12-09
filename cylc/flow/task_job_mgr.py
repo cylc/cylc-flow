@@ -46,6 +46,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     WorkflowConfigError,
 )
+from cylc.flow.id import detokenise
 from cylc.flow.hostuserutil import (
     get_host,
     is_remote_platform
@@ -352,8 +353,11 @@ class TaskJobManager:
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             detokenise(
-                                **itask.tokens,
-                                'job': submit_num,
+                                {
+                                    **itask.tokens,
+                                    'job': itask.submit_num,
+                                },
+                                relative=True
                             ),
                             self.REMOTE_INIT_MSG)
                     continue
@@ -369,8 +373,11 @@ class TaskJobManager:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
                         self.data_store_mgr.delta_job_msg(
                             detokenise(
-                                **itask.tokens,
-                                'job': itask.submit_num,
+                                {
+                                    **itask.tokens,
+                                    'job': itask.submit_num,
+                                },
+                                relative=True
                             ),
                             msg
                         )
@@ -384,8 +391,11 @@ class TaskJobManager:
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             detokenise(
-                                **itask.tokens,
-                                'job': submit_num,
+                                {
+                                    **itask.tokens,
+                                    'job': itask.submit_num,
+                                },
+                                relative=True
                             ),
                             self.REMOTE_INIT_MSG
                         )
@@ -409,8 +419,11 @@ class TaskJobManager:
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         detokenise(
-                            **itask.tokens,
-                            itask.submit_num,
+                            {
+                                **itask.tokens,
+                                'job': itask.submit_num,
+                            },
+                            relative=True
                         ),
                         self.REMOTE_INIT_MSG,
                     )
@@ -444,8 +457,11 @@ class TaskJobManager:
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         detokenise(
-                            **itask.tokens,
-                            'job': itask.submit_num,
+                            {
+                                **itask.tokens,
+                                'job': itask.submit_num,
+                            },
+                            relative=True,
                         ),
                         REMOTE_FILE_INSTALL_IN_PROGRESS
                     )

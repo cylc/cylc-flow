@@ -1911,14 +1911,14 @@ class WorkflowConfig:
                 # l and r are both members
                 lret = detokenise(
                     {
-                        'cycle': lpoint,
+                        'cycle': str(lpoint),
                         'task': fam_name,
                     },
                     relative=True
                 )
                 rret = detokenise(
                     {
-                        'cycle': rpoint,
+                        'cycle': str(rpoint),
                         'task': fam_name,
                     },
                     relative=True
@@ -1928,7 +1928,7 @@ class WorkflowConfig:
                 # l is a member
                 lret = detokenise(
                     {
-                        'cycle': lpoint,
+                        'cycle': str(lpoint),
                         'task': fam_name,
                     },
                     relative=True
@@ -1937,7 +1937,7 @@ class WorkflowConfig:
                 # r is a member
                 rret = detokenise(
                     {
-                        'cycle': rpoint,
+                        'cycle': str(rpoint),
                         'task': fam_name,
                     },
                     relative=True

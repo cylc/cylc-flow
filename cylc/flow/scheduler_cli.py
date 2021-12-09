@@ -286,7 +286,7 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         workflow_id,
         constraint='workflows',
         max_workflows=1,
-        warn_depr=False,  # TODO
+        # warn_depr=False,  # TODO
     )
     try:
         detect_old_contact_file(workflow_id)

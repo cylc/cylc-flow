@@ -164,11 +164,12 @@ class TaskProxy:
         'tdef',
         'state',
         'summary',
+        'flow_nums',
+        'graph_children',
         'platform',
         'timeout',
+        'tokens',
         'try_timers',
-        'graph_children',
-        'flow_nums',
         'waiting_on_job_prep',
     ]
 
@@ -193,9 +194,9 @@ class TaskProxy:
         else:
             self.flow_nums = flow_nums
         self.point = start_point
-        self.tokens = {
-            'cycle': str(self.point),  # TODO?
-            'name': self.tdef.name,
+        self.tokens = {  # TODO ?
+            'cycle': str(self.point),
+            'task': self.tdef.name,
         }
         self.identity = detokenise(self.tokens, relative=True)
         self.reload_successor: Optional['TaskProxy'] = None
@@ -244,7 +245,7 @@ class TaskProxy:
     def __str__(self) -> str:
         """Stringify with tokens, state, submit_num, and flow_nums."""
         return (
-            f"{self.tokens} "
+            f"{self.identity} "
             f"{self.state} "
             f"job:{self.submit_num:02d}"
             f" flows:{','.join(str(i) for i in self.flow_nums) or 'none'}"

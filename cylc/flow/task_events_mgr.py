@@ -39,6 +39,7 @@ from cylc.flow.parsec.config import ItemNotFoundError
 
 from cylc.flow import LOG, LOG_LEVELS
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.id import detokenise
 from cylc.flow.hostuserutil import get_host, get_user, is_remote_platform
 from cylc.flow.pathutil import (
     get_remote_workflow_run_job_dir,
@@ -50,8 +51,11 @@ from cylc.flow.task_action_timer import (
 )
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.task_job_logs import (
-    get_task_job_id, get_task_job_log, get_task_job_activity_log,
-    JOB_LOG_OUT, JOB_LOG_ERR)
+    get_task_job_log,
+    get_task_job_activity_log,
+    JOB_LOG_OUT,
+    JOB_LOG_ERR,
+)
 from cylc.flow.task_message import (
     ABORT_MESSAGE_PREFIX, FAIL_MESSAGE_PREFIX, VACATION_MESSAGE_PREFIX)
 from cylc.flow.task_state import (
@@ -426,8 +430,15 @@ class TaskEventsManager():
         else:
             new_msg = message
         self.data_store_mgr.delta_job_msg(
-            get_task_job_id(itask.point, itask.tdef.name, submit_num),
-            new_msg)
+            detokenise(
+                {
+                    **itask.tokens,
+                    'job': submit_num
+                },
+                relative=True,
+            ),
+            new_msg
+        )
 
         # Satisfy my output, if possible, and spawn children.
         # (first remove signal: failed/EXIT -> failed)
@@ -507,8 +518,13 @@ class TaskEventsManager():
             # ... but either way update the job ID in the job proxy (it only
             # comes in via the submission message).
             if itask.tdef.run_mode != 'simulation':
-                job_d = get_task_job_id(
-                    itask.point, itask.tdef.name, itask.submit_num)
+                job_d = detokenise(
+                    {
+                        **itask.tokens,
+                        'job': submit_num
+                    },
+                    relative=True,
+                )
                 self.data_store_mgr.delta_job_attr(
                     job_d, 'job_id', itask.summary['submit_method_id'])
 
@@ -901,8 +917,13 @@ class TaskEventsManager():
         if event_time is None:
             event_time = get_current_time_string()
         itask.set_summary_time('finished', event_time)
-        job_d = get_task_job_id(
-            itask.point, itask.tdef.name, itask.submit_num)
+        job_d = detokenise(
+            {
+                **itask.tokens,
+                'job': itask.submit_num
+            },
+            relative=True,
+        )
         self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_FAILED)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
@@ -937,7 +958,13 @@ class TaskEventsManager():
             itask.job_vacated = False
             LOG.warning(f"[{itask}] Vacated job restarted")
         self.reset_inactivity_timer_func()
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
+        job_d = detokenise(
+            {
+                **itask.tokens,
+                'job': itask.submit_num
+            },
+            relative=True,
+        )
         self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_RUNNING)
         itask.set_summary_time('started', event_time)
@@ -955,7 +982,13 @@ class TaskEventsManager():
 
     def _process_message_succeeded(self, itask, event_time):
         """Helper for process_message, handle a succeeded message."""
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
+        job_d = detokenise(
+            {
+                **itask.tokens,
+                'job': itask.submit_num
+            },
+            relative=True,
+        )
         self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUCCEEDED)
         self.reset_inactivity_timer_func()
@@ -988,7 +1021,13 @@ class TaskEventsManager():
             "time_submit_exit": event_time,
             "submit_status": 1,
         })
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
+        job_d = detokenise(
+            {
+                **itask.tokens,
+                'job': itask.submit_num
+            },
+            relative=True,
+        )
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
         itask.summary['submit_method_id'] = None
         self.reset_inactivity_timer_func()
@@ -1032,8 +1071,13 @@ class TaskEventsManager():
 
         # Register the newly submitted job with the database and datastore.
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
-        job_d = get_task_job_id(
-            itask.point, itask.tdef.name, itask.submit_num)
+        job_d = detokenise(
+            {
+                **itask.tokens,
+                'job': itask.submit_num
+            },
+            relative=True,
+        )
 
         itask.set_summary_time('submitted', event_time)
         self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
@@ -1046,6 +1090,7 @@ class TaskEventsManager():
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
         else:
+            itask.set_summary_time('submitted', event_time)
             self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
             # Unset started and finished times in case of resubmission.
             itask.set_summary_time('started')
