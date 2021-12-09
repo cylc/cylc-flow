@@ -67,6 +67,7 @@ from metomi.isodatetime.exceptions import IsodatetimeError
 def get_option_parser():
     parser = COP(
         __doc__,
+        color=False,
         argdoc=[
             ('[POINT]', 'ISO8601 date-time, default=$CYLC_TASK_CYCLE_POINT')])
 
