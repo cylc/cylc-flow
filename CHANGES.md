@@ -80,6 +80,9 @@ are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
 
+[#4553](https://github.com/cylc/cylc-flow/pull/4553) - Add job submit time
+to the datastore.
+
 [#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent `runN` and
 `run<number>` being allowed as installation target names.
 
