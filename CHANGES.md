@@ -80,8 +80,10 @@ are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
 
-[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent `runN` and
-`run<number>` being allowed as installation target names.
+[#4526](https://github.com/cylc/cylc-flow/pull/4526),
+[#4549](https://github.com/cylc/cylc-flow/pull/4549) - Prevent installing
+workflows with directory names that include reserved filenames such as
+`log`, `work`, `runN`, `run<number>` etc.
 
 [#4442](https://github.com/cylc/cylc-flow/pull/4442) - Prevent installation
 of workflows inside other installed workflows.
