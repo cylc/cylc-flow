@@ -779,7 +779,7 @@ mock_smtpd_kill() {  # Logic borrowed from Rose
 install_and_validate() {
     # First part of the reftest function, to allow separate use.
     # Expect 1 OK test.
-    local TEST_NAME="${1:-${TEST_NAME_BASE}}-validate"
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     install_workflow "$@"
     run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
 }

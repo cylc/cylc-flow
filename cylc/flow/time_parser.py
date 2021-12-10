@@ -75,7 +75,7 @@ class CylcTimeParser:
 
     RECURRENCE_FORMAT_REGEXES = [
         (re.compile(r"^(?P<start>[^PR/][^/]*)$"), 3),
-        (re.compile(r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/]"
+        (re.compile(r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/]"
                     "[^/]*)$"), 1),
         (re.compile(r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$"), 3),
         (re.compile(r"^(?P<intv>P[^/]*)$"), 3),
