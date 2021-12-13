@@ -321,7 +321,7 @@ class WorkflowRuntimeServer:
                 err=ResponseErrTuple(str(exc), traceback.format_exc())
             )
 
-        return ResponseTuple(content=response)
+        return ResponseTuple(content=response, user=user)
 
     def register_endpoints(self):
         """Register all exposed methods."""

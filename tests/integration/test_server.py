@@ -95,7 +95,7 @@ async def test_receiver(one: Scheduler, start):
     async with timeout(5):
         async with start(one):
             # start with a message that works
-            msg = {'command': 'api', 'args': {}}
+            msg: dict = {'command': 'api', 'args': {}}
             response = one.server.receiver(msg, user)
             assert response.err is None
             assert response.content is not None

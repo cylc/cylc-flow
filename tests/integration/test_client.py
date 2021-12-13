@@ -15,10 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Test cylc.flow.client.WorkflowRuntimeClient."""
-import pytest
 
+import json
+import pytest
+from typing import Optional, Union
+from unittest.mock import Mock
+
+from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.server import PB_METHOD_MAP
+
+
+def async_return(value):
+    """Return an awaitable that returns ``value``."""
+    async def _async_return():
+        return value
+    return _async_return
 
 
 @pytest.fixture(scope='module')
@@ -93,3 +105,84 @@ async def test_command_validation_failure(harness):
             'message': '--pre=all must be used alone',
         }
     ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'cmd, timeout, mock_response, expected',
+    [
+        pytest.param(
+            'graphql',
+            False,
+            b'[{"ringbearer": "frodo"}, null, null]',
+            {"ringbearer": "frodo"},
+            id="Normal graphql"
+        ),
+        pytest.param(
+            'pb_entire_workflow',
+            False,
+            b'mock protobuf response',
+            b'mock protobuf response',
+            id="Normal PB"
+        ),
+        pytest.param(
+            'graphql',
+            True,
+            None,
+            ClientTimeout("blah"),
+            id="Timeout"
+        ),
+        pytest.param(
+            'graphql',
+            False,
+            b'[null, ["mock error msg", "mock traceback"], null]',
+            ClientError("mock error msg", "mock traceback"),
+            id="Client error"
+        ),
+        pytest.param(
+            'graphql',
+            False,
+            b'[null, null, null]',
+            ClientError("No response from server. Check the workflow log."),
+            id="Empty response"
+        ),
+    ]
+)
+async def test_async_request(
+    cmd: str,
+    timeout: bool,
+    mock_response: Optional[bytes],
+    expected: Union[bytes, object, Exception],
+    harness,
+    monkeypatch: pytest.MonkeyPatch
+):
+    """Test structure of date sent/received by
+    WorkflowRuntimeClient.async_request()
+
+    Params:
+        cmd: Network command to be tested.
+        timeout: Whether to simulate a client timeout.
+        mock_response: Simulated response from the server.
+        expected: Expected return value, or an Exception expected to be raised.
+    """
+    client: WorkflowRuntimeClient
+    _, client = harness
+    mock_socket = Mock()
+    mock_socket.recv.side_effect = async_return(mock_response)
+    monkeypatch.setattr(client, 'socket', mock_socket)
+    mock_poller = Mock()
+    mock_poller.poll.return_value = not timeout
+    monkeypatch.setattr(client, 'poller', mock_poller)
+
+    args = {}  # type: ignore[var-annotated]
+    expected_msg = {'command': cmd, 'args': args, **client.header}
+
+    call = client.async_request(cmd, args)
+    if isinstance(expected, Exception):
+        with pytest.raises(type(expected)) as ei:
+            await call
+        if isinstance(expected, ClientError):
+            assert ei.value.args == expected.args
+    else:
+        assert await call == expected
+    mock_socket.send_string.assert_called_with(json.dumps(expected_msg))
