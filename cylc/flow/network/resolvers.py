@@ -230,12 +230,12 @@ def node_filter(node, node_type, args):
 
 def get_flow_data_from_ids(data_store, native_ids):
     """Return workflow data by id."""
-    w_ids = set()
+    w_ids = []
     for native_id in native_ids:
-        w_ids.add(strip_task(tokenise(native_id)))
+        w_ids.append(strip_task(tokenise(native_id)))
     return [
         data_store[w_id]
-        for w_id in w_ids
+        for w_id in uniq(w_ids)
         if w_id in data_store
     ]
 

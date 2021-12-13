@@ -29,7 +29,11 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
-from cylc.flow.id import detokenise
+from cylc.flow.id import (
+    detokenise,
+    tokenise,
+)
+from cylc.flow.id_match import filter_ids
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
 from cylc.flow.task_events_mgr import (
@@ -1087,7 +1091,13 @@ class TaskPool:
         n_warnings = 0
         matched_tasks: Set[Tuple[str, 'PointBase']] = set()
         for item in items:
-            point_str, name_str, status = self._parse_task_item(item)
+            if not item.startswith('//'):
+                item = f'//{item}'
+            tokens = tokenise(item)
+            point_str = tokens['cycle']
+            name_str = tokens['task']
+            # TODO: handle both independently
+            status = tokens['cycle_sel'] or tokens['task_sel']
             if status or ('*' in item) or ('?' in item) or ('[' in item):
                 # Glob or task state was not matched by active tasks
                 LOG.warning(f"No active tasks matching: {item}")
@@ -1395,7 +1405,11 @@ class TaskPool:
         n_warnings = 0
         task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
         for item in items:
-            point_str, name_str, _ = self._parse_task_item(item)
+            if not item.startswith('//'):
+                item = f'//{item}'
+            tokens = tokenise(item)
+            point_str = tokens['cycle']
+            name_str = tokens['task']
             if point_str is None:
                 LOG.warning(f"{item} - task to spawn must have a cycle point")
                 n_warnings += 1
@@ -1641,7 +1655,13 @@ class TaskPool:
         itasks: List[TaskProxy] = []
         bad_items: List[str] = []
         for item in items:
-            point_str, name_str, status = self._parse_task_item(item)
+            if not item.startswith('//'):
+                item = f'//{item}'
+            tokens = tokenise(item)
+            point_str = tokens['cycle']
+            name_str = tokens['task']
+            # TODO: handle both independently
+            status = tokens['cycle_sel'] or tokens['task_sel']
             tasks_found = False
             for itask in self.get_all_tasks():
                 if (itask.point_match(point_str) and
@@ -1678,23 +1698,3 @@ class TaskPool:
                         for itask in pool
                     )
                 )
-
-    @staticmethod
-    def _parse_task_item(
-        item: str
-    ) -> Tuple[Optional[str], str, Optional[str]]:
-        """Parse point/name:state or name.point:state syntax."""
-        point_str: Optional[str]
-        name_str: str
-        state_str: Optional[str]
-        if ":" in item:
-            head, state_str = item.rsplit(":", 1)
-        else:
-            head, state_str = (item, None)
-        if "/" in head:
-            point_str, name_str = head.split("/", 1)
-        elif "." in head:
-            name_str, point_str = head.split(".", 1)
-        else:
-            name_str, point_str = (head, None)
-        return (point_str, name_str, state_str)

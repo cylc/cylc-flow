@@ -1,0 +1,360 @@
+from fnmatch import fnmatchcase
+from typing import Any, Callable, Dict, List
+
+from cylc.flow import LOG
+from cylc.flow.id import Tokens
+from cylc.flow.id_cli import contains_fnmatch
+
+
+def filter_ids(
+    pool: Dict[Any, List[Any]],
+    ids: List[str],
+    warn: bool = True,
+    out: Tokens = Tokens.Task,
+    pattern_match: bool = True,
+):
+    """Filter IDs against a pool of tasks.
+
+    Args:
+        pool:
+            The pool to match against.
+        ids:
+            List of IDs to match against the pool.
+        out:
+            The type of object to match:
+
+            * If Tokens.Task all matching TaskProxies will be returned.
+            * If Tokens.Cycle all CyclePoints with any matching tasks will
+              be returned.
+        warn:
+            Whether to log a warning if no matching tasks are found.
+
+    TODO:
+        Consider using wcmatch which would add support for
+        extglobs, namely brace syntax e.g. {foo,bar}.
+
+    """
+    _cycles = []
+    _tasks = []
+    _not_matched = []
+
+    # enable / disable pattern matching
+    match: Callable[[Any, Any], bool]
+    if pattern_match:
+        match = fnmatchcase
+    else:
+        match = str.__eq__
+        pattern_ids = [
+            id_
+            for id_ in ids
+            if contains_fnmatch(id_)
+        ]
+        if pattern_ids:
+            LOG.warning(f'IDs cannot contain globs: {", ".join(pattern_ids)}')
+            ids = [
+                id_
+                for id_ in ids
+                if id_ not in pattern_ids
+            ]
+            _not_matched.extend(pattern_ids)
+
+    id_tokens_map = {}
+    for id_ in ids:
+        try:
+            id_tokens_map[id_] = tokenise(f'//{id_}')
+        except ValueError:
+            _not_matched.append(id_)
+            if warn:
+                LOG.warning(f'Invalid ID: {id_}')
+
+    for id_, tokens in id_tokens_map.items():
+        for lowest_token in reversed(Tokens):
+            if tokens.get(lowest_token.value):
+                break
+
+        cycles = []
+        tasks = []
+
+        # filter by cycle
+        if lowest_token == Tokens.Cycle:
+            cycle = tokens[Tokens.Cycle.value]
+            cycle_sel = tokens.get(Tokens.Cycle.value + '_sel') or '*'
+            for icycle, itasks in pool.items():
+                if not itasks:
+                    continue
+                str_cycle = str(icycle)
+                if not match(str_cycle, cycle):
+                    continue
+                if cycle_sel == '*':
+                    cycles.append(icycle)
+                    continue
+                for itask in itasks:
+                    if match(itask.state.status, cycle_sel):
+                        cycles.append(icycle)
+                        break
+
+        # filter by task
+        elif lowest_token == Tokens.Task:  # noqa: SIM106
+            cycle = tokens[Tokens.Cycle.value]
+            cycle_sel = tokens.get(Tokens.Cycle.value + '_sel') or '*'
+            task = tokens[Tokens.Task.value]
+            task_sel = tokens.get(Tokens.Task.value + '_sel') or '*'
+            for icycle, itasks in pool.items():
+                str_cycle = str(icycle)
+                if not match(str_cycle, cycle):
+                    continue
+                for itask in itasks:
+                    if (
+                        match(itask.state.status, cycle_sel)
+                        and match(itask.tdef.name, task)
+                        and (
+                            match(itask.state.status, task_sel)
+                            or any(
+                                match(ns, task)
+                                for ns in itask.tdef.namespace_hierarchy
+                            )
+                        )
+                    ):
+                        tasks.append(itask)
+
+        else:
+            raise NotImplementedError
+
+        if not (cycles or tasks):
+            _not_matched.append(id_)
+            if warn:
+                LOG.warning(f"No active tasks matching: {id_}")
+        else:
+            _cycles.extend(cycles)
+            _tasks.extend(tasks)
+
+    ret = None
+    if out == Tokens.Cycle:
+        _cycles.extend({
+            itask.point
+            for itask in _tasks
+        })
+        ret = _cycles
+    elif out == Tokens.Task:
+        for icycle in _cycles:
+            _tasks.extend(pool[icycle])
+        ret = _tasks
+
+    return ret, _not_matched
+
+
+from types import SimpleNamespace
+
+import pytest
+
+from cylc.flow.id import tokenise
+
+
+@pytest.fixture
+def task_pool():
+    def _task_proxy(id_, hier):
+        tokens = tokenise(f'//{id_}')
+        itask = SimpleNamespace()
+        itask.id_ = id_
+        itask.point = int(tokens['cycle'])
+        itask.state = SimpleNamespace()
+        itask.state.status = tokens['task_sel']
+        itask.tdef = SimpleNamespace()
+        itask.tdef.name = tokens['task']
+        if tokens['task'] in hier:
+            hier = hier['name']
+        else:
+            hier = []
+        itask.tdef.namespace_hierarchy = hier
+        return itask
+
+    def _task_pool(pool, hier):
+        return {
+            cycle: [
+                _task_proxy(id_, hier)
+                for id_ in ids
+            ]
+            for cycle, ids in pool.items()
+        }
+
+    return _task_pool
+
+
+@pytest.mark.parametrize(
+    'ids,matched,not_matched',
+    [
+        (
+            ['1'],
+            ['1/a:x', '1/b:x', '1/c:x'],
+            []
+        ),
+        (
+            ['2'],
+            [],
+            ['2']
+        ),
+        (
+            ['*'],
+            ['1/a:x', '1/b:x', '1/c:x'],
+            []
+        ),
+        (
+            ['1/*'],
+            ['1/a:x', '1/b:x', '1/c:x'],
+            []
+        ),
+        (
+            ['2/*'],
+            [],
+            ['2/*']
+        ),
+        (
+            ['*/*'],
+            ['1/a:x', '1/b:x', '1/c:x'],
+            []
+        ),
+        (
+            ['*/a'],
+            ['1/a:x'],
+            []
+        ),
+        (
+            ['*/z'],
+            [],
+            ['*/z']
+        ),
+        (
+            ['*/*:x'],
+            ['1/a:x', '1/b:x', '1/c:x'],
+            [],
+        ),
+        (
+            ['*/*:y'],
+            [],
+            ['*/*:y'],
+        ),
+    ]
+)
+def test_filter_ids_task_mode(task_pool, ids, matched, not_matched):
+    """Ensure tasks are returned in task mode."""
+    pool = task_pool(
+        {
+            1: ['1/a:x', '1/b:x', '1/c:x']
+        },
+        {}
+    )
+
+    _matched, _not_matched = filter_ids(pool, ids)
+    assert [itask.id_ for itask in _matched] == matched
+    assert _not_matched == not_matched
+
+
+@pytest.mark.parametrize(
+    'ids,matched,not_matched',
+    [
+        (
+            ['1/a'],
+            [1],
+            [],
+        ),
+        (
+            ['1/*'],
+            [1],
+            [],
+        ),
+        (
+            ['1/*:x'],
+            [1],
+            [],
+        ),
+        (
+            ['1/*:y'],
+            [],
+            ['1/*:y'],
+        ),
+        (
+            ['*/*:x'],
+            [1],
+            [],
+        ),
+        (
+            ['1/z'],
+            [],
+            ['1/z'],
+        ),
+        (
+            ['1'],
+            [1],
+            [],
+        ),
+        (
+            ['3'],
+            [],
+            ['3'],
+        ),
+    ]
+)
+def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
+    """Ensure cycle poinds are returned in cycle mode."""
+    pool = task_pool(
+        {
+            1: ['1/a:x', '1/b:x'],
+            2: ['1/a:x'],
+            3: [],
+        },
+        {}
+    )
+
+    _matched, _not_matched = filter_ids(pool, ids, out=Tokens.Cycle)
+    assert _matched == matched
+    assert _not_matched == not_matched
+
+
+def test_filter_ids_invalid(caplog):
+    """Ensure invalid IDs are handled elegantly."""
+    matched, not_matched = filter_ids({}, ['#'])
+    assert matched == []
+    assert not_matched == ['#']
+    assert caplog.record_tuples == [
+        ('cylc', 30, 'No active tasks matching: #'),
+    ]
+    caplog.clear()
+    matched, not_matched = filter_ids({}, ['#'], warn=False)
+    assert caplog.record_tuples == []
+
+
+def test_filter_ids_pattern_matching(task_pool, caplog):
+    """Ensure pattern matching can be toggled on and off."""
+    pool = task_pool(
+        {
+            1: ['1/a:x'],
+        },
+        {}
+    )
+
+    ids = ['*/*']
+
+    # ensure pattern matching works
+    _matched, _not_matched = filter_ids(
+        pool,
+        ids,
+        out=Tokens.Task,
+        pattern_match=True,
+    )
+    assert [itask.id_ for itask in _matched] == ['1/a:x']
+    assert _not_matched == []
+
+    # ensure pattern matching can be disabled
+    caplog.clear()
+    _matched, _not_matched = filter_ids(
+        pool,
+        ids,
+        out=Tokens.Task,
+        pattern_match=False,
+    )
+    assert [itask.id_ for itask in _matched] == []
+    assert _not_matched == ['*/*']
+
+    # ensure the ID is logged
+    assert len(caplog.record_tuples) == 1
+    assert '*/*' in caplog.record_tuples[0][2]

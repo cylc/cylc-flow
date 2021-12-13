@@ -212,17 +212,17 @@ def _batch_tokens_by_workflow(*tokens_list, constraint=None):
     return workflow_tokens
 
 
-def _contains_fnmatch(string):
+def contains_fnmatch(string):
     """Return True if a string contains filename match chars.
 
     Examples:
-        >>> _contains_fnmatch('a')
+        >>> contains_fnmatch('a')
         False
-        >>> _contains_fnmatch('*')
+        >>> contains_fnmatch('*')
         True
-        >>> _contains_fnmatch('abc')
+        >>> contains_fnmatch('abc')
         False
-        >>> _contains_fnmatch('a*c')
+        >>> contains_fnmatch('a*c')
         True
     """
     return bool(FN_CHARS.search(string))
@@ -232,7 +232,7 @@ async def _expand_workflow_tokens(tokens_list):
     multi_mode = False
     for tokens in list(tokens_list):
         workflow = tokens['workflow']
-        if not _contains_fnmatch(workflow):
+        if not contains_fnmatch(workflow):
             # no expansion to perform
             continue
         else:

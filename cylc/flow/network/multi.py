@@ -59,8 +59,6 @@ async def call_multi_async(
 
     """
     # parse ids
-    if constraint not in {'tasks', 'mixed'}:
-        raise Exception(f'Unspported constraint: {constraint}')
     workflow_args, multi_mode = await parse_ids_async(
         *ids,
         src=False,
@@ -77,6 +75,13 @@ async def call_multi_async(
         reporter = partial(_report_multi, report)
     else:
         reporter = partial(_report_single, report)
+
+    if constraint == 'workflows':
+        # TODO: this is silly, just standardise the responses
+        workflow_args = {
+            workflow_id: []
+            for workflow_id in workflow_args
+        }
 
     # run coros
     results = []
