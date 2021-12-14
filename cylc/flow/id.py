@@ -123,9 +123,9 @@ LEGACY_TASK_DOT_CYCLE = re.compile(
         (?P<{Tokens.Task.value}>[^~\:\/\n]+)
         \.
         # NOTE: legacy cycles always start with a number
-        (?P<{Tokens.Cycle.value}>\d[^~\.\:\/\n]+)
+        (?P<{Tokens.Cycle.value}>\d[^~\.\:\/\n]*)
         # NOTE: the task selector applied to the cycle in this legacy format
-        # (note a mistake)
+        # (not a mistake)
         (?:
             :
             (?P<{Tokens.Task.value}_sel>[^\:\/\n]+)

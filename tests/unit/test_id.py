@@ -245,8 +245,8 @@ def test_legacy_task_dot_cycle_illegal(identifier):
     'identifier,expected_tokens',
     [
         (
-            'task.123',
-            {'task': 'task', 'cycle': '123', 'task_sel': None}
+            'task.1',  # integer cycles can be one character long
+            {'task': 'task', 'cycle': '1', 'task_sel': None}
         ),
         (
             't.a.s.k.123',
@@ -255,7 +255,7 @@ def test_legacy_task_dot_cycle_illegal(identifier):
         (
             'task.123:task_sel',
             {'task': 'task', 'cycle': '123', 'task_sel': 'task_sel'}
-        )
+        ),
     ]
 )
 def test_legacy_task_dot_cycle_matches(identifier, expected_tokens):
