@@ -1012,12 +1012,25 @@ with Conf('global.cylc', desc='''
                    the wrapper script.
             ''')
             Conf('global init-script', VDR.V_STRING, desc='''
-                Add a script before the init-script of all jobs on this
-                platform.
+                A per-platform script which is run before other job scripts.
 
-                If specified, the value of this setting will be inserted to
-                just before the ``init-script`` section of all job scripts that
-                are to be submitted to the specified platform.
+                This should be used sparingly to perform any shell
+                configuration that cannot be performed via other means.
+
+                .. versionchanged:: 8.0.0
+
+                   The ``global init-script`` now runs *before* any job
+                   scripting which introduces caveats outlined below.
+
+                .. warning::
+
+                   The ``global init-script`` has the following caveats,
+                   as compared to the other task ``script-*`` items:
+
+                   * The script is not covered by error trapping.
+                   * The job environment is not available to this script.
+                   * In debug mode this script will not be included in
+                     xtrace output.
             ''')
             Conf('copyable environment variables', VDR.V_STRING_LIST, '',
                  desc='''

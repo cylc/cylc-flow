@@ -26,7 +26,6 @@ from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.job_runner_mgr import JobRunnerManager
 import cylc.flow.flags
 from cylc.flow.option_parsers import verbosity_to_env
-from cylc.flow.pathutil import get_remote_workflow_run_dir
 from cylc.flow.config import interpolate_template, ParamExpandError
 
 
@@ -57,22 +56,21 @@ class JobFileWriter:
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
         tmp_name = os.path.expandvars(local_job_file_path + '.tmp')
-        run_d = get_remote_workflow_run_dir(job_conf['workflow_name'])
         try:
             with open(tmp_name, 'w') as handle:
                 self._write_header(handle, job_conf)
                 self._write_directives(handle, job_conf)
                 self._write_reinvocation(handle)
                 self._write_prelude(handle, job_conf)
-                self._write_workflow_environment(handle, job_conf, run_d)
+                self._write_workflow_environment(handle, job_conf)
                 self._write_task_environment(handle, job_conf)
-                self._write_global_init_script(handle, job_conf)
                 # workflow bin access must be before runtime environment
                 # because workflow bin commands may be used in variable
                 # assignment expressions: FOO=$(command args).
                 self._write_runtime_environment(handle, job_conf)
                 self._write_script(handle, job_conf)
-                self._write_epilogue(handle, job_conf, run_d)
+                self._write_global_init_script(handle, job_conf)
+                self._write_epilogue(handle, job_conf)
         except IOError as exc:
             # Remove temporary file
             with suppress(OSError):
@@ -184,6 +182,10 @@ class JobFileWriter:
         else:
             handle.write(
                 "\nexport CYLC_ENV_NAME='%s'" % CYLC_ENV_NAME)
+        handle.write(
+            '\nexport CYLC_WORKFLOW_ID='
+            f'"{job_conf["workflow_name"]}"'
+        )
         env_vars = (
             (job_conf['platform']['copyable environment variables'] or [])
             # pass CYLC_COVERAGE into the job execution environment
@@ -193,21 +195,18 @@ class JobFileWriter:
             if key in os.environ:
                 handle.write("\nexport %s='%s'" % (key, os.environ[key]))
 
-    def _write_workflow_environment(self, handle, job_conf, run_d):
+    def _write_workflow_environment(self, handle, job_conf):
         """Workflow and task environment."""
         handle.write("\n\ncylc__job__inst__cylc_env() {")
         handle.write("\n    # CYLC WORKFLOW ENVIRONMENT:")
         # write the static workflow variables
         for var, val in sorted(self.workflow_env.items()):
-            if var not in ('CYLC_DEBUG', 'CYLC_VERBOSE'):
+            if var not in ('CYLC_DEBUG', 'CYLC_VERBOSE', 'CYLC_WORKFLOW_ID'):
                 handle.write('\n    export %s="%s"' % (var, val))
 
         if str(self.workflow_env.get('CYLC_UTC')) == 'True':
             handle.write('\n    export TZ="UTC"')
 
-        handle.write('\n')
-        # override and write task-host-specific workflow variables
-        handle.write('\n    export CYLC_WORKFLOW_RUN_DIR="%s"' % run_d)
         handle.write(
             '\n    export CYLC_WORKFLOW_UUID="%s"' % job_conf['uuid_str'])
 
@@ -314,10 +313,8 @@ class JobFileWriter:
         """Global Init-script."""
         global_init_script = job_conf['platform']['global init-script']
         if cls._check_script_value(global_init_script):
-            handle.write("\n\ncylc__job__inst__global_init_script() {")
-            handle.write("\n# GLOBAL-INIT-SCRIPT:\n")
+            handle.write("\n\n# GLOBAL INIT-SCRIPT:\n")
             handle.write(global_init_script)
-            handle.write("\n}")
 
     @classmethod
     def _write_script(cls, handle, job_conf):
@@ -336,8 +333,13 @@ class JobFileWriter:
                 handle.write("\n}")
 
     @staticmethod
-    def _write_epilogue(handle, job_conf, run_d):
+    def _write_epilogue(handle, job_conf):
         """Write epilogue."""
-        handle.write(f'\n\n. "{run_d}/.service/etc/job.sh"\ncylc__job__main')
+        handle.write('\n\nCYLC_RUN_DIR="${CYLC_RUN_DIR:-$HOME/cylc-run}"')
+        handle.write(
+            '\n. '
+            '"${CYLC_RUN_DIR}/${CYLC_WORKFLOW_ID}/.service/etc/job.sh"'
+            '\ncylc__job__main'
+        )
         handle.write("\n\n%s%s\n" % (
             JobRunnerManager.LINE_PREFIX_EOF, job_conf['job_d']))
