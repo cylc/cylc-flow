@@ -1635,12 +1635,12 @@ class TaskPool:
         )
 
     def filter_task_proxies(
-        self, items: Iterable[str], warn: bool = True
+        self, ids: Iterable[str], warn: bool = True
     ) -> Tuple[List[TaskProxy], List[str]]:
         """Return task proxies that match names, points, states in items.
 
         Args:
-            items:
+            ids:
                 ID strings for matching task proxies, each with the
                 general form `point[:state][/name[:state]]`
                 where name is a glob-like pattern for matching a task name or
@@ -1650,30 +1650,11 @@ class TaskPool:
 
         Return (itasks, bad_items).
         """
-        if not items:
-            return [], []
-        itasks: List[TaskProxy] = []
-        bad_items: List[str] = []
-        for item in items:
-            if not item.startswith('//'):
-                item = f'//{item}'
-            tokens = tokenise(item)
-            point_str = tokens['cycle']
-            name_str = tokens['task']
-            # TODO: handle both independently
-            status = tokens['cycle_sel'] or tokens['task_sel']
-            tasks_found = False
-            for itask in self.get_all_tasks():
-                if (itask.point_match(point_str) and
-                        itask.name_match(name_str) and
-                        itask.status_match(status)):
-                    itasks.append(itask)
-                    tasks_found = True
-            if not tasks_found:
-                if warn:
-                    LOG.warning(f"No active tasks matching: {item}")
-                bad_items.append(item)
-        return itasks, bad_items
+        return filter_ids(
+            self.main_pool,
+            ids,
+            warn=warn,
+        )
 
     def stop_flow(self, flow_num):
         """Stop a particular flow_num from spawning any further."""

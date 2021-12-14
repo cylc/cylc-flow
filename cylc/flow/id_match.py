@@ -5,8 +5,9 @@ from typing import (
     Iterable,
     List,
     TYPE_CHECKING,
-    Tuple,
-    Union,
+    # Tuple,
+    # Union,
+    # overload,
 )
 
 from cylc.flow import LOG
@@ -14,18 +15,55 @@ from cylc.flow.id import Tokens
 from cylc.flow.id_cli import contains_fnmatch
 
 if TYPE_CHECKING:
+    # from typing_extensions import Literal
+
     from cylc.flow.task_pool import Pool
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.cycling import PointBase
 
 
+# @overload
+# def filter_ids(
+#     pool: 'Pool',
+#     ids: 'Iterable[str]',
+#     *,
+#     warn: 'bool' = True,
+#     out: 'Literal[Tokens.Task]' = Tokens.Task,
+#     pattern_match: 'bool' = True,
+# ) -> 'Tuple[List[TaskProxy], List[str]]':
+#     ...
+#
+#
+# @overload
+# def filter_ids(
+#     pool: 'Pool',
+#     ids: 'Iterable[str]',
+#     *,
+#     warn: 'bool' = True,
+#     out: 'Literal[Tokens.Cycle]' = Tokens.Cycle,
+#     pattern_match: 'bool' = True,
+# ) -> 'Tuple[List[PointBase], List[str]]':
+#     ...
+
+
+_RET = (
+    'Union['
+    'Tuple[List[TaskProxy], List[str]]'
+    ', '
+    'Tuple[List[PointBase], List[str]]'
+    ']'
+)
+
+
 def filter_ids(
     pool: 'Pool',
     ids: 'Iterable[str]',
+    *,
     warn: 'bool' = True,
     out: 'Tokens' = Tokens.Task,
     pattern_match: 'bool' = True,
-) -> 'Tuple[List[Union[PointBase, TaskProxy]], List[str]]':
+    # ) -> _RET:
+):
     """Filter IDs against a pool of tasks.
 
     Args:
