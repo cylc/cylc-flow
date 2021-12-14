@@ -1,18 +1,31 @@
 from fnmatch import fnmatchcase
-from typing import Any, Callable, Dict, List
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    TYPE_CHECKING,
+    Tuple,
+    Union,
+)
 
 from cylc.flow import LOG
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import contains_fnmatch
 
+if TYPE_CHECKING:
+    from cylc.flow.task_pool import Pool
+    from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.cycling import PointBase
+
 
 def filter_ids(
-    pool: Dict[Any, List[Any]],
-    ids: List[str],
-    warn: bool = True,
-    out: Tokens = Tokens.Task,
-    pattern_match: bool = True,
-):
+    pool: 'Pool',
+    ids: 'Iterable[str]',
+    warn: 'bool' = True,
+    out: 'Tokens' = Tokens.Task,
+    pattern_match: 'bool' = True,
+) -> 'Tuple[List[Union[PointBase, TaskProxy]], List[str]]':
     """Filter IDs against a pool of tasks.
 
     Args:
@@ -34,12 +47,15 @@ def filter_ids(
         extglobs, namely brace syntax e.g. {foo,bar}.
 
     """
-    _cycles = []
-    _tasks = []
-    _not_matched = []
+    if out not in {Tokens.Cycle, Tokens.Task}:
+        raise ValueError(f'Invalid output format: {out}')
+
+    _cycles: 'List[PointBase]' = []
+    _tasks: 'List[TaskProxy]' = []
+    _not_matched: 'List[str]' = []
 
     # enable / disable pattern matching
-    match: Callable[[Any, Any], bool]
+    match: 'Callable[[Any, Any], bool]'
     if pattern_match:
         match = fnmatchcase
     else:
@@ -88,7 +104,7 @@ def filter_ids(
                 if cycle_sel == '*':
                     cycles.append(icycle)
                     continue
-                for itask in itasks:
+                for itask in itasks.values():
                     if match(itask.state.status, cycle_sel):
                         cycles.append(icycle)
                         break
@@ -103,7 +119,7 @@ def filter_ids(
                 str_cycle = str(icycle)
                 if not match(str_cycle, cycle):
                     continue
-                for itask in itasks:
+                for itask in itasks.values():
                     if (
                         match(itask.state.status, cycle_sel)
                         and match(itask.tdef.name, task)
@@ -128,7 +144,7 @@ def filter_ids(
             _cycles.extend(cycles)
             _tasks.extend(tasks)
 
-    ret = None
+    ret: 'List[Any]' = []
     if out == Tokens.Cycle:
         _cycles.extend({
             itask.point
@@ -137,9 +153,8 @@ def filter_ids(
         ret = _cycles
     elif out == Tokens.Task:
         for icycle in _cycles:
-            _tasks.extend(pool[icycle])
+            _tasks.extend(pool[icycle].values())
         ret = _tasks
-
     return ret, _not_matched
 
 
@@ -168,12 +183,12 @@ def task_pool():
         itask.tdef.namespace_hierarchy = hier
         return itask
 
-    def _task_pool(pool, hier):
+    def _task_pool(pool, hier) -> 'Pool':
         return {
-            cycle: [
-                _task_proxy(id_, hier)
+            cycle: {
+                id_.split(':')[0]: _task_proxy(id_, hier)
                 for id_ in ids
-            ]
+            }
             for cycle, ids in pool.items()
         }
 
