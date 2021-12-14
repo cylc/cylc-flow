@@ -1301,8 +1301,13 @@ def check_reserved_dir_names(name: Union[Path, str]) -> None:
             raise WorkflowFilesError(err_msg.format('run<number>'))
 
 
-def infer_latest_run(
-    path: Path, implicit_runN: bool = True
+def infer_latest_run_from_id(workflow_id: str) -> str:
+    run_dir = Path(get_workflow_run_dir(workflow_id))
+    _, reg = infer_latest_run(run_dir)
+    return str(reg)
+
+
+def infer_latest_run(path: Path, implicit_runN: bool = True
 ) -> Tuple[Path, Path]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 

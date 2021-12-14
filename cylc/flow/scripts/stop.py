@@ -182,16 +182,17 @@ async def run(
     workflow_id,
     *tokens_list,
 ) -> int:
-    if len(tokens_list) != 1:
+    if len(tokens_list) > 1:
         raise Exception('Multiple TODO')
 
     # parse the stop-task or stop-cycle if provided
-    tokens = tokens_list[0]
     stop_task = stop_cycle = None
-    if 'task' in tokens:
-        stop_task = detokenise(strip_workflow(tokens))
-    else:
-        stop_cycle = tokens['cycle']
+    if tokens_list:
+        tokens = tokens_list[0]
+        if 'task' in tokens:
+            stop_task = detokenise(strip_workflow(tokens))
+        else:
+            stop_cycle = tokens['cycle']
 
     # handle orthogonal options
     if stop_task is not None and options.kill:

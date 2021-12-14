@@ -57,7 +57,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, UserInputError
 import cylc.flow.flags
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.command_polling import Poller
@@ -186,10 +186,9 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser, remove_opts=["--db"])
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    (workflow_id,), _ = parse_ids(
+    workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
-        max_workflows=1,
     )
 
     if options.use_task_point and options.cycle:

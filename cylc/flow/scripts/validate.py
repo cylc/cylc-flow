@@ -37,7 +37,7 @@ from cylc.flow.exceptions import (
     TriggerExpressionError
 )
 import cylc.flow.flags
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
@@ -107,7 +107,7 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     if cylc.flow.flags.verbosity < 2:
         disable_timestamps(LOG)
 
-    workflow_id, flow_file = parse_ids(
+    workflow_id, _, flow_file = parse_id(
         workflow_id,
         src=True,
         constraint='workflows',

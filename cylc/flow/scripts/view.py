@@ -41,7 +41,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.templatevars import load_template_vars
@@ -118,7 +118,7 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    workflow_id, flow_file = parse_ids(
+    workflow_id, _, flow_file = parse_id(
         workflow_id,
         src=True,
         constraint='workflows',

@@ -129,7 +129,7 @@ class TaskPool:
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
-        tokens = tokenise(f'//{task_id}')
+        tokens = tokenise(task_id, relative=True)
         name = tokens['task']
         if name in self.config.get_task_name_list():
             task_id = TaskID.get_standardised_taskid(task_id)
@@ -1098,9 +1098,7 @@ class TaskPool:
         matched_tasks: 'Set[Tuple[str, PointBase]]' = set()
         unmatched_tasks: 'List[str]' = []
         for item in items:
-            if not item.startswith('//'):
-                item = f'//{item}'
-            tokens = tokenise(item)
+            tokens = tokenise(item, relative=True)
             point_str = tokens['cycle']
             name_str = tokens['task']
             # TODO: handle both independently
@@ -1412,9 +1410,7 @@ class TaskPool:
         n_warnings = 0
         task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
         for item in items:
-            if not item.startswith('//'):
-                item = f'//{item}'
-            tokens = tokenise(item)
+            tokens = tokenise(item, relative=True)
             point_str = tokens['cycle']
             name_str = tokens['task']
             if point_str is None:

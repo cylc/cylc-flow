@@ -41,7 +41,7 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.platforms import get_platform, get_host_from_platform
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.templatevars import load_template_vars
@@ -56,7 +56,7 @@ def get_option_parser():
         __doc__,
         prep=True,
         jset=True,
-        argdoc=[('WORKFLOW', 'Workflow ID or path to source')],
+        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
     )
 
     parser.add_option(
@@ -68,9 +68,9 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options: 'Values', workflow_id: str) -> None:
-    workflow_id, flow_file = parse_ids(
-        workflow_id,
+def main(_, options: 'Values', *ids) -> None:
+    workflow_id, _, flow_file = parse_id(
+        *ids,
         src=True,
         constraint='workflows',
     )

@@ -171,19 +171,11 @@ def node_ids_filter(tokens, items) -> bool:
     return any(
         (
             (
-                not items['user']
-                or fnmatchcase(tokens['user'], items['user'])
-            )
-            and (
-                not items['workflow']
-                or fnmatchcase(tokens['workflow'], items['workflow'])
-            )
-            and (
-                not items['cycle']
-                or fnmatchcase(tokens['cycle'], items['cycle'])
+                not item['cycle']
+                or fnmatchcase(tokens['cycle'], item['cycle'])
             )
             and any(
-                fnmatchcase(nn, items['task'])
+                fnmatchcase(nn, item['task'])
                 for nn in tokens['task']
             )
             and (

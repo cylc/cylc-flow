@@ -114,10 +114,8 @@ def filter_ids(
 
     id_tokens_map = {}
     for id_ in ids:
-        if not id_.startswith('//'):
-            id_ = f'//{id_}'
         try:
-            id_tokens_map[id_] = tokenise(id_)
+            id_tokens_map[id_] = tokenise(id_, relative=True)
         except ValueError:
             _not_matched.append(id_)
             if warn:
@@ -208,7 +206,7 @@ from cylc.flow.id import tokenise
 @pytest.fixture
 def task_pool():
     def _task_proxy(id_, hier):
-        tokens = tokenise(f'//{id_}')
+        tokens = tokenise(id_, relative=True)
         itask = SimpleNamespace()
         itask.id_ = id_
         itask.point = int(tokens['cycle'])

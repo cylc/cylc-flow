@@ -459,7 +459,8 @@ def upgrade_legacy_ids(*ids):
             )
 
     LOG.warning(
-        f'Cylc7 format is deprecated using: {" ".join(legacy_ids)}'
+        f'Cylc7 format is deprecated, using: {" ".join(legacy_ids)}'
+        ' (see "cylc help id")'
     )
     return legacy_ids
 

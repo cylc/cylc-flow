@@ -54,11 +54,12 @@ from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import WorkflowFiles
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -67,7 +68,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("[WORKFLOW]", "Workflow ID or path to source")],
+        argdoc=[("[ID]", "Workflow ID or path to source")],
         jset=True, icp=True
     )
 
@@ -120,13 +121,9 @@ def get_config_file_hierarchy(workflow_id: Optional[str] = None) -> List[str]:
 def main(
     parser: COP,
     options: 'Values',
-    workflow_id: Optional[str] = None
+    *ids,
 ) -> None:
-    if options.print_hierarchy:
-        print("\n".join(get_config_file_hierarchy(workflow_id)))
-        return
-
-    if workflow_id is None:
+    if not ids:
         glbl_cfg().idump(
             options.item,
             not options.defaults,
@@ -135,15 +132,18 @@ def main(
         )
         return
 
-    (workflow,), flow_file = parse_ids(
-        workflow_id,
+    workflow_id, _, flow_file = parse_id(
+        *ids,
         src=True,
         constraint='workflows',
-        max_workflows=1,
     )
 
+    if options.print_hierarchy:
+        print("\n".join(get_config_file_hierarchy(workflow_id)))
+        return
+
     config = WorkflowConfig(
-        workflow,
+        workflow_id,
         flow_file,
         options,
         get_template_vars(options)

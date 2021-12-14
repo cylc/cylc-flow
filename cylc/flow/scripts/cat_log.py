@@ -66,7 +66,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     verbosity_to_opts,
@@ -224,7 +224,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ("ID ...", "Workflow/Cycle/Task ID"),
+            ("ID [...]", "Workflow/Cycle/Task ID"),
         ]
     )
 
@@ -354,18 +354,7 @@ def main(
             sys.exit(res)
         return
 
-    workflow_tokens = parse_ids(
-        *ids,
-        constraint='mixed',
-        max_workflows=1,
-        max_tasks=1,
-    )[0]
-    workflow_id = list(workflow_tokens.keys())[0]
-    tokens_list = list(workflow_tokens.values())[0]
-    tokens = {}
-    if tokens_list:
-        # if a cycle/task was specified it will be in these tokens
-        tokens = tokens_list[0]
+    workflow_id, tokens, _ = parse_id(*ids, constraint='mixed')
 
     # Get long-format mode.
     try:
@@ -373,7 +362,7 @@ def main(
     except KeyError:
         mode = options.mode
 
-    if not tokens.get('task'):
+    if not tokens or not tokens.get('task'):
         # Cat workflow logs, local only.
         if options.filename is not None:
             raise UserInputError("The '-f' option is for job logs only.")

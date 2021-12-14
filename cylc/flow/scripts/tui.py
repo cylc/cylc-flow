@@ -32,7 +32,7 @@ from textwrap import indent
 from typing import TYPE_CHECKING
 from urwid import html_fragment
 
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.tui import TUI
@@ -85,10 +85,9 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow_id: str) -> None:
-    (workflow_id,), _ = parse_ids(
+    workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
-        max_workflows=1,
     )
     screen = None
     if options.display == 'html':

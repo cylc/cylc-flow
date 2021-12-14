@@ -21,9 +21,11 @@
 Display workflow and task information.
 
 Query a running workflow for:
-  $ cylc show WORKFLOW  # workflow metadata
-  $ cylc show WORKFLOW TASK_NAME  # task metadata
-  $ cylc show WORKFLOW TASK_GLOB  # prerequisites and outputs of task instances
+  # view workflow metadata
+  $ cylc show my_workflow
+
+  # view metadata for the task 1/a
+  $ cylc show my_workflow//1/a
 
 Prerequisite and output status is indicated for current active tasks.
 """
@@ -34,11 +36,10 @@ import sys
 
 from ansimarkup import ansiprint
 
-from cylc.flow import ID_DELIM
+from cylc.flow.id import detokenise, strip_workflow, tokenise
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
 
 
@@ -72,6 +73,7 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
 TASK_PREREQS_QUERY = '''
 query ($wFlows: [ID]!, $taskIds: [ID]) {
   taskProxies (workflows: $wFlows, ids: $taskIds, stripNull: false) {
+    id
     name
     cyclePoint
     task {
@@ -142,10 +144,8 @@ def flatten_data(data, flat_data=None):
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, multitask=True,
-        argdoc=[
-            # TODO
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('[TASK_NAME or TASK_GLOB ...]', 'Task names or match patterns')])
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+    )
 
     parser.add_option('--list-prereqs', action="store_true", default=False,
                       help="Print a task's pre-requisites as a list.")
@@ -157,10 +157,10 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
+def main(_, options: 'Values', *ids) -> None:
     """Implement "cylc show" CLI."""
     workflow_args, _ = parse_ids(
-        workflow_id,
+        *ids,
         constraint='mixed',
         max_workflows=1,
     )
@@ -187,65 +187,34 @@ def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
                     ansiprint(
                         f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
 
-    return
+    if tokens_list:
+        ids_list = [
+            # convert the tokens into standardised IDs
+            detokenise(tokens, relative=True)
+            for tokens in tokens_list
+        ]
 
-    # TODO !!!
-
-    task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
-    task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
-
-    if task_names:
-        tasks_query = TASK_META_QUERY
-        tasks_kwargs = {
-            'request_string': tasks_query,
-            'variables': {'wFlows': [workflow_id], 'taskIds': task_names}
-        }
-        # Print workflow info.
-        results = pclient('graphql', tasks_kwargs)
-        multi = len(results['tasks']) > 1
-        for task in results['tasks']:
-            flat_data = flatten_data(task['meta'])
-            if options.json:
-                json_filter.update({task['name']: flat_data})
-            else:
-                if multi:
-                    print(f'----\nTASK NAME: {task["name"]}')
-                for key, value in sorted(flat_data.items(), reverse=True):
-                    ansiprint(
-                        f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
-
-    if task_ids:
         tp_query = TASK_PREREQS_QUERY
         tp_kwargs = {
             'request_string': tp_query,
             'variables': {
                 'wFlows': [workflow_id],
-                'taskIds': [
-                    f'{c}{ID_DELIM}{n}'
-                    for n, c in [
-                        TaskID.split(t_id)
-                        for t_id in task_ids
-                        if TaskID.is_valid_id(t_id)
-                    ]
-                ] + [
-                    f'{c}{ID_DELIM}{n}'
-                    for c, n in [
-                        t_id.rsplit(TaskID.DELIM2, 1)
-                        for t_id in task_ids
-                        if not TaskID.is_valid_id(t_id)
-                    ]
-                ]
+                'taskIds': ids_list,
             }
         }
         results = pclient('graphql', tp_kwargs)
         multi = len(results['taskProxies']) > 1
         for t_proxy in results['taskProxies']:
-            task_id = TaskID.get(t_proxy['name'], t_proxy['cyclePoint'])
+            task_id = detokenise(
+                # the task ID with the workflow bit taken off
+                strip_workflow(tokenise(t_proxy['id'])),
+                relative=True
+            )
             if options.json:
                 json_filter.update({task_id: t_proxy})
             else:
                 if multi:
-                    print(f'----\nTASK ID: {task_id}')
+                    ansiprint(f'\n------\n\n<bold>Task ID:</bold> {task_id}')
                 prereqs = []
                 for item in t_proxy['prerequisites']:
                     prefix = ''
@@ -260,12 +229,10 @@ def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
                     for cond in item['conditions']:
                         if multi_cond and not options.list_prereqs:
                             prefix = f'\t{cond["exprAlias"].strip("c")} = '
-                        _, _, point, name = cond['taskId'].split(ID_DELIM)
-                        cond_id = TaskID.get(name, point)
                         prereqs.append([
                             False,
                             prefix,
-                            f'{cond_id} {cond["reqState"]}',
+                            f'{cond["taskId"]} {cond["reqState"]}',
                             cond['satisfied']
                         ])
                 if options.list_prereqs:
@@ -321,7 +288,7 @@ def main(_, options: 'Values', workflow_id: str, *task_args: str) -> None:
                                 state)
         if not results['taskProxies']:
             ansiprint(
-                f"<red>No matching tasks found: {task_ids}",
+                f"<red>No matching tasks found: {', '.join(ids_list)}",
                 file=sys.stderr)
             sys.exit(1)
 

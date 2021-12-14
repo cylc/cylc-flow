@@ -47,8 +47,9 @@ from cylc.flow.workflow_files import (
     check_deprecation,
     check_flow_file,
     detect_both_flow_and_suite,
+    get_flow_file,
     get_workflow_run_dir,
-    infer_latest_run,
+    infer_latest_run_from_id,
     validate_workflow_name,
 )
 
@@ -67,17 +68,43 @@ async def parse_ids_async(
     max_workflows=None,
     max_tasks=None,
 ):
+    """Parse IDs from the command line.
+
+    Args:
+        ids:
+            Collection of IDs to parse.
+        src:
+            If True then source workflows can be provided via an absolute
+            path or a relative path starting "./".
+            Infers max_workflows = 1.
+        match_workflows:
+            If True workflows can be globs.
+        constraint:
+            Constrain the types of objects the IDs should relate to.
+
+            workflows - only allow workflows.
+            tasks - require tasks to be defined.
+            mixed - permit tasks not to be defined.
+        max_workflows:
+            Specify the maximum number of workflows permitted to be specified
+            in the ids.
+        max_tasks:
+            Specify the maximum number of tasks permitted to be specified
+            in the ids.
+
+    """
     tokens_list = []
     src_path = None
-    src_file_path = None
+    flow_file_path = None
     multi_mode = False
 
     if src:
+        # can only have one workflow if permitting source workflows
         max_workflows = 1
         ret = _parse_src_path(ids[0])
         if ret:
             # yes, replace the path with an ID and continue
-            workflow_id, src_path, src_file_path = ret
+            workflow_id, src_path, flow_file_path = ret
             ids = (
                 detokenise({
                     'user': None,
@@ -109,24 +136,48 @@ async def parse_ids_async(
     # infer the run number if not specified the ID (and if possible)
     _infer_latest_runs(*tokens_list, src_path=src_path)
 
-    _validate_number(*tokens_list, max_workflows=max_workflows, max_tasks=max_tasks)
+    _validate_number(
+        *tokens_list,
+        max_workflows=max_workflows,
+        max_tasks=max_tasks,
+    )
 
-    if constraint == 'workflows':
-        ret = []
-        for tokens in tokens_list:
-            # detokenise, but remove duplicates
-            id_ = detokenise(tokens)
-            if id_ not in ret:
-                ret.append(id_)
-    elif constraint in ('tasks', 'mixed'):
-        ret = _batch_tokens_by_workflow(*tokens_list, constraint=constraint)
+    workflows = _batch_tokens_by_workflow(*tokens_list, constraint=constraint)
 
     if src:
-        # TODO: remove these special return types
-        if constraint == 'mixed':
-            return ret, src_file_path
-        return ret[:1], src_file_path
-    return ret, multi_mode
+        if not flow_file_path:
+            # get the workflow file path from the run dir
+            flow_file_path = get_flow_file(list(workflows)[0])
+        return workflows, flow_file_path
+    return workflows, multi_mode
+
+
+def parse_id(*args, **kwargs):
+    return asyncio.run(parse_id_async(*args, **kwargs))
+
+
+async def parse_id_async(*args, **kwargs):
+    """Special case of parse_ids with a more convient return format.
+
+    Infers:
+        max_workflows: 1
+        max_tasks: 1
+
+    """
+    workflows, ret = await parse_ids_async(
+        *args,
+        **{
+            **kwargs,
+            'max_workflows': 1,
+            'max_tasks': 1,
+        },
+    )
+    workflow_id = list(workflows)[0]
+    tokens_list = workflows[workflow_id]
+    tokens = []
+    if tokens_list:
+        tokens = tokens_list[0]
+    return workflow_id, tokens, ret
 
 
 def _validate_constraint(*tokens_list, constraint=None):
@@ -158,8 +209,8 @@ def _validate_workflow_ids(*tokens_list, src_path):
             pass
         else:
             src_path = Path(get_workflow_run_dir(tokens['workflow']))
-        if not src_path.exists():
-            raise UserInputError()  # TODO ???
+        #if not src_path.exists():
+        #    raise UserInputError()  # TODO ???
         if src_path.is_file():
             raise UserInputError(f'Workflow ID cannot be a file: {tokens["workflow"]}')
         detect_both_flow_and_suite(src_path)
@@ -170,8 +221,7 @@ def _infer_latest_runs(*tokens_list, src_path):
         if ind == 0 and src_path:
             # source workflow passed in as a path
             continue
-        # TODO: infer_latest_run is expecting a path not an ID
-        # infer_latest_run(tokens['workflow'])
+        tokens['workflow'] = infer_latest_run_from_id(tokens['workflow'])
         pass
 
 
@@ -316,18 +366,18 @@ def abc_src_dir(tmp_path_factory):
 )
 async def test_parse_ids_workflows(ids_in, ids_out):
     ret = await parse_ids_async(*ids_in, constraint='workflows')
-    assert ret[0] == ids_out
+    assert list(ret[0]) == ids_out
 
 
 @pytest.mark.parametrize(
     'ids_in,ids_out',
     [
-        (('./a',), 'a'),
+        (('./a',), ['a']),
     ]
 )
 async def test_parse_ids_workflows_src(ids_in, ids_out, abc_src_dir):
     ret = await parse_ids_async(*ids_in, constraint='workflows', src=True)
-    assert ret[0] == ids_out
+    assert list(ret[0]) == ids_out
 
 
 @pytest.mark.parametrize(
@@ -458,3 +508,8 @@ async def test_parse_ids_max_tasks(ids_in, errors):
     else:
         if errors:
             raise Exception('Should have raised UserInputError')
+
+
+#async def test_parse_ids_infer_run_name():
+#    workflows = await parse_ids_async(['foo//'], constraint='workflows')
+#    assert workflows == []

@@ -40,7 +40,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.terminal import cli_function
@@ -147,7 +147,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
-        argdoc=[('WORKFLOW', 'Workflow ID')],
+        argdoc=[('ID', 'Workflow ID')],
     )
     parser.add_option(
         "-g", "--global", help="Global information only.",
@@ -176,10 +176,9 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow_id: str) -> None:
-    (workflow_id,), _ = parse_ids(
+    workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
-        max_workflows=1,
     )
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 

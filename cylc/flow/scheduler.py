@@ -908,7 +908,7 @@ class Scheduler:
             task_id = TaskID.get_standardised_taskid(task)
 
             try:
-                tokenise(f'//{task_id}')
+                tokenise(task_id, relative=True)
             except ValueError:
                 # TODO: yield warning
                 pass

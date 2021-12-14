@@ -29,7 +29,7 @@ import json
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.server import PB_METHOD_MAP
@@ -57,10 +57,9 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(_, options: 'Values', workflow_id: str, func: str) -> None:
-    (workflow_id,), _ = parse_ids(
+    workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
-        max_workflows=1
     )
     pclient = WorkflowRuntimeClient(workflow_id, timeout=options.comms_timeout)
     if options.no_input:

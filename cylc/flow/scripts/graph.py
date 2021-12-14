@@ -42,7 +42,7 @@ from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
@@ -166,16 +166,16 @@ def graph_inheritance(config, write=print):
     write('stop')
 
 
-def get_config(workflow: str, opts: 'Values') -> WorkflowConfig:
+def get_config(workflow_id: str, opts: 'Values') -> WorkflowConfig:
     """Return a WorkflowConfig object for the provided reg / path."""
-    workflow, flow_file = parse_ids(
-        workflow,
+    workflow_id, _, flow_file = parse_id(
+        workflow_id,
         src=True,
         constraint='workflows',
     )
     template_vars = get_template_vars(opts)
     return WorkflowConfig(
-        workflow, flow_file, opts, template_vars=template_vars
+        workflow_id, flow_file, opts, template_vars=template_vars
     )
 
 

@@ -31,7 +31,7 @@ run directory are not currently differenced."""
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.templatevars import load_template_vars
@@ -118,8 +118,8 @@ def get_option_parser():
     parser = COP(
         __doc__, jset=True, prep=True, icp=True,
         argdoc=[
-            ('WORKFLOW1', 'Workflow ID or path to source'),
-            ('WORKFLOW2', 'Workflow ID or path to source')
+            ('ID_1', 'Workflow ID or path to source'),
+            ('ID_2', 'Workflow ID or path to source')
         ]
     )
 
@@ -133,39 +133,39 @@ def get_option_parser():
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id1: str, workflow_id2: str):
-    workflow1_name, workflow1_fpath = parse_ids(
+    workflow_id_1, _, workflow_file_1_ = parse_id(
         workflow_id1,
         src=True,
         constraint='workflows',
     )
-    workflow2_name, workflow2_fpath = parse_ids(
+    workflow_id_2, _, workflow_file_2_ = parse_id(
         workflow_id2,
         src=True,
         constraint='workflows',
     )
-    if workflow1_fpath == workflow2_fpath:
+    if workflow_file_1_ == workflow_file_2_:
         parser.error("You can't diff a single workflow.")
-    print(f"Parsing {workflow1_name} ({workflow1_fpath})")
+    print(f"Parsing {workflow_id_1} ({workflow_file_1_})")
     template_vars = load_template_vars(
         options.templatevars, options.templatevars_file
     )
     config1 = WorkflowConfig(
-        workflow1_name, workflow1_fpath, options, template_vars
+        workflow_id_1, workflow_file_1_, options, template_vars
     ).cfg
-    print(f"Parsing {workflow2_name} ({workflow2_fpath})")
+    print(f"Parsing {workflow_id_2} ({workflow_file_2_})")
     config2 = WorkflowConfig(
-        workflow2_name, workflow2_fpath, options, template_vars,
+        workflow_id_2, workflow_file_2_, options, template_vars,
         is_reload=True
     ).cfg
 
     if config1 == config2:
         print(
-            f"Workflow definitions {workflow1_name} and {workflow2_name} are "
+            f"Workflow definitions {workflow_id_1} and {workflow_id_2} are "
             f"identical"
         )
         sys.exit(0)
 
-    print(f"Workflow definitions {workflow1_name} and {workflow2_name} differ")
+    print(f"Workflow definitions {workflow_id_1} and {workflow_id_2} differ")
 
     workflow1_only = {}  # type: ignore
     workflow2_only = {}  # type: ignore
@@ -175,14 +175,14 @@ def main(parser: COP, options: 'Values', workflow_id1: str, workflow_id2: str):
     diffdict(config1, config2, workflow1_only, workflow2_only, diff_1_2)
 
     if n_oone > 0:
-        print(f'\n{n_oone} items only in {workflow1_name} (<)')
+        print(f'\n{n_oone} items only in {workflow_id_1} (<)')
         prdict(workflow1_only, '<', nested=options.nested)
 
     if n_otwo > 0:
-        print(f'\n{n_otwo} items only in {workflow2_name} (>)')
+        print(f'\n{n_otwo} items only in {workflow_id_2} (>)')
         prdict(workflow2_only, '>', nested=options.nested)
 
     if n_diff > 0:
-        print(f'\n{n_diff} common items differ {workflow1_name}(<) '
-              f'{workflow2_name}(>)')
+        print(f'\n{n_diff} common items differ {workflow_id_1}(<) '
+              f'{workflow_id_2}(>)')
         prdict(diff_1_2, '', diff=True, nested=options.nested)
