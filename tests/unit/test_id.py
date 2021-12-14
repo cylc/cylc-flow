@@ -80,17 +80,93 @@ def test_univseral_id_illegal(identifier):
 )
 def test_universal_id_matches(identifier):
     """test every legal format of the universal identifier."""
+    # fmt: off
     expected_tokens = {
-        'user': 'user' if 'user' in identifier else None,
-        'workflow': 'workflow' if 'workflow' in identifier else None,
-        'workflow_sel': 'workflow_sel' if 'workflow_sel' in identifier else None,
-        'cycle': 'cycle' if 'cycle' in identifier else None,
-        'cycle_sel': 'cycle_sel' if 'cycle_sel' in identifier else None,
-        'task': 'task' if 'task' in identifier else None,
-        'task_sel': 'task_sel' if 'task_sel' in identifier else None,
-        'job': 'job' if 'job' in identifier else None,
-        'job_sel': 'job_sel' if 'job_sel' in identifier else None
+        'user':
+            'user' if 'user' in identifier else None,
+        'workflow':
+            'workflow' if 'workflow' in identifier else None,
+        'workflow_sel':
+            'workflow_sel' if 'workflow_sel' in identifier else None,
+        'cycle':
+            'cycle' if 'cycle' in identifier else None,
+        'cycle_sel':
+            'cycle_sel' if 'cycle_sel' in identifier else None,
+        'task':
+            'task' if 'task' in identifier else None,
+        'task_sel':
+            'task_sel' if 'task_sel' in identifier else None,
+        'job':
+            'job' if 'job' in identifier else None,
+        'job_sel':
+            'job_sel' if 'job_sel' in identifier else None
     }
+    # fmt: on
+    match = UNIVERSAL_ID.match(identifier)
+    assert match
+    assert match.groupdict() == expected_tokens
+
+
+@pytest.mark.parametrize(
+    'identifier',
+    [
+        '~user/a/b/c',
+        '~user/a/b/c//',
+        '~user/a/b/c:workflow_sel',
+        '~user/a/b/c:workflow_sel//',
+        '~user/a/b/c:workflow_sel//cycle',
+        '~user/a/b/c:workflow_sel//cycle/',
+        '~user/a/b/c:workflow_sel//cycle:cycle_sel',
+        '~user/a/b/c:workflow_sel//cycle:cycle_sel/',
+        '~user/a/b/c:workflow_sel//cycle:cycle_sel/task',
+        '~user/a/b/c:workflow_sel//cycle:cycle_sel/task/',
+        '~user/a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel',
+        '~user/a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel/',
+        '~user/a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel/job',
+        (
+            '~user/a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel/job'
+            ':job_sel'
+        ),
+        'a/b/c',
+        'a/b/c//',
+        'a/b/c:workflow_sel',
+        'a/b/c:workflow_sel//',
+        'a/b/c:workflow_sel//cycle',
+        'a/b/c:workflow_sel//cycle/',
+        'a/b/c:workflow_sel//cycle:cycle_sel',
+        'a/b/c:workflow_sel//cycle:cycle_sel/',
+        'a/b/c:workflow_sel//cycle:cycle_sel/task',
+        'a/b/c:workflow_sel//cycle:cycle_sel/task/',
+        'a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel',
+        'a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel/',
+        'a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel/job',
+        'a/b/c:workflow_sel//cycle:cycle_sel/task:task_sel/job:job_sel'
+    ]
+)
+def test_universal_id_matches_hierarchical(identifier):
+    """Test the UID with hierarchical workflow IDs."""
+    # fmt: off
+    expected_tokens = {
+        'user':
+            'user' if 'user' in identifier else None,
+        'workflow':
+            'a/b/c',  # the hierarchical workflow ID
+        'workflow_sel':
+            'workflow_sel' if 'workflow_sel' in identifier else None,
+        'cycle':
+            'cycle' if 'cycle' in identifier else None,
+        'cycle_sel':
+            'cycle_sel' if 'cycle_sel' in identifier else None,
+        'task':
+            'task' if 'task' in identifier else None,
+        'task_sel':
+            'task_sel' if 'task_sel' in identifier else None,
+        'job':
+            'job' if 'job' in identifier else None,
+        'job_sel':
+            'job_sel' if 'job_sel' in identifier else None
+    }
+    # fmt: on
     match = UNIVERSAL_ID.match(identifier)
     assert match
     assert match.groupdict() == expected_tokens

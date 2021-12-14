@@ -87,19 +87,26 @@ UNIVERSAL_ID = re.compile(
           |^
         )
         (?:
-          (?P<{Tokens.Workflow.value}>[^\/:\n~]+)
+          (?P<{Tokens.Workflow.value}>
+            # can't begin with //
+            (?!//)
+            # can't contain : ~ but can contain /
+            [^:~\n]+?
+            # can't end with /
+            (?<!/)
+          )
           (?:
             :
             (?P<{Tokens.Workflow.value}_sel>[^\/:\n]+)
           )?
           (?:
             (?:
-                //
+                # can't end ///
+                //(?!/)
             )?
             (?:
-
+                # cycle/task/job
                 { RELATIVE_PATTERN }
-
             )?
           )?
         )?
