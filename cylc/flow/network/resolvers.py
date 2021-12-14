@@ -213,18 +213,42 @@ def node_filter(node, node_type, args):
     # The n_atts (node attributes) list contains ordered node values
     # or defaults (see collate function for index item).
     return (
-        (args.get('ghosts') or state) and
-        (not args.get('states') or state in args['states']) and
-        not (args.get('exstates') and state in args['exstates']) and
-        (args.get('is_held') is None
-         or (node.is_held == args['is_held'])) and
-        (args.get('is_queued') is None
-         or (node.is_queued == args['is_queued'])) and
-        (args.get('mindepth', -1) < 0 or node.depth >= args['mindepth']) and
-        (args.get('maxdepth', -1) < 0 or node.depth <= args['maxdepth']) and
+        (
+            args.get('ghosts') or state
+        )
+        and (
+            not args.get('states')
+            or state in args['states']
+        )
+        and not (
+            args.get('exstates')
+            and state in args['exstates']
+        )
+        and (
+            args.get('is_held') is None
+            or (node.is_held == args['is_held'])
+        )
+        and (
+            args.get('is_queued') is None
+            or (node.is_queued == args['is_queued'])
+        )
+        and (
+            args.get('mindepth', -1) < 0
+            or node.depth >= args['mindepth']
+        )
+        and (
+            args.get('maxdepth', -1) < 0
+            or node.depth <= args['maxdepth']
+        )
         # Now filter node against id arg lists
-        (not args.get('ids') or node_ids_filter(tokens, args['ids'])) and
-        not (args.get('exids') and node_ids_filter(tokens, args['exids']))
+        and (
+            not args.get('ids')
+            or node_ids_filter(tokens, args['ids'])
+        )
+        and not (
+            args.get('exids')
+            and node_ids_filter(tokens, args['exids'])
+        )
     )
 
 
@@ -232,7 +256,13 @@ def get_flow_data_from_ids(data_store, native_ids):
     """Return workflow data by id."""
     w_ids = []
     for native_id in native_ids:
-        w_ids.append(strip_task(tokenise(native_id)))
+        w_ids.append(
+            detokenise(
+                strip_task(
+                    tokenise(native_id)
+                )
+            )
+        )
     return [
         data_store[w_id]
         for w_id in uniq(w_ids)

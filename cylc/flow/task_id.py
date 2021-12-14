@@ -104,7 +104,6 @@ class TaskID:
     @classmethod
     def get_standardised_taskid(cls, task_id):
         """Return task ID with standardised cycle point."""
-        name, point_string = cls.split(task_id)
-        tokens = tokenise(task_id)
+        tokens = tokenise(task_id, relative=True)
         tokens['cycle'] = cls.get_standardised_point_string(tokens['cycle'])
         return detokenise(tokens, relative=True)

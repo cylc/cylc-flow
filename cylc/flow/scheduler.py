@@ -47,7 +47,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
-from cylc.flow.id import detokenise
+from cylc.flow.id import detokenise, tokenise
 from cylc.flow.flow_mgr import FlowMgr
 from cylc.flow.exceptions import (
     CommandFailedError, CyclingError, CylcError, UserInputError

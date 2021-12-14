@@ -53,7 +53,7 @@ from cylc.flow.cycling.loader import (
     get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
     INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
 )
-from cylc.flow.id import detokenise
+from cylc.flow.id import detokenise, tokenise
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 from cylc.flow.exceptions import (

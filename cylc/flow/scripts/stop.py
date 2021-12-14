@@ -73,6 +73,7 @@ from cylc.flow.exceptions import (
     UserInputError,
 )
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.id import detokenise, strip_workflow
 from cylc.flow.network.multi import call_multi
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -181,16 +182,16 @@ async def run(
     workflow_id,
     *tokens_list,
 ) -> int:
-    # parse the stop-task or stop-cycle if provided
-    stop_task = stop_cycle = None
-    if len(tokens_list) > 1:
+    if len(tokens_list) != 1:
         raise Exception('Multiple TODO')
-    elif len(tokens_list) == 1:
-        tokens = tokens_list[0]
-        if tokens.get('task'):
-            stop_task = tokens['task']
-        elif tokens.get('cycle'):
-            stop_cycle = tokens['cycle']
+
+    # parse the stop-task or stop-cycle if provided
+    tokens = tokens_list[0]
+    stop_task = stop_cycle = None
+    if 'task' in tokens:
+        stop_task = detokenise(strip_workflow(tokens))
+    else:
+        stop_cycle = tokens['cycle']
 
     # handle orthogonal options
     if stop_task is not None and options.kill:

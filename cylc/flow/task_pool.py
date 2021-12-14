@@ -1044,32 +1044,38 @@ class TaskPool:
     def hold_tasks(self, items: Iterable[str]) -> int:
         """Hold tasks with IDs matching the specified items."""
         # Hold active tasks:
-        itasks, unmatched = self.filter_task_proxies(items, warn=False)
+        itasks, future_tasks, unmatched = self.filter_task_proxies(
+            items,
+            warn=False,
+            future=True,
+        )
         for itask in itasks:
             self.hold_active_task(itask)
         # Set future tasks to be held:
-        n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
-        for name, cycle in task_items:
+        for name, cycle in future_tasks:
             self.data_store_mgr.delta_task_held((name, cycle, True))
-        self.tasks_to_hold.update(task_items)
+        self.tasks_to_hold.update(future_tasks)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
-        return n_warnings
+        return len(unmatched)
 
     def release_held_tasks(self, items: Iterable[str]) -> int:
         """Release held tasks with IDs matching any specified items."""
         # Release active tasks:
-        itasks, unmatched = self.filter_task_proxies(items, warn=False)
+        itasks, future_tasks, unmatched = self.filter_task_proxies(
+            items,
+            warn=False,
+            future=True,
+        )
         for itask in itasks:
             self.release_held_active_task(itask)
         # Unhold future tasks:
-        n_warnings, task_items = self._explicit_match_tasks_to_hold(unmatched)
-        for name, cycle in task_items:
+        for name, cycle in future_tasks:
             self.data_store_mgr.delta_task_held((name, cycle, False))
-        self.tasks_to_hold.difference_update(task_items)
+        self.tasks_to_hold.difference_update(future_tasks)
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
-        return n_warnings
+        return len(unmatched)
 
     def release_hold_point(self) -> None:
         """Unset the workflow hold point and release all held active tasks."""
@@ -1081,15 +1087,16 @@ class TaskPool:
         self.workflow_db_mgr.delete_workflow_hold_cycle_point()
 
     def _explicit_match_tasks_to_hold(
-        self, items: Iterable[str]
-    ) -> Tuple[int, Set[Tuple[str, 'PointBase']]]:
+        self,
+        items: Iterable[str],
+    ) -> Tuple[Set[Tuple[str, 'PointBase']], List[str]]:
         """Match future tasks based on the assumption that no active tasks
         matched the items.
 
-        Returns (n_warnings, matched_tasks)
+        Returns (matched_tasks, unmatched_tasks)
         """
-        n_warnings = 0
-        matched_tasks: Set[Tuple[str, 'PointBase']] = set()
+        matched_tasks: 'Set[Tuple[str, PointBase]]' = set()
+        unmatched_tasks: 'List[str]' = []
         for item in items:
             if not item.startswith('//'):
                 item = f'//{item}'
@@ -1101,7 +1108,7 @@ class TaskPool:
             if status or ('*' in item) or ('?' in item) or ('[' in item):
                 # Glob or task state was not matched by active tasks
                 LOG.warning(f"No active tasks matching: {item}")
-                n_warnings += 1
+                unmatched_tasks.append(item)
                 continue
             if name_str not in self.config.taskdefs:
                 if self.config.find_taskdefs(name_str):
@@ -1112,18 +1119,18 @@ class TaskPool:
                     )
                 else:
                     LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
-                n_warnings += 1
+                unmatched_tasks.append(item)
                 continue
             if point_str is None:
                 LOG.warning(f"No active instances of task: {item}")
-                n_warnings += 1
+                unmatched_tasks.append(item)
                 continue
             try:
                 point_str = standardise_point_string(point_str)
             except PointParsingError as exc:
                 LOG.warning(
                     f"{item} - invalid cycle point: {point_str} ({exc})")
-                n_warnings += 1
+                unmatched_tasks.append(item)
                 continue
             point = get_point(point_str)
             taskdef = self.config.taskdefs[name_str]
@@ -1131,9 +1138,9 @@ class TaskPool:
                 matched_tasks.add((taskdef.name, point))
             else:
                 # is_valid_point() already logged warning
-                n_warnings += 1
+                unmatched_tasks.append(item)
                 continue
-        return n_warnings, matched_tasks
+        return matched_tasks, unmatched_tasks
 
     def check_abort_on_task_fails(self):
         """Check whether workflow should abort on task failure.
@@ -1495,11 +1502,17 @@ class TaskPool:
         Queue the task if not queued, otherwise release it to run.
 
         """
-        n_warnings, task_items = self.match_taskdefs(items)
-        for name, point in task_items.keys():
+        # n_warnings, task_items = self.match_taskdefs(items)
+        itasks, future_tasks, unmatched = self.filter_task_proxies(
+            items,
+            future=True,
+        )
+
+        # spawn future tasks
+        for name, point in future_tasks:
             task_id = detokenise(
                 {
-                    'cycle': point,
+                    'cycle': str(point),
                     'task': name,
                 },
                 relative=True
@@ -1522,23 +1535,27 @@ class TaskPool:
                 self.add_to_pool(itask, is_new=True)
             else:
                 # In pool already
-                if itask.state(*TASK_STATUSES_ACTIVE):
-                    LOG.warning(f"[{itask}] ignoring trigger - already active")
-                    continue
-                itask.is_manual_submit = True
-                itask.reset_try_timers()
-                # (If None, spawner reports cycle bounds errors).
-                if itask.state_reset(TASK_STATUS_WAITING):
-                    # (could also be unhandled failed)
-                    self.data_store_mgr.delta_task_state(itask)
-                # (No need to set prerequisites satisfied here).
-                if not itask.state.is_queued:
-                    self.queue_task(itask)
-                    LOG.info(
-                        f"[{itask}] queued, trigger again to submit now."
-                    )
-                else:
-                    self.task_queue_mgr.force_release_task(itask)
+                itasks.append(itask)
+
+        # trigger tasks
+        for itask in itasks:
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                LOG.warning(f"[{itask}] ignoring trigger - already active")
+                continue
+            itask.is_manual_submit = True
+            itask.reset_try_timers()
+            # (If None, spawner reports cycle bounds errors).
+            if itask.state_reset(TASK_STATUS_WAITING):
+                # (could also be unhandled failed)
+                self.data_store_mgr.delta_task_state(itask)
+            # (No need to set prerequisites satisfied here).
+            if not itask.state.is_queued:
+                self.queue_task(itask)
+                LOG.info(
+                    f"[{itask}] queued, trigger again to submit now."
+                )
+            else:
+                self.task_queue_mgr.force_release_task(itask)
 
             self.workflow_db_mgr.put_insert_task_states(
                 itask,
@@ -1547,7 +1564,8 @@ class TaskPool:
                     "flow_nums": json.dumps(list(itask.flow_nums))
                 }
             )
-        return n_warnings
+
+        return len(unmatched)
 
     def sim_time_check(self, message_queue):
         """Simulation mode: simulate task run times and set states."""
@@ -1635,8 +1653,11 @@ class TaskPool:
         )
 
     def filter_task_proxies(
-        self, ids: Iterable[str], warn: bool = True
-    ) -> Tuple[List[TaskProxy], List[str]]:
+        self,
+        ids: Iterable[str],
+        warn: bool = True,
+        future: bool = True,
+    ) -> 'Tuple[List[TaskProxy], Set[Tuple[str, PointBase]], List[str]]':
         """Return task proxies that match names, points, states in items.
 
         Args:
@@ -1650,11 +1671,18 @@ class TaskPool:
 
         Return (itasks, bad_items).
         """
-        return filter_ids(
+        matched, unmatched = filter_ids(
             self.main_pool,
             ids,
             warn=warn,
         )
+        future_matched: 'Set[Tuple[str, PointBase]]' = set()
+        if future:
+            future_matched, unmatched = self._explicit_match_tasks_to_hold(
+                unmatched
+            )
+
+        return matched, future_matched, unmatched
 
     def stop_flow(self, flow_num):
         """Stop a particular flow_num from spawning any further."""

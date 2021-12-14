@@ -394,8 +394,8 @@ async def get_nodes_by_ids(root, info, **args):
 
     node_type = NODE_MAP[get_type_str(info.return_type)]
 
-    args['ids'] = [tokenise(n_id, node_type) for n_id in args['ids']]
-    args['exids'] = [tokenise(n_id, node_type) for n_id in args['exids']]
+    args['ids'] = [tokenise(n_id) for n_id in args['ids']]
+    args['exids'] = [tokenise(n_id) for n_id in args['exids']]
     return await resolvers.get_nodes_by_ids(node_type, args)
 
 

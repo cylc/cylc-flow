@@ -207,12 +207,14 @@ def legacy_tokenise(identifier):
     raise ValueError(f'Invalid legacy Cylc identifier: {identifier}')
 
 
-def tokenise(identifier):
+def tokenise(identifier, relative=False):
     """Convert a string identifier into Cylc tokens.
 
     Args:
         identifier (str):
             The namespace to tokenise.
+        relative (bool):
+            If True the prefix // is implicit if omitted.
 
     Returns:
         dict - {token: value}
@@ -259,6 +261,8 @@ def tokenise(identifier):
         # "relative" identifiers (new syntax):
         >>> _(tokenise('//cycle'))
         {'cycle': 'cycle'}
+        >>> _(tokenise('cycle', relative=True))
+        {'cycle': 'cycle'}
         >>> _(tokenise('//cycle/task/job'))
         {'cycle': 'cycle', 'task': 'task', 'job': 'job'}
 
@@ -273,6 +277,8 @@ def tokenise(identifier):
 
     """
     patterns = [UNIVERSAL_ID, RELATIVE_ID]
+    if relative and not identifier.startswith('//'):
+        identifier = f'//{identifier}'
     for pattern in patterns:
         match = pattern.match(identifier)
         if match:
