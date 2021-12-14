@@ -19,8 +19,8 @@
 import argparse
 from contextlib import contextmanager
 import os
-import sys
 from pathlib import Path
+import sys
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
@@ -136,7 +136,8 @@ Full ID
       w//1        # The cycle "1" in the workflow "w"
       w//1/a      # The task "a" in the cycle "1" in the workflow "w"
       w//1/a/1    # The first job of w//1/a/1
-      ~alice/test # The workflow "test" installed under the user account "alice"
+      ~alice/test # The workflow "test" installed under the user
+                  # account "alice"
 
 Patterns
     Patterns can be used in Cylc IDs:
@@ -166,7 +167,8 @@ Filters
       *:running                       # All running workflows
       workflow//*:running             # All running cycles in workflow
       workflow//cycle/*:running       # All running tasks in workflow//cycle
-      workflow//cycle/task/*:running  # All running jobs in workflow//cycle/task
+      workflow//cycle/task/*:running  # All running jobs in
+                                      # workflow//cycle/task
 
 Full ID Specification
     [~user[:selector]/]workflow_id[:selector]
@@ -370,7 +372,6 @@ def iter_commands():
 
 
 def print_id_help():
-    from textwrap import dedent
     print(ID_HELP)
 
 

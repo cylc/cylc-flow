@@ -121,9 +121,7 @@ class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
 
-
     # TODO v
-
 
     # Shared text for commands which can, & cannot, glob on cycle points:
     MULTI_USAGE_TEMPLATE = """{0}
@@ -183,8 +181,6 @@ TASK_GLOB matches task or family names at a given cycle point.
             if prep:
 
                 # TODO
-
-
 
                 argdoc = [('WORKFLOW | PATH', 'Workflow ID or path')]
             else:

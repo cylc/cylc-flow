@@ -1307,7 +1307,9 @@ def infer_latest_run_from_id(workflow_id: str) -> str:
     return str(reg)
 
 
-def infer_latest_run(path: Path, implicit_runN: bool = True
+def infer_latest_run(
+    path: Path,
+    implicit_runN: bool = True,
 ) -> Tuple[Path, Path]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 

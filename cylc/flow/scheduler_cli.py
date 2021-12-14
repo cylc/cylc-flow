@@ -292,7 +292,10 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         detect_old_contact_file(workflow_id)
     except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
-        pclient = WorkflowRuntimeClient(workflow_id, timeout=options.comms_timeout)
+        pclient = WorkflowRuntimeClient(
+            workflow_id,
+            timeout=options.comms_timeout,
+        )
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
             'variables': {

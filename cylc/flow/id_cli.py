@@ -16,15 +16,18 @@
 
 # TODO: move check_deprecation into the relevant scripts
 
+# TODO changes:
+# * src paths must start "./" or be absolte
+#   * remove ambigious name check (no longer needed)
+# * run paths cannot be absolute (use the workflow ID)
+#   * no infering latest runs for paths (no longer needed)
+
 import asyncio
 import fnmatch
-from functools import partial
 import os
 from pathlib import Path
 import re
-from typing import Tuple
 
-from cylc.flow.async_util import unordered_map
 from cylc.flow.exceptions import (
     UserInputError,
     WorkflowFilesError,
@@ -44,7 +47,7 @@ from cylc.flow.network.scan import (
 )
 from cylc.flow.workflow_files import (
     NO_FLOW_FILE_MSG,
-    check_deprecation,
+    # check_deprecation,  TODO?
     check_flow_file,
     detect_both_flow_and_suite,
     get_flow_file,
@@ -202,17 +205,21 @@ def _validate_constraint(*tokens_list, constraint=None):
 def _validate_workflow_ids(*tokens_list, src_path):
     for ind, tokens in enumerate(tokens_list):
         if tokens['user']:
-            raise UserInputError('Operating on others workflows is not supported')  # TODO
+            raise UserInputError(
+                'Operating on others workflows is not supported'
+            )
         validate_workflow_name(tokens['workflow'])
         if ind == 0 and src_path:
             # source workflow passed in as a path
             pass
         else:
             src_path = Path(get_workflow_run_dir(tokens['workflow']))
-        #if not src_path.exists():
-        #    raise UserInputError()  # TODO ???
+        # if not src_path.exists():
+        #     raise UserInputError()  # TODO ???
         if src_path.is_file():
-            raise UserInputError(f'Workflow ID cannot be a file: {tokens["workflow"]}')
+            raise UserInputError(
+                f'Workflow ID cannot be a file: {tokens["workflow"]}'
+            )
         detect_both_flow_and_suite(src_path)
 
 
@@ -306,18 +313,15 @@ async def _expand_workflow_tokens_impl(tokens):
         )
 
     # construct the pipe
-    pipe = scan | filter_name(fnmatch.translate(tokens['workflow'])) | is_active(True)
+    pipe = (
+        scan
+        | filter_name(fnmatch.translate(tokens['workflow']))
+        | is_active(True)
+    )
 
     # iter the results
     async for workflow in pipe:
         yield {**tokens, 'workflow': workflow['name']}
-
-
-# changes:
-# * src paths must start "./" or be absolte
-#   * remove ambigious name check (no longer needed)
-# * run paths cannot be absolute (use the workflow ID)
-#   * no infering latest runs for paths (no longer needed)
 
 
 def _parse_src_path(id_):
@@ -338,178 +342,3 @@ def _parse_src_path(id_):
         workflow_id = src_path.name
         return workflow_id, src_path, src_file_path
     return None
-
-
-import os
-import pytest
-
-
-@pytest.fixture(scope='module')
-def abc_src_dir(tmp_path_factory):
-    cwd_before = Path.cwd()
-    tmp_path = tmp_path_factory.getbasetemp()
-    os.chdir(tmp_path)
-    for name in ('a', 'b', 'c'):
-        Path(tmp_path, name).mkdir()
-        Path(tmp_path, name, 'flow.cylc').touch()  # TODO: const
-    yield tmp_path
-    os.chdir(cwd_before)
-
-
-@pytest.mark.parametrize(
-    'ids_in,ids_out',
-    [
-        (('a//',), ['a']),
-        (('a//', 'a//'), ['a']),
-        (('a//', 'b//'), ['a', 'b']),
-    ]
-)
-async def test_parse_ids_workflows(ids_in, ids_out):
-    ret = await parse_ids_async(*ids_in, constraint='workflows')
-    assert list(ret[0]) == ids_out
-
-
-@pytest.mark.parametrize(
-    'ids_in,ids_out',
-    [
-        (('./a',), ['a']),
-    ]
-)
-async def test_parse_ids_workflows_src(ids_in, ids_out, abc_src_dir):
-    ret = await parse_ids_async(*ids_in, constraint='workflows', src=True)
-    assert list(ret[0]) == ids_out
-
-
-@pytest.mark.parametrize(
-    'ids_in,ids_out',
-    [
-        (
-            ('a//i',),
-            {'a': ['//i']},
-        ),
-        (
-            ('a//i', 'a//j'),
-            {'a': ['//i', '//j']},
-        ),
-        (
-            ('a//i', 'b//i'),
-            {'a': ['//i'], 'b': ['//i']},
-        ),
-        (
-            ('a//', '//i', 'b//', '//i'),
-            {'a': ['//i'], 'b': ['//i']},
-        ),
-    ]
-)
-async def test_parse_ids_tasks(ids_in, ids_out):
-    ret = await parse_ids_async(*ids_in, constraint='tasks')
-    assert {
-        workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
-    } == ids_out
-
-
-@pytest.mark.parametrize(
-    'ids_in,ids_out',
-    [
-        (
-            ('./a', '//i'),
-            {'a': ['//i']}
-        ),
-        (
-            ('./a', '//i', '//j', '//k'),
-            {'a': ['//i', '//j', '//k']}
-        ),
-    ]
-)
-async def test_parse_ids_tasks_src(ids_in, ids_out, abc_src_dir):
-    ret = await parse_ids_async(*ids_in, constraint='tasks', src=True)
-    assert {
-        workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
-    } == ids_out
-
-
-@pytest.mark.parametrize(
-    'ids_in,ids_out',
-    [
-        (('a//',), {'a': []}),
-        (
-            ('a//', 'b//', 'c//'),
-            {'a': [], 'b': [], 'c': []}
-        ),
-        (('a//i',), {'a': ['//i']}),
-        (('a//', '//i'), {'a': ['//i']}),
-        (
-            ('a//', '//i', '//j', '//k'),
-            {'a': ['//i', '//j', '//k']},
-        ),
-        (('a//', '//i', 'b//'), {'a': ['//i'], 'b': []}),
-    ]
-)
-async def test_parse_ids_mixed(ids_in, ids_out):
-    ret = await parse_ids_async(*ids_in, constraint='mixed')
-    assert {
-        workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
-    } == ids_out
-
-
-@pytest.mark.parametrize(
-    'ids_in,ids_out',
-    [
-        (('./a',), {'a': []}),
-        (('./a', '//i'), {'a': ['//i']}),
-        (('./a', '//i', '//j', '//k'), {'a': ['//i', '//j', '//k']}),
-        # (('./a', 'b//'), {'a': [], 'b': []}),  # TODO (debatable)
-    ]
-)
-async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir):
-    ret = await parse_ids_async(*ids_in, constraint='mixed', src=True)
-    assert {
-        workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
-    } == ids_out
-
-
-@pytest.mark.parametrize(
-    'ids_in,errors',
-    [
-        (('a//',), False),
-        (('a//', 'b//'), False),
-        (('a//', 'b//', 'c//'), True),
-    ]
-)
-async def test_parse_ids_max_workflows(ids_in, errors):
-    try:
-        await parse_ids_async(*ids_in, constraint='workflows', max_workflows=2)
-    except UserInputError:
-        if not errors:
-            raise
-    else:
-        if errors:
-            raise Exception('Should have raised UserInputError')
-
-
-@pytest.mark.parametrize(
-    'ids_in,errors',
-    [
-        (('a//', '//i'), False),
-        (('a//', '//i', '//j'), False),
-        (('a//', '//i', '//j', '//k'), True),
-    ]
-)
-async def test_parse_ids_max_tasks(ids_in, errors):
-    try:
-        await parse_ids_async(*ids_in, constraint='tasks', max_tasks=2)
-    except UserInputError:
-        if not errors:
-            raise
-    else:
-        if errors:
-            raise Exception('Should have raised UserInputError')
-
-
-#async def test_parse_ids_infer_run_name():
-#    workflows = await parse_ids_async(['foo//'], constraint='workflows')
-#    assert workflows == []

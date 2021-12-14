@@ -582,7 +582,8 @@ def pop_token(tokens):
         >>> pop_token(tokens)
         ('user', 'u')
         >>> tokens
-        {'workflow_sel': None, 'cycle_sel': None, 'task_sel': None, 'job_sel': None}
+        {'workflow_sel': None,
+         'cycle_sel': None, 'task_sel': None, 'job_sel': None}
 
     """
     for token_name in reversed(Tokens):
@@ -628,12 +629,17 @@ def parse_cli(*ids):
         ['workworkflow//cycle1', 'workworkflow//cycle2']
 
         # mixed references
-        >>> parse_back('workworkflow1', '//cycle', 'workworkflow2', '//cycle', 'workworkflow3//cycle')
-        ['workworkflow1//cycle', 'workworkflow2//cycle', 'workworkflow3//cycle']
+        >>> parse_back(
+        ...     'workworkflow1', '//cycle', 'workworkflow2',
+        ...     '//cycle', 'workworkflow3//cycle'
+        ... )
+        ['workworkflow1//cycle',
+         'workworkflow2//cycle', 'workworkflow3//cycle']
 
         # legacy ids:
         >>> parse_back('workworkflow', 'task.123', 'a.b.c.234', '345/task')
-        ['workworkflow//123/task', 'workworkflow//234/a.b.c', 'workworkflow//345/task']
+        ['workworkflow//123/task',
+         'workworkflow//234/a.b.c', 'workworkflow//345/task']
 
         # errors:
         >>> parse_cli('////')
