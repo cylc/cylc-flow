@@ -1012,7 +1012,7 @@ with Conf('global.cylc', desc='''
                    the wrapper script.
             ''')
             Conf('global init-script', VDR.V_STRING, desc='''
-                A per-platform script which is run before other job scrips.
+                A per-platform script which is run before other job scripts.
 
                 This should be used sparingly to perform any shell
                 configuration that cannot be performed via other means.
