@@ -38,7 +38,7 @@ EXAMPLE_FLOW_CFG = {
         'runahead limit': 'P4',
         'graph': {
             'P1': 'foo & bar',
-            'R1/2': 'foo[1] => pub'  # pub.2 doesn't spawn at start
+            'R1/2': 'foo[1] => pub'  # 2/pub doesn't spawn at start
         }
     },
     'runtime': {
@@ -119,47 +119,47 @@ async def example_flow(
     'items, expected_task_ids, expected_bad_items, expected_warnings',
     [
         param(
-            ['foo'], ['foo.1', 'foo.2', 'foo.3', 'foo.4', 'foo.5'], [], [],
+            ['foo'], ['1/foo', '2/foo', '3/foo', '4/foo', '5/foo'], [], [],
             id="Basic"
         ),
         param(
-            ['*.1'],
-            ['foo.1', 'bar.1'], [], [],
+            ['1/*'],
+            ['1/foo', '1/bar'], [], [],
             id="Name glob"
         ),
         param(
-            ['FAM.1'], ['bar.1'], [], [],
+            ['1/FAM'], ['1/bar'], [], [],
             id="Family name"
         ),
         param(
-            ['foo.*'], ['foo.1', 'foo.2', 'foo.3', 'foo.4', 'foo.5'], [], [],
+            ['*/foo'], ['1/foo', '2/foo', '3/foo', '4/foo', '5/foo'], [], [],
             id="Point glob"
         ),
         param(
             ['*:waiting'],
-            ['foo.1', 'bar.1', 'foo.2', 'bar.2', 'foo.3', 'bar.3', 'foo.4',
-             'bar.4', 'foo.5', 'bar.5'], [], [],
+            ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
+             '4/bar', '5/foo', '5/bar'], [], [],
             id="Task state"
         ),
         param(
-            ['foo.8'], [], ['foo.8'], ["No active tasks matching: foo.8"],
+            ['8/foo'], [], ['8/foo'], ["No active tasks matching: 8/foo"],
             id="Task not yet spawned"
         ),
         param(
-            ['foo.1', 'bar.8'], ['foo.1'], ['bar.8'],
-            ["No active tasks matching: bar.8"],
+            ['1/foo', '8/bar'], ['1/foo'], ['8/bar'],
+            ["No active tasks matching: 8/bar"],
             id="Multiple items"
         ),
         param(
-            ['grogu.1', 'grogu.*'], [], ['grogu.1', 'grogu.*'],
-            ["No active tasks matching: grogu.1",
-             "No active tasks matching: grogu.*"],
+            ['1/grogu', '/grogu*'], [], ['1/grogu', '/grogu*'],
+            ["No active tasks matching: 1/grogu",
+             "No active tasks matching: /grogu*"],
             id="No such task"
         ),
         param(
             [],
-            ['foo.1', 'bar.1', 'foo.2', 'bar.2', 'foo.3', 'bar.3', 'foo.4',
-             'bar.4', 'foo.5', 'bar.5'], [], [],
+            ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
+             '4/bar', '5/foo', '5/bar'], [], [],
             id="No items given - get all tasks"
         )
     ]
@@ -180,7 +180,7 @@ async def test_filter_task_proxies(
     Params:
         items: Arg passed to filter_task_proxies().
         expected_task_ids: IDs of the TaskProxys that are expected to be
-            returned, of the form "{name}.{point}".
+            returned, of the form "{point}/{name}"/
         expected_bad_items: Expected to be returned.
         expected_warnings: Expected to be logged.
     """
@@ -198,7 +198,7 @@ async def test_filter_task_proxies(
     'items, expected_task_ids, expected_warnings',
     [
         param(
-            ['foo.4'], ['foo.4'], [],
+            ['4/foo'], ['4/foo'], [],
             id="Basic"
         ),
         param(
@@ -206,34 +206,34 @@ async def test_filter_task_proxies(
             id="No cycle point given"
         ),
         param(
-            ['*.2'], ['foo.2', 'bar.2', 'pub.2'], [],
+            ['2/*'], ['2/foo', '2/bar', '2/pub'], [],
             id="Name glob"
         ),
         param(
-            ['FAM.2'], ['bar.2'], [],
+            ['2/FAM'], ['2/bar'], [],
             id="Family name"
         ),
         param(
-            ['foo.*'], [], ["No matching tasks found: foo.*"],
+            ['*/foo'], [], ["No matching tasks found: */foo"],
             id="Point glob not allowed"
         ),
         param(
-            ['grogu.1'], [], ["No matching tasks found: grogu.1"],
+            ['1/grogu'], [], ["No matching tasks found: 1/grogu"],
             id="No such task"
         ),
         param(
-            ['foo.4', 'bar.2', 'grogu.1'], ['foo.4', 'bar.2'],
-            ["No matching tasks found: grogu.1"],
+            ['4/foo', '2/bar', '1/grogu'], ['4/foo', '2/bar'],
+            ["No matching tasks found: 1/grogu"],
             id="Multiple items"
         ),
         param(
-            ['foo.20', 'pub.1'], [],
+            ['20/foo', '1/pub'], [],
             ["Invalid cycle point for task: foo, 20",
              "Invalid cycle point for task: pub, 1"],
             id="Task not in graph at given cycle point"
         ),
         param(
-            ['foo.1:badger'], ['foo.1'], [],
+            ['1/foo:badger'], ['1/foo'], [],
             id="Task state is ignored"
         ),
         param([], [], [], id="No items given")
@@ -254,7 +254,7 @@ async def test_match_taskdefs(
         items: Arg passed to match_taskdefs().
         ignore_state: Arg passed to match_taskdefs().
         expected_task_ids: Expected IDs of the tasks in the dict that gets
-            returned, of the form "{name}.{point}".
+            returned, of the form "{point}/{name}".
         expected_warnings: Expected to be logged.
     """
     caplog.set_level(logging.WARNING, CYLC_LOG)
@@ -272,37 +272,37 @@ async def test_match_taskdefs(
     'items, expected_tasks_to_hold_ids, expected_warnings',
     [
         param(
-            ['foo.1', 'foo.2'], ['foo.1', 'foo.2'], [],
+            ['1/foo', '2/foo'], ['1/foo', '2/foo'], [],
             id="Active & future tasks"
         ),
         param(
-            ['*.1', '*.2'], ['foo.1', 'bar.1'],
-            ["No active tasks matching: *.2"],
+            ['1/*', '2/*'], ['1/foo', '1/bar'],
+            ["No active tasks matching: 2/*"],
             id="Name globs hold active tasks only"
         ),
         param(
-            ['FAM.1', 'FAM.2'], ['bar.1'],
-            ["No active tasks in the family 'FAM' matching: FAM.2"],
+            ['1/FAM', '2/FAM'], ['1/bar'],
+            ["No active tasks in the family 'FAM' matching: 2/FAM"],
             id="Family names hold active tasks only"
         ),
         param(
-            ['foo.*', 'bar', 'pub', 'grogu.*'], ['foo.1', 'bar.1'],
+            ['*/foo', 'bar', 'pub', '*/grogu'], ['1/foo', '1/bar'],
             ["No active instances of task: pub",
-             "No active tasks matching: grogu.*"],
+             "No active tasks matching: /grogu"],
             id="Point globs/point omitted hold active tasks only"
         ),
         param(
-            ['grogu.1', 'foo.H', 'foo.20', 'pub.1'], [],
+            ['1/grogu', '/fooH', '20/foo', '1/pub'], [],
             ["No matching tasks found: grogu",
-             "foo.H - invalid cycle point: H",
+             "H/foo - invalid cycle point: H",
              "Invalid cycle point for task: foo, 20",
              "Invalid cycle point for task: pub, 1"],
             id="Non-existent task name or invalid cycle point"
         ),
         param(
-            ['foo:waiting', 'foo.1:failed', 'bar.2:waiting'], ['foo.1'],
-            ["No active tasks matching: foo.1:failed",
-             "No active tasks matching: bar.2:waiting"],
+            ['foo:waiting', '1/foo:failed', '2/bar:waiting'], ['1/foo'],
+            ["No active tasks matching: 1/foo:failed",
+             "No active tasks matching: 2/bar:waiting"],
             id="Specifying task state works for active tasks, not future tasks"
         )
     ]
@@ -322,7 +322,7 @@ async def test_hold_tasks(
     Params:
         items: Arg passed to hold_tasks().
         expected_tasks_to_hold_ids: Expected IDs of the tasks that get put in
-            the TaskPool.tasks_to_hold set, of the form "{name}.{point}".
+            the TaskPool.tasks_to_hold set, of the form "{point}/{name}"/
         expected_warnings: Expected to be logged.
     """
     expected_tasks_to_hold_ids = sorted(expected_tasks_to_hold_ids)
@@ -349,8 +349,8 @@ async def test_release_held_tasks(
 ) -> None:
     """Test TaskPool.release_held_tasks().
 
-    For a workflow with held active tasks foo.1 & bar.1, and held future task
-    pub.2.
+    For a workflow with held active tasks 1/foo & 1/bar, and held future task
+    2/pub.
 
     We skip testing the matching logic here because it would be slow using the
     function-scoped example_flow fixture, and it would repeat what is covered
@@ -358,21 +358,21 @@ async def test_release_held_tasks(
     """
     # Setup
     task_pool = example_flow.pool
-    task_pool.hold_tasks(['foo.1', 'bar.1', 'pub.2'])
+    task_pool.hold_tasks(['1/foo', '1/bar', '2/pub'])
     for itask in task_pool.get_all_tasks():
         assert itask.state.is_held is True
-    expected_tasks_to_hold_ids = sorted(['foo.1', 'bar.1', 'pub.2'])
+    expected_tasks_to_hold_ids = sorted(['1/foo', '1/bar', '2/pub'])
     assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
 
     # Test
-    task_pool.release_held_tasks(['foo.1', 'pub.2'])
+    task_pool.release_held_tasks(['1/foo', '2/pub'])
     for itask in task_pool.get_all_tasks():
-        hold_expected = itask.identity == 'bar.1'
+        hold_expected = itask.identity == '1/bar'
         assert itask.state.is_held is hold_expected
 
-    expected_tasks_to_hold_ids = sorted(['bar.1'])
+    expected_tasks_to_hold_ids = sorted(['1/bar'])
     assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
 
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
@@ -383,7 +383,7 @@ async def test_release_held_tasks(
 @pytest.mark.parametrize(
     'hold_after_point, expected_held_task_ids',
     [
-        (0, ['foo.1', 'bar.1']),
+        (0, ['1/foo', '1/bar']),
         (1, [])
     ]
 )

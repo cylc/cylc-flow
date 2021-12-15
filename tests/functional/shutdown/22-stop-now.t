@@ -44,6 +44,6 @@ WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 log_scan "${TEST_NAME_BASE}-orphaned" "${WORKFLOW_LOG}" 1 1 \
     'Orphaned task jobs.*' \
-    '.*foo.1'
+    '1/.*foo'
 
 purge

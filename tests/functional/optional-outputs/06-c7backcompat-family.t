@@ -40,12 +40,12 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 
 grep_workflow_log_ok grep-1 "Workflow stalled"
 grep_workflow_log_ok grep-2 "WARNING - Unsatisfied prerequisites"
-grep_workflow_log_ok grep-3 "stall01\.1 is waiting on"
-grep_workflow_log_ok grep-4 "stall02\.1 is waiting on"
-grep_workflow_log_ok grep-5 "stall03\.1 is waiting on"
-grep_workflow_log_ok grep-6 "stall04\.1 is waiting on"
-grep_workflow_log_ok grep-7 "stall05\.1 is waiting on"
-grep_workflow_log_ok grep-8 "stall06\.1 is waiting on"
+grep_workflow_log_ok grep-3 "1/stall01 is waiting on"
+grep_workflow_log_ok grep-4 "1/stall02 is waiting on"
+grep_workflow_log_ok grep-5 "1/stall03 is waiting on"
+grep_workflow_log_ok grep-6 "1/stall04 is waiting on"
+grep_workflow_log_ok grep-7 "1/stall05 is waiting on"
+grep_workflow_log_ok grep-8 "1/stall06 is waiting on"
 grep_workflow_log_ok grep-9 'Workflow shutting down \- "abort on stall timeout" is set'
 
 purge

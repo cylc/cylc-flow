@@ -39,52 +39,52 @@ URL: (not given)
 
 prerequisites (- => not satisfied):
   + 0 & 1 & (2 | (3 & 4)) & 5
-  + 	0 = a.20000101T0000Z succeeded
-  + 	1 = b.20000101T0000Z succeeded
-  + 	2 = c.20000101T0000Z succeeded
-  + 	3 = d.20000101T0000Z succeeded
-  + 	4 = e.20000101T0000Z succeeded
-  + 	5 = f.19991231T0000Z succeeded
+  + 	0 = 20000101T0000Z/a succeeded
+  + 	1 = 20000101T0000Z/b succeeded
+  + 	2 = 20000101T0000Z/c succeeded
+  + 	3 = 20000101T0000Z/d succeeded
+  + 	4 = 20000101T0000Z/e succeeded
+  + 	5 = 19991231T0000Z/f succeeded
 
 outputs (- => not completed):
-  - f.20000101T0000Z expired
-  + f.20000101T0000Z submitted
-  - f.20000101T0000Z submit-failed
-  + f.20000101T0000Z started
-  - f.20000101T0000Z succeeded
-  - f.20000101T0000Z failed
-a.20000101T0000Z succeeded
-b.20000101T0000Z succeeded
-c.20000101T0000Z succeeded
-d.20000101T0000Z succeeded
-e.20000101T0000Z succeeded
-f.19991231T0000Z succeeded
+  - 20000101T0000Z/f expired
+  + 20000101T0000Z/f submitted
+  - 20000101T0000Z/f submit-failed
+  + 20000101T0000Z/f started
+  - 20000101T0000Z/f succeeded
+  - 20000101T0000Z/f failed
+20000101T0000Z/a succeeded
+20000101T0000Z/b succeeded
+20000101T0000Z/c succeeded
+20000101T0000Z/d succeeded
+20000101T0000Z/e succeeded
+19991231T0000Z/f succeeded
 title: (not given)
 description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
   + 0 & 1 & (2 | (3 & 4)) & 5
-  + 	0 = a.20000102T0000Z succeeded
-  + 	1 = b.20000102T0000Z succeeded
-  + 	2 = c.20000102T0000Z succeeded
-  + 	3 = d.20000102T0000Z succeeded
-  + 	4 = e.20000102T0000Z succeeded
-  + 	5 = f.20000101T0000Z succeeded
+  + 	0 = 20000102T0000Z/a succeeded
+  + 	1 = 20000102T0000Z/b succeeded
+  + 	2 = 20000102T0000Z/c succeeded
+  + 	3 = 20000102T0000Z/d succeeded
+  + 	4 = 20000102T0000Z/e succeeded
+  + 	5 = 20000101T0000Z/f succeeded
 
 outputs (- => not completed):
-  - f.20000102T0000Z expired
-  + f.20000102T0000Z submitted
-  - f.20000102T0000Z submit-failed
-  + f.20000102T0000Z started
-  - f.20000102T0000Z succeeded
-  - f.20000102T0000Z failed
-a.20000102T0000Z succeeded
-b.20000102T0000Z succeeded
-c.20000102T0000Z succeeded
-d.20000102T0000Z succeeded
-e.20000102T0000Z succeeded
-f.20000101T0000Z succeeded
+  - 20000102T0000Z/f expired
+  + 20000102T0000Z/f submitted
+  - 20000102T0000Z/f submit-failed
+  + 20000102T0000Z/f started
+  - 20000102T0000Z/f succeeded
+  - 20000102T0000Z/f failed
+20000102T0000Z/a succeeded
+20000102T0000Z/b succeeded
+20000102T0000Z/c succeeded
+20000102T0000Z/d succeeded
+20000102T0000Z/e succeeded
+20000101T0000Z/f succeeded
 __OUT__
 #-------------------------------------------------------------------------------
 purge

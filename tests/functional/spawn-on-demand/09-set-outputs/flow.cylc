@@ -35,7 +35,7 @@
     [[foo]]
         # Hang about until setter is finished.
         script = """
-            cylc__job__poll_grep_workflow_log -E "setter\.1 .* => succeeded"
+            cylc__job__poll_grep_workflow_log -E "1/setter .* => succeeded"
         """
     [[bar]]
         script = true
@@ -46,7 +46,7 @@
             cylc set-outputs --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}" 1/foo
 
             # Set bar outputs after it is gone from the pool.
-            cylc__job__poll_grep_workflow_log -E "bar\.1 .*task proxy removed"
+            cylc__job__poll_grep_workflow_log -E "1/bar .*task proxy removed"
             cylc set-outputs --flow=2 --output=out1 --output=out2 "${CYLC_WORKFLOW_ID}" 1/bar
         """
     [[qux, quw, fux, fuw]]

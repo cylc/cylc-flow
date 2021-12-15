@@ -1,6 +1,6 @@
 2013/08/19 15:29:00 INFO - Initial point: 2010010100
 2013/08/19 15:29:00 INFO - Final point: 2010010200
-2013/08/19 15:29:00 INFO - [monthly.2010010100] -triggered off []
-2013/08/19 15:29:00 INFO - [yearly.2010010100] -triggered off []
-2013/08/19 15:29:00 INFO - [daily.2010010100] -triggered off []
-2013/08/19 15:29:04 INFO - [daily.2010010200] -triggered off []
+2013/08/19 15:29:00 INFO - [2010010100/monthly] -triggered off []
+2013/08/19 15:29:00 INFO - [2010010100/yearly] -triggered off []
+2013/08/19 15:29:00 INFO - [2010010100/daily] -triggered off []
+2013/08/19 15:29:04 INFO - [2010010200/daily] -triggered off []

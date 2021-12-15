@@ -1,8 +1,8 @@
 Initial point: 2005023T12
 Final point: 2008001T11
-[foo.20050123T1200Z] -triggered off ['foo.20040123T1200Z']
-[bar.20050123T1200Z] -triggered off ['foo.20050123T1200Z']
-[foo.20060123T1200Z] -triggered off ['foo.20050123T1200Z']
-[bar.20060123T1200Z] -triggered off ['foo.20060123T1200Z']
-[foo.20070123T1200Z] -triggered off ['foo.20060123T1200Z']
-[bar.20070123T1200Z] -triggered off ['foo.20070123T1200Z']
+[20050123T1200Z/foo] -triggered off ['20040123T1200Z/foo']
+[20050123T1200Z/bar] -triggered off ['20050123T1200Z/foo']
+[20060123T1200Z/foo] -triggered off ['20050123T1200Z/foo']
+[20060123T1200Z/bar] -triggered off ['20060123T1200Z/foo']
+[20070123T1200Z/foo] -triggered off ['20060123T1200Z/foo']
+[20070123T1200Z/bar] -triggered off ['20070123T1200Z/foo']

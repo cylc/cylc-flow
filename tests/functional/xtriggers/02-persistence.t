@@ -43,8 +43,8 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
 # Check the broadcast result of xtrigger.
-cylc cat-log "${WORKFLOW_NAME}" 'foo.2010' >'foo.2010.out'
-grep_ok 'NAME is bob' 'foo.2010.out'
+cylc cat-log "${WORKFLOW_NAME}//2010/foo" >'2010.foo.out'
+grep_ok 'NAME is bob' '2010.foo.out'
 
 # Replace the xtrigger function with one that will fail if called again.
 cp "${WORKFLOW_RUN_DIR}/faker_fail.py" 'lib/python/faker.py'
@@ -57,7 +57,7 @@ TEST_NAME="${TEST_NAME_BASE}-restart"
 workflow_run_ok "${TEST_NAME}" cylc play --no-detach "${WORKFLOW_NAME}"
 
 # Check the broadcast result has persisted from first run.
-cylc cat-log "${WORKFLOW_NAME}" 'foo.2011' >'foo.2011.out'
-grep_ok 'NAME is bob' 'foo.2011.out'
+cylc cat-log "${WORKFLOW_NAME}//2011/foo" >'2011.foo.out'
+grep_ok 'NAME is bob' '2011.foo.out'
 
 purge

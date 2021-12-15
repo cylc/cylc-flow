@@ -29,7 +29,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 grep_ok "Unsatisfied prerequisites" "${LOG}"
-grep_ok "bar\.1 is waiting on \['foo\.1:y'\]" "${LOG}"
+grep_ok "1/bar is waiting on \['1/foo:y'\]" "${LOG}"
 grep_ok "Workflow stalled" "${LOG}"
 
 purge

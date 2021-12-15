@@ -7,7 +7,7 @@
   [[events]]
      stall timeout = PT0S
      abort on stall timeout = True
-     expected task failures = a.1
+     expected task failures = 1/a
 
 [scheduling]
    cycling mode = integer
@@ -26,6 +26,6 @@
    [[a]]
       # Fail after c is spawned out to the runahead limit.
       script = """
-         cylc__job__poll_grep_workflow_log "spawned c\.5"
+         cylc__job__poll_grep_workflow_log "spawned 5/c"
          false
       """

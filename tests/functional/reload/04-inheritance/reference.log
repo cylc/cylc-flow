@@ -1,4 +1,4 @@
 2013/11/05 11:00:11 INFO - Initial point: 1
 2013/11/05 11:00:11 INFO - Final point: 1
-2013/11/05 11:00:11 INFO - [reloader.1] -triggered off []
-2013/11/05 11:00:20 INFO - [inheritor.1] -triggered off ['reloader.1']
+2013/11/05 11:00:11 INFO - [1/reloader] -triggered off []
+2013/11/05 11:00:20 INFO - [1/inheritor] -triggered off ['1/reloader']

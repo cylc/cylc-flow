@@ -43,7 +43,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-simple-2" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-simple-2.stderr" <<'__ERR__'
-WorkflowConfigError: circular edges detected:  d.1 => a.1  a.1 => b.1  b.1 => c.1  c.1 => d.1
+WorkflowConfigError: circular edges detected:  1/d => 1/a  1/a => 1/b  1/b => 1/c  1/c => 1/d
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -79,7 +79,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-intercycle-1" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-intercycle-1.stderr" <<'__ERR__'
-WorkflowConfigError: circular edges detected:  a.2002 => a.2001  a.2001 => a.2002  a.2003 => a.2002  a.2002 => a.2003
+WorkflowConfigError: circular edges detected:  2002/a => 2001/a  2001/a => 2002/a  2003/a => 2002/a  2002/a => 2003/a
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -95,7 +95,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-intercycle-2" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-intercycle-2.stderr" <<'__ERR__'
-WorkflowConfigError: circular edges detected:  foo.8 => bar.8  bar.8 => baz.8  baz.8 => foo.8
+WorkflowConfigError: circular edges detected:  8/foo => 8/bar  8/bar => 8/baz  8/baz => 8/foo
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -113,7 +113,7 @@ __FLOW_CONFIG__
 
 run_fail "${TEST_NAME_BASE}-param-1" cylc validate 'flow.cylc'
 contains_ok "${TEST_NAME_BASE}-param-1.stderr" <<'__ERR__'
-WorkflowConfigError: circular edges detected:  fool_foo2.1 => fool_foo1.1  fool_foo1.1 => fool_foo2.1
+WorkflowConfigError: circular edges detected:  1/fool_foo2 => 1/fool_foo1  1/fool_foo1 => 1/fool_foo2
 __ERR__
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'

@@ -45,8 +45,8 @@ logfile="${WORKFLOW_RUN_DIR}/log/workflow/log"
 
 # Check workflow fails for the reason we want it to fail
 named_grep_ok \
-    "Workflow stalled with bad.1 (submit-failed)" \
-    "bad.1 did not complete required outputs" \
+    "Workflow stalled with 1/bad (submit-failed)" \
+    "1/bad did not complete required outputs" \
     "$logfile"
 
 # Look for message indicating that remote init has failed on each bad_host
@@ -72,8 +72,8 @@ done
 
 # Look for message indicating that remote init has failed.
 named_grep_ok \
-    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
-    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
+    "platform: ./badhostplatform - initialisation did not complete (no hosts were reachable)" \
+    "platform: ./badhostplatform - initialisation did not complete (no hosts were reachable)" \
     "${logfile}"
 
 purge

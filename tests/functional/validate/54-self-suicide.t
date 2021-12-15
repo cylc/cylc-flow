@@ -37,16 +37,16 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-graph-check
 run_ok "${TEST_NAME}" cylc graph --reference "${WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
-edge "bar.1" "baz.1"
-edge "foo.1" "bar.1"
-edge "foo.1" "qux.1"
-edge "qux.1" "baz.1"
+cmp_ok "${TEST_NAME}/stdout" <<'__OUT__'
+edge "1/bar" "1/baz"
+edge "1/foo" "1/bar"
+edge "1/foo" "1/qux"
+edge "1/qux" "1/baz"
 graph
-node "bar.1" "bar\n1"
-node "baz.1" "baz\n1"
-node "foo.1" "foo\n1"
-node "qux.1" "qux\n1"
+node "1/bar" "bar\n1"
+node "1/baz" "baz\n1"
+node "1/foo" "foo\n1"
+node "1/qux" "qux\n1"
 stop
 __OUT__
 #-------------------------------------------------------------------------------

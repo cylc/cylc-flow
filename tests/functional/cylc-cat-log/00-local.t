@@ -37,11 +37,11 @@ UserInputError: The '-f' option is for job logs only.
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-out
-run_ok "${TEST_NAME}" cylc cat-log -f o "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f o "${WORKFLOW_NAME}//1/a-task"
 grep_ok '^the quick brown fox$' "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-job
-run_ok "${TEST_NAME}" cylc cat-log -f j "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f j "${WORKFLOW_NAME}//1/a-task"
 contains_ok "${TEST_NAME}.stdout" - << __END__
 # SCRIPT:
 # Write to task stdout log
@@ -55,23 +55,23 @@ cylc message -p WARNING 'marmite and squashed bananas'
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-err
-run_ok "${TEST_NAME}" cylc cat-log -f e "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f e "${WORKFLOW_NAME}//1/a-task"
 grep_ok "jumped over the lazy dog" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-status
-run_ok "${TEST_NAME}" cylc cat-log -f s "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f s "${WORKFLOW_NAME}//1/a-task"
 grep_ok "CYLC_JOB_RUNNER_NAME=background" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-activity
-run_ok "${TEST_NAME}" cylc cat-log -f a "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f a "${WORKFLOW_NAME}//1/a-task"
 grep_ok '\[jobs-submit ret_code\] 0' "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-custom
-run_ok "${TEST_NAME}" cylc cat-log -f 'job.custom-log' "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f 'job.custom-log' "${WORKFLOW_NAME}//1/a-task"
 grep_ok "drugs and money" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-list-local-NN
-run_ok "${TEST_NAME}" cylc cat-log -f a -m l "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f a -m l "${WORKFLOW_NAME}//1/a-task"
 contains_ok "${TEST_NAME}.stdout" <<__END__
 job
 job-activity.log
@@ -82,7 +82,7 @@ job.status
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-list-local-01
-run_ok "${TEST_NAME}" cylc cat-log -f a -m l -s 1 "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f a -m l -s 1 "${WORKFLOW_NAME}//1/a-task"
 contains_ok "${TEST_NAME}.stdout" <<__END__
 job
 job-activity.log
@@ -93,18 +93,18 @@ job.status
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-list-local-02
-run_fail cylc cat-log -f j -m l -s 2 "${WORKFLOW_NAME}" a-task.1
+run_fail cylc cat-log -f j -m l -s 2 "${WORKFLOW_NAME}//1/a-task"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-NN
-run_ok "${TEST_NAME}" cylc cat-log -f j -m d "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f j -m d "${WORKFLOW_NAME}//1/a-task"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-01
-run_ok "${TEST_NAME}" cylc cat-log -f j -m d -s 1 "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f j -m d -s 1 "${WORKFLOW_NAME}//1/a-task"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-job-path
-run_ok "${TEST_NAME}" cylc cat-log -f j -m p "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f j -m p "${WORKFLOW_NAME}//1/a-task"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 purge

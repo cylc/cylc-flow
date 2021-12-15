@@ -27,7 +27,7 @@ cmp_ok "${TEST_NAME_BASE}-workflow.stderr" <<__ERR__
 UserInputError: The '-f' option is for job logs only.
 __ERR__
 
-run_fail "${TEST_NAME_BASE}-workflow" cylc cat-log -f j "${BAD_NAME}" "garbage.1"
+run_fail "${TEST_NAME_BASE}-workflow" cylc cat-log -f j "${BAD_NAME}" "1/garbage"
 cmp_ok "${TEST_NAME_BASE}-workflow.stderr" <<__ERR__
 file not found: ${CYLC_RUN_DIR}/${BAD_NAME}/log/job/1/garbage/NN/job
 __ERR__

@@ -25,6 +25,6 @@ install_workflow "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --reference-test -t bar.3 -t war.3 "${WORKFLOW_NAME}"
+    cylc play --no-detach --reference-test -t 3/bar -t 3/war "${WORKFLOW_NAME}"
 
 purge

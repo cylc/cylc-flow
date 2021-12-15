@@ -35,16 +35,17 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
             cylc__job__wait_cylc_message_started
             cylc hold --after=0 ${CYLC_WORKFLOW_ID}
             cylc__job__poll_grep_workflow_log 'Command succeeded: set_hold_point'
-            cylc release ${CYLC_WORKFLOW_ID} '*FF.1'  # inexact fam
-            cylc release ${CYLC_WORKFLOW_ID} 'TOAST.1'  # exact fam
-            cylc release ${CYLC_WORKFLOW_ID} 'cat*.1'  # inexact tasks
-            cylc release ${CYLC_WORKFLOW_ID} 'dog1.1'  # exact tasks
-            cylc release ${CYLC_WORKFLOW_ID} 'stop.1'  # exact tasks
+            cylc release "${CYLC_WORKFLOW_ID}//1/*FF"  # inexact fam
+            cylc release "${CYLC_WORKFLOW_ID}//1/TOAST"  # exact fam
+            cylc release "${CYLC_WORKFLOW_ID}//1/cat*"  # inexact tasks
+            cylc release "${CYLC_WORKFLOW_ID}//1/dog1"  # exact tasks
+            cylc release "${CYLC_WORKFLOW_ID}//1/stop"  # exact tasks
 
             # TODO: finished tasks are not removed if held: should this be the case?
             # (is this related to killed tasks being held to prevent retries?)
-            cylc release ${CYLC_WORKFLOW_ID} 'spawner.1'
-            cylc release ${CYLC_WORKFLOW_ID} 'holdrelease.1'
+            cylc release "${CYLC_WORKFLOW_ID}//1/spawner"
+            cylc release "${CYLC_WORKFLOW_ID}//1/holdrelease"
+
         """
     [[STUFF]]
     [[TOAST]]
@@ -64,7 +65,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         inherit = STOP
         script = """
             cylc__job__poll_grep_workflow_log -E \
-               'dog1\.1 succeeded .* task proxy removed \(finished\)'
+               '1/dog1 succeeded /* task proxy removed \(finished\)'
             cylc stop "${CYLC_WORKFLOW_ID}"
         """
 __FLOW_CONFIG__

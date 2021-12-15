@@ -30,7 +30,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 grep_ok "Incomplete tasks" "${LOG}"
-grep_ok "foo\.1 did not complete required outputs: \['y'\]" "${LOG}"
+grep_ok "1/foo did not complete required outputs: \['y'\]" "${LOG}"
 grep_ok "Workflow stalled" "${LOG}"
 
 purge

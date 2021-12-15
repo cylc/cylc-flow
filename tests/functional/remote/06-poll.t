@@ -52,8 +52,8 @@ log_scan \
     "$(cylc cat-log -m p "$WORKFLOW_NAME")" \
     10 \
     1 \
-    '\[foo\.1 submitted .* (polled)foo' \
-    '\[foo\.1 submitted .* (polled)succeeded'
+    '\[1/foo submitted .* (polled)foo' \
+    '\[1/foo submitted .* (polled)succeeded'
 
 purge
 exit

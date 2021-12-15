@@ -44,10 +44,10 @@ function run_tests {
         export ORIGFILE="${JOBFILE}.orig"
         # Check we can view the job log file in the "editor".
         TEST_NAME="${TEST_NAME_BASE}-${JOBFILE}"
-        run_ok "${TEST_NAME}" cylc cat-log -f "${JOBFILE}" -m e "${WORKFLOW_NAME}" foo.1
-        # Compare viewed (i.e. copied by the fake editor) file with the original.
+        run_ok "${TEST_NAME}" cylc cat-log -f "${JOBFILE}" -m e "${WORKFLOW_NAME}//1/foo"
+        # Compare viewed (i.e copied by the fake editor) file with the original.
         # (The original must be catted as it could be a remote log file).
-        cylc cat-log -f "${JOBFILE}" -m c "${WORKFLOW_NAME}" foo.1 > "${ORIGFILE}"
+        cylc cat-log -f "${JOBFILE}" -m c "${WORKFLOW_NAME}//1/foo" > "${ORIGFILE}"
         cmp_ok "${DESTFILE}" "${ORIGFILE}"
     done
 
@@ -55,6 +55,6 @@ function run_tests {
     TEST_NAME="${TEST_NAME_BASE}-job"
     JOBFILE="job"
     export DESTFILE="${JOBFILE}.edit"
-    run_ok "${TEST_NAME}" cylc cat-log -m e --geditor -f j "${WORKFLOW_NAME}" foo.1
+    run_ok "${TEST_NAME}" cylc cat-log -m e --geditor -f j "${WORKFLOW_NAME}//1/foo"
     cmp_ok "${DESTFILE}" "${JOB_LOG_DIR}/${JOBFILE}"
 }

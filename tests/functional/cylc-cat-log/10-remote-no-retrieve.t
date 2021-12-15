@@ -33,12 +33,12 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # Local job.out should not exist (not retrieved).
-LOCAL_JOB_DIR=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}" a-task.1)
+LOCAL_JOB_DIR=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}//1/a-task")
 exists_fail "${LOCAL_JOB_DIR}/job.out"
 
 # Cat the remote one.
 TEST_NAME=${TEST_NAME_BASE}-task-out
-run_ok "${TEST_NAME}" cylc cat-log -f o "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f o "${WORKFLOW_NAME}//1/a-task"
 grep_ok '^the quick brown fox$' "${TEST_NAME}.stdout"
 
 purge

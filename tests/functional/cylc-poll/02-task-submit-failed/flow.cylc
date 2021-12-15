@@ -2,7 +2,7 @@
 
 [scheduler]
     [[events]]
-        expected task failures = foo.1
+        expected task failures = 1/foo
 
 [scheduling]
     [[graph]]

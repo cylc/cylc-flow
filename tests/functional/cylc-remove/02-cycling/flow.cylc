@@ -5,7 +5,7 @@
     [[events]]
         stall timeout = PT30S
         abort on stall timeout = True
-        expected task failures = bar.2020, baz.2021
+        expected task failures = 2020/bar, 2021/baz
 [scheduling]
     initial cycle point = 2020
     final cycle point = 2021
@@ -15,8 +15,8 @@
 [runtime]
     [[remover]]
         script = """
-cylc__job__poll_grep_workflow_log -E 'bar\.2020 running .* \(received\)failed'
-cylc__job__poll_grep_workflow_log -E 'baz\.2021 running .* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E '2020/bar running /* \(received\)failed'
+cylc__job__poll_grep_workflow_log -E '2021/baz running /* \(received\)failed'
 # Remove the two unhandled failed tasks.
 cylc remove $CYLC_WORKFLOW_ID */ba*:failed
 # Remove the two unsatisfied waiting tasks.

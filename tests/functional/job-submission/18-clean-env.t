@@ -37,7 +37,7 @@ export BEEF=wellington
 export CHEESE=melted
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
-cylc cat-log "${WORKFLOW_NAME}" foo.1 > job.out
+cylc cat-log "${WORKFLOW_NAME}" 1/foo > job.out
 
 grep_ok "BEEF wellington" job.out
 grep_ok "CHEESE undefined" job.out

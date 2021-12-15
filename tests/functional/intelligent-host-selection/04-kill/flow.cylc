@@ -9,7 +9,7 @@ Tasks
 
 [scheduler]
     [[events]]
-        expected task failures = goodhosttask.1, mixedhosttask.1
+        expected task failures = 1/goodhosttask, 1/mixedhosttask
 
 
 [scheduling]
@@ -46,9 +46,9 @@ Tasks
     [[stop_g]]
         inherit = mystop
         [[[environment]]]
-            TASK = goodhosttask.1
+            TASK = 1/goodhosttask
 
     [[stop_m]]
         inherit = mystop
         [[[environment]]]
-            TASK = mixedhosttask.1
+            TASK = 1/mixedhosttask

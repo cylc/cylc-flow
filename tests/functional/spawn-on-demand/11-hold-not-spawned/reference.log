@@ -1,4 +1,4 @@
 Initial point: 1
 Final point: 1
-[holder.1] -triggered off []
-[stopper.1] -triggered off ['holder.1']
+[1/holder] -triggered off []
+[1/stopper] -triggered off ['1/holder']

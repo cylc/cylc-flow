@@ -40,7 +40,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 
 grep_workflow_log_ok grep-1 "WARNING - Unsatisfied prerequisites"
 grep_workflow_log_ok grep-2 "Workflow stalled"
-grep_workflow_log_ok grep-3 "baz\.1 is waiting on"
+grep_workflow_log_ok grep-3 "1/baz is waiting on"
 grep_workflow_log_ok grep-4 'Workflow shutting down \- "abort on stall timeout" is set'
 
 purge

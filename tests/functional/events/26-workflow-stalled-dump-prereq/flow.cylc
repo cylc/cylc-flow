@@ -3,7 +3,7 @@
     [[events]]
         abort on stall timeout = True
         stall timeout = PT0S
-        expected task failures = bar.20100101T0000Z
+        expected task failures = 20100101T0000Z/bar
 [scheduling]
     initial cycle point = 20100101T0000Z
     [[graph]]

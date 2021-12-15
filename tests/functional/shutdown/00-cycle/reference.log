@@ -1,5 +1,5 @@
 Initial point: 20100101T0000Z
 Final point: 20100105T0000Z
-[a.20100101T0000Z] -triggered off ['a.20091231T1800Z', 'c.20091231T1800Z']
-[stopper.20100101T0000Z] -triggered off ['a.20100101T0000Z']
-[c.20100101T0000Z] -triggered off ['stopper.20100101T0000Z']
+[20100101T0000Z/a] -triggered off ['20091231T1800Z/a', '20091231T1800Z/c']
+[20100101T0000Z/stopper] -triggered off ['20100101T0000Z/a']
+[20100101T0000Z/c] -triggered off ['20100101T0000Z/stopper']

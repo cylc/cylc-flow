@@ -1,6 +1,6 @@
 2013/11/15 12:12:45 INFO - Initial point: 1
 2013/11/15 12:12:45 INFO - Final point: 1
-2013/11/15 12:12:45 INFO - [baz.1] -triggered off []
-2013/11/15 12:12:45 INFO - [foo.1] -triggered off []
-2013/11/15 12:12:49 INFO - [bar.1] -triggered off ['foo.1']
-2013/11/15 12:12:49 INFO - [qux.1] -triggered off ['baz.1']
+2013/11/15 12:12:45 INFO - [1/baz] -triggered off []
+2013/11/15 12:12:45 INFO - [1/foo] -triggered off []
+2013/11/15 12:12:49 INFO - [1/bar] -triggered off ['1/foo']
+2013/11/15 12:12:49 INFO - [1/qux] -triggered off ['1/baz']

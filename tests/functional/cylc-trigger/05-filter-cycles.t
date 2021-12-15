@@ -24,7 +24,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-# Ensure that fixable.20100101T0000Z is only triggered once.
+# Ensure that 20100101T0000Z/fixable is only triggered once.
 JOB_LOG_DIR="$RUN_DIR/${WORKFLOW_NAME}/log/job"
 run_ok "${TEST_NAME_BASE}-fixable.20100101T0000Z-nn" \
     test "$(readlink "${JOB_LOG_DIR}/20100101T0000Z/fixable/NN")" = '01'

@@ -1,6 +1,6 @@
 2015-08-24T16:19:01Z INFO - Initial point: 1
 2015-08-24T16:19:01Z INFO - Final point: 1
-2015-08-24T16:19:01Z INFO - [speaker1.1] -triggered off []
-2015-08-24T16:19:01Z INFO - [speaker2.1] -triggered off []
-2015-08-24T16:19:04Z INFO - [poller.1] -triggered off ['speaker1.1', 'speaker2.1']
-2015-08-24T16:19:07Z INFO - [finisher.1] -triggered off ['speaker1.1', 'speaker1.1', 'speaker2.1']
+2015-08-24T16:19:01Z INFO - [1/speaker1] -triggered off []
+2015-08-24T16:19:01Z INFO - [1/speaker2] -triggered off []
+2015-08-24T16:19:04Z INFO - [1/poller] -triggered off ['1/speaker1', '1/speaker2']
+2015-08-24T16:19:07Z INFO - [1/finisher] -triggered off ['1/speaker1', '1/speaker1', '1/speaker2']

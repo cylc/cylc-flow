@@ -117,7 +117,7 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-workflows.stdout" << __HERE__
             ],
             "states": ["waiting"],
             "latestStateTasks": {
-                "waiting": ["foo.20210101T0000Z"]
+                "waiting": ["20210101T0000Z/foo"]
             }
         }
     ]

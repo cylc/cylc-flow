@@ -26,9 +26,9 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 FOO_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 grep_ok \
-"\[(('event-handler-00', 'custom-1'), 1) out\] !!CUSTOM!! foo.1 fugu Data ready for barring" \
+"\[(('event-handler-00', 'custom-1'), 1) out\] !!CUSTOM!! 1/foo fugu Data ready for barring" \
     "${FOO_ACTIVITY_LOG}"
-grep_ok "foo\.1 .*Data ready for barring" "${WORKFLOW_LOG}" -E
-grep_ok "foo\.1 .*Data ready for bazzing" "${WORKFLOW_LOG}" -E
-grep_ok "foo\.1 .*Aren't the hydrangeas nice" "${WORKFLOW_LOG}" -E
+grep_ok "1/foo .*Data ready for barring" "${WORKFLOW_LOG}" -E
+grep_ok "1/foo .*Data ready for bazzing" "${WORKFLOW_LOG}" -E
+grep_ok "1/foo .*Aren't the hydrangeas nice" "${WORKFLOW_LOG}" -E
 purge

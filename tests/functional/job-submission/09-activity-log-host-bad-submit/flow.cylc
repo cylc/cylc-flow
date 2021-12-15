@@ -3,7 +3,7 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        expected task failures = bad-submitter.19990101T0000Z
+        expected task failures = 19990101T0000Z/bad-submitter
 
 [scheduling]
     initial cycle point=1999

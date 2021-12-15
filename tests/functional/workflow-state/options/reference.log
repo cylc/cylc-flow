@@ -1,8 +1,8 @@
 Initial point: 20100101T0000Z
 Final point: 20100103T0000Z
-[foo.20100101T0000Z] -triggered off ['foo.20091231T0000Z']
-[foo.20100102T0000Z] -triggered off ['foo.20100101T0000Z']
-[foo.20100103T0000Z] -triggered off ['foo.20100102T0000Z']
-[env_polling.20100102T0000Z] -triggered off ['foo.20100102T0000Z']
-[offset_polling.20100102T0000Z] -triggered off ['foo.20100102T0000Z']
-[offset_polling2.20100102T0000Z] -triggered off ['foo.20100103T0000Z']
+[20100101T0000Z/foo] -triggered off ['20091231T0000Z/foo']
+[20100102T0000Z/foo] -triggered off ['20100101T0000Z/foo']
+[20100103T0000Z/foo] -triggered off ['20100102T0000Z/foo']
+[20100102T0000Z/env_polling] -triggered off ['20100102T0000Z/foo']
+[20100102T0000Z/offset_polling] -triggered off ['20100102T0000Z/foo']
+[20100102T0000Z/offset_polling2] -triggered off ['20100103T0000Z/foo']

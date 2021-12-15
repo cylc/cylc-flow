@@ -59,7 +59,7 @@ workflow_run_ok "${TEST_NAME_BASE}-restart-db-stopcp" \
 dumpdbtables
 # Stop point should be removed from DB once reached
 cmp_ok stopcp.out < /dev/null
-# Task hello.1974 (after stop point) should be spawned but not submitted
+# Task 1974/hello (after stop point) should be spawned but not submitted
 cmp_ok taskpool.out <<'__OUT__'
 1974|hello|waiting
 __OUT__

@@ -4,7 +4,7 @@
     [[events]]
         abort on stall timeout = True
         stall timeout = PT0S
-        expected task failures = foo.1
+        expected task failures = 1/foo
 [scheduling]
     [[graph]]
         R1 = """

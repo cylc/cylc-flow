@@ -32,7 +32,7 @@ grep_ok '\[jobs-kill ret_code\] 1' "${T1_ACTIVITY_LOG}"
 grep_ok '\[jobs-kill out\] [^|]*|1/t1/01|1' "${T1_ACTIVITY_LOG}"
 grep_ok '\[jobs-poll out\] [^|]*|1/t1/01|{"job_runner_name": "background", "job_id": "[^\"]*", "job_runner_exit_polled": 1, "time_submit_exit": "[^\"]*", "time_run": "[^\"]*"}' "${T1_ACTIVITY_LOG}"
 grep_ok "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${WORKFLOW_NAME} \
-t1\\.1 job failed" "${T1_ACTIVITY_LOG}"
+t1/1 job failed" "${T1_ACTIVITY_LOG}"
 #-------------------------------------------------------------------------------
 purge
 exit

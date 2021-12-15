@@ -53,7 +53,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 
 grep "host=" "${WORKFLOW_RUN_DIR}/log/workflow/log" > hosts.log
 
-grep_ok "\[t2\.2.*\].*host=${CYLC_TEST_HOST}" hosts.log
+grep_ok "\[2/t2.*\].*host=${CYLC_TEST_HOST}" hosts.log
 
 purge
 exit

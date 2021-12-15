@@ -37,7 +37,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 sed -e 's/^.* \([EW]\)/\1/' "${WORKFLOW_RUN_DIR}/log/workflow/log" >'log'
 
 contains_ok 'log' <<__END__
-ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh foo.1
+ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh 1/foo
 ${LOG_INDENT}[(('event-handler-00', 'started'), 1) ret_code] -9
 ${LOG_INDENT}[(('event-handler-00', 'started'), 1) err] killed on timeout (PT10S)
 WARNING - 1/foo/01 ('event-handler-00', 'started') failed

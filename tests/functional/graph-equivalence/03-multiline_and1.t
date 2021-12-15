@@ -36,7 +36,7 @@ delete_db
 TEST_NAME="${TEST_NAME_BASE}-check-c"
 cylc play "${WORKFLOW_NAME}" --hold-after=1 1>'out' 2>&1
 poll_grep_workflow_log 'Setting hold cycle point'
-cylc show "${WORKFLOW_NAME}" 'c.1' | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
+cylc show "${WORKFLOW_NAME}//1/c" | sed -n "/prerequisites/,/outputs/p" > 'c-prereqs'
 contains_ok "${TEST_SOURCE_DIR}/multiline_and_refs/c-ref" 'c-prereqs'
 cylc shutdown "${WORKFLOW_NAME}" --now
 #-------------------------------------------------------------------------------

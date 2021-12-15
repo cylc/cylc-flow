@@ -3,7 +3,7 @@
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        expected task failures = goodbye.1
+        expected task failures = 1/goodbye
 
 [scheduling]
     [[graph]]

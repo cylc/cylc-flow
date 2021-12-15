@@ -23,9 +23,9 @@
 [runtime]
     [[holder]]
         script = """
-            cylc__job__poll_grep_workflow_log -E 't1\.19900101T0000Z .* spawned'
-            cylc__job__poll_grep_workflow_log -E 't2\.20100101T0000Z .* spawned'
-            cylc__job__poll_grep_workflow_log -E 't3\.20300101T0000Z .* spawned'
+            cylc__job__poll_grep_workflow_log -E '19900101T0000Z/t1 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '20100101T0000Z/t2 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '20300101T0000Z/t3 .* spawned'
             cylc hold "${CYLC_WORKFLOW_ID}" '*/t*'
         """
     [[releaser]]

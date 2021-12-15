@@ -13,10 +13,10 @@ trigger, and the workflow to shut down successfully."""
    [[events]]
        abort on inactivity timeout = True
        inactivity timeout = PT2M
-       expected task failures = run_kill.20141207T0000Z,\
-                                run_kill.20141208T0000Z,\
-                                submit_hold.20141207T0000Z,\
-                                submit_hold.20141208T0000Z
+       expected task failures = 20141207T0000Z/run_kill, \
+                                20141208T0000Z/run_kill, \
+                                20141207T0000Z/submit_hold, \
+                                20141208T0000Z/submit_hold
 
 [scheduling]
     initial cycle point = 20141207T0000Z

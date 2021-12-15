@@ -53,15 +53,15 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
-  + woo.20140808T0900$TZ_OFFSET_BASIC succeeded
+  + 20140808T0900$TZ_OFFSET_BASIC/woo succeeded
 
 outputs (- => not completed):
-  - foo.20140808T0900$TZ_OFFSET_BASIC expired
-  + foo.20140808T0900$TZ_OFFSET_BASIC submitted
-  - foo.20140808T0900$TZ_OFFSET_BASIC submit-failed
-  + foo.20140808T0900$TZ_OFFSET_BASIC started
-  - foo.20140808T0900$TZ_OFFSET_BASIC succeeded
-  - foo.20140808T0900$TZ_OFFSET_BASIC failed
+  - 20140808T0900$TZ_OFFSET_BASIC/foo expired
+  + 20140808T0900$TZ_OFFSET_BASIC/foo submitted
+  - 20140808T0900$TZ_OFFSET_BASIC/foo submit-failed
+  + 20140808T0900$TZ_OFFSET_BASIC/foo started
+  - 20140808T0900$TZ_OFFSET_BASIC/foo succeeded
+  - 20140808T0900$TZ_OFFSET_BASIC/foo failed
 
 other (- => not satisfied):
   + Clock trigger time reached

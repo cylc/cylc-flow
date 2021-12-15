@@ -31,19 +31,19 @@ grep_ok '"abort on stall timeout" is set' "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "foo.1 did not complete required outputs: \['succeeded'\]" \
+grep_ok "1/foo did not complete required outputs: \['succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "WARNING - Unsatisfied prerequisites:" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "f_1.1 is waiting on \['foo.1:succeeded'\]" \
+grep_ok "1/f_1 is waiting on \['1/foo:succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "f_2.1 is waiting on \['foo.1:succeeded'\]" \
+grep_ok "1/f_2 is waiting on \['1/foo:succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "f_3.1 is waiting on \['foo.1:succeeded'\]" \
+grep_ok "1/f_3 is waiting on \['1/foo:succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge

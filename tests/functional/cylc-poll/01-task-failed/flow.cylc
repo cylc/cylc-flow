@@ -6,7 +6,7 @@ suicide via a :fail trigger, and the workflow to shut down successfully."""
 
 [scheduler]
    [[events]]
-       expected task failures = a.1
+       expected task failures = 1/a
 
 [scheduling]
     [[graph]]

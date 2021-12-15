@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc cat-log" with a custom tail command.
+# Test "cylc cat-log" with a custom tail /command
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
@@ -23,13 +23,13 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 create_test_global_config "" "
 [platforms]
    [[localhost]]
-        tail command template = $PWD/bin/my-tailer.sh %(filename)s
+        tail command template = $PWD/bin//my-tailersh %(filename)s
 "
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-# Run detached.
+# Run /detached
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 
@@ -37,8 +37,8 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 cylc workflow-state "${WORKFLOW_NAME}" -t 'foo' -p '1' -S 'start' --interval=1
 sleep 1
 TEST_NAME=${TEST_NAME_BASE}-cat-log
-cylc cat-log "${WORKFLOW_NAME}" -f o -m t foo.1 > "${TEST_NAME}.out"
-grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
+cylc cat-log "${WORKFLOW_NAME}//1/foo" -f o -m t > "${TEST_NAME}/out"
+grep_ok "HELLO from foo 1" "${TEST_NAME}/out"
 #-------------------------------------------------------------------------------
 cylc stop --kill --max-polls=20 --interval=1 "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------

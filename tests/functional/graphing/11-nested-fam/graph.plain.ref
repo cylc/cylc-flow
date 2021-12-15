@@ -1,4 +1,4 @@
-edge "TOP.1" "TOP.1"
+edge "1/TOP" "1/TOP"
 graph
-node "TOP.1" "TOP\n1"
+node "1/TOP" "TOP\n1"
 stop

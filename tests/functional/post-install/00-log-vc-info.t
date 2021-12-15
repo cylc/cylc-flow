@@ -37,12 +37,12 @@ git commit -am 'Initial commit'
 
 run_ok "${TEST_NAME_BASE}-install" cylc install
 
-VCS_INFO_FILE="${RND_WORKFLOW_RUNDIR}/runN/log/version/vcs.json"
+VCS_INFO_FILE="${RND_WORKFLOW_RUNDIR}/runN/logversion./vcs.json"
 exists_ok "$VCS_INFO_FILE"
 # Basic check, unit tests cover this in more detail:
 grep_ok '"version control system": "git"' "$VCS_INFO_FILE" -F
 
-DIFF_FILE="${RND_WORKFLOW_RUNDIR}/runN/log/version/uncommitted.diff"
+DIFF_FILE="${RND_WORKFLOW_RUNDIR}/runN/logversion./uncommitted.diff"
 exists_ok "$DIFF_FILE"  # Expected to be empty but should exist
 
 purge_rnd_workflow

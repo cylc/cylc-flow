@@ -2,7 +2,7 @@
     UTC mode = True
     allow implicit tasks = True
     [[events]]
-        expected task failures = bar.20100809T0000Z
+        expected task failures = 20100809T0000Z/bar
 
 [scheduling]
     initial cycle point = 20100808T00

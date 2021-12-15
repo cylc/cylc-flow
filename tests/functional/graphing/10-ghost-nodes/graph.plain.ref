@@ -1,10 +1,10 @@
-edge "foo.1" "foo.2"
-edge "foo.3" "foo.4"
-edge "foo.4" "foo.5"
+edge "1/foo" "2/foo"
+edge "3/foo" "4/foo"
+edge "4/foo" "5/foo"
 graph
-node "foo.1" "foo\n1"
-node "foo.2" "foo\n2"
-node "foo.3" "foo\n3"
-node "foo.4" "foo\n4"
-node "foo.5" "foo\n5"
+node "1/foo" "foo\n1"
+node "2/foo" "foo\n2"
+node "3/foo" "foo\n3"
+node "4/foo" "foo\n4"
+node "5/foo" "foo\n5"
 stop

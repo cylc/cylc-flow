@@ -1,7 +1,7 @@
-edge "FAM.1" "bar.1"
-edge "foo.1" "FAM.1"
+edge "1/FAM" "1/bar"
+edge "1/foo" "1/FAM"
 graph
-node "FAM.1" "FAM\n1"
-node "bar.1" "bar\n1"
-node "foo.1" "foo\n1"
+node "1/FAM" "FAM\n1"
+node "1/bar" "bar\n1"
+node "1/foo" "foo\n1"
 stop
