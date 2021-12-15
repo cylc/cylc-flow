@@ -150,23 +150,46 @@ def filter_ids(
         # filter by task
         elif lowest_token == Tokens.Task:  # noqa: SIM106
             cycle = tokens[Tokens.Cycle.value]
-            cycle_sel = tokens.get(Tokens.Cycle.value + '_sel') or '*'
+            cycle_sel_raw = tokens.get(Tokens.Cycle.value + '_sel')
+            cycle_sel = cycle_sel_raw or '*'
             task = tokens[Tokens.Task.value]
-            task_sel = tokens.get(Tokens.Task.value + '_sel') or '*'
+            task_sel_raw = tokens.get(Tokens.Task.value + '_sel')
+            task_sel = task_sel_raw or '*'
             for icycle, itasks in pool.items():
                 str_cycle = str(icycle)
                 if not match(str_cycle, cycle):
                     continue
                 for itask in itasks.values():
                     if (
-                        match(itask.state.status, cycle_sel)
-                        and match(itask.tdef.name, task)
+                        # check cycle selector
+                        (
+                            (
+                                # disable cycle_sel if not defined if pattern
+                                # matching is turned off
+                                pattern_match is False
+                                and cycle_sel_raw is None
+                            )
+                            or match(itask.state.status, cycle_sel)
+                        )
+                        # check namespace name
                         and (
-                            match(itask.state.status, task_sel)
+                            # task name
+                            match(itask.tdef.name, task)
+                            # family name
                             or any(
                                 match(ns, task)
                                 for ns in itask.tdef.namespace_hierarchy
                             )
+                        )
+                        # check task selector
+                        and (
+                            (
+                                # disable task_sel if not defined if pattern
+                                # matching is turned off
+                                pattern_match is False
+                                and task_sel_raw is None
+                            )
+                            or match(itask.state.status, task_sel)
                         )
                     ):
                         tasks.append(itask)
@@ -215,9 +238,10 @@ def task_pool():
         itask.tdef = SimpleNamespace()
         itask.tdef.name = tokens['task']
         if tokens['task'] in hier:
-            hier = hier['name']
+            hier = hier[tokens['task']]
         else:
             hier = []
+        hier.append('root')
         itask.tdef.namespace_hierarchy = hier
         return itask
 
@@ -376,7 +400,26 @@ def test_filter_ids_invalid(caplog):
     assert caplog.record_tuples == []
 
 
-def test_filter_ids_pattern_matching(task_pool, caplog):
+def test_filter_ids_pattern_match_off(task_pool):
+    """Ensure filtering works when pattern matching is turned off."""
+    pool = task_pool(
+        {
+            1: ['1/a:x'],
+        },
+        {}
+    )
+
+    _matched, _not_matched = filter_ids(
+        pool,
+        ['1/a'],
+        out=Tokens.Task,
+        pattern_match=True,
+    )
+    assert [itask.id_ for itask in _matched] == ['1/a:x']
+    assert _not_matched == []
+
+
+def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     """Ensure pattern matching can be toggled on and off."""
     pool = task_pool(
         {
@@ -411,3 +454,35 @@ def test_filter_ids_pattern_matching(task_pool, caplog):
     # ensure the ID is logged
     assert len(caplog.record_tuples) == 1
     assert '*/*' in caplog.record_tuples[0][2]
+
+
+@pytest.mark.parametrize(
+    'ids,matched,not_matched',
+    [
+        (['1/A'], ['1/a:x'], []),
+        (['1/B'], ['1/b1:x', '1/b2:x'], []),
+        (['1/C'], [], ['1/C']),
+        (['1/root'], ['1/a:x', '1/b1:x', '1/b2:x'], []),
+    ]
+)
+def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
+    """Ensure matching includes namespaces."""
+    pool = task_pool(
+        {
+            1: ['1/a:x', '1/b1:x', '1/b2:x']
+        },
+        {
+            'a': ['A'],
+            'b1': ['B'],
+            'b2': ['B'],
+        },
+    )
+
+    _matched, _not_matched = filter_ids(
+        pool,
+        ids,
+        pattern_match=False,
+    )
+
+    assert [itask.id_ for itask in _matched] == matched
+    assert _not_matched == not_matched
