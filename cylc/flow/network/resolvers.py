@@ -742,7 +742,7 @@ class Resolvers(BaseResolvers):
                 (task_job, event_time, severity, message))
         return (True, 'Messages queued: %d' % len(messages))
 
-    def set_graph_window_extent(self, n_edge_distance):
+    def set_graph_window_extent(self, n_edge_distance, meta=None):
         """Set data-store graph window to new max edge distance.
 
         Args:
@@ -810,6 +810,7 @@ class Resolvers(BaseResolvers):
             clock_time: Wallclock time after which to stop.
             task: Stop after this task succeeds.
             flow_num: The flow to stop.
+            meta: Meta data from ui-server
     ):
 
         Returns:
