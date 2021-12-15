@@ -877,6 +877,45 @@ class CylcWorkflowDAO:
         )
         return columns, list(self.connect().execute(stmt))
 
+    def select_tasks_for_datastore(
+        self, cycle_name_pairs
+    ):
+        """Select from task_pool+task_states+task_jobs for restart.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [cycle, name, is_late, status, is_held, submit_num,
+             try_num, platform_name, time_submit, time_run, timeout, outputs]
+        """
+        form_stmt = r"""
+            SELECT
+                %(task_states)s.cycle,
+                %(task_states)s.name,
+                %(task_states)s.flow_nums,
+                %(task_states)s.status,
+                MAX(%(task_states)s.submit_num),
+                %(task_outputs)s.outputs
+            FROM
+                %(task_states)s
+            LEFT OUTER JOIN
+                %(task_outputs)s
+            ON  %(task_states)s.cycle == %(task_outputs)s.cycle AND
+                %(task_states)s.name == %(task_outputs)s.name
+            WHERE
+                (%(task_states)s.cycle, %(task_states)s.name) IN (
+                    VALUES %(cycle_name_pairs)s
+                )
+            GROUP BY
+                %(task_states)s.cycle, %(task_states)s.name
+        """
+        form_data = {
+            "task_states": self.TABLE_TASK_STATES,
+            "task_outputs": self.TABLE_TASK_OUTPUTS,
+            "cycle_name_pairs": ', '.join(
+                f'{val}' for val in cycle_name_pairs),
+        }
+        stmt = form_stmt % form_data
+        return list(self.connect().execute(stmt))
+
     def vacuum(self):
         """Vacuum to the database."""
         return self.connect().execute("VACUUM")

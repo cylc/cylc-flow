@@ -398,6 +398,7 @@ class DataStoreMgr:
         self.n_window_nodes = {}
         self.n_window_edges = {}
         self.n_window_boundary_nodes = {}
+        self.db_load_task_proxies = {}
         self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
@@ -677,6 +678,8 @@ class DataStoreMgr:
                     True,
                 )
 
+        # If this is the active task (edge_distance has been incremented),
+        # then add the most distant child as a trigger to prune it.
         if edge_distance == 1:
             levels = self.n_window_boundary_nodes[active_id].keys()
             # Could be self-reference node foo:failed => foo
@@ -818,14 +821,7 @@ class DataStoreMgr:
             ),
             depth=task_def.depth,
             name=name,
-            state=TASK_STATUS_WAITING,
-            flow_nums=json.dumps(list(itask.flow_nums))
         )
-        if is_parent and tp_id not in self.n_window_nodes:
-            # TODO: Load task info from DB, including itask prerequisites
-            tproxy.state = TASK_STATUS_EXPIRED
-        else:
-            tproxy.state = TASK_STATUS_WAITING
 
         tproxy.namespace[:] = task_def.namespace
         if is_orphan:
@@ -846,39 +842,6 @@ class DataStoreMgr:
             ]
         tproxy.first_parent = tproxy.ancestors[0]
 
-        for prereq in itask.state.prerequisites:
-            # Protobuf messages populated within
-            prereq_obj = prereq.api_dump()
-            if prereq_obj:
-                tproxy.prerequisites.append(prereq_obj)
-
-        for label, message, satisfied in itask.state.outputs.get_all():
-            output = tproxy.outputs[label]
-            output.label = label
-            output.message = message
-            output.satisfied = satisfied
-            output.time = update_time
-
-        if itask.tdef.clocktrigger_offset is not None:
-            tproxy.clock_trigger.satisfied = itask.is_waiting_clock_done()
-            tproxy.clock_trigger.time = itask.clock_trigger_time
-            tproxy.clock_trigger.time_string = time2str(
-                itask.clock_trigger_time)
-
-        for trig, satisfied in itask.state.external_triggers.items():
-            ext_trig = tproxy.external_triggers[trig]
-            ext_trig.id = trig
-            ext_trig.satisfied = satisfied
-
-        for label, satisfied in itask.state.xtriggers.items():
-            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
-                itask, label).get_signature()
-            xtrig = tproxy.xtriggers[sig]
-            xtrig.id = sig
-            xtrig.label = label
-            xtrig.satisfied = satisfied
-            self.xtrigger_tasks.setdefault(sig, set()).add(tp_id)
-
         self.added[TASK_PROXIES][tp_id] = tproxy
         getattr(self.updated[WORKFLOW], TASK_PROXIES).append(tp_id)
         self.updated[TASKS].setdefault(
@@ -890,12 +853,13 @@ class DataStoreMgr:
         ).proxies.append(tp_id)
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
-        if tproxy.state in self.latest_state_tasks:
-            tp_ref = Tokens(tproxy.id).relative_id
-            tp_queue = self.latest_state_tasks[tproxy.state]
-            if tp_ref in tp_queue:
-                tp_queue.remove(tp_ref)
-            self.latest_state_tasks[tproxy.state].appendleft(tp_ref)
+
+        if tp_id in self.n_window_nodes:
+            self.process_internal_task_proxy(itask, tproxy)
+        else:
+            # Batch node for DB load
+            self.db_load_task_proxies[tp_id] = itask
+
         self.updates_pending = True
 
         return is_orphan
@@ -1001,6 +965,102 @@ class DataStoreMgr:
             fp_parent.child_tasks.append(child_task)
         elif child_fam not in fp_parent.child_families:
             fp_parent.child_families.append(child_fam)
+
+    def process_internal_task_proxy(self, itask, tproxy):
+        """Extract information from internal task proxy object."""
+
+        update_time = time()
+
+        tproxy.state = itask.state.status
+        tproxy.flow_nums = json.dumps(list(itask.flow_nums))
+
+        for prereq in itask.state.prerequisites:
+            # Protobuf messages populated within
+            prereq_obj = prereq.api_dump()
+            if prereq_obj:
+                tproxy.prerequisites.append(prereq_obj)
+
+        for label, message, satisfied in itask.state.outputs.get_all():
+            output = tproxy.outputs[label]
+            output.label = label
+            output.message = message
+            output.satisfied = satisfied
+            output.time = update_time
+
+        if itask.tdef.clocktrigger_offset is not None:
+            tproxy.clock_trigger.satisfied = itask.is_waiting_clock_done()
+            tproxy.clock_trigger.time = itask.clock_trigger_time
+            tproxy.clock_trigger.time_string = time2str(
+                itask.clock_trigger_time)
+
+        for trig, satisfied in itask.state.external_triggers.items():
+            ext_trig = tproxy.external_triggers[trig]
+            ext_trig.id = trig
+            ext_trig.satisfied = satisfied
+
+        for label, satisfied in itask.state.xtriggers.items():
+            sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
+                itask, label).get_signature()
+            xtrig = tproxy.xtriggers[sig]
+            xtrig.id = sig
+            xtrig.label = label
+            xtrig.satisfied = satisfied
+            self.xtrigger_tasks.setdefault(sig, set()).add(tp_id)
+
+        if tproxy.state in self.latest_state_tasks:
+            tp_ref = Tokens(tproxy.id).relative_id
+            tp_queue = self.latest_state_tasks[tproxy.state]
+            if tp_ref in tp_queue:
+                tp_queue.remove(tp_ref)
+            self.latest_state_tasks[tproxy.state].appendleft(tp_ref)
+
+    def apply_task_proxy_db_history(self):
+        """Extract and apply DB history on given task proxies."""
+
+        if not self.db_load_task_proxies:
+            return
+
+        flow_db = self.schd.workflow_db_mgr.pri_dao
+
+        # Batch load rows with matching cycle & name column pairs.
+        cycle_name_pairs = {
+            (f'{itask.point}', f'{itask.tdef.name}')
+            for itask in self.db_load_task_proxies.values()
+        }
+
+        state_rows = flow_db.select_tasks_for_datastore(cycle_name_pairs)
+        for (
+                cycle, name, flow_nums, status, submit_num, outputs_str
+        ) in state_rows:
+            itask = self.db_load_task_proxies[
+                self.id_.duplicate(
+                    cycle=cycle,
+                    task=name,
+                ).id
+            ]
+            itask.state_reset(status)
+            itask.flow_nums = set(json.loads(flow_nums))
+            if (
+                    outputs_str is not None
+                    and itask.state(
+                        TASK_STATUS_RUNNING,
+                        TASK_STATUS_FAILED,
+                        TASK_STATUS_SUCCEEDED
+                    )
+            ):
+                for message in json.loads(outputs_str).values():
+                    itask.state.outputs.set_completion(message, True)
+
+        #prereq_rows = flow_db.select_prereqs_for_datastore(cycle_name_pairs)
+
+
+        for tp_id, itask in self.db_load_task_proxies.items():
+            self.process_internal_task_proxy(
+                itask,
+                self.added[TASK_PROXIES][tp_id]
+            )
+
+        self.db_load_task_proxies.clear()
 
     def insert_job(self, name, point_string, status, job_conf):
         """Insert job into data-store.
@@ -1125,6 +1185,9 @@ class DataStoreMgr:
 
     def update_data_structure(self, reloaded=False):
         """Workflow batch updates in the data structure."""
+
+        # load database history for flagged nodes
+        self.apply_task_proxy_db_history()
 
         # Avoids changing window edge distance during edge/node creation
         if self.next_n_edge_distance is not None:
