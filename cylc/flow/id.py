@@ -21,6 +21,12 @@ This module contains the abstract ID tokenising/detokenising code.
 
 from enum import Enum
 import re
+from typing import (
+    Dict,
+    Optional,
+    List,
+    Tuple,
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import UserInputError
@@ -34,6 +40,9 @@ class Tokens(Enum):
     Cycle = 'cycle'
     Task = 'task'
     Job = 'job'
+
+
+TokensDict = Dict[str, Optional[str]]
 
 
 # //cycle[:sel][/task[:sel][/job[:sel]]]
@@ -168,7 +177,7 @@ def _dict_strip(dictionary):
     }
 
 
-def legacy_tokenise(identifier):
+def legacy_tokenise(identifier: str) -> TokensDict:
     """Convert a legacy string identifier into Cylc tokens.
 
     Supports the two legacy Cylc7 formats:
@@ -214,7 +223,10 @@ def legacy_tokenise(identifier):
     raise ValueError(f'Invalid legacy Cylc identifier: {identifier}')
 
 
-def tokenise(identifier, relative=False):
+def tokenise(
+    identifier: str,
+    relative: bool = False,
+) -> TokensDict:
     """Convert a string identifier into Cylc tokens.
 
     Args:
@@ -293,7 +305,11 @@ def tokenise(identifier, relative=False):
     raise ValueError(f'Invalid Cylc identifier: {identifier}')
 
 
-def detokenise(tokens, selectors=False, relative=False):
+def detokenise(
+    tokens: TokensDict,
+    selectors: bool = False,
+    relative: bool = False,
+) -> str:
     """Convert Cylc tokens into a string identifier.
 
     Args:
@@ -371,6 +387,7 @@ def detokenise(tokens, selectors=False, relative=False):
         if lowest_token.value in toks:
             break
 
+    highest_token: 'Optional[Tokens]'
     if is_relative:
         highest_token = Tokens.Cycle
         identifier = []
@@ -385,13 +402,14 @@ def detokenise(tokens, selectors=False, relative=False):
             continue
         elif highest_token:
             highest_token = None
+        value: 'Optional[str]'
         value = tokens.get(token.value)
         if not value and token == Tokens.User:
             continue
         elif token == Tokens.User:
             value = f'~{value}'
         elif token == Tokens.Job and value != 'NN':
-            value = f'{int(value):02}'
+            value = f'{int(value):02}'  # type: ignore
         value = value or '*'
         if selectors and tokens.get(token.value + '_sel'):
             # include selectors
@@ -406,7 +424,7 @@ def detokenise(tokens, selectors=False, relative=False):
     return '/'.join(identifier)
 
 
-def upgrade_legacy_ids(*ids):
+def upgrade_legacy_ids(*ids: str) -> List[str]:
     """Reformat IDs from legacy to contemporary format:
 
     If no upgrading is required it returns the identifiers unchanged.
@@ -419,10 +437,10 @@ def upgrade_legacy_ids(*ids):
 
         # do nothing to contemporary ids:
         >>> upgrade_legacy_ids('workflow')
-        ('workflow',)
+        ['workflow']
 
         >>> upgrade_legacy_ids('workflow', '//cycle')
-        ('workflow', '//cycle')
+        ['workflow', '//cycle']
 
         # upgrade legacy task.cycle ids:
         >>> upgrade_legacy_ids('workflow', 'task.123', 'task.234')
@@ -443,7 +461,7 @@ def upgrade_legacy_ids(*ids):
     """
     if len(ids) < 2:
         # only legacy relative references require upgrade => abort
-        return ids
+        return list(ids)
 
     legacy_ids = [ids[0]]
     for id_ in ids[1:]:
@@ -451,7 +469,7 @@ def upgrade_legacy_ids(*ids):
             tokens = legacy_tokenise(id_)
         except ValueError:
             # not a valid legacy token => abort
-            return ids
+            return list(ids)
         else:
             # upgrade this token
             legacy_ids.append(
@@ -465,7 +483,7 @@ def upgrade_legacy_ids(*ids):
     return legacy_ids
 
 
-def strip_workflow(tokens):
+def strip_workflow(tokens: TokensDict) -> TokensDict:
     """Remove the workflow portion of the tokens.
 
     Examples:
@@ -487,7 +505,7 @@ def strip_workflow(tokens):
     }
 
 
-def strip_task(tokens):
+def strip_task(tokens: TokensDict) -> TokensDict:
     """Remove the task portion of the tokens.
 
     Examples:
@@ -509,7 +527,7 @@ def strip_task(tokens):
     }
 
 
-def is_null(tokens):
+def is_null(tokens: TokensDict) -> bool:
     """Returns True if no tokens are set.
 
     Examples:
@@ -527,7 +545,7 @@ def is_null(tokens):
     )
 
 
-def contains_task_like(tokens):
+def contains_task_like(tokens: TokensDict) -> bool:
     """Returns True if any task-like objects are present in the ID.
 
     Task like == cycles or tasks or jobs.
@@ -546,7 +564,7 @@ def contains_task_like(tokens):
     )
 
 
-def contains_multiple_workflows(tokens_list):
+def contains_multiple_workflows(tokens_list: List[TokensDict]) -> bool:
     """Returns True if multiple workflows are contained in the tokens list.
 
     Examples:
@@ -568,7 +586,7 @@ def contains_multiple_workflows(tokens_list):
     }) > 1
 
 
-def pop_token(tokens):
+def pop_token(tokens: TokensDict) -> Tuple[str, str]:
     """
         >>> tokens = tokenise('~u/w//c/t/01')
         >>> pop_token(tokens)
@@ -584,15 +602,20 @@ def pop_token(tokens):
         >>> tokens
         {'workflow_sel': None,
          'cycle_sel': None, 'task_sel': None, 'job_sel': None}
+        >>> pop_token({})
+        Traceback (most recent call last):
+        KeyError: No defined tokens.
 
     """
-    for token_name in reversed(Tokens):
-        token_name = token_name.value
-        if token_name in tokens and tokens[token_name]:
-            return (token_name, tokens.pop(token_name))
+    for token in reversed(Tokens):
+        token_name = token.value
+        value = tokens.get(token_name)
+        if value:
+            return (token_name, value)
+    raise KeyError('No defined tokens.')
 
 
-def parse_cli(*ids):
+def parse_cli(*ids: str) -> List[TokensDict]:
     # TOOD move?
     """Parse a list of Cylc identifiers as provided on the CLI.
 
@@ -714,9 +737,9 @@ def parse_cli(*ids):
     return tokens_list
 
 
-def parse_ids(*ids):
+def parse_ids(*ids: str) -> Dict[str, List[str]]:
     tokens_list = parse_cli(*ids)
-    workflows = {}
+    workflows: Dict[str, List[str]] = {}
     for tokens in tokens_list:
         if tokens['user']:
             # TODO
@@ -724,6 +747,10 @@ def parse_ids(*ids):
         if tokens['workflow_sel']:
             raise UserInputError('Selectors cannot be used on workflows')
         key = tokens['workflow']
+        if not key:
+            raise ValueError(
+                f'ID does not specify a workflow: {detokenise(tokens)}'
+            )
         workflows.setdefault(key, []).append(
             detokenise(strip_workflow(tokens), relative=True)
         )

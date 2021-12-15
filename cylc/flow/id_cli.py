@@ -27,12 +27,14 @@ import fnmatch
 import os
 from pathlib import Path
 import re
+from typing import Optional, Dict, List, Tuple, Any
 
 from cylc.flow.exceptions import (
     UserInputError,
     WorkflowFilesError,
 )
 from cylc.flow.id import (
+    TokensDict,
     contains_multiple_workflows,
     contains_task_like,
     detokenise,
@@ -64,13 +66,13 @@ def parse_ids(*args, **kwargs):
 
 
 async def parse_ids_async(
-    *ids,
-    src=False,
-    match_workflows=False,
-    constraint='tasks',
-    max_workflows=None,
-    max_tasks=None,
-):
+    *ids: str,
+    src: bool = False,
+    match_workflows: bool = False,
+    constraint: str = 'tasks',
+    max_workflows: Optional[int] = None,
+    max_tasks: Optional[int] = None,
+) -> Tuple[Dict[str, List[TokensDict]], Any]:
     """Parse IDs from the command line.
 
     Args:
@@ -159,7 +161,10 @@ def parse_id(*args, **kwargs):
     return asyncio.run(parse_id_async(*args, **kwargs))
 
 
-async def parse_id_async(*args, **kwargs):
+async def parse_id_async(
+    *args,
+    **kwargs,
+) -> Tuple[str, Optional[TokensDict], Any]:
     """Special case of parse_ids with a more convient return format.
 
     Infers:
@@ -169,7 +174,7 @@ async def parse_id_async(*args, **kwargs):
     """
     workflows, ret = await parse_ids_async(
         *args,
-        **{
+        **{  # type: ignore
             **kwargs,
             'max_workflows': 1,
             'max_tasks': 1,
@@ -177,10 +182,28 @@ async def parse_id_async(*args, **kwargs):
     )
     workflow_id = list(workflows)[0]
     tokens_list = workflows[workflow_id]
-    tokens = []
+    tokens: Optional[TokensDict]
     if tokens_list:
         tokens = tokens_list[0]
+    else:
+        tokens = None
     return workflow_id, tokens, ret
+
+
+def contains_fnmatch(string: str) -> bool:
+    """Return True if a string contains filename match chars.
+
+    Examples:
+        >>> contains_fnmatch('a')
+        False
+        >>> contains_fnmatch('*')
+        True
+        >>> contains_fnmatch('abc')
+        False
+        >>> contains_fnmatch('a*c')
+        True
+    """
+    return bool(FN_CHARS.search(string))
 
 
 def _validate_constraint(*tokens_list, constraint=None):
@@ -267,22 +290,6 @@ def _batch_tokens_by_workflow(*tokens_list, constraint=None):
             continue
         w_tokens.append(relative_tokens)
     return workflow_tokens
-
-
-def contains_fnmatch(string):
-    """Return True if a string contains filename match chars.
-
-    Examples:
-        >>> contains_fnmatch('a')
-        False
-        >>> contains_fnmatch('*')
-        True
-        >>> contains_fnmatch('abc')
-        False
-        >>> contains_fnmatch('a*c')
-        True
-    """
-    return bool(FN_CHARS.search(string))
 
 
 async def _expand_workflow_tokens(tokens_list):

@@ -690,10 +690,12 @@ class WorkflowConfig:
             # Start from designated task(s).
             # Select the earliest start point for use in pre-initial ignore.
             self.start_point = min(
-                get_point(
+                get_point(cycle).standardise()
+                for cycle in [
                     tokenise(taskid)['cycle']
-                ).standardise()
-                for taskid in self.options.starttask
+                    for taskid in self.options.starttask
+                ]
+                if cycle
             )
         else:
             # Start from the initial point.
