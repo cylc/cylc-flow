@@ -60,6 +60,7 @@ from cylc.flow.async_util import (
     pipe,
     scandir
 )
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import WorkflowStopped
 from cylc.flow.network.client import (
     ClientError,
@@ -70,7 +71,6 @@ from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.workflow_files import (
     ContactFileFields,
-    MAX_SCAN_DEPTH,
     WorkflowFiles,
     get_workflow_title,
     load_contact_file_async,
@@ -113,7 +113,7 @@ def dir_is_flow(listing: Iterable[Path]) -> bool:
 @pipe
 async def scan_multi(
     dirs: Iterable[Path],
-    max_depth: int = MAX_SCAN_DEPTH
+    max_depth: Optional[int] = None
 ) -> AsyncGenerator[dict, None]:
     """List flows from multiple directories.
 
@@ -123,6 +123,8 @@ async def scan_multi(
     Args:
         dirs
     """
+    if max_depth is None:
+        max_depth = glbl_cfg().get(['install', 'max depth'])
     for dir_ in dirs:
         async for flow in scan(
             run_dir=dir_,
@@ -138,7 +140,7 @@ async def scan_multi(
 async def scan(
     run_dir: Optional[Path] = None,
     scan_dir: Optional[Path] = None,
-    max_depth: int = MAX_SCAN_DEPTH
+    max_depth: Optional[int] = None
 ) -> AsyncGenerator[Dict[str, Union[str, Path]], None]:
     """List flows installed on the filesystem.
 
@@ -167,6 +169,8 @@ async def scan(
         run_dir = cylc_run_dir
     if not scan_dir:
         scan_dir = run_dir
+    if max_depth is None:
+        max_depth = glbl_cfg().get(['install', 'max depth'])
 
     running: List[asyncio.tasks.Task] = []
 

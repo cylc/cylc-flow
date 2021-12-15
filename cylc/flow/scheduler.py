@@ -71,7 +71,6 @@ from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
 from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
 from cylc.flow.parsec.OrderedDict import DictTree
-from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
@@ -88,7 +87,7 @@ from cylc.flow.platforms import (
     get_platform,
     is_platform_with_target_in_list)
 from cylc.flow.profiler import Profiler
-from cylc.flow.resources import extract_resources
+from cylc.flow.resources import get_resources
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_events import (
@@ -185,6 +184,7 @@ class Scheduler:
     ext_trigger_queue: Queue
 
     # configuration
+    config: WorkflowConfig  # flow config
     options: Values
     cylc_config: DictTree  # [scheduler] config
 
@@ -195,7 +195,6 @@ class Scheduler:
     bad_hosts: Optional[Set[str]] = None
 
     # configuration
-    config: Optional[WorkflowConfig] = None  # flow config
     flow_file: Optional[str] = None
     flow_file_update_time: Optional[float] = None
 
@@ -228,13 +227,13 @@ class Scheduler:
     auto_restart_time: Optional[float] = None
 
     # tcp / zmq
-    zmq_context: zmq.Context = None
+    zmq_context: Optional[zmq.Context] = None
     port: Optional[int] = None
     pub_port: Optional[int] = None
     server: Optional[WorkflowRuntimeServer] = None
     publisher: Optional[WorkflowPublisher] = None
     barrier: Optional[Barrier] = None
-    curve_auth: ThreadAuthenticator = None
+    curve_auth: Optional[ThreadAuthenticator] = None
     client_pub_key_dir: Optional[str] = None
 
     # queue-released tasks still in prep
@@ -305,8 +304,9 @@ class Scheduler:
         )
 
         # Extract job.sh from library, for use in job scripts.
-        extract_resources(
-            workflow_files.get_workflow_srv_dir(self.workflow),
+        get_resources(
+            os.path.join(
+                workflow_files.get_workflow_srv_dir(self.workflow), 'etc',),
             ['etc/job.sh'])
         # Add python dirs to sys.path
         for sub_dir in ["python", os.path.join("lib", "python")]:
@@ -480,7 +480,7 @@ class Scheduler:
         else:
             self._load_pool_from_point()
 
-        self.process_cylc_stop_point()
+        self.process_stop_cycle_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.workflow_db_mgr.put_workflow_params(self)
@@ -678,17 +678,14 @@ class Scheduler:
         released from runhead.)
 
         """
-        if self.config.start_point is not None:
-            start_type = "Warm" if self.options.startcp else "Cold"
-            LOG.info(f"{start_type} start from {self.config.start_point}")
+        LOG.info(
+            f"{'warm' if self.options.startcp else 'cold'} start from"
+            f"{self.config.start_point}.")
 
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}"
         )
         for name in self.config.get_task_name_list():
-            if self.config.start_point is None:
-                # No start cycle point at which to load cycling tasks.
-                continue
             tdef = self.config.get_taskdef(name)
             try:
                 point = sorted([
@@ -708,9 +705,6 @@ class Scheduler:
 
     def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
-        if self.options.startcp:
-            self.config.start_point = TaskID.get_standardised_point(
-                self.options.startcp)
         self.workflow_db_mgr.pri_dao.select_broadcast_states(
             self.broadcast_mgr.load_db_broadcast_states)
         self.workflow_db_mgr.pri_dao.select_task_job_run_times(
@@ -1121,13 +1115,9 @@ class Scheduler:
             load_type = "start"
         file_name = get_workflow_run_config_log_dir(
             self.workflow, f"{time_str}-{load_type}.cylc")
-        with open(file_name, "wb") as handle:
-            handle.write(b"# cylc-version: %s\n" % CYLC_VERSION.encode())
-            printcfg(self.config.cfg, none_str=None, handle=handle)
-
-        if not self.config.initial_point and not self.is_restart:
-            LOG.warning('No initial cycle point provided - no cycling tasks '
-                        'will be loaded.')
+        with open(file_name, "w") as handle:
+            handle.write("# cylc-version: %s\n" % CYLC_VERSION)
+            self.config.pcfg.idump(sparse=True, handle=handle)
 
         # Pass static cylc and workflow variables to job script generation code
         self.task_job_mgr.job_file_writer.set_workflow_env({
@@ -1159,23 +1149,17 @@ class Scheduler:
             LOG.info('LOADING workflow parameters')
         key, value = row
         if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.icp == 'reload':
-                LOG.debug(f"- initial point = {value} (ignored)")
-            elif self.options.icp is None:
-                self.options.icp = value
-                LOG.info(f"+ initial point = {value}")
+            self.options.icp = value
+            LOG.info(f"+ initial point = {value}")
         elif key in self.workflow_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
-            if self.is_restart and self.options.startcp == 'reload':
-                LOG.debug(f"- start point = {value} (ignored)")
-            elif self.options.startcp is None:
-                self.options.startcp = value
-                LOG.info(f"+ start point = {value}")
+            self.options.startcp = value
+            LOG.info(f"+ start point = {value}")
         elif key in self.workflow_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
             if self.is_restart and self.options.fcp == 'reload':
-                LOG.debug(f"- override final point = {value} (ignored)")
+                LOG.debug(f"- final point = {value} (ignored)")
             elif self.options.fcp is None:
                 self.options.fcp = value
-                LOG.info(f"+ override final point = {value}")
+                LOG.info(f"+ final point = {value}")
         elif key == self.workflow_db_mgr.KEY_STOP_CYCLE_POINT:
             if self.is_restart and self.options.stopcp == 'reload':
                 LOG.debug(f"- stop point = {value} (ignored)")
@@ -1718,7 +1702,8 @@ class Scheduler:
                 [(b'shutdown', str(reason).encode('utf-8'))]
             )
             self.publisher.stop()
-        self.curve_auth.stop()  # stop the authentication thread
+        if self.curve_auth:
+            self.curve_auth.stop()  # stop the authentication thread
 
         # Flush errors and info before removing workflow contact file
         sys.stdout.flush()
@@ -1928,29 +1913,27 @@ class Scheduler:
                         f"option --{opt}=reload is only valid for restart"
                     )
 
-    def process_cylc_stop_point(self):
-        """
-        Set stop point.
+    def process_stop_cycle_point(self) -> None:
+        """Set stop after cycle point.
 
         In decreasing priority, stop cycle point (``stopcp``) is set:
-        * From the final point for ``cylc play --stopcp=reload``.
         * From the command line (``cylc play --stopcp=XYZ``).
         * From the database.
         * From the flow.cylc file (``[scheduling]stop after cycle point``).
+
+        However, if ``--stopcp=reload`` on the command line during restart,
+        the ``[scheduling]stop after cycle point`` value is used.
         """
-        stoppoint = None
-        if self.is_restart and self.options.stopcp == 'reload':
-            stoppoint = self.config.final_point
-        elif self.options.stopcp:
-            stoppoint = self.options.stopcp
-        # Tests whether pool has stopcp from database on restart.
-        elif (
-            self.pool.stop_point and
-            self.pool.stop_point != self.config.final_point
-        ):
-            stoppoint = self.pool.stop_point
-        elif 'stop after cycle point' in self.config.cfg['scheduling']:
-            stoppoint = self.config.cfg['scheduling']['stop after cycle point']
+        stoppoint = self.config.cfg['scheduling'].get('stop after cycle point')
+        if self.options.stopcp != 'reload':
+            if self.options.stopcp:
+                stoppoint = self.options.stopcp
+            # Tests whether pool has stopcp from database on restart.
+            elif (
+                self.pool.stop_point and
+                self.pool.stop_point != self.config.final_point
+            ):
+                stoppoint = self.pool.stop_point
 
         if stoppoint is not None:
             self.options.stopcp = str(stoppoint)
@@ -1969,7 +1952,7 @@ class Scheduler:
         await self.shutdown(exc)
         raise exc from None
 
-    def validate_finalcp(self):
+    def validate_finalcp(self) -> None:
         """Warn if Stop Cycle point is on or after the final cycle point
         """
         if self.config.final_point is None:

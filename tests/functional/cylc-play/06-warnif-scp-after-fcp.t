@@ -20,9 +20,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 14
-
-# integer cycling
+set_test_number 7
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
@@ -31,7 +29,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     initial cycle point = 1
     final cycle point = 2
     cycling mode = integer
-    [[dependencies]]
+    [[graph]]
         P1 = foo
 __FLOW_CONFIG__
 
@@ -44,38 +42,6 @@ for SCP in 1 2 3; do
         --no-detach --stopcp="${SCP}"
 
     if [[ "${SCP}" -lt 3 ]]; then
-        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
-            "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "-v"
-    else
-        grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
-            "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log"
-    fi
-done
-
-purge
-
-# Gregorian Cycling
-
-init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
-[scheduler]
-    allow implicit tasks = True
-[scheduling]
-    initial cycle point = 1348
-    final cycle point = 1349
-    [[dependencies]]
-        P1Y = foo
-__FLOW_CONFIG__
-
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-
-
-for SCP in 1348 1349 1350; do
-    TEST_NAME="${TEST_NAME_BASE}-play-gregorian-scp=${SCP}"
-        workflow_run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" \
-        --no-detach --stopcp="${SCP}"
-
-    if [[ "${SCP}" -lt 1350 ]]; then
         grep_ok "Stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/log" "-v"
     else

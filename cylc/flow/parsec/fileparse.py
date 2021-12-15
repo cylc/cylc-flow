@@ -220,18 +220,44 @@ def multiline(flines, value, index, maxline):
     return quot + newvalue + line, index
 
 
-def process_plugins(fpath):
-    # Load Rose Vars, if a ``rose-suite.conf`` file is present.
+def process_plugins(fpath, opts):
+    """Run a Cylc pre-configuration plugin.
+
+    Plugins should return a dictionary containing:
+        'env': A dictionary of environment variables.
+        'template_variables': A dictionary of template variables.
+        'templating_detected': Where the plugin identifies a templating
+            language this is specified here. Expected values are ``jinja2``
+            or ``empy``.
+
+    args:
+        fpath: Directory where the plugin will look for a config.
+        opts: Command line options to be passed to the plugin.
+
+    Returns: Dictionary in the form:
+        extra_vars = {
+            'env': {},
+            'template_variables': {},
+            'templating_detected': None
+        }
+    """
+    # Set out blank dictionary for return:
     extra_vars = {
         'env': {},
         'template_variables': {},
         'templating_detected': None
     }
+
+    # Run entry point pre_configure items, trying to merge values with each.:
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
-            plugin_result = entry_point.resolve()(srcdir=fpath)
+            # If you want it to work on sourcedirs you need to get the options
+            # to here.
+            plugin_result = entry_point.resolve()(
+                srcdir=fpath, opts=opts
+            )
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
@@ -322,13 +348,14 @@ def merge_template_vars(
         return native_tvars
 
 
-def read_and_proc(fpath, template_vars=None, viewcfg=None):
+def read_and_proc(fpath, template_vars=None, viewcfg=None, opts=None):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
     Jinja2 processing must be done before concatenation - it could be
     used to generate continuation lines.
     """
+
     fdir = os.path.dirname(fpath)
 
     # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).
@@ -350,7 +377,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None):
     do_jinja2 = True
     do_contin = True
 
-    extra_vars = process_plugins(Path(fpath).parent)
+    extra_vars = process_plugins(Path(fpath).parent, opts)
 
     if not template_vars:
         template_vars = {}
@@ -478,11 +505,11 @@ def hashbang_and_plugin_templating_clash(
     return hashbang
 
 
-def parse(fpath, output_fname=None, template_vars=None):
+def parse(fpath, output_fname=None, template_vars=None, opts=None):
     """Parse file items line-by-line into a corresponding nested dict."""
 
     # read and process the file (jinja2, include-files, line continuation)
-    flines = read_and_proc(fpath, template_vars)
+    flines = read_and_proc(fpath, template_vars, opts=opts)
     if output_fname:
         with open(output_fname, 'w') as handle:
             handle.write('\n'.join(flines) + '\n')

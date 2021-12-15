@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Test file-system interaction aspects of scan functionality."""
 
+from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
+from typing import List
 
 import pytest
 
@@ -49,11 +51,8 @@ def init_flows(tmp_path, running=None, registered=None, un_registered=None):
         run_d.mkdir(parents=True, exist_ok=True)
         if "run" in name:
             root = Path(tmp_path, name).parent
-            try:
+            with suppress(FileExistsError):
                 (root / "runN").symlink_to(run_d, target_is_directory=True)
-            except FileExistsError:
-                # Already make the runN symink
-                pass
         else:
             root = run_d
         (root / INSTALL).mkdir(parents=True, exist_ok=True)
@@ -138,7 +137,7 @@ def run_dir_with_nasty_symlinks():
 
 
 @pytest.fixture(scope='session')
-def nested_run_dir():
+def nested_dir():
     tmp_path = Path(TemporaryDirectory().name)
     tmp_path.mkdir()
     init_flows(
@@ -284,20 +283,35 @@ async def test_is_active(sample_run_dir):
 
 
 @pytest.mark.asyncio
-async def test_max_depth(nested_run_dir):
+@pytest.mark.parametrize(
+    'depth, expected',
+    [
+        (1, ['a']),
+        (3, ['a', 'b/c', 'd/e/f'])
+    ]
+)
+async def test_max_depth(nested_dir, depth: int, expected: List[str]):
     """It should descend only as far as permitted."""
     assert await listify(
-        scan(nested_run_dir, max_depth=1)
-    ) == [
-        'a'
-    ]
+        scan(nested_dir, max_depth=depth)
+    ) == expected
 
+
+@pytest.mark.asyncio
+async def test_max_depth_configurable(nested_dir, mock_glbl_cfg):
+    """Default scan depth should be configurable in global.cylc."""
+    mock_glbl_cfg(
+        'cylc.flow.network.scan.glbl_cfg',
+        '''
+        [install]
+            max depth = 2
+        '''
+    )
     assert await listify(
-        scan(nested_run_dir, max_depth=3)
+        scan(nested_dir)
     ) == [
         'a',
         'b/c',
-        'd/e/f'
     ]
 
 

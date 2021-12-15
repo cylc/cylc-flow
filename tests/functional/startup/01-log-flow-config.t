@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test "log/flow-config/*-<mode>.cylc" files that are generated on workflow start up.
 . "$(dirname "$0")/test_header"
-set_test_number 9
+set_test_number 10
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!Jinja2
@@ -58,20 +58,23 @@ start.cylc
 __OUT__
 
 LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
-RUN_CONFIG="$(ls "${LOGD}/"*-start.cylc)"
+START_CONFIG="$(ls "${LOGD}/"*-start.cylc)"
 REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
 RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"
 # The generated *-run.cylc and *-reload.cylc should be identical
 # The generated *.cylc files should validate
-cmp_ok "${RUN_CONFIG}" "${REL_CONFIG}"
-run_ok "${TEST_NAME_BASE}-validate-start-config" cylc validate "${RUN_CONFIG}"
+cmp_ok "${START_CONFIG}" "${REL_CONFIG}"
+run_ok "${TEST_NAME_BASE}-validate-start-config" cylc validate "${START_CONFIG}"
 run_ok "${TEST_NAME_BASE}-validate-restart-config" cylc validate "${RES_CONFIG}"
 
-diff -u "${RUN_CONFIG}" "${RES_CONFIG}" >'diff.out'
+diff -u "${START_CONFIG}" "${RES_CONFIG}" >'diff.out'
 contains_ok 'diff.out' <<'__DIFF__'
 -    description = the weather is bad
 +    description = the weather is good
 __DIFF__
+
+# Ensure that the start config is sparse.
+grep_fail "\[\[mail\]\]" "${START_CONFIG}"
 
 purge
 exit

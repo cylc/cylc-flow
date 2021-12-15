@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 import re
 from shutil import rmtree
 from typing import List, Optional, Tuple
@@ -25,7 +26,7 @@ from cylc.flow.parsec.config import ParsecConfig
 
 
 @pytest.fixture
-def mock_glbl_cfg(tmp_path, monkeypatch):
+def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """A Pytest fixture for fiddling global config values.
 
     * Hacks the specified `glbl_cfg` object.
@@ -56,7 +57,7 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
 
     """
     # TODO: modify Parsec so we can use StringIO rather than a temp file.
-    def _mock(pypath, global_config):
+    def _mock_glbl_cfg(pypath: str, global_config: str) -> None:
         nonlocal tmp_path, monkeypatch
         global_config_path = tmp_path / 'global.cylc'
         global_config_path.write_text(global_config)
@@ -69,7 +70,7 @@ def mock_glbl_cfg(tmp_path, monkeypatch):
 
         monkeypatch.setattr(pypath, _inner)
 
-    yield _mock
+    yield _mock_glbl_cfg
     rmtree(tmp_path)
 
 

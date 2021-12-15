@@ -247,7 +247,8 @@ class WorkflowConfig:
         self.pcfg = RawWorkflowConfig(
             fpath,
             output_fname,
-            template_vars
+            template_vars,
+            self.options
         )
         self.mem_log("config.py: after RawWorkflowConfig init")
         self.mem_log("config.py: before get(sparse=True")

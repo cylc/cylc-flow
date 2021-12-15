@@ -116,6 +116,7 @@ class ServiceFileError(CylcError):
 
 class WorkflowFilesError(CylcError):
     """Exception for errors related to workflow files/directories."""
+    bullet = "\n    -"
 
 
 def handle_rmtree_err(

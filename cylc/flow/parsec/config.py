@@ -36,7 +36,19 @@ class ParsecConfig:
     """Object wrapper for parsec functions."""
 
     def __init__(self, spec, upgrader=None, output_fname=None, tvars=None,
-                 validator=None):
+                 validator=None, options=None):
+        """Instatiate a parsec config object.
+
+        Args:
+            spec: Specification for the config.
+            upgrader: An upgrader function, which converts old config items
+                to new ones, or returns errors for obselete items.
+            output_fname: Filename to dump parsed config to.
+            tvars: Template variables.
+            validator: Function checkin that config is valid; defaults to
+                ``parsec_validate``.
+            options: Command line options.
+        """
         self.sparse = OrderedDictWithDefaults()
         self.dense = OrderedDictWithDefaults()
         self.upgrader = upgrader
@@ -48,13 +60,15 @@ class ParsecConfig:
         self.validator = validator
         # Get a list of config items which have a private name ``__MANY__``:
         self.manyparents = self._get_namespace_parents()
+        self.options = options
 
     def loadcfg(self, rcfile, title=""):
         """Parse a config file, upgrade or deprecate items if necessary,
         validate it against the spec, and if this is not the first load,
         combine/override with the existing loaded config."""
 
-        sparse = parse(rcfile, self.output_fname, self.tvars)
+        sparse = parse(
+            rcfile, self.output_fname, self.tvars, opts=self.options)
 
         if self.upgrader is not None:
             self.upgrader(sparse, title)
@@ -128,7 +142,7 @@ class ParsecConfig:
         return cfg
 
     def idump(self, items=None, sparse=False, prefix='',
-              oneline=False, none_str=''):
+              oneline=False, none_str='', handle=None):
         """
         items is a list of --item style inputs:
            '[runtime][foo]script'.
@@ -144,10 +158,10 @@ class ParsecConfig:
                 mkeys.append(j)
         if null:
             mkeys = [[]]
-        self.mdump(mkeys, sparse, prefix, oneline, none_str)
+        self.mdump(mkeys, sparse, prefix, oneline, none_str, handle=handle)
 
     def mdump(self, mkeys=None, sparse=False, prefix='',
-              oneline=False, none_str=''):
+              oneline=False, none_str='', handle=None):
         if oneline:
             items = []
             if mkeys:
@@ -162,13 +176,18 @@ class ParsecConfig:
             print(prefix + ' '.join(items))
         elif mkeys:
             for keys in mkeys:
-                self.dump(keys, sparse, prefix, none_str)
+                self.dump(keys, sparse, prefix, none_str, handle=handle)
 
-    def dump(self, keys=None, sparse=False, prefix='', none_str=''):
+    def dump(
+        self, keys=None, sparse=False, prefix='', none_str='', handle=None
+    ):
         if not keys:
             keys = []
         cfg = self.get(keys, sparse)
-        printcfg(cfg, prefix=prefix, level=len(keys), none_str=none_str)
+        printcfg(
+            cfg, prefix=prefix, level=len(keys),
+            none_str=none_str, handle=handle
+        )
 
     def _get_namespace_parents(self) -> List[List[str]]:
         """Get a list of the parents of config items which can be user defined.

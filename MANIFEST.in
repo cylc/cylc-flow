@@ -1,0 +1,2 @@
+include cylc/flow/py.typed
+recursive-include cylc/flow/etc/ *

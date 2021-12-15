@@ -14,16 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 from pathlib import Path
 import pytest
 from pytest import MonkeyPatch, TempPathFactory
 import shutil
 import subprocess
-from typing import Any, Tuple
+from typing import Any, Callable, Tuple
 from unittest.mock import Mock
 
 from cylc.flow.install_plugins.log_vc_info import (
-    get_diff, _get_git_commit, get_status, get_vc_info, main
+    INFO_FILENAME,
+    LOG_VERSION_DIR,
+    get_diff,
+    _get_git_commit,
+    get_status,
+    get_vc_info,
+    main,
 )
 
 Fixture = Any
@@ -57,15 +64,15 @@ require_svn = pytest.mark.skipif(
 def git_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str]:
     """Init a git repo for a workflow source dir.
 
-    The repo has a flow.cylc file with uncommitted changes. This dir is reused
+    The repo has uncommitted changes. This dir is reused
     by all tests requesting it in this module.
 
     Returns (source_dir_path, commit_hash)
     """
-    source_dir: Path = tmp_path_factory.getbasetemp().joinpath('git_repo')
+    source_dir: Path = tmp_path_factory.getbasetemp() / 'git_repo'
     source_dir.mkdir()
     subprocess.run(['git', 'init'], cwd=source_dir, check=True)
-    flow_file = source_dir.joinpath('flow.cylc')
+    flow_file = source_dir / 'flow.cylc'
     flow_file.write_text(BASIC_FLOW_1)
     subprocess.run(['git', 'add', '-A'], cwd=source_dir, check=True)
     subprocess.run(
@@ -73,6 +80,8 @@ def git_source_repo(tmp_path_factory: TempPathFactory) -> Tuple[str, str]:
         cwd=source_dir, check=True, capture_output=True)
     # Overwrite file to introduce uncommitted changes:
     flow_file.write_text(BASIC_FLOW_2)
+    # Also add new file:
+    (source_dir / 'gandalf.md').touch()
     commit_sha = subprocess.run(
         ['git', 'rev-parse', 'HEAD'],
         cwd=source_dir, check=True, capture_output=True, text=True
@@ -126,7 +135,10 @@ def test_get_git_commit(git_source_repo: Tuple[str, str]):
 def test_get_status_git(git_source_repo: Tuple[str, str]):
     """Test get_status() for a git repo"""
     source_dir, commit_sha = git_source_repo
-    assert get_status('git', source_dir) == " M flow.cylc"
+    assert get_status('git', source_dir) == [
+        " M flow.cylc",
+        "?? gandalf.md"
+    ]
 
 
 @require_git
@@ -140,7 +152,10 @@ def test_get_vc_info_git(git_source_repo: Tuple[str, str]):
         ('repository version', f"{commit_sha[:7]}-dirty"),
         ('commit', commit_sha),
         ('working copy root path', source_dir),
-        ('status', " M flow.cylc")
+        ('status', [
+            " M flow.cylc",
+            "?? gandalf.md"
+        ])
     ]
     assert list(vc_info.items()) == expected
 
@@ -158,6 +173,20 @@ def test_get_diff_git(git_source_repo: Tuple[str, str]):
         assert line in diff_lines
 
 
+@require_git
+def test_main_git(git_source_repo: Tuple[str, str], tmp_run_dir: Callable):
+    """Test the written JSON info file."""
+    source_dir, _ = git_source_repo
+    run_dir: Path = tmp_run_dir('frodo')
+    main(source_dir, None, run_dir)
+    with open(run_dir / LOG_VERSION_DIR / INFO_FILENAME, 'r') as f:
+        loaded = json.loads(f.read())
+    assert isinstance(loaded, dict)
+    assert loaded['version control system'] == 'git'
+    assert isinstance(loaded['status'], list)
+    assert len(loaded['status']) == 2
+
+
 @require_svn
 def test_get_vc_info_svn(svn_source_repo: Tuple[str, str, str]):
     """Test get_vc_info() for an svn working copy"""
@@ -170,7 +199,7 @@ def test_get_vc_info_svn(svn_source_repo: Tuple[str, str, str]):
         ('url', f"file://{repo_path}/project/trunk"),
         ('repository uuid', uuid),
         ('revision', "1"),
-        ('status', "M       flow.cylc")
+        ('status', ["M       flow.cylc"])
     ]
     assert list(vc_info.items()) == expected
 
@@ -223,7 +252,7 @@ def test_no_base_commit_git(tmp_path: Path):
     expected = [
         ('version control system', "git"),
         ('working copy root path', str(source_dir)),
-        ('status', "?? flow.cylc")
+        ('status', ["?? flow.cylc"])
     ]
     assert list(vc_info.items()) == expected
     assert get_diff('git', source_dir) is None
