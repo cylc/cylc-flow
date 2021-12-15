@@ -1100,7 +1100,7 @@ class TaskPool:
         for item in items:
             tokens = tokenise(item, relative=True)
             point_str = tokens['cycle']
-            name_str = tokens['task']
+            name_str = tokens['task'] or '*'
             # TODO: handle both independently
             status = tokens['cycle_sel'] or tokens['task_sel']
             if status or ('*' in item) or ('?' in item) or ('[' in item):
@@ -1412,7 +1412,7 @@ class TaskPool:
         for item in items:
             tokens = tokenise(item, relative=True)
             point_str = tokens['cycle']
-            name_str = tokens['task']
+            name_str = tokens['task'] or '*'
             if point_str is None:
                 LOG.warning(f"{item} - task to spawn must have a cycle point")
                 n_warnings += 1
