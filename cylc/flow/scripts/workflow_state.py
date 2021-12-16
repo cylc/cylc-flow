@@ -49,6 +49,7 @@ Examples:
   # cylc task.
 """
 
+import asyncio
 import os
 import sqlite3
 import sys
@@ -86,7 +87,7 @@ class WorkflowPoller(Poller):
         if cylc.flow.flags.verbosity > 0:
             sys.stderr.write(
                 "connecting to workflow db for " +
-                self.args['run_dir'] + "/" + self.args['workflow'])
+                self.args['run_dir'] + "/" + self.args['workflow_id'])
 
         # Attempt db connection even if no polls for condition are
         # requested, as failure to connect is useful information.
@@ -97,7 +98,7 @@ class WorkflowPoller(Poller):
             self.n_polls += 1
             try:
                 self.checker = CylcWorkflowDBChecker(
-                    self.args['run_dir'], self.args['workflow'])
+                    self.args['run_dir'], self.args['workflow_id'])
                 connected = True
                 # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
@@ -118,7 +119,7 @@ class WorkflowPoller(Poller):
                 self.args['cycle'] = str(my_point)
         return connected, self.args['cycle']
 
-    def check(self):
+    async def check(self):
         """Return True if desired workflow state achieved, else False"""
         return self.checker.task_state_met(
             self.args['task'], self.args['cycle'],
@@ -236,10 +237,12 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         'message': options.msg,
     }
 
-    spoller = WorkflowPoller("requested state",
-                             options.interval,
-                             options.max_polls,
-                             args=pollargs)
+    spoller = WorkflowPoller(
+        "requested state",
+        options.interval,
+        options.max_polls,
+        args=pollargs,
+    )
 
     connected, formatted_pt = spoller.connect()
 
@@ -249,12 +252,12 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     if options.status and options.task and options.cycle:
         # check a task status
         spoller.condition = options.status
-        if not spoller.poll():
+        if not asyncio.run(spoller.poll()):
             sys.exit(1)
     elif options.msg:
         # Check for a custom task output
         spoller.condition = "output: %s" % options.msg
-        if not spoller.poll():
+        if not asyncio.run(spoller.poll()):
             sys.exit(1)
     else:
         # just display query results

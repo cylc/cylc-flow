@@ -61,6 +61,7 @@ job poll and kill commands, however, will be executed prior to shutdown, unless
 This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for workflow shutdown."""
 
+import asyncio
 from functools import partial
 import sys
 from typing import TYPE_CHECKING
@@ -125,10 +126,10 @@ class StopPoller(Poller):
             'variables': {'wFlows': [self.pclient.workflow]}
         }
 
-    def check(self):
+    async def check(self):
         """Return True if workflow has stopped (success) else False"""
         try:
-            self.pclient('graphql', self.query)
+            await self.pclient.async_request('graphql', self.query)
         except (ClientError, ClientTimeout, CylcError):
             # failed to ping - workflow stopped or (CylcError) restarted on
             # another host:port (in which case it must have stopped first).
@@ -214,8 +215,12 @@ async def run(
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
+
         spoller = StopPoller(
-            pclient, "workflow stopped", options.interval, options.max_polls
+            pclient,
+            "workflow stopped",
+            options.interval,
+            options.max_polls,
         )
 
     # mode defaults to 'Clean'
@@ -243,7 +248,7 @@ async def run(
 
     await pclient.async_request('graphql', mutation_kwargs)
 
-    if int(options.max_polls) > 0 and not spoller.poll():
+    if int(options.max_polls) > 0 and not await spoller.poll():
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
         return 1
     return 0

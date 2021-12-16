@@ -63,11 +63,11 @@ class Poller:
         self.n_polls = 0
         self.args = args  # any extra parameters needed by check()
 
-    def check(self):
+    async def check(self):
         """Abstract method. Test polling condition."""
         raise NotImplementedError()
 
-    def poll(self):
+    async def poll(self):
         """Poll for the condition embodied by self.check().
         Return True if condition met, or False if polling exhausted."""
 
@@ -81,7 +81,7 @@ class Poller:
 
         while self.n_polls < self.max_polls:
             self.n_polls += 1
-            if self.check():
+            if await self.check():
                 sys.stdout.write(": satisfied\n")
                 return True
             if self.max_polls > 1:
