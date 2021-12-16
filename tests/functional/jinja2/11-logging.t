@@ -35,4 +35,5 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}" --debug
 grep_ok 'Hello World!' "${TEST_NAME}.stderr"  # debug lines go to stderr
 
+purge
 exit
