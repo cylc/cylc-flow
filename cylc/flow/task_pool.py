@@ -436,6 +436,7 @@ class TaskPool:
                     self.workflow_db_mgr.pri_dao.select_task_prerequisites(
                         cycle,
                         name,
+                        flow_nums,
                     )
             ):
                 key = (prereq_cycle, prereq_name, prereq_output)

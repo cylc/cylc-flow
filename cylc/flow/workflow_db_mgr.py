@@ -440,7 +440,8 @@ class WorkflowDatabaseManager:
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
-        self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
+        # We now keep prereq history, no need to do:
+        # self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
         # No need to do:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
         # Should already be done by self.put_task_event_timers above.
@@ -451,6 +452,7 @@ class WorkflowDatabaseManager:
                     prereq.satisfied.items()
                 ):
                     self.put_insert_task_prerequisites(itask, {
+                        "flow_nums": json.dumps(list(itask.flow_nums)),
                         "prereq_name": p_name,
                         "prereq_cycle": p_cycle,
                         "prereq_output": p_output,

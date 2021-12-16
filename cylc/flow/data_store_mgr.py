@@ -76,13 +76,11 @@ from cylc.flow.workflow_status import get_workflow_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUS_WAITING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
-    TASK_STATUS_EXPIRED,
     TASK_STATUSES_ORDERED
 )
 from cylc.flow.task_state_prop import extract_group_state
@@ -593,10 +591,8 @@ class DataStoreMgr:
         """Generate graph window about given origin to n-edge-distance.
 
         Args:
-            name (str):
-                Task name.
-            point (cylc.flow.cycling.PointBase):
-                PointBase derived object.
+            itask (cylc.flow.task_proxy.TaskProxy):
+                Update task-node from corresponding task proxy object.
             edge_distance (int):
                 Graph distance from active/origin node.
             active_id (str):
@@ -613,6 +609,12 @@ class DataStoreMgr:
         s_tokens = self.id_.duplicate(itask.tokens)
         if active_id is None:
             active_id = s_tokens.id
+
+        # flag manual triggers for pruning on deletion.
+        if itask.is_manual_submit:
+            self.prune_trigger_nodes.setdefault(active_id, set()).add(
+                s_tokens.id
+            )
 
         # Setup and check if active node is another's boundary node
         # to flag its paths for pruning.
@@ -649,7 +651,7 @@ class DataStoreMgr:
         edge_distance += 1
 
         # Don't expand window about orphan task.
-        if is_orphan is not True:
+        if not is_orphan:
             # TODO: xtrigger is workflow_state edges too
             # Reference set for workflow relations
             for items in itask.graph_children.values():
@@ -756,6 +758,7 @@ class DataStoreMgr:
         ).id
         if tp_id in self.all_task_pool:
             self.all_task_pool.remove(tp_id)
+            self.updates_pending = True
         # flagged isolates/end-of-branch nodes for pruning on removal
         if (
                 tp_id in self.prune_trigger_nodes and
@@ -763,6 +766,7 @@ class DataStoreMgr:
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
             del self.prune_trigger_nodes[tp_id]
+            self.updates_pending = True
 
     def add_pool_node(self, name, point):
         """Add external ID reference for internal task pool node."""
@@ -785,7 +789,7 @@ class DataStoreMgr:
 
         Returns:
 
-            None
+            True/False
 
         """
         name = itask.tdef.name
@@ -794,11 +798,13 @@ class DataStoreMgr:
         task_proxies = self.data[self.workflow_id][TASK_PROXIES]
 
         is_orphan = False
+        if name not in self.schd.config.taskdefs:
+            is_orphan = True
+
         if tp_id in task_proxies or tp_id in self.added[TASK_PROXIES]:
             return is_orphan
 
-        if name not in self.schd.config.taskdefs:
-            is_orphan = True
+        if is_orphan:
             self.generate_orphan_task(itask)
 
         # Most the time the definition node will be in the store,
@@ -858,7 +864,7 @@ class DataStoreMgr:
             self.process_internal_task_proxy(itask, tproxy)
         else:
             # Batch node for DB load
-            self.db_load_task_proxies[tp_id] = itask
+            self.db_load_task_proxies[(point_string, name)] = itask
 
         self.updates_pending = True
 
@@ -974,11 +980,14 @@ class DataStoreMgr:
         tproxy.state = itask.state.status
         tproxy.flow_nums = json.dumps(list(itask.flow_nums))
 
+        prereq_list = []
         for prereq in itask.state.prerequisites:
             # Protobuf messages populated within
             prereq_obj = prereq.api_dump()
             if prereq_obj:
-                tproxy.prerequisites.append(prereq_obj)
+                prereq_list.append(prereq_obj)
+        del tproxy.prerequisites[:]
+        tproxy.prerequisites.extend(prereq_list)
 
         for label, message, satisfied in itask.state.outputs.get_all():
             output = tproxy.outputs[label]
@@ -1005,7 +1014,7 @@ class DataStoreMgr:
             xtrig.id = sig
             xtrig.label = label
             xtrig.satisfied = satisfied
-            self.xtrigger_tasks.setdefault(sig, set()).add(tp_id)
+            self.xtrigger_tasks.setdefault(sig, set()).add(tproxy.id)
 
         if tproxy.state in self.latest_state_tasks:
             tp_ref = Tokens(tproxy.id).relative_id
@@ -1023,21 +1032,14 @@ class DataStoreMgr:
         flow_db = self.schd.workflow_db_mgr.pri_dao
 
         # Batch load rows with matching cycle & name column pairs.
-        cycle_name_pairs = {
-            (f'{itask.point}', f'{itask.tdef.name}')
-            for itask in self.db_load_task_proxies.values()
-        }
+        cycle_name_pairs = set(self.db_load_task_proxies.keys())
 
-        state_rows = flow_db.select_tasks_for_datastore(cycle_name_pairs)
+        prereq_tasks_args = set()
         for (
                 cycle, name, flow_nums, status, submit_num, outputs_str
-        ) in state_rows:
-            itask = self.db_load_task_proxies[
-                self.id_.duplicate(
-                    cycle=cycle,
-                    task=name,
-                ).id
-            ]
+        ) in flow_db.select_tasks_for_datastore(cycle_name_pairs):
+            itask = self.db_load_task_proxies[(cycle, name)]
+            itask.submit_num = submit_num
             itask.state_reset(status)
             itask.flow_nums = set(json.loads(flow_nums))
             if (
@@ -1051,13 +1053,35 @@ class DataStoreMgr:
                 for message in json.loads(outputs_str).values():
                     itask.state.outputs.set_completion(message, True)
 
-        #prereq_rows = flow_db.select_prereqs_for_datastore(cycle_name_pairs)
+            prereq_tasks_args.add((cycle, name, flow_nums))
 
+        prereqs_rows = flow_db.select_prereqs_for_datastore(prereq_tasks_args)
+        prereqs_map = {}
+        for (
+                cycle, name, prereq_name,
+                prereq_cycle, prereq_output, satisfied
+        ) in prereqs_rows:
+            prereqs_map.setdefault((cycle, name), {})[
+                (prereq_name, prereq_cycle, prereq_output)
+            ] = satisfied if satisfied != '0' else False
 
-        for tp_id, itask in self.db_load_task_proxies.items():
+        for ikey, prereqs in prereqs_map.items():
+            for itask_prereq in (
+                    self.db_load_task_proxies[ikey].state.prerequisites
+            ):
+                for key in itask_prereq.satisfied.keys():
+                    itask_prereq.satisfied[key] = prereqs[key]
+
+        for ikey, itask in self.db_load_task_proxies.items():
+            cycle, name = ikey
             self.process_internal_task_proxy(
                 itask,
-                self.added[TASK_PROXIES][tp_id]
+                self.added[TASK_PROXIES][
+                    self.id_.duplicate(
+                        cycle=cycle,
+                        task=name,
+                    ).id
+                ]
             )
 
         self.db_load_task_proxies.clear()
@@ -1229,11 +1253,13 @@ class DataStoreMgr:
         if not self.prune_flagged_nodes:
             return
 
+        # Keep all nodes in the path of active tasks.
         in_paths_nodes = set().union(*[
             v
             for k, v in self.n_window_nodes.items()
             if k in self.all_task_pool
         ])
+        # Gather all nodes in the paths of tasks flagged for pruning.
         out_paths_nodes = self.prune_flagged_nodes.union(*[
             v
             for k, v in self.n_window_nodes.items()

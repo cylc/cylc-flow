@@ -168,7 +168,7 @@ class CylcWorkflowDAO:
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
-    RESTART_INCOMPAT_VERSION = "8.0b1"  # Can't restart if <= this version
+    RESTART_INCOMPAT_VERSION = "8.0b3"  # Can't restart if <= this version
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
@@ -275,6 +275,7 @@ class CylcWorkflowDAO:
         TABLE_TASK_PREREQUISITES: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
+            ["flow_nums", {"is_primary_key": True}],
             ["prereq_name", {"is_primary_key": True}],
             ["prereq_cycle", {"is_primary_key": True}],
             ["prereq_output", {"is_primary_key": True}],
@@ -823,7 +824,7 @@ class CylcWorkflowDAO:
             callback(row_idx, list(row))
 
     def select_task_prerequisites(
-        self, cycle: str, name: str
+        self, cycle: str, name: str, flow_nums: str
     ) -> List[Tuple[str, str, str, str]]:
         """Return prerequisites of a task of the given name & cycle point."""
         stmt = rf"""
@@ -836,9 +837,10 @@ class CylcWorkflowDAO:
                 {self.TABLE_TASK_PREREQUISITES}
             WHERE
                 cycle == ? AND
-                name == ?
+                name == ? AND
+                flow_nums == ?
         """  # nosec (table name is code constant)
-        stmt_args = [cycle, name]
+        stmt_args = [cycle, name, flow_nums]
         return list(self.connect().execute(stmt, stmt_args))
 
     def select_tasks_to_hold(self) -> List[Tuple[str, str]]:
@@ -880,12 +882,7 @@ class CylcWorkflowDAO:
     def select_tasks_for_datastore(
         self, cycle_name_pairs
     ):
-        """Select from task_pool+task_states+task_jobs for restart.
-
-        Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, is_late, status, is_held, submit_num,
-             try_num, platform_name, time_submit, time_run, timeout, outputs]
-        """
+        """Select state and outputs of specified tasks."""
         form_stmt = r"""
             SELECT
                 %(task_states)s.cycle,
@@ -912,6 +909,35 @@ class CylcWorkflowDAO:
             "task_outputs": self.TABLE_TASK_OUTPUTS,
             "cycle_name_pairs": ', '.join(
                 f'{val}' for val in cycle_name_pairs),
+        }
+        stmt = form_stmt % form_data
+        return list(self.connect().execute(stmt))
+
+    def select_prereqs_for_datastore(
+        self, prereq_tasks_args
+    ):
+        """Select prerequisites of specified tasks."""
+        if not prereq_tasks_args:
+            return []
+        form_stmt = r"""
+            SELECT
+                cycle,
+                name,
+                prereq_name,
+                prereq_cycle,
+                prereq_output,
+                satisfied
+            FROM
+                %(prerequisites)s
+            WHERE
+                (cycle, name, flow_nums) IN (
+                    VALUES %(prereq_tasks_args)s
+                )
+        """
+        form_data = {
+            "prerequisites": self.TABLE_TASK_PREREQUISITES,
+            "prereq_tasks_args": ', '.join(
+                f'{val}' for val in prereq_tasks_args),
         }
         stmt = form_stmt % form_data
         return list(self.connect().execute(stmt))
