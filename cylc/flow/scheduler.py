@@ -847,8 +847,8 @@ class Scheduler:
                     name, args, kwargs = command
                     meta = {}
                 LOG.info(
-                    f"Authenticated user {meta.get('auth_user', '?')} "
-                    f"has submitted request {name}"
+                    f"{meta.get('auth_user', 'Owner')} has submitted request "
+                    f"{name}"
                 )
             except Empty:
                 break
