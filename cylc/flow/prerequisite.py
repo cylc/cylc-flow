@@ -70,7 +70,7 @@ class Prerequisite:
         self.satisfied = {}
 
         # Expression present only when conditions are used.
-        # 'foo.1 failed & bar.1 succeeded'
+        # '1/foo failed & 1/bar succeeded'
         self.conditional_expression = None
 
         # The cached state of this prerequisite:
@@ -129,7 +129,7 @@ class Prerequisite:
             ...    ('1', 'foo', 'succeeded'): False,
             ...    ('1', 'xfoo', 'succeeded'): False
             ... }
-            >>> preq.set_condition("foo.1 succeeded|xfoo.1 succeeded")
+            >>> preq.set_condition("1/foo succeeded|1/xfoo succeeded")
             >>> expr = preq.conditional_expression
             >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
             ['bool(self.satisfied[("1", "foo", "succeeded")])',
