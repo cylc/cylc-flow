@@ -163,4 +163,5 @@ def main(parser: COP, options: 'Values', *ids):
     call_multi(
         partial(run, options),
         *ids,
+        constraint='mixed',
     )

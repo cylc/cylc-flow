@@ -761,7 +761,7 @@ class Scheduler:
             sleep(1.0)
             # Remote init/file-install is done via process pool
             self.proc_pool.process()
-        self.command_poll_tasks()
+        self.command_poll_tasks(['*/*'])
 
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
@@ -948,16 +948,16 @@ class Scheduler:
         """Resume paused workflow."""
         self.resume_workflow()
 
-    def command_poll_tasks(self, items=None):
+    def command_poll_tasks(self, items: List[str]):
         """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
             return
-        itasks, _, bad_items = self.pool.filter_task_proxies(items or ['*/*'])
+        itasks, _, bad_items = self.pool.filter_task_proxies(items)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
         # (Could filter itasks by state here if needed)
         return len(bad_items)
 
-    def command_kill_tasks(self, items=None):
+    def command_kill_tasks(self, items: List[str]):
         """Kill all tasks or a task/family if options are provided."""
         itasks, _, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
@@ -1361,8 +1361,8 @@ class Scheduler:
                 raise SchedulerStop(self.stop_mode.value)
         elif (self.time_next_kill is not None and
               time() > self.time_next_kill):
-            self.command_poll_tasks()
-            self.command_kill_tasks()
+            self.command_poll_tasks(['*/*'])
+            self.command_kill_tasks(['*/*'])
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...

@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test workflow graphql interface
+# TODO: convert to integration test
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -41,7 +42,6 @@ sleep 1
 
 # query workflow
 TEST_NAME="${TEST_NAME_BASE}-is-held-arg"
-ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 read -r -d '' isHeld <<_args_
 {
   "request_string": "
@@ -56,7 +56,7 @@ query {
         startedTime
       }
     }
-    familyProxies(exids: [\"root\"], isHeld: true) {
+    familyProxies(exids: [\"*/root\"], isHeld: true) {
       id
     }
   }
@@ -97,7 +97,7 @@ cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
             ],
             "familyProxies": [
                 {
-                    "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}1${ID_DELIM}BAZ"
+                    'id': 'cylctb-20211216T170501Z-8Qjn/f/graphql/03-is-held-arg//1/foo'
                 }
             ]
         }
