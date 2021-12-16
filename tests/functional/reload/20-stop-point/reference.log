@@ -2,6 +2,6 @@ INFO - Initial point: 1
 INFO - Final point: 5
 INFO - [1/set-stop-point] -triggered off []
 INFO - [1/reload] -triggered off ['1/set-stop-point']
-INFO - [1/t1] -triggered off ['1/reload', '0/t1']
+INFO - [1/t1] -triggered off ['0/t1', '1/reload']
 INFO - [2/t1] -triggered off ['1/t1']
 INFO - [3/t1] -triggered off ['2/t1']
