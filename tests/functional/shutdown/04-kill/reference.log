@@ -1,4 +1,4 @@
 2014-08-27T11:46:52+01 INFO - Initial point: 1
 2014-08-27T11:46:52+01 INFO - Final point: 1
-2014-08-27T11:46:52+01 INFO - [t1.1] -triggered off []
-2014-08-27T11:46:54+01 INFO - [t2.1] -triggered off ['t1.1']
+2014-08-27T11:46:52+01 INFO - [1/t1] -triggered off []
+2014-08-27T11:46:54+01 INFO - [1/t2] -triggered off ['1/t1']

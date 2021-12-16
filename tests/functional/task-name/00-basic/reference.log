@@ -18,7 +18,7 @@ Final point: 20200101T0000Z
 [20200101T0000Z/t1] -triggered off ['20180101T0000Z/t1']
 [20190101T0000Z/t1-a] -triggered off ['20190101T0000Z/t1']
 [20180101T0000Z/t1+a] -triggered off ['20180101T0000Z/t1-a']
-[20200101T0000Zt1-a] -triggered off ['20200101T0000Z/t1']
+[20200101T0000Z/t1-a] -triggered off ['20200101T0000Z/t1']
 [20190101T0000Z/t1+a] -triggered off ['20190101T0000Z/t1-a']
 [20180101T0000Z/t1%a] -triggered off ['20180101T0000Z/t1+a']
 [20200101T0000Z/t1+a] -triggered off ['20200101T0000Z/t1-a']

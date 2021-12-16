@@ -47,7 +47,7 @@ class Prerequisite:
 
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self.satisfied[("%s", "%s", "%s")])'
-    MESSAGE_TEMPLATE = '%s/%s %s'
+    MESSAGE_TEMPLATE = r'%s/%s %s'
 
     DEP_STATE_SATISFIED = 'satisfied naturally'
     DEP_STATE_OVERRIDDEN = 'force satisfied'
@@ -147,6 +147,7 @@ class Prerequisite:
                     self.SATISFIED_TEMPLATE % message,
                     expr
                 )
+
             self.conditional_expression = expr
 
     def is_satisfied(self):

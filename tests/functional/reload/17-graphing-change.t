@@ -66,8 +66,8 @@ cp "${TEST_SOURCE_DIR}/graphing-change/flow-2.cylc" \
     "${RUN_DIR}/${WORKFLOW_NAME}/flow.cylc"
 
 # Spawn a couple of task proxies, to get "task definition removed" message.
-cylc set-outputs --flow=1 "${WORKFLOW_NAME}"  1/foo
-cylc set-outputs --flow=1 "${WORKFLOW_NAME}"  1/baz
+cylc set-outputs --flow=1 "${WORKFLOW_NAME}//1/foo"
+cylc set-outputs --flow=1 "${WORKFLOW_NAME}//1/baz"
 # reload workflow
 run_ok "${TEST_NAME_BASE}-swap-reload" cylc reload "${WORKFLOW_NAME}"
 poll grep_workflow_log_n_times 'Reload completed' 3
@@ -76,8 +76,8 @@ poll grep_workflow_log_n_times 'Reload completed' 3
 grep_ok "Added task: 'one'" "${LOG_FILE}"
 grep_ok "Added task: 'add'" "${LOG_FILE}"
 grep_ok "Added task: 'boo'" "${LOG_FILE}"
-grep_ok "\\[*/bar\\].*task definition removed" "${LOG_FILE}"
-grep_ok "\\[*/bol\\].*task definition removed" "${LOG_FILE}"
+grep_ok "\\[1/bar.*\\].*task definition removed" "${LOG_FILE}"
+grep_ok "\\[1/bol.*\\].*task definition removed" "${LOG_FILE}"
 
 run_ok "${TEST_NAME_BASE}-stop" \
     cylc stop --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
