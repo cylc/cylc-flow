@@ -18,9 +18,9 @@ import os
 from pathlib import Path
 import pytest
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import UserInputError, WorkflowFilesError
 from cylc.flow.id import detokenise
-from cylc.flow.id_cli import parse_ids_async
+from cylc.flow.id_cli import parse_ids_async, _parse_src_path
 
 
 @pytest.fixture(scope='module')
@@ -44,8 +44,9 @@ def abc_src_dir(tmp_path_factory):
     ]
 )
 async def test_parse_ids_workflows(ids_in, ids_out):
-    ret = await parse_ids_async(*ids_in, constraint='workflows')
-    assert list(ret[0]) == ids_out
+    workflows, _ = await parse_ids_async(*ids_in, constraint='workflows')
+    assert list(workflows) == ids_out
+    assert list(workflows.values()) == [[] for _ in workflows]
 
 
 @pytest.mark.parametrize(
@@ -55,8 +56,13 @@ async def test_parse_ids_workflows(ids_in, ids_out):
     ]
 )
 async def test_parse_ids_workflows_src(ids_in, ids_out, abc_src_dir):
-    ret = await parse_ids_async(*ids_in, constraint='workflows', src=True)
-    assert list(ret[0]) == ids_out
+    workflows, _ = await parse_ids_async(
+        *ids_in,
+        src=True,
+        constraint='workflows',
+    )
+    assert list(workflows) == ids_out
+    assert list(workflows.values()) == [[] for _ in workflows]
 
 
 @pytest.mark.parametrize(
@@ -81,10 +87,10 @@ async def test_parse_ids_workflows_src(ids_in, ids_out, abc_src_dir):
     ]
 )
 async def test_parse_ids_tasks(ids_in, ids_out):
-    ret = await parse_ids_async(*ids_in, constraint='tasks')
+    workflows, _ = await parse_ids_async(*ids_in, constraint='tasks')
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
+        for workflow_id, tokens_list in workflows.items()
     } == ids_out
 
 
@@ -102,10 +108,10 @@ async def test_parse_ids_tasks(ids_in, ids_out):
     ]
 )
 async def test_parse_ids_tasks_src(ids_in, ids_out, abc_src_dir):
-    ret = await parse_ids_async(*ids_in, constraint='tasks', src=True)
+    workflows, _ = await parse_ids_async(*ids_in, constraint='tasks', src=True)
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
+        for workflow_id, tokens_list in workflows.items()
     } == ids_out
 
 
@@ -127,10 +133,10 @@ async def test_parse_ids_tasks_src(ids_in, ids_out, abc_src_dir):
     ]
 )
 async def test_parse_ids_mixed(ids_in, ids_out):
-    ret = await parse_ids_async(*ids_in, constraint='mixed')
+    workflows, _ = await parse_ids_async(*ids_in, constraint='mixed')
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
+        for workflow_id, tokens_list in workflows.items()
     } == ids_out
 
 
@@ -144,10 +150,10 @@ async def test_parse_ids_mixed(ids_in, ids_out):
     ]
 )
 async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir):
-    ret = await parse_ids_async(*ids_in, constraint='mixed', src=True)
+    workflows, _ = await parse_ids_async(*ids_in, constraint='mixed', src=True)
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
-        for workflow_id, tokens_list in ret[0].items()
+        for workflow_id, tokens_list in workflows.items()
     } == ids_out
 
 
@@ -192,3 +198,107 @@ async def test_parse_ids_max_tasks(ids_in, errors):
 # async def test_parse_ids_infer_run_name():
 #     workflows = await parse_ids_async(['foo//'], constraint='workflows')
 #     assert workflows == []
+
+
+@pytest.fixture
+def patch_expand_worklflow_tokens(monkeypatch):
+
+    def _patch_expand_workflow_tokens(_ids):
+
+        async def _expand_workflow_tokens_impl(tokens):
+            nonlocal _ids
+            for id_ in _ids:
+                yield {**tokens, 'workflow': id_}
+
+        monkeypatch.setattr(
+            'cylc.flow.id_cli._expand_workflow_tokens_impl',
+            _expand_workflow_tokens_impl,
+        )
+
+    _patch_expand_workflow_tokens(['xxx'])
+    return _patch_expand_workflow_tokens
+
+
+@pytest.mark.parametrize(
+    'ids_in,ids_out,multi_mode',
+    [
+        # multi mode should be True if multiple workflows are defined
+        (['a//'], ['a'], False),
+        (['a//', 'b//'], ['a', 'b'], True),
+        # or if pattern matching is used, irrespective of the number of matches
+        (['*//'], ['xxx'], True),
+    ]
+)
+async def test_parse_ids_multi_mode(
+    patch_expand_worklflow_tokens,
+    ids_in,
+    ids_out,
+    multi_mode,
+):
+    workflows, _multi_mode = await parse_ids_async(
+        *ids_in,
+        constraint='workflows',
+        match_workflows=True,
+    )
+    assert list(workflows) == ids_out
+    assert _multi_mode == multi_mode
+
+
+@pytest.fixture
+def src_dir(tmp_path):
+    src_dir = (tmp_path / 'a')
+    src_dir.mkdir()
+    src_file = src_dir / 'flow.cylc'
+    src_file.touch()
+    os.chdir(tmp_path)
+    yield src_dir
+
+
+def test_parse_src_path(src_dir):
+    # valid absolute path
+    workflow_id, src_path, src_file_path = _parse_src_path(
+        str(src_dir.resolve())
+    )
+    assert workflow_id == 'a'
+    assert src_path == src_dir
+    assert src_file_path == src_dir / 'flow.cylc'
+
+    # broken absolute path
+    with pytest.raises(UserInputError):
+        workflow_id, src_path, src_file_path = _parse_src_path(
+            str(src_dir.resolve()) + 'xyz'
+        )
+
+    # valid relative path
+    workflow_id, src_path, src_file_path = _parse_src_path('./a')
+    assert workflow_id == 'a'
+    assert src_path == src_dir
+    assert src_file_path == src_dir / 'flow.cylc'
+
+    # broken relative path
+    with pytest.raises(WorkflowFilesError):
+        _parse_src_path('.')
+
+    # move into the src dir
+    os.chdir(src_dir)
+
+    # relative '.'
+    workflow_id, src_path, src_file_path = _parse_src_path('.')
+    assert workflow_id == 'a'
+    assert src_path == src_dir
+    assert src_file_path == src_dir / 'flow.cylc'
+
+    # relative './<flow-file>'
+    workflow_id, src_path, src_file_path = _parse_src_path('./flow.cylc')
+    assert workflow_id == 'a'
+    assert src_path == src_dir
+    assert src_file_path == src_dir / 'flow.cylc'
+
+
+async def test_parse_ids_src_path(src_dir):
+    workflows, src_path = await parse_ids_async(
+        './a',
+        src=True,
+        constraint='workflows',
+    )
+    assert workflows == {'a': []}

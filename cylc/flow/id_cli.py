@@ -117,7 +117,6 @@ async def parse_ids_async(
                 }) + '//',
                 *ids[1:]
             )
-
     tokens_list.extend(parse_cli(*ids))
 
     if constraint not in {'tasks', 'workflows', 'mixed'}:
@@ -286,7 +285,7 @@ def _batch_tokens_by_workflow(*tokens_list, constraint=None):
     for tokens in tokens_list:
         w_tokens = workflow_tokens.setdefault(tokens['workflow'], [])
         relative_tokens = strip_workflow(tokens)
-        if constraint == 'mixed' and is_null(relative_tokens):
+        if constraint in {'mixed', 'workflows'} and is_null(relative_tokens):
             continue
         w_tokens.append(relative_tokens)
     return workflow_tokens
@@ -334,10 +333,11 @@ async def _expand_workflow_tokens_impl(tokens):
 def _parse_src_path(id_):
     src_path = Path(id_)
     if (
-        id_.startswith(f'{os.curdir}{os.sep}')
+        id_ == os.curdir
+        or id_.startswith(f'{os.curdir}{os.sep}')
         or Path(id_).is_absolute()
     ):
-        src_path.resolve()
+        src_path = src_path.resolve()
         if not src_path.exists():
             raise UserInputError(src_path)
         if src_path.name == 'flow.cylc':  # TODO constantize
