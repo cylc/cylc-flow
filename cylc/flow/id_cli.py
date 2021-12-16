@@ -230,7 +230,8 @@ def _validate_workflow_ids(*tokens_list, src_path):
             raise UserInputError(
                 'Operating on others workflows is not supported'
             )
-        validate_workflow_name(tokens['workflow'])
+        if not src_path:
+            validate_workflow_name(tokens['workflow'])
         if ind == 0 and src_path:
             # source workflow passed in as a path
             pass
