@@ -858,11 +858,6 @@ class Scheduler:
             )
             sep = ', ' if kwargs_string and args_string else ''
             cmdstr = f"{name}({args_string}{sep}{kwargs_string})"
-            # print("moooooo")
-            # if 'tasks' in kwargs:
-            #     import mdb
-            #     print("atttttttatchchhc")
-            #     mdb.debug(ui_server=True)
             try:
                 n_warnings: Optional[int] = self.get_command_method(name)(
                     *args, **kwargs)
