@@ -56,7 +56,7 @@ _RET = (
 
 
 def filter_ids(
-    pool: 'Pool',
+    pools: 'List[Pool]',
     ids: 'Iterable[str]',
     *,
     warn: 'bool' = True,
@@ -133,19 +133,20 @@ def filter_ids(
         if lowest_token == Tokens.Cycle:
             cycle = tokens[Tokens.Cycle.value]
             cycle_sel = tokens.get(Tokens.Cycle.value + '_sel') or '*'
-            for icycle, itasks in pool.items():
-                if not itasks:
-                    continue
-                str_cycle = str(icycle)
-                if not match(str_cycle, cycle):
-                    continue
-                if cycle_sel == '*':
-                    cycles.append(icycle)
-                    continue
-                for itask in itasks.values():
-                    if match(itask.state.status, cycle_sel):
+            for pool in pools:
+                for icycle, itasks in pool.items():
+                    if not itasks:
+                        continue
+                    str_cycle = str(icycle)
+                    if not match(str_cycle, cycle):
+                        continue
+                    if cycle_sel == '*':
                         cycles.append(icycle)
-                        break
+                        continue
+                    for itask in itasks.values():
+                        if match(itask.state.status, cycle_sel):
+                            cycles.append(icycle)
+                            break
 
         # filter by task
         elif lowest_token == Tokens.Task:  # noqa: SIM106
@@ -155,44 +156,45 @@ def filter_ids(
             task = tokens[Tokens.Task.value]
             task_sel_raw = tokens.get(Tokens.Task.value + '_sel')
             task_sel = task_sel_raw or '*'
-            for icycle, itasks in pool.items():
-                str_cycle = str(icycle)
-                if not match(str_cycle, cycle):
-                    continue
-                for itask in itasks.values():
-                    if (
-                        # check cycle selector
-                        (
+            for pool in pools:
+                for icycle, itasks in pool.items():
+                    str_cycle = str(icycle)
+                    if not match(str_cycle, cycle):
+                        continue
+                    for itask in itasks.values():
+                        if (
+                            # check cycle selector
                             (
-                                # disable cycle_sel if not defined if pattern
-                                # matching is turned off
-                                pattern_match is False
-                                and cycle_sel_raw is None
+                                (
+                                    # disable cycle_sel if not defined if
+                                    # pattern matching is turned off
+                                    pattern_match is False
+                                    and cycle_sel_raw is None
+                                )
+                                or match(itask.state.status, cycle_sel)
                             )
-                            or match(itask.state.status, cycle_sel)
-                        )
-                        # check namespace name
-                        and (
-                            # task name
-                            match(itask.tdef.name, task)
-                            # family name
-                            or any(
-                                match(ns, task)
-                                for ns in itask.tdef.namespace_hierarchy
+                            # check namespace name
+                            and (
+                                # task name
+                                match(itask.tdef.name, task)
+                                # family name
+                                or any(
+                                    match(ns, task)
+                                    for ns in itask.tdef.namespace_hierarchy
+                                )
                             )
-                        )
-                        # check task selector
-                        and (
-                            (
-                                # disable task_sel if not defined if pattern
-                                # matching is turned off
-                                pattern_match is False
-                                and task_sel_raw is None
+                            # check task selector
+                            and (
+                                (
+                                    # disable task_sel if not defined if
+                                    # pattern matching is turned off
+                                    pattern_match is False
+                                    and task_sel_raw is None
+                                )
+                                or match(itask.state.status, task_sel)
                             )
-                            or match(itask.state.status, task_sel)
-                        )
-                    ):
-                        tasks.append(itask)
+                        ):
+                            tasks.append(itask)
 
         else:
             raise NotImplementedError
@@ -321,7 +323,7 @@ def test_filter_ids_task_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids(pool, ids)
+    _matched, _not_matched = filter_ids([pool], ids)
     assert [itask.id_ for itask in _matched] == matched
     assert _not_matched == not_matched
 
@@ -382,21 +384,21 @@ def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids(pool, ids, out=Tokens.Cycle)
+    _matched, _not_matched = filter_ids([pool], ids, out=Tokens.Cycle)
     assert _matched == matched
     assert _not_matched == not_matched
 
 
 def test_filter_ids_invalid(caplog):
     """Ensure invalid IDs are handled elegantly."""
-    matched, not_matched = filter_ids({}, ['#'])
+    matched, not_matched = filter_ids([{}], ['#'])
     assert matched == []
     assert not_matched == ['#']
     assert caplog.record_tuples == [
         ('cylc', 30, 'No active tasks matching: #'),
     ]
     caplog.clear()
-    matched, not_matched = filter_ids({}, ['#'], warn=False)
+    matched, not_matched = filter_ids([{}], ['#'], warn=False)
     assert caplog.record_tuples == []
 
 
@@ -410,7 +412,7 @@ def test_filter_ids_pattern_match_off(task_pool):
     )
 
     _matched, _not_matched = filter_ids(
-        pool,
+        [pool],
         ['1/a'],
         out=Tokens.Task,
         pattern_match=True,
@@ -432,7 +434,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
 
     # ensure pattern matching works
     _matched, _not_matched = filter_ids(
-        pool,
+        [pool],
         ids,
         out=Tokens.Task,
         pattern_match=True,
@@ -443,7 +445,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     # ensure pattern matching can be disabled
     caplog.clear()
     _matched, _not_matched = filter_ids(
-        pool,
+        [pool],
         ids,
         out=Tokens.Task,
         pattern_match=False,
@@ -479,7 +481,7 @@ def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
     )
 
     _matched, _not_matched = filter_ids(
-        pool,
+        [pool],
         ids,
         pattern_match=False,
     )

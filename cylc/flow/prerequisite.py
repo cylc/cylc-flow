@@ -66,7 +66,7 @@ class Prerequisite:
         self.target_point_strings = []
 
         # Dictionary of messages pertaining to this prerequisite.
-        # {('task name', 'point string', 'output'): DEP_STATE_X, ...}
+        # {('point string', 'task name', 'output'): DEP_STATE_X, ...}
         self.satisfied = {}
 
         # Expression present only when conditions are used.
@@ -287,5 +287,5 @@ class Prerequisite:
 
         """
         return [f'{point}/{name}' for
-                (name, point, _), satisfied in self.satisfied.items() if
+                (point, name, _), satisfied in self.satisfied.items() if
                 satisfied == self.DEP_STATE_SATISFIED]

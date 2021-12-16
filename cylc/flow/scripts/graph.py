@@ -42,6 +42,7 @@ from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
+from cylc.flow.id import tokenise
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import get_template_vars
@@ -51,32 +52,32 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-def sort_integer_node(item):
+def sort_integer_node(id_):
     """Return sort tokens for nodes with cyclepoints in integer format.
 
     Example:
-        >>> sort_integer_node('foo.11')
+        >>> sort_integer_node('11/foo')
         ('foo', 11)
 
     """
-    name, point = item.split('.')
-    return (name, int(point))
+    tokens = tokenise(id_, relative=True)
+    return (tokens['task'], int(tokens['cycle']))
 
 
-def sort_integer_edge(item):
+def sort_integer_edge(id_):
     """Return sort tokens for edges with cyclepoints in integer format.
 
     Example:
-        >>> sort_integer_edge(('foo.11', 'foo.12', None))
+        >>> sort_integer_edge(('11/foo', '12/foo', None))
         (('foo', 11), ('foo', 12))
-        >>> sort_integer_edge(('foo.11', None , None))
+        >>> sort_integer_edge(('11/foo', None , None))
         (('foo', 11), ('', 0))
 
     """
 
     return (
-        sort_integer_node(item[0]),
-        sort_integer_node(item[1]) if item[1] else ('', 0)
+        sort_integer_node(id_[0]),
+        sort_integer_node(id_[1]) if id_[1] else ('', 0)
     )
 
 

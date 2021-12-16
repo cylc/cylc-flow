@@ -706,7 +706,7 @@ class CylcWorkflowDAO:
     def select_submit_nums(self, name, point):
         """Select submit_num and flow_nums from task_states table.
 
-        Fetch submit number and flow_nums for spawning task name.point.
+        Fetch submit number and flow_nums for spawning task point/name.
         Return:
         {
             flow_nums: submit_num,

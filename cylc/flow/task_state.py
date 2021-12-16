@@ -519,6 +519,5 @@ class TaskState:
             for key, val in prereq.satisfied.items():
                 if val:
                     continue
-                name, point, output = key
-                unsat.append((name, point, output))
+                unsat.append(key)
         return unsat

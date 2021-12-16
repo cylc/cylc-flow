@@ -93,7 +93,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
         task identifier (str):
             A task identifier in the format ``task.cycle-point``
-            e.g. ``foo.1`` or ``bar.20000101T0000Z``.
+            e.g. ``1/foo`` or ``20000101T0000Z/bar``.
 
         .. _task globs:
 

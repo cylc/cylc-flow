@@ -681,7 +681,7 @@ class Workflow(ObjectType):
             ID,
             description=sstrip('''
                 Node IDs, cycle point and/or-just family/task namespace:
-                    ["foo.1234", "1234|foo", "FAM.1234", "FAM.*"]
+                    ["1234/foo", "1234/FAM", "*/FAM"]
             '''),
             default_value=[]),
         resolver=resolve_broadcasts)

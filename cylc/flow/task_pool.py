@@ -369,7 +369,7 @@ class TaskPool:
 
     def load_abs_outputs_for_restart(self, row_idx, row):
         cycle, name, output = row
-        self.abs_outputs_done.add((name, cycle, output))
+        self.abs_outputs_done.add((cycle, name, output))
 
     def load_db_task_pool_for_restart(self, row_idx, row):
         """Load tasks from DB task pool/states/jobs tables.
@@ -485,7 +485,7 @@ class TaskPool:
                 "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
-        LOG.info("+ %s.%s %s" % (name, cycle, ctx_key))
+        LOG.info("+ %s/%s %s" % (cycle, name, ctx_key))
         if ctx_key == "poll_timer":
             itask = self._get_main_task_by_id(id_)
             if itask is None:
@@ -1106,6 +1106,7 @@ class TaskPool:
             name_str = tokens['task'] or '*'
             # TODO: handle both independently
             status = tokens['cycle_sel'] or tokens['task_sel']
+            # TODO: use regex
             if status or ('*' in item) or ('?' in item) or ('[' in item):
                 # Glob or task state was not matched by active tasks
                 LOG.warning(f"No active tasks matching: {item}")
@@ -1188,7 +1189,7 @@ class TaskPool:
         for c_name, c_point, is_abs in children:
             if is_abs:
                 self.abs_outputs_done.add(
-                    (itask.tdef.name, str(itask.point), output))
+                    (str(itask.point), itask.tdef.name, output))
                 self.workflow_db_mgr.put_insert_abs_output(
                     str(itask.point), itask.tdef.name, output)
                 self.workflow_db_mgr.process_queued_ops()
@@ -1228,15 +1229,17 @@ class TaskPool:
             if c_task is not None:
                 # Update downstream prerequisites directly.
                 if is_abs:
-                    # Update existing children spawned by other tasks.
-                    tasks, *_ = self.filter_task_proxies([c_name])
+                    tasks, *_ = self.filter_task_proxies(
+                        [f'*/{c_name}'],
+                        warn=False,
+                    )
                     if c_task not in tasks:
                         tasks.append(c_task)
                 else:
                     tasks = [c_task]
                 for t in tasks:
                     t.state.satisfy_me({
-                        (itask.tdef.name, str(itask.point), output)
+                        (str(itask.point), itask.tdef.name, output)
                     })
                     self.data_store_mgr.delta_task_prerequisite(t)
                     # Add it to the hidden pool or move it to the main pool.
@@ -1325,12 +1328,12 @@ class TaskPool:
             # Attempted manual trigger prior to FCP
             # or future triggers like foo[+P1] => bar, with foo at ICP.
             LOG.debug(
-                'Not spawning %s.%s: before initial cycle point', name, point)
+                'Not spawning %s/%s: before initial cycle point', point, name)
             return False
         elif self.config.final_point and point > self.config.final_point:
             # Only happens on manual trigger beyond FCP
             LOG.debug(
-                'Not spawning %s.%s: beyond final cycle point', name, point)
+                'Not spawning %s/%s: beyond final cycle point', point, name)
             return False
         return True
 
@@ -1340,7 +1343,7 @@ class TaskPool:
         point: 'PointBase',
         flow_nums: Set[int],
     ) -> Optional[TaskProxy]:
-        """Spawn name.point. Return the spawned task, or None."""
+        """Spawn point/name. Return the spawned task, or None."""
         if not self.can_spawn(name, point):
             return None
 
@@ -1359,7 +1362,7 @@ class TaskPool:
             if set.intersection(flow_nums, set(json.loads(f_id))):
                 # To avoid "conditional reflow" with (e.g.) "foo | bar => baz".
                 LOG.warning(
-                    f"Task {name}.{point} already spawned in {flow_nums}"
+                    f"Task {point}/{name} already spawned in {flow_nums}"
                 )
                 return None
 
@@ -1655,7 +1658,7 @@ class TaskPool:
         self,
         ids: Iterable[str],
         warn: bool = True,
-        future: bool = True,
+        future: bool = False,
     ) -> 'Tuple[List[TaskProxy], Set[Tuple[str, PointBase]], List[str]]':
         """Return task proxies that match names, points, states in items.
 
@@ -1671,7 +1674,7 @@ class TaskPool:
         Return (itasks, bad_items).
         """
         matched, unmatched = filter_ids(
-            self.main_pool,
+            [self.main_pool, self.hidden_pool],
             ids,
             warn=warn,
         )

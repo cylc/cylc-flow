@@ -81,8 +81,8 @@ Examples:
     $ cylc play --start-cycle-point=20250101T0000Z WORKFLOW
 
     # Start a new run from specified tasks in the graph
-    $ cylc play --start-task=foo.3 WORKFLOW
-    $ cylc play -t foo.3 -t bar.3 WORKFLOW
+    $ cylc play --start-task=3/foo WORKFLOW
+    $ cylc play -t 3/foo -t 3/bar WORKFLOW
 
     # Start, restart or resume the second installed run of the workflow
     # "dogs/fido"
