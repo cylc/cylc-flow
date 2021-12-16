@@ -436,8 +436,11 @@ class TaskPool:
             sat = {}
             for prereq_name, prereq_cycle, prereq_output, satisfied in (
                     self.workflow_db_mgr.pri_dao.select_task_prerequisites(
-                        cycle, name)):
-                key = (prereq_name, prereq_cycle, prereq_output)
+                        cycle,
+                        name,
+                    )
+            ):
+                key = (prereq_cycle, prereq_name, prereq_output)
                 sat[key] = satisfied if satisfied != '0' else False
 
             for itask_prereq in itask.state.prerequisites:
@@ -974,12 +977,12 @@ class TaskPool:
             if get_point(point) > self.stop_point:
                 continue
             for pre in itask.state.get_unsatisfied_prerequisites():
-                name, point, output = pre
+                point, name, output = pre
                 if get_point(point) > self.stop_point:
                     continue
                 if itask.identity not in unsat:
                     unsat[itask.identity] = []
-                unsat[itask.identity].append(f"{name}.{point}:{output}")
+                unsat[itask.identity].append(f"{point}/{name}:{output}")
         if unsat:
             LOG.warning(
                 "Unsatisfied prerequisites:\n"
@@ -1226,7 +1229,7 @@ class TaskPool:
                 # Update downstream prerequisites directly.
                 if is_abs:
                     # Update existing children spawned by other tasks.
-                    tasks, _ = self.filter_task_proxies([c_name])
+                    tasks, *_ = self.filter_task_proxies([c_name])
                     if c_task not in tasks:
                         tasks.append(c_task)
                 else:
@@ -1477,7 +1480,7 @@ class TaskPool:
 
     def remove_tasks(self, items):
         """Remove tasks from the pool."""
-        itasks, bad_items = self.filter_task_proxies(items)
+        itasks, _, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             self.remove(itask, 'request')
         return len(bad_items)

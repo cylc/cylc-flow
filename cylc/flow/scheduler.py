@@ -952,14 +952,14 @@ class Scheduler:
         """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
             return
-        itasks, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(items or ['*/*'])
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
         # (Could filter itasks by state here if needed)
         return len(bad_items)
 
     def command_kill_tasks(self, items=None):
         """Kill all tasks or a task/family if options are provided."""
-        itasks, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):

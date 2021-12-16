@@ -47,7 +47,7 @@ class Prerequisite:
 
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self.satisfied[("%s", "%s", "%s")])'
-    MESSAGE_TEMPLATE = '%s.%s %s'
+    MESSAGE_TEMPLATE = '%s/%s %s'
 
     DEP_STATE_SATISFIED = 'satisfied naturally'
     DEP_STATE_OVERRIDDEN = 'force satisfied'
@@ -90,7 +90,7 @@ class Prerequisite:
             pre_initial (bool): this is a pre-initial dependency.
 
         """
-        message = (name, str(point), output)
+        message = (str(point), name, output)
 
         # Add a new prerequisite as satisfied if pre-initial, else unsatisfied.
         if pre_initial:
@@ -126,14 +126,14 @@ class Prerequisite:
             # Add 'foo' to the 'satisfied' dict before 'xfoo'.
             >>> preq = Prerequisite(1)
             >>> preq.satisfied = {
-            ...    ('foo', '1', 'succeeded'): False,
-            ...    ('xfoo', '1', 'succeeded'): False
+            ...    ('1', 'foo', 'succeeded'): False,
+            ...    ('1', 'xfoo', 'succeeded'): False
             ... }
             >>> preq.set_condition("foo.1 succeeded|xfoo.1 succeeded")
             >>> expr = preq.conditional_expression
             >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
-            ['bool(self.satisfied[("foo", "1", "succeeded")])',
-            'bool(self.satisfied[("xfoo", "1", "succeeded")])']
+            ['bool(self.satisfied[("1", "foo", "succeeded")])',
+            'bool(self.satisfied[("1", "xfoo", "succeeded")])']
 
         """
         self._all_satisfied = None
@@ -217,7 +217,7 @@ class Prerequisite:
         conds = []
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
-            name, point = message_tuple[0:2]
+            point, name = message_tuple[0:2]
             t_id = detokenise({
                 **workflow_tokens,
                 'cycle': str(point),
@@ -283,9 +283,9 @@ class Prerequisite:
     def get_resolved_dependencies(self):
         """Return a list of satisfied dependencies.
 
-        E.G: ['foo.1', 'bar.2']
+        E.G: ['1/foo', '2/bar']
 
         """
-        return [f'{name}.{point}' for
+        return [f'{point}/{name}' for
                 (name, point, _), satisfied in self.satisfied.items() if
                 satisfied == self.DEP_STATE_SATISFIED]
