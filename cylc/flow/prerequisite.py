@@ -203,7 +203,7 @@ class Prerequisite:
                 self._all_satisfied = self._conditional_is_satisfied()
         return relevant_messages
 
-    def api_dump(self, workflow_tokens):
+    def api_dump(self):
         """Return list of populated Protobuf data objects."""
         if not self.satisfied:
             return None
@@ -218,11 +218,13 @@ class Prerequisite:
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             point, name = message_tuple[0:2]
-            t_id = detokenise({
-                **workflow_tokens,
-                'cycle': str(point),
-                'task': name,
-            })
+            t_id = detokenise(
+                {
+                    'cycle': str(point),
+                    'task': name,
+                },
+                relative=True,
+            )
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]

@@ -139,7 +139,10 @@ def graph_workflow(
         if show_suicide or not suicide
     )
     for node in sorted(set(nodes), key=node_sort):
-        write('node "%s" "%s"' % (node, node.replace('.', r'\n')))
+        tokens = tokenise(node, relative=True)
+        write(
+            f'node "{node}" "{tokens["task"]}\\n{tokens["cycle"]}"'
+        )
 
     write('stop')
 
@@ -292,7 +295,7 @@ def dot(opts, lines):
                 task = match.group(1)
                 cycle = ''
             else:
-                task, cycle = match.group(1).split('.')
+                cycle, task = match.group(1).split('/')
                 nodes.setdefault(cycle, []).append(task)
             continue
         match = edge.match(line)

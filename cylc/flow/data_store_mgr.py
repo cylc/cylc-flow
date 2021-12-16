@@ -884,7 +884,7 @@ class DataStoreMgr:
 
         for prereq in itask.state.prerequisites:
             # Protobuf messages populated within
-            prereq_obj = prereq.api_dump(self.id_)
+            prereq_obj = prereq.api_dump()
             if prereq_obj:
                 tproxy.prerequisites.append(prereq_obj)
 
@@ -1724,7 +1724,7 @@ class DataStoreMgr:
         prereq_list = []
         for prereq in itask.state.prerequisites:
             # Protobuf messages populated within
-            prereq_obj = prereq.api_dump(self.id_)
+            prereq_obj = prereq.api_dump()
             if prereq_obj:
                 prereq_list.append(prereq_obj)
         del tp_delta.prerequisites[:]

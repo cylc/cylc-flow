@@ -1,8 +1,10 @@
 [meta]
     title = "Test workflow for task state change on poll result."
-    description = """Task A fails silently - it will be stuck in 'running'
-unless polled. Task B then polls A to find it has failed, allowing A to
-suicide via a :fail trigger, and the workflow to shut down successfully."""
+    description = """
+        Task A fails silently - it will be stuck in 'running'
+        unless polled. Task B then polls A to find it has failed, allowing A to
+        suicide via a :fail trigger, and the workflow to shut down successfully.
+    """
 
 [scheduler]
    [[events]]
@@ -22,7 +24,7 @@ suicide via a :fail trigger, and the workflow to shut down successfully."""
            exit 1
         """
     [[b]]
-        script = cylc poll "$CYLC_WORKFLOW_ID" 'a'
+        script = cylc poll "$CYLC_WORKFLOW_ID//*/a"
     [[handled]]
         # (allows a:fail to be removed as handled)
         script = true

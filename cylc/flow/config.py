@@ -1891,10 +1891,10 @@ class WorkflowConfig:
             lname, lpoint = l_id
             lret = detokenise(
                 {
-                    'cycle': lpoint,
+                    'cycle': str(lpoint),
                     'task': lname,
                 },
-                relative=True
+                relative=True,
             )
         rret = None
         rname, rpoint = None, None
@@ -1902,10 +1902,10 @@ class WorkflowConfig:
             rname, rpoint = r_id
             rret = detokenise(
                 {
-                    'cycle': rpoint,
+                    'cycle': str(rpoint),
                     'task': rname,
                 },
-                relative=True
+                relative=True,
             )
 
         for fam_name, fam_members in clf_map.items():
