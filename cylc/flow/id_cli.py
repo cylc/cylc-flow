@@ -113,7 +113,7 @@ async def parse_ids_async(
             ids = (
                 detokenise({
                     'user': None,
-                    'workflow': workflow_id
+                    'workflow': workflow_id,
                 }) + '//',
                 *ids[1:]
             )

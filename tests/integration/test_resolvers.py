@@ -18,7 +18,8 @@ from typing import Callable
 import pytest
 from unittest.mock import Mock
 
-from cylc.flow.data_store_mgr import ID_DELIM, EDGES, TASK_PROXIES
+from cylc.flow.data_store_mgr import EDGES, TASK_PROXIES
+from cylc.flow.id import detokenise
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import parse_node_id
 from cylc.flow.scheduler import Scheduler
@@ -144,7 +145,12 @@ async def test_get_nodes_by_ids(mock_flow, node_args):
 async def test_get_node_by_id(mock_flow, node_args):
     """Test method returning a workflow node message
     who's ID is a match to that given."""
-    node_args['id'] = f'me{ID_DELIM}mine{ID_DELIM}20500808T00{ID_DELIM}jin'
+    node_args['id'] = detokenise({
+        'user': 'me',
+        'workflow': 'mine',
+        'cycle': '20500808T00',
+        'task': 'jin',
+    })
     node_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
     node = await mock_flow.resolvers.get_node_by_id(TASK_PROXIES, node_args)
     assert node is None

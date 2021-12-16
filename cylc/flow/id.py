@@ -611,6 +611,7 @@ def pop_token(tokens: TokensDict) -> Tuple[str, str]:
         token_name = token.value
         value = tokens.get(token_name)
         if value:
+            tokens.pop(token_name)
             return (token_name, value)
     raise KeyError('No defined tokens.')
 

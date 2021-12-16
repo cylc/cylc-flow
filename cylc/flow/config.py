@@ -692,7 +692,7 @@ class WorkflowConfig:
             self.start_point = min(
                 get_point(cycle).standardise()
                 for cycle in [
-                    tokenise(taskid)['cycle']
+                    tokenise(taskid, relative=True)['cycle']
                     for taskid in self.options.starttask
                 ]
                 if cycle
@@ -833,14 +833,14 @@ class WorkflowConfig:
                     err_msg += '  %s => %s' % (
                         detokenise(
                             {
-                                'cycle': lhs[1],
+                                'cycle': str(lhs[1]),
                                 'task': lhs[0]
                             },
                             relative=True
                         ),
                         detokenise(
                             {
-                                'cycle': rhs[1],
+                                'cycle': str(rhs[1]),
                                 'task': rhs[0]
                             },
                             relative=True

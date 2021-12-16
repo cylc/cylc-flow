@@ -33,10 +33,16 @@ Opts = Options(get_option_parser())
     [
         (Opts(), ['*'], None),
         (Opts(hold_point_string='2'), [], None),
-        (Opts(hold_point_string='2'), ['*'],
-         (UserInputError, "Cannot combine --after with TASK_GLOB")),
-        (Opts(), [],
-         (UserInputError, "Missing arguments: TASK_GLOB")),
+        (
+            Opts(hold_point_string='2'),
+            ['*'],
+            (UserInputError, "Cannot combine --after with Cylc/Task ID")
+        ),
+        (
+            Opts(),
+            [],
+            (UserInputError, "Must define Cycles/Tasks")
+        ),
     ]
 )
 def test_validate(

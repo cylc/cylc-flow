@@ -104,11 +104,11 @@ def _validate(options: 'Values', *tokens_list: str) -> None:
     """Check combination of options and task globs is valid."""
     if options.release_all:
         if tokens_list:
-            raise UserInputError("Cannot combine --all with defined tasks")
+            raise UserInputError("Cannot combine --all with Cycle/Task IDs")
     else:
         if not tokens_list:
             raise UserInputError(
-                'Must provide one or more tasks to release or use --all.'
+                "Must define Cycles/Tasks. See `cylc release --help`."
             )
 
 

@@ -122,12 +122,12 @@ def _validate(options: 'Values', *task_globs: str) -> None:
     if options.hold_point_string:
         if task_globs:
             raise UserInputError(
-                "Cannot combine --after with TASK_GLOB(s).\n"
+                "Cannot combine --after with Cylc/Task IDs.\n"
                 "`cylc hold --after` holds all tasks after the given "
                 "cycle point.")
     elif not task_globs:
         raise UserInputError(
-            "Missing arguments: TASK_GLOB [...]. See `cylc hold --help`.")
+            "Must define Cycles/Tasks. See `cylc hold --help`.")
 
 
 async def run(options, workflow_id, *tokens_list):
