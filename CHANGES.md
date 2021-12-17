@@ -83,6 +83,12 @@ are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
 
+[#4553](https://github.com/cylc/cylc-flow/pull/4553) - Add job submit time
+to the datastore.
+
+[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent `runN` and
+`run<number>` being allowed as installation target names.
+
 [#4526](https://github.com/cylc/cylc-flow/pull/4526),
 [#4549](https://github.com/cylc/cylc-flow/pull/4549) - Prevent installing
 workflows with directory names that include reserved filenames such as

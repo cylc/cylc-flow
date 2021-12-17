@@ -224,18 +224,16 @@ def load_json(file1, file2=None):
     """
     try:
         this = json.loads(file1)
-    except json.decoder.JSONDecodeError:
-        sys.exit('Syntax error in file1')
-        raise
+    except json.decoder.JSONDecodeError as exc:
+        sys.exit(f'Syntax error in file1: {exc}')
 
     try:
         if file2:
             that = json.loads(file2)
         else:
             that = json.load(sys.stdin)
-    except json.decoder.JSONDecodeError:
-        sys.exit('Syntax error in file2')
-        raise
+    except json.decoder.JSONDecodeError as exc:
+        sys.exit(f'Syntax error in file2: {exc}')
 
     return this, that
 

@@ -49,8 +49,12 @@ query {
   workflows {
     name
     isHeldTotal
-    taskProxies(isHeld: false) {
+    taskProxies(isHeld: true) {
       id
+      jobs {
+        submittedTime 
+        startedTime
+      }
     }
     familyProxies(exids: [\"root\"], isHeld: true) {
       id
@@ -69,14 +73,28 @@ run_ok "${TEST_NAME_BASE}-contact" cylc get-contact "${WORKFLOW_NAME}"
 # stop workflow
 cylc stop --max-polls=10 --interval=2 --kill "${WORKFLOW_NAME}"
 
+RESPONSE="${TEST_NAME_BASE}-is-held-arg.stdout" 
+perl -pi -e 's/("submittedTime":).*$/${1} "blargh",/' "${RESPONSE}"
+perl -pi -e 's/("startedTime":).*$/${1} "blargh"/' "${RESPONSE}"
+
 # compare to expectation
-cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-is-held-arg.stdout" << __HERE__
+cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
 {
     "workflows": [
         {
             "name": "${WORKFLOW_NAME}",
             "isHeldTotal": 1,
-            "taskProxies": [],
+            "taskProxies": [
+                {
+                    "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}1${ID_DELIM}foo",
+                    "jobs": [
+                        {
+                            "submittedTime": "blargh",
+                            "startedTime": "blargh"
+                        }
+                    ]
+                }
+            ],
             "familyProxies": [
                 {
                     "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}1${ID_DELIM}BAZ"
