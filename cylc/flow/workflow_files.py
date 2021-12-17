@@ -407,10 +407,12 @@ def _is_process_running(
 
     """
     # See if the process is still running or not.
-    cmd = ['cylc', 'psutil']
     metric = f'[["Process", {pid}]]'
     if is_remote_host(host):
+        cmd = ['psutil']
         cmd = _construct_ssh_cmd(cmd, host)
+    else:
+        cmd = ['cylc', 'psutil']
     proc = Popen(  # nosec
         cmd,
         stdin=PIPE,
