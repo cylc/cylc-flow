@@ -41,10 +41,10 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
             cylc__job__poll_grep_workflow_log -E 'cat21/ .* spawned'
             cylc__job__poll_grep_workflow_log -E 'dog11/ .* spawned'
             cylc__job__poll_grep_workflow_log -E 'dog21/ .* spawned'
-            cylc hold ${CYLC_WORKFLOW_ID} '1/*FF'  # inexact fam
-            cylc hold ${CYLC_WORKFLOW_ID} '1/TOAST'  # exact fam
-            cylc hold ${CYLC_WORKFLOW_ID} '1/cat*'  # inexact tasks
-            cylc hold ${CYLC_WORKFLOW_ID} '1/dog1'  # exact tasks
+            cylc hold "${CYLC_WORKFLOW_ID}//1/*FF"  # inexact fam
+            cylc hold "${CYLC_WORKFLOW_ID}//1/TOAST"  # exact fam
+            cylc hold "${CYLC_WORKFLOW_ID}//1/cat*"  # inexact tasks
+            cylc hold "${CYLC_WORKFLOW_ID}//1/dog1"  # exact tasks
         """
     [[STUFF]]
     [[TOAST]]

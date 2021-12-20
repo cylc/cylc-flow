@@ -98,7 +98,6 @@ def main(
     else:
         (workflow_id,), _ = parse_ids(
             workflow_id,
-            warn_depr=False,  # TODO needed?
             constraint='workflows',
             max_workflows=1,
         )

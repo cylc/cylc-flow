@@ -54,7 +54,7 @@ f2, 2016, waiting
 __END__
 
 # Check broadcast of xtrigger outputs to dependent tasks.
-JOB_LOG="$(cylc cat-log -f 'j' -m 'p' "${WORKFLOW_NAME}" '2015/f1')"
+JOB_LOG="$(cylc cat-log -f 'j' -m 'p' "${WORKFLOW_NAME}//2015/f1")"
 contains_ok "${JOB_LOG}" << __END__
     upstream_task="foo"
     upstream_point="2015"

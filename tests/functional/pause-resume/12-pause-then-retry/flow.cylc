@@ -22,7 +22,7 @@
             cylc__job__poll_grep_workflow_log -F 'Command succeeded: pause'
 
             # Poll t-submit-retry-able, should return submit-fail
-            cylc poll "${CYLC_WORKFLOW_ID}" 't-submit-retry-able'
+            cylc poll "${CYLC_WORKFLOW_ID}//*/t-submit-retry-able"
             # Allow t-retry-able to continue
             rm -f "${CYLC_WORKFLOW_RUN_DIR}/file"
 

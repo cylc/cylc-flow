@@ -30,13 +30,14 @@ mkdir -p "${PWD}/${SOURCE_DIR_1}"
 pushd "${SOURCE_DIR_1}" || exit 1
 touch flow.cylc
 
-run_ok "${TEST_NAME}" cylc install
+run_ok "${TEST_NAME}" cylc install '.'
 popd || exit 1
 SOURCE_DIR_2="test-install-${CYLC_TEST_TIME_INIT}2/${TEST_NAME_BASE}"
 mkdir -p "${PWD}/${SOURCE_DIR_2}"
 pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
-run_fail "${TEST_NAME}" cylc install
+run_fail "${TEST_NAME}" cylc install '.'
+exit
 
 grep_ok "previous installations were from" "${TEST_NAME}.stderr"
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"

@@ -1,9 +1,9 @@
-edge "1/foo" "bar11/"
-edge "1/foo" "bar21/"
-edge "1/foo" "bar31/"
+edge "1/foo" "1/bar1"
+edge "1/foo" "1/bar2"
+edge "1/foo" "1/bar3"
 graph
-node "bar11/" "bar1\n1"
-node "bar21/" "bar2\n1"
-node "bar31/" "bar3\n1"
+node "1/bar1" "bar1\n1"
+node "1/bar2" "bar2\n1"
+node "1/bar3" "bar3\n1"
 node "1/foo" "foo\n1"
 stop

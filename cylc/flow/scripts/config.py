@@ -124,6 +124,9 @@ def main(
     *ids,
 ) -> None:
     if not ids:
+        if options.print_hierarchy:
+            print("\n".join(get_config_file_hierarchy()))
+            return
         glbl_cfg().idump(
             options.item,
             not options.defaults,

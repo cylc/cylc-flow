@@ -20,12 +20,12 @@ sleep 60
         inherit=KILLABLE
     [[killer]]
         script="""
-cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_workflow_log -F '[killable-1.1] -triggered'
-cylc__job__poll_grep_workflow_log -F '[killable-2.1] -triggered'
-cylc__job__poll_grep_workflow_log -F '[killable-3.1] -triggered'
-# (Avoid killing myself if my started message hasn't arrived yet:)
-cylc kill "${CYLC_WORKFLOW_ID}" 'killable*:submitted'
-"""
+            cylc__job__wait_cylc_message_started
+            cylc__job__poll_grep_workflow_log -F '[killable-1.1] -triggered'
+            cylc__job__poll_grep_workflow_log -F '[killable-2.1] -triggered'
+            cylc__job__poll_grep_workflow_log -F '[killable-3.1] -triggered'
+            # (Avoid killing myself if my started message hasn't arrived yet:)
+            cylc kill "${CYLC_WORKFLOW_ID}//*/killable*:submitted'
+        """
     [[stopper]]
         script=cylc stop "${CYLC_WORKFLOW_ID}"

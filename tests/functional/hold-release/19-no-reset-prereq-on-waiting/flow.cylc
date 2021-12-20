@@ -17,10 +17,10 @@
     [[holder]]
         script = """
             cylc__job__poll_grep_workflow_log -E '1/t1 .* spawned'
-            cylc hold "${CYLC_WORKFLOW_ID}1/t1"
+            cylc hold "${CYLC_WORKFLOW_ID}//1/t1"
         """
     [[releaser]]
         script = """
             cylc__job__wait_cylc_message_started
-            cylc release "${CYLC_WORKFLOW_ID}/1/t1"
+            cylc release "${CYLC_WORKFLOW_ID}//1/t1"
         """

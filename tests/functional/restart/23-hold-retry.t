@@ -37,7 +37,7 @@ WORKFLOW_PID=$!
 
 poll_grep_workflow_log -F 'INFO - + t1.1 waiting (held)'
 
-run_ok "${TEST_NAME_BASE}-release" cylc release "${WORKFLOW_NAME}" t1.1
+run_ok "${TEST_NAME_BASE}-release" cylc release "${WORKFLOW_NAME}//1/t1"
 
 poll_grep_workflow_log -F 'INFO - DONE'
 

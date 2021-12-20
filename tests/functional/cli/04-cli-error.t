@@ -32,7 +32,7 @@ __CONFIG__
 # "cylc trigger --meta" requires --reflow
 TEST_NAME="set-trigger-fail"
 run_fail "${TEST_NAME}"  \
-    cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}"  1/foo
+    cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}//1/foo"
 contains_ok "${TEST_NAME}".stderr <<__END__
 cylc: error: --meta requires --reflow
 __END__

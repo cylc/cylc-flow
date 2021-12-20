@@ -17,7 +17,7 @@
     [[poll_foo]]
         script = """
            cylc__job__wait_cylc_message_started
-           cylc poll "$CYLC_WORKFLOW_ID" 'foo'
+           cylc poll "$CYLC_WORKFLOW_ID//*/foo"
         """
     [[stop]]
         script = cylc stop $CYLC_WORKFLOW_ID

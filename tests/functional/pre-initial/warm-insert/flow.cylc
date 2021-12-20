@@ -26,5 +26,5 @@
     [[foo,bar]]
     [[inserter]]
         script = """
-            cylc trigger --reflow --meta="other" $CYLC_WORKFLOW_ID 20100101T1200Z/foo
+            cylc trigger --reflow --meta="other" "$CYLC_WORKFLOW_ID//20100101T1200Z/foo"
         """
