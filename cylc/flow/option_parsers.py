@@ -173,13 +173,16 @@ TASK_GLOB matches task or family names at a given cycle point.
         color: bool = True,
         segregated_log: bool = False
     ) -> None:
-
         self.auto_add = auto_add
         if argdoc is None:
             if prep:
                 argdoc = [('WORKFLOW | PATH', 'Workflow ID or path')]
             else:
                 argdoc = [('WORKFLOW', 'Workflow ID')]
+
+        # Allow colour only in an interactive shell:
+        if not sys.stdin.isatty():
+            color = False
 
         if '--color=never' not in '='.join(sys.argv[2:]):
             # Before option parsing, for `--help`, make comments grey in usage.
