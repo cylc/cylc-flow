@@ -342,11 +342,9 @@ async def run(options: 'Values', workflow_id):
     if options.show or options.showtask:
         if options.showtask:
             try:
-                showtask = options.showtask
-                if not showtask.startswith('//'):
-                    showtask = f'//{showtask}'
-                query_kwargs['variables']['nIds'] = [showtask]
+                query_kwargs['variables']['nIds'] = [options.showtask]
             except ValueError:
+                # TODO validate showtask?
                 raise UserInputError("TASKID must be cycle/taask")
         result = await pclient.async_request('graphql', query_kwargs)
         for wflow in result['workflows']:
@@ -428,10 +426,10 @@ async def run(options: 'Values', workflow_id):
                 )
             )
 
-    ret['stderr'].append(
-        report_bad_options(bad_options, is_set=report_set)
-    )
-    ret['exit'] = 1
+    bad_opts = report_bad_options(bad_options, is_set=report_set)
+    if bad_opts:
+        ret['stderr'].append(f'ERROR: {bad_opts}')
+        ret['exit'] = 1
     return ret
 
 

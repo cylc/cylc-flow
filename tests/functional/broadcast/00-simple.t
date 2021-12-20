@@ -22,7 +22,6 @@ set_test_number 5
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-# Debug mode not needed here (and set-x w/ XTRACEFD broken some bash versions)
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --no-detach --reference-test "${WORKFLOW_NAME}"
 sort "${WORKFLOW_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'

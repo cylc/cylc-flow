@@ -26,20 +26,20 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 grep_ok 'INFO - Workflow shutting down - REQUEST(NOW-NOW)' "${LOGD}/workflow/log"
 grep_ok 'WARNING - Orphaned task jobs' "${LOGD}/workflow/log"
-grep_ok '\* t1.1 (running)' "${LOGD}/workflow/log"
+grep_ok '\* 1/t1 (running)' "${LOGD}/workflow/log"
 JLOGD="${LOGD}/job/1/t1/01"
-# Check that t1.1 event handler runs
+# Check that 1/t1 event handler runs
 run_fail "${TEST_NAME_BASE}-activity-log-succeeded" \
     grep -q -F \
-    "[(('event-handler-00', 'succeeded'), 1) out] Well done t1.1 succeeded" \
+    "[(('event-handler-00', 'succeeded'), 1) out] Well done 1/t1 succeeded" \
     "${JLOGD}/job-activity.log"
 run_fail "${TEST_NAME_BASE}-activity-log-started" \
     grep -q -F \
-    "[(('event-handler-00', 'started'), 1) out] Hello t1.1 started" \
+    "[(('event-handler-00', 'started'), 1) out] Hello 1/t1 started" \
     "${JLOGD}/job-activity.log"
-# Check that t2.1 did not run
+# Check that 1/t2 did not run
 exists_fail "${LOGD}/job/1/t2"
-# In SoD the restart does not stall and abort, because t1.1:failed can be removed
+# In SoD the restart does not stall and abort, because 1/t1:failed can be removed
 # as handled.
 workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play --no-detach "${WORKFLOW_NAME}"
 purge
