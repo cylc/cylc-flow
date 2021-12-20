@@ -61,7 +61,6 @@ job poll and kill commands, however, will be executed prior to shutdown, unless
 This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for workflow shutdown."""
 
-import asyncio
 from functools import partial
 import sys
 from typing import TYPE_CHECKING
@@ -190,9 +189,9 @@ async def run(
     stop_task = stop_cycle = None
     if tokens_list:
         tokens = tokens_list[0]
-        if 'task' in tokens:
+        if tokens.get('task'):
             stop_task = detokenise(strip_workflow(tokens))
-        else:
+        elif tokens.get('cycle'):
             stop_cycle = tokens['cycle']
 
     # handle orthogonal options

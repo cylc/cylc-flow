@@ -906,14 +906,7 @@ class Scheduler:
         elif task:
             # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
-
-            try:
-                tokenise(task_id, relative=True)
-            except ValueError:
-                # TODO: yield warning
-                pass
-            else:
-                self.pool.set_stop_task(task_id)
+            self.pool.set_stop_task(task_id)
         else:
             # immediate shutdown
             with suppress(KeyError):

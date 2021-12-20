@@ -42,15 +42,13 @@ NN = "NN"
 
 def get_task_job_log(workflow, point, name, submit_num=None, suffix=None):
     """Return the full job log path."""
-    if point == '*':  # TODO remove
-        raise Exception('Buggered!')
     args = [
         get_workflow_run_job_dir(workflow),
         detokenise(
             {
                 'cycle': str(point),
                 'task': name,
-                'job': submit_num,
+                'job': submit_num or NN,
             },
             relative=True,
         )
