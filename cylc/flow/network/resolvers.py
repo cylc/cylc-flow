@@ -41,6 +41,7 @@ from cylc.flow.data_store_mgr import (
 )
 from cylc.flow.id import (
     detokenise,
+    is_null,
     strip_task,
     tokenise,
 )
@@ -166,27 +167,31 @@ def get_state_from_selectors(tokens):
             return tokens[selector]
 
 
-def node_ids_filter(tokens, items) -> bool:
+def node_ids_filter(tokens, state, items) -> bool:
     """Match id arguments with node attributes."""
     return any(
         (
-            (
+            # don't match an empty string (globs should be implicit)
+            not is_null(item)
+            # match cycle point
+            and (
                 not item['cycle']
                 or fnmatchcase(tokens['cycle'], item['cycle'])
             )
-            and any(
-                fnmatchcase(nn, item['task'])
-                for nn in tokens['task']
+            # match namespace name
+            and (
+                not item['task']
+                or fnmatchcase(tokens['task'], item['task'])
             )
+            # match job
             and (
                 not item['job']
-                or fnmatchcase(tokens['job'], item['job']))
+                or fnmatchcase(tokens['job'], item['job'])
+            )
+            # match cycle/task/job state
             and (
-                not get_state_from_selectors(item)
-                or (
-                    get_state_from_selectors(tokens) ==
-                    get_state_from_selectors(item)
-                )
+                not state
+                or get_state_from_selectors(item) == state
             )
         )
         for item in uniq(items)
@@ -195,15 +200,8 @@ def node_ids_filter(tokens, items) -> bool:
 
 def node_filter(node, node_type, args):
     """Filter nodes based on attribute arguments"""
-    # Updated delta nodes don't contain name but still need filter
     tokens = tokenise(node.id)
-    state = get_state_from_selectors(tokens)
-    if not node.name:
-        tokens['task'] = [tokens['task']]
-    else:
-        state = getattr(node, 'state', None),
-    # The n_atts (node attributes) list contains ordered node values
-    # or defaults (see collate function for index item).
+    state = getattr(node, 'state', None)
     return (
         (
             args.get('ghosts') or state
@@ -235,11 +233,11 @@ def node_filter(node, node_type, args):
         # Now filter node against id arg lists
         and (
             not args.get('ids')
-            or node_ids_filter(tokens, args['ids'])
+            or node_ids_filter(tokens, state, args['ids'])
         )
         and not (
             args.get('exids')
-            and node_ids_filter(tokens, args['exids'])
+            and node_ids_filter(tokens, state, args['exids'])
         )
     )
 
