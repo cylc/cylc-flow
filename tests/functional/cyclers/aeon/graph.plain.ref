@@ -1,6 +1,5 @@
 edge "-138000000000229T0530Z/big_bang" "-138000000000229T0530Z/count_the_aeons"
 graph
-node "-138000000000229T0530Z/big_bang" "big_bang\n-138000000000229T0530Z"
 node "+002000000000229T0530Z/count_the_aeons" "count_the_aeons\n+002000000000229T0530Z"
 node "+012000000000229T0530Z/count_the_aeons" "count_the_aeons\n+012000000000229T0530Z"
 node "+022000000000229T0530Z/count_the_aeons" "count_the_aeons\n+022000000000229T0530Z"
@@ -20,5 +19,6 @@ node "-098000000000229T0530Z/count_the_aeons" "count_the_aeons\n-098000000000229
 node "-108000000000229T0530Z/count_the_aeons" "count_the_aeons\n-108000000000229T0530Z"
 node "-118000000000229T0530Z/count_the_aeons" "count_the_aeons\n-118000000000229T0530Z"
 node "-128000000000229T0530Z/count_the_aeons" "count_the_aeons\n-128000000000229T0530Z"
+node "-138000000000229T0530Z/big_bang" "big_bang\n-138000000000229T0530Z"
 node "-138000000000229T0530Z/count_the_aeons" "count_the_aeons\n-138000000000229T0530Z"
 stop
