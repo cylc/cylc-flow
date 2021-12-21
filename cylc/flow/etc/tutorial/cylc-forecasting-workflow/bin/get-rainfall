@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# This is illustrative code developed for tutorial purposes, it is not
+# intended for scientific use and is not guarantied to be accurate or correct.
+"""
+Usage:
+    get-rainfall
+
+Environment Variables:
+    API_KEY: The DataPoint API key, required for getting live weather data.
+        If un-specified then get-observations will fall back to archive data
+        from the workflow directory.
+    DOMAIN: The area in which to generate forecasts for in the format
+        (lng1, lat1, lng2, lat2).
+    RESOLUTION: The length/width of each grid cell in degrees.
+
+"""
+
+from datetime import datetime
+import math
+import os
+import shutil
+import urllib3
+
+try:
+    from PIL import Image
+except ModuleNotFoundError:
+    # not all PIL installations are created equal
+    # sometimes we must import like this
+    import Image
+from mercator import get_offset, get_scale, pos_to_coord
+import util
+
+
+URL = ('http://datapoint.metoffice.gov.uk/public/data/layer/wxobs/'
+       'RADAR_UK_Composite_Highres/png?TIME={time}&key={api_key}')
+
+
+class Rainfall(object):
+    """Class for holding rainfall data.
+
+    Args:
+        domain (dict): Domain as returned by util.parse_domain()
+        resolution (float): The length of each grid cell in degrees.
+
+    """
+    VALUE_MAP = {
+        (0, 0, 254, 255): 1,
+        (50, 101, 254, 255): 2,
+        (127, 127, 0, 255): 3,
+        (254, 203, 0, 255): 4,
+        (254, 152, 0, 255): 5,
+        (254, 0, 0, 255): 6,
+        (254, 0, 254, 255): 7
+    }
+
+    def __init__(self, domain, resolution):
+        self.resolution = resolution
+        self.domain = domain
+
+        rows = int(
+            math.ceil(abs(domain['lat1'] - domain['lat2']) / resolution))
+        cols = int(
+            math.ceil(abs(domain['lng1'] - domain['lng2']) / resolution))
+
+        self.data = []
+        for itt_y in range(rows):
+            self.data.append([])
+            for _ in range(cols):
+                self.data[itt_y].append([])
+
+    def add(self, lng, lat, value):
+        """Add a data point to this data set.
+
+        Args:
+            lng (float): The longitude for this reading.
+            lat (float): The latitude fo this reading.
+            value (tuple): The value of the reading.
+
+        """
+        itt_x, itt_y = util.get_grid_coordinates(lng, lat, self.domain,
+                                                 self.resolution)
+        try:
+            self.data[itt_y][itt_x].append(self.VALUE_MAP[value])
+        except KeyError:
+            pass
+
+    def compute_bins(self):
+        """Return this dataset as a 2D matrix."""
+        for row in self.data:
+            for itt, col in enumerate(row):
+                if col:
+                    row[itt] = sum(col) / float(len(col))
+                else:
+                    row[itt] = 0
+        return self.data
+
+
+def get_datapoint_radar_image(filename, time, api_key):
+    """Retrieve a png image of rainfall from the DataPoint service.
+
+    Args:
+        filename (str): The path to write the image file to.
+        time (str): The datetime of the image to retrieve in ISO8601 format.
+        api_key (str): Datapoint API key.
+
+    """
+    time = datetime.strptime(time, '%Y%m%dT%H%MZ').strftime(
+        '%Y-%m-%dT%H:%M:%SZ')
+    url = URL.format(time=time, api_key=api_key)
+    # HTTP header to prevent 403 error:
+    hdr = {'User-Agent': ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 '
+                          '(KHTML, like Gecko) Chrome/23.0.1271.64 '
+                          'Safari/537.11'),
+           'Accept': ('text/html,application/xhtml+xml,application/xml;'
+                      'q=0.9,*/*;q=0.8'),
+           'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+           'Accept-Encoding': 'none',
+           'Accept-Language': 'en-US,en;q=0.8',
+           'Connection': 'keep-alive'}
+    http = urllib3.PoolManager()
+    req = http.request('GET', url, headers=hdr)
+    if req.status != 200:
+        raise Exception(f'{url} returned exit code {req.status}')
+    with open(filename, 'bw+') as png_file:
+        png_file.write(req.data)
+
+
+def get_archived_radar_image(filename, time):
+    """Retrieve a png image from the archived data in the workflow directory.
+
+    Args:
+        filename (str): The path to write the image file to.
+        time (str): The datetime of the image to retrieve in ISO8601 format.
+
+    """
+    shutil.copyfile(
+        os.path.join(os.environ['CYLC_WORKFLOW_RUN_DIR'], 'data', time,
+                     filename),
+        filename)
+
+
+def process_rainfall_data(filename, resolution, domain):
+    """Generate a 2D matrix of data from the rainfall data in the image.
+
+    Args:
+        filename (str): Path to the png image to process.
+        resolution (float): The length/weight of each grid cell in degrees.
+        domain (dict): The bounds of the domain as returned by
+            util.parse_domain.
+
+    Return:
+        list - A 2D matrix of rainfall data.
+
+    """
+    rainfall = Rainfall(domain, resolution)
+
+    image = Image.open(filename)
+    scale = get_scale(domain, image.width)
+    offset = get_offset(domain, scale)
+
+    for itt_x in range(image.width):
+        for itt_y in range(image.height):
+            lng, lat = pos_to_coord(
+                itt_x,
+                itt_y * (2. / 3.),  # Counter aspect ratio.
+                offset, scale)
+            rainfall.add(lng, lat, image.getpixel((itt_x, itt_y)))
+
+    return rainfall.compute_bins()
+
+
+def main():
+    time = os.environ['CYLC_TASK_CYCLE_POINT']
+    resolution = float(os.environ['RESOLUTION'])
+    domain = util.parse_domain(os.environ['DOMAIN'])
+    api_key = os.environ.get('API_KEY')
+
+    if api_key:
+        print('Attempting to get weather data from the DataPoint service.')
+        get_datapoint_radar_image('rainfall-radar.png', time, api_key)
+    else:
+        print('No API key provided, falling back to archived data')
+        get_archived_radar_image('rainfall-radar.png', time)
+
+    data = process_rainfall_data('rainfall-radar.png', resolution, domain)
+    util.write_csv('rainfall.csv', data)
+
+
+if __name__ == '__main__':
+    main()

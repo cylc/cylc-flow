@@ -1,0 +1,102 @@
+[scheduler]
+    UTC mode = True
+
+[scheduling]
+    # Start the workflow 7 hours before now ignoring minutes and seconds
+    # * previous(T-00) takes the current time ignoring minutes and seconds.
+    # * - PT7H subtracts 7 hours from the time.
+    initial cycle point = previous(T-00) - PT7H
+    # Stop the workflow 6 hours after the initial cycle point.
+    final cycle point = +PT6H
+    [[graph]]
+        # Repeat every three hours starting at the initial cycle point.
+        PT3H = """
+            get_observations_aldergrove => consolidate_observations
+            get_observations_camborne => consolidate_observations
+            get_observations_heathrow => consolidate_observations
+            get_observations_shetland => consolidate_observations
+        """
+
+        # Repeat every six hours starting six hours after the initial
+        # cycle point.
+        +PT6H/PT6H = """
+            consolidate_observations => forecast
+            consolidate_observations[-PT3H] => forecast
+            consolidate_observations[-PT6H] => forecast
+            get_rainfall => forecast => post_process_exeter
+        """
+
+        # Repeat every six hours starting twelve hours after the initial
+        # cycle point.
+        +PT12H/PT6H = """
+            forecast[-PT6H] => forecast
+        """
+[runtime]
+    [[get_observations_aldergrove]]
+        script = get-observations
+        [[[environment]]]
+            SITE_ID = 3976
+            API_KEY = DATAPOINT_API_KEY
+    [[get_observations_camborne]]
+        script = get-observations
+        [[[environment]]]
+            SITE_ID = 3808
+            API_KEY = DATAPOINT_API_KEY
+    [[get_observations_heathrow]]
+        script = get-observations
+        [[[environment]]]
+            SITE_ID = 3772
+            API_KEY = DATAPOINT_API_KEY
+    [[get_observations_shetland]]
+        script = get-observations
+        [[[environment]]]
+            SITE_ID = 3005
+            API_KEY = DATAPOINT_API_KEY
+
+
+    [[consolidate_observations]]
+        script = consolidate-observations
+        [[[environment]]]
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!
+
+    [[get_rainfall]]
+        script = get-rainfall
+        [[[environment]]]
+            # The key required to get weather data from the DataPoint service.
+            # To use archived data comment this line out.
+            API_KEY = DATAPOINT_API_KEY
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!
+
+    [[forecast]]
+        script = forecast 60 5  # Generate 5 forecasts at 60 minute intervals.
+        [[[environment]]]
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!
+            # The path to the files containing wind data (the {variables} will
+            # get substituted in the forecast script).
+            WIND_FILE_TEMPLATE = $CYLC_WORKFLOW_WORK_DIR/{cycle}/consolidate_observations/wind_{xy}.csv
+            # Offset in hours to cycles to process wind data from.
+            WIND_CYCLES = 0, -3, -6
+            # The path to the rainfall file.
+            RAINFALL_FILE = $CYLC_WORKFLOW_WORK_DIR/$CYLC_TASK_CYCLE_POINT/get_rainfall/rainfall.csv
+            # Create the html map file in the task's log directory.
+            MAP_FILE = "${CYLC_TASK_LOG_ROOT}-map.html"
+            # The path to the template file used to generate the html map.
+            MAP_TEMPLATE = "$CYLC_WORKFLOW_RUN_DIR/lib/template/map.html"
+
+    [[post_process_exeter]]
+        # Generate a forecast for Exeter 60 minutes in the future.
+        script = post-process exeter 60
+        [[[environment]]]
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!

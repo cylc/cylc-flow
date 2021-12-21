@@ -84,6 +84,10 @@ are now sparse, i.e. they will no longer be fleshed-out with defaults.
 [#4558](https://github.com/cylc/cylc-flow/pull/4558) -
 Added a metadata section to the platform and platform group configurations.
 
+[#4561](https://github.com/cylc/cylc-flow/pull/4561) - Moved the tutoral
+workflow back into Cylc from Cylc Docs to make it a packaged resource for
+anyone with a Cylc installation.
+
 ### Fixes
 
 [#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
