@@ -595,15 +595,11 @@ class TaskEventsManager():
         Check whether to process/skip message.
         Return True if `.process_message` should contine, False otherwise.
         """
-        if self.timestamp:
-            timestamp = f" at {event_time}"
-        else:
-            timestamp = ""
         if flag == self.FLAG_RECEIVED and submit_num != itask.submit_num:
             # Ignore received messages from old jobs
             LOG.warning(
                 f"[{itask}] "
-                f"{self.FLAG_RECEIVED_IGNORED}{message}{timestamp} "
+                f"{self.FLAG_RECEIVED_IGNORED}{message}"
                 f"for job({submit_num:02d}) != job({itask.submit_num:02d})"
             )
             return False
@@ -633,19 +629,19 @@ class TaskEventsManager():
             if flag == self.FLAG_RECEIVED:
                 LOG.warning(
                     f"[{itask}] "
-                    f"{self.FLAG_RECEIVED_IGNORED}{message}{timestamp}"
+                    f"{self.FLAG_RECEIVED_IGNORED}{message}"
                 )
 
             else:
                 LOG.warning(
                     f"[{itask}] "
-                    f"{self.FLAG_POLLED_IGNORED}{message}{timestamp}"
+                    f"{self.FLAG_POLLED_IGNORED}{message}"
                 )
             return False
 
         LOG.log(
             LOG_LEVELS.get(severity, INFO),
-            f"[{itask}] {flag}{message}{timestamp}"
+            f"[{itask}] {flag}{message}"
         )
         return True
 
