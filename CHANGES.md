@@ -83,6 +83,10 @@ are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
 
+[#4511](https://github.com/cylc/cylc-flow/pull/4511) - Fix clock xtriggers for
+large inexact offsets (year, months); restore time check for old-style
+(task-property) clock triggers.
+
 [#4553](https://github.com/cylc/cylc-flow/pull/4553) - Add job submit time
 to the datastore.
 
