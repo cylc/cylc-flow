@@ -33,7 +33,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [runtime]
     [[bar]]
 __FLOW_CONFIG__
-run_ok "${TEST_NAME}-valid" cylc validate flow.cylc
+run_ok "${TEST_NAME}-valid" cylc validate .
 
 # test an invalid xtrigger
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
@@ -47,7 +47,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[bar]]
 __FLOW_CONFIG__
 
-run_fail "${TEST_NAME}-invalid" cylc validate flow.cylc
+run_fail "${TEST_NAME}-invalid" cylc validate .
 grep_ok 'Invalid xtrigger name' "${TEST_NAME}-invalid.stderr"
 
 exit

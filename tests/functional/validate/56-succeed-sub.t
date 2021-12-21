@@ -33,6 +33,6 @@ R1 = foo:fail? | (foo? & bar:fail) => something
 script = true
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_ok "${TEST_NAME_BASE}" cylc validate .
 
 exit

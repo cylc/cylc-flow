@@ -33,14 +33,14 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[graph]]
         R1 = foo
 __FLOW_CONFIG__
-run_fail "${TEST_NAME}-valid" cylc validate flow.cylc
-run_fail "${TEST_NAME}-valid" cylc validate flow.cylc -s 'ICP="2000"'
-run_ok "${TEST_NAME}-valid" cylc validate flow.cylc -s 'ICP=2000'
+run_fail "${TEST_NAME}-valid" cylc validate .
+run_fail "${TEST_NAME}-valid" cylc validate . -s 'ICP="2000"'
+run_ok "${TEST_NAME}-valid" cylc validate . -s 'ICP=2000'
 
 cat >'template' <<'__TEMPLATE__'
 ICP=2000
 __TEMPLATE__
-run_fail "${TEST_NAME}-valid" cylc validate flow.cylc
-run_ok "${TEST_NAME}-valid" cylc validate flow.cylc --set-file=template
+run_fail "${TEST_NAME}-valid" cylc validate .
+run_ok "${TEST_NAME}-valid" cylc validate . --set-file=template
 
 exit

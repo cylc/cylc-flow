@@ -215,8 +215,10 @@ def filter_ids(
         })
         ret = _cycles
     elif out == Tokens.Task:
-        for icycle in _cycles:
-            _tasks.extend(pool[icycle].values())
+        for pool in pools:
+            for icycle in _cycles:
+                if icycle in pool:
+                    _tasks.extend(pool[icycle].values())
         ret = _tasks
     return ret, _not_matched
 

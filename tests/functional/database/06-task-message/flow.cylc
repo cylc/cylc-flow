@@ -6,11 +6,11 @@
 [runtime]
     [[t1]]
         script = """
-sleep 1
-cylc message -p 'WARNING' 'You have been warned'
-sleep 1
-cylc message -p 'CRITICAL' 'You are being critical'
-sleep 1
-cylc message 'You are normal'
-sleep 1
-"""
+            sleep 1
+            cylc message -p 'WARNING' 'You have been warned'
+            sleep 1
+            cylc message -p 'CRITICAL' 'You are being critical'
+            sleep 1
+            cylc message 'You are normal'
+            sleep 1
+        """

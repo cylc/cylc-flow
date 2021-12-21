@@ -190,7 +190,7 @@ def node_ids_filter(tokens, state, items) -> bool:
             )
             # match cycle/task/job state
             and (
-                not state
+                not get_state_from_selectors(item)
                 or get_state_from_selectors(item) == state
             )
         )

@@ -45,4 +45,4 @@ platform=lewis
 
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME}" cylc validate flow.cylc
+run_ok "${TEST_NAME}" cylc validate .

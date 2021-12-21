@@ -40,14 +40,14 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         """
 __FLOW_CONFIG__
 
-run_fail "${TEST_NAME_BASE}-simple-fail" cylc validate 'flow.cylc'
+run_fail "${TEST_NAME_BASE}-simple-fail" cylc validate .
 cmp_ok "${TEST_NAME_BASE}-simple-fail.stderr" <<'__ERR__'
 FileParseError: Syntax error line 9: Whitespace after the line continuation character (\).
 __ERR__
 
 # Test example with correct syntax
 sed -i 's/\\ /\\/' 'flow.cylc'
-run_ok "${TEST_NAME_BASE}-simple-pass" cylc validate 'flow.cylc'
+run_ok "${TEST_NAME_BASE}-simple-pass" cylc validate .
 
 
 exit

@@ -1,6 +1,6 @@
 #!jinja2
 [meta]
-    title=Workflow Event Mail
+    title = Workflow Event Mail
     URL = http://myworkflows.com/${CYLC_WORKFLOW_ID}.html
     workflow-priority = HIGH
 
@@ -13,8 +13,8 @@
 
 [scheduling]
     [[graph]]
-        R1=t1
+        R1 = t1
 
 [runtime]
     [[t1]]
-        script=true
+        script = true
