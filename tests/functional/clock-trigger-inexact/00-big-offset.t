@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,25 +14,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
 
-# Test that clock xtriggers are not allowed with integer cycling.
+# Test clock triggers (xtrigger and old-style) with a large inexact offset.
+
 . "$(dirname "$0")/test_header"
+set_test_number 5
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-set_test_number 2
+run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[scheduling]
-   cycling mode = integer
-   initial cycle point = 1
-   final cycle point = 2
-   [[xtriggers]]
-       c1 = wall_clock(offset=P0Y)
-   [[graph]]
-      R/^/P1 = "@c1 & foo[-P1] => foo"
-__FLOW_CONFIG__
+cylc cat-log "${WORKFLOW_NAME}" > log 
+START_HOUR=$(grep 'Workflow:' log | cut -c 1-13)
+START_MINU=$(grep 'Workflow:' log | cut -c 15-16)
+TRIGG_MINU=$(( 10#${START_MINU} + 1))
+[[ $START_MINU == 0* ]] && TRIGG_MINU=0${TRIGG_MINU}
 
-run_fail "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
+for NAME in foo bar baz; do
+   grep_ok "${START_HOUR}:${TRIGG_MINU}.* INFO - \[${NAME}\..*] => waiting$" log
+done
 
-contains_ok "${TEST_NAME_BASE}-val.stderr" <<'__END__'
-WorkflowConfigError: Clock xtriggers require datetime cycling: c1 = wall_clock(offset=P0Y)
-__END__
+purge

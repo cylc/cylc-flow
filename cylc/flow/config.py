@@ -1649,7 +1649,7 @@ class WorkflowConfig:
             if xtrig.func_name == 'wall_clock':
                 if self.cycling_type == INTEGER_CYCLING_TYPE:
                     raise WorkflowConfigError(
-                        "Clock triggers require datetime cycling:"
+                        "Clock xtriggers require datetime cycling:"
                         f" {label} = {xtrig.get_signature()}"
                     )
                 else:
