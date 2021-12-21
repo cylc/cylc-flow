@@ -37,7 +37,7 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-graph-check
 run_ok "${TEST_NAME}" cylc graph --reference "${WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME}/stdout" <<'__OUT__'
+cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
 edge "1/bar" "1/baz"
 edge "1/foo" "1/bar"
 edge "1/foo" "1/qux"

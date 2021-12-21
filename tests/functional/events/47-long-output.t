@@ -45,7 +45,7 @@ cd "$WORKFLOW_RUN_DIR" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
-[t1.1] -triggered off []
+[1/t1] -triggered off []
 __REFLOG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
@@ -81,7 +81,7 @@ cd "${WORKFLOW_RUN_DIR}" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
-[t1.1] -triggered off []
+[1/t1] -triggered off []
 __REFLOG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

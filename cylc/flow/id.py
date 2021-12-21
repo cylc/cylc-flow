@@ -505,6 +505,7 @@ def strip_workflow(tokens: TokensDict) -> TokensDict:
     }
 
 
+# TODO: rename strip_relative?
 def strip_task(tokens: TokensDict) -> TokensDict:
     """Remove the task portion of the tokens.
 
@@ -522,6 +523,30 @@ def strip_task(tokens: TokensDict) -> TokensDict:
             enum.value
             for enum in (
                 {*Tokens} - {Tokens.User, Tokens.Workflow}
+            )
+        )
+    }
+
+
+def strip_job(tokens: TokensDict) -> TokensDict:
+    """Remove the job portion of the tokens.
+
+    Examples:
+        >>> detokenise(strip_job(tokenise('cycle/task/01', relative=True)))
+        '//cycle/task'
+        >>> detokenise(strip_job(tokenise(
+        ...     '~user/workflow//cycle/task/01'
+        ... )))
+        '~user/workflow//cycle/task'
+
+    """
+    return {
+        key: value
+        for key, value in tokens.items()
+        if key in (
+            enum.value
+            for enum in (
+                {*Tokens} - {Tokens.Job}
             )
         )
     }

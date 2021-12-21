@@ -70,7 +70,7 @@ from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)
 from cylc.flow.exceptions import WorkflowConfigError
-from cylc.flow.id import detokenise, tokenise
+from cylc.flow.id import detokenise, tokenise, strip_workflow
 from cylc.flow.network import API
 from cylc.flow.workflow_status import get_workflow_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
@@ -170,44 +170,6 @@ CLEAR_FIELD_MAP = {
     TASK_PROXIES: {'prerequisites'},
     WORKFLOW: {'latest_state_tasks', 'state_totals', 'states'},
 }
-
-
-def parse_job_item(item):
-    """Parse internal job id.
-
-    Args:
-        item (str):
-            point/name/submit_num
-            OR name.point.submit_num syntax.
-    Returns:
-        tuple - (point_str: str, name_str: str, submit_num: [int, None])
-
-    """
-    # BACK COMPAT: name.point.submit_num
-    # url:
-    #     https://github.com/cylc/cylc-admin/pull/115
-    # from:
-    #     Cylc7
-    # to:
-    #     Cylc8
-    # remove at:
-    #     Cylc9
-    submit_num = None
-    if item.count('/') > 1:
-        point_str, name_str, submit_num = item.split('/', 2)
-    elif '/' in item:
-        point_str, name_str = item.split('/', 1)
-    elif item.count('.') > 1:
-        name_str, point_str, submit_num = item.split('.', 2)
-    elif '.' in item:
-        name_str, point_str = item.split('.', 1)
-    else:
-        name_str, point_str = (item, None)
-    try:
-        sub_num = int(submit_num)
-    except (TypeError, ValueError):
-        sub_num = None
-    return (point_str, name_str, sub_num)
 
 
 def generate_checksum(in_strings):
@@ -927,7 +889,10 @@ class DataStoreMgr:
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
         if tproxy.state in self.latest_state_tasks:
-            tp_ref = f'{tproxy.name}.{tproxy.cycle_point}'
+            tp_ref = detokenise(
+                strip_workflow(tokenise(tproxy.id)),
+                relative=True
+            )
             tp_queue = self.latest_state_tasks[tproxy.state]
             if tp_ref in tp_queue:
                 tp_queue.remove(tp_ref)
@@ -1566,7 +1531,10 @@ class DataStoreMgr:
         tp_delta.state = itask.state.status
         self.state_update_families.add(tproxy.first_parent)
         if tp_delta.state in self.latest_state_tasks:
-            tp_ref = f'{tproxy.name}.{tproxy.cycle_point}'
+            tp_ref = detokenise(
+                strip_workflow(tokenise(tproxy.id)),
+                relative=True
+            )
             tp_queue = self.latest_state_tasks[tp_delta.state]
             if tp_ref in tp_queue:
                 tp_queue.remove(tp_ref)
@@ -1813,8 +1781,12 @@ class DataStoreMgr:
     # -----------
     def delta_job_msg(self, job_d, msg):
         """Add message to job."""
-        point, name, sub_num = parse_job_item(job_d)
-        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        tokens = tokenise(job_d, relative=True)
+        j_id, job = self.store_node_fetcher(
+            tokens['cycle'],
+            tokens['task'],
+            tokens['job'],
+        )
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
@@ -1827,8 +1799,12 @@ class DataStoreMgr:
 
     def delta_job_attr(self, job_d, attr_key, attr_val):
         """Set job attribute."""
-        point, name, sub_num = parse_job_item(job_d)
-        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        tokens = tokenise(job_d, relative=True)
+        j_id, job = self.store_node_fetcher(
+            tokens['cycle'],
+            tokens['task'],
+            tokens['job'],
+        )
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
@@ -1841,8 +1817,12 @@ class DataStoreMgr:
 
     def delta_job_state(self, job_d, status):
         """Set job state."""
-        point, name, sub_num = parse_job_item(job_d)
-        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        tokens = tokenise(job_d, relative=True)
+        j_id, job = self.store_node_fetcher(
+            tokens['cycle'],
+            tokens['task'],
+            tokens['job'],
+        )
         if not job or status not in JOB_STATUS_SET:
             return
         j_delta = PbJob(
@@ -1860,8 +1840,12 @@ class DataStoreMgr:
 
         Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        point, name, sub_num = parse_job_item(job_d)
-        j_id, job = self.store_node_fetcher(name, point, sub_num)
+        tokens = tokenise(job_d, relative=True)
+        j_id, job = self.store_node_fetcher(
+            tokens['cycle'],
+            tokens['task'],
+            tokens['job'],
+        )
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')

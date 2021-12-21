@@ -38,7 +38,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # Grep for inherit-fail to fail later at submit time
-grep_ok "WorkflowConfigError:.*non-valid-child.1" \
+grep_ok "WorkflowConfigError:.*1/non-valid-child" \
     "${TEST_NAME_BASE}-run.stderr"
 
 purge

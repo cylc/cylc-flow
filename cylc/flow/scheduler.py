@@ -46,8 +46,8 @@ from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
-from cylc.flow.id import detokenise, tokenise
+from cylc.flow.data_store_mgr import DataStoreMgr
+from cylc.flow.id import detokenise, tokenise, strip_job
 from cylc.flow.flow_mgr import FlowMgr
 from cylc.flow.exceptions import (
     CommandFailedError, CyclingError, CylcError, UserInputError
@@ -789,17 +789,12 @@ class Scheduler:
             except Empty:
                 break
             self.message_queue.task_done()
-            cycle, task_name, submit_num = parse_job_item(task_job)
-            task_id = detokenise(
-                {
-                    'cycle': str(cycle),
-                    'task': task_name,
-                },
-                relative=True,
-            )
+            tokens = tokenise(task_job, relative=True)
+            task_id = detokenise(strip_job(tokens), relative=True)
             messages.setdefault(task_id, [])
             messages[task_id].append(
-                (submit_num, event_time, severity, message))
+                (int(tokens['job']), event_time, severity, message)
+            )
         # Note on to_poll_tasks: If an incoming message is going to cause a
         # reverse change to task state, it is desirable to confirm this by
         # polling.
