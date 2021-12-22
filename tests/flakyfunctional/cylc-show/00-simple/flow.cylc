@@ -17,11 +17,11 @@
 [runtime]
     [[foo]]
         script = """
-touch 'foot'
-while [[ -e 'foot' ]]; do
-    sleep 1
-done
-"""
+            touch 'foot'
+            while [[ -e 'foot' ]]; do
+                sleep 1
+            done
+        """
         [[[meta]]]
              title = a task
              description = jumped over the lazy dog
@@ -36,7 +36,7 @@ done
         script = cylc show "$CYLC_WORKFLOW_ID" >>{{ TEST_OUTPUT_PATH }}-workflow
     [[show-task]]
         inherit = SHOW
-        script = cylc show "$CYLC_WORKFLOW_ID" foo >>{{ TEST_OUTPUT_PATH }}-task
+        script = cylc show "$CYLC_WORKFLOW_ID" --task-def foo >>{{ TEST_OUTPUT_PATH }}-task
     [[show-taskinstance]]
         inherit = SHOW
         script = cylc show "$CYLC_WORKFLOW_ID//20141106T0900Z/foo" \
@@ -47,7 +47,7 @@ done
             >>{{ TEST_OUTPUT_PATH }}-json-workflow
     [[show-task-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_WORKFLOW_ID" foo \
+        script = cylc show --json "$CYLC_WORKFLOW_ID" --task-def foo \
             >>{{ TEST_OUTPUT_PATH }}-json-task
     [[show-taskinstance-json]]
         inherit = SHOW

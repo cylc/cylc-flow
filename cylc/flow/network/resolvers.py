@@ -46,7 +46,11 @@ from cylc.flow.id import (
     tokenise,
 )
 from cylc.flow.network.schema import (
-    NodesEdges, PROXY_NODES, SUB_RESOLVERS, sort_elements
+    DEF_TYPES,
+    NodesEdges,
+    PROXY_NODES,
+    SUB_RESOLVERS,
+    sort_elements,
 )
 
 if TYPE_CHECKING:
@@ -200,11 +204,23 @@ def node_ids_filter(tokens, state, items) -> bool:
 
 def node_filter(node, node_type, args):
     """Filter nodes based on attribute arguments"""
-    tokens = tokenise(node.id)
+    if node_type in DEF_TYPES:
+        # namespace nodes don't fit into the universal ID scheme so must
+        # be tokenised manually
+        tokens = {
+            'cycle': None,
+            'task': node.name,
+            'job': None,
+        }
+    else:
+        # live objects can be represented by a universal ID
+        tokens = tokenise(node.id)
     state = getattr(node, 'state', None)
     return (
         (
-            args.get('ghosts') or state
+            args.get('ghosts')
+            or state
+            or node_type in DEF_TYPES
         )
         and (
             not args.get('states')
@@ -319,11 +335,14 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
     async def get_nodes_all(self, node_type, args):
         """Return nodes from all workflows, filter by args."""
         return sort_elements(
-            [n
-             for flow in await self.get_workflows_data(args)
-             for n in flow.get(node_type).values()
-             if node_filter(n, node_type, args)],
-            args)
+            [
+                n
+                for flow in await self.get_workflows_data(args)
+                for n in flow.get(node_type).values()
+                if node_filter(n, node_type, args)
+            ],
+            args,
+        )
 
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
@@ -344,12 +363,15 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
         else:
             node_types = [node_type]
         return sort_elements(
-            [node
-             for flow in flow_data
-             for node_type in node_types
-             for node in get_data_elements(flow, nat_ids, node_type)
-             if node_filter(node, node_type, args)],
-            args)
+            [
+                node
+                for flow in flow_data
+                for node_type in node_types
+                for node in get_data_elements(flow, nat_ids, node_type)
+                if node_filter(node, node_type, args)
+            ],
+            args,
+        )
 
     async def get_node_by_id(self, node_type, args):
         """Return protobuf node object for given id."""

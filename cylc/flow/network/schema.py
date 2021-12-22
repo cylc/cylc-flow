@@ -356,8 +356,21 @@ async def get_nodes_all(root, info, **args):
 
     node_type = NODE_MAP[get_type_str(info.return_type)]
 
-    args['ids'] = [tokenise(n_id, node_type) for n_id in args['ids']]
-    args['exids'] = [tokenise(n_id, node_type) for n_id in args['exids']]
+    for arg in ('ids', 'exids'):
+        if node_type in DEF_TYPES:
+            # namespace nodes don't fit into the universal ID scheme so must
+            # be tokenised manually
+            args[arg] = [
+                {
+                    'cycle': None,
+                    'task': task,
+                    'job': None,
+                }
+                for task in args[arg]
+            ]
+        else:
+            # live objects can be represented by a universal ID
+            args[arg] = [tokenise(n_id, relative=True) for n_id in args[arg]]
     args['workflows'] = [
         tokenise(w_id) for w_id in args['workflows']]
     args['exworkflows'] = [
@@ -368,7 +381,6 @@ async def get_nodes_all(root, info, **args):
 
 async def get_nodes_by_ids(root, info, **args):
     """Resolver for returning job, task, family node"""
-
     field_name, field_ids = process_resolver_info(root, info, args)
 
     resolvers = info.context.get('resolvers')

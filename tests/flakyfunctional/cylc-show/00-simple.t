@@ -87,12 +87,12 @@ cmp_json "${TEST_NAME}-task" "${TEST_NAME}-task" <<'__SHOW_OUTPUT__'
 }
 __SHOW_OUTPUT__
 
-ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
     <<__SHOW_OUTPUT__
 {
     "20141106T0900Z/foo": {
         "name": "foo",
+        "id": "${WORKFLOW_NAME}//20141106T0900Z/foo",
         "cyclePoint": "20141106T0900Z",
         "task": {
             "meta": {
@@ -110,7 +110,7 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
                 "conditions": [
                     {
                         "exprAlias": "c0",
-                        "taskId": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20141106T0900Z${ID_DELIM}bar",
+                        "taskId": "20141106T0900Z/bar",
                         "reqState": "succeeded",
                         "message": "satisfied naturally",
                         "satisfied": true
