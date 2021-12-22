@@ -34,7 +34,7 @@ TEST_NAME="set-trigger-fail"
 run_fail "${TEST_NAME}"  \
     cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}//1/foo"
 contains_ok "${TEST_NAME}".stderr <<__END__
-cylc: error: --meta requires --reflow
+UserInputError: --meta requires --reflow
 __END__
 
 purge

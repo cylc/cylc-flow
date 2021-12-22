@@ -29,8 +29,8 @@ set_test_number 6
 
 # Event should look like this:
 # Start workflow
-# At t1.1, set stop clock time to 60 seconds ahead
-# At t2.1, stop workflow
+# At 1/t1, set stop clock time to 60 seconds ahead
+# At 1/t2, stop workflow
 # Restart
 # Workflow runs to stop clock time, reset stop clock time
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'

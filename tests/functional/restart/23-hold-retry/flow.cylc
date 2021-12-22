@@ -10,11 +10,11 @@
 [runtime]
     [[t1]]
         script = """
-if ((CYLC_TASK_TRY_NUMBER == 1)); then
-    cylc stop "${CYLC_WORKFLOW_ID}"
-    cylc kill "${CYLC_WORKFLOW_ID}//*/${CYLC_TASK_ID}"
-    sleep 120  # Should not matter because the job will be killed
-fi
-"""
+            if ((CYLC_TASK_TRY_NUMBER == 1)); then
+                cylc stop "${CYLC_WORKFLOW_ID}"
+                cylc kill "${CYLC_WORKFLOW_ID}//${CYLC_TASK_ID}"
+                sleep 120  # Should not matter because the job will be killed
+            fi
+        """
         [[[job]]]
             execution retry delays = PT0S

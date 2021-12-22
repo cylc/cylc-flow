@@ -1,14 +1,14 @@
-
 [meta]
-title = "Try out scenarios for intelligent host selection."
-description = """
-Tasks
-=====
+    title = "Try out scenarios for intelligent host selection."
+    description = """
+        Tasks
+        =====
 
-Bad
----
-Fails on all hosts on all plaforms
-"""
+        Bad
+        ---
+        Fails on all hosts on all plaforms
+    """
+
 [scheduler]
     [[events]]
         stall timeout = PT0S

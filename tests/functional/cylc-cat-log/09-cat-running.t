@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" of currently-running local and remote jobs.
-. "$(dirname "$0")/test_header"
 export REQUIRE_PLATFORM='loc:remote comms:tcp'
+. "$(dirname "$0")/test_header"
 set_test_number 2
 reftest
 purge

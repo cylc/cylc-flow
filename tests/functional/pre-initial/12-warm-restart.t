@@ -37,7 +37,7 @@ poll_workflow_running
 #-------------------------------------------------------------------------------
 # Check pre-reqs
 TEST_NAME=${TEST_NAME_BASE}-check-prereq
-run_ok "${TEST_NAME}" cylc show "${WORKFLOW_NAME}" 20130101T1200Z/foo --list-prereqs
+run_ok "${TEST_NAME}" cylc show "${WORKFLOW_NAME}//20130101T1200Z/foo" --list-prereqs
 cmp_ok "${TEST_NAME}.stdout" <<'__OUT__'
 20130101T0600Z/foo succeeded
 __OUT__

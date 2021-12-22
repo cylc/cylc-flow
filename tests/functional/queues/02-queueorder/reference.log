@@ -1,6 +1,6 @@
 2018-03-13T14:22:38Z INFO - Initial point: 1
 2018-03-13T14:22:38Z INFO - Final point: 1
-2018-03-13T14:22:38Z INFO - [1/delay_n11/] -triggered off []
+2018-03-13T14:22:38Z INFO - [1/delay_n1] -triggered off []
 2018-03-13T14:22:38Z INFO - [1/hold] -triggered off []
 2018-03-13T14:22:40Z INFO - [1/delay_n2] -triggered off ['1/delay_n1']
 2018-03-13T14:22:42Z INFO - [1/delay_n3] -triggered off ['1/delay_n2']

@@ -1,5 +1,5 @@
 2016-10-10T14:01:04Z INFO - Initial point: 2016
 2016-10-10T14:01:04Z INFO - Final point: 2020
-2016-10-10T14:01:05Z INFO - [t1.2018] -triggered off ['t1.2017']
-2016-10-10T14:01:08Z INFO - [t1.2019] -triggered off ['t1.2018']
-2016-10-10T14:01:11Z INFO - [t1.2020] -triggered off ['t1.2019']
+2016-10-10T14:01:05Z INFO - [2018/t1] -triggered off ['2017/t1']
+2016-10-10T14:01:08Z INFO - [2019/t1] -triggered off ['2018/t1']
+2016-10-10T14:01:11Z INFO - [2020/t1] -triggered off ['2019/t1']

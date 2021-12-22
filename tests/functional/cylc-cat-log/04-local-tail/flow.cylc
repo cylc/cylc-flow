@@ -8,7 +8,8 @@
 [runtime]
     [[foo]]
         script = """
-for I in $(seq 1 100); do
-    echo "from $CYLC_TASK_NAME $I"
-    sleep 1
-done"""
+            for I in $(seq 1 100); do
+                echo "from $CYLC_TASK_NAME $I"
+                sleep 1
+            done
+        """

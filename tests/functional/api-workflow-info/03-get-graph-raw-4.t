@@ -36,15 +36,15 @@ cmp_json "${TEST_NAME_BASE}-out" \
 [
     [
         [
-            "t1.20200202T0000Z",
+            "20200202T0000Z/t1",
             null,
             null,
             false,
             false
         ],
         [
-            "t1.20200202T0000Z",
-            "t1.20200203T0000Z",
+            "20200202T0000Z/t1",
+            "20200203T0000Z/t1",
             null,
             false,
             false

@@ -23,22 +23,17 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 create_test_global_config "" "
 [platforms]
    [[localhost]]
-        tail command template = $PWD/bin//my-tailersh %(filename)s
+        tail command template = $PWD/bin/my-tailer.sh %(filename)s
 "
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-#-------------------------------------------------------------------------------
-# Run /detached
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
 cylc workflow-state "${WORKFLOW_NAME}" -t 'foo' -p '1' -S 'start' --interval=1
 sleep 1
 TEST_NAME=${TEST_NAME_BASE}-cat-log
-cylc cat-log "${WORKFLOW_NAME}//1/foo" -f o -m t > "${TEST_NAME}/out"
-grep_ok "HELLO from foo 1" "${TEST_NAME}/out"
+cylc cat-log "${WORKFLOW_NAME}//1/foo" -f o -m t > "${TEST_NAME}.out"
+grep_ok "HELLO from foo 1" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 cylc stop --kill --max-polls=20 --interval=1 "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------

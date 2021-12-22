@@ -973,8 +973,8 @@ class TaskPool:
         """
         unsat = {}
         for itask in self.get_hidden_tasks():
-            point = itask.point
-            if get_point(point) > self.stop_point:
+            task_point = point = itask.point
+            if task_point > self.stop_point:
                 continue
             for pre in itask.state.get_unsatisfied_prerequisites():
                 point, name, output = pre

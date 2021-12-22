@@ -20,6 +20,6 @@ Final point: 5
 [3/products] -triggered off ['3/proc2']
 [5/proc1] -triggered off ['5/get_data']
 [4/products] -triggered off ['4/proc2']
-[6/proc2] -triggered off ['5/proc1']
+[5/proc2] -triggered off ['5/proc1']
 [5/products] -triggered off ['5/proc2']
 [5/collate] -triggered off ['5/products']

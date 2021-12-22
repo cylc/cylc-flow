@@ -1,6 +1,6 @@
 [scheduler]
    [[events]]
-       expected task failures = t1.1
+       expected task failures = 1/t1
 
 [scheduling]
     [[graph]]

@@ -35,21 +35,21 @@ cmp_ok "${WORKFLOW_RUN_DIR}/ctb-get-graph-raw.out" <<'__OUT__'
 [
     [
         [
-            "t1/1",
+            "1/t1",
             null,
             null,
             false,
             false
         ],
         [
-            "t1/1",
+            "1/t1",
             "1/T",
             null,
             false,
             false
         ],
         [
-            "t1/1",
+            "1/t1",
             "1/T",
             null,
             false,

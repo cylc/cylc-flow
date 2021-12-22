@@ -1,23 +1,23 @@
 [meta]
-    title=broadcast empty
-    description=Test broadcast of an empty string
+    title = broadcast empty
+    description = Test broadcast of an empty string
 [scheduling]
     [[graph]]
-        R1="broadcast => t1"
+        R1 = "broadcast => t1"
 [runtime]
     [[broadcast]]
-        script="""
-cylc broadcast -s '[environment]EMPTY=' -p '1' -n 't1' "${CYLC_WORKFLOW_ID}" \
-    | tee 'broadcast.out'
-diff -u - 'broadcast.out' <<__OUT__
-Broadcast set:
-+ [t1.${CYLC_TASK_CYCLE_POINT}] [environment]EMPTY=
-__OUT__
-"""
+        script = """
+            cylc broadcast -s '[environment]EMPTY=' -p '1' -n 't1' "${CYLC_WORKFLOW_ID}" \
+                | tee 'broadcast.out'
+            diff -u - 'broadcast.out' <<__OUT__
+            Broadcast set:
+            + [${CYLC_TASK_CYCLE_POINT}/t1] [environment]EMPTY=
+            __OUT__
+        """
     [[t1]]
         script = """
-printenv EMPTY | tee 'echo.out'
-diff -u - 'echo.out' <<<''
-"""
+            printenv EMPTY | tee 'echo.out'
+            diff -u - 'echo.out' <<<''
+        """
         [[[environment]]]
             EMPTY=full

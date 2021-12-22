@@ -72,8 +72,8 @@ done
 
 # Look for message indicating that remote init has failed.
 named_grep_ok \
-    "platform: ./badhostplatform - initialisation did not complete (no hosts were reachable)" \
-    "platform: ./badhostplatform - initialisation did not complete (no hosts were reachable)" \
+    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
+    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
     "${logfile}"
 
 purge

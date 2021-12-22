@@ -37,10 +37,10 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
             cylc__job__poll_grep_workflow_log -E '1/bar .* spawned'
             cylc__job__poll_grep_workflow_log -E '1/cheese .* spawned'
             cylc__job__poll_grep_workflow_log -E '1/jam .* spawned'
-            cylc__job__poll_grep_workflow_log -E 'cat11/ .* spawned'
-            cylc__job__poll_grep_workflow_log -E 'cat21/ .* spawned'
-            cylc__job__poll_grep_workflow_log -E 'dog11/ .* spawned'
-            cylc__job__poll_grep_workflow_log -E 'dog21/ .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/cat1 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/cat2 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/dog1 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/dog2 .* spawned'
             cylc hold "${CYLC_WORKFLOW_ID}//1/*FF"  # inexact fam
             cylc hold "${CYLC_WORKFLOW_ID}//1/TOAST"  # exact fam
             cylc hold "${CYLC_WORKFLOW_ID}//1/cat*"  # inexact tasks
@@ -63,8 +63,8 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[stop]]
         inherit = STOP
         script = """
-        sleep 5
-        cylc stop "${CYLC_WORKFLOW_ID}"
+            sleep 5
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """
 __FLOW_CONFIG__
 

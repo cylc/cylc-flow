@@ -61,11 +61,16 @@ LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
 START_CONFIG="$(ls "${LOGD}/"*-start.cylc)"
 REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
 RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"
+mkdir start_config
+mkdir res_config
+cp $START_CONFIG start_config/flow.cylc
+cp $RES_CONFIG res_config/flow.cylc
 # The generated *-run.cylc and *-reload.cylc should be identical
 # The generated *.cylc files should validate
 cmp_ok "${START_CONFIG}" "${REL_CONFIG}"
-run_ok "${TEST_NAME_BASE}-validate-start-config" cylc validate "${START_CONFIG}"
-run_ok "${TEST_NAME_BASE}-validate-restart-config" cylc validate "${RES_CONFIG}"
+run_ok "${TEST_NAME_BASE}-validate-start-config" cylc validate ./start_config
+run_ok "${TEST_NAME_BASE}-validate-restart-config" cylc validate ./res_config
+rm -rf start_config res_config
 
 diff -u "${START_CONFIG}" "${RES_CONFIG}" >'diff.out'
 contains_ok 'diff.out' <<'__DIFF__'

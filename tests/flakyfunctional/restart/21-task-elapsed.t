@@ -28,10 +28,10 @@ import sys
 data = ast.literal_eval(open(sys.argv[1]).read())
 
 keys = list(
-    f"{task['name']}.{task['cyclePoint']}"
+    f"{task['cyclePoint']}/{task['name']}"
     for task in data['taskProxies']
 )
-if keys != ["t1.2031", "t2.2031"]:
+if keys != ["2031/t1", "2031/t2"]:
     sys.exit(keys)
 for datum in data['tasks']:
     assert isinstance(datum['meanElapsedTime'], float)

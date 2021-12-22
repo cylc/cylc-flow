@@ -6,36 +6,40 @@
         stall timeout = PT30S
         abort on stall timeout = True
         expected task failures = 2020/bar, 2021/baz
+
 [scheduling]
     initial cycle point = 2020
     final cycle point = 2021
     [[graph]]
         R1 = remover
         P1Y = foo => bar & baz => waz
+
 [runtime]
     [[remover]]
         script = """
-cylc__job__poll_grep_workflow_log -E '2020/bar running .* \(received\)failed'
-cylc__job__poll_grep_workflow_log -E '2021/baz running .* \(received\)failed'
-# Remove the two unhandled failed tasks.
-cylc remove $CYLC_WORKFLOW_ID */ba*:failed
-# Remove the two unsatisfied waiting tasks.
-cylc remove $CYLC_WORKFLOW_ID */waz
-# Exit so workflow can shut down.
-"""
+            cylc__job__poll_grep_workflow_log -E '2020/bar running .* \(received\)failed'
+            cylc__job__poll_grep_workflow_log -E '2021/baz running .* \(received\)failed'
+            # Remove the two unhandled failed tasks.
+            cylc remove "$CYLC_WORKFLOW_ID//*/ba*:failed"
+            # Remove the two unsatisfied waiting tasks.
+            cylc remove "$CYLC_WORKFLOW_ID//*/waz"
+            # Exit so workflow can shut down.
+        """
     [[foo, waz]]
         script = true
     [[bar]]
         script = """
-if [[ $CYLC_TASK_CYCLE_POINT == 2020 ]]; then
-   false
-else
-    true
-fi"""
+            if [[ $CYLC_TASK_CYCLE_POINT == 2020 ]]; then
+               false
+            else
+                true
+            fi
+        """
     [[baz]]
         script = """
-if [[ $CYLC_TASK_CYCLE_POINT == 2021 ]]; then
-   false
-else
-    true
-fi"""
+            if [[ $CYLC_TASK_CYCLE_POINT == 2021 ]]; then
+               false
+            else
+                true
+            fi
+        """

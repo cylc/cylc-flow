@@ -26,14 +26,14 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 grep_ok 'INFO - Workflow shutting down - REQUEST(NOW)' "${LOGD}/workflow/log"
 JLOGD="${LOGD}/job/1/t1/01"
-# Check that t1.1 event handler runs
+# Check that 1/t1 event handler runs
 run_ok "${TEST_NAME_BASE}-activity-log-succeeded" \
     grep -q -F \
-    "[(('event-handler-00', 'succeeded'), 1) out] Well done t1.1 succeeded" \
+    "[(('event-handler-00', 'succeeded'), 1) out] Well done 1/t1 succeeded" \
     "${JLOGD}/job-activity.log"
 run_ok "${TEST_NAME_BASE}-activity-log-started" \
     grep -q -F \
-    "[(('event-handler-00', 'started'), 1) out] Hello t1.1 started" \
+    "[(('event-handler-00', 'started'), 1) out] Hello 1/t1 started" \
     "${JLOGD}/job-activity.log"
 # Check that t2.1 did not run
 exists_fail "${LOGD}/job/1/t2"

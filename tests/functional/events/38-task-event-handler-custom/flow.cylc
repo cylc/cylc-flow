@@ -10,19 +10,19 @@
     [[root]]
         script = true
         [[[events]]]
-            custom handlers = echo !!CUSTOM!! %(name)s.%(point)s %(fish)s %(message)s
+            custom handlers = echo !!CUSTOM!! %(point)s/%(name)s %(fish)s %(message)s
         [[[meta]]]
             fish = trout
     [[foo]]
         script = """
-cylc__job__wait_cylc_message_started
-# Output message for triggering, and custom event handler.
-cylc message -p CUSTOM "Data ready for barring"
-# Generic message, not for triggering or custom event handler.
-cylc message "Aren't the hydrangeas nice?"
-# Output message for triggering, not custom event handler.
-cylc message "Data ready for bazzing"
-"""
+            cylc__job__wait_cylc_message_started
+            # Output message for triggering, and custom event handler.
+            cylc message -p CUSTOM "Data ready for barring"
+            # Generic message, not for triggering or custom event handler.
+            cylc message "Aren't the hydrangeas nice?"
+            # Output message for triggering, not custom event handler.
+            cylc message "Data ready for bazzing"
+        """
         [[[outputs]]]
             a = "Data ready for barring"
             b = "Data ready for bazzing"

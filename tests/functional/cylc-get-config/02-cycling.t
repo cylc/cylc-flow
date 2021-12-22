@@ -23,7 +23,10 @@ set_test_number 2
 init_workflow "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc"
 
 run_ok "${TEST_NAME_BASE}" cylc config "${WORKFLOW_NAME}"
+mkdir temp
+cp "${TEST_NAME_BASE}.stdout" temp/flow.cylc
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate --check-circular "${TEST_NAME_BASE}.stdout"
+    cylc validate --check-circular ./temp
+rm -rf temp
 purge
 exit

@@ -11,9 +11,9 @@
 [runtime]
     [[foo]]
         script = """
-cylc__job__wait_cylc_message_started
-cylc message -p CUSTOM "cheesy peas"
-"""
+            cylc__job__wait_cylc_message_started
+            cylc message -p CUSTOM "cheesy peas"
+        """
         [[[events]]]
             custom handlers = checkargs workflow=%(workflow)s job_id=%(job_id)s event=%(event)s point=%(point)s name=%(name)s try_num=%(try_num)s submit_num=%(submit_num)s id=%(id)s job_runner_name=%(job_runner_name)s message=%(message)s fish=%(fish)s title=%(title)s URL=%(URL)s workflow_title=%(workflow_title)s workflow_size=%(workflow_size)s submit_time=%(submit_time)s start_time=%(start_time)s finish_time=%(finish_time)s platform_name=%(platform_name)s
         [[[meta]]]
