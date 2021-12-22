@@ -42,8 +42,15 @@ EXC_EXIT = cparse('<red><bold>{name}: </bold>{exc}</red>')
 
 
 def is_terminal():
-    """Determine if running in a terminal."""
-    return hasattr(sys.stderr, 'isatty') and sys.stderr.isatty()
+    """Determine if running in (and printing to) a terminal."""
+    # Return False if stdout or stderr not going to a terminal.
+    return (
+        (
+            hasattr(sys.stderr, 'isatty') and sys.stderr.isatty()
+        ) and (
+            hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+        )
+    )
 
 
 def get_width(default=80):
