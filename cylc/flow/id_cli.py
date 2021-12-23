@@ -14,13 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO: move check_deprecation into the relevant scripts
-
-# TODO changes:
-# * src paths must start "./" or be absolte
-#   * remove ambigious name check (no longer needed)
-# * run paths cannot be absolute (use the workflow ID)
-#   * no infering latest runs for paths (no longer needed)
 
 import asyncio
 import fnmatch
@@ -49,7 +42,6 @@ from cylc.flow.network.scan import (
 )
 from cylc.flow.workflow_files import (
     NO_FLOW_FILE_MSG,
-    # check_deprecation,  TODO?
     check_flow_file,
     detect_both_flow_and_suite,
     get_flow_file,

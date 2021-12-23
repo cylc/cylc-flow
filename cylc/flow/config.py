@@ -101,7 +101,11 @@ from cylc.flow.unicode_rules import (
 )
 from cylc.flow.wallclock import (
     get_current_time_string, set_utc_mode, get_utc_mode)
-from cylc.flow.workflow_files import NO_TITLE, WorkflowFiles
+from cylc.flow.workflow_files import (
+    NO_TITLE,
+    WorkflowFiles,
+    check_deprecation,
+)
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
@@ -181,7 +185,7 @@ class WorkflowConfig:
         work_dir: Optional[str] = None,
         share_dir: Optional[str] = None
     ) -> None:
-
+        check_deprecation(fpath)
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None
