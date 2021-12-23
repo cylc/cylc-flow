@@ -86,7 +86,7 @@ cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
             "isHeldTotal": 1,
             "taskProxies": [
                 {
-                    "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}1${ID_DELIM}foo",
+                    "id": "${USER}/${WORKFLOW_NAME}//1/foo",
                     "jobs": [
                         {
                             "submittedTime": "blargh",
@@ -97,7 +97,7 @@ cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
             ],
             "familyProxies": [
                 {
-                    'id': 'cylctb-20211216T170501Z-8Qjn/f/graphql/03-is-held-arg//1/foo'
+                    "id": "${WORKFLOW_NAME}//1/BAZ"
                 }
             ]
         }

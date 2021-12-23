@@ -27,48 +27,47 @@ run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
 
 # query workflow
 TEST_NAME="${TEST_NAME_BASE}-root-queries"
-ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 read -r -d '' rootQueries <<_args_
 {
   "request_string": "
 query {
-  workflows(ids: [\"*${ID_DELIM}${WORKFLOW_NAME}:running\"]) {
+  workflows(ids: [\"${WORKFLOW_NAME}:running\"]) {
     id
   }
-  job(id: \"${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo${ID_DELIM}1\") {
+  job(id: \"${WORKFLOW_NAME}//20190101T00/foo/1/*\") {
     id
   }
-  jobs(workflows: [\"*${ID_DELIM}*\"], ids: [\"*${ID_DELIM}*${ID_DELIM}1\"], sort: {keys: [\"id\"], reverse: false}) {
+  jobs(workflows: [\"*\"], ids: [\"*/*/1\"], sort: {keys: [\"id\"], reverse: false}) {
     id
   }
-  task(id: \"${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}foo\") {
+  task(id: \"${WORKFLOW_NAME}//foo\") {
     id
   }
   tasks(sort: {keys: [\"id\"], reverse: false}) {
     id
   }
-  taskProxy(id: \"${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo\") {
+  taskProxy(id: \"${WORKFLOW_NAME}//20190101T00/foo\") {
     id
   }
-  taskProxies(workflows: [\"*${ID_DELIM}*\"], ids: [\"*${ID_DELIM}*\"], isHeld: false, sort: {keys: [\"id\"], reverse: false}) {
+  taskProxies(workflows: [\"*\"], ids: [\"*/*\"], isHeld: false, sort: {keys: [\"id\"], reverse: false}) {
     id
   }
-  family(id: \"${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}FAM\") {
+  family(id: \"${WORKFLOW_NAME}//FAM\") {
     id
   }
   families(sort: {keys: [\"id\"], reverse: false}) {
     id
   }
-  familyProxy(id: \"${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}FAM\") {
+  familyProxy(id: \"${WORKFLOW_NAME}//20190101T00/FAM\") {
     id
   }
-  familyProxies(workflows: [\"*${ID_DELIM}*\"], ids: [\"20190101T00${ID_DELIM}FAM2\"]) {
+  familyProxies(workflows: [\"*\"], ids: [\"20190101T00/FAM2\"]) {
     id
   }
-  edges(workflows: [\"${USER}${ID_DELIM}${WORKFLOW_NAME}\"], sort: {keys: [\"id\"], reverse: false}) {
+  edges(workflows: [\"${WORKFLOW_NAME}\"], sort: {keys: [\"id\"], reverse: false}) {
     id
   }
-  nodesEdges(workflows: [\"*${ID_DELIM}*\"], ids: [\"foo\"], distance: 1, sort: {keys: [\"id\"], reverse: false}) {
+  nodesEdges(workflows: [\"*\"], ids: [\"*/foo\"], distance: 1, sort: {keys: [\"id\"], reverse: false}) {
     nodes {
       id
     }
@@ -94,156 +93,156 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-root-queries.stdout" << __HERE__
 {
     "workflows": [
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}"
+            "id": "${WORKFLOW_NAME}"
         }
     ],
     "job": {
-        "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo${ID_DELIM}1"
+        "id": "${WORKFLOW_NAME}//20190101T00/foo/1"
     },
     "jobs": [
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}baa${ID_DELIM}1"
+            "id": "${WORKFLOW_NAME}//20190101T00/baa/1"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo${ID_DELIM}1"
+            "id": "${WORKFLOW_NAME}//20190101T00/foo/1"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}qar${ID_DELIM}1"
+            "id": "${WORKFLOW_NAME}//20190101T00/qar/1"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}qux${ID_DELIM}1"
+            "id": "${WORKFLOW_NAME}//20190101T00/qux/1"
         }
     ],
     "task": {
-        "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}foo"
+        "id": "${WORKFLOW_NAME}//foo"
     },
     "tasks": [
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}baa"
+            "id": "${WORKFLOW_NAME}//baa"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}bar"
+            "id": "${WORKFLOW_NAME}//bar"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}foo"
+            "id": "${WORKFLOW_NAME}//foo"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}qar"
+            "id": "${WORKFLOW_NAME}//qar"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}qaz"
+            "id": "${WORKFLOW_NAME}//qaz"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}qux"
+            "id": "${WORKFLOW_NAME}//qux"
         }
     ],
     "taskProxy": {
-        "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo"
+        "id": "${WORKFLOW_NAME}//20190101T00/foo"
     },
     "taskProxies": [
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}baa"
+            "id": "${WORKFLOW_NAME}//20190101T00/baa"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}bar"
+            "id": "${WORKFLOW_NAME}//20190101T00/bar"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo"
+            "id": "${WORKFLOW_NAME}//20190101T00/foo"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}qar"
+            "id": "${WORKFLOW_NAME}//20190101T00/qar"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}qaz"
+            "id": "${WORKFLOW_NAME}//20190101T00/qaz"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}qux"
+            "id": "${WORKFLOW_NAME}//20190101T00/qux"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190201T00${ID_DELIM}baa"
+            "id": "${WORKFLOW_NAME}//20190201T00/baa"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190201T00${ID_DELIM}foo"
+            "id": "${WORKFLOW_NAME}//20190201T00/foo"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190201T00${ID_DELIM}qar"
+            "id": "${WORKFLOW_NAME}//20190201T00/qar"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190201T00${ID_DELIM}qux"
+            "id": "${WORKFLOW_NAME}//20190201T00/qux"
         }
     ],
     "family": {
-        "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}FAM"
+        "id": "${WORKFLOW_NAME}//FAM"
     },
     "families": [
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}FAM"
+            "id": "${WORKFLOW_NAME}//FAM"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}FAM2"
+            "id": "${WORKFLOW_NAME}//FAM2"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}FAM3"
+            "id": "${WORKFLOW_NAME}//FAM3"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}FAM4"
+            "id": "${WORKFLOW_NAME}//FAM4"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}root"
+            "id": "${WORKFLOW_NAME}//root"
         }
     ],
     "familyProxy": {
-        "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}FAM"
+        "id": "${WORKFLOW_NAME}//20190101T00/FAM"
     },
     "familyProxies": [
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}FAM2"
+            "id": "${WORKFLOW_NAME}//20190101T00/FAM2"
         }
     ],
     "edges": [
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}baa.20190101T00${ID_DELIM}baa.20190201T00"
+            "id": "${WORKFLOW_NAME}//baa.20190101T00/baa.20190201T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}baa.20190101T00${ID_DELIM}qaz.20190101T00"
+            "id": "${WORKFLOW_NAME}//baa.20190101T00/qaz.20190101T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}bar.20190101T00"
+            "id": "${WORKFLOW_NAME}//foo.20190101T00/bar.20190101T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}foo.20190201T00"
+            "id": "${WORKFLOW_NAME}//foo.20190101T00/foo.20190201T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}qar.20190101T00${ID_DELIM}qar.20190201T00"
+            "id": "${WORKFLOW_NAME}//qar.20190101T00/qar.20190201T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}bar.20190101T00"
+            "id": "${WORKFLOW_NAME}//qux.20190101T00/bar.20190101T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}qaz.20190101T00"
+            "id": "${WORKFLOW_NAME}//qux.20190101T00/qaz.20190101T00"
         },
         {
-            "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}qux.20190101T00${ID_DELIM}qux.20190201T00"
+            "id": "${WORKFLOW_NAME}//qux.20190101T00/qux.20190201T00"
         }
     ],
     "nodesEdges": {
         "nodes": [
             {
-                "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}bar"
+                "id": "${WORKFLOW_NAME}//20190101T00/bar"
             },
             {
-                "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190101T00${ID_DELIM}foo"
+                "id": "${WORKFLOW_NAME}//20190101T00/foo"
             },
             {
-                "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20190201T00${ID_DELIM}foo"
+                "id": "${WORKFLOW_NAME}//20190201T00/foo"
             }
         ],
         "edges": [
             {
-                "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}bar.20190101T00"
+                "id": "${WORKFLOW_NAME}//foo.20190101T00/bar.20190101T00"
             },
             {
-                "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}foo.20190101T00${ID_DELIM}foo.20190201T00"
+                "id": "${WORKFLOW_NAME}//foo.20190101T00/foo.20190201T00"
             }
         ]
     }

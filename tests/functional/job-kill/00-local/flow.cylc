@@ -24,7 +24,7 @@
     [[stop2]]
         script = """
             # Kill 1/t3, 1/t4, and myself! implicitly (kill all active tasks).
-            cylc kill $CYLC_WORKFLOW_ID || true
+            cylc kill "$CYLC_WORKFLOW_ID//*" || true
             sleep 30
         """
     [[shutdown]]

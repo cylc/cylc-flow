@@ -14,17 +14,17 @@
     initial cycle point = 20190101T00
     [[graph]]
         P1M = """
-foo[-P1M] => foo
-qux[-P1M] => qux
-baa[-P1M] => baa
-qar[-P1M] => qar
+            foo[-P1M] => foo
+            qux[-P1M] => qux
+            baa[-P1M] => baa
+            qar[-P1M] => qar
 
-@wall_clock => foo & qux
+            @wall_clock => foo & qux
 
-foo | qux => bar
-qux => qaz
-baa => qaz
-"""
+            foo | qux => bar
+            qux => qaz
+            baa => qaz
+        """
 
 [runtime]
     [[root]]
