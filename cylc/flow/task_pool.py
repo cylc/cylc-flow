@@ -33,6 +33,7 @@ from cylc.flow.id import (
     detokenise,
     tokenise,
 )
+from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
 from cylc.flow.workflow_status import StopMode
 from cylc.flow.task_action_timer import TaskActionTimer, TimerFlags
@@ -1089,61 +1090,6 @@ class TaskPool:
         self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
         self.workflow_db_mgr.delete_workflow_hold_cycle_point()
 
-    def _explicit_match_tasks_to_hold(
-        self,
-        items: Iterable[str],
-    ) -> Tuple[Set[Tuple[str, 'PointBase']], List[str]]:
-        """Match future tasks based on the assumption that no active tasks
-        matched the items.
-
-        Returns (matched_tasks, unmatched_tasks)
-        """
-        matched_tasks: 'Set[Tuple[str, PointBase]]' = set()
-        unmatched_tasks: 'List[str]' = []
-        for item in items:
-            tokens = tokenise(item, relative=True)
-            point_str = tokens['cycle']
-            name_str = tokens['task'] or '*'
-            # TODO: handle both independently
-            status = tokens['cycle_sel'] or tokens['task_sel']
-            # TODO: use regex
-            if status or ('*' in item) or ('?' in item) or ('[' in item):
-                # Glob or task state was not matched by active tasks
-                LOG.warning(f"No active tasks matching: {item}")
-                unmatched_tasks.append(item)
-                continue
-            if name_str not in self.config.taskdefs:
-                if self.config.find_taskdefs(name_str):
-                    # It's a family name; was not matched by active tasks
-                    LOG.warning(
-                        f"No active tasks in the family '{name_str}' "
-                        f"matching: {item}"
-                    )
-                else:
-                    LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
-                unmatched_tasks.append(item)
-                continue
-            if point_str is None:
-                LOG.warning(f"No active instances of task: {item}")
-                unmatched_tasks.append(item)
-                continue
-            try:
-                point_str = standardise_point_string(point_str)
-            except PointParsingError as exc:
-                LOG.warning(
-                    f"{item} - invalid cycle point: {point_str} ({exc})")
-                unmatched_tasks.append(item)
-                continue
-            point = get_point(point_str)
-            taskdef = self.config.taskdefs[name_str]
-            if taskdef.is_valid_point(point):
-                matched_tasks.add((taskdef.name, point))
-            else:
-                # is_valid_point() already logged warning
-                unmatched_tasks.append(item)
-                continue
-        return matched_tasks, unmatched_tasks
-
     def check_abort_on_task_fails(self):
         """Check whether workflow should abort on task failure.
 
@@ -1403,49 +1349,6 @@ class TaskPool:
         LOG.info(f"[{itask}] spawned")
         return itask
 
-    def match_taskdefs(
-        self, items: Iterable[str]
-    ) -> Tuple[int, Dict[Tuple[str, 'PointBase'], 'TaskDef']]:
-        """Return matching taskdefs valid for selected cycle points.
-
-        Args:
-            items: Identifiers for matching task definitions, each with the
-                form "name[.point][:state]" or "[point/]name[:state]".
-                Glob-like patterns will give a warning and be skipped.
-        """
-        n_warnings = 0
-        task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
-        for item in items:
-            tokens = tokenise(item, relative=True)
-            point_str = tokens['cycle']
-            name_str = tokens['task'] or '*'
-            if point_str is None:
-                LOG.warning(f"{item} - task to spawn must have a cycle point")
-                n_warnings += 1
-                continue
-            try:
-                point_str = standardise_point_string(point_str)
-            except PointParsingError as exc:
-                LOG.warning(
-                    self.ERR_TMPL_NO_TASKID_MATCH.format(f"{item} ({exc})")
-                )
-                n_warnings += 1
-                continue
-            taskdefs: List['TaskDef'] = self.config.find_taskdefs(name_str)
-            if not taskdefs:
-                LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(item))
-                n_warnings += 1
-                continue
-            point = get_point(point_str)
-            for taskdef in taskdefs:
-                if taskdef.is_valid_point(point):
-                    task_items[(taskdef.name, point)] = taskdef
-                else:
-                    # is_valid_point() already logged warning
-                    n_warnings += 1
-                    continue
-        return n_warnings, task_items
-
     def force_spawn_children(
         self,
         items: Iterable[str],
@@ -1654,38 +1557,6 @@ class TaskPool:
             for itask in self.get_tasks()
         )
 
-    def filter_task_proxies(
-        self,
-        ids: Iterable[str],
-        warn: bool = True,
-        future: bool = False,
-    ) -> 'Tuple[List[TaskProxy], Set[Tuple[str, PointBase]], List[str]]':
-        """Return task proxies that match names, points, states in items.
-
-        Args:
-            ids:
-                ID strings for matching task proxies, each with the
-                general form `point[:state][/name[:state]]`
-                where name is a glob-like pattern for matching a task name or
-                a family name.
-            warn:
-                Whether to log a warning if no matching tasks are found.
-
-        Return (itasks, bad_items).
-        """
-        matched, unmatched = filter_ids(
-            [self.main_pool, self.hidden_pool],
-            ids,
-            warn=warn,
-        )
-        future_matched: 'Set[Tuple[str, PointBase]]' = set()
-        if future:
-            future_matched, unmatched = self._explicit_match_tasks_to_hold(
-                unmatched
-            )
-
-        return matched, future_matched, unmatched
-
     def stop_flow(self, flow_num):
         """Stop a particular flow_num from spawning any further."""
         for itask in self.get_all_tasks():
@@ -1709,3 +1580,154 @@ class TaskPool:
                         for itask in pool
                     )
                 )
+
+    def filter_task_proxies(
+        self,
+        ids: Iterable[str],
+        warn: bool = True,
+        future: bool = False,
+    ) -> 'Tuple[List[TaskProxy], Set[Tuple[str, PointBase]], List[str]]':
+        """Return task proxies that match names, points, states in items.
+
+        Args:
+            ids:
+                ID strings.
+            warn:
+                Whether to log a warning if no matching tasks are found.
+            future:
+                If True, unmatched IDs will be checked against taskdefs
+                and cycle, task pairs will be provided in the future_matched
+                argument providing the ID
+
+                * Specifies a cycle point.
+                * Is not a pattern. (e.g. `*/foo`).
+                * Does not contain a state selector (e.g. `:failed`).
+
+        Returns:
+            (matched, future_matched, unmatched)
+
+        """
+        matched, unmatched = filter_ids(
+            [self.main_pool, self.hidden_pool],
+            ids,
+            warn=warn,
+
+        )
+        future_matched: 'Set[Tuple[str, PointBase]]' = set()
+        if future and unmatched:
+            future_matched, unmatched = self.match_future_tasks(
+                unmatched
+            )
+
+        return matched, future_matched, unmatched
+
+    def match_future_tasks(
+        self,
+        ids: Iterable[str],
+    ) -> Tuple[Set[Tuple[str, 'PointBase']], List[str]]:
+        """Match task IDs against task definitions (rather than the task pool).
+
+        IDs will be matched providing the ID:
+
+        * Specifies a cycle point.
+        * Is not a pattern. (e.g. `*/foo`).
+        * Does not contain a state selector (e.g. `:failed`).
+
+        Returns:
+            (matched_tasks, unmatched_tasks)
+
+        """
+        matched_tasks: 'Set[Tuple[str, PointBase]]' = set()
+        unmatched_tasks: 'List[str]' = []
+        for id_ in ids:
+            try:
+                tokens = tokenise(id_, relative=True)
+            except ValueError:
+                LOG.warning(f'Invalid task ID: {id_}')
+            if (
+                tokens['cycle_sel']
+                or tokens['task_sel']
+                or contains_fnmatch(id_)
+            ):
+                # Glob or task state was not matched by active tasks
+                LOG.warning(f"No active tasks matching: {id_}")
+                unmatched_tasks.append(id_)
+                continue
+            point_str = tokens['cycle']
+            name_str = tokens['task'] or '*'
+            if name_str not in self.config.taskdefs:
+                if self.config.find_taskdefs(name_str):
+                    # It's a family name; was not matched by active tasks
+                    LOG.warning(
+                        f"No active tasks in the family '{name_str}' "
+                        f"matching: {id_}"
+                    )
+                else:
+                    LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
+                unmatched_tasks.append(id_)
+                continue
+            if point_str is None:
+                LOG.warning(f"No active instances of task: {id_}")
+                unmatched_tasks.append(id_)
+                continue
+            try:
+                point_str = standardise_point_string(point_str)
+            except PointParsingError as exc:
+                LOG.warning(
+                    f"{id_} - invalid cycle point: {point_str} ({exc})")
+                unmatched_tasks.append(id_)
+                continue
+            point = get_point(point_str)
+            taskdef = self.config.taskdefs[name_str]
+            if taskdef.is_valid_point(point):
+                matched_tasks.add((taskdef.name, point))
+            else:
+                # is_valid_point() already logged warning
+                unmatched_tasks.append(id_)
+                continue
+        return matched_tasks, unmatched_tasks
+
+    def match_taskdefs(
+        self, items: Iterable[str]
+    ) -> Tuple[int, Dict[Tuple[str, 'PointBase'], 'TaskDef']]:
+        """Return matching taskdefs valid for selected cycle points.
+
+        Args:
+            items:
+                Identifiers for matching task definitions, each with the
+                form "name[.point][:state]" or "[point/]name[:state]".
+                Glob-like patterns will give a warning and be skipped.
+
+        """
+        n_warnings = 0
+        task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
+        for item in items:
+            tokens = tokenise(item, relative=True)
+            point_str = tokens['cycle']
+            name_str = tokens['task'] or '*'
+            if point_str is None:
+                LOG.warning(f"{item} - task to spawn must have a cycle point")
+                n_warnings += 1
+                continue
+            try:
+                point_str = standardise_point_string(point_str)
+            except PointParsingError as exc:
+                LOG.warning(
+                    self.ERR_TMPL_NO_TASKID_MATCH.format(f"{item} ({exc})")
+                )
+                n_warnings += 1
+                continue
+            taskdefs: List['TaskDef'] = self.config.find_taskdefs(name_str)
+            if not taskdefs:
+                LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(item))
+                n_warnings += 1
+                continue
+            point = get_point(point_str)
+            for taskdef in taskdefs:
+                if taskdef.is_valid_point(point):
+                    task_items[(taskdef.name, point)] = taskdef
+                else:
+                    # is_valid_point() already logged warning
+                    n_warnings += 1
+                    continue
+        return n_warnings, task_items

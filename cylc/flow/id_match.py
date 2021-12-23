@@ -46,13 +46,13 @@ if TYPE_CHECKING:
 #     ...
 
 
-_RET = (
-    'Union['
-    'Tuple[List[TaskProxy], List[str]]'
-    ', '
-    'Tuple[List[PointBase], List[str]]'
-    ']'
-)
+# _RET = (
+#     'Union['
+#     'Tuple[List[TaskProxy], List[str]]'
+#     ', '
+#     'Tuple[List[PointBase], List[str]]'
+#     ']'
+# )
 
 
 def filter_ids(
