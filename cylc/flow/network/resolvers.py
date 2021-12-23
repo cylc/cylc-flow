@@ -43,6 +43,7 @@ from cylc.flow.id import (
     detokenise,
     is_null,
     strip_task,
+    strip_workflow,
     tokenise,
 )
 from cylc.flow.network.schema import (
@@ -615,7 +616,7 @@ class Resolvers(BaseResolvers):
 
     async def nodes_mutator(self, *m_args):
         """Mutate node items of associated workflows."""
-        _, command, ids, w_args, args = m_args
+        _, command, tokens_list, w_args, args = m_args
         w_ids = [
             workflow[WORKFLOW].id
             for workflow in await self.get_workflows_data(w_args)
@@ -627,27 +628,21 @@ class Resolvers(BaseResolvers):
         w_id = w_ids[0]
         # match proxy ID args with workflows
         items = []
-        for owner, workflow, cycle, name, submit_num, state in ids:
+        for tokens in tokens_list:
+            owner = tokens.get('user')
+            workflow = tokens.get('workflow')
             if workflow and owner is None:
                 owner = "*"
             if (
                 not (owner and workflow)
                 or fnmatchcase(
                     w_id,
-                    detokenise({
-                        'user': owner,
-                        'workflow': workflow,
-                    }),
+                    detokenise(strip_task(tokens)),
                 )
             ):
-                if cycle is None:
-                    cycle = '*'
-                id_arg = f'{cycle}/{name}'
-                if submit_num:
-                    id_arg = f'{id_arg}/{submit_num}'
-                if state:
-                    id_arg = f'{id_arg}:{state}'
-                items.append(id_arg)
+                items.append(
+                    detokenise(strip_workflow(tokens), relative=True)
+                )
         if items:
             if command == 'put_messages':
                 args['task_job'] = items[0]
@@ -823,7 +818,7 @@ class Resolvers(BaseResolvers):
         ))
         return (True, 'Command queued')
 
-    def force_trigger_tasks(self, tasks, reflow=False, flow_descr=None):
+    def force_trigger_tasks(self, tasks=None, reflow=False, flow_descr=None):
         """Trigger submission of task jobs where possible.
 
         Args:
@@ -845,7 +840,7 @@ class Resolvers(BaseResolvers):
         """
         self.schd.command_queue.put(
             (
-                "force_trigger_tasks", (tasks,),
+                "force_trigger_tasks", (tasks or [],),
                 {
                     "reflow": reflow,
                     "flow_descr": flow_descr

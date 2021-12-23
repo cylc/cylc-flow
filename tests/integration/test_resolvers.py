@@ -19,9 +19,8 @@ import pytest
 from unittest.mock import Mock
 
 from cylc.flow.data_store_mgr import EDGES, TASK_PROXIES
-from cylc.flow.id import detokenise
+from cylc.flow.id import detokenise, tokenise
 from cylc.flow.network.resolvers import Resolvers
-from cylc.flow.network.schema import parse_node_id
 from cylc.flow.scheduler import Scheduler
 
 
@@ -97,7 +96,11 @@ async def mock_flow(
 @pytest.mark.asyncio
 async def test_get_workflows(mock_flow, flow_args):
     """Test method returning workflow messages satisfying filter args."""
-    flow_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
+    flow_args['workflows'].append({
+        'user': mock_flow.owner,
+        'workflow': mock_flow.name,
+        'workflow_sel': None,
+    })
     flow_msgs = await mock_flow.resolvers.get_workflows(flow_args)
     assert len(flow_msgs) == 1
 
@@ -106,13 +109,17 @@ async def test_get_workflows(mock_flow, flow_args):
 async def test_get_nodes_all(mock_flow, node_args):
     """Test method returning workflow(s) node message satisfying filter args.
     """
-    node_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
+    node_args['workflows'].append({
+        'user': mock_flow.owner,
+        'workflow': mock_flow.name,
+        'workflow_sel': None,
+    })
     node_args['states'].append('failed')
     nodes = await mock_flow.resolvers.get_nodes_all(TASK_PROXIES, node_args)
     assert len(nodes) == 0
     node_args['ghosts'] = True
     node_args['states'] = []
-    node_args['ids'].append(parse_node_id(mock_flow.node_ids[0], TASK_PROXIES))
+    node_args['ids'].append(tokenise(mock_flow.node_ids[0]))
     nodes = [
         n for n in await mock_flow.resolvers.get_nodes_all(
             TASK_PROXIES, node_args)
@@ -125,7 +132,11 @@ async def test_get_nodes_all(mock_flow, node_args):
 async def test_get_nodes_by_ids(mock_flow, node_args):
     """Test method returning workflow(s) node messages
     who's ID is a match to any given."""
-    node_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
+    node_args['workflows'].append({
+        'user': mock_flow.owner,
+        'workflow': mock_flow.name,
+        'workflow_sel': None
+    })
     nodes = await mock_flow.resolvers.get_nodes_by_ids(TASK_PROXIES, node_args)
     assert len(nodes) == 0
 
@@ -151,7 +162,11 @@ async def test_get_node_by_id(mock_flow, node_args):
         'cycle': '20500808T00',
         'task': 'jin',
     })
-    node_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
+    node_args['workflows'].append({
+        'user': mock_flow.owner,
+        'workflow': mock_flow.name,
+        'workflow_sel': None
+    })
     node = await mock_flow.resolvers.get_node_by_id(TASK_PROXIES, node_args)
     assert node is None
     node_args['id'] = mock_flow.node_ids[0]
@@ -188,7 +203,11 @@ async def test_get_edges_by_ids(mock_flow, node_args):
 @pytest.mark.asyncio
 async def test_mutator(mock_flow, flow_args):
     """Test the mutation method."""
-    flow_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
+    flow_args['workflows'].append({
+        'user': mock_flow.owner,
+        'workflow': mock_flow.name,
+        'workflow_sel': None
+    })
     args = {}
     response = await mock_flow.resolvers.mutator(
         None,
@@ -202,8 +221,12 @@ async def test_mutator(mock_flow, flow_args):
 @pytest.mark.asyncio
 async def test_nodes_mutator(mock_flow, flow_args):
     """Test the nodes mutation method."""
-    flow_args['workflows'].append((mock_flow.owner, mock_flow.name, None))
-    ids = [parse_node_id(n, TASK_PROXIES) for n in mock_flow.node_ids]
+    flow_args['workflows'].append({
+        'user': mock_flow.owner,
+        'workflow': mock_flow.name,
+        'workflow_sel': None,
+    })
+    ids = [tokenise(n) for n in mock_flow.node_ids]
     response = await mock_flow.resolvers.nodes_mutator(
         None, 'force_trigger_tasks', ids, flow_args,
         {"reflow": False, "flow_descr": ""}

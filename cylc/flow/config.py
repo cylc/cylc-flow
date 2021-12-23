@@ -185,7 +185,7 @@ class WorkflowConfig:
         work_dir: Optional[str] = None,
         share_dir: Optional[str] = None
     ) -> None:
-        check_deprecation(fpath)
+        check_deprecation(Path(fpath))
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None

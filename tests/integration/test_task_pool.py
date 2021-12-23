@@ -53,7 +53,7 @@ def get_task_ids(
 ) -> List[str]:
     """Helper function to return sorted task identities ("{name}.{point}")
     from a list of  (name, point) tuples."""
-    return sorted(f'{name}.{point}' for name, point in name_point_list)
+    return sorted(f'{point}/{name}' for name, point in name_point_list)
 
 
 def assert_expected_log(
@@ -119,7 +119,7 @@ async def example_flow(
     'items, expected_task_ids, expected_bad_items, expected_warnings',
     [
         param(
-            ['foo'], ['1/foo', '2/foo', '3/foo', '4/foo', '5/foo'], [], [],
+            ['*/foo'], ['1/foo', '2/foo', '3/foo', '4/foo', '5/foo'], [], [],
             id="Basic"
         ),
         param(
@@ -151,13 +151,13 @@ async def example_flow(
             id="Multiple items"
         ),
         param(
-            ['1/grogu', '/grogu*'], [], ['1/grogu', '/grogu*'],
+            ['1/grogu', '*/grogu'], [], ['1/grogu', '*/grogu'],
             ["No active tasks matching: 1/grogu",
-             "No active tasks matching: /grogu*"],
+             "No active tasks matching: */grogu"],
             id="No such task"
         ),
         param(
-            [],
+            ['*'],
             ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
              '4/bar', '5/foo', '5/bar'], [], [],
             id="No items given - get all tasks"
@@ -186,7 +186,7 @@ async def test_filter_task_proxies(
     """
     caplog.set_level(logging.WARNING, CYLC_LOG)
     task_pool = mod_example_flow.pool
-    itasks, bad_items = task_pool.filter_task_proxies(items)
+    itasks, _, bad_items = task_pool.filter_task_proxies(items)
     task_ids = [itask.identity for itask in itasks]
     assert sorted(task_ids) == sorted(expected_task_ids)
     assert sorted(bad_items) == sorted(expected_bad_items)
@@ -200,10 +200,6 @@ async def test_filter_task_proxies(
         param(
             ['4/foo'], ['4/foo'], [],
             id="Basic"
-        ),
-        param(
-            ['foo'], [], ["foo - task to spawn must have a cycle point"],
-            id="No cycle point given"
         ),
         param(
             ['2/*'], ['2/foo', '2/bar', '2/pub'], [],
@@ -286,13 +282,7 @@ async def test_match_taskdefs(
             id="Family names hold active tasks only"
         ),
         param(
-            ['*/foo', 'bar', 'pub', '*/grogu'], ['1/foo', '1/bar'],
-            ["No active instances of task: pub",
-             "No active tasks matching: /grogu"],
-            id="Point globs/point omitted hold active tasks only"
-        ),
-        param(
-            ['1/grogu', '/fooH', '20/foo', '1/pub'], [],
+            ['1/grogu', 'H/foo', '20/foo', '1/pub'], [],
             ["No matching tasks found: grogu",
              "H/foo - invalid cycle point: H",
              "Invalid cycle point for task: foo, 20",
@@ -300,7 +290,7 @@ async def test_match_taskdefs(
             id="Non-existent task name or invalid cycle point"
         ),
         param(
-            ['foo:waiting', '1/foo:failed', '2/bar:waiting'], ['1/foo'],
+            ['1/foo:waiting', '1/foo:failed', '2/bar:waiting'], ['1/foo'],
             ["No active tasks matching: 1/foo:failed",
              "No active tasks matching: 2/bar:waiting"],
             id="Specifying task state works for active tasks, not future tasks"

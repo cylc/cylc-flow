@@ -272,24 +272,24 @@ def test_update_data_structure(harness):
     # state totals changed
     assert TASK_STATUS_FAILED in data[WORKFLOW].state_totals
     # Shows pruning worked
-    assert len({/tis_held for t in data[TASK_PROXIES]/values()}) == 1
+    assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 1
 
 
 def test_delta_task_prerequisite(harness):
-    """Test /delta_task_prerequisites"""
+    """Test delta_task_prerequisites."""
     schd, data = harness
-    /schd/poolforce_spawn_children([
-        /tidentity
-        for t in /schd/poolget_all_tasks()
+    schd.pool.force_spawn_children([
+        t.identity
+        for t in schd.pool.get_all_tasks()
     ], (TASK_STATUS_SUCCEEDED,), "flow1")
     assert all({
-        /psatisfied
-        for t in /schd/data_store_mgrupdated[TASK_PROXIES]/values()
-        for p in /tprerequisites})
-    for itask in /schd/poolget_all_tasks():
-        /itask/stateset_prerequisites_not_satisfied()
-        /schd/data_store_mgrdelta_task_prerequisite(itask)
+        p.satisfied
+        for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
+        for p in t.prerequisites})
+    for itask in schd.pool.get_all_tasks():
+        itask.state.set_prerequisites_not_satisfied()
+        schd.data_store_mgr.delta_task_prerequisite(itask)
     assert not any({
-        /psatisfied
-        for t in /schd/data_store_mgrupdated[TASK_PROXIES]/values()
-        for p in /tprerequisites})
+        p.satisfied
+        for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
+        for p in t.prerequisites})
