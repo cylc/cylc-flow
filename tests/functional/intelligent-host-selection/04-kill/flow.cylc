@@ -1,11 +1,11 @@
 [meta]
-title = "Try out scenarios for intelligent host selection."
-description = """
-Tasks
-- goodhost: a control to check that everything works
-- badhost is always going to fail
-- mixedhost contains some hosts that will and won't fail
-"""
+    title = "Try out scenarios for intelligent host selection."
+    description = """
+        Tasks
+        - goodhost: a control to check that everything works
+        - badhost is always going to fail
+        - mixedhost contains some hosts that will and won't fail
+    """
 
 [scheduler]
     [[events]]
@@ -23,7 +23,6 @@ Tasks
             mixedhosttask:start => stop_m
         """
 
-
 [runtime]
     [[root]]
         script = sleep 120 & echo $! >file; wait
@@ -31,7 +30,7 @@ Tasks
     [[mystop]]
         script="""
             sleep 5  # Give the badhosts list time to empty
-            cylc kill "$CYLC_WORKFLOW_ID//*/$TASK" || true
+            cylc kill "$CYLC_WORKFLOW_ID//$TASK"
             cylc stop $CYLC_WORKFLOW_ID
         """
 

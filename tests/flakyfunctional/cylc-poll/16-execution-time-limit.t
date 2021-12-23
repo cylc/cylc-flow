@@ -65,7 +65,7 @@ PREDICTED_POLL_TIME=$(time_offset \
     "$(cut -d ' ' -f 1 <<< "${LINE}")" \
     "$(sed -n 's/^.*execution timeout=\([^,]\+\).*$/\1/p' <<< "${LINE}")")
 ACTUAL_POLL_TIME=$(sed -n \
-    's/\(.*\) INFO - \[1/foo running .* (polled)failed .*/\1/p' "${LOG}")
+    's|\(.*\) INFO - \[1/foo running .* (polled)failed .*|\1|p' "${LOG}")
 
 # Test execution timeout polling.
 # Main loop is roughly 1 second, but integer rounding may give an apparent 2

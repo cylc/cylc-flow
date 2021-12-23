@@ -3,7 +3,7 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        expected task failures = local-1.1, local-2.1, local-3.1, remote-1.1, remote-2.1
+        expected task failures = 1/local-1, 1/local-2, 1/local-3, 1/remote-1, 1/remote-2
 
 [scheduling]
     [[graph]]

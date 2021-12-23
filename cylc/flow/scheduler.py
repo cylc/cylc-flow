@@ -792,8 +792,10 @@ class Scheduler:
             tokens = tokenise(task_job, relative=True)
             task_id = detokenise(strip_job(tokens), relative=True)
             messages.setdefault(task_id, [])
+            # job may be None (e.g. simulation mode)
+            job = int(tokens['job']) if tokens['job'] else None
             messages[task_id].append(
-                (int(tokens['job']), event_time, severity, message)
+                (job, event_time, severity, message)
             )
         # Note on to_poll_tasks: If an incoming message is going to cause a
         # reverse change to task state, it is desirable to confirm this by

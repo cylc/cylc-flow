@@ -1,13 +1,16 @@
 #!Jinja2
+
 [scheduler]
     [[events]]
         abort on stall timeout = True
         stall timeout = PT0S
         abort on inactivity timeout = True
         inactivity timeout = PT3M
+
 [scheduling]
     [[graph]]
         R1 = local-task:echo & remote-task:echo => cat-log
+
 [runtime]
     [[ECHO]]
         script = """
@@ -26,12 +29,12 @@
     [[cat-log]]
         script = """
             cylc__job__wait_cylc_message_started
-            for TASK in 1/local-task 1/remote-task; do
+            for TASK in '1/local-task' '1/remote-task'; do
                 cylc cat-log --debug -f o \
-                    "${CYLC_WORKFLOW_ID}//$CYLC_TASK_CYCLE_POINT/$TASK" \
+                    "${CYLC_WORKFLOW_ID}//${TASK}" \
                     | grep 'rubbish'
-                cylc cat-log --debug -f e \\
-                    "${CYLC_WORKFLOW_ID}//$CYLC_TASK_CYCLE_POINT/$TASK" \
+                cylc cat-log --debug -f e \
+                    "${CYLC_WORKFLOW_ID}//${TASK}" \
                     | grep 'garbage'
             done
         """

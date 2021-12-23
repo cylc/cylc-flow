@@ -15,7 +15,7 @@
 
 [runtime]
     [[set-stop-point]]
-        script = cylc stop "${CYLC_WORKFLOW_ID}" '3'
+        script = cylc stop "${CYLC_WORKFLOW_ID}//3"
     [[reload]]
         script = """
             cylc__job__wait_cylc_message_started

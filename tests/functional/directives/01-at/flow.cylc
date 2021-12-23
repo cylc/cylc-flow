@@ -2,7 +2,7 @@
 
 [scheduler]
    [[events]]
-       expected task failures = rem2.1
+       expected task failures = 1/rem2
 
 [scheduling]
     [[graph]]
