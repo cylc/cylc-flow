@@ -56,7 +56,6 @@ from cylc.flow.workflow_files import (
     is_forbidden,
     is_installed,
     parse_cli_sym_dirs,
-    parse_reg,
     reinstall_workflow,
     search_install_source_dirs,
     validate_workflow_name
@@ -336,86 +335,88 @@ def test_infer_latest_run__bad(
     assert str(exc.value) == err_msg
 
 
-@pytest.fixture(scope='module')
-def setup__test_parse_reg(mod_tmp_run_dir: Callable):
-    """Setup for test_parse_reg().
+# TODO: remove these tests once sure all cases are covered by the new tests
 
-    Returns dict of template vars tmp_path, cylc_run_dir and cwd.
-    """
-    cylc_run_dir: Path = mod_tmp_run_dir()
-    numbered_workflow = cylc_run_dir / 'numbered' / 'workflow'
-    (numbered_workflow / 'run1').mkdir(parents=True)
-    (numbered_workflow / 'run1' / 'flow.cylc').touch()
-    (numbered_workflow / 'runN').symlink_to('run1')
-    non_numbered_workflow = cylc_run_dir / 'non_numbered' / 'workflow'
-    non_numbered_workflow.mkdir(parents=True)
-    (non_numbered_workflow / 'flow.cylc').touch()
-    (cylc_run_dir / 'empty').mkdir()
-    tmp_path = cylc_run_dir.parent
-    (tmp_path / 'random_file.cylc').touch()
-    mock_cwd = tmp_path / 'mock-cwd'
-    mock_cwd.mkdir()
-    (mock_cwd / 'flow.cylc').touch()
+# @pytest.fixture(scope='module')
+# def setup__test_parse_reg(mod_tmp_run_dir: Callable):
+#     """Setup for test_parse_reg().
+#
+#     Returns dict of template vars tmp_path, cylc_run_dir and cwd.
+#     """
+#     cylc_run_dir: Path = mod_tmp_run_dir()
+#     numbered_workflow = cylc_run_dir / 'numbered' / 'workflow'
+#     (numbered_workflow / 'run1').mkdir(parents=True)
+#     (numbered_workflow / 'run1' / 'flow.cylc').touch()
+#     (numbered_workflow / 'runN').symlink_to('run1')
+#     non_numbered_workflow = cylc_run_dir / 'non_numbered' / 'workflow'
+#     non_numbered_workflow.mkdir(parents=True)
+#     (non_numbered_workflow / 'flow.cylc').touch()
+#     (cylc_run_dir / 'empty').mkdir()
+#     tmp_path = cylc_run_dir.parent
+#     (tmp_path / 'random_file.cylc').touch()
+#     mock_cwd = tmp_path / 'mock-cwd'
+#     mock_cwd.mkdir()
+#     (mock_cwd / 'flow.cylc').touch()
+#
+#     def _setup__test_parse_reg() -> Dict[str, Path]:
+#         return {
+#             'cylc_run_dir': cylc_run_dir,
+#             'tmp_path': tmp_path,
+#             'cwd': mock_cwd
+#         }
+#
+#     orig_cwd = os.getcwd()
+#     os.chdir(mock_cwd)
+#     yield _setup__test_parse_reg
+#     os.chdir(orig_cwd)
 
-    def _setup__test_parse_reg() -> Dict[str, Path]:
-        return {
-            'cylc_run_dir': cylc_run_dir,
-            'tmp_path': tmp_path,
-            'cwd': mock_cwd
-        }
 
-    orig_cwd = os.getcwd()
-    os.chdir(mock_cwd)
-    yield _setup__test_parse_reg
-    os.chdir(orig_cwd)
-
-
-@pytest.mark.parametrize('src', [True, False])
-@pytest.mark.parametrize(
-    'reg, expected_reg, expected_path',
-    [
-        pytest.param(
-            'numbered/workflow',
-            'numbered/workflow/run1',
-            '{cylc_run_dir}/numbered/workflow/run1',
-            id="numbered workflow"
-        ),
-        pytest.param(
-            'numbered/workflow/runN',
-            'numbered/workflow/run1',
-            '{cylc_run_dir}/numbered/workflow/run1',
-            id="numbered workflow targeted by runN"
-        ),
-        pytest.param(
-            'non_numbered/workflow',
-            'non_numbered/workflow',
-            '{cylc_run_dir}/non_numbered/workflow',
-            id="non-numbered workflow"
-        ),
-    ]
-)
-def test_parse_reg__ok(
-    src: bool,
-    reg: str,
-    expected_reg: str,
-    expected_path: str,
-    setup__test_parse_reg: Callable
-) -> None:
-    """Test parse_reg() with relative reg.
-
-    Params:
-        src: Arg passed to parse_reg().
-        reg: Arg passed to parse_reg().
-        expected_reg: Expected reg returned for both src=True|False.
-        expected_path: Expected path returned for src=False (for src=True,
-            flow.cylc will be appended).
-    """
-    paths: dict = setup__test_parse_reg()
-    expected_reg = expected_reg.format(**paths)
-    expected_path: Path = Path(expected_path.format(**paths))
-    if src:
-        expected_path = expected_path / WorkflowFiles.FLOW_FILE
-    assert parse_reg(reg, src) == (expected_reg, expected_path)
+# @pytest.mark.parametrize('src', [True, False])
+# @pytest.mark.parametrize(
+#     'reg, expected_reg, expected_path',
+#     [
+#         pytest.param(
+#             'numbered/workflow',
+#             'numbered/workflow/run1',
+#             '{cylc_run_dir}/numbered/workflow/run1',
+#             id="numbered workflow"
+#         ),
+#         pytest.param(
+#             'numbered/workflow/runN',
+#             'numbered/workflow/run1',
+#             '{cylc_run_dir}/numbered/workflow/run1',
+#             id="numbered workflow targeted by runN"
+#         ),
+#         pytest.param(
+#             'non_numbered/workflow',
+#             'non_numbered/workflow',
+#             '{cylc_run_dir}/non_numbered/workflow',
+#             id="non-numbered workflow"
+#         ),
+#     ]
+# )
+# def test_parse_reg__ok(
+#     src: bool,
+#     reg: str,
+#     expected_reg: str,
+#     expected_path: str,
+#     setup__test_parse_reg: Callable
+# ) -> None:
+#     """Test parse_reg() with relative reg.
+#
+#     Params:
+#         src: Arg passed to parse_reg().
+#         reg: Arg passed to parse_reg().
+#         expected_reg: Expected reg returned for both src=True|False.
+#         expected_path: Expected path returned for src=False (for src=True,
+#             flow.cylc will be appended).
+#     """
+#     paths: dict = setup__test_parse_reg()
+#     expected_reg = expected_reg.format(**paths)
+#     expected_path: Path = Path(expected_path.format(**paths))
+#     if src:
+#         expected_path = expected_path / WorkflowFiles.FLOW_FILE
+#     assert parse_reg(reg, src) == (expected_reg, expected_path)
 
 
 @pytest.mark.parametrize(

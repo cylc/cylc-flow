@@ -359,7 +359,7 @@ class DataStoreMgr:
     def __init__(self, schd):
         self.schd = schd
         self.id_ = {
-            'owner': self.schd.owner,
+            'user': self.schd.owner,
             'workflow': self.schd.workflow,
         }
         self.workflow_id = detokenise(self.id_)

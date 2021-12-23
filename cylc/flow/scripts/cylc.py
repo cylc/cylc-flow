@@ -128,7 +128,6 @@ Cycle / Family / Task / Job IDs:
 
 Full ID
     We join the workflow and cycle/task/job IDs together using //:
-
       workflow//cycle/task/job
 
     Examples:
@@ -156,7 +155,7 @@ Patterns
 
     Warning:
       Remember to write IDs inside single quotes when using them on the
-      command line otherwise your shell will expand them.
+      command line otherwise your shell may expand them.
 
 Filters
     Filters allow you to filter for specific states.
@@ -169,10 +168,6 @@ Filters
       workflow//cycle/*:running       # All running tasks in workflow//cycle
       workflow//cycle/task/*:running  # All running jobs in
                                       # workflow//cycle/task
-
-Full ID Specification
-    [~user[:selector]/]workflow_id[:selector]
-     [//cycle[:selector][/task[:selector][/job[:selector]]]]
 '''
 
 

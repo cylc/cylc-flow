@@ -17,6 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test workflow graphql interface
 . "$(dirname "$0")/test_header"
+skip_all 'TODO: awaiting re-write'
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
@@ -93,156 +94,156 @@ cmp_json "${TEST_NAME}-out" "${TEST_NAME_BASE}-root-queries.stdout" << __HERE__
 {
     "workflows": [
         {
-            "id": "${WORKFLOW_NAME}"
+            "id": "~${USER}/${WORKFLOW_NAME}"
         }
     ],
     "job": {
-        "id": "${WORKFLOW_NAME}//20190101T00/foo/1"
+        "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/foo/1"
     },
     "jobs": [
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/baa/1"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/baa/1"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/foo/1"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/foo/1"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/qar/1"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/qar/1"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/qux/1"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/qux/1"
         }
     ],
     "task": {
-        "id": "${WORKFLOW_NAME}//foo"
+        "id": "~${USER}/${WORKFLOW_NAME}//foo"
     },
     "tasks": [
         {
-            "id": "${WORKFLOW_NAME}//baa"
+            "id": "~${USER}/${WORKFLOW_NAME}//baa"
         },
         {
-            "id": "${WORKFLOW_NAME}//bar"
+            "id": "~${USER}/${WORKFLOW_NAME}//bar"
         },
         {
-            "id": "${WORKFLOW_NAME}//foo"
+            "id": "~${USER}/${WORKFLOW_NAME}//foo"
         },
         {
-            "id": "${WORKFLOW_NAME}//qar"
+            "id": "~${USER}/${WORKFLOW_NAME}//qar"
         },
         {
-            "id": "${WORKFLOW_NAME}//qaz"
+            "id": "~${USER}/${WORKFLOW_NAME}//qaz"
         },
         {
-            "id": "${WORKFLOW_NAME}//qux"
+            "id": "~${USER}/${WORKFLOW_NAME}//qux"
         }
     ],
     "taskProxy": {
-        "id": "${WORKFLOW_NAME}//20190101T00/foo"
+        "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/foo"
     },
     "taskProxies": [
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/baa"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/baa"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/bar"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/bar"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/foo"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/foo"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/qar"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/qar"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/qaz"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/qaz"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/qux"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/qux"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190201T00/baa"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190201T00/baa"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190201T00/foo"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190201T00/foo"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190201T00/qar"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190201T00/qar"
         },
         {
-            "id": "${WORKFLOW_NAME}//20190201T00/qux"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190201T00/qux"
         }
     ],
     "family": {
-        "id": "${WORKFLOW_NAME}//FAM"
+        "id": "~${USER}/${WORKFLOW_NAME}//FAM"
     },
     "families": [
         {
-            "id": "${WORKFLOW_NAME}//FAM"
+            "id": "~${USER}/${WORKFLOW_NAME}//FAM"
         },
         {
-            "id": "${WORKFLOW_NAME}//FAM2"
+            "id": "~${USER}/${WORKFLOW_NAME}//FAM2"
         },
         {
-            "id": "${WORKFLOW_NAME}//FAM3"
+            "id": "~${USER}/${WORKFLOW_NAME}//FAM3"
         },
         {
-            "id": "${WORKFLOW_NAME}//FAM4"
+            "id": "~${USER}/${WORKFLOW_NAME}//FAM4"
         },
         {
-            "id": "${WORKFLOW_NAME}//root"
+            "id": "~${USER}/${WORKFLOW_NAME}//root"
         }
     ],
     "familyProxy": {
-        "id": "${WORKFLOW_NAME}//20190101T00/FAM"
+        "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/FAM"
     },
     "familyProxies": [
         {
-            "id": "${WORKFLOW_NAME}//20190101T00/FAM2"
+            "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/FAM2"
         }
     ],
     "edges": [
         {
-            "id": "${WORKFLOW_NAME}//baa.20190101T00/baa.20190201T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//baa.20190101T00/baa.20190201T00"
         },
         {
-            "id": "${WORKFLOW_NAME}//baa.20190101T00/qaz.20190101T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//baa.20190101T00/qaz.20190101T00"
         },
         {
-            "id": "${WORKFLOW_NAME}//foo.20190101T00/bar.20190101T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//foo.20190101T00/bar.20190101T00"
         },
         {
-            "id": "${WORKFLOW_NAME}//foo.20190101T00/foo.20190201T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//foo.20190101T00/foo.20190201T00"
         },
         {
-            "id": "${WORKFLOW_NAME}//qar.20190101T00/qar.20190201T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//qar.20190101T00/qar.20190201T00"
         },
         {
-            "id": "${WORKFLOW_NAME}//qux.20190101T00/bar.20190101T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//qux.20190101T00/bar.20190101T00"
         },
         {
-            "id": "${WORKFLOW_NAME}//qux.20190101T00/qaz.20190101T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//qux.20190101T00/qaz.20190101T00"
         },
         {
-            "id": "${WORKFLOW_NAME}//qux.20190101T00/qux.20190201T00"
+            "id": "~${USER}/${WORKFLOW_NAME}//qux.20190101T00/qux.20190201T00"
         }
     ],
     "nodesEdges": {
         "nodes": [
             {
-                "id": "${WORKFLOW_NAME}//20190101T00/bar"
+                "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/bar"
             },
             {
-                "id": "${WORKFLOW_NAME}//20190101T00/foo"
+                "id": "~${USER}/${WORKFLOW_NAME}//20190101T00/foo"
             },
             {
-                "id": "${WORKFLOW_NAME}//20190201T00/foo"
+                "id": "~${USER}/${WORKFLOW_NAME}//20190201T00/foo"
             }
         ],
         "edges": [
             {
-                "id": "${WORKFLOW_NAME}//foo.20190101T00/bar.20190101T00"
+                "id": "~${USER}/${WORKFLOW_NAME}//foo.20190101T00/bar.20190101T00"
             },
             {
-                "id": "${WORKFLOW_NAME}//foo.20190101T00/foo.20190201T00"
+                "id": "~${USER}/${WORKFLOW_NAME}//foo.20190101T00/foo.20190201T00"
             }
         ]
     }

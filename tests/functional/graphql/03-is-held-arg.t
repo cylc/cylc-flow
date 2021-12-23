@@ -97,7 +97,7 @@ cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
             ],
             "familyProxies": [
                 {
-                    "id": "${WORKFLOW_NAME}//1/BAZ"
+                    "id": "~${USER}/${WORKFLOW_NAME}//1/BAZ"
                 }
             ]
         }
