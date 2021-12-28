@@ -77,12 +77,12 @@ def job_db_row():
     ]
 
 
-def ext_id(schd):
-    return f'~{schd.owner}/{schd.workflow}//1/foo/3'
-
-
 def int_id(_):
     return '1/foo/03'
+
+
+def ext_id(schd):
+    return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
 
 
 @pytest.mark.asyncio
@@ -239,7 +239,6 @@ def test_delta_job_time(harness):
     event_time = get_current_time_string()
     schd.data_store_mgr.delta_job_time(
         int_id(schd), 'submitted', event_time)
-    breakpoint()
     job_updated = schd.data_store_mgr.updated[JOBS][ext_id(schd)]
     with pytest.raises(ValueError):
         job_updated.HasField('jumped_time')

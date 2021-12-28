@@ -1783,8 +1783,8 @@ class DataStoreMgr:
         """Add message to job."""
         tokens = tokenise(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
-            tokens['cycle'],
             tokens['task'],
+            tokens['cycle'],
             tokens['job'],
         )
         if not job:
@@ -1801,8 +1801,8 @@ class DataStoreMgr:
         """Set job attribute."""
         tokens = tokenise(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
-            tokens['cycle'],
             tokens['task'],
+            tokens['cycle'],
             tokens['job'],
         )
         if not job:
@@ -1819,8 +1819,8 @@ class DataStoreMgr:
         """Set job state."""
         tokens = tokenise(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
-            tokens['cycle'],
             tokens['task'],
+            tokens['cycle'],
             tokens['job'],
         )
         if not job or status not in JOB_STATUS_SET:
@@ -1842,8 +1842,8 @@ class DataStoreMgr:
         """
         tokens = tokenise(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
-            tokens['cycle'],
             tokens['task'],
+            tokens['cycle'],
             tokens['job'],
         )
         if not job:
