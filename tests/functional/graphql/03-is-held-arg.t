@@ -86,7 +86,7 @@ cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
             "isHeldTotal": 1,
             "taskProxies": [
                 {
-                    "id": "${USER}/${WORKFLOW_NAME}//1/foo",
+                    "id": "~${USER}/${WORKFLOW_NAME}//1/foo",
                     "jobs": [
                         {
                             "submittedTime": "blargh",
