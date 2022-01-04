@@ -195,9 +195,27 @@ async def test_parse_ids_max_tasks(ids_in, errors):
             raise Exception('Should have raised UserInputError')
 
 
-# async def test_parse_ids_infer_run_name():
-#     workflows = await parse_ids_async(['foo//'], constraint='workflows')
-#     assert workflows == []
+async def test_parse_ids_infer_run_name(tmp_run_dir):
+    # it doesn't do anything for a named run
+    tmp_run_dir('foo', named=True)
+    workflows, *_ = await parse_ids_async('foo//', constraint='workflows')
+    assert list(workflows) == ['foo']
+
+    # it correctly identifies the latest run
+    tmp_run_dir('bar/run1')
+    workflows, *_ = await parse_ids_async('bar//', constraint='workflows')
+    assert list(workflows) == ['bar/run1']
+    tmp_run_dir('bar/run2')
+    workflows, *_ = await parse_ids_async('bar//', constraint='workflows')
+    assert list(workflows) == ['bar/run2']
+
+    # it leaves the ID alone if infer_latest_runs = False
+    workflows, *_ = await parse_ids_async(
+        'bar//',
+        constraint='workflows',
+        infer_latest_runs=False,
+    )
+    assert list(workflows) == ['bar']
 
 
 @pytest.fixture
@@ -279,10 +297,15 @@ def test_parse_src_path(src_dir):
     with pytest.raises(WorkflowFilesError):
         _parse_src_path('.')
 
+    # relative '.' (invalid)
+    with pytest.raises(WorkflowFilesError) as exc_ctx:
+        workflow_id, src_path, src_file_path = _parse_src_path('.')
+    assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
+
     # move into the src dir
     os.chdir(src_dir)
 
-    # relative '.'
+    # relative '.' (valid)
     workflow_id, src_path, src_file_path = _parse_src_path('.')
     assert workflow_id == 'a'
     assert src_path == src_dir
@@ -302,3 +325,29 @@ async def test_parse_ids_src_path(src_dir):
         constraint='workflows',
     )
     assert workflows == {'a': []}
+
+
+@pytest.mark.parametrize(
+    'ids_in,error_msg',
+    [
+        (
+            ['/home/me/whatever'],
+            'workflow name cannot be an absolute path',
+        ),
+        (
+            ['foo/..'],
+            'cannot be a path that points to the cylc-run directory or above',
+        ),
+        (
+            ['foo/'],
+            'Invalid Cylc identifier',
+        ),
+    ]
+)
+async def test_invalid_ids(ids_in, error_msg):
+    with pytest.raises(Exception) as exc_ctx:
+        workflows, _multi_mode = await parse_ids_async(
+            *ids_in,
+            constraint='workflows',
+        )
+    assert error_msg in str(exc_ctx.value)

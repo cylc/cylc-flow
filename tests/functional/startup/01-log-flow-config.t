@@ -63,8 +63,8 @@ REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
 RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"
 mkdir start_config
 mkdir res_config
-cp $START_CONFIG start_config/flow.cylc
-cp $RES_CONFIG res_config/flow.cylc
+cp "$START_CONFIG" start_config/flow.cylc
+cp "$RES_CONFIG" res_config/flow.cylc
 # The generated *-run.cylc and *-reload.cylc should be identical
 # The generated *.cylc files should validate
 cmp_ok "${START_CONFIG}" "${REL_CONFIG}"

@@ -32,8 +32,9 @@ from cylc.flow.id import (
     contains_task_like,
     detokenise,
     is_null,
-    parse_cli,
     strip_workflow,
+    tokenise,
+    upgrade_legacy_ids,
 )
 from cylc.flow.network.scan import (
     filter_name,
@@ -52,6 +53,127 @@ from cylc.flow.workflow_files import (
 )
 
 FN_CHARS = re.compile(r'[\*\?\[\]\!]')
+
+
+def _parse_cli(*ids: str) -> List[TokensDict]:
+    """Parse a list of Cylc identifiers as provided on the CLI.
+
+    * Validates identifiers.
+    * Expands relative references to absolute ones.
+    * Handles legacy Cylc7 syntax.
+
+    Args:
+        *ids (tuple): Identifier list.
+
+    Raises:
+        ValueError - For invalid identifiers or identifier lists.
+
+    Returns:
+        list - List of tokens dictionaries.
+
+    Examples:
+        # parse to tokens then detokenise back
+        >>> parse_back = lambda *ids: list(map(detokenise, _parse_cli(*ids)))
+
+        # list of workflows:
+        >>> parse_back('workworkflow')
+        ['workworkflow']
+
+        >>> parse_back('workworkflow1', 'workworkflow2')
+        ['workworkflow1', 'workworkflow2']
+
+        # sbsolute references
+        >>> parse_back('workworkflow1//cycle1', 'workworkflow2//cycle2')
+        ['workworkflow1//cycle1', 'workworkflow2//cycle2']
+
+        # relative references:
+        >>> parse_back('workworkflow', '//cycle1', '//cycle2')
+        ['workworkflow//cycle1', 'workworkflow//cycle2']
+
+        # mixed references
+        >>> parse_back(
+        ...     'workworkflow1', '//cycle', 'workworkflow2',
+        ...     '//cycle', 'workworkflow3//cycle'
+        ... )
+        ['workworkflow1//cycle',
+         'workworkflow2//cycle', 'workworkflow3//cycle']
+
+        # legacy ids:
+        >>> parse_back('workworkflow', 'task.123', 'a.b.c.234', '345/task')
+        ['workworkflow//123/task',
+         'workworkflow//234/a.b.c', 'workworkflow//345/task']
+
+        # errors:
+        >>> _parse_cli('////')
+        Traceback (most recent call last):
+        ValueError: Invalid Cylc identifier: ////
+
+        >>> parse_back('//cycle')
+        Traceback (most recent call last):
+        ValueError: Relative reference must follow an incomplete one.
+        E.G: workflow //cycle/task
+
+        >>> parse_back('workflow//cycle', '//cycle')
+        Traceback (most recent call last):
+        ValueError: Relative reference must follow an incomplete one.
+        E.G: workflow //cycle/task
+
+    """
+    # upgrade legacy ids if required
+    ids = upgrade_legacy_ids(*ids)
+
+    partials = None
+    partials_expended = False
+    tokens_list = []
+    for id_ in ids:
+        tokens = tokenise(id_)
+        is_partial = tokens.get('workflow') and not tokens.get('cycle')
+        is_relative = not tokens.get('workflow')
+
+        if partials:
+            # we previously encountered a workflow ID which did not specify a
+            # cycle
+            if is_partial:
+                # this is an absolute ID
+                if not partials_expended:
+                    # no relative references were made to the previous ID
+                    # so add the whole workflow to the tokens list
+                    tokens_list.append(partials)
+                partials = tokens
+                partials_expended = False
+            elif is_relative:
+                # this is a relative reference => expand it using the context
+                # of the partial ID
+                tokens_list.append({
+                    **partials,
+                    **tokens,
+                })
+                partials_expended = True
+            else:
+                # this is a fully expanded reference
+                tokens_list.append(tokens)
+                partials = None
+                partials_expended = False
+        else:
+            # there was no previous reference that a relative reference
+            # could apply to
+            if is_partial:
+                partials = tokens
+                partials_expended = False
+            elif is_relative:
+                # so a relative reference is an error
+                raise ValueError(
+                    'Relative reference must follow an incomplete one.'
+                    '\nE.G: workflow //cycle/task'
+                )
+            else:
+                tokens_list.append(tokens)
+
+    if partials and not partials_expended:
+        # if the last ID was a "partial" but not expanded add it to the list
+        tokens_list.append(tokens)
+
+    return tokens_list
 
 
 def parse_ids(*args, **kwargs):
@@ -122,7 +244,7 @@ async def parse_ids_async(
                 }) + '//',
                 *ids[1:]
             )
-    tokens_list.extend(parse_cli(*ids))
+    tokens_list.extend(_parse_cli(*ids))
 
     if constraint not in {'tasks', 'workflows', 'mixed'}:
         raise Exception(f'Invalid constraint: {constraint}')
