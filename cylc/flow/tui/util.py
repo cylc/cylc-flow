@@ -35,13 +35,14 @@ from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
 def get_task_icon(
-        status,
-        *,
-        is_held=False,
-        is_queued=False,
-        is_runahead=False,
-        start_time=None,
-        mean_time=None):
+    status,
+    *,
+    is_held=False,
+    is_queued=False,
+    is_runahead=False,
+    start_time=None,
+    mean_time=None
+):
     """Return a Unicode string to represent a task.
 
     Arguments:
@@ -71,9 +72,9 @@ def get_task_icon(
     elif is_queued:
         ret.append(TASK_MODIFIERS['queued'])
     if (
-            status == TASK_STATUS_RUNNING
-            and start_time
-            and mean_time
+        status == TASK_STATUS_RUNNING
+        and start_time
+        and mean_time
     ):
         start_time = get_unix_time_from_time_string(start_time)
         progress = (time() - start_time) / mean_time
@@ -93,15 +94,16 @@ def idpop(id_):
     """Remove the last element of a node id.
 
     Examples:
-        >>> idpop('~u/w//c/t/j')
-        '~u/w//c/t'
-        >>> idpop('~u/w//c/t')
-        '~u/w//c'
+        >>> idpop('c/t/j')
+        'c/t'
+        >>> idpop('c/t')
+        'c'
 
     """
-    tokens = tokenise(id_)
+    relative = '//' not in id_
+    tokens = tokenise(id_, relative=relative)
     pop_token(tokens)
-    return detokenise(tokens)
+    return detokenise(tokens, relative=relative)
 
 
 def compute_tree(flow):
@@ -135,8 +137,8 @@ def compute_tree(flow):
             'family', family['id'], nodes)
         first_parent = family['firstParent']
         if (
-                first_parent
-                and first_parent['name'] != 'root'
+            first_parent
+            and first_parent['name'] != 'root'
         ):
             parent_node = add_node(
                 'family', first_parent['id'], nodes)
@@ -445,7 +447,7 @@ def render_node(node, data, type_):
 PARTS = [
     'user',
     'workflow',
-    'cycle_point',
+    'cycle',
     'task',
     'job'
 ]

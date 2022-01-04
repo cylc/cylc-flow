@@ -641,6 +641,28 @@ def pop_token(tokens: TokensDict) -> Tuple[str, str]:
     raise KeyError('No defined tokens.')
 
 
+def lowest_token(tokens: TokensDict) -> str:
+    """Return the lowest token present in a tokens dictionary.
+
+    Examples:
+        >>> lowest_token(tokenise('~u/w//c/t/j'))
+        'job'
+        >>> lowest_token(tokenise('~u/w//c/t'))
+        'task'
+        >>> lowest_token(tokenise('~u/w//c'))
+        'cycle'
+        >>> lowest_token(tokenise('~u/w//'))
+        'workflow'
+        >>> lowest_token(tokenise('~u'))
+        'user'
+
+    """
+    for token in reversed(Tokens):
+        if token.value in tokens and tokens[token.value]:
+            return token.value
+    raise ValueError('No tokens defined')
+
+
 def parse_cli(*ids: str) -> List[TokensDict]:
     # TOOD move?
     """Parse a list of Cylc identifiers as provided on the CLI.

@@ -192,55 +192,55 @@ def test_compute_tree():
         'id': 'workflow id',
         'cyclePoints': [
             {
-                'id': '1|family-suffix',
+                'id': '1/family-suffix',
                 'cyclePoint': '1'
             }
         ],
         'familyProxies': [
             {  # top level family
                 'name': 'FOO',
-                'id': '1|FOO',
+                'id': '1/FOO',
                 'cyclePoint': '1',
-                'firstParent': {'name': 'root', 'id': '1|root'}
+                'firstParent': {'name': 'root', 'id': '1/root'}
             },
             {  # nested family
                 'name': 'FOOT',
-                'id': '1|FOOT',
+                'id': '1/FOOT',
                 'cyclePoint': '1',
-                'firstParent': {'name': 'FOO', 'id': '1|FOO'}
+                'firstParent': {'name': 'FOO', 'id': '1/FOO'}
             },
         ],
         'taskProxies': [
             {  # top level task
                 'name': 'pub',
-                'id': '1|pub',
-                'firstParent': {'name': 'root', 'id': '1|root'},
+                'id': '1/pub',
+                'firstParent': {'name': 'root', 'id': '1/root'},
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # child task (belongs to family)
                 'name': 'fan',
-                'id': '1|fan',
-                'firstParent': {'name': 'fan', 'id': '1|fan'},
+                'id': '1/fan',
+                'firstParent': {'name': 'fan', 'id': '1/fan'},
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # nested child task (belongs to incestuous family)
                 'name': 'fool',
-                'id': '1|fool',
-                'firstParent': {'name': 'FOOT', 'id': '1|FOOT'},
+                'id': '1/fool',
+                'firstParent': {'name': 'FOOT', 'id': '1/FOOT'},
                 'cyclePoint': '1',
                 'jobs': []
             },
             {  # a task which has jobs
                 'name': 'worker',
-                'id': '1|worker',
-                'firstParent': {'name': 'root', 'id': '1|root'},
+                'id': '1/worker',
+                'firstParent': {'name': 'root', 'id': '1/root'},
                 'cyclePoint': '1',
                 'jobs': [
-                    {'id': 'job3', 'submitNum': '3'},
-                    {'id': 'job2', 'submitNum': '2'},
-                    {'id': 'job1', 'submitNum': '1'}
+                    {'id': '1/worker/03', 'submitNum': '3'},
+                    {'id': '1/worker/02', 'submitNum': '2'},
+                    {'id': '1/worker/01', 'submitNum': '1'}
                 ]
             }
         ]
@@ -272,15 +272,15 @@ def test_compute_tree():
         for node in cycle['children']
     ] == [
         # test alphabetical sorting
-        '1|FOO',
-        '1|pub',
-        '1|worker'
+        '1/FOO',
+        '1/pub',
+        '1/worker'
     ]
 
     # test family node
     family = cycle['children'][0]
     assert family['type_'] == 'family'
-    assert family['id_'] == '1|FOO'
+    assert family['id_'] == '1/FOO'
     assert list(family['data']) == [
         'name',
         'id',
@@ -292,7 +292,7 @@ def test_compute_tree():
     # test nested family
     nested_family = family['children'][0]
     assert nested_family['type_'] == 'family'
-    assert nested_family['id_'] == '1|FOOT'
+    assert nested_family['id_'] == '1/FOOT'
     assert list(nested_family['data']) == [
         'name',
         'id',
@@ -304,7 +304,7 @@ def test_compute_tree():
     # test task
     task = nested_family['children'][0]
     assert task['type_'] == 'task'
-    assert task['id_'] == '1|fool'
+    assert task['id_'] == '1/fool'
     assert list(task['data']) == [
         'name',
         'id',
@@ -320,15 +320,15 @@ def test_compute_tree():
         job['id_']
         for job in task['children']
     ] == [
-        'job3',
-        'job2',
-        'job1'
+        '1/worker/03',
+        '1/worker/02',
+        '1/worker/01'
     ]
 
     # test job
     job = task['children'][0]
     assert job['type_'] == 'job'
-    assert job['id_'] == 'job3'
+    assert job['id_'] == '1/worker/03'
     assert list(job['data']) == [
         'id',
         'submitNum'
@@ -338,7 +338,7 @@ def test_compute_tree():
     # test job info
     job_info = job['children'][0]
     assert job_info['type_'] == 'job_info'
-    assert job_info['id_'] == 'job3_info'
+    assert job_info['id_'] == '1/worker/03_info'
     assert list(job_info['data']) == [
         'id',
         'submitNum'
