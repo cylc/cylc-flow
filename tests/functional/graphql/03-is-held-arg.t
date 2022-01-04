@@ -52,7 +52,7 @@ query {
     taskProxies(isHeld: true) {
       id
       jobs {
-        submittedTime 
+        submittedTime
         startedTime
       }
     }
@@ -73,7 +73,7 @@ run_ok "${TEST_NAME_BASE}-contact" cylc get-contact "${WORKFLOW_NAME}"
 # stop workflow
 cylc stop --max-polls=10 --interval=2 --kill "${WORKFLOW_NAME}"
 
-RESPONSE="${TEST_NAME_BASE}-is-held-arg.stdout" 
+RESPONSE="${TEST_NAME_BASE}-is-held-arg.stdout"
 perl -pi -e 's/("submittedTime":).*$/${1} "blargh",/' "${RESPONSE}"
 perl -pi -e 's/("startedTime":).*$/${1} "blargh"/' "${RESPONSE}"
 
