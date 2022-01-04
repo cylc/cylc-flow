@@ -32,6 +32,9 @@ Examples:
   # Remove the workflow at ~/cylc-run/foo/bar
   $ cylc clean foo/bar
 
+  # Remove multiple workflows
+  $ cylc clean one two three
+
   # Remove the workflow's log directory
   $ cylc clean foo/bar --rm log
 
@@ -54,15 +57,18 @@ Examples:
 
 """
 
+import asyncio
+import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
+from cylc.flow.id_cli import parse_ids_async
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import CylcOptionParser as COP, Options
-from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import init_clean
+from cylc.flow.terminal import cli_function, is_terminal
+from cylc.flow.workflow_files import init_clean, get_contained_workflows
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -71,7 +77,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[('WORKFLOW', 'Workflow ID')],
+        argdoc=[('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow IDs')],
         segregated_log=True,
     )
 
@@ -117,10 +123,64 @@ def get_option_parser():
 CleanOptions = Options(get_option_parser())
 
 
+def prompt(workflows):
+    print('Would remove multiple workflows:')
+    for workflow in workflows:
+        print(f'  {workflow}')
+
+    if is_terminal():
+        while True:
+            ret = input('Remove these workflows (y/n): ')
+            if ret.lower() == 'y':
+                return
+            if ret.lower() == 'n':
+                sys.exit(1)
+    else:
+        print('Use --force to remove multiple workflows.', file=sys.stderr)
+        sys.exit(1)
+
+
+async def scan(workflows, multi_mode):
+    """Expand tuncated workflow IDs
+
+    For example "one" might expand to "one/run1" & "one/run2"
+    or "one/two/run1".
+
+    """
+    ret = []
+    for workflow in list(workflows):
+        contained_flows = await get_contained_workflows(workflow)
+        if contained_flows:
+            ret.extend(contained_flows)
+            multi_mode = True
+        else:
+            ret.append(workflow)
+    return ret, multi_mode
+
+
+async def run(*ids, opts=None):
+    # parse ids from the CLI
+    workflows, multi_mode = await parse_ids_async(
+        *ids,
+        constraint='workflows',
+        match_workflows=True,
+        match_active=False,
+        infer_latest_runs=False,  # don't infer latest runs like other cmds
+    )
+
+    # expand partial workflow ids (including run names)
+    workflows, multi_mode = await scan(workflows, multi_mode)
+
+    workflows.sort()
+    if multi_mode and not opts.force:
+        prompt(workflows)  # prompt for approval or exit
+
+    for workflow in sorted(workflows):
+        init_clean(workflow, opts)
+
+
 @cli_function(get_option_parser)
-def main(parser: COP, opts: 'Values', reg: str):
-    # TODO:
-    # Note: do not use workflow_files.parse_reg here
+def main(_, opts: 'Values', *ids: str):
     if cylc.flow.flags.verbosity < 2:
         disable_timestamps(LOG)
 
@@ -129,4 +189,4 @@ def main(parser: COP, opts: 'Values', reg: str):
             "--local and --remote options are mutually exclusive"
         )
 
-    init_clean(reg, opts)
+    asyncio.run(run(*ids, opts=opts))

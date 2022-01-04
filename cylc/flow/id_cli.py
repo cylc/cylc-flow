@@ -61,6 +61,8 @@ async def parse_ids_async(
     *ids: str,
     src: bool = False,
     match_workflows: bool = False,
+    match_active: Optional[bool] = True,
+    infer_latest_runs: bool = True,
     constraint: str = 'tasks',
     max_workflows: Optional[int] = None,
     max_tasks: Optional[int] = None,
@@ -76,6 +78,16 @@ async def parse_ids_async(
             Infers max_workflows = 1.
         match_workflows:
             If True workflows can be globs.
+        match_active:
+            If match_workflows is True this determines the wokflow state
+            filter.
+
+            True - running & paused
+            False - stopped
+            None - any
+        infer_latest_runs:
+            If true infer the latest run for a workflow when applicable
+            (allows 'cylc play one' rather than 'cylc play one/run1').
         constraint:
             Constrain the types of objects the IDs should relate to.
 
@@ -120,7 +132,7 @@ async def parse_ids_async(
     if match_workflows:
         # match workflow IDs via cylc-scan
         # if any patterns are present switch to multi_mode for clarity
-        multi_mode = await _expand_workflow_tokens(tokens_list)
+        multi_mode = await _expand_workflow_tokens(tokens_list, match_active)
 
     # check the workflow part of the IDs are vaild
     _validate_workflow_ids(*tokens_list, src_path=src_path)
@@ -130,7 +142,8 @@ async def parse_ids_async(
         multi_mode = contains_multiple_workflows(tokens_list)
 
     # infer the run number if not specified the ID (and if possible)
-    _infer_latest_runs(*tokens_list, src_path=src_path)
+    if infer_latest_runs:
+        _infer_latest_runs(*tokens_list, src_path=src_path)
 
     _validate_number(
         *tokens_list,
@@ -284,7 +297,7 @@ def _batch_tokens_by_workflow(*tokens_list, constraint=None):
     return workflow_tokens
 
 
-async def _expand_workflow_tokens(tokens_list):
+async def _expand_workflow_tokens(tokens_list, match_active=True):
     multi_mode = False
     for tokens in list(tokens_list):
         workflow = tokens['workflow']
@@ -295,14 +308,17 @@ async def _expand_workflow_tokens(tokens_list):
             # remove the original entry
             multi_mode = True
             tokens_list.remove(tokens)
-            async for tokens in _expand_workflow_tokens_impl(tokens):
+            async for tokens in _expand_workflow_tokens_impl(
+                tokens,
+                match_active=match_active
+            ):
                 # add the expanded tokens back onto the list
                 # TODO: insert into the same location to preserve order?
                 tokens_list.append(tokens)
     return multi_mode
 
 
-async def _expand_workflow_tokens_impl(tokens):
+async def _expand_workflow_tokens_impl(tokens, match_active=True):
     """Use "cylc scan" to expand workflow patterns."""
     workflow_sel = tokens['workflow_sel']
     if workflow_sel and workflow_sel != 'running':
@@ -312,11 +328,9 @@ async def _expand_workflow_tokens_impl(tokens):
         )
 
     # construct the pipe
-    pipe = (
-        scan
-        | filter_name(fnmatch.translate(tokens['workflow']))
-        | is_active(True)
-    )
+    pipe = scan | filter_name(fnmatch.translate(tokens['workflow']))
+    if match_active is not None:
+        pipe |= is_active(match_active)
 
     # iter the results
     async for workflow in pipe:

@@ -703,10 +703,7 @@ def is_installed(rund: Union[Path, str]) -> bool:
     return cylc_install_dir.is_dir() or alt_cylc_install_dir.is_dir()
 
 
-async def get_contained_workflows(
-    path: Path,
-    scan_depth: Optional[int] = None
-) -> List[str]:
+async def get_contained_workflows(partial_id) -> List[str]:
     """Return the sorted names of any workflows in a directory.
 
     Args:
@@ -714,8 +711,11 @@ async def get_contained_workflows(
         scan_depth: How many levels deep to look inside the dir.
     """
     from cylc.flow.network.scan import scan
+    run_dir = Path(get_workflow_run_dir(partial_id))
+    # Note: increased scan depth for safety
+    scan_depth = glbl_cfg().get(['install', 'max depth']) + 1
     return sorted(
-        [i['name'] async for i in scan(scan_dir=path, max_depth=scan_depth)]
+        [i['name'] async for i in scan(scan_dir=run_dir, max_depth=scan_depth)]
     )
 
 
@@ -751,37 +751,11 @@ def init_clean(reg: str, opts: 'Values') -> None:
     except FileNotFoundError as exc:
         LOG.info(exc)
         return
-    local_run_dir, reg_path = infer_latest_run(
-        local_run_dir, implicit_runN=False
-    )
-    reg = str(reg_path)
 
     # Parse --rm option to make sure it's valid
     rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
 
-    # Check dir does not contain other workflows:
-    scan_depth = glbl_cfg().get(['install', 'max depth']) + 1
-    contained_workflows = asyncio.get_event_loop().run_until_complete(
-        get_contained_workflows(local_run_dir, scan_depth)
-    )  # Note: increased scan depth for safety
-    if len(contained_workflows) == 1:
-        # Clean the contained workflow followed by the parent dir
-        init_clean(contained_workflows[0], opts)
-        if opts.rm_dirs:
-            return  # Do not delete parent dir if --rm dirs specified
-    elif len(contained_workflows) > 1:
-        msg = (
-            f"{local_run_dir} contains the following workflows:"
-            f"{WorkflowFilesError.bullet}"
-            f"{WorkflowFilesError.bullet.join(contained_workflows)}"
-        )
-        if not opts.force:
-            raise WorkflowFilesError(f"Cannot clean because {msg}")
-        if opts.remote_only:
-            msg = f"Not performing remote clean because {msg}"
-        LOG.warning(msg)
-
-    if (not opts.local_only) and (len(contained_workflows) == 0):
+    if not opts.local_only:
         platform_names = None
         try:
             platform_names = get_platforms_from_db(local_run_dir)
@@ -1188,73 +1162,6 @@ def check_deprecation(path, warn=True):
         cylc.flow.flags.cylc7_back_compat = True
         if warn:
             LOG.warning(SUITERC_DEPR_MSG)
-
-
-def _parse_src_reg(reg: Path, cur_dir_only: bool = False) -> Tuple[Path, Path]:
-    """Helper function for parse_reg() when src=True.
-
-    Args:
-        reg: Reg.
-        cur_dir_only: Whether the pre-normalised reg began with './'
-            i.e. whether we should only look in the current directory.
-    """
-    if reg.is_absolute():
-        abs_path = reg
-        with suppress(ValueError):
-            # ValueError if abs_path not relative to ~/cylc-run
-            abs_path, reg = infer_latest_run(abs_path)
-    else:
-        run_dir_path = Path(get_workflow_run_dir(reg))
-        cwd = Path.cwd()
-        reg = Path(os.path.normpath(cwd / reg))
-        abs_path = reg
-        with suppress(ValueError):
-            # ValueError if abs_path not relative to ~/cylc-run
-            abs_path, reg = infer_latest_run(abs_path)
-        try:
-            run_dir_path, run_dir_reg = infer_latest_run(run_dir_path)
-        except ValueError:
-            # run_dir_path not relative to ~/cylc-run
-            pass
-        else:
-            if (
-                not cur_dir_only and
-                abs_path.resolve() != run_dir_path.resolve()
-            ):
-                if abs_path.is_file():
-                    if run_dir_path.is_file():
-                        LOG.warning(REG_CLASH_MSG.format(
-                            abs_path.relative_to(cwd),
-                            run_dir_path.relative_to(get_cylc_run_dir())
-                        ))
-                    return (reg.parent, abs_path)
-                if run_dir_path.is_file():
-                    return (run_dir_reg.parent, run_dir_path)
-                try:
-                    run_dir_path = check_flow_file(run_dir_path)
-                except WorkflowFilesError:
-                    try:
-                        abs_path = check_flow_file(abs_path)
-                    except WorkflowFilesError:
-                        raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(
-                            f"./{abs_path.relative_to(cwd)} or {run_dir_path}"
-                        ))
-                else:
-                    try:
-                        abs_path = check_flow_file(abs_path)
-                    except WorkflowFilesError:
-                        return (run_dir_reg, run_dir_path)
-                    LOG.warning(REG_CLASH_MSG.format(
-                        abs_path.relative_to(cwd),
-                        run_dir_path.relative_to(get_cylc_run_dir())
-                    ))
-                return (reg, abs_path)
-    if abs_path.is_file():
-        reg = reg.parent
-    else:
-        abs_path = check_flow_file(abs_path)
-
-    return (reg, abs_path)
 
 
 def validate_workflow_name(
