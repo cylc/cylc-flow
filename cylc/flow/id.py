@@ -319,7 +319,6 @@ def detokenise(
             If true selectors (i.e. :sel) will be included in the output.
         relative (bool):
             If true relative references are not given the `//` prefix.
-            TODO: remove this?
 
     Returns:
         str - Identifier i.e. ~user/workflow//cycle/task/job
@@ -790,7 +789,6 @@ def parse_ids(*ids: str) -> Dict[str, List[str]]:
     workflows: Dict[str, List[str]] = {}
     for tokens in tokens_list:
         if tokens['user']:
-            # TODO
             raise UserInputError('Changing user not supported')
         if tokens['workflow_sel']:
             raise UserInputError('Selectors cannot be used on workflows')

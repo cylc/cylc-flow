@@ -41,6 +41,7 @@ from cylc.flow.network.scan import (
     scan,
 )
 from cylc.flow.workflow_files import (
+    WorkflowFiles,
     NO_FLOW_FILE_MSG,
     check_flow_file,
     detect_both_flow_and_suite,
@@ -214,17 +215,17 @@ def _validate_constraint(*tokens_list, constraint=None):
     if constraint == 'workflows':
         for tokens in tokens_list:
             if contains_task_like(tokens):
-                raise UserInputError()  # TODO
+                raise UserInputError('IDs must be workflows')
         return
     if constraint == 'tasks':
         for tokens in tokens_list:
             if not contains_task_like(tokens):
-                raise UserInputError()  # TODO
+                raise UserInputError('IDs must be tasks')
         return
     if constraint == 'mixed':
         for tokens in tokens_list:
             if is_null(tokens):
-                raise UserInputError()  # TODO
+                raise UserInputError('IDs cannot be null.')
         return
     raise Exception(f'Invalid constraint: {constraint}')
 
@@ -242,8 +243,6 @@ def _validate_workflow_ids(*tokens_list, src_path):
             pass
         else:
             src_path = Path(get_workflow_run_dir(tokens['workflow']))
-        # if not src_path.exists():
-        #     raise UserInputError()  # TODO ???
         if src_path.is_file():
             raise UserInputError(
                 f'Workflow ID cannot be a file: {tokens["workflow"]}'
@@ -271,9 +270,13 @@ def _validate_number(*tokens_list, max_workflows=None, max_tasks=None):
         else:
             workflows_count += 1
     if max_workflows and workflows_count > max_workflows:
-        raise UserInputError()  # TODO
+        raise UserInputError(
+            f'IDs contain too many workflows (max {max_workflows})'
+        )
     if max_tasks and tasks_count > max_tasks:
-        raise UserInputError()  # TODO
+        raise UserInputError(
+            f'IDs contain too many cycles/tasks/jobs (max {max_tasks})'
+        )
 
 
 def _batch_tokens_by_workflow(*tokens_list, constraint=None):
@@ -313,7 +316,6 @@ async def _expand_workflow_tokens(tokens_list, match_active=True):
                 match_active=match_active
             ):
                 # add the expanded tokens back onto the list
-                # TODO: insert into the same location to preserve order?
                 tokens_list.append(tokens)
     return multi_mode
 
@@ -347,7 +349,7 @@ def _parse_src_path(id_):
         src_path = src_path.resolve()
         if not src_path.exists():
             raise UserInputError(src_path)
-        if src_path.name == 'flow.cylc':  # TODO constantize
+        if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
             src_path = src_path.parent
         try:
             src_file_path = check_flow_file(src_path)
