@@ -20,6 +20,6 @@
         """
     [[show]]
         script = """
-            script = cylc workflow-state "$CYLC_WORKFLOW_ID" -p "$CYLC_TASK_CYCLE_POINT" -t 'show' -S running --interval 1
+            cylc workflow-state "$CYLC_WORKFLOW_ID" -p "$CYLC_TASK_CYCLE_POINT" -t 'show' -S running --interval 1
             cylc show "$CYLC_WORKFLOW_ID//20141106T0900Z/foo" >{{ TEST_OUTPUT_PATH }}
         """

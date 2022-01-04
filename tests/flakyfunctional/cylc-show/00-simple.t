@@ -92,7 +92,7 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
 {
     "20141106T0900Z/foo": {
         "name": "foo",
-        "id": "${WORKFLOW_NAME}//20141106T0900Z/foo",
+        "id": "~${USER}/${WORKFLOW_NAME}//20141106T0900Z/foo",
         "cyclePoint": "20141106T0900Z",
         "task": {
             "meta": {

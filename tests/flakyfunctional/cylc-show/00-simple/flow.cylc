@@ -39,17 +39,25 @@
         script = cylc show "$CYLC_WORKFLOW_ID" --task-def foo >>{{ TEST_OUTPUT_PATH }}-task
     [[show-taskinstance]]
         inherit = SHOW
-        script = cylc show "$CYLC_WORKFLOW_ID//20141106T0900Z/foo" \
-            >>{{ TEST_OUTPUT_PATH }}-taskinstance
+        script = """
+            cylc show "$CYLC_WORKFLOW_ID//20141106T0900Z/foo" \
+                >>{{ TEST_OUTPUT_PATH }}-taskinstance
+        """
     [[show-workflow-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_WORKFLOW_ID" \
-            >>{{ TEST_OUTPUT_PATH }}-json-workflow
+        script = """
+            cylc show --json "$CYLC_WORKFLOW_ID" \
+                >>{{ TEST_OUTPUT_PATH }}-json-workflow
+        """
     [[show-task-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_WORKFLOW_ID" --task-def foo \
-            >>{{ TEST_OUTPUT_PATH }}-json-task
+        script = """
+            cylc show --json "$CYLC_WORKFLOW_ID" --task-def foo \
+                >>{{ TEST_OUTPUT_PATH }}-json-task
+        """
     [[show-taskinstance-json]]
         inherit = SHOW
-        script = cylc show --json "$CYLC_WORKFLOW_ID//20141106T0900Z/foo" \
-            >>{{ TEST_OUTPUT_PATH }}-json-taskinstance
+        script = """
+            cylc show --json "$CYLC_WORKFLOW_ID//20141106T0900Z/foo" \
+                >>{{ TEST_OUTPUT_PATH }}-json-taskinstance
+        """

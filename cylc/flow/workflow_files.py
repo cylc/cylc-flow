@@ -16,7 +16,6 @@
 
 """Workflow service files management."""
 
-import asyncio
 from collections import deque
 from contextlib import suppress
 from enum import Enum
