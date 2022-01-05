@@ -219,11 +219,11 @@ async def test_parse_ids_infer_run_name(tmp_run_dir):
 
 
 @pytest.fixture
-def patch_expand_worklflow_tokens(monkeypatch):
+def patch_expand_workflow_tokens(monkeypatch):
 
     def _patch_expand_workflow_tokens(_ids):
 
-        async def _expand_workflow_tokens_impl(tokens):
+        async def _expand_workflow_tokens_impl(tokens, match_active=True):
             nonlocal _ids
             for id_ in _ids:
                 yield {**tokens, 'workflow': id_}
@@ -248,7 +248,7 @@ def patch_expand_worklflow_tokens(monkeypatch):
     ]
 )
 async def test_parse_ids_multi_mode(
-    patch_expand_worklflow_tokens,
+    patch_expand_workflow_tokens,
     ids_in,
     ids_out,
     multi_mode,

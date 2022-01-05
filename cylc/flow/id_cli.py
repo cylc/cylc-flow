@@ -255,7 +255,10 @@ async def parse_ids_async(
     if match_workflows:
         # match workflow IDs via cylc-scan
         # if any patterns are present switch to multi_mode for clarity
-        multi_mode = await _expand_workflow_tokens(tokens_list, match_active)
+        multi_mode = await _expand_workflow_tokens(
+            tokens_list,
+            match_active=match_active,
+        )
 
     # check the workflow part of the IDs are vaild
     _validate_workflow_ids(*tokens_list, src_path=src_path)
@@ -435,7 +438,7 @@ async def _expand_workflow_tokens(tokens_list, match_active=True):
             tokens_list.remove(tokens)
             async for tokens in _expand_workflow_tokens_impl(
                 tokens,
-                match_active=match_active
+                match_active=match_active,
             ):
                 # add the expanded tokens back onto the list
                 tokens_list.append(tokens)
