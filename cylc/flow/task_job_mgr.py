@@ -288,17 +288,18 @@ class TaskJobManager:
 
                     # Get another platform, if task config platform is a group
                     use_next_platform_in_group = False
-                    try:
-                        platform = get_platform(
-                            itask.tdef.rtconfig['platform'],
-                            bad_hosts=self.bad_hosts
-                        )
-                    except NoPlatformsError:
-                        pass
-                    else:
-                        # If were able to select a new platform;
-                        if platform and platform != itask.platform:
-                            use_next_platform_in_group = True
+                    if itask.tdef.rtconfig['platform']:
+                        try:
+                            platform = get_platform(
+                                itask.tdef.rtconfig['platform'],
+                                bad_hosts=self.bad_hosts
+                            )
+                        except NoPlatformsError:
+                            pass
+                        else:
+                            # If were able to select a new platform;
+                            if platform and platform != itask.platform:
+                                use_next_platform_in_group = True
 
                     if use_next_platform_in_group:
                         # store the previous platform's hosts so that when
