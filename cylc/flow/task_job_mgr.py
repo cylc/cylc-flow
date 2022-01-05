@@ -1154,7 +1154,7 @@ class TaskJobManager:
                 rtconfig['remote']['host'] = host_n
 
             try:
-                platform = get_platform(rtconfig, self.bad_hosts)
+                platform = get_platform(rtconfig, bad_hosts=self.bad_hosts)
 
             except PlatformLookupError as exc:
                 # Submit number not yet incremented
