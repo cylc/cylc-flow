@@ -203,7 +203,7 @@ def cli_function(
             wrapped_args, wrapped_kwargs = [], {}
             if parser_function:
                 parser = parser_function()
-                opts, args = parser_function().parse_args(
+                opts, args = parser.parse_args(
                     list(api_args),
                     **parser_kwargs
                 )
