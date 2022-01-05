@@ -85,6 +85,8 @@ def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         installed: bool = False,
         named: bool = False
     ) -> Path:
+        nonlocal tmp_path
+        nonlocal monkeypatch
         cylc_run_dir = tmp_path / 'cylc-run'
         cylc_run_dir.mkdir(exist_ok=True)
         monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)

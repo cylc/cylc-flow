@@ -653,6 +653,9 @@ def lowest_token(tokens: TokensDict) -> str:
         'workflow'
         >>> lowest_token(tokenise('~u'))
         'user'
+        >>> lowest_token({})
+        Traceback (most recent call last):
+        ValueError: No tokens defined
 
     """
     for token in reversed(Tokens):

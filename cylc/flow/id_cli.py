@@ -247,7 +247,7 @@ async def parse_ids_async(
     tokens_list.extend(_parse_cli(*ids))
 
     if constraint not in {'tasks', 'workflows', 'mixed'}:
-        raise Exception(f'Invalid constraint: {constraint}')
+        raise ValueError(f'Invalid constraint: {constraint}')
 
     # ensure the IDS are compatible with the constraint
     _validate_constraint(*tokens_list, constraint=constraint)
