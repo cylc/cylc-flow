@@ -98,6 +98,12 @@ def idpop(id_):
         'c/t'
         >>> idpop('c/t')
         'c'
+        >>> idpop('c')
+        Traceback (most recent call last):
+        ValueError: No tokens provided
+        >>> idpop('')
+        Traceback (most recent call last):
+        ValueError: Invalid Cylc identifier: //
 
     """
     relative = '//' not in id_

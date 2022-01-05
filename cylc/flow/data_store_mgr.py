@@ -609,12 +609,11 @@ class DataStoreMgr:
 
         """
         # Create this source node
-        s_node = f'{itask.tdef.name}.{itask.point}'
-        s_id = detokenise({
+        s_tokens = {
             **self.id_,
-            'cycle': str(itask.point),
-            'task': itask.tdef.name,
-        })
+            **itask.tokens,
+        }
+        s_id = detokenise(s_tokens)
         if active_id is None:
             active_id = s_id
 
@@ -658,14 +657,14 @@ class DataStoreMgr:
                 if edge_distance == 1:
                     descendant = True
                 self._expand_graph_window(
-                    s_id, s_node, items, active_id, itask.flow_nums,
+                    s_id, s_tokens, items, active_id, itask.flow_nums,
                     edge_distance, descendant, False)
 
             for items in generate_graph_parents(
                 itask.tdef, itask.point
             ).values():
                 self._expand_graph_window(
-                    s_id, s_node, items, active_id, itask.flow_nums,
+                    s_id, s_tokens, items, active_id, itask.flow_nums,
                     edge_distance, False, True)
 
         if edge_distance == 1:
@@ -684,32 +683,24 @@ class DataStoreMgr:
                     self.n_window_edges[active_id])
 
     def _expand_graph_window(
-            self, s_id, s_node, items, active_id, flow_nums,
+            self, s_id, s_tokens, items, active_id, flow_nums,
             edge_distance, descendant=False, is_parent=False):
         """Construct nodes/edges for children/parents of source node."""
         final_point = self.schd.config.final_point
         for t_name, t_point, _ in items:
             if t_point > final_point:
                 continue
-            t_node = f'{t_name}.{t_point}'
-            t_id = detokenise({
+            t_tokens = {
                 **self.id_,
                 'cycle': str(t_point),
                 'task': t_name,
-            })
+            }
+            t_id = detokenise(t_tokens)
             # Initiate edge element.
             if is_parent:
-                e_id = detokenise({
-                    **self.id_,
-                    'cycle': str(t_node),
-                    'task': s_node,
-                })
+                e_id = self.edge_id(t_tokens, s_tokens)
             else:
-                e_id = detokenise({
-                    **self.id_,
-                    'cycle': str(s_node),
-                    'task': t_node,
-                })
+                e_id = self.edge_id(s_tokens, t_tokens)
             if e_id in self.n_window_edges[active_id]:
                 continue
             if (
@@ -2012,8 +2003,20 @@ class DataStoreMgr:
         return pb_msg
 
     def definition_id(self, namespace):
+        # return detokenise({
+        #     **self.id_,
+        #     'cycle': '*',
+        #     'task': namespace,
+        # })
         return detokenise({
             **self.id_,
-            'cycle': '*',
-            'task': namespace,
+            'cycle': f'$namespace|{namespace}',
+        })
+
+    def edge_id(self, left_tokens, right_tokens):
+        left_id = detokenise(strip_workflow(left_tokens), relative=True)
+        right_id = detokenise(strip_workflow(right_tokens), relative=True)
+        return detokenise({
+            **self.id_,
+            'cycle': f'$edge|{left_id}|{right_id}',
         })
