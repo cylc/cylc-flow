@@ -79,19 +79,19 @@ async def run(
 ) -> Dict:
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
-    ret = {
+    ret: Dict[str, Any] = {
         'stdout': [],
         'stderr': [],
         'exit': 0
     }
-
-    flow_kwargs = {
+    flow_kwargs: Dict[str, Any] = {
         'request_string': FLOW_QUERY,
         'variables': {'wFlows': [workflow_id]}
     }
     task_kwargs: Dict[str, Any] = {
         'request_string': TASK_QUERY,
     }
+
     # ping called on the workflow
     result = await pclient.async_request('graphql', flow_kwargs)
     msg = ""

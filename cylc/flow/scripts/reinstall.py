@@ -43,7 +43,7 @@ from typing import Optional, TYPE_CHECKING
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
-from cylc.flow.id_cli import parse_ids
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
 from cylc.flow.workflow_files import (
@@ -83,10 +83,11 @@ def get_option_parser():
 def main(
     parser: COP,
     opts: 'Values',
-    workflow_id: Optional[str] = None
+    args: Optional[str] = None
 ) -> None:
     run_dir: Optional[Path]
-    if workflow_id is None:
+    workflow_id: str
+    if args is None:
         try:
             workflow_id = str(Path.cwd().relative_to(
                 Path(get_cylc_run_dir()).resolve()
@@ -96,10 +97,9 @@ def main(
                 "The current working directory is not a workflow run directory"
             )
     else:
-        (workflow_id,), _ = parse_ids(
-            workflow_id,
+        workflow_id, *_ = parse_id(
+            args,
             constraint='workflows',
-            max_workflows=1,
         )
     run_dir = Path(get_workflow_run_dir(workflow_id))
     if not run_dir.is_dir():

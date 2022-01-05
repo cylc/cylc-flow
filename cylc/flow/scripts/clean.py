@@ -124,7 +124,7 @@ CleanOptions = Options(get_option_parser())
 
 
 def prompt(workflows):
-    print('Would remove multiple workflows:')
+    print('Would remove the following workflows:')
     for workflow in workflows:
         print(f'  {workflow}')
 

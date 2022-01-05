@@ -312,7 +312,7 @@ async def run(options: 'Values', workflow_id):
     """Implement cylc broadcast."""
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
-    ret = {
+    ret: Dict[str, Any] = {
         'stdout': [],
         'stderr': [],
         'exit': 0,
