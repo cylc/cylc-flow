@@ -34,7 +34,7 @@ Examples:
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cylc.flow.id import detokenise, TokensDict
+from cylc.flow.id import Tokens
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -70,14 +70,14 @@ def get_option_parser():
     return parser
 
 
-async def run(options: 'Values', workflow_id: str, *tokens_list: TokensDict):
+async def run(options: 'Values', workflow_id: str, *tokens_list: Tokens):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
             'wFlows': [workflow_id],
-            'tasks': [detokenise(id_, relative=True) for id_ in tokens_list],
+            'tasks': [tokens.relative_id for tokens in tokens_list],
         }
     }
 

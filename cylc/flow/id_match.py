@@ -27,7 +27,7 @@ from typing import (
 )
 
 from cylc.flow import LOG
-from cylc.flow.id import Tokens, tokenise
+from cylc.flow.id import IDTokens, Tokens
 from cylc.flow.id_cli import contains_fnmatch
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 #     ids: 'Iterable[str]',
 #     *,
 #     warn: 'bool' = True,
-#     out: 'Literal[Tokens.Task]' = Tokens.Task,
+#     out: 'Literal[IDTokens.Task]' = IDTokens.Task,
 #     pattern_match: 'bool' = True,
 # ) -> 'Tuple[List[TaskProxy], List[str]]':
 #     ...
@@ -56,7 +56,7 @@ if TYPE_CHECKING:
 #     ids: 'Iterable[str]',
 #     *,
 #     warn: 'bool' = True,
-#     out: 'Literal[Tokens.Cycle]' = Tokens.Cycle,
+#     out: 'Literal[IDTokens.Cycle]' = IDTokens.Cycle,
 #     pattern_match: 'bool' = True,
 # ) -> 'Tuple[List[PointBase], List[str]]':
 #     ...
@@ -76,7 +76,7 @@ def filter_ids(
     ids: 'Iterable[str]',
     *,
     warn: 'bool' = True,
-    out: 'Tokens' = Tokens.Task,
+    out: 'IDTokens' = IDTokens.Task,
     pattern_match: 'bool' = True,
     # ) -> _RET:
 ):
@@ -90,8 +90,8 @@ def filter_ids(
         out:
             The type of object to match:
 
-            * If Tokens.Task all matching TaskProxies will be returned.
-            * If Tokens.Cycle all CyclePoints with any matching tasks will
+            * If IDTokens.Task all matching TaskProxies will be returned.
+            * If IDTokens.Cycle all CyclePoints with any matching tasks will
               be returned.
         warn:
             Whether to log a warning if no matching tasks are found.
@@ -101,7 +101,7 @@ def filter_ids(
         extglobs, namely brace syntax e.g. {foo,bar}.
 
     """
-    if out not in {Tokens.Cycle, Tokens.Task}:
+    if out not in {IDTokens.Cycle, IDTokens.Task}:
         raise ValueError(f'Invalid output format: {out}')
 
     _cycles: 'List[PointBase]' = []
@@ -131,14 +131,14 @@ def filter_ids(
     id_tokens_map = {}
     for id_ in ids:
         try:
-            id_tokens_map[id_] = tokenise(id_, relative=True)
+            id_tokens_map[id_] = Tokens(id_, relative=True)
         except ValueError:
             _not_matched.append(id_)
             if warn:
                 LOG.warning(f'Invalid ID: {id_}')
 
     for id_, tokens in id_tokens_map.items():
-        for lowest_token in reversed(Tokens):
+        for lowest_token in reversed(IDTokens):
             if tokens.get(lowest_token.value):
                 break
 
@@ -146,9 +146,9 @@ def filter_ids(
         tasks = []
 
         # filter by cycle
-        if lowest_token == Tokens.Cycle:
-            cycle = tokens[Tokens.Cycle.value]
-            cycle_sel = tokens.get(Tokens.Cycle.value + '_sel') or '*'
+        if lowest_token == IDTokens.Cycle:
+            cycle = tokens[IDTokens.Cycle.value]
+            cycle_sel = tokens.get(IDTokens.Cycle.value + '_sel') or '*'
             for pool in pools:
                 for icycle, itasks in pool.items():
                     if not itasks:
@@ -165,12 +165,12 @@ def filter_ids(
                             break
 
         # filter by task
-        elif lowest_token == Tokens.Task:  # noqa: SIM106
-            cycle = tokens[Tokens.Cycle.value]
-            cycle_sel_raw = tokens.get(Tokens.Cycle.value + '_sel')
+        elif lowest_token == IDTokens.Task:  # noqa: SIM106
+            cycle = tokens[IDTokens.Cycle.value]
+            cycle_sel_raw = tokens.get(IDTokens.Cycle.value + '_sel')
             cycle_sel = cycle_sel_raw or '*'
-            task = tokens[Tokens.Task.value]
-            task_sel_raw = tokens.get(Tokens.Task.value + '_sel')
+            task = tokens[IDTokens.Task.value]
+            task_sel_raw = tokens.get(IDTokens.Task.value + '_sel')
             task_sel = task_sel_raw or '*'
             for pool in pools:
                 for icycle, itasks in pool.items():
@@ -224,13 +224,13 @@ def filter_ids(
             _tasks.extend(tasks)
 
     ret: 'List[Any]' = []
-    if out == Tokens.Cycle:
+    if out == IDTokens.Cycle:
         _cycles.extend({
             itask.point
             for itask in _tasks
         })
         ret = _cycles
-    elif out == Tokens.Task:
+    elif out == IDTokens.Task:
         for pool in pools:
             for icycle in _cycles:
                 if icycle in pool:

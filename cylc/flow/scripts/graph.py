@@ -42,7 +42,7 @@ from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
-from cylc.flow.id import tokenise
+from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import get_template_vars
@@ -60,7 +60,7 @@ def sort_integer_node(id_):
         ('foo', 11)
 
     """
-    tokens = tokenise(id_, relative=True)
+    tokens = Tokens(id_, relative=True)
     return (tokens['task'], int(tokens['cycle']))
 
 
@@ -139,7 +139,7 @@ def graph_workflow(
         if show_suicide or not suicide
     )
     for node in sorted(set(nodes), key=node_sort):
-        tokens = tokenise(node, relative=True)
+        tokens = Tokens(node, relative=True)
         write(
             f'node "{node}" "{tokens["task"]}\\n{tokens["cycle"]}"'
         )

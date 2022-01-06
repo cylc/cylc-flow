@@ -29,10 +29,7 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
-from cylc.flow.id import (
-    detokenise,
-    tokenise,
-)
+from cylc.flow.id import Tokens
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
 from cylc.flow.workflow_status import StopMode
@@ -130,7 +127,7 @@ class TaskPool:
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
-        tokens = tokenise(task_id, relative=True)
+        tokens = Tokens(task_id, relative=True)
         name = tokens['task']
         if name in self.config.get_task_name_list():
             task_id = TaskID.get_standardised_taskid(task_id)
@@ -458,13 +455,10 @@ class TaskPool:
             LOG.info("LOADING task action timers")
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
-        id_ = detokenise(
-            {
-                'cycle': cycle,
-                'task': name,
-            },
-            relative=True,
-        )
+        id_ = Tokens(
+            cycle=cycle,
+            task=name,
+        ).relative_id
         try:
             # Extract type namedtuple variables from JSON strings
             ctx_key = json.loads(str(ctx_key_raw))
@@ -562,13 +556,10 @@ class TaskPool:
             or all(x < self.config.start_point for x in parent_points)
             or itask.tdef.has_only_abs_triggers(next_point)
         ):
-            taskid = detokenise(
-                {
-                    'cycle': str(next_point),
-                    'task': itask.tdef.name,
-                },
-                relative=True
-            )
+            taskid = Tokens(
+                cycle=str(next_point),
+                task=itask.tdef.name,
+            ).relative_id
             next_task = (
                 self._get_hidden_task_by_id(taskid)
                 or self._get_main_task_by_id(taskid)
@@ -1140,13 +1131,10 @@ class TaskPool:
                     str(itask.point), itask.tdef.name, output)
                 self.workflow_db_mgr.process_queued_ops()
 
-            c_taskid = detokenise(
-                {
-                    'cycle': str(c_point),
-                    'task': c_name,
-                },
-                relative=True
-            )
+            c_taskid = Tokens(
+                cycle=str(c_point),
+                task=c_name,
+            ).relative_id
             c_task = (
                 self._get_hidden_task_by_id(c_taskid)
                 or self._get_main_task_by_id(c_taskid)
@@ -1243,13 +1231,10 @@ class TaskPool:
                 continue
 
             for c_name, c_point, _ in children:
-                c_taskid = detokenise(
-                    {
-                        'cycle': str(c_point),
-                        'task': c_name,
-                    },
-                    relative=True
-                )
+                c_taskid = Tokens(
+                    cycle=str(c_point),
+                    task=c_name,
+                ).relative_id
                 c_task = (
                     self._get_hidden_task_by_id(c_taskid)
                     or self._get_main_task_by_id(c_taskid)
@@ -1415,13 +1400,10 @@ class TaskPool:
 
         # spawn future tasks
         for name, point in future_tasks:
-            task_id = detokenise(
-                {
-                    'cycle': str(point),
-                    'task': name,
-                },
-                relative=True
-            )
+            task_id = Tokens(
+                cycle=str(point),
+                task=name,
+            ).relative_id
             itask = (
                 self._get_main_task_by_id(task_id)
                 or self._get_hidden_task_by_id(task_id)
@@ -1488,13 +1470,7 @@ class TaskPool:
                        itask.tdef.rtconfig['job']['simulated run length'])
             if now > timeout:
                 conf = itask.tdef.rtconfig['simulation']
-                job_d = detokenise(
-                    {
-                        **itask.tokens,
-                        'job': itask.submit_num,
-                    },
-                    relative=True,
-                )
+                job_d = itask.tokens.duplicate(job=itask.submit_num)
                 now_str = get_current_time_string()
                 if (itask.point in conf['fail cycle points'] and
                         (itask.get_try_num() == 1 or
@@ -1641,7 +1617,7 @@ class TaskPool:
         unmatched_tasks: 'List[str]' = []
         for id_ in ids:
             try:
-                tokens = tokenise(id_, relative=True)
+                tokens = Tokens(id_, relative=True)
             except ValueError:
                 LOG.warning(f'Invalid task ID: {id_}')
             if (
@@ -1702,7 +1678,7 @@ class TaskPool:
         n_warnings = 0
         task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
         for item in items:
-            tokens = tokenise(item, relative=True)
+            tokens = Tokens(item, relative=True)
             point_str = tokens['cycle']
             name_str = tokens['task'] or '*'
             if point_str is None:

@@ -39,13 +39,7 @@ from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
     DELTA_ADDED, create_delta_store
 )
-from cylc.flow.id import (
-    detokenise,
-    is_null,
-    strip_task,
-    strip_workflow,
-    tokenise,
-)
+from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
     NodesEdges,
@@ -177,7 +171,7 @@ def node_ids_filter(tokens, state, items) -> bool:
     return any(
         (
             # don't match an empty string (globs should be implicit)
-            not is_null(item)
+            not item.is_null
             # match cycle point
             and (
                 not item['cycle']
@@ -205,17 +199,18 @@ def node_ids_filter(tokens, state, items) -> bool:
 
 def node_filter(node, node_type, args):
     """Filter nodes based on attribute arguments"""
+    tokens: Tokens
     if node_type in DEF_TYPES:
         # namespace nodes don't fit into the universal ID scheme so must
         # be tokenised manually
-        tokens = {
-            'cycle': None,
-            'task': node.name,
-            'job': None,
-        }
+        tokens = Tokens(
+            cycle=None,
+            task=node.name,
+            job=None,
+        )
     else:
         # live objects can be represented by a universal ID
-        tokens = tokenise(node.id)
+        tokens = Tokens(node.id)
     state = getattr(node, 'state', None)
     return (
         (
@@ -264,11 +259,7 @@ def get_flow_data_from_ids(data_store, native_ids):
     w_ids = []
     for native_id in native_ids:
         w_ids.append(
-            detokenise(
-                strip_task(
-                    tokenise(native_id)
-                )
-            )
+            Tokens(native_id).workflow_id
         )
     return [
         data_store[w_id]
@@ -377,7 +368,7 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
     async def get_node_by_id(self, node_type, args):
         """Return protobuf node object for given id."""
         n_id = args.get('id')
-        w_id = detokenise(strip_task(tokenise(n_id)))
+        w_id = Tokens(n_id).workflow_id
         # Both cases just as common so 'if' not 'try'
         try:
             if 'sub_id' in args and args.get('delta_store'):
@@ -637,11 +628,11 @@ class Resolvers(BaseResolvers):
                 not (owner and workflow)
                 or fnmatchcase(
                     w_id,
-                    detokenise(strip_task(tokens)),
+                    tokens.workflow_id,
                 )
             ):
                 items.append(
-                    detokenise(strip_workflow(tokens), relative=True)
+                    tokens.relative_id
                 )
         if items:
             if command == 'put_messages':

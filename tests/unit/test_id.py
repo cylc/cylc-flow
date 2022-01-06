@@ -21,7 +21,8 @@ from cylc.flow.id import (
     LEGACY_CYCLE_SLASH_TASK,
     LEGACY_TASK_DOT_CYCLE,
     RELATIVE_ID,
-    UNIVERSAL_ID
+    Tokens,
+    UNIVERSAL_ID,
 )
 
 

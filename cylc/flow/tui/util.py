@@ -20,8 +20,7 @@ from itertools import zip_longest
 import re
 from time import time
 
-from cylc.flow.id import (
-    tokenise, detokenise, pop_token,)
+from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
 )
@@ -107,9 +106,9 @@ def idpop(id_):
 
     """
     relative = '//' not in id_
-    tokens = tokenise(id_, relative=relative)
-    pop_token(tokens)
-    return detokenise(tokens, relative=relative)
+    tokens = Tokens(id_, relative=relative)
+    tokens.pop_token()
+    return tokens.relative_id
 
 
 def compute_tree(flow):
@@ -444,10 +443,10 @@ def render_node(node, data, type_):
                 is_runahead=data['isRunahead']
             ),
             ' ',
-            pop_token(tokenise(data['id']))[1]
+            Tokens(data['id']).pop_token()[1]
         ]
 
-    return pop_token(tokenise(data['id']))[1]
+    return Tokens(data['id']).pop_token()[1]
 
 
 PARTS = [
@@ -478,7 +477,7 @@ def extract_context(selection):
     """
     ret = {}
     for item in selection:
-        tokens = tokenise(item)
+        tokens = Tokens(item)
         for key, value in tokens.items():
             if (
                 value

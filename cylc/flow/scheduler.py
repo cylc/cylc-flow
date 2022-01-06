@@ -47,7 +47,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr
-from cylc.flow.id import detokenise, tokenise, strip_job
+from cylc.flow.id import Tokens
 from cylc.flow.flow_mgr import FlowMgr
 from cylc.flow.exceptions import (
     CommandFailedError, CyclingError, CylcError, UserInputError
@@ -254,10 +254,10 @@ class Scheduler:
         self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
-        self.id = detokenise({
-            'user': self.owner,
-            'workflow': self.workflow,
-        })
+        self.id = Tokens(
+            user=self.owner,
+            workflow=self.workflow,
+        ).id
         self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = load_template_vars(
@@ -789,8 +789,8 @@ class Scheduler:
             except Empty:
                 break
             self.message_queue.task_done()
-            tokens = tokenise(task_job, relative=True)
-            task_id = detokenise(strip_job(tokens), relative=True)
+            tokens = Tokens(task_job, relative=True)
+            task_id = tokens.relative_id
             messages.setdefault(task_id, [])
             # job may be None (e.g. simulation mode)
             job = int(tokens['job']) if tokens['job'] else None

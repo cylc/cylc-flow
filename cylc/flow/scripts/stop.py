@@ -73,7 +73,6 @@ from cylc.flow.exceptions import (
     UserInputError,
 )
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.id import detokenise, strip_workflow
 from cylc.flow.network.multi import call_multi
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -189,9 +188,9 @@ async def run(
     stop_task = stop_cycle = None
     if tokens_list:
         tokens = tokens_list[0]
-        if tokens.get('task'):
-            stop_task = detokenise(strip_workflow(tokens))
-        elif tokens.get('cycle'):
+        if tokens['task']:
+            stop_task = tokens.relative_id
+        elif tokens['cycle']:
             stop_cycle = tokens['cycle']
 
     # handle orthogonal options

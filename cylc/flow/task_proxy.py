@@ -28,7 +28,7 @@ import cylc.flow.cycling.iso8601
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import standardise_point_string
 from cylc.flow.exceptions import PointParsingError
-from cylc.flow.id import detokenise
+from cylc.flow.id import Tokens
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
@@ -194,11 +194,12 @@ class TaskProxy:
         else:
             self.flow_nums = flow_nums
         self.point = start_point
-        self.tokens = {  # TODO ?
-            'cycle': str(self.point),
-            'task': self.tdef.name,
-        }
-        self.identity = detokenise(self.tokens, relative=True)
+        self.tokens = Tokens(
+            # TODO: make these absolute?
+            cycle=str(self.point),
+            task=self.tdef.name,
+        )
+        self.identity = self.tokens.relative_id
         self.reload_successor: Optional['TaskProxy'] = None
         self.point_as_seconds: Optional[int] = None
 

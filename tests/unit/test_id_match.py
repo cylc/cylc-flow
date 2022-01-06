@@ -18,7 +18,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from cylc.flow.id import Tokens, tokenise
+from cylc.flow.id import IDTokens, Tokens
 from cylc.flow.id_match import filter_ids
 from cylc.flow.task_pool import Pool
 
@@ -26,7 +26,7 @@ from cylc.flow.task_pool import Pool
 @pytest.fixture
 def task_pool():
     def _task_proxy(id_, hier):
-        tokens = tokenise(id_, relative=True)
+        tokens = Tokens(id_, relative=True)
         itask = SimpleNamespace()
         itask.id_ = id_
         itask.point = int(tokens['cycle'])
@@ -179,7 +179,7 @@ def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
         {}
     )
 
-    _matched, _not_matched = filter_ids([pool], ids, out=Tokens.Cycle)
+    _matched, _not_matched = filter_ids([pool], ids, out=IDTokens.Cycle)
     assert _matched == matched
     assert _not_matched == not_matched
 
@@ -209,7 +209,7 @@ def test_filter_ids_pattern_match_off(task_pool):
     _matched, _not_matched = filter_ids(
         [pool],
         ['1/a'],
-        out=Tokens.Task,
+        out=IDTokens.Task,
         pattern_match=True,
     )
     assert [itask.id_ for itask in _matched] == ['1/a:x']
@@ -231,7 +231,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     _matched, _not_matched = filter_ids(
         [pool],
         ids,
-        out=Tokens.Task,
+        out=IDTokens.Task,
         pattern_match=True,
     )
     assert [itask.id_ for itask in _matched] == ['1/a:x']
@@ -242,7 +242,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
     _matched, _not_matched = filter_ids(
         [pool],
         ids,
-        out=Tokens.Task,
+        out=IDTokens.Task,
         pattern_match=False,
     )
     assert [itask.id_ for itask in _matched] == []

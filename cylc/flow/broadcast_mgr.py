@@ -25,7 +25,7 @@ from cylc.flow.broadcast_report import (
     get_broadcast_change_report,
     get_broadcast_bad_options_report,
 )
-from cylc.flow.id import tokenise
+from cylc.flow.id import Tokens
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
 
@@ -156,7 +156,7 @@ class BroadcastMgr:
             # all broadcasts requested
             return self.broadcasts
         try:
-            tokens = tokenise(task_id, relative=True)
+            tokens = Tokens(task_id, relative=True)
             name = tokens['task']
             point_string = tokens['cycle']
         except ValueError:

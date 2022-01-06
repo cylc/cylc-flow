@@ -46,7 +46,6 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     WorkflowConfigError,
 )
-from cylc.flow.id import detokenise
 from cylc.flow.hostuserutil import (
     get_host,
     is_remote_platform
@@ -352,14 +351,11 @@ class TaskJobManager:
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
-                            detokenise(
-                                {
-                                    **itask.tokens,
-                                    'job': itask.submit_num,
-                                },
-                                relative=True
-                            ),
-                            self.REMOTE_INIT_MSG)
+                            itask.tokens.duplicate(
+                                job=itask.submit_num
+                            ).relative_id,
+                            self.REMOTE_INIT_MSG,
+                        )
                     continue
 
                 elif (ri_map[install_target] == REMOTE_INIT_DONE):
@@ -372,13 +368,7 @@ class TaskJobManager:
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
                         self.data_store_mgr.delta_job_msg(
-                            detokenise(
-                                {
-                                    **itask.tokens,
-                                    'job': itask.submit_num,
-                                },
-                                relative=True
-                            ),
+                            itask.tokens.duplicate(job=itask.submit_num),
                             msg
                         )
                     continue
@@ -390,13 +380,9 @@ class TaskJobManager:
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
-                            detokenise(
-                                {
-                                    **itask.tokens,
-                                    'job': itask.submit_num,
-                                },
-                                relative=True
-                            ),
+                            itask.tokens.duplicate(
+                                job=itask.submit_num
+                            ).relative_id,
                             self.REMOTE_INIT_MSG
                         )
                     continue
@@ -418,13 +404,9 @@ class TaskJobManager:
                     platform, curve_auth, client_pub_key_dir)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
-                        detokenise(
-                            {
-                                **itask.tokens,
-                                'job': itask.submit_num,
-                            },
-                            relative=True
-                        ),
+                        itask.tokens.duplicate(
+                            job=itask.submit_num
+                        ).relative_id,
                         self.REMOTE_INIT_MSG,
                     )
                 continue
@@ -456,13 +438,9 @@ class TaskJobManager:
                     platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
-                        detokenise(
-                            {
-                                **itask.tokens,
-                                'job': itask.submit_num,
-                            },
-                            relative=True,
-                        ),
+                        itask.tokens.duplicate(
+                            job=itask.submit_num
+                        ).relative_id,
                         REMOTE_FILE_INSTALL_IN_PROGRESS
                     )
                 continue
@@ -551,13 +529,9 @@ class TaskJobManager:
                             )
                         )
                     job_log_dirs.append(
-                        detokenise(
-                            {
-                                **itask.tokens,
-                                'job': itask.submit_num,
-                            },
-                            relative=True
-                        )
+                        itask.tokens.duplicate(
+                            job=itask.submit_num,
+                        ).relative_id
                     )
                     # The job file is now (about to be) used: reset the file
                     # write flag so that subsequent manual retrigger will
@@ -745,13 +719,9 @@ class TaskJobManager:
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
         self.data_store_mgr.delta_job_msg(
-            detokenise(
-                {
-                    **itask.tokens,
-                    'job': itask.submit_num
-                },
-                relative=True,
-            ),
+            itask.tokens.duplicate(
+                job=itask.submit_num
+            ).relative_id,
             log_msg
         )
         LOG.log(log_lvl, f"[{itask}] {log_msg}")
@@ -847,13 +817,7 @@ class TaskJobManager:
         ctx.out = line
         ctx.ret_code = 0
         # See cylc.flow.job_runner_mgr.JobPollContext
-        job_d = detokenise(
-            {
-                **itask.tokens,
-                'job': itask.submit_num
-            },
-            relative=True,
-        )
+        job_d = itask.tokens.duplicate(job=itask.submit_num).relative_id
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
@@ -972,13 +936,9 @@ class TaskJobManager:
                 )
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(
-                    detokenise(
-                        {
-                            **itask.tokens,
-                            'job': itask.submit_num
-                        },
-                        relative=True,
-                    )
+                    itask.tokens.duplicate(
+                        job=itask.submit_num
+                    ).relative_id
                 )
             cmd += job_log_dirs
             LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
@@ -1301,13 +1261,7 @@ class TaskJobManager:
 
         # Location of job file, etc
         self._create_job_log_path(workflow, itask)
-        job_d = detokenise(
-            {
-                **itask.tokens,
-                'job': itask.submit_num
-            },
-            relative=True,
-        )
+        job_d = itask.tokens.duplicate(job=itask.submit_num).relative_id
         job_file_path = get_remote_workflow_run_job_dir(
             workflow, job_d, JOB_LOG_JOB)
 

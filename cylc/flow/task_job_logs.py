@@ -17,7 +17,7 @@
 
 import os
 
-from cylc.flow.id import detokenise
+from cylc.flow.id import Tokens
 from cylc.flow.pathutil import get_workflow_run_job_dir
 
 # Task job log filenames.
@@ -44,14 +44,11 @@ def get_task_job_log(workflow, point, name, submit_num=None, suffix=None):
     """Return the full job log path."""
     args = [
         get_workflow_run_job_dir(workflow),
-        detokenise(
-            {
-                'cycle': str(point),
-                'task': name,
-                'job': submit_num or NN,
-            },
-            relative=True,
-        )
+        Tokens(
+            cycle=str(point),
+            task=name,
+            job=submit_num or NN,
+        ).relative_id
     ]
     if suffix is not None:
         args.append(suffix)

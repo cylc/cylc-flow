@@ -44,7 +44,6 @@ See also 'cylc hold'.
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cylc.flow.id import detokenise
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
@@ -124,7 +123,7 @@ async def run(options: 'Values', workflow_id, *tokens_list):
         mutation = RELEASE_MUTATION
         args = {
             'tasks': [
-                detokenise(tokens, relative=True)
+                tokens.relative_id
                 for tokens in tokens_list
             ]
         }

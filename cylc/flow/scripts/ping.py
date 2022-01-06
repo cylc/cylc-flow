@@ -30,7 +30,6 @@ import sys
 from typing import Any, Dict, TYPE_CHECKING
 
 import cylc.flow.flags
-from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -108,10 +107,10 @@ async def run(
         # ping called with task-like objects
         for tokens in tokens_list:
             task_kwargs['variables'] = {
-                'tProxy': detokenise(tokens, relative=True)
+                'tProxy': tokens.relative_id
             }
             task_result = await pclient.async_request('graphql', task_kwargs)
-            string_id = detokenise(tokens, relative=True)
+            string_id = tokens.relative_id
             if not task_result.get('taskProxy'):
                 msg = f"task not found: {string_id}"
             elif task_result['taskProxy']['state'] != TASK_STATUS_RUNNING:

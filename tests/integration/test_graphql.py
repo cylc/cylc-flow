@@ -19,7 +19,7 @@
 import pytest
 from typing import TYPE_CHECKING
 
-from cylc.flow.id import detokenise, strip_workflow
+from cylc.flow.id import Tokens
 from cylc.flow.network.client import WorkflowRuntimeClient
 
 if TYPE_CHECKING:
@@ -102,10 +102,10 @@ async def harness(mod_flow, mod_scheduler, mod_run):
         # Fails without it.. and a test needs to overwrite schd data with this.
         # data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
 
-        workflow_tokens = {
-            'user': schd.owner,
-            'workflow': schd.workflow,
-        }
+        workflow_tokens = Tokens(
+            user=schd.owner,
+            workflow=schd.workflow,
+        )
 
         yield schd, client, workflow_tokens
 
@@ -120,7 +120,7 @@ async def test_workflows(harness):
     assert ret == {
         'workflows': [
             {
-                'id': f'{detokenise(w_tokens)}'
+                'id': f'{w_tokens}'
             }
         ]
     }
@@ -136,10 +136,7 @@ async def test_tasks(harness):
         {'request_string': 'query { tasks { id } }'}
     )
     ids = [
-        detokenise({
-            **w_tokens,
-            'cycle': f'$namespace|{namespace}',
-        })
+        w_tokens.duplicate(cycle=f'$namespace|{namespace}').id
         for namespace in ('a', 'b', 'c', 'd')
     ]
     ret['tasks'].sort(key=lambda x: x['id'])
@@ -171,10 +168,9 @@ async def test_families(harness):
         {'request_string': 'query { families { id } }'}
     )
     ids = [
-        detokenise({
-            **w_tokens,
-            'cycle': f'$namespace|{namespace}',
-        })
+        w_tokens.duplicate(
+            cycle=f'$namespace|{namespace}'
+        ).id
         for namespace in ('A', 'B', 'root')
     ]
     ret['families'].sort(key=lambda x: x['id'])
@@ -206,11 +202,10 @@ async def test_task_proxies(harness):
         {'request_string': 'query { taskProxies { id } }'}
     )
     ids = [
-        detokenise({
-            **w_tokens,
-            'cycle': '1',
-            'task': namespace,
-        })
+        w_tokens.duplicate(
+            cycle='1',
+            task=namespace,
+        ).id
         # NOTE: task "d" is not in the n=1 window yet
         for namespace in ('a', 'b', 'c')
     ]
@@ -242,11 +237,10 @@ async def test_family_proxies(harness):
         {'request_string': 'query { familyProxies { id } }'}
     )
     ids = [
-        detokenise({
-            **w_tokens,
-            'cycle': '1',
-            'task': namespace,
-        })
+        w_tokens.duplicate(
+            cycle='1',
+            task=namespace,
+        ).id
         # NOTE: family "d" is not in the n=1 window yet
         for namespace in ('A', 'B', 'root')
     ]
@@ -274,11 +268,10 @@ async def test_edges(harness):
     schd, client, w_tokens = harness
 
     t_tokens = [
-        {
-            **w_tokens,
-            'cycle': '1',
-            'task': namespace,
-        }
+        w_tokens.duplicate(
+            cycle='1',
+            task=namespace,
+        )
         # NOTE: task "d" is not in the n=1 window yet
         for namespace in ('a', 'b', 'c')
     ]
@@ -287,14 +280,13 @@ async def test_edges(harness):
         (t_tokens[0], t_tokens[2]),
     ]
     e_ids = sorted([
-        detokenise({
-            **w_tokens,
-            'cycle': (
+        w_tokens.duplicate(
+            cycle=(
                 '$edge'
-                f'|{detokenise(strip_workflow(left), relative=True)}'
-                f'|{detokenise(strip_workflow(right), relative=True)}'
+                f'|{left.relative_id}'
+                f'|{right.relative_id}'
             )
-        })
+        ).id
         for left, right in edges
     ])
 
@@ -320,7 +312,7 @@ async def test_edges(harness):
     assert ret == {
         'nodesEdges': {
             'nodes': [
-                {'id': detokenise(tokens)}
+                {'id': tokens.id}
                 for tokens in t_tokens
             ],
             'edges': [
@@ -338,13 +330,12 @@ async def test_jobs(harness):
     # add a job
     schd.data_store_mgr.insert_job('a', '1', 'submitted', job_config(schd))
     schd.data_store_mgr.update_data_structure()
-    j_tokens = {
-        **w_tokens,
-        'cycle': '1',
-        'task': 'a',
-        'job': '01',
-    }
-    j_id = detokenise(j_tokens)
+    j_tokens = w_tokens.duplicate(
+        cycle='1',
+        task='a',
+        job='01',
+    )
+    j_id = j_tokens.id
 
     # query "jobs"
     ret = await client.async_request(

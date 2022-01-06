@@ -243,7 +243,7 @@ def patch_expand_workflow_tokens(monkeypatch):
         async def _expand_workflow_tokens_impl(tokens, match_active=True):
             nonlocal _ids
             for id_ in _ids:
-                yield {**tokens, 'workflow': id_}
+                yield tokens.duplicate(workflow=id_)
 
         monkeypatch.setattr(
             'cylc.flow.id_cli._expand_workflow_tokens_impl',

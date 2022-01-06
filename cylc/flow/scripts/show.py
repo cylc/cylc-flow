@@ -41,7 +41,7 @@ from typing import Dict
 from ansimarkup import ansiprint
 
 from cylc.flow.exceptions import UserInputError
-from cylc.flow.id import detokenise, strip_workflow, tokenise
+from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -206,7 +206,7 @@ def prereqs_and_outputs_query(
 ):
     ids_list = [
         # convert the tokens into standardised IDs
-        detokenise(tokens, relative=True)
+        tokens.relative_id
         for tokens in tokens_list
     ]
 
@@ -221,11 +221,7 @@ def prereqs_and_outputs_query(
     results = pclient('graphql', tp_kwargs)
     multi = len(results['taskProxies']) > 1
     for t_proxy in results['taskProxies']:
-        task_id = detokenise(
-            # the task ID with the workflow bit taken off
-            strip_workflow(tokenise(t_proxy['id'])),
-            relative=True
-        )
+        task_id = Tokens(t_proxy['id']).relative_id
         if options.json:
             json_filter.update({task_id: t_proxy})
         else:

@@ -70,7 +70,7 @@ from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbTaskProxy, PbWorkflow, AllDeltas, EDeltas, FDeltas, FPDeltas,
     JDeltas, TDeltas, TPDeltas, WDeltas)
 from cylc.flow.exceptions import WorkflowConfigError
-from cylc.flow.id import detokenise, tokenise, strip_workflow
+from cylc.flow.id import Tokens
 from cylc.flow.network import API
 from cylc.flow.workflow_status import get_workflow_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
@@ -358,11 +358,11 @@ class DataStoreMgr:
 
     def __init__(self, schd):
         self.schd = schd
-        self.id_ = {
-            'user': self.schd.owner,
-            'workflow': self.schd.workflow,
-        }
-        self.workflow_id = detokenise(self.id_)
+        self.id_ = Tokens(
+            user=self.schd.owner,
+            workflow=self.schd.workflow,
+        )  # TODO: rename and move to scheduler
+        self.workflow_id = self.id_.workflow_id
         self.ancestors = {}
         self.descendants = {}
         self.parents = {}
@@ -609,13 +609,9 @@ class DataStoreMgr:
 
         """
         # Create this source node
-        s_tokens = {
-            **self.id_,
-            **itask.tokens,
-        }
-        s_id = detokenise(s_tokens)
+        s_tokens = self.id_.duplicate(itask.tokens)
         if active_id is None:
-            active_id = s_id
+            active_id = s_tokens.id
 
         # Setup and check if active node is another's boundary node
         # to flag its paths for pruning.
@@ -633,19 +629,21 @@ class DataStoreMgr:
         if edge_distance > self.n_edge_distance:
             if descendant and self.n_edge_distance > 0:
                 self.n_window_boundary_nodes[
-                    active_id].setdefault(edge_distance, set()).add(s_id)
+                    active_id
+                ].setdefault(edge_distance, set()).add(s_tokens.id)
             return
         if (
                 (not any(itask.graph_children.values()) and descendant)
                 or self.n_edge_distance == 0
         ):
             self.n_window_boundary_nodes[
-                active_id].setdefault(edge_distance, set()).add(s_id)
+                active_id
+            ].setdefault(edge_distance, set()).add(s_tokens.id)
 
-        self.n_window_nodes[active_id].add(s_id)
+        self.n_window_nodes[active_id].add(s_tokens.id)
 
         # Generate task proxy node
-        is_orphan = self.generate_ghost_task(s_id, itask, is_parent)
+        is_orphan = self.generate_ghost_task(s_tokens.id, itask, is_parent)
 
         edge_distance += 1
 
@@ -657,15 +655,27 @@ class DataStoreMgr:
                 if edge_distance == 1:
                     descendant = True
                 self._expand_graph_window(
-                    s_id, s_tokens, items, active_id, itask.flow_nums,
-                    edge_distance, descendant, False)
+                    s_tokens,
+                    items,
+                    active_id,
+                    itask.flow_nums,
+                    edge_distance,
+                    descendant,
+                    False,
+                )
 
             for items in generate_graph_parents(
                 itask.tdef, itask.point
             ).values():
                 self._expand_graph_window(
-                    s_id, s_tokens, items, active_id, itask.flow_nums,
-                    edge_distance, False, True)
+                    s_tokens,
+                    items,
+                    active_id,
+                    itask.flow_nums,
+                    edge_distance,
+                    False,
+                    True,
+                )
 
         if edge_distance == 1:
             levels = self.n_window_boundary_nodes[active_id].keys()
@@ -683,19 +693,24 @@ class DataStoreMgr:
                     self.n_window_edges[active_id])
 
     def _expand_graph_window(
-            self, s_id, s_tokens, items, active_id, flow_nums,
-            edge_distance, descendant=False, is_parent=False):
+        self,
+        s_tokens,
+        items,
+        active_id,
+        flow_nums,
+        edge_distance,
+        descendant=False,
+        is_parent=False
+    ):
         """Construct nodes/edges for children/parents of source node."""
         final_point = self.schd.config.final_point
         for t_name, t_point, _ in items:
             if t_point > final_point:
                 continue
-            t_tokens = {
-                **self.id_,
-                'cycle': str(t_point),
-                'task': t_name,
-            }
-            t_id = detokenise(t_tokens)
+            t_tokens = self.id_.duplicate(
+                cycle=str(t_point),
+                task=t_name,
+            )
             # Initiate edge element.
             if is_parent:
                 e_id = self.edge_id(t_tokens, s_tokens)
@@ -710,18 +725,18 @@ class DataStoreMgr:
             ):
                 self.added[EDGES][e_id] = PbEdge(
                     id=e_id,
-                    source=s_id,
-                    target=t_id
+                    source=s_tokens.id,
+                    target=t_tokens.id
                 )
                 # Add edge id to node field for resolver reference
                 self.updated[TASK_PROXIES].setdefault(
-                    t_id,
-                    PbTaskProxy(id=t_id)).edges.append(e_id)
+                    t_tokens.id,
+                    PbTaskProxy(id=t_tokens.id)).edges.append(e_id)
                 self.updated[TASK_PROXIES].setdefault(
-                    s_id,
-                    PbTaskProxy(id=s_id)).edges.append(e_id)
+                    s_tokens.id,
+                    PbTaskProxy(id=s_tokens.id)).edges.append(e_id)
                 self.n_window_edges[active_id].add(e_id)
-            if t_id in self.n_window_nodes[active_id]:
+            if t_tokens.id in self.n_window_nodes[active_id]:
                 continue
             self.increment_graph_window(
                 TaskProxy(
@@ -732,11 +747,10 @@ class DataStoreMgr:
 
     def remove_pool_node(self, name, point):
         """Remove ID reference and flag isolate node/branch for pruning."""
-        tp_id = detokenise({
-            **self.id_,
-            'cycle': str(point),
-            'task': name,
-        })
+        tp_id = self.id_.duplicate(
+            cycle=str(point),
+            task=name,
+        ).id
         if tp_id in self.all_task_pool:
             self.all_task_pool.remove(tp_id)
         # flagged isolates/end-of-branch nodes for pruning on removal
@@ -749,11 +763,10 @@ class DataStoreMgr:
 
     def add_pool_node(self, name, point):
         """Add external ID reference for internal task pool node."""
-        tp_id = detokenise({
-            **self.id_,
-            'cycle': str(point),
-            'task': name,
-        })
+        tp_id = self.id_.duplicate(
+            cycle=str(point),
+            task=name,
+        ).id
         self.all_task_pool.add(tp_id)
 
     def generate_ghost_task(self, tp_id, itask, is_parent=False):
@@ -817,19 +830,17 @@ class DataStoreMgr:
         tproxy.namespace[:] = task_def.namespace
         if is_orphan:
             tproxy.ancestors[:] = [
-                detokenise({
-                    **self.id_,
-                    'cycle': point_string,
-                    'task': 'root',
-                })
+                self.id_.duplicate(
+                    cycle=point_string,
+                    task='root',
+                ).id
             ]
         else:
             tproxy.ancestors[:] = [
-                detokenise({
-                    **self.id_,
-                    'cycle': point_string,
-                    'task': a_name,
-                })
+                self.id_.duplicate(
+                    cycle=point_string,
+                    task=a_name,
+                ).id
                 for a_name in self.ancestors[task_def.name]
                 if a_name != task_def.name
             ]
@@ -880,10 +891,7 @@ class DataStoreMgr:
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
         if tproxy.state in self.latest_state_tasks:
-            tp_ref = detokenise(
-                strip_workflow(tokenise(tproxy.id)),
-                relative=True
-            )
+            tp_ref = Tokens(tproxy.id).relative_id
             tp_queue = self.latest_state_tasks[tproxy.state]
             if tp_ref in tp_queue:
                 tp_queue.remove(tp_ref)
@@ -954,7 +962,7 @@ class DataStoreMgr:
             fp_delta = fp_added[fp_id]
             fp_parent = fp_added.setdefault(fp_id, PbFamilyProxy(id=fp_id))
         else:
-            tokens = tokenise(fp_id)
+            tokens = Tokens(fp_id)
             point_string = tokens['cycle']
             name = tokens['task']
             fam = families[self.definition_id(name)]
@@ -967,11 +975,10 @@ class DataStoreMgr:
                 depth=fam.depth,
             )
             fp_delta.ancestors[:] = [
-                detokenise({
-                    **self.id_,
-                    'cycle': point_string,
-                    'task': a_name,
-                })
+                self.id_.duplicate(
+                    cycle=point_string,
+                    task=a_name,
+                ).id
                 for a_name in self.ancestors[fam.name]
                 if a_name != fam.name
             ]
@@ -1016,12 +1023,9 @@ class DataStoreMgr:
         if not tproxy:
             return
         update_time = time()
-        tp_tokens = tokenise(tp_id)
-        j_tokens = {
-            **tp_tokens,
-            'job': sub_num
-        }
-        j_id = detokenise(j_tokens)
+        tp_tokens = Tokens(tp_id)
+        j_tokens = tp_tokens.duplicate(job=sub_num)
+        j_id = j_tokens.id
         j_buf = PbJob(
             stamp=f'{j_id}@{update_time}',
             id=j_id,
@@ -1075,12 +1079,9 @@ class DataStoreMgr:
         tp_id, tproxy = self.store_node_fetcher(name, point_string)
         if not tproxy:
             return
-        tp_tokens = tokenise(tp_id)
-        j_tokens = {
-            **tp_tokens,
-            'job': submit_num
-        }
-        j_id = detokenise(j_tokens)
+        tp_tokens = Tokens(tp_id)
+        j_tokens = tp_tokens.duplicate(job=submit_num)
+        j_id = j_tokens.id
         try:
             update_time = time()
             j_buf = PbJob(
@@ -1522,10 +1523,7 @@ class DataStoreMgr:
         tp_delta.state = itask.state.status
         self.state_update_families.add(tproxy.first_parent)
         if tp_delta.state in self.latest_state_tasks:
-            tp_ref = detokenise(
-                strip_workflow(tokenise(tproxy.id)),
-                relative=True
-            )
+            tp_ref = Tokens(tproxy.id).relative_id
             tp_queue = self.latest_state_tasks[tp_delta.state]
             if tp_ref in tp_queue:
                 tp_queue.remove(tp_ref)
@@ -1772,7 +1770,7 @@ class DataStoreMgr:
     # -----------
     def delta_job_msg(self, job_d, msg):
         """Add message to job."""
-        tokens = tokenise(job_d, relative=True)
+        tokens = Tokens(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
             tokens['task'],
             tokens['cycle'],
@@ -1790,7 +1788,7 @@ class DataStoreMgr:
 
     def delta_job_attr(self, job_d, attr_key, attr_val):
         """Set job attribute."""
-        tokens = tokenise(job_d, relative=True)
+        tokens = Tokens(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
             tokens['task'],
             tokens['cycle'],
@@ -1808,7 +1806,7 @@ class DataStoreMgr:
 
     def delta_job_state(self, job_d, status):
         """Set job state."""
-        tokens = tokenise(job_d, relative=True)
+        tokens = Tokens(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
             tokens['task'],
             tokens['cycle'],
@@ -1831,7 +1829,7 @@ class DataStoreMgr:
 
         Set values of both event_key + '_time' and event_key + '_time_string'.
         """
-        tokens = tokenise(job_d, relative=True)
+        tokens = Tokens(job_d, relative=True)
         j_id, job = self.store_node_fetcher(
             tokens['task'],
             tokens['cycle'],
@@ -1855,18 +1853,16 @@ class DataStoreMgr:
             node_id = self.definition_id(name)
             node_type = TASKS
         elif sub_num is None:
-            node_id = detokenise({
-                **self.id_,
-                'cycle': str(point),
-                'task': name,
-            })
+            node_id = self.id_.duplicate(
+                cycle=str(point),
+                task=name,
+            ).id
         else:
-            node_id = detokenise({
-                **self.id_,
-                'cycle': str(point),
-                'task': name,
-                'job': sub_num,
-            })
+            node_id = self.id_.duplicate(
+                cycle=str(point),
+                task=name,
+                job=sub_num,
+            ).id
             node_type = JOBS
         if node_id in self.added[node_type]:
             return (node_id, self.added[node_type][node_id])
@@ -2002,21 +1998,12 @@ class DataStoreMgr:
             pb_msg.added.extend(data[element_type].values())
         return pb_msg
 
-    def definition_id(self, namespace):
-        # return detokenise({
-        #     **self.id_,
-        #     'cycle': '*',
-        #     'task': namespace,
-        # })
-        return detokenise({
-            **self.id_,
-            'cycle': f'$namespace|{namespace}',
-        })
+    def definition_id(self, namespace: str) -> str:
+        return self.id_.duplicate(cycle=f'$namespace|{namespace}').id
 
-    def edge_id(self, left_tokens, right_tokens):
-        left_id = detokenise(strip_workflow(left_tokens), relative=True)
-        right_id = detokenise(strip_workflow(right_tokens), relative=True)
-        return detokenise({
-            **self.id_,
-            'cycle': f'$edge|{left_id}|{right_id}',
-        })
+    def edge_id(self, left_tokens: Tokens, right_tokens: Tokens) -> str:
+        return self.id_.duplicate(
+            cycle=(
+                f'$edge|{left_tokens.relative_id}|{right_tokens.relative_id}'
+            )
+        ).id

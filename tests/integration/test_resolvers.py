@@ -19,7 +19,7 @@ import pytest
 from unittest.mock import Mock
 
 from cylc.flow.data_store_mgr import EDGES, TASK_PROXIES
-from cylc.flow.id import detokenise, tokenise
+from cylc.flow.id import Tokens
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.scheduler import Scheduler
 
@@ -119,7 +119,7 @@ async def test_get_nodes_all(mock_flow, node_args):
     assert len(nodes) == 0
     node_args['ghosts'] = True
     node_args['states'] = []
-    node_args['ids'].append(tokenise(mock_flow.node_ids[0]))
+    node_args['ids'].append(Tokens(mock_flow.node_ids[0]))
     nodes = [
         n for n in await mock_flow.resolvers.get_nodes_all(
             TASK_PROXIES, node_args)
@@ -156,12 +156,12 @@ async def test_get_nodes_by_ids(mock_flow, node_args):
 async def test_get_node_by_id(mock_flow, node_args):
     """Test method returning a workflow node message
     who's ID is a match to that given."""
-    node_args['id'] = detokenise({
-        'user': 'me',
-        'workflow': 'mine',
-        'cycle': '20500808T00',
-        'task': 'jin',
-    })
+    node_args['id'] = Tokens(
+        user='me',
+        workflow='mine',
+        cycle='20500808T00',
+        task='jin',
+    ).id
     node_args['workflows'].append({
         'user': mock_flow.owner,
         'workflow': mock_flow.name,
@@ -226,7 +226,7 @@ async def test_nodes_mutator(mock_flow, flow_args):
         'workflow': mock_flow.name,
         'workflow_sel': None,
     })
-    ids = [tokenise(n) for n in mock_flow.node_ids]
+    ids = [Tokens(n) for n in mock_flow.node_ids]
     response = await mock_flow.resolvers.nodes_mutator(
         None, 'force_trigger_tasks', ids, flow_args,
         {"reflow": False, "flow_descr": ""}

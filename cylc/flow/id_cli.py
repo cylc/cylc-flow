@@ -27,13 +27,8 @@ from cylc.flow.exceptions import (
     WorkflowFilesError,
 )
 from cylc.flow.id import (
-    TokensDict,
+    Tokens,
     contains_multiple_workflows,
-    contains_task_like,
-    detokenise,
-    is_null,
-    strip_workflow,
-    tokenise,
     upgrade_legacy_ids,
 )
 from cylc.flow.network.scan import (
@@ -55,7 +50,7 @@ from cylc.flow.workflow_files import (
 FN_CHARS = re.compile(r'[\*\?\[\]\!]')
 
 
-def _parse_cli(*ids: str) -> List[TokensDict]:
+def _parse_cli(*ids: str) -> List[Tokens]:
     """Parse a list of Cylc identifiers as provided on the CLI.
 
     * Validates identifiers.
@@ -73,6 +68,7 @@ def _parse_cli(*ids: str) -> List[TokensDict]:
 
     Examples:
         # parse to tokens then detokenise back
+        >>> from cylc.flow.id import detokenise
         >>> parse_back = lambda *ids: list(map(detokenise, _parse_cli(*ids)))
 
         # list of workflows:
@@ -122,11 +118,11 @@ def _parse_cli(*ids: str) -> List[TokensDict]:
     # upgrade legacy ids if required
     ids = upgrade_legacy_ids(*ids)
 
-    partials = None
-    partials_expended = False
-    tokens_list = []
+    partials: Optional[Tokens] = None
+    partials_expended: bool = False
+    tokens_list: List[Tokens] = []
     for id_ in ids:
-        tokens = tokenise(id_)
+        tokens = Tokens(id_)
         is_partial = tokens.get('workflow') and not tokens.get('cycle')
         is_relative = not tokens.get('workflow')
 
@@ -144,10 +140,12 @@ def _parse_cli(*ids: str) -> List[TokensDict]:
             elif is_relative:
                 # this is a relative reference => expand it using the context
                 # of the partial ID
-                tokens_list.append({
-                    **partials,
-                    **tokens,
-                })
+                tokens_list.append(Tokens(
+                    **{
+                        **partials,
+                        **tokens,
+                    },
+                ))
                 partials_expended = True
             else:
                 # this is a fully expanded reference
@@ -189,7 +187,7 @@ async def parse_ids_async(
     constraint: str = 'tasks',
     max_workflows: Optional[int] = None,
     max_tasks: Optional[int] = None,
-) -> Tuple[Dict[str, List[TokensDict]], Any]:
+) -> Tuple[Dict[str, List[Tokens]], Any]:
     """Parse IDs from the command line.
 
     Args:
@@ -238,10 +236,10 @@ async def parse_ids_async(
             # yes, replace the path with an ID and continue
             workflow_id, src_path, flow_file_path = ret
             ids = (
-                detokenise({
-                    'user': None,
-                    'workflow': workflow_id,
-                }) + '//',
+                Tokens(
+                    user=None,
+                    workflow=workflow_id,
+                ).id + '//',
                 *ids[1:]
             )
     tokens_list.extend(_parse_cli(*ids))
@@ -294,7 +292,7 @@ def parse_id(*args, **kwargs):
 async def parse_id_async(
     *args,
     **kwargs,
-) -> Tuple[str, Optional[TokensDict], Any]:
+) -> Tuple[str, Optional[Tokens], Any]:
     """Special case of parse_ids with a more convient return format.
 
     Infers:
@@ -312,7 +310,7 @@ async def parse_id_async(
     )
     workflow_id = list(workflows)[0]
     tokens_list = workflows[workflow_id]
-    tokens: Optional[TokensDict]
+    tokens: Optional[Tokens]
     if tokens_list:
         tokens = tokens_list[0]
     else:
@@ -339,17 +337,17 @@ def contains_fnmatch(string: str) -> bool:
 def _validate_constraint(*tokens_list, constraint=None):
     if constraint == 'workflows':
         for tokens in tokens_list:
-            if contains_task_like(tokens):
+            if tokens.is_task_like:
                 raise UserInputError('IDs must be workflows')
         return
     if constraint == 'tasks':
         for tokens in tokens_list:
-            if not contains_task_like(tokens):
+            if not tokens.is_task_like:
                 raise UserInputError('IDs must be tasks')
         return
     if constraint == 'mixed':
         for tokens in tokens_list:
-            if is_null(tokens):
+            if tokens.is_null:
                 raise UserInputError('IDs cannot be null.')
         return
     raise Exception(f'Invalid constraint: {constraint}')
@@ -390,7 +388,7 @@ def _validate_number(*tokens_list, max_workflows=None, max_tasks=None):
     workflows_count = 0
     tasks_count = 0
     for tokens in tokens_list:
-        if contains_task_like(tokens):
+        if tokens.is_task_like:
             tasks_count += 1
         else:
             workflows_count += 1
@@ -409,17 +407,17 @@ def _batch_tokens_by_workflow(*tokens_list, constraint=None):
 
     Example:
         >>> _batch_tokens_by_workflow(
-        ...     {'workflow': 'x', 'cycle': '1'},
-        ...     {'workflow': 'x', 'cycle': '2'},
+        ...     Tokens(workflow='x', cycle='1'),
+        ...     Tokens(workflow='x', cycle='2'),
         ... )
-        {'x': [{'cycle': '1'}, {'cycle': '2'}]}
+        {'x': [<id: //1>, <id: //2>]}
 
     """
     workflow_tokens = {}
     for tokens in tokens_list:
         w_tokens = workflow_tokens.setdefault(tokens['workflow'], [])
-        relative_tokens = strip_workflow(tokens)
-        if constraint in {'mixed', 'workflows'} and is_null(relative_tokens):
+        relative_tokens = tokens.task
+        if constraint in {'mixed', 'workflows'} and relative_tokens.is_null:
             continue
         w_tokens.append(relative_tokens)
     return workflow_tokens
@@ -461,7 +459,7 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
 
     # iter the results
     async for workflow in pipe:
-        yield {**tokens, 'workflow': workflow['name']}
+        yield tokens.duplicate(workflow=workflow['name'])
 
 
 def _parse_src_path(id_):

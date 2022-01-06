@@ -22,16 +22,16 @@ This module contains the abstract ID tokenising/detokenising code.
 from enum import Enum
 import re
 from typing import (
-    Dict,
-    Optional,
     List,
+    Optional,
     Tuple,
+    Union,
 )
 
 from cylc.flow import LOG
 
 
-class Tokens(Enum):
+class IDTokens(Enum):
     """Cylc object identifier tokens."""
 
     User = 'user'
@@ -41,32 +41,374 @@ class Tokens(Enum):
     Job = 'job'
 
 
-TokensDict = Dict[str, Optional[str]]
+class Tokens(dict):
+    """A parsed representation of a Cylc universal identifier (UID).
+
+    Examples:
+        Parse tokens:
+        >>> tokens = Tokens('~u/w//c/t/01')
+        >>> tokens
+        <id: ~u/w//c/t/01>
+
+        Parse back to a string ID:
+        >>> tokens.id
+        '~u/w//c/t/01'
+        >>> tokens.workflow_id
+        '~u/w'
+        >>> tokens.relative_id
+        'c/t/01'
+
+        Inspect the tokens:
+        >>> tokens['user']
+        'u'
+        >>> tokens['task']
+        't'
+        >>> tokens['task_sel']  # task selector
+        >>> list(tokens.values())  # Note the None values are selectors
+        ['u', 'w', None, 'c', None, 't', None, '01', None]
+
+        Construct tokens:
+        >>> Tokens(workflow='w', cycle='c')
+        <id: w//c>
+        >>> Tokens(workflow='w', cycle='c')['job']
+
+        # Make a copy (note Tokens are mutable):
+        >>> tokens.duplicate()
+        <id: ~u/w//c/t/01>
+        >>> tokens.duplicate(job='02')  # make changes at the same time
+        <id: ~u/w//c/t/02>
+
+    """
+    # valid dictionary keys
+    _KEYS = {
+        # regular tokens
+        *{token.value for token in IDTokens},
+        # selector tokens
+        *{
+            f'{token.value}_sel'
+            for token in IDTokens
+            if token != IDTokens.User
+        },
+    }
+
+    def __init__(self, *args: 'Union[str, Tokens]', **kwargs):
+        if args:
+            if len(args) > 1:
+                raise ValueError()
+            kwargs = tokenise(
+                str(args[0]),
+                relative=kwargs.get('relative', False)
+            )
+        dict.__init__(self, **kwargs)
+
+    def __setitem__(self, key, value):
+        if key not in self._KEYS:
+            raise ValueError(f'Invalid token: {key}')
+        dict.__setitem__(self, key, value)
+
+    def __getitem__(self, key):
+        try:
+            return dict.__getitem__(self, key)
+        except KeyError:
+            if key not in self._KEYS:
+                raise ValueError(f'Invalid token: {key}')
+            return None
+
+    def __str__(self):
+        return self.id
+
+    def __repr__(self):
+        """Python internal representation.
+
+        Examples:
+            >>> Tokens('a//1')
+            <id: a//1>
+            >>> Tokens('//1', relative=True)
+            <id: //1>
+            >>> Tokens()
+            <id: >
+
+        """
+        if self.is_null:
+            id_ = ''
+        else:
+            id_ = self.id
+        return f'<id: {id_}>'
+
+    def __eq__(self, other):
+        return all(
+            self[key] == other[key]
+            for key in self._KEYS
+        )
+
+    def __ne__(self, other):
+        return any(
+            self[key] != other[key]
+            for key in self._KEYS
+        )
+
+    @property
+    def id(self) -> str:  # noqa A003 (not shadowing id built-in)
+        """The full ID these tokens represent.
+
+        Examples:
+            >>> Tokens('~u/w//c/t/01').id
+            '~u/w//c/t/01'
+            >>> Tokens().id
+            Traceback (most recent call last):
+            ValueError: No tokens provided
+
+        """
+        return detokenise(self)
+
+    @property
+    def relative_id(self) -> str:
+        """The relative ID (without the workflow part).
+
+        Examples:
+            >>> Tokens('~u/w//c/t/01').relative_id
+            'c/t/01'
+            >>> Tokens('~u/w').relative_id
+            Traceback (most recent call last):
+            ValueError: No tokens provided
+
+        """
+        return detokenise(self.task, relative=True)
+
+    @property
+    def workflow_id(self) -> str:
+        """The workflow id (without the relative part).
+
+        Examples:
+            >>> Tokens('~u/w//c/t/01').workflow_id
+            '~u/w'
+            >>> Tokens('c/t/01', relative=True).workflow_id
+            Traceback (most recent call last):
+            ValueError: No tokens provided
+
+
+        """
+        return detokenise(self.workflow)
+
+    @property
+    def lowest_token(self) -> str:
+        """Return the lowest token present in a tokens dictionary.
+
+        Examples:
+            >>> Tokens('~u/w//c/t/01').lowest_token
+            'job'
+            >>> Tokens('~u/w//c/t').lowest_token
+            'task'
+            >>> Tokens('~u/w//c').lowest_token
+            'cycle'
+            >>> Tokens('~u/w//').lowest_token
+            'workflow'
+            >>> Tokens('~u').lowest_token
+            'user'
+            >>> Tokens().lowest_token({})
+            Traceback (most recent call last):
+            ValueError: No tokens defined
+
+        """
+        for token in reversed(IDTokens):
+            if token.value in self and self[token.value]:
+                return token.value
+        raise ValueError('No tokens defined')
+
+    def pop_token(self) -> Tuple[str, str]:
+        """Pop the lowest token.
+
+        Examples:
+            >>> tokens = Tokens('~u/w//c/t/01')
+            >>> tokens.pop_token()
+            ('job', '01')
+            >>> tokens.pop_token()
+            ('task', 't')
+            >>> tokens.pop_token()
+            ('cycle', 'c')
+            >>> tokens.pop_token()
+            ('workflow', 'w')
+            >>> tokens.pop_token()
+            ('user', 'u')
+            >>> tokens
+            <id: >
+            >>> tokens.pop_token()
+            Traceback (most recent call last):
+            KeyError: No defined tokens.
+
+        """
+        for token in reversed(IDTokens):
+            token_name = token.value
+            value = self[token_name]
+            if value:
+                self.pop(token_name)
+                return (token_name, value)
+        raise KeyError('No defined tokens.')
+
+    @property
+    def is_task_like(self) -> bool:
+        """Returns True if any task-like objects are present in the ID.
+
+        Task like == cycles or tasks or jobs.
+
+        Examples:
+            >>> Tokens('workflow//').is_task_like
+            False
+            >>> Tokens('workflow//1').is_task_like
+            True
+
+        """
+        return any(
+            bool(self[token.value])
+            for token in IDTokens
+            if token not in {IDTokens.User, IDTokens.Workflow}
+        )
+
+    @property
+    def task(self) -> 'Tokens':
+        """The task portion of the tokens.
+
+        Examples:
+            >>> Tokens('~user/workflow//cycle/task/01').task
+            <id: //cycle/task/01>
+
+        """
+        return Tokens(
+            **{
+                key: value
+                for key, value in self.items()
+                if key in (
+                    enum.value
+                    for enum in (
+                        {*IDTokens} - {IDTokens.User, IDTokens.Workflow}
+                    )
+                )
+            }
+        )
+
+    @property
+    def workflow(self) -> 'Tokens':
+        """The workflow portion of the tokens.
+
+        Examples:
+            >>> Tokens('~user/workflow//cycle/task/01').workflow
+            <id: ~user/workflow>
+
+        """
+        return Tokens(
+            **{
+                key: value
+                for key, value in self.items()
+                if key not in (
+                    enum.value
+                    for enum in (
+                        {*IDTokens} - {IDTokens.User, IDTokens.Workflow}
+                    )
+                )
+            }
+        )
+
+    @property
+    def is_null(self) -> bool:
+        """Returns True if no tokens are set.
+
+        Examples:
+            >>> tokens = Tokens()
+            >>> tokens.is_null
+            True
+            >>> tokens['job_sel'] = 'x'
+            >>> tokens.is_null
+            True
+            >>> tokens['job'] = '01'
+            >>> tokens.is_null
+            False
+
+        """
+        return not any(
+            bool(self[token.value])
+            for token in IDTokens
+        )
+
+    def update_tokens(
+        self,
+        tokens: 'Optional[Tokens]' = None,
+        **kwargs
+    ) -> None:
+        """Update the tokens dictionary.
+
+        Similar to dict.update but with an optional Tokens argument.
+
+        Examples:
+            >>> tokens = Tokens('x')
+            >>> tokens.update(workflow='y')
+            >>> tokens
+            <id: y>
+            >>> tokens.update(Tokens('z'))
+            >>> tokens
+            <id: z>
+            >>> tokens.update(Tokens('a'), cycle='b')
+            >>> tokens
+            <id: a//b>
+
+        """
+        if tokens:
+            for key, value in tokens.items():
+                self[key] = value
+        for key, value in kwargs.items():
+            self[key] = value
+
+    def duplicate(
+        self,
+        tokens: 'Optional[Tokens]' = None,
+        **kwargs
+    ) -> 'Tokens':
+        """Duplicate a tokens object.
+
+        Can be used to change the values of the new object at the same time.
+
+        Examples:
+            Duplicate tokens:
+            >>> tokens1 = Tokens('~u/w')
+            >>> tokens2 = tokens1.duplicate()
+
+            The copy is equal but a different object:
+            >>> tokens1 == tokens2
+            True
+            >>> id(tokens1) == id(tokens2)
+            False
+
+            Make a copy and modify it:
+            >>> tokens1.duplicate(cycle='1').id
+            '~u/w//1'
+        """
+        ret = Tokens(self)
+        ret.update_tokens(tokens, **kwargs)
+        return ret
 
 
 # //cycle[:sel][/task[:sel][/job[:sel]]]
 RELATIVE_PATTERN = rf'''
     //
-    (?P<{Tokens.Cycle.value}>[^~\/:\n]+)
+    (?P<{IDTokens.Cycle.value}>[^~\/:\n]+)
     (?:
       :
-      (?P<{Tokens.Cycle.value}_sel>[^\/:\n]+)
+      (?P<{IDTokens.Cycle.value}_sel>[^\/:\n]+)
     )?
     (?:
       /
       (?:
-        (?P<{Tokens.Task.value}>[^\/:\n]+)
+        (?P<{IDTokens.Task.value}>[^\/:\n]+)
         (?:
           :
-          (?P<{Tokens.Task.value}_sel>[^\/:\n]+)
+          (?P<{IDTokens.Task.value}_sel>[^\/:\n]+)
         )?
         (?:
           /
           (?:
-            (?P<{Tokens.Job.value}>[^\/:\n]+)
+            (?P<{IDTokens.Job.value}>[^\/:\n]+)
             (?:
               :
-              (?P<{Tokens.Job.value}_sel>[^\/:\n]+)
+              (?P<{IDTokens.Job.value}_sel>[^\/:\n]+)
             )?
           )?
         )?
@@ -88,14 +430,14 @@ UNIVERSAL_ID = re.compile(
         (?:
           (?:
             ~
-            (?P<{Tokens.User.value}>[^\/:\n~]+)
+            (?P<{IDTokens.User.value}>[^\/:\n~]+)
             # allow the match to end here
             (\/|$)
           )
           |^
         )
         (?:
-          (?P<{Tokens.Workflow.value}>
+          (?P<{IDTokens.Workflow.value}>
             # can't begin with //
             (?!//)
             # can't contain : ~ but can contain /
@@ -105,7 +447,7 @@ UNIVERSAL_ID = re.compile(
           )
           (?:
             :
-            (?P<{Tokens.Workflow.value}_sel>[^\/:\n]+)
+            (?P<{IDTokens.Workflow.value}_sel>[^\/:\n]+)
           )?
           (?:
             (?:
@@ -128,15 +470,15 @@ LEGACY_TASK_DOT_CYCLE = re.compile(
     rf'''
         ^
         # NOTE: task names can contain "."
-        (?P<{Tokens.Task.value}>[^~\:\/\n]+)
+        (?P<{IDTokens.Task.value}>[^~\:\/\n]+)
         \.
         # NOTE: legacy cycles always start with a number
-        (?P<{Tokens.Cycle.value}>\d[^~\.\:\/\n]*)
+        (?P<{IDTokens.Cycle.value}>\d[^~\.\:\/\n]*)
         # NOTE: the task selector applied to the cycle in this legacy format
         # (not a mistake)
         (?:
             :
-            (?P<{Tokens.Task.value}_sel>[^\:\/\n]+)
+            (?P<{IDTokens.Task.value}_sel>[^\:\/\n]+)
         )?
         $
     ''',
@@ -148,13 +490,13 @@ LEGACY_CYCLE_SLASH_TASK = re.compile(
     rf'''
         ^
         # NOTE: legacy cycles always start with a number
-        (?P<{Tokens.Cycle.value}>\d[^~\.\:\/\n]+)
+        (?P<{IDTokens.Cycle.value}>\d[^~\.\:\/\n]+)
         \/
         # NOTE: task names can contain "."
-        (?P<{Tokens.Task.value}>[^~\:\/\n]+)
+        (?P<{IDTokens.Task.value}>[^~\:\/\n]+)
         (?:
             :
-            (?P<{Tokens.Task.value}_sel>[^\:\/\n]+)
+            (?P<{IDTokens.Task.value}_sel>[^\:\/\n]+)
         )?
         $
     ''',
@@ -176,7 +518,7 @@ def _dict_strip(dictionary):
     }
 
 
-def legacy_tokenise(identifier: str) -> TokensDict:
+def legacy_tokenise(identifier: str) -> Tokens:
     """Convert a legacy string identifier into Cylc tokens.
 
     Supports the two legacy Cylc7 formats:
@@ -225,7 +567,7 @@ def legacy_tokenise(identifier: str) -> TokensDict:
 def tokenise(
     identifier: str,
     relative: bool = False,
-) -> TokensDict:
+) -> Tokens:
     """Convert a string identifier into Cylc tokens.
 
     Args:
@@ -248,17 +590,9 @@ def tokenise(
         # absolute identifiers
         >>> tokenise(
         ...     '~user/workflow:workflow_sel//'
-        ...     'cycle:cycle_sel/task:task_sel/job:job_sel'
+        ...     'cycle:cycle_sel/task:task_sel/01:job_sel'
         ... ) # doctest: +NORMALIZE_WHITESPACE
-        {'user': 'user',
-         'workflow': 'workflow',
-         'workflow_sel': 'workflow_sel',
-         'cycle': 'cycle',
-         'cycle_sel': 'cycle_sel',
-         'task': 'task',
-         'task_sel': 'task_sel',
-         'job': 'job',
-         'job_sel': 'job_sel'}
+        <id: ~user/workflow//cycle/task/01>
 
         >>> def _(tokens):
         ...     return {
@@ -300,12 +634,12 @@ def tokenise(
     for pattern in patterns:
         match = pattern.match(identifier)
         if match:
-            return _dict_strip(match.groupdict())
+            return Tokens(**_dict_strip(match.groupdict()))
     raise ValueError(f'Invalid Cylc identifier: {identifier}')
 
 
 def detokenise(
-    tokens: TokensDict,
+    tokens: Tokens,
     selectors: bool = False,
     relative: bool = False,
 ) -> str:
@@ -313,7 +647,7 @@ def detokenise(
 
     Args:
         tokens (dict):
-            Tokens as returned by tokenise.
+            IDTokens as returned by tokenise.
         selectors (bool):
             If true selectors (i.e. :sel) will be included in the output.
         relative (bool):
@@ -373,7 +707,7 @@ def detokenise(
     """
     toks = {
         token.value
-        for token in Tokens
+        for token in IDTokens
         if tokens.get(token.value)
     }
     is_relative = not toks & {'user', 'workflow'}
@@ -381,38 +715,38 @@ def detokenise(
     if is_relative and is_partial:
         raise ValueError('No tokens provided')
 
-    for lowest_token in reversed(Tokens):
+    for lowest_token in reversed(IDTokens):
         if lowest_token.value in toks:
             break
 
-    highest_token: 'Optional[Tokens]'
+    highest_token: 'Optional[IDTokens]'
     if is_relative:
-        highest_token = Tokens.Cycle
+        highest_token = IDTokens.Cycle
         identifier = []
         if not relative:
             identifier = ['/']
     else:
-        highest_token = Tokens.User
+        highest_token = IDTokens.User
         identifier = []
 
-    for token in Tokens:
+    for token in IDTokens:
         if highest_token and token != highest_token:
             continue
         elif highest_token:
             highest_token = None
         value: 'Optional[str]'
         value = tokens.get(token.value)
-        if not value and token == Tokens.User:
+        if not value and token == IDTokens.User:
             continue
-        elif token == Tokens.User:
+        elif token == IDTokens.User:
             value = f'~{value}'
-        elif token == Tokens.Job and value != 'NN':
+        elif token == IDTokens.Job and value != 'NN':
             value = f'{int(value):02}'  # type: ignore
         value = value or '*'
         if selectors and tokens.get(token.value + '_sel'):
             # include selectors
             value = f'{value}:{tokens[token.value + "_sel"]}'
-        if token == Tokens.Workflow and not is_partial:
+        if token == IDTokens.Workflow and not is_partial:
             value += '/'
         identifier.append(value)
 
@@ -481,113 +815,7 @@ def upgrade_legacy_ids(*ids: str) -> List[str]:
     return legacy_ids
 
 
-def strip_workflow(tokens: TokensDict) -> TokensDict:
-    """Remove the workflow portion of the tokens.
-
-    Examples:
-        >>> detokenise(strip_workflow(tokenise(
-        ...     '~user/workflow//cycle/task/01'
-        ... )))
-        '//cycle/task/01'
-
-    """
-    return {
-        key: value
-        for key, value in tokens.items()
-        if key in (
-            enum.value
-            for enum in (
-                {*Tokens} - {Tokens.User, Tokens.Workflow}
-            )
-        )
-    }
-
-
-# TODO: rename strip_relative?
-def strip_task(tokens: TokensDict) -> TokensDict:
-    """Remove the task portion of the tokens.
-
-    Examples:
-        >>> detokenise(strip_task(tokenise(
-        ...     '~user/workflow//cycle/task/01'
-        ... )))
-        '~user/workflow'
-
-    """
-    return {
-        key: value
-        for key, value in tokens.items()
-        if key not in (
-            enum.value
-            for enum in (
-                {*Tokens} - {Tokens.User, Tokens.Workflow}
-            )
-        )
-    }
-
-
-def strip_job(tokens: TokensDict) -> TokensDict:
-    """Remove the job portion of the tokens.
-
-    Examples:
-        >>> detokenise(strip_job(tokenise('cycle/task/01', relative=True)))
-        '//cycle/task'
-        >>> detokenise(strip_job(tokenise(
-        ...     '~user/workflow//cycle/task/01'
-        ... )))
-        '~user/workflow//cycle/task'
-
-    """
-    return {
-        key: value
-        for key, value in tokens.items()
-        if key in (
-            enum.value
-            for enum in (
-                {*Tokens} - {Tokens.Job}
-            )
-        )
-    }
-
-
-def is_null(tokens: TokensDict) -> bool:
-    """Returns True if no tokens are set.
-
-    Examples:
-        >>> is_null({})
-        True
-        >>> is_null({'job_sel': 'x'})
-        True
-        >>> is_null({'job': '01'})
-        False
-
-    """
-    return not any(
-        bool(tokens.get(token.value))
-        for token in Tokens
-    )
-
-
-def contains_task_like(tokens: TokensDict) -> bool:
-    """Returns True if any task-like objects are present in the ID.
-
-    Task like == cycles or tasks or jobs.
-
-    Examples:
-        >>> contains_task_like(tokenise('workflow//'))
-        False
-        >>> contains_task_like(tokenise('workflow//cycle'))
-        True
-
-    """
-    return any(
-        bool(tokens.get(token.value))
-        for token in Tokens
-        if token not in {Tokens.User, Tokens.Workflow}
-    )
-
-
-def contains_multiple_workflows(tokens_list: List[TokensDict]) -> bool:
+def contains_multiple_workflows(tokens_list: List[Tokens]) -> bool:
     """Returns True if multiple workflows are contained in the tokens list.
 
     Examples:
@@ -607,58 +835,3 @@ def contains_multiple_workflows(tokens_list: List[TokensDict]) -> bool:
         (tokens['user'], tokens['workflow'])
         for tokens in tokens_list
     }) > 1
-
-
-def pop_token(tokens: TokensDict) -> Tuple[str, str]:
-    """
-        >>> tokens = tokenise('~u/w//c/t/01')
-        >>> pop_token(tokens)
-        ('job', '01')
-        >>> pop_token(tokens)
-        ('task', 't')
-        >>> pop_token(tokens)
-        ('cycle', 'c')
-        >>> pop_token(tokens)
-        ('workflow', 'w')
-        >>> pop_token(tokens)
-        ('user', 'u')
-        >>> tokens
-        {'workflow_sel': None,
-         'cycle_sel': None, 'task_sel': None, 'job_sel': None}
-        >>> pop_token({})
-        Traceback (most recent call last):
-        KeyError: No defined tokens.
-
-    """
-    for token in reversed(Tokens):
-        token_name = token.value
-        value = tokens.get(token_name)
-        if value:
-            tokens.pop(token_name)
-            return (token_name, value)
-    raise KeyError('No defined tokens.')
-
-
-def lowest_token(tokens: TokensDict) -> str:
-    """Return the lowest token present in a tokens dictionary.
-
-    Examples:
-        >>> lowest_token(tokenise('~u/w//c/t/j'))
-        'job'
-        >>> lowest_token(tokenise('~u/w//c/t'))
-        'task'
-        >>> lowest_token(tokenise('~u/w//c'))
-        'cycle'
-        >>> lowest_token(tokenise('~u/w//'))
-        'workflow'
-        >>> lowest_token(tokenise('~u'))
-        'user'
-        >>> lowest_token({})
-        Traceback (most recent call last):
-        ValueError: No tokens defined
-
-    """
-    for token in reversed(Tokens):
-        if token.value in tokens and tokens[token.value]:
-            return token.value
-    raise ValueError('No tokens defined')

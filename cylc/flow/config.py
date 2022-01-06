@@ -53,7 +53,7 @@ from cylc.flow.cycling.loader import (
     get_sequence, get_sequence_cls, init_cyclers, get_dump_format,
     INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
 )
-from cylc.flow.id import detokenise, tokenise
+from cylc.flow.id import Tokens
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ingest_time, ISO8601Interval
 from cylc.flow.exceptions import (
@@ -696,7 +696,7 @@ class WorkflowConfig:
             self.start_point = min(
                 get_point(cycle).standardise()
                 for cycle in [
-                    tokenise(taskid, relative=True)['cycle']
+                    Tokens(taskid, relative=True)['cycle']
                     for taskid in self.options.starttask
                 ]
                 if cycle
@@ -835,20 +835,14 @@ class WorkflowConfig:
             for rhs, lhss in sorted(rhs2lhss.items()):
                 for lhs in sorted(lhss):
                     err_msg += '  %s => %s' % (
-                        detokenise(
-                            {
-                                'cycle': str(lhs[1]),
-                                'task': lhs[0]
-                            },
-                            relative=True
-                        ),
-                        detokenise(
-                            {
-                                'cycle': str(rhs[1]),
-                                'task': rhs[0]
-                            },
-                            relative=True
-                        ),
+                        Tokens(
+                            cycle=str(lhs[1]),
+                            task=lhs[0]
+                        ).relative_id,
+                        Tokens(
+                            cycle=str(rhs[1]),
+                            task=rhs[0]
+                        ).relative_id,
                     )
             if err_msg:
                 raise WorkflowConfigError(
@@ -1893,61 +1887,43 @@ class WorkflowConfig:
         lname, lpoint = None, None
         if l_id:
             lname, lpoint = l_id
-            lret = detokenise(
-                {
-                    'cycle': str(lpoint),
-                    'task': lname,
-                },
-                relative=True,
-            )
+            lret = Tokens(
+                cycle=str(lpoint),
+                task=lname,
+            ).relative_id
         rret = None
         rname, rpoint = None, None
         if r_id:
             rname, rpoint = r_id
-            rret = detokenise(
-                {
-                    'cycle': str(rpoint),
-                    'task': rname,
-                },
-                relative=True,
-            )
+            rret = Tokens(
+                cycle=str(rpoint),
+                task=rname,
+            ).relative_id
 
         for fam_name, fam_members in clf_map.items():
             if lname in fam_members and rname in fam_members:
                 # l and r are both members
-                lret = detokenise(
-                    {
-                        'cycle': str(lpoint),
-                        'task': fam_name,
-                    },
-                    relative=True
-                )
-                rret = detokenise(
-                    {
-                        'cycle': str(rpoint),
-                        'task': fam_name,
-                    },
-                    relative=True
-                )
+                lret = Tokens(
+                    cycle=str(lpoint),
+                    task=fam_name,
+                ).relative_id
+                rret = Tokens(
+                    cycle=str(rpoint),
+                    task=fam_name,
+                ).relative_id
                 break
             elif lname in fam_members:
                 # l is a member
-                lret = detokenise(
-                    {
-                        'cycle': str(lpoint),
-                        'task': fam_name,
-                    },
-                    relative=True
-                )
+                lret = Tokens(
+                    cycle=str(lpoint),
+                    task=fam_name,
+                ).relative_id
             elif rname in fam_members:
                 # r is a member
-                rret = detokenise(
-                    {
-                        'cycle': str(rpoint),
-                        'task': fam_name,
-                    },
-                    relative=True
-                )
+                rret = Tokens(
+                    cycle=str(rpoint),
+                    task=fam_name,
+                ).relative_id
 
         return lret, rret
 

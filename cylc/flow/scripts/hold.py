@@ -62,7 +62,6 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
-from cylc.flow.id import detokenise
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
@@ -142,7 +141,7 @@ async def run(options, workflow_id, *tokens_list):
         mutation = HOLD_MUTATION
         args = {
             'tasks': [
-                detokenise(id_, relative=True)
+                id_.relative_id
                 for id_ in tokens_list
             ]
         }
