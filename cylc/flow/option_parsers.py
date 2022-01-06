@@ -36,6 +36,7 @@ from cylc.flow.loggingutil import (
 )
 
 
+# regex to match '<blargh>foo</blargh>' and capture foo:
 TAG_REC = re.compile(r'<(.*?)>(.*?)</\1>')
 
 
@@ -189,14 +190,13 @@ class CylcOptionParser(OptionParser):
             else:
                 argdoc = [('WORKFLOW', 'Workflow ID')]
 
-        joined_args = '='.join(sys.argv[2:])
+        joined_args = '='.join(sys.argv[2:])  # for "--opt=arg" and "--opt arg"
         if (
             '--color=never' not in joined_args
             and
             '--colour=never' not in joined_args
         ):
             # Before option parsing, make comments grey in --help output.
-            # (This catches both '--colo(u)r=never' and '--colo(u)r never'.)
             usage = format_shell_examples(usage)
         else:
             # Strip hardwired colour tags in usage (e.g. "cylc scan --help").
@@ -385,17 +385,18 @@ class CylcOptionParser(OptionParser):
         before color init for general command output.
 
         """
+        joined_args = '='.join(sys.argv[2:])  # for "--opt=arg" and "--opt arg"
         use_color = (
-            '--color=always' in sys.argv
+            '--color=always' in joined_args
             or
-            '--colour=always' in sys.argv
+            '--colour=always' in joined_args
             or (
                 supports_color()
                 and not
                 (
-                    '--color=never' in sys.argv
+                    '--color=never' in joined_args
                     or
-                    '--colour=never' in sys.argv
+                    '--colour=never' in joined_args
                 )
             )
         )
