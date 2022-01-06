@@ -100,6 +100,9 @@ of workflows inside other installed workflows.
 [#4540](https://github.com/cylc/cylc-flow/pull/4540) - Handle the `/` character
 in job names, for PBS 19.2.1+.
 
+[#4570](https://github.com/cylc/cylc-flow/pull/4570) - Fix incorrect fallback
+to localhost if `[runtime][<task>][remote]host` is unreachable.
+
 [#4543](https://github.com/cylc/cylc-flow/pull/4543) -
 `cylc play --stopcp=reload` now takes its value from
 `[scheduling]stop after cycle point` instead of using the final cycle point.
