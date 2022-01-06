@@ -26,30 +26,30 @@ ANSI='\e\['
 
 # No redirection.
 script -q -c "cylc scan -t rich" log > /dev/null 2>&1
-grep_ok $ANSI log -P  # color
+grep_ok "$ANSI" log -P  # color
 
 script -q -c "cylc scan -t rich --color=never" log > /dev/null 2>&1
-grep_fail $ANSI log -P  # no color
+grep_fail "$ANSI" log -P  # no color
 
 # Redirected.
 cylc scan -t rich > log
-grep_fail $ANSI log -P  # no color
+grep_fail "$ANSI" log -P  # no color
 
 cylc scan -t rich --color=always > log
-grep_ok $ANSI log -P  # color
+grep_ok "$ANSI" log -P  # color
 
 # Check command help too (gets printed during command line parsing).
 
 # No redirection.
 script -q -c "cylc scan --help" log > /dev/null 2>&1
-grep_ok $ANSI log -P  # color
+grep_ok "$ANSI" log -P  # color
 
 script -q -c "cylc scan --help --color never" log > /dev/null 2>&1
-grep_fail $ANSI log -P  # no color
+grep_fail "$ANSI" log -P  # no color
 
 # Redirected.
 cylc scan --help > log
-grep_fail $ANSI log -P  # no color
+grep_fail "$ANSI" log -P  # no color
 
 cylc scan --help --color=always > log
-grep_ok $ANSI log -P  # color
+grep_ok "$ANSI" log -P  # color
