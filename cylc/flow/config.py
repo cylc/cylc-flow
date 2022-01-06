@@ -789,7 +789,9 @@ class WorkflowConfig:
         msg = (
             f"{msg}\n"
             "To allow implicit tasks, use "
-            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'\n"
+            "See https://cylc.github.io/cylc-doc/latest/html/"
+            "7-to-8/summary.html#backward-compatibility"
         )
         # Allow implicit tasks in Cylc 7 back-compat mode (but not if
         # rose-suite.conf present, to maintain compat with Rose 2019)
