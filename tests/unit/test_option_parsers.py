@@ -17,6 +17,8 @@
 import pytest
 
 import sys
+import io
+from contextlib import redirect_stdout
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 
@@ -30,16 +32,7 @@ def parser():
 
 
 @pytest.fixture(scope='module')
-def parser_nocolor():
-    argv = sys.argv
-    sys.argv = ['cmd', 'arg', '--help', '--color=never']
-    cop = COP(USAGE_WITH_COMMENT)
-    sys.argv = argv
-    return cop
-
-
-@pytest.fixture(scope='module')
-def parser_color():
+def parser_usage_with_comment():
     return COP(USAGE_WITH_COMMENT)
 
 
@@ -66,11 +59,25 @@ def test_verbosity(args, verbosity, parser, monkeypatch):
     assert cylc.flow.flags.verbosity == verbosity
 
 
-def test_help_color(parser_color):
-    """Test for colorized comments in 'cylc cmd --help'."""
-    assert not parser_color.usage.startswith(USAGE_WITH_COMMENT)
+def test_help_color(parser_usage_with_comment):
+    """Test for colorized comments in 'cylc cmd --help --color=always'."""
+    # This colorization is done on the fly when help is printed.
+    argv = sys.argv
+    sys.argv = ['cmd', 'arg', '--help', '--color=always']
+    f = io.StringIO()
+    with redirect_stdout(f):
+        parser_usage_with_comment.print_help()
+    sys.argv = argv
+    assert not (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)
 
 
-def test_help_nocolor(parser_nocolor):
+def test_help_nocolor(parser_usage_with_comment):
     """Test for no colorization in 'cylc cmd --help --color=never'."""
-    assert parser_nocolor.usage.startswith(USAGE_WITH_COMMENT)
+    # This colorization is done on the fly when help is printed.
+    argv = sys.argv
+    sys.argv = ['cmd', 'arg', '--help', '--color=never']
+    f = io.StringIO()
+    with redirect_stdout(f):
+        parser_usage_with_comment.print_help()
+    sys.argv = argv
+    assert (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)
