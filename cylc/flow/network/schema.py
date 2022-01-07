@@ -357,11 +357,11 @@ async def get_nodes_all(root, info, **args):
             # namespace nodes don't fit into the universal ID scheme so must
             # be tokenised manually
             args[arg] = [
-                {
-                    'cycle': None,
-                    'task': task,
-                    'job': None,
-                }
+                Tokens(
+                    cycle=None,
+                    task=task,
+                    job=None,
+                )
                 for task in args[arg]
             ]
         else:
