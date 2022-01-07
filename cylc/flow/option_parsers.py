@@ -17,11 +17,19 @@
 
 from contextlib import suppress
 import logging
-from optparse import OptionParser, OptionConflictError, Values, Option
+from optparse import (
+    OptionParser,
+    OptionConflictError,
+    Values,
+    Option,
+    IndentedHelpFormatter
+)
 import os
 import re
-from ansimarkup import parse as cparse
-from colorama import init as color_init
+from ansimarkup import (
+    parse as cparse,
+    strip as cstrip
+)
 
 import sys
 from textwrap import dedent
@@ -34,10 +42,6 @@ from cylc.flow.loggingutil import (
     CylcLogFormatter,
     setup_segregated_log_streams,
 )
-
-
-# regex to match '<blargh>foo</blargh>' and capture foo:
-TAG_REC = re.compile(r'<(.*?)>(.*?)</\1>')
 
 
 def format_shell_examples(string):
@@ -125,6 +129,53 @@ class CylcOption(Option):
             Option.take_action(self, action, dest, opt, value, values, parser)
 
 
+class CylcHelpFormatter(IndentedHelpFormatter):
+    def _format(self, text):
+        """Format help (usage) text on the fly to handle coloring.
+
+        This has to be done here because help is printed to the terminal before
+        command line parsing is completed, and color initialization for general
+        command output is done after that to make use of parsed options.
+
+        If coloring is wanted:
+          - Add color tags to shell examples
+        Else:
+          - Strip any hardwired color tags
+
+        """
+        # Crudely parse sys.argv for --color options here (see docstring above;
+        # only default option values are available here in self.parser.values).
+        # Join the command line with '=' to unify "--opt=val" and "--opt val":
+        joined_args = '='.join(sys.argv[2:])
+        use_color = (
+            '--color=always' in joined_args
+            or
+            '--colour=always' in joined_args
+            or (
+                supports_color()
+                and not
+                (
+                    '--color=never' in joined_args
+                    or
+                    '--colour=never' in joined_args
+                )
+            )
+        )
+        if use_color:
+            # Add color formatting to examples text.
+            text = format_shell_examples(text)
+        else:
+            # Strip any hardwired formatting
+            text = cstrip(text)
+        return text
+
+    def format_usage(self, usage):
+        return super().format_usage(self._format(usage))
+
+    def format_descrtiption(self, description):
+        return super().format_description(self._format(description))
+
+
 class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
@@ -190,20 +241,9 @@ class CylcOptionParser(OptionParser):
             else:
                 argdoc = [('WORKFLOW', 'Workflow ID')]
 
-        joined_args = '='.join(sys.argv[2:])  # for "--opt=arg" and "--opt arg"
-        if (
-            '--color=never' not in joined_args
-            and
-            '--colour=never' not in joined_args
-        ):
-            # Before option parsing, make comments grey in --help output.
-            usage = format_shell_examples(usage)
-        else:
-            # Strip hardwired colour tags in usage (e.g. "cylc scan --help").
-            usage = TAG_REC.sub(r'\2', usage)
-
         if multiworkflow:
             usage += self.MULTIWORKFLOW_USAGE
+
         if multitask:
             usage += self.MULTITASK_USAGE
 
@@ -241,7 +281,12 @@ class CylcOptionParser(OptionParser):
                 usage += "\n   " + arg[0] + pad + arg[1]
             usage = usage.replace('ARGS', args)
 
-        OptionParser.__init__(self, usage, option_class=CylcOption)
+        OptionParser.__init__(
+            self,
+            usage,
+            option_class=CylcOption,
+            formatter=CylcHelpFormatter()
+        )
 
     def add_std_option(self, *args, **kwargs):
         """Add a standard option, ignoring override."""
@@ -377,31 +422,6 @@ class CylcOptionParser(OptionParser):
             default=[],
             dest="rose_template_vars"
         )
-
-    def print_help(self):
-        """Override OptionParser.print_help() to handle CLI color in --help.
-
-        This gets called by the option parser during command line parsing,
-        before color init for general command output.
-
-        """
-        joined_args = '='.join(sys.argv[2:])  # for "--opt=arg" and "--opt arg"
-        use_color = (
-            '--color=always' in joined_args
-            or
-            '--colour=always' in joined_args
-            or (
-                supports_color()
-                and not
-                (
-                    '--color=never' in joined_args
-                    or
-                    '--colour=never' in joined_args
-                )
-            )
-        )
-        color_init(autoreset=True, strip=not use_color)
-        OptionParser.print_help(self)
 
     def parse_args(self, api_args, remove_opts=None):
         """Parse options and arguments, overrides OptionParser.parse_args.
