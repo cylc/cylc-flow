@@ -283,3 +283,15 @@ def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
 
     assert [itask.id_ for itask in _matched] == matched
     assert _not_matched == not_matched
+
+
+def test_filter_ids_out_format():
+    filter_ids({}, [], out=IDTokens.Cycle)
+    with pytest.raises(ValueError):
+        filter_ids({}, [], out=IDTokens.Job)
+
+
+def test_filter_ids_log_errors(caplog):
+    _, _not_matched = filter_ids({}, ['/////'])
+    assert _not_matched == ['/////']
+    assert caplog.record_tuples == [('cylc', 30, 'Invalid ID: /////')]

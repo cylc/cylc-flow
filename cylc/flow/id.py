@@ -99,6 +99,10 @@ class Tokens(dict):
                 str(args[0]),
                 relative=kwargs.get('relative', False)
             )
+        else:
+            for key in kwargs:
+                if key not in self._KEYS:
+                    raise ValueError(f'Invalid token: {key}')
         dict.__init__(self, **kwargs)
 
     def __setitem__(self, key, value):
@@ -340,13 +344,13 @@ class Tokens(dict):
 
         Examples:
             >>> tokens = Tokens('x')
-            >>> tokens.update(workflow='y')
+            >>> tokens.update_tokens(workflow='y')
             >>> tokens
             <id: y>
-            >>> tokens.update(Tokens('z'))
+            >>> tokens.update_tokens(Tokens('z'))
             >>> tokens
             <id: z>
-            >>> tokens.update(Tokens('a'), cycle='b')
+            >>> tokens.update_tokens(Tokens('a'), cycle='b')
             >>> tokens
             <id: a//b>
 
@@ -356,6 +360,18 @@ class Tokens(dict):
                 self[key] = value
         for key, value in kwargs.items():
             self[key] = value
+
+    def update(self, other):
+        """dict.update.
+
+        Example:
+            >>> tokens = Tokens(workflow='w')
+            >>> tokens.update({'cycle': 'c'})
+            >>> tokens.id
+            'w//c'
+
+        """
+        return self.update_tokens(**other)
 
     def duplicate(
         self,

@@ -20,10 +20,13 @@ import pytest
 
 from cylc.flow.async_util import pipe
 from cylc.flow.exceptions import UserInputError, WorkflowFilesError
-from cylc.flow.id import detokenise, tokenise
+from cylc.flow.id import detokenise, tokenise, Tokens
 from cylc.flow.id_cli import (
     _expand_workflow_tokens,
     _parse_src_path,
+    _validate_constraint,
+    _validate_workflow_ids,
+    _validate_number,
     parse_ids_async,
 )
 from cylc.flow.pathutil import get_cylc_run_dir
@@ -371,7 +374,7 @@ async def test_parse_ids_src_path(src_dir):
         ),
         (
             ['~alice/foo'],
-            'Operating on others workflows is not supported',
+            "Operating on others users' workflows is not supported",
         ),
     ]
 )
@@ -443,6 +446,50 @@ async def test_parse_ids_src_run(abc_src_dir, tmp_run_dir):
     )
     assert list(workflows) == ['b']
     assert flow_file_path == run_dir / WorkflowFiles.FLOW_FILE
+
+
+def test_validate_constraint():
+    """It should validate tokens against the constraint."""
+    # constraint=workflows
+    _validate_constraint(Tokens(workflow='a'), constraint='workflows')
+    with pytest.raises(UserInputError):
+        _validate_constraint(Tokens(cycle='a'), constraint='workflows')
+    with pytest.raises(UserInputError):
+        _validate_constraint(Tokens(), constraint='workflows')
+    # constraint=tasks
+    _validate_constraint(Tokens(cycle='a'), constraint='tasks')
+    with pytest.raises(UserInputError):
+        _validate_constraint(Tokens(workflow='a'), constraint='tasks')
+    with pytest.raises(UserInputError):
+        _validate_constraint(Tokens(), constraint='tasks')
+    # constraint=mixed
+    _validate_constraint(Tokens(workflow='a'), constraint='mixed')
+    _validate_constraint(Tokens(cycle='a'), constraint='mixed')
+    with pytest.raises(UserInputError):
+        _validate_constraint(Tokens(), constraint='mixed')
+
+
+def test_validate_workflow_ids(tmp_run_dir):
+    _validate_workflow_ids(Tokens('workflow'), src_path='')
+    with pytest.raises(UserInputError):
+        _validate_workflow_ids(Tokens('~alice/workflow'), src_path='')
+    run_dir = tmp_run_dir('b')
+    with pytest.raises(UserInputError):
+        _validate_workflow_ids(
+            Tokens('workflow'),
+            src_path=run_dir / 'flow.cylc',
+        )
+
+
+def test_validate_number():
+    _validate_number(Tokens('a'), max_workflows=1)
+    with pytest.raises(UserInputError):
+        _validate_number(Tokens('a'), Tokens('b'), max_workflows=1)
+    t1 = Tokens(cycle='1')
+    t2 = Tokens(cycle='2')
+    _validate_number(t1, max_tasks=1)
+    with pytest.raises(UserInputError):
+        _validate_number(t1, t2, max_tasks=1)
 
 
 @pytest.fixture

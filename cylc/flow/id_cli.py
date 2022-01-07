@@ -223,6 +223,9 @@ async def parse_ids_async(
             in the ids.
 
     """
+    if constraint not in {'tasks', 'workflows', 'mixed'}:
+        raise ValueError(f'Invalid constraint: {constraint}')
+
     tokens_list = []
     src_path = None
     flow_file_path = None
@@ -243,9 +246,6 @@ async def parse_ids_async(
                 *ids[1:]
             )
     tokens_list.extend(_parse_cli(*ids))
-
-    if constraint not in {'tasks', 'workflows', 'mixed'}:
-        raise ValueError(f'Invalid constraint: {constraint}')
 
     # ensure the IDS are compatible with the constraint
     _validate_constraint(*tokens_list, constraint=constraint)
@@ -337,12 +337,12 @@ def contains_fnmatch(string: str) -> bool:
 def _validate_constraint(*tokens_list, constraint=None):
     if constraint == 'workflows':
         for tokens in tokens_list:
-            if tokens.is_task_like:
+            if tokens.is_null or tokens.is_task_like:
                 raise UserInputError('IDs must be workflows')
         return
     if constraint == 'tasks':
         for tokens in tokens_list:
-            if not tokens.is_task_like:
+            if tokens.is_null or not tokens.is_task_like:
                 raise UserInputError('IDs must be tasks')
         return
     if constraint == 'mixed':
@@ -350,7 +350,6 @@ def _validate_constraint(*tokens_list, constraint=None):
             if tokens.is_null:
                 raise UserInputError('IDs cannot be null.')
         return
-    raise Exception(f'Invalid constraint: {constraint}')
 
 
 def _validate_workflow_ids(*tokens_list, src_path):

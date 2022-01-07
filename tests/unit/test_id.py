@@ -303,3 +303,32 @@ def test_legacy_cycle_slash_task_matches(identifier, expected_tokens):
     match = LEGACY_CYCLE_SLASH_TASK.match(identifier)
     assert match
     assert match.groupdict() == expected_tokens
+
+
+def test_tokens():
+    # tested mainly in doctests
+
+    Tokens('a')
+    with pytest.raises(ValueError):
+        Tokens('a', 'b')
+
+    Tokens(cycle='a')
+    with pytest.raises(ValueError):
+        Tokens(foo='a')
+
+    Tokens()['cycle'] = 'a'
+    with pytest.raises(ValueError):
+        Tokens()['foo'] = 'a'
+
+    assert Tokens('a') == Tokens('a')
+    assert Tokens('a') != Tokens('b')
+    assert Tokens('a', relative=True) == Tokens('a', relative=True)
+    assert Tokens('a', relative=True) != Tokens('b', relative=True)
+    assert Tokens() != Tokens('a')
+    assert Tokens(workflow='a') == Tokens('a')
+
+    tokens = Tokens('a//b')
+    tokens.update({'cycle': 'c', 'task': 'd'})
+    assert tokens == Tokens('a//c/d')
+    with pytest.raises(ValueError):
+        tokens.update({'foo': 'c'})
