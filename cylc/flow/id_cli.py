@@ -78,7 +78,7 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         >>> parse_back('workworkflow1', 'workworkflow2')
         ['workworkflow1', 'workworkflow2']
 
-        # sbsolute references
+        # absolute references
         >>> parse_back('workworkflow1//cycle1', 'workworkflow2//cycle2')
         ['workworkflow1//cycle1', 'workworkflow2//cycle2']
 
@@ -293,7 +293,7 @@ async def parse_id_async(
     *args,
     **kwargs,
 ) -> Tuple[str, Optional[Tokens], Any]:
-    """Special case of parse_ids with a more convient return format.
+    """Special case of parse_ids with a more convenient return format.
 
     Infers:
         max_workflows: 1
@@ -357,7 +357,7 @@ def _validate_workflow_ids(*tokens_list, src_path):
     for ind, tokens in enumerate(tokens_list):
         if tokens['user']:
             raise UserInputError(
-                'Operating on others workflows is not supported'
+                "Operating on others users' workflows is not supported"
             )
         if not src_path:
             validate_workflow_name(tokens['workflow'])
@@ -471,7 +471,7 @@ def _parse_src_path(id_):
     ):
         src_path = src_path.resolve()
         if not src_path.exists():
-            raise UserInputError(src_path)
+            raise UserInputError(f'Path does not exist: {src_path}')
         if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
             src_path = src_path.parent
         try:
