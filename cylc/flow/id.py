@@ -147,7 +147,7 @@ class Tokens(dict):
             for key in self._KEYS
         )
 
-    @property
+    @property # noqa A003 (not shadowing id built-in)
     def id(self) -> str:  # noqa A003 (not shadowing id built-in)
         """The full ID these tokens represent.
 
