@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""cylc [control] jobs-kill JOB-LOG-ROOT [JOB-LOG-DIR ...]
+"""cylc [control] jobs-kill ARGS
 
 (This command is for internal use. Users should use "cylc kill".) Read job
 status files to obtain the names of the batch systems and the job IDs in the

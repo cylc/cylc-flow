@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc gui [OPTIONS] [REG] [USER_AT_HOST]
-gcylc [OPTIONS] [REG] [USER_AT_HOST]
+"""cylc gui [OPTIONS] ARGS
+gcylc [OPTIONS] ARGS
 
 This is the cylc Graphical User Interface.
 

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc gscan [OPTIONS]
+"""cylc gscan [OPTIONS] ARGS
 
 This is the cylc scan gui for monitoring running suites on a set of
 hosts.
