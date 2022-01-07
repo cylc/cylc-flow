@@ -145,7 +145,6 @@ def generate_mutation(mutation, arguments):
 
 
 def list_mutations(selection):
-    # tokens_list = [detokenise(id_) for id_ in selection]
     context = extract_context(selection)
     selection_type = list(context)[-1]
     return MUTATIONS.get(selection_type, [])

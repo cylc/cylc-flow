@@ -25,7 +25,7 @@ from cylc.flow.data_messages_pb2 import (  # type: ignore
     PbPrerequisite,
     PbCondition,
 )
-from cylc.flow.id import detokenise
+from cylc.flow.id import Tokens
 
 
 class Prerequisite:
@@ -219,13 +219,7 @@ class Prerequisite:
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
             point, name = message_tuple[0:2]
-            t_id = detokenise(
-                {
-                    'cycle': str(point),
-                    'task': name,
-                },
-                relative=True,
-            )
+            t_id = Tokens(cycle=str(point), task=name).relative_id
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]

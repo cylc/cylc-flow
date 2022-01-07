@@ -1024,7 +1024,7 @@ class DataStoreMgr:
             return
         update_time = time()
         tp_tokens = Tokens(tp_id)
-        j_tokens = tp_tokens.duplicate(job=sub_num)
+        j_tokens = tp_tokens.duplicate(job=str(sub_num))
         j_id = j_tokens.id
         j_buf = PbJob(
             stamp=f'{j_id}@{update_time}',
@@ -1080,7 +1080,7 @@ class DataStoreMgr:
         if not tproxy:
             return
         tp_tokens = Tokens(tp_id)
-        j_tokens = tp_tokens.duplicate(job=submit_num)
+        j_tokens = tp_tokens.duplicate(job=str(submit_num))
         j_id = j_tokens.id
         try:
             update_time = time()
@@ -1861,7 +1861,7 @@ class DataStoreMgr:
             node_id = self.id_.duplicate(
                 cycle=str(point),
                 task=name,
-                job=sub_num,
+                job=str(sub_num),
             ).id
             node_type = JOBS
         if node_id in self.added[node_type]:

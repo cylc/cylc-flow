@@ -47,7 +47,7 @@ def get_task_job_log(workflow, point, name, submit_num=None, suffix=None):
         Tokens(
             cycle=str(point),
             task=name,
-            job=submit_num or NN,
+            job=str(submit_num or NN),
         ).relative_id
     ]
     if suffix is not None:

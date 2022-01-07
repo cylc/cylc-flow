@@ -1470,7 +1470,7 @@ class TaskPool:
                        itask.tdef.rtconfig['job']['simulated run length'])
             if now > timeout:
                 conf = itask.tdef.rtconfig['simulation']
-                job_d = itask.tokens.duplicate(job=itask.submit_num)
+                job_d = itask.tokens.duplicate(job=str(itask.submit_num))
                 now_str = get_current_time_string()
                 if (itask.point in conf['fail cycle points'] and
                         (itask.get_try_num() == 1 or

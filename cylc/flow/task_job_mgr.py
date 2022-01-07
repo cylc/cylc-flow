@@ -352,7 +352,7 @@ class TaskJobManager:
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
-                                job=itask.submit_num
+                                job=str(itask.submit_num)
                             ).relative_id,
                             self.REMOTE_INIT_MSG,
                         )
@@ -368,7 +368,7 @@ class TaskJobManager:
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
                         self.data_store_mgr.delta_job_msg(
-                            itask.tokens.duplicate(job=itask.submit_num),
+                            itask.tokens.duplicate(job=str(itask.submit_num)),
                             msg
                         )
                     continue
@@ -381,7 +381,7 @@ class TaskJobManager:
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
                             itask.tokens.duplicate(
-                                job=itask.submit_num
+                                job=str(itask.submit_num)
                             ).relative_id,
                             self.REMOTE_INIT_MSG
                         )
@@ -405,7 +405,7 @@ class TaskJobManager:
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(
-                            job=itask.submit_num
+                            job=str(itask.submit_num)
                         ).relative_id,
                         self.REMOTE_INIT_MSG,
                     )
@@ -439,7 +439,7 @@ class TaskJobManager:
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(
-                            job=itask.submit_num
+                            job=str(itask.submit_num)
                         ).relative_id,
                         REMOTE_FILE_INSTALL_IN_PROGRESS
                     )
@@ -530,7 +530,7 @@ class TaskJobManager:
                         )
                     job_log_dirs.append(
                         itask.tokens.duplicate(
-                            job=itask.submit_num,
+                            job=str(itask.submit_num),
                         ).relative_id
                     )
                     # The job file is now (about to be) used: reset the file
@@ -720,7 +720,7 @@ class TaskJobManager:
                 itask.state.status)
         self.data_store_mgr.delta_job_msg(
             itask.tokens.duplicate(
-                job=itask.submit_num
+                job=str(itask.submit_num)
             ).relative_id,
             log_msg
         )
@@ -817,7 +817,7 @@ class TaskJobManager:
         ctx.out = line
         ctx.ret_code = 0
         # See cylc.flow.job_runner_mgr.JobPollContext
-        job_d = itask.tokens.duplicate(job=itask.submit_num).relative_id
+        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
@@ -937,7 +937,7 @@ class TaskJobManager:
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 job_log_dirs.append(
                     itask.tokens.duplicate(
-                        job=itask.submit_num
+                        job=str(itask.submit_num)
                     ).relative_id
                 )
             cmd += job_log_dirs
@@ -1261,7 +1261,7 @@ class TaskJobManager:
 
         # Location of job file, etc
         self._create_job_log_path(workflow, itask)
-        job_d = itask.tokens.duplicate(job=itask.submit_num).relative_id
+        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
         job_file_path = get_remote_workflow_run_job_dir(
             workflow, job_d, JOB_LOG_JOB)
 

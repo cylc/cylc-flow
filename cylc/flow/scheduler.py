@@ -790,7 +790,8 @@ class Scheduler:
                 break
             self.message_queue.task_done()
             tokens = Tokens(task_job, relative=True)
-            task_id = tokens.relative_id
+            # task ID (job stripped)
+            task_id = tokens.duplicate(job=None).relative_id
             messages.setdefault(task_id, [])
             # job may be None (e.g. simulation mode)
             job = int(tokens['job']) if tokens['job'] else None
