@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc suite-state REG [OPTIONS]
+"""cylc suite-state [OPTIONS] ARGS
 
 Print task states retrieved from a suite database; or (with --task,
 --point, and --status) poll until a given task reaches a given state; or (with

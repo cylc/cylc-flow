@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [info] cat-state [OPTIONS] REG
+"""cylc [info] cat-state [OPTIONS] ARGS
 
 Print the suite state in the old state dump file format to stdout.
 This command is deprecated; use "cylc ls-checkpoints" instead."""
