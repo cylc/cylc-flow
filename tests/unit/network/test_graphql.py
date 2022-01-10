@@ -17,10 +17,13 @@
 from typing import Optional, Type
 
 import pytest
+from pytest import param
 from graphql import parse
 
 from cylc.flow.data_messages_pb2 import PbTaskProxy, PbPrerequisite
-from cylc.flow.network.graphql import AstDocArguments, null_setter, NULL_VALUE
+from cylc.flow.network.graphql import (
+    AstDocArguments, null_setter, NULL_VALUE, grow_tree
+)
 from cylc.flow.network.schema import schema
 
 
@@ -154,3 +157,32 @@ def test_null_setter(pre_result, expected_result):
     """Test the null setting of different data types/results."""
     post_result = null_setter(pre_result)
     assert post_result == expected_result
+
+
+@pytest.mark.parametrize(
+    'expect, tree, path, leaves',
+    [
+        param(
+            {'foo': {'bar': {'baz': {}}}}, {}, ['foo', 'bar', 'baz'], None,
+            id='fill-empty-tree'
+        ),
+        param(
+            {'bar': {'baz': {}}}, {'bar': {'baz': {}}}, ['bar', 'baz'], None,
+            id='keep-full-tree'
+        ),
+        param(
+            {'foo': {'bar': {}, 'qux': {}}},
+            {'foo': {'bar': {}}},
+            ['foo', 'qux'],
+            None,
+            id='add-new-branch'
+        ),
+        param(
+            {'leaves': {'foo': {}}}, {}, [], {'foo': {}},
+            id='add-leaves'
+        )
+    ]
+)
+def test_grow_tree(expect, tree, path, leaves):
+    grow_tree(tree, path, leaves)
+    assert tree == expect
