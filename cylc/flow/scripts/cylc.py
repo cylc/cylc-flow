@@ -77,7 +77,7 @@ Cylc IDs:
     workflow//cycle1 workflow//cycle2
     workflow// //cycle1 //cycle2
 
-  IDs to be written as globs:
+  IDs can be written as globs:
     *//                 # All workflows
     workflow//*         # All cycles in "workflow"
     workflow//cycle/*   # All tasks in "workflow" in "cycle"
@@ -100,7 +100,7 @@ Workflow IDs:
       $ cylc stop foo/run1
 
     In the case of numbered runs (e.g. "run1", "run2", ...) you can omit
-    the run number:
+    the run number, Cylc will infer latest run.
       $ cylc play foo
       $ cylc pause foo
       $ cylc stop foo
@@ -117,7 +117,7 @@ Workflow IDs:
     You can omit the user name when working on your own workflows.
 
 Cycle / Family / Task / Job IDs:
-    Just as workflows have IDs the things within workflows have IDs too.
+    Just as workflows have IDs, the things within workflows have IDs too.
     These IDs take the format:
       cycle/task_or_family/job
 

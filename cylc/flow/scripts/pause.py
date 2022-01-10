@@ -26,7 +26,7 @@ Examples:
   # pause my_flow
   $ cylc pause my_flow
 
-  # un-pause my_flow
+  # resume my_flow
   $ cylc play my_flow
 
 Not to be confused with `cylc hold`.

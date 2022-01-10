@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Cylc univeral identifier system for referencing Cylc "objets".
+"""Cylc univeral identifier system for referencing Cylc "objects".
 
 This module contains the abstract ID tokenising/detokenising code.
 """
@@ -731,6 +731,7 @@ def detokenise(
     if is_relative and is_partial:
         raise ValueError('No tokens provided')
 
+    # determine the lowest token
     for lowest_token in reversed(IDTokens):
         if lowest_token.value in toks:
             break
