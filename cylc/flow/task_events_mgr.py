@@ -1049,7 +1049,6 @@ class TaskEventsManager():
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
         else:
-            itask.set_summary_time('submitted', event_time)
             self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
             # Unset started and finished times in case of resubmission.
             itask.set_summary_time('started')
