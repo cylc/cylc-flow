@@ -79,11 +79,11 @@ def test_get_clock_trigger_time(
     set_cycling_type: Callable
 ) -> None:
     """Test get_clock_trigger_time() for exact and inexact offsets."""
+    set_cycling_type(itask_point.TYPE)
     mock_itask = Mock(
         point=itask_point.standardise(),
         clock_trigger_time=None
     )
-    set_cycling_type(itask_point.TYPE)
     assert TaskProxy.get_clock_trigger_time(mock_itask, offset_str) == expected
 
 
