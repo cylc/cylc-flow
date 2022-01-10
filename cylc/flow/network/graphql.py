@@ -66,10 +66,8 @@ def grow_tree(tree, path, leaves=None):
     """
     tree_loc = [tree, {}]
     for loc, key in enumerate(path):
-        if key in tree_loc[loc % 2]:
-            tree_loc[(loc + 1) % 2] = tree_loc[loc % 2][key]
-        else:
-            tree_loc[loc % 2][key] = tree_loc[(loc + 1) % 2]
+        tree_loc[(loc + 1) % 2] = tree_loc[loc % 2].get(
+            key, tree_loc[(loc + 1) % 2])
         tree_loc[loc % 2] = {}
     if leaves:
         tree_loc[len(path) % 2].update({'leaves': leaves})
