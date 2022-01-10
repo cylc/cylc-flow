@@ -26,7 +26,7 @@ Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
 
-import contextlib
+from contextlib import suppress
 from copy import copy
 from fnmatch import fnmatchcase
 import os
@@ -727,7 +727,7 @@ class WorkflowConfig:
                         self.initial_point
                     ).standardise()
             else:
-                with contextlib.suppress(IsodatetimeError):
+                with suppress(IsodatetimeError):
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
                         fcp_str, self.initial_point).standardise()
@@ -1642,12 +1642,19 @@ class WorkflowConfig:
                     xtrig = SubFuncContext(
                         'wall_clock', 'wall_clock', [], {})
 
-            if (xtrig.func_name == 'wall_clock' and
-                    self.cfg['scheduling']['cycling mode'] == (
-                        INTEGER_CYCLING_TYPE)):
-                sig = xtrig.get_signature()
-                raise WorkflowConfigError(
-                    f"clock xtriggers need date-time cycling: {label} = {sig}")
+            if xtrig.func_name == 'wall_clock':
+                if self.cycling_type == INTEGER_CYCLING_TYPE:
+                    raise WorkflowConfigError(
+                        "Clock xtriggers require datetime cycling:"
+                        f" {label} = {xtrig.get_signature()}"
+                    )
+                else:
+                    # Convert offset arg to kwarg for certainty later.
+                    if "offset" not in xtrig.func_kwargs:
+                        xtrig.func_kwargs["offset"] = None
+                        with suppress(IndexError):
+                            xtrig.func_kwargs["offset"] = xtrig.func_args[0]
+
             if self.xtrigger_mgr is None:
                 XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
             else:

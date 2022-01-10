@@ -26,13 +26,14 @@ run_workflow() {
 set_test_number 5
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-NOW="$(date '+%Y%m%dT%H')"
+NOW="$(date -u '+%Y%m%dT%H')"
 
-# Validate and run with "now" clock trigger (satisfied).
+# Initial cycle point is the hour just passed.
 START="$NOW"
-HOUR="$(date +%H)"
+HOUR="$(date -u +%H)"
 OFFSET="PT0S"
 
+# Validate and run with "now" clock trigger (satisfied).
 run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}" \
    -s "START='${START}'" -s "HOUR='${HOUR}'" -s "OFFSET='${OFFSET}'"
 
