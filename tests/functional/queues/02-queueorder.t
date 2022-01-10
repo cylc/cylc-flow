@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-run" \
     cylc play "${WORKFLOW_NAME}" --reference-test --debug --no-detach
 run_ok "${TEST_NAME_BASE}-test" bash -o pipefail -c "
     cylc cat-log '${WORKFLOW_NAME}' |
-    grep 'proc_n.*)submitted' |
+    grep 'proc_n.*(internal)submitted' |
     sort --key=4,4 --check"
 
 purge
