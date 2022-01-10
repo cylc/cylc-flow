@@ -250,16 +250,21 @@ class XtriggerManager:
 
         args = []
         kwargs = {}
-        if ctx.func_name == 'wall_clock':
-            # Handle clock xtriggers.
-            if "trigger_time" not in ctx.func_kwargs:
-                # External (clock xtrigger) convert offset to trigger_time.
+        if ctx.func_name == "wall_clock":
+            if "trigger_time" in ctx.func_kwargs:
+                # Internal (retry timer): trigger_time already set.
+                kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
+            elif "offset" in ctx.func_kwargs:  # noqa: SIM106
+                # External (clock xtrigger): convert offset to trigger_time.
+                # Datetime cycling only.
                 kwargs["trigger_time"] = itask.get_clock_trigger_time(
                     ctx.func_kwargs["offset"]
                 )
             else:
-                # Internal (retry timer) we set trigger_time directly.
-                kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
+                # Should not happen!
+                raise ValueError(
+                    "wall_clock function kwargs needs trigger time or offset"
+                )
         else:
             # Other xtrig functions: substitute template values.
             for val in ctx.func_args:
