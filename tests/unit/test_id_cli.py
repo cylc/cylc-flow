@@ -111,6 +111,7 @@ async def test_parse_ids_tasks(ids_in, ids_out):
     } == ids_out
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,ids_out',
     [

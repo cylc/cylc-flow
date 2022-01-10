@@ -210,7 +210,7 @@ def test_filter_ids_pattern_match_off(task_pool):
         [pool],
         ['1/a'],
         out=IDTokens.Task,
-        pattern_match=True,
+        pattern_match=False,
     )
     assert [itask.id_ for itask in _matched] == ['1/a:x']
     assert _not_matched == []
