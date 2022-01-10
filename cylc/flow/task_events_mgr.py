@@ -595,13 +595,13 @@ class TaskEventsManager():
         Check whether to process/skip message.
         Return True if `.process_message` should contine, False otherwise.
         """
-        if (
-            self.timestamp
-            and itask.platform.get('communication method', None) == 'poll'
-        ):
+        if self.timestamp:
             timestamp = f" at {event_time}"
         else:
             timestamp = ""
+
+        is_poll = itask.platform.get('communication method', None) == 'poll'
+
         if flag == self.FLAG_RECEIVED and submit_num != itask.submit_num:
             # Ignore received messages from old jobs
             LOG.warning(
@@ -648,7 +648,7 @@ class TaskEventsManager():
 
         LOG.log(
             LOG_LEVELS.get(severity, INFO),
-            f"[{itask}] {flag}{message}{timestamp}"
+            f"[{itask}] {flag}{message}{timestamp if is_poll else ''}"
         )
         return True
 
