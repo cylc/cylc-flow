@@ -595,7 +595,7 @@ class TaskEventsManager():
         Check whether to process/skip message.
         Return True if `.process_message` should contine, False otherwise.
         """
-        if self.timestamp:
+        if self.timestamp and itask.platform['communication method'] == 'poll':
             timestamp = f" at {event_time}"
         else:
             timestamp = ""
