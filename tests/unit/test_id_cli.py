@@ -46,6 +46,7 @@ def abc_src_dir(tmp_path_factory):
     os.chdir(cwd_before)
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,ids_out',
     [
@@ -61,6 +62,7 @@ async def test_parse_ids_workflows(ids_in, ids_out):
     assert list(workflows.values()) == [[] for _ in workflows]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,ids_out',
     [
@@ -78,6 +80,7 @@ async def test_parse_ids_workflows_src(ids_in, ids_out, abc_src_dir):
     assert list(workflows.values()) == [[] for _ in workflows]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,ids_out',
     [
@@ -130,6 +133,7 @@ async def test_parse_ids_tasks_src(ids_in, ids_out, abc_src_dir):
     } == ids_out
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,ids_out',
     [
@@ -156,6 +160,7 @@ async def test_parse_ids_mixed(ids_in, ids_out):
     } == ids_out
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,ids_out',
     [
@@ -173,6 +178,7 @@ async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir):
     } == ids_out
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,errors',
     [
@@ -193,6 +199,7 @@ async def test_parse_ids_max_workflows(ids_in, errors):
             raise Exception('Should have raised UserInputError')
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,errors',
     [
@@ -213,6 +220,7 @@ async def test_parse_ids_max_tasks(ids_in, errors):
             raise Exception('Should have raised UserInputError')
 
 
+@pytest.mark.asyncio
 async def test_parse_ids_infer_run_name(tmp_run_dir):
     """It should infer the run name for auto-numbered installations."""
     # it doesn't do anything for a named run
@@ -257,6 +265,7 @@ def patch_expand_workflow_tokens(monkeypatch):
     return _patch_expand_workflow_tokens
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,ids_out,multi_mode',
     [
@@ -348,6 +357,7 @@ def test_parse_src_path(src_dir):
     assert src_file_path == src_dir / 'flow.cylc'
 
 
+@pytest.mark.asyncio
 async def test_parse_ids_src_path(src_dir):
     workflows, src_path = await parse_ids_async(
         './a',
@@ -357,6 +367,7 @@ async def test_parse_ids_src_path(src_dir):
     assert workflows == {'a': []}
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'ids_in,error_msg',
     [
@@ -388,6 +399,7 @@ async def test_parse_ids_invalid_ids(ids_in, error_msg):
     assert error_msg in str(exc_ctx.value)
 
 
+@pytest.mark.asyncio
 async def test_parse_ids_file(tmp_run_dir):
     """It should reject IDs that are paths to files."""
     tmp_path = tmp_run_dir('x')
@@ -408,6 +420,7 @@ async def test_parse_ids_file(tmp_run_dir):
     assert 'Workflow ID cannot be a file' in str(exc_ctx.value)
 
 
+@pytest.mark.asyncio
 async def test_parse_ids_constraint():
     """It should validate input against the constraint."""
     # constraint: workflows
@@ -426,6 +439,7 @@ async def test_parse_ids_constraint():
         await parse_ids_async('foo', constraint='bar')
 
 
+@pytest.mark.asyncio
 async def test_parse_ids_src_run(abc_src_dir, tmp_run_dir):
     """It should locate the flow file when src=True."""
     # locate flow file for a src workflow
@@ -504,6 +518,7 @@ def no_scan(monkeypatch):
     monkeypatch.setattr('cylc.flow.id_cli.scan', _scan)
 
 
+@pytest.mark.asyncio
 async def test_expand_workflow_tokens_impl_selector(no_scan):
     """It should reject filters it can't handle."""
     tokens = tokenise('~user/*')

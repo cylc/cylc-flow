@@ -23,6 +23,7 @@ import pytest
 from cylc.flow.scripts.clean import scan, run
 
 
+@pytest.mark.asyncio
 async def test_scan(tmp_run_dir):
     """It should scan the filesystem to expand partial IDs."""
     # regular workflows pass straight through
@@ -58,6 +59,7 @@ def mute(monkeypatch):
     return items
 
 
+@pytest.mark.asyncio
 async def test_multi(tmp_run_dir, mute):
     """It supports cleaning multiple workflows."""
     # cli opts
