@@ -310,7 +310,7 @@ def src_dir(tmp_path):
     os.chdir(cwd_before)
 
 
-def test_parse_src_path(src_dir):
+def test_parse_src_path(src_dir, monkeypatch):
     """It should locate src dirs."""
     # valid absolute path
     workflow_id, src_path, src_file_path = _parse_src_path(
@@ -342,7 +342,7 @@ def test_parse_src_path(src_dir):
     assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
 
     # move into the src dir
-    os.chdir(src_dir)
+    monkeypatch.chdir(src_dir)
 
     # relative '.' (valid)
     workflow_id, src_path, src_file_path = _parse_src_path('.')
