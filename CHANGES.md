@@ -56,6 +56,9 @@ First Release Candidate for Cylc 8.
 
 ### Enhancements
 
+[#3931](https://github.com/cylc/cylc-flow/pull/3931) -
+Convert Cylc to use the new "Universal Identifier".
+
 [#4506](https://github.com/cylc/cylc-flow/pull/4506) -
 Cylc no longer creates a `flow.cylc` symlink to a `suite.rc` file.
 This only affects you if you have used a prior Cylc 8 pre-release.
