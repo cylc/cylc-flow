@@ -600,8 +600,6 @@ class TaskEventsManager():
         else:
             timestamp = ""
 
-        is_poll = itask.platform.get('communication method', None) == 'poll'
-
         if flag == self.FLAG_RECEIVED and submit_num != itask.submit_num:
             # Ignore received messages from old jobs
             LOG.warning(
@@ -646,14 +644,14 @@ class TaskEventsManager():
                 )
             return False
 
-        if is_poll:
-            ts_string = timestamp
+        if itask.platform.get('communication method', '') == 'poll':
+            ts = ''
         else:
-            ts_string = ''
+            ts = timestamp
 
         LOG.log(
             LOG_LEVELS.get(severity, INFO),
-            f"[{itask}] {flag}{message}{ts_string}"
+            f"[{itask}] {flag}{message}{ts}"
         )
         return True
 
