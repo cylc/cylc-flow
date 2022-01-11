@@ -706,16 +706,18 @@ class CylcWorkflowDAO:
     def select_submit_nums(self, name, point):
         """Select submit_num and flow_nums from task_states table.
 
-        Fetch submit number and flow_nums for spawning task point/name.
+        Fetch submit number and flow_nums for spawning tasks.
+
         Return:
-        {
-            flow_nums: submit_num,
-            ...,
-        }
+            {
+                flow_nums: submit_num,
+                ...,
+            }
 
         Args:
             name: task name
             point: task cycle point (str)
+
         """
         # Ignore bandit false positive: B608: hardcoded_sql_expressions
         # Not an injection, simply putting the table name in the SQL query

@@ -94,9 +94,9 @@ def collate_workflow_atts(workflow):
 
 
 def uniq(iterable):
-    """Return a unique collection of the provided items.
+    """Return a unique collection of the provided items preserving item order.
 
-    Useful for unhachable things like dicts, relies on __eq__ for teting
+    Useful for unhashable things like dicts, relies on __eq__ for testing
     equality.
 
     Examples:

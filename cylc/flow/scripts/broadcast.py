@@ -287,10 +287,10 @@ def get_option_parser():
         action="store_true", default=False, dest="show")
 
     parser.add_option(
-        "-k", "--display-task", metavar="TASK_GLOB",
+        "-k", "--display-task", metavar="TASK_ID_GLOB",
         help=(
             "Print active broadcasts for a given task "
-            "(cycle/task)."
+            "(in the format cycle/task)."
         ),
         action="store", default=None, dest="showtask")
 
@@ -345,7 +345,9 @@ async def run(options: 'Values', workflow_id):
                 query_kwargs['variables']['nIds'] = [options.showtask]
             except ValueError:
                 # TODO validate showtask?
-                raise UserInputError("TASKID must be cycle/taask")
+                raise UserInputError(
+                    'TASK_ID_GLOB must be in the format: cycle/task'
+                )
         result = await pclient.async_request('graphql', query_kwargs)
         for wflow in result['workflows']:
             settings = wflow['broadcasts']

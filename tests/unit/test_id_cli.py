@@ -225,7 +225,7 @@ async def test_parse_ids_max_tasks(ids_in, errors):
 async def test_parse_ids_infer_run_name(tmp_run_dir):
     """It should infer the run name for auto-numbered installations."""
     # it doesn't do anything for a named run
-    tmp_run_dir('foo', named=True)
+    tmp_run_dir('foo/bar', named=True, installed=True)
     workflows, *_ = await parse_ids_async('foo//', constraint='workflows')
     assert list(workflows) == ['foo']
 
@@ -334,8 +334,8 @@ def test_parse_src_path(src_dir, monkeypatch):
     assert src_file_path == src_dir / 'flow.cylc'
 
     # broken relative path
-    with pytest.raises(WorkflowFilesError):
-        _parse_src_path('.')
+    with pytest.raises(UserInputError):
+        _parse_src_path('./xxx')
 
     # relative '.' (invalid)
     with pytest.raises(WorkflowFilesError) as exc_ctx:
