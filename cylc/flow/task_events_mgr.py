@@ -646,9 +646,14 @@ class TaskEventsManager():
                 )
             return False
 
+        if is_poll:
+            ts_string = timestamp
+        else:
+            ts_string = ''
+
         LOG.log(
             LOG_LEVELS.get(severity, INFO),
-            f"[{itask}] {flag}{message}{timestamp if is_poll else ''}"
+            f"[{itask}] {flag}{message}{ts_string}"
         )
         return True
 
