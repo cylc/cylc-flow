@@ -374,7 +374,7 @@ async def test_parse_ids_src_path(src_dir):
     [
         (
             ['/home/me/whatever'],
-            'workflow name cannot be an absolute path',
+            'Invalid Cylc identifier: /home/me/whatever',
         ),
         (
             ['foo/..'],

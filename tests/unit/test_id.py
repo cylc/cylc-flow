@@ -332,3 +332,18 @@ def test_tokens():
     assert tokens == Tokens('a//c/d')
     with pytest.raises(ValueError):
         tokens.update({'foo': 'c'})
+
+
+def test_no_look_behind():
+    """Ensure the UID pattern does not use lookbehinds.
+
+    Ideally this pattern should be work for both cylc-flow and
+    cylc-ui.
+
+    2022-01-11:
+        * Lookbehind support is at ~75%
+        * https://caniuse.com/js-regexp-lookbehind
+
+    """
+    assert '?<=' not in UNIVERSAL_ID.pattern
+    assert '?<!' not in UNIVERSAL_ID.pattern

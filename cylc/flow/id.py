@@ -456,10 +456,16 @@ UNIVERSAL_ID = re.compile(
           (?P<{IDTokens.Workflow.value}>
             # can't begin with //
             (?!//)
-            # can't contain : ~ but can contain /
-            [^:~\n]+?
-            # can't end with /
-            (?<!/)
+            # workflow ID (flat)
+            [^:~\n\/]+
+            # workflow ID (hierarchical)
+            (?:
+              (?:
+                \/
+                [^:~\n\/]+
+              )+
+            )?
+
           )
           (?:
             :
