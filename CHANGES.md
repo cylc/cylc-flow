@@ -83,6 +83,9 @@ are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
 ### Fixes
 
+[#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
+invocation for remote scheduler host on a shared filesystem.
+
 [#4526](https://github.com/cylc/cylc-flow/pull/4526),
 [#4549](https://github.com/cylc/cylc-flow/pull/4549) - Prevent installing
 workflows with directory names that include reserved filenames such as
