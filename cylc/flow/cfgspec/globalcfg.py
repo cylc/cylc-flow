@@ -839,6 +839,7 @@ with Conf('global.cylc', desc='''
                    :ref:`AdminGuide.PlatformConfigs`
 
             '''):
+                Conf('description', VDR.V_STRING, '')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
                 ''')
@@ -1265,6 +1266,7 @@ with Conf('global.cylc', desc='''
                    :ref:`AdminGuide.PlatformConfigs`
 
             '''):
+                Conf('description', VDR.V_STRING, '')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
                 ''')
