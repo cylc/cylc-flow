@@ -177,25 +177,21 @@ if [[ -z "${CYLC_HOME}" ]]; then
     exit 1
 fi
 
-# Note "conda activate" fails to prepend the environment bin dir to PATH if
-# local jobs inherit the scheduler environment and bashrc has prepended other
-# paths here. We don't actually rely on PATH to find "cylc" below, but just in
-# case, this makes "conda activate" do the right thing:
-unset CONDA_SHLVL
-
-# If selecting a virtual environment, activate it
-if [[ -f "${CYLC_HOME}/bin/activate" ]]; then
-    # A Python venv or Conda pack installation
-    . "${CYLC_HOME}/bin/activate" || exit 1
-elif [[ -d "${CYLC_HOME}/conda-meta" && \
-        -f "${CYLC_HOME%/*/*}/etc/profile.d/conda.sh" ]]; then
-    # A normal Conda environment
-    . "${CYLC_HOME%/*/*}/etc/profile.d/conda.sh"
-    conda activate "${CYLC_HOME##*/}" || exit 1
-fi
+# Warn if executable not at $CYLC_HOME
 if [[ ! -x "${CYLC_HOME}/bin/${0##*/}" ]]; then
     echo 1>&2 "ERROR: ${0##*/} not found in ${CYLC_HOME}"
     exit 1
 fi
-# Execute the command in the selected installation.
+# Set PATH when running cylc hub so that configurable-http-proxy can find node
+if [[ ${0##*/} =~ ^cylc && ${1:-} == "hub" && ! ${CYLC_VERSION:-} =~ ^7 ]]; then
+  PATH=${CYLC_HOME}/bin:${PATH}
+fi
+
+# Execute Cylc from the selected installation.
+# n.b. If CYLC_HOME points to a cylc binary inside a
+# ``conda/envs/bin directory``this is sufficent without using
+# ``conda activate``. We avoid ``conda activate`` because:
+# - It's slow.
+# - Subsequent environment changes (conda activate or deactivate)
+#   are not straightforward.
 exec "${CYLC_HOME}/bin/${0##*/}" "$@"

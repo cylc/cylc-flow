@@ -1,0 +1,32 @@
+#!Jinja2
+
+# Test clock-trigger offset involving inexact intervals (months and years),
+# which requires adding the offset to the cycle point before conversion to
+# absolute seconds. Initial cycle point is next minute minus P1Y7M, with
+# opposite clock-offset to get real time triggering once per minute.
+
+{% set OFFSET = "P1Y7M" %}
+
+[scheduler]
+    [[events]]
+        # May take up to 60 secs to finish, allow some extra time.
+        inactivity timeout = PT80S
+        abort on inactivity timeout = True
+[scheduling]
+    initial cycle point = next(T--00) - {{OFFSET}}  # next minute - P1Y7M
+    final cycle point = +P0Y
+    [[xtriggers]]
+        clock1 = wall_clock({{OFFSET}})  # xtrigger with arg
+        clock2 = wall_clock(offset={{OFFSET}})  # xtrigger with kwarg
+    [[special tasks]]
+        clock-trigger = baz({{OFFSET}})  # old-style clock-triggered task
+    [[graph]]
+        PT1M = """
+            # These should all trigger at once, at the first minute boundary
+            # after start-up
+            @clock1 => foo
+            @clock2 => bar
+                       baz
+        """
+[runtime]
+    [[foo, bar, baz]]

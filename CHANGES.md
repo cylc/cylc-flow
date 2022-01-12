@@ -86,6 +86,16 @@ are now sparse, i.e. they will no longer be fleshed-out with defaults.
 [#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
 invocation for remote scheduler host on a shared filesystem.
 
+[#4511](https://github.com/cylc/cylc-flow/pull/4511) - Fix clock xtriggers for
+large inexact offsets (year, months); restore time check for old-style
+(task-property) clock triggers.
+
+[#4553](https://github.com/cylc/cylc-flow/pull/4553) - Add job submit time
+to the datastore.
+
+[#4526](https://github.com/cylc/cylc-flow/pull/4526) - Prevent `runN` and
+`run<number>` being allowed as installation target names.
+
 [#4526](https://github.com/cylc/cylc-flow/pull/4526),
 [#4549](https://github.com/cylc/cylc-flow/pull/4549) - Prevent installing
 workflows with directory names that include reserved filenames such as

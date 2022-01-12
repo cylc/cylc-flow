@@ -266,10 +266,8 @@ def m_override(target, sparse):
             defaults_list.append((dest, many_defaults))
         for key, val in source.items():
             if isinstance(val, dict):
-                if key in many_defaults:
-                    child_many_defaults = many_defaults[key]
-                else:
-                    child_many_defaults = OrderedDictWithDefaults()
+                child_many_defaults = many_defaults.get(
+                    key, OrderedDictWithDefaults())
                 if key not in dest:
                     if '__MANY__' in dest:
                         dest[key] = OrderedDictWithDefaults()

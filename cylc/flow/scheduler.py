@@ -678,9 +678,11 @@ class Scheduler:
         released from runhead.)
 
         """
-        LOG.info(
-            f"{'warm' if self.options.startcp else 'cold'} start from"
-            f"{self.config.start_point}.")
+        start_type = (
+            "Warm" if self.config.start_point > self.config.initial_point
+            else "Cold"
+        )
+        LOG.info(f"{start_type} start from {self.config.start_point}")
 
         flow_num = self.flow_mgr.get_new_flow(
             f"original flow from {self.config.start_point}"
@@ -1499,6 +1501,13 @@ class Scheduler:
                         itask, self.ext_trigger_queue)
                     and all(itask.is_ready_to_run())
                 ):
+                    self.pool.queue_task(itask)
+
+                if (
+                    itask.tdef.clocktrigger_offset is not None
+                    and itask.is_waiting_clock_done()
+                ):
+                    # Old-style clock-trigger tasks.
                     self.pool.queue_task(itask)
 
             if housekeep_xtriggers:

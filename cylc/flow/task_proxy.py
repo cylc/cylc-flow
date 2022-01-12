@@ -24,7 +24,6 @@ from typing import Any, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
-import cylc.flow.cycling.iso8601
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import standardise_point_string
 from cylc.flow.exceptions import PointParsingError
@@ -34,6 +33,11 @@ from cylc.flow.task_action_timer import TimerFlags
 from cylc.flow.task_state import TaskState, TASK_STATUS_WAITING
 from cylc.flow.taskdef import generate_graph_children
 from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
+from cylc.flow.cycling.iso8601 import (
+    point_parse,
+    interval_parse,
+    ISO8601Interval
+)
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -47,6 +51,7 @@ class TaskProxy:
     Attributes:
         .clock_trigger_time:
             Clock trigger time in seconds since epoch.
+            (Used for both old-style clock triggers and wall_clock xtrigger).
         .expire_time:
             Time in seconds since epoch when this task is considered expired.
         .identity:
@@ -262,11 +267,12 @@ class TaskProxy:
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
         reload_successor.state.prerequisites = self.state.prerequisites
+        reload_successor.jobs = self.jobs
 
     @staticmethod
     def get_offset_as_seconds(offset):
         """Return an ISO interval as seconds."""
-        iso_offset = cylc.flow.cycling.iso8601.interval_parse(str(offset))
+        iso_offset = interval_parse(str(offset))
         return int(iso_offset.get_seconds())
 
     def get_late_time(self):
@@ -284,8 +290,7 @@ class TaskProxy:
     def get_point_as_seconds(self):
         """Compute and store my cycle point as seconds since epoch."""
         if self.point_as_seconds is None:
-            iso_timepoint = cylc.flow.cycling.iso8601.point_parse(
-                str(self.point))
+            iso_timepoint = point_parse(str(self.point))
             self.point_as_seconds = int(iso_timepoint.get(
                 'seconds_since_unix_epoch'))
             if iso_timepoint.time_zone.unknown:
@@ -295,6 +300,26 @@ class TaskProxy:
                     3600 * utc_offset_hours + 60 * utc_offset_minutes)
                 self.point_as_seconds += utc_offset_in_seconds
         return self.point_as_seconds
+
+    def get_clock_trigger_time(self, offset_str):
+        """Compute, cache, and return trigger time relative to cycle point.
+
+        Args:
+            offset_str: ISO8601Interval string, e.g. "PT2M".
+                        Can be None for zero offset.
+        Returns:
+            Absolute trigger time in seconds since Unix epoch.
+
+        """
+        if self.clock_trigger_time is None:
+            if offset_str is None:
+                trigger_time = self.point
+            else:
+                trigger_time = self.point + ISO8601Interval(offset_str)
+            self.clock_trigger_time = int(
+                point_parse(str(trigger_time)).get('seconds_since_unix_epoch')
+            )
+        return self.clock_trigger_time
 
     def get_try_num(self):
         """Return the number of automatic tries (try number)."""
@@ -350,17 +375,16 @@ class TaskProxy:
         self.summary[event_key + '_time_string'] = time_str
 
     def is_waiting_clock_done(self):
-        """Is this task done waiting for its clock trigger time?
+        """Is this task done waiting for its old-style clock trigger time?
 
         Return True if there is no clock trigger or when clock trigger is done.
         """
         if self.tdef.clocktrigger_offset is None:
             return True
-        if self.clock_trigger_time is None:
-            self.clock_trigger_time = (
-                self.get_point_as_seconds() +
-                self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
-        return time() >= self.clock_trigger_time
+        return (
+            time() >
+            self.get_clock_trigger_time(str(self.tdef.clocktrigger_offset))
+        )
 
     def is_task_prereqs_not_done(self):
         """Are some task prerequisites not satisfied?"""

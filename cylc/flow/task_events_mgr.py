@@ -867,7 +867,7 @@ class TaskEventsManager():
             itask.identity
         ))
         kwargs = {
-            'absolute_as_seconds': wallclock_time
+            'trigger_time': wallclock_time
         }
 
         # if this isn't the first retry the xtrigger will already exist
@@ -1030,20 +1030,22 @@ class TaskEventsManager():
                 f"[{summary['submit_method_id']}]"
             )
 
+        # Register the newly submitted job with the database and datastore.
+        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
+        job_d = get_task_job_id(
+            itask.point, itask.tdef.name, itask.submit_num)
+
+        itask.set_summary_time('submitted', event_time)
+        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
         if itask.tdef.run_mode == 'simulation':
-            # Simulate job execution at this point.
-            itask.set_summary_time('submitted', event_time)
+            # Simulate job started as well.
             itask.set_summary_time('started', event_time)
+            self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
             if itask.state_reset(TASK_STATUS_RUNNING):
                 self.data_store_mgr.delta_task_state(itask)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
-
         else:
-            itask.set_summary_time('submitted', event_time)
-            job_d = get_task_job_id(
-                itask.point, itask.tdef.name, itask.submit_num)
-            self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
             self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
             # Unset started and finished times in case of resubmission.
             itask.set_summary_time('started')
@@ -1064,9 +1066,6 @@ class TaskEventsManager():
                     self.data_store_mgr.delta_task_state(itask)
                     self.data_store_mgr.delta_task_queued(itask)
                 self._reset_job_timers(itask)
-
-        # Register the newly submitted job with the database and datastore.
-        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
 
     def _insert_task_job(
         self,
