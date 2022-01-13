@@ -45,7 +45,7 @@ cd "$WORKFLOW_RUN_DIR" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
-[t1.1] -triggered off []
+t1.1 -triggered off []
 __REFLOG__
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
@@ -63,7 +63,7 @@ run_ok "log-event-handler-00-out" \
     grep -qF "[(('event-handler-00', 'succeeded'), 1) out]" 'catlog'
 run_ok "log-event-handler-ret-code" \
     grep -qF "[(('event-handler-00', 'succeeded'), 1) ret_code] 0" 'catlog'
-    
+
 purge
 
 # REPEAT: Long STDERR output
@@ -81,7 +81,7 @@ cd "${WORKFLOW_RUN_DIR}" || exit 1
 cat >'reference.log' <<'__REFLOG__'
 Initial point: 1
 Final point: 1
-[t1.1] -triggered off []
+t1.1 -triggered off []
 __REFLOG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"

@@ -1,3 +1,3 @@
-2014-09-08T09:42:52+12 INFO - [foo.20140101T00] -triggered off []
-2014-09-08T09:42:54+12 INFO - [holdrelease.20140101T00] -triggered off ['foo.20140101T00']
-2014-09-08T09:42:54+12 INFO - [bar.20140101T00] -triggered off ['foo.20140101T00']
+2014-09-08T09:42:52+12 DEBUG - foo.20140101T00 -triggered off []
+2014-09-08T09:42:54+12 DEBUG - holdrelease.20140101T00 -triggered off ['foo.20140101T00']
+2014-09-08T09:42:54+12 DEBUG - bar.20140101T00 -triggered off ['foo.20140101T00']
