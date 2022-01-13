@@ -467,11 +467,17 @@ graph_workflow() {
         >"${OUTPUT_FILE}" 2>"${OUTPUT_FILE}".err
 }
 
+workflow_id() {
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
+    local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
+    echo "${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+}
+
 init_workflow() {
     local TEST_NAME="$1"
     local FLOW_CONFIG="${2:--}"
     local RUN_NUMS="${3:-false}"
-    WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    WORKFLOW_NAME="$(workflow_id "${TEST_NAME}")"
     WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
     mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}/"
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${WORKFLOW_NAME}/flow.cylc"
@@ -486,7 +492,7 @@ init_workflow() {
 install_workflow() {
     local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
-    WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}"
+    WORKFLOW_NAME="$(workflow_id "${TEST_NAME}" "${TEST_SOURCE_BASE}")"
     WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
     mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}/" # make source dir
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${WORKFLOW_NAME}/"
@@ -548,6 +554,8 @@ log_scan () {
 make_rnd_workflow() {
     # Create a randomly-named workflow source directory.
     # Define its run directory.
+    # TODO: export a WORKFLOW_NAME variable so tests can get cylc-install
+    # to install under the regular test hierarchy
     RND_WORKFLOW_NAME="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
     RND_WORKFLOW_SOURCE="$PWD/${RND_WORKFLOW_NAME}"
     mkdir -p "${RND_WORKFLOW_SOURCE}"
@@ -832,6 +840,8 @@ create_test_global_config() {
             stall timeout = PT5M
             abort on inactivity timeout = true
             abort on workflow timeout = true
+    [install]
+        max depth = 5
 __HERE__
     # add global-tests.cylc
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
