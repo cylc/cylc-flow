@@ -92,24 +92,26 @@ class WorkflowRuntimeServer(ZMQSocketBase):
         Arguments which are shared between multiple commands.
 
         task identifier (str):
-            A task identifier in the format ``task.cycle-point``
+            A task identifier in the format ``cycle-point/task-name``
             e.g. ``1/foo`` or ``20000101T0000Z/bar``.
 
         .. _task globs:
 
         task globs (list):
-            A list of strings in the format
-            ``name[.cycle_point][:task_state]`` where ``name`` could be a
-            task or family name.
+            A list of Cylc IDs relative to the workflow.
 
-             Glob-like patterns may be used to match multiple items e.g.
+            * ``1`` - The cycle point "1".
+            * ``1/foo` - The task "foo" in the cycle "1".
+            * ``1/foo/01` - The first job of the task "foo" from the cycle "1".
 
-             ``*``
-                Matches everything.
-             ``*.1``
-                Matches everything in cycle ``1``.
-             ``*.*:failed``
-                Matches all failed tasks.
+            Glob-like patterns may be used to match multiple items e.g.
+
+            ``*``
+               Matches everything.
+            ``1/*``
+               Matches everything in cycle ``1``.
+            ``*/*:failed``
+               Matches all failed tasks.
 
     """
 

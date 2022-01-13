@@ -61,6 +61,8 @@ submitted to the job runner.
 
 import re
 
+from cylc.flow.id import Tokens
+
 
 class PBSHandler:
 
@@ -89,9 +91,10 @@ class PBSHandler:
         directives = job_conf["directives"].__class__()  # an ordereddict
         # Change task/runM to task-runM in the job name
         # (PBS 19.2.1+ does not allow '/' in job names)
+        tokens = Tokens(job_conf['task_id'], relative=True)
         directives["-N"] = (
-            f"{job_conf['task_id']}."
-            f"{job_conf['workflow_name'].replace('/', '-')}"
+            f'{tokens["task"]}.{tokens["cycle"]}'
+            f".{job_conf['workflow_name'].replace('/', '-')}"
         )
         job_name_len_max = job_conf['platform']["job name length maximum"]
         if job_name_len_max:

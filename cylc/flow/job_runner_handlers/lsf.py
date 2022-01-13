@@ -58,6 +58,8 @@ submitted to the job runner.
 import math
 import re
 
+from cylc.flow.id import Tokens
+
 
 class LSFHandler():
     """IBM Platform LSF bsub job submission"""
@@ -74,8 +76,9 @@ class LSFHandler():
         """Format the job directives for a job file."""
         job_file_path = job_conf['job_file_path']
         directives = job_conf["directives"].__class__()
+        tokens = Tokens(job_conf['task_id'], relative=True)
         directives["-J"] = (
-            job_conf["task_id"] + "." + job_conf["workflow_name"]
+            f'{tokens["task"]}.{tokens["cycle"]}.{job_conf["workflow_name"]}'
         )
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"

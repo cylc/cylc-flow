@@ -67,6 +67,8 @@ workflow may be out of sync with what is submitted to the job runner.
 
 import re
 
+from cylc.flow.id import Tokens
+
 
 class LoadlevelerHandler():
 
@@ -86,8 +88,11 @@ class LoadlevelerHandler():
         """Format the job directives for a job file."""
         job_file_path = job_conf['job_file_path']
         directives = job_conf["directives"].__class__()
+        tokens = Tokens(job_conf["task_id"], relative=True)
         directives["job_name"] = (
-            job_conf["workflow_name"] + "." + job_conf["task_id"])
+            f'{job_conf["workflow_name"]}.{tokens["task"]}.{tokens["cycle"]}'
+
+        )
         directives["output"] = job_file_path + ".out"
         directives["error"] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and

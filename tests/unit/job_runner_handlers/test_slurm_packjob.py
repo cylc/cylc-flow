@@ -33,7 +33,7 @@ from cylc.flow.job_runner_handlers.slurm_packjob import JOB_RUNNER_HANDLER
                 'execution_time_limit': 200,
                 'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
-                'task_id': 'axe.1',
+                'task_id': '1/axe',
             },
             [
                 '#SBATCH --job-name=axe.1.chop',

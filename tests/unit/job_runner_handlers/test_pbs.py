@@ -28,7 +28,7 @@ from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
                 'execution_time_limit': 180,
                 'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
-                'task_id': 'axe.1',
+                'task_id': '1/axe',
                 'platform': {
                     'job runner': 'pbs',
                     'job name length maximum': 100
@@ -47,7 +47,7 @@ from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
                 'execution_time_limit': 180,
                 'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
-                'task_id': 'axe.1',
+                'task_id': '1/axe',
                 'platform': {
                     'job runner': 'pbs',
                     'job name length maximum': 6
@@ -70,7 +70,7 @@ from cylc.flow.job_runner_handlers.pbs import JOB_RUNNER_HANDLER
                 'execution_time_limit': 180,
                 'job_file_path': 'cylc-run/chop/log/job/1/axe/01/job',
                 'workflow_name': 'chop',
-                'task_id': 'axe.1',
+                'task_id': '1/axe',
                 'platform': {
                     'job runner': 'pbs',
                     'job name length maximum': 100

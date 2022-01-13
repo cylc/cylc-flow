@@ -82,7 +82,7 @@ def test_write(fixture_get_platform):
         )
         job_conf = {
             "platform": platform,
-            "task_id": "baa",
+            "task_id": "1/baa",
             "workflow_name": "farm_noises",
             "work_d": "farm_noises/work_d",
             "uuid_str": "neigh",
@@ -117,7 +117,7 @@ def test_write(fixture_get_platform):
     """Test the header is correctly written"""
 
     expected = ('#!/bin/bash -l\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT '
-                '++++\n# Workflow: farm_noises\n# Task: baa\n# Job '
+                '++++\n# Workflow: farm_noises\n# Task: 1/baa\n# Job '
                 'log directory: 1/baa/01\n# Job submit method: '
                 'background\n# Job submit command template: woof\n#'
                 ' Execution time limit: moo')
@@ -130,7 +130,7 @@ def test_write(fixture_get_platform):
         "job runner": "background",
         "execution_time_limit": "moo",
         "workflow_name": "farm_noises",
-        "task_id": "baa",
+        "task_id": "1/baa",
         "job_d": "1/baa/01"
     }
 
@@ -151,12 +151,12 @@ def test_write(fixture_get_platform):
                 "directives": {"moo": "foo",
                                "cluck": "bar"},
                 "workflow_name": "farm_noises",
-                "task_id": "baa",
+                "task_id": "1/baa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "directory/job",
                 "execution_time_limit": 60
             },
-            ('\n\n# DIRECTIVES:\n# @ job_name = farm_noises.baa'
+            ('\n\n# DIRECTIVES:\n# @ job_name = farm_noises.baa.1'
                 '\n# @ output = directory/job.out\n# @ error = directory/'
                 'job.err\n# @ wall_clock_limit = 120,60\n# @ moo = foo'
                 '\n# @ cluck = bar\n# @ queue')
@@ -170,14 +170,17 @@ def test_write(fixture_get_platform):
                 },
                 "directives": {},
                 "workflow_name": "farm_noises",
-                "task_id": "baa",
+                "task_id": "1/baa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "directory/job",
                 "execution_time_limit": 60
             },
-            ('\n\n# DIRECTIVES:\n#SBATCH --job-name=baa.farm_noises\n#SBATCH '
-             '--output=directory/job.out\n#SBATCH --error=directory/'
-             'job.err\n#SBATCH --time=1:00')
+            (
+                '\n\n# DIRECTIVES:\n#SBATCH '
+                '--job-name=baa.1.farm_noises\n#SBATCH '
+                '--output=directory/job.out\n#SBATCH --error=directory/'
+                'job.err\n#SBATCH --time=1:00'
+            )
 
         ),
         (  # Check pbs max job name length
@@ -189,7 +192,7 @@ def test_write(fixture_get_platform):
                 },
                 "directives": {},
                 "workflow_name": "farm_noises",
-                "task_id": "baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "task_id": "1/baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "directory/job",
                 "execution_time_limit": 60
@@ -208,13 +211,13 @@ def test_write(fixture_get_platform):
                                "-q": "queuename",
                                "-l": "s_vmem=1G,s_cpu=60"},
                 "workflow_name": "farm_noises",
-                "task_id": "baa",
+                "task_id": "1/baa",
                 "job_d": "1/test_task_id/01",
                 "job_file_path": "$HOME/directory/job",
                 "execution_time_limit": 1000
 
             },
-            ('\n\n# DIRECTIVES:\n#$ -N farm_noises.baa\n#$ -o directory/'
+            ('\n\n# DIRECTIVES:\n#$ -N farm_noises.baa.1\n#$ -o directory/'
              'job.out\n#$ -e directory/job.err\n#$ -l h_rt=0:16:40\n#$ -V\n#'
              '$ -q queuename\n#$ -l s_vmem=1G,s_cpu=60'
              )
@@ -478,7 +481,7 @@ def test_homeless_platform(fixture_get_platform):
         "platform": fixture_get_platform({
             'global init-script': 'some-script'
         }),
-        "task_id": "a",
+        "task_id": "1/a",
         "workflow_name": "b",
         "work_d": "c/d",
         "uuid_str": "e",
