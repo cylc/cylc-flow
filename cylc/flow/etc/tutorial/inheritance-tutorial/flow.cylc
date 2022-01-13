@@ -1,0 +1,35 @@
+[scheduling]
+    [[graph]]
+        R1 = a380 & r44
+
+[runtime]
+    [[VEHICLE]]
+        init-script = echo 'Boarding'
+        pre-script = echo 'Departing'
+        post-script = echo 'Arriving'
+
+    [[AIR_VEHICLE]]
+        inherit = VEHICLE
+        [[[meta]]]
+            description = A vehicle which can fly.
+    [[AIRPLANE]]
+        inherit = AIR_VEHICLE
+        [[[meta]]]
+            description = An air vehicle with fixed wings.
+        [[[environment]]]
+            CAN_TAKE_OFF_VERTICALLY = false
+    [[HELICOPTER]]
+        inherit = AIR_VEHICLE
+        [[[meta]]]
+            description = An air vehicle with rotors.
+        [[[environment]]]
+            CAN_TAKE_OFF_VERTICALLY = true
+
+    [[a380]]
+        inherit = AIRPLANE
+        [[[meta]]]
+            title = Airbus A380 Jumbo-Jet.
+    [[r44]]
+        inherit = HELICOPTER
+        [[[meta]]]
+            title = Robson R44 Helicopter.
