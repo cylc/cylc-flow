@@ -344,10 +344,12 @@ def dot(opts, lines):
 
 def gui(filename):
     """Open the rendered image file."""
+    print(f'Graph rendered to {filename}')
     try:
         from PIL import Image
     except ModuleNotFoundError:
-        print(f'Graph rendered to {filename}')
+        # dependencies required to display images not present
+        pass
     else:
         img = Image.open(filename)
         img.show()
