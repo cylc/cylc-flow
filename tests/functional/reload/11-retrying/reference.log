@@ -1,5 +1,5 @@
 Initial point: 1
 Final point: 1
-[retrier.1] -triggered off []
-[reloader.1] -triggered off []
-[retrier.1] -triggered off []
+retrier.1 -triggered off []
+reloader.1 -triggered off []
+retrier.1 -triggered off []

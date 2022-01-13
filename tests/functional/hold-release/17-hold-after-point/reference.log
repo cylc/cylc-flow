@@ -1,5 +1,5 @@
 Initial point: 20100101T0000Z
 Final point: 20100110T0000Z
-[stopper.20100101T0000Z] -triggered off []
-[foo.20100101T0000Z] -triggered off ['foo.20091231T0000Z']
-[foo.20100102T0000Z] -triggered off ['foo.20100101T0000Z']
+stopper.20100101T0000Z -triggered off []
+foo.20100101T0000Z -triggered off ['foo.20091231T0000Z']
+foo.20100102T0000Z -triggered off ['foo.20100101T0000Z']

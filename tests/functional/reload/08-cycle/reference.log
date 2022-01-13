@@ -1,7 +1,7 @@
 Initial point: 20100101T0000Z
 Final point: 20100101T1800Z
-[reloader.20100101T0000Z] -triggered off []
-[a.20100101T0000Z] -triggered off ['a.20091231T1800Z', 'reloader.20100101T0000Z']
-[a.20100101T0600Z] -triggered off ['a.20100101T0000Z']
-[a.20100101T1200Z] -triggered off ['a.20100101T0600Z']
-[a.20100101T1800Z] -triggered off ['a.20100101T1200Z']
+reloader.20100101T0000Z -triggered off []
+a.20100101T0000Z -triggered off ['a.20091231T1800Z', 'reloader.20100101T0000Z']
+a.20100101T0600Z -triggered off ['a.20100101T0000Z']
+a.20100101T1200Z -triggered off ['a.20100101T0600Z']
+a.20100101T1800Z -triggered off ['a.20100101T1200Z']

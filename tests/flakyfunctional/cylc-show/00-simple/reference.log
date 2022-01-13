@@ -1,11 +1,11 @@
-2017-12-12T17:43:33Z INFO - Initial point: 20141106T0900Z
-2017-12-12T17:43:33Z INFO - Final point: 20141106T0900Z
-2017-12-12T17:43:33Z INFO - [bar.20141106T0900Z] -triggered off []
-2017-12-12T17:43:36Z INFO - [foo.20141106T0900Z] -triggered off ['bar.20141106T0900Z']
-2017-12-12T17:43:38Z INFO - [show-task-json.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
-2017-12-12T17:43:38Z INFO - [show-workflow-json.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
-2017-12-12T17:43:38Z INFO - [show-taskinstance-json.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
-2017-12-12T17:43:38Z INFO - [show-taskinstance.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
-2017-12-12T17:43:38Z INFO - [show-task.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
-2017-12-12T17:43:38Z INFO - [show-workflow.20141106T0900Z] -triggered off ['foo.20141106T0900Z']
-2017-12-12T17:43:38Z INFO - [end.20141106T0900Z] -triggered off ['show-task-json.20141106T0900Z', 'show-task.20141106T0900Z', 'show-taskinstance-json.20141106T0900Z', 'show-taskinstance.20141106T0900Z', 'show-workflow-json.20141106T0900Z', 'show-workflow.20141106T0900Z']
+Initial point: 20141106T0900Z
+Final point: 20141106T0900Z
+bar.20141106T0900Z -triggered off []
+foo.20141106T0900Z -triggered off ['bar.20141106T0900Z']
+show-task-json.20141106T0900Z -triggered off ['foo.20141106T0900Z']
+show-workflow-json.20141106T0900Z -triggered off ['foo.20141106T0900Z']
+show-taskinstance-json.20141106T0900Z -triggered off ['foo.20141106T0900Z']
+show-taskinstance.20141106T0900Z -triggered off ['foo.20141106T0900Z']
+show-task.20141106T0900Z -triggered off ['foo.20141106T0900Z']
+show-workflow.20141106T0900Z -triggered off ['foo.20141106T0900Z']
+end.20141106T0900Z -triggered off ['show-task-json.20141106T0900Z', 'show-task.20141106T0900Z', 'show-taskinstance-json.20141106T0900Z', 'show-taskinstance.20141106T0900Z', 'show-workflow-json.20141106T0900Z', 'show-workflow.20141106T0900Z']

@@ -1265,8 +1265,8 @@ class Scheduler:
                 self.config.run_mode('simulation')
             ):
                 # (Not using f"{itask}"_here to avoid breaking func tests)
-                LOG.info(
-                    f"[{itask.identity}] -triggered off "
+                LOG.debug(
+                    f"{itask.identity} -triggered off "
                     f"{itask.state.get_resolved_dependencies()}"
                 )
 

@@ -1,6 +1,6 @@
 2018-10-30T13:14:12+13 INFO - Initial point: 1
 2018-10-30T13:14:12+13 INFO - Final point: 1
-2018-10-30T13:14:12+13 INFO - [l-good.1] -triggered off []
-2018-10-30T13:14:12+13 INFO - [lbad.1] -triggered off []
-2018-10-30T13:14:12+13 INFO - [l-mess.1] -triggered off []
-2018-10-30T13:14:17+13 INFO - [done.1] -triggered off ['l-mess.1']
+2018-10-30T13:14:12+13 DEBUG - l-good.1 -triggered off []
+2018-10-30T13:14:12+13 DEBUG - lbad.1 -triggered off []
+2018-10-30T13:14:12+13 DEBUG - l-mess.1 -triggered off []
+2018-10-30T13:14:17+13 DEBUG - done.1 -triggered off ['l-mess.1']
