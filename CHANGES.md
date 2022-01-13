@@ -81,6 +81,9 @@ workflow version control info log file format from modified-INI to JSON.
 logs (that get written in `log/flow-config/` on start/restart/reload)
 are now sparse, i.e. they will no longer be fleshed-out with defaults.
 
+[#4558](https://github.com/cylc/cylc-flow/pull/4558) -
+Added a metadata section to the platform and platform group configurations.
+
 ### Fixes
 
 [#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
