@@ -27,7 +27,6 @@ import pkg_resources as pr
 import cylc.flow
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.option_parsers import CylcOption
 from cylc.flow.wallclock import get_current_time_string
 
 
