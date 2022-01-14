@@ -1,6 +1,6 @@
 Initial point: 1000
 Final point: 1001
-[10000101T0000Z/baz] -triggered off ['09990701T0000Z/baz']
+10000101T0000Z/baz -triggered off ['09990701T0000Z/baz']
 10000101T0000Z/foo -triggered off ['09991201T0000Z/foo']
 10000101T0000Z/bar -triggered off ['10000101T0000Z/foo']
 10000101T0000Z/qux -triggered off ['10000101T0000Z/baz']
