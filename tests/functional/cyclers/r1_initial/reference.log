@@ -1,7 +1,7 @@
 Initial point: 20140101
 Final point: 20140102T12
-[20140101T0000Z/cold_foo] -triggered off []
-[20140101T0000Z/foo] -triggered off ['20131231T1200Z/foo', '20140101T0000Z/cold_foo']
-[20140101T1200Z/foo] -triggered off ['20140101T0000Z/foo']
-[20140102T0000Z/foo] -triggered off ['20140101T1200Z/foo']
-[20140102T1200Z/foo] -triggered off ['20140102T0000Z/foo']
+20140101T0000Z/cold_foo -triggered off []
+20140101T0000Z/foo -triggered off ['20131231T1200Z/foo', '20140101T0000Z/cold_foo']
+20140101T1200Z/foo -triggered off ['20140101T0000Z/foo']
+20140102T0000Z/foo -triggered off ['20140101T1200Z/foo']
+20140102T1200Z/foo -triggered off ['20140102T0000Z/foo']

@@ -1,7 +1,7 @@
-2014-11-21T10:40:43Z INFO - Initial point: 2014010100
-2014-11-21T10:40:43Z INFO - Final point: 2014010400
-2014-11-21T10:40:43Z INFO - [2014010100/cold_foo] -triggered off []
-2014-11-21T10:40:46Z INFO - [2014010100/foo_midnight] -triggered off ['2014010100/cold_foo']
-2014-11-21T10:40:49Z INFO - [2014010200/foo_midnight] -triggered off ['2014010100/foo_midnight']
-2014-11-21T10:40:52Z INFO - [2014010300/foo_midnight] -triggered off ['2014010200/foo_midnight']
-2014-11-21T10:40:55Z INFO - [2014010400/foo_midnight] -triggered off ['2014010300/foo_midnight']
+Initial point: 2014010100
+Final point: 2014010400
+2014010100/cold_foo -triggered off []
+2014010100/foo_midnight -triggered off ['2014010100/cold_foo']
+2014010200/foo_midnight -triggered off ['2014010100/foo_midnight']
+2014010300/foo_midnight -triggered off ['2014010200/foo_midnight']
+2014010400/foo_midnight -triggered off ['2014010300/foo_midnight']

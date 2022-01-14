@@ -24,9 +24,9 @@
     [[killer]]
         script="""
             cylc__job__wait_cylc_message_started
-            cylc__job__poll_grep_workflow_log -F '[1/killable-1] -triggered'
-            cylc__job__poll_grep_workflow_log -F '[1/killable-2] -triggered'
-            cylc__job__poll_grep_workflow_log -F '[1/killable-3] -triggered'
+            cylc__job__poll_grep_workflow_log -F '1/killable-1 -triggered'
+            cylc__job__poll_grep_workflow_log -F '1/killable-2 -triggered'
+            cylc__job__poll_grep_workflow_log -F '1/killable-3 -triggered'
             # (Avoid killing myself if my started message hasn't arrived yet:)
             cylc kill "${CYLC_WORKFLOW_ID}//*/killable*:submitted"
         """

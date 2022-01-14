@@ -1,6 +1,6 @@
-2016-06-30T11:27:42Z INFO - Initial point: 20160101T0000Z
-2016-06-30T11:27:42Z INFO - Final point: 20220101T0000Z
-2016-06-30T11:27:42Z INFO - [20190101T0000Z/foo] -triggered off []
-2016-06-30T11:27:44Z INFO - [20200101T0000Z/foo] -triggered off []
-2016-06-30T11:27:44Z INFO - [20210101T0000Z/foo] -triggered off []
-2016-06-30T11:27:44Z INFO - [20220101T0000Z/foo] -triggered off []
+Initial point: 20160101T0000Z
+Final point: 20220101T0000Z
+20190101T0000Z/foo -triggered off []
+20200101T0000Z/foo -triggered off []
+20210101T0000Z/foo -triggered off []
+20220101T0000Z/foo -triggered off []

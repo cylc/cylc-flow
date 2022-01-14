@@ -1,0 +1,43 @@
+[scheduler]
+    UTC mode = True
+
+[scheduling]
+    # Start the workflow 7 hours before now ignoring minutes and seconds
+    # * previous(T-00) takes the current time ignoring minutes and seconds.
+    # * - PT7H subtracts 7 hours from the time.
+    initial cycle point = previous(T-00) - PT7H
+    # Stop the workflow 6 hours after the initial cycle point.
+    final cycle point = +PT6H
+    [[graph]]
+        # Repeat every three hours starting at the initial cycle point.
+        PT3H = """
+            get_observations_aldergrove => consolidate_observations
+            get_observations_camborne => consolidate_observations
+            get_observations_heathrow => consolidate_observations
+            get_observations_shetland => consolidate_observations
+        """
+
+        # Repeat every six hours starting six hours after the initial
+        # cycle point.
+        +PT6H/PT6H = """
+            consolidate_observations => forecast
+            consolidate_observations[-PT3H] => forecast
+            consolidate_observations[-PT6H] => forecast
+            get_rainfall => forecast => post_process_exeter
+        """
+
+        # Repeat every six hours starting twelve hours after the initial
+        # cycle point.
+        +PT12H/PT6H = """
+            forecast[-PT6H] => forecast
+        """
+
+[runtime]
+    [[get_observations_camborne]]
+    [[get_observations_heathrow]]
+    [[get_observations_aldergrove]]
+    [[get_observations_shetland]]
+    [[consolidate_observations]]
+    [[forecast]]
+    [[get_rainfall]]
+    [[post_process_exeter]]

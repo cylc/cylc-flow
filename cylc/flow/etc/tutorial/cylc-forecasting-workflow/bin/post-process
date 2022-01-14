@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+# This is illustrative code developed for tutorial purposes, it is not
+# intended for scientific use and is not guarantied to be accurate or correct.
+"""
+Usage:
+    post-process SITE TIME
+
+Arguments:
+    SITE: The name of the location to process data for.
+    TIME: The time ahead of the cycle point to produce the forecast for in
+          minutes.
+
+Environment Variables:
+    DOMAIN: The area in which to generate forecasts for in the format
+        (lng1, lat1, lng2, lat2).
+    RESOLUTION: The length/width of each grid cell in degrees.
+
+"""
+
+from datetime import datetime, timedelta
+import os
+import sys
+
+import util
+
+
+SITE_LOCATIONS = {
+    "exeter": (-3.533, 50.717),
+    "london": (-0.1275, 51.507),
+    "cardiff": (-3.183, 51.483),
+    "edinburgh": (-3.189, 55.953),
+    "belfast": (-5.930, 54.597)
+}
+
+
+def main(site_name, time):
+    resolution = float(os.environ['RESOLUTION'])
+    domain = util.parse_domain(os.environ['DOMAIN'])
+    lng, lat = SITE_LOCATIONS[site_name]
+
+    # Load forecast data.
+    filename = '+PT%02dH%02dM.csv' % (time // 60, time % 60)
+    try:
+        # The path to the forecast data file.
+        forecast = util.read_csv(os.path.join(
+            os.environ['CYLC_WORKFLOW_WORK_DIR'],
+            os.environ['CYLC_TASK_CYCLE_POINT'],
+            'forecast',
+            filename
+        ))
+    except IOError:
+        sys.exit('Could not find forecast "%s".' % filename)
+
+    # Calculate the time for which this forecast is valid.
+    forecast_time = datetime.strptime(
+        os.environ['CYLC_TASK_CYCLE_POINT'], '%Y%m%dT%H%MZ'
+    ) + timedelta(minutes=time)
+
+    # Extract forecast for specified location.
+    ind_x, ind_y = util.get_grid_coordinates(lng, lat, domain, resolution)
+    predicted_rainfall = forecast[ind_y][ind_x]
+
+    # Use forecast to choose an appropriate message.
+    if predicted_rainfall < 0.1:
+        message = 'Clear skies ahead!'
+    elif predicted_rainfall < 0.5:
+        message = 'A slim change of light rain.'
+    elif predicted_rainfall < 2:
+        message = 'Chance of a light rain.'
+    elif predicted_rainfall < 3:
+        message = 'Better take an umbrella.'
+    elif predicted_rainfall < 4:
+        message = 'Nice weather for ducks.'
+    elif predicted_rainfall < 5:
+        message = "Looks like it'll be chucking it down."
+    else:
+        message = 'Torrential downpour :('
+
+    # Write out forecast summary.
+    with open('summary.txt', 'w+') as summary_file:
+        summary_file.write('The outlook at %s UTC for %s is "%s"' % (
+            forecast_time.strftime('%Y-%m-%dT%H:%M'), site_name, message))
+
+
+if __name__ == '__main__':
+    try:
+        args = (sys.argv[1].lower(), int(sys.argv[2]))
+    except IndexError:
+        print(__doc__)
+        sys.exit(1)
+    main(*args)

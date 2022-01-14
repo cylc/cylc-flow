@@ -1,11 +1,11 @@
-2016-01-14T11:55:10Z INFO - Initial point: 1
-2016-01-14T11:55:10Z INFO - Final point: 1
-2016-01-14T11:55:10Z INFO - [1/fixable1] -triggered off []
-2016-01-14T11:55:10Z INFO - [1/fixable2] -triggered off []
-2016-01-14T11:55:10Z INFO - [1/fixable3] -triggered off []
-2016-01-14T11:55:13Z INFO - [1/fixer] -triggered off []
-2016-01-14T11:55:15Z INFO - [1/fixable1] -triggered off []
-2016-01-14T11:55:15Z INFO - [1/fixable2] -triggered off []
-2016-01-14T11:55:15Z INFO - [1/fixable3] -triggered off []
-2016-01-14T11:55:18Z INFO - [1/z1] -triggered off ['1/fixable1', '1/fixable2', '1/fixable3']
-2016-01-14T11:55:18Z INFO - [1/z2] -triggered off ['1/fixable1', '1/fixable2', '1/fixable3']
+Initial point: 1
+Final point: 1
+1/fixable1 -triggered off []
+1/fixable2 -triggered off []
+1/fixable3 -triggered off []
+1/fixer -triggered off []
+1/fixable1 -triggered off []
+1/fixable2 -triggered off []
+1/fixable3 -triggered off []
+1/z1 -triggered off ['1/fixable1', '1/fixable2', '1/fixable3']
+1/z2 -triggered off ['1/fixable1', '1/fixable2', '1/fixable3']

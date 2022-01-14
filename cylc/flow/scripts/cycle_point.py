@@ -159,12 +159,7 @@ def main(parser, options, *args):
             parser.error(
                 '"print only" options are incompatible with templating')
         tmp = options.template
-        if tmp in os.environ:
-            # name of a variable that contains a template
-            template = os.environ[tmp]
-        else:
-            # or a raw template string
-            template = tmp
+        template = os.environ.get(tmp, tmp)
     else:
         n_chosen = 0
 

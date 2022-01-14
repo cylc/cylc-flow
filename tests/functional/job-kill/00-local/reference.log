@@ -1,9 +1,9 @@
-2019-04-10T16:15:32+12:00 INFO - Initial point: 1
-2019-04-10T16:15:32+12:00 INFO - Final point: 1
-2019-04-10T16:15:32+12:00 INFO - [1/t2] -triggered off []
-2019-04-10T16:15:32+12:00 INFO - [1/t1] -triggered off []
-2019-04-10T16:15:36+12:00 INFO - [1/stop1] -triggered off ['1/t1', '1/t2']
-2019-04-10T16:15:39+12:00 INFO - [1/t4] -triggered off ['1/stop1']
-2019-04-10T16:15:39+12:00 INFO - [1/t3] -triggered off ['1/stop1']
-2019-04-10T16:15:43+12:00 INFO - [1/stop2] -triggered off ['1/t3', '1/t4']
-2019-04-10T16:15:46+12:00 INFO - [1/shutdown] -triggered off ['1/stop2']
+Initial point: 1
+Final point: 1
+1/t2 -triggered off []
+1/t1 -triggered off []
+1/stop1 -triggered off ['1/t1', '1/t2']
+1/t4 -triggered off ['1/stop1']
+1/t3 -triggered off ['1/stop1']
+1/stop2 -triggered off ['1/t3', '1/t4']
+1/shutdown -triggered off ['1/stop2']

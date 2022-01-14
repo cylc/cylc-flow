@@ -872,7 +872,7 @@ class TaskEventsManager():
             itask.identity
         ))
         kwargs = {
-            'absolute_as_seconds': wallclock_time
+            'trigger_time': wallclock_time
         }
 
         # if this isn't the first retry the xtrigger will already exist

@@ -1,13 +1,13 @@
-2015-06-10T21:54:26Z INFO - Initial point: 1
-2015-06-10T21:54:26Z INFO - Final point: 1
-2015-06-10T21:54:26Z INFO - [1/locker] -triggered off []
-2015-06-10T21:54:47Z INFO - [1/t6] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t5] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t0] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t1] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t8] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t9] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t4] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t7] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t2] -triggered off ['1/locker']
-2015-06-10T21:54:47Z INFO - [1/t3] -triggered off ['1/locker']
+Initial point: 1
+Final point: 1
+1/locker -triggered off []
+1/t6 -triggered off ['1/locker']
+1/t5 -triggered off ['1/locker']
+1/t0 -triggered off ['1/locker']
+1/t1 -triggered off ['1/locker']
+1/t8 -triggered off ['1/locker']
+1/t9 -triggered off ['1/locker']
+1/t4 -triggered off ['1/locker']
+1/t7 -triggered off ['1/locker']
+1/t2 -triggered off ['1/locker']
+1/t3 -triggered off ['1/locker']

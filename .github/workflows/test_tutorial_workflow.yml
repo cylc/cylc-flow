@@ -1,0 +1,53 @@
+name: test-tutorial-workflow
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      rose_ref:
+        description: The Rose branch to test against
+        required: false
+      cylc_rose_ref:
+        description: The Cylc branch to test against
+        required: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: configure python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: Install docs/tutorial dependencies
+        uses: cylc/cylc-doc/.github/actions/install-dependencies@master
+
+      - name: install cylc-flow
+        run: pip install .[all]
+
+      - name: install libs
+        env:
+          rose_ref: ${{ github.event.inputs.rose_ref || 'master' }}
+          cylc_rose_ref: ${{ github.event.inputs.cylc_rose_ref || 'master' }}
+        run: |
+          pip install  \
+            "cylc-rose @ git+https://github.com/cylc/cylc-rose@${cylc_rose_ref}"
+          git clone --depth 1 --branch "${rose_ref}" https://github.com/metomi/rose ../rose
+          pip install -e ../rose
+
+      - name: run tutorial workflow
+        run: |
+          mkdir -p "${HOME}/cylc-run"
+          etc/bin/run-validate-tutorials
+
+      - name: debug
+        if: failure()
+        run: |
+          find ~/cylc-run -name job.err -exec cat {} +  # cylc error files

@@ -1,7 +1,7 @@
-2014/01/02 15:42:26 INFO - Initial point: 20100808T0000Z
-2014/01/02 15:42:26 INFO - Final point: 20100809T0000Z
-2014/01/02 15:42:26 INFO - [20100808T0000Z/bar] -triggered off []
-2014/01/02 15:42:30 INFO - [20100808T0000Z/foo] -triggered off ['20100807T0000Z/foo', '20100808T0000Z/bar']
-2014/01/02 15:42:30 INFO - [20100809T0000Z/bar] -triggered off []
-2014/01/02 15:42:34 INFO - [20100809T0000Z/foo] -triggered off ['20100808T0000Z/foo']
-2014/01/02 15:42:34 INFO - [20100809T0000Z/handled] -triggered off ['20100809T0000Z/bar']
+Initial point: 20100808T0000Z
+Final point: 20100809T0000Z
+20100808T0000Z/bar -triggered off []
+20100808T0000Z/foo -triggered off ['20100807T0000Z/foo', '20100808T0000Z/bar']
+20100809T0000Z/bar -triggered off []
+20100809T0000Z/foo -triggered off ['20100808T0000Z/foo']
+20100809T0000Z/handled -triggered off ['20100809T0000Z/bar']

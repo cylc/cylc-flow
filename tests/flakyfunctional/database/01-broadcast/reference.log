@@ -1,5 +1,5 @@
-2015-06-10T11:08:30+01 INFO - Initial point: 1
-2015-06-10T11:08:30+01 INFO - Final point: 1
-2015-06-10T11:08:30+01 INFO - [1/t1] -triggered off []
-2015-06-10T11:08:31+01 INFO - [1/recover-t1] -triggered off ['1/t1']
-2015-06-10T11:08:35+01 INFO - [1/t1] -triggered off []
+Initial point: 1
+Final point: 1
+1/t1 -triggered off []
+1/recover-t1 -triggered off ['1/t1']
+1/t1 -triggered off []

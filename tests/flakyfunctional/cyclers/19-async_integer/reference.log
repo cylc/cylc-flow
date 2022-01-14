@@ -1,4 +1,4 @@
-2014-04-22T16:40:30 INFO - Initial point: 1
-2014-04-22T16:40:30 INFO - Final point: 1
-2014-04-22T16:40:30 INFO - [1/foo] -triggered off []
-2014-04-22T16:40:35 INFO - [1/bar] -triggered off ['1/foo']
+Initial point: 1
+Final point: 1
+1/foo -triggered off []
+1/bar -triggered off ['1/foo']

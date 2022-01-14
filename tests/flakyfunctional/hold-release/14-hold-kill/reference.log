@@ -1,5 +1,5 @@
-2015-02-06T10:41:15Z INFO - Initial point: 1
-2015-02-06T10:41:15Z INFO - Final point: 1
-2015-02-06T10:41:15Z INFO - [1/sleeper] -triggered off []
-2015-02-06T10:41:17Z INFO - [1/killer] -triggered off ['1/sleeper']
-2015-02-06T10:41:22Z INFO - [1/sleeper] -triggered off []
+Initial point: 1
+Final point: 1
+1/sleeper -triggered off []
+1/killer -triggered off ['1/sleeper']
+1/sleeper -triggered off []

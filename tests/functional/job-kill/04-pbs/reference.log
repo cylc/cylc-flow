@@ -1,4 +1,4 @@
-2013/12/18 09:59:04 INFO - Initial point: 1
-2013/12/18 09:59:04 INFO - Final point: 1
-2013/12/18 09:59:04 INFO - [1/t1] -triggered off []
-2013/12/18 09:59:21 INFO - [1/stop] -triggered off ['1/t1']
+Initial point: 1
+Final point: 1
+1/t1 -triggered off []
+1/stop -triggered off ['1/t1']

@@ -1,9 +1,9 @@
 Initial point: 1
 Final point: 1
-[1/setter] -triggered off []
-[1/foo] -triggered off []
-[1/bar] -triggered off []
-[1/qux] -triggered off ['1/foo']
-[1/quw] -triggered off ['1/foo']
-[1/fux] -triggered off ['1/bar']
-[1/fuw] -triggered off ['1/bar']
+1/setter -triggered off []
+1/foo -triggered off []
+1/bar -triggered off []
+1/qux -triggered off ['1/foo']
+1/quw -triggered off ['1/foo']
+1/fux -triggered off ['1/bar']
+1/fuw -triggered off ['1/bar']

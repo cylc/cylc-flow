@@ -34,5 +34,5 @@ __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}-val" cylc validate '.'
 
 contains_ok "${TEST_NAME_BASE}-val.stderr" <<'__END__'
-WorkflowConfigError: clock xtriggers need date-time cycling: c1 = wall_clock(offset=P0Y)
+WorkflowConfigError: Clock xtriggers require datetime cycling: c1 = wall_clock(offset=P0Y)
 __END__

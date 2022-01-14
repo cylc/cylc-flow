@@ -1,4 +1,4 @@
-2014/03/31 10:14:45 INFO - Initial point: 20140101
-2014/03/31 10:14:45 INFO - Final point: 20140102T12
-2014/03/31 10:14:45 INFO - [20140101T1200Z/bar] -triggered off []
-2014/03/31 10:14:54 INFO - [20140101T1200Z/baz] -triggered off ['20140101T1200Z/bar']
+Initial point: 20140101
+Final point: 20140102T12
+20140101T1200Z/bar -triggered off []
+20140101T1200Z/baz -triggered off ['20140101T1200Z/bar']

@@ -1,4 +1,4 @@
-2017-01-26T12:14:50Z INFO - Initial point: 20100101T0000Z
-2017-01-26T12:14:50Z INFO - Final point: None
-2017-01-26T12:14:50Z INFO - [20100101T0000Z/t1] -triggered off []
-2017-01-26T12:14:53Z INFO - [20100101T0000Z/t2] -triggered off ['20100101T0000Z/t1']
+Initial point: 20100101T0000Z
+Final point: None
+20100101T0000Z/t1 -triggered off []
+20100101T0000Z/t2 -triggered off ['20100101T0000Z/t1']

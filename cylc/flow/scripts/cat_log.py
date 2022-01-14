@@ -138,7 +138,7 @@ def colorise_cat_log(cat_proc, color=False):
     if color:
         color_proc = Popen(  # nosec
             [
-                'python3', '-c',
+                sys.executable, '-c',
                 '; '.join([
                     'import sys',
                     'from cylc.flow.loggingutil import re_formatter',

@@ -1,10 +1,10 @@
 Initial point: 2014-01-01
 Final point: 2014-01-04
-[20140101T0000Z/cold_foo] -triggered off []
-[20140101T0000Z/foo_midnight] -triggered off ['20131231T0000Z/foo_midnight', '20140101T0000Z/cold_foo']
-[20140101T0600Z/foo_dawn] -triggered off ['20131231T0600Z/foo_dawn', '20140101T0000Z/cold_foo']
-[20140102T0000Z/foo_midnight] -triggered off ['20140101T0000Z/foo_midnight']
-[20140102T0600Z/foo_dawn] -triggered off ['20140101T0600Z/foo_dawn']
-[20140103T0000Z/foo_midnight] -triggered off ['20140102T0000Z/foo_midnight']
-[20140103T0600Z/foo_dawn] -triggered off ['20140102T0600Z/foo_dawn']
-[20140104T0000Z/foo_midnight] -triggered off ['20140103T0000Z/foo_midnight']
+20140101T0000Z/cold_foo -triggered off []
+20140101T0000Z/foo_midnight -triggered off ['20131231T0000Z/foo_midnight', '20140101T0000Z/cold_foo']
+20140101T0600Z/foo_dawn -triggered off ['20131231T0600Z/foo_dawn', '20140101T0000Z/cold_foo']
+20140102T0000Z/foo_midnight -triggered off ['20140101T0000Z/foo_midnight']
+20140102T0600Z/foo_dawn -triggered off ['20140101T0600Z/foo_dawn']
+20140103T0000Z/foo_midnight -triggered off ['20140102T0000Z/foo_midnight']
+20140103T0600Z/foo_dawn -triggered off ['20140102T0600Z/foo_dawn']
+20140104T0000Z/foo_midnight -triggered off ['20140103T0000Z/foo_midnight']

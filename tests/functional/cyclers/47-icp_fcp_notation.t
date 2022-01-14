@@ -24,13 +24,13 @@ set_test_number 6
 TEST_NAME=${TEST_NAME_BASE}
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-run"
-run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" --no-detach
+run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" --debug --no-detach
 
 TEST_NAME=${TEST_NAME_BASE}-out
-grep_ok "\[20160101T0000Z/foo\]" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "\[20160101T0000Z/bar\]" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "\[20160101T0100Z/baz\]" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "\[20160101T2300Z/boo\]" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "\[20160102T0000Z/bot\]" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T0000Z/foo" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T0000Z/bar" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T0100Z/baz" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T2300Z/boo" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160102T0000Z/bot" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

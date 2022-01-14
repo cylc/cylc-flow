@@ -63,6 +63,25 @@ MOVEDFROMJOB = '''
 '''
 
 
+PLATFORM_META_DESCR = '''
+    Metadata for this platform or platform group.
+
+    Allows writers of platform configurations to add information
+    about platform usage. There are no-preset items because
+    Cylc does not use any platform (or group) metadata internally.
+
+    Users can then see information about defined platforms using::
+
+        cylc config -i [platforms]
+        cylc config -i [platform groups]
+
+    .. seealso::
+
+        :ref:`AdminGuide.PlatformConfigs`
+
+'''
+
+
 # Event config descriptions shared between global and workflow config.
 EVENTS_DESCR = {
     'startup handlers': (
@@ -823,6 +842,10 @@ with Conf('global.cylc', desc='''
                  platform configurations.
 
         ''') as Platform:
+            with Conf('meta', desc=PLATFORM_META_DESCR):
+                Conf('<custom metadata>', VDR.V_STRING, '', desc='''
+                    Any user-defined metadata item.
+                ''')
             Conf('hosts', VDR.V_STRING_LIST, desc='''
                 A list of hosts from which the job host can be selected using
                 :cylc:conf:`[..][selection]method`.
@@ -1243,6 +1266,10 @@ with Conf('global.cylc', desc='''
               configurations.
     '''):  # noqa: SIM117 (keep same format)
         with Conf('<group>'):
+            with Conf('meta', desc=PLATFORM_META_DESCR):
+                Conf('<custom metadata>', VDR.V_STRING, '', desc='''
+                    Any user-defined metadata item.
+                ''')
             Conf('platforms', VDR.V_STRING_LIST, desc='''
                 A list of platforms which can be selected if
                 :cylc:conf:`flow.cylc[runtime][<namespace>]platform` matches

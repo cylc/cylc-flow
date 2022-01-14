@@ -1,6 +1,6 @@
-2014-11-13T10:12:31Z INFO - Initial point: 1
-2014-11-13T10:12:31Z INFO - Final point: 1
-2014-11-13T10:12:31Z INFO - [1/starter] -triggered off []
-2014-11-13T10:12:31Z INFO - [1/sleeping-waiter] -triggered off []
-2014-11-13T10:12:34Z INFO - [1/reloader] -triggered off ['1/sleeping-waiter']
-2014-11-13T10:12:40Z INFO - [1/waiter] -triggered off ['1/sleeping-waiter', '1/starter']
+Initial point: 1
+Final point: 1
+1/starter -triggered off []
+1/sleeping-waiter -triggered off []
+1/reloader -triggered off ['1/sleeping-waiter']
+1/waiter -triggered off ['1/sleeping-waiter', '1/starter']

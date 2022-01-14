@@ -1,0 +1,47 @@
+    [[consolidate_observations]]
+        script = consolidate-observations
+        [[[environment]]]
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!
+
+    [[get_rainfall]]
+        script = get-rainfall
+        [[[environment]]]
+            # The key required to get weather data from the DataPoint service.
+            # To use archived data comment this line out.
+            API_KEY = DATAPOINT_API_KEY
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!
+
+    [[forecast]]
+        script = forecast 60 5  # Generate 5 forecasts at 60 minute intervals.
+        [[[environment]]]
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!
+            # The path to the files containing wind data (the {variables} will
+            # get substituted in the forecast script).
+            WIND_FILE_TEMPLATE = $CYLC_WORKFLOW_WORK_DIR/{cycle}/consolidate_observations/wind_{xy}.csv
+            # List of cycle points to process wind data from.
+            WIND_CYCLES = 0, -3, -6
+
+            # The path to the rainfall file.
+            RAINFALL_FILE = $CYLC_WORKFLOW_WORK_DIR/$CYLC_TASK_CYCLE_POINT/get_rainfall/rainfall.csv
+            # Create the html map file in the task's log directory.
+            MAP_FILE = "${CYLC_TASK_LOG_ROOT}-map.html"
+            # The path to the template file used to generate the html map.
+            MAP_TEMPLATE = "$CYLC_WORKFLOW_RUN_DIR/lib/template/map.html"
+
+    [[post_process_exeter]]
+        # Generate a forecast for Exeter 60 minutes in the future.
+        script = post-process exeter 60
+        [[[environment]]]
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!

@@ -1,9 +1,9 @@
 Initial point: 1
 Final point: 5
-[2/start] -triggered off []
-[1/foo] -triggered off []
-[2/foo] -triggered off []
-[3/foo] -triggered off []
-[1/bar] -triggered off ['1/foo', '2/start']
-[2/bar] -triggered off ['2/foo', '2/start']
-[3/bar] -triggered off ['2/start', '3/foo']
+2/start -triggered off []
+1/foo -triggered off []
+2/foo -triggered off []
+3/foo -triggered off []
+1/bar -triggered off ['1/foo', '2/start']
+2/bar -triggered off ['2/foo', '2/start']
+3/bar -triggered off ['2/start', '3/foo']

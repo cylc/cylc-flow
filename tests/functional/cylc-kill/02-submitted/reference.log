@@ -1,7 +1,7 @@
-2015-08-24T15:20:15Z INFO - Initial point: 1
-2015-08-24T15:20:15Z INFO - Final point: 1
-2015-08-24T15:20:16Z INFO - [1/killable-1] -triggered off []
-2015-08-24T15:20:16Z INFO - [1/killable-2] -triggered off []
-2015-08-24T15:20:16Z INFO - [1/killable-3] -triggered off []
-2015-08-24T15:20:19Z INFO - [1/killer] -triggered off ['1/killable-1', '1/killable-2', '1/killable-3']
-2015-08-24T15:20:19Z INFO - [1/stopper] -triggered off ['1/killable-1', '1/killable-2', '1/killable-3']
+Initial point: 1
+Final point: 1
+1/killable-1 -triggered off []
+1/killable-2 -triggered off []
+1/killable-3 -triggered off []
+1/killer -triggered off ['1/killable-1', '1/killable-2', '1/killable-3']
+1/stopper -triggered off ['1/killable-1', '1/killable-2', '1/killable-3']

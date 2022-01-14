@@ -1,5 +1,5 @@
-2014/02/10 16:32:16 INFO - Initial point: 20140101T00
-2014/02/10 16:32:16 INFO - Final point: 20140101T00
-2014/02/10 16:32:16 INFO - [20140101T00/broadcast_all] -triggered off []
-2014/02/10 16:32:21 INFO - [20140101T00/broadcast_tag] -triggered off ['20140101T00/broadcast_all']
-2014/02/10 16:32:24 INFO - [20140101T00/t1] -triggered off ['20140101T00/broadcast_tag']
+Initial point: 20140101T00
+Final point: 20140101T00
+20140101T00/broadcast_all -triggered off []
+20140101T00/broadcast_tag -triggered off ['20140101T00/broadcast_all']
+20140101T00/t1 -triggered off ['20140101T00/broadcast_tag']

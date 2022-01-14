@@ -1,0 +1,93 @@
+[scheduler]
+    UTC mode = True
+[task parameters]
+    # A list of the weather stations we will be fetching observations from.
+    station = camborne, heathrow, shetland, aldergrove
+    # A list of the sites we will be generating forecasts for.
+    site = exeter
+
+[scheduling]
+    # Start the workflow 7 hours before now ignoring minutes and seconds
+    # * previous(T-00) takes the current time ignoring minutes and seconds.
+    # * - PT7H subtracts 7 hours from the time.
+    initial cycle point = previous(T-00) - PT7H
+    # Stop the workflow 6 hours after the initial cycle point.
+    final cycle point = +PT6H
+    [[graph]]
+        # Repeat every three hours starting at the initial cycle point.
+        PT3H = """
+            get_observations<station> => consolidate_observations
+        """
+
+        # Repeat every six hours starting six hours after the initial
+        # cycle point.
+        +PT6H/PT6H = """
+            consolidate_observations => forecast
+            consolidate_observations[-PT3H] => forecast
+            consolidate_observations[-PT6H] => forecast
+            get_rainfall => forecast => post_process<site>
+        """
+
+        # Repeat every six hours starting twelve hours after the initial
+        # cycle point.
+        +PT12H/PT6H = """
+            forecast[-PT6H] => forecast
+        """
+
+[runtime]
+    [[root]]
+        # These environment variables will be available to all tasks.
+        [[[environment]]]
+            # The dimensions of each grid cell in degrees.
+            RESOLUTION = 0.2
+            # The area to generate forecasts for (lng1, lat1, lng2, lat2)
+            DOMAIN = -12,48,5,61  # Do not change!
+
+    [[get_observations<station>]]
+        script = get-observations
+        [[[environment]]]
+            # The key required to get weather data from the DataPoint service.
+            # To use archived data comment this line out.
+            API_KEY = DATAPOINT_API_KEY
+
+    [[get_observations<station=aldergrove>]]
+        [[[environment]]]
+            SITE_ID = 3917
+    [[get_observations<station=camborne>]]
+        [[[environment]]]
+            SITE_ID = 3808
+    [[get_observations<station=heathrow>]]
+        [[[environment]]]
+            SITE_ID = 3772
+    [[get_observations<station=shetland>]]
+        [[[environment]]]
+            SITE_ID = 3005
+
+    [[consolidate_observations]]
+        script = consolidate-observations
+
+    [[get_rainfall]]
+        script = get-rainfall
+        [[[environment]]]
+            # The key required to get weather data from the DataPoint service.
+            # To use archived data comment this line out.
+            API_KEY = DATAPOINT_API_KEY
+
+    [[forecast]]
+        script = forecast 60 5  # Generate 5 forecasts at 60 minute intervals.
+        [[[environment]]]
+            # The path to the files containing wind data (the {variables} will
+            # get substituted in the forecast script).
+            WIND_FILE_TEMPLATE = $CYLC_WORKFLOW_WORK_DIR/{cycle}/consolidate_observations/wind_{xy}.csv
+            # Offset in hours to cycles to process wind data from.
+            WIND_CYCLES = 0, -3, -6
+            # The path to the rainfall file.
+            RAINFALL_FILE = $CYLC_WORKFLOW_WORK_DIR/$CYLC_TASK_CYCLE_POINT/get_rainfall/rainfall.csv
+            # Create the html map file in the task's log directory.
+            MAP_FILE = "${CYLC_TASK_LOG_ROOT}-map.html"
+            # The path to the template file used to generate the html map.
+            MAP_TEMPLATE = "$CYLC_WORKFLOW_RUN_DIR/lib/template/map.html"
+
+    [[post_process<site>]]
+        # Generate a forecast for the location <site> 60 minutes in the future.
+        script = post-process $CYLC_TASK_PARAM_site 60

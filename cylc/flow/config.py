@@ -26,7 +26,7 @@ Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
 
-import contextlib
+from contextlib import suppress
 from copy import copy
 from fnmatch import fnmatchcase
 import os
@@ -734,7 +734,7 @@ class WorkflowConfig:
                         self.initial_point
                     ).standardise()
             else:
-                with contextlib.suppress(IsodatetimeError):
+                with suppress(IsodatetimeError):
                     # Relative, ISO8601 cycling.
                     self.final_point = get_point_relative(
                         fcp_str, self.initial_point).standardise()
@@ -796,7 +796,9 @@ class WorkflowConfig:
         msg = (
             f"{msg}\n"
             "To allow implicit tasks, use "
-            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'\n"
+            "See https://cylc.github.io/cylc-doc/latest/html/"
+            "7-to-8/summary.html#backward-compatibility"
         )
         # Allow implicit tasks in Cylc 7 back-compat mode (but not if
         # rose-suite.conf present, to maintain compat with Rose 2019)
@@ -1339,10 +1341,8 @@ class WorkflowConfig:
     def add_tree_titles(self, tree):
         for key, val in tree.items():
             if val == {}:
-                if 'title' in self.cfg['runtime'][key]['meta']:
-                    tree[key] = self.cfg['runtime'][key]['meta']['title']
-                else:
-                    tree[key] = NO_TITLE
+                tree[key] = self.cfg['runtime'][key]['meta'].get(
+                    'title', NO_TITLE)
             elif isinstance(val, dict):
                 self.add_tree_titles(val)
 
@@ -1361,12 +1361,8 @@ class WorkflowConfig:
                     names.append(ns)
         result = {}
         for ns in names:
-            if 'title' in self.cfg['runtime'][ns]['meta']:
-                # the runtime dict is sparse at this stage.
-                result[ns] = self.cfg['runtime'][ns]['meta']['title']
-            else:
-                # no need to flesh out the full runtime just for title
-                result[ns] = NO_TITLE
+            result[ns] = self.cfg['runtime'][ns]['meta'].get(
+                'title', NO_TITLE)
 
         return result
 
@@ -1661,12 +1657,19 @@ class WorkflowConfig:
                     xtrig = SubFuncContext(
                         'wall_clock', 'wall_clock', [], {})
 
-            if (xtrig.func_name == 'wall_clock' and
-                    self.cfg['scheduling']['cycling mode'] == (
-                        INTEGER_CYCLING_TYPE)):
-                sig = xtrig.get_signature()
-                raise WorkflowConfigError(
-                    f"clock xtriggers need date-time cycling: {label} = {sig}")
+            if xtrig.func_name == 'wall_clock':
+                if self.cycling_type == INTEGER_CYCLING_TYPE:
+                    raise WorkflowConfigError(
+                        "Clock xtriggers require datetime cycling:"
+                        f" {label} = {xtrig.get_signature()}"
+                    )
+                else:
+                    # Convert offset arg to kwarg for certainty later.
+                    if "offset" not in xtrig.func_kwargs:
+                        xtrig.func_kwargs["offset"] = None
+                        with suppress(IndexError):
+                            xtrig.func_kwargs["offset"] = xtrig.func_args[0]
+
             if self.xtrigger_mgr is None:
                 XtriggerManager.validate_xtrigger(label, xtrig, self.fdir)
             else:

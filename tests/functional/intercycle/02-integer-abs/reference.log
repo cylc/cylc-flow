@@ -1,8 +1,8 @@
-2016-12-16T12:14:01Z INFO - Initial point: 1
-2016-12-16T12:14:01Z INFO - Final point: 5
-2016-12-16T12:14:01Z INFO - [2/start] -triggered off []
-2016-12-16T12:14:04Z INFO - [1/foo] -triggered off ['2/start']
-2016-12-16T12:14:06Z INFO - [2/foo] -triggered off ['2/start']
-2016-12-16T12:14:08Z INFO - [3/foo] -triggered off ['2/start']
-2016-12-16T12:14:10Z INFO - [4/foo] -triggered off ['2/start']
-2016-12-16T12:14:12Z INFO - [5/foo] -triggered off ['2/start']
+Initial point: 1
+Final point: 5
+2/start -triggered off []
+1/foo -triggered off ['2/start']
+2/foo -triggered off ['2/start']
+3/foo -triggered off ['2/start']
+4/foo -triggered off ['2/start']
+5/foo -triggered off ['2/start']

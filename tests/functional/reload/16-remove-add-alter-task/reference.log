@@ -1,5 +1,5 @@
-2016-05-03T09:57:39Z INFO - Initial point: 1
-2016-05-03T09:57:39Z INFO - Final point: 1
-2016-05-03T09:57:39Z INFO - [1/reloader] -triggered off []
-2016-05-03T09:57:39Z INFO - [1/inter] -triggered off ['1/reloader']
-2016-05-03T09:58:24Z INFO - [1/remove_add_alter_me] -triggered off ['1/inter']
+Initial point: 1
+Final point: 1
+1/reloader -triggered off []
+1/inter -triggered off ['1/reloader']
+1/remove_add_alter_me -triggered off ['1/inter']

@@ -47,6 +47,47 @@ def test_point_match(
 
 
 @pytest.mark.parametrize(
+    'itask_point, offset_str, expected',
+    [
+        param(  # date -u -d 19700101 "+%s"
+            ISO8601Point('19700101T00Z'), 'PT0M', 0, id="zero epoch"
+        ),
+        param(  # 2025 is not a leap year: Jan 1 + P2M = P59D
+            ISO8601Point('20250101T00Z'), 'PT0M', 1735689600, id="nonleap base"
+        ),
+        param(
+            ISO8601Point('20250101T00Z'), 'P59D', 1740787200, id="nonleap off1"
+        ),
+        param(
+            ISO8601Point('20250101T00Z'), 'P2M', 1740787200, id="nonleap off2"
+        ),
+        param(  # 2024 is a leap year: Jan 1 + P2M = P60D
+            ISO8601Point('20240101T00Z'), 'PT0M', 1704067200, id="leap base"
+        ),
+        param(
+            ISO8601Point('20240101T00Z'), 'P60D', 1709251200, id="leap off1"
+        ),
+        param(
+            ISO8601Point('20240101T00Z'), 'P2M', 1709251200, id="leap off2"
+        ),
+    ]
+)
+def test_get_clock_trigger_time(
+    itask_point: PointBase,
+    offset_str: str,
+    expected: int,
+    set_cycling_type: Callable
+) -> None:
+    """Test get_clock_trigger_time() for exact and inexact offsets."""
+    set_cycling_type(itask_point.TYPE)
+    mock_itask = Mock(
+        point=itask_point.standardise(),
+        clock_trigger_time=None
+    )
+    assert TaskProxy.get_clock_trigger_time(mock_itask, offset_str) == expected
+
+
+@pytest.mark.parametrize(
     'name_str, expected',
     [('beer', True),
      ('FAM', True),

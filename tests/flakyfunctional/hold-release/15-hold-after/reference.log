@@ -1,8 +1,8 @@
 Initial point: 20140101T0000Z
 Final point: 20140104T0000Z
-[20140101T0000Z/holdafter] -triggered off []
-[20140101T0000Z/stopper] -triggered off []
-[20140101T0000Z/foo] -triggered off ['20131231T1200Z/foo', '20140101T0000Z/holdafter']
-[20140101T1200Z/foo] -triggered off ['20140101T0000Z/foo']
-[20140101T0000Z/bar] -triggered off ['20140101T0000Z/foo']
-[20140101T1200Z/bar] -triggered off ['20140101T1200Z/foo']
+20140101T0000Z/holdafter -triggered off []
+20140101T0000Z/stopper -triggered off []
+20140101T0000Z/foo -triggered off ['20131231T1200Z/foo', '20140101T0000Z/holdafter']
+20140101T1200Z/foo -triggered off ['20140101T0000Z/foo']
+20140101T0000Z/bar -triggered off ['20140101T0000Z/foo']
+20140101T1200Z/bar -triggered off ['20140101T1200Z/foo']

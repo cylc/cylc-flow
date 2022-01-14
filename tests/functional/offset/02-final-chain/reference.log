@@ -1,8 +1,8 @@
 Initial point: 20100101T0000+01
 Final point: 20100102T0600+01
-[20100101T0000+01/foo] -triggered off ['20091231T1800+01/foo']
-[20100101T0600+01/foo] -triggered off ['20100101T0000+01/foo']
-[20100101T1200+01/foo] -triggered off ['20100101T0600+01/foo']
-[20100101T1800+01/foo] -triggered off ['20100101T1200+01/foo']
-[20100102T0000+01/foo] -triggered off ['20100101T1800+01/foo']
-[20100102T0600+01/foo] -triggered off ['20100102T0000+01/foo']
+20100101T0000+01/foo -triggered off ['20091231T1800+01/foo']
+20100101T0600+01/foo -triggered off ['20100101T0000+01/foo']
+20100101T1200+01/foo -triggered off ['20100101T0600+01/foo']
+20100101T1800+01/foo -triggered off ['20100101T1200+01/foo']
+20100102T0000+01/foo -triggered off ['20100101T1800+01/foo']
+20100102T0600+01/foo -triggered off ['20100102T0000+01/foo']

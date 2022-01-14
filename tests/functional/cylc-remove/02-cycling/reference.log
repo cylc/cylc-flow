@@ -1,11 +1,11 @@
-2016-07-07T22:17:12Z INFO - Run mode: live
-2016-07-07T22:17:12Z INFO - Initial point: 2020
-2016-07-07T22:17:12Z INFO - Final point: 2021
-2016-07-07T22:17:12Z INFO - Cold Start 2020
-2016-07-07T22:17:12Z INFO - [2020/remover] -triggered off []
-2016-07-07T22:17:12Z INFO - [2020/foo] -triggered off []
-2016-07-07T22:17:14Z INFO - [2021/foo] -triggered off []
-2016-07-07T22:17:29Z INFO - [2020/bar] -triggered off ['2020/foo']
-2016-07-07T22:17:29Z INFO - [2021/bar] -triggered off ['2021/foo']
-2016-07-07T22:17:29Z INFO - [2020/baz] -triggered off ['2020/foo']
-2016-07-07T22:17:29Z INFO - [2021/baz] -triggered off ['2021/foo']
+Run mode: live
+Initial point: 2020
+Final point: 2021
+Cold Start 2020
+2020/remover -triggered off []
+2020/foo -triggered off []
+2021/foo -triggered off []
+2020/bar -triggered off ['2020/foo']
+2021/bar -triggered off ['2021/foo']
+2020/baz -triggered off ['2020/foo']
+2021/baz -triggered off ['2021/foo']
