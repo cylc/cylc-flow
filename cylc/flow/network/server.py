@@ -101,8 +101,9 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             A list of Cylc IDs relative to the workflow.
 
             * ``1`` - The cycle point "1".
-            * ``1/foo` - The task "foo" in the cycle "1".
-            * ``1/foo/01` - The first job of the task "foo" from the cycle "1".
+            * ``1/foo`` - The task "foo" in the cycle "1".
+            * ``1/foo/01`` - The first job of the task "foo" from the cycle
+              "1".
 
             Glob-like patterns may be used to match multiple items e.g.
 
