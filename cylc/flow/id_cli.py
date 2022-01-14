@@ -222,6 +222,22 @@ async def parse_ids_async(
             Specify the maximum number of tasks permitted to be specified
             in the ids.
 
+    Returns:
+        With src=True":
+            (workflows, flow_file_path)
+        Else:
+            (workflow, multi_mode)
+        Where:
+            workflows:
+                Dictionary containing workflow ID strings against lists of
+                relative tokens specified on that workflow.
+                {workflow_id: [relative_tokens]}
+            flow_file_path:
+                Path to the flow.cylc (or suite.rc in Cylc 7 compat mode)
+            multi_mode:
+                True if multiple workflows selected or if globs were provided
+                in the IDs.
+
     """
     if constraint not in {'tasks', 'workflows', 'mixed'}:
         raise ValueError(f'Invalid constraint: {constraint}')
