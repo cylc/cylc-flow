@@ -20,8 +20,10 @@ from pathlib import Path
 from shlex import split
 from subprocess import run
 
+import cylc.flow
+from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.resources import (
-    resource_names, list_resources, get_resources)
+    resource_names, list_resources, get_resources, extract_tutorials)
 
 
 def test_list_resources():
@@ -60,3 +62,20 @@ def test_cli(tmpdir):
         raise AssertionError(
             f'{result.stderr}'
         )
+
+
+def test_extract_tutorials(monkeypatch, tmp_path, caplog):
+    test_dest = tmp_path/ 'destination'
+    class MockGlobalConfig:
+        def get(*args):
+            return [str(test_dest)]
+
+    monkeypatch.setattr(GlobalConfig, '_DEFAULT', MockGlobalConfig)
+    extract_tutorials()
+    glob_dest = test_dest.glob('*/*/*')
+    glob_src =  (
+        Path(cylc.flow.__file__).parent / 'etc/tutorial'
+    ).rglob('*/*/*')
+    assert list(glob_dest).sort() == list(glob_src).sort()
+    extract_tutorials()
+    assert 'Replacing' in caplog.records[0].msg

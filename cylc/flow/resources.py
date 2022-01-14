@@ -19,9 +19,19 @@
 Uses the pkg_resources API in case the package is a compressed archive.
 """
 
+
+import shutil
 from pathlib import Path
 import pkg_resources as pr
+
+import cylc.flow
 from cylc.flow import LOG
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.option_parsers import CylcOption
+from cylc.flow.wallclock import get_current_time_string
+
+
+TUTORIAL_SRC = 'etc/tutorial'
 
 
 # {resource: brief description}
@@ -61,7 +71,10 @@ def get_resources(target_dir, resources=None):
     if resources is None:
         resources = resource_names
     for resource in resources:
-        if resource not in resource_names:
+        if (
+            resource not in resource_names
+            and resource != 'etc/tutorial'
+        ):
             raise ValueError(f"Invalid resource name {resource}")
         path = Path(target_dir) / Path(resource).name
         LOG.info(f"Extracting {resource} to {path}")
@@ -72,3 +85,20 @@ def get_resources(target_dir, resources=None):
         res = pr.resource_string('cylc.flow', resource)
         with open(path, 'wb') as h:
             h.write(res)
+
+
+def extract_tutorials():
+    """Extract tutorial workflows to Cylc Source Directory."""
+    src = Path(cylc.flow.__file__).parent / 'etc/tutorial'
+    dest = glbl_cfg().get(['install', 'source dirs'])[0]
+    dest = Path(dest).expanduser() / 'cylc-tutorials'
+    if dest.exists():
+        # If destination exists timestamp it and replace it.
+        tstamp = get_current_time_string(use_basic_format=True)
+        backup = dest / f'{tstamp}.cylc-tutorials'
+        shutil.copytree(dest, backup)
+        shutil.rmtree(dest)
+        LOG.warning(
+            'Replacing an existing cylc-tutorials folder which will'
+            f' be copied to {backup}')
+    shutil.copytree(src, dest)

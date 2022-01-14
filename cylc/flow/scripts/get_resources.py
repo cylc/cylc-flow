@@ -16,12 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc get-resources [OPTIONS] ARGS
 
-Extract resources from the cylc.flow package."""
+Extract resources from the cylc.flow package.
+"""
 
 import sys
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.resources import get_resources, list_resources
+from cylc.flow.resources import (
+    get_resources, list_resources, extract_tutorials
+)
 from cylc.flow.terminal import cli_function
 
 
@@ -38,7 +41,14 @@ def get_option_parser():
         '--list',
         help="List available package resources.",
         default=False,
-        action='store_true'
+        action='store_true',
+    )
+
+    parser.add_option(
+        '--tutorials',
+        help="Extract tutorials workflows to ~/cylc-src",
+        default=False,
+        action='store_true',
     )
 
     return parser
@@ -48,6 +58,9 @@ def get_option_parser():
 def main(parser, opts, *args):
     if opts.list:
         print('\n'.join(list_resources()))
+        sys.exit(0)
+    elif opts.tutorials:
+        extract_tutorials()
         sys.exit(0)
     elif not args:
         print(parser.usage)
