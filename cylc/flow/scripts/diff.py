@@ -118,8 +118,8 @@ def get_option_parser():
     parser = COP(
         __doc__, jset=True, prep=True, icp=True,
         argdoc=[
-            ('ID_1', 'Workflow ID or path to source'),
-            ('ID_2', 'Workflow ID or path to source')
+            ('WORKFLOW_ID_1', 'Workflow ID or path to source'),
+            ('WORKFLOW_ID_2', 'Workflow ID or path to source')
         ]
     )
 

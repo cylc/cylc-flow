@@ -139,9 +139,11 @@ class StopPoller(Poller):
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True,
+        __doc__,
+        comms=True,
+        multiworkflow=True,
         argdoc=[
-            ('ID [ID ...]', 'Workflow ID(s), cycles or tasks'),
+            ('ID [ID ...]', 'Workflow/Cycle/Task ID(s)'),
         ],
     )
 

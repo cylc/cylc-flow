@@ -25,9 +25,9 @@ a message to the Cylc scheduler. Cylc can use this
 message as a signal that an external prerequisite has
 been satisfied and trigger the task accordingly.
 
-The ID argument should be unique to each external
+The WORKFLOW_ID argument should be unique to each external
 trigger event. When an incoming message satisfies
-a task's external trigger the message ID is broadcast
+a task's external trigger the message TRIGGER_ID is broadcast
 to all downstream tasks in the cycle point as
 ``$CYLC_EXT_TRIGGER_ID``.  Tasks can use
 ``$CYLC_EXT_TRIGGER_ID``, for example,  to
@@ -81,9 +81,9 @@ def get_option_parser():
         __doc__,
         comms=True,
         argdoc=[
-            ("WORKFLOW", "Workflow ID"),
+            ("WORKFLOW_ID", "Workflow ID"),
             ("MSG", "External trigger message"),
-            ("ID", "Unique trigger ID"),
+            ("TRIGGER_ID", "Unique trigger ID"),
         ],
     )
 

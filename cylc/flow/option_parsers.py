@@ -22,6 +22,7 @@ import os
 import re
 from ansimarkup import parse as cparse
 import sys
+from textwrap import dedent
 from typing import Any, Dict, Optional, List, Tuple
 
 from cylc.flow import LOG, RSYNC_LOG
@@ -121,45 +122,41 @@ class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
 
-    # TODO v
+    MULTITASK_USAGE = cparse(dedent('''
+        This command can operate on multiple tasks, globs and selectors may
+        be used:
+            Multiple Tasks:
+                <dim># Operate on two tasks</dim>
+                workflow //cycle-1/task-1 //cycle-2/task-2
 
-    # Shared text for commands which can, & cannot, glob on cycle points:
-    MULTI_USAGE_TEMPLATE = """{0}
+            Globs (note: globs should be quoted and only match active tasks):
+                <dim># Match any the active task "foo" in all cycles</dim>
+                '//*/foo'
 
-For example, to match:{1}"""
-    # Help text either including or excluding globbing on cycle points:
-    WITH_CYCLE_GLOBS = """
-One or more TASK_GLOBs can be given to match task instances in the current task
-pool, by task or family name pattern, cycle point pattern, and task state.
-* [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
-* [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
-* TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
-* FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]"""
-    WITHOUT_CYCLE_GLOBS = """
-TASK_GLOB matches task or family names at a given cycle point.
-* CYCLE-POINT/TASK-NAME-GLOB
-* CYCLE-POINT/FAMILY-NAME-GLOB
-* TASK-NAME-GLOB.CYCLE-POINT
-* FAMILY-NAME-GLOB.CYCLE-POINT"""
-    WITH_CYCLE_EXAMPLES = """
-* all tasks in a cycle: '20200202T0000Z/*' or '*.20200202T0000Z'
-* all tasks in the submitted status: ':submitted'
-* running 'foo*' tasks in 0000Z cycles: 'foo*.*0000Z:running' or
-  '*0000Z/foo*:running'
-* waiting tasks in 'BAR' family: '*/BAR:waiting' or 'BAR.*:waiting'
-* submitted tasks in 'BAR' or 'BAZ' families: '*/BA[RZ]:submitted' or
-  'BA[RZ].*:submitted'"""
-    WITHOUT_CYCLE_EXAMPLES = """
-* all tasks: '20200202T0000Z/*' or '*.20200202T0000Z'
-* all tasks named model_N for some character N: '20200202T0000Z/model_?' or
-  'model_?.20200202T0000Z'
-* all tasks in 'BAR' family: '20200202T0000Z/BAR' or 'BAR.20200202T0000Z'
-* all tasks in 'BAR' or 'BAZ' families: '20200202T0000Z/BA[RZ]' or
-  'BA[RZ].20200202T0000Z'"""
-    MULTITASKCYCLE_USAGE = MULTI_USAGE_TEMPLATE.format(
-        WITH_CYCLE_GLOBS, WITH_CYCLE_EXAMPLES)
-    MULTITASK_USAGE = MULTI_USAGE_TEMPLATE.format(
-        WITHOUT_CYCLE_GLOBS, WITHOUT_CYCLE_EXAMPLES)
+                <dim># Match the tasks "foo-1" and "foo-2"</dim>
+                '//*/foo-[12]'
+
+            Selectors (note: selectors only match active tasks):
+                <dim># match all failed tasks in cycle "1"</dim>
+                //1:failed
+
+            See `cylc help id` for more details.
+    '''))
+    MULTIWORKFLOW_USAGE = cparse(dedent('''
+        This command can operate on multiple workflows, globs may also be used:
+            Multiple Workflows:
+                <dim># Operate on two workflows</dim>
+                workflow-1 workflow-2
+
+            Globs (note: globs should be quoted):
+                <dim># Match all workflows</dim>
+                '*'
+
+                <dim># Match the workflows foo-1, foo-2</dim>
+                'foo-[12]'
+
+            See `cylc help id` for more details.
+    '''))
 
     def __init__(
         self,
@@ -168,7 +165,7 @@ TASK_GLOB matches task or family names at a given cycle point.
         comms: bool = False,
         jset: bool = False,
         multitask: bool = False,
-        multitask_nocycles: bool = False,
+        multiworkflow: bool = False,
         prep: bool = False,
         auto_add: bool = True,
         icp: bool = False,
@@ -191,10 +188,11 @@ TASK_GLOB matches task or family names at a given cycle point.
             # (This catches both '--color=never' and '--color never'.)
             usage = format_shell_examples(usage)
 
+        if multiworkflow:
+            usage += self.MULTIWORKFLOW_USAGE
         if multitask:
-            usage += self.MULTITASKCYCLE_USAGE
-        elif multitask_nocycles:  # glob on task names but not cycle points
             usage += self.MULTITASK_USAGE
+
         args = ""
         self.n_compulsory_args = 0
         self.n_optional_args = 0

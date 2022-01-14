@@ -92,7 +92,7 @@ def get_option_parser():
         comms=True,
         argdoc=[
             # TODO
-            ('[WORKFLOW]', 'Workflow ID'),
+            ('[WORKFLOW_ID]', 'Workflow ID'),
             ('[TASK-JOB]', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM'),
             ('[[SEVERITY:]MESSAGE ...]', 'Messages')])
     parser.add_option(

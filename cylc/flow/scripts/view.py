@@ -56,7 +56,7 @@ def get_option_parser():
         __doc__,
         jset=True,
         prep=True,
-        argdoc=[('WORKFLOW', 'Workflow ID or path to source')],
+        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
     )
 
     parser.add_option(

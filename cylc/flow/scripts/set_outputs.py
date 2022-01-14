@@ -29,19 +29,18 @@ otherwise no reflow will occur.
 
 Examples:
   # For example, for the following dependency graph:
-
   R1 = '''
      a => b & c => d
      foo:x => bar => baz
   '''
 
-  # spawn b.1 and c.1, but d.1 will not subsequently run
+  # spawn 1/b and 1/c, but 1/d will not subsequently run
   $ cylc set-outputs my_flow//1/a
 
-  # spawn b.1 and c.1 as flow 2, followed by d.1
+  # spawn 1/b and 1/c as flow 2, followed by 1/d
   $ cylc set-outputs --flow=2 my_flow//1/a
 
-  # spawn bar.1 as flow 3, followed by baz.1
+  # spawn 1/bar as flow 3, followed by 1/baz
   $ cylc set-outputs --flow=3 --output=x my_flow//1/foo
 
 Use --output multiple times to spawn off of several outputs at once.
@@ -79,7 +78,8 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
-        multitask_nocycles=True,
+        multitask=True,
+        multiworkflow=True,
         argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
     )
 

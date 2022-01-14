@@ -64,10 +64,10 @@ Usage:
 Command Abbreviation:
   # Commands can be abbreviated as long as there is no ambiguity in
   # the abbreviated command:
-  $ cylc trigger WORKFLOW TASK    # trigger TASK in WORKFLOW
-  $ cylc trig WORKFLOW TASK       # ditto
-  $ cylc tr WORKFLOW TASK         # ditto
-  $ cylc t                        # Error: ambiguous command
+  $ cylc trigger WORKFLOW//CYCLE/TASK    # trigger TASK in WORKFLOW
+  $ cylc trig WORKFLOW//CYCLE/TASK       # ditto
+  $ cylc tr WORKFLOW//CYCLE/TASK         # ditto
+  $ cylc t                               # Error: ambiguous command
 
 Cylc IDs:
   Cylc IDs take the form:

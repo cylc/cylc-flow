@@ -53,7 +53,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('ID', 'Workflow ID')
+            ('WORKFLOW_ID', 'Workflow ID')
         ],
         # auto_add=False,  NOTE: at present auto_add can not be turned off
         color=False

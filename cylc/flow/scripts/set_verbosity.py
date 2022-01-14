@@ -52,10 +52,12 @@ mutation (
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True,
+        __doc__,
+        comms=True,
+        multiworkflow=True,
         argdoc=[
             ('LEVEL', ', '.join(LOG_LEVELS.keys())),
-            ('ID [ID ...]', 'Workflow ID(s)'),
+            ('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow ID(s)'),
         ]
     )
 

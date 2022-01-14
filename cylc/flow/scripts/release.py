@@ -35,9 +35,6 @@ Examples:
 
 Held tasks do not submit their jobs even if ready to run.
 
-Note: globs and ":<state>" selectors will only match active tasks;
-to release future tasks, use exact identifiers e.g. "1234/mytask".
-
 See also 'cylc hold'.
 """
 
@@ -86,6 +83,7 @@ def get_option_parser() -> COP:
         __doc__,
         comms=True,
         multitask=True,
+        multiworkflow=True,
         argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
     )
 

@@ -29,9 +29,6 @@ Examples:
   # start a new "flow" by triggering 1234/foo
   $ cylc trigger --reflow my_flow//1234/foo
 
-Note: globs and ":<state>" selectors will only match active tasks;
-to release future tasks, use exact identifiers e.g. "1234/mytask".
-
 Note: waiting tasks that are queue-limited will be queued if triggered, to
 submit as normal when released by the queue; queued tasks will submit
 immediately if triggered, even if that violates the queue limit (so you may
@@ -75,7 +72,8 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
-        multitask_nocycles=True,
+        multitask=True,
+        multiworkflow=True,
         argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
     )
 

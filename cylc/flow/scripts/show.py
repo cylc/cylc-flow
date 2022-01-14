@@ -148,8 +148,10 @@ def flatten_data(data, flat_data=None):
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
-        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+        __doc__,
+        comms=True,
+        multitask=True,
+        argdoc=[('ID [ID ...]', 'Workflow/Cycle/Family/Task ID(s)')],
     )
 
     parser.add_option(
@@ -171,6 +173,7 @@ def get_option_parser():
         action="append",
         default=None,
         dest='task_defs',
+        metavar='TASK_NAME',
         help="View metadata for a task definition (can be used multiple times)"
     )
 

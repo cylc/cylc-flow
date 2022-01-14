@@ -22,17 +22,17 @@ Print information about a running workflow.
 
 For command line monitoring:
 * `cylc tui`
-* `watch cylc dump WORKFLOW` works for small simple workflows
+* `watch cylc dump WORKFLOW_ID` works for small simple workflows
 
 For more information about a specific task, such as the current state of
 its prerequisites and outputs, see 'cylc show'.
 
 Examples:
   # Display the state of all running tasks, sorted by cycle point:
-  $ cylc dump --tasks --sort WORKFLOW | grep running
+  $ cylc dump --tasks --sort WORKFLOW_ID | grep running
 
   # Display the state of all tasks in a particular cycle point:
-  $ cylc dump -t WORKFLOW | grep 2010082406"""
+  $ cylc dump -t WORKFLOW_ID | grep 2010082406"""
 
 from graphene.utils.str_converters import to_snake_case
 import json
@@ -147,7 +147,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         comms=True,
-        argdoc=[('ID', 'Workflow ID')],
+        argdoc=[('WORKFLOW_ID', 'Workflow ID')],
     )
     parser.add_option(
         "-g", "--global", help="Global information only.",

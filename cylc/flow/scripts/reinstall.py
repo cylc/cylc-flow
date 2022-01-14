@@ -58,7 +58,7 @@ if TYPE_CHECKING:
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, argdoc=[('[WORKFLOW]', 'Workflow ID')]
+        __doc__, comms=True, argdoc=[('[WORKFLOW_ID]', 'Workflow ID')]
     )
 
     parser.add_cylc_rose_options()

@@ -62,7 +62,8 @@ def get_option_parser():
         __doc__,
         comms=True,
         multitask=True,
-        argdoc=[('ID [ID ...]', 'Workflow ID(s)')],
+        multiworkflow=True,
+        argdoc=[('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow ID(s)')],
     )
     return parser
 
