@@ -64,13 +64,15 @@ def test_cli(tmpdir):
         )
 
 
-def test_extract_tutorials(monkeypatch, tmp_path, caplog):
+def test_extract_tutorials(mock_glbl_cfg, tmp_path, caplog):
     test_dest = tmp_path/ 'destination'
-    class MockGlobalConfig:
-        def get(*args):
-            return [str(test_dest)]
-
-    monkeypatch.setattr(GlobalConfig, '_DEFAULT', MockGlobalConfig)
+    mock_glbl_cfg(
+        'cylc.flow.resources.glbl_cfg',
+        f'''
+        [install]\n
+            source dirs = {test_dest}
+        '''
+    )
     extract_tutorials()
     glob_dest = test_dest.glob('*/*/*')
     glob_src =  (
