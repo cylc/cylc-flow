@@ -133,9 +133,8 @@ class CylcHelpFormatter(IndentedHelpFormatter):
     def _format(self, text):
         """Format help (usage) text on the fly to handle coloring.
 
-        This has to be done here because help is printed to the terminal before
-        command line parsing is completed, and color initialization for general
-        command output is done after that to make use of parsed options.
+        Help is printed to the terminal before color initialization for general
+        command output.
 
         If coloring is wanted:
           - Add color tags to shell examples
@@ -143,22 +142,11 @@ class CylcHelpFormatter(IndentedHelpFormatter):
           - Strip any hardwired color tags
 
         """
-        # Crudely parse sys.argv for --color options here (see docstring above;
-        # only default option values are available here in self.parser.values).
-        # Join the command line with '=' to unify "--opt=val" and "--opt val":
-        joined_args = '='.join(sys.argv[2:])
         use_color = (
-            '--color=always' in joined_args
-            or
-            '--colour=always' in joined_args
+            self.parser.values.color == "always"
             or (
-                supports_color()
-                and not
-                (
-                    '--color=never' in joined_args
-                    or
-                    '--colour=never' in joined_args
-                )
+                self.parser.values.color == "auto"
+                and supports_color()
             )
         )
         if use_color:
