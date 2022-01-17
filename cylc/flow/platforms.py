@@ -65,14 +65,18 @@ def log_platform_event(
 
 @overload
 def get_platform(
-    task_conf: Union[str, None] = None, task_id: str = UNKNOWN_TASK
+    task_conf: Union[str, None] = None,
+    task_id: str = UNKNOWN_TASK,
+    bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     ...
 
 
 @overload
 def get_platform(
-    task_conf: Dict[str, Any], task_id: str = UNKNOWN_TASK
+    task_conf: Dict[str, Any],
+    task_id: str = UNKNOWN_TASK,
+    bad_hosts: Optional[Set[str]] = None
 ) -> Optional[Dict[str, Any]]:
     ...
 

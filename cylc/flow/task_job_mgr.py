@@ -287,16 +287,18 @@ class TaskJobManager:
 
                     # Get another platform, if task config platform is a group
                     use_next_platform_in_group = False
-                    try:
-                        platform = get_platform(
-                            itask.tdef.rtconfig['platform'],
-                            bad_hosts=self.bad_hosts
-                        )
-                        # If were able to select a new platform;
-                        if platform and platform != itask.platform:
-                            use_next_platform_in_group = True
-                    except NoPlatformsError:
-                        use_next_platform_in_group = False
+                    if itask.tdef.rtconfig['platform']:
+                        try:
+                            platform = get_platform(
+                                itask.tdef.rtconfig['platform'],
+                                bad_hosts=self.bad_hosts
+                            )
+                        except NoPlatformsError:
+                            pass
+                        else:
+                            # If were able to select a new platform;
+                            if platform and platform != itask.platform:
+                                use_next_platform_in_group = True
 
                     if use_next_platform_in_group:
                         # store the previous platform's hosts so that when
@@ -317,10 +319,8 @@ class TaskJobManager:
                         # group selected in task config are exhausted we clear
                         # bad_hosts for all the hosts we have
                         # tried for this platform or group.
-                        self.bad_hosts = (
-                            self.bad_hosts - set(itask.platform['hosts']))
-                        self.bad_hosts = (
-                            self.bad_hosts - self.bad_hosts_to_clear)
+                        self.bad_hosts -= set(itask.platform['hosts'])
+                        self.bad_hosts -= self.bad_hosts_to_clear
                         self.bad_hosts_to_clear.clear()
                         LOG.critical(
                             PlatformError(
@@ -339,7 +339,7 @@ class TaskJobManager:
             install_target = get_install_target_from_platform(platform)
             ri_map = self.task_remote_mgr.remote_init_map
 
-            if (ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE):
+            if ri_map.get(install_target) != REMOTE_FILE_INSTALL_DONE:
                 if install_target == get_localhost_install_target():
                     # Skip init and file install for localhost.
                     LOG.debug(f"REMOTE INIT NOT REQUIRED for {install_target}")
@@ -358,12 +358,12 @@ class TaskJobManager:
                         )
                     continue
 
-                elif (ri_map[install_target] == REMOTE_INIT_DONE):
+                elif ri_map[install_target] == REMOTE_INIT_DONE:
                     # Already done remote init so move on to file install
                     self.task_remote_mgr.file_install(platform)
                     continue
 
-                elif (ri_map[install_target] in self.IN_PROGRESS):
+                elif ri_map[install_target] in self.IN_PROGRESS:
                     # Remote init or file install in progress.
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
@@ -372,7 +372,7 @@ class TaskJobManager:
                             msg
                         )
                     continue
-                elif (ri_map[install_target] == REMOTE_INIT_255):
+                elif ri_map[install_target] == REMOTE_INIT_255:
                     # Remote init previously failed becase a host was
                     # unreachable, so start it again.
                     del ri_map[install_target]
@@ -434,8 +434,7 @@ class TaskJobManager:
 
             if ri_map[install_target] == REMOTE_FILE_INSTALL_255:
                 del ri_map[install_target]
-                self.task_remote_mgr.file_install(
-                    platform)
+                self.task_remote_mgr.file_install(platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
                         itask.tokens.duplicate(
@@ -445,12 +444,13 @@ class TaskJobManager:
                     )
                 continue
 
-            if (ri_map[install_target] in [REMOTE_INIT_FAILED,
-                                           REMOTE_FILE_INSTALL_FAILED]):
+            if ri_map[install_target] in {
+                REMOTE_INIT_FAILED, REMOTE_FILE_INSTALL_FAILED
+            }:
                 # Remote init or install failed. Set submit-failed for all
                 # affected tasks and remove target from remote init map
                 # - this enables new tasks to re-initialise that target
-                init_error = (ri_map[install_target])
+                init_error = ri_map[install_target]
                 del ri_map[install_target]
                 for itask in itasks:
                     itask.waiting_on_job_prep = False
@@ -1162,7 +1162,7 @@ class TaskJobManager:
                 rtconfig['remote']['host'] = host_n
 
             try:
-                platform = get_platform(rtconfig, self.bad_hosts)
+                platform = get_platform(rtconfig, bad_hosts=self.bad_hosts)
 
             except PlatformLookupError as exc:
                 # Submit number not yet incremented
