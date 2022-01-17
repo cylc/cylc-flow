@@ -1,7 +1,7 @@
-2013/11/05 15:57:18 INFO - Initial point: 1
-2013/11/05 15:57:18 INFO - Final point: 1
-2013/11/05 15:57:18 DEBUG - a.1 -triggered off []
-2013/11/05 15:57:18 DEBUG - c.1 -triggered off []
-2013/11/05 15:57:18 DEBUG - b.1 -triggered off []
-2013/11/05 15:57:22 DEBUG - foo.1 -triggered off ['b.1']
-2013/11/05 15:57:22 DEBUG - handled.1 -triggered off ['a.1', 'c.1']
+Initial point: 1
+Final point: 1
+1/a -triggered off []
+1/c -triggered off []
+1/b -triggered off []
+1/foo -triggered off ['1/b']
+1/handled -triggered off ['1/a', '1/c']

@@ -4,7 +4,7 @@
         stall timeout = PT0S
         abort on inactivity timeout = True
         inactivity timeout = PT3M
-        expected task failures = foo.1
+        expected task failures = 1/foo
 [scheduling]
     [[graph]]
         R1 = "foo:submit-fail => !foo"

@@ -42,14 +42,14 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 sed -n 's/^.*\(\[jobs-poll err\]\) \(Connection refused\).*$/\1\n\2/p;
         s/^.*\(\[jobs-poll err\]\).*$/\1/p;
         s/^.*\(Connection refused\).*$/\1/p;
-        s/^.*\(INFO - \[t1.1\] status=running: (polled)started\).*$/\1/p' \
+        s/^.*\(INFO - \[1/t1\] status=running: (polled)started\).*$/\1/p' \
     "${WORKFLOW_RUN_DIR}/log/workflow/log" >'sed-log.out'
 contains_ok 'sed-log.out' <<'__LOG__'
 [jobs-poll err]
 Connection refused
 __LOG__
 contains_ok 'sed-log.out' <<'__LOG__'
-INFO - [t1.1] status=running: (polled)started
+INFO - [1/t1] status=running: (polled)started
 __LOG__
 
 purge

@@ -28,7 +28,7 @@ LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 run_ok "${TEST_NAME_BASE}-log-1" \
     grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete job runner info' "${LOG}"
 run_ok "${TEST_NAME_BASE}-log-2" \
-    grep -E 't1\.1 running .*\(polled\)failed' "${LOG}"
+    grep -E '1/t1 running .*\(polled\)failed' "${LOG}"
 
 purge
 exit

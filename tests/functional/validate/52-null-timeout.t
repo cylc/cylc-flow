@@ -31,6 +31,6 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
             execution timeout =
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_ok "${TEST_NAME_BASE}" cylc validate .
 
 exit

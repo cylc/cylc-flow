@@ -1,10 +1,10 @@
 Initial point: 20200101T0000Z
 Final point: 20250101T0000Z
-broadcast.20200101T0000Z -triggered off []
-broadcast.20250101T0000Z -triggered off []
-t1.20200101T0000Z -triggered off ['broadcast.20200101T0000Z']
-t1.20250101T0000Z -triggered off ['broadcast.20250101T0000Z']
-broadcast-expire.20200101T0000Z -triggered off ['t1.20200101T0000Z', 't2.20150101T0000Z']
-t2.20200101T0000Z -triggered off ['broadcast-expire.20200101T0000Z']
-broadcast-expire.20250101T0000Z -triggered off ['t1.20250101T0000Z', 't2.20200101T0000Z']
-t2.20250101T0000Z -triggered off ['broadcast-expire.20250101T0000Z']
+20200101T0000Z/broadcast -triggered off []
+20250101T0000Z/broadcast -triggered off []
+20200101T0000Z/t1 -triggered off ['20200101T0000Z/broadcast']
+20250101T0000Z/t1 -triggered off ['20250101T0000Z/broadcast']
+20200101T0000Z/broadcast-expire -triggered off ['20150101T0000Z/t2', '20200101T0000Z/t1']
+20200101T0000Z/t2 -triggered off ['20200101T0000Z/broadcast-expire']
+20250101T0000Z/broadcast-expire -triggered off ['20200101T0000Z/t2', '20250101T0000Z/t1']
+20250101T0000Z/t2 -triggered off ['20250101T0000Z/broadcast-expire']

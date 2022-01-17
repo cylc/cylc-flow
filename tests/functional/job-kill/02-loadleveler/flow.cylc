@@ -2,7 +2,7 @@
 
 [scheduler]
     [[events]]
-        expected task failures = t1.1
+        expected task failures = 1/t1
 
 [scheduling]
     [[graph]]
@@ -22,6 +22,6 @@
             wall_clock_limit=180,120
     [[stop]]
         script="""
-            cylc kill "$CYLC_WORKFLOW_ID" 't1'
+            cylc kill "$CYLC_WORKFLOW_ID//*/t1"
             cylc stop "$CYLC_WORKFLOW_ID"
         """

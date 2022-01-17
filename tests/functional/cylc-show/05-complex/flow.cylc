@@ -1,20 +1,23 @@
 #!Jinja2
+
 [scheduler]
     UTC mode = True
+
 [scheduling]
     initial cycle point = 2000
     final cycle point = +P1D
     runahead limit = P2
     [[graph]]
         T00 = a & b & (c | (d & e)) & f[-P1D] => f
+
 [runtime]
     [[root]]
         script = true
     [[a, b, c, d, e]]
     [[f]]
         script = """
-# show myself.
-sleep 4
-cylc show ${CYLC_WORKFLOW_ID} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
-cylc show --list-prereqs ${CYLC_WORKFLOW_ID} f.${CYLC_TASK_CYCLE_POINT} >>{{ TEST_OUTPUT_PATH }}
-"""
+            # show myself.
+            sleep 4
+            cylc show "${CYLC_WORKFLOW_ID}//${CYLC_TASK_CYCLE_POINT}/f" >>{{ TEST_OUTPUT_PATH }}
+            cylc show --list-prereqs "${CYLC_WORKFLOW_ID}//${CYLC_TASK_CYCLE_POINT}/f" >>{{ TEST_OUTPUT_PATH }}
+        """

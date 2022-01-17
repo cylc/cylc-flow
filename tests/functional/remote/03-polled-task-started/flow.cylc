@@ -2,7 +2,7 @@
 [scheduler]
     allow implicit tasks = True
     [[events]]
-        expected task failures = janeway.1
+        expected task failures = 1/janeway
 [scheduling]
     cycling mode = integer
     [[graph]]

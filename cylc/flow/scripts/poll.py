@@ -20,24 +20,26 @@
 
 Poll (query) task jobs to verify and update their statuses.
 
-This checks the job status file and queries the
-job runner on the job platform.
+This checks the job status file and queries the job runner on the job platform.
 
-Pollable tasks are those in the n=0 window with
-an associated job ID, including incomplete finished
-tasks.
+Pollable tasks are those in the n=0 window with an associated job ID,
+including incomplete finished tasks.
 
 Examples:
-  $ cylc poll WORKFLOW  # poll all pollable tasks
-  $ cylc poll WORKFLOW TASK_GLOB  # poll multiple pollable tasks or families
+  # poll all pollable tasks in my_flow
+  $ cylc poll 'my_flow//*'
+
+  # poll specific tasks in my_flow
+  $ cylc poll my_flow// //1/a //1/b
 """
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -60,25 +62,35 @@ mutation (
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
-        argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('[TASK_GLOB ...]', 'Task matching patterns')]
+        __doc__,
+        comms=True,
+        multitask=True,
+        multiworkflow=True,
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
     )
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
-    workflow, _ = parse_reg(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+async def run(options: 'Values', workflow_id: str, *tokens_list):
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
-            'tasks': list(task_globs),
+            'wFlows': [workflow_id],
+            'tasks': [
+                tokens.relative_id
+                for tokens in tokens_list
+            ],
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids):
+    call_multi(
+        partial(run, options),
+        *ids,
+    )

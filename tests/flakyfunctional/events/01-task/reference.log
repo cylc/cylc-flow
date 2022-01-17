@@ -1,9 +1,9 @@
 Initial point: 1
 Final point: 1
-prep.1 -triggered off []
-foo.1 -triggered off ['prep.1']
-bar.1 -triggered off ['prep.1']
-baz.1 -triggered off ['prep.1']
-foo.1 -triggered off ['prep.1']
-bar.1 -triggered off ['prep.1']
-done.1 -triggered off ['bar.1', 'baz.1', 'foo.1']
+1/prep -triggered off []
+1/foo -triggered off ['1/prep']
+1/bar -triggered off ['1/prep']
+1/baz -triggered off ['1/prep']
+1/foo -triggered off ['1/prep']
+1/bar -triggered off ['1/prep']
+1/done -triggered off ['1/bar', '1/baz', '1/foo']

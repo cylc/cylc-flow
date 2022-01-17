@@ -29,7 +29,11 @@ from cylc.flow.cycling.loader import (
 )
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.scheduler import Scheduler
-from cylc.flow.workflow_files import WorkflowFiles
+from cylc.flow.workflow_files import (
+    WorkflowFiles,
+    link_runN,
+    unlink_runN,
+)
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
 
@@ -57,11 +61,11 @@ def monkeymock(monkeypatch: pytest.MonkeyPatch):
     return _monkeymock
 
 
-def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Fixture that patches the cylc-run dir to the tests's
     {tmp_path}/cylc-run, and optionally creates a workflow run dir inside.
 
-    (Actually the fixture is below, this is the re-usable meat of it.)
+    Adds the runN symlink automatically if the workflow ID ends with /run__.
 
     Args:
         reg: Workflow name.
@@ -81,6 +85,8 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         installed: bool = False,
         named: bool = False
     ) -> Path:
+        nonlocal tmp_path
+        nonlocal monkeypatch
         cylc_run_dir = tmp_path / 'cylc-run'
         cylc_run_dir.mkdir(exist_ok=True)
         monkeypatch.setattr('cylc.flow.pathutil._CYLC_RUN_DIR', cylc_run_dir)
@@ -89,6 +95,9 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / WorkflowFiles.FLOW_FILE).touch(exist_ok=True)
             (run_dir / WorkflowFiles.Service.DIRNAME).mkdir(exist_ok=True)
+            if run_dir.name.startswith('run'):
+                unlink_runN(run_dir.parent)
+                link_runN(run_dir)
             if installed:
                 if named:
                     if len(Path(reg).parts) < 2:
@@ -104,10 +113,9 @@ def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return _tmp_run_dir
 
 
-@pytest.fixture(name='tmp_run_dir')
-def tmp_run_dir_fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    # This is the actual tmp_run_dir fixture
-    return tmp_run_dir(tmp_path, monkeypatch)
+@pytest.fixture
+def tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    return _tmp_run_dir(tmp_path, monkeypatch)
 
 
 @pytest.fixture(scope='module')
@@ -115,7 +123,7 @@ def mod_tmp_run_dir(tmp_path_factory: pytest.TempPathFactory):
     """Module-scoped version of tmp_run_dir()"""
     tmp_path = tmp_path_factory.getbasetemp()
     with pytest.MonkeyPatch.context() as mp:
-        return tmp_run_dir(tmp_path, mp)
+        return _tmp_run_dir(tmp_path, mp)
 
 
 def tmp_src_dir(tmp_path: Path):

@@ -26,6 +26,7 @@ from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.loggingutil import (
     close_log,
     TimestampRotatingFileHandler,
@@ -42,7 +43,6 @@ from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts import cylc_header
 from cylc.flow.workflow_files import (
-    parse_reg,
     detect_old_contact_file,
     SUITERC_DEPR_MSG
 )
@@ -81,8 +81,8 @@ Examples:
     $ cylc play --start-cycle-point=20250101T0000Z WORKFLOW
 
     # Start a new run from specified tasks in the graph
-    $ cylc play --start-task=foo.3 WORKFLOW
-    $ cylc play -t foo.3 -t bar.3 WORKFLOW
+    $ cylc play --start-task=3/foo WORKFLOW
+    $ cylc play -t 3/foo -t 3/bar WORKFLOW
 
     # Start, restart or resume the second installed run of the workflow
     # "dogs/fido"
@@ -251,24 +251,24 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(reg, no_detach):
+def _open_logs(id_, no_detach):
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    log_path = get_workflow_run_log_name(reg)
+    log_path = get_workflow_run_log_name(id_)
     LOG.addHandler(
         TimestampRotatingFileHandler(log_path, no_detach)
     )
     # Add file installation log
-    file_install_log_path = get_workflow_file_install_log_name(reg)
+    file_install_log_path = get_workflow_file_install_log_name(id_)
     RSYNC_LOG.addHandler(
         TimestampRotatingFileHandler(file_install_log_path, no_detach)
     )
 
 
-def scheduler_cli(options: 'Values', reg: str) -> None:
+def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     """Run the workflow.
 
     This function should contain all of the command line facing
@@ -281,16 +281,25 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
     """
     # Parse workflow name but delay Cylc 7 suiter.rc deprecation warning
     # until after the start-up splash is printed.
-    reg, _ = parse_reg(reg, warn_depr=False)
+    # TODO: singleton
+    (workflow_id,), _ = parse_ids(
+        workflow_id,
+        constraint='workflows',
+        max_workflows=1,
+        # warn_depr=False,  # TODO
+    )
     try:
-        detect_old_contact_file(reg)
+        detect_old_contact_file(workflow_id)
     except ServiceFileError as exc:
         print(f"Resuming already-running workflow\n\n{exc}")
-        pclient = WorkflowRuntimeClient(reg, timeout=options.comms_timeout)
+        pclient = WorkflowRuntimeClient(
+            workflow_id,
+            timeout=options.comms_timeout,
+        )
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
             'variables': {
-                'wFlows': [reg]
+                'wFlows': [workflow_id]
             }
         }
         pclient('graphql', mutation_kwargs)
@@ -316,7 +325,7 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
     #       then shutdown async generators and closes the event loop
-    scheduler = Scheduler(reg, options)
+    scheduler = Scheduler(workflow_id, options)
     asyncio.run(
         _setup(scheduler)
     )
@@ -329,7 +338,7 @@ def scheduler_cli(options: 'Values', reg: str) -> None:
         daemonize(scheduler)
 
     # setup loggers
-    _open_logs(reg, options.no_detach)
+    _open_logs(workflow_id, options.no_detach)
 
     # run the workflow
     ret = asyncio.run(
@@ -386,6 +395,6 @@ async def _run(scheduler: Scheduler) -> int:
 
 
 @cli_function(get_option_parser)
-def play(parser: COP, options: 'Values', reg: str):
+def play(parser: COP, options: 'Values', id_: str):
     """Implement cylc play."""
-    return scheduler_cli(options, reg)
+    return scheduler_cli(options, id_)

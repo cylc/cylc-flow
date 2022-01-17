@@ -53,7 +53,7 @@ QUERY = '''
           meanElapsedTime
         }
       }
-      familyProxies(exids: ["root"], states: $taskStates) {
+      familyProxies(exids: ["*/root"], states: $taskStates) {
         id
         name
         cyclePoint
@@ -66,7 +66,7 @@ QUERY = '''
           name
         }
       }
-      cyclePoints: familyProxies(ids: ["root"], states: $taskStates) {
+      cyclePoints: familyProxies(ids: ["*/root"], states: $taskStates) {
         id
         cyclePoint
         state
@@ -85,7 +85,7 @@ MUTATIONS = {
         'reload',
         'stop',
     ],
-    'cycle_point': [
+    'cycle': [
         'hold',
         'release',
         'kill',
@@ -153,13 +153,14 @@ def list_mutations(selection):
 def context_to_variables(context):
     """Derive multiple selection out of single selection.
 
-        >>> context_to_variables(extract_context(['a|b|c|d']))
-        {'workflow': ['b'], 'task': ['d.c']}
+    Examples:
+        >>> context_to_variables(extract_context(['~a/b//c/d']))
+        {'workflow': ['b'], 'task': ['c/d']}
 
-        >>> context_to_variables(extract_context(['a|b|c']))
-        {'workflow': ['b'], 'task': ['*.c']}
+        >>> context_to_variables(extract_context(['~a/b//c']))
+        {'workflow': ['b'], 'task': ['c/*']}
 
-        >>> context_to_variables(extract_context(['a|b']))
+        >>> context_to_variables(extract_context(['~a/b']))
         {'workflow': ['b']}
 
     """
@@ -167,10 +168,10 @@ def context_to_variables(context):
     variables = {'workflow': context['workflow']}
     if 'task' in context:
         variables['task'] = [
-            f'{context["task"][0]}.{context["cycle_point"][0]}'
+            f'{context["cycle"][0]}/{context["task"][0]}'
         ]
-    elif 'cycle_point' in context:
-        variables['task'] = [f'*.{context["cycle_point"][0]}']
+    elif 'cycle' in context:
+        variables['task'] = [f'{context["cycle"][0]}/*']
     return variables
 
 

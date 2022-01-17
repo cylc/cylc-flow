@@ -20,7 +20,7 @@ BAD_OPTIONS_FMT = "\n  --%s=%s"
 BAD_OPTIONS_TITLE = "No broadcast to cancel/clear for these options:"
 BAD_OPTIONS_TITLE_SET = ("Rejected broadcast: settings are not"
                          " compatible with the workflow")
-CHANGE_FMT = "\n%(change)s [%(namespace)s.%(point)s] %(key)s=%(value)s"
+CHANGE_FMT = "\n%(change)s [%(point)s/%(namespace)s] %(key)s=%(value)s"
 CHANGE_PREFIX_CANCEL = "-"
 CHANGE_PREFIX_SET = "+"
 CHANGE_TITLE_CANCEL = "Broadcast cancelled:"

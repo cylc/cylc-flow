@@ -55,15 +55,15 @@ baz: pub
 URL: (not given)
 
 prerequisites (- => not satisfied):
-  + bar.20141106T0900Z succeeded
+  + 20141106T0900Z/bar succeeded
 
 outputs (- => not completed):
-  - foo.20141106T0900Z expired
-  + foo.20141106T0900Z submitted
-  - foo.20141106T0900Z submit-failed
-  + foo.20141106T0900Z started
-  - foo.20141106T0900Z succeeded
-  - foo.20141106T0900Z failed
+  - 20141106T0900Z/foo expired
+  + 20141106T0900Z/foo submitted
+  - 20141106T0900Z/foo submit-failed
+  + 20141106T0900Z/foo started
+  - 20141106T0900Z/foo succeeded
+  - 20141106T0900Z/foo failed
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-show-json"
@@ -87,12 +87,12 @@ cmp_json "${TEST_NAME}-task" "${TEST_NAME}-task" <<'__SHOW_OUTPUT__'
 }
 __SHOW_OUTPUT__
 
-ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
     <<__SHOW_OUTPUT__
 {
-    "foo.20141106T0900Z": {
+    "20141106T0900Z/foo": {
         "name": "foo",
+        "id": "~${USER}/${WORKFLOW_NAME}//20141106T0900Z/foo",
         "cyclePoint": "20141106T0900Z",
         "task": {
             "meta": {
@@ -110,7 +110,7 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
                 "conditions": [
                     {
                         "exprAlias": "c0",
-                        "taskId": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}20141106T0900Z${ID_DELIM}bar",
+                        "taskId": "20141106T0900Z/bar",
                         "reqState": "succeeded",
                         "message": "satisfied naturally",
                         "satisfied": true

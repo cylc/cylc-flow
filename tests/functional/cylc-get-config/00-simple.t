@@ -24,8 +24,11 @@ init_workflow "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cyl
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-all"
 run_ok "${TEST_NAME}" cylc config -d "${WORKFLOW_NAME}"
-run_ok "${TEST_NAME}-validate" cylc validate --check-circular "${TEST_NAME}.stdout"
+mkdir tmp_src
+cp "${TEST_NAME}.stdout" tmp_src/flow.cylc
+run_ok "${TEST_NAME}-validate" cylc validate --check-circular ./tmp_src
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
+rm -rf tmp_src
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-section1"
 run_ok "${TEST_NAME}" cylc config -d --item=[scheduling] "${WORKFLOW_NAME}"

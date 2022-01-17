@@ -1,13 +1,12 @@
 Initial point: 1
 Final point: 1
-t1_num099_this.1 -triggered off []
-t2_num099_this.1 -triggered off ['t1_num099_this.1']
-t1_num099_that.1 -triggered off []
-t2_num099_that.1 -triggered off ['t1_num099_that.1']
-t1_num101_this.1 -triggered off []
-t2_num101_this.1 -triggered off ['t1_num101_this.1']
-t1_num101_that.1 -triggered off []
-t2_num101_that.1 -triggered off ['t1_num101_that.1']
-x_that.1 -triggered off []
-x_this.1 -triggered off []
-
+1/t1_num099_this -triggered off []
+1/t2_num099_this -triggered off ['1/t1_num099_this']
+1/t1_num099_that -triggered off []
+1/t2_num099_that -triggered off ['1/t1_num099_that']
+1/t1_num101_this -triggered off []
+1/t2_num101_this -triggered off ['1/t1_num101_this']
+1/t1_num101_that -triggered off []
+1/t2_num101_that -triggered off ['1/t1_num101_that']
+1/x_that -triggered off []
+1/x_this -triggered off []

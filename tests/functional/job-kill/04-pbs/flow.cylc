@@ -2,7 +2,7 @@
 
 [scheduler]
     [[events]]
-        expected task failures = t1.1
+        expected task failures = 1/t1
 
 [scheduling]
     [[graph]]
@@ -20,6 +20,6 @@
             -l select=1:ncpus=1:mem=15mb
     [[stop]]
         script="""
-            cylc kill "$CYLC_WORKFLOW_ID" 't1'
+            cylc kill "$CYLC_WORKFLOW_ID//*/t1"
             cylc stop "$CYLC_WORKFLOW_ID"
         """

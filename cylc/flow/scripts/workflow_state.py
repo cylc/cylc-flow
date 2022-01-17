@@ -35,20 +35,21 @@ site/user config. For other workflows, e.g. those owned by others, or
 mirrored workflow databases, use --run-dir=DIR to specify the location.
 
 Examples:
-  $ cylc workflow-state WORKFLOW --task=TASK --point=POINT --status=STATUS
+  $ cylc workflow-state WORKFLOW_ID --task=TASK --point=POINT --status=STATUS
   # returns 0 if TASK.POINT reaches STATUS before the maximum number of
   # polls, otherwise returns 1.
 
-  $ cylc workflow-state WORKFLOW --task=TASK --point=POINT --status=STATUS \
+  $ cylc workflow-state WORKFLOW_ID --task=TASK --point=POINT --status=STATUS \
   > --offset=PT6H
   # adds 6 hours to the value of CYCLE for carrying out the polling operation.
 
-  $ cylc workflow-state WORKFLOW --task=TASK --status=STATUS --task-point
+  $ cylc workflow-state WORKFLOW_ID --task=TASK --status=STATUS --task-point
   # uses CYLC_TASK_CYCLE_POINT environment variable as the value for the
   # CYCLE to poll. This is useful when you want to use cylc workflow-state in a
   # cylc task.
 """
 
+import asyncio
 import os
 import sqlite3
 import sys
@@ -57,6 +58,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, UserInputError
 import cylc.flow.flags
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.command_polling import Poller
@@ -64,7 +66,6 @@ from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.terminal import cli_function
 from cylc.flow.cycling.util import add_offset
 from cylc.flow.pathutil import expand_path, get_cylc_run_dir
-from cylc.flow.workflow_files import parse_reg
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -86,7 +87,7 @@ class WorkflowPoller(Poller):
         if cylc.flow.flags.verbosity > 0:
             sys.stderr.write(
                 "connecting to workflow db for " +
-                self.args['run_dir'] + "/" + self.args['workflow'])
+                self.args['run_dir'] + "/" + self.args['workflow_id'])
 
         # Attempt db connection even if no polls for condition are
         # requested, as failure to connect is useful information.
@@ -97,7 +98,7 @@ class WorkflowPoller(Poller):
             self.n_polls += 1
             try:
                 self.checker = CylcWorkflowDBChecker(
-                    self.args['run_dir'], self.args['workflow'])
+                    self.args['run_dir'], self.args['workflow_id'])
                 connected = True
                 # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
@@ -118,7 +119,7 @@ class WorkflowPoller(Poller):
                 self.args['cycle'] = str(my_point)
         return connected, self.args['cycle']
 
-    def check(self):
+    async def check(self):
         """Return True if desired workflow state achieved, else False"""
         return self.checker.task_state_met(
             self.args['task'], self.args['cycle'],
@@ -128,7 +129,7 @@ class WorkflowPoller(Poller):
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
-        argdoc=[('WORKFLOW', "Workflow name or ID")]
+        argdoc=[('WORKFLOW_ID', "Workflow ID")]
     )
 
     parser.add_option(
@@ -185,8 +186,11 @@ def get_option_parser() -> COP:
 
 
 @cli_function(get_option_parser, remove_opts=["--db"])
-def main(parser: COP, options: 'Values', workflow: str) -> None:
-    workflow, _ = parse_reg(workflow)
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, *_ = parse_id(
+        workflow_id,
+        constraint='workflows',
+    )
 
     if options.use_task_point and options.cycle:
         raise UserInputError(
@@ -225,7 +229,7 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
         run_dir = get_cylc_run_dir()
 
     pollargs = {
-        'workflow': workflow,
+        'workflow_id': workflow_id,
         'run_dir': run_dir,
         'task': options.task,
         'cycle': options.cycle,
@@ -233,25 +237,27 @@ def main(parser: COP, options: 'Values', workflow: str) -> None:
         'message': options.msg,
     }
 
-    spoller = WorkflowPoller("requested state",
-                             options.interval,
-                             options.max_polls,
-                             args=pollargs)
+    spoller = WorkflowPoller(
+        "requested state",
+        options.interval,
+        options.max_polls,
+        args=pollargs,
+    )
 
     connected, formatted_pt = spoller.connect()
 
     if not connected:
-        raise CylcError("cannot connect to the workflow DB")
+        raise CylcError("cannot connect to the workflow_id DB")
 
     if options.status and options.task and options.cycle:
         # check a task status
         spoller.condition = options.status
-        if not spoller.poll():
+        if not asyncio.run(spoller.poll()):
             sys.exit(1)
     elif options.msg:
         # Check for a custom task output
         spoller.condition = "output: %s" % options.msg
-        if not spoller.poll():
+        if not asyncio.run(spoller.poll()):
             sys.exit(1)
     else:
         # just display query results

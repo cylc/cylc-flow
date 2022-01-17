@@ -13,7 +13,7 @@
     UTC mode = True
     allow implicit tasks = True
     [[events]]
-        expected task failures = model.20110101T1200Z
+        expected task failures = 20110101T1200Z/model
 
 [scheduling]
     initial cycle point = 20110101T00

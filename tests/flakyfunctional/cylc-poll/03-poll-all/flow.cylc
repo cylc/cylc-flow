@@ -1,22 +1,24 @@
 [meta]
     title = "Test workflow for task state change on poll result."
-    description = """Task run_kill fails silently - it will be stuck in 'running'
-unless polled. Task run_kill goes to Task submit_hold. Task poll_check_kill
-then polls all to find if any tasks have failed, allowing run_kill to suicide
-via a :fail trigger. Task submit_hold is an idle task which is killed after
-Task poll_check_kill succeeds by Task poll_now. Task poll_now then polls all
-to find if any tasks, allowing submit_hold to suicide via a :submit-fail
-trigger, and the workflow to shut down successfully."""
+    description = """
+        Task run_kill fails silently - it will be stuck in 'running'
+        unless polled. Task run_kill goes to Task submit_hold. Task poll_check_kill
+        then polls all to find if any tasks have failed, allowing run_kill to suicide
+        via a :fail trigger. Task submit_hold is an idle task which is killed after
+        Task poll_check_kill succeeds by Task poll_now. Task poll_now then polls all
+        to find if any tasks, allowing submit_hold to suicide via a :submit-fail
+        trigger, and the workflow to shut down successfully.
+    """
 
 [scheduler]
    UTC mode = True
    [[events]]
        abort on inactivity timeout = True
        inactivity timeout = PT2M
-       expected task failures = run_kill.20141207T0000Z,\
-                                run_kill.20141208T0000Z,\
-                                submit_hold.20141207T0000Z,\
-                                submit_hold.20141208T0000Z
+       expected task failures = 20141207T0000Z/run_kill, \
+                                20141208T0000Z/run_kill, \
+                                20141207T0000Z/submit_hold, \
+                                20141208T0000Z/submit_hold
 
 [scheduling]
     initial cycle point = 20141207T0000Z
@@ -36,16 +38,16 @@ trigger, and the workflow to shut down successfully."""
         script = exit 1
     [[poll_check_kill]]
         script = """
-cylc poll "${CYLC_WORKFLOW_ID}"
+            cylc poll "${CYLC_WORKFLOW_ID}//*"
 
-cylc__job__poll_grep_workflow_log \
-    "submit_hold.${CYLC_TASK_CYCLE_POINT} preparing .* => submitted"
+            cylc__job__poll_grep_workflow_log \
+                "${CYLC_TASK_CYCLE_POINT}/submit_hold preparing .* => submitted"
 
-st_file="${CYLC_WORKFLOW_RUN_DIR}/log/job/${CYLC_TASK_CYCLE_POINT}/submit_hold/NN/job.status"
-pkill -g "$(awk -F= '$1 == "CYLC_JOB_ID" {print $2}' "${st_file}")"
-"""
+            st_file="${CYLC_WORKFLOW_RUN_DIR}/log/job/${CYLC_TASK_CYCLE_POINT}/submit_hold/NN/job.status"
+            pkill -g "$(awk -F= '$1 == "CYLC_JOB_ID" {print $2}' "${st_file}")"
+        """
     [[poll_now]]
-        script = cylc poll "${CYLC_WORKFLOW_ID}"
+        script = cylc poll "${CYLC_WORKFLOW_ID}//*"
 
     [[submit_hold]]
         init-script = sleep 120

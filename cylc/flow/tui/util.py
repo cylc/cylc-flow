@@ -20,7 +20,7 @@ from itertools import zip_longest
 import re
 from time import time
 
-from cylc.flow import ID_DELIM
+from cylc.flow.id import Tokens
 from cylc.flow.task_state import (
     TASK_STATUS_RUNNING
 )
@@ -34,13 +34,14 @@ from cylc.flow.wallclock import get_unix_time_from_time_string
 
 
 def get_task_icon(
-        status,
-        *,
-        is_held=False,
-        is_queued=False,
-        is_runahead=False,
-        start_time=None,
-        mean_time=None):
+    status,
+    *,
+    is_held=False,
+    is_queued=False,
+    is_runahead=False,
+    start_time=None,
+    mean_time=None
+):
     """Return a Unicode string to represent a task.
 
     Arguments:
@@ -70,9 +71,9 @@ def get_task_icon(
     elif is_queued:
         ret.append(TASK_MODIFIERS['queued'])
     if (
-            status == TASK_STATUS_RUNNING
-            and start_time
-            and mean_time
+        status == TASK_STATUS_RUNNING
+        and start_time
+        and mean_time
     ):
         start_time = get_unix_time_from_time_string(start_time)
         progress = (time() - start_time) / mean_time
@@ -91,13 +92,23 @@ def get_task_icon(
 def idpop(id_):
     """Remove the last element of a node id.
 
-    Example:
-        >>> id_ = ID_DELIM.join(['a', 'b', 'c'])
-        >>> idpop(id_).split(ID_DELIM)
-        ['a', 'b']
+    Examples:
+        >>> idpop('c/t/j')
+        'c/t'
+        >>> idpop('c/t')
+        'c'
+        >>> idpop('c')
+        Traceback (most recent call last):
+        ValueError: No tokens provided
+        >>> idpop('')
+        Traceback (most recent call last):
+        ValueError: Invalid Cylc identifier: //
 
     """
-    return id_.rsplit(ID_DELIM, 1)[0]
+    relative = '//' not in id_
+    tokens = Tokens(id_, relative=relative)
+    tokens.pop_token()
+    return tokens.relative_id
 
 
 def compute_tree(flow):
@@ -131,8 +142,8 @@ def compute_tree(flow):
             'family', family['id'], nodes)
         first_parent = family['firstParent']
         if (
-                first_parent
-                and first_parent['name'] != 'root'
+            first_parent
+            and first_parent['name'] != 'root'
         ):
             parent_node = add_node(
                 'family', first_parent['id'], nodes)
@@ -432,16 +443,16 @@ def render_node(node, data, type_):
                 is_runahead=data['isRunahead']
             ),
             ' ',
-            data['id'].rsplit(ID_DELIM, 1)[-1]
+            Tokens(data['id']).pop_token()[1]
         ]
 
-    return data['id'].rsplit(ID_DELIM, 1)[-1]
+    return Tokens(data['id']).pop_token()[1]
 
 
 PARTS = [
     'user',
     'workflow',
-    'cycle_point',
+    'cycle',
     'task',
     'job'
 ]
@@ -455,22 +466,24 @@ def extract_context(selection):
             List of element id's as extracted from the data store / graphql.
 
     Examples:
-        >>> extract_context(['a|b', 'a|c'])
+        >>> extract_context(['~a/b', '~a/c'])
         {'user': ['a'], 'workflow': ['b', 'c']}
 
-        >>> extract_context(['a|b|c|d|e']
+        >>> extract_context(['~a/b//c/d/e']
         ... )  # doctest: +NORMALIZE_WHITESPACE
-        {'user': ['a'], 'workflow': ['b'], 'cycle_point': ['c'],
+        {'user': ['a'], 'workflow': ['b'], 'cycle': ['c'],
         'task': ['d'], 'job': ['e']}
 
     """
-    context = {type_: set() for type_ in PARTS}
+    ret = {}
     for item in selection:
-        parts = item.split(ID_DELIM)
-        for type_, part in zip(PARTS, parts):
-            context[type_].add(part)
-    return {
-        key: sorted(value)
-        for key, value in context.items()
-        if value
-    }
+        tokens = Tokens(item)
+        for key, value in tokens.items():
+            if (
+                value
+                and not key.endswith('_sel')  # ignore selectors
+            ):
+                lst = ret.setdefault(key, [])
+                if value not in lst:
+                    lst.append(value)
+    return ret

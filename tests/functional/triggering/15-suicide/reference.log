@@ -1,5 +1,5 @@
-2014/01/08 10:04:17 INFO - Initial point: 1
-2014/01/08 10:04:17 INFO - Final point: 1
-2014/01/08 10:04:17 DEBUG - hello.1 -triggered off []
-2014/01/08 10:04:30 DEBUG - goodbye.1 -triggered off ['hello.1']
-2014/01/08 10:04:44 DEBUG - really_goodbye.1 -triggered off ['goodbye.1']
+Initial point: 1
+Final point: 1
+1/hello -triggered off []
+1/goodbye -triggered off ['1/hello']
+1/really_goodbye -triggered off ['1/goodbye']

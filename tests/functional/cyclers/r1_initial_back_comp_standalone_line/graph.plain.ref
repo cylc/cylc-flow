@@ -1,7 +1,7 @@
-edge "cold_foo.2014010100" "foo_midnight.2014010100"
-edge "foo_midnight.2014010100" "foo_midnight.2014010200"
+edge "2014010100/cold_foo" "2014010100/foo_midnight"
+edge "2014010100/foo_midnight" "2014010200/foo_midnight"
 graph
-node "cold_foo.2014010100" "cold_foo\n2014010100"
-node "foo_midnight.2014010100" "foo_midnight\n2014010100"
-node "foo_midnight.2014010200" "foo_midnight\n2014010200"
+node "2014010100/cold_foo" "cold_foo\n2014010100"
+node "2014010100/foo_midnight" "foo_midnight\n2014010100"
+node "2014010200/foo_midnight" "foo_midnight\n2014010200"
 stop

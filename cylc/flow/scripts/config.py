@@ -54,11 +54,12 @@ from typing import List, Optional, TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import WorkflowFiles, parse_reg
+from cylc.flow.workflow_files import WorkflowFiles
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -67,7 +68,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        argdoc=[("[WORKFLOW]", "Workflow name, ID, or path")],
+        argdoc=[("[WORKFLOW_ID]", "Workflow ID or path to source")],
         jset=True, icp=True
     )
 
@@ -106,21 +107,26 @@ def get_option_parser():
     return parser
 
 
-def get_config_file_hierarchy(reg: Optional[str] = None) -> List[str]:
+def get_config_file_hierarchy(workflow_id: Optional[str] = None) -> List[str]:
     filepaths = [os.path.join(path, glbl_cfg().CONF_BASENAME)
                  for _, path in glbl_cfg().conf_dir_hierarchy]
-    if reg is not None:
-        filepaths.append(get_workflow_run_dir(reg, WorkflowFiles.FLOW_FILE))
+    if workflow_id is not None:
+        filepaths.append(
+            get_workflow_run_dir(workflow_id, WorkflowFiles.FLOW_FILE)
+        )
     return filepaths
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
-    if options.print_hierarchy:
-        print("\n".join(get_config_file_hierarchy(reg)))
-        return
-
-    if reg is None:
+def main(
+    parser: COP,
+    options: 'Values',
+    *ids,
+) -> None:
+    if not ids:
+        if options.print_hierarchy:
+            print("\n".join(get_config_file_hierarchy()))
+            return
         glbl_cfg().idump(
             options.item,
             not options.defaults,
@@ -129,10 +135,18 @@ def main(parser: COP, options: 'Values', reg: Optional[str] = None) -> None:
         )
         return
 
-    workflow, flow_file = parse_reg(reg, src=True)
+    workflow_id, _, flow_file = parse_id(
+        *ids,
+        src=True,
+        constraint='workflows',
+    )
+
+    if options.print_hierarchy:
+        print("\n".join(get_config_file_hierarchy(workflow_id)))
+        return
 
     config = WorkflowConfig(
-        workflow,
+        workflow_id,
         flow_file,
         options,
         get_template_vars(options)

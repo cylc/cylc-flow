@@ -1,4 +1,4 @@
-2013/11/06 10:27:36 INFO - Initial point: 1
-2013/11/06 10:27:36 INFO - Final point: 1
-2013/11/06 10:27:36 DEBUG - reloader.1 -triggered off []
-2013/11/06 10:27:45 DEBUG - foo.1 -triggered off ['reloader.1']
+Initial point: 1
+Final point: 1
+1/reloader -triggered off []
+1/foo -triggered off ['1/reloader']

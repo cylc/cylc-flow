@@ -21,9 +21,14 @@
 Display workflow and task information.
 
 Query a running workflow for:
-  $ cylc show WORKFLOW  # workflow metadata
-  $ cylc show WORKFLOW TASK_NAME  # task metadata
-  $ cylc show WORKFLOW TASK_GLOB  # prerequisites and outputs of task instances
+  # view workflow metadata
+  $ cylc show my_workflow
+
+  # view task metadata
+  $ cylc show my_workflow --task-def my_task
+
+  # view prerequisites & outputs for a live task
+  $ cylc show my_workflow//1/my_task
 
 Prerequisite and output status is indicated for current active tasks.
 """
@@ -31,15 +36,16 @@ Prerequisite and output status is indicated for current active tasks.
 import json
 from optparse import Values
 import sys
+from typing import Dict
 
 from ansimarkup import ansiprint
 
-from cylc.flow import ID_DELIM
+from cylc.flow.exceptions import UserInputError
+from cylc.flow.id import Tokens
+from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 
 WORKFLOW_META_QUERY = '''
@@ -72,6 +78,7 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
 TASK_PREREQS_QUERY = '''
 query ($wFlows: [ID]!, $taskIds: [ID]) {
   taskProxies (workflows: $wFlows, ids: $taskIds, stripNull: false) {
+    id
     name
     cyclePoint
     task {
@@ -141,177 +148,232 @@ def flatten_data(data, flat_data=None):
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask=True,
-        argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            ('[TASK_NAME or TASK_GLOB ...]', 'Task names or match patterns')])
+        __doc__,
+        comms=True,
+        multitask=True,
+        argdoc=[('ID [ID ...]', 'Workflow/Cycle/Family/Task ID(s)')],
+    )
 
-    parser.add_option('--list-prereqs', action="store_true", default=False,
-                      help="Print a task's pre-requisites as a list.")
+    parser.add_option(
+        '--list-prereqs',
+        action="store_true",
+        default=False,
+        help="Print a task's pre-requisites as a list.",
+    )
 
-    parser.add_option('--json', action="store_true", default=False,
-                      help="Print output in JSON format.")
+    parser.add_option(
+        '--json',
+        action="store_true",
+        default=False,
+        help="Print output in JSON format.",
+    )
+
+    parser.add_option(
+        '--task-def',
+        action="append",
+        default=None,
+        dest='task_defs',
+        metavar='TASK_NAME',
+        help="View metadata for a task definition (can be used multiple times)"
+    )
 
     return parser
 
 
-@cli_function(get_option_parser)
-def main(_, options: 'Values', reg: str, *task_args: str) -> None:
-    """Implement "cylc show" CLI."""
-    reg, _ = parse_reg(reg)
-    pclient = get_client(reg, timeout=options.comms_timeout)
-    json_filter = {}
+def workflow_meta_query(workflow_id, pclient, options, json_filter):
+    query = WORKFLOW_META_QUERY
+    query_kwargs = {
+        'request_string': query,
+        'variables': {'wFlows': [workflow_id]}
+    }
+    # Print workflow info.
+    results = pclient('graphql', query_kwargs)
+    for workflow_id in results['workflows']:
+        flat_data = flatten_data(workflow_id)
+        if options.json:
+            json_filter.update(flat_data)
+        else:
+            for key, value in sorted(flat_data.items(), reverse=True):
+                ansiprint(
+                    f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}'
+                )
+    return 0
 
-    if not task_args:
-        query = WORKFLOW_META_QUERY
-        query_kwargs = {
-            'request_string': query,
-            'variables': {'wFlows': [reg]}
+
+def prereqs_and_outputs_query(
+    workflow_id,
+    tokens_list,
+    pclient,
+    options,
+    json_filter,
+):
+    ids_list = [
+        # convert the tokens into standardised IDs
+        tokens.relative_id
+        for tokens in tokens_list
+    ]
+
+    tp_query = TASK_PREREQS_QUERY
+    tp_kwargs = {
+        'request_string': tp_query,
+        'variables': {
+            'wFlows': [workflow_id],
+            'taskIds': ids_list,
         }
-        # Print workflow info.
-        results = pclient('graphql', query_kwargs)
-        for reg in results['workflows']:
-            flat_data = flatten_data(reg)
-            if options.json:
-                json_filter.update(flat_data)
+    }
+    results = pclient('graphql', tp_kwargs)
+    multi = len(results['taskProxies']) > 1
+    for t_proxy in results['taskProxies']:
+        task_id = Tokens(t_proxy['id']).relative_id
+        if options.json:
+            json_filter.update({task_id: t_proxy})
+        else:
+            if multi:
+                ansiprint(f'------\n<bold>Task ID:</bold> {task_id}')
+            prereqs = []
+            for item in t_proxy['prerequisites']:
+                prefix = ''
+                multi_cond = len(item['conditions']) > 1
+                if multi_cond:
+                    prereqs.append([
+                        True,
+                        '',
+                        item['expression'].replace('c', ''),
+                        item['satisfied']
+                    ])
+                for cond in item['conditions']:
+                    if multi_cond and not options.list_prereqs:
+                        prefix = f'\t{cond["exprAlias"].strip("c")} = '
+                    prereqs.append([
+                        False,
+                        prefix,
+                        f'{cond["taskId"]} {cond["reqState"]}',
+                        cond['satisfied']
+                    ])
+            if options.list_prereqs:
+                for composite, _, msg, _ in prereqs:
+                    if not composite:
+                        print(msg)
             else:
-                for key, value in sorted(flat_data.items(), reverse=True):
+                flat_meta = flatten_data(t_proxy['task']['meta'])
+                for key, value in sorted(flat_meta.items(), reverse=True):
                     ansiprint(
-                        f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
+                        f'<bold>{key}:</bold>'
+                        f' {value or "<m>(not given)</m>"}')
+                ansiprint(
+                    '\n<bold>prerequisites</bold>'
+                    ' (<red>- => not satisfied</red>):')
+                if not prereqs:
+                    print('  (None)')
+                for _, prefix, msg, state in prereqs:
+                    print_msg_state(f'{prefix}{msg}', state)
 
-    task_names = [arg for arg in task_args if TaskID.is_valid_name(arg)]
-    task_ids = [arg for arg in task_args if TaskID.is_valid_id_2(arg)]
-
-    if task_names:
-        tasks_query = TASK_META_QUERY
-        tasks_kwargs = {
-            'request_string': tasks_query,
-            'variables': {'wFlows': [reg], 'taskIds': task_names}
-        }
-        # Print workflow info.
-        results = pclient('graphql', tasks_kwargs)
-        multi = len(results['tasks']) > 1
-        for task in results['tasks']:
-            flat_data = flatten_data(task['meta'])
-            if options.json:
-                json_filter.update({task['name']: flat_data})
-            else:
-                if multi:
-                    print(f'----\nTASK NAME: {task["name"]}')
-                for key, value in sorted(flat_data.items(), reverse=True):
+                ansiprint(
+                    '\n<bold>outputs</bold>'
+                    ' (<red>- => not completed</red>):')
+                if not t_proxy['outputs']:
+                    print('  (None)')
+                for output in t_proxy['outputs']:
+                    info = f'{task_id} {output["label"]}'
+                    print_msg_state(info, output['satisfied'])
+                if (
+                        t_proxy['clockTrigger']['timeString']
+                        or t_proxy['externalTriggers']
+                        or t_proxy['xtriggers']
+                ):
                     ansiprint(
-                        f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
-
-    if task_ids:
-        tp_query = TASK_PREREQS_QUERY
-        tp_kwargs = {
-            'request_string': tp_query,
-            'variables': {
-                'wFlows': [reg],
-                'taskIds': [
-                    f'{c}{ID_DELIM}{n}'
-                    for n, c in [
-                        TaskID.split(t_id)
-                        for t_id in task_ids
-                        if TaskID.is_valid_id(t_id)
-                    ]
-                ] + [
-                    f'{c}{ID_DELIM}{n}'
-                    for c, n in [
-                        t_id.rsplit(TaskID.DELIM2, 1)
-                        for t_id in task_ids
-                        if not TaskID.is_valid_id(t_id)
-                    ]
-                ]
-            }
-        }
-        results = pclient('graphql', tp_kwargs)
-        multi = len(results['taskProxies']) > 1
-        for t_proxy in results['taskProxies']:
-            task_id = TaskID.get(t_proxy['name'], t_proxy['cyclePoint'])
-            if options.json:
-                json_filter.update({task_id: t_proxy})
-            else:
-                if multi:
-                    print(f'----\nTASK ID: {task_id}')
-                prereqs = []
-                for item in t_proxy['prerequisites']:
-                    prefix = ''
-                    multi_cond = len(item['conditions']) > 1
-                    if multi_cond:
-                        prereqs.append([
-                            True,
-                            '',
-                            item['expression'].replace('c', ''),
-                            item['satisfied']
-                        ])
-                    for cond in item['conditions']:
-                        if multi_cond and not options.list_prereqs:
-                            prefix = f'\t{cond["exprAlias"].strip("c")} = '
-                        _, _, point, name = cond['taskId'].split(ID_DELIM)
-                        cond_id = TaskID.get(name, point)
-                        prereqs.append([
-                            False,
-                            prefix,
-                            f'{cond_id} {cond["reqState"]}',
-                            cond['satisfied']
-                        ])
-                if options.list_prereqs:
-                    for composite, _, msg, _ in prereqs:
-                        if not composite:
-                            print(msg)
-                else:
-                    flat_meta = flatten_data(t_proxy['task']['meta'])
-                    for key, value in sorted(flat_meta.items(), reverse=True):
-                        ansiprint(
-                            f'<bold>{key}:</bold>'
-                            f' {value or "<m>(not given)</m>"}')
-                    ansiprint(
-                        '\n<bold>prerequisites</bold>'
+                        '\n<bold>other</bold>'
                         ' (<red>- => not satisfied</red>):')
-                    if not prereqs:
-                        print('  (None)')
-                    for _, prefix, msg, state in prereqs:
-                        print_msg_state(f'{prefix}{msg}', state)
+                    if t_proxy['clockTrigger']['timeString']:
+                        state = t_proxy['clockTrigger']['satisfied']
+                        time_str = t_proxy['clockTrigger']['timeString']
+                        print_msg_state(
+                            'Clock trigger time reached',
+                            state)
+                        print(f'  o Triggers at ... {time_str}')
+                    for ext_trig in t_proxy['externalTriggers']:
+                        state = ext_trig['satisfied']
+                        print_msg_state(
+                            f'{ext_trig["label"]} ... {state}',
+                            state)
+                    for xtrig in t_proxy['xtriggers']:
+                        state = xtrig['satisfied']
+                        print_msg_state(
+                            f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',
+                            state)
+    if not results['taskProxies']:
+        ansiprint(
+            f"<red>No matching tasks found: {', '.join(ids_list)}",
+            file=sys.stderr)
+        return 1
+    return 0
 
-                    ansiprint(
-                        '\n<bold>outputs</bold>'
-                        ' (<red>- => not completed</red>):')
-                    if not t_proxy['outputs']:
-                        print('  (None)')
-                    for output in t_proxy['outputs']:
-                        info = f'{task_id} {output["label"]}'
-                        print_msg_state(info, output['satisfied'])
-                    if (
-                            t_proxy['clockTrigger']['timeString']
-                            or t_proxy['externalTriggers']
-                            or t_proxy['xtriggers']
-                    ):
-                        ansiprint(
-                            '\n<bold>other</bold>'
-                            ' (<red>- => not satisfied</red>):')
-                        if t_proxy['clockTrigger']['timeString']:
-                            state = t_proxy['clockTrigger']['satisfied']
-                            time_str = t_proxy['clockTrigger']['timeString']
-                            print_msg_state(
-                                'Clock trigger time reached',
-                                state)
-                            print(f'  o Triggers at ... {time_str}')
-                        for ext_trig in t_proxy['externalTriggers']:
-                            state = ext_trig['satisfied']
-                            print_msg_state(
-                                f'{ext_trig["label"]} ... {state}',
-                                state)
-                        for xtrig in t_proxy['xtriggers']:
-                            state = xtrig['satisfied']
-                            print_msg_state(
-                                f'xtrigger "{xtrig["label"]} = {xtrig["id"]}"',
-                                state)
-        if not results['taskProxies']:
-            ansiprint(
-                f"<red>No matching tasks found: {task_ids}",
-                file=sys.stderr)
-            sys.exit(1)
+
+def task_meta_query(workflow_id, task_names, pclient, options, json_filter):
+    tasks_query = TASK_META_QUERY
+    tasks_kwargs = {
+        'request_string': tasks_query,
+        'variables': {
+            'wFlows': [workflow_id],
+            'taskIds': task_names,
+        },
+    }
+    # Print workflow info.
+    results = pclient('graphql', tasks_kwargs)
+    multi = len(results['tasks']) > 1
+    for task in results['tasks']:
+        flat_data = flatten_data(task['meta'])
+        if options.json:
+            json_filter.update({task['name']: flat_data})
+        else:
+            if multi:
+                print(f'----\nTASK NAME: {task["name"]}')
+            for key, value in sorted(flat_data.items(), reverse=True):
+                ansiprint(
+                    f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
+    return 0
+
+
+@cli_function(get_option_parser)
+def main(_, options: 'Values', *ids) -> None:
+    """Implement "cylc show" CLI."""
+    workflow_args, _ = parse_ids(
+        *ids,
+        constraint='mixed',
+        max_workflows=1,
+    )
+    workflow_id = list(workflow_args)[0]
+    tokens_list = workflow_args[workflow_id]
+
+    if tokens_list and options.task_defs:
+        raise UserInputError(
+            'Cannot query both live tasks and task definitions.'
+        )
+
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    json_filter: 'Dict' = {}
+
+    ret = 0
+    if options.task_defs:
+        ret = task_meta_query(
+            workflow_id,
+            options.task_defs,
+            pclient,
+            options,
+            json_filter,
+        )
+    elif not tokens_list:
+        ret = workflow_meta_query(workflow_id, pclient, options, json_filter)
+    else:
+        ret = prereqs_and_outputs_query(
+            workflow_id,
+            tokens_list,
+            pclient,
+            options,
+            json_filter,
+        )
 
     if options.json:
         print(json.dumps(json_filter, indent=4))
+
+    sys.exit(ret)

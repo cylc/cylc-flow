@@ -30,7 +30,7 @@ cmp_ok 't1-status.out' <<<'running'
 run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}"
 # Ensure workflow has started
 poll_workflow_running
-cylc kill "${WORKFLOW_NAME}" 't1.1'
+cylc kill "${WORKFLOW_NAME}//1/t1"
 # Ensure workflow has completed
 poll_workflow_stopped
 

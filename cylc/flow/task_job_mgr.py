@@ -79,7 +79,6 @@ from cylc.flow.task_job_logs import (
     JOB_LOG_JOB,
     NN,
     get_task_job_activity_log,
-    get_task_job_id,
     get_task_job_job_log,
     get_task_job_log
 )
@@ -352,11 +351,11 @@ class TaskJobManager:
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
-                            get_task_job_id(
-                                itask.point,
-                                itask.tdef.name,
-                                itask.submit_num),
-                            self.REMOTE_INIT_MSG)
+                            itask.tokens.duplicate(
+                                job=str(itask.submit_num)
+                            ).relative_id,
+                            self.REMOTE_INIT_MSG,
+                        )
                     continue
 
                 elif (ri_map[install_target] == REMOTE_INIT_DONE):
@@ -369,11 +368,9 @@ class TaskJobManager:
                     for itask in itasks:
                         msg = self.IN_PROGRESS[ri_map[install_target]]
                         self.data_store_mgr.delta_job_msg(
-                            get_task_job_id(
-                                itask.point,
-                                itask.tdef.name,
-                                itask.submit_num),
-                            msg)
+                            itask.tokens.duplicate(job=str(itask.submit_num)),
+                            msg
+                        )
                     continue
                 elif (ri_map[install_target] == REMOTE_INIT_255):
                     # Remote init previously failed becase a host was
@@ -383,11 +380,11 @@ class TaskJobManager:
                         platform, curve_auth, client_pub_key_dir)
                     for itask in itasks:
                         self.data_store_mgr.delta_job_msg(
-                            get_task_job_id(
-                                itask.point,
-                                itask.tdef.name,
-                                itask.submit_num),
-                            self.REMOTE_INIT_MSG)
+                            itask.tokens.duplicate(
+                                job=str(itask.submit_num)
+                            ).relative_id,
+                            self.REMOTE_INIT_MSG
+                        )
                     continue
 
             # Ensure that localhost background/at jobs are recorded as running
@@ -407,11 +404,11 @@ class TaskJobManager:
                     platform, curve_auth, client_pub_key_dir)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
-                        get_task_job_id(
-                            itask.point,
-                            itask.tdef.name,
-                            itask.submit_num),
-                        self.REMOTE_INIT_MSG)
+                        itask.tokens.duplicate(
+                            job=str(itask.submit_num)
+                        ).relative_id,
+                        self.REMOTE_INIT_MSG,
+                    )
                 continue
 
             if (
@@ -441,11 +438,11 @@ class TaskJobManager:
                     platform)
                 for itask in itasks:
                     self.data_store_mgr.delta_job_msg(
-                        get_task_job_id(
-                            itask.point,
-                            itask.tdef.name,
-                            itask.submit_num),
-                        REMOTE_FILE_INSTALL_IN_PROGRESS)
+                        itask.tokens.duplicate(
+                            job=str(itask.submit_num)
+                        ).relative_id,
+                        REMOTE_FILE_INSTALL_IN_PROGRESS
+                    )
                 continue
 
             if (ri_map[install_target] in [REMOTE_INIT_FAILED,
@@ -531,8 +528,11 @@ class TaskJobManager:
                                 )
                             )
                         )
-                    job_log_dirs.append(get_task_job_id(
-                        itask.point, itask.tdef.name, itask.submit_num))
+                    job_log_dirs.append(
+                        itask.tokens.duplicate(
+                            job=str(itask.submit_num),
+                        ).relative_id
+                    )
                     # The job file is now (about to be) used: reset the file
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
@@ -719,8 +719,11 @@ class TaskJobManager:
                 'ignoring job kill result, unexpected task state: %s' %
                 itask.state.status)
         self.data_store_mgr.delta_job_msg(
-            get_task_job_id(itask.point, itask.tdef.name, itask.submit_num),
-            log_msg)
+            itask.tokens.duplicate(
+                job=str(itask.submit_num)
+            ).relative_id,
+            log_msg
+        )
         LOG.log(log_lvl, f"[{itask}] {log_msg}")
 
     def _manip_task_jobs_callback(
@@ -814,7 +817,7 @@ class TaskJobManager:
         ctx.out = line
         ctx.ret_code = 0
         # See cylc.flow.job_runner_mgr.JobPollContext
-        job_d = get_task_job_id(itask.point, itask.tdef.name, itask.submit_num)
+        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
         try:
             job_log_dir, context = line.split('|')[1:3]
             items = json.loads(context)
@@ -932,8 +935,11 @@ class TaskJobManager:
                     cmd, platform, host
                 )
             for itask in sorted(itasks, key=lambda itask: itask.identity):
-                job_log_dirs.append(get_task_job_id(
-                    itask.point, itask.tdef.name, itask.submit_num))
+                job_log_dirs.append(
+                    itask.tokens.duplicate(
+                        job=str(itask.submit_num)
+                    ).relative_id
+                )
             cmd += job_log_dirs
             LOG.debug(f'{cmd_key} for {platform["name"]} on {host}')
             self.proc_pool.put_command(
@@ -1076,7 +1082,8 @@ class TaskJobManager:
 
         # Handle broadcasts
         overrides = self.task_events_mgr.broadcast_mgr.get_broadcast(
-            itask.identity)
+            itask.identity
+        )
         if overrides:
             rtconfig = pdeepcopy(itask.tdef.rtconfig)
             poverride(rtconfig, overrides, prepend=True)
@@ -1254,8 +1261,7 @@ class TaskJobManager:
 
         # Location of job file, etc
         self._create_job_log_path(workflow, itask)
-        job_d = get_task_job_id(
-            itask.point, itask.tdef.name, itask.submit_num)
+        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
         job_file_path = get_remote_workflow_run_job_dir(
             workflow, job_d, JOB_LOG_JOB)
 

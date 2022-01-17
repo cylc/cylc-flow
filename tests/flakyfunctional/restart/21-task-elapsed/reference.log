@@ -1,5 +1,5 @@
 Initial point: 2016
 Final point: 2020
-t1.2018 -triggered off ['t1.2017']
-t1.2019 -triggered off ['t1.2018']
-t1.2020 -triggered off ['t1.2019']
+2018/t1 -triggered off ['2017/t1']
+2019/t1 -triggered off ['2018/t1']
+2020/t1 -triggered off ['2019/t1']

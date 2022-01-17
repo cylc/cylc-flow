@@ -25,9 +25,9 @@ a message to the Cylc scheduler. Cylc can use this
 message as a signal that an external prerequisite has
 been satisfied and trigger the task accordingly.
 
-The ID argument should be unique to each external
+The WORKFLOW_ID argument should be unique to each external
 trigger event. When an incoming message satisfies
-a task's external trigger the message ID is broadcast
+a task's external trigger the message TRIGGER_ID is broadcast
 to all downstream tasks in the cycle point as
 ``$CYLC_EXT_TRIGGER_ID``.  Tasks can use
 ``$CYLC_EXT_TRIGGER_ID``, for example,  to
@@ -43,10 +43,10 @@ from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, ClientError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -78,10 +78,14 @@ mutation (
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True,
-        argdoc=[("WORKFLOW", "Workflow name or ID"),
-                ("MSG", "External trigger message"),
-                ("ID", "Unique trigger ID")])
+        __doc__,
+        comms=True,
+        argdoc=[
+            ("WORKFLOW_ID", "Workflow ID"),
+            ("MSG", "External trigger message"),
+            ("TRIGGER_ID", "Unique trigger ID"),
+        ],
+    )
 
     parser.add_option(
         "--max-tries", help="Maximum number of send attempts "
@@ -100,13 +104,18 @@ def get_option_parser():
 def main(
     parser: COP,
     options: 'Values',
-    workflow: str,
+    workflow_id: str,
     event_msg: str,
     event_id: str
 ) -> None:
-    workflow, _ = parse_reg(workflow)
-    LOG.info('Send to workflow %s: "%s" (%s)', workflow, event_msg, event_id)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    workflow_id, *_ = parse_id(
+        workflow_id,
+        constraint='workflows',
+    )
+    LOG.info(
+        'Send to workflow %s: "%s" (%s)', workflow_id, event_msg, event_id
+    )
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     max_n_tries = int(options.max_n_tries)
     retry_intvl_secs = float(options.retry_intvl_secs)
@@ -114,7 +123,7 @@ def main(
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             'eventMsg': event_msg,
             'eventId': event_id,
         }

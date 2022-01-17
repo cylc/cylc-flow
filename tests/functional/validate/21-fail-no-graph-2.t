@@ -26,7 +26,7 @@ cat > flow.cylc <<__END__
     [[graph]]
         R1 = ""
 __END__
-run_fail "${TEST_NAME}" cylc validate -v flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v .
 grep_ok "No workflow dependency graph defined." "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-no-graph
@@ -35,5 +35,5 @@ cat > flow.cylc <<__END__
     initial cycle point = 2015
     [[graph]]
 __END__
-run_fail "${TEST_NAME}" cylc validate -v flow.cylc
+run_fail "${TEST_NAME}" cylc validate -v .
 grep_ok "No workflow dependency graph defined." "${TEST_NAME}.stderr"

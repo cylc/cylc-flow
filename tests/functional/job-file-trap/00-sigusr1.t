@@ -31,7 +31,7 @@ run_tests() {
     # Needs to be detaching:
     workflow_run_ok "${TEST_NAME}" cylc play --reference-test "${WORKFLOW_NAME}"
 
-    # Make sure t1.1.1's status file is in place
+    # Make sure 1/t1's status file is in place
     T1_STATUS_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.status"
 
     poll_grep -E 'CYLC_JOB_ID=' "${T1_STATUS_FILE}"

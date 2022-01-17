@@ -1,4 +1,4 @@
-2014/01/24 12:25:52 INFO - Initial point: 1
-2014/01/24 12:25:52 INFO - Final point: 1
-2014/01/24 12:25:52 DEBUG - t1.1 -triggered off []
-2014/01/24 12:26:48 DEBUG - t2.1 -triggered off ['t1.1']
+Initial point: 1
+Final point: 1
+1/t1 -triggered off []
+1/t2 -triggered off ['1/t1']

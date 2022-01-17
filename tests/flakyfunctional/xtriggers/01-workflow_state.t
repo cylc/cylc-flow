@@ -44,7 +44,7 @@ workflow_run_fail "${TEST_NAME}" \
 WORKFLOW_LOG="$(cylc cat-log -m 'p' "${WORKFLOW_NAME}")"
 grep_ok 'WARNING - inactivity timer timed out after PT10S' "${WORKFLOW_LOG}"
 
-# ... with foo.2016 succeeded and FAM.2016 waiting.
+# ... with 2016/foo succeeded and 2016/FAM waiting.
 cylc workflow-state -p '2016' "${WORKFLOW_NAME}" >'workflow_state.out'
 contains_ok 'workflow_state.out' << __END__
 foo, 2016, succeeded
@@ -54,7 +54,7 @@ f2, 2016, waiting
 __END__
 
 # Check broadcast of xtrigger outputs to dependent tasks.
-JOB_LOG="$(cylc cat-log -f 'j' -m 'p' "${WORKFLOW_NAME}" 'f1.2015')"
+JOB_LOG="$(cylc cat-log -f 'j' -m 'p' "${WORKFLOW_NAME}//2015/f1")"
 contains_ok "${JOB_LOG}" << __END__
     upstream_task="foo"
     upstream_point="2015"
@@ -70,17 +70,17 @@ __END__
 # set' ('+') and later '... INFO - Broadcast cancelled:' ('-') line, where we
 # use as a test case an arbitrary task where such setting & cancellation occurs:
 contains_ok "${WORKFLOW_LOG}" << __LOG_BROADCASTS__
-${LOG_INDENT}+ [f1.2015] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}+ [f1.2015] [environment]upstream_task=foo
-${LOG_INDENT}+ [f1.2015] [environment]upstream_point=2015
-${LOG_INDENT}+ [f1.2015] [environment]upstream_offset=None
-${LOG_INDENT}+ [f1.2015] [environment]upstream_status=succeeded
-${LOG_INDENT}+ [f1.2015] [environment]upstream_message=data ready
-${LOG_INDENT}- [f1.2015] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}- [f1.2015] [environment]upstream_task=foo
-${LOG_INDENT}- [f1.2015] [environment]upstream_point=2015
-${LOG_INDENT}- [f1.2015] [environment]upstream_status=succeeded
-${LOG_INDENT}- [f1.2015] [environment]upstream_message=data ready
+${LOG_INDENT}+ [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}+ [2015/f1] [environment]upstream_task=foo
+${LOG_INDENT}+ [2015/f1] [environment]upstream_point=2015
+${LOG_INDENT}+ [2015/f1] [environment]upstream_offset=None
+${LOG_INDENT}+ [2015/f1] [environment]upstream_status=succeeded
+${LOG_INDENT}+ [2015/f1] [environment]upstream_message=data ready
+${LOG_INDENT}- [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}- [2015/f1] [environment]upstream_task=foo
+${LOG_INDENT}- [2015/f1] [environment]upstream_point=2015
+${LOG_INDENT}- [2015/f1] [environment]upstream_status=succeeded
+${LOG_INDENT}- [2015/f1] [environment]upstream_message=data ready
 __LOG_BROADCASTS__
 # ... and 2) in the DB.
 TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"

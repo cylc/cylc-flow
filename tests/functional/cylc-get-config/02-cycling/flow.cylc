@@ -6,6 +6,6 @@
 [runtime]
     [[foo]]
         script = """
-echo this
-echo that
-"""
+            echo this
+            echo that
+        """

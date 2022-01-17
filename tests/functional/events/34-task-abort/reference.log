@@ -1,5 +1,5 @@
 Initial point: 1
 Final point: 1
-foo.1 -triggered off []
-foo.1 -triggered off []
-handled.1 -triggered off ['foo.1']
+1/foo -triggered off []
+1/foo -triggered off []
+1/handled -triggered off ['1/foo']

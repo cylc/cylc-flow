@@ -1,8 +1,8 @@
-edge "foo_a-t.1" "bar_a-t.1"
-edge "foo_c-g.1" "bar_c-g.1"
+edge "1/foo_a-t" "1/bar_a-t"
+edge "1/foo_c-g" "1/bar_c-g"
 graph
-node "bar_a-t.1" "bar_a-t\n1"
-node "bar_c-g.1" "bar_c-g\n1"
-node "foo_a-t.1" "foo_a-t\n1"
-node "foo_c-g.1" "foo_c-g\n1"
+node "1/bar_a-t" "bar_a-t\n1"
+node "1/bar_c-g" "bar_c-g\n1"
+node "1/foo_a-t" "foo_a-t\n1"
+node "1/foo_c-g" "foo_c-g\n1"
 stop

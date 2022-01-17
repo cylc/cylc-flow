@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test workflow graphql interface
+# TODO: convert to integration test
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -41,7 +42,6 @@ sleep 1
 
 # query workflow
 TEST_NAME="${TEST_NAME_BASE}-is-held-arg"
-ID_DELIM="$(python -c 'from cylc.flow import ID_DELIM;print(ID_DELIM)')"
 read -r -d '' isHeld <<_args_
 {
   "request_string": "
@@ -52,11 +52,11 @@ query {
     taskProxies(isHeld: true) {
       id
       jobs {
-        submittedTime 
+        submittedTime
         startedTime
       }
     }
-    familyProxies(exids: [\"root\"], isHeld: true) {
+    familyProxies(exids: [\"*/root\"], isHeld: true) {
       id
     }
   }
@@ -73,7 +73,7 @@ run_ok "${TEST_NAME_BASE}-contact" cylc get-contact "${WORKFLOW_NAME}"
 # stop workflow
 cylc stop --max-polls=10 --interval=2 --kill "${WORKFLOW_NAME}"
 
-RESPONSE="${TEST_NAME_BASE}-is-held-arg.stdout" 
+RESPONSE="${TEST_NAME_BASE}-is-held-arg.stdout"
 perl -pi -e 's/("submittedTime":).*$/${1} "blargh",/' "${RESPONSE}"
 perl -pi -e 's/("startedTime":).*$/${1} "blargh"/' "${RESPONSE}"
 
@@ -86,7 +86,7 @@ cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
             "isHeldTotal": 1,
             "taskProxies": [
                 {
-                    "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}1${ID_DELIM}foo",
+                    "id": "~${USER}/${WORKFLOW_NAME}//1/foo",
                     "jobs": [
                         {
                             "submittedTime": "blargh",
@@ -97,7 +97,7 @@ cmp_json "${TEST_NAME}-out" "$RESPONSE" << __HERE__
             ],
             "familyProxies": [
                 {
-                    "id": "${USER}${ID_DELIM}${WORKFLOW_NAME}${ID_DELIM}1${ID_DELIM}BAZ"
+                    "id": "~${USER}/${WORKFLOW_NAME}//1/BAZ"
                 }
             ]
         }

@@ -17,7 +17,6 @@
 import pytest
 from typing import TYPE_CHECKING
 
-from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
     FAMILY_PROXIES,
     JOBS,
@@ -43,7 +42,7 @@ def job_config(schd):
     return {
         'owner': schd.owner,
         'submit_num': 3,
-        'task_id': 'foo.1',
+        'task_id': '1/foo',
         'job_runner_name': 'background',
         'env-script': None,
         'err-script': None,
@@ -78,15 +77,12 @@ def job_db_row():
     ]
 
 
-def ext_id(schd):
-    return (
-        f'{schd.owner}{ID_DELIM}{schd.workflow}{ID_DELIM}'
-        f'1{ID_DELIM}foo{ID_DELIM}3'
-    )
-
-
 def int_id(_):
     return '1/foo/03'
+
+
+def ext_id(schd):
+    return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
 
 
 @pytest.mark.asyncio

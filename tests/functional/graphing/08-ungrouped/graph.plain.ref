@@ -1,5 +1,5 @@
-edge "foo.1" "BAR.1"
+edge "1/foo" "1/BAR"
 graph
-node "BAR.1" "BAR\n1"
-node "foo.1" "foo\n1"
+node "1/BAR" "BAR\n1"
+node "1/foo" "foo\n1"
 stop

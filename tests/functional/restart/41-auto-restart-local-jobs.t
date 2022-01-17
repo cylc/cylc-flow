@@ -92,7 +92,7 @@ poll_workflow_restart
 #     ensure the workflow DOESN'T WAIT for local jobs to complete before stopping
 TEST_NAME="${TEST_NAME_BASE}-force-mode"
 
-cylc trigger "${WORKFLOW_NAME}" bar.1
+cylc trigger "${WORKFLOW_NAME}//1/bar"
 cylc workflow-state "${WORKFLOW_NAME}" --task='bar' --status='running' --point=1 \
     --interval=1 --max-polls=20 >& $ERR
 
@@ -110,7 +110,7 @@ log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
     'This workflow will be shutdown as the workflow host is unable to continue' \
     'Workflow shutting down - REQUEST(NOW)' \
     'Orphaned task jobs:' \
-    '* bar.1 (running)'
+    '* 1/bar (running)'
 
 cylc stop "${WORKFLOW_NAME}" --now --now 2>/dev/null || true
 poll_workflow_stopped

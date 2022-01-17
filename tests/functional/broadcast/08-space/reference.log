@@ -1,4 +1,4 @@
-2015-05-01T07:41:43Z INFO - Initial point: 20200202T0000Z
-2015-05-01T07:41:43Z INFO - Final point: 20200202T0000Z
-2015-05-01T07:41:43Z DEBUG - broadcast.20200202T0000Z -triggered off []
-2015-05-01T07:41:43Z DEBUG - test-env.20200202T0000Z -triggered off ['broadcast.20200202T0000Z']
+Initial point: 20200202T0000Z
+Final point: 20200202T0000Z
+20200202T0000Z/broadcast -triggered off []
+20200202T0000Z/test-env -triggered off ['20200202T0000Z/broadcast']

@@ -19,7 +19,6 @@
 # so that kill will need to retry, despite 'unreachable_host' being idetified
 # as unreachable by job submission.
 export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
-
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
@@ -58,7 +57,7 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
 # are removed from the badhosts set.
 named_grep_ok "job kill fails" \
     "unreachable_host has been added to the list of unreachable hosts" \
-    "${LOGFILE}" "-P"
+    "${LOGFILE}"
 
 named_grep_ok "job kill retries & succeeds" \
     "\[jobs-kill out\] \[TASK JOB SUMMARY\].*1/mixedhosttask/01" \

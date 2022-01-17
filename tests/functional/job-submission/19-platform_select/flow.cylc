@@ -43,4 +43,4 @@ purpose = """
             host = `hostname`
 
     [[fin]]
-        script = cylc remove ${CYLC_SUITE_NAME} platform_*
+        script = cylc remove "${CYLC_SUITE_NAME}//1/platform_*"

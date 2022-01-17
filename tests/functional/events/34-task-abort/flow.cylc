@@ -2,7 +2,7 @@
     title = "Test job abort with retries and failed handler"
 [scheduler]
     [[events]]
-        expected task failures = foo.1
+        expected task failures = 1/foo
 [scheduling]
     [[graph]]
         R1 = "foo:fail => handled"

@@ -4,7 +4,7 @@
     [[events]]
         abort on stall timeout = True
         stall timeout = PT0S
-        expected task failures = foo.1
+        expected task failures = 1/foo
 
 [scheduling]
     [[graph]]
@@ -16,8 +16,8 @@
             cylc__job__wait_cylc_message_started
             cylc reload "${CYLC_WORKFLOW_ID}"
             cylc__job__poll_grep_workflow_log -F 'Reload completed'
-            cylc kill "${CYLC_WORKFLOW_ID}" 'foo.1'
-            cylc__job__poll_grep_workflow_log -E 'foo\.1 failed\(held\) job:01.* job killed'
+            cylc kill "${CYLC_WORKFLOW_ID}//1/foo"
+            cylc__job__poll_grep_workflow_log -E '1/foo failed\(held\) job:01.* job killed'
         """
         [[[job]]]
             execution time limit = PT1M

@@ -1,6 +1,6 @@
 [scheduler]
     [[events]]
-        expected task failures = a.1, b.1, c.1
+        expected task failures = 1/a, 1/b, 1/c
 [scheduling]
     [[graph]]
         R1 = """a:fail? => b?

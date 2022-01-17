@@ -32,6 +32,7 @@ from textwrap import indent
 from typing import TYPE_CHECKING
 from urwid import html_fragment
 
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 from cylc.flow.tui import TUI
@@ -40,7 +41,6 @@ from cylc.flow.tui.app import (
     TREE_EXPAND_DEPTH
     # ^ a nasty solution
 )
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -53,7 +53,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('WORKFLOW', 'Workflow name or ID')
+            ('WORKFLOW_ID', 'Workflow ID')
         ],
         # auto_add=False,  NOTE: at present auto_add can not be turned off
         color=False
@@ -84,8 +84,11 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(_, options: 'Values', reg: str) -> None:
-    reg, _ = parse_reg(reg)
+def main(_, options: 'Values', workflow_id: str) -> None:
+    workflow_id, *_ = parse_id(
+        workflow_id,
+        constraint='workflows',
+    )
     screen = None
     if options.display == 'html':
         TREE_EXPAND_DEPTH[0] = -1  # expand tree fully
@@ -98,7 +101,7 @@ def main(_, options: 'Values', reg: str) -> None:
         )
 
     try:
-        TuiApp(reg, screen=screen).main()
+        TuiApp(workflow_id, screen=screen).main()
 
         if options.display == 'html':
             for fragment in html_fragment.screenshot_collect():

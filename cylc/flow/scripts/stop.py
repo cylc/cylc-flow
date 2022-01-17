@@ -20,6 +20,25 @@
 
 Tell a workflow to shut down.
 
+Examples:
+  # wait for active tasks to finish, then shut down
+  $ cylc stop my_flow
+
+  # kill active tasks, then shut down
+  $ cylc stop my_flow --kill
+
+  # shut down immediately, leave active tasks alone
+  $ cylc stop my_flow --now
+
+  # shut down all workflows
+  $ cylc stop '*'
+
+  # shut down after the cycle 1234 has been passed
+  $ cylc stop my_flow//1234
+
+  # shut down after the task foo in cycle 1234 has succeeded
+  $ cylc stop my_flow//1234/foo
+
 By default stopping workflows wait for submitted and running tasks
 to complete before shutting down. You can change this behaviour
 with the "mode" option.
@@ -42,17 +61,22 @@ job poll and kill commands, however, will be executed prior to shutdown, unless
 This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for workflow shutdown."""
 
+from functools import partial
 import sys
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from cylc.flow.command_polling import Poller
-from cylc.flow.exceptions import ClientError, ClientTimeout, CylcError
+from cylc.flow.exceptions import (
+    ClientError,
+    ClientTimeout,
+    CylcError,
+    UserInputError,
+)
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.task_id import TaskID
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -100,10 +124,10 @@ class StopPoller(Poller):
             'variables': {'wFlows': [self.pclient.workflow]}
         }
 
-    def check(self):
+    async def check(self):
         """Return True if workflow has stopped (success) else False"""
         try:
-            self.pclient('graphql', self.query)
+            await self.pclient.async_request('graphql', self.query)
         except (ClientError, ClientTimeout, CylcError):
             # failed to ping - workflow stopped or (CylcError) restarted on
             # another host:port (in which case it must have stopped first).
@@ -115,9 +139,12 @@ class StopPoller(Poller):
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True,
-        argdoc=[("WORKFLOW", "Workflow name or ID"),
-                ("[STOP]", "task POINT (cycle point), or TASK (task ID).")]
+        __doc__,
+        comms=True,
+        multiworkflow=True,
+        argdoc=[
+            ('ID [ID ...]', 'Workflow/Cycle/Task ID(s)'),
+        ],
     )
 
     parser.add_option(
@@ -151,40 +178,55 @@ def get_option_parser():
     return parser
 
 
-@cli_function(get_option_parser)
-def main(
-    parser: COP,
+async def run(
     options: 'Values',
-    reg: str,
-    shutdown_arg: Optional[str] = None
-) -> None:
-    if shutdown_arg is not None and options.kill:
-        parser.error("ERROR: --kill is not compatible with [STOP]")
+    workflow_id,
+    *tokens_list,
+) -> int:
+    if len(tokens_list) > 1:
+        raise Exception('Multiple TODO')
+
+    # parse the stop-task or stop-cycle if provided
+    stop_task = stop_cycle = None
+    if tokens_list:
+        tokens = tokens_list[0]
+        if tokens['task']:
+            stop_task = tokens.relative_id
+        elif tokens['cycle']:
+            stop_cycle = tokens['cycle']
+
+    # handle orthogonal options
+    if stop_task is not None and options.kill:
+        raise UserInputError("--kill is not compatible with stop-task")
+
+    if stop_cycle is not None and options.kill:
+        raise UserInputError("--kill is not compatible with stop-cycle")
+
+    if stop_task and stop_cycle:
+        raise UserInputError('stop-task is not compatible with stop-cycle')
 
     if options.kill and options.now:
-        parser.error("ERROR: --kill is not compatible with --now")
+        raise UserInputError("--kill is not compatible with --now")
 
     if options.flow_num and int(options.max_polls) > 0:
-        parser.error("ERROR: --flow is not compatible with --max-polls")
+        raise UserInputError("--flow is not compatible with --max-polls")
 
-    reg, _ = parse_reg(reg)
-    pclient = get_client(reg, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
+
         spoller = StopPoller(
-            pclient, "workflow stopped", options.interval, options.max_polls)
+            pclient,
+            "workflow stopped",
+            options.interval,
+            options.max_polls,
+        )
 
     # mode defaults to 'Clean'
     mode = None
-    task = None
-    cycle_point = None
-    if shutdown_arg is not None and TaskID.is_valid_id(shutdown_arg):
-        # STOP argument detected
-        task = shutdown_arg
-    elif shutdown_arg is not None:
-        # not a task ID, may be a cycle point
-        cycle_point = shutdown_arg
+    if stop_task or stop_cycle:
+        pass
     elif options.kill:
         mode = WorkflowStopMode.Kill.name
     elif options.now > 1:
@@ -195,17 +237,37 @@ def main(
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [reg],
+            'wFlows': [workflow_id],
             'stopMode': mode,
-            'cyclePoint': cycle_point,
+            'cyclePoint': stop_cycle,
             'clockTime': options.wall_clock,
-            'task': task,
+            'task': stop_task,
             'flowNum': options.flow_num
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
 
-    if int(options.max_polls) > 0 and not spoller.poll():
+    if int(options.max_polls) > 0 and not await spoller.poll():
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
-        sys.exit(1)
+        return 1
+    return 0
+
+
+@cli_function(get_option_parser)
+def main(
+    parser: COP,
+    options: 'Values',
+    *ids,
+) -> None:
+    rets = call_multi(
+        partial(run, options),
+        *ids,
+        constraint='mixed',
+    )
+    if all(
+        ret == 0
+        for ret in rets
+    ):
+        sys.exit(0)
+    sys.exit(1)

@@ -32,20 +32,20 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [runtime]
     [[holdrelease]]
         script = """
-cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_workflow_log -E 'foo\.1 .* spawned'
-cylc__job__poll_grep_workflow_log -E 'bar\.1 .* spawned'
-cylc__job__poll_grep_workflow_log -E 'cheese\.1 .* spawned'
-cylc__job__poll_grep_workflow_log -E 'jam\.1 .* spawned'
-cylc__job__poll_grep_workflow_log -E 'cat1\.1 .* spawned'
-cylc__job__poll_grep_workflow_log -E 'cat2\.1 .* spawned'
-cylc__job__poll_grep_workflow_log -E 'dog1\.1 .* spawned'
-cylc__job__poll_grep_workflow_log -E 'dog2\.1 .* spawned'
-cylc hold ${CYLC_WORKFLOW_ID} '*FF.1'  # inexact fam
-cylc hold ${CYLC_WORKFLOW_ID} 'TOAST.1'  # exact fam
-cylc hold ${CYLC_WORKFLOW_ID} 'cat*.1'  # inexact tasks
-cylc hold ${CYLC_WORKFLOW_ID} 'dog1.1'  # exact tasks
-"""
+            cylc__job__wait_cylc_message_started
+            cylc__job__poll_grep_workflow_log -E '1/foo .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/bar .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/cheese .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/jam .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/cat1 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/cat2 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/dog1 .* spawned'
+            cylc__job__poll_grep_workflow_log -E '1/dog2 .* spawned'
+            cylc hold "${CYLC_WORKFLOW_ID}//1/*FF"  # inexact fam
+            cylc hold "${CYLC_WORKFLOW_ID}//1/TOAST"  # exact fam
+            cylc hold "${CYLC_WORKFLOW_ID}//1/cat*"  # inexact tasks
+            cylc hold "${CYLC_WORKFLOW_ID}//1/dog1"  # exact tasks
+        """
     [[STUFF]]
     [[TOAST]]
     [[STOP]]
@@ -63,8 +63,8 @@ cylc hold ${CYLC_WORKFLOW_ID} 'dog1.1'  # exact tasks
     [[stop]]
         inherit = STOP
         script = """
-        sleep 5
-        cylc stop "${CYLC_WORKFLOW_ID}"
+            sleep 5
+            cylc stop "${CYLC_WORKFLOW_ID}"
         """
 __FLOW_CONFIG__
 
@@ -73,7 +73,7 @@ run_ok "${TEST_NAME_BASE}-val" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 
-# Should shut down with all the held tasks in the held state, and dog.2
+# Should shut down with all the held tasks in the held state, and 2/dog
 # finished and gone from the task pool.
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \

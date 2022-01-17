@@ -2,7 +2,7 @@
 
 [scheduler]
    [[events]]
-       expected task failures = t1.1, t2.1
+       expected task failures = 1/t1, 1/t2
 
 [scheduling]
     [[graph]]
@@ -21,6 +21,6 @@
         inherit=T
     [[stop]]
         script="""
-            cylc kill "$CYLC_WORKFLOW_ID" 't1.1' 't2.1' || true
+            cylc kill "$CYLC_WORKFLOW_ID//" '//1/t1' '//1/t2' || true
             cylc stop $CYLC_WORKFLOW_ID
         """

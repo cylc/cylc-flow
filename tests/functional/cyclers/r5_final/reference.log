@@ -1,12 +1,12 @@
-2014/03/31 10:15:08 INFO - Initial point: 20140101
-2014/03/31 10:15:08 INFO - Final point: 20140102T12
-2014/03/31 10:15:08 DEBUG - xyzzy.20140102T0000Z -triggered off []
-2014/03/31 10:15:12 DEBUG - xyzzy.20140102T0300Z -triggered off []
-2014/03/31 10:15:15 DEBUG - xyzzy.20140102T0600Z -triggered off []
-2014/03/31 10:15:23 DEBUG - bar.20140102T0000Z -triggered off ['xyzzy.20140102T0000Z']
-2014/03/31 10:15:27 DEBUG - bar.20140102T0300Z -triggered off ['xyzzy.20140102T0300Z']
-2014/03/31 10:15:30 DEBUG - bar.20140102T0600Z -triggered off ['xyzzy.20140102T0600Z']
-2014/03/31 10:15:40 DEBUG - xyzzy.20140102T0900Z -triggered off []
-2014/03/31 10:15:44 DEBUG - xyzzy.20140102T1200Z -triggered off []
-2014/03/31 10:15:54 DEBUG - bar.20140102T0900Z -triggered off ['xyzzy.20140102T0900Z']
-2014/03/31 10:15:57 DEBUG - bar.20140102T1200Z -triggered off ['xyzzy.20140102T1200Z']
+Initial point: 20140101
+Final point: 20140102T12
+20140102T0000Z/xyzzy -triggered off []
+20140102T0300Z/xyzzy -triggered off []
+20140102T0600Z/xyzzy -triggered off []
+20140102T0000Z/bar -triggered off ['20140102T0000Z/xyzzy']
+20140102T0300Z/bar -triggered off ['20140102T0300Z/xyzzy']
+20140102T0600Z/bar -triggered off ['20140102T0600Z/xyzzy']
+20140102T0900Z/xyzzy -triggered off []
+20140102T1200Z/xyzzy -triggered off []
+20140102T0900Z/bar -triggered off ['20140102T0900Z/xyzzy']
+20140102T1200Z/bar -triggered off ['20140102T1200Z/xyzzy']

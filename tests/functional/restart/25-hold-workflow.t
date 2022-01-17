@@ -39,11 +39,11 @@ cylc play "${WORKFLOW_NAME}" --debug --no-detach 1>"${TEST_NAME_BASE}-restart.ou
 CYLC_RESTART_PID=$!
 poll_workflow_running
 
-cylc release "${WORKFLOW_NAME}" 't2.2016'
+cylc release "${WORKFLOW_NAME}//2016/t2"
 poll_grep 'CYLC_JOB_EXIT' "${WORKFLOW_RUN_DIR}/log/job/2016/t2/01/job.status"
 
 cylc release --all "${WORKFLOW_NAME}"
-cylc poll "${WORKFLOW_NAME}"
+cylc poll "${WORKFLOW_NAME}//*"
 
 # Ensure workflow has completed
 run_ok "${TEST_NAME_BASE}-restart" wait "${CYLC_RESTART_PID}"

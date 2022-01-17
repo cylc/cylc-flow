@@ -1,12 +1,12 @@
-2013/11/05 10:58:59 INFO - Initial point: 1
-2013/11/05 10:58:59 INFO - Final point: 1
-2013/11/05 10:58:59 DEBUG - reloader.1 -triggered off []
-2013/11/05 10:58:59 DEBUG - inter.1 -triggered off ['reloader.1']
-2013/11/05 10:59:08 DEBUG - a.1 -triggered off ['inter.1']
-2013/11/05 10:59:08 DEBUG - c.1 -triggered off ['inter.1']
-2013/11/05 10:59:08 DEBUG - b.1 -triggered off ['inter.1']
-2013/11/05 10:59:08 DEBUG - d.1 -triggered off ['inter.1']
-2013/11/05 10:59:16 DEBUG - e.1 -triggered off ['a.1', 'b.1', 'c.1', 'd.1']
-2013/11/05 10:59:16 DEBUG - g.1 -triggered off ['a.1', 'b.1', 'c.1', 'd.1']
-2013/11/05 10:59:16 DEBUG - f.1 -triggered off ['a.1', 'b.1', 'c.1', 'd.1']
-2013/11/05 10:59:16 DEBUG - h.1 -triggered off ['a.1', 'b.1', 'c.1', 'd.1']
+Initial point: 1
+Final point: 1
+1/reloader -triggered off []
+1/inter -triggered off ['1/reloader']
+1/a -triggered off ['1/inter']
+1/c -triggered off ['1/inter']
+1/b -triggered off ['1/inter']
+1/d -triggered off ['1/inter']
+1/e -triggered off ['1/a', '1/b', '1/c', '1/d']
+1/g -triggered off ['1/a', '1/b', '1/c', '1/d']
+1/f -triggered off ['1/a', '1/b', '1/c', '1/d']
+1/h -triggered off ['1/a', '1/b', '1/c', '1/d']

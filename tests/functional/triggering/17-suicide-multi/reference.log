@@ -1,11 +1,11 @@
-2017-12-27T14:42:10Z INFO - Initial point: 1
-2017-12-27T14:42:10Z INFO - Final point: 3
-2017-12-27T14:42:10Z DEBUG - showdown.1 -triggered off ['fin.0']
-2017-12-27T14:42:13Z DEBUG - ugly.1 -triggered off ['showdown.1']
-2017-12-27T14:42:16Z DEBUG - fin.1 -triggered off ['ugly.1']
-2017-12-27T14:42:19Z DEBUG - showdown.2 -triggered off ['fin.1']
-2017-12-27T14:42:22Z DEBUG - bad.2 -triggered off ['showdown.2']
-2017-12-27T14:42:25Z DEBUG - fin.2 -triggered off ['bad.2']
-2017-12-27T14:42:28Z DEBUG - showdown.3 -triggered off ['fin.2']
-2017-12-27T14:42:32Z DEBUG - good.3 -triggered off ['showdown.3']
-2017-12-27T14:42:35Z DEBUG - fin.3 -triggered off ['good.3']
+Initial point: 1
+Final point: 3
+1/showdown -triggered off ['0/fin']
+1/ugly -triggered off ['1/showdown']
+1/fin -triggered off ['1/ugly']
+2/showdown -triggered off ['1/fin']
+2/bad -triggered off ['2/showdown']
+2/fin -triggered off ['2/bad']
+3/showdown -triggered off ['2/fin']
+3/good -triggered off ['3/showdown']
+3/fin -triggered off ['3/good']

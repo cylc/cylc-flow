@@ -30,9 +30,9 @@
 [runtime]
     [[foo]]
         script = """
-            cylc kill "$CYLC_WORKFLOW_NAME" 'bar.1'
-            cylc__job__poll_grep_workflow_log -E 'bar\.1 .* \(internal\)failed'
-            cylc release "$CYLC_WORKFLOW_ID" 'bar.1'
+            cylc kill "$CYLC_WORKFLOW_NAME//1/bar"
+            cylc__job__poll_grep_workflow_log -E '1/bar .* \(internal\)failed'
+            cylc release "$CYLC_WORKFLOW_ID//1/bar"
         """
     [[bar]]
         script = """

@@ -1,8 +1,8 @@
-2014-05-19T17:32:12 INFO - Initial point: 20120101T00
-2014-05-19T17:32:12 INFO - Final point: 20120101T18
-2014-05-19T17:32:12 DEBUG - a.20120101T06 -triggered off []
-2014-05-19T17:32:16 DEBUG - a.20120101T12 -triggered off []
-2014-05-19T17:32:16 DEBUG - b.20120101T00 -triggered off ['a.20120101T06']
-2014-05-19T17:32:20 DEBUG - b.20120101T06 -triggered off ['a.20120101T12']
-2014-05-19T17:32:20 DEBUG - a.20120101T18 -triggered off []
-2014-05-19T17:32:29 DEBUG - b.20120101T12 -triggered off ['a.20120101T18']
+Initial point: 20120101T00
+Final point: 20120101T18
+20120101T06/a -triggered off []
+20120101T12/a -triggered off []
+20120101T00/b -triggered off ['20120101T06/a']
+20120101T06/b -triggered off ['20120101T12/a']
+20120101T18/a -triggered off []
+20120101T12/b -triggered off ['20120101T18/a']

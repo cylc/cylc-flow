@@ -1,6 +1,6 @@
 [scheduler]
    [[events]]
-       expected task failures = t1.1
+       expected task failures = 1/t1
 
 [scheduling]
     [[graph]]
@@ -19,9 +19,9 @@
             failed handlers = echo
     [[t2]]
         script = """
-            cylc kill "${CYLC_WORKFLOW_ID}" 't1'
+            cylc kill "${CYLC_WORKFLOW_ID}//*/t1"
             sleep 1
-            cylc poll "${CYLC_WORKFLOW_ID}" 't1'
+            cylc poll "${CYLC_WORKFLOW_ID}//*/t1"
             sleep 1
             cylc shutdown "${CYLC_WORKFLOW_ID}"
         """

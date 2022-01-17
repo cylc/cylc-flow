@@ -40,13 +40,14 @@ from zmq.auth.thread import ThreadAuthenticator
 from metomi.isodatetime.parsers import TimePointParser
 
 from cylc.flow import (
-    LOG, main_loop, ID_DELIM, __version__ as CYLC_VERSION
+    LOG, main_loop, __version__ as CYLC_VERSION
 )
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
-from cylc.flow.data_store_mgr import DataStoreMgr, parse_job_item
+from cylc.flow.data_store_mgr import DataStoreMgr
+from cylc.flow.id import Tokens
 from cylc.flow.flow_mgr import FlowMgr
 from cylc.flow.exceptions import (
     CommandFailedError, CyclingError, CylcError, UserInputError
@@ -253,7 +254,10 @@ class Scheduler:
         self.workflow_name = get_workflow_name_from_id(self.workflow)
         self.owner = get_user()
         self.host = get_host()
-        self.id = f'{self.owner}{ID_DELIM}{self.workflow}'
+        self.id = Tokens(
+            user=self.owner,
+            workflow=self.workflow,
+        ).id
         self.uuid_str = str(uuid4())
         self.options = options
         self.template_vars = load_template_vars(
@@ -759,7 +763,7 @@ class Scheduler:
             sleep(1.0)
             # Remote init/file-install is done via process pool
             self.proc_pool.process()
-        self.command_poll_tasks()
+        self.command_poll_tasks(['*/*'])
 
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
@@ -787,11 +791,15 @@ class Scheduler:
             except Empty:
                 break
             self.message_queue.task_done()
-            cycle, task_name, submit_num = parse_job_item(task_job)
-            task_id = TaskID.get(task_name, cycle)
+            tokens = Tokens(task_job, relative=True)
+            # task ID (job stripped)
+            task_id = tokens.duplicate(job=None).relative_id
             messages.setdefault(task_id, [])
+            # job may be None (e.g. simulation mode)
+            job = int(tokens['job']) if tokens['job'] else None
             messages[task_id].append(
-                (submit_num, event_time, severity, message))
+                (job, event_time, severity, message)
+            )
         # Note on to_poll_tasks: If an incoming message is going to cause a
         # reverse change to task state, it is desirable to confirm this by
         # polling.
@@ -898,11 +906,7 @@ class Scheduler:
         elif task:
             # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
-            if TaskID.is_valid_id(task_id):
-                self.pool.set_stop_task(task_id)
-            else:
-                # TODO: yield warning
-                pass
+            self.pool.set_stop_task(task_id)
         else:
             # immediate shutdown
             with suppress(KeyError):
@@ -937,18 +941,18 @@ class Scheduler:
         """Resume paused workflow."""
         self.resume_workflow()
 
-    def command_poll_tasks(self, items=None):
+    def command_poll_tasks(self, items: List[str]):
         """Poll pollable tasks or a task or family if options are provided."""
         if self.config.run_mode('simulation'):
             return
-        itasks, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(items)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
         # (Could filter itasks by state here if needed)
         return len(bad_items)
 
-    def command_kill_tasks(self, items=None):
+    def command_kill_tasks(self, items: List[str]):
         """Kill all tasks or a task/family if options are provided."""
-        itasks, bad_items = self.pool.filter_task_proxies(items)
+        itasks, _, bad_items = self.pool.filter_task_proxies(items)
         if self.config.run_mode('simulation'):
             for itask in itasks:
                 if itask.state(*TASK_STATUSES_ACTIVE):
@@ -1350,8 +1354,8 @@ class Scheduler:
                 raise SchedulerStop(self.stop_mode.value)
         elif (self.time_next_kill is not None and
               time() > self.time_next_kill):
-            self.command_poll_tasks()
-            self.command_kill_tasks()
+            self.command_poll_tasks(['*/*'])
+            self.command_kill_tasks(['*/*'])
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...

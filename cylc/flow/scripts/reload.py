@@ -20,24 +20,40 @@
 
 Reload the configuration of a running workflow.
 
+Example:
+  # install and run the workflow
+  $ cylc install
+  $ cylc play my_flow
+
+  # make changes to the workflow source directory
+
+  # reinstall the workflow
+  $ cylc reinstall my_flow
+
+  # reload the workflow to pick up changes
+  $ cylc reload my_flow
+
+  # the workflow is now running with the new config
+
 All settings including task definitions, with the exception of
 workflow log config, can be changed on reload. Changes to task
 definitions take effect immediately, unless a task is already
 running at reload time.
 
 If the workflow was started with Jinja2 template variables set on the command
-line (cylc play --set 'FOO="bar"' WORKFLOW) the same template settings apply to
-the reload (only changes to the flow.cylc file itself are reloaded).
+line (cylc play --set 'FOO="bar"' WORKFLOW_ID) the same template settings apply
+to the reload (only changes to the flow.cylc file itself are reloaded).
 
 If the modified workflow definition does not parse, failure to reload will
 be reported but no harm will be done to the running workflow."""
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -57,20 +73,32 @@ mutation (
 
 
 def get_option_parser():
-    parser = COP(__doc__, comms=True)
+    parser = COP(
+        __doc__,
+        comms=True,
+        multiworkflow=True,
+        argdoc=[('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow ID(s)')],
+    )
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str) -> None:
-    workflow, _ = parse_reg(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+async def run(options: 'Values', workflow_id: str) -> None:
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids) -> None:
+    call_multi(
+        partial(run, options),
+        *ids,
+        constraint='workflows',
+    )

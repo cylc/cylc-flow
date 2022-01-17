@@ -19,8 +19,8 @@
 import argparse
 from contextlib import contextmanager
 import os
-import sys
 from pathlib import Path
+import sys
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
@@ -64,21 +64,112 @@ Usage:
 Command Abbreviation:
   # Commands can be abbreviated as long as there is no ambiguity in
   # the abbreviated command:
-  $ cylc trigger WORKFLOW TASK    # trigger TASK in WORKFLOW
-  $ cylc trig WORKFLOW TASK       # ditto
-  $ cylc tr WORKFLOW TASK         # ditto
-  $ cylc t                        # Error: ambiguous command
+  $ cylc trigger WORKFLOW//CYCLE/TASK    # trigger TASK in WORKFLOW
+  $ cylc trig WORKFLOW//CYCLE/TASK       # ditto
+  $ cylc tr WORKFLOW//CYCLE/TASK         # ditto
+  $ cylc t                               # Error: ambiguous command
 
-Task Identification:
-  Tasks are identified by NAME.CYCLE_POINT where POINT is either a
-  date-time or an integer.
+Cylc IDs:
+  Cylc IDs take the form:
+    workflow//cycle/task
 
-  Date-time cycle points are in an ISO 8601 date-time format, typically
-  CCYYMMDDThhmm followed by a time zone - e.g. 20101225T0600Z.
+  You can split an ID at the // so following two IDs are equivalent:
+    workflow//cycle1 workflow//cycle2
+    workflow// //cycle1 //cycle2
 
-  Integer cycle points (including those for non-cycling workflows) are integers
-  - just '1' for non-cycling workflows.
+  IDs can be written as globs:
+    *//                 # All workflows
+    workflow//*         # All cycles in "workflow"
+    workflow//cycle/*   # All tasks in "workflow" in "cycle"
+
+  For more information type "cylc help id".
 """
+
+ID_HELP = '''
+Workflow IDs:
+    Every Installed Cylc workflow has an ID.
+
+    For example if we install a workflow like so:
+      $ cylc install --flow-name=foo
+
+    We will end up with a workflow with the ID "foo/run1".
+
+    This ID can be used to interact with the workflow:
+      $ cylc play foo/run1
+      $ cylc pause foo/run1
+      $ cylc stop foo/run1
+
+    In the case of numbered runs (e.g. "run1", "run2", ...) you can omit
+    the run number, Cylc will infer latest run.
+      $ cylc play foo
+      $ cylc pause foo
+      $ cylc stop foo
+
+    Workflows can be installed hierarchically:
+      $ cylc install --flow-name=foo/bar/baz
+
+      # play the workflow with the ID "foo/bar/baz"
+      $ cylc play foo/bar/baz
+
+    The full format of a workflow ID is:
+      ~user/workflow-id
+
+    You can omit the user name when working on your own workflows.
+
+Cycle / Family / Task / Job IDs:
+    Just as workflows have IDs, the things within workflows have IDs too.
+    These IDs take the format:
+      cycle/task_or_family/job
+
+    Examples:
+      1      # The cycle point "1"
+      1/a    # The task "a" in cycle point "1"
+      1/a/1  # The first job of the task "a" in the cycle point "1".
+
+Full ID
+    We join the workflow and cycle/task/job IDs together using //:
+      workflow//cycle/task/job
+
+    Examples:
+      w//         # The workflow "w"
+      w//1        # The cycle "1" in the workflow "w"
+      w//1/a      # The task "a" in the cycle "1" in the workflow "w"
+      w//1/a/1    # The first job of w//1/a/1
+      ~alice/test # The workflow "test" installed under the user
+                  # account "alice"
+
+Patterns
+    Patterns can be used in Cylc IDs:
+      *       # Matches everything.
+      ?       # Matches any single character.
+      [seq]   # Matches any character in "seq".
+      [!seq]  # Matches any character not in "seq".
+
+    Examples:
+      *                      # All workflows
+      test*                  # All workflows starting "test".
+      test/*                 # All workflows starting "test/".
+      workflow//*            # All cycles in workflow
+      workflow//cycle/*      # All tasks in workflow//cycle
+      workflow//cycle/task/* # All jobs in workflow//cycle/job
+
+    Warning:
+      Remember to write IDs inside single quotes when using them on the
+      command line otherwise your shell may expand them.
+
+Filters
+    Filters allow you to filter for specific states.
+
+    Filters are prefixed by a colon (:).
+
+    Examples:
+      *:running                       # All running workflows
+      workflow//*:running             # All running cycles in workflow
+      workflow//cycle/*:running       # All running tasks in workflow//cycle
+      workflow//cycle/task/*:running  # All running jobs in
+                                      # workflow//cycle/task
+'''
+
 
 # because this command is not served from behind cli_function like the
 # other cylc commands we have to manually patch in colour support
@@ -273,6 +364,10 @@ def iter_commands():
             continue
         usage, desc = parse_docstring(module.__doc__)
         yield (cmd, desc, usage)
+
+
+def print_id_help():
+    print(ID_HELP)
 
 
 def print_command_list(commands=None, indent=0):
@@ -510,6 +605,9 @@ def main():
                     cli_help()
                 elif cmd_args == ['all']:
                     print_command_list()
+                    sys.exit(0)
+                elif cmd_args == ['id']:
+                    print_id_help()
                     sys.exit(0)
                 else:
                     command = cmd_args.pop(0)

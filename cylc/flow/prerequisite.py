@@ -19,11 +19,13 @@
 import math
 import re
 
-from cylc.flow import ID_DELIM
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.data_messages_pb2 import (  # type: ignore
-    PbPrerequisite, PbCondition)
+    PbPrerequisite,
+    PbCondition,
+)
+from cylc.flow.id import Tokens
 
 
 class Prerequisite:
@@ -45,7 +47,7 @@ class Prerequisite:
 
     # Extracts T from "foo.T succeeded" etc.
     SATISFIED_TEMPLATE = 'bool(self.satisfied[("%s", "%s", "%s")])'
-    MESSAGE_TEMPLATE = '%s.%s %s'
+    MESSAGE_TEMPLATE = r'%s/%s %s'
 
     DEP_STATE_SATISFIED = 'satisfied naturally'
     DEP_STATE_OVERRIDDEN = 'force satisfied'
@@ -64,11 +66,11 @@ class Prerequisite:
         self.target_point_strings = []
 
         # Dictionary of messages pertaining to this prerequisite.
-        # {('task name', 'point string', 'output'): DEP_STATE_X, ...}
+        # {('point string', 'task name', 'output'): DEP_STATE_X, ...}
         self.satisfied = {}
 
         # Expression present only when conditions are used.
-        # 'foo.1 failed & bar.1 succeeded'
+        # '1/foo failed & 1/bar succeeded'
         self.conditional_expression = None
 
         # The cached state of this prerequisite:
@@ -88,7 +90,7 @@ class Prerequisite:
             pre_initial (bool): this is a pre-initial dependency.
 
         """
-        message = (name, str(point), output)
+        message = (str(point), name, output)
 
         # Add a new prerequisite as satisfied if pre-initial, else unsatisfied.
         if pre_initial:
@@ -124,14 +126,14 @@ class Prerequisite:
             # Add 'foo' to the 'satisfied' dict before 'xfoo'.
             >>> preq = Prerequisite(1)
             >>> preq.satisfied = {
-            ...    ('foo', '1', 'succeeded'): False,
-            ...    ('xfoo', '1', 'succeeded'): False
+            ...    ('1', 'foo', 'succeeded'): False,
+            ...    ('1', 'xfoo', 'succeeded'): False
             ... }
-            >>> preq.set_condition("foo.1 succeeded|xfoo.1 succeeded")
+            >>> preq.set_condition("1/foo succeeded|1/xfoo succeeded")
             >>> expr = preq.conditional_expression
             >>> expr.split('|')  # doctest: +NORMALIZE_WHITESPACE
-            ['bool(self.satisfied[("foo", "1", "succeeded")])',
-            'bool(self.satisfied[("xfoo", "1", "succeeded")])']
+            ['bool(self.satisfied[("1", "foo", "succeeded")])',
+            'bool(self.satisfied[("1", "xfoo", "succeeded")])']
 
         """
         self._all_satisfied = None
@@ -145,6 +147,7 @@ class Prerequisite:
                     self.SATISFIED_TEMPLATE % message,
                     expr
                 )
+
             self.conditional_expression = expr
 
     def is_satisfied(self):
@@ -201,7 +204,7 @@ class Prerequisite:
                 self._all_satisfied = self._conditional_is_satisfied()
         return relevant_messages
 
-    def api_dump(self, workflow_id):
+    def api_dump(self):
         """Return list of populated Protobuf data objects."""
         if not self.satisfied:
             return None
@@ -215,8 +218,8 @@ class Prerequisite:
         conds = []
         num_length = math.ceil(len(self.satisfied) / 10)
         for ind, message_tuple in enumerate(sorted(self.satisfied)):
-            name, point = message_tuple[0:2]
-            t_id = f"{workflow_id}{ID_DELIM}{point}{ID_DELIM}{name}"
+            point, name = message_tuple[0:2]
+            t_id = Tokens(cycle=str(point), task=name).relative_id
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]
@@ -277,9 +280,9 @@ class Prerequisite:
     def get_resolved_dependencies(self):
         """Return a list of satisfied dependencies.
 
-        E.G: ['foo.1', 'bar.2']
+        E.G: ['1/foo', '2/bar']
 
         """
-        return [f'{name}.{point}' for
-                (name, point, _), satisfied in self.satisfied.items() if
+        return [f'{point}/{name}' for
+                (point, name, _), satisfied in self.satisfied.items() if
                 satisfied == self.DEP_STATE_SATISFIED]

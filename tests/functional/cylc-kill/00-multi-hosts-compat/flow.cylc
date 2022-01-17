@@ -3,7 +3,7 @@
 [scheduler]
     UTC mode = True
     [[events]]
-        expected task failures = local-1.1, local-2.1, local-3.1, remote-1.1, remote-2.1
+        expected task failures = 1/local-1, 1/local-2, 1/local-3, 1/remote-1, 1/remote-2
 
 [scheduling]
     [[graph]]
@@ -24,6 +24,6 @@
         platform = {{CYLC_TEST_PLATFORM}}
     [[killer]]
         script = """
-            cylc kill "${CYLC_WORKFLOW_ID}" KILLABLE 1
+            cylc kill "${CYLC_WORKFLOW_ID}//1/KILLABLE"
             cylc stop "${CYLC_WORKFLOW_ID}"
         """

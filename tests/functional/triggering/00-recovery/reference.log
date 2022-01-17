@@ -1,10 +1,10 @@
-2012/09/12 09:36:00 INFO - Initial point: 20110101T0000Z
-2012/09/12 09:36:00 INFO - Final point: 20110101T1200Z
-2012/09/12 09:36:00 DEBUG - pre.20110101T0000Z -triggered off []
-2012/09/12 09:36:00 DEBUG - pre.20110101T1200Z -triggered off []
-2012/09/12 09:36:01 DEBUG - model.20110101T0000Z -triggered off ['pre.20110101T0000Z']
-2012/09/12 09:36:01 DEBUG - model.20110101T1200Z -triggered off ['pre.20110101T1200Z']
-2012/09/12 09:36:02 DEBUG - post.20110101T0000Z -triggered off ['model.20110101T0000Z']
-2012/09/12 09:36:02 DEBUG - diagnose.20110101T1200Z -triggered off ['model.20110101T1200Z']
-2012/09/12 09:36:02 DEBUG - recover.20110101T1200Z -triggered off ['diagnose.20110101T1200Z']
-2012/09/12 09:36:03 DEBUG - post.20110101T1200Z -triggered off ['recover.20110101T1200Z']
+Initial point: 20110101T0000Z
+Final point: 20110101T1200Z
+20110101T0000Z/pre -triggered off []
+20110101T1200Z/pre -triggered off []
+20110101T0000Z/model -triggered off ['20110101T0000Z/pre']
+20110101T1200Z/model -triggered off ['20110101T1200Z/pre']
+20110101T0000Z/post -triggered off ['20110101T0000Z/model']
+20110101T1200Z/diagnose -triggered off ['20110101T1200Z/model']
+20110101T1200Z/recover -triggered off ['20110101T1200Z/diagnose']
+20110101T1200Z/post -triggered off ['20110101T1200Z/recover']

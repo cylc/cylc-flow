@@ -102,6 +102,8 @@ The resulting formatted directives are:
 import re
 import shlex
 
+from cylc.flow.id import Tokens
+
 
 class SLURMHandler():
     """SLURM job submission and manipulation."""
@@ -149,8 +151,10 @@ class SLURMHandler():
         """Format the job directives for a job file."""
         job_file_path = job_conf['job_file_path']
         directives = job_conf['directives'].__class__()
+        tokens = Tokens(job_conf['task_id'], relative=True)
         directives['--job-name'] = (
-            job_conf['task_id'] + '.' + job_conf['workflow_name'])
+            f'{tokens["task"]}.{tokens["cycle"]}.{job_conf["workflow_name"]}'
+        )
         directives['--output'] = job_file_path.replace('%', '%%') + ".out"
         directives['--error'] = job_file_path.replace('%', '%%') + ".err"
         if (job_conf["execution_time_limit"] and

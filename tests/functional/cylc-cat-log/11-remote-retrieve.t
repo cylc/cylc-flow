@@ -33,20 +33,21 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 # Local job.out should exist (retrieved).
-LOCAL_JOB_OUT=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}" a-task.1)/job.out
+LOCAL_JOB_OUT=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}//1/a-task")/job.out
 exists_ok "${LOCAL_JOB_OUT}"
 
-# Distinguish local from remote job.out.
+# Distinguish local from remote job.out
 perl -pi -e 's/fox/FOX/' "${LOCAL_JOB_OUT}"
 
 # Cat the remote one.
 TEST_NAME=${TEST_NAME_BASE}-out-rem
-run_ok "${TEST_NAME}" cylc cat-log --force-remote -f o "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log --force-remote -f o \
+    "${WORKFLOW_NAME}//1/a-task"
 grep_ok '^the quick brown fox$' "${TEST_NAME}.stdout"
 
 # Cat the local one.
 TEST_NAME=${TEST_NAME_BASE}-out-loc
-run_ok "${TEST_NAME}" cylc cat-log -f o "${WORKFLOW_NAME}" a-task.1
+run_ok "${TEST_NAME}" cylc cat-log -f o "${WORKFLOW_NAME}//1/a-task"
 grep_ok '^the quick brown FOX$' "${TEST_NAME}.stdout"
 
 purge

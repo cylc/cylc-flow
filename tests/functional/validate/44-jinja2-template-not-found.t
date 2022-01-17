@@ -22,7 +22,7 @@ set_test_number 2
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
-run_fail "${TEST_NAME}" cylc validate flow.cylc
+run_fail "${TEST_NAME}" cylc validate .
 cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: flow-foo.cylc
 Context lines:

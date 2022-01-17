@@ -35,13 +35,17 @@ from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
 
-from cylc.flow import ID_DELIM
 from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
     DELTA_ADDED, create_delta_store
 )
+from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
-    NodesEdges, PROXY_NODES, SUB_RESOLVERS, parse_node_id, sort_elements
+    DEF_TYPES,
+    NodesEdges,
+    PROXY_NODES,
+    SUB_RESOLVERS,
+    sort_elements,
 )
 
 if TYPE_CHECKING:
@@ -82,116 +86,184 @@ def collate_workflow_atts(workflow):
     """Collate workflow filter attributes, setting defaults if non-existent."""
     # Append new atts to the end of the list,
     # this will retain order used in index access.
-    return [
-        workflow.owner,
-        workflow.name,
-        workflow.status,
-    ]
+    return {
+        'user': workflow.owner,
+        'workflow': workflow.name,
+        'workflow_sel': workflow.status,
+    }
 
 
-def workflow_ids_filter(w_atts, items):
+def uniq(iterable):
+    """Return a unique collection of the provided items preserving item order.
+
+    Useful for unhashable things like dicts, relies on __eq__ for testing
+    equality.
+
+    Examples:
+        >>> uniq([1, 1, 2, 3, 5, 8, 1])
+        [1, 2, 3, 5, 8]
+
+    """
+    ret = []
+    for item in iterable:
+        if item not in ret:
+            ret.append(item)
+    return ret
+
+
+def workflow_ids_filter(workflow_tokens, items) -> bool:
     """Match id arguments with workflow attributes.
 
-    Returns a boolean."""
-    # Return true if workflow matches any id arg.
+    Return True if workflow matches any id arg.
+    """
     return any(
         (
-            (not owner or fnmatchcase(w_atts[0], owner))
-            and (not name or fnmatchcase(w_atts[1], name))
-            and (not status or w_atts[2] == status)
+            (
+                not item['user']
+                or fnmatchcase(workflow_tokens['user'], item['user'])
+            )
+            and (
+                not item['workflow']
+                or fnmatchcase(workflow_tokens['workflow'], item['workflow'])
+            )
+            and (
+                not item['workflow_sel']
+                or workflow_tokens['workflow_sel'] == item['workflow_sel']
+            )
         )
-        for owner, name, status in set(items)
+        for item in uniq(items)
     )
 
 
-def workflow_filter(flow, args, w_atts=None):
+def workflow_filter(flow, args, w_atts=None) -> bool:
     """Filter workflows based on attribute arguments"""
     if w_atts is None:
         w_atts = collate_workflow_atts(flow[WORKFLOW])
     # The w_atts (workflow attributes) list contains ordered workflow values
     # or defaults (see collate function for index item).
-    return ((not args.get('workflows') or
-             workflow_ids_filter(w_atts, args['workflows'])) and
-            not (args.get('exworkflows') and
-                 workflow_ids_filter(w_atts, args['exworkflows'])))
+    return (
+        (
+            not args.get('workflows')
+            or workflow_ids_filter(w_atts, args['workflows'])
+        )
+        and not (
+            args.get('exworkflows')
+            and workflow_ids_filter(w_atts, args['exworkflows'])
+        )
+    )
 
 
-def collate_node_atts(node):
-    """Collate node filter attributes, setting defaults if non-existent."""
-    owner, workflow, _ = node.id.split(ID_DELIM, 2)
-    # Append new atts to the end of the list,
-    # this will retain order used in index access
-    # 0 - owner
-    # 1 - workflow
-    # 2 - Cycle point or None
-    # 3 - name or namespace list
-    # 4 - submit number or None
-    # 5 - state
-    return [
-        owner,
-        workflow,
-        getattr(node, 'cycle_point', None),
-        getattr(node, 'namespace', [node.name]),
-        getattr(node, 'submit_num', None),
-        getattr(node, 'state', None),
-    ]
+def get_state_from_selectors(tokens):
+    """Return the highest defined selector in the provided tokens or None.
+
+    TODO:
+        This is a temporary workaround, the filters here should acquire
+        full selector capability in due course.
+
+    """
+    for selector in 'cycle_sel', 'task_sel', 'job_sel':
+        if tokens.get(selector):
+            return tokens[selector]
 
 
-def node_ids_filter(n_atts, items):
-    """Match id arguments with node attributes.
-
-    Returns a boolean."""
+def node_ids_filter(tokens, state, items) -> bool:
+    """Match id arguments with node attributes."""
     return any(
         (
-            (not owner or fnmatchcase(n_atts[0], owner))
-            and (not workflow or fnmatchcase(n_atts[1], workflow))
-            and (not cycle or fnmatchcase(n_atts[2], cycle))
-            and any(fnmatchcase(nn, name) for nn in n_atts[3])
+            # don't match an empty string (globs should be implicit)
+            not item.is_null
+            # match cycle point
             and (
-                not submit_num
-                or fnmatchcase(str(n_atts[4]), submit_num.lstrip('0')))
-            and (not state or n_atts[5] == state)
+                not item['cycle']
+                or fnmatchcase(tokens['cycle'], item['cycle'])
+            )
+            # match namespace name
+            and (
+                not item['task']
+                or fnmatchcase(tokens['task'], item['task'])
+            )
+            # match job
+            and (
+                not item['job']
+                or fnmatchcase(tokens['job'], item['job'])
+            )
+            # match cycle/task/job state
+            and (
+                not get_state_from_selectors(item)
+                or get_state_from_selectors(item) == state
+            )
         )
-        for owner, workflow, cycle, name, submit_num, state in items
+        for item in uniq(items)
     )
 
 
 def node_filter(node, node_type, args):
     """Filter nodes based on attribute arguments"""
-    # Updated delta nodes don't contain name but still need filter
-    if not node.name:
-        n_atts = list(parse_node_id(node.id, node_type))
-        n_atts[3] = [n_atts[3]]
+    tokens: Tokens
+    if node_type in DEF_TYPES:
+        # namespace nodes don't fit into the universal ID scheme so must
+        # be tokenised manually
+        tokens = Tokens(
+            cycle=None,
+            task=node.name,
+            job=None,
+        )
     else:
-        n_atts = collate_node_atts(node)
-    # The n_atts (node attributes) list contains ordered node values
-    # or defaults (see collate function for index item).
+        # live objects can be represented by a universal ID
+        tokens = Tokens(node.id)
+    state = getattr(node, 'state', None)
     return (
-        (args.get('ghosts') or n_atts[5] != '') and
-        (not args.get('states') or n_atts[5] in args['states']) and
-        not (args.get('exstates') and n_atts[5] in args['exstates']) and
-        (args.get('is_held') is None
-         or (node.is_held == args['is_held'])) and
-        (args.get('is_queued') is None
-         or (node.is_queued == args['is_queued'])) and
-        (args.get('mindepth', -1) < 0 or node.depth >= args['mindepth']) and
-        (args.get('maxdepth', -1) < 0 or node.depth <= args['maxdepth']) and
+        (
+            args.get('ghosts')
+            or state
+            or node_type in DEF_TYPES
+        )
+        and (
+            not args.get('states')
+            or state in args['states']
+        )
+        and not (
+            args.get('exstates')
+            and state in args['exstates']
+        )
+        and (
+            args.get('is_held') is None
+            or (node.is_held == args['is_held'])
+        )
+        and (
+            args.get('is_queued') is None
+            or (node.is_queued == args['is_queued'])
+        )
+        and (
+            args.get('mindepth', -1) < 0
+            or node.depth >= args['mindepth']
+        )
+        and (
+            args.get('maxdepth', -1) < 0
+            or node.depth <= args['maxdepth']
+        )
         # Now filter node against id arg lists
-        (not args.get('ids') or node_ids_filter(n_atts, args['ids'])) and
-        not (args.get('exids') and node_ids_filter(n_atts, args['exids']))
+        and (
+            not args.get('ids')
+            or node_ids_filter(tokens, state, args['ids'])
+        )
+        and not (
+            args.get('exids')
+            and node_ids_filter(tokens, state, args['exids'])
+        )
     )
 
 
 def get_flow_data_from_ids(data_store, native_ids):
     """Return workflow data by id."""
-    w_ids = set()
+    w_ids = []
     for native_id in native_ids:
-        o_name, w_name, _ = native_id.split(ID_DELIM, 2)
-        flow_id = f'{o_name}{ID_DELIM}{w_name}'
-        w_ids.add(flow_id)
+        w_ids.append(
+            Tokens(native_id).workflow_id
+        )
     return [
         data_store[w_id]
-        for w_id in w_ids
+        for w_id in uniq(w_ids)
         if w_id in data_store
     ]
 
@@ -239,9 +311,9 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
                 if workflow_filter(self.data_store_mgr.data[key], args)
             ]
         return [
-            flow
-            for flow in self.data_store_mgr.data.values()
-            if workflow_filter(flow, args)
+            workflow
+            for workflow in self.data_store_mgr.data.values()
+            if workflow_filter(workflow, args)
         ]
 
     async def get_workflows(self, args):
@@ -255,11 +327,14 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
     async def get_nodes_all(self, node_type, args):
         """Return nodes from all workflows, filter by args."""
         return sort_elements(
-            [n
-             for flow in await self.get_workflows_data(args)
-             for n in flow.get(node_type).values()
-             if node_filter(n, node_type, args)],
-            args)
+            [
+                n
+                for flow in await self.get_workflows_data(args)
+                for n in flow.get(node_type).values()
+                if node_filter(n, node_type, args)
+            ],
+            args,
+        )
 
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
@@ -280,18 +355,20 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
         else:
             node_types = [node_type]
         return sort_elements(
-            [node
-             for flow in flow_data
-             for node_type in node_types
-             for node in get_data_elements(flow, nat_ids, node_type)
-             if node_filter(node, node_type, args)],
-            args)
+            [
+                node
+                for flow in flow_data
+                for node_type in node_types
+                for node in get_data_elements(flow, nat_ids, node_type)
+                if node_filter(node, node_type, args)
+            ],
+            args,
+        )
 
     async def get_node_by_id(self, node_type, args):
         """Return protobuf node object for given id."""
         n_id = args.get('id')
-        o_name, w_name, _ = n_id.split(ID_DELIM, 2)
-        w_id = f'{o_name}{ID_DELIM}{w_name}'
+        w_id = Tokens(n_id).workflow_id
         # Both cases just as common so 'if' not 'try'
         try:
             if 'sub_id' in args and args.get('delta_store'):
@@ -519,9 +596,9 @@ class Resolvers(BaseResolvers):
         w_ids = [flow[WORKFLOW].id
                  for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
-            flows = list(self.data_store_mgr.data.keys())
+            workflows = list(self.data_store_mgr.data.keys())
             return [{
-                'response': (False, f'No matching workflow in {flows}')}]
+                'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
         result = await self._mutation_mapper(command, args)
         if result is None:
@@ -530,29 +607,33 @@ class Resolvers(BaseResolvers):
 
     async def nodes_mutator(self, *m_args):
         """Mutate node items of associated workflows."""
-        _, command, ids, w_args, args = m_args
-        w_ids = [flow[WORKFLOW].id
-                 for flow in await self.get_workflows_data(w_args)]
+        _, command, tokens_list, w_args, args = m_args
+        w_ids = [
+            workflow[WORKFLOW].id
+            for workflow in await self.get_workflows_data(w_args)
+        ]
         if not w_ids:
-            flows = list(self.data_store_mgr.data.keys())
+            workflows = list(self.data_store_mgr.data.keys())
             return [{
-                'response': (False, f'No matching workflow in {flows}')}]
+                'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
         # match proxy ID args with workflows
         items = []
-        for owner, workflow, cycle, name, submit_num, state in ids:
+        for tokens in tokens_list:
+            owner = tokens.get('user')
+            workflow = tokens.get('workflow')
             if workflow and owner is None:
                 owner = "*"
-            if (not (owner and workflow) or
-                    fnmatchcase(w_id, f'{owner}{ID_DELIM}{workflow}')):
-                if cycle is None:
-                    cycle = '*'
-                id_arg = f'{cycle}/{name}'
-                if submit_num:
-                    id_arg = f'{id_arg}/{submit_num}'
-                if state:
-                    id_arg = f'{id_arg}:{state}'
-                items.append(id_arg)
+            if (
+                not (owner and workflow)
+                or fnmatchcase(
+                    w_id,
+                    tokens.workflow_id,
+                )
+            ):
+                items.append(
+                    tokens.relative_id
+                )
         if items:
             if command == 'put_messages':
                 args['task_job'] = items[0]
@@ -728,7 +809,7 @@ class Resolvers(BaseResolvers):
         ))
         return (True, 'Command queued')
 
-    def force_trigger_tasks(self, tasks, reflow=False, flow_descr=None):
+    def force_trigger_tasks(self, tasks=None, reflow=False, flow_descr=None):
         """Trigger submission of task jobs where possible.
 
         Args:
@@ -750,7 +831,7 @@ class Resolvers(BaseResolvers):
         """
         self.schd.command_queue.put(
             (
-                "force_trigger_tasks", (tasks,),
+                "force_trigger_tasks", (tasks or [],),
                 {
                     "reflow": reflow,
                     "flow_descr": flow_descr

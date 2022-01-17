@@ -1,5 +1,5 @@
 Initial point: 1
 Final point: 1
-t1.1 -triggered off []
-recover-t1.1 -triggered off ['t1.1']
-t1.1 -triggered off []
+1/t1 -triggered off []
+1/recover-t1 -triggered off ['1/t1']
+1/t1 -triggered off []

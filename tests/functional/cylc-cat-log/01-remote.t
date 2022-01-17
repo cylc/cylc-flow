@@ -33,11 +33,11 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-out
-cylc cat-log -f o "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f o "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok '^the quick brown fox$' "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-job
-cylc cat-log -f j "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f j "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 contains_ok "${TEST_NAME}.out" - << __END__
 # SCRIPT:
 # Write to task stdout log
@@ -50,27 +50,27 @@ __END__
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-err
-cylc cat-log -f e "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f e "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok "jumped over the lazy dog" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-status
-cylc cat-log -f s "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f s "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok "CYLC_JOB_RUNNER_NAME=background" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=${TEST_NAME_BASE}-task-activity
-cylc cat-log -f a "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f a "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok '\[jobs-submit ret_code\] 0' "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-custom
-cylc cat-log -f 'job.custom-log' "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f 'job.custom-log' "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok "drugs and money" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=${TEST_NAME_BASE}-task-list-local-NN
-cylc cat-log -f a -m l "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f a -m l "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 contains_ok "${TEST_NAME}.out" <<__END__
 job
 job-activity.log
@@ -78,7 +78,7 @@ __END__
 #-------------------------------------------------------------------------------
 # local
 TEST_NAME=${TEST_NAME_BASE}-task-list-local-01
-cylc cat-log -f a -m l -s 1 "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f a -m l -s 1 "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 contains_ok "${TEST_NAME}.out" <<__END__
 job
 job-activity.log
@@ -86,7 +86,7 @@ __END__
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-list-remote-NN
-cylc cat-log -f j -m l "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f j -m l "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 contains_ok "${TEST_NAME}.out" <<__END__
 job
 job.custom-log
@@ -98,17 +98,17 @@ __END__
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-NN
-cylc cat-log -f j -m d "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -f j -m d "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-01
-cylc cat-log -m d -f j -s 1 "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -m d -f j -s 1 "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-job-path
-cylc cat-log -m p -f j "${WORKFLOW_NAME}" a-task.1 >"${TEST_NAME}.out"
+cylc cat-log -m p -f j "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
 grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # Clean up the task host.

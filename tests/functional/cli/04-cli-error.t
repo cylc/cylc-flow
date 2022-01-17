@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Get coverage up for some CLI parser errors. 
+# Get coverage up for some CLI parser errors.
 
 . "$(dirname "$0")/test_header"
 set_test_number 2
@@ -32,9 +32,9 @@ __CONFIG__
 # "cylc trigger --meta" requires --reflow
 TEST_NAME="set-trigger-fail"
 run_fail "${TEST_NAME}"  \
-    cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}"  foo.1
+    cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}//1/foo"
 contains_ok "${TEST_NAME}".stderr <<__END__
-cylc: error: --meta requires --reflow
+UserInputError: --meta requires --reflow
 __END__
 
 purge

@@ -42,41 +42,42 @@ from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
+from cylc.flow.id import Tokens
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
 
 
-def sort_integer_node(item):
+def sort_integer_node(id_):
     """Return sort tokens for nodes with cyclepoints in integer format.
 
     Example:
-        >>> sort_integer_node('foo.11')
+        >>> sort_integer_node('11/foo')
         ('foo', 11)
 
     """
-    name, point = item.split('.')
-    return (name, int(point))
+    tokens = Tokens(id_, relative=True)
+    return (tokens['task'], int(tokens['cycle']))
 
 
-def sort_integer_edge(item):
+def sort_integer_edge(id_):
     """Return sort tokens for edges with cyclepoints in integer format.
 
     Example:
-        >>> sort_integer_edge(('foo.11', 'foo.12', None))
+        >>> sort_integer_edge(('11/foo', '12/foo', None))
         (('foo', 11), ('foo', 12))
-        >>> sort_integer_edge(('foo.11', None , None))
+        >>> sort_integer_edge(('11/foo', None , None))
         (('foo', 11), ('', 0))
 
     """
 
     return (
-        sort_integer_node(item[0]),
-        sort_integer_node(item[1]) if item[1] else ('', 0)
+        sort_integer_node(id_[0]),
+        sort_integer_node(id_[1]) if id_[1] else ('', 0)
     )
 
 
@@ -138,7 +139,10 @@ def graph_workflow(
         if show_suicide or not suicide
     )
     for node in sorted(set(nodes), key=node_sort):
-        write('node "%s" "%s"' % (node, node.replace('.', r'\n')))
+        tokens = Tokens(node, relative=True)
+        write(
+            f'node "{node}" "{tokens["task"]}\\n{tokens["cycle"]}"'
+        )
 
     write('stop')
 
@@ -166,27 +170,33 @@ def graph_inheritance(config, write=print):
     write('stop')
 
 
-def get_config(workflow: str, opts: 'Values') -> WorkflowConfig:
+def get_config(workflow_id: str, opts: 'Values') -> WorkflowConfig:
     """Return a WorkflowConfig object for the provided reg / path."""
-    workflow, flow_file = parse_reg(workflow, src=True)
+    workflow_id, _, flow_file = parse_id(
+        workflow_id,
+        src=True,
+        constraint='workflows',
+    )
     template_vars = get_template_vars(opts)
     return WorkflowConfig(
-        workflow, flow_file, opts, template_vars=template_vars
+        workflow_id, flow_file, opts, template_vars=template_vars
     )
 
 
 def get_option_parser():
     """CLI."""
     parser = COP(
-        __doc__, jset=True, prep=True,
+        __doc__,
+        jset=True,
+        prep=True,
         argdoc=[
-            ('[WORKFLOW]', 'Workflow name or path'),
+            ('[WORKFLOW_ID]', 'Workflow ID or path to source'),
             ('[START]', 'Graph start; defaults to initial cycle point'),
             (
                 '[STOP]',
                 'Graph stop point or interval; defaults to 3 points from START'
             )
-        ]
+        ],
     )
 
     parser.add_option(
@@ -285,7 +295,7 @@ def dot(opts, lines):
                 task = match.group(1)
                 cycle = ''
             else:
-                task, cycle = match.group(1).split('.')
+                cycle, task = match.group(1).split('/')
                 nodes.setdefault(cycle, []).append(task)
             continue
         match = edge.match(line)
@@ -359,7 +369,7 @@ def gui(filename):
 def main(
     parser: COP,
     opts: 'Values',
-    workflow: str,
+    workflow_id: str,
     start: Optional[str] = None,
     stop: Optional[str] = None
 ) -> None:
@@ -373,7 +383,7 @@ def main(
     else:
         write = print
 
-    flows: List[Tuple[str, List[str]]] = [(workflow, [])]
+    flows: List[Tuple[str, List[str]]] = [(workflow_id, [])]
     if opts.diff:
         flows.append((opts.diff, []))
 

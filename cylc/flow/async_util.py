@@ -417,3 +417,44 @@ async def asyncqgen(queue):
     """Turn a queue into an async generator."""
     while not queue.empty():
         yield await queue.get()
+
+
+async def unordered_map(coroutine, iterator):
+    """An asynchronous map function which does not preserve order.
+
+    Use in situations where you want results as they are completed rather than
+    once they are all completed.
+
+    Example:
+        # define your async coroutine
+        >>> async def square(x): return x**2
+
+        # define your iterator (must yield tuples)
+        >>> iterator = [(num,) for num in range(5)]
+
+        # use `async for` to iterate over the results
+        # (sorted in this case so the test is repeatable)
+        >>> async def test():
+        ...     ret = []
+        ...     async for x in unordered_map(square, iterator):
+        ...         ret.append(x)
+        ...     return sorted(ret)
+        >>> asyncio.run(test())
+        [((0,), 0), ((1,), 1), ((2,), 4), ((3,), 9), ((4,), 16)]
+
+    """
+    # create tasks
+    pending = []
+    for args in iterator:
+        task = asyncio.create_task(coroutine(*args))
+        task._args = args
+        pending.append(task)
+
+    # run tasks
+    while pending:
+        done, pending = await asyncio.wait(
+            pending,
+            return_when=asyncio.FIRST_COMPLETED
+        )
+        for task in done:
+            yield task._args, task.result()

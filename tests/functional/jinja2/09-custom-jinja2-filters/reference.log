@@ -1,6 +1,6 @@
-2018-10-22T15:43:24Z INFO - Initial point: 01231212T1212Z
-2018-10-22T15:43:24Z INFO - Final point: None
-2018-10-22T15:43:24Z DEBUG - strftime.01231212T1212Z -triggered off []
-2018-10-22T15:43:28Z DEBUG - pad.01231212T1212Z -triggered off ['strftime.01231212T1212Z']
-2018-10-22T15:43:32Z DEBUG - duration_as.01231212T1212Z -triggered off ['pad.01231212T1212Z']
-2018-10-22T15:43:36Z DEBUG - end.01231212T1212Z -triggered off ['duration_as.01231212T1212Z']
+Initial point: 01231212T1212Z
+Final point: None
+01231212T1212Z/strftime -triggered off []
+01231212T1212Z/pad -triggered off ['01231212T1212Z/strftime']
+01231212T1212Z/duration_as -triggered off ['01231212T1212Z/pad']
+01231212T1212Z/end -triggered off ['01231212T1212Z/duration_as']

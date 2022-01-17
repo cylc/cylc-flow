@@ -1,4 +1,4 @@
 Initial point: 20000101T0000Z
 Final point: 20000101T0000Z
-foo.20000101T0000Z -triggered off []
-bar.20000101T0000Z -triggered off []
+20000101T0000Z/foo -triggered off []
+20000101T0000Z/bar -triggered off []

@@ -8,7 +8,7 @@ Tasks
 
 [scheduler]
     [[events]]
-        expected task failures = t1.1, t2.1
+        expected task failures = 1/t1, 1/t2
 
 
 [scheduling]
@@ -37,12 +37,12 @@ Tasks
     [[stop_g]]
         script="""
             sleep 5  # Give the badhosts list time to empty
-            cylc kill "$CYLC_WORKFLOW_ID" 'goodhosttask.1' || true
+            cylc kill "$CYLC_WORKFLOW_ID//1/goodhosttask" || true
         """
 
     [[stop_m]]
         script="""
             sleep 5  # Give the badhosts list time to empty
-            cylc kill "$CYLC_WORKFLOW_ID" 'mixedhosttask.1' || true
+            cylc kill "$CYLC_WORKFLOW_ID//1/mixedhosttask" || true
             cylc stop $CYLC_WORKFLOW_ID
         """

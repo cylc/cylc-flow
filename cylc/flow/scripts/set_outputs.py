@@ -27,32 +27,33 @@ artificially satisfying outputs of tasks.
 If a flow number is given, the child tasks will start (or continue) that flow,
 otherwise no reflow will occur.
 
-For example, for the following dependency graph:
-
+Examples:
+  # For example, for the following dependency graph:
   R1 = '''
      a => b & c => d
      foo:x => bar => baz
   '''
 
-$ cylc set-outputs <workflow> a.1
-  will spawn b.1 and c.1, but d.1 will not subsequently run
+  # spawn 1/b and 1/c, but 1/d will not subsequently run
+  $ cylc set-outputs my_flow//1/a
 
-$ cylc set-outputs --flow=2 <workflow> a.1
-  will spawn b.1 and c.1 as flow 2, followed by d.1
+  # spawn 1/b and 1/c as flow 2, followed by 1/d
+  $ cylc set-outputs --flow=2 my_flow//1/a
 
-$ cylc set-outputs --flow=3 --output=x <workflow> foo.1
-  will spawn bar.1 as flow 3, followed by baz.1
+  # spawn 1/bar as flow 3, followed by 1/baz
+  $ cylc set-outputs --flow=3 --output=x my_flow//1/foo
 
 Use --output multiple times to spawn off of several outputs at once.
 
 """
 
+from functools import partial
 from optparse import Values
 
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 MUTATION = '''
 mutation (
@@ -75,10 +76,12 @@ mutation (
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, multitask_nocycles=True,
-        argdoc=[
-            ("WORKFLOW", "Workflow name or ID"),
-            ('TASK-GLOB [...]', 'Task match pattern')])
+        __doc__,
+        comms=True,
+        multitask=True,
+        multiworkflow=True,
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+    )
 
     parser.add_option(
         "-o", "--output", metavar="OUTPUT",
@@ -93,19 +96,28 @@ def get_option_parser():
     return parser
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: str, *task_globs: str) -> None:
-    reg, _ = parse_reg(reg)
-    pclient = get_client(reg, timeout=options.comms_timeout)
+async def run(options: 'Values', workflow_id: str, *tokens_list) -> None:
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [reg],
-            'tasks': list(task_globs),
+            'wFlows': [workflow_id],
+            'tasks': [
+                tokens.relative_id
+                for tokens in tokens_list
+            ],
             'outputs': options.outputs,
             'flowNum': options.flow_num
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids) -> None:
+    call_multi(
+        partial(run, options),
+        *ids,
+    )

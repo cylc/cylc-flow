@@ -39,15 +39,15 @@ description: (not given)
 URL: (not given)
 
 prerequisites (- => not satisfied):
-  + woo.20141106T0900Z succeeded
+  + 20141106T0900Z/woo succeeded
 
 outputs (- => not completed):
-  - foo.20141106T0900Z expired
-  + foo.20141106T0900Z submitted
-  - foo.20141106T0900Z submit-failed
-  + foo.20141106T0900Z started
-  - foo.20141106T0900Z succeeded
-  - foo.20141106T0900Z failed
+  - 20141106T0900Z/foo expired
+  + 20141106T0900Z/foo submitted
+  - 20141106T0900Z/foo submit-failed
+  + 20141106T0900Z/foo started
+  - 20141106T0900Z/foo succeeded
+  - 20141106T0900Z/foo failed
 
 other (- => not satisfied):
   + Clock trigger time reached

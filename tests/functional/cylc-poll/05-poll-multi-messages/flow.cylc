@@ -1,42 +1,44 @@
 #!Jinja2
+
 [scheduler]
     UTC mode = True
+
 [scheduling]
     [[graph]]
-        R1="""
-speaker1:start & speaker2:start => poller
-speaker1:hello1 & speaker1:hello2 & speaker2:greet => finisher
-"""
+        R1 = """
+            speaker1:start & speaker2:start => poller
+            speaker1:hello1 & speaker1:hello2 & speaker2:greet => finisher
+        """
 [runtime]
     [[speaker1]]
-        script="""
-# Wait for "cylc message started" command
-cylc__job__wait_cylc_message_started
-# Simulate "cylc message", messages written to status file but failed to
-# get sent back to the workflow
-{
-    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello1"
-    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello2"
-} >>"${CYLC_TASK_LOG_ROOT}.status"
-cylc__job__poll_grep_workflow_log -E 'speaker1\.1 running .* \(polled\)hello1'
-cylc__job__poll_grep_workflow_log -E 'speaker1\.1 running .* \(polled\)hello2'
-"""
-        [[[outputs]]]
-            hello1 = "hello1"
-            hello2 = "hello2"
+        script = """
+            # Wait for "cylc message started" command
+            cylc__job__wait_cylc_message_started
+            # Simulate "cylc message", messages written to status file but failed to
+            # get sent back to the workflow
+            {
+                echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello1"
+                echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|hello2"
+            } >>"${CYLC_TASK_LOG_ROOT}.status"
+            cylc__job__poll_grep_workflow_log -E '1/speaker1 running .* \(polled\)hello1'
+            cylc__job__poll_grep_workflow_log -E '1/speaker1 running .* \(polled\)hello2'
+            """
+            [[[outputs]]]
+                hello1 = "hello1"
+                hello2 = "hello2"
     [[speaker2]]
         script="""
-# Wait for "cylc message started" command
-cylc__job__wait_cylc_message_started
-# Simulate "cylc message", messages written to status file but failed to
-# get sent back to the workflow
-echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|greet" \
-    >>"${CYLC_TASK_LOG_ROOT}.status"
-cylc__job__poll_grep_workflow_log -E 'speaker2\.1 running .* \(polled\)greet'
-"""
+            # Wait for "cylc message started" command
+            cylc__job__wait_cylc_message_started
+            # Simulate "cylc message", messages written to status file but failed to
+            # get sent back to the workflow
+            echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|INFO|greet" \
+                >>"${CYLC_TASK_LOG_ROOT}.status"
+            cylc__job__poll_grep_workflow_log -E '1/speaker2 running .* \(polled\)greet'
+        """
         [[[outputs]]]
             greet = "greet"
     [[finisher]]
         script=true
     [[poller]]
-        script=cylc poll "${CYLC_WORKFLOW_ID}" 'speaker[12]'
+        script=cylc poll "${CYLC_WORKFLOW_ID}//*/speaker[12]"

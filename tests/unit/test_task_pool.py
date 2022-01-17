@@ -13,22 +13,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import pytest
-from typing import Optional, Tuple
-
-from cylc.flow.task_pool import TaskPool
-
-
-@pytest.mark.parametrize(
-    'item, expected',
-    [('foo', (None, 'foo', None)),
-     ('foo.*', ('*', 'foo', None)),
-     ('foo.*:failed', ('*', 'foo', 'failed')),
-     ('foo:failed', (None, 'foo', 'failed')),
-     ('3/foo:failed', ('3', 'foo', 'failed'))]
-)
-def test_parse_task_item(
-    item: str, expected: Tuple[Optional[str], str, Optional[str]]
-) -> None:
-    assert TaskPool._parse_task_item(item) == expected

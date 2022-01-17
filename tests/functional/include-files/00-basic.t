@@ -27,12 +27,14 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}.1" cylc val "${WORKFLOW_NAME}"
 
 # test workflow validates as inlined during editing
-cylc view --inline --stdout "${WORKFLOW_NAME}" > inlined.cylc
-run_ok "${TEST_NAME}.2" cylc val inlined.cylc
+mkdir inlined
+cylc view --inline --stdout "${WORKFLOW_NAME}" > inlined/flow.cylc
+run_ok "${TEST_NAME}.2" cylc val ./inlined
 #-------------------------------------------------------------------------------
 # compare inlined workflow def with reference copy
 TEST_NAME=${TEST_NAME_BASE}-compare
-cmp_ok inlined.cylc "${TEST_SOURCE_DIR}/workflow/ref-inlined.cylc"
+cmp_ok inlined/flow.cylc "${TEST_SOURCE_DIR}/workflow/ref-inlined.cylc"
+rm -rf inlined
 #-------------------------------------------------------------------------------
 purge
 #-------------------------------------------------------------------------------

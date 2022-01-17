@@ -41,9 +41,9 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.fileparse import read_and_proc
-from cylc.flow.workflow_files import parse_reg
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -52,7 +52,12 @@ if TYPE_CHECKING:
 
 
 def get_option_parser():
-    parser = COP(__doc__, jset=True, prep=True)
+    parser = COP(
+        __doc__,
+        jset=True,
+        prep=True,
+        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
+    )
 
     parser.add_option(
         "--inline", "-i", help="Inline include-files.", action="store_true",
@@ -112,8 +117,12 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: str) -> None:
-    workflow, flow_file = parse_reg(reg, src=True)
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, _, flow_file = parse_id(
+        workflow_id,
+        src=True,
+        constraint='workflows',
+    )
 
     if options.geditor:
         editor = glbl_cfg().get(['editors', 'gui'])
@@ -143,7 +152,7 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
 
     # write to a temporary file
     viewfile = NamedTemporaryFile(
-        suffix=".flow.cylc", prefix=workflow.replace('/', '_') + '.',
+        suffix=".flow.cylc", prefix=workflow_id.replace('/', '_') + '.',
     )
     for line in lines:
         viewfile.write((line + '\n').encode())

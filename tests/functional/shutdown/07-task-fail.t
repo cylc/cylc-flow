@@ -28,10 +28,10 @@ LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 grep_ok "ERROR - Workflow shutting down - AUTOMATIC(ON-TASK-FAILURE)" \
     "${LOGD}/workflow/log"
 JLOGD="${LOGD}/job/1/t1/01"
-# Check that t1.1 event handler runs
+# Check that 1/t1 event handler runs
 run_ok "${TEST_NAME_BASE}-activity-log" \
     grep -q -F \
-    "[(('event-handler-00', 'failed'), 1) out] Unfortunately t1.1 failed" \
+    "[(('event-handler-00', 'failed'), 1) out] Unfortunately 1/t1 failed" \
     "${JLOGD}/job-activity.log"
 # Check that t2.1 did not run
 exists_fail "${LOGD}/1/t2"

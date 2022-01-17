@@ -6,14 +6,17 @@
     [[w1]]
         init-script=cylc__job__disable_fail_signals ERR EXIT
         script="""
-cylc__job__wait_cylc_message_started
-# Append to job.status
-cat >>"${CYLC_TASK_LOG_ROOT}.status" <<__STATUS__
-CYLC_JOB_EXIT=SUCCEEDED
-CYLC_JOB_EXIT_TIME=$(date -u +'%FT%H:%M:%SZ')
-__STATUS__
-# Exit without trap
-exit 1
-"""
+            cylc__job__wait_cylc_message_started
+            # Append to job.status
+            cat >>"${CYLC_TASK_LOG_ROOT}.status" <<__STATUS__
+            CYLC_JOB_EXIT=SUCCEEDED
+            CYLC_JOB_EXIT_TIME=$(date -u +'%FT%H:%M:%SZ')
+            __STATUS__
+            # Exit without trap
+            exit 1
+        """
     [[w2]]
-        script=cylc__job__wait_cylc_message_started; cylc poll "${CYLC_WORKFLOW_ID}" 'w1.1'
+        script = """
+            cylc__job__wait_cylc_message_started
+            cylc poll "${CYLC_WORKFLOW_ID}//1/w1"
+        """

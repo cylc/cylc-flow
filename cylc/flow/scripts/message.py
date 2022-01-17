@@ -75,12 +75,12 @@ import os
 import sys
 from typing import TYPE_CHECKING
 
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.unicode_rules import TaskMessageValidator
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -88,9 +88,11 @@ if TYPE_CHECKING:
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True,
+        __doc__,
+        comms=True,
         argdoc=[
-            ('[WORKFLOW]', 'Workflow name or ID'),
+            # TODO
+            ('[WORKFLOW_ID]', 'Workflow ID'),
             ('[TASK-JOB]', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM'),
             ('[[SEVERITY:]MESSAGE ...]', 'Messages')])
     parser.add_option(
@@ -115,12 +117,15 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         #     9.0?
         # (As of Dec 2020 some functional tests still use the classic
         # two arg interface)
-        workflow = os.getenv('CYLC_WORKFLOW_ID')
+        workflow_id = os.getenv('CYLC_WORKFLOW_ID')
         task_job = os.getenv('CYLC_TASK_JOB')
         message_strs = list(args)
     else:
-        workflow, task_job, *message_strs = args
-        workflow, _ = parse_reg(workflow)
+        workflow_id, task_job, *message_strs = args
+        workflow_id, *_ = parse_id(
+            workflow_id,
+            constraint='workflows',
+        )
     # Read messages from STDIN
     if '-' in message_strs:
         current_message_str = ''
@@ -155,4 +160,4 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
             messages.append([options.severity, message_str.strip()])
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
-    record_messages(workflow, task_job, messages)
+    record_messages(workflow_id, task_job, messages)

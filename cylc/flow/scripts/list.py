@@ -34,17 +34,23 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
 
 
 def get_option_parser():
-    parser = COP(__doc__, jset=True, prep=True, icp=True)
+    parser = COP(
+        __doc__,
+        jset=True,
+        prep=True,
+        icp=True,
+        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
+    )
 
     parser.add_option(
         "-a", "--all-tasks",
@@ -90,8 +96,12 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: str) -> None:
-    workflow, flow_file = parse_reg(reg, src=True)
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    workflow_id, _, flow_file = parse_id(
+        workflow_id,
+        src=True,
+        constraint='workflows',
+    )
     template_vars = get_template_vars(options)
 
     if options.all_tasks and options.all_namespaces:
@@ -128,7 +138,7 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
         print("WARNING: -t chosen, ignoring non-tree options.",
               file=sys.stderr)
     config = WorkflowConfig(
-        workflow,
+        workflow_id,
         flow_file,
         options,
         template_vars

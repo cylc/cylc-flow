@@ -29,9 +29,9 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 grep "event-handler" "${LOG}" > 'edited-job-activity.log'
 cmp_ok 'edited-job-activity.log' <<'__LOG__'
-[(('event-handler-00', 'failed'), 2) cmd] echo "!!!FAILED!!!" failed foo.1 2 '"ERROR: rust never sleeps"'
+[(('event-handler-00', 'failed'), 2) cmd] echo "!!!FAILED!!!" failed 1/foo 2 '"ERROR: rust never sleeps"'
 [(('event-handler-00', 'failed'), 2) ret_code] 0
-[(('event-handler-00', 'failed'), 2) out] !!!FAILED!!! failed foo.1 2 "ERROR: rust never sleeps"
+[(('event-handler-00', 'failed'), 2) out] !!!FAILED!!! failed 1/foo 2 "ERROR: rust never sleeps"
 __LOG__
 #-------------------------------------------------------------------------------
 # Check job stdout stops at the abort call.

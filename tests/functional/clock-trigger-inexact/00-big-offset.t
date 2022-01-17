@@ -32,7 +32,7 @@ TRIGG_MINU=$(( 10#${START_MINU} + 1))
 [[ $START_MINU == 0* ]] && TRIGG_MINU=0${TRIGG_MINU}
 
 for NAME in foo bar baz; do
-   grep_ok "${START_HOUR}:${TRIGG_MINU}.* INFO - \[${NAME}\..*\] => waiting$" log
+   grep_ok "${START_HOUR}:${TRIGG_MINU}.* INFO - \[.*/${NAME} .*\] => waiting$" log
 done
 
 purge

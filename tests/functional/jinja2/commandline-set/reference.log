@@ -1,4 +1,4 @@
-2013/11/08 22:20:16 INFO - Initial point: 20100101T0000Z
-2013/11/08 22:20:16 INFO - Final point: 20120101T0000Z
-2013/11/08 22:20:16 DEBUG - foo.20100101T0000Z -triggered off []
-2013/11/08 22:20:20 DEBUG - foo.20120101T0000Z -triggered off []
+Initial point: 20100101T0000Z
+Final point: 20120101T0000Z
+20100101T0000Z/foo -triggered off []
+20120101T0000Z/foo -triggered off []

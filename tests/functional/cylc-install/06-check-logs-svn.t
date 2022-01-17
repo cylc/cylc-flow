@@ -21,12 +21,12 @@
 
 svn --version || skip_all "svn not installed"
 
-set_test_number 2
+set_test_number 3
 
-WORKFLOW=$(date | md5sum | awk '{print $1}')
-RUN_DIR="${HOME}/cylc-run/${WORKFLOW}"
+WORKFLOW="$(date | md5sum | awk '{print $1}')"
+WORKFLOW_NAME="$(workflow_id "${TEST_NAME_BASE}")"
+WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
 WORKDIR1="${PWD}/workdir1"
-
 
 # Create a workflow in a subdirectory of the test tmpdir
 mkdir -p "${WORKDIR1}/${WORKFLOW}"
@@ -54,9 +54,16 @@ echo "Inside workflow" > "${WORKFLOW}/test_file_in_workflow"
 echo "Outside workflow" > test_file_outside_workflow
 
 # Carry out actual test:
-cylc install -C "$PWD/${WORKFLOW}" --no-run-name
-named_grep_ok "File inside flow VC'd" "Inside workflow" "${RUN_DIR}/log/version/uncommitted.diff"
-grep_fail "Outside workflow" "${RUN_DIR}/log/version/uncommitted.diff"
 
-# Clean up installed flow:
-rm -fr "${RUN_DIR}"
+run_ok "${TEST_NAME_BASE}-install" \
+    cylc install \
+        -C "$PWD/${WORKFLOW}" \
+        --no-run-name \
+        --flow-name "${WORKFLOW_NAME}"
+named_grep_ok \
+    "File inside flow VC'd" \
+    "Inside workflow" \
+    "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
+grep_fail "Outside workflow" "${WORKFLOW_RUN_DIR}/logversion./uncommitted.diff"
+
+purge

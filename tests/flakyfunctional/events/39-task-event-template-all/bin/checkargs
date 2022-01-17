@@ -9,7 +9,7 @@ from subprocess import Popen, PIPE
 args = dict([arg.split('=', 1) for arg in sys.argv[1:]])
 
 workflow = os.environ['CYLC_WORKFLOW_ID']
-proc = Popen(['cylc', 'cat-log', '-m', 'p', '-f', 'a', workflow, 'foo.1'],
+proc = Popen(['cylc', 'cat-log', '-m', 'p', '-f', 'a', workflow, '//1/foo'],
              stdout=PIPE, stdin=open(os.devnull))
 alog = proc.communicate()[0].decode().strip()
 proc.wait()
@@ -30,7 +30,7 @@ desired_args = {
     'submit_num': '1',
     'try_num': '1',
     'job_runner_name': 'background',
-    'id': 'foo.1',
+    'id': '1/foo',
     'finish_time': 'None',
     'workflow_size': 'large',
     'workflow': workflow,

@@ -30,7 +30,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         inherit = foo
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_ok "${TEST_NAME_BASE}" cylc validate .
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
@@ -42,5 +42,5 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         inherit = foo
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_ok "${TEST_NAME_BASE}" cylc validate .
 exit

@@ -267,8 +267,13 @@ class Dependency:
         ret = []
         for item in nested_expr:
             if isinstance(item, TaskTrigger):
-                ret.append(Prerequisite.MESSAGE_TEMPLATE % (
-                    item.task_name, item.get_point(point), item.output))
+                ret.append(
+                    Prerequisite.MESSAGE_TEMPLATE % (
+                        item.get_point(point),
+                        item.task_name,
+                        item.output,
+                    )
+                )
             elif isinstance(item, list):
                 ret.extend(['('] + cls._stringify_list(item, point) + [')'])
             else:

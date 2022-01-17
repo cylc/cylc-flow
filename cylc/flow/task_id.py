@@ -22,6 +22,7 @@ from typing import Optional
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.exceptions import PointParsingError
+from cylc.flow.id import Tokens
 
 
 _TASK_NAME_PREFIX = r'\w'
@@ -100,6 +101,6 @@ class TaskID:
     @classmethod
     def get_standardised_taskid(cls, task_id):
         """Return task ID with standardised cycle point."""
-        name, point_string = cls.split(task_id)
-        return cls.get(
-            name, cls.get_standardised_point_string(point_string))
+        tokens = Tokens(task_id, relative=True)
+        tokens['cycle'] = cls.get_standardised_point_string(tokens['cycle'])
+        return tokens.relative_id

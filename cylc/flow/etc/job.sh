@@ -83,7 +83,7 @@ cylc__job__main() {
     # The "10#" part ensures that the submit number is interpreted in base 10.
     # Otherwise, a zero padded number will be interpreted as an octal.
     export CYLC_TASK_SUBMIT_NUMBER="$((10#${CYLC_TASK_JOB##*/}))"
-    export CYLC_TASK_ID="${CYLC_TASK_NAME}.${CYLC_TASK_CYCLE_POINT}"
+    export CYLC_TASK_ID="${CYLC_TASK_CYCLE_POINT}/${CYLC_TASK_NAME}"
     export CYLC_TASK_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/job/${CYLC_TASK_JOB}"
     export CYLC_TASK_LOG_ROOT="${CYLC_TASK_LOG_DIR}/job"
     if [[ -n "${CYLC_TASK_WORK_DIR_BASE:-}" ]]; then

@@ -24,7 +24,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}" cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-# Ensure that loser.1 is only triggered once.
+# Ensure that 1/loser is only triggered once.
 JOB_LOG_DIR="$RUN_DIR/${WORKFLOW_NAME}/log/job"
 run_ok "${TEST_NAME_BASE}-loser-nn" \
     test "$(readlink "${JOB_LOG_DIR}/1/loser/NN")" = '01'

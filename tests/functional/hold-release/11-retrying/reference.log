@@ -1,7 +1,7 @@
-2014-12-17T15:48:59Z INFO - Initial point: 1
-2014-12-17T15:48:59Z INFO - Final point: 1
-2014-12-17T15:48:59Z DEBUG - t-retry-able.1 -triggered off []
-2014-12-17T15:49:00Z DEBUG - t-hold-release.1 -triggered off ['t-retry-able.1']
-2014-12-17T15:49:16Z DEBUG - t-retry-able.1 -triggered off []
-2014-12-17T15:49:19Z DEBUG - t-retry-able.1 -triggered off []
-2014-12-17T15:49:22Z DEBUG - t-analyse.1 -triggered off ['t-retry-able.1']
+Initial point: 1
+Final point: 1
+1/t-retry-able -triggered off []
+1/t-hold-release -triggered off ['1/t-retry-able']
+1/t-retry-able -triggered off []
+1/t-retry-able -triggered off []
+1/t-analyse -triggered off ['1/t-retry-able']

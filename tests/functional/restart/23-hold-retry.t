@@ -35,9 +35,9 @@ __OUT__
 cylc play "${WORKFLOW_NAME}" --debug --no-detach 1>'out' 2>&1 &
 WORKFLOW_PID=$!
 
-poll_grep_workflow_log -F 'INFO - + t1.1 waiting (held)'
+poll_grep_workflow_log -F 'INFO - + 1/t1 waiting (held)'
 
-run_ok "${TEST_NAME_BASE}-release" cylc release "${WORKFLOW_NAME}" t1.1
+run_ok "${TEST_NAME_BASE}-release" cylc release "${WORKFLOW_NAME}//1/t1"
 
 poll_grep_workflow_log -F 'INFO - DONE'
 

@@ -42,7 +42,7 @@ run_fail "${TEST_NAME}" \
     cylc graph "${DIFF_WORKFLOW_NAME}" --diff "${CONTROL_WORKFLOW_NAME}.bad"
 cmp_ok "${TEST_NAME}.stdout" </'dev/null'
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: No flow.cylc or suite.rc in ./${CONTROL_WORKFLOW_NAME}.bad or ${RUN_DIR}/${CONTROL_WORKFLOW_NAME}.bad
+WorkflowFilesError: No flow.cylc or suite.rc in ${RUN_DIR}/${CONTROL_WORKFLOW_NAME}.bad
 __ERR__
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-deps-fail"
@@ -53,19 +53,19 @@ cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 --- ${DIFF_WORKFLOW_NAME}
 +++ ${CONTROL_WORKFLOW_NAME}
 @@ -1,10 +1,10 @@
--edge "bar.20140808T0000Z" "baz.20140808T0000Z"
--edge "bar.20140809T0000Z" "baz.20140809T0000Z"
--edge "bar.20140810T0000Z" "baz.20140810T0000Z"
- edge "cold_foo.20140808T0000Z" "foo.20140808T0000Z"
- edge "foo.20140808T0000Z" "bar.20140808T0000Z"
-+edge "foo.20140808T0000Z" "baz.20140808T0000Z"
- edge "foo.20140809T0000Z" "bar.20140809T0000Z"
-+edge "foo.20140809T0000Z" "baz.20140809T0000Z"
- edge "foo.20140810T0000Z" "bar.20140810T0000Z"
-+edge "foo.20140810T0000Z" "baz.20140810T0000Z"
+-edge "20140808T0000Z/bar" "20140808T0000Z/baz"
+ edge "20140808T0000Z/cold_foo" "20140808T0000Z/foo"
+ edge "20140808T0000Z/foo" "20140808T0000Z/bar"
+-edge "20140809T0000Z/bar" "20140809T0000Z/baz"
++edge "20140808T0000Z/foo" "20140808T0000Z/baz"
+ edge "20140809T0000Z/foo" "20140809T0000Z/bar"
+-edge "20140810T0000Z/bar" "20140810T0000Z/baz"
++edge "20140809T0000Z/foo" "20140809T0000Z/baz"
+ edge "20140810T0000Z/foo" "20140810T0000Z/bar"
++edge "20140810T0000Z/foo" "20140810T0000Z/baz"
  graph
- node "bar.20140808T0000Z" "bar\n20140808T0000Z"
- node "bar.20140809T0000Z" "bar\n20140809T0000Z"
+ node "20140808T0000Z/bar" "bar\n20140808T0000Z"
+ node "20140808T0000Z/baz" "baz\n20140808T0000Z"
 __OUT__
 cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------

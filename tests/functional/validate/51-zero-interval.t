@@ -32,7 +32,7 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         script = true
 __FLOW_CONFIG__
 
-run_fail "${TEST_NAME_BASE}" cylc validate 'flow.cylc'
+run_fail "${TEST_NAME_BASE}" cylc validate .
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
 SequenceDegenerateError: R/20100101T0000Z/P0Y, point format CCYYMMDDThhmmZ: equal adjacent points: 20100101T0000Z => 20100101T0000Z.
 __ERR__

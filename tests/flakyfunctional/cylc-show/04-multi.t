@@ -18,7 +18,7 @@
 # Test cylc show multiple tasks
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 3
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -27,55 +27,57 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 RUND="${RUN_DIR}/${WORKFLOW_NAME}"
-for FILE in "${RUND}/show1.txt" "${RUND}/show2.txt"; do
-    contains_ok "${FILE}" <<'__TXT__'
-----
-TASK ID: t1.2016
+cat "${RUND}/show.txt" >&2
+contains_ok "${RUND}/show.txt" <<'__TXT__'
+------
+Task ID: 2016/t1
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
-  + t1.2015 started
+  + 2015/t1 started
 
 outputs (- => not completed):
-  - t1.2016 expired
-  + t1.2016 submitted
-  - t1.2016 submit-failed
-  + t1.2016 started
-  - t1.2016 succeeded
-  - t1.2016 failed
-----
-TASK ID: t1.2017
+  - 2016/t1 expired
+  + 2016/t1 submitted
+  - 2016/t1 submit-failed
+  + 2016/t1 started
+  - 2016/t1 succeeded
+  - 2016/t1 failed
+------
+Task ID: 2017/t1
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
-  + t1.2016 started
+  + 2016/t1 started
 
 outputs (- => not completed):
-  - t1.2017 expired
-  + t1.2017 submitted
-  - t1.2017 submit-failed
-  + t1.2017 started
-  - t1.2017 succeeded
-  - t1.2017 failed
-----
-TASK ID: t1.2018
+  - 2017/t1 expired
+  + 2017/t1 submitted
+  - 2017/t1 submit-failed
+  + 2017/t1 started
+  - 2017/t1 succeeded
+  - 2017/t1 failed
+------
+Task ID: 2018/t1
 title: (not given)
 description: (not given)
+URL: (not given)
 
 prerequisites (- => not satisfied):
-  + t1.2017 started
+  + 2017/t1 started
 
 outputs (- => not completed):
-  - t1.2018 expired
-  + t1.2018 submitted
-  - t1.2018 submit-failed
-  + t1.2018 started
-  - t1.2018 succeeded
-  - t1.2018 failed
+  - 2018/t1 expired
+  + 2018/t1 submitted
+  - 2018/t1 submit-failed
+  + 2018/t1 started
+  - 2018/t1 succeeded
+  - 2018/t1 failed
 __TXT__
-done
 
 purge
 exit

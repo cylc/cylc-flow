@@ -42,7 +42,7 @@ __EOF__
 
 workflow_run_fail "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --stopcp=3 --no-detach
 
-# Check bar.2 is still waiting (i.e. prereqs not satisfied):
+# Check 2/bar is still waiting (i.e. prereqs not satisfied):
 TEST_NAME="${TEST_NAME_BASE}-db-task-pool"
 QUERY='SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;'
 run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"

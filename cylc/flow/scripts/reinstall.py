@@ -43,11 +43,11 @@ from typing import Optional, TYPE_CHECKING
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
-    parse_reg,
     reinstall_workflow,
 )
 from cylc.flow.terminal import cli_function
@@ -58,7 +58,7 @@ if TYPE_CHECKING:
 
 def get_option_parser():
     parser = COP(
-        __doc__, comms=True, argdoc=[('[WORKFLOW]', 'Workflow name or ID')]
+        __doc__, comms=True, argdoc=[('[WORKFLOW_ID]', 'Workflow ID')]
     )
 
     parser.add_cylc_rose_options()
@@ -80,11 +80,16 @@ def get_option_parser():
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, opts: 'Values', reg: Optional[str] = None) -> None:
+def main(
+    parser: COP,
+    opts: 'Values',
+    args: Optional[str] = None
+) -> None:
     run_dir: Optional[Path]
-    if reg is None:
+    workflow_id: str
+    if args is None:
         try:
-            reg = str(Path.cwd().relative_to(
+            workflow_id = str(Path.cwd().relative_to(
                 Path(get_cylc_run_dir()).resolve()
             ))
         except ValueError:
@@ -92,15 +97,18 @@ def main(parser: COP, opts: 'Values', reg: Optional[str] = None) -> None:
                 "The current working directory is not a workflow run directory"
             )
     else:
-        reg, _ = parse_reg(reg, warn_depr=False)
-    run_dir = Path(get_workflow_run_dir(reg))
+        workflow_id, *_ = parse_id(
+            args,
+            constraint='workflows',
+        )
+    run_dir = Path(get_workflow_run_dir(workflow_id))
     if not run_dir.is_dir():
         raise WorkflowFilesError(
-            f'"{reg}" is not an installed workflow.')
+            f'"{workflow_id}" is not an installed workflow.')
     source, source_symlink = get_workflow_source_dir(run_dir)
     if not source:
         raise WorkflowFilesError(
-            f'"{reg}" was not installed with cylc install.')
+            f'"{workflow_id}" was not installed with cylc install.')
     if not Path(source).is_dir():
         raise WorkflowFilesError(
             f'Workflow source dir is not accessible: "{source}".\n'
@@ -122,7 +130,7 @@ def main(parser: COP, opts: 'Values', reg: Optional[str] = None) -> None:
             ) from None
 
     reinstall_workflow(
-        named_run=reg,
+        named_run=workflow_id,
         rundir=run_dir,
         source=source,
         dry_run=False  # TODO: ready for dry run implementation

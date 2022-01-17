@@ -65,7 +65,7 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
 named_grep_ok \
     "job poll fails" \
     "unreachable_host has been added to the list of unreachable hosts" \
-    "${LOGFILE}" "-P"
+    "${LOGFILE}"
 
 named_grep_ok "job poll retries & succeeds" \
     "\[jobs-poll out\] \[TASK JOB SUMMARY\].*1/mixedhosttask/01" \

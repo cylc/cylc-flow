@@ -22,25 +22,31 @@
 . "$(dirname "$0")/test_header"
 set_test_number 47
 
+create_test_global_config '' '
+[install]
+    max depth = 6
+'
+
 # Test source directory between runs that are not consistent result in error
 
 TEST_NAME="${TEST_NAME_BASE}-forbid-inconsistent-source-dir-between-runs"
 SOURCE_DIR_1="test-install-${CYLC_TEST_TIME_INIT}/${TEST_NAME_BASE}"
+WORKFLOW_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
 mkdir -p "${PWD}/${SOURCE_DIR_1}"
 pushd "${SOURCE_DIR_1}" || exit 1
 touch flow.cylc
-
-run_ok "${TEST_NAME}" cylc install
+run_ok "${TEST_NAME}" cylc install --flow-name "$WORKFLOW_NAME"
 popd || exit 1
+
 SOURCE_DIR_2="test-install-${CYLC_TEST_TIME_INIT}2/${TEST_NAME_BASE}"
+WORKFLOW_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
 mkdir -p "${PWD}/${SOURCE_DIR_2}"
 pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
-run_fail "${TEST_NAME}" cylc install
-
+run_fail "${TEST_NAME}" cylc install --flow-name "$WORKFLOW_NAME"
 grep_ok "previous installations were from" "${TEST_NAME}.stderr"
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
-rm -rf "${RUN_DIR:?}/${TEST_NAME_BASE}"
+purge
 popd || exit
 
 # -----------------------------------------------------------------------------
@@ -104,7 +110,7 @@ __ERR__
 TEST_NAME="${TEST_NAME_BASE}-invalid-flow-name"
 run_fail "${TEST_NAME}" cylc install --flow-name=".invalid" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`.\`, \`-\`
+WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`.\`, \`-\`, numbers
 __ERR__
 
 # Test --run-name and --no-run-name options are mutually exclusive
@@ -225,13 +231,14 @@ purge_rnd_workflow
 # -----------------------------------------------------------------------------
 # Test cylc install can not be run from within the cylc-run directory
 
+make_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"
 BASE_NAME="test-install-${CYLC_TEST_TIME_INIT}"
 mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$_" || exit
 touch flow.cylc
-run_fail "${TEST_NAME}" cylc install
+run_fail "${TEST_NAME}" cylc install --flow-name "$RND_WORKFLOW_NAME"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: ${TEST_NAME} installation failed. Source directory should not be in ${RUN_DIR}.
+WorkflowFilesError: ${RND_WORKFLOW_NAME} installation failed. Source directory should not be in ${RUN_DIR}.
 __ERR__
 
 cd "${RUN_DIR}" || exit
@@ -241,11 +248,12 @@ purge_rnd_workflow
 # -----------------------------------------------------------------------------
 # --run-name cannot be a path
 
+make_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"
 BASE_NAME="test-install-${CYLC_TEST_TIME_INIT}"
 mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$_" || exit
 touch flow.cylc
-run_fail "${TEST_NAME}" cylc install --run-name=foo/bar/baz
+run_fail "${TEST_NAME}" cylc install --run-name=foo/bar/baz --flow-name "$RND_WORKFLOW_NAME"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Run name cannot be a path. (You used foo/bar/baz)
 __ERR__

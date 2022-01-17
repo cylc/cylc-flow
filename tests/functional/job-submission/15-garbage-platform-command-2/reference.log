@@ -1,12 +1,12 @@
-2018-02-23T15:03:50Z INFO - Initial point: 1
-2018-02-23T15:03:50Z INFO - Final point: 1
-2018-02-23T15:03:51Z DEBUG - foo_i3.1 -triggered off []
-2018-02-23T15:03:51Z DEBUG - foo_i1.1 -triggered off []
-2018-02-23T15:03:51Z DEBUG - foo_i4.1 -triggered off []
-2018-02-23T15:03:51Z DEBUG - foo_i2.1 -triggered off []
-2018-02-23T15:03:51Z DEBUG - foo_i5.1 -triggered off []
-2018-02-23T15:04:53Z DEBUG - foo_i3.1 -triggered off []
-2018-02-23T15:04:53Z DEBUG - foo_i1.1 -triggered off []
-2018-02-23T15:04:53Z DEBUG - foo_i4.1 -triggered off []
-2018-02-23T15:04:53Z DEBUG - foo_i2.1 -triggered off []
-2018-02-23T15:04:53Z DEBUG - foo_i5.1 -triggered off []
+Initial point: 1
+Final point: 1
+1/foo_i3 -triggered off []
+1/foo_i1 -triggered off []
+1/foo_i4 -triggered off []
+1/foo_i2 -triggered off []
+1/foo_i5 -triggered off []
+1/foo_i3 -triggered off []
+1/foo_i1 -triggered off []
+1/foo_i4 -triggered off []
+1/foo_i2 -triggered off []
+1/foo_i5 -triggered off []

@@ -39,17 +39,17 @@ The correct cycle point format of the workflow must be used for task job logs,
 but can be discovered with '--mode=d' (print-dir).
 
 Examples:
-  # for a task "bar.2020" in workflow "foo"
+  # for a task "2020/bar" in workflow "foo"
 
   # Print workflow log:
   $ cylc cat-log foo
 
   # Print task stdout:
-  $ cylc cat-log foo bar.2020
-  $ cylc cat-log -f o foo bar.2020
+  $ cylc cat-log foo//2020/bar
+  $ cylc cat-log -f o foo//2020/bar
 
   # Print task stderr:
-  $cylc cat-log -f e foo bar.2020
+  $cylc cat-log -f e foo//2020/bar
 """
 
 import os
@@ -60,12 +60,13 @@ from stat import S_IRUSR
 from subprocess import Popen, PIPE, DEVNULL
 import sys
 from tempfile import NamedTemporaryFile
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import UserInputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
+from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
     verbosity_to_opts,
@@ -78,12 +79,10 @@ from cylc.flow.pathutil import (
     get_workflow_run_pub_db_name)
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 from cylc.flow.rundb import CylcWorkflowDAO
-from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
 from cylc.flow.platforms import get_platform
-from cylc.flow.workflow_files import parse_reg
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -225,8 +224,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ("WORKFLOW", "Workflow name or ID"),
-            ("[TASK-ID]", """Task ID""")
+            ("ID [...]", "Workflow/Cycle/Task ID"),
         ]
     )
 
@@ -275,14 +273,14 @@ def get_option_parser():
     return parser
 
 
-def get_task_job_attrs(workflow_name, point, task, submit_num):
+def get_task_job_attrs(workflow_id, point, task, submit_num):
     """Return job (platform, job_runner_name, live_job_id).
 
     live_job_id is the job ID if job is running, else None.
 
     """
     workflow_dao = CylcWorkflowDAO(
-        get_workflow_run_pub_db_name(workflow_name), is_public=True)
+        get_workflow_run_pub_db_name(workflow_id), is_public=True)
     task_job_data = workflow_dao.select_task_job(point, task, submit_num)
     workflow_dao.close()
     if task_job_data is None:
@@ -329,8 +327,7 @@ def tmpfile_edit(tmpfile, geditor=False):
 def main(
     parser: COP,
     options: 'Values',
-    reg: str,
-    task_id: Optional[str] = None,
+    *ids,
     color: bool = False
 ) -> None:
     """Implement cylc cat-log CLI.
@@ -357,19 +354,20 @@ def main(
             sys.exit(res)
         return
 
-    workflow_name, _ = parse_reg(reg)
+    workflow_id, tokens, _ = parse_id(*ids, constraint='mixed')
+
     # Get long-format mode.
     try:
         mode = MODES[options.mode]
     except KeyError:
         mode = options.mode
 
-    if not task_id:
+    if not tokens or not tokens.get('task'):
         # Cat workflow logs, local only.
         if options.filename is not None:
             raise UserInputError("The '-f' option is for job logs only.")
 
-        logpath = get_workflow_run_log_name(workflow_name)
+        logpath = get_workflow_run_log_name(workflow_id)
         if options.rotation_num:
             logs = glob('%s.*' % logpath)
             logs.sort(key=os.path.getmtime, reverse=True)
@@ -388,15 +386,13 @@ def main(
             tmpfile_edit(out, options.geditor)
         return
 
-    if task_id:
+    else:
         # Cat task job logs, may be on workflow or job host.
         if options.rotation_num is not None:
             raise UserInputError(
                 "only workflow (not job) logs get rotated")
-        try:
-            task, point = TaskID.split(task_id)
-        except ValueError:
-            parser.error("Illegal task ID: %s" % task_id)
+        task = tokens['task']
+        point = tokens['cycle']
         if options.submit_num != NN:
             try:
                 options.submit_num = "%02d" % int(options.submit_num)
@@ -410,7 +406,7 @@ def main(
                 options.filename = JOB_LOG_OPTS[options.filename]
                 # KeyError: Is already long form (standard log, or custom).
         platform_name, job_runner_name, live_job_id = get_task_job_attrs(
-            workflow_name, point, task, options.submit_num)
+            workflow_id, point, task, options.submit_num)
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
@@ -441,7 +437,7 @@ def main(
                             and live_job_id is None)
         if log_is_remote and (not log_is_retrieved or options.force_remote):
             logpath = os.path.normpath(get_remote_workflow_run_job_dir(
-                workflow_name, point, task, options.submit_num,
+                workflow_id, point, task, options.submit_num,
                 options.filename))
             tail_tmpl = platform["tail command template"]
             # Reinvoke the cat-log command on the remote account.
@@ -450,7 +446,7 @@ def main(
                 cmd.append('--remote-arg=%s' % shlex.quote(item))
             if batchview_cmd:
                 cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
-            cmd.append(workflow_name)
+            cmd.append(workflow_id)
             is_edit_mode = (mode == 'edit')
             # TODO: Add Intelligent Host selection to this
             try:
@@ -477,7 +473,7 @@ def main(
         else:
             # Local task job or local job log.
             logpath = os.path.normpath(get_workflow_run_job_dir(
-                workflow_name, point, task, options.submit_num,
+                workflow_id, point, task, options.submit_num,
                 options.filename))
             tail_tmpl = os.path.expandvars(platform["tail command template"])
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,

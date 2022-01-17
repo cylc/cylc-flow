@@ -1,5 +1,5 @@
-2014/01/10 08:41:32 INFO - Initial point: 20140101T00
-2014/01/10 08:41:32 INFO - Final point: 20140101T00
-2014/01/10 08:41:32 DEBUG - holdrelease.20140101T00 -triggered off []
-2014/01/10 08:41:50 DEBUG - foo.20140101T00 -triggered off ['holdrelease.20140101T00']
-2014/01/10 08:41:50 DEBUG - bar.20140101T00 -triggered off ['holdrelease.20140101T00']
+Initial point: 20140101T00
+Final point: 20140101T00
+20140101T00/holdrelease -triggered off []
+20140101T00/foo -triggered off ['20140101T00/holdrelease']
+20140101T00/bar -triggered off ['20140101T00/holdrelease']

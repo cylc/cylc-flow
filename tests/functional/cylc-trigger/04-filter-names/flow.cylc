@@ -1,13 +1,13 @@
 [scheduler]
    [[events]]
-       expected task failures = fixable-1a.1, fixable-1b.1, fixable-2a.1, fixable-2b.1, fixable-3.1, loser.1
+       expected task failures = 1/fixable-1a, 1/fixable-1b, 1/fixable-2a, 1/fixable-2b, 1/fixable-3, 1/loser
 [scheduling]
     [[graph]]
         R1 = """
-# Unhandled failures stay around for retriggering by "fixer"
-fixer
-FIXABLES:succeed-all & loser:fail => Z
-"""
+            # Unhandled failures stay around for retriggering by "fixer"
+            fixer
+            FIXABLES:succeed-all & loser:fail => Z
+        """
 [runtime]
     [[FIXABLES]]
         script = test "${CYLC_TASK_SUBMIT_NUMBER}" -eq 2
@@ -21,14 +21,15 @@ FIXABLES:succeed-all & loser:fail => Z
         inherit = FIXABLE-3
     [[fixer]]
         script = """
-cylc__job__wait_cylc_message_started
-cylc__job__poll_grep_workflow_log -E 'fixable-1a\.1 .* \(received\)failed'
-cylc__job__poll_grep_workflow_log -E 'fixable-1b\.1 .* \(received\)failed'
-cylc__job__poll_grep_workflow_log -E 'fixable-2a\.1 .* \(received\)failed'
-cylc__job__poll_grep_workflow_log -E 'fixable-2b\.1 .* \(received\)failed'
-cylc__job__poll_grep_workflow_log -E 'fixable-3\.1 .* \(received\)failed'
-cylc trigger "${CYLC_WORKFLOW_ID}" '1/FIXABLE-1' '1/fixable-2*' '1/fixable-3'
-"""
+            cylc__job__wait_cylc_message_started
+            cylc__job__poll_grep_workflow_log -E '1/fixable-1a .* \(received\)failed'
+            cylc__job__poll_grep_workflow_log -E '1/fixable-1b .* \(received\)failed'
+            cylc__job__poll_grep_workflow_log -E '1/fixable-2a .* \(received\)failed'
+            cylc__job__poll_grep_workflow_log -E '1/fixable-2b .* \(received\)failed'
+            cylc__job__poll_grep_workflow_log -E '1/fixable-3 .* \(received\)failed'
+            cylc trigger "${CYLC_WORKFLOW_ID}//" \
+                '//1/FIXABLE-1' '//1/fixable-2*' '//1/fixable-3'
+        """
     [[loser]]
         script = false
     [[Z]]

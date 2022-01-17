@@ -6,7 +6,7 @@
        abort on stall timeout = True
        stall timeout = PT0S
        inactivity timeout = PT2M
-       expected task failures = foo.1
+       expected task failures = 1/foo
 
 [scheduling]
     [[graph]]

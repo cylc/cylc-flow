@@ -371,7 +371,7 @@ class TaskState:
     def get_resolved_dependencies(self):
         """Return a list of dependencies which have been met for this task.
 
-        E.G: ['foo.1', 'bar.2']
+        E.G: ['1/foo', '2/bar']
 
         The returned list is sorted to allow comparison with reference run
         task with lots of near-simultaneous triggers.
@@ -519,6 +519,5 @@ class TaskState:
             for key, val in prereq.satisfied.items():
                 if val:
                     continue
-                name, point, output = key
-                unsat.append((name, point, output))
+                unsat.append(key)
         return unsat

@@ -38,10 +38,6 @@ LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
 }
 
-# Used widely with data element ID (internally and externally),
-# scope may widen further with internal and CLI adoption.
-ID_DELIM = '|'
-
 
 def environ_init():
     """Initialise cylc environment."""

@@ -22,43 +22,47 @@ Hold task(s) in a workflow.
 
 Held tasks do not submit their jobs even if ready to run.
 
+To pause an entire workflow use "cylc pause".
+
 Examples:
   # Hold mytask at cycle point 1234 in my_flow (if it has not yet spawned, it
-  # will hold as soon as it spawns)
-  $ cylc hold my_flow mytask.1234
+  # will hold as soon as it spawns):
+  $ cylc hold my_flow//1234/mytask
 
   # Hold all active tasks at cycle 1234 in my_flow (note: tasks before/after
-  # this cycle point will not be held)
-  $ cylc hold my_flow '*.1234'
+  # this cycle point will not be held):
+  $ cylc hold 'my_flow//1234/*'
 
   # Hold all active instances of mytask in my_flow (note: this will not hold
-  # any unspawned tasks that might spawn in the future)
-  $ cylc hold my_flow 'mytask.*'
-  # or
-  $ cylc hold my_flow mytask
+  # any unspawned tasks that might spawn in the future):
+  $ cylc hold 'my_flow//*/mytask'
 
-  # Hold all active failed tasks
-  $ cylc hold my_flow '*:failed'
+  # Hold all active failed tasks:
+  $ cylc hold 'my_flow//*:failed'
 
-  # Hold all tasks after cycle point 1234 in my_flow
-  $ cylc hold my_flow --after=1234
+  # Hold all tasks after cycle point 1234 in my_flow:
+  $ cylc hold my_flow// --after=1234
+
+  # Hold cycles 1, 2 & 3 in my_flow:
+  $ cylc hold my_flow// //1 //2 //3
+
+  # Hold cycle "1" in "my_flow_1" and "my_flow_2":
+  $ cylc hold my_flow_1//1 my_flow_2//1
 
 Note: To pause a workflow (immediately preventing all job submission), use
 'cylc pause' instead.
 
-Note: globs and ":<state>" selectors will only match active tasks;
-to hold future tasks when they spawn, use exact identifiers e.g. "mytask.1234".
-
 See also 'cylc release'.
 """
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
+from cylc.flow.network.multi import call_multi
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -95,11 +99,11 @@ mutation (
 
 def get_option_parser() -> COP:
     parser = COP(
-        __doc__, comms=True, multitask=True,
-        argdoc=[
-            ('WORKFLOW', 'Workflow name or ID'),
-            # TODO: switch back to TASK_ID?
-            ('[TASK_GLOB ...]', "Task matching patterns")]
+        __doc__,
+        comms=True,
+        multitask=True,
+        multiworkflow=True,
+        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
     )
 
     parser.add_option(
@@ -115,35 +119,46 @@ def _validate(options: 'Values', *task_globs: str) -> None:
     if options.hold_point_string:
         if task_globs:
             raise UserInputError(
-                "Cannot combine --after with TASK_GLOB(s).\n"
+                "Cannot combine --after with Cylc/Task IDs.\n"
                 "`cylc hold --after` holds all tasks after the given "
                 "cycle point.")
     elif not task_globs:
         raise UserInputError(
-            "Missing arguments: TASK_GLOB [...]. See `cylc hold --help`.")
+            "Must define Cycles/Tasks. See `cylc hold --help`.")
 
 
-@cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', workflow: str, *task_globs: str):
+async def run(options, workflow_id, *tokens_list):
+    _validate(options, *tokens_list)
 
-    _validate(options, *task_globs)
-
-    workflow, _ = parse_reg(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if options.hold_point_string:
         mutation = SET_HOLD_POINT_MUTATION
         args = {'point': options.hold_point_string}
     else:
         mutation = HOLD_MUTATION
-        args = {'tasks': list(task_globs)}
+        args = {
+            'tasks': [
+                id_.relative_id
+                for id_ in tokens_list
+            ]
+        }
 
     mutation_kwargs = {
         'request_string': mutation,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             **args
         }
     }
 
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
+
+
+@cli_function(get_option_parser)
+def main(parser: COP, options: 'Values', *ids):
+    call_multi(
+        partial(run, options),
+        *ids,
+        constraint='mixed',
+    )

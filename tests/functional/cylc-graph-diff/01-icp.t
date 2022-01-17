@@ -48,13 +48,13 @@ WORKFLOW_NAME2="${WORKFLOW_NAME}"
 run_fail "${TEST_NAME_BASE}" \
     cylc graph "${WORKFLOW_NAME1}" --diff "${WORKFLOW_NAME2}" --icp='20200101T0000Z'
 contains_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
--edge "foo.20200101T0000Z" "bar.20200101T0000Z"
-+edge "food.20200101T0000Z" "barley.20200101T0000Z"
+-edge "20200101T0000Z/foo" "20200101T0000Z/bar"
++edge "20200101T0000Z/food" "20200101T0000Z/barley"
  graph
--node "bar.20200101T0000Z" "bar\n20200101T0000Z"
--node "foo.20200101T0000Z" "foo\n20200101T0000Z"
-+node "barley.20200101T0000Z" "barley\n20200101T0000Z"
-+node "food.20200101T0000Z" "food\n20200101T0000Z"
+-node "20200101T0000Z/bar" "bar\n20200101T0000Z"
+-node "20200101T0000Z/foo" "foo\n20200101T0000Z"
++node "20200101T0000Z/barley" "barley\n20200101T0000Z"
++node "20200101T0000Z/food" "food\n20200101T0000Z"
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 

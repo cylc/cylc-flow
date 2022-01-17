@@ -1,4 +1,4 @@
-# foo.3 triggers a new flow at foo.1 and waits for it to catch up and merge.
+# 3/foo triggers a new flow at 1/foo and waits for it to catch up and merge.
 # bar checks for the expected flow names at each cycle point.
 [scheduling]
     cycling mode = integer
@@ -10,7 +10,7 @@
     [[foo]]
         script = """
             if (( CYLC_TASK_CYCLE_POINT == 3 )); then
-                cylc trigger --reflow --meta=other ${CYLC_WORKFLOW_ID} foo.1
+                cylc trigger --reflow --meta=other "${CYLC_WORKFLOW_ID}//1/foo"
                 cylc__job__poll_grep_workflow_log 'Merged in'
             fi
         """

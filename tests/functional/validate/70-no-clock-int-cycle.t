@@ -22,16 +22,16 @@ set_test_number 2
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduling]
-   cycling mode = integer
-   initial cycle point = 1
-   final cycle point = 2
-   [[xtriggers]]
-       c1 = wall_clock(offset=P0Y)
-   [[graph]]
-      R/^/P1 = "@c1 & foo[-P1] => foo"
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    [[xtriggers]]
+        c1 = wall_clock(offset=P0Y)
+    [[graph]]
+        R/^/P1 = "@c1 & foo[-P1] => foo"
 __FLOW_CONFIG__
 
-run_fail "${TEST_NAME_BASE}-val" cylc validate 'flow.cylc'
+run_fail "${TEST_NAME_BASE}-val" cylc validate '.'
 
 contains_ok "${TEST_NAME_BASE}-val.stderr" <<'__END__'
 WorkflowConfigError: Clock xtriggers require datetime cycling: c1 = wall_clock(offset=P0Y)

@@ -1,7 +1,7 @@
-INFO - Initial point: 1
-INFO - Final point: 5
-DEBUG - set-stop-point.1 -triggered off []
-DEBUG - reload.1 -triggered off ['set-stop-point.1']
-DEBUG - t1.1 -triggered off ['reload.1', 't1.0']
-DEBUG - t1.2 -triggered off ['t1.1']
-DEBUG - t1.3 -triggered off ['t1.2']
+Initial point: 1
+Final point: 5
+1/set-stop-point -triggered off []
+1/reload -triggered off ['1/set-stop-point']
+1/t1 -triggered off ['0/t1', '1/reload']
+2/t1 -triggered off ['1/t1']
+3/t1 -triggered off ['2/t1']

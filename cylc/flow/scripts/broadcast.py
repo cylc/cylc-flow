@@ -53,16 +53,19 @@ Examples:
 
   # To do the same with a file:
   $ cat >'broadcast.cylc' <<'__FLOW__'
-  $ [environment]
-  $     VERSE = the quick brown fox
-  $ __FLOW__
-  $ cylc broadcast -F 'broadcast.cylc' WORKFLOW
+  > [environment]
+  >     VERSE = the quick brown fox
+  > __FLOW__
+  $ cylc broadcast -F 'broadcast.cylc' WORKFLOW_ID
 
   # To cancel the same broadcast:
-  $ cylc broadcast --cancel "[environment]VERSE" WORKFLOW
+  $ cylc broadcast --cancel "[environment]VERSE" WORKFLOW_ID
 
   # If -F FILE was used, the same file can be used to cancel the broadcast:
-  $ cylc broadcast -G 'broadcast.cylc' WORKFLOW
+  $ cylc broadcast -G 'broadcast.cylc' WORKFLOW_ID
+
+  # Use broadcast with multiple workflows
+  $ cylc broadcast [options] WORKFLOW_ID_1// WORKFLOW_ID_2//
 
 Use -d/--display to see active broadcasts. Multiple --cancel options or
 multiple --set and --set-file options can be used on the same command line.
@@ -77,24 +80,25 @@ Broadcast cannot change [runtime] inheritance.
 See also 'cylc reload' - reload a modified workflow definition at run time."""
 
 from ansimarkup import parse as cparse
+from functools import partial
 import re
 import sys
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, TYPE_CHECKING
 
-from cylc.flow import ID_DELIM
-from cylc.flow.task_id import TaskID
-from cylc.flow.terminal import cli_function
-from cylc.flow.exceptions import UserInputError
-from cylc.flow.print_tree import print_tree
-from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.broadcast_report import (
-    get_broadcast_bad_options_report, get_broadcast_change_report)
+    get_broadcast_bad_options_report,
+    get_broadcast_change_report,
+)
 from cylc.flow.cfgspec.workflow import SPEC, upg
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.network.client_factory import get_client
+from cylc.flow.network.multi import call_multi
+from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
-from cylc.flow.workflow_files import parse_reg
+from cylc.flow.print_tree import get_tree
+from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -224,8 +228,10 @@ def report_bad_options(bad_options, is_set=False):
 def get_option_parser():
     """CLI for "cylc broadcast"."""
     parser = COP(
-        __doc__, comms=True,
-        argdoc=[('WORKFLOW', 'Workflow name or ID')]
+        __doc__,
+        comms=True,
+        multiworkflow=True,
+        argdoc=[('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow ID(s)')],
     )
 
     parser.add_option(
@@ -282,9 +288,11 @@ def get_option_parser():
         action="store_true", default=False, dest="show")
 
     parser.add_option(
-        "-k", "--display-task", metavar="TASK_GLOB",
-        help="Print active broadcasts for a given task "
-             "(" + TaskID.SYNTAX + ").",
+        "-k", "--display-task", metavar="TASK_ID_GLOB",
+        help=(
+            "Print active broadcasts for a given task "
+            "(in the format cycle/task)."
+        ),
         action="store", default=None, dest="showtask")
 
     parser.add_option(
@@ -301,16 +309,20 @@ def get_option_parser():
     return parser
 
 
-@cli_function(get_option_parser)
-def main(_, options: 'Values', workflow: str) -> None:
+async def run(options: 'Values', workflow_id):
     """Implement cylc broadcast."""
-    workflow, _ = parse_reg(workflow)
-    pclient = get_client(workflow, timeout=options.comms_timeout)
+    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+
+    ret: Dict[str, Any] = {
+        'stdout': [],
+        'stderr': [],
+        'exit': 0,
+    }
 
     mutation_kwargs: Dict[str, Any] = {
         'request_string': MUTATION,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             'bMode': 'Set',
             'cPoints': options.point_strings,
             'nSpaces': options.namespaces,
@@ -322,7 +334,7 @@ def main(_, options: 'Values', workflow: str) -> None:
     query_kwargs: Dict[str, Any] = {
         'request_string': QUERY,
         'variables': {
-            'wFlows': [workflow],
+            'wFlows': [workflow_id],
             'nIds': []
         }
 
@@ -331,20 +343,23 @@ def main(_, options: 'Values', workflow: str) -> None:
     if options.show or options.showtask:
         if options.showtask:
             try:
-                task, point = TaskID.split(options.showtask)
-                query_kwargs['variables']['nIds'] = [
-                    f'{point}{ID_DELIM}{task}']
+                query_kwargs['variables']['nIds'] = [options.showtask]
             except ValueError:
-                raise UserInputError("TASKID must be " + TaskID.SYNTAX)
-        result = pclient('graphql', query_kwargs)
+                # TODO validate showtask?
+                raise UserInputError(
+                    'TASK_ID_GLOB must be in the format: cycle/task'
+                )
+        result = await pclient.async_request('graphql', query_kwargs)
         for wflow in result['workflows']:
             settings = wflow['broadcasts']
             padding = get_padding(settings) * ' '
             if options.raw:
-                print(str(settings))
+                ret['stdout'].append(str(settings))
             else:
-                print_tree(settings, padding, options.unicode)
-        sys.exit(0)
+                ret['stdout'].extend(
+                    get_tree(settings, padding, options.unicode)
+                )
+        return ret
 
     report_cancel = True
     report_set = False
@@ -402,11 +417,44 @@ def main(_, options: 'Values', workflow: str) -> None:
         report_cancel = False
         report_set = True
 
-    results = pclient('graphql', mutation_kwargs)
+    results = await pclient.async_request('graphql', mutation_kwargs)
     for result in results['broadcast']['result']:
         modified_settings = result['response'][0]
         bad_options = result['response'][1]
         if modified_settings:
-            print(get_broadcast_change_report(
-                modified_settings, is_cancel=report_cancel))
-    sys.exit(report_bad_options(bad_options, is_set=report_set))
+            ret['stdout'].append(
+                get_broadcast_change_report(
+                    modified_settings,
+                    is_cancel=report_cancel,
+                )
+            )
+
+    bad_opts = report_bad_options(bad_options, is_set=report_set)
+    if bad_opts:
+        ret['stderr'].append(f'ERROR: {bad_opts}')
+        ret['exit'] = 1
+    return ret
+
+
+def report(ret):
+    for line in ret['stdout']:
+        print(line)
+    for line in ret['stderr']:
+        if line is not None:
+            print(line, file=sys.stderr)
+
+
+@cli_function(get_option_parser)
+def main(_, options: 'Values', *ids) -> None:
+    rets = call_multi(
+        partial(run, options),
+        *ids,
+        constraint='workflows',
+        report=report,
+    )
+    if all(
+        ret['exit'] == 0
+        for ret in rets
+    ):
+        sys.exit(0)
+    sys.exit(1)

@@ -447,8 +447,9 @@ class WorkflowDatabaseManager:
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
             for prereq in itask.state.prerequisites:
-                for (p_name, p_cycle, p_output), satisfied_state in (
-                        prereq.satisfied.items()):
+                for (p_cycle, p_name, p_output), satisfied_state in (
+                    prereq.satisfied.items()
+                ):
                     self.put_insert_task_prerequisites(itask, {
                         "prereq_name": p_name,
                         "prereq_cycle": p_cycle,

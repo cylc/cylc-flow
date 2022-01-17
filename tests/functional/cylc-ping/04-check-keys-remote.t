@@ -51,7 +51,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play \
     "${WORKFLOW_NAME}" \
     --no-detach
 
-KEYS_FILE="$(cylc cat-log -m p "$WORKFLOW_NAME" 'keys.1' -f job-find-out)"
+KEYS_FILE="$(cylc cat-log -m p "$WORKFLOW_NAME//1/keys" -f job-find-out)"
 if [[ "$CYLC_TEST_PLATFORM" == *shared* ]]; then
     cmp_ok "$KEYS_FILE" <<__OUT__
 client.key_secret

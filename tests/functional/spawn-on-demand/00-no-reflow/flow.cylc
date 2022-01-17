@@ -10,6 +10,6 @@
 [runtime]
     [[triggerer]]
          script = """
-# Cause only bar.1 to run again.
-cylc trigger ${CYLC_WORKFLOW_ID} bar.1
+            # Cause only 1/bar to run again.
+            cylc trigger "${CYLC_WORKFLOW_ID}//1/bar"
          """

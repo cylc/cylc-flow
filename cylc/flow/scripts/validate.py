@@ -37,6 +37,7 @@ from cylc.flow.exceptions import (
     TriggerExpressionError
 )
 import cylc.flow.flags
+from cylc.flow.id_cli import parse_id
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
@@ -46,11 +47,16 @@ from cylc.flow.profiler import Profiler
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
-from cylc.flow.workflow_files import parse_reg
 
 
 def get_option_parser():
-    parser = COP(__doc__, jset=True, prep=True, icp=True)
+    parser = COP(
+        __doc__,
+        jset=True,
+        prep=True,
+        icp=True,
+        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
+    )
 
     parser.add_option(
         "--check-circular",
@@ -93,7 +99,7 @@ ValidateOptions = Options(
 
 
 @cli_function(get_option_parser)
-def main(parser: COP, options: 'Values', reg: str) -> None:
+def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
     profiler.start()
@@ -101,9 +107,13 @@ def main(parser: COP, options: 'Values', reg: str) -> None:
     if cylc.flow.flags.verbosity < 2:
         disable_timestamps(LOG)
 
-    workflow, flow_file = parse_reg(reg, src=True)
+    workflow_id, _, flow_file = parse_id(
+        workflow_id,
+        src=True,
+        constraint='workflows',
+    )
     cfg = WorkflowConfig(
-        workflow,
+        workflow_id,
         flow_file,
         options,
         get_template_vars(options),

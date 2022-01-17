@@ -1,5 +1,5 @@
-edge "foo_dog.1" "foo_cat.1"
+edge "1/foo_dog" "1/foo_cat"
 graph
-node "foo_cat.1" "foo_cat\n1"
-node "foo_dog.1" "foo_dog\n1"
+node "1/foo_cat" "foo_cat\n1"
+node "1/foo_dog" "foo_dog\n1"
 stop

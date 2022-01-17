@@ -27,10 +27,10 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" --debug --no-detach
 
 TEST_NAME=${TEST_NAME_BASE}-out
-grep_ok "foo\.20160101T0000Z -triggered" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "bar\.20160101T0000Z -triggered" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "baz\.20160101T0100Z -triggered" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "boo\.20160101T2300Z -triggered" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
-grep_ok "bot\.20160102T0000Z -triggered" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T0000Z/foo" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T0000Z/bar" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T0100Z/baz" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160101T2300Z/boo" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
+grep_ok "20160102T0000Z/bot" "$HOME/cylc-run/${WORKFLOW_NAME}/log/workflow/log"
 #-------------------------------------------------------------------------------
 purge

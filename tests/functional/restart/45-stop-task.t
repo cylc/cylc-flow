@@ -30,12 +30,12 @@ set_test_number 10
 
 # Event should look like this:
 # Start workflow
-# At t1.1, set stop task to t5.1
-# At t2.1, stop workflow at t2.1
+# At 1/t1, set stop task to 1/t5
+# At 1/t2, stop workflow at 1/t2
 # Restart
-# Workflow runs to stop task t5.1, reset stop task.
+# Workflow runs to stop task 1/t5, reset stop task.
 # Restart
-# Workflow stops normally at t8.1
+# Workflow stops normally at 1/t8
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [task parameters]
     i = 1..8
@@ -52,7 +52,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[t<i>]]
         script = true
     [[t<i=1>]]
-        script = cylc stop "${CYLC_WORKFLOW_ID}" 't_i5.1'
+        script = cylc stop "${CYLC_WORKFLOW_ID}//1/t_i5"
     [[t<i=2>]]
         script = cylc stop "${CYLC_WORKFLOW_ID}"
 __FLOW_CONFIG__
@@ -61,7 +61,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
-cmp_ok 'stoptask.out' <<<'stop_task|t_i5.1'
+cmp_ok 'stoptask.out' <<<'stop_task|1/t_i5'
 cmp_ok 'taskpool.out' <<'__OUT__'
 1|t_i3|waiting
 __OUT__

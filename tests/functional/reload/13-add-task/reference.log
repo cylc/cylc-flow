@@ -1,5 +1,5 @@
-2014-10-31T13:50:55+13 INFO - Initial point: 1
-2014-10-31T13:50:55+13 INFO - Final point: 1
-2014-10-31T13:50:55+13 DEBUG - reloader.1 -triggered off []
-2014-10-31T13:51:08+13 DEBUG - foo.1 -triggered off ['reloader.1']
-2014-10-31T13:51:08+13 DEBUG - add_me.1 -triggered off ['foo.1']
+Initial point: 1
+Final point: 1
+1/reloader -triggered off []
+1/foo -triggered off ['1/reloader']
+1/add_me -triggered off ['1/foo']

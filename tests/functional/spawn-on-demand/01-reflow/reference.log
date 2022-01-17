@@ -1,9 +1,9 @@
 Initial point: 1
 Final point: 2
-foo.1 -triggered off []
-bar.1 -triggered off ['foo.1']
-baz.1 -triggered off ['bar.1']
-foo.2 -triggered off ['foo.1']
-triggerer.2 -triggered off ['foo.2']
-bar.1 -triggered off []
-baz.1 -triggered off ['bar.1']
+1/foo -triggered off []
+1/bar -triggered off ['1/foo']
+1/baz -triggered off ['1/bar']
+2/foo -triggered off ['1/foo']
+2/triggerer -triggered off ['2/foo']
+1/bar -triggered off []
+1/baz -triggered off ['1/bar']

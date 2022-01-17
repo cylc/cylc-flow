@@ -64,6 +64,8 @@ submitted to the job runner.
 
 import re
 
+from cylc.flow.id import Tokens
+
 
 class MoabHandler:
 
@@ -82,9 +84,10 @@ class MoabHandler:
         job_file_path = job_conf['job_file_path']
         directives = job_conf["directives"].__class__()  # an ordereddict
 
+        tokens = Tokens(job_conf['task_id'], relative=True)
         directives["-N"] = (
-            job_conf["task_id"] + "." + job_conf["workflow_name"])
-
+            f'{tokens["task"]}.{tokens["cycle"]}.{job_conf["workflow_name"]}'
+        )
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
         if (job_conf["execution_time_limit"] and
