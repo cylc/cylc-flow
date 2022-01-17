@@ -649,14 +649,14 @@ class Resolvers(BaseResolvers):
     ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
         method = getattr(self, command, None)
+        if not meta:
+            meta = {"auth_user": "unknown user"}
         if method is not None:
             return method(**kwargs, meta=meta)
         try:
             self.schd.get_command_method(command)
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
-        if not meta:
-            meta = {"auth_user": "unknown user"}
         self.schd.queue_command(
             command,
             kwargs,
