@@ -73,6 +73,7 @@ def test_extract_tutorials(mock_glbl_cfg, tmp_path, caplog):
             source dirs = {test_dest}
         '''
     )
+    caplog.clear()
     extract_tutorials()
     glob_dest = test_dest.glob('*/*/*')
     glob_src =  (
