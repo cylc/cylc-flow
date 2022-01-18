@@ -969,8 +969,8 @@ class CylcWorkflowDAO:
                 (%(task_states)s.cycle, %(task_states)s.name) IN (
                     VALUES %(cycle_name_pairs)s
                 )
-            GROUP BY
-                %(task_states)s.cycle, %(task_states)s.name
+            ORDER BY
+                %(task_states)s.submit_num DESC
         """
         form_data = {
             "task_states": self.TABLE_TASK_STATES,

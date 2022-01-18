@@ -76,6 +76,7 @@ from cylc.flow.workflow_status import get_workflow_status
 from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
+    TASK_STATUS_WAITING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -860,11 +861,23 @@ class DataStoreMgr:
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
 
+        # Active, but not in the data-store yet (new).
         if tp_id in self.n_window_nodes:
             self.process_internal_task_proxy(itask, tproxy)
+            # Has run before, so get history.
+            # Cannot batch as task is active (all jobs retrieved at once).
+            if itask.submit_num > 0:
+                flow_db = self.schd.workflow_db_mgr.pri_dao
+                for row in flow_db.select_jobs_for_datastore(
+                        {(tproxy.cycle_point, tproxy.name)}
+                ):
+                    self.insert_db_job(1, row)
         else:
-            # Batch node for DB load
-            self.db_load_task_proxies[(point_string, name)] = itask
+            # Batch non-active node for load of DB history.
+            self.db_load_task_proxies[(point_string, name)] = (
+                itask,
+                is_parent,
+            )
 
         self.updates_pending = True
 
@@ -1031,17 +1044,27 @@ class DataStoreMgr:
 
         flow_db = self.schd.workflow_db_mgr.pri_dao
 
-        # Batch load rows with matching cycle & name column pairs.
         cycle_name_pairs = set(self.db_load_task_proxies.keys())
 
+        # Batch load rows with matching cycle & name column pairs.
         prereq_tasks_args = set()
         for (
-                cycle, name, flow_nums, status, submit_num, outputs_str
+                cycle, name, flow_nums_str, status, submit_num, outputs_str
         ) in flow_db.select_tasks_for_datastore(cycle_name_pairs):
-            itask = self.db_load_task_proxies[(cycle, name)]
+            itask, is_parent = self.db_load_task_proxies[(cycle, name)]
             itask.submit_num = submit_num
-            itask.state_reset(status)
-            itask.flow_nums = set(json.loads(flow_nums))
+            flow_nums = set(json.loads(flow_nums_str))
+            # Do not set states and outputs for future tasks in flow.
+            if (
+                    itask.flow_nums and
+                    flow_nums != itask.flow_nums and
+                    not is_parent
+            ):
+                itask.state_reset(TASK_STATUS_WAITING)
+                continue
+            else:
+                itask.flow_nums = flow_nums
+                itask.state_reset(status)
             if (
                     outputs_str is not None
                     and itask.state(
@@ -1052,30 +1075,31 @@ class DataStoreMgr:
             ):
                 for message in json.loads(outputs_str).values():
                     itask.state.outputs.set_completion(message, True)
+            # Gather tasks with flow id.
+            prereq_tasks_args.add((cycle, name, flow_nums_str))
 
-            prereq_tasks_args.add((cycle, name, flow_nums))
-
-        prereqs_rows = flow_db.select_prereqs_for_datastore(prereq_tasks_args)
+        # Batch load prerequisites of tasks according to flow.
         prereqs_map = {}
         for (
                 cycle, name, prereq_name,
                 prereq_cycle, prereq_output, satisfied
-        ) in prereqs_rows:
+        ) in flow_db.select_prereqs_for_datastore(prereq_tasks_args):
             prereqs_map.setdefault((cycle, name), {})[
-                (prereq_name, prereq_cycle, prereq_output)
+                (prereq_cycle, prereq_name, prereq_output)
             ] = satisfied if satisfied != '0' else False
 
         for ikey, prereqs in prereqs_map.items():
             for itask_prereq in (
-                    self.db_load_task_proxies[ikey].state.prerequisites
+                    self.db_load_task_proxies[ikey][0].state.prerequisites
             ):
                 for key in itask_prereq.satisfied.keys():
                     itask_prereq.satisfied[key] = prereqs[key]
 
-        for ikey, itask in self.db_load_task_proxies.items():
+        # Extract info from itasks to data-store.
+        for ikey, task_info in self.db_load_task_proxies.items():
             cycle, name = ikey
             self.process_internal_task_proxy(
-                itask,
+                task_info[0],
                 self.added[TASK_PROXIES][
                     self.id_.duplicate(
                         cycle=cycle,
@@ -1084,7 +1108,9 @@ class DataStoreMgr:
                 ]
             )
 
-        # Load jobs from DB.
+        flow_db.select_prereqs_for_datastore(prereq_tasks_args)
+
+        # Batch load jobs from DB.
         for row in flow_db.select_jobs_for_datastore(cycle_name_pairs):
             self.insert_db_job(1, row)
 
