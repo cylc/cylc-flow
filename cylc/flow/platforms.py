@@ -251,7 +251,7 @@ def get_platform_from_group(
         good_platforms = set()
         for platform in group['platforms']:
             if set(platform_from_name(platform)['hosts']) - bad_hosts:
-                good_platforms.add(platform)
+                good_platforms = good_platforms.union({platform})
 
         platform_names = list(good_platforms)
     else:
