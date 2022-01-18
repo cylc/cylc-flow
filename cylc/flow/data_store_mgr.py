@@ -1084,6 +1084,10 @@ class DataStoreMgr:
                 ]
             )
 
+        # Load jobs from DB.
+        for row in flow_db.select_jobs_for_datastore(cycle_name_pairs):
+            self.insert_db_job(1, row)
+
         self.db_load_task_proxies.clear()
 
     def insert_job(self, name, point_string, status, job_conf):

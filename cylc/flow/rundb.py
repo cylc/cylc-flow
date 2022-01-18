@@ -942,6 +942,45 @@ class CylcWorkflowDAO:
         stmt = form_stmt % form_data
         return list(self.connect().execute(stmt))
 
+    def select_jobs_for_datastore(
+        self, cycle_name_pairs
+    ):
+        """Select jobs of of specified tasks."""
+        form_stmt = r"""
+            SELECT
+                %(task_states)s.cycle,
+                %(task_states)s.name,
+                %(task_states)s.status,
+                %(task_states)s.submit_num,
+                %(task_jobs)s.time_submit,
+                %(task_jobs)s.time_run,
+                %(task_jobs)s.time_run_exit,
+                %(task_jobs)s.job_runner_name,
+                %(task_jobs)s.job_id,
+                %(task_jobs)s.platform_name
+            FROM
+                %(task_jobs)s
+            JOIN
+                %(task_states)s
+            ON  %(task_jobs)s.cycle == %(task_states)s.cycle AND
+                %(task_jobs)s.name == %(task_states)s.name AND
+                %(task_jobs)s.submit_num == %(task_states)s.submit_num
+            WHERE
+                (%(task_states)s.cycle, %(task_states)s.name) IN (
+                    VALUES %(cycle_name_pairs)s
+                )
+            GROUP BY
+                %(task_states)s.cycle, %(task_states)s.name
+        """
+        form_data = {
+            "task_states": self.TABLE_TASK_STATES,
+            "task_jobs": self.TABLE_TASK_JOBS,
+            "cycle_name_pairs": ', '.join(
+                f'{val}' for val in cycle_name_pairs),
+        }
+        stmt = form_stmt % form_data
+        return list(self.connect().execute(stmt))
+
     def vacuum(self):
         """Vacuum to the database."""
         return self.connect().execute("VACUUM")
