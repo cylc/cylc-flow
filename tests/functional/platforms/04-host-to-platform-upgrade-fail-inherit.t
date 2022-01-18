@@ -21,23 +21,11 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 
-# Create `global.cylc`` here rather than use
-# `test_header.create_test_global_config`` method which appends
-# to existing config: Stop users accidentally creating platforms which would
-# match the Cylc 7 settings in `flow.cylc`.
-cat >> 'global.cylc' <<__HERE__
+create_test_global_config '' "
+# non-existent platform
 [platforms]
-    [[FOO]]
-        retrieve job logs = True
-[scheduler]
-    [[events]]
-        inactivity timeout = PT3S
-        stall timeout = PT3S
-        abort on inactivity timeout = true
-        abort on workflow timeout = true
-__HERE__
-
-export CYLC_CONF_PATH="${PWD}"
+    [[_wibble]]
+"
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
