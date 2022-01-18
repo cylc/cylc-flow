@@ -81,6 +81,7 @@ class ParsecValidator:
     V_FLOAT_LIST = 'V_FLOAT_LIST'
     V_INTEGER = 'V_INTEGER'
     V_INTEGER_LIST = 'V_INTEGER_LIST'
+    V_RANGE = 'V_RANGE'
     V_STRING = 'V_STRING'
     V_STRING_LIST = 'V_STRING_LIST'
     V_SPACELESS_STRING_LIST = 'V_SPACELESS_STRING_LIST'
@@ -111,7 +112,14 @@ class ParsecValidator:
         V_INTEGER_LIST: (
             'integer list',
             'A comma separated list of integers.',
-            ['1, 2, 3']
+            ['1, 2, 3', '1..3', '1..3, 7']
+        ),
+        V_RANGE: (
+            'integer range',
+            'An integer range specified by a minumum and maximum value.',
+            {
+                '1..5': 'The numbers 1 to 5 inclusive.',
+            }
         ),
         V_STRING: (
             'string',
@@ -144,6 +152,7 @@ class ParsecValidator:
             self.V_FLOAT_LIST: self.coerce_float_list,
             self.V_INTEGER: self.coerce_int,
             self.V_INTEGER_LIST: self.coerce_int_list,
+            self.V_RANGE: self.coerce_range,
             self.V_STRING: self.coerce_str,
             self.V_STRING_LIST: self.coerce_str_list,
             self.V_SPACELESS_STRING_LIST: self.coerce_spaceless_str_list,
@@ -290,6 +299,8 @@ class ParsecValidator:
         Examples:
             >>> ParsecValidator.coerce_int_list('1, 2, 3', None)
             [1, 2, 3]
+            >>> ParsecValidator.coerce_int_list('1..3', None)
+            [1, 2, 3]
 
         """
         items = []
@@ -300,6 +311,47 @@ class ParsecValidator:
             else:
                 items.extend(values)
         return items
+
+    @classmethod
+    def coerce_range(cls, value, keys):
+        """A single min/max pair defining an integer range.
+
+        Examples:
+            >>> ParsecValidator.coerce_range('1..3', None)
+            (1, 3)
+            >>> ParsecValidator.coerce_range('1..3, 5', 'k')
+            Traceback (most recent call last):
+            cylc.flow.parsec.exceptions.ListValueError: \
+            (type=list) k = 1..3, 5 - (Only one min..max pair is permitted)
+            >>> ParsecValidator.coerce_range('1..z', None)
+            Traceback (most recent call last):
+            cylc.flow.parsec.exceptions.ListValueError: \
+            (type=list) k = 1..3, 5 - \
+            (Integer range must be in the format min..max)
+            >>> ParsecValidator.coerce_range('1', 'k')
+            Traceback (most recent call last):
+            cylc.flow.parsec.exceptions.ListValueError: \
+            (type=list) k = 1..3, 5 - \
+            (Integer range must be in the format min..max)
+
+        """
+        items = cls.strip_and_unquote_list(keys, value)
+        if len(items) != 1:
+            raise ListValueError(
+                keys,
+                value,
+                msg='Only one min..max pair is permitted',
+            )
+        item = items[0]
+        match = cls._REC_INT_RANGE.match(item)
+        if not match:
+            raise ListValueError(
+                keys,
+                value,
+                msg='Integer range must be in the format min..max',
+            )
+        min_, max_ = match.groups()[0:2]
+        return Range((int(min_), int(max_)))
 
     @classmethod
     def coerce_str(cls, value, keys):
@@ -563,6 +615,12 @@ class DurationFloat(float):
 
     def __str__(self):
         return str(Duration(seconds=self, standardize=True))
+
+
+class Range(tuple):
+
+    def __str__(self):
+        return f'{self[0]} .. {self[1]}'
 
 
 class CylcConfigValidator(ParsecValidator):
