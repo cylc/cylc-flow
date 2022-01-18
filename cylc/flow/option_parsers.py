@@ -142,14 +142,13 @@ class CylcHelpFormatter(IndentedHelpFormatter):
           - Strip any hardwired color tags
 
         """
-        use_color = (
+        if (
             self.parser.values.color == "always"
             or (
                 self.parser.values.color == "auto"
                 and supports_color()
             )
-        )
-        if use_color:
+        ):
             # Add color formatting to examples text.
             text = format_shell_examples(text)
         else:
@@ -160,8 +159,9 @@ class CylcHelpFormatter(IndentedHelpFormatter):
     def format_usage(self, usage):
         return super().format_usage(self._format(usage))
 
-    def format_descrtiption(self, description):
-        return super().format_description(self._format(description))
+    # If we start using "description" as well as "usage" (also epilog):
+    # def format_description(self, description):
+    #     return super().format_description(self._format(description))
 
 
 class CylcOptionParser(OptionParser):
