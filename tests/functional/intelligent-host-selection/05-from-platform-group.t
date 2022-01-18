@@ -18,16 +18,20 @@
 # Test that Cylc Can select a host from a platform group
 # Failing if there is no good host _any_ platform
 # Succeeding if there is no bad host on any platform in the group
-export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
+export REQUIRE_PLATFORM='loc:remote fs:indep'
 
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
 set_test_number 11
 
-create_test_global_config "" "
+# Create `global.cylc`` here rather than use
+# `test_header.create_test_global_config`` method which appends
+# to existing config: Stop users accidentally creating platforms which would
+# match the Cylc 7 settings in `flow.cylc`.
+cat >> 'global.cylc' <<__HERE__
 [platforms]
-    [[${CYLC_TEST_PLATFORM}]]
+    [[mixedhostplatform]]
         # mixed host platform
         hosts = unreachable_host, ${CYLC_TEST_HOST}
         [[[selection]]]
@@ -39,14 +43,24 @@ create_test_global_config "" "
 
 [platform groups]
     [[mixedplatformgroup]]
-        platforms = badhostplatform, ${CYLC_TEST_PLATFORM}
+        platforms = badhostplatform, mixedhostplatform
         [[[selection]]]
             method = definition order
     [[goodplatformgroup]]
-        platforms = ${CYLC_TEST_PLATFORM}
+        platforms = mixedhostplatform
         [[[selection]]]
             method = definition order
-"
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT3S
+        stall timeout = PT3S
+        abort on inactivity timeout = true
+        abort on workflow timeout = true
+__HERE__
+
+export CYLC_CONF_PATH="${PWD}"
+
 #-------------------------------------------------------------------------------
 # Uncomment to print config for manual testing of workflow.
 # cylc config -i '[platforms]' >&2
@@ -72,10 +86,10 @@ log_scan \
 log_scan \
     "${TEST_NAME_BASE}-goodplatformgroup" \
     "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
-    "platform: ${CYLC_TEST_PLATFORM} - remote init (on unreachable_host)" \
-    "platform: ${CYLC_TEST_PLATFORM} - Could not connect to unreachable_host." \
-    "platform: ${CYLC_TEST_PLATFORM} - remote init (on ${CYLC_TEST_HOST})" \
-    "platform: ${CYLC_TEST_PLATFORM} - file install (on ${CYLC_TEST_HOST})" \
+    "platform: mixedhostplatform - remote init (on unreachable_host)" \
+    "platform: mixedhostplatform - Could not connect to unreachable_host." \
+    "platform: mixedhostplatform - remote init (on ${CYLC_TEST_HOST})" \
+    "platform: mixedhostplatform - file install (on ${CYLC_TEST_HOST})" \
     "\[1/ugly preparing job:01 flows:1\] => submitted"
 
 purge

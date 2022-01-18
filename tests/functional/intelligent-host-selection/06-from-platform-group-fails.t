@@ -22,7 +22,11 @@
 . "$(dirname "$0")/test_header"
 set_test_number 12
 #-------------------------------------------------------------------------------
-create_test_global_config "" "
+# Create `global.cylc`` here rather than use
+# `test_header.create_test_global_config`` method which appends
+# to existing config: Stop users accidentally creating platforms which would
+# match the Cylc 7 settings in `flow.cylc`.
+cat >> 'global.cylc' <<__HERE__
 [platforms]
     [[badhostplatform1]]
         hosts = bad_host1, bad_host2
@@ -32,7 +36,9 @@ create_test_global_config "" "
 [platform groups]
     [[badplatformgroup]]
         platforms = badhostplatform1, badhostplatform2
-"
+__HERE__
+
+export CYLC_CONF_PATH="${PWD}"
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
