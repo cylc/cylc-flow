@@ -21,7 +21,7 @@ from functools import lru_cache
 import re
 from typing import List, Optional, TYPE_CHECKING, Tuple
 
-from metomi.isodatetime.data import Calendar, Duration, CALENDAR
+from metomi.isodatetime.data import Calendar, CALENDAR
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
@@ -164,18 +164,6 @@ class ISO8601Interval(IntervalBase):
     def get_null_offset(cls):
         """Return a null offset."""
         return ISO8601Interval("+P0Y")
-
-    def get_inferred_child(self, string):
-        """Return an instance with 'string' amounts of my non-zero units."""
-        interval = interval_parse(self.value)
-        amount_per_unit = int(string)
-        unit_amounts = {}
-        for attribute in ["years", "months", "weeks", "days",
-                          "hours", "minutes", "seconds"]:
-            if getattr(interval, attribute):
-                unit_amounts[attribute] = amount_per_unit
-        interval = Duration(**unit_amounts)
-        return ISO8601Interval(str(interval))
 
     def standardise(self):
         """Format self.value into a standard representation."""
