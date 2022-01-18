@@ -180,8 +180,6 @@ class IntervalBase(metaclass=ABCMeta):
     this type.
      * self.get_null_offset, which is a method to extract a null offset
     relative to a PointBase object.
-     * self.get_inferred_child to generate an offset from an input
-    without units using the current units of the instance (if any).
 
     Subclasses may also provide an overridden self.standardise
     method to reprocess their value into a standard form.
@@ -205,11 +203,6 @@ class IntervalBase(metaclass=ABCMeta):
     @abstractmethod
     def get_null(cls):
         """Return a null interval."""
-        pass
-
-    @abstractmethod
-    def get_inferred_child(self, string):
-        """For a given string, infer the offset given my instance units."""
         pass
 
     @abstractmethod
