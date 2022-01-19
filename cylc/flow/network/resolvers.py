@@ -621,7 +621,7 @@ class Resolvers(BaseResolvers):
             log_msg = f"[command] {command} "
             user = meta.get('auth_user', self.schd.owner)
             if user != self.schd.owner:
-                log_msg += (f"issued by {user}")
+                log_msg += (f"(issued by {user})")
             LOG.info(log_msg)
         self.schd.queue_command(
             command,
