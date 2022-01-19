@@ -32,6 +32,7 @@ from fnmatch import fnmatchcase
 import os
 from pathlib import Path
 import re
+from textwrap import wrap
 import traceback
 from typing import (
     Any, Callable, Dict, List, Mapping, Optional, Set, TYPE_CHECKING, Tuple,
@@ -476,6 +477,7 @@ class WorkflowConfig:
         self._check_explicit_cycling()
 
         self._check_implicit_tasks()
+        self._check_sequence_bounds()
         self.validate_namespace_names()
 
         # Check that external trigger messages are only used once (they have to
@@ -878,6 +880,30 @@ class WorkflowConfig:
                         sxs.add(y01)
                     del y2xs[y01]
             del x2ys[sx01]
+
+    def _check_sequence_bounds(self):
+        """Check bounds of sequences against the start point."""
+        out_of_bounds = [
+            str(seq)
+            for seq in self.sequences
+            if seq.get_first_point(self.start_point) is None
+        ]
+        if out_of_bounds:
+            if len(out_of_bounds) > 1:
+                # avoid spamming users with multiple warnings
+                out_of_bounds_str = '\n'.join(
+                    wrap(', '.join(out_of_bounds), 70))
+                msg = (
+                    "multiple sequences out of bounds for"
+                    " initial cycle point "
+                    f"{self.start_point}:\n{out_of_bounds_str}"
+                )
+            else:
+                msg = (
+                    f"{out_of_bounds[0]}: sequence out of bounds for "
+                    f"initial cycle point {self.start_point}"
+                )
+            LOG.warning(msg)
 
     def _expand_name_list(self, orig_names):
         """Expand any parameters in lists of names."""
