@@ -618,10 +618,10 @@ class Resolvers(BaseResolvers):
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
         if command != "put_messages":
-            log_msg = f"[command] {command} "
+            log_msg = f"[command] {command}"
             user = meta.get('auth_user', self.schd.owner)
             if user != self.schd.owner:
-                log_msg += (f"(issued by {user})")
+                log_msg += (f" (issued by {user})")
             LOG.info(log_msg)
         self.schd.queue_command(
             command,
