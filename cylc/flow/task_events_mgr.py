@@ -807,7 +807,7 @@ class TaskEventsManager():
 
     def _job_logs_retrieval_callback_255(self, proc_ctx, schd_ctx):
         """Call back when log job retrieval fails with a 255 error."""
-        self.bad_hosts.add(proc_ctx.host)
+        self.bad_hosts.append(proc_ctx.host)
         for id_key in proc_ctx.cmd_kwargs["id_keys"]:
             key1, point, name, submit_num = id_key
             for key in proc_ctx.cmd_kwargs['id_keys']:

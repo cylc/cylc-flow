@@ -30,7 +30,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List, Set, Dict, Union
+from typing import Iterable, NoReturn, Optional, List, Dict, Union
 from uuid import uuid4
 
 import psutil
@@ -193,7 +193,7 @@ class Scheduler:
 
     # flow information
     contact_data: Optional[dict] = None
-    bad_hosts: Optional[Set[str]] = None
+    bad_hosts: Optional[List[str]] = None
 
     # configuration
     flow_file: Optional[str] = None
@@ -269,7 +269,7 @@ class Scheduler:
         self._profile_amounts = {}
         self._profile_update_times = {}
         self.pre_submit_tasks = []
-        self.bad_hosts: Set[str] = set()
+        self.bad_hosts: List[str] = []
 
         self.restored_stop_task_id = None
 

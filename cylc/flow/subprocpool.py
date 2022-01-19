@@ -524,7 +524,7 @@ class SubProcPool:
 
             # Run Callback
             if bad_hosts is not None:
-                bad_hosts.add(ctx.host)
+                bad_hosts.append(ctx.host)
 
             res = _run_callback(callback_255, callback_255_args)
             if res is False:

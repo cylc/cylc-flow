@@ -149,7 +149,7 @@ class TaskJobManager:
         self.job_file_writer = JobFileWriter()
         self.job_runner_mgr = self.job_file_writer.job_runner_mgr
         self.bad_hosts = bad_hosts
-        self.bad_hosts_to_clear = set()
+        self.bad_hosts_to_clear = []
         self.task_remote_mgr = TaskRemoteMgr(
             workflow, proc_pool, self.bad_hosts)
 
@@ -273,10 +273,10 @@ class TaskJobManager:
             for itask in itasks:
                 # If there are any hosts left for this platform which we
                 # have not previously failed to contact with a 255 error.
-                if (
-                    set(itask.platform['hosts']) -
-                    self.task_remote_mgr.bad_hosts
-                ):
+                if [
+                    host for host in itask.platform['hosts']
+                    if host not in self.task_remote_mgr.bad_hosts
+                ]:
                     platform = itask.platform
                     out_of_hosts = False
                     break
@@ -305,7 +305,7 @@ class TaskJobManager:
                         # we record a submit fail we can clear all hosts
                         # from all platforms from bad_hosts.
                         for host_ in itask.platform['hosts']:
-                            self.bad_hosts_to_clear.add(host_)
+                            self.bad_hosts_to_clear.append(host_)
                         itask.platform = platform
                         out_of_hosts = False
                         break
@@ -319,8 +319,14 @@ class TaskJobManager:
                         # group selected in task config are exhausted we clear
                         # bad_hosts for all the hosts we have
                         # tried for this platform or group.
-                        self.bad_hosts -= set(itask.platform['hosts'])
-                        self.bad_hosts -= self.bad_hosts_to_clear
+                        self.bad_hosts = [
+                            host for host in self.bad_hosts
+                            if host not in itask.platform['hosts']
+                        ]
+                        self.bad_hosts = [
+                            host for host in self.bad_hosts
+                            if host not in self.bad_hosts_to_clear
+                        ]
                         self.bad_hosts_to_clear.clear()
                         LOG.critical(
                             PlatformError(

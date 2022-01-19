@@ -393,7 +393,7 @@ class TaskRemoteMgr:
         """
         install_target = platform['install target']
         self.remote_init_map[install_target] = REMOTE_INIT_255
-        self.bad_hosts.add(proc_ctx.host)
+        self.bad_hosts.append(proc_ctx.host)
         self.ready = True
         return
 
