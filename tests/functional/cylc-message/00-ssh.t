@@ -29,5 +29,5 @@ run_ok "${TEST_NAME_BASE}-validate" \
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
-#purge
+purge
 exit
