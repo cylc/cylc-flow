@@ -34,6 +34,7 @@ from typing import (
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
+from cylc.flow import LOG
 
 from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
@@ -605,62 +606,26 @@ class Resolvers(BaseResolvers):
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
-    async def nodes_mutator(self, *m_args):
-        """Mutate node items of associated workflows."""
-        _, command, tokens_list, w_args, args, meta = m_args
-        w_ids = [
-            workflow[WORKFLOW].id
-            for workflow in await self.get_workflows_data(w_args)
-        ]
-        if not w_ids:
-            workflows = list(self.data_store_mgr.data.keys())
-            return [{
-                'response': (False, f'No matching workflow in {workflows}')}]
-        w_id = w_ids[0]
-        # match proxy ID args with workflows
-        items = []
-        for tokens in tokens_list:
-            owner = tokens.get('user')
-            workflow = tokens.get('workflow')
-            if workflow and owner is None:
-                owner = "*"
-            if (
-                not (owner and workflow)
-                or fnmatchcase(
-                    w_id,
-                    tokens.workflow_id,
-                )
-            ):
-                items.append(
-                    tokens.relative_id
-                )
-        if items:
-            if command == 'put_messages':
-                args['task_job'] = items[0]
-            else:
-                args['tasks'] = items
-        result = await self._mutation_mapper(command, args, meta)
-        if result is None:
-            result = (True, 'Command queued')
-        return [{'id': w_id, 'response': result}]
-
     async def _mutation_mapper(
         self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]
     ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
         method = getattr(self, command, None)
-        if not meta:
-            meta = {"auth_user": "unknown user"}
         if method is not None:
-            return method(**kwargs, meta=meta)
+            return method(**kwargs)
         try:
             self.schd.get_command_method(command)
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
+        if command != "put_messages":
+            log_msg = f"[command] {command} "
+            user = meta.get('auth_user', self.schd.owner)
+            if user != self.schd.owner:
+                log_msg += (f"issued by {user}")
+            LOG.info(log_msg)
         self.schd.queue_command(
             command,
-            kwargs,
-            meta,
+            kwargs
         )
         return None
 
@@ -670,8 +635,7 @@ class Resolvers(BaseResolvers):
             cycle_points=None,
             namespaces=None,
             settings=None,
-            cutoff=None,
-            meta=None
+            cutoff=None
     ):
         """Put or clear broadcasts."""
         if mode == 'put_broadcast':
@@ -688,8 +652,7 @@ class Resolvers(BaseResolvers):
     def put_ext_trigger(
         self,
         message,
-        id,  # noqa: A002 (graphql interface)
-        meta=None
+        id  # noqa: A002 (graphql interface)
     ):
         """Server-side external event trigger interface.
 
@@ -713,8 +676,7 @@ class Resolvers(BaseResolvers):
         self,
         task_job=None,
         event_time=None,
-        messages=None,
-        meta=None
+        messages=None
     ):
         """Put task messages in queue for processing later by the main loop.
 
@@ -742,7 +704,7 @@ class Resolvers(BaseResolvers):
                 (task_job, event_time, severity, message))
         return (True, 'Messages queued: %d' % len(messages))
 
-    def set_graph_window_extent(self, n_edge_distance, meta=None):
+    def set_graph_window_extent(self, n_edge_distance):
         """Set data-store graph window to new max edge distance.
 
         Args:
@@ -768,8 +730,7 @@ class Resolvers(BaseResolvers):
         self,
         tasks: Iterable[str],
         outputs: Optional[Iterable[str]] = None,
-        flow_num: Optional[int] = None,
-        meta: Optional[Dict[str, Any]] = None
+        flow_num: Optional[int] = None
     ) -> Tuple[bool, str]:
         """Spawn children of given task outputs.
 
@@ -788,7 +749,6 @@ class Resolvers(BaseResolvers):
                     "outputs": outputs,
                     "flow_num": flow_num
                 },
-                meta
             )
         )
         return (True, 'Command queued')
@@ -800,7 +760,6 @@ class Resolvers(BaseResolvers):
         clock_time: Optional[str] = None,
         task: Optional[str] = None,
         flow_num: Optional[int] = None,
-        meta: Optional[Dict[str, Any]] = None
     ) -> Tuple[bool, str]:
         """Stop the workflow or specific flow from spawning any further.
 
@@ -810,7 +769,6 @@ class Resolvers(BaseResolvers):
             clock_time: Wallclock time after which to stop.
             task: Stop after this task succeeds.
             flow_num: The flow to stop.
-            meta: Meta data from ui-server
     ):
 
         Returns:
@@ -828,7 +786,7 @@ class Resolvers(BaseResolvers):
                 'task': task,
                 'flow_num': flow_num,
             }),
-            meta)
+        )
         )
         return (True, 'Command queued')
 
@@ -837,7 +795,6 @@ class Resolvers(BaseResolvers):
         tasks=None,
         reflow=False,
         flow_descr=None,
-        meta=None
     ):
         """Trigger submission of task jobs where possible.
 
@@ -865,8 +822,7 @@ class Resolvers(BaseResolvers):
                 {
                     "reflow": reflow,
                     "flow_descr": flow_descr
-                },
-                meta
+                }
             ),
         )
         return (True, 'Command queued')

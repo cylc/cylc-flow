@@ -21,7 +21,7 @@
 export REQUIRE_PLATFORM='loc:remote comms:ssh'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 2
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
@@ -29,8 +29,5 @@ run_ok "${TEST_NAME_BASE}-validate" \
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 
-grep_ok "\[client-command\] graphql ssh" \
-    "$RUN_DIR/${WORKFLOW_NAME}/log/workflow/log" 
-
-purge
+#purge
 exit

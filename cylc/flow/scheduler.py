@@ -823,13 +823,10 @@ class Scheduler:
         """Return a command processing method or raise AttributeError."""
         return getattr(self, f'command_{command_name}')
 
-    def queue_command(self, command, kwargs, meta):
-        if not meta:
-            meta = {"auth_user": "unknown"}
+    def queue_command(self, command, kwargs):
         self.command_queue.put((
             command,
-            tuple(kwargs.values()), {},
-            meta
+            tuple(kwargs.values()), {}
         ))
 
     def process_command_queue(self) -> None:
@@ -841,15 +838,7 @@ class Scheduler:
         while True:
             try:
                 command = (self.command_queue.get(False))
-                if len(command) == 4:
-                    name, args, kwargs, meta = command
-                else:
-                    name, args, kwargs = command
-                    meta = {}
-                LOG.info(
-                    f"{meta.get('auth_user', 'Owner')} has submitted request "
-                    f"{name}"
-                )
+                name, args, kwargs = command
             except Empty:
                 break
             args_string = ', '.join(str(a) for a in args)

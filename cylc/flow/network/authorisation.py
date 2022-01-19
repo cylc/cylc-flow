@@ -17,8 +17,6 @@
 
 from functools import wraps
 
-from cylc.flow import LOG
-
 
 def authorise():
     """Add authorisation to an endpoint.
@@ -40,16 +38,6 @@ def authorise():
         def _call(self, *args, user='?', meta=None, **kwargs):
             if not meta:
                 meta = {}
-            host = meta.get('host', '?')
-            prog = meta.get('prog', '?')
-            comms_method = meta.get('comms_method', '?')
-
-            # Hardcoded, for new - but much of this functionality can be
-            # removed more swingingly.
-            LOG.debug(
-                '[client-command] %s %s://%s@%s:%s',
-                fcn.__name__, comms_method, user, host, prog
-            )
             return fcn(self, *args, meta=meta, **kwargs)
 
         return _call

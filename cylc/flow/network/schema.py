@@ -1222,39 +1222,6 @@ async def mutator(root, info, command=None, workflows=None,
     res = await resolvers.mutator(info, command, w_args, args, meta)
     return GenericResponse(result=res)
 
-
-async def nodes_mutator(root, info, command, ids, workflows=None,
-                        exworkflows=None, **args):
-    """Call the resolver method, dealing with multiple node id arguments,
-    which acts on the workflow service via the internal command queue."""
-    tokens_list = [Tokens(n_id, relative=True) for n_id in ids]
-    # if the workflows arg is empty extract from proxy args
-    if workflows is None:
-        workflows = set()
-        for tokens in tokens_list:
-            workflows.add(tokens.workflow_id)
-    if not workflows:
-        return GenericResponse(result="Error: No given Workflow(s)")
-    if exworkflows is None:
-        exworkflows = []
-    w_args = {}
-    w_args['workflows'] = [Tokens(w_id) for w_id in workflows]
-    w_args['exworkflows'] = [Tokens(w_id) for w_id in exworkflows]
-    if args.get('args', False):
-        args.update(args.get('args', {}))
-        args.pop('args')
-    resolvers = info.context.get('resolvers')
-    meta = info.context.get('meta')
-    res = await resolvers.nodes_mutator(
-        info,
-        command,
-        tokens_list,
-        w_args,
-        args,
-        meta
-    )
-    return GenericResponse(result=res)
-
 # Input types:
 
 

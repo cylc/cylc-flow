@@ -220,22 +220,6 @@ async def test_mutator(mock_flow, flow_args):
     assert response[0]['id'] == mock_flow.id
 
 
-@pytest.mark.asyncio
-async def test_nodes_mutator(mock_flow, flow_args):
-    """Test the nodes mutation method."""
-    flow_args['workflows'].append({
-        'user': mock_flow.owner,
-        'workflow': mock_flow.name,
-        'workflow_sel': None,
-    })
-    ids = [Tokens(n) for n in mock_flow.node_ids]
-    meta = {}
-    response = await mock_flow.resolvers.nodes_mutator(
-        None, 'force_trigger_tasks', ids, flow_args,
-        {"reflow": False, "flow_descr": ""}, meta
-    )
-    assert response[0]['id'] == mock_flow.id
-
 
 @pytest.mark.asyncio
 async def test_mutation_mapper(mock_flow):
