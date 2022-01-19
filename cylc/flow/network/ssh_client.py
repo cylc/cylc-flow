@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import json
 import os
-from typing import Union
+from typing import Union, Dict
 
 from cylc.flow.exceptions import ClientError
 from cylc.flow.network.client_factory import CommsMeth
@@ -45,11 +46,34 @@ class WorkflowRuntimeClient():
             timeout: Union[float, str] = None
     ):
         self.workflow = workflow
-
+        self.SLEEP_INTERVAL = 0.1
         if not host:
             self.host, _, _ = get_location(workflow)
 
-    def send_request(self, command, args=None, timeout=None):
+    async def async_request(self, command, args=None, timeout=None):
+        """Send asynchronous request via SSH.
+        """
+        cmd, ssh_cmd, login_shell, cylc_path, message = self.prepare_command(
+            command, args, timeout)
+        proc = _remote_cylc_cmd(
+            cmd,
+            host=self.host,
+            stdin_str=message,
+            ssh_cmd=ssh_cmd,
+            remote_cylc_path=cylc_path,
+            ssh_login_shell=login_shell,
+            capture_process=True)
+        while True:
+            if proc.poll() is not None:
+                break
+            await asyncio.sleep(self.SLEEP_INTERVAL)
+            out, err = (f.decode() for f in proc.communicate())
+            return_code = proc.wait()
+            if return_code:
+                raise ClientError(err, f"return-code={return_code}")
+        return json.loads(out)
+
+    def serial_request(self, command, args=None, timeout=None):
         """Send a request, using ssh.
 
         Determines ssh_cmd, cylc_path and login_shell settings from the contact
@@ -69,6 +93,18 @@ class WorkflowRuntimeClient():
         Returns:
             object: Deserialized output from function called.
         """
+        loop = asyncio.new_event_loop()
+        task = loop.create_task(
+            self.async_request(command, args, timeout))
+        loop.run_until_complete(task)
+        loop.close()
+        return task.result()
+
+    def prepare_command(
+        self, command: str, args: Dict, timeout: Union[float, str]
+    ):
+        """Prepare command for submission.
+        """
         # Set environment variable to determine the communication for use on
         # the scheduler
         os.environ["CLIENT_COMMS_METH"] = CommsMeth.SSH.value
@@ -84,19 +120,6 @@ class WorkflowRuntimeClient():
         if not args:
             args = {}
         message = json.dumps(args)
-        proc = _remote_cylc_cmd(
-            cmd,
-            host=self.host,
-            stdin_str=message,
-            ssh_cmd=ssh_cmd,
-            remote_cylc_path=cylc_path,
-            ssh_login_shell=login_shell,
-            capture_process=True)
+        return cmd, ssh_cmd, login_shell, cylc_path, message
 
-        out, err = (f.decode() for f in proc.communicate())
-        return_code = proc.wait()
-        if return_code:
-            raise ClientError(err, f"return-code={return_code}")
-        return json.loads(out)
-
-    __call__ = send_request
+    __call__ = serial_request
