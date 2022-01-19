@@ -28,7 +28,6 @@ import pytest
 from cylc.flow import __version__
 
 
-@pytest.mark.asyncio
 async def test_create_flow(flow, run_dir):
     """Use the flow fixture to create workflows on the file system."""
     # Ensure a flow.cylc file gets written out
@@ -49,7 +48,6 @@ async def test_create_flow(flow, run_dir):
     assert flow_file.exists()
 
 
-@pytest.mark.asyncio
 async def test_run(flow, scheduler, run, one_conf):
     """Create a workflow, initialise the scheduler and run it."""
     # Ensure the scheduler can survive for one second without crashing
@@ -59,7 +57,6 @@ async def test_run(flow, scheduler, run, one_conf):
         await asyncio.sleep(1)
 
 
-@pytest.mark.asyncio
 async def test_logging(flow, scheduler, run, one_conf, log_filter):
     """We can capture log records when we run a scheduler."""
     # Ensure that the cylc version is logged on startup.
@@ -70,7 +67,6 @@ async def test_logging(flow, scheduler, run, one_conf, log_filter):
         assert log_filter(log, contains=__version__)
 
 
-@pytest.mark.asyncio
 async def test_scheduler_arguments(flow, scheduler, run, one_conf):
     """We can provide options to the scheduler when we __init__ it.
 
@@ -90,7 +86,6 @@ async def test_scheduler_arguments(flow, scheduler, run, one_conf):
         assert not schd.is_paused
 
 
-@pytest.mark.asyncio
 async def test_shutdown(flow, scheduler, run, one_conf):
     """Shut down a workflow.
 
@@ -107,7 +102,6 @@ async def test_shutdown(flow, scheduler, run, one_conf):
     assert schd.server.socket.closed
 
 
-@pytest.mark.asyncio
 async def test_install(flow, scheduler, one_conf, run_dir):
     """You don't have to run workflows, it's usually best not to!
 
@@ -124,7 +118,6 @@ async def test_install(flow, scheduler, one_conf, run_dir):
     ).exists()
 
 
-@pytest.mark.asyncio
 async def test_task_pool(flow, scheduler, one_conf):
     """You don't have to run the scheduler to play with the task pool."""
     # Ensure that the correct number of tasks get added to the task pool.
@@ -143,7 +136,6 @@ async def test_task_pool(flow, scheduler, one_conf):
     assert len(schd.pool.main_pool) == 1
 
 
-@pytest.mark.asyncio
 async def test_exception(flow, scheduler, run, one_conf, log_filter):
     """Through an exception into the scheduler to see how it will react.
 
@@ -210,7 +202,6 @@ def test_module_two(myflow):
     assert myflow.uuid_str
 
 
-@pytest.mark.asyncio
 async def test_db_select(one, run, db_select):
     """Demonstrate and test querying the workflow database."""
     schd = one

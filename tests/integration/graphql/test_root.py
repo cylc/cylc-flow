@@ -19,7 +19,6 @@ import pytest
 from cylc.flow.network.client import WorkflowRuntimeClient
 
 
-@pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run):
     reg = mod_flow({
@@ -58,7 +57,6 @@ async def harness(mod_flow, mod_scheduler, mod_run):
         yield schd, client, _query
 
 
-@pytest.mark.asyncio
 async def test_workflows(harness):
     """It should return True if running."""
     schd, client, query = harness
@@ -70,7 +68,6 @@ async def test_workflows(harness):
     }
 
 
-@pytest.mark.asyncio
 async def test_jobs(harness):
     """It should return True if running."""
     schd, client, query = harness
