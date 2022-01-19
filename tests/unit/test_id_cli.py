@@ -362,15 +362,11 @@ async def test_parse_ids_src_path(src_dir):
     [
         (
             ['/home/me/whatever'],
-            'Invalid Cylc identifier: /home/me/whatever',
+            'Invalid ID: /home/me/whatever',
         ),
         (
             ['foo/..'],
             'cannot be a path that points to the cylc-run directory or above',
-        ),
-        (
-            ['foo/'],
-            'Invalid Cylc identifier',
         ),
         (
             ['~alice/foo'],
