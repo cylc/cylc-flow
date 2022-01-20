@@ -1620,6 +1620,7 @@ class TaskPool:
                 tokens = Tokens(id_, relative=True)
             except ValueError:
                 LOG.warning(f'Invalid task ID: {id_}')
+                continue
             if (
                 tokens['cycle_sel']
                 or tokens['task_sel']
@@ -1680,6 +1681,7 @@ class TaskPool:
                 tokens = Tokens(id_, relative=True)
             except ValueError:
                 LOG.warning(f'Invalid task ID: {id_}')
+                continue
             point_str = tokens['cycle']
             if not tokens['task']:
                 # make task globs explicit to make warnings clearer
