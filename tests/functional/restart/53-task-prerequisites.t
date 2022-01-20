@@ -34,10 +34,10 @@ TEST_NAME="${TEST_NAME_BASE}-db-task-prereq"
 QUERY='SELECT * FROM task_prerequisites ORDER BY cycle, name, prereq_cycle;'
 run_ok "$TEST_NAME" sqlite3 "$DB_FILE" "$QUERY"
 cmp_ok "${TEST_NAME}.stdout" << '__EOF__'
-2|bar|foo|1|succeeded|0
-2|bar|apollo|2|The Eagle has landed|satisfied naturally
-3|bar|foo|2|succeeded|satisfied naturally
-3|bar|apollo|3|The Eagle has landed|0
+2|bar|[1]|foo|1|succeeded|0
+2|bar|[1]|apollo|2|The Eagle has landed|satisfied naturally
+3|bar|[1]|foo|2|succeeded|satisfied naturally
+3|bar|[1]|apollo|3|The Eagle has landed|0
 __EOF__
 
 workflow_run_fail "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --stopcp=3 --no-detach
