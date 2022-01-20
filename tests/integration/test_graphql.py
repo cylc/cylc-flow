@@ -69,7 +69,6 @@ def job_db_row():
     ]
 
 
-@pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run):
     flow_def = {
@@ -110,7 +109,6 @@ async def harness(mod_flow, mod_scheduler, mod_run):
         yield schd, client, workflow_tokens
 
 
-@pytest.mark.asyncio
 async def test_workflows(harness):
     schd, client, w_tokens = harness
     ret = await client.async_request(
@@ -126,7 +124,6 @@ async def test_workflows(harness):
     }
 
 
-@pytest.mark.asyncio
 async def test_tasks(harness):
     schd, client, w_tokens = harness
 
@@ -158,7 +155,6 @@ async def test_tasks(harness):
         }
 
 
-@pytest.mark.asyncio
 async def test_families(harness):
     schd, client, w_tokens = harness
 
@@ -192,7 +188,6 @@ async def test_families(harness):
         }
 
 
-@pytest.mark.asyncio
 async def test_task_proxies(harness):
     schd, client, w_tokens = harness
 
@@ -227,7 +222,6 @@ async def test_task_proxies(harness):
     }
 
 
-@pytest.mark.asyncio
 async def test_family_proxies(harness):
     schd, client, w_tokens = harness
 
@@ -263,7 +257,6 @@ async def test_family_proxies(harness):
         }
 
 
-@pytest.mark.asyncio
 async def test_edges(harness):
     schd, client, w_tokens = harness
 
@@ -323,7 +316,6 @@ async def test_edges(harness):
     }
 
 
-@pytest.mark.asyncio
 async def test_jobs(harness):
     schd, client, w_tokens = harness
 

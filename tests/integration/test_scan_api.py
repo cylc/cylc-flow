@@ -95,7 +95,6 @@ async def flows(mod_flow, mod_scheduler, mod_run, mod_one_conf):
             yield
 
 
-@pytest.mark.asyncio
 async def test_state_filter(flows, mod_test_dir):
     """It should filter flows by state."""
     # one stopped flow
@@ -133,7 +132,6 @@ async def test_state_filter(flows, mod_test_dir):
     assert len(lines) == 4
 
 
-@pytest.mark.asyncio
 async def test_name_filter(flows, mod_test_dir):
     """It should filter flows by name regex."""
     # one stopped flow
@@ -144,7 +142,6 @@ async def test_name_filter(flows, mod_test_dir):
     assert '-paused-' in lines[0]
 
 
-@pytest.mark.asyncio
 async def test_name_sort(flows, mod_test_dir):
     """It should sort flows by name."""
     # one stopped flow
@@ -158,7 +155,6 @@ async def test_name_sort(flows, mod_test_dir):
     assert 'a/b/c' in lines[3]
 
 
-@pytest.mark.asyncio
 async def test_format_json(flows, mod_test_dir):
     """It should dump results in json format."""
     # one stopped flow
@@ -170,7 +166,6 @@ async def test_format_json(flows, mod_test_dir):
     assert data[0]['name']
 
 
-@pytest.mark.asyncio
 async def test_format_tree(flows, run_dir, ses_test_dir, mod_test_dir):
     """It should dump results in an ascii tree format."""
     # one stopped flow
@@ -186,7 +181,6 @@ async def test_format_tree(flows, run_dir, ses_test_dir, mod_test_dir):
     assert '-running-' in lines[2]
 
 
-@pytest.mark.asyncio
 async def test_format_rich(flows, mod_test_dir):
     """It should print results in a long human-friendly format."""
     # one stopped flow (--colour-blind)
@@ -245,7 +239,6 @@ async def test_format_rich(flows, mod_test_dir):
         raise Exception('missing state totals line (colourful)')
 
 
-@pytest.mark.asyncio
 async def test_scan_cleans_stuck_contact_files(
     run,
     scheduler,
