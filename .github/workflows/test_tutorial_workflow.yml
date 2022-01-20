@@ -4,6 +4,11 @@ on:
   push:
     branches: [master]
   pull_request:
+    paths-ignore:
+      - '.github/workflows/*.ya?ml'
+      - '!.github/workflows/test_tutorial_workflow.yml'
+      - 'tests/**'
+      - '**.md'
   workflow_dispatch:
     inputs:
       rose_ref:
