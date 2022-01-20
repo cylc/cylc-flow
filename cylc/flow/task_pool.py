@@ -1629,21 +1629,19 @@ class TaskPool:
                 LOG.warning(f"No active tasks matching: {id_}")
                 unmatched_tasks.append(id_)
                 continue
+            if not tokens['task']:
+                # make task globs explicit to make warnings clearer
+                tokens['task'] = '*'
             point_str = tokens['cycle']
-            name_str = tokens['task'] or '*'
+            name_str = tokens['task']
             if name_str not in self.config.taskdefs:
                 if self.config.find_taskdefs(name_str):
                     # It's a family name; was not matched by active tasks
                     LOG.warning(
-                        f"No active tasks in the family '{name_str}' "
-                        f"matching: {id_}"
+                        f"No active tasks matching: {tokens.relative_id}"
                     )
                 else:
                     LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
-                unmatched_tasks.append(id_)
-                continue
-            if point_str is None:
-                LOG.warning(f"No active instances of task: {id_}")
                 unmatched_tasks.append(id_)
                 continue
             try:
@@ -1664,7 +1662,7 @@ class TaskPool:
         return matched_tasks, unmatched_tasks
 
     def match_taskdefs(
-        self, items: Iterable[str]
+        self, ids: Iterable[str]
     ) -> Tuple[int, Dict[Tuple[str, 'PointBase'], 'TaskDef']]:
         """Return matching taskdefs valid for selected cycle points.
 
@@ -1677,25 +1675,33 @@ class TaskPool:
         """
         n_warnings = 0
         task_items: Dict[Tuple[str, 'PointBase'], 'TaskDef'] = {}
-        for item in items:
-            tokens = Tokens(item, relative=True)
+        for id_ in ids:
+            try:
+                tokens = Tokens(id_, relative=True)
+            except ValueError:
+                LOG.warning(f'Invalid task ID: {id_}')
             point_str = tokens['cycle']
-            name_str = tokens['task'] or '*'
-            if point_str is None:
-                LOG.warning(f"{item} - task to spawn must have a cycle point")
-                n_warnings += 1
-                continue
+            if not tokens['task']:
+                # make task globs explicit to make warnings clearer
+                tokens['task'] = '*'
+            name_str = tokens['task']
             try:
                 point_str = standardise_point_string(point_str)
             except PointParsingError as exc:
                 LOG.warning(
-                    self.ERR_TMPL_NO_TASKID_MATCH.format(f"{item} ({exc})")
+                    self.ERR_TMPL_NO_TASKID_MATCH.format(
+                        f"{tokens.relative_id} ({exc})"
+                    )
                 )
                 n_warnings += 1
                 continue
             taskdefs: List['TaskDef'] = self.config.find_taskdefs(name_str)
             if not taskdefs:
-                LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(item))
+                LOG.warning(
+                    self.ERR_TMPL_NO_TASKID_MATCH.format(
+                        tokens.relative_id
+                    )
+                )
                 n_warnings += 1
                 continue
             point = get_point(point_str)
