@@ -22,6 +22,7 @@ from cylc.flow.network.subscriber import (
 )
 
 
+@pytest.mark.asyncio
 async def test_publisher(flow, scheduler, run, one_conf, port_range):
     """It should publish deltas when the flow starts."""
     reg = flow(one_conf)

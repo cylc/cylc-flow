@@ -46,6 +46,7 @@ async def harness(
             yield reg_prefix, reg1, reg2, reg3
 
 
+@pytest.mark.asyncio
 async def test_glob_wildcard(harness):
     """It should search for workflows using globs."""
     reg_prefix, reg1, reg2, reg3 = harness
@@ -64,6 +65,7 @@ async def test_glob_wildcard(harness):
     assert sorted(workflows) == sorted([])
 
 
+@pytest.mark.asyncio
 async def test_glob_pattern(harness):
     """It should support fnmatch syntax including square brackets."""
     # [a]* should match workflows starting with "a"
@@ -82,6 +84,7 @@ async def test_glob_pattern(harness):
     assert sorted(workflows) == sorted([])
 
 
+@pytest.mark.asyncio
 async def test_state_filter(harness):
     """It should filter by workflow state."""
     reg_prefix, reg1, reg2, reg3 = harness

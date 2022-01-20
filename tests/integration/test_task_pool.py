@@ -114,6 +114,7 @@ async def example_flow(
     return schd
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'items, expected_task_ids, expected_bad_items, expected_warnings',
     [
@@ -192,6 +193,7 @@ async def test_filter_task_proxies(
     assert_expected_log(caplog, expected_warnings)
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'items, expected_task_ids, expected_warnings',
     [
@@ -261,6 +263,7 @@ async def test_match_taskdefs(
     assert n_warnings == len(logged_warnings)
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'items, expected_tasks_to_hold_ids, expected_warnings',
     [
@@ -330,6 +333,7 @@ async def test_hold_tasks(
     assert get_task_ids(db_held_tasks) == expected_tasks_to_hold_ids
 
 
+@pytest.mark.asyncio
 async def test_release_held_tasks(
     example_flow: Scheduler, db_select: Callable
 ) -> None:
@@ -365,6 +369,7 @@ async def test_release_held_tasks(
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'hold_after_point, expected_held_task_ids',
     [

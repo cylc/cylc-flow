@@ -44,6 +44,7 @@ def test_filter_name_preprocess():
     assert pipe.args[0] == re.compile('(^f|^c)')
 
 
+@pytest.mark.asyncio
 async def test_filter_name():
     """It should filter flows by registration name."""
     pipe = filter_name('^f')
@@ -57,6 +58,7 @@ async def test_filter_name():
     )
 
 
+@pytest.mark.asyncio
 async def test_cylc_version():
     """It should filter flows by cylc version."""
     version = ContactFileFields.VERSION
@@ -74,6 +76,7 @@ async def test_cylc_version():
     )
 
 
+@pytest.mark.asyncio
 async def test_api_version():
     """It should filter flows by api version."""
     version = ContactFileFields.API
@@ -91,6 +94,7 @@ async def test_api_version():
     )
 
 
+@pytest.mark.asyncio
 async def test_contact_info(tmp_path):
     """It should load info from the contact file."""
     # create a dummy flow

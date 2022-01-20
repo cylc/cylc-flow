@@ -21,6 +21,7 @@ from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.server import PB_METHOD_MAP
 
 
+@pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     reg = mod_flow(mod_one_conf)
@@ -30,6 +31,7 @@ async def harness(mod_flow, mod_scheduler, mod_run, mod_one_conf):
         yield schd, client
 
 
+@pytest.mark.asyncio
 async def test_graphql(harness):
     """It should return True if running."""
     schd, client = harness
@@ -43,6 +45,7 @@ async def test_graphql(harness):
     assert schd.workflow in workflow['id']
 
 
+@pytest.mark.asyncio
 async def test_protobuf(harness):
     """It should return True if running."""
     schd, client = harness

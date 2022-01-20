@@ -23,6 +23,7 @@ import pytest
 from cylc.flow.network.server import PB_METHOD_MAP
 
 
+@pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
     reg = mod_flow(mod_one_conf)
@@ -78,6 +79,7 @@ def test_pb_entire_workflow(myflow):
     assert data.workflow.id == myflow.id
 
 
+@pytest.mark.asyncio
 @pytest.fixture
 async def accident(flow, scheduler, run, one_conf):
     reg = flow(one_conf)
@@ -86,6 +88,7 @@ async def accident(flow, scheduler, run, one_conf):
         yield schd
 
 
+@pytest.mark.asyncio
 async def test_listener(accident):
     """Test listener."""
     accident.server.queue.put('STOP')

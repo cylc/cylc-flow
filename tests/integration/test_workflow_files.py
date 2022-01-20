@@ -45,6 +45,7 @@ def test_load_contact_file(myflow):
     assert cont[CFF.HOST] == myflow.host
 
 
+@pytest.mark.asyncio
 async def test_load_contact_file_async(myflow):
     cont = await load_contact_file_async(myflow.workflow)
     assert cont[CFF.HOST] == myflow.host
@@ -54,6 +55,7 @@ async def test_load_contact_file_async(myflow):
     assert cont == cont2
 
 
+@pytest.mark.asyncio
 @pytest.fixture
 async def workflow(flow, scheduler, one_conf, run_dir):
     reg = flow(one_conf)

@@ -184,6 +184,7 @@ async def listify(async_gen, field='name'):
     return ret
 
 
+@pytest.mark.asyncio
 async def test_scan(sample_run_dir):
     """It should list all flows."""
     assert await listify(
@@ -197,6 +198,7 @@ async def test_scan(sample_run_dir):
     ]
 
 
+@pytest.mark.asyncio
 async def test_scan_with_files(sample_run_dir):
     """It shouldn't be perturbed by arbitrary files."""
     Path(sample_run_dir, 'abc').touch()
@@ -212,6 +214,7 @@ async def test_scan_with_files(sample_run_dir):
     ]
 
 
+@pytest.mark.asyncio
 async def test_scan_horrible_mess(badly_messed_up_cylc_run_dir):
     """It shouldn't be affected by erroneous cylc files/dirs.
 
@@ -227,6 +230,7 @@ async def test_scan_horrible_mess(badly_messed_up_cylc_run_dir):
     ]
 
 
+@pytest.mark.asyncio
 async def test_scan_symlinks(run_dir_with_symlinks):
     """It should follow symlinks to flows in other dirs."""
     assert await listify(
@@ -237,6 +241,7 @@ async def test_scan_symlinks(run_dir_with_symlinks):
     ]
 
 
+@pytest.mark.asyncio
 async def test_scan_nasty_symlinks(run_dir_with_nasty_symlinks):
     """It should handle strange symlinks because users can be nasty."""
     assert await listify(
@@ -248,6 +253,7 @@ async def test_scan_nasty_symlinks(run_dir_with_nasty_symlinks):
     ]
 
 
+@pytest.mark.asyncio
 async def test_is_active(sample_run_dir):
     """It should filter flows by presence of a contact file."""
     # running flows
@@ -276,6 +282,7 @@ async def test_is_active(sample_run_dir):
     )
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     'depth, expected',
     [
@@ -290,6 +297,7 @@ async def test_max_depth(nested_dir, depth: int, expected: List[str]):
     ) == expected
 
 
+@pytest.mark.asyncio
 async def test_max_depth_configurable(nested_dir, mock_glbl_cfg):
     """Default scan depth should be configurable in global.cylc."""
     mock_glbl_cfg(
@@ -307,6 +315,7 @@ async def test_max_depth_configurable(nested_dir, mock_glbl_cfg):
     ]
 
 
+@pytest.mark.asyncio
 async def test_workflow_params(
     flow,
     scheduler,
@@ -341,6 +350,7 @@ async def test_workflow_params(
             assert flow['workflow_params'][uuid_key] == schd.uuid_str
 
 
+@pytest.mark.asyncio
 async def test_source_dirs(source_dirs):
     """It should list uninstalled workflows from configured source dirs."""
     src1, src2 = source_dirs
@@ -355,6 +365,7 @@ async def test_source_dirs(source_dirs):
     ]
 
 
+@pytest.mark.asyncio
 async def test_scan_sigstop(flow, scheduler, run, one_conf, test_dir, caplog):
     """It should log warnings if workflows are un-contactable.
 

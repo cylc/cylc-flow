@@ -85,6 +85,7 @@ def ext_id(schd):
     return f'~{schd.owner}/{schd.workflow}//{int_id(None)}'
 
 
+@pytest.mark.asyncio
 @pytest.fixture(scope='module')
 async def harness(mod_flow, mod_scheduler, mod_run):
     flow_def = {

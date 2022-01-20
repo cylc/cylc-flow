@@ -55,6 +55,7 @@ async def sleepy(x):
     return True
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize('preserve_order', (True, False))
 async def test_pipe(preserve_order):
     """It passes values through the pipe."""
@@ -72,6 +73,7 @@ async def test_pipe(preserve_order):
     ]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize('preserve_order', (True, False))
 async def test_pipe_single(preserve_order):
     """It allow single-step pipes."""
@@ -91,6 +93,7 @@ async def test_pipe_single(preserve_order):
     ]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize('preserve_order', (True, False))
 async def test_pipe_reusable(preserve_order):
     """It can be re-used once depleted."""
@@ -109,6 +112,7 @@ async def test_pipe_reusable(preserve_order):
         ]
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize('preserve_order', (True, False))
 async def test_pipe_filter_stop(preserve_order):
     """It yields values early with the filter_stop argument."""
@@ -137,6 +141,7 @@ async def one(x):
     return x
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize('preserve_order', (True, False))
 async def test_pipe_preserve_order(preserve_order):
     """It should control result order according to pipe configuration."""
@@ -152,6 +157,7 @@ async def test_pipe_preserve_order(preserve_order):
     assert (result == list(range(n))) is preserve_order
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize('preserve_order', (True, False))
 async def test_pipe_concurrent(caplog, preserve_order):
     """It runs pipes concurrently.
@@ -223,6 +229,7 @@ def test_rewind():
     assert pipe.fastforward().rewind() == pipe
 
 
+@pytest.mark.asyncio
 async def test_asyncqgen():
     """It should provide an async gen interface to an async queue."""
     queue = asyncio.Queue()
