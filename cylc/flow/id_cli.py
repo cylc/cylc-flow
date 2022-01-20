@@ -74,6 +74,8 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         # list of workflows:
         >>> parse_back('workworkflow')
         ['workworkflow']
+        >>> parse_back('workworkflow/')
+        ['workworkflow']
 
         >>> parse_back('workworkflow1', 'workworkflow2')
         ['workworkflow1', 'workworkflow2']
@@ -102,16 +104,16 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         # errors:
         >>> _parse_cli('////')
         Traceback (most recent call last):
-        ValueError: Invalid Cylc identifier: ////
+        UserInputError: Invalid ID: ////
 
         >>> parse_back('//cycle')
         Traceback (most recent call last):
-        ValueError: Relative reference must follow an incomplete one.
+        UserInputError: Relative reference must follow an incomplete one.
         E.G: workflow //cycle/task
 
         >>> parse_back('workflow//cycle', '//cycle')
         Traceback (most recent call last):
-        ValueError: Relative reference must follow an incomplete one.
+        UserInputError: Relative reference must follow an incomplete one.
         E.G: workflow //cycle/task
 
     """
@@ -122,7 +124,15 @@ def _parse_cli(*ids: str) -> List[Tokens]:
     partials_expended: bool = False
     tokens_list: List[Tokens] = []
     for id_ in ids:
-        tokens = Tokens(id_)
+        try:
+            tokens = Tokens(id_)
+        except ValueError:
+            if id_.endswith('/') and not id_.endswith('//'):  # noqa: SIM106
+                # tolerate IDs that end in a single slash on the CLI
+                # (e.g. CLI auto completion)
+                tokens = Tokens(id_[:-1])
+            else:
+                raise UserInputError(f'Invalid ID: {id_}')
         is_partial = tokens.get('workflow') and not tokens.get('cycle')
         is_relative = not tokens.get('workflow')
 
@@ -160,7 +170,7 @@ def _parse_cli(*ids: str) -> List[Tokens]:
                 partials_expended = False
             elif is_relative:
                 # so a relative reference is an error
-                raise ValueError(
+                raise UserInputError(
                     'Relative reference must follow an incomplete one.'
                     '\nE.G: workflow //cycle/task'
                 )
