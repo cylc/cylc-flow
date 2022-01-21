@@ -32,7 +32,7 @@ class WorkflowRuntimeClient():
 
     Determines host from the contact file unless provided.
 
-    Arg:l
+    Args:
         workflow (str):
             Name of the workflow to connect to.
         timeout (float):
