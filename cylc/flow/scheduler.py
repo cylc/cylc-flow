@@ -30,7 +30,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List, Dict, Union
+from typing import Dict, Iterable, List, NoReturn, Optional, Set, Union
 from uuid import uuid4
 
 import psutil
@@ -269,7 +269,7 @@ class Scheduler:
         self._profile_amounts = {}
         self._profile_update_times = {}
         self.pre_submit_tasks = []
-        self.bad_hosts: List[str] = []
+        self.bad_hosts: Set[str] = set()
 
         self.restored_stop_task_id = None
 

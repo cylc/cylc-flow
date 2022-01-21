@@ -289,20 +289,20 @@ def test__run_command_exit_no_255_args(caplog, mock_ctx):
 def test__run_command_exit_add_to_badhosts(mock_ctx):
     """It updates the list of badhosts
     """
-    badhosts = ['foo', 'bar']
+    badhosts = {'foo', 'bar'}
     SubProcPool._run_command_exit(
         mock_ctx(cmd=['ssh']),
         bad_hosts=badhosts,
         callback=print,
         callback_args=['Welcome to Magrathea']
     )
-    assert badhosts == ['foo', 'bar', 'mouse']
+    assert badhosts == {'foo', 'bar', 'mouse'}
 
 
 def test__run_command_exit_rsync_fails(mock_ctx):
     """It updates the list of badhosts
     """
-    badhosts = ['foo', 'bar']
+    badhosts = {'foo', 'bar'}
     ctx = mock_ctx(cmd=['rsync'], ret_code=42, cmd_key='file-install')
     SubProcPool._run_command_exit(
         ctx=ctx,
@@ -316,7 +316,7 @@ def test__run_command_exit_rsync_fails(mock_ctx):
             }
         ]
     )
-    assert badhosts == ['foo', 'bar', 'mouse']
+    assert badhosts == {'foo', 'bar', 'mouse'}
 
 
 @pytest.mark.parametrize(

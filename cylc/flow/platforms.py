@@ -20,7 +20,7 @@ import random
 import re
 from copy import deepcopy
 from typing import (
-    Any, Dict, Iterable, List, Optional, Tuple, Union, overload
+    Any, Dict, Iterable, List, Optional, Tuple, Set, Union, overload
 )
 
 from cylc.flow import LOG
@@ -67,7 +67,7 @@ def log_platform_event(
 def get_platform(
     task_conf: Union[str, None] = None,
     task_id: str = UNKNOWN_TASK,
-    bad_hosts: Optional[List[str]] = None
+    bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     ...
 
@@ -76,7 +76,7 @@ def get_platform(
 def get_platform(
     task_conf: Dict[str, Any],
     task_id: str = UNKNOWN_TASK,
-    bad_hosts: Optional[List[str]] = None
+    bad_hosts: Optional[Set[str]] = None
 ) -> Optional[Dict[str, Any]]:
     ...
 
@@ -92,7 +92,7 @@ def get_platform(
 def get_platform(
     task_conf: Union[str, Dict[str, Any], None] = None,
     task_id: str = UNKNOWN_TASK,
-    bad_hosts: Optional[List[str]] = None
+    bad_hosts: Optional[Set[str]] = None
 ) -> Optional[Dict[str, Any]]:
     """Get a platform.
 
@@ -151,7 +151,7 @@ def get_platform(
 def platform_from_name(
     platform_name: Optional[str] = None,
     platforms: Optional[Dict[str, Dict[str, Any]]] = None,
-    bad_hosts: Optional[List[str]] = None
+    bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     """
     Find out which job platform to use given a list of possible platforms and
@@ -228,7 +228,7 @@ def platform_from_name(
 def get_platform_from_group(
     group: Dict[str, Any],
     group_name: str,
-    bad_hosts: Optional[List[str]] = None
+    bad_hosts: Optional[Set[str]] = None
 ) -> str:
     """Get platform name from group, according to the selection method.
 
@@ -463,7 +463,7 @@ def generic_items_match(
 
 
 def get_host_from_platform(
-    platform: Dict[str, Any], bad_hosts: Optional[List[str]] = None
+    platform: Dict[str, Any], bad_hosts: Optional[Set[str]] = None
 ) -> str:
     """Placeholder for a more sophisticated function which returns a host
     given a platform dictionary.
