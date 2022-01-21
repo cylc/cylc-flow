@@ -269,7 +269,7 @@ class Scheduler:
         self._profile_amounts = {}
         self._profile_update_times = {}
         self.pre_submit_tasks = []
-        self.bad_hosts: Optional[List[str]] = set()
+        self.bad_hosts: Set[str] = set()
 
         self.restored_stop_task_id = None
 
