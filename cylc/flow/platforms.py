@@ -250,10 +250,10 @@ def get_platform_from_group(
     if bad_hosts:
         good_platforms = []
         for platform in group['platforms']:
-            if [
+            if any(
                 host for host in platform_from_name(platform)['hosts']
                 if host not in bad_hosts
-            ]:
+            ):
                 good_platforms.append(platform)
 
         platform_names = list(good_platforms)
