@@ -91,6 +91,10 @@ Added a metadata section to the platform and platform group configurations.
 workflow back into Cylc from Cylc Docs to make it a packaged resource for
 anyone with a Cylc installation.
 
+[#4576](https://github.com/cylc/cylc-flow/pull/4576) - Added
+`--platform-names` and `--platform-meta` to `cylc config` to allow users
+simple access to information about what platforms have been configured.
+
 ### Fixes
 
 [#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
