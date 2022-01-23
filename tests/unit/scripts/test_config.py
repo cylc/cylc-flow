@@ -16,11 +16,17 @@
 
 import os
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Optional, List
+from cylc.flow.exceptions import UserInputError
 
 import pytest
+from pytest import param
 
-from cylc.flow.scripts.config import get_config_file_hierarchy
+from cylc.flow.scripts.config import (
+    get_config_file_hierarchy,
+    options_are_valid
+)
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 
 
@@ -197,3 +203,62 @@ def test_cylc_site_conf_path_env_var(
     GlobalConfig.get_inst()
 
     assert capload == files
+
+
+@pytest.mark.parametrize(
+    'wid_given',
+    [
+        None,
+        'Foo'
+    ]
+)
+@pytest.mark.parametrize(
+    'print_platform_name_set',
+    [
+        True,
+        False
+    ]
+)
+@pytest.mark.parametrize(
+    'print_platform_meta_set',
+    [
+        True,
+        False
+    ]
+)
+def test_options_are_valid(
+    caplog, wid_given, print_platform_name_set, print_platform_meta_set
+):
+    """Test that bad sets of options are not allowed."""
+
+    # Set up truth table for outputs:
+    if print_platform_meta_set and print_platform_name_set:
+        output = False
+        log = '--platform-names is not compatible with --platform-meta'
+    elif (
+        wid_given is not None
+        and (print_platform_name_set or print_platform_meta_set)
+    ):
+        output = False
+        log = (
+            '--platform-names and --platform-meta are not compatible '
+            'with providing a workflow registration.'
+        )
+    else:
+        output = True
+
+    # Setup a mock options object:
+    options = SimpleNamespace(
+        print_platform_names=print_platform_name_set,
+        print_platform_meta=print_platform_meta_set
+    )
+
+    # Run the function under test:
+    if output == True:
+        # Function does nothing:
+        options_are_valid(options, wid=wid_given)
+        assert caplog.records == []
+    else:
+        # Function Raises:
+        with pytest.raises(UserInputError):
+            options_are_valid(options, wid=wid_given)

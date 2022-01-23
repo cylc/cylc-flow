@@ -55,6 +55,7 @@ from typing import List, Optional, TYPE_CHECKING
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id_cli import parse_id
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
@@ -102,6 +103,25 @@ def get_option_parser():
             "overrides any settings it shares with those higher up."),
         action="store_true", default=False, dest="print_hierarchy")
 
+    platform_listing_options_group = parser.add_option_group(
+        'Platform printing options:')
+    platform_listing_options_group.add_option(
+        '--platform-names',
+        help=(
+            'Print a list of platforms and platform group names from the '
+            'configuration.'
+        ),
+        action='store_true', default=False, dest='print_platform_names'
+    )
+    platform_listing_options_group.add_option(
+        '--platform-meta',
+        help=(
+            'Print a list of platforms and platform group names and metadata'
+            'from the configuration.'
+        ),
+        action='store_true', default=False, dest='print_platform_meta'
+    )
+
     parser.add_cylc_rose_options()
 
     return parser
@@ -117,6 +137,26 @@ def get_config_file_hierarchy(workflow_id: Optional[str] = None) -> List[str]:
     return filepaths
 
 
+def options_are_valid(options: 'Values', wid: Optional[str] = None) -> None:
+    """Check parser for options that should not be allowed.
+    """
+    if (
+        options.print_platform_names and
+        options.print_platform_meta
+    ):
+        raise UserInputError(
+            '--platform-names is not compatible with --platform-meta'
+        )
+    if (
+        wid is not None
+        and (options.print_platform_names or options.print_platform_meta)
+    ):
+        raise UserInputError(
+            '--platform-names and --platform-meta are not compatible '
+            'with providing a workflow ID.'
+        )
+
+
 @cli_function(get_option_parser)
 def main(
     parser: COP,
@@ -124,9 +164,18 @@ def main(
     *ids,
 ) -> None:
     if not ids:
-        if options.print_hierarchy:
+        if options.print_platform_names or options.print_platform_meta:
+            # Get platform information:
+            glbl_cfg().platform_dump(
+                options.print_platform_names,
+                options.print_platform_meta
+            )
+            return
+
+        elif options.print_hierarchy:
             print("\n".join(get_config_file_hierarchy()))
             return
+
         glbl_cfg().idump(
             options.item,
             not options.defaults,
@@ -140,6 +189,8 @@ def main(
         src=True,
         constraint='workflows',
     )
+
+    options_are_valid(options, workflow_id)
 
     if options.print_hierarchy:
         print("\n".join(get_config_file_hierarchy(workflow_id)))

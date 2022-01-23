@@ -16,6 +16,7 @@
 """Cylc site and user configuration file spec."""
 
 import os
+from sys import stderr
 from typing import List, Optional, Tuple, Any
 
 from pkg_resources import parse_version
@@ -31,12 +32,22 @@ from cylc.flow.parsec.config import (
 )
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.upgrade import upgrader
+from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR,
     DurationFloat,
     Range,
     cylc_config_validate,
 )
+
+
+PLATFORM_REGEX_TEXT = '''
+Names from the configuration are regular expressions.
+Any match is a valid platform.
+Cylc searches the definitions from the bottom upwards.
+If a platform name matches a regex on the list Cylc will
+stop searching.'''
+
 
 # Nested dict of spec items.
 # Spec value is [value_type, default, allowed_2, allowed_3, ...]
@@ -1448,3 +1459,33 @@ class GlobalConfig(ParsecConfig):
                 for name in names_in_platforms_and_groups:
                     msg += f'\n * {name}'
                 raise GlobalConfigError(msg)
+
+    def platform_dump(
+        self,
+        print_platform_names: bool = True,
+        print_platform_meta: bool = True
+    ) -> None:
+        """Print informations about platforms currently defined.
+        """
+        if print_platform_names:
+            self.dump_platform_names(self)
+        if print_platform_meta:
+            self.dump_platform_details(self)
+
+    @staticmethod
+    def dump_platform_names(cfg) -> None:
+        """Print a list of defined platforms and groups.
+        """
+        platforms = '\n'.join(cfg.get(['platforms']).keys())
+        platform_groups = '\n'.join(cfg.get(['platform groups']).keys())
+        print(f'{PLATFORM_REGEX_TEXT}\n\nPlatforms\n---------', file=stderr)
+        print(platforms)
+        print('\n\nPlatform Groups\n--------------', file=stderr)
+        print(platform_groups)
+
+    @staticmethod
+    def dump_platform_details(cfg) -> None:
+        """Print platform and platform group configs.
+        """
+        for config in ['platforms', 'platform groups']:
+            printcfg({config: cfg.get([config], sparse=True)})
