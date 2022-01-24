@@ -20,7 +20,7 @@ import random
 import re
 from copy import deepcopy
 from typing import (
-    Any, Dict, Iterable, List, Optional, Tuple, Union, Set, overload
+    Any, Dict, Iterable, List, Optional, Tuple, Set, Union, overload
 )
 
 from cylc.flow import LOG
@@ -248,10 +248,13 @@ def get_platform_from_group(
     TODO: Uses host_selection methods; should also allow custom select methods.
     """
     if bad_hosts:
-        good_platforms = set()
+        good_platforms = []
         for platform in group['platforms']:
-            if set(platform_from_name(platform)['hosts']) - bad_hosts:
-                good_platforms.add(platform)
+            if any(
+                host not in bad_hosts
+                for host in platform_from_name(platform)['hosts']
+            ):
+                good_platforms.append(platform)
 
         platform_names = list(good_platforms)
     else:

@@ -30,7 +30,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List, Set, Dict, Union
+from typing import Dict, Iterable, List, NoReturn, Optional, Set, Union
 from uuid import uuid4
 
 import psutil
