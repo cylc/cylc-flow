@@ -211,8 +211,13 @@ DEAD_ENDS = {
     'check-software':
         'use standard tools to inspect the environment'
         ' e.g. https://pypi.org/project/pipdeptree/',
+    'checkpoint':
+        'DB checkpoints have been removed, use a reflow to '
+        '"rewind" a workflow.',
     'documentation':
         'Cylc documentation is now at http://cylc.org',
+    'edit':
+        'Command removed, please edit the workflow in source directory',
     'get-directory':
         'cylc get-directory has been removed.',
     'get-config':
@@ -232,16 +237,27 @@ DEAD_ENDS = {
         'inserting tasks is now done automatically',
     'jobscript':
         'cylc jobscript has been removed',
+    'nudge':
+        'cylc nudge has been removed',
+    'print':
+        'cylc print has been removed; use `cylc scan --states=all`',
     'register':
         'cylc register has been removed; use cylc install or cylc play',
     'reset':
         'cylc reset has been replaced by cylc set-outputs',
     'restart':
         'cylc run & cylc restart have been replaced by cylc play',
+    'review':
+        'cylc review has been removed; the latest Cylc 7 version is forward'
+        ' compatible with Cylc 8.',
     'suite-state':
         'cylc suite-state has been replaced by cylc workflow-state',
     'run':
         'cylc run & cylc restart have been replaced by cylc play',
+    'search':
+        'cylc search has been removed; please use `grep` or a text editor',
+    'spawn':
+        'cylc spawn has been removed; spawning is now performed automatically',
     'submit':
         'cylc submit has been removed',
     'start':
