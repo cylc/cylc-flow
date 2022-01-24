@@ -64,6 +64,6 @@ named_grep_ok \
     "File inside flow VC'd" \
     "Inside workflow" \
     "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
-grep_fail "Outside workflow" "${WORKFLOW_RUN_DIR}/logversion./uncommitted.diff"
+grep_fail "Outside workflow" "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
 
 purge
