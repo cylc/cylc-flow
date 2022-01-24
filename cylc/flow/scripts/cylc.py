@@ -54,12 +54,14 @@ Version:
   {get_version(True)}
 
 Usage:
+  $ cylc help license             # view the Cylc license (GPL-3.0)
   $ cylc help all                 # list all commands
-  $ cylc validate FLOW            # validate a workflow configuration
-  $ cylc play FLOW                # run/resume a workflow
+  $ cylc validate <workflow>      # validate a workflow configuration
+  $ cylc install <workflow>       # install a workflow
+  $ cylc play <workflow>          # run/resume a workflow
   $ cylc scan                     # list all running workflows (by default)
-  $ cylc tui FLOW                 # view a running workflow in the terminal
-  $ cylc stop FLOW                # stop a running workflow
+  $ cylc tui <workflow>           # view/control workflows in the terminal
+  $ cylc stop <workflow>          # stop a running workflow
 
 Command Abbreviation:
   # Commands can be abbreviated as long as there is no ambiguity in
@@ -214,6 +216,8 @@ DEAD_ENDS = {
     'checkpoint':
         'DB checkpoints have been removed, use a reflow to '
         '"rewind" a workflow.',
+    'conditions':
+        'cylc conditions has been replaced by cylc help license',
     'documentation':
         'Cylc documentation is now at http://cylc.org',
     'edit':
@@ -261,7 +265,9 @@ DEAD_ENDS = {
     'submit':
         'cylc submit has been removed',
     'start':
-        'cylc start & cylc restart have been replaced by cylc play'
+        'cylc start & cylc restart have been replaced by cylc play',
+    'warranty':
+        'cylc warranty has been replaced by cylc help license',
 }
 # fmt: on
 
@@ -386,6 +392,14 @@ def print_id_help():
     print(ID_HELP)
 
 
+def print_license():
+    print(
+        pkg_resources.get_distribution('cylc-flow').get_resource_string(
+            __name__, 'COPYING'
+        ).decode()
+    )
+
+
 def print_command_list(commands=None, indent=0):
     """Print list of Cylc commands.
 
@@ -418,6 +432,7 @@ def cli_help():
         # print a short list of the main cylc commands
         commands=[
             'hold',
+            'install',
             'kill',
             'pause',
             'play',
@@ -624,6 +639,9 @@ def main():
                     sys.exit(0)
                 elif cmd_args == ['id']:
                     print_id_help()
+                    sys.exit(0)
+                if cmd_args in (['license'], ['licence']):
+                    print_license()
                     sys.exit(0)
                 else:
                     command = cmd_args.pop(0)

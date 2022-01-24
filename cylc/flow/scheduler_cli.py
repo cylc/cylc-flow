@@ -54,7 +54,7 @@ if TYPE_CHECKING:
 
 PLAY_DOC = r"""cylc play [OPTIONS] ARGS
 
-Start a new workflow, restart a stopped workflow, or resume a paused workflow.
+Start, resume, or restart a workflow.
 
 The scheduler will run as a daemon unless you specify --no-detach.
 
