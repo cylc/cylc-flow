@@ -274,8 +274,8 @@ class TaskJobManager:
                 # If there are any hosts left for this platform which we
                 # have not previously failed to contact with a 255 error.
                 if any(
-                    host for host in itask.platform['hosts']
-                    if host not in self.task_remote_mgr.bad_hosts
+                    host not in self.task_remote_mgr.bad_hosts
+                    for host in itask.platform['hosts']
                 ):
                     platform = itask.platform
                     out_of_hosts = False
