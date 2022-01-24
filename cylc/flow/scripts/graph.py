@@ -324,7 +324,7 @@ def dot(opts, lines):
                 ]
             )
         dot.extend(
-            rf'    "{task}.{cycle}" [label="{task}\n{cycle}"]'
+            rf'    "{cycle}/{task}" [label="{task}\n{cycle}"]'
             for task in tasks
         )
         dot.append('  }' if opts.cycles else '')
