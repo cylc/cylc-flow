@@ -29,7 +29,7 @@ from cylc.flow.cycling.loader import get_point, standardise_point_string
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
-from cylc.flow.id import Tokens
+from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.id_match import filter_ids
 from cylc.flow.workflow_status import StopMode
@@ -1622,24 +1622,32 @@ class TaskPool:
                 LOG.warning(f'Invalid task ID: {id_}')
                 continue
             if (
-                tokens['cycle_sel']
+                not tokens['cycle']
+                or not tokens['task']
+                or tokens['cycle_sel']
                 or tokens['task_sel']
                 or contains_fnmatch(id_)
             ):
                 # Glob or task state was not matched by active tasks
-                LOG.warning(f"No active tasks matching: {id_}")
+                if not tokens['task']:
+                    # make task globs explicit to make warnings clearer
+                    tokens['task'] = '*'
+                LOG.warning(
+                    'No active tasks matching:'
+                    # preserve :selectors when logging the id
+                    f' {detokenise(tokens, selectors=True, relative=True)}'
+                )
                 unmatched_tasks.append(id_)
                 continue
-            if not tokens['task']:
-                # make task globs explicit to make warnings clearer
-                tokens['task'] = '*'
+
             point_str = tokens['cycle']
             name_str = tokens['task']
             if name_str not in self.config.taskdefs:
                 if self.config.find_taskdefs(name_str):
                     # It's a family name; was not matched by active tasks
                     LOG.warning(
-                        f"No active tasks matching: {tokens.relative_id}"
+                        f"No active tasks in the family {name_str}"
+                        f' matching: {id_}'
                     )
                 else:
                     LOG.warning(self.ERR_TMPL_NO_TASKID_MATCH.format(name_str))
