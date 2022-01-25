@@ -43,11 +43,8 @@ from cylc.flow.parsec.validate import (
 
 
 PLATFORM_REGEX_TEXT = '''
-Names from the configuration are regular expressions.
-Any match is a valid platform.
-Cylc searches the definitions from the bottom upwards.
-If a platform name matches a regex on the list Cylc will
-stop searching.'''
+Configured names are regular expressions; any match is a valid platform.
+They are searched from the bottom up, until the first match is found.'''
 
 
 # Nested dict of spec items.
