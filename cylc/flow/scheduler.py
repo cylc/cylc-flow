@@ -823,6 +823,12 @@ class Scheduler:
         """Return a command processing method or raise AttributeError."""
         return getattr(self, f'command_{command_name}')
 
+    def queue_command(self, command, kwargs):
+        self.command_queue.put((
+            command,
+            tuple(kwargs.values()), {}
+        ))
+
     def process_command_queue(self) -> None:
         """Process queued commands."""
         qsize = self.command_queue.qsize()
@@ -831,7 +837,8 @@ class Scheduler:
         LOG.info(f"Processing {qsize} queued command(s)")
         while True:
             try:
-                name, args, kwargs = self.command_queue.get(False)
+                command = (self.command_queue.get(False))
+                name, args, kwargs = command
             except Empty:
                 break
             args_string = ', '.join(str(a) for a in args)
