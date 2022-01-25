@@ -275,7 +275,7 @@ async def test_match_taskdefs(
         ),
         param(
             ['1/FAM', '2/FAM'], ['1/bar'],
-            ["No active tasks in the family 'FAM' matching: 2/FAM"],
+            ["No active tasks in the family FAM matching: 2/FAM"],
             id="Family names hold active tasks only"
         ),
         param(
