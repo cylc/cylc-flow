@@ -104,7 +104,7 @@ def get_option_parser():
         action="store_true", default=False, dest="print_hierarchy")
 
     platform_listing_options_group = parser.add_option_group(
-        'Platform printing options:')
+        'Platform printing options')
     platform_listing_options_group.add_option(
         '--platform-names',
         help=(
