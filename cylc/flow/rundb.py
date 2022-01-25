@@ -883,6 +883,8 @@ class CylcWorkflowDAO:
         self, cycle_name_pairs
     ):
         """Select state and outputs of specified tasks."""
+        if not cycle_name_pairs:
+            return []
         form_stmt = r"""
             SELECT
                 %(task_states)s.cycle,
@@ -946,6 +948,8 @@ class CylcWorkflowDAO:
         self, cycle_name_pairs
     ):
         """Select jobs of of specified tasks."""
+        if not cycle_name_pairs:
+            return []
         form_stmt = r"""
             SELECT
                 %(task_states)s.cycle,
