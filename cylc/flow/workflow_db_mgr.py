@@ -440,8 +440,8 @@ class WorkflowDatabaseManager:
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
-        # We now keep prereq history, no need to do:
-        # self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
+        # We can comment this out to keep prereq history for the data-store:
+        self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
         # No need to do:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
         # Should already be done by self.put_task_event_timers above.
