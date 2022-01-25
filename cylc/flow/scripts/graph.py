@@ -190,7 +190,7 @@ def get_option_parser():
         jset=True,
         prep=True,
         argdoc=[
-            ('[WORKFLOW_ID]', 'Workflow ID or path to source'),
+            ('WORKFLOW_ID', 'Workflow ID or path to source'),
             ('[START]', 'Graph start; defaults to initial cycle point'),
             (
                 '[STOP]',
