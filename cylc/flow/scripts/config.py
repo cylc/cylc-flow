@@ -114,10 +114,9 @@ def get_option_parser():
         action='store_true', default=False, dest='print_platform_names'
     )
     platform_listing_options_group.add_option(
-        '--platform-meta',
+        '--platforms',
         help=(
-            'Print a list of platforms and platform group names and metadata'
-            'from the configuration.'
+            'Print platform and platform group configurations, including metadata.'
         ),
         action='store_true', default=False, dest='print_platform_meta'
     )
