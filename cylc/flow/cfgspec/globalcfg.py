@@ -19,6 +19,7 @@ import os
 from sys import stderr
 from typing import List, Optional, Tuple, Any
 
+from contextlib import suppress
 from pkg_resources import parse_version
 
 from cylc.flow import LOG
@@ -30,7 +31,7 @@ from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
 )
-from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.parsec.exceptions import ParsecError, ItemNotFoundError
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.util import printcfg
 from cylc.flow.parsec.validate import (
@@ -1468,9 +1469,11 @@ class GlobalConfig(ParsecConfig):
         """Print informations about platforms currently defined.
         """
         if print_platform_names:
-            self.dump_platform_names(self)
+            with suppress(ItemNotFoundError):
+                self.dump_platform_names(self)
         if print_platform_meta:
-            self.dump_platform_details(self)
+            with suppress(ItemNotFoundError):
+                self.dump_platform_details(self)
 
     @staticmethod
     def dump_platform_names(cfg) -> None:

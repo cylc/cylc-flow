@@ -206,57 +206,76 @@ def test_cylc_site_conf_path_env_var(
 
 
 @pytest.mark.parametrize(
-    'wid_given',
+    'expect, wid_given, p_name_set, p_meta_set',
     [
-        None,
-        'Foo'
-    ]
-)
-@pytest.mark.parametrize(
-    'print_platform_name_set',
-    [
-        True,
-        False
-    ]
-)
-@pytest.mark.parametrize(
-    'print_platform_meta_set',
-    [
-        True,
-        False
+        (
+            {
+                'log': '--platform-names is not compatible with --platform-meta',
+                'result': False
+            },
+            'Foo', True, True
+        ),
+        (
+            {
+                'log': (
+                    '--platform-names and --platform-meta are not compatible '
+                    'with providing a workflow registration.'
+                ),
+                'result': False
+            },
+            'Foo', True, False
+        ),
+            (
+            {
+                'log': None,
+                'result': True
+            },
+            'Foo', False, False
+        ),
+        (
+            {
+                'log': (
+                    '--platform-names and --platform-meta are not compatible '
+                    'with providing a workflow registration.'
+                ),
+                'result': False
+            },
+            'Foo', False, True
+        ),
+        (
+            {
+                'log': '--platform-names is not compatible with --platform-meta',
+                'result': False
+            },
+            None, True, True
+        ),
+        (
+            {'log': None, 'result': True},
+            None, True, False
+        ),
+        (
+            {'log': None, 'result': True},
+            None, False, False
+        ),
+        (
+            {'log': None, 'result': True},
+            None, False, True
+        ),
     ]
 )
 def test_options_are_valid(
-    caplog, wid_given, print_platform_name_set, print_platform_meta_set
+    caplog, expect, wid_given, p_name_set, p_meta_set,
 ):
     """Test that bad sets of options are not allowed."""
-
-    # Set up truth table for outputs:
-    if print_platform_meta_set and print_platform_name_set:
-        output = False
-        log = '--platform-names is not compatible with --platform-meta'
-    elif (
-        wid_given is not None
-        and (print_platform_name_set or print_platform_meta_set)
-    ):
-        output = False
-        log = (
-            '--platform-names and --platform-meta are not compatible '
-            'with providing a workflow registration.'
-        )
-    else:
-        output = True
-
     # Setup a mock options object:
     options = SimpleNamespace(
-        print_platform_names=print_platform_name_set,
-        print_platform_meta=print_platform_meta_set
+        print_platform_names=p_name_set,
+        print_platform_meta=p_meta_set
     )
 
     # Run the function under test:
-    if output == True:
+    if expect['result'] == True:
         # Function does nothing:
-        options_are_valid(options, wid=wid_given)
         assert caplog.records == []
     else:
         # Function Raises:
