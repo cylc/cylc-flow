@@ -17,6 +17,8 @@
 import pytest
 
 import sys
+import io
+from contextlib import redirect_stdout
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 
@@ -27,20 +29,6 @@ USAGE_WITH_COMMENT = "usage \n # comment"
 @pytest.fixture(scope='module')
 def parser():
     return COP('usage')
-
-
-@pytest.fixture(scope='module')
-def parser_nocolor():
-    argv = sys.argv
-    sys.argv = ['cmd', 'arg', '--help', '--color=never']
-    cop = COP(USAGE_WITH_COMMENT)
-    sys.argv = argv
-    return cop
-
-
-@pytest.fixture(scope='module')
-def parser_color():
-    return COP(USAGE_WITH_COMMENT)
 
 
 @pytest.mark.parametrize(
@@ -66,11 +54,27 @@ def test_verbosity(args, verbosity, parser, monkeypatch):
     assert cylc.flow.flags.verbosity == verbosity
 
 
-def test_help_color(parser_color):
-    """Test for colorized comments in 'cylc cmd --help'."""
-    assert not parser_color.usage.startswith(USAGE_WITH_COMMENT)
+def test_help_color(monkeypatch):
+    """Test for colorized comments in 'cylc cmd --help --color=always'."""
+    # This colorization is done on the fly when help is printed.
+    monkeypatch.setattr("sys.argv", ['cmd', 'foo', '--color=always'])
+    parser = COP(USAGE_WITH_COMMENT)
+    parser.parse_args(None)
+    assert parser.values.color == "always"
+    f = io.StringIO()
+    with redirect_stdout(f):
+        parser.print_help()
+    assert not (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)
 
 
-def test_help_nocolor(parser_nocolor):
+def test_help_nocolor(monkeypatch):
     """Test for no colorization in 'cylc cmd --help --color=never'."""
-    assert parser_nocolor.usage.startswith(USAGE_WITH_COMMENT)
+    # This colorization is done on the fly when help is printed.
+    monkeypatch.setattr(sys, "argv", ['cmd', 'foo', '--color=never'])
+    parser = COP(USAGE_WITH_COMMENT)
+    parser.parse_args(None)
+    assert parser.values.color == "never"
+    f = io.StringIO()
+    with redirect_stdout(f):
+        parser.print_help()
+    assert (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)

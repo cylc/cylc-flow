@@ -646,7 +646,7 @@ def main():
                 # check if this is a command abbreviation or exit
                 command = match_command(command)
             if opts.help_:
-                execute_cmd(command, "--help")
+                execute_cmd(command, *cmd_args, "--help")
             else:
                 if opts.version:
                     cmd_args.append("--version")

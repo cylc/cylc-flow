@@ -100,6 +100,9 @@ invocation for remote scheduler host on a shared filesystem.
 large inexact offsets (year, months); restore time check for old-style
 (task-property) clock triggers.
 
+[#4568](https://github.com/cylc/cylc-flow/pull/4568) - Disable all CLI colour
+output if not to a terminal.
+
 [#4553](https://github.com/cylc/cylc-flow/pull/4553) - Add job submit time
 to the datastore.
 
