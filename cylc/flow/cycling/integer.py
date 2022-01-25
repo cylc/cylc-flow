@@ -183,13 +183,6 @@ class IntegerInterval(IntervalBase):
         """Return a null offset."""
         return IntegerInterval("+P0")
 
-    def get_inferred_child(self, string):
-        """For a given string, infer the offset given my instance units."""
-        try:
-            IntegerInterval.from_integer(int(string))
-        except (TypeError, ValueError):
-            return IntegerInterval(string)
-
     def __init__(self, value):
         if (not isinstance(value, str) or
                 not REC_INTERVAL.search(value)):

@@ -17,15 +17,26 @@
 
 from contextlib import suppress
 import logging
-from optparse import OptionParser, OptionConflictError, Values, Option
+from optparse import (
+    OptionParser,
+    OptionConflictError,
+    Values,
+    Option,
+    IndentedHelpFormatter
+)
 import os
 import re
-from ansimarkup import parse as cparse
+from ansimarkup import (
+    parse as cparse,
+    strip as cstrip
+)
+
 import sys
 from textwrap import dedent
 from typing import Any, Dict, Optional, List, Tuple
 
 from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow.terminal import supports_color
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
@@ -118,6 +129,41 @@ class CylcOption(Option):
             Option.take_action(self, action, dest, opt, value, values, parser)
 
 
+class CylcHelpFormatter(IndentedHelpFormatter):
+    def _format(self, text):
+        """Format help (usage) text on the fly to handle coloring.
+
+        Help is printed to the terminal before color initialization for general
+        command output.
+
+        If coloring is wanted:
+          - Add color tags to shell examples
+        Else:
+          - Strip any hardwired color tags
+
+        """
+        if (
+            self.parser.values.color == "always"
+            or (
+                self.parser.values.color == "auto"
+                and supports_color()
+            )
+        ):
+            # Add color formatting to examples text.
+            text = format_shell_examples(text)
+        else:
+            # Strip any hardwired formatting
+            text = cstrip(text)
+        return text
+
+    def format_usage(self, usage):
+        return super().format_usage(self._format(usage))
+
+    # If we start using "description" as well as "usage" (also epilog):
+    # def format_description(self, description):
+    #     return super().format_description(self._format(description))
+
+
 class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
@@ -183,13 +229,9 @@ class CylcOptionParser(OptionParser):
             else:
                 argdoc = [('WORKFLOW', 'Workflow ID')]
 
-        if '--color=never' not in '='.join(sys.argv[2:]):
-            # Before option parsing, for `--help`, make comments grey in usage.
-            # (This catches both '--color=never' and '--color never'.)
-            usage = format_shell_examples(usage)
-
         if multiworkflow:
             usage += self.MULTIWORKFLOW_USAGE
+
         if multitask:
             usage += self.MULTITASK_USAGE
 
@@ -227,7 +269,12 @@ class CylcOptionParser(OptionParser):
                 usage += "\n   " + arg[0] + pad + arg[1]
             usage = usage.replace('ARGS', args)
 
-        OptionParser.__init__(self, usage, option_class=CylcOption)
+        OptionParser.__init__(
+            self,
+            usage,
+            option_class=CylcOption,
+            formatter=CylcHelpFormatter()
+        )
 
     def add_std_option(self, *args, **kwargs):
         """Add a standard option, ignoring override."""
@@ -422,7 +469,7 @@ class CylcOptionParser(OptionParser):
         log_handler = logging.StreamHandler(sys.stderr)
         log_handler.setFormatter(CylcLogFormatter(
             timestamp=options.log_timestamp,
-            dev_info=bool(options.verbosity > 2)
+            dev_info=(options.verbosity > 2)
         ))
         LOG.addHandler(log_handler)
 

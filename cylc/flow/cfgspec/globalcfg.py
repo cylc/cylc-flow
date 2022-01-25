@@ -34,6 +34,7 @@ from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR,
     DurationFloat,
+    Range,
     cylc_config_validate,
 )
 
@@ -368,13 +369,18 @@ with Conf('global.cylc', desc='''
                (Unless an explicit host is provided as an option to the
                ``cylc play --host=<myhost>`` command.)
             ''')
-            Conf('ports', VDR.V_INTEGER_LIST, list(range(43001, 43101)),
+            Conf('ports', VDR.V_RANGE, Range((43001, 43101)),
                  desc=f'''
-                A list of allowed ports for Cylc to use to run workflows.
+                The range of ports for Cylc to use to run workflows.
+
+                The minimum and maximum port numbers in the format
+                ``min .. max``.
 
                 .. versionchanged:: 8.0.0
 
-                   {REPLACES}``[suite servers]run ports``
+                   {REPLACES}``[suite servers]run ports``.
+                   It can no longer be used to definine a non-contiguous port
+                   range.
             ''')
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc=f'''
                 These hosts will not be used to run jobs.

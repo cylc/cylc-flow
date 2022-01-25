@@ -32,7 +32,6 @@ def directory(tmp_path):
     rmtree(tmp_path)
 
 
-@pytest.mark.asyncio
 async def test_scandir(directory):
     """It should list directory contents (including symlinks)."""
     assert await scandir(directory) == [

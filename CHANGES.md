@@ -100,6 +100,9 @@ invocation for remote scheduler host on a shared filesystem.
 large inexact offsets (year, months); restore time check for old-style
 (task-property) clock triggers.
 
+[#4568](https://github.com/cylc/cylc-flow/pull/4568) - Disable all CLI colour
+output if not to a terminal.
+
 [#4553](https://github.com/cylc/cylc-flow/pull/4553) - Add job submit time
 to the datastore.
 
@@ -116,6 +119,9 @@ of workflows inside other installed workflows.
 
 [#4540](https://github.com/cylc/cylc-flow/pull/4540) - Handle the `/` character
 in job names, for PBS 19.2.1+.
+
+[#4570](https://github.com/cylc/cylc-flow/pull/4570) - Fix incorrect fallback
+to localhost if `[runtime][<task>][remote]host` is unreachable.
 
 [#4543](https://github.com/cylc/cylc-flow/pull/4543) -
 `cylc play --stopcp=reload` now takes its value from

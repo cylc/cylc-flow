@@ -421,6 +421,10 @@ grep_fail() {
     local FILE="$2"
     local TEST_NAME
     TEST_NAME="$(basename "${FILE}")-grep-fail"
+    if [[ ! -f "${FILE}" ]]; then
+        fail "${TEST_NAME}-file to be grepped does not exist."
+        return
+    fi
     if grep -q -e "${BRE}" "${FILE}"; then
         mkdir -p "${TEST_LOG_DIR}"
         echo "ERROR: Found ${BRE} in ${FILE}" \

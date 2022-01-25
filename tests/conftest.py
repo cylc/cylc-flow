@@ -21,6 +21,7 @@ from typing import List, Optional, Tuple
 
 import pytest
 
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.parsec.config import ParsecConfig
 
@@ -101,3 +102,12 @@ def log_filter():
             and (regex is None or re.match(regex, log_message))
         ]
     return _log_filter
+
+
+@pytest.fixture(scope='session')
+def port_range():
+    return glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
+
+
+def pytest_addhooks(pluginmanager):
+    pluginmanager.unregister('tornado')

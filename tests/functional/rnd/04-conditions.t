@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -13,28 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from time import sleep
-
-import pytest
-
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.network.publisher import WorkflowPublisher, serialize_data
-
-
-def test_serialize_data():
-    str1 = 'hello'
-    assert serialize_data(str1, None) == str1
-    assert serialize_data(str1, 'encode', 'utf-8') == str1.encode('utf-8')
-    assert serialize_data(str1, bytes, 'utf-8') == bytes(str1, 'utf-8')
-
-
-def test_start_stop(port_range):
-    pub = WorkflowPublisher('beef')
-    assert not pub.loop
-    pub.start(*port_range)
-    sleep(1)  # TODO - remove this evil sleep
-    assert not pub.socket.closed
-    assert pub.loop
-    pub.stop()
-    assert pub.socket.closed
+#-------------------------------------------------------------------------------
+. "$(dirname "$0")/test_header"
+#-------------------------------------------------------------------------------
+set_test_number 2
+#-------------------------------------------------------------------------------
+# check `cylc help license`
+run_ok "${TEST_NAME_BASE}" cylc help license
+# remove trailing newlines
+sed -i -e :a -e '/^\n*$/{$d;N;};/\n$/ba' "${TEST_NAME_BASE}.stdout"
+# check `cylc help license` output matches the COPYING file
+cmp_ok "${CYLC_REPO_DIR}/COPYING" "${TEST_NAME_BASE}.stdout"

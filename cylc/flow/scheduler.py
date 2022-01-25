@@ -30,7 +30,7 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Iterable, NoReturn, Optional, List, Set, Dict, Union
+from typing import Dict, Iterable, List, NoReturn, Optional, Set, Union
 from uuid import uuid4
 
 import psutil
@@ -539,9 +539,9 @@ class Scheduler:
 
     async def start_servers(self):
         """Start the TCP servers."""
-        port_range = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
-        self.server.start(port_range[0], port_range[-1])
-        self.publisher.start(port_range[0], port_range[-1])
+        min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
+        self.server.start(min_, max_)
+        self.publisher.start(min_, max_)
         # wait for threads to setup socket ports before continuing
         self.barrier.wait()
         self.port = self.server.port
