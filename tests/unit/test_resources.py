@@ -16,23 +16,15 @@
 
 import pytest
 
-import logging
 from pathlib import Path
 from shlex import split
 from subprocess import run
 
-import cylc.flow
-from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.resources import (
-    resource_names, list_resources, get_resources, extract_tutorials, tutorial_names)
-
-
-def test_list_resources():
-    """Test resources.list_resources."""
-    result = '\n'.join(list_resources())
-    for resource_set in [resource_names, tutorial_names]:
-        for item in resource_set:
-            assert item in result
+    RESOURCE_NAMES,
+    get_resources,
+    _backup,
+)
 
 
 def test_get_resources_one(tmpdir):
@@ -42,22 +34,22 @@ def test_get_resources_one(tmpdir):
     Do not check file content becuase there is no assurance that it will
     remain constant.
     """
-    get_resources(tmpdir, resources=['etc/job.sh'])
+    get_resources('job.sh', tmpdir)
     assert (tmpdir / 'job.sh').isfile()
 
 
 @pytest.mark.parametrize(
     'resource',
-    resource_names.keys()
+    list(RESOURCE_NAMES.keys()) + ['tutorial/runtime-tutorial']
 )
 def test_get_resources_all(resource, tmpdir):
-    get_resources(tmpdir, None)
+    get_resources(resource, tmpdir)
     assert (tmpdir / Path(resource).name).exists()
 
 
 def test_cli(tmpdir):
     result = run(
-        split(f'cylc get-resources etc/job.sh {str(tmpdir)}'),
+        split(f'cylc get-resources job.sh {str(tmpdir)}'),
         capture_output=True
     )
     if result.returncode != 0:
@@ -66,23 +58,20 @@ def test_cli(tmpdir):
         )
 
 
-def test_extract_tutorials(mock_glbl_cfg, tmp_path, caplog):
-    test_dest = tmp_path/ 'destination'
-    mock_glbl_cfg(
-        'cylc.flow.resources.glbl_cfg',
-        f'''
-        [install]\n
-            source dirs = {test_dest}
-        '''
-    )
-    caplog.clear()
-    caplog.set_level(logging.INFO)
-    extract_tutorials()
-    glob_dest = test_dest.glob('*/*/*')
-    glob_src =  (
-        Path(cylc.flow.__file__).parent / 'etc/tutorial'
-    ).rglob('*/*/*')
-    assert list(glob_dest).sort() == list(glob_src).sort()
-    extract_tutorials()
-    assert 'Replacing' in caplog.records[1].msg
-    assert 'extracted to' in caplog.records[0].msg
+def test_backup(tmp_path, caplog):
+    a = tmp_path / 'a'
+    abc = tmp_path / 'a' / 'b' / 'c'
+    abc.mkdir(parents=True)
+    before = set(tmp_path.glob('*'))
+
+    _backup(a)
+    assert len(caplog.record_tuples) == 1
+
+    after = set(tmp_path.glob('*'))
+    assert len(after - before) == 1
+
+    new = list(after - before)[0]
+    assert new.name.startswith(a.name)
+
+    new_abc = new / 'b' / 'c'
+    assert new_abc.exists()

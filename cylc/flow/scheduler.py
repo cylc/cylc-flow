@@ -309,9 +309,11 @@ class Scheduler:
 
         # Extract job.sh from library, for use in job scripts.
         get_resources(
+            'job.sh',
             os.path.join(
-                workflow_files.get_workflow_srv_dir(self.workflow), 'etc',),
-            ['etc/job.sh'])
+                workflow_files.get_workflow_srv_dir(self.workflow), 'etc',
+            ),
+        )
         # Add python dirs to sys.path
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
