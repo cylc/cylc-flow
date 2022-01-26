@@ -48,6 +48,7 @@ jobs:
           pip install -e ../rose
 
       - name: run tutorial workflow
+        timeout-minutes: 6
         run: |
           mkdir -p "${HOME}/cylc-run"
           etc/bin/run-validate-tutorials
