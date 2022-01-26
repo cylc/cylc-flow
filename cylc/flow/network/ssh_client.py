@@ -50,13 +50,15 @@ class WorkflowRuntimeClient():
         self.SLEEP_INTERVAL = 0.1
         if not host:
             self.host, _, _ = get_location(workflow)
+        # 5 min default timeout
+        self.timeout = timeout if timeout is not None else 300
 
     async def async_request(self, command, args=None, timeout=None):
         """Send asynchronous request via SSH.
         """
-        self.timeout = timeout if timeout else 300  # 5 min default timeout
+        timeout = timeout if timeout is not None else self.timeout
         try:
-            async with ascyncto(self.timeout):
+            async with ascyncto(timeout):
                 cmd, ssh_cmd, login_sh, cylc_path, msg = self.prepare_command(
                     command, args, timeout)
                 proc = _remote_cylc_cmd(
@@ -78,7 +80,7 @@ class WorkflowRuntimeClient():
                 return json.loads(out)
         except asyncio.TimeoutError:
             raise ClientTimeout(
-                f"Command exceeded the timeout {self.timeout}. "
+                f"Command exceeded the timeout {timeout}. "
                 f"This could be due to network problems. "
                 "Check the workflow log."
             )
@@ -120,7 +122,7 @@ class WorkflowRuntimeClient():
         os.environ["CLIENT_COMMS_METH"] = CommsMeth.SSH.value
         cmd = ["client"]
         if timeout:
-            cmd += [f'comms_timeout={timeout}']
+            cmd += [f'--comms-timeout={timeout}']
         cmd += [self.workflow, command]
         contact = load_contact_file(self.workflow)
         ssh_cmd = contact[ContactFileFields.SCHEDULER_SSH_COMMAND]
