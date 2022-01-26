@@ -18,9 +18,9 @@
 
 Extract resources from the cylc.flow package.
 
-If the directory is omitted the resource will be coppied either to your
+If the directory is omitted the resource will be copied either to your
 current working directory for regular resources, or to the first configured
-"source" directory (~/cylc-src by default).
+"source" directory (~/cylc-src by default) for the tutorials.
 
 Examples:
     # list all resources

@@ -34,7 +34,7 @@ TUTORIAL_DIR = RESOURCE_DIR / 'tutorial'
 
 # {resource: brief description}
 RESOURCE_NAMES = {
-    'syntax/cylc-mode.el': 'Emacs syntax hihglighting.',
+    'syntax/cylc-mode.el': 'Emacs syntax highlighting.',
     'syntax/cylc.lang': 'Gedit (gtksourceview) syntax highlighting.',
     'syntax/cylc.vim': 'Vim syntax highlighting.',
     'syntax/cylc.xml': 'Kate syntax highlighting.',
