@@ -14,99 +14,180 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Extract named resources from the cylc.flow package.
+"""Extract named resources from the cylc.flow package."""
 
-Uses the pkg_resources API in case the package is a compressed archive.
-"""
-
-
-import shutil
 from pathlib import Path
-import pkg_resources as pr
+from random import shuffle
+import shutil
+from typing import Optional
 
 import cylc.flow
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.wallclock import get_current_time_string
 
 
-TUTORIAL_SRC = 'etc/tutorial'
+RESOURCE_DIR = Path(cylc.flow.__file__).parent / 'etc'
+TUTORIAL_DIR = RESOURCE_DIR / 'tutorial'
 
 
 # {resource: brief description}
-resource_names = {
-    'etc/syntax/cylc-mode.el': 'Emacs syntax hihglighting.',
-    'etc/syntax/cylc.lang': 'Gedit (gtksourceview) syntax highlighting.',
-    'etc/syntax/cylc.vim': 'Vim syntax highlighting.',
-    'etc/syntax/cylc.xml': 'Kate syntax highlighting.',
-    'etc/cylc-bash-completion':
-        'Sets up bash auto-completion for Cylc commands',
-    'etc/job.sh': 'Bash functions for Cylc task jobs.',
-    'etc/cylc': 'Cylc wrapper script.',
+RESOURCE_NAMES = {
+    'syntax/cylc-mode.el': 'Emacs syntax hihglighting.',
+    'syntax/cylc.lang': 'Gedit (gtksourceview) syntax highlighting.',
+    'syntax/cylc.vim': 'Vim syntax highlighting.',
+    'syntax/cylc.xml': 'Kate syntax highlighting.',
+    'cylc-bash-completion': 'Bash auto-completion for Cylc commands',
+    'cylc': 'Cylc wrapper script.',
 }
-tutorial_names = {
-    'etc/tutorial': (
-        'Tutorials for Cylc: Use "cylc get-resources --tutorials" to copy'
-        'This folder to the "~/cylc-src" directory.'
-    )
-}
+API_KEY = 'api-key'
 
 
-def list_resources():
-    """List available cylc.flow package resources.
+def list_resources(write=print):
+    """Print resource names to stdout."""
+    tutorials = [
+        path.relative_to(RESOURCE_DIR)
+        for path in TUTORIAL_DIR.iterdir()
+        if path.is_dir()
+    ]
+    write('Resources:')
+    max_len = max(len(res) for res in RESOURCE_NAMES)
+    for resource, desc in RESOURCE_NAMES.items():
+        write(f'  {resource}  {" " * (max_len - len(resource))}  # {desc}')
+    write('\nTutorials:')
+    for tutorial in tutorials:
+        write(f'  {tutorial}')
+    write(f'  {API_KEY}')
 
-    The API has a "listdir" function but no automatic recursion capability,
-    and we have few resources, so listing them explicitly for the moment.
-    """
-    width = len(max(resource_names, key=len))
-    result = []
-    for resource_info in [resource_names.items(), tutorial_names.items()]:
-        result += [
-            f'{resource + (width - len(resource)) * " "}    {meta}'
-            for resource, meta in resource_info
-        ]
-    return result
+
+def path_is_tutorial(src: Path) -> bool:
+    """Returns True if the src path is in the tutorial directory."""
+    try:
+        src.relative_to(TUTORIAL_DIR)
+    except ValueError:
+        return False
+    return True
 
 
-def get_resources(target_dir, resources=None):
+def get_resources(resource: str, tgt_dir: Optional[str]):
     """Extract cylc.flow resources and write them to a target directory.
 
     Arguments:
-        target_dir - where to put extracted resources, created if necessary
-        resources - list of name resources, e.g. ['etc/foo.bar']
+        resource: path relative to RESOURCE_DIR.
+        target_dir: Where to put extracted resources, created if necessary.
+
     """
-    if resources is None:
-        resources = resource_names
-    for resource in resources:
-        if (
-            resource not in resource_names
-            and resource != 'etc/tutorial'
-        ):
-            raise ValueError(f"Invalid resource name {resource}")
-        path = Path(target_dir) / Path(resource).name
-        LOG.info(f"Extracting {resource} to {path}")
-        pdir = path.parent
-        if not pdir.exists():
-            pdir.mkdir(parents=True)
-        # In spite of the name, this returns a byte array, not a string:
-        res = pr.resource_string('cylc.flow', resource)
-        with open(path, 'wb') as h:
-            h.write(res)
+    # get the resource path
+    resource_path = Path(resource)
+
+    src = RESOURCE_DIR / resource_path
+    if not src.exists():
+        raise UserInputError(
+            f'No such resouces {resource}.'
+            '\nRun `cylc get-resouces --list` for resource names.'
+        )
+
+    is_tutorial = path_is_tutorial(src)
+
+    # get the target path
+    if not tgt_dir:
+        if is_tutorial:
+            # this is a tutorial => use the primary source dir
+            _tgt_dir = Path(glbl_cfg().get(['install', 'source dirs'])[0])
+        else:
+            # this is a regular resource => use $PWD
+            _tgt_dir = Path.cwd()
+    else:
+        _tgt_dir = Path(tgt_dir).resolve()
+    tgt = _tgt_dir / resource_path.name
+
+    tgt = tgt.expanduser()
+    tgt = tgt.resolve()
+
+    # extract resources
+    extract_resource(src, tgt)
+    if is_tutorial:
+        set_api_key(tgt)
 
 
-def extract_tutorials():
-    """Extract tutorial workflows to Cylc Source Directory."""
-    src = Path(cylc.flow.__file__).parent / 'etc/tutorial'
-    dest = glbl_cfg().get(['install', 'source dirs'])[0]
-    dest = Path(dest).expanduser() / 'cylc-tutorials'
-    if dest.exists():
-        # If destination exists timestamp it and replace it.
-        tstamp = get_current_time_string(use_basic_format=True)
-        backup = dest / f'{tstamp}.cylc-tutorials'
-        shutil.copytree(dest, backup)
-        shutil.rmtree(dest)
-        LOG.warning(
-            'Replacing an existing cylc-tutorials folder which will'
-            f' be copied to {backup}')
-    shutil.copytree(src, dest)
-    LOG.info(f'Cylc tutorials extracted to {str(dest)}')
+def _backup(tgt: Path) -> None:
+    """Make a timestamped backup of a dir or file."""
+    tstamp = get_current_time_string(use_basic_format=True)
+    backup = Path(tgt).parent / (tgt.name + f'.{tstamp}')
+    LOG.warning(
+        'Replacing an existing cylc-tutorials folder which will'
+        f' be copied to {backup}'
+    )
+    # NOTE: shutil interfaces don't fully support Path objects at all
+    # python versions
+    shutil.move(str(tgt), str(backup))
+
+
+def extract_resource(src: Path, tgt: Path) -> None:
+    """Extract src into tgt.
+
+    NOTE: src can be a dir or a file.
+    """
+    LOG.info(f"Extracting {src.relative_to(RESOURCE_DIR)} to {tgt}")
+    if tgt.exists():
+        # target exists, back up the old copy
+        _backup(tgt)
+
+    # create the target directory
+    tgt.parent.mkdir(parents=True, exist_ok=True)
+
+    # NOTE: shutil interfaces don't fully support Path objects at all
+    # python versions
+    if src.is_dir():
+        shutil.copytree(str(src), str(tgt))
+    else:
+        shutil.copyfile(str(src), str(tgt))
+
+
+def get_api_key() -> str:
+    """Return a DataPoint API key for tutorial use.
+
+    Picks an API key from the file "api-keys" at random so as to spread the
+    load over a larger number of keys to prevent hitting the cap with group
+    sessions.
+    """
+    keys = []
+    with open((TUTORIAL_DIR / 'api-keys'), 'r') as api_keys:
+        for api_key in api_keys:
+            keys.append(api_key)
+    shuffle(keys)
+    return keys[0]
+
+
+def set_api_key(tgt):
+    """Replace a placeholder with a real API key.
+
+    Replaces the placeholder DATAPOINT_API_KEY with a value chosen at random
+    from the file api-keys chosen.
+    """
+    # get the api key
+    api_key = get_api_key()
+    # go through all the top level files
+    for path in tgt.glob('*'):
+        if not path.is_dir():
+            # write the file out one line at a time to a temp file
+            tmp_path = path.parent / (path.name + '.tmp')
+            with open(path, 'rb') as _src, open(tmp_path, 'wb+') as _tmp:
+                # NOTE: open the file in bytes mode for safety
+                # (prevents decode errors surfacing here)
+                for line in _src:
+                    _tmp.write(
+                        # perform the replacement line by line
+                        # (some things are easier with sed!)
+                        line.replace(
+                            b'DATAPOINT_API_KEY',
+                            api_key.encode(),
+                        )
+                    )
+
+            # then move the tmpfile over the original
+            # NOTE: shutil interfaces don't fully support Path objects at all
+            # python versions
+            path.unlink()
+            shutil.move(str(tmp_path), str(path))
