@@ -159,7 +159,13 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-    async def async_request(self, command, args=None, timeout=None):
+    async def async_request(
+        self,
+        command,
+        args=None,
+        timeout=None,
+        req_meta=None
+    ):
         """Send an asynchronous request using asyncio.
 
         Has the same arguments and return values as ``serial_request``.
@@ -177,6 +183,9 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         # send message
         msg = {'command': command, 'args': args}
         msg.update(self.header)
+        # add the request metadata
+        if req_meta:
+            msg['meta'].update(req_meta)
         LOG.debug('zmq:send %s', msg)
         message = encode_(msg)
         self.socket.send_string(message)
@@ -205,7 +214,13 @@ class WorkflowRuntimeClient(ZMQSocketBase):
             error = response['error']
             raise ClientError(error['message'], error.get('traceback'))
 
-    def serial_request(self, command, args=None, timeout=None):
+    def serial_request(
+        self,
+        command,
+        args=None,
+        timeout=None,
+        req_meta=None
+    ):
         """Send a request.
 
         For convenience use ``__call__`` to call this method.
@@ -225,7 +240,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
 
         """
         task = self.loop.create_task(
-            self.async_request(command, args, timeout))
+            self.async_request(command, args, timeout, req_meta))
         self.loop.run_until_complete(task)
         return task.result()
 

@@ -93,7 +93,6 @@ async def mock_flow(
     return ret
 
 
-@pytest.mark.asyncio
 async def test_get_workflows(mock_flow, flow_args):
     """Test method returning workflow messages satisfying filter args."""
     flow_args['workflows'].append({
@@ -105,7 +104,6 @@ async def test_get_workflows(mock_flow, flow_args):
     assert len(flow_msgs) == 1
 
 
-@pytest.mark.asyncio
 async def test_get_nodes_all(mock_flow, node_args):
     """Test method returning workflow(s) node message satisfying filter args.
     """
@@ -128,7 +126,6 @@ async def test_get_nodes_all(mock_flow, node_args):
     assert len(nodes) == 1
 
 
-@pytest.mark.asyncio
 async def test_get_nodes_by_ids(mock_flow, node_args):
     """Test method returning workflow(s) node messages
     who's ID is a match to any given."""
@@ -152,7 +149,6 @@ async def test_get_nodes_by_ids(mock_flow, node_args):
     assert len(nodes) > 0
 
 
-@pytest.mark.asyncio
 async def test_get_node_by_id(mock_flow, node_args):
     """Test method returning a workflow node message
     who's ID is a match to that given."""
@@ -174,7 +170,6 @@ async def test_get_node_by_id(mock_flow, node_args):
     assert node in mock_flow.data[TASK_PROXIES].values()
 
 
-@pytest.mark.asyncio
 async def test_get_edges_all(mock_flow, flow_args):
     """Test method returning all workflow(s) edges."""
     edges = [
@@ -185,7 +180,6 @@ async def test_get_edges_all(mock_flow, flow_args):
     assert len(edges) > 0
 
 
-@pytest.mark.asyncio
 async def test_get_edges_by_ids(mock_flow, node_args):
     """Test method returning workflow(s) edge messages
     who's ID is a match to any given edge IDs."""
@@ -200,7 +194,6 @@ async def test_get_edges_by_ids(mock_flow, node_args):
     assert len(edges) > 0
 
 
-@pytest.mark.asyncio
 async def test_mutator(mock_flow, flow_args):
     """Test the mutation method."""
     flow_args['workflows'].append({
@@ -209,35 +202,21 @@ async def test_mutator(mock_flow, flow_args):
         'workflow_sel': None
     })
     args = {}
+    meta = {}
     response = await mock_flow.resolvers.mutator(
         None,
         'pause',
         flow_args,
-        args
+        args,
+        meta
     )
     assert response[0]['id'] == mock_flow.id
 
 
-@pytest.mark.asyncio
-async def test_nodes_mutator(mock_flow, flow_args):
-    """Test the nodes mutation method."""
-    flow_args['workflows'].append({
-        'user': mock_flow.owner,
-        'workflow': mock_flow.name,
-        'workflow_sel': None,
-    })
-    ids = [Tokens(n) for n in mock_flow.node_ids]
-    response = await mock_flow.resolvers.nodes_mutator(
-        None, 'force_trigger_tasks', ids, flow_args,
-        {"reflow": False, "flow_descr": ""}
-    )
-    assert response[0]['id'] == mock_flow.id
-
-
-@pytest.mark.asyncio
 async def test_mutation_mapper(mock_flow):
     """Test the mapping of mutations to internal command methods."""
-    response = await mock_flow.resolvers._mutation_mapper('pause', {})
+    meta = {}
+    response = await mock_flow.resolvers._mutation_mapper('pause', {}, meta)
     assert response is None
     with pytest.raises(ValueError):
-        await mock_flow.resolvers._mutation_mapper('non_exist', {})
+        await mock_flow.resolvers._mutation_mapper('non_exist', {}, meta)

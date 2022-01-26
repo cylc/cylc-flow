@@ -54,12 +54,14 @@ Version:
   {get_version(True)}
 
 Usage:
+  $ cylc help license             # view the Cylc license (GPL-3.0)
   $ cylc help all                 # list all commands
-  $ cylc validate FLOW            # validate a workflow configuration
-  $ cylc play FLOW                # run/resume a workflow
+  $ cylc validate <workflow>      # validate a workflow configuration
+  $ cylc install <workflow>       # install a workflow
+  $ cylc play <workflow>          # run/resume a workflow
   $ cylc scan                     # list all running workflows (by default)
-  $ cylc tui FLOW                 # view a running workflow in the terminal
-  $ cylc stop FLOW                # stop a running workflow
+  $ cylc tui <workflow>           # view/control workflows in the terminal
+  $ cylc stop <workflow>          # stop a running workflow
 
 Command Abbreviation:
   # Commands can be abbreviated as long as there is no ambiguity in
@@ -211,8 +213,15 @@ DEAD_ENDS = {
     'check-software':
         'use standard tools to inspect the environment'
         ' e.g. https://pypi.org/project/pipdeptree/',
+    'checkpoint':
+        'DB checkpoints have been removed, use a reflow to '
+        '"rewind" a workflow.',
+    'conditions':
+        'cylc conditions has been replaced by cylc help license',
     'documentation':
         'Cylc documentation is now at http://cylc.org',
+    'edit':
+        'Command removed, please edit the workflow in source directory',
     'get-directory':
         'cylc get-directory has been removed.',
     'get-config':
@@ -232,20 +241,33 @@ DEAD_ENDS = {
         'inserting tasks is now done automatically',
     'jobscript':
         'cylc jobscript has been removed',
+    'nudge':
+        'cylc nudge has been removed',
+    'print':
+        'cylc print has been removed; use `cylc scan --states=all`',
     'register':
         'cylc register has been removed; use cylc install or cylc play',
     'reset':
         'cylc reset has been replaced by cylc set-outputs',
     'restart':
         'cylc run & cylc restart have been replaced by cylc play',
+    'review':
+        'cylc review has been removed; the latest Cylc 7 version is forward'
+        ' compatible with Cylc 8.',
     'suite-state':
         'cylc suite-state has been replaced by cylc workflow-state',
     'run':
         'cylc run & cylc restart have been replaced by cylc play',
+    'search':
+        'cylc search has been removed; please use `grep` or a text editor',
+    'spawn':
+        'cylc spawn has been removed; spawning is now performed automatically',
     'submit':
         'cylc submit has been removed',
     'start':
-        'cylc start & cylc restart have been replaced by cylc play'
+        'cylc start & cylc restart have been replaced by cylc play',
+    'warranty':
+        'cylc warranty has been replaced by cylc help license',
 }
 # fmt: on
 
@@ -370,6 +392,14 @@ def print_id_help():
     print(ID_HELP)
 
 
+def print_license():
+    print(
+        pkg_resources.get_distribution('cylc-flow').get_resource_string(
+            __name__, 'COPYING'
+        ).decode()
+    )
+
+
 def print_command_list(commands=None, indent=0):
     """Print list of Cylc commands.
 
@@ -402,6 +432,7 @@ def cli_help():
         # print a short list of the main cylc commands
         commands=[
             'hold',
+            'install',
             'kill',
             'pause',
             'play',
@@ -609,6 +640,9 @@ def main():
                 elif cmd_args == ['id']:
                     print_id_help()
                     sys.exit(0)
+                if cmd_args in (['license'], ['licence']):
+                    print_license()
+                    sys.exit(0)
                 else:
                     command = cmd_args.pop(0)
 
@@ -630,7 +664,7 @@ def main():
                 # check if this is a command abbreviation or exit
                 command = match_command(command)
             if opts.help_:
-                execute_cmd(command, "--help")
+                execute_cmd(command, *cmd_args, "--help")
             else:
                 if opts.version:
                     cmd_args.append("--version")

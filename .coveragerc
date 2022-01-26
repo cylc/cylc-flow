@@ -15,6 +15,7 @@ disable_warnings =
 omit =
     tests/*
     */cylc/flow/*_pb2.py
+    cylc/flow/etc/*
 parallel = True
 source = ./cylc
 timid = False
@@ -39,6 +40,7 @@ ignore_errors = False
 omit =
     tests/*
     */cylc/flow/*_pb2.py
+    cylc/flow/etc/*
 precision = 2
 show_missing = False
 skip_covered = False

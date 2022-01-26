@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-FLOW_NAME="$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
+FLOW_NAME="$(< /dev/urandom tr -dc A-Za-z | head -c6)"
 cylc install --flow-name "$FLOW_NAME" --no-run-name
 cylc validate --check-circular --icp=2000 "$FLOW_NAME"
 cylc play --no-detach --abort-if-any-task-fails "$FLOW_NAME"

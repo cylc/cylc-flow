@@ -25,7 +25,6 @@ from cylc.flow.scheduler import Scheduler
 Fixture = Any
 
 
-@pytest.mark.asyncio
 async def test_is_paused_after_stop(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
@@ -45,7 +44,6 @@ async def test_is_paused_after_stop(
         assert not schd.is_paused
 
 
-@pytest.mark.asyncio
 async def test_is_paused_after_crash(
         one_conf: Fixture, flow: Fixture, scheduler: Fixture, run: Fixture,
         db_select: Fixture):
@@ -75,7 +73,6 @@ async def test_is_paused_after_crash(
         assert schd.is_paused
 
 
-@pytest.mark.asyncio
 async def test_resume_does_not_release_tasks(one: Scheduler, run: Callable):
     """Test that resuming a workflow does not release any held tasks."""
     schd: Scheduler = one
@@ -92,7 +89,6 @@ async def test_resume_does_not_release_tasks(one: Scheduler, run: Callable):
         assert itask.state.is_held
 
 
-@pytest.mark.asyncio
 async def test_shutdown_CylcError_log(one: Scheduler, run: Callable):
     """Test that if a CylcError occurs during shutdown, it is
     logged in one line."""
@@ -112,7 +108,6 @@ async def test_shutdown_CylcError_log(one: Scheduler, run: Callable):
     assert last_record.levelno == logging.ERROR
 
 
-@pytest.mark.asyncio
 async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
     """Test that if a non-CylcError occurs during shutdown, it is
     logged with traceback (but not excessive)."""

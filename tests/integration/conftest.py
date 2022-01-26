@@ -213,12 +213,6 @@ def mod_one(mod_one_conf, mod_flow, mod_scheduler):
     return schd
 
 
-@pytest.fixture(scope='session')
-def port_range():
-    ports = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
-    return min(ports), max(ports)
-
-
 @pytest.fixture(scope='module')
 def event_loop():
     """This fixture defines the event loop used for each test.

@@ -264,7 +264,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def api(self, endpoint=None):
+    def api(self, endpoint=None, meta=None):
         """Return information about this API.
 
         Returns a list of callable endpoints.
@@ -297,7 +297,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def graphql(self, request_string=None, variables=None):
+    def graphql(self, request_string=None, variables=None, meta=None):
         """Return the GraphQL scheme execution result.
 
         Args:
@@ -315,6 +315,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
                 variable_values=variables,
                 context={
                     'resolvers': self.resolvers,
+                    'meta': meta or {},
                 },
                 backend=CylcGraphQLBackend(),
                 middleware=list(instantiate_middleware(self.middleware)),
@@ -341,7 +342,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
     @authorise()
     @expose
     def get_graph_raw(
-            self, start_point_str, stop_point_str, grouping=None
+            self, start_point_str, stop_point_str, grouping=None, meta=None
     ):
         """Return a textual representation of the workflow graph.
 
@@ -386,7 +387,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
     # UIServer Data Commands
     @authorise()
     @expose
-    def pb_entire_workflow(self):
+    def pb_entire_workflow(self, meta=None):
         """Send the entire data-store in a single Protobuf message.
 
         Returns:
@@ -399,7 +400,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def pb_data_elements(self, element_type):
+    def pb_data_elements(self, element_type, meta=None):
         """Send the specified data elements in delta form.
 
         Args:

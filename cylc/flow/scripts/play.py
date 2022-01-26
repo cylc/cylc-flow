@@ -23,6 +23,3 @@ from cylc.flow.scheduler_cli import (  # noqa: F401
 )
 
 # CLI of "cylc play". See cylc.flow.scheduler_cli for details.
-
-if __name__ == "__main__":
-    main()

@@ -44,7 +44,6 @@ def test_rm_if_empty(tmp_path):
     assert not path1.exists()
 
 
-@pytest.mark.asyncio
 async def test_poll_file(tmp_path):
     """It should return if the condition is met."""
     path = tmp_path / 'file'

@@ -34,6 +34,7 @@ from typing import (
 from uuid import uuid4
 
 from graphene.utils.str_converters import to_snake_case
+from cylc.flow import LOG
 
 from cylc.flow.data_store_mgr import (
     EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
@@ -592,7 +593,7 @@ class Resolvers(BaseResolvers):
     # Mutations
     async def mutator(self, *m_args):
         """Mutate workflow."""
-        _, command, w_args, args = m_args
+        _, command, w_args, args, meta = m_args
         w_ids = [flow[WORKFLOW].id
                  for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
@@ -600,52 +601,13 @@ class Resolvers(BaseResolvers):
             return [{
                 'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
-        result = await self._mutation_mapper(command, args)
-        if result is None:
-            result = (True, 'Command queued')
-        return [{'id': w_id, 'response': result}]
-
-    async def nodes_mutator(self, *m_args):
-        """Mutate node items of associated workflows."""
-        _, command, tokens_list, w_args, args = m_args
-        w_ids = [
-            workflow[WORKFLOW].id
-            for workflow in await self.get_workflows_data(w_args)
-        ]
-        if not w_ids:
-            workflows = list(self.data_store_mgr.data.keys())
-            return [{
-                'response': (False, f'No matching workflow in {workflows}')}]
-        w_id = w_ids[0]
-        # match proxy ID args with workflows
-        items = []
-        for tokens in tokens_list:
-            owner = tokens.get('user')
-            workflow = tokens.get('workflow')
-            if workflow and owner is None:
-                owner = "*"
-            if (
-                not (owner and workflow)
-                or fnmatchcase(
-                    w_id,
-                    tokens.workflow_id,
-                )
-            ):
-                items.append(
-                    tokens.relative_id
-                )
-        if items:
-            if command == 'put_messages':
-                args['task_job'] = items[0]
-            else:
-                args['tasks'] = items
-        result = await self._mutation_mapper(command, args)
+        result = await self._mutation_mapper(command, args, meta)
         if result is None:
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
 
     async def _mutation_mapper(
-        self, command: str, kwargs: Dict[str, Any]
+        self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]
     ) -> Optional[Tuple[bool, str]]:
         """Map between GraphQL resolvers and internal command interface."""
         method = getattr(self, command, None)
@@ -655,7 +617,16 @@ class Resolvers(BaseResolvers):
             self.schd.get_command_method(command)
         except AttributeError:
             raise ValueError(f"Command '{command}' not found")
-        self.schd.command_queue.put((command, tuple(kwargs.values()), {}))
+        if command != "put_messages":
+            log_msg = f"[command] {command}"
+            user = meta.get('auth_user', self.schd.owner)
+            if user != self.schd.owner:
+                log_msg += (f" (issued by {user})")
+            LOG.info(log_msg)
+        self.schd.queue_command(
+            command,
+            kwargs
+        )
         return None
 
     def broadcast(
@@ -678,7 +649,11 @@ class Resolvers(BaseResolvers):
                 cutoff)
         raise ValueError('Unsupported broadcast mode')
 
-    def put_ext_trigger(self, message, id):  # noqa: A002 (graphql interface)
+    def put_ext_trigger(
+        self,
+        message,
+        id  # noqa: A002 (graphql interface)
+    ):
         """Server-side external event trigger interface.
 
         Args:
@@ -697,7 +672,12 @@ class Resolvers(BaseResolvers):
         self.schd.ext_trigger_queue.put((message, id))
         return (True, 'Event queued')
 
-    def put_messages(self, task_job=None, event_time=None, messages=None):
+    def put_messages(
+        self,
+        task_job=None,
+        event_time=None,
+        messages=None
+    ):
         """Put task messages in queue for processing later by the main loop.
 
         Arguments:
@@ -768,7 +748,7 @@ class Resolvers(BaseResolvers):
                 {
                     "outputs": outputs,
                     "flow_num": flow_num
-                }
+                },
             )
         )
         return (True, 'Command queued')
@@ -779,7 +759,7 @@ class Resolvers(BaseResolvers):
         cycle_point: Optional[str] = None,
         clock_time: Optional[str] = None,
         task: Optional[str] = None,
-        flow_num: Optional[int] = None
+        flow_num: Optional[int] = None,
     ) -> Tuple[bool, str]:
         """Stop the workflow or specific flow from spawning any further.
 
@@ -805,11 +785,17 @@ class Resolvers(BaseResolvers):
                 'clock_time': clock_time,
                 'task': task,
                 'flow_num': flow_num,
-            })
-        ))
+            }),
+        )
+        )
         return (True, 'Command queued')
 
-    def force_trigger_tasks(self, tasks=None, reflow=False, flow_descr=None):
+    def force_trigger_tasks(
+        self,
+        tasks=None,
+        reflow=False,
+        flow_descr=None,
+    ):
         """Trigger submission of task jobs where possible.
 
         Args:
@@ -831,11 +817,12 @@ class Resolvers(BaseResolvers):
         """
         self.schd.command_queue.put(
             (
-                "force_trigger_tasks", (tasks or [],),
+                "force_trigger_tasks",
+                (tasks or [],),
                 {
                     "reflow": reflow,
                     "flow_descr": flow_descr
                 }
-            )
+            ),
         )
         return (True, 'Command queued')

@@ -27,7 +27,6 @@ will correspond to the inlined version seen by the parser; use
 from ansimarkup import parse as cparse
 from optparse import Values
 import sys
-import textwrap
 
 from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
@@ -120,23 +119,6 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
         output_fname=options.output,
         mem_log_func=profiler.log_memory
     )
-
-    # Check bounds of sequences
-    out_of_bounds = [str(seq) for seq in cfg.sequences
-                     if seq.get_first_point(cfg.start_point) is None]
-    if out_of_bounds:
-        if len(out_of_bounds) > 1:
-            # avoid spamming users with multiple warnings
-            out_of_bounds_str = '\n'.join(
-                textwrap.wrap(', '.join(out_of_bounds), 70))
-            msg = (
-                "multiple sequences out of bounds for initial cycle point "
-                f"{cfg.start_point}:\n{out_of_bounds_str}")
-        else:
-            msg = (
-                f"{out_of_bounds[0]}: sequence out of bounds for "
-                f"initial cycle point {cfg.start_point}")
-        LOG.warning(msg)
 
     # Instantiate tasks and force evaluation of trigger expressions.
     # (Taken from config.py to avoid circular import problems.)
