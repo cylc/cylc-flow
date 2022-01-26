@@ -80,7 +80,7 @@ def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         # Or:
         cylc_run_dir = tmp_run_dir()
     """
-    def _tmp_run_dir(
+    def __tmp_run_dir(
         reg: Optional[str] = None,
         installed: bool = False,
         named: bool = False
@@ -110,7 +110,7 @@ def _tmp_run_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
             return run_dir
         return cylc_run_dir
-    return _tmp_run_dir
+    return __tmp_run_dir
 
 
 @pytest.fixture
@@ -126,7 +126,7 @@ def mod_tmp_run_dir(tmp_path_factory: pytest.TempPathFactory):
         return _tmp_run_dir(tmp_path, mp)
 
 
-def tmp_src_dir(tmp_path: Path):
+def _tmp_src_dir(tmp_path: Path):
     """Fixture that creates a temporary workflow source dir.
 
     (Actually the fixture is below, this is the re-usable meat of it.)
@@ -137,27 +137,27 @@ def tmp_src_dir(tmp_path: Path):
     Example:
         src_dir = tmp_src_dir('foo')
     """
-    def _tmp_src_dir(path: Union[Path, str]) -> Path:
+    def __tmp_src_dir(path: Union[Path, str]) -> Path:
         cylc_src_dir = tmp_path / 'cylc-src'
         cylc_src_dir.mkdir(exist_ok=True)
         src_dir = cylc_src_dir / path
         src_dir.mkdir(parents=True)
         (src_dir / WorkflowFiles.FLOW_FILE).touch()
         return src_dir
-    return _tmp_src_dir
+    return __tmp_src_dir
 
 
-@pytest.fixture(name='tmp_src_dir')
-def tmp_src_dir_fixture(tmp_path: Path):
+@pytest.fixture
+def tmp_src_dir(tmp_path: Path):
     # This is the actual tmp_src_dir fixture
-    return tmp_src_dir(tmp_path)
+    return _tmp_src_dir(tmp_path)
 
 
 @pytest.fixture(scope='module')
 def mod_tmp_src_dir(tmp_path_factory: pytest.TempPathFactory):
     """Module-scoped version of tmp_src_dir()"""
     tmp_path = tmp_path_factory.getbasetemp()
-    return tmp_src_dir(tmp_path)
+    return _tmp_src_dir(tmp_path)
 
 
 @pytest.fixture

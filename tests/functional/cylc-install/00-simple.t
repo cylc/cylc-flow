@@ -52,8 +52,8 @@ pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 # Test WORKFLOW_NAME and --directory are mutually exclusive
 TEST_NAME="${TEST_NAME_BASE}-WORKFLOW_NAME-and--directory-forbidden"
 run_fail "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-cylc: error: WORKFLOW_NAME and --directory are mutually exclusive.
+cmp_ok "${TEST_NAME}.stderr" <<__ERR__
+UserInputError: WORKFLOW_NAME and --directory are mutually exclusive.
 __ERR__
 # Finally test normal case
 TEST_NAME="${TEST_NAME_BASE}-WORKFLOW_NAME-install-ok"

@@ -54,6 +54,7 @@ from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
+    is_relative_to,
     make_localhost_symlinks,
     parse_rm_dirs,
     remove_dir_and_target,
@@ -1326,17 +1327,19 @@ def check_nested_dirs(
                 )
 
 
-def is_valid_run_dir(path):
+def is_valid_run_dir(path: Union[Path, str]) -> bool:
     """Return True if path is a valid, existing run directory, else False.
 
     Args:
-        path (str): if this is a relative path, it is taken to be relative to
+        path: if this is a relative path, it is taken to be relative to
             the cylc-run directory.
     """
     path = get_cylc_run_abs_path(path)
-    if os.path.isdir(os.path.join(path, WorkflowFiles.Service.DIRNAME)):
-        return True
-    return False
+    return (
+        Path(path, WorkflowFiles.FLOW_FILE).is_file() or
+        Path(path, WorkflowFiles.SUITE_RC).is_file() or
+        Path(path, WorkflowFiles.Service.DIRNAME).is_dir()
+    )
 
 
 def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
@@ -1518,7 +1521,8 @@ def install_workflow(
     validate_source_dir(source, workflow_name)
     run_path_base = Path(get_workflow_run_dir(workflow_name))
     relink, run_num, rundir = get_run_dir_info(
-        run_path_base, run_name, no_run_name)
+        run_path_base, run_name, no_run_name
+    )
     max_scan_depth = glbl_cfg().get(['install', 'max depth'])
     workflow_id = rundir.relative_to(get_cylc_run_dir())
     if len(workflow_id.parts) > max_scan_depth:
@@ -1554,7 +1558,6 @@ def install_workflow(
         )
     if relink:
         link_runN(rundir)
-    create_workflow_srv_dir(rundir)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
@@ -1618,18 +1621,19 @@ def get_run_dir_info(
         rundir = run_path_base
     elif run_name:
         rundir = run_path_base.joinpath(run_name)
-        if (run_path_base.exists() and
-                detect_flow_exists(run_path_base, True)):
+        if run_path_base.exists() and detect_flow_exists(run_path_base, True):
             raise WorkflowFilesError(
                 f"--run-name option not allowed as '{run_path_base}' contains "
-                "installed numbered runs.")
+                "installed numbered runs."
+            )
     else:
         run_num = get_next_rundir_number(run_path_base)
         rundir = Path(run_path_base, f'run{run_num}')
         if run_path_base.exists() and detect_flow_exists(run_path_base, False):
             raise WorkflowFilesError(
                 f"Path: \"{run_path_base}\" contains an installed"
-                " workflow. Use --run-name to create a new run.")
+                " workflow. Use --run-name to create a new run."
+            )
         unlink_runN(run_path_base)
         relink = True
     return relink, run_num, rundir
@@ -1731,21 +1735,16 @@ def check_flow_file(path: Union[Path, str]) -> Path:
     raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
 
 
-def create_workflow_srv_dir(rundir: Path) -> None:
-    """Create workflow service directory"""
-
-    workflow_srv_d = rundir.joinpath(WorkflowFiles.Service.DIRNAME)
-    workflow_srv_d.mkdir(exist_ok=True, parents=True)
-
-
-def validate_source_dir(source, workflow_name):
+def validate_source_dir(
+    source: Union[Path, str], workflow_name: str
+) -> None:
     """Ensure the source directory is valid:
         - has flow file
         - does not contain reserved dir names
         - is not inside ~/cylc-run.
 
     Args:
-        source (path): Path to source directory
+        source: Path to source directory
     Raises:
         WorkflowFilesError:
             If log, share, work or _cylc-install directories exist in the
@@ -1754,16 +1753,20 @@ def validate_source_dir(source, workflow_name):
     """
     # Ensure source dir does not contain log, share, work, _cylc-install
     for dir_ in WorkflowFiles.RESERVED_DIRNAMES:
-        if Path(source, dir_).exists():
+        if Path(source, dir_).is_dir():
             raise WorkflowFilesError(
                 f"{workflow_name} installation failed. "
-                f"- {dir_} exists in source directory.")
-    cylc_run_dir = Path(get_cylc_run_dir())
-    if (os.path.abspath(os.path.realpath(cylc_run_dir))
-            in os.path.abspath(os.path.realpath(source))):
+                f"- {dir_} exists in source directory."
+            )
+    cylc_run_dir = get_cylc_run_dir()
+    if is_relative_to(
+        os.path.abspath(os.path.realpath(source)),
+        os.path.abspath(os.path.realpath(cylc_run_dir))
+    ):
         raise WorkflowFilesError(
             f"{workflow_name} installation failed. Source directory "
-            f"should not be in {cylc_run_dir}.")
+            f"should not be in {cylc_run_dir}."
+        )
     check_flow_file(source)
 
 

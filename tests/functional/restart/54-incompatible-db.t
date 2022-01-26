@@ -23,7 +23,9 @@ set_test_number 3
 
 install_workflow
 # install the cylc7 restart database
-sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" < 'db.sqlite3'
+SRV_DIR="${WORKFLOW_RUN_DIR}/.service"
+mkdir "$SRV_DIR"
+sqlite3 "${SRV_DIR}/db" < 'db.sqlite3'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 

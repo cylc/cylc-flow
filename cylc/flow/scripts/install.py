@@ -72,7 +72,7 @@ multiple workflow run directories that link to the same workflow definition.
 from typing import Optional, TYPE_CHECKING, Dict, Any
 
 from cylc.flow import iter_entry_points
-from cylc.flow.exceptions import PluginError
+from cylc.flow.exceptions import PluginError, UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.workflow_files import (
     install_workflow, search_install_source_dirs, parse_cli_sym_dirs
@@ -146,15 +146,17 @@ def install(
     parser: COP, opts: 'Values', reg: Optional[str] = None
 ) -> None:
     if opts.no_run_name and opts.run_name:
-        parser.error(
-            "options --no-run-name and --run-name are mutually exclusive.")
+        raise UserInputError(
+            "options --no-run-name and --run-name are mutually exclusive."
+        )
 
     if reg is None:
         source = opts.source
     else:
         if opts.source:
-            parser.error(
-                "WORKFLOW_NAME and --directory are mutually exclusive.")
+            raise UserInputError(
+                "WORKFLOW_NAME and --directory are mutually exclusive."
+            )
         source = search_install_source_dirs(reg)
     workflow_name = opts.workflow_name or reg
 
@@ -175,11 +177,13 @@ def install(
                 entry_point.name,
                 exc
             ) from None
+
     cli_symdirs: Optional[Dict[str, Dict[str, Any]]] = None
     if opts.symlink_dirs == '':
         cli_symdirs = {}
     elif opts.symlink_dirs:
         cli_symdirs = parse_cli_sym_dirs(opts.symlink_dirs)
+
     source_dir, rundir, _workflow_name = install_workflow(
         workflow_name=workflow_name,
         source=source,

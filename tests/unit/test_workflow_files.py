@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ast import Call
 from glob import iglob
 import logging
 import os
@@ -37,7 +38,6 @@ from cylc.flow.pathutil import parse_rm_dirs
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     NESTED_DIRS_MSG,
-    REG_CLASH_MSG,
     WorkflowFiles,
     _clean_using_glob,
     _remote_clean_cmd,
@@ -58,6 +58,7 @@ from cylc.flow.workflow_files import (
     parse_cli_sym_dirs,
     reinstall_workflow,
     search_install_source_dirs,
+    validate_source_dir,
     validate_workflow_name
 )
 
@@ -116,9 +117,11 @@ def test_is_valid_run_dir(is_abs_path: bool, tmp_run_dir: Callable):
     # (Non-run dirs can still contain flow.cylc)
     run_dir = cylc_run_dir.joinpath('foo/bar')
     run_dir.mkdir(parents=True)
-    run_dir.joinpath(WorkflowFiles.FLOW_FILE).touch()
-    assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is False
+    flow_file = run_dir.joinpath(WorkflowFiles.FLOW_FILE)
+    flow_file.touch()
+    assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
     # What if service dir exists?
+    flow_file.unlink()
     run_dir.joinpath(WorkflowFiles.Service.DIRNAME).mkdir()
     assert workflow_files.is_valid_run_dir(Path(prefix, 'foo/bar')) is True
 
@@ -209,7 +212,6 @@ def test_check_nested_dirs_install_dirs(
 def test_validate_workflow_name(reg, expected_err, expected_msg):
     if expected_err:
         with pytest.raises(expected_err) as exc:
-            runNcheck = 'cannot contain a folder called' in expected_msg
             validate_workflow_name(reg)
         if expected_msg:
             assert expected_msg in str(exc.value)
@@ -1780,3 +1782,56 @@ def test_install_workflow__max_depth(
         )
     else:
         install_workflow(workflow_name, src_dir)
+
+
+@pytest.mark.parametrize(
+    'flow_file, expected_exc',
+    [
+        (WorkflowFiles.FLOW_FILE, WorkflowFilesError),
+        (WorkflowFiles.SUITE_RC, WorkflowFilesError),
+        (None, None)
+    ]
+)
+def test_install_workflow__next_to_flow_file(
+    flow_file: Optional[str],
+    expected_exc: Optional[Type[Exception]],
+    tmp_run_dir: Callable,
+    tmp_src_dir: Callable
+):
+    """Test that you can't install into a dir that contains a workflow file."""
+    # Setup
+    cylc_run_dir: Path = tmp_run_dir()
+    workflow_dir = cylc_run_dir / 'faden'
+    workflow_dir.mkdir()
+    src_dir: Path = tmp_src_dir('faden')
+    if flow_file:
+        (workflow_dir / flow_file).touch()
+    # Test
+    if expected_exc:
+        with pytest.raises(expected_exc) as exc_info:
+            install_workflow('faden', src_dir)
+        assert "Nested run directories not allowed" in str(exc_info.value)
+    else:
+        install_workflow('faden', src_dir)
+
+
+def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):
+    cylc_run_dir: Path = tmp_run_dir()
+    src_dir: Path = tmp_src_dir('ludlow')
+    validate_source_dir(src_dir, 'ludlow')
+    # Test that src dir must have flow file
+    (src_dir / WorkflowFiles.FLOW_FILE).unlink()
+    with pytest.raises(WorkflowFilesError):
+        validate_source_dir(src_dir, 'ludlow')
+    # Test that reserved dirnames not allowed in src dir
+    src_dir = tmp_src_dir('roland')
+    (src_dir / 'log').mkdir()
+    with pytest.raises(WorkflowFilesError) as exc_info:
+        validate_source_dir(src_dir, 'roland')
+    assert "exists in source directory" in str(exc_info.value)
+    # Test that src dir is not allowed to be inside ~/cylc-run
+    src_dir = cylc_run_dir / 'dieter'
+    src_dir.mkdir()
+    with pytest.raises(WorkflowFilesError) as exc_info:
+        validate_source_dir(src_dir, 'dieter')
+    assert "Source directory should not be in" in str(exc_info.value)

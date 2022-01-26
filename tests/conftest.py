@@ -107,7 +107,3 @@ def log_filter():
 @pytest.fixture(scope='session')
 def port_range():
     return glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
-
-
-def pytest_addhooks(pluginmanager):
-    pluginmanager.unregister('tornado')
