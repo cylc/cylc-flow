@@ -206,11 +206,11 @@ def test_cylc_site_conf_path_env_var(
 
 
 @pytest.mark.parametrize(
-    'expect, wid_given, p_name_set, p_meta_set',
+    'expect, wid_given, p_name_set, p_set',
     [
         (
             {
-                'log': '--platform-names is not compatible with --platform-meta',
+                'log': '--platform-names is not compatible with --platforms',
                 'result': False
             },
             'Foo', True, True
@@ -218,7 +218,7 @@ def test_cylc_site_conf_path_env_var(
         (
             {
                 'log': (
-                    '--platform-names and --platform-meta are not compatible '
+                    '--platform-names and --platforms are not compatible '
                     'with providing a workflow registration.'
                 ),
                 'result': False
@@ -235,7 +235,7 @@ def test_cylc_site_conf_path_env_var(
         (
             {
                 'log': (
-                    '--platform-names and --platform-meta are not compatible '
+                    '--platform-names and --platforms are not compatible '
                     'with providing a workflow registration.'
                 ),
                 'result': False
@@ -244,7 +244,7 @@ def test_cylc_site_conf_path_env_var(
         ),
         (
             {
-                'log': '--platform-names is not compatible with --platform-meta',
+                'log': '--platform-names is not compatible with --platforms',
                 'result': False
             },
             None, True, True
@@ -264,13 +264,13 @@ def test_cylc_site_conf_path_env_var(
     ]
 )
 def test_options_are_valid(
-    caplog, expect, wid_given, p_name_set, p_meta_set,
+    caplog, expect, wid_given, p_name_set, p_set,
 ):
     """Test that bad sets of options are not allowed."""
     # Setup a mock options object:
     options = SimpleNamespace(
         print_platform_names=p_name_set,
-        print_platform_meta=p_meta_set
+        print_platforms=p_set
     )
 
     # Run the function under test:

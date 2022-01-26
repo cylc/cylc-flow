@@ -1461,14 +1461,14 @@ class GlobalConfig(ParsecConfig):
     def platform_dump(
         self,
         print_platform_names: bool = True,
-        print_platform_meta: bool = True
+        print_platforms: bool = True
     ) -> None:
         """Print informations about platforms currently defined.
         """
         if print_platform_names:
             with suppress(ItemNotFoundError):
                 self.dump_platform_names(self)
-        if print_platform_meta:
+        if print_platforms:
             with suppress(ItemNotFoundError):
                 self.dump_platform_details(self)
 
