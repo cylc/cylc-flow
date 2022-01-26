@@ -71,10 +71,10 @@ class WorkflowRuntimeClient():
                     if proc.poll() is not None:
                         break
                     await asyncio.sleep(self.SLEEP_INTERVAL)
-                    out, err = (f.decode() for f in proc.communicate())
-                    return_code = proc.wait()
-                    if return_code:
-                        raise ClientError(err, f"return-code={return_code}")
+                out, err = (f.decode() for f in proc.communicate())
+                return_code = proc.wait()
+                if return_code:
+                    raise ClientError(err, f"return-code={return_code}")
                 return json.loads(out)
         except asyncio.TimeoutError:
             raise ClientTimeout(
