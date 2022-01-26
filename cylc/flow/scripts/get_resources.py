@@ -16,10 +16,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc get-resources [OPTIONS] ARGS
 
-Extract resources from the cylc.flow package."""
+Extract resources from the cylc.flow package.
+
+If the directory is omitted the resource will be copied either to your
+current working directory for regular resources, or to the first configured
+"source" directory (~/cylc-src by default) for the tutorials.
+
+Examples:
+    # list all resources
+    $ cylc get-resources --list
+
+    # copy the Cylc wrapper script to the current directory:
+    $ cylc get-resources cylc
+
+    # copy the Cylc wrapper script to a/b/c:
+    $ cylc get-resources cylc a/b/c
+
+    # copy the "runtime-tutorial" to your "source" directory:
+    $ cylc get-resources tutorial/runtime-tutorial
+
+    # copy all of the tutorials to your "source" directory:
+    $ cylc get-resources tutorial"""
 
 import sys
 
+from cylc.flow import LOG
+import cylc.flow.flags
+from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.resources import get_resources, list_resources
 from cylc.flow.terminal import cli_function
@@ -29,29 +52,32 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('[RESOURCES...]', 'Resources to extract (default all).'),
-            ('[DIR]', 'Target directory.')
+            (
+                '[RESOURCE]',
+                'Resource to extract.'
+            ),
+            (
+                '[DIR]',
+                'Target directory.'
+            )
         ]
     )
 
     parser.add_option(
         '--list',
-        help="List available package resources.",
+        help="List available resources.",
         default=False,
-        action='store_true'
+        action='store_true',
     )
 
     return parser
 
 
 @cli_function(get_option_parser)
-def main(parser, opts, *args):
-    if opts.list:
-        print('\n'.join(list_resources()))
+def main(parser, opts, resource=None, tgt_dir=None):
+    if cylc.flow.flags.verbosity < 2:
+        disable_timestamps(LOG)
+    if not resource or opts.list:
+        list_resources()
         sys.exit(0)
-    elif not args:
-        print(parser.usage)
-        sys.exit(0)
-    target_dir = args[-1]
-    resources = args[:-1]
-    get_resources(target_dir, resources or None)
+    get_resources(resource, tgt_dir)

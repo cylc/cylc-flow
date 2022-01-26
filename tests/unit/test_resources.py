@@ -21,14 +21,10 @@ from shlex import split
 from subprocess import run
 
 from cylc.flow.resources import (
-    resource_names, list_resources, get_resources)
-
-
-def test_list_resources():
-    """Test resources.list_resources."""
-    result = '\n'.join(list_resources())
-    for item in resource_names:
-        assert item in result
+    RESOURCE_NAMES,
+    get_resources,
+    _backup,
+)
 
 
 def test_get_resources_one(tmpdir):
@@ -38,25 +34,44 @@ def test_get_resources_one(tmpdir):
     Do not check file content becuase there is no assurance that it will
     remain constant.
     """
-    get_resources(tmpdir, resources=['etc/job.sh'])
+    get_resources('job.sh', tmpdir)
     assert (tmpdir / 'job.sh').isfile()
 
 
 @pytest.mark.parametrize(
     'resource',
-    resource_names.keys()
+    list(RESOURCE_NAMES.keys()) + ['tutorial/runtime-tutorial']
 )
 def test_get_resources_all(resource, tmpdir):
-    get_resources(tmpdir, None)
+    get_resources(resource, tmpdir)
     assert (tmpdir / Path(resource).name).exists()
 
 
 def test_cli(tmpdir):
     result = run(
-        split(f'cylc get-resources etc/job.sh {str(tmpdir)}'),
+        split(f'cylc get-resources job.sh {str(tmpdir)}'),
         capture_output=True
     )
     if result.returncode != 0:
         raise AssertionError(
             f'{result.stderr}'
         )
+
+
+def test_backup(tmp_path, caplog):
+    a = tmp_path / 'a'
+    abc = tmp_path / 'a' / 'b' / 'c'
+    abc.mkdir(parents=True)
+    before = set(tmp_path.glob('*'))
+
+    _backup(a)
+    assert len(caplog.record_tuples) == 1
+
+    after = set(tmp_path.glob('*'))
+    assert len(after - before) == 1
+
+    new = list(after - before)[0]
+    assert new.name.startswith(a.name)
+
+    new_abc = new / 'b' / 'c'
+    assert new_abc.exists()
