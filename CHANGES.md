@@ -92,8 +92,8 @@ workflow back into Cylc from Cylc Docs to make it a packaged resource for
 anyone with a Cylc installation.
 
 [#4576](https://github.com/cylc/cylc-flow/pull/4576) - Added
-`--platform-names` and `--platform-meta` to `cylc config` to allow users
-simple access to information about what platforms have been configured.
+`--platform-names` and `--platforms` options to `cylc config` for easy
+access to information on configured platforms.
 
 ### Fixes
 
