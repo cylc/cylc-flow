@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from async_timeout import timeout as ascyncto
+import asyncio
 import json
 import os
-from typing import Union
+from typing import Union, Dict
 
-from cylc.flow.exceptions import ClientError
+from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network import get_location
 from cylc.flow.remote import _remote_cylc_cmd
@@ -45,11 +47,45 @@ class WorkflowRuntimeClient():
             timeout: Union[float, str] = None
     ):
         self.workflow = workflow
-
+        self.SLEEP_INTERVAL = 0.1
         if not host:
             self.host, _, _ = get_location(workflow)
+        # 5 min default timeout
+        self.timeout = timeout if timeout is not None else 300
 
-    def send_request(self, command, args=None, timeout=None):
+    async def async_request(self, command, args=None, timeout=None):
+        """Send asynchronous request via SSH.
+        """
+        timeout = timeout if timeout is not None else self.timeout
+        try:
+            async with ascyncto(timeout):
+                cmd, ssh_cmd, login_sh, cylc_path, msg = self.prepare_command(
+                    command, args, timeout)
+                proc = _remote_cylc_cmd(
+                    cmd,
+                    host=self.host,
+                    stdin_str=msg,
+                    ssh_cmd=ssh_cmd,
+                    remote_cylc_path=cylc_path,
+                    ssh_login_shell=login_sh,
+                    capture_process=True)
+                while True:
+                    if proc.poll() is not None:
+                        break
+                    await asyncio.sleep(self.SLEEP_INTERVAL)
+                out, err = (f.decode() for f in proc.communicate())
+                return_code = proc.wait()
+                if return_code:
+                    raise ClientError(err, f"return-code={return_code}")
+                return json.loads(out)
+        except asyncio.TimeoutError:
+            raise ClientTimeout(
+                f"Command exceeded the timeout {timeout}. "
+                f"This could be due to network problems. "
+                "Check the workflow log."
+            )
+
+    def serial_request(self, command, args=None, timeout=None):
         """Send a request, using ssh.
 
         Determines ssh_cmd, cylc_path and login_shell settings from the contact
@@ -69,12 +105,24 @@ class WorkflowRuntimeClient():
         Returns:
             object: Deserialized output from function called.
         """
+        loop = asyncio.new_event_loop()
+        task = loop.create_task(
+            self.async_request(command, args, timeout))
+        loop.run_until_complete(task)
+        loop.close()
+        return task.result()
+
+    def prepare_command(
+        self, command: str, args: Dict, timeout: Union[float, str]
+    ):
+        """Prepare command for submission.
+        """
         # Set environment variable to determine the communication for use on
         # the scheduler
         os.environ["CLIENT_COMMS_METH"] = CommsMeth.SSH.value
         cmd = ["client"]
         if timeout:
-            cmd += [f'comms_timeout={timeout}']
+            cmd += [f'--comms-timeout={timeout}']
         cmd += [self.workflow, command]
         contact = load_contact_file(self.workflow)
         ssh_cmd = contact[ContactFileFields.SCHEDULER_SSH_COMMAND]
@@ -84,19 +132,6 @@ class WorkflowRuntimeClient():
         if not args:
             args = {}
         message = json.dumps(args)
-        proc = _remote_cylc_cmd(
-            cmd,
-            host=self.host,
-            stdin_str=message,
-            ssh_cmd=ssh_cmd,
-            remote_cylc_path=cylc_path,
-            ssh_login_shell=login_shell,
-            capture_process=True)
+        return cmd, ssh_cmd, login_shell, cylc_path, message
 
-        out, err = (f.decode() for f in proc.communicate())
-        return_code = proc.wait()
-        if return_code:
-            raise ClientError(err, f"return-code={return_code}")
-        return json.loads(out)
-
-    __call__ = send_request
+    __call__ = serial_request
