@@ -880,10 +880,10 @@ class CylcWorkflowDAO:
         return columns, list(self.connect().execute(stmt))
 
     def select_tasks_for_datastore(
-        self, cycle_name_pairs
+        self, task_ids
     ):
         """Select state and outputs of specified tasks."""
-        if not cycle_name_pairs:
+        if not task_ids:
             return []
         form_stmt = r"""
             SELECT
@@ -900,8 +900,8 @@ class CylcWorkflowDAO:
             ON  %(task_states)s.cycle == %(task_outputs)s.cycle AND
                 %(task_states)s.name == %(task_outputs)s.name
             WHERE
-                (%(task_states)s.cycle, %(task_states)s.name) IN (
-                    VALUES %(cycle_name_pairs)s
+                %(task_states)s.cycle || '/' || %(task_states)s.name IN (
+                    %(task_ids)s
                 )
             GROUP BY
                 %(task_states)s.cycle, %(task_states)s.name
@@ -909,17 +909,16 @@ class CylcWorkflowDAO:
         form_data = {
             "task_states": self.TABLE_TASK_STATES,
             "task_outputs": self.TABLE_TASK_OUTPUTS,
-            "cycle_name_pairs": ', '.join(
-                f'{val}' for val in cycle_name_pairs),
+            "task_ids": ', '.join(f"'{val}'" for val in task_ids),
         }
         stmt = form_stmt % form_data
         return list(self.connect().execute(stmt))
 
     def select_prereqs_for_datastore(
-        self, prereq_tasks_args
+        self, prereq_ids
     ):
         """Select prerequisites of specified tasks."""
-        if not prereq_tasks_args:
+        if not prereq_ids:
             return []
         form_stmt = r"""
             SELECT
@@ -932,23 +931,22 @@ class CylcWorkflowDAO:
             FROM
                 %(prerequisites)s
             WHERE
-                (cycle, name, flow_nums) IN (
-                    VALUES %(prereq_tasks_args)s
+                cycle || '/' || name || '/' || flow_nums IN (
+                    %(prereq_tasks_args)s
                 )
         """
         form_data = {
             "prerequisites": self.TABLE_TASK_PREREQUISITES,
-            "prereq_tasks_args": ', '.join(
-                f'{val}' for val in prereq_tasks_args),
+            "prereq_tasks_args": ', '.join(f"'{val}'" for val in prereq_ids),
         }
         stmt = form_stmt % form_data
         return list(self.connect().execute(stmt))
 
     def select_jobs_for_datastore(
-        self, cycle_name_pairs
+        self, task_ids
     ):
         """Select jobs of of specified tasks."""
-        if not cycle_name_pairs:
+        if not task_ids:
             return []
         form_stmt = r"""
             SELECT
@@ -970,8 +968,8 @@ class CylcWorkflowDAO:
                 %(task_jobs)s.name == %(task_states)s.name AND
                 %(task_jobs)s.submit_num == %(task_states)s.submit_num
             WHERE
-                (%(task_states)s.cycle, %(task_states)s.name) IN (
-                    VALUES %(cycle_name_pairs)s
+                %(task_states)s.cycle || '/' || %(task_states)s.name IN (
+                    %(task_ids)s
                 )
             ORDER BY
                 %(task_states)s.submit_num DESC
@@ -979,8 +977,7 @@ class CylcWorkflowDAO:
         form_data = {
             "task_states": self.TABLE_TASK_STATES,
             "task_jobs": self.TABLE_TASK_JOBS,
-            "cycle_name_pairs": ', '.join(
-                f'{val}' for val in cycle_name_pairs),
+            "task_ids": ', '.join(f"'{val}'" for val in task_ids),
         }
         stmt = form_stmt % form_data
         return list(self.connect().execute(stmt))
