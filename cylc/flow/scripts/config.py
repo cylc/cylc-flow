@@ -116,9 +116,10 @@ def get_option_parser():
     platform_listing_options_group.add_option(
         '--platforms',
         help=(
-            'Print platform and platform group configurations, including metadata.'
+            'Print platform and platform group configurations, '
+            'including metadata.'
         ),
-        action='store_true', default=False, dest='print_platform_meta'
+        action='store_true', default=False, dest='print_platforms'
     )
 
     parser.add_cylc_rose_options()
@@ -141,17 +142,17 @@ def options_are_valid(options: 'Values', wid: Optional[str] = None) -> None:
     """
     if (
         options.print_platform_names and
-        options.print_platform_meta
+        options.print_platforms
     ):
         raise UserInputError(
-            '--platform-names is not compatible with --platform-meta'
+            '--platform-names is not compatible with --platforms'
         )
     if (
         wid is not None
-        and (options.print_platform_names or options.print_platform_meta)
+        and (options.print_platform_names or options.print_platforms)
     ):
         raise UserInputError(
-            '--platform-names and --platform-meta are not compatible '
+            '--platform-names and --platforms are not compatible '
             'with providing a workflow ID.'
         )
 
@@ -163,11 +164,11 @@ def main(
     *ids,
 ) -> None:
     if not ids:
-        if options.print_platform_names or options.print_platform_meta:
+        if options.print_platform_names or options.print_platforms:
             # Get platform information:
             glbl_cfg().platform_dump(
                 options.print_platform_names,
-                options.print_platform_meta
+                options.print_platforms
             )
             return
 
