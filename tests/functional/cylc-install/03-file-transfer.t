@@ -38,7 +38,6 @@ tree -a -v -I '*.log|03-file-transfer*' --charset=ascii --noreport "${RND_WORKFL
 
 cmp_ok 'basic-tree.out'  <<__OUT__
 ${RND_WORKFLOW_RUNDIR}/
-|-- .service
 |-- _cylc-install
 |   \`-- source -> ${RND_WORKFLOW_SOURCE}
 |-- dir1
@@ -77,7 +76,6 @@ tree -a -v -I '*.log|03-file-transfer*' --charset=ascii --noreport "${RND_WORKFL
 
 cmp_ok 'cylc-ignore-tree.out'  <<__OUT__
 ${RND_WORKFLOW_RUNDIR}/
-|-- .service
 |-- _cylc-install
 |   \`-- source -> ${RND_WORKFLOW_SOURCE}
 |-- file1

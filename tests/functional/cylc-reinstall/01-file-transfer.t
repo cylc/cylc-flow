@@ -37,7 +37,6 @@ tree -a -v -I "${tree_excludes}" --charset=ascii --noreport "${RND_WORKFLOW_RUND
 
 cmp_ok '01-file-transfer-basic-tree.out'  <<__OUT__
 ${RND_WORKFLOW_RUNDIR}/run1
-|-- .service
 |-- dir1
 |   \`-- file1
 |-- dir2-be-removed
@@ -67,7 +66,6 @@ send new_dir/new_file2" "${REINSTALL_LOG}"
 tree -a -v -I "${tree_excludes}" --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/run2" > 'after-reinstall-run2-tree.out'
 cmp_ok 'after-reinstall-run2-tree.out'  <<__OUT__
 ${RND_WORKFLOW_RUNDIR}/run2
-|-- .service
 |-- dir1
 |   \`-- file1
 |-- file1

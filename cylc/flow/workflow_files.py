@@ -1335,7 +1335,11 @@ def is_valid_run_dir(path: Union[Path, str]) -> bool:
             the cylc-run directory.
     """
     path = get_cylc_run_abs_path(path)
-    return Path(path, WorkflowFiles.Service.DIRNAME).is_dir()
+    return (
+        Path(path, WorkflowFiles.FLOW_FILE).is_file() or
+        Path(path, WorkflowFiles.SUITE_RC).is_file() or
+        Path(path, WorkflowFiles.Service.DIRNAME).is_dir()
+    )
 
 
 def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
@@ -1554,7 +1558,6 @@ def install_workflow(
         )
     if relink:
         link_runN(rundir)
-    create_workflow_srv_dir(rundir)
     rsync_cmd = get_rsync_rund_cmd(source, rundir)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
@@ -1730,13 +1733,6 @@ def check_flow_file(path: Union[Path, str]) -> Path:
     if suite_rc_path.is_file():
         return suite_rc_path
     raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
-
-
-def create_workflow_srv_dir(rundir: Path) -> None:
-    """Create workflow service directory"""
-
-    workflow_srv_d = rundir.joinpath(WorkflowFiles.Service.DIRNAME)
-    workflow_srv_d.mkdir(exist_ok=True, parents=True)
 
 
 def validate_source_dir(
