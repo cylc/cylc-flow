@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc config --platform-names and --platform-meta
+# Test cylc config --platform-names and --platforms
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
@@ -47,11 +47,8 @@ __HEREDOC__
 
 cmp_ok "${TEST_NAME}.stderr" <<__HEREDOC__
 
-Names from the configuration are regular expressions.
-Any match is a valid platform.
-Cylc searches the definitions from the bottom upwards.
-If a platform name matches a regex on the list Cylc will
-stop searching.
+Configured names are regular expressions; any match is a valid platform.
+They are searched from the bottom up, until the first match is found.
 
 Platforms
 ---------
@@ -61,9 +58,9 @@ Platform Groups
 --------------
 __HEREDOC__
 
-TEST_NAME="${TEST_NAME_BASE}-meta"
+TEST_NAME="${TEST_NAME_BASE}-s"
 head -n 8 > just_platforms < global.cylc
-run_ok "${TEST_NAME}" cylc config --platform-meta
+run_ok "${TEST_NAME}" cylc config --platforms
 cmp_ok "${TEST_NAME}.stdout" "just_platforms"
 
 exit
