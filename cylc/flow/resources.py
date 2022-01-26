@@ -44,6 +44,12 @@ resource_names = {
     'etc/job.sh': 'Bash functions for Cylc task jobs.',
     'etc/cylc': 'Cylc wrapper script.',
 }
+tutorial_names = {
+    'etc/tutorial': (
+        'Tutorials for Cylc: Use "cylc get-resources --tutorials" to copy'
+        'This folder to the "~/cylc-src" directory.'
+    )
+}
 
 
 def list_resources():
@@ -53,10 +59,12 @@ def list_resources():
     and we have few resources, so listing them explicitly for the moment.
     """
     width = len(max(resource_names, key=len))
-    result = [
-        f'{resource + (width - len(resource)) * " "}    {meta}'
-        for resource, meta in resource_names.items()
-    ]
+    result = []
+    for resource_info in [resource_names.items(), tutorial_names.items()]:
+        result += [
+            f'{resource + (width - len(resource)) * " "}    {meta}'
+            for resource, meta in resource_info
+        ]
     return result
 
 
@@ -101,3 +109,4 @@ def extract_tutorials():
             'Replacing an existing cylc-tutorials folder which will'
             f' be copied to {backup}')
     shutil.copytree(src, dest)
+    LOG.info(f'Cylc tutorials extracted to {str(dest)}')

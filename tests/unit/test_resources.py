@@ -16,6 +16,7 @@
 
 import pytest
 
+import logging
 from pathlib import Path
 from shlex import split
 from subprocess import run
@@ -23,14 +24,15 @@ from subprocess import run
 import cylc.flow
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.resources import (
-    resource_names, list_resources, get_resources, extract_tutorials)
+    resource_names, list_resources, get_resources, extract_tutorials, tutorial_names)
 
 
 def test_list_resources():
     """Test resources.list_resources."""
     result = '\n'.join(list_resources())
-    for item in resource_names:
-        assert item in result
+    for resource_set in [resource_names, tutorial_names]:
+        for item in resource_set:
+            assert item in result
 
 
 def test_get_resources_one(tmpdir):
@@ -74,6 +76,7 @@ def test_extract_tutorials(mock_glbl_cfg, tmp_path, caplog):
         '''
     )
     caplog.clear()
+    caplog.set_level(logging.INFO)
     extract_tutorials()
     glob_dest = test_dest.glob('*/*/*')
     glob_src =  (
@@ -81,4 +84,5 @@ def test_extract_tutorials(mock_glbl_cfg, tmp_path, caplog):
     ).rglob('*/*/*')
     assert list(glob_dest).sort() == list(glob_src).sort()
     extract_tutorials()
-    assert 'Replacing' in caplog.records[0].msg
+    assert 'Replacing' in caplog.records[1].msg
+    assert 'extracted to' in caplog.records[0].msg

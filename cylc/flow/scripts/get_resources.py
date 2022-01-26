@@ -32,8 +32,12 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            ('[RESOURCES...]', 'Resources to extract (default all).'),
-            ('[DIR]', 'Target directory.')
+            (
+                '[RESOURCES...]', (
+                    'Resources to extract (default all except the tutorials).'
+                ),
+                ('[DIR]', 'Target directory.')
+            )
         ]
     )
 
@@ -46,7 +50,11 @@ def get_option_parser():
 
     parser.add_option(
         '--tutorials',
-        help="Extract tutorials workflows to ~/cylc-src",
+        help=(
+            "Extract tutorials workflows to ~/cylc-src/. If you already have"
+            "a tutorial folder that folder will be moved to a timestamped"
+            "backup."
+        ),
         default=False,
         action='store_true',
     )

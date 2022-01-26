@@ -422,7 +422,7 @@ class CylcOptionParser(OptionParser):
         log_handler = logging.StreamHandler(sys.stderr)
         log_handler.setFormatter(CylcLogFormatter(
             timestamp=options.log_timestamp,
-            dev_info=bool(options.verbosity > 2)
+            dev_info=(options.verbosity > 2)
         ))
         LOG.addHandler(log_handler)
 
