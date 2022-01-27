@@ -134,8 +134,7 @@ def filter_ids(
             id_tokens_map[id_] = Tokens(id_, relative=True)
         except ValueError:
             _not_matched.append(id_)
-            if warn:
-                LOG.warning(f'Invalid ID: {id_}')
+            LOG.warning(f'Invalid ID: {id_}')
 
     for id_, tokens in id_tokens_map.items():
         for lowest_token in reversed(IDTokens):
