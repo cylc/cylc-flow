@@ -97,6 +97,9 @@ access to information on configured platforms.
 
 ### Fixes
 
+[#4617](https://github.com/cylc/cylc-flow/pull/4617) - Fix task hold on paused
+start-up.
+
 [#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
 invocation for remote scheduler host on a shared filesystem.
 
