@@ -55,6 +55,7 @@ from typing import List, Optional, TYPE_CHECKING
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id_cli import parse_id
+from cylc.flow.exceptions import UserInputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
@@ -102,6 +103,25 @@ def get_option_parser():
             "overrides any settings it shares with those higher up."),
         action="store_true", default=False, dest="print_hierarchy")
 
+    platform_listing_options_group = parser.add_option_group(
+        'Platform printing options')
+    platform_listing_options_group.add_option(
+        '--platform-names',
+        help=(
+            'Print a list of platforms and platform group names from the '
+            'configuration.'
+        ),
+        action='store_true', default=False, dest='print_platform_names'
+    )
+    platform_listing_options_group.add_option(
+        '--platforms',
+        help=(
+            'Print platform and platform group configurations, '
+            'including metadata.'
+        ),
+        action='store_true', default=False, dest='print_platforms'
+    )
+
     parser.add_cylc_rose_options()
 
     return parser
@@ -123,10 +143,27 @@ def main(
     options: 'Values',
     *ids,
 ) -> None:
+
+    if options.print_platform_names and options.print_platforms:
+        options.print_platform_names = False
+
+    if options.print_platform_names or options.print_platforms:
+        # Get platform information:
+        if ids:
+            raise UserInputError(
+                "Workflow IDs are incompatible with --platform options."
+            )
+        glbl_cfg().platform_dump(
+            options.print_platform_names,
+            options.print_platforms
+        )
+        return
+
     if not ids:
         if options.print_hierarchy:
             print("\n".join(get_config_file_hierarchy()))
             return
+
         glbl_cfg().idump(
             options.item,
             not options.defaults,

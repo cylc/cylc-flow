@@ -16,9 +16,12 @@
 
 import os
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Optional, List
+from cylc.flow.exceptions import UserInputError
 
 import pytest
+from pytest import param
 
 from cylc.flow.scripts.config import get_config_file_hierarchy
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
