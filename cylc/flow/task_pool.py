@@ -240,6 +240,7 @@ class TaskPool:
 
         # At restart all tasks are runahead-limited but finished and manually
         # triggered tasks (incl. --start-task's) can be released immediately.
+        runahead_limit_point = self.compute_runahead()
         for itask in (
             itask
             for itask in self.get_tasks()
@@ -251,10 +252,9 @@ class TaskPool:
             )
             or itask.is_manual_submit
         ):
-            self.release_runahead_task(itask)
+            self.release_runahead_task(itask, runahead_limit_point)
             released = True
 
-        runahead_limit_point = self.compute_runahead()
         if not runahead_limit_point:
             return released
 
@@ -595,10 +595,6 @@ class TaskPool:
 
         if itask.tdef.sequential:
             # implicit prev-instance parent
-            return
-
-        if not itask.flow_nums:
-            # No reflow
             return
 
         if not runahead_limit_point:
