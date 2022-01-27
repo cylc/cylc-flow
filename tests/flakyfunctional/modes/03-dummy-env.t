@@ -25,10 +25,10 @@ install_workflow "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"\
-        --mode=dummy-local
+        --mode=dummy
 
 # Check that each of pre, main and post script do not leave a trace in the
-# job out when --mode=dummy-local.
+# job out when --mode=dummy.
 declare -a GREPFOR=('MY-PRE-SCRIPT' 'MY-SCRIPT' 'MY-POST-SCRIPT')
 for BAD_PHRASE in "${GREPFOR[@]}"; do
     cp "${WORKFLOW_RUN_DIR}/log/job/1/oxygas/NN/job.out" "${BAD_PHRASE}"

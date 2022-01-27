@@ -77,7 +77,7 @@ def get_option_parser():
     parser.add_option(
         "-u", "--run-mode", help="Validate for run mode.", action="store",
         default="live", dest="run_mode",
-        choices=['live', 'dummy', 'dummy-local', 'simulation'])
+        choices=['live', 'dummy', 'simulation'])
 
     parser.add_cylc_rose_options()
 

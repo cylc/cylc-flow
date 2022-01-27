@@ -467,7 +467,7 @@ class WorkflowConfig:
 
         self.process_runahead_limit()
 
-        if self.run_mode('simulation', 'dummy', 'dummy-local'):
+        if self.run_mode('simulation', 'dummy'):
             self.configure_sim_modes()
 
         self.configure_workflow_state_polling_tasks()
@@ -1269,7 +1269,7 @@ class WorkflowConfig:
             rtc['script'] = script
 
     def configure_sim_modes(self):
-        """Adjust task defs for simulation mode and dummy modes."""
+        """Adjust task defs for simulation and dummy mode."""
         for tdef in self.taskdefs.values():
             # Compute simulated run time by scaling the execution limit.
             rtc = tdef.rtconfig
@@ -1305,19 +1305,16 @@ class WorkflowConfig:
             scr += "\ncylc__job__dummy_result %s %s || exit 1" % (arg1, arg2)
             rtc['script'] = scr
 
-            # All dummy modes should run on platform localhost
+            # Dummy mode jobs should run on platform localhost
             # All Cylc 7 config items which conflict with platform are removed.
             for section, key, _ in FORBIDDEN_WITH_PLATFORM:
                 if (section in rtc and key in rtc[section]):
                     rtc[section][key] = None
+
             rtc['platform'] = 'localhost'
 
             # Disable environment, in case it depends on env-script.
             rtc['environment'] = {}
-
-            if tdef.run_mode == 'dummy-local':
-                # Run all dummy tasks on the workflow host.
-                rtc['platform'] = 'localhost'
 
             # Simulation mode tasks should fail in which cycle points?
             f_pts = []

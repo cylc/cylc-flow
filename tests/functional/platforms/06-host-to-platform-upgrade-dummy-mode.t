@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.    If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check that setting the platform to localhost for dummy-local mode doesn't
+# Check that setting the platform to localhost for dummy mode doesn't
 # cause conflicts with Cylc 7 settings
 # TODO Remove test at Cylc 9.
 . "$(dirname "$0")/test_header"
@@ -28,7 +28,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${WORKFLOW_NAME}"
 
 run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${WORKFLOW_NAME}" --no-detach --mode=dummy-local
+    cylc play "${WORKFLOW_NAME}" --no-detach --mode=dummy
 
 # Check that the upgradeable config has been run on a sensible host.
 grep_ok \

@@ -181,9 +181,9 @@ def get_option_parser(add_std_opts=False):
 
     parser.add_option(
         "-m", "--mode",
-        help="Run mode: live, dummy, dummy-local, simulation (default live).",
+        help="Run mode: live, dummy, simulation (default live).",
         metavar="STRING", action="store", dest="run_mode",
-        choices=["live", "dummy", "dummy-local", "simulation"])
+        choices=["live", "dummy", "simulation"])
 
     parser.add_option(
         "--reference-log",
