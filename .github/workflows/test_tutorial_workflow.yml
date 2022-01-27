@@ -28,6 +28,9 @@ jobs:
         with:
           python-version: '3.7'
 
+      - name: Check for hostname problem
+        uses: cylc/release-actions/check-for-hostname-problem@v1
+
       - name: checkout
         uses: actions/checkout@v2
 

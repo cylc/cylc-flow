@@ -29,6 +29,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Check for hostname problem
+        uses: cylc/release-actions/check-for-hostname-problem@v1
+
       - name: Brew Install
         if: startsWith(matrix.os, 'macos')
         run: |
