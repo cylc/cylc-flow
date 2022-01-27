@@ -79,7 +79,7 @@ def assert_expected_log(
 
 
 @pytest.fixture(scope='module')
-async def mod_example_flow(
+async def mod_example_flow_paused_start(
     mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
 ) -> Scheduler:
     """Return a scheduler for interrogating its task pool.
@@ -92,6 +92,23 @@ async def mod_example_flow(
     async with mod_run(schd):
         pass
     return schd
+
+
+@pytest.fixture(scope='module')
+async def mod_example_flow(
+    mod_flow: Callable, mod_scheduler: Callable, mod_run: Callable
+) -> Scheduler:
+    """Return a scheduler for interrogating its task pool.
+
+    This is module-scoped so faster than example_flow, but should only be used
+    where the test does not mutate the state of the scheduler or task pool.
+    """
+    reg = mod_flow(EXAMPLE_FLOW_CFG)
+    schd: Scheduler = mod_scheduler(reg, paused_start=False)
+    async with mod_run(schd):
+        pass
+    return schd
+
 
 
 @pytest.fixture
@@ -112,6 +129,82 @@ async def example_flow(
     await schd.initialise()
     await schd.configure()
     return schd
+
+
+@pytest.mark.parametrize(
+    'items, expected_task_ids, expected_bad_items, expected_warnings',
+    [
+        param(
+            ['*/foo'], ['1/foo'], [], [],
+            id="Basic"
+        ),
+        param(
+            ['1/*'],
+            ['1/foo', '1/bar'], [], [],
+            id="Name glob"
+        ),
+        param(
+            ['1/FAM'], ['1/bar'], [], [],
+            id="Family name"
+        ),
+        param(
+            ['*/foo'], ['1/foo'], [], [],
+            id="Point glob"
+        ),
+        param(
+            ['*:waiting'],
+            ['1/foo', '1/bar'], [], [],
+            id="Task state"
+        ),
+        param(
+            ['8/foo'], [], ['8/foo'], ["No active tasks matching: 8/foo"],
+            id="Task not yet spawned"
+        ),
+        param(
+            ['1/foo', '8/bar'], ['1/foo'], ['8/bar'],
+            ["No active tasks matching: 8/bar"],
+            id="Multiple items"
+        ),
+        param(
+            ['1/grogu', '*/grogu'], [], ['1/grogu', '*/grogu'],
+            ["No active tasks matching: 1/grogu",
+             "No active tasks matching: */grogu"],
+            id="No such task"
+        ),
+        param(
+            ['*'],
+            ['1/foo', '1/bar'], [], [],
+            id="No items given - get all tasks"
+        )
+    ]
+)
+async def test_filter_task_proxies_paused_start(
+    items: List[str],
+    expected_task_ids: List[str],
+    expected_bad_items: List[str],
+    expected_warnings: List[str],
+    mod_example_flow_paused_start: Scheduler,
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test TaskPool.filter_task_proxies().
+
+    The NOTE before EXAMPLE_FLOW_CFG above explains which tasks should be
+    expected for the tests here.
+
+    Params:
+        items: Arg passed to filter_task_proxies().
+        expected_task_ids: IDs of the TaskProxys that are expected to be
+            returned, of the form "{point}/{name}"/
+        expected_bad_items: Expected to be returned.
+        expected_warnings: Expected to be logged.
+    """
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    task_pool = mod_example_flow_paused_start.pool
+    itasks, _, bad_items = task_pool.filter_task_proxies(items)
+    task_ids = [itask.identity for itask in itasks]
+    assert sorted(task_ids) == sorted(expected_task_ids)
+    assert sorted(bad_items) == sorted(expected_bad_items)
+    assert_expected_log(caplog, expected_warnings)
 
 
 @pytest.mark.parametrize(

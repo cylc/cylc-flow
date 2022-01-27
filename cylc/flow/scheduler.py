@@ -1455,7 +1455,7 @@ class Scheduler:
             tinit = time()
 
             # Useful for debugging core scheduler issues:
-            # self.pool.log_task_pool(logging.CRITICAL)
+            self.pool.log_task_pool(logging.CRITICAL)
 
             if self.pool.do_reload:
                 # Re-initialise data model on reload
