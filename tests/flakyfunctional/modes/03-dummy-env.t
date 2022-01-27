@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that user environment is disabled along with env-script in dummy mode.
-# And that remote host is disabled in dummy local mode.
+# Test that in dummy mode:
+# - user environment is disabled.
+# - env-script is disabled.
+# - remote host is disabled.
 . "$(dirname "$0")/test_header"
 set_test_number 5
 
