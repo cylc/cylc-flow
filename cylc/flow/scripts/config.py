@@ -137,42 +137,30 @@ def get_config_file_hierarchy(workflow_id: Optional[str] = None) -> List[str]:
     return filepaths
 
 
-def options_are_valid(options: 'Values', wid: Optional[str] = None) -> None:
-    """Check parser for options that should not be allowed.
-    """
-    if (
-        options.print_platform_names and
-        options.print_platforms
-    ):
-        raise UserInputError(
-            '--platform-names is not compatible with --platforms'
-        )
-    if (
-        wid is not None
-        and (options.print_platform_names or options.print_platforms)
-    ):
-        raise UserInputError(
-            '--platform-names and --platforms are not compatible '
-            'with providing a workflow ID.'
-        )
-
-
 @cli_function(get_option_parser)
 def main(
     parser: COP,
     options: 'Values',
     *ids,
 ) -> None:
-    if not ids:
-        if options.print_platform_names or options.print_platforms:
-            # Get platform information:
-            glbl_cfg().platform_dump(
-                options.print_platform_names,
-                options.print_platforms
-            )
-            return
 
-        elif options.print_hierarchy:
+    if options.print_platform_names and options.print_platforms:
+        options.print_platform_names = False
+
+    if options.print_platform_names or options.print_platforms:
+        # Get platform information:
+        if ids:
+            raise UserInputError(
+                "Workflow IDs are incompatible with --platform options."
+            )
+        glbl_cfg().platform_dump(
+            options.print_platform_names,
+            options.print_platforms
+        )
+        return
+
+    if not ids:
+        if options.print_hierarchy:
             print("\n".join(get_config_file_hierarchy()))
             return
 
@@ -189,8 +177,6 @@ def main(
         src=True,
         constraint='workflows',
     )
-
-    options_are_valid(options, workflow_id)
 
     if options.print_hierarchy:
         print("\n".join(get_config_file_hierarchy(workflow_id)))

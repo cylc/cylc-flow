@@ -23,10 +23,7 @@ from cylc.flow.exceptions import UserInputError
 import pytest
 from pytest import param
 
-from cylc.flow.scripts.config import (
-    get_config_file_hierarchy,
-    options_are_valid
-)
+from cylc.flow.scripts.config import get_config_file_hierarchy
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 
 
@@ -203,81 +200,3 @@ def test_cylc_site_conf_path_env_var(
     GlobalConfig.get_inst()
 
     assert capload == files
-
-
-@pytest.mark.parametrize(
-    'expect, wid_given, p_name_set, p_set',
-    [
-        (
-            {
-                'log': '--platform-names is not compatible with --platforms',
-                'result': False
-            },
-            'Foo', True, True
-        ),
-        (
-            {
-                'log': (
-                    '--platform-names and --platforms are not compatible '
-                    'with providing a workflow registration.'
-                ),
-                'result': False
-            },
-            'Foo', True, False
-        ),
-            (
-            {
-                'log': None,
-                'result': True
-            },
-            'Foo', False, False
-        ),
-        (
-            {
-                'log': (
-                    '--platform-names and --platforms are not compatible '
-                    'with providing a workflow registration.'
-                ),
-                'result': False
-            },
-            'Foo', False, True
-        ),
-        (
-            {
-                'log': '--platform-names is not compatible with --platforms',
-                'result': False
-            },
-            None, True, True
-        ),
-        (
-            {'log': None, 'result': True},
-            None, True, False
-        ),
-        (
-            {'log': None, 'result': True},
-            None, False, False
-        ),
-        (
-            {'log': None, 'result': True},
-            None, False, True
-        ),
-    ]
-)
-def test_options_are_valid(
-    caplog, expect, wid_given, p_name_set, p_set,
-):
-    """Test that bad sets of options are not allowed."""
-    # Setup a mock options object:
-    options = SimpleNamespace(
-        print_platform_names=p_name_set,
-        print_platforms=p_set
-    )
-
-    # Run the function under test:
-    if expect['result'] == True:
-        # Function does nothing:
-        assert caplog.records == []
-    else:
-        # Function Raises:
-        with pytest.raises(UserInputError):
-            options_are_valid(options, wid=wid_given)

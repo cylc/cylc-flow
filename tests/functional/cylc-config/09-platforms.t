@@ -35,7 +35,6 @@ __HEREDOC__
 
 export CYLC_CONF_PATH="${PWD}"
 
-
 TEST_NAME="${TEST_NAME_BASE}-names"
 run_ok "${TEST_NAME}" cylc config --platform-names
 cmp_ok "${TEST_NAME}.stdout" <<__HEREDOC__
