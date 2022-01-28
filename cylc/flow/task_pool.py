@@ -1396,6 +1396,7 @@ class TaskPool:
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
             future=True,
+            warn=False,
         )
 
         # spawn future tasks
