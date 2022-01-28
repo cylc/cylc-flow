@@ -16,9 +16,11 @@
 #
 # Tests for the task queue manager module
 
-import pytest
-from unittest.mock import Mock
 from collections import Counter
+from unittest.mock import Mock
+
+import pytest
+
 from cylc.flow.task_queues.independent import IndepQueueManager
 from cylc.flow.task_state import TASK_STATUS_PREPARING
 

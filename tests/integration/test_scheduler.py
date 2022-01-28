@@ -73,22 +73,6 @@ async def test_is_paused_after_crash(
         assert schd.is_paused
 
 
-async def test_resume_does_not_release_tasks(one: Scheduler, run: Callable):
-    """Test that resuming a workflow does not release any held tasks."""
-    schd: Scheduler = one
-    async with run(schd):
-        assert schd.is_paused
-        itasks = schd.pool.get_all_tasks()
-        assert len(itasks) == 1
-        itask = itasks[0]
-        assert not itask.state.is_held
-
-        schd.command_hold('*')
-        schd.resume_workflow()
-        assert not schd.is_paused
-        assert itask.state.is_held
-
-
 async def test_shutdown_CylcError_log(one: Scheduler, run: Callable):
     """Test that if a CylcError occurs during shutdown, it is
     logged in one line."""
@@ -129,3 +113,51 @@ async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
     assert last_record.exc_text.startswith("Traceback (most recent call last)")
     assert ("During handling of the above exception, "
             "another exception occurred") not in last_record.exc_text
+
+
+async def test_holding_tasks_whilst_scheduler_paused(
+    capture_submission,
+    flow,
+    one_conf,
+    run,
+    scheduler,
+):
+    """It should hold tasks irrespective of workflow state.
+
+    See https://github.com/cylc/cylc-flow/issues/4278
+    """
+    reg = flow(one_conf)
+    one = scheduler(reg, paused_start=True)
+
+    # run the workflow
+    async with run(one):
+        # capture any job submissions
+        submitted_tasks = capture_submission(one)
+        assert one.pre_prep_tasks == []
+        assert submitted_tasks == set()
+
+        # release runahead/queued tasks
+        # (nothing should happen because the scheduler is paused)
+        one.pool.release_runahead_tasks()
+        one.release_queued_tasks()
+        assert one.pre_prep_tasks == []
+        assert submitted_tasks == set()
+
+        # hold all tasks & resume the workflow
+        one.command_hold(['*/*'])
+        one.resume_workflow()
+
+        # release queued tasks
+        # (there should be no change because the task is still held)
+        one.release_queued_tasks()
+        assert one.pre_prep_tasks == []
+        assert submitted_tasks == set()
+
+        # release all tasks
+        one.command_release(['*/*'])
+
+        # release queued tasks
+        # (the task should be submitted)
+        one.release_queued_tasks()
+        assert len(one.pre_prep_tasks) == 1
+        assert len(submitted_tasks) == 1

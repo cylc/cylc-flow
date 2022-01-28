@@ -20,7 +20,7 @@ from functools import partial
 from pathlib import Path
 import pytest
 from shutil import rmtree
-from typing import List, TYPE_CHECKING, Tuple
+from typing import List, TYPE_CHECKING, Tuple, Set
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
@@ -38,6 +38,7 @@ from .utils.flow_tools import (
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.task_proxy import TaskProxy
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -316,3 +317,28 @@ def validate(run_dir):
         )
 
     return _validate
+
+
+@pytest.fixture
+def capture_submission():
+    """Suppress job submission and capture submitted tasks.
+
+    Provides a function to run on a Scheduler *whilst running*, use like so:
+
+    async with run(schd):
+        submitted_tasks = capture_submission(schd)
+
+    """
+
+    def _disable_submission(schd: 'Scheduler') -> 'Set[TaskProxy]':
+        submitted_tasks: 'Set[TaskProxy]' = set()
+
+        def _submit_task_jobs(_, itasks, *args, **kwargs):
+            nonlocal submitted_tasks
+            submitted_tasks.update(itasks)
+            return itasks
+
+        schd.task_job_mgr.submit_task_jobs = _submit_task_jobs  # type: ignore
+        return submitted_tasks
+
+    return _disable_submission

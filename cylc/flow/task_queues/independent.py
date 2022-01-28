@@ -42,6 +42,7 @@ class LimitedTaskQueue:
         """Release tasks if below the active limit."""
         # The "active" argument counts active tasks by name.
         released: List[TaskProxy] = []
+        held: List[TaskProxy] = []
         n_active: int = 0
         for mem in self.members:
             n_active += active[mem]
@@ -51,9 +52,14 @@ class LimitedTaskQueue:
             except IndexError:
                 # deque empty
                 break
-            released.append(itask)
-            n_active += 1
-            active.update({itask.tdef.name: 1})
+            if itask.state.is_held:
+                held.append(itask)
+            else:
+                released.append(itask)
+                n_active += 1
+                active.update({itask.tdef.name: 1})
+        for itask in held:
+            self.deque.appendleft(itask)
         return released
 
     def remove(self, itask: TaskProxy) -> bool:

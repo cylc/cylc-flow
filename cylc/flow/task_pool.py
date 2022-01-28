@@ -707,15 +707,24 @@ class TaskPool:
             self.data_store_mgr.delta_task_queued(itask)
             self.task_queue_mgr.push_task(itask)
 
-    def release_queued_tasks(self):
+    def release_queued_tasks(self, pre_prep_tasks):
         """Return list of queue-released tasks for job prep."""
         released = self.task_queue_mgr.release_tasks(
             Counter(
                 [
-                    t.tdef.name for t in self.get_tasks()
-                    if t.state(TASK_STATUS_PREPARING,
-                               TASK_STATUS_SUBMITTED,
-                               TASK_STATUS_RUNNING)
+                    # active tasks
+                    t.tdef.name
+                    for t in self.get_tasks()
+                    if t.state(
+                        TASK_STATUS_PREPARING,
+                        TASK_STATUS_SUBMITTED,
+                        TASK_STATUS_RUNNING
+                    )
+                ] + [
+                    # tasks await job preparation which have not yet
+                    # entered the preparing state
+                    itask.tdef.name
+                    for itask in pre_prep_tasks
                 ]
             )
         )

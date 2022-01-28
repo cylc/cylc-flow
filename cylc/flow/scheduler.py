@@ -237,8 +237,8 @@ class Scheduler:
     curve_auth: Optional[ThreadAuthenticator] = None
     client_pub_key_dir: Optional[str] = None
 
-    # queue-released tasks still in prep
-    pre_submit_tasks: Optional[List[TaskProxy]] = None
+    # queue-released tasks awaiting job preparation
+    pre_prep_tasks: Optional[List[TaskProxy]] = None
 
     # profiling
     _profile_amounts: Optional[dict] = None
@@ -268,7 +268,7 @@ class Scheduler:
         # mutable defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
-        self.pre_submit_tasks = []
+        self.pre_prep_tasks = []
         self.bad_hosts: Set[str] = set()
 
         self.restored_stop_task_id = None
@@ -1250,20 +1250,27 @@ class Scheduler:
 
         """
         # Forget tasks that are no longer preparing for job submission.
-        self.pre_submit_tasks = [
-            itask for itask in self.pre_submit_tasks if
+        self.pre_prep_tasks = [
+            itask for itask in self.pre_prep_tasks if
             itask.waiting_on_job_prep
         ]
 
-        # Add newly released tasks to those still preparing.
-        self.pre_submit_tasks += self.pool.release_queued_tasks()
-
         if (
-            self.pre_submit_tasks and
-            not self.is_paused and
-            self.stop_mode is None and
-            self.auto_restart_time is None
+            not self.is_paused
+            and self.stop_mode is None
+            and self.auto_restart_time is None
         ):
+            # Add newly released tasks to those still preparing.
+            self.pre_prep_tasks += self.pool.release_queued_tasks(
+                # the number of tasks waiting to go through the task
+                # submission pipeline
+                self.pre_prep_tasks
+            )
+
+            if not self.pre_prep_tasks:
+                # No tasks to submit.
+                return
+
             # Start the job submission process.
             self.is_updated = True
 
@@ -1272,7 +1279,7 @@ class Scheduler:
 
             for itask in self.task_job_mgr.submit_task_jobs(
                 self.workflow,
-                self.pre_submit_tasks,
+                self.pre_prep_tasks,
                 self.curve_auth,
                 self.client_pub_key_dir,
                 self.config.run_mode('simulation')
