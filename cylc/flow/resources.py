@@ -81,6 +81,10 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     # get the resource path
     resource_path = Path(resource)
 
+    if resource in ('api-key', 'tutorial/api-key'):
+        print(get_api_key())
+        return
+
     src = RESOURCE_DIR / resource_path
     if not src.exists():
         raise UserInputError(
@@ -157,7 +161,7 @@ def get_api_key() -> str:
         for api_key in api_keys:
             keys.append(api_key)
     shuffle(keys)
-    return keys[0]
+    return keys[0].strip()
 
 
 def set_api_key(tgt):
