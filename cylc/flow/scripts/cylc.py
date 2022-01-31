@@ -374,12 +374,6 @@ def iter_commands():
 
     """
     for cmd, obj in sorted(COMMANDS.items()):
-        if cmd == 'cylc':
-            # don't include this command in the listing
-            continue
-        if not obj:
-            raise ValueError(f'Unrecognised command "{cmd}"')
-        # python command
         module = __import__(obj.module_name, fromlist=[''])
         if getattr(module, 'INTERNAL', False):
             # do not list internal commands
@@ -504,7 +498,7 @@ def list_plugins():
 
 
 @contextmanager
-def pycoverage(cmd_args):
+def pycoverage(cmd_args):  # pragma: no cover
     """Capture code coverage if configured to do so.
 
     This requires Cylc to be installed in editable mode

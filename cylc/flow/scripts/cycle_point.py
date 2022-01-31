@@ -144,12 +144,9 @@ def main(parser, options, *args):
             parser.error("Provide CYCLE arg, or define $CYLC_TASK_CYCLE_POINT")
         cycle_point_string = os.environ['CYLC_TASK_CYCLE_POINT']
 
-    elif len(args) == 1:
+    else:
         # must be cycle point
         cycle_point_string = args[0]
-
-    else:
-        parser.error("Wrong number of arguments!")
 
     # template string
     template = None

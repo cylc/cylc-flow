@@ -18,7 +18,7 @@
 # basic jinja2 expansion test
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 29
+set_test_number 45
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-use-env-var
 export CYLC_TASK_CYCLE_POINT=20100102T0300
@@ -82,4 +82,34 @@ cmp_ok "${TEST_NAME}.full.stdout" - <<<'2011-01-01'
 run_ok "${TEST_NAME}-offset-week" cylc cycle-point --offset=P1W '20160301T06Z'
 cmp_ok "${TEST_NAME}-offset-week.stdout" - <<<'20160308T06Z'
 #-------------------------------------------------------------------------------
-unset CYLC_TASK_CYCLE_TIME
+unset CYLC_TASK_CYCLE_POINT
+# Test --equal option
+TEST_NAME="${TEST_NAME_BASE}-equal"
+run_ok "${TEST_NAME}-true" cylc cycle-point 2000 --equal 2000
+run_fail "${TEST_NAME}-true" cylc cycle-point 2000 --equal 2001
+run_fail "${TEST_NAME}-invalid" cylc cycle-point 2000 --equal x
+
+# Test --template option
+TEST_NAME="${TEST_NAME_BASE}-template"
+run_ok "${TEST_NAME}-pass" cylc cycle-point 2010-08 \
+    --offset-years=2 --template=foo-CCYY-MM.nc
+cmp_ok "${TEST_NAME}-pass.stdout" <<< 'foo-2012-08.nc'
+# invalid arg combo
+run_fail "${TEST_NAME}-fail" cylc cycle-point 2000 --template=x --print-year
+#-------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}-fail"
+# no cycle point
+run_fail "${TEST_NAME}-1" cylc cycle-point
+# invalid cycle point
+run_fail "${TEST_NAME}-2" cylc cycle-point x
+# too many cycle points
+run_fail "${TEST_NAME}-3" cylc cycle-point 2000 2000
+# invalid offsets
+run_ok "${TEST_NAME}-5" cylc cycle-point 2000 --offset-hours=1  # VALID
+run_fail "${TEST_NAME}-6" cylc cycle-point 2000 --offset-hours=x  # INVALID
+run_fail "${TEST_NAME}-7" cylc cycle-point 2000 --offset-days=x
+run_fail "${TEST_NAME}-8" cylc cycle-point 2000 --offset-months=x
+run_fail "${TEST_NAME}-9" cylc cycle-point 2000 --offset-years=x
+# invalid ISO offset
+run_ok "${TEST_NAME}-10" cylc cycle-point 2000 --offset=P1Y  # VALID
+run_fail "${TEST_NAME}-11" cylc cycle-point 2000 --offset=PT1Y  # INVALID
