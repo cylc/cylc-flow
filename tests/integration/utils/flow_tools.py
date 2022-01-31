@@ -25,7 +25,6 @@ import asyncio
 from async_timeout import timeout
 from contextlib import asynccontextmanager, contextmanager
 import logging
-from pathlib import Path
 import pytest
 from typing import Any, Optional
 from uuid import uuid1
@@ -37,7 +36,6 @@ from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.workflow_status import StopMode
 
 from .flow_writer import flow_config_str
-from . import _poll_file
 
 
 def _make_flow(run_dir, test_dir, conf, name=None):
@@ -75,30 +73,59 @@ def _make_scheduler():
 
 
 @asynccontextmanager
-async def _run_flow(
-    run_dir: Path,
+async def _start_flow(
     caplog: Optional[pytest.LogCaptureFixture],
-    scheduler: Scheduler,
+    schd: Scheduler,
     level: int = logging.INFO
 ):
-    """Start a scheduler."""
-    contact = (run_dir / scheduler.workflow / WorkflowFiles.Service.DIRNAME /
-               WorkflowFiles.Service.CONTACT)
+    """Start a scheduler but don't set it running."""
     if caplog:
         caplog.set_level(level, CYLC_LOG)
-    task = None
-    started = False
-    await scheduler.install()
+
+    # install
+    await schd.install()
+
+    # start
     try:
-        task = asyncio.get_event_loop().create_task(scheduler.run())
-        started = await _poll_file(contact)
+        await schd.start()
         yield caplog
+
+    # stop
     finally:
-        if started:
+        async with timeout(5):
+            await schd.shutdown(Exception("that'll do"))
+
+
+@asynccontextmanager
+async def _run_flow(
+    caplog: Optional[pytest.LogCaptureFixture],
+    schd: Scheduler,
+    level: int = logging.INFO
+):
+    """Start a scheduler and set it running."""
+    if caplog:
+        caplog.set_level(level, CYLC_LOG)
+
+    # install
+    await schd.install()
+
+    # start
+    try:
+        await schd.start()
+    except Exception as exc:
+        async with timeout(5):
+            await schd.shutdown(exc)
+    # run
+    try:
+        task = asyncio.get_event_loop().create_task(schd.run_scheduler())
+        yield caplog
+
+    # stop
+    finally:
+        async with timeout(5):
             # ask the scheduler to shut down nicely
-            async with timeout(5):
-                scheduler._set_stop(StopMode.REQUEST_NOW_NOW)
-                await task
+            schd._set_stop(StopMode.REQUEST_NOW_NOW)
+            await task
 
         if task:
             # leave everything nice and tidy

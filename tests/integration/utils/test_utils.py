@@ -23,11 +23,8 @@ And yes, these are unit-tests inside a functional test framework thinggy.
 
 from pathlib import Path
 
-import pytest
-
 from . import (
     _rm_if_empty,
-    _poll_file,
 )
 
 
@@ -42,11 +39,3 @@ def test_rm_if_empty(tmp_path):
     assert not path2.exists()
     _rm_if_empty(path1)
     assert not path1.exists()
-
-
-async def test_poll_file(tmp_path):
-    """It should return if the condition is met."""
-    path = tmp_path / 'file'
-    await _poll_file(path, exists=False)
-    path.touch()
-    await _poll_file(path, exists=True)

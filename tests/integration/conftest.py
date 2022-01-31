@@ -22,7 +22,6 @@ import pytest
 from shutil import rmtree
 from typing import List, TYPE_CHECKING, Tuple, Set
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -33,7 +32,8 @@ from .utils import _rm_if_empty
 from .utils.flow_tools import (
     _make_flow,
     _make_scheduler,
-    _run_flow
+    _run_flow,
+    _start_flow,
 )
 
 if TYPE_CHECKING:
@@ -161,15 +161,27 @@ def scheduler():
 
 
 @pytest.fixture(scope='module')
-def mod_run(run_dir: Path):
-    """Run a module-level flow."""
-    return partial(_run_flow, run_dir, None)
+def mod_start():
+    """Start a scheduler but don't set it running (module scope)."""
+    return partial(_start_flow, None)
 
 
 @pytest.fixture
-def run(run_dir: Path, caplog: pytest.LogCaptureFixture):
-    """Run a function-level flow."""
-    return partial(_run_flow, run_dir, caplog)
+def start(caplog: pytest.LogCaptureFixture):
+    """Start a scheduler but don't set it running."""
+    return partial(_start_flow, caplog)
+
+
+@pytest.fixture(scope='module')
+def mod_run():
+    """Start a scheduler and set it running (module scope)."""
+    return partial(_run_flow, None)
+
+
+@pytest.fixture
+def run(caplog: pytest.LogCaptureFixture):
+    """Start a scheduler and set it running."""
+    return partial(_run_flow, caplog)
 
 
 @pytest.fixture
@@ -323,7 +335,12 @@ def validate(run_dir):
 def capture_submission():
     """Suppress job submission and capture submitted tasks.
 
-    Provides a function to run on a Scheduler *whilst running*, use like so:
+    Provides a function to run on a Scheduler *whilst started*, use like so:
+
+    async with start(schd):
+        submitted_tasks = capture_submission(schd)
+
+    or:
 
     async with run(schd):
         submitted_tasks = capture_submission(schd)

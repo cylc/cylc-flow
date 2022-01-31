@@ -598,10 +598,9 @@ class Scheduler:
             LOG.info("Quiet mode on")
             LOG.setLevel(log_level)
 
-    async def start_scheduler(self):
+    async def run_scheduler(self):
         """Start the scheduler main loop."""
         try:
-            self._configure_contact()
             if self.is_restart:
                 self.restart_remote_init()
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
@@ -641,15 +640,10 @@ class Scheduler:
         finally:
             self.profiler.stop()
 
-    async def run(self):
-        """Run the startup sequence.
+    async def start(self):
+        """Run the startup sequence but don't set the main loop running.
 
-        * initialise
-        * configure
-        * start_servers
-        * start_scheduler
-
-        Lightweight wrapper for convenience.
+        Lightweight wrapper for testing convenience.
 
         """
         try:
@@ -657,11 +651,19 @@ class Scheduler:
             await self.configure()
             await self.start_servers()
             await self.log_start()
+            self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
-        else:
-            # note start_scheduler handles its own shutdown logic
-            await self.start_scheduler()
+
+    async def run(self):
+        """Run the startup sequence and set the main loop running.
+
+        Lightweight wrapper for testing convenience.
+
+        """
+        await self.start()
+        # note run_scheduler handles its own shutdown logic
+        await self.run_scheduler()
 
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""

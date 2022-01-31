@@ -39,7 +39,7 @@ def param_workflow(flow, scheduler):
 )
 async def test_queue_release(
     param_workflow,
-    run,
+    start,
     capture_submission,
     start_paused,
     queue_limit,
@@ -54,9 +54,9 @@ async def test_queue_release(
     """
     expected_submissions = queue_limit if not start_paused else 0
 
+    # start the scheduler (but don't set the main loop running)
     schd = param_workflow(start_paused, queue_limit)
-
-    async with run(schd):
+    async with start(schd):
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)
 
@@ -78,7 +78,7 @@ async def test_queue_release(
 
 async def test_queue_held_tasks(
     param_workflow,
-    run,
+    start,
     capture_submission
 ):
     """Held tasks should not be released from queues.
@@ -90,7 +90,7 @@ async def test_queue_held_tasks(
     """
     schd = param_workflow(paused_start=True, queue_limit=1)
 
-    async with run(schd):
+    async with start(schd):
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)
 
