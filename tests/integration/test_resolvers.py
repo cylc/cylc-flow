@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import re
 from typing import Callable
 from unittest.mock import Mock
 
@@ -218,7 +219,8 @@ async def test_mutation_mapper(mock_flow):
     """Test the mapping of mutations to internal command methods."""
     meta = {}
     response = await mock_flow.resolvers._mutation_mapper('pause', {}, meta)
-    assert response[0] is True  # (True, command-uuid-str)
+    assert response[0] is True
+    assert re.match(r'[\d\w-]+', response[1])  # uuid str
     with pytest.raises(ValueError):
         await mock_flow.resolvers._mutation_mapper('non_exist', {}, meta)
 

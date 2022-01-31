@@ -374,9 +374,19 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     async def get_workflows(self, args):
         """Return workflow elements."""
         return sort_elements(
-            [flow[WORKFLOW]
-             for flow in await self.get_workflows_data(args)],
-            args)
+            [
+                workflow[WORKFLOW]
+                for workflow in await self.get_workflows_data(args)
+            ],
+            args
+        )
+
+    async def get_workflow_ids(self, w_args: Dict[str, Any]) -> List[str]:
+        """Return workflow ids for matching workflows in the data store."""
+        return [
+            workflow[WORKFLOW].id
+            for workflow in await self.get_workflows_data(w_args)
+        ]
 
     # nodes
     def get_node_state(self, node, node_type):
@@ -674,6 +684,13 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                 sub_id, w_id = context['ops_queue'][op_id].get(False)
                 self.delta_processing_flows[sub_id].remove(w_id)
 
+    @property
+    def _no_matching_workflows_response(self) -> GenericResponse:
+        workflows = list(self.data_store_mgr.data.keys())
+        return GenericResponse(
+            success=False, message=f'No matching workflow in {workflows}'
+        )
+
     @abstractmethod
     async def mutator(
         self,
@@ -683,6 +700,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         kwargs: Dict[str, Any],
         meta: Dict[str, Any]
     ) -> List[GenericResponse]:
+        """Method for mutating workflow."""
         ...
 
 
@@ -705,18 +723,12 @@ class Resolvers(BaseResolvers):
         meta: Dict[str, Any]
     ) -> List[GenericResponse]:
         """Mutate workflow."""
-        w_ids = [flow[WORKFLOW].id
-                 for flow in await self.get_workflows_data(w_args)]
+        w_ids = await self.get_workflow_ids(w_args)
         if not w_ids:
-            workflows = list(self.data_store_mgr.data.keys())
-            ret = GenericResponse(
-                success=False, message=f'No matching workflow in {workflows}'
-            )
-            return [ret]
+            return [self._no_matching_workflows_response]
         w_id = w_ids[0]
         result = await self._mutation_mapper(command, kwargs, meta)
-        ret = GenericResponse(w_id, *result)
-        return [ret]
+        return [GenericResponse(w_id, *result)]
 
     async def _mutation_mapper(
         self, command: str, kwargs: Dict[str, Any], meta: Dict[str, Any]

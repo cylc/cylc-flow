@@ -20,6 +20,7 @@ from copy import deepcopy
 from functools import partial
 import json
 from operator import attrgetter
+import traceback
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
@@ -40,6 +41,7 @@ from graphene import (
 )
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
+from graphql.error import GraphQLError
 from graphql.type.definition import get_named_type
 
 from cylc.flow import LOG_LEVELS
@@ -1454,7 +1456,7 @@ async def mutator(
     workflows: Optional[List[str]] = None,
     exworkflows: Optional[List[str]] = None,
     **kwargs: Any
-) -> List[GenericResponse]:
+) -> Mutation:
     """Call the resolver method that act on the workflow service
     via the internal command queue.
 
@@ -1485,7 +1487,18 @@ async def mutator(
         kwargs.pop('args')
     resolvers = get_resolvers(info)
     meta = info.context.get('meta')  # type: ignore[union-attr]
-    res = await resolvers.mutator(info, command, w_args, kwargs, meta)
+    try:
+        res = await resolvers.mutator(info, command, w_args, kwargs, meta)
+    except Exception as exc:  # Unexpected exception
+        if isinstance(exc, GraphQLError):
+            raise exc
+        # Wrap exception to make it easier to debug
+        raise GraphQLError(
+            f"{type(exc).__name__}: {exc}",
+            extensions={
+                'traceback': traceback.format_tb(exc.__traceback__)
+            }
+        )
     return info.return_type.graphene_type(  # type: ignore[union-attr]
         results=res
     )
