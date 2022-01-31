@@ -70,7 +70,8 @@ from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
-from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
+from cylc.flow.parsec.exceptions import (
+    TemplateVarLanguageClash, IllegalValueError)
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
@@ -1095,23 +1096,26 @@ class Scheduler:
     def load_flow_file(self, is_reload=False):
         """Load, and log the workflow definition."""
         # Local workflow environment set therein.
-        self.config = WorkflowConfig(
-            self.workflow,
-            self.flow_file,
-            self.options,
-            self.template_vars,
-            is_reload=is_reload,
-            xtrigger_mgr=self.xtrigger_mgr,
-            mem_log_func=self.profiler.log_memory,
-            output_fname=os.path.join(
-                self.workflow_run_dir, 'log', 'flow-config',
-                workflow_files.WorkflowFiles.FLOW_FILE_PROCESSED
-            ),
-            run_dir=self.workflow_run_dir,
-            log_dir=self.workflow_log_dir,
-            work_dir=self.workflow_work_dir,
-            share_dir=self.workflow_share_dir,
-        )
+        try:
+            self.config = WorkflowConfig(
+                self.workflow,
+                self.flow_file,
+                self.options,
+                self.template_vars,
+                is_reload=is_reload,
+                xtrigger_mgr=self.xtrigger_mgr,
+                mem_log_func=self.profiler.log_memory,
+                output_fname=os.path.join(
+                    self.workflow_run_dir, 'log', 'flow-config',
+                    workflow_files.WorkflowFiles.FLOW_FILE_PROCESSED
+                ),
+                run_dir=self.workflow_run_dir,
+                log_dir=self.workflow_log_dir,
+                work_dir=self.workflow_work_dir,
+                share_dir=self.workflow_share_dir,
+            )
+        except IllegalValueError as exc:
+            raise UserInputError(exc)
         self.cylc_config = DictTree(
             self.config.cfg['scheduler'],
             glbl_cfg().get(['scheduler'])
