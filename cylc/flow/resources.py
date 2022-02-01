@@ -134,7 +134,7 @@ def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
     NOTE: src can be a dir or a file.
     """
     LOG.info(f"Extracting {src.relative_to(RESOURCE_DIR)} to {tgt}")
-    if tgt.exists() and is_tutorial:
+    if is_tutorial and tgt.exists():
         # target exists, back up the old copy
         _backup(tgt)
 
