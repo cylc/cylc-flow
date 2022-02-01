@@ -74,7 +74,7 @@ def main(_, options: 'Values', workflow_id: str, func: str) -> None:
         else:
             pb_msg = PB_METHOD_MAP[func]()
         pb_msg.ParseFromString(res)
-        res_msg = MessageToDict(pb_msg)
+        res_msg: object = MessageToDict(pb_msg)
     else:
         res_msg = res
     sys.stdout.write(json.dumps(res_msg, indent=4) + '\n')

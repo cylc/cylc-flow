@@ -22,7 +22,13 @@ import json
 import logging
 from operator import attrgetter
 from textwrap import dedent
-from typing import AsyncGenerator, Any
+from typing import (
+    TYPE_CHECKING,
+    AsyncGenerator,
+    Any,
+    List,
+    Optional,
+)
 
 import graphene
 from graphene import (
@@ -53,6 +59,10 @@ from cylc.flow.data_store_mgr import (
     DELTA_ADDED, DELTA_UPDATED
 )
 from cylc.flow.workflow_status import StopMode
+
+if TYPE_CHECKING:
+    from graphql import ResolveInfo
+    from cylc.flow.network.resolvers import BaseResolvers
 
 
 def sstrip(text):
@@ -1203,10 +1213,30 @@ class GenericResponse(ObjectType):
 
 # Mutators:
 
-async def mutator(root, info, command=None, workflows=None,
-                  exworkflows=None, **args):
+async def mutator(
+    root: Optional[Any],
+    info: 'ResolveInfo',
+    *,
+    command: str,
+    workflows: Optional[List[str]] = None,
+    exworkflows: Optional[List[str]] = None,
+    **kwargs: Any
+) -> GenericResponse:
     """Call the resolver method that act on the workflow service
-    via the internal command queue."""
+    via the internal command queue.
+
+    This is what a mutation's Meta.resolver should be set to
+    (or the mutation's mutate() method).
+
+    Args:
+        root: Parent field (if any) value object.
+        info: GraphQL execution info.
+        command: Mutation command name (name of method of
+            cylc.flow.network.resolvers.Resolvers or
+            Scheduler command_<name> method).
+        workflows: List of workflow IDs.
+        exworkflows: List of workflow IDs.
+    """
     if workflows is None:
         workflows = []
     if exworkflows is None:
@@ -1215,16 +1245,18 @@ async def mutator(root, info, command=None, workflows=None,
         'workflows': [Tokens(w_id) for w_id in workflows],
         'exworkflows': [Tokens(w_id) for w_id in exworkflows]
     }
-    if args.get('args', False):
-        args.update(args.get('args', {}))
-        args.pop('args')
-    resolvers = info.context.get('resolvers')
-    meta = info.context.get('meta')
-    res = await resolvers.mutator(info, command, w_args, args, meta)
+    if kwargs.get('args', False):
+        kwargs.update(kwargs.get('args', {}))
+        kwargs.pop('args')
+    resolvers: 'BaseResolvers' = (
+        info.context.get('resolvers')  # type: ignore[union-attr]
+    )
+    meta = info.context.get('meta')  # type: ignore[union-attr]
+    res = await resolvers.mutator(info, command, w_args, kwargs, meta)
     return GenericResponse(result=res)
 
-# Input types:
 
+# Input types:
 
 class WorkflowID(String):
     """A registered workflow."""

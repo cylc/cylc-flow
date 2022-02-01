@@ -225,11 +225,15 @@ class TaskDefError(WorkflowConfigError):
 
 class ClientError(CylcError):
 
-    def __str__(self):
-        ret = self.args[0]
-        if len(self.args) > 1 and self.args[1]:
-            # append server-side traceback if appended
-            ret += '\n' + self.args[1]
+    def __init__(self, message: str, traceback: Optional[str] = None):
+        self.message = message
+        self.traceback = traceback
+
+    def __str__(self) -> str:
+        ret = self.message
+        if self.traceback:
+            # append server-side traceback
+            ret += '\n' + self.traceback
         return ret
 
 

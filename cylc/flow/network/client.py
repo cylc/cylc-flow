@@ -20,7 +20,7 @@ import os
 from shutil import which
 import socket
 import sys
-from typing import Union, Dict
+from typing import Any, Optional, Union, Dict
 
 import zmq
 import zmq.asyncio
@@ -62,18 +62,18 @@ class WorkflowRuntimeClient(ZMQSocketBase):
     bail after ``timeout`` seconds.
 
     Args:
-        workflow (str):
+        workflow:
             Name of the workflow to connect to.
-        timeout (float):
+        timeout:
             Set the default timeout in seconds. The default is
             ``ZMQClient.DEFAULT_TIMEOUT``.
             Note the default timeout can be overridden for individual requests.
-        host (str):
+        host:
             The host where the flow is running if known.
 
             If both host and port are provided it is not necessary to load
             the contact file.
-        port (int):
+        port:
             The port on which the REQ-REP TCP server is listening.
 
             If both host and port are provided it is not necessary to load
@@ -117,13 +117,13 @@ class WorkflowRuntimeClient(ZMQSocketBase):
     DEFAULT_TIMEOUT = 5.  # 5 seconds
 
     def __init__(
-            self,
-            workflow: str,
-            host: str = None,
-            port: int = None,
-            context: object = None,
-            timeout: Union[float, str] = None,
-            srv_public_key_loc: str = None
+        self,
+        workflow: str,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        context: Optional[zmq.asyncio.Context] = None,
+        timeout: Union[float, str, None] = None,
+        srv_public_key_loc: Optional[str] = None
     ):
         super().__init__(zmq.REQ, context=context)
         self.workflow = workflow
@@ -140,7 +140,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         self.timeout = timeout * 1000
         self.timeout_handler = partial(
             self._timeout_handler, workflow, host, port)
-        self.poller = None
+        self.poller: Any = None
         # Connect the ZMQ socket on instantiation
         self.start(self.host, self.port, srv_public_key_loc)
         # gather header info post start
@@ -161,11 +161,11 @@ class WorkflowRuntimeClient(ZMQSocketBase):
 
     async def async_request(
         self,
-        command,
-        args=None,
-        timeout=None,
-        req_meta=None
-    ):
+        command: str,
+        args: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+        req_meta: Optional[Dict[str, Any]] = None
+    ) -> object:
         """Send an asynchronous request using asyncio.
 
         Has the same arguments and return values as ``serial_request``.
@@ -181,7 +181,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         # there is no need to encrypt messages ourselves before sending.
 
         # send message
-        msg = {'command': command, 'args': args}
+        msg: Dict[str, Any] = {'command': command, 'args': args}
         msg.update(self.header)
         # add the request metadata
         if req_meta:
@@ -216,19 +216,19 @@ class WorkflowRuntimeClient(ZMQSocketBase):
 
     def serial_request(
         self,
-        command,
-        args=None,
-        timeout=None,
-        req_meta=None
-    ):
+        command: str,
+        args: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+        req_meta: Optional[Dict[str, Any]] = None
+    ) -> object:
         """Send a request.
 
         For convenience use ``__call__`` to call this method.
 
         Args:
-            command (str): The name of the endpoint to call.
-            args (dict): Arguments to pass to the endpoint function.
-            timeout (float): Override the default timeout (seconds).
+            command: The name of the endpoint to call.
+            args: Arguments to pass to the endpoint function.
+            timeout: Override the default timeout (seconds).
 
         Raises:
             ClientTimeout: If a response takes longer than timeout to arrive.

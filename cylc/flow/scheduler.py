@@ -30,7 +30,9 @@ import sys
 from threading import Barrier
 from time import sleep, time
 import traceback
-from typing import Dict, Iterable, List, NoReturn, Optional, Set, Union
+from typing import (
+    Callable, Iterable, NoReturn, Optional, List, Set, Dict, Tuple, Union
+)
 from uuid import uuid4
 
 import psutil
@@ -180,7 +182,7 @@ class Scheduler:
     flow_mgr: FlowMgr
 
     # queues
-    command_queue: Queue
+    command_queue: 'Queue[Tuple[str, tuple, dict]]'
     message_queue: Queue
     ext_trigger_queue: Queue
 
@@ -825,7 +827,7 @@ class Scheduler:
         self.task_job_mgr.poll_task_jobs(
             self.workflow, to_poll_tasks)
 
-    def get_command_method(self, command_name):
+    def get_command_method(self, command_name: str) -> Callable:
         """Return a command processing method or raise AttributeError."""
         return getattr(self, f'command_{command_name}')
 

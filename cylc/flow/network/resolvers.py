@@ -16,6 +16,7 @@
 
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
+from abc import ABCMeta, abstractmethod
 import asyncio
 from contextlib import suppress
 from fnmatch import fnmatchcase
@@ -26,6 +27,7 @@ from typing import (
     Any,
     Dict,
     Iterable,
+    List,
     Optional,
     Tuple,
     TYPE_CHECKING,
@@ -50,6 +52,8 @@ from cylc.flow.network.schema import (
 )
 
 if TYPE_CHECKING:
+    from uuid import UUID
+    from graphql import ResolveInfo
     from cylc.flow.data_store_mgr import DataStoreMgr
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.workflow_status import StopMode
@@ -279,17 +283,17 @@ def get_data_elements(flow, nat_ids, element_type):
     ]
 
 
-class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
+class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     """Data access methods for resolving GraphQL queries."""
 
-    def __init__(self, data_store_mgr):
+    def __init__(self, data_store_mgr: 'DataStoreMgr'):
         self.data_store_mgr = data_store_mgr
         # Used with subscriptions for a temporary delta-store,
         # [sub_id][w_id] = store
-        self.delta_store = {}
+        self.delta_store: Dict['UUID', Dict[str, dict]] = {}
         # Used to serialised deltas from a single workflow, needed for
         # the management of a common data object.
-        self.delta_processing_flows = {}
+        self.delta_processing_flows: Dict['UUID', set] = {}
 
     # Query resolvers
     async def get_workflow_by_id(self, args):
@@ -302,7 +306,7 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
         except KeyError:
             return None
 
-    async def get_workflows_data(self, args):
+    async def get_workflows_data(self, args: Dict[str, Any]):
         """Return list of data from workflows."""
         # Both cases just as common so 'if' not 'try'
         if 'sub_id' in args and args['delta_store']:
@@ -580,6 +584,17 @@ class BaseResolvers:  # noqa: SIM119 (no real gain + mutable default)
                 sub_id, w_id = context['ops_queue'][op_id].get(False)
                 self.delta_processing_flows[sub_id].remove(w_id)
 
+    @abstractmethod
+    async def mutator(
+        self,
+        info: 'ResolveInfo',
+        command: str,
+        w_args: Dict[str, Any],
+        kwargs: Dict[str, Any],
+        meta: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        ...
+
 
 class Resolvers(BaseResolvers):
     """Workflow Service context GraphQL query and mutation resolvers."""
@@ -591,9 +606,15 @@ class Resolvers(BaseResolvers):
         self.schd = schd
 
     # Mutations
-    async def mutator(self, *m_args):
+    async def mutator(
+        self,
+        _info: 'ResolveInfo',
+        command: str,
+        w_args: Dict[str, Any],
+        kwargs: Dict[str, Any],
+        meta: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Mutate workflow."""
-        _, command, w_args, args, meta = m_args
         w_ids = [flow[WORKFLOW].id
                  for flow in await self.get_workflows_data(w_args)]
         if not w_ids:
@@ -601,7 +622,7 @@ class Resolvers(BaseResolvers):
             return [{
                 'response': (False, f'No matching workflow in {workflows}')}]
         w_id = w_ids[0]
-        result = await self._mutation_mapper(command, args, meta)
+        result = await self._mutation_mapper(command, kwargs, meta)
         if result is None:
             result = (True, 'Command queued')
         return [{'id': w_id, 'response': result}]
