@@ -350,51 +350,6 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             return errors
         return executed.data
 
-    @authorise()
-    @expose
-    def get_graph_raw(
-            self, start_point_str, stop_point_str, grouping=None, meta=None
-    ):
-        """Return a textual representation of the workflow graph.
-
-        .. warning::
-
-           The grouping options:
-
-           * ``grouping``
-
-        Args:
-            start_point_str (str):
-                Cycle point as a string to define the window of view of the
-                workflow graph.
-            stop_point_str (str):
-                Cycle point as a string to define the window of view of the
-                workflow graph.
-            grouping (list, optional):
-                List of (graph nodes) family names to group according to
-                inheritance.
-
-        Returns:
-            list: [left, right, None, is_suicide, condition]
-
-            left (str):
-                Task identifier for the dependency of
-                an edge.
-            right (str):
-                Task identifier for the dependent task
-                of an edge.
-            is_suicide (bool):
-                True if edge represents a suicide trigger.
-            condition:
-                Conditional expression if edge represents a conditional trigger
-                else ``None``.
-
-        """
-        # Ensure that a "None" str is converted to the None value.
-        return self.schd.info_get_graph_raw(
-            start_point_str, stop_point_str,
-            grouping=grouping)
-
     # UIServer Data Commands
     @authorise()
     @expose
