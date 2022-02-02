@@ -20,7 +20,7 @@
 set_test_number 4
 
 CYLC_RUN_DIR="$RUN_DIR"
-BAD_NAME="$(basename "$(mktemp -u "${CYLC_RUN_DIR}/XXXXXXXX")")"
+BAD_NAME="NONEXISTENTWORKFLOWNAME"
 
 run_fail "${TEST_NAME_BASE}-workflow" cylc cat-log -f l "${BAD_NAME}"
 cmp_ok "${TEST_NAME_BASE}-workflow.stderr" <<__ERR__

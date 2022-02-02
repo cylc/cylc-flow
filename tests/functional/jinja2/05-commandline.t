@@ -30,7 +30,7 @@ run_ok "${TEST_NAME}" cylc validate \
     --set-file="${TEST_DIR}/${WORKFLOW_NAME}/vars.txt" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_ok "${TEST_NAME}" cylc play --no-detach --reference-test \
+workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug --reference-test \
     --set-file="${TEST_DIR}/${WORKFLOW_NAME}/vars.txt" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

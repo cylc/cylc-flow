@@ -23,7 +23,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --reference-test "${WORKFLOW_NAME}"
+    cylc play --no-detach --debug --reference-test "${WORKFLOW_NAME}"
 sort "${WORKFLOW_RUN_DIR}/share/broadcast.log" >'broadcast.log.sorted'
 cmp_ok 'broadcast.ref' 'broadcast.log.sorted'
 

@@ -92,7 +92,9 @@
            sed -i '/BASH_XTRACEFD/d' ${PREPLOG}.err
 
            diff -u "${CYLC_WORKFLOW_RUN_DIR}/expected-prep.out" ${PREPLOG}.out
-           diff -u "${CYLC_WORKFLOW_RUN_DIR}/expected-prep.err" ${PREPLOG}.err
+           # Let's not compare stderr here; it can be contaminated by debug
+           # output from parsec (repeated config items).
+           # diff -u "${CYLC_WORKFLOW_RUN_DIR}/expected-prep.err" ${PREPLOG}.err
         """
     [[ENS]]
     [[ENS1]]
