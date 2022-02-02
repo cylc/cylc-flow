@@ -143,10 +143,13 @@ class CylcHelpFormatter(IndentedHelpFormatter):
 
         """
         if (
-            self.parser.values.color == "always"
-            or (
-                self.parser.values.color == "auto"
-                and supports_color()
+            hasattr(self.parser.values, 'color')
+            and (
+                self.parser.values.color == "always"
+                or (
+                    self.parser.values.color == "auto"
+                    and supports_color()
+                )
             )
         ):
             # Add color formatting to examples text.
