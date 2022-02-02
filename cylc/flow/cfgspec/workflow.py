@@ -1040,6 +1040,9 @@ with Conf(
                 The main custom script invoked from the task job script.
 
                 It can be an external command or script, or inlined scripting.
+
+                See :ref:`Task Job Script Variables` for the list of variables
+                available in the task execution environment.
             ''') + get_script_common_text(
                 this='script', example='my_script.sh'
             ))
