@@ -29,7 +29,7 @@ run_tests() {
     run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
     TEST_NAME="${TEST_NAME_BASE}-run"
     # Needs to be detaching:
-    workflow_run_ok "${TEST_NAME}" cylc play --debug --reference-test "${WORKFLOW_NAME}"
+    workflow_run_ok "${TEST_NAME}" cylc play --reference-test "${WORKFLOW_NAME}"
 
     # Make sure 1/t1's status file is in place
     T1_STATUS_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.status"

@@ -27,7 +27,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play "${WORKFLOW_NAME}" --debug --reference-test --no-detach --stopcp=3
+    cylc play "${WORKFLOW_NAME}"  --reference-test --no-detach --stopcp=3
 
 # Restart will hang if abs triggers not remembered.
 workflow_run_ok "${TEST_NAME_BASE}-restart" \

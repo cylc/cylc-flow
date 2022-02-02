@@ -24,7 +24,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach --debug --reference-test "${WORKFLOW_NAME}"
+    cylc play --no-detach --reference-test "${WORKFLOW_NAME}"
 
 # Make sure status files are in place
 T1_STATUS_FILE="${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.status"

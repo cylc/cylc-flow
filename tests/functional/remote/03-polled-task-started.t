@@ -25,7 +25,7 @@ install_workflow
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "$WORKFLOW_NAME"
 
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --reference-test --no-detach "$WORKFLOW_NAME"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --reference-test --no-detach "$WORKFLOW_NAME"
 
 # Check 'started' event handlers ran
 PICARD_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/picard/01/job-activity.log"
