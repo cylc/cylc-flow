@@ -27,8 +27,8 @@ TEST_NAME="${TEST_NAME_BASE}"-validate
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}"-run
-workflow_run_ok "${TEST_NAME}" cylc play --reference-test \
-   --debug --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" \
+   cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 # check the DB as well
 sqlite3 ~/cylc-run/"${WORKFLOW_NAME}"/log/db \
