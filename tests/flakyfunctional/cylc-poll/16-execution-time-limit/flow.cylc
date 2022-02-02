@@ -8,7 +8,7 @@
 [scheduling]
     [[graph]]
         R1 = """
-            foo:fail? => ! foo
+            foo:fail => bar
         """
 [runtime]
     [[foo]]
@@ -23,3 +23,4 @@
         """
         [[[job]]]
             execution time limit = PT5S
+    [[bar]]
