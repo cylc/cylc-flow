@@ -1,0 +1,10 @@
+Initial point: 1
+Final point: 4
+1/foo -triggered off []
+1/bar -triggered off ['1/foo']
+2/foo -triggered off []
+2/bar -triggered off ['2/foo']
+3/foo -triggered off []
+3/bar -triggered off ['3/foo']
+4/foo -triggered off []
+4/bar -triggered off ['4/foo']
