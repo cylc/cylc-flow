@@ -556,9 +556,17 @@ class TaskPool:
             or all(x < self.config.start_point for x in parent_points)
             or itask.tdef.has_only_abs_triggers(next_point)
         ):
+            task = itask.tdef.name
+            cycle = str(next_point)
+
+            # Get submit number by flow_nums {flow_nums: submit_num, ...}
+            if self.workflow_db_mgr.pri_dao.select_submit_nums(task, cycle):
+                # Task already spawned in this flow.
+                return None
+
             taskid = Tokens(
-                cycle=str(next_point),
-                task=itask.tdef.name,
+                cycle=cycle,
+                task=task,
             ).relative_id
             next_task = (
                 self._get_hidden_task_by_id(taskid)
