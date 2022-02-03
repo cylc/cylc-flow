@@ -977,6 +977,16 @@ with Conf(
 
                 If no parents are listed default is ``root``.
             ''')
+            Conf('script', VDR.V_STRING, desc=dedent('''
+                The main custom script invoked from the task job script.
+
+                It can be an external command or script, or inlined scripting.
+
+                See :ref:`Task Job Script Variables` for the list of variables
+                available in the task execution environment.
+            ''') + get_script_common_text(
+                this='script', example='my_script.sh'
+            ))
             Conf('init-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script before the task
                 execution environment is configured.
@@ -1035,13 +1045,6 @@ with Conf(
             ''') + get_script_common_text(
                 this='pre-script',
                 example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
-            ))
-            Conf('script', VDR.V_STRING, desc=dedent('''
-                The main custom script invoked from the task job script.
-
-                It can be an external command or script, or inlined scripting.
-            ''') + get_script_common_text(
-                this='script', example='my_script.sh'
             ))
             Conf('post-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script immediately
