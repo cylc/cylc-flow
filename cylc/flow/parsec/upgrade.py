@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Support automatic deprecation and obsoletion of parsec config items."""
 
+import contextlib
 from logging import DEBUG, WARNING
 
 from cylc.flow import LOG
@@ -191,17 +192,18 @@ class upgrader:
                         if upg['new']:
                             # check self.cfg does not already contain a
                             # non-deprecated item matching upg['new']:
-                            try:
-                                self.get_item(upg['new'])
-                            except KeyError:
-                                self.put_item(upg['new'],
-                                              upg['cvt'].convert(old))
-                            else:
+                            nval = ""
+                            with contextlib.suppress(KeyError):
+                                nval = self.get_item(upg['new'])
+                            if nval:
+                                # Conflicting item exists, with non-null value.
                                 raise UpgradeError(
                                     'ERROR: Cannot upgrade deprecated '
                                     f'item "{msg}" because the upgraded '
                                     'item already exists'
                                 )
+                            self.put_item(upg['new'],
+                                          upg['cvt'].convert(old))
         if warnings:
             level = WARNING
             if self.descr == self.SITE_CONFIG:
