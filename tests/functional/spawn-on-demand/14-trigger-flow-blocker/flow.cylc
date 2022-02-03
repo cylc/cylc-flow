@@ -1,0 +1,27 @@
+# This workflow should behave the same as if 3/foo is not force-triggered.
+
+# Force-triggering 3/foo puts a running no-flow task in the way of the main flow.
+# When 2/foo tries to spawn its successor 3/foo, we merge its flow number into
+# the existing 3/foo, which now belongs to a flow so it needs to retroactively
+# spawn its successor 4/foo and its child 3/bar.
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 4
+    runahead limit = P1
+    [[graph]]
+        P1 = "foo:start => bar"
+[runtime]
+    [[foo]]
+        script = """
+            cylc__job__wait_cylc_message_started
+            if ((CYLC_TASK_CYCLE_POINT == 1)); then
+                # Force trigger 3/foo while 2/foo is runahead limited.
+                expected="foo, 2, waiting, unheld, not-queued, runahead"
+                diff <(cylc dump -t "${CYLC_WORKFLOW_NAME}" | grep 'foo, 2') \
+                     <(echo "$expected")
+                cylc trigger $CYLC_WORKFLOW_NAME//3/foo
+            fi
+         """
+    [[bar]]

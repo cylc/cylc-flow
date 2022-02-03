@@ -563,9 +563,19 @@ class TaskPool:
             next_task = (
                 self._get_hidden_task_by_id(taskid)
                 or self._get_main_task_by_id(taskid)
-                or self.spawn_task(
-                    itask.tdef.name, next_point, itask.flow_nums)
             )
+            if next_task is None:
+                # Does not exist yet, spawn it.
+                next_task = self.spawn_task(
+                    itask.tdef.name, next_point, itask.flow_nums)
+            else:
+                # Already exists
+                if not next_task.flow_nums and not next_task.state.is_runahead:
+                    # Does not belong to a flow (force-triggered). Now (merge)
+                    # it does, so spawn successor, and children if needed.
+                    self.spawn_successor(next_task)
+                    self.spawn_on_all_outputs(next_task, completed_only=True)
+                next_task.merge_flows(itask.flow_nums)
             if next_task:
                 self.add_to_pool(next_task)
                 return next_task
@@ -1140,7 +1150,11 @@ class TaskPool:
                 or self._get_main_task_by_id(c_taskid)
             )
             if c_task is not None:
-                # Child already spawned, update it.
+                # Child already exists, update it.
+                if not c_task.flow_nums:
+                    # Child does not belong to a flow (force-triggered). Now
+                    # (merging) it does, so spawn outputs completed so far.
+                    self.spawn_on_all_outputs(c_task, completed_only=True)
                 c_task.merge_flows(itask.flow_nums)
                 LOG.info(
                     f"[{c_task}] Merged in flow(s) "
@@ -1217,14 +1231,25 @@ class TaskPool:
             if itask.identity == self.stop_task_id:
                 self.stop_task_finished = True
 
-    def spawn_on_all_outputs(self, itask):
-        """Spawn on all of itask's outputs regardless of completion.
+    def spawn_on_all_outputs(self, itask, completed_only=False):
+        """Spawn on all (or all completed) task outputs.
 
-        Do not set the associated prerequisites of spawned children satisfied.
-        Used in Cylc 7 Back Compat mode for pre-spawning waiting tasks.
+        completed_only=False:
+           Used in Cylc 7 Back Compat mode for pre-spawning waiting tasks. Do
+           not set the associated prerequisites of spawned children satisfied.
+
+        completed_only=True:
+           Used to retroactively spawn on already-completed outputs when a flow
+           merges into a force-triggered no-flow task. In this case, do set the
+           associated prerequisites of spawned children to satisifed.
 
         """
-        for output in itask.state.outputs._by_message:
+        if completed_only:
+            outputs = itask.state.outputs.get_completed()
+        else:
+            outputs = itask.state.outputs._by_message
+
+        for output in outputs:
             try:
                 children = itask.graph_children[output]
             except KeyError:
@@ -1244,8 +1269,13 @@ class TaskPool:
                     continue
                 # Spawn child only if itask.flow_nums is not empty.
                 c_task = self.spawn_task(c_name, c_point, itask.flow_nums)
-                if c_task is not None:
-                    self.add_to_pool(c_task)
+                if completed_only:
+                    c_task.state.satisfy_me({
+                        (str(itask.point), itask.tdef.name, output)
+                    })
+                    self.data_store_mgr.delta_task_prerequisite(c_task)
+
+                self.add_to_pool(c_task)
 
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if name.point is within various workflow limits."""
