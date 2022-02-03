@@ -1,0 +1,19 @@
+#!Jinja2
+
+[scheduling]
+    initial cycle point = 1
+    final cycle point = 5
+    cycling mode = integer
+    runahead limit = P1
+    [[graph]]
+        P1 = x
+
+[runtime]
+    [[x]]
+        script = """
+            cylc__job__wait_cylc_message_started
+            if ((CYLC_TASK_CYCLE_POINT == 1)); then
+                cylc trigger "${CYLC_WORKFLOW_ID}//{{cycle}}/x"
+            fi
+            sleep 1
+        """
