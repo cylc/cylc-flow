@@ -538,7 +538,9 @@ class TaskPool:
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
-    def spawn_successor(self, itask: TaskProxy) -> Optional[TaskProxy]:
+    def spawn_successor_if_parentless(
+            self, itask: TaskProxy
+    ) -> Optional[TaskProxy]:
         """Spawn next-cycle instance of itask if parentless.
 
         This includes:
@@ -573,7 +575,7 @@ class TaskPool:
                 if not next_task.flow_nums and not next_task.state.is_runahead:
                     # Does not belong to a flow (force-triggered). Now (merge)
                     # it does, so spawn successor, and children if needed.
-                    self.spawn_successor(next_task)
+                    self.spawn_successor_if_parentless(next_task)
                     self.spawn_on_all_outputs(next_task, completed_only=True)
                 next_task.merge_flows(itask.flow_nums)
             if next_task:
@@ -607,17 +609,15 @@ class TaskPool:
             # implicit prev-instance parent
             return
 
-        if not itask.flow_nums:
-            # No reflow
-            return
-
-        if not runahead_limit_point:
-            return
-
-        # Autospawn successor of itask if parentless.
-        n_task = self.spawn_successor(itask)
-        if n_task and n_task.point <= runahead_limit_point:
-            self.release_runahead_task(n_task, runahead_limit_point)
+        # Autospawn successor of itask if parentless and reflowing.
+        if itask.flow_nums:
+            n_task = self.spawn_successor_if_parentless(itask)
+            if (
+                n_task and
+                runahead_limit_point and
+                n_task.point <= runahead_limit_point
+            ):
+                self.release_runahead_task(n_task, runahead_limit_point)
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool (e.g. after a reload)."""
