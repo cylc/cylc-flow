@@ -573,12 +573,24 @@ class TaskPool:
                     itask.tdef.name, next_point, itask.flow_nums)
             else:
                 # Already exists
-                if not next_task.flow_nums and not next_task.state.is_runahead:
-                    # Does not belong to a flow (force-triggered). Now (merge)
-                    # it does, so spawn successor, and children if needed.
-                    self.spawn_successor(next_task)
-                    self.spawn_on_all_outputs(next_task, completed_only=True)
+                retroactive_spawn = (
+                    not next_task.flow_nums
+                    and not next_task.state.is_runahead
+                )
                 next_task.merge_flows(itask.flow_nums)
+                LOG.info(
+                    f"[{next_task}] merged in flow(s) "
+                    f"{','.join(str(f) for f in itask.flow_nums)}"
+                )
+                if retroactive_spawn:
+                    # Did not belong to a flow (force-triggered) before merge.
+                    # Now it does, so spawn successor, and children if needed.
+                    LOG.info(
+                        f"[{next_task}] retroactive spawning post flow merge."
+                    )
+                    self.spawn_successor_if_parentless(next_task)
+                    self.spawn_on_all_outputs(next_task, completed_only=True)
+
             if next_task:
                 self.add_to_pool(next_task)
                 return next_task
@@ -1169,7 +1181,7 @@ class TaskPool:
                     self.spawn_on_all_outputs(c_task, completed_only=True)
                 c_task.merge_flows(itask.flow_nums)
                 LOG.info(
-                    f"[{c_task}] Merged in flow(s) "
+                    f"[{c_task}] merged in flow(s) "
                     f"{','.join(str(f) for f in itask.flow_nums)}"
                 )
                 self.workflow_db_mgr.put_insert_task_states(
