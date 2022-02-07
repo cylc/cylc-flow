@@ -508,6 +508,7 @@ class CylcReviewService(object):
 
     def get_file(self, user, suite, path, path_in_tar=None, mode=None):
         """Returns file information / content or a cherrypy response."""
+        suite = suite.replace('%2F', '/')
         f_name = self._get_user_suite_dir(user, suite, path)
         self._check_file_path(path)
         view_size_max = self.VIEW_SIZE_MAX
@@ -614,7 +615,7 @@ class CylcReviewService(object):
     def viewsearch(self, user, suite, path=None, path_in_tar=None, mode=None,
                    search_string=None, search_mode=None):
         """Search a text log file."""
-        # get file or serve raw data
+        # get file or serve raw
         file_output = self.get_file(
             user, suite, path, path_in_tar=path_in_tar, mode=mode)
         if isinstance(file_output, tuple):
@@ -673,7 +674,8 @@ class CylcReviewService(object):
         # Log files with +TZ in name end up with space instead of plus sign, so
         # put plus sign back in (https://github.com/cylc/cylc-flow/issues/4260)
         path = re.sub(r"(log\.\S+\d{2})\s(\d{2,4})$", r"\1+\2", path)
-        
+        suite = suite.replace('%2F', '/')
+
         # get file or serve raw data
         file_output = self.get_file(
             user, suite, path, path_in_tar=path_in_tar, mode=mode)
