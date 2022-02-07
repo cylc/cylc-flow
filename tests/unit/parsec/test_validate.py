@@ -15,14 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit Tests for cylc.flow.parsec.validate.ParsecValidator.coerce methods."""
 
+from typing import List
+
 import pytest
+from pytest import approx
 
 from cylc.flow.parsec.config import ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.exceptions import IllegalValueError
 from cylc.flow.parsec.validate import (
-    CylcConfigValidator as VDR, DurationFloat, ListValueError,
-    IllegalItemError, ParsecValidator, parsec_validate)
+    CylcConfigValidator as VDR,
+    DurationFloat,
+    ListValueError,
+    IllegalItemError,
+    ParsecValidator,
+    parsec_validate
+)
 
 
 @pytest.fixture
@@ -327,11 +335,9 @@ def test_coerce_boolean():
             validator.coerce_boolean(value, ['whatever'])
 
 
-def test_coerce_float():
-    """Test coerce_float."""
-    validator = ParsecValidator()
-    # The good
-    for value, result in [
+@pytest.mark.parametrize(
+    'value, expected',
+    [
         ('3', 3.0),
         ('9.80', 9.80),
         ('3.141592654', 3.141592654),
@@ -345,64 +351,84 @@ def test_coerce_float():
         ('1e20', 1.0e20),
         ('6.02e23', 6.02e23),
         ('-1.6021765e-19', -1.6021765e-19),
-        ('6.62607004e-34', 6.62607004e-34)
-    ]:
-        assert pytest.approx(
-            validator.coerce_float(value, ['whatever']), result)
-    assert validator.coerce_int('', ['whatever']) is None  # not a number
-    # The bad
-    for value in [
-        'None', ' Who cares? ', 'True', '[]', '[3.14]', '3.14, 2.72'
-    ]:
-        with pytest.raises(IllegalValueError):
-            validator.coerce_float(value, ['whatever'])
+        ('6.62607004e-34', 6.62607004e-34),
+    ]
+)
+def test_coerce_float(value: str, expected: float):
+    """Test coerce_float."""
+    assert (
+        ParsecValidator.coerce_float(value, ['whatever']) == approx(expected)
+    )
 
 
-def test_coerce_float_list():
-    """Test coerce_float_list."""
-    validator = ParsecValidator()
-    # The good
-    for value, results in [
+def test_coerce_float__empty():
+    # not a number
+    assert ParsecValidator.coerce_float('', ['whatever']) is None
+
+
+@pytest.mark.parametrize(
+    'value',
+    ['None', ' Who cares? ', 'True', '[]', '[3.14]', '3.14, 2.72']
+)
+def test_coerce_float__bad(value: str):
+    with pytest.raises(IllegalValueError):
+        ParsecValidator.coerce_float(value, ['whatever'])
+
+
+@pytest.mark.parametrize(
+    'value, expected',
+    [
         ('', []),
         ('3', [3.0]),
         ('2*3.141592654', [3.141592654, 3.141592654]),
         ('12*8, 8*12.0', [8.0] * 12 + [12.0] * 8),
         ('-3, -2, -1, -0.0, 1.0', [-3.0, -2.0, -1.0, -0.0, 1.0]),
         ('6.02e23, -1.6021765e-19, 6.62607004e-34',
-         [6.02e23, -1.6021765e-19, 6.62607004e-34])
-    ]:
-        items = validator.coerce_float_list(value, ['whatever'])
-        for item, result in zip(items, results):
-            pytest.approx(item, result)
-    # The bad
-    for value in [
-        'None', 'e, i, e, i, o', '[]', '[3.14]', 'pi, 2.72', '2*True'
-    ]:
-        with pytest.raises(IllegalValueError):
-            validator.coerce_float_list(value, ['whatever'])
+         [6.02e23, -1.6021765e-19, 6.62607004e-34]),
+    ]
+)
+def test_coerce_float_list(value: str, expected: List[float]):
+    """Test coerce_float_list."""
+    items = ParsecValidator.coerce_float_list(value, ['whatever'])
+    assert items == approx(expected)
 
 
-def test_coerce_int():
-    """Test coerce_int."""
-    validator = ParsecValidator()
-    # The good
-    for value, result in [
+@pytest.mark.parametrize(
+    'value',
+    ['None', 'e, i, e, i, o', '[]', '[3.14]', 'pi, 2.72', '2*True']
+)
+def test_coerce_float_list__bad(value: str):
+    with pytest.raises(IllegalValueError):
+        ParsecValidator.coerce_float_list(value, ['whatever'])
+
+
+@pytest.mark.parametrize(
+    'value, expected',
+    [
         ('0', 0),
         ('3', 3),
         ('-3', -3),
         ('-0', -0),
         ('653456', 653456),
         ('-8362583645365', -8362583645365)
-    ]:
-        pytest.approx(
-            validator.coerce_int(value, ['whatever']), result)
-    assert validator.coerce_int('', ['whatever']) is None  # not a number
-    # The bad
-    for value in [
-        'None', ' Who cares? ', 'True', '4.8', '[]', '[3]', '60*60'
-    ]:
-        with pytest.raises(IllegalValueError):
-            validator.coerce_int(value, ['whatever'])
+    ]
+)
+def test_coerce_int(value: str, expected: int):
+    """Test coerce_int."""
+    assert ParsecValidator.coerce_int(value, ['whatever']) == expected
+
+
+def test_coerce_int__empty():
+    assert ParsecValidator.coerce_int('', ['whatever']) is None  # not a number
+
+
+@pytest.mark.parametrize(
+    'value',
+    ['None', ' Who cares? ', 'True', '4.8', '[]', '[3]', '60*60']
+)
+def test_coerce_int__bad(value: str):
+    with pytest.raises(IllegalValueError):
+        ParsecValidator.coerce_int(value, ['whatever'])
 
 
 def test_coerce_int_list():
@@ -590,23 +616,28 @@ def test_coerce_interval():
             validator.coerce_interval(value, ['whatever'])
 
 
-def test_coerce_interval_list():
+@pytest.mark.parametrize(
+    'value, expected',
+    [
+        ('', []),
+        ('P3D', [DurationFloat(259200)]),
+        ('P3D, PT10M10S', [DurationFloat(259200), DurationFloat(610)]),
+        ('25*PT30M,10*PT1H',
+         [DurationFloat(1800)] * 25 + [DurationFloat(3600)] * 10)
+    ]
+)
+def test_coerce_interval_list(value: str, expected: List[DurationFloat]):
     """Test coerce_interval_list."""
-    validator = VDR()
-    # The good
-    for value, results in [
-            ('', []),
-            ('P3D', [DurationFloat(259200)]),
-            ('P3D, PT10M10S', [DurationFloat(259200), DurationFloat(610)]),
-            ('25*PT30M,10*PT1H',
-             [DurationFloat(1800)] * 25 + [DurationFloat(3600)] * 10)]:
-        items = validator.coerce_interval_list(value, ['whatever'])
-        for item, result in zip(items, results):
-            assert pytest.approx(item, result)
-    # The bad
-    for value in ['None', '5 days', '20', 'PT10S, -12']:
-        with pytest.raises(IllegalValueError):
-            validator.coerce_interval_list(value, ['whatever'])
+    assert VDR.coerce_interval_list(value, ['whatever']) == approx(expected)
+
+
+@pytest.mark.parametrize(
+    'value',
+    ['None', '5 days', '20', 'PT10S, -12']
+)
+def test_coerce_interval_list__bad(value: str):
+    with pytest.raises(IllegalValueError):
+        VDR.coerce_interval_list(value, ['whatever'])
 
 
 def test_coerce_parameter_list():
