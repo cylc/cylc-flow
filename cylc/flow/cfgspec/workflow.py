@@ -1129,7 +1129,7 @@ with Conf(
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
 
-                The ``meta`` section containins metadata items for this task or
+                The ``meta`` section contains metadata items for this task or
                 family namespace. The items ``title``, ``description`` and
                 ``URL`` are pre-defined and are used by Cylc. Others can be
                 user-defined and passed to task event handlers to be

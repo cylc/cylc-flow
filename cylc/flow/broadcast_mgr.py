@@ -65,7 +65,7 @@ class BroadcastMgr:
         """Get queued ext trigger messages and try to satisfy itask.
 
         Ext-triggers are pushed by the remote end, so we can check for
-        new messages and satisfy dependendent tasks at the same time.
+        new messages and satisfy dependent tasks at the same time.
         Return True if itask has a newly satisfied ext-trigger.
         """
         while not ext_trigger_queue.empty():
