@@ -623,13 +623,14 @@ with Conf(
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
-            Choice of integer cycling or one of several calendars.
+            Choice of :term:`integer cycling` or one of several
+            :term:`datetime cycling` calendars.
 
-            Cylc runs using the proleptic Gregorian calendar by default.
-            This allows you to run the workflow with the 360 day
-            calendar (12 months of 30 days in a year) OR integer cycling. It
-            also supports use of the 365 (never a leap year) and 366 (always a
-            leap year) calendars.
+            Cylc runs workflows using the proleptic Gregorian calendar
+            by default. This setting allows you to instead choose
+            integer cycling, or one of the other supported non-Gregorian
+            datetime calendars: 360 day (12 months of 30 days in a year),
+            365 day (never a leap year) and 366 day (always a leap year).
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
             How many cycles ahead of the slowest tasks the fastest may run.
