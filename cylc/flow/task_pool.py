@@ -822,7 +822,7 @@ class TaskPool:
                 itask.copy_to_reload_successor(new_task)
                 self._swap_out(new_task)
                 LOG.info(f"[{itask}] reloaded task definition")
-                if itask.state(*TASK_STATUSES_ACTIVE):
+                if itask.state(*TASK_STATUSES_ACTIVE, TASK_STATUS_PREPARING):
                     LOG.warning(
                         f"[{itask}] active with pre-reload settings"
                     )
@@ -898,6 +898,8 @@ class TaskPool:
                 and itask.state(*TASK_STATUSES_ACTIVE)
                 and not itask.state.kill_failed
             )
+            # we don't need to check for preparing tasks because they will be
+            # reset to waiting on restart
             for itask in self.get_tasks()
         )
 
