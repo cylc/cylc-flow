@@ -218,6 +218,8 @@ def context(app):
     widget = urwid.ListBox(
         urwid.SimpleFocusListWalker(
             [
+                urwid.Text(f'id: {value["id_"]}'),
+                urwid.Divider(),
                 urwid.Text('Action'),
                 urwid.Button(
                     '(cancel)',
@@ -236,5 +238,5 @@ def context(app):
 
     return (
         widget,
-        {'width': 30, 'height': 12}
+        {'width': 30, 'height': 15}
     )

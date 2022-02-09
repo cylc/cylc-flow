@@ -261,7 +261,7 @@ def test_compute_tree():
     # the cycle point node
     cycle = tree['children'][0]
     assert cycle['type_'] == 'cycle'
-    assert cycle['id_'] == '1'
+    assert cycle['id_'] == '//1'
     assert list(cycle['data']) == [
         'id',
         'cyclePoint'
