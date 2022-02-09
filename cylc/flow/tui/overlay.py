@@ -231,7 +231,11 @@ def context(app):
                     mutation,
                     on_press=partial(_mutate, mutation)
                 )
-                for mutation in list_mutations(selection)
+                for mutation in (
+                    list_mutations(selection)
+                    if app.client
+                    else []
+                )
             ]
         )
     )

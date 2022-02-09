@@ -276,7 +276,7 @@ class NaturalSort:
 def dummy_flow(data):
     return add_node(
         'workflow',
-        '',
+        data['id'],
         {},
         data
     )

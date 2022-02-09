@@ -319,6 +319,7 @@ class TuiApp:
             })
         except (ClientError, ClientTimeout) as exc:
             # catch network / client errors
+            self.client = None
             self.set_header([('workflow_error', str(exc))])
             return False
 
