@@ -23,6 +23,13 @@ from typing import Callable, Iterable, List, Tuple, Union
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_state import (
+    TASK_STATUS_WAITING,
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUCCEEDED,
+)
 
 
 # NOTE: foo & bar have no parents so at start-up (even with the workflow
@@ -405,3 +412,29 @@ async def test_hold_point(
 
     assert task_pool.tasks_to_hold == set()
     assert db_select(example_flow, True, 'tasks_to_hold') == []
+
+
+@pytest.mark.parametrize(
+    'status,should_trigger',
+    [
+        (TASK_STATUS_WAITING, True),
+        (TASK_STATUS_PREPARING, False),
+        (TASK_STATUS_SUBMITTED, False),
+        (TASK_STATUS_RUNNING, False),
+        (TASK_STATUS_SUCCEEDED, True),
+    ]
+)
+async def test_trigger_states(status, should_trigger, one, run):
+    """It should only trigger tasks in compatible states."""
+
+    async with run(one):
+        task = one.pool.filter_task_proxies('1/a')[0][0]
+
+        # reset task a to the provided state
+        task.state.reset(status)
+
+        # try triggering the task
+        one.pool.force_trigger_tasks('1/a')
+
+        # check whether the task triggered
+        assert task.is_manual_submit == should_trigger
