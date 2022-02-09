@@ -97,6 +97,9 @@ access to information on configured platforms.
 
 ### Fixes
 
+[#4667](https://github.com/cylc/cylc-flow/pull/4667) - Check manually triggered
+tasks are not already preparing for job submission.
+
 [#4640](https://github.com/cylc/cylc-flow/pull/4640) - Fix manual triggering of
 runahead-limited parentless tasks.
 
