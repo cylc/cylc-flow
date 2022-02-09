@@ -309,7 +309,7 @@ class TuiApp:
                     }
                 }
             )
-        except WorkflowStopped:
+        except (WorkflowStopped):
             self.client = None
             return dummy_flow({
                 'name': self.reg,
@@ -319,7 +319,6 @@ class TuiApp:
             })
         except (ClientError, ClientTimeout) as exc:
             # catch network / client errors
-            self.client = None
             self.set_header([('workflow_error', str(exc))])
             return False
 
