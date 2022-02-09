@@ -142,7 +142,7 @@ Event Types
 ^^^^^^^^^^^
 
 Coroutines must be decorated using one of the main loop decorators. The
-choise of decorator effects when the coroutine is called and what
+choice of decorator effects when the coroutine is called and what
 arguments are provided to it.
 
 The available event types are:

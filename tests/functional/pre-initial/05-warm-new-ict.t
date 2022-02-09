@@ -27,7 +27,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
-workflow_run_ok "${TEST_NAME}" cylc play --startcp=20130101T0600Z --reference-test \
-    --debug --no-detach "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --startcp=20130101T0600Z \
+    --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 purge

@@ -110,7 +110,7 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     tgt = tgt.resolve()
 
     # extract resources
-    extract_resource(src, tgt)
+    extract_resource(src, tgt, is_tutorial)
     if is_tutorial:
         set_api_key(tgt)
 
@@ -128,13 +128,13 @@ def _backup(tgt: Path) -> None:
     shutil.move(str(tgt), str(backup))
 
 
-def extract_resource(src: Path, tgt: Path) -> None:
+def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
     """Extract src into tgt.
 
     NOTE: src can be a dir or a file.
     """
     LOG.info(f"Extracting {src.relative_to(RESOURCE_DIR)} to {tgt}")
-    if tgt.exists():
+    if is_tutorial and tgt.exists():
         # target exists, back up the old copy
         _backup(tgt)
 

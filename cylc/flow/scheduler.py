@@ -1279,6 +1279,9 @@ class Scheduler:
             self.task_job_mgr.task_remote_mgr.rsync_includes = (
                 self.config.get_validated_rsync_includes())
 
+            meth = LOG.debug
+            if self.options.reftest or self.options.genref:
+                meth = LOG.info
             for itask in self.task_job_mgr.submit_task_jobs(
                 self.workflow,
                 self.pre_prep_tasks,
@@ -1287,7 +1290,7 @@ class Scheduler:
                 self.config.run_mode('simulation')
             ):
                 # (Not using f"{itask}"_here to avoid breaking func tests)
-                LOG.debug(
+                meth(
                     f"{itask.identity} -triggered off "
                     f"{itask.state.get_resolved_dependencies()}"
                 )

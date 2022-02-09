@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,18 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test job log NN link correctness on reaching 100, localhost.
+
+# Check correct behaviour if a parentless task is manually triggered whilst
+# runahead-limited. See GitHub #4619.
+
 . "$(dirname "$0")/test_header"
 set_test_number 2
-
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-mkdir -p "${WORKFLOW_RUN_DIR}/.service/"
-sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" <'db.sqlite3'
-
-workflow_run_ok "${TEST_NAME_BASE}-restart" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
-
-purge
+reftest
 exit

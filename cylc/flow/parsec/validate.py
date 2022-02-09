@@ -116,7 +116,7 @@ class ParsecValidator:
         ),
         V_RANGE: (
             'integer range',
-            'An integer range specified by a minumum and maximum value.',
+            'An integer range specified by a minimum and maximum value.',
             {
                 '1..5': 'The numbers 1 to 5 inclusive.',
             }

@@ -22,6 +22,7 @@ set_test_number 2
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+mkdir -p "${WORKFLOW_RUN_DIR}/.service/"
 sqlite3 "${WORKFLOW_RUN_DIR}/.service/db" <'db.sqlite3'
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
     cylc play --reference-test --debug --no-detach  \

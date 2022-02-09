@@ -623,13 +623,14 @@ with Conf(
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
-            Choice of integer cycling or one of several calendars.
+            Choice of :term:`integer cycling` or one of several
+            :term:`datetime cycling` calendars.
 
-            Cylc runs using the proleptic Gregorian calendar by default.
-            This allows you to run the workflow with the 360 day
-            calendar (12 months of 30 days in a year) OR integer cycling. It
-            also supports use of the 365 (never a leap year) and 366 (always a
-            leap year) calendars.
+            Cylc runs workflows using the proleptic Gregorian calendar
+            by default. This setting allows you to instead choose
+            integer cycling, or one of the other supported non-Gregorian
+            datetime calendars: 360 day (12 months of 30 days in a year),
+            365 day (never a leap year) and 366 day (always a leap year).
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
             How many cycles ahead of the slowest tasks the fastest may run.
@@ -977,6 +978,16 @@ with Conf(
 
                 If no parents are listed default is ``root``.
             ''')
+            Conf('script', VDR.V_STRING, desc=dedent('''
+                The main custom script invoked from the task job script.
+
+                It can be an external command or script, or inlined scripting.
+
+                See :ref:`Task Job Script Variables` for the list of variables
+                available in the task execution environment.
+            ''') + get_script_common_text(
+                this='script', example='my_script.sh'
+            ))
             Conf('init-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script before the task
                 execution environment is configured.
@@ -1035,13 +1046,6 @@ with Conf(
             ''') + get_script_common_text(
                 this='pre-script',
                 example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
-            ))
-            Conf('script', VDR.V_STRING, desc=dedent('''
-                The main custom script invoked from the task job script.
-
-                It can be an external command or script, or inlined scripting.
-            ''') + get_script_common_text(
-                this='script', example='my_script.sh'
             ))
             Conf('post-script', VDR.V_STRING, desc=dedent('''
                 Custom script invoked by the task job script immediately
@@ -1126,7 +1130,7 @@ with Conf(
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
 
-                The ``meta`` section containins metadata items for this task or
+                The ``meta`` section contains metadata items for this task or
                 family namespace. The items ``title``, ``description`` and
                 ``URL`` are pre-defined and are used by Cylc. Others can be
                 user-defined and passed to task event handlers to be

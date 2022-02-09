@@ -166,7 +166,7 @@ EVENTS_DESCR = {
 
         A workflow will stall if there are no tasks ready to run and no
         waiting external triggers, but the presence of incomplete
-        tasks or unsatisified prerequisites shows the workflow did not run to
+        tasks or unsatisfied prerequisites shows the workflow did not run to
         completion. The stall timer turns off on any post-stall task activity.
         It resets on restarting a stalled workflow.
 
@@ -388,7 +388,7 @@ with Conf('global.cylc', desc='''
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``[suite servers]run ports``.
-                   It can no longer be used to definine a non-contiguous port
+                   It can no longer be used to define a non-contiguous port
                    range.
             ''')
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc=f'''
@@ -1173,7 +1173,7 @@ with Conf('global.cylc', desc='''
             Conf('clean job submission environment', VDR.V_BOOLEAN, False,
                  desc='''
                 Job submission subprocesses inherit their parent environment by
-                default. Remote jobs inherit the default non-interative shell
+                default. Remote jobs inherit the default non-interactive shell
                 environment for their platform. Jobs on the scheduler host
                 inherit the scheduler environment (unless their job runner
                 prevents this).

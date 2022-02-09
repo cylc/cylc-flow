@@ -20,6 +20,9 @@
 # Uses the "script" command to make stdout log file look like a terminal.
 
 . "$(dirname "$0")/test_header"
+if [[ "$OSTYPE" != "linux-gnu"* ]]; then
+    skip_all "Tests not compatibile with $OSTYPE"
+fi
 set_test_number 8
 
 ANSI='\e\['

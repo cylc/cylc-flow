@@ -267,7 +267,7 @@ def main(_, options: 'Values', workflow_id: str) -> None:
                                 item['name'],
                                 item['cyclePoint'],
                                 item['state']]
-                        values.append('held' if item['isHeld'] else 'unheld')
+                        values.append('held' if item['isHeld'] else 'not-held')
                         values.append('queued' if item['isQueued']
                                       else 'not-queued')
                         values.append('runahead' if item['isRunahead']

@@ -100,6 +100,9 @@ access to information on configured platforms.
 [#4620](https://github.com/cylc/cylc-flow/pull/4620) -
 Fix queue interactions with the scheduler paused and task held states.
 
+[#4640](https://github.com/cylc/cylc-flow/pull/4640) - Fix manual triggering of
+runahead-limited parentless tasks.
+
 [#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
 invocation for remote scheduler host on a shared filesystem.
 

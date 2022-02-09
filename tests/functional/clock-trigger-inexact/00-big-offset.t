@@ -19,6 +19,7 @@
 # Test clock triggers (xtrigger and old-style) with a large inexact offset.
 
 . "$(dirname "$0")/test_header"
+skip_all 'TODO: fix test https://github.com/cylc/cylc-flow/issues/4633'
 set_test_number 5
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

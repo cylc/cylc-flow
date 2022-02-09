@@ -25,12 +25,19 @@ from cylc.flow.exceptions import WorkflowEventError
 from cylc.flow.pathutil import get_workflow_test_log_name
 
 
+RE_TRIG = re.compile(r'(.*? -triggered off \[.*\])$')
+
+
 def run_reftest(config, ctx):
     """Run reference test at shutdown."""
     reffilename = config.get_ref_log_name()
     curfilename = get_workflow_test_log_name(ctx.workflow)
     ref = _load_reflog(reffilename)
     cur = _load_reflog(curfilename)
+    if not ref:
+        raise WorkflowEventError("No triggering events in reference log.")
+    if not cur:
+        raise WorkflowEventError("No triggering events in test log.")
     if ref == cur:
         LOG.info('WORKFLOW REFERENCE TEST PASSED')
     else:
@@ -46,10 +53,9 @@ def run_reftest(config, ctx):
 def _load_reflog(filename):
     """Reference test: get trigger info from reference log."""
     res = []
-    re_trig = re.compile(r'(\[.+\]\s-triggered\soff\s\[.*\])$')
     with open(os.path.expandvars(filename), 'r') as reflog:
         for line in reflog:
-            match = re_trig.search(line)
+            match = RE_TRIG.search(line)
             if match:
                 res.append(match.groups()[0])
     res.sort()
