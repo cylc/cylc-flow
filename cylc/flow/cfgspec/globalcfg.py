@@ -166,7 +166,7 @@ EVENTS_DESCR = {
 
         A workflow will stall if there are no tasks ready to run and no
         waiting external triggers, but the presence of incomplete
-        tasks or unsatisified prerequisites shows the workflow did not run to
+        tasks or unsatisfied prerequisites shows the workflow did not run to
         completion. The stall timer turns off on any post-stall task activity.
         It resets on restarting a stalled workflow.
 
