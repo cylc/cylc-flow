@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from subprocess import Popen, PIPE
+import sys
 
+from cylc.flow.exceptions import ClientError
 from cylc.flow.tui.util import (
     extract_context
 )
@@ -176,6 +179,7 @@ def context_to_variables(context):
 
 
 def mutate(client, mutation, selection):
+    """Issue a mutation over a network interface."""
     context = extract_context(selection)
     variables = context_to_variables(context)
     request_string = generate_mutation(mutation, variables)
@@ -186,3 +190,43 @@ def mutate(client, mutation, selection):
             'variables': variables
         }
     )
+
+
+def offline_mutate(mutation, selection):
+    """Issue a mutation over the CLI or other offline interface."""
+    context = extract_context(selection)
+    variables = context_to_variables(context)
+    for workflow in variables['workflow']:
+        if mutation == 'play':
+            cli_cmd('play', workflow)
+        elif mutation == 'clean':  # noqa: SIM106
+            cli_cmd('clean', workflow)
+            # tui only supports single-workflow display ATM so
+            # clean should shut down the program
+            sys.exit()
+        else:
+            raise Exception(f'Invalid mutation: {mutation}')
+
+
+def cli_cmd(*cmd):
+    """Issue a CLI command.
+
+    Args:
+        cmd:
+            The command without the 'cylc' prefix'.
+
+    Rasies:
+        ClientError:
+            In the event of mishap for consistency with the network
+            client alternative.
+
+    """
+    proc = Popen(  # nosec (command constructed internally, no untrusted input)
+        ['cylc', *cmd],
+        stderr=PIPE,
+        stdout=PIPE,
+        text=True,
+    )
+    out, err = proc.communicate()
+    if proc.returncode != 0:
+        raise ClientError(err)

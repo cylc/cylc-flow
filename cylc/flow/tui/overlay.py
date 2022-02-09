@@ -42,6 +42,9 @@ import sys
 
 import urwid
 
+from cylc.flow.exceptions import (
+    ClientError,
+)
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_WAITING
@@ -54,7 +57,8 @@ from cylc.flow.tui import (
 )
 from cylc.flow.tui.data import (
     list_mutations,
-    mutate
+    mutate,
+    offline_mutate,
 )
 from cylc.flow.tui.util import (
     get_task_icon
@@ -208,12 +212,22 @@ def help_info(app):
 
 
 def context(app):
+    """An overlay for context menus."""
     value = app.tree_walker.get_focus()[0].get_node().get_value()
     selection = [value['id_']]  # single selection ATM
 
     def _mutate(mutation, _):
-        mutate(app.client, mutation, selection)
-        app.close_topmost()
+        nonlocal app
+        try:
+            if app.client:
+                mutate(app.client, mutation, selection)
+            else:
+                offline_mutate(mutation, selection)
+        except ClientError as exc:
+            # app.set_header([('workflow_error', str(exc))])
+            app.open_overlay(partial(error, text=str(exc)))
+        else:
+            app.close_topmost()
 
     widget = urwid.ListBox(
         urwid.SimpleFocusListWalker(
@@ -234,7 +248,7 @@ def context(app):
                 for mutation in (
                     list_mutations(selection)
                     if app.client
-                    else []
+                    else ['play', 'clean']
                 )
             ]
         )
@@ -243,4 +257,16 @@ def context(app):
     return (
         widget,
         {'width': 30, 'height': 15}
+    )
+
+
+def error(app, text=''):
+    """An overlay for unexpected errors."""
+    return (
+        urwid.ListBox([
+            urwid.Text('Error'),
+            urwid.Divider(),
+            urwid.Text(text),
+        ]),
+        {'width': 50, 'height': 40}
     )

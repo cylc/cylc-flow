@@ -309,7 +309,7 @@ class TuiApp:
                     }
                 }
             )
-        except (WorkflowStopped):
+        except WorkflowStopped:
             self.client = None
             return dummy_flow({
                 'name': self.reg,
