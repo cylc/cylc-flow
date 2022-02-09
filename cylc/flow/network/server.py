@@ -370,7 +370,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
                 Task identifier for the dependency of
                 an edge.
             right (str):
-                Task identifier for the dependant task
+                Task identifier for the dependent task
                 of an edge.
             is_suicide (bool):
                 True if edge represents a suicide trigger.
