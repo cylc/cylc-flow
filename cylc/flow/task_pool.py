@@ -1425,9 +1425,9 @@ class TaskPool:
                 # In pool already
                 itasks.append(itask)
 
-        # trigger tasks
+        # trigger tasks if not already preparing or active
         for itask in itasks:
-            if itask.state(*TASK_STATUSES_ACTIVE):
+            if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 LOG.warning(f"[{itask}] ignoring trigger - already active")
                 continue
             itask.is_manual_submit = True
