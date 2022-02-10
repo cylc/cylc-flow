@@ -70,7 +70,8 @@ from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
-from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
+from cylc.flow.parsec.exceptions import (
+    TemplateVarLanguageClash, ParsecError)
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
@@ -1668,7 +1669,7 @@ class Scheduler:
             LOG.error("Error during shutdown")
             # Suppress the reason for shutdown, which is logged separately
             exc.__suppress_context__ = True
-            if isinstance(exc, CylcError):
+            if isinstance(exc, (CylcError, ParsecError)):
                 LOG.error(f"{exc.__class__.__name__}: {exc}")
                 if cylc.flow.flags.verbosity > 1:
                     LOG.exception(exc)
@@ -1686,7 +1687,9 @@ class Scheduler:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
             LOG.error(f'Workflow shutting down - {reason}')
-        elif isinstance(reason, (CylcError, TemplateVarLanguageClash)):
+        elif isinstance(
+            reason, (CylcError, TemplateVarLanguageClash, ParsecError)
+        ):
             LOG.error(
                 "Workflow shutting down - "
                 f"{reason.__class__.__name__}: {reason}")
