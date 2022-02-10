@@ -737,6 +737,8 @@ class Scheduler:
             itask.platform['install target'] = (
                 get_install_target_from_platform(itask.platform))
             if (
+                # we don't need to remote-init for preparing tasks because
+                # they will be reset to waiting on restart
                 itask.state(*TASK_STATUSES_ACTIVE)
                 and not (
                     is_platform_with_target_in_list(
