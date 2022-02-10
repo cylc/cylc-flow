@@ -52,7 +52,11 @@ from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.id import Tokens
 from cylc.flow.flow_mgr import FlowMgr
 from cylc.flow.exceptions import (
-    CommandFailedError, CyclingError, CylcError, UserInputError
+    CommandFailedError,
+    CyclingError,
+    CylcConfigError,
+    CylcError,
+    UserInputError,
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
@@ -72,7 +76,7 @@ from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
-from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
@@ -125,12 +129,10 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 class SchedulerStop(CylcError):
     """Scheduler normal stop."""
-    pass
 
 
 class SchedulerError(CylcError):
     """Scheduler expected error stop."""
-    pass
 
 
 @dataclass
@@ -441,7 +443,11 @@ class Scheduler:
                 pri_dao.close()
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
-        self.load_flow_file()
+        try:
+            self.load_flow_file()
+        except ParsecError as exc:
+            exc.schd_expected = True
+            raise exc
         self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
@@ -1025,7 +1031,10 @@ class Scheduler:
         pri_dao = self.workflow_db_mgr.get_pri_dao()
         pri_dao.select_workflow_params(self._load_workflow_params)
 
-        self.load_flow_file(is_reload=True)
+        try:
+            self.load_flow_file(is_reload=True)
+        except (ParsecError, CylcConfigError) as exc:
+            raise CommandFailedError(f"{type(exc).__name__}: {exc}")
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
@@ -1122,6 +1131,7 @@ class Scheduler:
             self.config.cfg['scheduler'],
             glbl_cfg().get(['scheduler'])
         )
+
         self.flow_file_update_time = time()
         # Dump the loaded flow.cylc file for future reference.
         time_str = get_current_time_string(
@@ -1698,12 +1708,15 @@ class Scheduler:
             if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
-            LOG.error(f'Workflow shutting down - {reason}')
-        elif isinstance(reason, (CylcError, TemplateVarLanguageClash)):
+            LOG.error(f"Workflow shutting down - {reason}")
+        elif isinstance(reason, CylcError) or (
+            isinstance(reason, ParsecError) and reason.schd_expected
+        ):
             LOG.error(
-                "Workflow shutting down - "
-                f"{reason.__class__.__name__}: {reason}")
+                f"Workflow shutting down - {type(reason).__name__}: {reason}"
+            )
             if cylc.flow.flags.verbosity > 1:
+                # Print traceback
                 LOG.exception(reason)
         else:
             LOG.exception(reason)
