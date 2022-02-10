@@ -56,19 +56,23 @@ First Release Candidate for Cylc 8.
 
 ### Enhancements
 
-[#3931](https://github.com/cylc/cylc-flow/pull/3931) -
-Convert Cylc to use the new "Universal Identifier".
+[#4581](https://github.com/cylc/cylc-flow/pull/4581) - Job and task history
+is now loaded into the window about active tasks. Reflow future tasks now set
+to waiting.
 
-[#4506](https://github.com/cylc/cylc-flow/pull/4506) -
-Cylc no longer creates a `flow.cylc` symlink to a `suite.rc` file.
+[#3931](https://github.com/cylc/cylc-flow/pull/3931) - Convert Cylc to
+use the new "Universal Identifier".
+
+[#4506](https://github.com/cylc/cylc-flow/pull/4506) - Cylc no longer
+creates a `flow.cylc` symlink to a `suite.rc` file.
 This only affects you if you have used a prior Cylc 8 pre-release.
 
 [#4547](https://github.com/cylc/cylc-flow/pull/4547) - The max scan depth is
 now configurable in `global.cylc[install]max depth`, and `cylc install` will
 fail if the workflow ID would exceed this depth.
 
-[#4534](https://github.com/cylc/cylc-flow/pull/4534)
-- Permit jobs to be run on platforms with no $HOME directory.
+[#4534](https://github.com/cylc/cylc-flow/pull/4534) - Permit jobs
+to be run on platforms with no $HOME directory.
 
 [#4536](https://github.com/cylc/cylc-flow/pull/4536) - `cylc extract-resources`
 renamed `cylc get-resources` and small changes made:

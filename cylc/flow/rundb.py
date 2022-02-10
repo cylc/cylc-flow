@@ -168,7 +168,7 @@ class CylcWorkflowDAO:
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "db"
     MAX_TRIES = 100
-    RESTART_INCOMPAT_VERSION = "8.0b1"  # Can't restart if <= this version
+    RESTART_INCOMPAT_VERSION = "8.0b3"  # Can't restart if <= this version
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
@@ -275,6 +275,7 @@ class CylcWorkflowDAO:
         TABLE_TASK_PREREQUISITES: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
+            ["flow_nums", {"is_primary_key": True}],
             ["prereq_name", {"is_primary_key": True}],
             ["prereq_cycle", {"is_primary_key": True}],
             ["prereq_output", {"is_primary_key": True}],
@@ -823,7 +824,7 @@ class CylcWorkflowDAO:
             callback(row_idx, list(row))
 
     def select_task_prerequisites(
-        self, cycle: str, name: str
+        self, cycle: str, name: str, flow_nums: str
     ) -> List[Tuple[str, str, str, str]]:
         """Return prerequisites of a task of the given name & cycle point."""
         stmt = rf"""
@@ -836,9 +837,10 @@ class CylcWorkflowDAO:
                 {self.TABLE_TASK_PREREQUISITES}
             WHERE
                 cycle == ? AND
-                name == ?
+                name == ? AND
+                flow_nums == ?
         """  # nosec (table name is code constant)
-        stmt_args = [cycle, name]
+        stmt_args = [cycle, name, flow_nums]
         return list(self.connect().execute(stmt, stmt_args))
 
     def select_tasks_to_hold(self) -> List[Tuple[str, str]]:
@@ -876,6 +878,109 @@ class CylcWorkflowDAO:
             'submit_time', 'start_time', 'succeed_time'
         )
         return columns, list(self.connect().execute(stmt))
+
+    def select_tasks_for_datastore(
+        self, task_ids
+    ):
+        """Select state and outputs of specified tasks."""
+        if not task_ids:
+            return []
+        form_stmt = r"""
+            SELECT
+                %(task_states)s.cycle,
+                %(task_states)s.name,
+                %(task_states)s.flow_nums,
+                %(task_states)s.status,
+                MAX(%(task_states)s.submit_num),
+                %(task_outputs)s.outputs
+            FROM
+                %(task_states)s
+            LEFT OUTER JOIN
+                %(task_outputs)s
+            ON  %(task_states)s.cycle == %(task_outputs)s.cycle AND
+                %(task_states)s.name == %(task_outputs)s.name
+            WHERE
+                %(task_states)s.cycle || '/' || %(task_states)s.name IN (
+                    %(task_ids)s
+                )
+            GROUP BY
+                %(task_states)s.cycle, %(task_states)s.name
+        """
+        form_data = {
+            "task_states": self.TABLE_TASK_STATES,
+            "task_outputs": self.TABLE_TASK_OUTPUTS,
+            "task_ids": ', '.join(f"'{val}'" for val in task_ids),
+        }
+        stmt = form_stmt % form_data
+        return list(self.connect().execute(stmt))
+
+    def select_prereqs_for_datastore(
+        self, prereq_ids
+    ):
+        """Select prerequisites of specified tasks."""
+        if not prereq_ids:
+            return []
+        form_stmt = r"""
+            SELECT
+                cycle,
+                name,
+                prereq_name,
+                prereq_cycle,
+                prereq_output,
+                satisfied
+            FROM
+                %(prerequisites)s
+            WHERE
+                cycle || '/' || name || '/' || flow_nums IN (
+                    %(prereq_tasks_args)s
+                )
+        """
+        form_data = {
+            "prerequisites": self.TABLE_TASK_PREREQUISITES,
+            "prereq_tasks_args": ', '.join(f"'{val}'" for val in prereq_ids),
+        }
+        stmt = form_stmt % form_data
+        return list(self.connect().execute(stmt))
+
+    def select_jobs_for_datastore(
+        self, task_ids
+    ):
+        """Select jobs of of specified tasks."""
+        if not task_ids:
+            return []
+        form_stmt = r"""
+            SELECT
+                %(task_states)s.cycle,
+                %(task_states)s.name,
+                %(task_states)s.status,
+                %(task_states)s.submit_num,
+                %(task_jobs)s.time_submit,
+                %(task_jobs)s.time_run,
+                %(task_jobs)s.time_run_exit,
+                %(task_jobs)s.job_runner_name,
+                %(task_jobs)s.job_id,
+                %(task_jobs)s.platform_name
+            FROM
+                %(task_jobs)s
+            JOIN
+                %(task_states)s
+            ON  %(task_jobs)s.cycle == %(task_states)s.cycle AND
+                %(task_jobs)s.name == %(task_states)s.name AND
+                %(task_jobs)s.submit_num == %(task_states)s.submit_num
+            WHERE
+                %(task_states)s.cycle || '/' || %(task_states)s.name IN (
+                    %(task_ids)s
+                )
+            ORDER BY
+                %(task_states)s.submit_num DESC
+        """
+        form_data = {
+            "task_states": self.TABLE_TASK_STATES,
+            "task_jobs": self.TABLE_TASK_JOBS,
+            "task_ids": ', '.join(f"'{val}'" for val in task_ids),
+        }
+        stmt = form_stmt % form_data
+        return list(self.connect().execute(stmt))
 
     def vacuum(self):
         """Vacuum to the database."""
