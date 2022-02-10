@@ -103,12 +103,12 @@ def get_option_parser():
     )
 
     parser.add_option(
-        '--force',
-        help=("Allow cleaning of directories that contain workflow run dirs "
-              "(e.g. 'cylc clean foo' when foo contains run1, run2 etc.). "
-              "Warning: this might lead to remote installations and "
-              "symlink dir targets not getting removed."),
-        action='store_true', dest='force'
+        '--yes', '-y',
+        help=(
+            "Skip interactive prompt if trying to clean multiple "
+            "run directories at once."
+        ),
+        action='store_true', dest='skip_interactive'
     )
 
     parser.add_option(
@@ -137,7 +137,10 @@ def prompt(workflows):
             if ret.lower() == 'n':
                 sys.exit(1)
     else:
-        print('Use --force to remove multiple workflows.', file=sys.stderr)
+        print(
+            "Use --yes to remove multiple workflows in non-interactive mode.",
+            file=sys.stderr
+        )
         sys.exit(1)
 
 
@@ -173,7 +176,7 @@ async def run(*ids, opts=None):
     workflows, multi_mode = await scan(workflows, multi_mode)
 
     workflows.sort()
-    if multi_mode and not opts.force:
+    if multi_mode and not opts.skip_interactive:
         prompt(workflows)  # prompt for approval or exit
 
     for workflow in sorted(workflows):
