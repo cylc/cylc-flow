@@ -863,7 +863,7 @@ class Scheduler:
             except SchedulerStop:
                 LOG.info(f"Command succeeded: {cmdstr}")
                 raise
-            except (CommandFailedError, Exception) as exc:
+            except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 if (
                     cylc.flow.flags.verbosity > 1 or
@@ -1107,7 +1107,6 @@ class Scheduler:
             self.flow_file,
             self.options,
             self.template_vars,
-            is_reload=is_reload,
             xtrigger_mgr=self.xtrigger_mgr,
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(

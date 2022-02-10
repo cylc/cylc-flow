@@ -177,7 +177,6 @@ class WorkflowConfig:
         fpath: Union[Path, str],
         options: 'Values',
         template_vars: Optional[Mapping[str, Any]] = None,
-        is_reload: bool = False,
         output_fname: Optional[str] = None,
         xtrigger_mgr: Optional[XtriggerManager] = None,
         mem_log_func: Optional[Callable[[str], None]] = None,
