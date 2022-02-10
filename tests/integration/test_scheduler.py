@@ -91,25 +91,24 @@ async def test_resume_does_not_release_tasks(one: Scheduler, run: Callable):
 
 
 @pytest.mark.parametrize(
-    'errorname, errorclass',
+    'errorname, ErrorClass',
     [
         ('CylcError', CylcError),
         ('ParsecError', ParsecError)
     ]
 )
 async def test_shutdown_CylcError_log(
-    one: Scheduler, run: Callable, errorname: str, errorclass: Exception
+    one: Scheduler, run: Callable, errorname: str, ErrorClass: Exception
 ):
     """Test that if a capturable error occurs during shutdown, it is
     logged in one line."""
     schd = one
-
     async def mock_shutdown(*a, **k):
-        raise errorclass("Error on shutdown")
+        raise ErrorClass("Error on shutdown")
     setattr(schd, '_shutdown', mock_shutdown)
 
     log: pytest.LogCaptureFixture
-    with pytest.raises(errorclass) as exc:
+    with pytest.raises(ErrorClass) as exc:
         async with run(schd) as log:
             pass
     assert str(exc.value) == "Error on shutdown"
