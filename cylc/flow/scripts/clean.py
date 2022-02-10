@@ -32,7 +32,7 @@ Examples:
   # Remove the workflow at ~/cylc-run/foo/bar
   $ cylc clean foo/bar
 
-  # Remove multiple workflows
+  # Remove multiple workflows
   $ cylc clean one two three
 
   # Remove the workflow's log directory
@@ -86,7 +86,7 @@ def get_option_parser():
         '--rm', metavar='DIR[:DIR:...]',
         help=("Only clean the specified subdirectories (or files) in the "
               "run directory, rather than the whole run directory. "
-              "Accepts quoted globs. Implies --verbose."),
+              "Accepts quoted globs."),
         action='append', dest='rm_dirs', default=[]
     )
 
@@ -125,7 +125,7 @@ CleanOptions = Options(get_option_parser())
 
 
 def prompt(workflows):
-    print('Would remove the following workflows:')
+    print("Would clean the following workflows:")
     for workflow in workflows:
         print(f'  {workflow}')
 
