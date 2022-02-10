@@ -438,3 +438,34 @@ async def test_trigger_states(status, should_trigger, one, run):
 
         # check whether the task triggered
         assert task.is_manual_submit == should_trigger
+
+
+async def test_preparing_tasks_on_restart(one_conf, flow, scheduler, run):
+    """Preparing tasks should be reset to waiting on restart.
+
+    This forces preparation to be re-done on restart so that it uses the
+    new configuration.
+
+    See discussion on: https://github.com/cylc/cylc-flow/pull/4668
+
+    """
+    id_ = flow(one_conf)
+
+    # start the workflow, reset a task to preparing
+    one = scheduler(id_)
+    async with run(one):
+        task = one.pool.filter_task_proxies(['*'])[0][0]
+        task.state.reset(TASK_STATUS_PREPARING)
+
+    # when we restart the task should have been reset to waiting
+    one = scheduler(id_)
+    async with run(one):
+        task = one.pool.filter_task_proxies(['*'])[0][0]
+        assert task.state(TASK_STATUS_WAITING)
+        task.state.reset(TASK_STATUS_SUCCEEDED)
+
+    # whereas if we reset the task to succeeded the state is not reset
+    one = scheduler(id_)
+    async with run(one):
+        task = one.pool.filter_task_proxies(['*'])[0][0]
+        assert task.state(TASK_STATUS_SUCCEEDED)
