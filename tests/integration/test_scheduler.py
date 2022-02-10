@@ -20,6 +20,7 @@ import pytest
 from typing import Any, Callable
 
 from cylc.flow.exceptions import CylcError
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler
 
 Fixture = Any
@@ -89,22 +90,31 @@ async def test_resume_does_not_release_tasks(one: Scheduler, run: Callable):
         assert itask.state.is_held
 
 
-async def test_shutdown_CylcError_log(one: Scheduler, run: Callable):
-    """Test that if a CylcError occurs during shutdown, it is
+@pytest.mark.parametrize(
+    'errorname, errorclass',
+    [
+        ('CylcError', CylcError),
+        ('ParsecError', ParsecError)
+    ]
+)
+async def test_shutdown_CylcError_log(
+    one: Scheduler, run: Callable, errorname: str, errorclass: Exception
+):
+    """Test that if a capturable error occurs during shutdown, it is
     logged in one line."""
     schd = one
 
     async def mock_shutdown(*a, **k):
-        raise CylcError("Error on shutdown")
+        raise errorclass("Error on shutdown")
     setattr(schd, '_shutdown', mock_shutdown)
 
     log: pytest.LogCaptureFixture
-    with pytest.raises(CylcError) as exc:
+    with pytest.raises(errorclass) as exc:
         async with run(schd) as log:
             pass
     assert str(exc.value) == "Error on shutdown"
     last_record = log.records[-1]
-    assert last_record.message == "CylcError: Error on shutdown"
+    assert last_record.message == f"{errorname}: Error on shutdown"
     assert last_record.levelno == logging.ERROR
 
 
