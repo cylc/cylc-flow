@@ -29,6 +29,7 @@ from pkg_resources import parse_version
 from shutil import copy, rmtree
 from tempfile import mkstemp
 from typing import Any, Dict, List, Set, TYPE_CHECKING, Tuple
+from sqlite3 import OperationalError
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -223,13 +224,20 @@ class WorkflowDatabaseManager:
         self.copy_pri_to_pub()
 
     def on_workflow_shutdown(self):
-        """Close data access objects."""
+        """Close data access objects.
+
+        Delete database files if self.workflow_params_exists_and_empty
+        identifies these workflows as having failed on startup.
+        """
         if self.pri_dao:
             self.pri_dao.close()
             self.pri_dao = None
         if self.pub_dao:
             self.pub_dao.close()
             self.pub_dao = None
+        if self.workflow_params_exists_and_empty():
+            os.unlink(self.pri_path)
+            os.unlink(self.pub_path)
 
     def process_queued_ops(self) -> None:
         """Handle queued db operations for each task proxy."""
@@ -633,7 +641,13 @@ class WorkflowDatabaseManager:
         except FileNotFoundError:
             return False
         except ServiceFileError as exc:
-            raise ServiceFileError(f"Cannot restart - {exc}")
+            if not self.workflow_params_exists_and_empty():
+                raise ServiceFileError(f"Cannot restart - {exc}")
+            else:
+                LOG.warn(
+                    'Ignoring database from failed workflow startup.'
+                )
+                return False
         pri_dao = self.get_pri_dao()
         try:
             pri_dao.vacuum()
@@ -674,3 +688,18 @@ class WorkflowDatabaseManager:
         if last_run_ver <= restart_incompat_ver:
             raise ServiceFileError(
                 f"{incompat_msg} (workflow last run with Cylc {last_run_ver})")
+
+    def workflow_params_exists_and_empty(self) -> bool:
+        """Queries database for state of table "WORKFLOW_PARAMS".
+        """
+        pri_dao = self.get_pri_dao()
+        try:
+            wf_params = pri_dao.connect().execute(
+                rf'SELECT * FROM {self.TABLE_WORKFLOW_PARAMS}'
+            )
+        except OperationalError:
+            # Table doesn't exist.
+            return False
+        else:
+            # False if table empty.
+            return not wf_params.fetchall()
