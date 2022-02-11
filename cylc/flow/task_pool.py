@@ -585,8 +585,9 @@ class TaskPool:
                 if retroactive_spawn:
                     # Did not belong to a flow (force-triggered) before merge.
                     # Now it does, so spawn successor, and children if needed.
-                    LOG.info(
-                        f"[{next_task}] retroactive spawning post flow merge."
+                    LOG.debug(
+                        f"[{next_task}] spawning children retroactively"
+                        " post flow merge."
                     )
                     self.spawn_successor_if_parentless(next_task)
                     self.spawn_on_all_outputs(next_task, completed_only=True)
