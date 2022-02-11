@@ -844,8 +844,8 @@ with Conf('global.cylc', desc='''
 
             Cylc searches through the list of platform regexes in the reverse
             of the definition order to allow user defined platforms
-            to override site defined platforms. This means, for example, that
-            if were set ``[[a.*]]`` near the bottom of a configuration any
+            to override site defined platforms. This means, for example, that 
+            if ``[[a.*]]`` were set near the bottom of a configuration any 
             platform name beginning "a" would retrn that platform.
 
             .. note::
