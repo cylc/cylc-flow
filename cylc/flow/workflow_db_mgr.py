@@ -695,8 +695,9 @@ class WorkflowDatabaseManager:
         pri_dao = self.get_pri_dao()
         try:
             wf_params = pri_dao.connect().execute(
+                rf'SELECT * FROM {self.TABLE_WORKFLOW_PARAMS}',
                 # nosec (table name is a code constant)
-                rf'SELECT * FROM {self.TABLE_WORKFLOW_PARAMS}'
+                [self.KEY_CYLC_VERSION]
             )
         except OperationalError:
             # Table doesn't exist.
