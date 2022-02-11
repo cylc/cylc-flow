@@ -16,11 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from types import SimpleNamespace
+from typing import Callable, List
 
 import pytest
 
-from cylc.flow.scripts.clean import scan, run
+from cylc.flow.scripts.clean import CleanOptions, scan, run
 
 
 async def test_scan(tmp_run_dir):
@@ -44,7 +44,7 @@ async def test_scan(tmp_run_dir):
 
 
 @pytest.fixture
-def mute(monkeypatch):
+def mute(monkeypatch: pytest.MonkeyPatch) -> List[str]:
     """Stop cylc clean from doing anything and log all init_clean calls."""
     items = []
 
@@ -58,11 +58,10 @@ def mute(monkeypatch):
     return items
 
 
-async def test_multi(tmp_run_dir, mute):
+async def test_multi(tmp_run_dir: Callable, mute: List[str]):
     """It supports cleaning multiple workflows."""
     # cli opts
-    opts = SimpleNamespace()
-    opts.force = False
+    opts = CleanOptions()
 
     # create three dummy workflows
     tmp_run_dir('bar/pub/beer')
@@ -70,22 +69,22 @@ async def test_multi(tmp_run_dir, mute):
     tmp_run_dir('foo')
 
     # an explicit workflow ID goes straight through
-    mute[:] = []
+    mute.clear()
     await run('foo', opts=opts)
     assert mute == ['foo']
 
     # a partial hierarchical ID gets expanded to all workflows contained
     # in the hierarchy (note runs are a special case of hierarchical ID)
-    mute[:] = []
+    mute.clear()
     await run('bar', opts=opts)
     assert mute == ['bar/pub/beer']
 
     # test a mixture of explicit and partial IDs
-    mute[:] = []
+    mute.clear()
     await run('bar', 'baz', 'foo', opts=opts)
     assert mute == ['bar/pub/beer', 'baz/run1', 'foo']
 
     # test a glob
-    mute[:] = []
+    mute.clear()
     await run('*', opts=opts)
     assert mute == ['bar/pub/beer', 'baz/run1', 'foo']
