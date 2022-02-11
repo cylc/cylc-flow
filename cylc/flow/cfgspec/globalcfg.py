@@ -842,13 +842,19 @@ with Conf('global.cylc', desc='''
             ``desktop0000, .., desktop9999`` one would define platforms with
             names ``[[bigmachine[12]]]`` and ``[[desktop[0-9]{4}]]``.
 
+            Cylc searches through the list of platform regexes in the reverse
+            of the definition order to allow user defined platforms
+            to override site defined platforms. This means, for example, that
+            if were set ``[[a.*]]`` near the bottom of a configuration any
+            platform name beginning "a" would retrn that platform.
+
             .. note::
 
                Each possible match to the definition regular expression is
                considered a separate platform.
 
                If you had a supercomputer with multiple login nodes this would
-               be a single platform with multiple :cylc:conf:`hosts`
+               be a single platform with multiple :cylc:conf:`hosts`.
 
             .. seealso::
 
