@@ -38,13 +38,7 @@ create_test_global_config "" "
             # Need to override any symlink dirs set in global-tests.cylc:
             share/cycle =
 "
-init_workflow "${TEST_NAME_BASE}" << __FLOW__
-[scheduler]
-    allow implicit tasks = True
-[scheduling]
-    [[graph]]
-        R1 = jalad
-__FLOW__
+install_workflow "${TEST_NAME_BASE}" basic-workflow
 # Also create some other file
 touch "${WORKFLOW_RUN_DIR}/darmok.cylc"
 
