@@ -118,8 +118,20 @@ async def test_install(flow, scheduler, one_conf, run_dir):
     ).exists()
 
 
-async def test_task_pool(flow, scheduler, one_conf):
-    """You don't have to run the scheduler to play with the task pool."""
+async def test_task_pool(flow, scheduler, one_conf, start):
+    """You don't have to run the scheduler to play with the task pool.
+
+    There are two fixtures to start a scheduler:
+
+    `start`
+       Takes a scheduler through the startup sequence.
+    `run`
+       Takes a scheduler through the startup sequence, then sets the main loop
+       going.
+
+    Unless you need the Scheduler main loop running, use `start`.
+
+    """
     # Ensure that the correct number of tasks get added to the task pool.
 
     # create the flow
@@ -127,13 +139,10 @@ async def test_task_pool(flow, scheduler, one_conf):
     schd = scheduler(reg)
 
     # take it as far through the startup sequence as needed
-    await schd.install()
-    await schd.initialise()
-    await schd.configure()
-
-    # pump the scheduler's heart manually
-    schd.pool.release_runahead_tasks()
-    assert len(schd.pool.main_pool) == 1
+    async with start(schd):
+        # pump the scheduler's heart manually
+        schd.pool.release_runahead_tasks()
+        assert len(schd.pool.main_pool) == 1
 
 
 async def test_exception(flow, scheduler, run, one_conf, log_filter):

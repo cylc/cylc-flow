@@ -101,6 +101,9 @@ access to information on configured platforms.
 
 ### Fixes
 
+[#4620](https://github.com/cylc/cylc-flow/pull/4620) -
+Fix queue interactions with the scheduler paused and task held states.
+
 [#4667](https://github.com/cylc/cylc-flow/pull/4667) - Check manually triggered
 tasks are not already preparing for job submission.
 

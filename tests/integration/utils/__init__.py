@@ -31,28 +31,3 @@ def _rm_if_empty(path):
     except OSError:
         return False
     return True
-
-
-async def _poll_file(path, timeout=2, step=0.1, exists=True):
-    """Poll a file to wait for its creation or removal.
-
-    Arguments:
-        timeout (number):
-            Maximum time to wait in seconds.
-        step (number):
-            Polling interval in seconds.
-        exists (bool):
-            Set to True to check if a file exists, otherwise False.
-
-    Raises:
-        Exception:
-            If polling hits the timeout.
-
-    """
-    elapsed = 0
-    while path.exists() != exists:
-        await asyncio.sleep(step)
-        elapsed += step
-        if elapsed > timeout:
-            raise Exception(f'Timeout waiting for file creation: {path}')
-    return True

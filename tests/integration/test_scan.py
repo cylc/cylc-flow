@@ -310,7 +310,7 @@ async def test_max_depth_configurable(nested_dir, mock_glbl_cfg):
 async def test_workflow_params(
     flow,
     scheduler,
-    run,
+    start,
     one_conf,
     run_dir,
     mod_test_dir
@@ -323,7 +323,7 @@ async def test_workflow_params(
     """
     reg = flow(one_conf)
     schd = scheduler(reg)
-    async with run(schd):
+    async with start(schd):
         pipe = (
             # scan just this workflow
             scan(scan_dir=mod_test_dir)

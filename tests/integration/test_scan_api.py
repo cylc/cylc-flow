@@ -240,7 +240,7 @@ async def test_format_rich(flows, mod_test_dir):
 
 
 async def test_scan_cleans_stuck_contact_files(
-    run,
+    start,
     scheduler,
     flow,
     one_conf,
@@ -256,7 +256,7 @@ async def test_scan_cleans_stuck_contact_files(
     cont = srv_dir / WorkflowFiles.Service.CONTACT
 
     # run the flow, copy the contact, stop the flow, copy back the contact
-    async with run(schd):
+    async with start(schd):
         copytree(srv_dir, tmp_dir)
     rmtree(srv_dir)
     copytree(tmp_dir, srv_dir)

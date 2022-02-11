@@ -237,8 +237,8 @@ class Scheduler:
     curve_auth: Optional[ThreadAuthenticator] = None
     client_pub_key_dir: Optional[str] = None
 
-    # queue-released tasks still in prep
-    pre_submit_tasks: Optional[List[TaskProxy]] = None
+    # queue-released tasks awaiting job preparation
+    pre_prep_tasks: Optional[List[TaskProxy]] = None
 
     # profiling
     _profile_amounts: Optional[dict] = None
@@ -268,7 +268,7 @@ class Scheduler:
         # mutable defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
-        self.pre_submit_tasks = []
+        self.pre_prep_tasks = []
         self.bad_hosts: Set[str] = set()
 
         self.restored_stop_task_id = None
@@ -598,10 +598,9 @@ class Scheduler:
             LOG.info("Quiet mode on")
             LOG.setLevel(log_level)
 
-    async def start_scheduler(self):
+    async def run_scheduler(self):
         """Start the scheduler main loop."""
         try:
-            self._configure_contact()
             if self.is_restart:
                 self.restart_remote_init()
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
@@ -641,15 +640,10 @@ class Scheduler:
         finally:
             self.profiler.stop()
 
-    async def run(self):
-        """Run the startup sequence.
+    async def start(self):
+        """Run the startup sequence but don't set the main loop running.
 
-        * initialise
-        * configure
-        * start_servers
-        * start_scheduler
-
-        Lightweight wrapper for convenience.
+        Lightweight wrapper for testing convenience.
 
         """
         try:
@@ -657,11 +651,19 @@ class Scheduler:
             await self.configure()
             await self.start_servers()
             await self.log_start()
+            self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
-        else:
-            # note start_scheduler handles its own shutdown logic
-            await self.start_scheduler()
+
+    async def run(self):
+        """Run the startup sequence and set the main loop running.
+
+        Lightweight wrapper for testing convenience.
+
+        """
+        await self.start()
+        # note run_scheduler handles its own shutdown logic
+        await self.run_scheduler()
 
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
@@ -1252,20 +1254,27 @@ class Scheduler:
 
         """
         # Forget tasks that are no longer preparing for job submission.
-        self.pre_submit_tasks = [
-            itask for itask in self.pre_submit_tasks if
+        self.pre_prep_tasks = [
+            itask for itask in self.pre_prep_tasks if
             itask.waiting_on_job_prep
         ]
 
-        # Add newly released tasks to those still preparing.
-        self.pre_submit_tasks += self.pool.release_queued_tasks()
-
         if (
-            self.pre_submit_tasks and
-            not self.is_paused and
-            self.stop_mode is None and
-            self.auto_restart_time is None
+            not self.is_paused
+            and self.stop_mode is None
+            and self.auto_restart_time is None
         ):
+            # Add newly released tasks to those still preparing.
+            self.pre_prep_tasks += self.pool.release_queued_tasks(
+                # the number of tasks waiting to go through the task
+                # submission pipeline
+                self.pre_prep_tasks
+            )
+
+            if not self.pre_prep_tasks:
+                # No tasks to submit.
+                return
+
             # Start the job submission process.
             self.is_updated = True
 
@@ -1277,7 +1286,7 @@ class Scheduler:
                 meth = LOG.info
             for itask in self.task_job_mgr.submit_task_jobs(
                 self.workflow,
-                self.pre_submit_tasks,
+                self.pre_prep_tasks,
                 self.curve_auth,
                 self.client_pub_key_dir,
                 self.config.run_mode('simulation')

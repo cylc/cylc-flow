@@ -20,9 +20,8 @@ from functools import partial
 from pathlib import Path
 import pytest
 from shutil import rmtree
-from typing import List, TYPE_CHECKING, Tuple
+from typing import List, TYPE_CHECKING, Tuple, Set
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -33,11 +32,13 @@ from .utils import _rm_if_empty
 from .utils.flow_tools import (
     _make_flow,
     _make_scheduler,
-    _run_flow
+    _run_flow,
+    _start_flow,
 )
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.task_proxy import TaskProxy
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -160,15 +161,27 @@ def scheduler():
 
 
 @pytest.fixture(scope='module')
-def mod_run(run_dir: Path):
-    """Run a module-level flow."""
-    return partial(_run_flow, run_dir, None)
+def mod_start():
+    """Start a scheduler but don't set it running (module scope)."""
+    return partial(_start_flow, None)
 
 
 @pytest.fixture
-def run(run_dir: Path, caplog: pytest.LogCaptureFixture):
-    """Run a function-level flow."""
-    return partial(_run_flow, run_dir, caplog)
+def start(caplog: pytest.LogCaptureFixture):
+    """Start a scheduler but don't set it running."""
+    return partial(_start_flow, caplog)
+
+
+@pytest.fixture(scope='module')
+def mod_run():
+    """Start a scheduler and set it running (module scope)."""
+    return partial(_run_flow, None)
+
+
+@pytest.fixture
+def run(caplog: pytest.LogCaptureFixture):
+    """Start a scheduler and set it running."""
+    return partial(_run_flow, caplog)
 
 
 @pytest.fixture
@@ -316,3 +329,33 @@ def validate(run_dir):
         )
 
     return _validate
+
+
+@pytest.fixture
+def capture_submission():
+    """Suppress job submission and capture submitted tasks.
+
+    Provides a function to run on a Scheduler *whilst started*, use like so:
+
+    async with start(schd):
+        submitted_tasks = capture_submission(schd)
+
+    or:
+
+    async with run(schd):
+        submitted_tasks = capture_submission(schd)
+
+    """
+
+    def _disable_submission(schd: 'Scheduler') -> 'Set[TaskProxy]':
+        submitted_tasks: 'Set[TaskProxy]' = set()
+
+        def _submit_task_jobs(_, itasks, *args, **kwargs):
+            nonlocal submitted_tasks
+            submitted_tasks.update(itasks)
+            return itasks
+
+        schd.task_job_mgr.submit_task_jobs = _submit_task_jobs  # type: ignore
+        return submitted_tasks
+
+    return _disable_submission
