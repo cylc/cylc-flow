@@ -359,3 +359,34 @@ def capture_submission():
         return submitted_tasks
 
     return _disable_submission
+
+
+@pytest.fixture
+def capture_polling():
+    """Suppress job polling and capture polled tasks.
+
+    Provides a function to run on a started Scheduler.
+
+    async with start(schd):
+        polled_tasks = capture_polling(schd)
+
+    or:
+
+    async with run(schd):
+        polled_tasks = capture_polling(schd)
+
+    """
+    def _disable_polling(schd: 'Scheduler') -> 'Set[TaskProxy]':
+        polled_tasks: 'Set[TaskProxy]' = set()
+
+        def run_job_cmd(
+            _1, _2, itasks, _3, _4=None
+        ):
+            nonlocal polled_tasks
+            polled_tasks.update(itasks)
+            return itasks
+
+        schd.task_job_mgr._run_job_cmd = run_job_cmd  # type: ignore
+        return polled_tasks
+
+    return _disable_polling
