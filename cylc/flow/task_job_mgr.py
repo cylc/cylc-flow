@@ -103,6 +103,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
+    TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE
 )
 from cylc.flow.wallclock import (
@@ -203,7 +204,14 @@ class TaskJobManager:
             if msg is not None:
                 LOG.info(msg)
             self._run_job_cmd(
-                self.JOBS_POLL, workflow, itasks,
+                self.JOBS_POLL, workflow,
+                [
+                    # Don't poll waiting tasks. (This is not only pointless, it
+                    # is dangerous because a task waiting to rerun has the
+                    # submit number of its previous job, which can be polled).
+                    itask for itask in itasks
+                    if itask.state.status != TASK_STATUS_WAITING
+                ],
                 self._poll_task_jobs_callback,
                 self._poll_task_jobs_callback_255
             )

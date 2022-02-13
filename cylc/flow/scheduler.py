@@ -960,7 +960,6 @@ class Scheduler:
             return
         itasks, _, bad_items = self.pool.filter_task_proxies(items)
         self.task_job_mgr.poll_task_jobs(self.workflow, itasks)
-        # (Could filter itasks by state here if needed)
         return len(bad_items)
 
     def command_kill_tasks(self, items: List[str]):
