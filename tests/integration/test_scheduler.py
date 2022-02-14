@@ -21,6 +21,14 @@ from typing import Any, Callable
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_state import (
+    TASK_STATUS_WAITING,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_FAILED
+)
+
 
 Fixture = Any
 
@@ -161,3 +169,57 @@ async def test_holding_tasks_whilst_scheduler_paused(
         one.release_queued_tasks()
         assert len(one.pre_prep_tasks) == 1
         assert len(submitted_tasks) == 1
+
+
+async def test_no_poll_waiting_tasks(
+    capture_polling,
+    flow,
+    one_conf,
+    run,
+    scheduler,
+):
+    """Waiting tasks shouldn't be polled.
+
+    If a waiting task previously it will have the submit number of its previous
+    job, and polling would erroneously return the state of that job.
+
+    See https://github.com/cylc/cylc-flow/issues/4658
+    """
+    reg = flow(one_conf)
+    one = scheduler(reg, paused_start=True)
+
+    log: pytest.LogCaptureFixture
+    async with run(one) as log:
+
+        # Test assumes start up with a waiting task.
+        task = (one.pool.get_all_tasks())[0]
+        assert task.state.status == TASK_STATUS_WAITING
+
+        polled_tasks = capture_polling(one)
+
+        # Waiting tasks should not be polled.
+        one.command_poll_tasks(['*/*'])
+        assert polled_tasks == set()
+
+        # Even if they have a submit number.
+        task.submit_num = 1
+        one.command_poll_tasks(['*/*'])
+        assert len(polled_tasks) == 0
+
+        # But these states should be:
+        for state in [
+            TASK_STATUS_SUBMIT_FAILED,
+            TASK_STATUS_FAILED,
+            TASK_STATUS_SUBMITTED,
+            TASK_STATUS_RUNNING
+        ]:
+            task.state.status = state
+            one.command_poll_tasks(['*/*'])
+            assert len(polled_tasks) == 1
+            polled_tasks.clear()
+
+        # Shut down with a running task.
+        task.state.status = TASK_STATUS_RUNNING
+
+    # For good measure, check the faked running task is reported at shutdown.
+    assert "Orphaned task jobs:\n* 1/one (running)" in log.messages

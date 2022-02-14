@@ -110,6 +110,9 @@ access to information on configured platforms.
 
 ### Fixes
 
+[#4658](https://github.com/cylc/cylc-flow/pull/4658) -
+Don't poll waiting tasks (which may have the submit number of a previous job).
+
 [#4620](https://github.com/cylc/cylc-flow/pull/4620) -
 Fix queue interactions with the scheduler paused and task held states.
 
