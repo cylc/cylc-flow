@@ -78,7 +78,7 @@
 #         "cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_NAME}"
 #         Provides WORKFLOW_NAME and WORKFLOW_RUN_DIR variables.
 #         RUN_NUMS (defaults to false): If false run cylc install --no-rundir
-#     install_workflow TEST_NAME SOURCE
+#     install_workflow TEST_NAME SOURCE [RUN_NUMS]
 #         Same as init_workflow, but SOURCE must be a directory containing a
 #         "flow.cylc" file.
 #     log_scan TEST_NAME FILE ATTEMPTS DELAY PATTERN...
@@ -496,12 +496,17 @@ init_workflow() {
 install_workflow() {
     local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     local TEST_SOURCE_BASE="${2:-${TEST_NAME}}"
+    local RUN_NUMS="${3:-false}"
     WORKFLOW_NAME="$(workflow_id "${TEST_NAME}" "${TEST_SOURCE_BASE}")"
     WORKFLOW_RUN_DIR="${RUN_DIR}/${WORKFLOW_NAME}"
     mkdir -p "${TEST_DIR}/${WORKFLOW_NAME}/" # make source dir
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${WORKFLOW_NAME}/"
     cd "${TEST_DIR}/${WORKFLOW_NAME}"
-    cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    if "$RUN_NUMS"; then
+        cylc install --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    else
+        cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+    fi
 }
 
 log_scan () {

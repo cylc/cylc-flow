@@ -37,13 +37,7 @@ create_test_global_config "" "
             share/cycle = ${TEST_DIR}/${SYM_NAME}/cycle
             work = ${TEST_DIR}/${SYM_NAME}/work
 "
-init_workflow "${TEST_NAME_BASE}" << '__FLOW__'
-[scheduler]
-    allow implicit tasks = True
-[scheduling]
-    [[graph]]
-        R1 = darmok
-__FLOW__
+install_workflow "${TEST_NAME_BASE}" basic-workflow
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "$WORKFLOW_NAME"
 
