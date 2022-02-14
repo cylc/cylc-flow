@@ -216,6 +216,7 @@ async def test_no_poll_waiting_tasks(
             task.state.status = state
             one.command_poll_tasks(['*/*'])
             assert len(polled_tasks) == 1
+            polled_tasks.clear()
 
         # Shut down with a running task.
         task.state.status = TASK_STATUS_RUNNING
