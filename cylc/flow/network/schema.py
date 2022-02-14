@@ -1211,9 +1211,10 @@ async def mutator(root, info, command=None, workflows=None,
         workflows = []
     if exworkflows is None:
         exworkflows = []
-    w_args = {}
-    w_args['workflows'] = [Tokens(w_id) for w_id in workflows]
-    w_args['exworkflows'] = [Tokens(w_id) for w_id in exworkflows]
+    w_args = {
+        'workflows': [Tokens(w_id) for w_id in workflows],
+        'exworkflows': [Tokens(w_id) for w_id in exworkflows]
+    }
     if args.get('args', False):
         args.update(args.get('args', {}))
         args.pop('args')
