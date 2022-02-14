@@ -842,10 +842,10 @@ with Conf('global.cylc', desc='''
             ``desktop0000, .., desktop9999`` one would define platforms with
             names ``[[bigmachine[12]]]`` and ``[[desktop[0-9]{4}]]``.
 
-            Cylc searches through the list of platform regexes in the reverse
+            Cylc searches for a matching platform in the reverse
             of the definition order to allow user defined platforms
             to override site defined platforms. This means, for example, that
-            if ``[[a.*]]`` were set near the bottom of a configuration any
+            if ``[[a.*]]`` were set at the bottom of a configuration any
             platform name beginning with "a" would return that platform.
 
             .. note::
