@@ -1259,11 +1259,11 @@ class TaskPool:
     def spawn_on_all_outputs(self, itask, completed_only=False):
         """Spawn on all (or all completed) task outputs.
 
-        completed_only=False:
+        If completed_only is False:
            Used in Cylc 7 Back Compat mode for pre-spawning waiting tasks. Do
            not set the associated prerequisites of spawned children satisfied.
 
-        completed_only=True:
+        If completed_only is True:
            Used to retroactively spawn on already-completed outputs when a flow
            merges into a force-triggered no-flow task. In this case, do set the
            associated prerequisites of spawned children to satisifed.
