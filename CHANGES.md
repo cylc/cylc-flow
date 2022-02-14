@@ -122,6 +122,9 @@ tasks are not already preparing for job submission.
 [#4640](https://github.com/cylc/cylc-flow/pull/4640) - Fix manual triggering of
 runahead-limited parentless tasks.
 
+[#4645](https://github.com/cylc/cylc-flow/pull/4645) - Fix behaviour when a
+flow catches up to a running force-triggered no-flow task.
+
 [#4566](https://github.com/cylc/cylc-flow/pull/4566) - Fix `cylc scan`
 invocation for remote scheduler host on a shared filesystem.
 

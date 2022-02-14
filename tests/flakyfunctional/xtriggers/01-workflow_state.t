@@ -42,7 +42,7 @@ workflow_run_fail "${TEST_NAME}" \
    cylc play --set="UPSTREAM='${WORKFLOW_NAME_UPSTREAM}'" --no-detach "${WORKFLOW_NAME}"
 
 WORKFLOW_LOG="$(cylc cat-log -m 'p' "${WORKFLOW_NAME}")"
-grep_ok 'WARNING - inactivity timer timed out after PT10S' "${WORKFLOW_LOG}"
+grep_ok 'WARNING - inactivity timer timed out after PT20S' "${WORKFLOW_LOG}"
 
 # ... with 2016/foo succeeded and 2016/FAM waiting.
 cylc workflow-state -p '2016' "${WORKFLOW_NAME}" >'workflow_state.out'
