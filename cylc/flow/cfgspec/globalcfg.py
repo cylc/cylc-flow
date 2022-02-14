@@ -846,7 +846,7 @@ with Conf('global.cylc', desc='''
             of the definition order to allow user defined platforms
             to override site defined platforms. This means, for example, that 
             if ``[[a.*]]`` were set near the bottom of a configuration any 
-            platform name beginning "a" would retrn that platform.
+            platform name beginning with "a" would return that platform.
 
             .. note::
 
