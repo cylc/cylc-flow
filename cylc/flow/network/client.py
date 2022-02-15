@@ -211,8 +211,14 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         try:
             return response['data']
         except KeyError:
-            error = response['error']
-            raise ClientError(error['message'], error.get('traceback'))
+            error = response.get(
+                'error',
+                {'message': f'Received invalid response: {response}'},
+            )
+            raise ClientError(
+                error.get('message'),
+                error.get('traceback'),
+            )
 
     def serial_request(
         self,
