@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from pathlib import Path
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import (
     CylcError,
     ServiceFileError,
@@ -128,7 +130,7 @@ def test_detect_old_contact_file_network_issue(workflow):
     assert workflow.contact_file.exists()
 
 
-def test_detect_old_contact_file_old_run(workflow):
+def test_detect_old_contact_file_old_run(workflow, caplog, log_filter):
     """It should remove the contact file from an old run."""
     # modify the contact file to make it look like the COMMAND has changed
     workflow.dump_contact(
@@ -136,11 +138,15 @@ def test_detect_old_contact_file_old_run(workflow):
             CFF.COMMAND: 'foo bar baz'
         }
     )
+    caplog.set_level(logging.INFO, logger=CYLC_LOG)
+
     # the workflow should not appear to be running (according to the contact
     # data) so detect_old_contact_file should not raise any errors
     detect_old_contact_file(workflow.reg)
+
     # as a side effect the contact file should have been removed
     assert not workflow.contact_file.exists()
+    assert log_filter(caplog, contains='Removing contact file')
 
 
 def test_detect_old_contact_file_none(workflow):
@@ -149,6 +155,8 @@ def test_detect_old_contact_file_none(workflow):
     workflow.contact_file.unlink()
     assert not workflow.contact_file.exists()
     # detect_old_contact_file should return
+
     detect_old_contact_file(workflow.reg)
+
     # it should not recreate the contact file
     assert not workflow.contact_file.exists()
