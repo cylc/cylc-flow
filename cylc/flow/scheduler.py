@@ -38,6 +38,7 @@ import zmq
 from zmq.auth.thread import ThreadAuthenticator
 
 from metomi.isodatetime.parsers import TimePointParser
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
 
 from cylc.flow import (
     LOG, main_loop, __version__ as CYLC_VERSION
@@ -119,6 +120,9 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
+
+
+MODE_INT = 'integer'
 
 
 class SchedulerStop(CylcError):
@@ -441,6 +445,10 @@ class Scheduler:
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         self.load_flow_file()
         self.profiler.log_memory("scheduler.py: after load_flow_file")
+
+        # Basic validation of --stopcp before we create a database.
+        if self.options.stopcp:
+            self.validate_cyclepoint_str(self.options.stopcp)
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
 
@@ -1998,6 +2006,17 @@ class Scheduler:
                 f"Stop cycle point '{self.options.stopcp}' will have no "
                 "effect as it is after the final cycle "
                 f"point '{self.config.final_point}'.")
+
+    def validate_cyclepoint_str(self, point: str) -> None:
+        """Assert that a cyclepoint is valid."""
+        try:
+            if self.config.cfg['scheduling']['cycling mode'] == MODE_INT:
+                int(point)
+            else:
+                parser = TimePointParser()
+                parser.parse(self.options.stopcp)
+        except (ValueError, ISO8601SyntaxError):
+            raise UserInputError(f'Invalid stop cyclepoint (stopcp): {point}')
 
     def update_data_store(self):
         """Sets the update flag on the data store.
