@@ -2104,7 +2104,7 @@ class Subscriptions(ObjectType):
         Deltas,
         description=Deltas._meta.description,
         workflows=graphene.List(
-            ID, description="List of full ID, i.e. `owner|name`"
+            ID, description="List of full ID, i.e. `~user/workflow_id`"
         ),
         strip_null=Boolean(default_value=False),
         initial_burst=Boolean(default_value=True),
