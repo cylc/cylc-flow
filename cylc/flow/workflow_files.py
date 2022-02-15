@@ -504,7 +504,7 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
             CONTACT_FILE_EXISTS_MSG % {
                 "host": old_host,
                 "port": old_port,
-                "pid": old_cmd,
+                "pid": old_pid,
                 "fname": fname,
                 "workflow": reg,
             }
