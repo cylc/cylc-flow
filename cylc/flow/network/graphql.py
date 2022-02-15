@@ -21,7 +21,7 @@ GraphQL Middleware defined here also.
 
 from functools import partial
 import logging
-from typing import Tuple
+from typing import TYPE_CHECKING, Any, Tuple, Union
 
 from inspect import isclass, iscoroutinefunction
 
@@ -40,6 +40,12 @@ from promise import Promise
 from rx import Observable
 
 from cylc.flow.network.schema import NODE_MAP, get_type_str
+
+if TYPE_CHECKING:
+    from graphql.execution import ExecutionResult
+    from graphql.language.ast import Document
+    from graphql.type import GraphQLSchema
+
 
 logger = logging.getLogger(__name__)
 
@@ -244,24 +250,14 @@ class AstDocArguments:
 
 
 def execute_and_validate_and_strip(
-        schema,
-        document_ast,
-        *args,
-        **kwargs
-):
-    """
-    Args:
-        schema (GraphQLSchema)
-        document_ast (Document)
-        args (Any)
-        kwargs (Any)
-
-    Returns
-        Union[ExecutionResult, Observable]
-
-    """
+    schema: 'GraphQLSchema',
+    document_ast: 'Document',
+    *args: Any,
+    **kwargs: Any
+) -> Union['ExecutionResult', Observable]:
+    """Wrapper around graphql ``execute_and_validate()`` that adds
+    null stripping."""
     result = execute_and_validate(schema, document_ast, *args, **kwargs)
-
     # Search request document to determine if 'stripNull: true' is set
     # as and argument. It can not be done in the middleware, as they
     # can be Promises/futures (so may not been resolved at this point).
@@ -269,7 +265,7 @@ def execute_and_validate_and_strip(
     doc_args = AstDocArguments(schema, document_ast, variable_values)
     if doc_args.has_arg_val(STRIP_ARG, True):
         if kwargs.get('return_promise', False) and hasattr(result, 'then'):
-            return result.then(null_stripper)
+            return result.then(null_stripper)  # type: ignore[union-attr]
         return null_stripper(result)
     return result
 

@@ -19,7 +19,9 @@ import getpass  # noqa: F401
 from queue import Queue
 from textwrap import dedent
 from time import sleep
+from typing import Any, Dict, List, Optional, Union
 
+from graphql.execution import ExecutionResult
 from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
 
@@ -33,6 +35,7 @@ from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.data_store_mgr import DELTAS_MAP
 from cylc.flow.data_messages_pb2 import PbEntireWorkflow  # type: ignore
+
 
 # maps server methods to the protobuf message (for client/UIS import)
 PB_METHOD_MAP = {
@@ -176,7 +179,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
         if self.queue is not None:
             self.queue.put('STOP')
 
-    def _listener(self):
+    def _listener(self) -> None:
         """The server main loop, listen for and serve requests."""
         while True:
             # process any commands passed to the listener by its parent process
@@ -264,18 +267,22 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def api(self, endpoint=None, meta=None):
+    def api(
+        self,
+        endpoint: Optional[str] = None,
+        **_kwargs
+    ) -> Union[str, List[str]]:
         """Return information about this API.
 
         Returns a list of callable endpoints.
 
         Args:
-            endpoint (str, optional):
+            endpoint:
                 If specified the documentation for the endpoint
                 will be returned instead.
 
         Returns:
-            list/str: List of endpoints or string documentation of the
+            List of endpoints or string documentation of the
             requested endpoint.
 
         """
@@ -297,20 +304,24 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def graphql(self, request_string=None, variables=None, meta=None):
-        """Return the GraphQL scheme execution result.
+    def graphql(
+        self,
+        request_string: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        meta: Optional[Dict[str, Any]] = None
+    ):
+        """Return the GraphQL schema execution result.
 
         Args:
-            request_string (str, optional):
-                GraphQL request passed to Graphene
-            variables (dict, optional):
-                Dict of variables passed to Graphene
+            request_string: GraphQL request passed to Graphene.
+            variables: Dict of variables passed to Graphene.
+            meta: Dict containing auth user etc.
 
         Returns:
             object: Execution result, or a list with errors.
         """
         try:
-            executed = schema.execute(
+            executed: ExecutionResult = schema.execute(
                 request_string,
                 variable_values=variables,
                 context={
@@ -326,7 +337,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
         except Exception as exc:
             return 'ERROR: GraphQL execution error \n%s' % exc
         if executed.errors:
-            errors = []
+            errors: List[Any] = []
             for error in executed.errors:
                 if hasattr(error, '__traceback__'):
                     import traceback
@@ -339,60 +350,13 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             return errors
         return executed.data
 
-    @authorise()
-    @expose
-    def get_graph_raw(
-            self, start_point_str, stop_point_str, grouping=None, meta=None
-    ):
-        """Return a textual representation of the workflow graph.
-
-        .. warning::
-
-           The grouping options:
-
-           * ``grouping``
-
-        Args:
-            start_point_str (str):
-                Cycle point as a string to define the window of view of the
-                workflow graph.
-            stop_point_str (str):
-                Cycle point as a string to define the window of view of the
-                workflow graph.
-            grouping (list, optional):
-                List of (graph nodes) family names to group according to
-                inheritance.
-
-        Returns:
-            list: [left, right, None, is_suicide, condition]
-
-            left (str):
-                Task identifier for the dependency of
-                an edge.
-            right (str):
-                Task identifier for the dependent task
-                of an edge.
-            is_suicide (bool):
-                True if edge represents a suicide trigger.
-            condition:
-                Conditional expression if edge represents a conditional trigger
-                else ``None``.
-
-        """
-        # Ensure that a "None" str is converted to the None value.
-        return self.schd.info_get_graph_raw(
-            start_point_str, stop_point_str,
-            grouping=grouping)
-
     # UIServer Data Commands
     @authorise()
     @expose
-    def pb_entire_workflow(self, meta=None):
+    def pb_entire_workflow(self, **_kwargs) -> bytes:
         """Send the entire data-store in a single Protobuf message.
 
-        Returns:
-            bytes
-                Serialised Protobuf message
+        Returns serialised Protobuf message
 
         """
         pb_msg = self.schd.data_store_mgr.get_entire_workflow()
@@ -400,16 +364,13 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     @authorise()
     @expose
-    def pb_data_elements(self, element_type, meta=None):
+    def pb_data_elements(self, element_type: str, **_kwargs) -> bytes:
         """Send the specified data elements in delta form.
 
         Args:
-            element_type (str):
-                Key from DELTAS_MAP dictionary.
+            element_type: Key from DELTAS_MAP dictionary.
 
-        Returns:
-            bytes
-                Serialised Protobuf message
+        Returns serialised Protobuf message
 
         """
         pb_msg = self.schd.data_store_mgr.get_data_elements(element_type)
