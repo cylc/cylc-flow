@@ -818,13 +818,6 @@ class TaskPool:
           subsequent outputs
         Otherwise: replace task definitions but copy over existing outputs etc.
 
-        TODO: document for users: beware of reloading graph changes that affect
-        current active tasks. Such tasks are active with their original defns -
-        including what children they spawn - and it is not possible in general
-        to be sure that new defns are compatible with already-active old tasks.
-        So active tasks attempt to spawn the children that their (pre-reload)
-        defns say they should.
-
         """
         LOG.info("Reloading task definitions.")
         tasks = self.get_all_tasks()
