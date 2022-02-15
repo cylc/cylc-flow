@@ -513,6 +513,10 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
         # ... the process isn't running so the contact file is out of date
         # remove it
         try:
+            LOG.info(
+                f'Removing contact file for {reg}'
+                ' (workflow no longer running).'
+            )
             os.unlink(fname)
             return
         except OSError as exc:
