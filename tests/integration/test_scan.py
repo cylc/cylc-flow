@@ -355,7 +355,14 @@ async def test_source_dirs(source_dirs):
     ]
 
 
-async def test_scan_sigstop(flow, scheduler, run, one_conf, test_dir, caplog):
+async def test_scan_sigstop(
+    flow,
+    scheduler,
+    start,
+    one_conf,
+    test_dir,
+    caplog,
+):
     """It should log warnings if workflows are un-contactable.
 
     Note:
@@ -367,7 +374,7 @@ async def test_scan_sigstop(flow, scheduler, run, one_conf, test_dir, caplog):
     # run a workflow
     reg = flow(one_conf)
     schd = scheduler(reg)
-    async with run(schd):
+    async with start(schd):
         # stop the server to make the flow un-responsive
         schd.server.stop()
         # try scanning the workflow
