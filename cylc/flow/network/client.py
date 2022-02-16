@@ -121,7 +121,7 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         workflow: str,
         host: Optional[str] = None,
         port: Optional[int] = None,
-        context: Optional[zmq.asyncio.Context] = None,
+        context=None,
         timeout: Union[float, str, None] = None,
         srv_public_key_loc: Optional[str] = None
     ):
