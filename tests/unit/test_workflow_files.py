@@ -344,7 +344,7 @@ def test_infer_latest_run__bad(
          "cannot be a path that points to the cylc-run directory or above"),
         ('foo/../..', True, WorkflowFilesError,
          "cannot be a path that points to the cylc-run directory or above"),
-        ('foo', False, ServiceFileError, "Cannot remove running workflow"),
+        ('foo', False, ServiceFileError, "Cannot clean running workflow"),
     ]
 )
 def test_clean_check__fail(
@@ -454,7 +454,9 @@ def test_init_clean__no_db(
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
 
     init_clean('bespin', opts=CleanOptions())
-    assert "No workflow database - will only clean locally" in caplog.text
+    assert (
+        "No workflow database for bespin - will only clean locally"
+    ) in caplog.text
     assert mock_clean.called is True
     assert mock_remote_clean.called is False
 
@@ -469,8 +471,9 @@ def test_init_clean__remote_only_no_db(
 
     with pytest.raises(ServiceFileError) as exc:
         init_clean('hoth', opts=CleanOptions(remote_only=True))
-    assert ("No workflow database - cannot perform remote clean"
-            in str(exc.value))
+    assert (
+        "No workflow database for hoth - cannot perform remote clean"
+    ) in str(exc.value)
     assert mock_clean.called is False
     assert mock_remote_clean.called is False
 
@@ -487,7 +490,7 @@ def test_init_clean__running_workflow(
 
     with pytest.raises(ServiceFileError) as exc:
         init_clean('yavin', opts=CleanOptions())
-    assert "Cannot remove running workflow" in str(exc.value)
+    assert "Cannot clean running workflow" in str(exc.value)
 
 
 @pytest.mark.parametrize(
@@ -1242,7 +1245,7 @@ PLATFORMS = {
             {'enterprise': 255, 'stargazer': 255},
             ['enterprise', 'stargazer', 'voyager'],
             True,
-            ["Could not clean on install target: picard"],
+            ["Could not clean foo on install target: picard"],
             id="Install target with all failed platforms"
         ),
         pytest.param(
@@ -1253,8 +1256,8 @@ PLATFORMS = {
             {'enterprise': 255, 'voyager': 255},
             ['enterprise', 'voyager'],
             True,
-            ["Could not clean on install target: picard",
-             "Could not clean on install target: janeway"],
+            ["Could not clean foo on install target: picard",
+             "Could not clean foo on install target: janeway"],
             id="All install targets have all failed platforms"
         ),
         pytest.param(
@@ -1264,7 +1267,7 @@ PLATFORMS = {
             {'enterprise': 1},
             ['enterprise'],
             True,
-            ["Could not clean on install target: picard"],
+            ["Could not clean foo on install target: picard"],
             id=("Remote clean cmd fails on a platform for non-SSH reason - "
                 "does not retry")
         ),
