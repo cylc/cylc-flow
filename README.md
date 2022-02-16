@@ -42,19 +42,20 @@ forecasting - which is notorious for the size and complexity of its workflows.
 [Website](https://cylc.github.io/) |
 [Documentation](https://cylc.github.io/documentation)
 
-### Cylc 8 (pre-release)
+### Cylc 8 (release candidate)
 
 ![PyPI](https://img.shields.io/pypi/pyversions/cylc-flow.svg?color=green)
 [![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
 [![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Flatest%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/latest/html/index.html)
 
-* Beta pre-release.
+* Pre-release for user acceptance testing.
 * ZMQ (TCP) network layer.
-* In-browser GUI
+* Text-based terminal user interface (TUI).
+* Optional web-based graphical user interface (GUI) provided by ([cylc-uiserver](https://github.com/cylc/cylc-uiserver)).
 * On the `master` branch in the source code.
 
-Cylc-8.0.0 will be released in 2021. Until then we recommend the latest
+The first official Cylc 8 release will follow the stabilisation of the release candidates. Until then we recommend the latest
 Cylc 7 versions for production use.
 
 [Installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) |
