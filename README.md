@@ -42,7 +42,7 @@ forecasting - which is notorious for the size and complexity of its workflows.
 [Website](https://cylc.github.io/) |
 [Documentation](https://cylc.github.io/documentation)
 
-### Cylc 8 (release-candidate)
+### Cylc 8 (release candidate)
 
 ![PyPI](https://img.shields.io/pypi/pyversions/cylc-flow.svg?color=green)
 [![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/)
@@ -55,7 +55,7 @@ forecasting - which is notorious for the size and complexity of its workflows.
 * Optional web-based graphical user interface (GUI) provided by ([cylc-uiserver](https://github.com/cylc/cylc-uiserver)).
 * On the `master` branch in the source code.
 
-The first official Cylc 8 release will follow the stabilisation of the release-candidate. Until then we recommend the latest
+The first official Cylc 8 release will follow the stabilisation of the release candidates. Until then we recommend the latest
 Cylc 7 versions for production use.
 
 [Installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) |
