@@ -127,7 +127,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
     capture_submission,
     flow,
     one_conf,
-    run,
+    start,
     scheduler,
 ):
     """It should hold tasks irrespective of workflow state.
@@ -138,7 +138,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
     one = scheduler(reg, paused_start=True)
 
     # run the workflow
-    async with run(one):
+    async with start(one):
         # capture any job submissions
         submitted_tasks = capture_submission(one)
         assert one.pre_prep_tasks == []
@@ -175,7 +175,7 @@ async def test_no_poll_waiting_tasks(
     capture_polling,
     flow,
     one_conf,
-    run,
+    start,
     scheduler,
 ):
     """Waiting tasks shouldn't be polled.
@@ -189,7 +189,7 @@ async def test_no_poll_waiting_tasks(
     one = scheduler(reg, paused_start=True)
 
     log: pytest.LogCaptureFixture
-    async with run(one) as log:
+    async with start(one) as log:
 
         # Test assumes start up with a waiting task.
         task = (one.pool.get_all_tasks())[0]

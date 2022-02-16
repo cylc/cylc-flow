@@ -424,10 +424,10 @@ async def test_hold_point(
         (TASK_STATUS_SUCCEEDED, True),
     ]
 )
-async def test_trigger_states(status, should_trigger, one, run):
+async def test_trigger_states(status, should_trigger, one, start):
     """It should only trigger tasks in compatible states."""
 
-    async with run(one):
+    async with start(one):
         task = one.pool.filter_task_proxies('1/a')[0][0]
 
         # reset task a to the provided state
@@ -440,7 +440,7 @@ async def test_trigger_states(status, should_trigger, one, run):
         assert task.is_manual_submit == should_trigger
 
 
-async def test_preparing_tasks_on_restart(one_conf, flow, scheduler, run):
+async def test_preparing_tasks_on_restart(one_conf, flow, scheduler, start):
     """Preparing tasks should be reset to waiting on restart.
 
     This forces preparation to be re-done on restart so that it uses the
@@ -453,19 +453,19 @@ async def test_preparing_tasks_on_restart(one_conf, flow, scheduler, run):
 
     # start the workflow, reset a task to preparing
     one = scheduler(id_)
-    async with run(one):
+    async with start(one):
         task = one.pool.filter_task_proxies(['*'])[0][0]
         task.state.reset(TASK_STATUS_PREPARING)
 
     # when we restart the task should have been reset to waiting
     one = scheduler(id_)
-    async with run(one):
+    async with start(one):
         task = one.pool.filter_task_proxies(['*'])[0][0]
         assert task.state(TASK_STATUS_WAITING)
         task.state.reset(TASK_STATUS_SUCCEEDED)
 
     # whereas if we reset the task to succeeded the state is not reset
     one = scheduler(id_)
-    async with run(one):
+    async with start(one):
         task = one.pool.filter_task_proxies(['*'])[0][0]
         assert task.state(TASK_STATUS_SUCCEEDED)
