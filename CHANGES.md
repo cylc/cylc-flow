@@ -5,42 +5,23 @@ all changes see the [closed
 milestones](https://github.com/cylc/cylc-flow/milestones?state=closed) for each
 release.
 
-## Backward-incompatible changes in Cylc-8.x
+## Major Changes in Cylc 8
 
-Cylc 8.0aX (alpha) releases are not compatible with Cylc 7 or with previous
-8.0aX releases, as the API is still under heavy development.
+* Python 2 -> 3.
+* Internal communications converted from HTTPS to ZMQ (TCP).
+* PyGTK GUIs replaced by:
+  * Terminal user interface (TUI) included in cylc-flow.
+  * Web user interface provided by the cylc-uiserver package.
+* A new scheduling algorithm with support for branched workflows.
+* Command line changes:
+  * `cylc run` -> `cylc play`
+  * `cylc restart` -> `cylc play`
+  * `rose suite-run` -> `cylc install; cylc play <id>`
+* The core package containing Cylc scheduler program has been renamed cylc-flow.
+* Cylc review has been removed, the Cylc 7 version remains Cylc 8 compatible.
+* [New documentation](https://cylc.github.io/cylc-doc/latest).
 
-The Cylc server program and CLI codebase is now a Python 3 package that can be
-installed from PyPI with `pip` (see
-[#2990](https://github.com/cylc/cylc-flow/pull/2990)), and has been renamed to
-`cylc-flow`. The name `cylc` is now used as a native Python package namespace
-to allow other projects to re-use it and extend Cylc with plug-ins.
-
-The old PyGTK GUI is being replaced by a Web UI, with development managed in
-the cylc/cylc-ui repository (and see also cylc/cylc-uiserver).
-
-The User Guide and other documentation has been removed from the Python package
-to the cylc/cylc-doc repository.
-
-The commands `cylc-profile-battery`, `cylc-test-battery`, `cylc-license`
-have been removed, and `cylc graph` is only retained for text output
-used in tests (it will be re-implemented in the new web UI).
-
-The xtrigger examples were moved to a separate `cylc/cylc-xtriggers` project
-(see [#3123](https://github.com/cylc/cylc-flow/pull/3123)).
-
-Jinja filters were moved from its `Jinja2Filters` folder to within the `cylc`
-namespace, under `cylc.jinja.filters`.
-
-Cylc Review was also removed in this version.
-
-Cylc 7 suites cannot be *restarted* (from previous state) with Cylc 8, but they
-can still be started from scratch
-([#3863](https://github.com/cylc/cylc-flow/pull/3863)).
-
-Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/pull/3906))
-due to being a seldom-used feature. Workflows can still be restarted from the
-last run, or reflow can be used to achieve the same result.
+See the [migration guide](https://cylc.github.io/cylc-doc/latest/html/7-to-8/index.html) for a full list of changes.
 
 <!-- The topmost release date is automatically updated by GitHub Actions. When
 creating a new release entry be sure to copy & paste the span tag with the
@@ -50,11 +31,9 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
 
-First Release Candidate for Cylc 8.
+First Release Candidate for Cylc 8 suitable for acceptance testing.
 
-(See note on cylc-8 backward-incompatible changes, above)
-
-Also note: you will not be able to restart workflows run with previous
+Cylc 8 beta users will not be able to restart workflows run with previous
 Cylc 8 pre-releases due to changes in the workflow database structure
 ([#4581](https://github.com/cylc/cylc-flow/pull/4581))
 
