@@ -59,7 +59,7 @@ The first official Cylc 8 release will follow the stabilisation of the release c
 Cylc 7 versions for production use.
 
 [Installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) |
-[Documentation - in development](https://cylc.github.io/cylc-doc/latest/html/index.html)
+[Documentation](https://cylc.github.io/cylc-doc/latest/html/index.html)
 
 ### Copyright and Terms of Use
 
