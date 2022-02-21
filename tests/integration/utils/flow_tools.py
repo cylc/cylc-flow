@@ -31,7 +31,7 @@ from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.workflow_files import WorkflowFiles
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.workflow_status import StopMode
 
@@ -93,7 +93,7 @@ async def _start_flow(
     # stop
     finally:
         async with timeout(5):
-            await schd.shutdown(Exception("that'll do"))
+            await schd.shutdown(SchedulerStop("that'll do"))
 
 
 @asynccontextmanager
@@ -117,7 +117,7 @@ async def _run_flow(
             await schd.shutdown(exc)
     # run
     try:
-        task = asyncio.get_event_loop().create_task(schd.run_scheduler())
+        task = asyncio.create_task(schd.run_scheduler())
         yield caplog
 
     # stop

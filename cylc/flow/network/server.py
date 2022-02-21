@@ -324,7 +324,7 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             executed: ExecutionResult = schema.execute(
                 request_string,
                 variable_values=variables,
-                context={
+                context_value={
                     'resolvers': self.resolvers,
                     'meta': meta or {},
                 },

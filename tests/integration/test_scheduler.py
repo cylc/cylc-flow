@@ -185,8 +185,8 @@ async def test_no_poll_waiting_tasks(
 
     See https://github.com/cylc/cylc-flow/issues/4658
     """
-    reg = flow(one_conf)
-    one = scheduler(reg, paused_start=True)
+    reg: str = flow(one_conf)
+    one: Scheduler = scheduler(reg, paused_start=True)
 
     log: pytest.LogCaptureFixture
     async with start(one) as log:
