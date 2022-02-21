@@ -48,6 +48,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Downgrade PIP
+        run: |
+          # pip v22+ will fail on error rather than falling back to the
+          # previous release
+          # the old behaviour is better for this check
+          if (( $(pip --version | sed 's/pip \([0-9]*\).*/\1/') >= 22 ))
+          then
+            pip install 'pip<22'
+          fi
+
       - name: Configure Manylinux Compatibility
         # Make this platform look older than it is. For info see:
         # https://stackoverflow.com/questions/37231799/
