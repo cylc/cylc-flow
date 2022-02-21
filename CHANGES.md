@@ -29,6 +29,18 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0rc2 (<span actions:bind='release-date'>Upcoming</span>)__
+
+Second Release Candidate for Cylc 8 suitable for acceptance testing.
+
+### Fixes
+
+[#4703](https://github.com/cylc/cylc-flow/pull/4703) - Fix `ImportError` when
+validating/running a Jinja2 workflow (for users who have installed Cylc
+using `pip`.)
+
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
 
 First Release Candidate for Cylc 8 suitable for acceptance testing.
