@@ -18,6 +18,10 @@ dependencies:
   - setuptools >=49
   - urwid >=2,<3
 
+  # https://github.com/pallets/jinja/issues/1585 (remove when upgrading
+  # jinja2 to >= 3.0):
+  - markupsafe <2.1
+
 # optional dependencies
   #- empy >=3.3,<3.4
   #- pandas >=1.0,<2
