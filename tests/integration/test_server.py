@@ -78,32 +78,48 @@ def test_pb_entire_workflow(myflow):
     assert data.workflow.id == myflow.id
 
 
-@pytest.fixture
-async def accident(flow, scheduler, run, one_conf):
-    reg = flow(one_conf)
-    schd = scheduler(reg)
-    async with run(schd):
-        yield schd
-
-
-async def test_listener(accident):
+async def test_listener(one, start):
     """Test listener."""
-    accident.server.queue.put('STOP')
-    async with timeout(2):
-        # wait for the server to consume the STOP item from the queue
-        while True:
-            if accident.server.queue.empty():
-                break
-            await asyncio.sleep(0.01)
-    # ensure the server is "closed"
-    with pytest.raises(ValueError):
-        accident.server.queue.put('foobar')
-        accident.server._listener()
+    async with start(one):
+        one.server.queue.put('STOP')
+        async with timeout(2):
+            # wait for the server to consume the STOP item from the queue
+            while True:
+                if one.server.queue.empty():
+                    break
+                await asyncio.sleep(0.01)
+        # ensure the server is "closed"
+        with pytest.raises(ValueError):
+            one.server.queue.put('foobar')
+            one.server._listener()
 
 
-def test_receiver(accident):
-    """Test receiver."""
-    msg_in = {'not_command': 'foobar', 'args': {}}
-    assert 'error' in accident.server._receiver(msg_in)
-    msg_in = {'command': 'foobar', 'args': {}}
-    assert 'error' in accident.server._receiver(msg_in)
+async def test_receiver(one, start):
+    """Test the receiver with different message objects."""
+    async with timeout(5):
+        async with start(one):
+            # start with a message that works
+            msg = {'command': 'api', 'user': '', 'args': {}}
+            assert 'error' not in one.server._receiver(msg)
+            assert 'data' in one.server._receiver(msg)
+
+            # remove the user field - should error
+            msg2 = dict(msg)
+            msg2.pop('user')
+            assert 'error' in one.server._receiver(msg2)
+
+            # remove the command field - should error
+            msg3 = dict(msg)
+            msg3.pop('command')
+            assert 'error' in one.server._receiver(msg3)
+
+            # provide an invalid command - should error
+            msg4 = {**msg, 'command': 'foobar'}
+            assert 'error' in one.server._receiver(msg4)
+
+            # simulate a command failure with the original message
+            # (the one which worked earlier) - should error
+            def _api(*args, **kwargs):
+                raise Exception('foo')
+            one.server.api = _api
+            assert 'error' in one.server._receiver(msg)
