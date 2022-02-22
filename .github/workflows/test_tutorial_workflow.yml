@@ -43,9 +43,8 @@ jobs:
           cylc_rose_ref: ${{ github.event.inputs.cylc_rose_ref || 'master' }}
         run: |
           pip install  \
-            "cylc-rose @ git+https://github.com/cylc/cylc-rose@${cylc_rose_ref}"
-          git clone --depth 1 --branch "${rose_ref}" https://github.com/metomi/rose ../rose
-          pip install -e ../rose
+            "cylc-rose @ git+https://github.com/cylc/cylc-rose@${cylc_rose_ref}" \
+            "metomi-rose @ git+https://github.com/metomi/rose@${rose_ref}"
 
       - name: run tutorial workflow
         timeout-minutes: 6
