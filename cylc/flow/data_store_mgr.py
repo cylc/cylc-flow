@@ -87,6 +87,10 @@ from cylc.flow.task_state import (
 from cylc.flow.task_state_prop import extract_group_state
 from cylc.flow.taskdef import generate_graph_parents
 from cylc.flow.task_state import TASK_STATUSES_FINAL
+from cylc.flow.util import (
+    serialise,
+    deserialise
+)
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
     TIME_ZONE_UTC_INFO,
@@ -991,7 +995,7 @@ class DataStoreMgr:
         update_time = time()
 
         tproxy.state = itask.state.status
-        tproxy.flow_nums = json.dumps(list(itask.flow_nums))
+        tproxy.flow_nums = serialise(itask.flow_nums)
 
         prereq_list = []
         for prereq in itask.state.prerequisites:
@@ -1045,7 +1049,6 @@ class DataStoreMgr:
         flow_db = self.schd.workflow_db_mgr.pri_dao
 
         task_ids = set(self.db_load_task_proxies.keys())
-
         # Batch load rows with matching cycle & name column pairs.
         prereq_ids = set()
         for (
@@ -1057,7 +1060,7 @@ class DataStoreMgr:
             )
             itask, is_parent = self.db_load_task_proxies[tokens.relative_id]
             itask.submit_num = submit_num
-            flow_nums = set(json.loads(flow_nums_str))
+            flow_nums = deserialise(flow_nums_str)
             # Do not set states and outputs for future tasks in flow.
             if (
                     itask.flow_nums and
