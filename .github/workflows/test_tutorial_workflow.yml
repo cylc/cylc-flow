@@ -10,13 +10,6 @@ on:
       - 'tests/**'
       - '**.md'
   workflow_dispatch:
-    inputs:
-      rose_ref:
-        description: The Rose branch to test against
-        required: false
-      cylc_rose_ref:
-        description: The Cylc branch to test against
-        required: false
 
 jobs:
   test:
@@ -36,16 +29,6 @@ jobs:
 
       - name: install cylc-flow
         run: pip install .[all]
-
-      - name: install libs
-        env:
-          rose_ref: ${{ github.event.inputs.rose_ref || 'master' }}
-          cylc_rose_ref: ${{ github.event.inputs.cylc_rose_ref || 'master' }}
-        run: |
-          pip install  \
-            "cylc-rose @ git+https://github.com/cylc/cylc-rose@${cylc_rose_ref}"
-          git clone --depth 1 --branch "${rose_ref}" https://github.com/metomi/rose ../rose
-          pip install -e ../rose
 
       - name: run tutorial workflow
         timeout-minutes: 6
