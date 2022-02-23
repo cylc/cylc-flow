@@ -740,7 +740,9 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
     try:
         detect_old_contact_file(reg)
     except ServiceFileError as exc:
-        raise ServiceFileError(f"Cannot remove running workflow.\n\n{exc}")
+        raise ServiceFileError(
+            f"Cannot clean running workflow {reg}.\n\n{exc}"
+        )
 
 
 def init_clean(reg: str, opts: 'Values') -> None:
@@ -768,11 +770,14 @@ def init_clean(reg: str, opts: 'Values') -> None:
         except FileNotFoundError:
             if opts.remote_only:
                 raise ServiceFileError(
-                    "No workflow database - cannot perform remote clean"
+                    f"No workflow database for {reg} - cannot perform "
+                    "remote clean"
                 )
-            LOG.info("No workflow database - will only clean locally")
+            LOG.info(
+                f"No workflow database for {reg} - will only clean locally"
+            )
         except ServiceFileError as exc:
-            raise ServiceFileError(f"Cannot clean - {exc}")
+            raise ServiceFileError(f"Cannot clean {reg} - {exc}")
 
         if platform_names and platform_names != {'localhost'}:
             remote_clean(
@@ -963,8 +968,8 @@ def remote_clean(
             get_install_target_to_platforms_map(platform_names))
     except PlatformLookupError as exc:
         raise PlatformLookupError(
-            "Cannot clean on remote platforms as the workflow database is "
-            f"out of date/inconsistent with the global config - {exc}")
+            f"Cannot clean {reg} on remote platforms as the workflow database "
+            f"is out of date/inconsistent with the global config - {exc}")
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(
         _remote_clean_cmd, reg=reg, rm_dirs=rm_dirs, timeout=timeout
@@ -974,7 +979,8 @@ def remote_clean(
             continue
         shuffle(platforms)
         LOG.info(
-            f"Cleaning on install target: {platforms[0]['install target']}"
+            f"Cleaning {reg} on install target: "
+            f"{platforms[0]['install target']}"
         )
         # Issue ssh command:
         queue.append(
@@ -1023,9 +1029,9 @@ def remote_clean(
     if failed_targets:
         for target, excp in failed_targets.items():
             LOG.error(
-                f"Could not clean on install target: {target}\n{excp}"
+                f"Could not clean {reg} on install target: {target}\n{excp}"
             )
-        raise CylcError("Remote clean failed")
+        raise CylcError(f"Remote clean failed for {reg}")
 
 
 def _remote_clean_cmd(
@@ -1045,8 +1051,8 @@ def _remote_clean_cmd(
         timeout: Number of seconds to wait before cancelling the command.
     """
     LOG.debug(
-        f'Cleaning on install target: {platform["install target"]} '
-        f'(using platform: {platform["name"]})'
+        f"Cleaning {reg} on install target: {platform['install target']} "
+        f"(using platform: {platform['name']})"
     )
     cmd = ['clean', '--local-only', reg]
     if rm_dirs is not None:

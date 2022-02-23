@@ -59,7 +59,7 @@ Examples:
 
 import asyncio
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import UserInputError
@@ -124,7 +124,8 @@ def get_option_parser():
 CleanOptions = Options(get_option_parser())
 
 
-def prompt(workflows):
+def prompt(workflows: Iterable[str]) -> None:
+    """Ask user if they want to clean the given set of workflows."""
     print("Would clean the following workflows:")
     for workflow in workflows:
         print(f'  {workflow}')
@@ -144,12 +145,15 @@ def prompt(workflows):
         sys.exit(1)
 
 
-async def scan(workflows, multi_mode):
+async def scan(
+    workflows: Iterable[str], multi_mode: bool
+) -> Tuple[List[str], bool]:
     """Expand tuncated workflow IDs
 
     For example "one" might expand to "one/run1" & "one/run2"
     or "one/two/run1".
 
+    Returns (workflows, multi_mode)
     """
     ret = []
     for workflow in list(workflows):
@@ -162,7 +166,7 @@ async def scan(workflows, multi_mode):
     return ret, multi_mode
 
 
-async def run(*ids, opts=None):
+async def run(*ids: str, opts: 'Values') -> None:
     # parse ids from the CLI
     workflows, multi_mode = await parse_ids_async(
         *ids,
