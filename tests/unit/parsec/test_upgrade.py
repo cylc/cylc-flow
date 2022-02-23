@@ -16,6 +16,8 @@
 
 import unittest
 
+import pytest
+
 from cylc.flow.parsec.upgrade import upgrader, converter
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.OrderedDict import OrderedDict
@@ -85,6 +87,30 @@ def test_simple():
             }
         }
     }
+
+
+def test_conflicting_items():
+    cfg = {
+        'item one': 1,
+        'item two': 2,
+    }
+
+    def get_upgrader():
+        nonlocal cfg
+        upg = upgrader(cfg, 'test file')
+        upg.deprecate('1.3', ['item one'], ['item two'])
+        return upg
+
+    # specifying both the old and new variants of a config should result in an
+    # error
+    upg = get_upgrader()
+    with pytest.raises(UpgradeError):
+        upg.upgrade()
+
+    # unless the new config is unset
+    cfg['item two'] = None
+    upg = get_upgrader()
+    upg.upgrade()
 
 
 class TestUpgrade(unittest.TestCase):
