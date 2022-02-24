@@ -123,6 +123,7 @@ def cli_format(cmd: List[str]):
 
 def serialise(flow_nums: set):
     """Convert set to json.
+    For use when a sorted result is needed for consistency.
     Example:
     >>> serialise({'3','2'})
     '["2", "3"]'
