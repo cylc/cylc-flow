@@ -132,9 +132,5 @@ def serialise(flow_nums: set):
 
 
 def deserialise(flow_num_str: str):
-    """Converts string to set.
-    Example:
-    >>> sorted(deserialise('["2", "3"]'))
-    ['2', '3']
-"""
+    """Converts string to set."""
     return set(json.loads(flow_num_str))
