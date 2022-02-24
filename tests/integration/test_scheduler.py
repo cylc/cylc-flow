@@ -20,7 +20,7 @@ import pytest
 from typing import Any, Callable
 
 from cylc.flow.exceptions import CylcError
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_SUBMIT_FAILED,
@@ -86,18 +86,25 @@ async def test_shutdown_CylcError_log(one: Scheduler, run: Callable):
     logged in one line."""
     schd = one
 
+    # patch the shutdown to raise an error
     async def mock_shutdown(*a, **k):
         raise CylcError("Error on shutdown")
     setattr(schd, '_shutdown', mock_shutdown)
 
+    # run the workflow
     log: pytest.LogCaptureFixture
     with pytest.raises(CylcError) as exc:
         async with run(schd) as log:
             pass
+
+    # check the log records after attempted shutdown
     assert str(exc.value) == "Error on shutdown"
     last_record = log.records[-1]
     assert last_record.message == "CylcError: Error on shutdown"
     assert last_record.levelno == logging.ERROR
+
+    # shut down the scheduler properly
+    await Scheduler._shutdown(schd, SchedulerStop('because I said so'))
 
 
 async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
@@ -105,14 +112,18 @@ async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
     logged with traceback (but not excessive)."""
     schd = one
 
+    # patch the shutdown to raise an error
     async def mock_shutdown(*a, **k):
         raise ValueError("Error on shutdown")
     setattr(schd, '_shutdown', mock_shutdown)
 
+    # run the workflow
     log: pytest.LogCaptureFixture
     with pytest.raises(ValueError) as exc:
         async with run(schd) as log:
             pass
+
+    # check the log records after attempted shutdown
     assert str(exc.value) == "Error on shutdown"
     last_record = log.records[-1]
     assert last_record.message == "Error on shutdown"
@@ -121,6 +132,9 @@ async def test_shutdown_general_exception_log(one: Scheduler, run: Callable):
     assert last_record.exc_text.startswith("Traceback (most recent call last)")
     assert ("During handling of the above exception, "
             "another exception occurred") not in last_record.exc_text
+
+    # shut down the scheduler properly
+    await Scheduler._shutdown(schd, SchedulerStop('because I said so'))
 
 
 async def test_holding_tasks_whilst_scheduler_paused(

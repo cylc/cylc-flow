@@ -50,7 +50,8 @@ def node_args():
 @pytest.fixture(scope='module')
 async def mock_flow(
     mod_flow: Callable[..., str],
-    mod_scheduler: Callable[..., Scheduler]
+    mod_scheduler: Callable[..., Scheduler],
+    mod_start,
 ) -> Scheduler:
     ret = Mock()
     ret.reg = mod_flow({
@@ -67,30 +68,28 @@ async def mock_flow(
     })
 
     ret.schd = mod_scheduler(ret.reg, paused_start=True)
-    await ret.schd.install()
-    await ret.schd.initialise()
-    await ret.schd.configure()
-    ret.schd.pool.release_runahead_tasks()
-    ret.schd.data_store_mgr.initiate_data_model()
+    async with mod_start(ret.schd):
+        ret.schd.pool.release_runahead_tasks()
+        ret.schd.data_store_mgr.initiate_data_model()
 
-    ret.owner = ret.schd.owner
-    ret.name = ret.schd.workflow
-    ret.id = list(ret.schd.data_store_mgr.data.keys())[0]
-    ret.resolvers = Resolvers(
-        ret.schd.data_store_mgr,
-        schd=ret.schd
-    )
-    ret.data = ret.schd.data_store_mgr.data[ret.id]
-    ret.node_ids = [
-        node.id
-        for node in ret.data[TASK_PROXIES].values()
-    ]
-    ret.edge_ids = [
-        edge.id
-        for edge in ret.data[EDGES].values()
-    ]
+        ret.owner = ret.schd.owner
+        ret.name = ret.schd.workflow
+        ret.id = list(ret.schd.data_store_mgr.data.keys())[0]
+        ret.resolvers = Resolvers(
+            ret.schd.data_store_mgr,
+            schd=ret.schd
+        )
+        ret.data = ret.schd.data_store_mgr.data[ret.id]
+        ret.node_ids = [
+            node.id
+            for node in ret.data[TASK_PROXIES].values()
+        ]
+        ret.edge_ids = [
+            edge.id
+            for edge in ret.data[EDGES].values()
+        ]
 
-    return ret
+        yield ret
 
 
 async def test_get_workflows(mock_flow, flow_args):

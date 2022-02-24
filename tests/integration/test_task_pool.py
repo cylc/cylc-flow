@@ -103,7 +103,10 @@ async def mod_example_flow(
 
 @pytest.fixture
 async def example_flow(
-    flow: Callable, scheduler: Callable, caplog: pytest.LogCaptureFixture
+    flow: Callable,
+    scheduler: Callable,
+    start,
+    caplog: pytest.LogCaptureFixture,
 ) -> Scheduler:
     """Return a scheduler for interrogating its task pool.
 
@@ -115,10 +118,8 @@ async def example_flow(
     caplog.set_level(logging.INFO, CYLC_LOG)
     reg = flow(EXAMPLE_FLOW_CFG)
     schd: Scheduler = scheduler(reg)
-    await schd.install()
-    await schd.initialise()
-    await schd.configure()
-    return schd
+    async with start(schd):
+        yield schd
 
 
 @pytest.mark.parametrize(
