@@ -350,9 +350,9 @@ def load(config, additional_plugins=None):
             )[(plugin_name, coro_name)] = coro
             plugins['timings'][(plugin_name, coro_name)] = deque(maxlen=1)
         LOG.debug(
-            'Loaded main loop plugin "%s": %s',
-            plugin_name + '\n',
-            '\n'.join((f'* {x}' for x in log))
+            'Loaded main loop plugin "%s":\n%s',
+            plugin_name,
+            '\n'.join(f'* {x}' for x in log)
         )
         # set the initial state of the plugin
         plugins['state'][plugin_name] = {}
