@@ -247,6 +247,10 @@ def test_get_runners_periodic_debounce(basic_plugins):
     assert len(runners) == 1
     assert calls[-1] == ('scheduler object', {'a': 1})
 
+    # Clean up coroutines we didn't run
+    for coro in runners:
+        coro.close()
+
 
 def test_state(basic_plugins):
     """It should pass the same state object with each function call.

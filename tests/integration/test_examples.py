@@ -211,10 +211,10 @@ def test_module_two(myflow):
     assert myflow.uuid_str
 
 
-async def test_db_select(one, run, db_select):
+async def test_db_select(one, start, db_select):
     """Demonstrate and test querying the workflow database."""
     schd = one
-    async with run(schd):
+    async with start(schd):
         # Note: can't query database here unfortunately
         pass
     # Now we can query the DB

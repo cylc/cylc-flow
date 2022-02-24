@@ -48,7 +48,7 @@ Main loop plugins can be activated either by:
 
      $ # run a workflow using the "health check" and "auto restart" plugins:
      $ cylc play my-workflow --main-loop 'health check' \
-       --main-loop 'auto restart'
+--main-loop 'auto restart'
 
 * Adding them to the default list of plugins in
   :cylc:conf:`global.cylc[scheduler][main loop]plugins` e.g:

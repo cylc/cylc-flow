@@ -16,9 +16,6 @@
 
 from time import sleep
 
-import pytest
-
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.publisher import WorkflowPublisher, serialize_data
 
 
