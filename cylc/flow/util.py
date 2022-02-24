@@ -17,6 +17,7 @@
 
 from contextlib import suppress
 from functools import partial
+import json
 import re
 from typing import (
     Any,
@@ -118,3 +119,18 @@ def cli_format(cmd: List[str]):
 
     """
     return ' '.join(cmd)
+
+
+def serialise(flow_nums: set):
+    """Convert set to json.
+    For use when a sorted result is needed for consistency.
+    Example:
+    >>> serialise({'3','2'})
+    '["2", "3"]'
+"""
+    return json.dumps(sorted(flow_nums))
+
+
+def deserialise(flow_num_str: str):
+    """Converts string to set."""
+    return set(json.loads(flow_num_str))

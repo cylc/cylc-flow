@@ -36,6 +36,7 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.wallclock import get_current_time_string, get_utc_mode
 from cylc.flow.exceptions import ServiceFileError
+from cylc.flow.util import serialise
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
@@ -426,7 +427,7 @@ class WorkflowDatabaseManager:
         where_args = {
             "cycle": str(itask.point),
             "name": itask.tdef.name,
-            "flow_nums": json.dumps(list(itask.flow_nums)),
+            "flow_nums": serialise(itask.flow_nums),
             "submit_num": itask.submit_num,
         }
         self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
@@ -452,7 +453,7 @@ class WorkflowDatabaseManager:
                     prereq.satisfied.items()
                 ):
                     self.put_insert_task_prerequisites(itask, {
-                        "flow_nums": json.dumps(list(itask.flow_nums)),
+                        "flow_nums": serialise(itask.flow_nums),
                         "prereq_name": p_name,
                         "prereq_cycle": p_cycle,
                         "prereq_output": p_output,
@@ -461,7 +462,7 @@ class WorkflowDatabaseManager:
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
-                "flow_nums": json.dumps(list(itask.flow_nums)),
+                "flow_nums": serialise(itask.flow_nums),
                 "status": itask.state.status,
                 "is_held": itask.state.is_held
             })
@@ -505,7 +506,7 @@ class WorkflowDatabaseManager:
                 where_args = {
                     "cycle": str(itask.point),
                     "name": itask.tdef.name,
-                    "flow_nums": json.dumps(list(itask.flow_nums))
+                    "flow_nums": serialise(itask.flow_nums)
                 }
                 self.db_updates_map.setdefault(self.TABLE_TASK_STATES, [])
                 self.db_updates_map[self.TABLE_TASK_STATES].append(
@@ -608,7 +609,7 @@ class WorkflowDatabaseManager:
         if "submit_num" not in set_args:
             where_args["submit_num"] = itask.submit_num
         if "flow_nums" not in set_args:
-            where_args["flow_nums"] = json.dumps(list(itask.flow_nums))
+            where_args["flow_nums"] = serialise(itask.flow_nums)
         self.db_updates_map.setdefault(table_name, [])
         self.db_updates_map[table_name].append((set_args, where_args))
 

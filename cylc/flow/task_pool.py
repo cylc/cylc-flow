@@ -53,6 +53,10 @@ from cylc.flow.task_state import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.util import (
+    serialise,
+    deserialise
+)
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_queues.independent import IndepQueueManager
@@ -200,7 +204,7 @@ class TaskPool:
                     "time_created": get_current_time_string(),
                     "time_updated": get_current_time_string(),
                     "status": itask.state.status,
-                    "flow_nums": json.dumps(list(itask.flow_nums))
+                    "flow_nums": serialise(itask.flow_nums)
                 }
             )
             # Add row to "task_outputs" table:
@@ -386,7 +390,7 @@ class TaskPool:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
                 get_point(cycle),
-                set(json.loads(flow_nums)),
+                deserialise(flow_nums),
                 is_held=is_held,
                 submit_num=submit_num,
                 is_late=bool(is_late))
@@ -1182,7 +1186,7 @@ class TaskPool:
                     c_task,
                     {
                         "status": c_task.state.status,
-                        "flow_nums": json.dumps(list(c_task.flow_nums))
+                        "flow_nums": serialise(c_task.flow_nums)
                     }
                 )
                 # self.workflow_db_mgr.process_queued_ops()
@@ -1497,7 +1501,7 @@ class TaskPool:
                 itask,
                 {
                     "status": itask.state.status,
-                    "flow_nums": json.dumps(list(itask.flow_nums))
+                    "flow_nums": serialise(itask.flow_nums)
                 }
             )
 
