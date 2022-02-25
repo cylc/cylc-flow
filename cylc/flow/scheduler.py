@@ -1783,6 +1783,8 @@ class Scheduler:
             except OSError as exc:
                 LOG.warning(f"failed to remove workflow contact file: {fname}")
                 LOG.exception(exc)
+            else:
+                self.contact_data = None
             if self.task_job_mgr:
                 self.task_job_mgr.task_remote_mgr.remote_tidy()
 

@@ -164,8 +164,7 @@ async def test_exception(flow, scheduler, run, one_conf, log_filter):
     # make sure that this error causes the flow to shutdown
     with pytest.raises(MyException):
         async with run(schd) as log:
-            # evil sleep - gotta let the except mechanism do its work
-            await asyncio.sleep(0.1)
+            pass
 
     # make sure the exception was logged
     assert len(log_filter(

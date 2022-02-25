@@ -78,22 +78,28 @@ async def _start_flow(
     schd: Scheduler,
     level: int = logging.INFO
 ):
-    """Start a scheduler but don't set it running."""
+    """Start a scheduler but don't set the main loop running."""
     if caplog:
         caplog.set_level(level, CYLC_LOG)
 
-    # install
     await schd.install()
 
-    # start
     try:
-        await schd.start()
-        yield caplog
-
-    # stop
+        # Nested `try...finally` to ensure caplog always yielded even if
+        # exception occurs in Scheduler
+        try:
+            await schd.start()
+        finally:
+            # After this `yield`, the `with` block of the context manager
+            # is executed:
+            yield caplog
     finally:
+        # Cleanup - this always runs after the `with` block of the
+        # context manager.
+        # Need to shut down Scheduler, but time out in case something
+        # goes wrong:
         async with timeout(5):
-            await schd.shutdown(SchedulerStop("that'll do"))
+            await schd.shutdown(SchedulerStop("integration test teardown"))
 
 
 @asynccontextmanager
@@ -102,31 +108,39 @@ async def _run_flow(
     schd: Scheduler,
     level: int = logging.INFO
 ):
-    """Start a scheduler and set it running."""
+    """Start a scheduler and set the main loop running."""
     if caplog:
         caplog.set_level(level, CYLC_LOG)
 
-    # install
     await schd.install()
 
-    # start
+    task: Optional[asyncio.Task] = None
     try:
-        await schd.start()
-    except Exception as exc:
-        async with timeout(5):
-            await schd.shutdown(exc)
-    # run
-    try:
-        task = asyncio.create_task(schd.run_scheduler())
-        yield caplog
-
-    # stop
+        # Nested `try...finally` to ensure caplog always yielded even if
+        # exception occurs in Scheduler
+        try:
+            await schd.start()
+            # Do not await as we need to yield control to the main loop:
+            task = asyncio.create_task(schd.run_scheduler())
+        finally:
+            # After this `yield`, the `with` block of the context manager
+            # is executed:
+            yield caplog
     finally:
+        # Cleanup - this always runs after the `with` block of the
+        # context manager.
+        # Need to shut down Scheduler, but time out in case something
+        # goes wrong:
         async with timeout(5):
-            # ask the scheduler to shut down nicely
-            schd._set_stop(StopMode.REQUEST_NOW_NOW)
-            await task
-
+            if task:
+                # ask the scheduler to shut down nicely,
+                # let main loop handle it:
+                schd._set_stop(StopMode.REQUEST_NOW_NOW)
+                await task
+        if schd.contact_data:
+            async with timeout(5):
+                # Scheduler still running... try more forceful tear down:
+                await schd.shutdown(SchedulerStop("integration test teardown"))
         if task:
-            # leave everything nice and tidy
+            # Brute force cleanup if something went wrong:
             task.cancel()
