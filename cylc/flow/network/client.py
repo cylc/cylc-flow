@@ -196,6 +196,9 @@ class WorkflowRuntimeClient(ZMQSocketBase):
         else:
             if callable(self.timeout_handler):
                 self.timeout_handler()
+            host, port, _ = get_location(self.workflow)
+            if host != self.host or port != self.port:
+                raise WorkflowStopped(self.workflow)
             raise ClientTimeout(
                 'Timeout waiting for server response.'
                 ' This could be due to network or server issues.'

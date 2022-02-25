@@ -93,10 +93,12 @@ def idpop(id_):
     """Remove the last element of a node id.
 
     Examples:
+        >>> idpop('w//c/t/j')
+        'w//c/t'
         >>> idpop('c/t/j')
-        'c/t'
+        '//c/t'
         >>> idpop('c/t')
-        'c'
+        '//c'
         >>> idpop('c')
         Traceback (most recent call last):
         ValueError: No tokens provided
@@ -108,7 +110,7 @@ def idpop(id_):
     relative = '//' not in id_
     tokens = Tokens(id_, relative=relative)
     tokens.pop_token()
-    return tokens.relative_id
+    return tokens.id
 
 
 def compute_tree(flow):
@@ -274,7 +276,7 @@ class NaturalSort:
 def dummy_flow(data):
     return add_node(
         'workflow',
-        '',
+        data['id'],
         {},
         data
     )
