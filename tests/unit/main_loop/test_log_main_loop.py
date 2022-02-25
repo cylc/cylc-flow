@@ -44,7 +44,7 @@ def test_normalise(test_data):
 
 
 def test_dump(test_data, tmp_path):
-    """Ensure the data is serialiseable."""
+    """Ensure the data is serialisable."""
     assert _dump(_normalise(test_data), tmp_path)
     assert list(tmp_path.iterdir()) == [
         Path(tmp_path, 'cylc.flow.main_loop.log_main_loop.json')
