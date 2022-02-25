@@ -46,7 +46,7 @@ from cylc.flow import (
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling.loader import get_point
+from cylc.flow.cycling.loader import get_point, INTEGER_CYCLING_TYPE
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.id import Tokens
 from cylc.flow.flow_mgr import FlowMgr
@@ -120,9 +120,6 @@ from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str,
     get_utc_mode)
 from cylc.flow.xtrigger_mgr import XtriggerManager
-
-
-MODE_INT = 'integer'
 
 
 class SchedulerStop(CylcError):
@@ -2010,7 +2007,10 @@ class Scheduler:
     def validate_cyclepoint_str(self, point: str) -> None:
         """Assert that a cyclepoint is valid."""
         try:
-            if self.config.cfg['scheduling']['cycling mode'] == MODE_INT:
+            if (
+                self.config.cfg['scheduling']['cycling mode'] ==
+                INTEGER_CYCLING_TYPE
+            ):
                 int(point)
             else:
                 parser = TimePointParser()
