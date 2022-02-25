@@ -41,3 +41,26 @@ Don't write unit tests here:
 
 * No testing of odd methods and functions.
 * If it runs *really* quickly, it's likely a unit test.
+
+## How To Write Integation Tests
+
+Common test patterns are documented in `test_examples.py`.
+
+Workflows can be run in two ways:
+
+```
+with start(schd):
+    # starts the Scheduler but does not start the main loop
+    # (always the better option if its possible)
+    ...
+
+with run(schd):
+    # starts the Scheduler and sets the main loop running
+    await asyncio.sleep(0)  # yield control to the main loop
+    ...
+```
+
+These methods both shut down the workflow / clean up after themselves.
+
+It it necessary to shut down workflows correctly to clean up resorces and
+running tasks.

@@ -50,24 +50,24 @@ async def test_create_flow(flow, run_dir):
 
 async def test_run(flow, scheduler, run, one_conf):
     """Create a workflow, initialise the scheduler and run it."""
-    # Ensure the scheduler can survive for one second without crashing
+    # Ensure the scheduler can survive for at least one second without crashing
     reg = flow(one_conf)
     schd = scheduler(reg)
     async with run(schd):
-        await asyncio.sleep(1)
+        await asyncio.sleep(1)  # this yields control to the main loop
 
 
-async def test_logging(flow, scheduler, run, one_conf, log_filter):
+async def test_logging(flow, scheduler, start, one_conf, log_filter):
     """We can capture log records when we run a scheduler."""
     # Ensure that the cylc version is logged on startup.
     reg = flow(one_conf)
     schd = scheduler(reg)
-    async with run(schd) as log:
+    async with start(schd) as log:
         # this returns a list of log records containing __version__
         assert log_filter(log, contains=__version__)
 
 
-async def test_scheduler_arguments(flow, scheduler, run, one_conf):
+async def test_scheduler_arguments(flow, scheduler, start, one_conf):
     """We can provide options to the scheduler when we __init__ it.
 
     These options match their command line equivalents.
@@ -78,15 +78,15 @@ async def test_scheduler_arguments(flow, scheduler, run, one_conf):
     # Ensure the paused_start option is obeyed by the scheduler.
     reg = flow(one_conf)
     schd = scheduler(reg, paused_start=True)
-    async with run(schd):
+    async with start(schd):
         assert schd.is_paused
     reg = flow(one_conf)
     schd = scheduler(reg, paused_start=False)
-    async with run(schd):
+    async with start(schd):
         assert not schd.is_paused
 
 
-async def test_shutdown(flow, scheduler, run, one_conf):
+async def test_shutdown(flow, scheduler, start, one_conf):
     """Shut down a workflow.
 
     The scheduler automatically shuts down once you exit the `async with`
@@ -97,7 +97,7 @@ async def test_shutdown(flow, scheduler, run, one_conf):
     # Ensure the TCP server shuts down with the scheduler.
     reg = flow(one_conf)
     schd = scheduler(reg)
-    async with run(schd):
+    async with start(schd):
         pass
     assert schd.server.socket.closed
 
@@ -118,7 +118,7 @@ async def test_install(flow, scheduler, one_conf, run_dir):
     ).exists()
 
 
-async def test_task_pool(flow, scheduler, one_conf, start):
+async def test_task_pool(one, start):
     """You don't have to run the scheduler to play with the task pool.
 
     There are two fixtures to start a scheduler:
@@ -131,18 +131,14 @@ async def test_task_pool(flow, scheduler, one_conf, start):
 
     Unless you need the Scheduler main loop running, use `start`.
 
+    This test uses a pre-prepared Scheduler called "one".
+
     """
     # Ensure that the correct number of tasks get added to the task pool.
-
-    # create the flow
-    reg = flow(one_conf)
-    schd = scheduler(reg)
-
-    # take it as far through the startup sequence as needed
-    async with start(schd):
+    async with start(one):
         # pump the scheduler's heart manually
-        schd.pool.release_runahead_tasks()
-        assert len(schd.pool.main_pool) == 1
+        one.pool.release_runahead_tasks()
+        assert len(one.pool.main_pool) == 1
 
 
 async def test_exception(flow, scheduler, run, one_conf, log_filter):
@@ -206,23 +202,32 @@ async def myflow(mod_flow, mod_scheduler, mod_one_conf):
     return schd
 
 
-def test_module_two(myflow):
-    # Ensure the uuid is set on __init__
+def test_module_scoped_fixture(myflow):
+    """Ensure the uuid is set on __init__.
+
+    The myflow fixture will be shared between all test functions within this
+    Python module.
+
+    """
     assert myflow.uuid_str
 
 
 async def test_db_select(one, start, db_select):
     """Demonstrate and test querying the workflow database."""
+    # run a workflow
     schd = one
     async with start(schd):
         # Note: can't query database here unfortunately
         pass
+
     # Now we can query the DB
     # Select all from workflow_params table:
     assert ('UTC_mode', '0') in db_select(schd, False, 'workflow_params')
+
     # Select name & status columns from task_states table:
     results = db_select(schd, False, 'task_states', 'name', 'status')
     assert results[0] == ('one', 'waiting')
+
     # Select all columns where name==one & status==waiting from
     # task_states table:
     results = db_select(
