@@ -204,6 +204,9 @@ def offline_mutate(mutation, selection):
             # tui only supports single-workflow display ATM so
             # clean should shut down the program
             sys.exit()
+        elif mutation in list_mutations(selection):  # noqa: SIM106
+            # this is an "online" mutation -> ignore
+            pass
         else:
             raise Exception(f'Invalid mutation: {mutation}')
 
