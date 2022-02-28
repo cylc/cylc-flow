@@ -539,6 +539,8 @@ class Scheduler:
             self.previous_profile_point = 0
             self.count = 0
 
+        self.process_workflow_db_queue()
+
         self.profiler.log_memory("scheduler.py: end configure")
 
     async def start_servers(self):

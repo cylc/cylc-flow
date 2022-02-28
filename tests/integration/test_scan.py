@@ -17,6 +17,7 @@
 
 from contextlib import suppress
 from pathlib import Path
+import re
 from shutil import rmtree
 from tempfile import TemporaryDirectory
 from typing import List
@@ -307,9 +308,25 @@ async def test_max_depth_configurable(nested_dir, mock_glbl_cfg):
     ]
 
 
+async def test_scan_one(one, start, test_dir):
+    """Ensure that a running workflow appears in the scan results."""
+    async with start(one):
+        pipe = (
+            # scan just this workflow
+            scan(scan_dir=test_dir)
+            | filter_name(rf'^{re.escape(one.workflow)}$')
+            | is_active(True)
+            | workflow_params
+        )
+        async for flow in pipe:
+            assert flow['name'] == one.workflow
+            break
+        else:
+            raise Exception('Expected one scan result')
+
+
 async def test_workflow_params(
-    flow,
-    scheduler,
+    one,
     start,
     one_conf,
     run_dir,
@@ -321,13 +338,11 @@ async def test_workflow_params(
         For this test we ensure that the workflow UUID is present in the params
         table.
     """
-    reg = flow(one_conf)
-    schd = scheduler(reg)
-    async with start(schd):
+    async with start(one):
         pipe = (
             # scan just this workflow
             scan(scan_dir=mod_test_dir)
-            | filter_name(rf'^{reg}$')
+            | filter_name(rf'^{re.escape(one.workflow)}$')
             | is_active(True)
             | workflow_params
         )
@@ -338,7 +353,10 @@ async def test_workflow_params(
             uuid_key = WorkflowDatabaseManager.KEY_UUID_STR
             assert uuid_key in flow['workflow_params']
             # check the workflow uuid key matches the scheduler value
-            assert flow['workflow_params'][uuid_key] == schd.uuid_str
+            assert flow['workflow_params'][uuid_key] == one.uuid_str
+            break
+        else:
+            raise Exception('Expected one scan result')
 
 
 async def test_source_dirs(source_dirs):
