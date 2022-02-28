@@ -445,7 +445,10 @@ class Scheduler:
 
         # Basic validation of --stopcp before we create a database.
         if self.options.stopcp:
-            self.validate_cyclepoint_str(self.options.stopcp)
+            self.validate_cyclepoint_str(
+                self.options.stopcp,
+                self.config.cfg['scheduling']['cycling mode']
+            )
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
 
@@ -2004,19 +2007,23 @@ class Scheduler:
                 "effect as it is after the final cycle "
                 f"point '{self.config.final_point}'.")
 
-    def validate_cyclepoint_str(self, point: str) -> None:
+    @staticmethod
+    def validate_cyclepoint_str(
+        point: str,
+        cycling_mode: str,
+        label: str = 'stop cyclepoint (stopcp)'
+    ) -> None:
         """Assert that a cyclepoint is valid."""
+        if point == 'reload':
+            return
         try:
-            if (
-                self.config.cfg['scheduling']['cycling mode'] ==
-                INTEGER_CYCLING_TYPE
-            ):
+            if cycling_mode == INTEGER_CYCLING_TYPE:
                 int(point)
             else:
                 parser = TimePointParser()
-                parser.parse(self.options.stopcp)
+                parser.parse(point)
         except (ValueError, ISO8601SyntaxError):
-            raise UserInputError(f'Invalid stop cyclepoint (stopcp): {point}')
+            raise UserInputError(f'Invalid {label}: {point}')
 
     def update_data_store(self):
         """Sets the update flag on the data store.

@@ -25,7 +25,7 @@ from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import RunOptions
 
 Fixture = Any
-
+param = pytest.param
 
 @pytest.mark.parametrize(
     'options, expected',
@@ -147,3 +147,59 @@ def test_check_startup_opts(
         with pytest.raises(UserInputError) as excinfo:
             Scheduler._check_startup_opts(mocked_scheduler)
         assert(err_msg.format(opt) in str(excinfo))
+
+
+@pytest.mark.parametrize(
+    'input_, expect',
+    [
+        param(
+            {
+                'point': 'reload',
+                'cycling_mode': 'integer'
+            },
+            None,
+            id="Point==reload"
+        ),
+        param(
+            {
+                'point': '911',
+                'cycling_mode': 'integer',
+            },
+            None,
+            id="integer-cycling-valid"
+        ),
+        param(
+            {
+                'point': 'foo',
+                'cycling_mode': 'integer'
+            },
+            'Not OK',
+            id="integer-cycling-invalid"
+        ),
+        param(
+            {
+                'point': '2022',
+                'cycling_mode': 'gregorian'
+            },
+            None,
+            id="dt-cycling-valid"
+        ),
+        param(
+            {
+                'point': '2022boo',
+                'cycling_mode': 'gergorian'
+            },
+            'Not OK',
+            id="dt-cycling-invalid"
+        )
+    ]
+)
+def test_validate_cyclepoint_str(input_, expect):
+    """Method correctly checks whether cyclepoint str is valid"""
+    testthis = Scheduler.validate_cyclepoint_str
+    if expect == None:
+        assert testthis(**input_) == expect
+    else:
+        with pytest.raises(UserInputError, match='Invalid'):
+            testthis(**input_)
+
