@@ -839,7 +839,7 @@ class Scheduler:
         """Return a command processing method or raise AttributeError."""
         return getattr(self, f'command_{command_name}')
 
-    def queue_command(self, command, kwargs):
+    def queue_command(self, command: str, kwargs: dict) -> None:
         self.command_queue.put((
             command,
             tuple(kwargs.values()), {}
@@ -1753,6 +1753,7 @@ class Scheduler:
                 [(b'shutdown', str(reason).encode('utf-8'))]
             )
             self.publisher.stop()
+            self.publisher = None
         if self.curve_auth:
             self.curve_auth.stop()  # stop the authentication thread
 

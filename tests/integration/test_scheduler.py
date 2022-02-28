@@ -16,10 +16,13 @@
 
 import asyncio
 import logging
+from pathlib import Path
 import pytest
 from typing import Any, Callable
 
 from cylc.flow.exceptions import CylcError
+from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
@@ -29,8 +32,13 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED
 )
 
+from .utils.flow_tools import _make_flow
+
 
 Fixture = Any
+
+
+TRACEBACK_MSG = "Traceback (most recent call last):"
 
 
 async def test_is_paused_after_stop(
@@ -237,3 +245,108 @@ async def test_no_poll_waiting_tasks(
 
     # For good measure, check the faked running task is reported at shutdown.
     assert "Orphaned task jobs:\n* 1/one (running)" in log.messages
+
+
+@pytest.mark.parametrize('reload', [False, True])
+@pytest.mark.parametrize(
+    'test_conf, expected_msg',
+    [
+        pytest.param(
+            {'Alan Wake': "It's not a lake, it's an ocean"},
+            "IllegalItemError: Alan Wake",
+            id="illegal item"
+        ),
+        pytest.param(
+            {
+                'scheduling': {
+                    'initial cycle point': "2k22",
+                    'graph': {'R1': "a => b"}
+                }
+            },
+            ("IllegalValueError: (type=cycle point) "
+             "[scheduling]initial cycle point = 2k22 - (Invalid cycle point)"),
+            id="illegal cycle point"
+        )
+    ]
+)
+async def test_illegal_config_load(
+    test_conf: dict,
+    expected_msg: str,
+    reload: bool,
+    flow: Callable,
+    one_conf: dict,
+    start: Callable,
+    run: Callable,
+    scheduler: Callable,
+    log_filter: Callable
+):
+    """Test that ParsecErrors (illegal config) - that occur during config load
+    when running a workflow - are displayed without traceback.
+
+    Params:
+        test_conf: Dict to update one_conf with.
+        expected_msg: Expected log message at error level.
+        reload: If False, test a workflow start with invalid config.
+            If True, test a workflow start with valid config followed by
+            reload with invalid config.
+    """
+    if not reload:
+        one_conf.update(test_conf)
+    reg: str = flow(one_conf)
+    schd: Scheduler = scheduler(reg)
+    log: pytest.LogCaptureFixture
+
+    if reload:
+        one_conf.update(test_conf)
+        run_dir = Path(get_workflow_run_dir(reg))
+        async with run(schd) as log:
+            # Shouldn't be any errors at this stage:
+            assert not log_filter(log, level=logging.ERROR)
+            # Modify flow.cylc:
+            _make_flow(get_cylc_run_dir(), run_dir, one_conf, '')
+            schd.queue_command('reload_workflow', {})
+        assert log_filter(
+            log, level=logging.WARNING, exact_match=expected_msg
+        )
+    else:
+        with pytest.raises(ParsecError):
+            async with start(schd) as log:
+                pass
+        assert log_filter(
+            log,
+            level=logging.ERROR,
+            exact_match=f"Workflow shutting down - {expected_msg}"
+        )
+
+    assert TRACEBACK_MSG not in log.text
+
+
+async def test_unexpected_ParsecError(
+    flow: Callable,
+    one_conf: dict,
+    start: Callable,
+    scheduler: Callable,
+    log_filter: Callable,
+    monkeypatch: pytest.MonkeyPatch
+):
+    """Test that ParsecErrors - that occur at any time other than config load
+    when running a workflow - are displayed with traceback, because they are
+    not expected."""
+    reg: str = flow(one_conf)
+    schd: Scheduler = scheduler(reg)
+    log: pytest.LogCaptureFixture
+
+    def raise_ParsecError(*a, **k):
+        raise ParsecError("Mock error")
+
+    monkeypatch.setattr(schd, '_configure_contact', raise_ParsecError)
+
+    with pytest.raises(ParsecError):
+        async with start(schd) as log:
+            pass
+
+    assert log_filter(
+        log, level=logging.CRITICAL,
+        exact_match="Workflow shutting down - Mock error"
+    )
+    assert TRACEBACK_MSG in log.text

@@ -22,11 +22,12 @@ Use the fixtures provided in the conftest instead.
 """
 
 import asyncio
+from pathlib import Path
 from async_timeout import timeout
 from contextlib import asynccontextmanager, contextmanager
 import logging
 import pytest
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from uuid import uuid1
 
 from cylc.flow import CYLC_LOG
@@ -38,13 +39,18 @@ from cylc.flow.workflow_status import StopMode
 from .flow_writer import flow_config_str
 
 
-def _make_flow(run_dir, test_dir, conf, name=None):
+def _make_flow(
+    cylc_run_dir: Union[Path, str],
+    test_dir: Path,
+    conf: Union[dict, str],
+    name: Optional[str] = None
+) -> str:
     """Construct a workflow on the filesystem."""
-    if not name:
+    if name is None:
         name = str(uuid1())
     flow_run_dir = (test_dir / name)
-    flow_run_dir.mkdir(parents=True)
-    reg = str(flow_run_dir.relative_to(run_dir))
+    flow_run_dir.mkdir(parents=True, exist_ok=True)
+    reg = str(flow_run_dir.relative_to(cylc_run_dir))
     if isinstance(conf, dict):
         conf = flow_config_str(conf)
     with open((flow_run_dir / WorkflowFiles.FLOW_FILE), 'w+') as flow_file:
