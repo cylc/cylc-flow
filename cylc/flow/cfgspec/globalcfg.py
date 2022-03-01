@@ -453,7 +453,7 @@ with Conf('global.cylc', desc='''
                    cpu_percent() < 70
 
                    # filter out hosts with less than 1GB of RAM available
-                   virtual_memory.available > 1000000000
+                   virtual_memory().available > 1000000000
 
                    # filter out hosts with less than 1GB of disk space
                    # available on the "/" mount

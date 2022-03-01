@@ -27,7 +27,7 @@ from tokenize import tokenize
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import HostSelectException
+from cylc.flow.exceptions import CylcError, HostSelectException
 from cylc.flow.hostuserutil import get_fqdn_by_host, is_remote_host
 from cylc.flow.remote import _remote_cylc_cmd, run_cmd
 from cylc.flow.terminal import parse_dirty_json
@@ -364,10 +364,15 @@ def _simple_eval(expr, **variables):
         >>> _simple_eval('a.available > 0', a=psutil.virtual_memory())
         True
 
-        If you try to get it to do something it's not supposed to:
+        If you try to get it to do something you're not allowed to:
         >>> _simple_eval('open("foo")')
         Traceback (most recent call last):
-        ValueError: open("foo")
+        CylcError: Invalid expression: open("foo")
+
+        If you try to do something which doesn't make sense:
+        >>> _simple_eval('a.b.c')  # no value "a.b.c"
+        Traceback (most recent call last):
+        CylcError: Invalid expression: a.b.c
 
     """
     try:
@@ -379,8 +384,8 @@ def _simple_eval(expr, **variables):
             {'__builtins__': None},
             variables
         )
-    except Exception:
-        raise ValueError(expr)
+    except Exception as exc:
+        raise CylcError(f'Invalid expression: {expr}\n{exc}')
 
 
 def _get_rankings(string):
