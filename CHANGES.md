@@ -35,6 +35,10 @@ Second Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Fixes
 
+[#4720](https://github.com/cylc/cylc-flow/pull/4720) - Fix traceback in
+workflow logs when starting or reloading a workflow with an illegal item
+(e.g. typo) in the config.
+
 [#4703](https://github.com/cylc/cylc-flow/pull/4703) - Fix `ImportError` when
 validating/running a Jinja2 workflow (for users who have installed Cylc
 using `pip`.)
@@ -440,6 +444,10 @@ not the whole workflow. ([#4076](https://github.com/cylc/cylc-flow/pull/4076))
 `flow.cylc[runtime]`) are now disallowed by default
 ([#4109](https://github.com/cylc/cylc-flow/pull/4109)). You can allow them by
 setting `flow.cylc[scheduler]allow implicit tasks` to `True`.
+
+Named checkpoints have been removed ([#3906](https://github.com/cylc/cylc-flow/pull/3906))
+due to being a seldom-used feature. Workflows can still be restarted from the
+last run, or reflow can be used to achieve the same result.
 
 ### Enhancements
 
