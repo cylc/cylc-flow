@@ -91,14 +91,16 @@ class Tokens(dict):
         },
     }
 
-    def __init__(self, *args: 'Union[str, Tokens]', **kwargs):
+    def __init__(
+        self,
+        *args: 'Union[str, Tokens]',
+        relative: bool = False,
+        **kwargs: Optional[str]
+    ):
         if args:
             if len(args) > 1:
                 raise ValueError()
-            kwargs = tokenise(
-                str(args[0]),
-                relative=kwargs.get('relative', False)
-            )
+            kwargs = tokenise(str(args[0]), relative)
         else:
             for key in kwargs:
                 if key not in self._KEYS:

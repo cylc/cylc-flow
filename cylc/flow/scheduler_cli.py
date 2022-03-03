@@ -162,12 +162,15 @@ def get_option_parser(add_std_opts=False):
 
     parser.add_option(
         "--start-task", "--starttask", "-t",
-        help="Start from this task instance. Can be used multiple times "
-        "to start from multiple tasks at once. Dependence on tasks with "
-        "with cycle points earlier than the earliest start-task will be "
-        "ignored. A sub-graph of the workflow will run if selected tasks "
-        "do not lead on to the full graph.",
-        metavar="NAME.CYCLE_POINT", action="append", dest="starttask")
+        help=(
+            "Start from this task instance, given by '<cycle>/<name>'. "
+            "Can be used multiple times "
+            "to start from multiple tasks at once. Dependence on tasks with "
+            "with cycle points earlier than the earliest start-task will be "
+            "ignored. A sub-graph of the workflow will run if selected tasks "
+            "do not lead on to the full graph."
+        ),
+        metavar="TASK_ID", action="append", dest="starttask")
 
     parser.add_option(
         "--pause",
