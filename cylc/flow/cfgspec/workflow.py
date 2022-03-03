@@ -362,6 +362,10 @@ with Conf(
                 ``$PATH`` (in the shell in which the scheduler runs).
                 They should require little resource to run and return
                 quickly.
+
+                Template variables can be used to configure handlers
+                for a full list of supported variables see
+                :ref:`workflow_event_template_variables`.
             ''')
             Conf('handler events', VDR.V_STRING_LIST, None, desc='''
                 Specify the events for which workflow event
@@ -1316,67 +1320,8 @@ with Conf(
                 quickly.
 
                 Each task event handler can be specified as a list of command
-                lines or command line templates. They can contain any or all
-                of the following patterns, which will be substituted with
-                actual values:
-
-                ``%(event)s``
-                   Event name
-                ``%(workflow)s``
-                   Workflow name
-                ``%(workflow_uuid)s``
-                   Workflow UUID string
-                ``%(point)s``
-                   Cycle point
-                ``%(name)s``
-                   Task name
-                ``%(submit_num)s``
-                   Submit number
-                ``%(try_num)s``
-                   Try number
-                ``%(id)s``
-                   Task ID (i.e. %(name)s.%(point)s)
-                ``%(job_runner_name)s``
-                   Job runner name (previously ``%(batch_sys_name)s``)
-                ``%(job_id)s``
-                   Job ID in the job runner
-                   (previously ``%(batch_sys_job_id)s``)
-                ``%(submit_time)s``
-                   Date-time when task job is submitted
-                ``%(start_time)s``
-                   Date-time when task job starts running
-                ``%(finish_time)s``
-                   Date-time when task job exits
-                ``%(platform_name)s``
-                   Name of platform where the task job is submitted
-                ``%(message)s``
-                   Event message, if any
-                Any task [meta] item, e.g.:
-                   ``%(title)s``
-                      Task title
-                   ``%(URL)s``
-                      Task URL
-                   ``%(importance)s``
-                      Example custom task metadata
-                Any workflow ``[meta]`` item, prefixed with ``workflow_``
-                   ``%(workflow_title)s``
-                      Workflow title
-                   ``%(workflow_URL)s``
-                      Workflow URL.
-                   ``%(workflow_rating)s``
-                      Example custom workflow metadata.
-
-                Otherwise, the command line will be called with the following
-                default arguments:
-
-                .. code-block:: none
-
-                   <event-handler> %(event)s %(workflow)s %(id)s %(message)s
-
-                .. note::
-
-                   Substitution patterns should not be quoted in the template
-                   strings.  This is done automatically where required.
+                lines or command line templates. For a full list of supported
+                template variables see :ref:`task_event_template_variables`.
 
                 For an explanation of the substitution syntax, see
                 `String Formatting Operations in the Python

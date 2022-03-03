@@ -16,8 +16,10 @@
 """Workflow event handler."""
 
 from collections import namedtuple
+from enum import Enum
 import os
 from shlex import quote
+from typing import Union, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -25,10 +27,108 @@ from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.log_diagnosis import run_reftest
 from cylc.flow.subprocctx import SubProcContext
 
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
+
 
 WorkflowEventContext = namedtuple(
     "WorkflowEventContext",
     ["event", "reason", "workflow", "uuid_str", "owner", "host", "port"])
+
+
+class EventData(Enum):
+    """The following variables are available to workflow event handlers.
+
+    They can be templated into event handlers with Python percent style string
+    formatting e.g:
+
+    .. code-block:: none
+
+       %(workflow)s is running on %(host)s
+
+    .. warning::
+
+       Substitution patterns should not be quoted in the template strings.
+       This is done automatically where required.
+
+    For an explanation of the substitution syntax, see
+    `String Formatting Operations in the Python documentation
+    <https://docs.python.org/3/library/stdtypes.html
+    #printf-style-string-formatting>`_.
+
+    """
+
+    Event = 'workflow event'
+    """The type of workflow event that has occurred e.g. ``stall``."""
+
+    Reason = 'reason'
+    """Additional information about the event."""
+
+    Workflow = 'workflow'
+    """The workflow ID"""
+
+    Host = 'host'
+    """The host where the workflow is running."""
+
+    Port = 'port'
+    """The port where the workflow is running."""
+
+    Owner = 'owner'
+    """The user account under which the workflow is running."""
+
+    UUID_str = 'uuid_str'
+    """The unique identification string for this workflow run.
+
+    This string is preserved for the lifetime of the scheduler and is restored
+    from the database on restart.
+    """
+
+    # BACK COMPAT: "suite" deprecated
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 9
+    Suite = 'suite'  # deprecated
+    """The workflow ID
+
+    .. deprecated:: 8.0.0
+
+       Use "workflow".
+    """
+
+
+def process_mail_footer(
+    mail_footer_tmpl: str,
+    ctx: Union[WorkflowEventContext, 'Scheduler'],
+) -> str:
+    """Process mail footer for workflow or task events.
+
+    Returns an empty string if issues occur in processing.
+    """
+    # BACK COMPAT: "suite" deprecated
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/4724 (&4714)
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 9
+
+    template_vars = {
+        EventData.Host.value: ctx.host,
+        EventData.Port.value: ctx.port,
+        EventData.Owner.value: ctx.owner,
+        EventData.Suite.value: ctx.workflow,  # deprecated
+        EventData.Workflow.value: ctx.workflow
+    }
+    try:
+        return (mail_footer_tmpl + '\n') % template_vars
+    except (KeyError, ValueError):
+        LOG.warning(
+            f'Ignoring bad mail footer template: {mail_footer_tmpl}'
+        )
+    return ''
 
 
 class WorkflowEventHandler():
@@ -90,37 +190,20 @@ class WorkflowEventHandler():
             subject = '[workflow %(event)s] %(workflow)s' % {
                 'workflow': ctx.workflow, 'event': ctx.event}
             stdin_str = ''
-            for name, value in [
-                    ('workflow event', ctx.event),
-                    ('reason', ctx.reason),
-                    ('workflow', ctx.workflow),
-                    ('host', ctx.host),
-                    ('port', ctx.port),
-                    ('owner', ctx.owner)]:
+            for key in (
+                EventData.Event.value,
+                EventData.Reason.value,
+                EventData.Workflow.value,
+                EventData.Host.value,
+                EventData.Port.value,
+                EventData.Owner.value,
+            ):
+                value = getattr(ctx, key, None)
                 if value:
-                    stdin_str += '%s: %s\n' % (name, value)
+                    stdin_str += '%s: %s\n' % (key, value)
             mail_footer_tmpl = self.get_events_conf(config, 'footer')
             if mail_footer_tmpl:
-                # BACK COMPAT: "suite" deprecated
-                # url:
-                #     https://github.com/cylc/cylc-flow/pull/4174
-                # from:
-                #     Cylc 8
-                # remove at:
-                #     Cylc 9
-                try:
-                    stdin_str_footer = (mail_footer_tmpl + '\n') % {
-                        'host': ctx.host,
-                        'port': ctx.port,
-                        'owner': ctx.owner,
-                        'suite': ctx.workflow,  # deprecated
-                        'workflow': ctx.workflow}
-                except KeyError:
-                    LOG.warning(
-                        "Ignoring bad mail footer template: %s" % (
-                            mail_footer_tmpl))
-                else:
-                    stdin_str += stdin_str_footer
+                stdin_str += process_mail_footer(mail_footer_tmpl, ctx)
             proc_ctx = SubProcContext(
                 (self.WORKFLOW_EVENT_HANDLER, ctx.event),
                 [

@@ -74,10 +74,15 @@ from cylc.flow.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string as intvl_as_str
 )
+from cylc.flow.workflow_events import (
+    EventData as WorkflowEventData,
+    process_mail_footer,
+)
 
 
 if TYPE_CHECKING:
     from cylc.flow.task_proxy import TaskProxy
+    from cylc.flow.scheduler import Scheduler
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -120,29 +125,182 @@ def log_task_job_activity(ctx, workflow, point, name, submit_num=None):
 
 
 class EventData(Enum):
-    """Template variables which are available to event handlers."""
+    """The following variables are available to task event handlers.
+
+    They can be templated into event handlers with Python percent style string
+    formatting e.g:
+
+    .. code-block:: none
+
+       %(workflow)s is running on %(host)s
+
+    The ``%(event)s`` string, for instance, will be replaced by the actual
+    event name when the handler is invoked.
+
+    If no templates or arguments are specified the following default command
+    line will be used:
+
+    .. code-block:: none
+
+       <event-handler> %(event)s %(workflow)s %(id)s %(message)s
+
+    .. warning::
+
+       Substitution patterns should not be quoted in the template strings.
+       This is done automatically where required.
+
+    For an explanation of the substitution syntax, see
+    `String Formatting Operations in the Python documentation
+    <https://docs.python.org/3/library/stdtypes.html
+    #printf-style-string-formatting>`_.
+
+    """
 
     Event = 'event'
+    """Event name."""
+
     Workflow = 'workflow'
+    """Workflow ID."""
+
     Suite = 'suite'  # deprecated
-    WorkflowUUID = 'workflow_uuid'
+    """Workflow ID.
+
+    .. deprecated:: 8.0.0
+
+       Use "workflow".
+    """
+
+    UUID_str = 'uuid_str'
+    """The unique identification string for this workflow run.
+
+    This string is preserved for the lifetime of the scheduler and is restored
+    from the database on restart.
+    """
+
     SuiteUUID = 'suite_uuid'  # deprecated
+    """The unique identification string for this workflow run.
+
+    .. deprecated:: 8.0.0
+
+       Use 'uuid_str'.
+    """
+
     CyclePoint = 'point'
+    """The task's cycle point."""
+
     SubmitNum = 'submit_num'
+    """The job's sumit number.
+
+    This starts at 1 and increments with each additional job submission.
+    """
+
     TryNum = 'try_num'
+    """The job's try number.
+
+    The number of execution attempts, starts at 1, increments with automatic
+    :cylc:conf:`flow.cylc[runtime][<namespace>]execution retry delays`.
+    """
+
     ID = 'id'
+    """The task ID (i.e. ``%(point)/%(name)``)."""
+
     Message = 'message'
-    JobRunnerName_old = 'batch_sys_name'  # deprecated
+    """Events message, if any."""
+
     JobRunnerName = 'job_runner_name'
-    JobID_old = 'batch_sys_job_id'  # deprecated
+    """The job runner name."""
+
+    JobRunnerName_old = 'batch_sys_name'  # deprecated
+    """The job runner name.
+
+    .. deprecated:: 8.0.0
+
+       Use "job_runner_name".
+    """
+
     JobID = 'job_id'
+    """The job ID in the job runner.
+
+    I.E. The job submission ID, for background jobs this is the process ID.
+    """
+
+    JobID_old = 'batch_sys_job_id'  # deprecated
+    """The job ID in the job runner.
+
+    .. deprecated:: 8.0.0
+
+       Use "job_id".
+    """
+
     SubmitTime = 'submit_time'
+    """Date-time when the job was submitted in ISO8601 format."""
+
     StartTime = 'start_time'
+    """Date-time when the job started in ISO8601 format."""
+
     FinishTime = 'finish_time'
+    """Date-time when the job finished in ISO8601 format."""
+
     PlatformName = 'platform_name'
+    """The name of the platform where the job is submitted."""
+
+    UserAtHost = 'user@host'
+    """The name of the platform where the job is submitted.
+
+    .. deprecated:: 8.0.0
+
+       Use "platform_name".
+
+    .. versionchanged:: 8.0.0
+
+       This now provides the platform name rather than ``user@host``.
+    """
+
     TaskName = 'name'
+    """The name of the task."""
+
     TaskURL = 'task_url'  # deprecated
+    """The URL defined in the task's metadata.
+
+    .. deprecated:: 8.0.0
+
+       Use ``URL`` from ``<task metadata>``.
+    """
+
     WorkflowURL = 'workflow_url'  # deprecated
+    """The URL defined in the workflow's metadata.
+
+    .. deprecated:: 8.0.0
+
+       Use ``workflow_URL`` from ``workflow_<workflow metadata>``.
+    """
+
+    # NOTE: placeholder for task metadata (here for documentation reasons)
+    TaskMeta = '<task metadata>'
+    """Any task metadata defined in
+    :cylc:conf:`flow.cylc[runtime][<namespace>][meta]` can be used e.g:
+
+    ``%(title)s``
+       Task title
+    ``%(URL)s``
+       Task URL
+    ``%(importance)s``
+       Example custom task metadata
+    """
+
+    # NOTE: placeholder for workflow metadata (here for documentation reasons)
+    WorkflowMeta = 'workflow_<workflow metadata>'
+    """Any workflow metadata defined in
+    :cylc:conf:`flow.cylc[meta]` can be used with the ``workflow_``
+    e.g. prefix:
+
+    ``%(workflow_title)s``
+       Workflow title
+    ``%(workflow_URL)s``
+       Workflow URL.
+    ``%(workflow_rating)s``
+       Example custom workflow metadata.
+    """
 
 
 def get_event_handler_data(task_cfg, workflow_cfg):
@@ -290,12 +448,10 @@ class TaskEventsManager():
             default
         )
 
-    def process_events(self, schd_ctx):
+    def process_events(self, schd: 'Scheduler'):
         """Process task events that were created by "setup_event_handlers".
-
-        schd_ctx is an instance of "Scheduler" in "cylc.flow.scheduler".
         """
-        ctx_groups = {}
+        ctx_groups: dict = {}
         now = time()
         for id_key, timer in self._event_timers.copy().items():
             key1, point, name, submit_num = id_key
@@ -329,7 +485,7 @@ class TaskEventsManager():
                 # Group together as many notifications as possible within a
                 # given interval.
                 timer.ctx.ctx_type == self.HANDLER_MAIL and
-                not schd_ctx.stop_mode and
+                not schd.stop_mode and
                 self.next_mail_time is not None and
                 self.next_mail_time > now
             ):
@@ -346,7 +502,7 @@ class TaskEventsManager():
                         shell=True,  # nosec
                     ),  # designed to run user defined code
                     callback=self._custom_handler_callback,
-                    callback_args=[schd_ctx, id_key]
+                    callback_args=[schd, id_key]
                 )
             else:
                 # Group together built-in event handlers, where possible
@@ -359,9 +515,9 @@ class TaskEventsManager():
             if ctx.ctx_type == self.HANDLER_MAIL:
                 # Set next_mail_time if any mail sent
                 self.next_mail_time = next_mail_time
-                self._process_event_email(schd_ctx, ctx, id_keys)
+                self._process_event_email(schd, ctx, id_keys)
             elif ctx.ctx_type == self.HANDLER_JOB_LOGS_RETRIEVE:
-                self._process_job_logs_retrieval(schd_ctx, ctx, id_keys)
+                self._process_job_logs_retrieval(schd, ctx, id_keys)
 
     def process_message(
         self,
@@ -666,10 +822,10 @@ class TaskEventsManager():
         self._setup_event_mail(itask, event)
         self._setup_custom_event_handlers(itask, event, message)
 
-    def _custom_handler_callback(self, ctx, schd_ctx, id_key):
+    def _custom_handler_callback(self, ctx, schd, id_key):
         """Callback when a custom event handler is done."""
         _, point, name, submit_num = id_key
-        log_task_job_activity(ctx, schd_ctx.workflow, point, name, submit_num)
+        log_task_job_activity(ctx, schd.workflow, point, name, submit_num)
         if ctx.ret_code == 0:
             self.remove_event_timer(id_key)
         else:
@@ -682,23 +838,23 @@ class TaskEventsManager():
             "event": event,
             "message": message})
 
-    def _process_event_email(self, schd_ctx, ctx, id_keys):
+    def _process_event_email(self, schd: 'Scheduler', ctx, id_keys):
         """Process event notification, by email."""
         if len(id_keys) == 1:
             # 1 event from 1 task
             (_, event), point, name, submit_num = id_keys[0]
             subject = "[%s/%s/%02d %s] %s" % (
-                point, name, submit_num, event, schd_ctx.workflow)
+                point, name, submit_num, event, schd.workflow)
         else:
             event_set = {id_key[0][1] for id_key in id_keys}
             if len(event_set) == 1:
                 # 1 event from n tasks
                 subject = "[%d tasks %s] %s" % (
-                    len(id_keys), event_set.pop(), schd_ctx.workflow)
+                    len(id_keys), event_set.pop(), schd.workflow)
             else:
                 # n events from n tasks
                 subject = "[%d task events] %s" % (
-                    len(id_keys), schd_ctx.workflow)
+                    len(id_keys), schd.workflow)
         cmd = ["mail", "-s", subject]
         # From: and To:
         cmd.append("-r")
@@ -711,19 +867,18 @@ class TaskEventsManager():
             stdin_str += "%s: %s/%s/%02d\n" % (event, point, name, submit_num)
         # STDIN for mail, event info + workflow detail
         stdin_str += "\n"
-        for label, value in [
-                ('workflow', schd_ctx.workflow),
-                ("host", schd_ctx.host),
-                ("port", schd_ctx.port),
-                ("owner", schd_ctx.owner)]:
+        for key in (
+            WorkflowEventData.Workflow.value,
+            WorkflowEventData.Host.value,
+            WorkflowEventData.Port.value,
+            WorkflowEventData.Owner.value,
+        ):
+            value = getattr(schd, key, None)
             if value:
-                stdin_str += "%s: %s\n" % (label, value)
+                stdin_str += '%s: %s\n' % (key, value)
+
         if self.mail_footer:
-            stdin_str += (self.mail_footer + "\n") % {
-                "host": schd_ctx.host,
-                "port": schd_ctx.port,
-                "owner": schd_ctx.owner,
-                "workflow": schd_ctx.workflow}
+            stdin_str += process_mail_footer(self.mail_footer, schd)
         # SMTP server
         env = dict(os.environ)
         if self.mail_smtp:
@@ -732,9 +887,9 @@ class TaskEventsManager():
             SubProcContext(
                 ctx, cmd, env=env, stdin_str=stdin_str, id_keys=id_keys,
             ),
-            callback=self._event_email_callback, callback_args=[schd_ctx])
+            callback=self._event_email_callback, callback_args=[schd])
 
-    def _event_email_callback(self, proc_ctx, schd_ctx):
+    def _event_email_callback(self, proc_ctx, schd):
         """Call back when email notification command exits."""
         for id_key in proc_ctx.cmd_kwargs["id_keys"]:
             key1, point, name, submit_num = id_key
@@ -744,7 +899,7 @@ class TaskEventsManager():
                     log_ctx = SubProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     log_task_job_activity(
-                        log_ctx, schd_ctx.workflow, point, name, submit_num)
+                        log_ctx, schd.workflow, point, name, submit_num)
                 else:
                     self.unset_waiting_event_timer(id_key)
             except KeyError as exc:
@@ -768,7 +923,7 @@ class TaskEventsManager():
                     return value
         return default
 
-    def _process_job_logs_retrieval(self, schd_ctx, ctx, id_keys):
+    def _process_job_logs_retrieval(self, schd, ctx, id_keys):
         """Process retrieval of task job logs from remote user@host."""
         platform = get_platform(ctx.platform_name)
         host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
@@ -792,20 +947,20 @@ class TaskEventsManager():
         # Remote source
         cmd.append("%s:%s/" % (
             host,
-            get_remote_workflow_run_job_dir(schd_ctx.workflow)))
+            get_remote_workflow_run_job_dir(schd.workflow)))
         # Local target
-        cmd.append(get_workflow_run_job_dir(schd_ctx.workflow) + "/")
+        cmd.append(get_workflow_run_job_dir(schd.workflow) + "/")
         self.proc_pool.put_command(
             SubProcContext(
                 ctx, cmd, env=dict(os.environ), id_keys=id_keys, host=host
             ),
             bad_hosts=self.bad_hosts,
             callback=self._job_logs_retrieval_callback,
-            callback_args=[schd_ctx],
+            callback_args=[schd],
             callback_255=self._job_logs_retrieval_callback_255
         )
 
-    def _job_logs_retrieval_callback_255(self, proc_ctx, schd_ctx):
+    def _job_logs_retrieval_callback_255(self, proc_ctx, schd):
         """Call back when log job retrieval fails with a 255 error."""
         self.bad_hosts.add(proc_ctx.host)
         for id_key in proc_ctx.cmd_kwargs["id_keys"]:
@@ -814,7 +969,7 @@ class TaskEventsManager():
                 timer = self._event_timers[key]
                 timer.reset()
 
-    def _job_logs_retrieval_callback(self, proc_ctx, schd_ctx):
+    def _job_logs_retrieval_callback(self, proc_ctx, schd):
         """Call back when log job retrieval completes."""
         if (
             (proc_ctx.ret_code and LOG.isEnabledFor(DEBUG))
@@ -834,7 +989,7 @@ class TaskEventsManager():
                 fname_oks = {}
                 for fname in fnames:
                     fname_oks[fname] = os.path.exists(get_task_job_log(
-                        schd_ctx.workflow, point, name, submit_num, fname))
+                        schd.workflow, point, name, submit_num, fname))
                 # All expected paths must exist to record a good attempt
                 log_ctx = SubProcContext((key1, submit_num), None)
                 if all(fname_oks.values()):
@@ -848,7 +1003,7 @@ class TaskEventsManager():
                             log_ctx.err += " %s" % fname
                     self.unset_waiting_event_timer(id_key)
                 log_task_job_activity(
-                    log_ctx, schd_ctx.workflow, point, name, submit_num)
+                    log_ctx, schd.workflow, point, name, submit_num)
             except KeyError as exc:
                 LOG.exception(exc)
 
@@ -1238,6 +1393,8 @@ class TaskEventsManager():
                     EventData.TaskName.value:
                         quote(itask.tdef.name),
                     EventData.PlatformName.value:
+                        quote(platform_name),
+                    EventData.UserAtHost.value:
                         quote(platform_name),
                     EventData.StartTime.value:
                         quote(str(itask.summary['started_time_string'])),
