@@ -32,8 +32,10 @@ jobs:
       - name: Brew Install
         if: startsWith(matrix.os, 'macos')
         run: |
+          # speed up install (https://docs.brew.sh/Manpage#environment)
+          export HOMEBREW_NO_AUTO_UPDATE=1
           brew update
-          brew install shellcheck sqlite3 bash coreutils
+          brew install shellcheck bash coreutils
 
           # add GNU coreutils and sed to the user PATH
           # (see instructions in brew install output)

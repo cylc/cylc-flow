@@ -90,6 +90,8 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           # install system deps
+          # speed up install (https://docs.brew.sh/Manpage#environment)
+          export HOMEBREW_NO_AUTO_UPDATE=1
           brew update
           brew install bash coreutils gnu-sed
 
