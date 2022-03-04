@@ -1404,7 +1404,7 @@ class TaskEventsManager():
                         quote(str(itask.summary['submitted_time_string'])),
                     EventData.Workflow.value:
                         quote(self.workflow),
-                    EventData.WorkflowUUID.value:
+                    EventData.UUID_str.value:
                         quote(self.uuid_str),
                     # BACK COMPAT: Suite, SuiteUUID deprecated
                     # url:

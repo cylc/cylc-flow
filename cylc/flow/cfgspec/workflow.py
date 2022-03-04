@@ -138,8 +138,13 @@ with Conf(
             A web URL to workflow documentation.
 
             It can be retrieved at run time with the ``cylc show`` command.
-            The template ``%(workflow_name)s`` will be replaced with the actual
-            workflow name.
+            The template variable ``%(workflow)s`` will be replaced with the
+            actual workflow ID.
+
+            .. deprecated:: 8.0.0
+
+               The ``%(suite_name)s`` template variable is deprecated, please
+               use ``%(workflow)s``.
 
             .. seealso::
 
@@ -147,7 +152,7 @@ with Conf(
 
             Example:
 
-            ``http://my-site.com/workflows/%(workflow_name)s/index.html``
+            ``http://my-site.com/workflows/%(workflow)s/index.html``
 
         ''')
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
@@ -1176,16 +1181,24 @@ with Conf(
                         A URL link to task documentation for this task or task
                         family.
 
-                        The templates ``%(workflow_name)s`` and
-                        ``%(task_name)s`` will be replaced with the actual
-                        workflow and task names.
+                        The templates ``%(workflow)s`` and
+                        ``%(task)s`` will be replaced with the actual
+                        workflow ID and task name.
+
+                        .. deprecated:: 8.0.0
+
+                           The ``%(suite_name)s`` template variable is
+                           deprecated, please use ``%(workflow)s``.
+
+                           The ``%(task_name)s`` template variable is
+                           deprecated, please use ``%(task)s``.
 
                         See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
                         Example:
 
-                        ``http://my-site.com/workflows/%(workflow_name)s/'''
-                    '%(task_name)s.html``')
+                        ``http://my-site.com/workflows/%(workflow)s/'''
+                    '%(task)s.html``')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
 
@@ -1910,7 +1923,7 @@ def warn_about_depr_event_handler_tmpl(cfg):
             if f'%({EventData.SuiteUUID.value})' in handler:
                 LOG.warning(
                     deprecation_msg.format(EventData.SuiteUUID.value,
-                                           EventData.WorkflowUUID.value)
+                                           EventData.UUID_str.value)
                 )
 
 

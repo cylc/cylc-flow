@@ -16,9 +16,11 @@
 
 from optparse import Values
 from typing import Any, Callable, Dict, Optional, Tuple, Type
+from itertools import product
 from pathlib import Path
 import pytest
 import logging
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 from cylc.flow import CYLC_LOG
@@ -1166,4 +1168,52 @@ def test_implicit_tasks(
         WorkflowConfig(**args)
         assert log_filter(
             caplog, level=expected_log_level, contains=expected_msg
+        )
+
+
+@pytest.mark.parametrize(
+    'workflow_meta,url_type',
+    product(
+        [True, False],
+        ['good', 'bad', 'ugly', 'broken']
+    )
+)
+def test_process_urls(caplog, log_filter, workflow_meta, url_type):
+
+    if url_type == 'good':
+        # valid cylc 8 syntax
+        url = '%(workflow)s'
+    elif url_type == 'bad':
+        # no variable called "foo"
+        url = '%(foo)s'
+    elif url_type == 'broken':
+        # invalid syntax (missing the trailing "s")
+        url = '%(suite_name)'
+    elif url_type == 'ugly':
+        # valid cylc 7 syntax
+        url = '%(suite_name)s'
+
+    config = SimpleNamespace()
+    config.workflow = 'my-workflow'
+    if workflow_meta:
+        config.cfg = {
+            'meta': {'URL': url},
+            'runtime': {}
+        }
+    else:
+        config.cfg = {
+            'meta': {'URL': ''},
+            'runtime': {'foo': {'meta': {'URL': url}}},
+        }
+
+    if url_type == 'good':
+        WorkflowConfig.process_metadata_urls(config)
+    elif url_type in {'bad', 'broken'}:
+        with pytest.raises(UserInputError):
+            WorkflowConfig.process_metadata_urls(config)
+    elif url_type == 'ugly':
+        WorkflowConfig.process_metadata_urls(config)
+        assert log_filter(
+            caplog,
+            contains='Detected deprecated template variables',
         )
