@@ -122,7 +122,7 @@ EVENTS_DESCR = {
     ),
     'abort handlers': (
         f'''
-        :Default For; :cylc:conf:`flow.cylc[scheduler][events]abort handlers`.
+        :Default For: :cylc:conf:`flow.cylc[scheduler][events]abort handlers`.
 
         Handlers to run if the scheduler aborts.
 
