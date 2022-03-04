@@ -26,6 +26,7 @@ from cylc.flow.exceptions import (
     UserInputError,
     WorkflowFilesError,
 )
+from cylc.flow.hostuserutil import get_user
 from cylc.flow.id import (
     Tokens,
     contains_multiple_workflows,
@@ -46,6 +47,7 @@ from cylc.flow.workflow_files import (
     infer_latest_run_from_id,
     validate_workflow_name,
 )
+
 
 FN_CHARS = re.compile(r'[\*\?\[\]\!]')
 
@@ -380,9 +382,9 @@ def _validate_constraint(*tokens_list, constraint=None):
 
 def _validate_workflow_ids(*tokens_list, src_path):
     for ind, tokens in enumerate(tokens_list):
-        if tokens['user']:
+        if tokens['user'] and (tokens['user'] != get_user()):
             raise UserInputError(
-                "Operating on others users' workflows is not supported"
+                "Operating on other users' workflows is not supported"
             )
         if not src_path:
             validate_workflow_name(tokens['workflow'])

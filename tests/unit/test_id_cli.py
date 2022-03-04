@@ -370,18 +370,27 @@ async def test_parse_ids_src_path(src_dir):
         ),
         (
             ['~alice/foo'],
-            "Operating on others users' workflows is not supported",
+            "Operating on other users' workflows is not supported",
         ),
     ]
 )
-async def test_parse_ids_invalid_ids(ids_in, error_msg):
+async def test_parse_ids_invalid_ids(
+    ids_in, error_msg, monkeypatch: pytest.MonkeyPatch
+):
     """It should error for invalid IDs."""
+    monkeypatch.setattr('cylc.flow.id_cli.get_user', lambda: 'rincewind')
     with pytest.raises(Exception) as exc_ctx:
         await parse_ids_async(
             *ids_in,
             constraint='workflows',
         )
     assert error_msg in str(exc_ctx.value)
+
+
+async def test_parse_ids_current_user(monkeypatch: pytest.MonkeyPatch):
+    """It should work if the user in the ID is the current user."""
+    monkeypatch.setattr('cylc.flow.id_cli.get_user', lambda: 'rincewind')
+    await parse_ids_async('~rincewind/luggage', constraint='workflows')
 
 
 async def test_parse_ids_file(tmp_run_dir):
