@@ -466,10 +466,8 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
 
     Raises:
         CylcError:
-            * If it is not possible to tell for sure if the workflow is running
-              or not.
-            * If the workflow is not, however, the contact file cannot be
-              removed.
+            If it is not possible to tell for sure if the workflow is running
+            or not.
         ServiceFileError(CylcError):
             If old contact file exists and the workflow process still alive.
 
@@ -513,15 +511,21 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
         # ... the process isn't running so the contact file is out of date
         # remove it
         try:
-            LOG.info(
-                f'Removing contact file for {reg}'
-                ' (workflow no longer running).'
-            )
             os.unlink(fname)
-            return
+        except FileNotFoundError:
+            # contact file has been removed by another process
+            # (likely by another cylc client, no problem, safe to ignore)
+            pass
         except OSError as exc:
-            raise CylcError(
-                f'Failed to remove old contact file: "{fname}"\n{exc}'
+            # unexpected error removing the contact file
+            # (note the FileNotFoundError incorporated errno.ENOENT)
+            LOG.error(
+                f'Failed to remove contact file for {reg}:\n{exc}'
+            )
+        else:
+            LOG.info(
+                f'Removed contact file for {reg}'
+                ' (workflow no longer running).'
             )
 
 
