@@ -108,11 +108,11 @@ __OUT__
 purge
 # -----------------------------------------------------------------------------
 
-if ! command -v xfs_mkfile; then
-    skip 2 "xfs_mkfile not installed"
-    exit
-fi
-
+create_test_global_config '' '
+    [platforms]
+        [['${CYLC_TEST_PLATFORM}']]
+            rsync command = "my-rsync"
+'
 # Test file install completes before dependent tasks are executed
 TEST_NAME="${TEST_NAME_BASE}-installation-timing"
 init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
@@ -140,12 +140,10 @@ init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
 
 __FLOW_CONFIG__
 
-# This generates a large file, ready for the file install. The aim is
-# to slow rsync and ensure tasks do not start until file install has
-# completed.
+
 for DIR in "dir1" "dir2"; do
     mkdir -p "${WORKFLOW_RUN_DIR}/${DIR}"
-    xfs_mkfile 1024m "${WORKFLOW_RUN_DIR}/${DIR}/moo"
+    touch "${WORKFLOW_RUN_DIR}/${DIR}/moo"
 done
 
 run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"

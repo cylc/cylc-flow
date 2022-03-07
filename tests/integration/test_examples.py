@@ -26,6 +26,7 @@ from pathlib import Path
 import pytest
 
 from cylc.flow import __version__
+from sqlalchemy import false
 
 
 async def test_create_flow(flow, run_dir):
