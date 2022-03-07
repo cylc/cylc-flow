@@ -22,6 +22,19 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
+## __cylc-7.8.11 (2022-03-07)__
+
+### Fixes
+
+[#4518](https://github.com/cylc/cylc-flow/pull/4518) - load suite contact info
+for custom settings for task messaging.
+
+[#4444](https://github.com/cylc/cylc-flow/pull/4444) - cylc review: syntax
+highlight all .cylc files (Cylc 8 log directory compatibility).
+
+[#4656](https://github.com/cylc/cylc-flow/pull/4456) - cylc review: display
+Rose Bunch logs correctly.
+
 
 ## __cylc-7.8.10 (2021-10-01)__
 
