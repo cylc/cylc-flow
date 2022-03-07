@@ -85,15 +85,15 @@ class StopMode(Enum):
         to clarify what the scheduler is doing.
         """
         if self in (self.AUTO, self.REQUEST_CLEAN):  # type: ignore
-            return 'Waiting for active jobs to complete'
+            return 'waiting for active jobs to complete'
         if self == self.REQUEST_KILL:  # type: ignore
-            return 'Killing active jobs'
+            return 'killing active jobs'
         if self in (  # type: ignore
             self.AUTO_ON_TASK_FAILURE,  # type: ignore
             self.REQUEST_NOW,
             self.REQUEST_NOW_NOW,
         ):
-            return 'Shutting down'
+            return 'shutting down'
         return ''
 
     def describe(self) -> str:
@@ -142,7 +142,7 @@ class AutoRestartMode(Enum):
     """Workflow will stop immediately but *not* attempt to restart."""
 
 
-def get_workflow_status(schd: 'Scheduler') -> Tuple[WorkflowStatus, str]:
+def get_workflow_status(schd: 'Scheduler') -> Tuple[str, str]:
     """Return the status of the provided workflow.
 
     This should be a short, concise description of the workflow state.
@@ -164,10 +164,10 @@ def get_workflow_status(schd: 'Scheduler') -> Tuple[WorkflowStatus, str]:
 
     if schd.is_paused:
         status = WorkflowStatus.PAUSED
-        status_msg = 'Paused'
+        status_msg = 'paused'
     elif schd.stop_mode is not None:
         status = WorkflowStatus.STOPPING
-        status_msg = f'Stopping: {schd.stop_mode.explain()}'
+        status_msg = f'stopping: {schd.stop_mode.explain()}'
     elif schd.pool.hold_point:
         status_msg = (
             WORKFLOW_STATUS_RUNNING_TO_HOLD %
@@ -190,6 +190,6 @@ def get_workflow_status(schd: 'Scheduler') -> Tuple[WorkflowStatus, str]:
             schd.config.final_point)
     else:
         # fallback - running indefinitely
-        status_msg = 'Running'
+        status_msg = 'running'
 
-    return (status.value, status_msg)  # type: ignore
+    return (status.value, status_msg)
