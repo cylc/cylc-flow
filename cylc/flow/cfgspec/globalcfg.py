@@ -1041,7 +1041,8 @@ with Conf('global.cylc', desc='''
                  VDR.V_STRING,
                  'rsync',
                  desc='''
-                Command used for remote file installation.
+                Command used for remote file installation. This supports posix
+                compliant rsync implementation e.g. GNU or BSD.
             ''')
             Conf('use login shell', VDR.V_BOOLEAN, True, desc='''
                 Whether to use a login shell or not for remote command
