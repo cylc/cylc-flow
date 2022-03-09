@@ -195,7 +195,7 @@ def construct_rsync_over_ssh_cmd(
     """
     dst_host = get_host_from_platform(platform, bad_hosts=bad_hosts)
     ssh_cmd = platform['ssh command']
-    command = platform.get('rsync command','rsync')
+    command = platform.get('rsync command', 'rsync')
     rsync_cmd = shlex.split(command)
     rsync_options = [
         "--delete",

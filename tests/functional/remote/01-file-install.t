@@ -19,7 +19,7 @@
 
 export REQUIRE_PLATFORM='loc:remote comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
-set_test_number 8
+set_test_number 6
 
 create_files () {
     # dump some files into the run dir
@@ -104,51 +104,6 @@ ${RUN_DIR_REL}/file1
 ${RUN_DIR_REL}/file2
 ${RUN_DIR_REL}/lib/moo
 __OUT__
-
-purge
-# -----------------------------------------------------------------------------
-
-create_test_global_config '' '
-    [platforms]
-        [['${CYLC_TEST_PLATFORM}']]
-            rsync command = "my-rsync"
-'
-# Test file install completes before dependent tasks are executed
-TEST_NAME="${TEST_NAME_BASE}-installation-timing"
-init_workflow "${TEST_NAME}" <<__FLOW_CONFIG__
-[scheduler]
-    install = dir1/, dir2/
-    [[events]]
-        abort on stall timeout = true
-        stall timeout = PT0S
-        abort on inactivity timeout = true
-
-[scheduling]
-    [[graph]]
-        R1 = olaf => sven
-
-[runtime]
-    [[olaf]]
-        # task dependent on file install already being complete
-        script = cat \${CYLC_WORKFLOW_RUN_DIR}/dir1/moo
-        platform = $CYLC_TEST_PLATFORM
-
-    [[sven]]
-        # task dependent on file install already being complete
-        script = rm -r \${CYLC_WORKFLOW_RUN_DIR}/dir1 \${CYLC_WORKFLOW_RUN_DIR}/dir2
-        platform = $CYLC_TEST_PLATFORM
-
-__FLOW_CONFIG__
-
-
-for DIR in "dir1" "dir2"; do
-    mkdir -p "${WORKFLOW_RUN_DIR}/${DIR}"
-    touch "${WORKFLOW_RUN_DIR}/${DIR}/moo"
-done
-
-run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
-workflow_run_ok "${TEST_NAME}-run" \
-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
 purge
 exit
