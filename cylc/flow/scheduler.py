@@ -446,6 +446,7 @@ class Scheduler:
         try:
             self.load_flow_file()
         except ParsecError as exc:
+            # Mark this exc as expected (see docstring for .schd_expected):
             exc.schd_expected = True
             raise exc
         self.profiler.log_memory("scheduler.py: after load_flow_file")
@@ -1785,6 +1786,8 @@ class Scheduler:
                 LOG.warning(f"failed to remove workflow contact file: {fname}")
                 LOG.exception(exc)
             else:
+                # Useful to identify that this Scheduler has shut down
+                # properly (e.g. in tests):
                 self.contact_data = None
             if self.task_job_mgr:
                 self.task_job_mgr.task_remote_mgr.remote_tidy()

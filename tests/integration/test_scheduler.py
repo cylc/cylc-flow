@@ -322,27 +322,23 @@ async def test_illegal_config_load(
 
 
 async def test_unexpected_ParsecError(
-    flow: Callable,
-    one_conf: dict,
+    one: Scheduler,
     start: Callable,
-    scheduler: Callable,
     log_filter: Callable,
     monkeypatch: pytest.MonkeyPatch
 ):
     """Test that ParsecErrors - that occur at any time other than config load
     when running a workflow - are displayed with traceback, because they are
     not expected."""
-    reg: str = flow(one_conf)
-    schd: Scheduler = scheduler(reg)
     log: pytest.LogCaptureFixture
 
     def raise_ParsecError(*a, **k):
         raise ParsecError("Mock error")
 
-    monkeypatch.setattr(schd, '_configure_contact', raise_ParsecError)
+    monkeypatch.setattr(one, '_configure_contact', raise_ParsecError)
 
     with pytest.raises(ParsecError):
-        async with start(schd) as log:
+        async with start(one) as log:
             pass
 
     assert log_filter(
