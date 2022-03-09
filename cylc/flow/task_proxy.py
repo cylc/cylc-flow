@@ -439,6 +439,7 @@ class TaskProxy:
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
+        # update the flow nums
         self.flow_nums.update(flow_nums)
 
     def state_reset(
