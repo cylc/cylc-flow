@@ -17,36 +17,33 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger tasks.
+Trigger tasks manually.
+
+Triggered tasks get all current active flow numbers by default, so those flows
+- if/when they catch up - will see the triggered tasks (and their children) as
+having run already, 
 
 Examples:
-  # trigger task foo in cycle 1234 in my_flow
-  $ cylc trigger my_flow//1234/foo
+  # trigger task foo in cycle 1234 in test
+  $ cylc trigger test//1234/foo
 
-  # trigger all failed tasks in my_flow
-  $ cylc trigger 'my_flow//*:failed'
+  # trigger all failed tasks in test
+  $ cylc trigger 'test//*:failed'
 
-  # start a new "flow" by triggering 1234/foo
-  $ cylc trigger --flow=new my_flow//1234/foo
+  # start a new flow by triggering 1234/foo in test
+  $ cylc trigger --flow=new test//1234/foo
 
 Triggering a waiting task queues it to submit regardless of prerequisites.
-
-If already queued it will submit to run, regardless of the queue limit.
+If already queued, it will submit immediately regardless of the queue limit.
+(You may need to trigger queue-limited tasks twice to run them immediately).
 
 Triggering a submitted or running task has no effect (it already triggered).
 
-Triggering an incomplete task queues it to run again.
+Tasks in the n=0 window already belong to a flow. Triggering active-waiting (or
+incomplete) tasks queues them to run (or rerun) in their own flow.
 
-Triggering an "active-waiting" task queues it to run regardless of what it is
-waiting on (e.g. a clock trigger).
-
-If a task is in the n=0 before triggering (active-waiting tasks and incomplete
-tasks) then it already belongs to a flow.
-
-Otherwise the triggered tasks will be given all active flow numbers, by
-default. Use the --flow option to trigger a new flow instead, or run a one-off
-task independent of any flow, or to assign it to specified flows.
-
+Tasks triggered outside of n=0 get all active flow numbers by default. Use the
+--flow option to change this.
 """
 
 from functools import partial
