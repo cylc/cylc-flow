@@ -37,7 +37,7 @@ Triggering a waiting task queues it to submit regardless of prerequisites.
 If already queued, it will submit immediately regardless of the queue limit.
 (You may need to trigger queue-limited tasks twice to run them immediately).
 
-Triggering a submitted or running task has no effect (it already triggered).
+Triggering a submitted or running task has no effect (already triggered).
 
 Tasks in the n=0 window already belong to a flow. Triggering active-waiting (or
 incomplete) tasks queues them to run (or rerun) in their own flow.
