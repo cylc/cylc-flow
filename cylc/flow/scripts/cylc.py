@@ -212,8 +212,8 @@ DEAD_ENDS = {
         'use standard tools to inspect the environment'
         ' e.g. https://pypi.org/project/pipdeptree/',
     'checkpoint':
-        'DB checkpoints have been removed, use a reflow to '
-        '"rewind" a workflow.',
+        'DB checkpoints have been removed. You can now "rewind" a'
+        ' workflow by triggering the flow anywhere in the graph.',
     'conditions':
         'cylc conditions has been replaced by cylc help license',
     'documentation':

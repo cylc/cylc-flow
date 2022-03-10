@@ -50,7 +50,7 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.id import Tokens
-from cylc.flow.flow_mgr import FlowMgr
+from cylc.flow.flow_mgr import FLOW_NONE, FlowMgr, FLOW_NEW
 from cylc.flow.exceptions import (
     CommandFailedError,
     CyclingError,
@@ -681,7 +681,7 @@ class Scheduler:
         # flow number set in this call:
         self.pool.force_trigger_tasks(
             self.options.starttask,
-            reflow=True,
+            flow=[FLOW_NEW],
             flow_descr=f"original flow from {self.options.starttask}"
         )
 
@@ -1300,10 +1300,14 @@ class Scheduler:
                 self.client_pub_key_dir,
                 self.config.run_mode('simulation')
             ):
-                # (Not using f"{itask}"_here to avoid breaking func tests)
+                if itask.flow_nums:
+                    flow = ','.join(str(i) for i in itask.flow_nums)
+                else:
+                    flow = FLOW_NONE
                 meth(
                     f"{itask.identity} -triggered off "
                     f"{itask.state.get_resolved_dependencies()}"
+                    f" in flow {flow}"
                 )
 
     def process_workflow_db_queue(self):
@@ -1884,9 +1888,9 @@ class Scheduler:
         self.workflow_db_mgr.delete_workflow_paused()
         self.update_data_store()
 
-    def command_force_trigger_tasks(self, items, reflow, flow_descr):
-        """Trigger tasks."""
-        return self.pool.force_trigger_tasks(items, reflow, flow_descr)
+    def command_force_trigger_tasks(self, items, flow, flow_descr):
+        """Manual task trigger."""
+        return self.pool.force_trigger_tasks(items, flow, flow_descr)
 
     def command_force_spawn_children(self, items, outputs, flow_num):
         """Force spawn task successors.

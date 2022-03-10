@@ -28,17 +28,17 @@ if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
 
 
-RE_TRIG = re.compile(r'(.*? -triggered off \[.*\])$')
+RE_TRIG = re.compile(r'(^.*? -triggered off \[.*\].*$)')
 
 
 def run_reftest(schd: 'Scheduler') -> None:
     """Run reference test at shutdown."""
     reffilename = schd.config.get_ref_log_name()
     curfilename = get_workflow_test_log_name(schd.workflow)
-    ref = _load_reflog(reffilename)
-    cur = _load_reflog(curfilename)
+    ref = _load_reflog(reffilename, False)
     if not ref:
         raise WorkflowEventError("No triggering events in reference log.")
+    cur = _load_reflog(curfilename, "in flow" not in ref[0])
     if not cur:
         raise WorkflowEventError("No triggering events in test log.")
     if ref == cur:
@@ -53,13 +53,19 @@ def run_reftest(schd: 'Scheduler') -> None:
         raise exc
 
 
-def _load_reflog(filename):
-    """Reference test: get trigger info from reference log."""
+def _load_reflog(filename, strip_flows):
+    """Reference test: get trigger info from reference log.
+
+    Back-compat for old logs: strip flow nums from each line.
+    """
     res = []
     with open(os.path.expandvars(filename), 'r') as reflog:
         for line in reflog:
             match = RE_TRIG.search(line)
             if match:
-                res.append(match.groups()[0])
+                if strip_flows:
+                    res.append(re.sub(' in flow .*$', '', match.groups()[0]))
+                else:
+                    res.append(match.groups()[0])
     res.sort()
     return res

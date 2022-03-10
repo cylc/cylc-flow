@@ -17,7 +17,7 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger workflow tasks.
+Manually trigger workflow tasks.star
 
 Examples:
   # trigger task foo in cycle 1234 in my_flow
@@ -27,31 +27,20 @@ Examples:
   $ cylc trigger 'my_flow//*:failed'
 
   # start a new "flow" by triggering 1234/foo
-  $ cylc trigger --reflow my_flow//1234/foo
+  $ cylc trigger --flow=new my_flow//1234/foo
 
-Manually triggering a task queues it to run regardless of satisfaction of its
-prerequisites. (This refers to Cylc internal queues).
+Triggering a task queues it for submission regardless of its prerequisites.
 
-Manually triggering a queued task causes it to submit immediately, regardless
-of the queue limit.
+Triggering a queued task submits it, regardless of queue limit.
 
-Manually triggering an active task has no effect, because multiple concurrent
-instances of the same task job aren't allowed. Active tasks are in the
-submitted or running states.
+Triggering a submitted or running task has no effect (already triggered).
 
-Manually triggering an incomplete task queues it to run again and continue its
-assigned flow. Incomplete tasks finished without completing expected outputs.
+Triggering an incomplete task queues it to rerun in its assigned flow.
 
-Manually triggering an "active-waiting" task queues it to run immediately in
-its flow. Active-waiting tasks have satisfied task-prerequisites but are held
-back by queue limit, runahead limit, clock trigger, xtrigger, or task hold.
-They are already assigned to a flow - that of the parent tasks that satisfied
-their prerequisites.
+Triggering an "active-waiting" task queues it to run in its assigned flow.
 
-Other tasks (those outside of the n=0 graph window) do not yet belong to a
-flow. Manual triggering of these with --reflow will start a new flow; otherwise
-only the triggered task will run.
-
+Triggered tasks that do not already belong to a flow get all active flow
+numbers. Use the --flow option to change this, or to start a new flow.
 """
 
 from functools import partial
@@ -62,6 +51,7 @@ from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
+from cylc.flow.flow_mgr import FLOW_NONE, FLOW_NEW, FLOW_ALL
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -71,13 +61,13 @@ MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
-  $reflow: Boolean,
+  $flow: [String],
   $flowDescr: String,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
-    reflow: $reflow,
+    flow: $flow,
     flowDescr: $flowDescr
   ) {
     result
@@ -96,18 +86,58 @@ def get_option_parser():
     )
 
     parser.add_option(
-        "--reflow", action="store_true",
-        dest="reflow", default=False,
-        help="Start a new flow from the triggered task."
+        "--flow", action="append", dest="flow", metavar="FLOW",
+        help=f"Assign the triggered task to all active flows ({FLOW_ALL});"
+             f" no flow ({FLOW_NONE}); a new flow ({FLOW_NEW});"
+             f" or a specific flow (e.g. 2). The default is {FLOW_ALL}."
+             " Reuse the option to assign multiple specific flows."
     )
 
     parser.add_option(
         "--meta", metavar="DESCRIPTION", action="store",
         dest="flow_descr", default=None,
-        help="(with --reflow) a descriptive string for the new flow."
+        help="description of triggered flow (with --flow=new) ."
     )
 
     return parser
+
+
+def check_flow_options(opt_flow, opt_flow_descr):
+    """Check validity of flow-related options.
+
+    Examples:
+        >>> check_flow_options([FLOW_ALL], None)
+
+        >>> check_flow_options([FLOW_NEW], "Denial is a deep river")
+
+        >>> check_flow_options([FLOW_ALL, "1"], None)
+        Traceback (most recent call last):
+            ...
+        UserInputError: Multiple flow options must all be integer valued
+
+        >>> check_flow_options([FLOW_ALL], "the quick brown fox")
+        Traceback (most recent call last):
+            ...
+        UserInputError: Metadata is only for new flows
+
+        >>> check_flow_options(["cheese"], None)
+        Traceback (most recent call last):
+            ...
+        UserInputError: Flow values must be integer, 'all', 'new', or 'none'
+
+    """
+    for val in opt_flow:
+        if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:
+            if len(opt_flow) != 1:
+                raise UserInputError(ERR_OPT_FLOW_INT)
+        else:
+            try:
+                int(val)
+            except ValueError:
+                raise UserInputError(ERR_OPT_FLOW_VAL.format(val))
+
+    if opt_flow_descr and opt_flow != [FLOW_NEW]:
+        raise UserInputError(ERR_OPT_FLOW_META)
 
 
 async def run(options: 'Values', workflow_id: str, *tokens_list):
@@ -121,7 +151,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
                 tokens.relative_id
                 for tokens in tokens_list
             ],
-            'reflow': options.reflow,
+            'flow': options.flow,
             'flowDescr': options.flow_descr,
         }
     }
@@ -132,8 +162,12 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
-    if options.flow_descr and not options.reflow:
-        raise UserInputError("--meta requires --reflow")
+
+    if options.flow is None:
+        # Default to all active flows.
+        options.flow = [FLOW_ALL]
+    check_flow_options(options.flow, options.flow_descr)
+
     call_multi(
         partial(run, options),
         *ids,

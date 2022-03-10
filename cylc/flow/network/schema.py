@@ -1833,7 +1833,7 @@ class Trigger(Mutation, TaskMutation):
         resolver = partial(mutator, command='force_trigger_tasks')
 
     class Arguments(TaskMutation.Arguments):
-        reflow = Boolean()
+        flow = graphene.List(String)
         flow_descr = String()
 
 

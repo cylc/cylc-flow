@@ -61,6 +61,8 @@ from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_queues.independent import IndepQueueManager
 
+from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE, FLOW_NEW
+
 if TYPE_CHECKING:
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
@@ -621,7 +623,7 @@ class TaskPool:
             # implicit prev-instance parent
             return
 
-        # Autospawn successor of itask if parentless and reflowing.
+        # Autospawn successor of itask if parentless
         if itask.flow_nums:
             n_task = self.spawn_successor_if_parentless(itask)
             if (
@@ -1121,7 +1123,7 @@ class TaskPool:
 
         Also set a the abort-on-task-failed flag if necessary.
 
-        If not reflow:
+        If not flowing on:
             - update existing children but don't spawn new ones
             - unless forced (manual command): spawn but with no flow number
 
@@ -1317,8 +1319,12 @@ class TaskPool:
         name: str,
         point: 'PointBase',
         flow_nums: Set[int],
+        force: bool = False
     ) -> Optional[TaskProxy]:
-        """Spawn point/name. Return the spawned task, or None."""
+        """Spawn point/name. Return the spawned task, or None.
+
+        Force arg used in manual triggering.
+        """
         if not self.can_spawn(name, point):
             return None
 
@@ -1334,7 +1340,10 @@ class TaskPool:
 
         for f_id in snums.keys():
             # Flow_nums of previous instances.
-            if set.intersection(flow_nums, set(json.loads(f_id))):
+            if (
+                not force and
+                set.intersection(flow_nums, set(json.loads(f_id)))
+            ):
                 # To avoid "conditional reflow" with (e.g.) "foo | bar => baz".
                 LOG.warning(
                     f"Task {point}/{name} already spawned in {flow_nums}"
@@ -1413,6 +1422,12 @@ class TaskPool:
                     LOG.info(f"[{itask}] Forced spawning on {out}")
                     self.spawn_on_output(itask, out, forced=True)
 
+    def _get_active_flow_nums(self):
+        fnums = set()
+        for itask in self.get_all_tasks():
+            fnums.update(itask.flow_nums)
+        return fnums
+
     def remove_tasks(self, items):
         """Remove tasks from the pool."""
         itasks, _, bad_items = self.filter_task_proxies(items)
@@ -1422,16 +1437,13 @@ class TaskPool:
 
     def force_trigger_tasks(
         self, items: Iterable[str],
-        reflow: bool = False,
+        flow: List[str],
         flow_descr: Optional[str] = None
     ) -> int:
-        """Trigger matching tasks, with or without reflow.
+        """Manual task triggering.
 
-        Don't get a new flow number for existing task proxies (e.g. incomplete
-        tasks). These can flow on in the original flow if retriggered.
-
-        Otherwise generate a new flow number for a new task proxy, with or
-        without reflow.
+        Don't get a new flow number for existing n=0 tasks (e.g. incomplete
+        tasks). These can carry on in the original flow if retriggered.
 
         Queue the task if not queued, otherwise release it to run.
 
@@ -1453,13 +1465,17 @@ class TaskPool:
                 self._get_main_task_by_id(task_id)
                 or self._get_hidden_task_by_id(task_id)
             )
+            # flow values already checked by the trigger client.
             if itask is None:
-                # Spawn with new flow number, unless no reflow.
-                if reflow:
+                if flow[0] == FLOW_ALL:
+                    flow_nums = self._get_active_flow_nums()
+                elif flow[0] == FLOW_NEW:
                     flow_nums = {self.flow_mgr.get_new_flow(flow_descr)}
-                else:
+                elif flow[0] == FLOW_NONE:
                     flow_nums = set()
-                itask = self.spawn_task(name, point, flow_nums)
+                else:
+                    flow_nums = {int(n) for n in flow_nums}
+                itask = self.spawn_task(name, point, flow_nums, force=True)
                 if itask is None:
                     continue
                 itask.is_manual_submit = True
