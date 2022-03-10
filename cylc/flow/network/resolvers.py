@@ -814,7 +814,7 @@ class Resolvers(BaseResolvers):
     def force_trigger_tasks(
         self,
         tasks=None,
-        reflow=False,
+        flow=None,
         flow_descr=None,
     ):
         """Trigger submission of task jobs where possible.
@@ -822,8 +822,8 @@ class Resolvers(BaseResolvers):
         Args:
             tasks (list):
                 List of identifiers or task globs.
-            reflow (bool):
-                Start new flow from triggered tasks.
+            flow (list):
+                Flow ownership of triggered tasks.
             flow_descr (str):
                 Description of new flow.
 
@@ -841,7 +841,7 @@ class Resolvers(BaseResolvers):
                 "force_trigger_tasks",
                 (tasks or [],),
                 {
-                    "reflow": reflow,
+                    "flow": flow,
                     "flow_descr": flow_descr
                 }
             ),

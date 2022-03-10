@@ -24,8 +24,7 @@ depend on those outputs. By default it marks tasks as succeeded.
 This allows you to manually intervene with Cylc's scheduling algorithm by
 artificially satisfying outputs of tasks.
 
-If a flow number is given, the child tasks will start (or continue) that flow,
-otherwise no reflow will occur.
+If a flow number is given, the child tasks will start (or continue) that flow.
 
 Examples:
   # For example, for the following dependency graph:
