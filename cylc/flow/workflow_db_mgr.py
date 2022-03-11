@@ -28,7 +28,7 @@ import os
 from pkg_resources import parse_version
 from shutil import copy, rmtree
 from tempfile import mkstemp
-from typing import Any, Dict, List, Set, TYPE_CHECKING, Tuple
+from typing import Any, AnyStr, Dict, List, Set, TYPE_CHECKING, Tuple, Union
 
 from cylc.flow import LOG
 from cylc.flow.broadcast_report import get_broadcast_change_iter
@@ -40,6 +40,7 @@ from cylc.flow.util import serialise
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
+    from cylc.flow.scheduler import Scheduler
     from cylc.flow.task_pool import TaskPool
 
 # # TODO: narrow down Any (should be str | int) after implementing type
@@ -314,7 +315,7 @@ class WorkflowDatabaseManager:
                 "namespace": namespace,
                 "inheritance": json.dumps(value)})
 
-    def put_workflow_params(self, schd):
+    def put_workflow_params(self, schd: 'Scheduler') -> None:
         """Put various workflow parameters from schd in runtime database.
 
         This method queues the relevant insert statements.
@@ -329,34 +330,43 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
         ])
         if schd.config.cycle_point_dump_format is not None:
-            self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].append({
-                "key": self.KEY_CYCLE_POINT_FORMAT,
-                "value": schd.config.cycle_point_dump_format})
+            self.put_workflow_params_1(
+                self.KEY_CYCLE_POINT_FORMAT,
+                schd.config.cycle_point_dump_format
+            )
         if schd.is_paused:
-            self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].append({
-                "key": self.KEY_PAUSED, "value": 1})
+            self.put_workflow_params_1(self.KEY_PAUSED, 1)
         for key in (
             self.KEY_INITIAL_CYCLE_POINT,
             self.KEY_FINAL_CYCLE_POINT,
             self.KEY_START_CYCLE_POINT,
-            self.KEY_STOP_CYCLE_POINT,
+            self.KEY_STOP_CYCLE_POINT
+        ):
+            value = getattr(schd.options, key, None)
+            if value is not None and value != 'reload':
+                self.put_workflow_params_1(key, value)
+        for key in (
             self.KEY_RUN_MODE,
             self.KEY_CYCLE_POINT_TIME_ZONE
         ):
             value = getattr(schd.options, key, None)
-            if value is not None and value != 'ignore':
-                self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].append({
-                    "key": key, "value": value})
-        for key in (self.KEY_STOP_CLOCK_TIME, self.KEY_STOP_TASK):
+            if value is not None:
+                self.put_workflow_params_1(key, value)
+        for key in (
+            self.KEY_STOP_CLOCK_TIME,
+            self.KEY_STOP_TASK
+        ):
             value = getattr(schd, key, None)
             if value is not None:
-                self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].append({
-                    "key": key, "value": value})
+                self.put_workflow_params_1(key, value)
 
-    def put_workflow_params_1(self, key, value):
+    def put_workflow_params_1(
+        self, key: str, value: Union[AnyStr, float]
+    ) -> None:
         """Queue insertion of 1 key=value pair to the workflow_params table."""
         self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].append(
-            {"key": key, "value": value})
+            {"key": key, "value": value}
+        )
 
     def put_workflow_paused(self):
         """Put workflow paused flag to workflow_params table."""

@@ -1300,7 +1300,8 @@ class TaskPool:
                 self.add_to_pool(c_task)
 
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
-        """Return True if name.point is within various workflow limits."""
+        """Return True if the task with the given name & point is within
+        various workflow limits."""
         if name not in self.config.get_task_name_list():
             LOG.debug('No task definition %s', name)
             return False
