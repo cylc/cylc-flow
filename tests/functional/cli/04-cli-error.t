@@ -29,12 +29,12 @@ init_workflow "${TEST_NAME_BASE}" << __CONFIG__
    [[foo]]
 __CONFIG__
 
-# "cylc trigger --meta" requires --reflow
+# "cylc trigger --meta" requires --flow=new
 TEST_NAME="set-trigger-fail"
 run_fail "${TEST_NAME}"  \
     cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}//1/foo"
 contains_ok "${TEST_NAME}".stderr <<__END__
-UserInputError: --meta requires --reflow
+UserInputError: --meta requires --flow=new
 __END__
 
 purge

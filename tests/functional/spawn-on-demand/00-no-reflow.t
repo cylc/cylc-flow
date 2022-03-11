@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check that triggering does not cause reflow by default.
+# Check that triggering does not start a new flow by default.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest
