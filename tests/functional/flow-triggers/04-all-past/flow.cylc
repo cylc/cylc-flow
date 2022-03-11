@@ -1,0 +1,38 @@
+#    flow:1
+#        a(succeeded)
+#        b(succeeded)
+#        c(running)
+#    flow:<new>
+#        a(running)
+#
+# by:
+#     cylc trigger a
+#
+# Result:
+#    The triggered task belongs to flow 1; it will run but not flow on. 
+#
+#    flow:1
+#        a #1
+#        a #2
+#        b
+#        c
+#        d
+
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = "a => b => c => d"
+[runtime]
+    [[d]]
+        script = """
+            if (( $CYLC_TASK_SUBMIT_NUMBER == 1 )); then
+                cylc trigger ${CYLC_WORKFLOW_ID}//1/a
+                cylc__job__poll_grep_workflow_log -E '1/a submitted job:02 .*started'
+            fi
+        """
