@@ -12,5 +12,5 @@
     [[triggerer]]
          script = """
             # Cause both 1/bar and 1/baz to run again.
-            cylc trigger --reflow --meta=cheese "${CYLC_WORKFLOW_ID}//1/bar"
+            cylc trigger --flow=new --meta=cheese "${CYLC_WORKFLOW_ID}//1/bar"
          """
