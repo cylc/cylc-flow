@@ -57,6 +57,11 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
+ERR_OPT_FLOW_VAL = "Flow values must be integer, 'all', 'new', or 'none'"
+ERR_OPT_FLOW_INT = "Multiple flow options must all be integer valued"
+ERR_OPT_FLOW_META = "Metadata is only for new flows"
+
+
 MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
