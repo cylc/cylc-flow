@@ -134,7 +134,9 @@ class TaskProxy:
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
         .flow_nums:
-            flow_nums
+            flows I belong to
+         flow_wait:
+            wait for flow merge before spawning children
         .waiting_on_job_prep:
             task waiting on job prep
 
@@ -142,7 +144,7 @@ class TaskProxy:
         tdef: The definition object of this task.
         start_point: Start point to calculate the task's cycle point on
             start-up or the cycle point for subsequent tasks.
-        flow_nums: Which flow within the scheduler this task belongs to.
+        flow_nums: Which flows this task belongs to.
         status: Task state string.
         is_held: True if the task is held, else False.
         submit_num: Number of times the task has attempted job submission.
@@ -170,6 +172,7 @@ class TaskProxy:
         'state',
         'summary',
         'flow_nums',
+        'flow_wait',
         'graph_children',
         'platform',
         'timeout',
@@ -198,6 +201,7 @@ class TaskProxy:
             self.flow_nums = set()
         else:
             self.flow_nums = flow_nums
+        self.flow_wait = False
         self.point = start_point
         self.tokens = Tokens(
             # TODO: make these absolute?
@@ -221,7 +225,8 @@ class TaskProxy:
             'execution_time_limit': None,
             'job_runner_name': None,
             'submit_method_id': None,
-            'flow_nums': set()
+            'flow_nums': set(),
+            'flow_wait': self.flow_wait
         }
 
         self.local_job_file_path: Optional[str] = None
@@ -261,6 +266,7 @@ class TaskProxy:
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
+        reload_successor.flow_wait = self.flow_wait
         reload_successor.is_manual_submit = self.is_manual_submit
         reload_successor.summary = self.summary
         reload_successor.local_job_file_path = self.local_job_file_path

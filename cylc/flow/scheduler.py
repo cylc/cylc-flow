@@ -1888,9 +1888,10 @@ class Scheduler:
         self.workflow_db_mgr.delete_workflow_paused()
         self.update_data_store()
 
-    def command_force_trigger_tasks(self, items, flow, flow_descr):
+    def command_force_trigger_tasks(self, items, flow, flow_wait, flow_descr):
         """Manual task trigger."""
-        return self.pool.force_trigger_tasks(items, flow, flow_descr)
+        return self.pool.force_trigger_tasks(
+            items, flow, flow_wait, flow_descr)
 
     def command_force_spawn_children(self, items, outputs, flow_num):
         """Force spawn task successors.

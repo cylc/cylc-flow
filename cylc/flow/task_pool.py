@@ -1181,7 +1181,7 @@ class TaskPool:
                 )
                 # self.workflow_db_mgr.process_queued_ops()
 
-            elif itask.flow_nums or forced:
+            elif (itask.flow_nums or forced) and not itask.flow_wait:
                 c_task = self.spawn_task(
                     c_name, c_point, itask.flow_nums,
                 )
@@ -1333,17 +1333,21 @@ class TaskPool:
             name, str(point)
         )
         try:
-            submit_num = max(snums.values())
+            submit_num = max(s[0] for s in snums.values())
         except ValueError:
             # Task never spawned in any flow.
             submit_num = 0
 
-        for f_id in snums.keys():
+        flow_wait = False
+        for f_id, rhs in snums.items():
             # Flow_nums of previous instances.
             if (
                 not force and
                 set.intersection(flow_nums, set(json.loads(f_id)))
             ):
+                flow_wait = rhs[1] == "1"
+                if flow_wait:
+                    break
                 # To avoid "conditional reflow" with (e.g.) "foo | bar => baz".
                 LOG.warning(
                     f"Task {point}/{name} already spawned in {flow_nums}"
@@ -1383,6 +1387,12 @@ class TaskPool:
         # TODO: consider doing this only for tasks with absolute prerequisites.
         if itask.state.prerequisites_are_not_all_satisfied():
             itask.state.satisfy_me(self.abs_outputs_done)
+
+        if flow_wait:
+            LOG.critical("spawned for flow-wait")
+            itask.state.outputs.set_all_completed()
+            self.spawn_on_all_outputs(itask, True)
+            return None
 
         LOG.info(f"[{itask}] spawned")
         return itask
@@ -1438,6 +1448,7 @@ class TaskPool:
     def force_trigger_tasks(
         self, items: Iterable[str],
         flow: List[str],
+        flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ) -> int:
         """Manual task triggering.
@@ -1478,7 +1489,9 @@ class TaskPool:
                 itask = self.spawn_task(name, point, flow_nums, force=True)
                 if itask is None:
                     continue
+                # TODO PUT THESE IN TASK INIT
                 itask.is_manual_submit = True
+                itask.flow_wait = flow_wait
                 # This will queue the task.
                 self.add_to_pool(itask, is_new=True)
             else:

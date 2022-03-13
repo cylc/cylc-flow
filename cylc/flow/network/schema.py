@@ -865,6 +865,7 @@ class TaskProxy(ObjectType):
     is_queued = Boolean()
     is_runahead = Boolean()
     flow_nums = String()
+    flow_wait = Boolean()
     depth = Int()
     job_submits = Int()
     outputs = graphene.List(
@@ -1834,6 +1835,7 @@ class Trigger(Mutation, TaskMutation):
 
     class Arguments(TaskMutation.Arguments):
         flow = graphene.List(String)
+        flow_wait = Boolean()
         flow_descr = String()
 
 

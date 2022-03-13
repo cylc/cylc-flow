@@ -293,6 +293,7 @@ class CylcWorkflowDAO:
             ["time_updated"],
             ["submit_num", {"datatype": "INTEGER"}],
             ["status"],
+            ["flow_wait"],
         ],
         TABLE_TASK_TIMEOUT_TIMERS: [
             ["cycle", {"is_primary_key": True}],
@@ -711,7 +712,7 @@ class CylcWorkflowDAO:
 
         Return:
             {
-                flow_nums: submit_num,
+                flow_nums: (submit_num, flow_wait)
                 ...,
             }
 
@@ -724,13 +725,13 @@ class CylcWorkflowDAO:
         # Not an injection, simply putting the table name in the SQL query
         # expression as a string constant local to this module.
         stmt = (  # nosec
-            r"SELECT flow_nums,submit_num FROM %(name)s"
+            r"SELECT flow_nums,submit_num,flow_wait FROM %(name)s"
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
-        for flow_nums, submit_num in self.connect().execute(
+        for flow_nums, submit_num, flow_wait in self.connect().execute(
                 stmt, (name, point,)):
-            ret[flow_nums] = submit_num
+            ret[flow_nums] = (submit_num, flow_wait)
         return ret
 
     def select_xtriggers_for_restart(self, callback):

@@ -63,6 +63,9 @@ if TYPE_CHECKING:
 ERR_OPT_FLOW_VAL = "Flow values must be integer, 'all', 'new', or 'none'"
 ERR_OPT_FLOW_INT = "Multiple flow options must all be integer valued"
 ERR_OPT_FLOW_META = "Metadata is only for new flows"
+ERR_OPT_FLOW_WAIT = (
+    f"--wait is not compatible with --flow={FLOW_NEW} or --flow={FLOW_NONE}"
+)
 
 
 MUTATION = '''
@@ -70,12 +73,14 @@ mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
   $flow: [String],
+  $flowWait: Boolean,
   $flowDescr: String,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
     flow: $flow,
+    flowWait: $flowWait,
     flowDescr: $flowDescr
   ) {
     result
@@ -104,34 +109,57 @@ def get_option_parser():
     parser.add_option(
         "--meta", metavar="DESCRIPTION", action="store",
         dest="flow_descr", default=None,
-        help="description of triggered flow (with --flow=new) ."
+        help="description of triggered flow (with --flow=new)."
+    )
+
+    parser.add_option(
+        "--wait", action="store_true", default=False, dest="flow_wait",
+        help="Wait for merge with current active flows before flowing on."
     )
 
     return parser
 
 
-def check_flow_options(opt_flow, opt_flow_descr):
+def check_flow_options(opt_flow, opt_flow_wait, opt_flow_descr):
     """Check validity of flow-related options.
 
     Examples:
-        >>> check_flow_options([FLOW_ALL], None)
+        >>> check_flow_options([FLOW_ALL], False, None)
 
-        >>> check_flow_options([FLOW_NEW], "Denial is a deep river")
+        >>> check_flow_options([FLOW_NEW], False, "Denial is a deep river")
 
-        >>> check_flow_options([FLOW_ALL, "1"], None)
+        >>> check_flow_options([FLOW_ALL, "1"], False, None)
         Traceback (most recent call last):
             ...
-        UserInputError: Multiple flow options must all be integer valued
+        cylc.flow.exceptions.UserInputError: Multiple flow options must all \
+             be integer valued
 
-        >>> check_flow_options([FLOW_ALL], "the quick brown fox")
+        >>> check_flow_options([FLOW_ALL], False, "the quick brown fox")
         Traceback (most recent call last):
             ...
-        UserInputError: Metadata is only for new flows
+        cylc.flow.exceptions.UserInputError: Metadata is only for new flows
 
-        >>> check_flow_options(["cheese"], None)
+        >>> check_flow_options(["cheese"], False, None)
         Traceback (most recent call last):
             ...
-        UserInputError: Flow values must be integer, 'all', 'new', or 'none'
+        cylc.flow.exceptions.UserInputError: Flow values must be integer, \
+            'all', 'new', or 'none'
+
+        >>> check_flow_options([FLOW_NONE], True, None)
+        Traceback (most recent call last):
+            ...
+        cylc.flow.exceptions.UserInputError: --wait is not compatible with \
+            --flow=new or --flow=none
+
+        >>> check_flow_options([FLOW_NEW], True, None)
+        Traceback (most recent call last):
+            ...
+        cylc.flow.exceptions.UserInputError: --wait is not compatible with \
+            --flow=new or --flow=none
+
+
+        (Note in CI we run doctests with IGNORE_EXCEPTION_DETAIL, but these
+        tests work with the detail).
 
     """
     for val in opt_flow:
@@ -147,6 +175,9 @@ def check_flow_options(opt_flow, opt_flow_descr):
     if opt_flow_descr and opt_flow != [FLOW_NEW]:
         raise UserInputError(ERR_OPT_FLOW_META)
 
+    if opt_flow_wait and opt_flow[0] in [FLOW_NEW, FLOW_NONE]:
+        raise UserInputError(ERR_OPT_FLOW_WAIT)
+
 
 async def run(options: 'Values', workflow_id: str, *tokens_list):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
@@ -160,6 +191,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
                 for tokens in tokens_list
             ],
             'flow': options.flow,
+            'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
         }
     }
@@ -172,9 +204,8 @@ def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
 
     if options.flow is None:
-        # Default to all active flows.
-        options.flow = [FLOW_ALL]
-    check_flow_options(options.flow, options.flow_descr)
+        options.flow = [FLOW_ALL]  # default to all active flows
+    check_flow_options(options.flow, options.flow_wait, options.flow_descr)
 
     call_multi(
         partial(run, options),
