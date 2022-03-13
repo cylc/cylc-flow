@@ -23,6 +23,7 @@ from typing import Callable, Iterable, List, Tuple, Union
 from cylc.flow.cycling import PointBase
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.flow_mgr import FLOW_ALL
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUS_PREPARING,
@@ -435,7 +436,7 @@ async def test_trigger_states(status, should_trigger, one, start):
         task.state.reset(status)
 
         # try triggering the task
-        one.pool.force_trigger_tasks('1/a')
+        one.pool.force_trigger_tasks('1/a', [FLOW_ALL])
 
         # check whether the task triggered
         assert task.is_manual_submit == should_trigger
