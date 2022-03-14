@@ -1,3 +1,5 @@
+#!Jinja2
+
 #    flow:1
 #        a(running)
 #    flow:
@@ -17,6 +19,12 @@
 #        e
 #        f
 
+{% if WAIT is defined %}
+   {% set OPT = "--wait" %}
+{% else %}
+   {% set OPT = "" %}
+{% endif %}
+
 [scheduler]
     allow implicit tasks = True
     [[events]]
@@ -30,6 +38,8 @@
 [runtime]
     [[a]]
         script = """
-            cylc trigger ${CYLC_WORKFLOW_ID}//1/d
-            cylc__job__poll_grep_workflow_log -E '1/d.*started'
+            cylc trigger {{OPT}} ${CYLC_WORKFLOW_ID}//1/d
+        {% if WAIT is not defined %}
+            cylc__job__poll_grep_workflow_log -E '1/d.*succeeded'
+        {% endif %}
         """

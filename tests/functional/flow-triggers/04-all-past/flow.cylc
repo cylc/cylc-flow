@@ -1,3 +1,5 @@
+#!Jinja2
+
 #    flow:1
 #        a(succeeded)
 #        b(succeeded)
@@ -18,6 +20,12 @@
 #        c
 #        d
 
+{% if WAIT is defined %}
+   {% set OPT = "--wait" %}
+{% else %}
+   {% set OPT = "" %}
+{% endif %}
+
 [scheduler]
     allow implicit tasks = True
     [[events]]
@@ -32,7 +40,7 @@
     [[d]]
         script = """
             if (( $CYLC_TASK_SUBMIT_NUMBER == 1 )); then
-                cylc trigger ${CYLC_WORKFLOW_ID}//1/a
-                cylc__job__poll_grep_workflow_log -E '1/a submitted job:02 .*started'
+                cylc trigger {{OPT}} ${CYLC_WORKFLOW_ID}//1/a
+                cylc__job__poll_grep_workflow_log -E '1/a running job:02 .*succeeded'
             fi
         """

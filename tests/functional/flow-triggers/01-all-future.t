@@ -17,6 +17,39 @@
 #-------------------------------------------------------------------------------
 
 . "$(dirname "$0")/test_header"
-set_test_number 2
-reftest
-exit
+set_test_number 7
+
+install_and_validate "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" true
+DB="${WORKFLOW_RUN_DIR}/runN/log/db"
+
+reftest_run
+
+TEST_NAME="${TEST_NAME_BASE}-order-no-wait"
+QUERY="SELECT name,flow_nums,flow_wait FROM task_states\
+ WHERE name IN ('a','d','c','e') ORDER BY time_created;"
+run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
+# If not waiting, e should come before c.
+cmp_ok "${TEST_NAME}.stdout" <<\__END__
+a|[1]|0
+d|[1]|0
+e|[1]|0
+c|[1]|0
+__END__
+
+export REFTEST_OPTS=--set="WAIT=1"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" true
+reftest_run
+
+TEST_NAME="${TEST_NAME_BASE}-order-wait"
+QUERY="SELECT name,flow_nums,flow_wait FROM task_states ORDER BY time_created"
+run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
+cmp_ok "${TEST_NAME}.stdout" <<\__END__
+a|[1]|0
+d|[1]|1
+b|[1]|0
+c|[1]|0
+e|[1]|0
+f|[1]|0
+__END__
+
+purge
