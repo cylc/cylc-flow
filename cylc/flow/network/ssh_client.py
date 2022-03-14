@@ -18,49 +18,53 @@ from async_timeout import timeout as ascyncto
 import asyncio
 import json
 import os
-from typing import Union, Dict
+from typing import Any, Optional, Union, Dict
 
 from cylc.flow.exceptions import ClientError, ClientTimeout
+from cylc.flow.network.client import WorkflowRuntimeClientBase
 from cylc.flow.network.client_factory import CommsMeth
-from cylc.flow.network import get_location
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.workflow_files import load_contact_file, ContactFileFields
 
 
-class WorkflowRuntimeClient():
-    """Client to scheduler communication using ssh.
+class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
+    """Client to scheduler communication using ssh."""
 
-    Determines host from the contact file unless provided.
+    DEFAULT_TIMEOUT = 300  # seconds
+    SLEEP_INTERVAL = 0.1
 
-    Args:
-        workflow (str):
-            Name of the workflow to connect to.
-        timeout (float):
-            Set the default timeout in seconds.
-        host (str):
-            The host where the flow is running if known.
-    """
-    def __init__(
-            self,
-            workflow: str,
-            host: str = None,
-            timeout: Union[float, str] = None
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+
+    async def async_request(
+        self, command: str,
+        args: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+        req_meta: Optional[Dict[str, Any]] = None
     ):
-        self.workflow = workflow
-        self.SLEEP_INTERVAL = 0.1
-        if not host:
-            self.host, _, _ = get_location(workflow)
-        # 5 min default timeout
-        self.timeout = timeout if timeout is not None else 300
-
-    async def async_request(self, command, args=None, timeout=None):
         """Send asynchronous request via SSH.
+
+        Determines ssh_cmd, cylc_path and login_shell settings from the contact
+        file.
+
+        Converts message to JSON and sends this to stdin. Executes the Cylc
+        command, then deserialises the output.
+
+        Args:
+            command (str): The name of the endpoint to call.
+            args (dict): Arguments to pass to the endpoint function.
+            timeout (float): Override the default timeout (seconds).
+        Raises:
+            ClientError: Coverall, on error from function call
+        Returns:
+            object: Deserialized output from function called.
         """
         timeout = timeout if timeout is not None else self.timeout
         try:
             async with ascyncto(timeout):
                 cmd, ssh_cmd, login_sh, cylc_path, msg = self.prepare_command(
-                    command, args, timeout)
+                    command, args, timeout
+                )
                 proc = _remote_cylc_cmd(
                     cmd,
                     host=self.host,
@@ -85,35 +89,8 @@ class WorkflowRuntimeClient():
                 "Check the workflow log."
             )
 
-    def serial_request(self, command, args=None, timeout=None):
-        """Send a request, using ssh.
-
-        Determines ssh_cmd, cylc_path and login_shell settings from the contact
-        file.
-
-        Converts message to JSON and sends this to stdin. Executes the Cylc
-        command, then deserialises the output.
-
-        Use ``__call__`` to call this method.
-
-        Args:
-            command (str): The name of the endpoint to call.
-            args (dict): Arguments to pass to the endpoint function.
-            timeout (float): Override the default timeout (seconds).
-        Raises:
-            ClientError: Coverall, on error from function call
-        Returns:
-            object: Deserialized output from function called.
-        """
-        loop = asyncio.new_event_loop()
-        task = loop.create_task(
-            self.async_request(command, args, timeout))
-        loop.run_until_complete(task)
-        loop.close()
-        return task.result()
-
     def prepare_command(
-        self, command: str, args: Dict, timeout: Union[float, str]
+        self, command: str, args: Optional[dict], timeout: Union[float, str]
     ):
         """Prepare command for submission.
         """
@@ -133,5 +110,3 @@ class WorkflowRuntimeClient():
             args = {}
         message = json.dumps(args)
         return cmd, ssh_cmd, login_shell, cylc_path, message
-
-    __call__ = serial_request
