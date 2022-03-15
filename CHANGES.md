@@ -95,6 +95,11 @@ line when specifying a Cylc ID that includes your username (e.g. `'~user/workflo
 [#4737](https://github.com/cylc/cylc-flow/pull/4737) -
 Fix issue which prevented tasks with incomplete outputs from being rerun by
 subsequent flows.
+### Enhancements
+
+[#4738](https://github.com/cylc/cylc-flow/pull/4738) - Implement
+ `cylc trigger [--flow=]` for manual triggering with respect to active flows
+(the default), specific flows, new flows, or one-off task runs.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
