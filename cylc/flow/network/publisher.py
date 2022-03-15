@@ -51,7 +51,7 @@ class WorkflowPublisher(ZMQSocketBase):
     """
 
     def __init__(self, workflow, context=None, barrier=None,
-                 threaded=True, daemon=False):
+                 threaded=False, daemon=False):
         super().__init__(zmq.PUB, bind=True, context=context,
                          barrier=barrier, threaded=threaded, daemon=daemon)
         self.workflow = workflow
@@ -70,6 +70,8 @@ class WorkflowPublisher(ZMQSocketBase):
     def _bespoke_stop(self):
         """Bespoke stop items."""
         LOG.debug('stopping zmq publisher...')
+        # Child of server object, parent to stop loop.
+        self.loop = None
         self.stopping = True
 
     async def send_multi(self, topic, data, serializer=None):

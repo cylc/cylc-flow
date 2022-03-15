@@ -146,7 +146,7 @@ class WorkflowRuntimeServer:
     def configure(self):
         self.register_endpoints()
         # create thread sync barrier for setup
-        self.barrier = Barrier(3, timeout=10)
+        self.barrier = Barrier(2, timeout=10)
 
         # TODO: this in zmq asyncio context?
         # Requires the scheduler main loop in asyncio first
@@ -177,7 +177,7 @@ class WorkflowRuntimeServer:
         self.replier = WorkflowReplier(
             self, context=self.zmq_context, barrier=self.barrier)
         self.publisher = WorkflowPublisher(
-            self.schd.workflow, context=self.zmq_context, barrier=self.barrier)
+            self.schd.workflow, context=self.zmq_context)
 
     async def start(self):
         """Start the TCP servers."""
