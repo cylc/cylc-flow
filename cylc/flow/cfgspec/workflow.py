@@ -137,7 +137,9 @@ with Conf(
         Conf('URL', VDR.V_STRING, '', desc='''
             A web URL to workflow documentation.
 
-            It can be retrieved at run time with the ``cylc show`` command.
+            The URL can be retrieved at run time with the ``cylc show``
+            command.
+
             The template variable ``%(workflow)s`` will be replaced with the
             actual workflow ID.
 
@@ -409,14 +411,9 @@ with Conf(
 
                    {REPLACES} ``[cylc][events]mail footer``.
 
-                ================ ======================
-                Syntax           Description
-                ================ ======================
-                ``%(host)s``     Workflow host name.
-                ``%(port)s``     Workflow port number.
-                ``%(owner)s``    Workflow owner name.
-                ``%(workflow)s``    Workflow name
-                ================ ======================
+                Template variables may be used in the mail footer, for a list
+                of supported variables see
+                :ref:`_workflow_event_template_variables`.
 
                 Example:
 
@@ -1923,7 +1920,7 @@ def warn_about_depr_event_handler_tmpl(cfg):
             if f'%({EventData.SuiteUUID.value})' in handler:
                 LOG.warning(
                     deprecation_msg.format(EventData.SuiteUUID.value,
-                                           EventData.UUID_str.value)
+                                           EventData.UUID.value)
                 )
 
 

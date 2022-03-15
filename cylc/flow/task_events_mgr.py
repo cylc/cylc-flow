@@ -76,6 +76,7 @@ from cylc.flow.wallclock import (
 )
 from cylc.flow.workflow_events import (
     EventData as WorkflowEventData,
+    get_template_variables as get_workflow_template_variables,
     process_mail_footer,
 )
 
@@ -144,7 +145,7 @@ class EventData(Enum):
 
        <event-handler> %(event)s %(workflow)s %(id)s %(message)s
 
-    .. warning::
+    .. note::
 
        Substitution patterns should not be quoted in the template strings.
        This is done automatically where required.
@@ -170,7 +171,7 @@ class EventData(Enum):
        Use "workflow".
     """
 
-    UUID_str = 'uuid_str'
+    UUID = 'uuid'
     """The unique identification string for this workflow run.
 
     This string is preserved for the lifetime of the scheduler and is restored
@@ -448,7 +449,7 @@ class TaskEventsManager():
             default
         )
 
-    def process_events(self, schd: 'Scheduler'):
+    def process_events(self, schd: 'Scheduler') -> None:
         """Process task events that were created by "setup_event_handlers".
         """
         ctx_groups: dict = {}
@@ -838,7 +839,7 @@ class TaskEventsManager():
             "event": event,
             "message": message})
 
-    def _process_event_email(self, schd: 'Scheduler', ctx, id_keys):
+    def _process_event_email(self, schd: 'Scheduler', ctx, id_keys) -> None:
         """Process event notification, by email."""
         if len(id_keys) == 1:
             # 1 event from 1 task
@@ -878,7 +879,10 @@ class TaskEventsManager():
                 stdin_str += '%s: %s\n' % (key, value)
 
         if self.mail_footer:
-            stdin_str += process_mail_footer(self.mail_footer, schd)
+            stdin_str += process_mail_footer(
+                self.mail_footer,
+                get_workflow_template_variables(schd, event, ''),
+            )
         # SMTP server
         env = dict(os.environ)
         if self.mail_smtp:
@@ -1404,7 +1408,7 @@ class TaskEventsManager():
                         quote(str(itask.summary['submitted_time_string'])),
                     EventData.Workflow.value:
                         quote(self.workflow),
-                    EventData.UUID_str.value:
+                    EventData.UUID.value:
                         quote(self.uuid_str),
                     # BACK COMPAT: Suite, SuiteUUID deprecated
                     # url:

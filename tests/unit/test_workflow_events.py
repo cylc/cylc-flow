@@ -22,8 +22,8 @@ import pytest
 from types import SimpleNamespace
 
 from cylc.flow.workflow_events import (
-    WorkflowEventContext,
     WorkflowEventHandler,
+    get_template_variables,
     process_mail_footer,
 )
 
@@ -77,26 +77,27 @@ def test_get_events_handler(
 
 
 def test_process_mail_footer(caplog, log_filter):
-    ctx = WorkflowEventContext(
+    schd = SimpleNamespace(
+        config=SimpleNamespace(cfg={'meta': {}}),
         host='myhost',
-        port=42,
         owner='me',
-        workflow='my_workflow',
-        event=None,
-        reason=None,
+        server=SimpleNamespace(port=42),
         uuid_str=None,
+        workflow='my_workflow',
     )
+    template_vars = get_template_variables(schd, '', '')
+
     # test all variables
     assert process_mail_footer(
-        '%(host)s|%(port)s|%(owner)s|%(suite)s|%(workflow)s', ctx
+        '%(host)s|%(port)s|%(owner)s|%(suite)s|%(workflow)s', template_vars
     ) == 'myhost|42|me|my_workflow|my_workflow\n'
     assert not log_filter(caplog, contains='Ignoring bad mail footer template')
 
     # test invalid variable
-    assert process_mail_footer('%(invalid)s', ctx) == ''
+    assert process_mail_footer('%(invalid)s', template_vars) == ''
     assert log_filter(caplog, contains='Ignoring bad mail footer template')
 
     # test broken template
     caplog.clear()
-    assert process_mail_footer('%(invalid)s', ctx) == ''
+    assert process_mail_footer('%(invalid)s', template_vars) == ''
     assert log_filter(caplog, contains='Ignoring bad mail footer template')

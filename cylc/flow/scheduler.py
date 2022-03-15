@@ -93,8 +93,7 @@ from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
 from cylc.flow.subprocpool import SubProcPool
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.workflow_events import (
-    WorkflowEventContext, WorkflowEventHandler)
+from cylc.flow.workflow_events import WorkflowEventHandler
 from cylc.flow.workflow_status import StopMode, AutoRestartMode
 from cylc.flow import workflow_files
 from cylc.flow.taskdef import TaskDef
@@ -1242,9 +1241,7 @@ class Scheduler:
                 conf.run_mode('simulation', 'dummy')
             ):
                 return
-        self.workflow_event_handler.handle(conf, WorkflowEventContext(
-            event, str(reason), self.workflow, self.uuid_str, self.owner,
-            self.host, self.server.port))
+        self.workflow_event_handler.handle(self, event, str(reason))
 
     def release_queued_tasks(self):
         """Release queued tasks, and submit task jobs.
