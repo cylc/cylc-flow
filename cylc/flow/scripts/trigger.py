@@ -17,7 +17,7 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger workflow tasks.star
+Manually trigger tasks.
 
 Examples:
   # trigger task foo in cycle 1234 in my_flow
@@ -29,18 +29,24 @@ Examples:
   # start a new "flow" by triggering 1234/foo
   $ cylc trigger --flow=new my_flow//1234/foo
 
-Triggering a task queues it for submission regardless of its prerequisites.
+Triggering a waiting task queues it to submit regardless of prerequisites.
 
-Triggering a queued task submits it, regardless of queue limit.
+If already queued it will submit to run, regardless of the queue limit.
 
-Triggering a submitted or running task has no effect (already triggered).
+Triggering a submitted or running task has no effect (it already triggered).
 
-Triggering an incomplete task queues it to rerun in its assigned flow.
+Triggering an incomplete task queues it to run again.
 
-Triggering an "active-waiting" task queues it to run in its assigned flow.
+Triggering an "active-waiting" task queues it to run regardless of what it is
+waiting on (e.g. a clock trigger).
 
-Triggered tasks that do not already belong to a flow get all active flow
-numbers. Use the --flow option to change this, or to start a new flow.
+If a task is in the n=0 before triggering (active-waiting tasks and incomplete
+tasks) then it already belongs to a flow.
+
+Otherwise the triggered tasks will be given all active flow numbers, by
+default. Use the --flow option to trigger a new flow instead, or run a one-off
+task independent of any flow, or to assign it to specified flows.
+
 """
 
 from functools import partial
