@@ -67,7 +67,7 @@ def get_location(workflow: str):
     NB: if it fails to load the workflow contact file, it will exit.
 
     Args:
-        workflow (str): workflow name
+        workflow: workflow name
     Returns:
         Tuple[str, int, int]: tuple with the host name and port numbers.
     Raises:
@@ -85,8 +85,7 @@ def get_location(workflow: str):
     if ContactFileFields.PUBLISH_PORT in contact:
         pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
     else:
-        version = (
-            contact['CYLC_VERSION'] if 'CYLC_VERSION' in contact else None)
+        version = contact.get('CYLC_VERSION', None)
         raise CylcVersionError(version=version)
     return host, port, pub_port
 

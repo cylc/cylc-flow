@@ -18,7 +18,7 @@ from async_timeout import timeout as ascyncto
 import asyncio
 import json
 import os
-from typing import Any, Optional, Union, Dict
+from typing import Any, List, Optional, Tuple, Union, Dict
 
 from cylc.flow.exceptions import ClientError, ClientTimeout
 from cylc.flow.network.client import WorkflowRuntimeClientBase
@@ -59,7 +59,8 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
         Returns:
             object: Deserialized output from function called.
         """
-        timeout = timeout if timeout is not None else self.timeout
+        if timeout is None:
+            timeout = self.timeout
         try:
             async with ascyncto(timeout):
                 cmd, ssh_cmd, login_sh, cylc_path, msg = self.prepare_command(
@@ -72,15 +73,13 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
                     ssh_cmd=ssh_cmd,
                     remote_cylc_path=cylc_path,
                     ssh_login_shell=login_sh,
-                    capture_process=True)
-                while True:
-                    if proc.poll() is not None:
-                        break
+                    capture_process=True
+                )
+                while proc.poll() is None:
                     await asyncio.sleep(self.SLEEP_INTERVAL)
-                out, err = (f.decode() for f in proc.communicate())
-                return_code = proc.wait()
-                if return_code:
-                    raise ClientError(err, f"return-code={return_code}")
+                out, err = proc.communicate()
+                if proc.returncode:
+                    raise ClientError(err, f"return-code={proc.returncode}")
                 return json.loads(out)
         except asyncio.TimeoutError:
             raise ClientTimeout(
@@ -91,15 +90,14 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
 
     def prepare_command(
         self, command: str, args: Optional[dict], timeout: Union[float, str]
-    ):
-        """Prepare command for submission.
-        """
+    ) -> Tuple[List[str], str, str, Optional[str], str]:
+        """Prepare command for submission."""
         # Set environment variable to determine the communication for use on
         # the scheduler
         os.environ["CLIENT_COMMS_METH"] = CommsMeth.SSH.value
         cmd = ["client"]
         if timeout:
-            cmd += [f'--comms-timeout={timeout}']
+            cmd.append(f'--comms-timeout={timeout}')
         cmd += [self.workflow, command]
         contact = load_contact_file(self.workflow)
         ssh_cmd = contact[ContactFileFields.SCHEDULER_SSH_COMMAND]

@@ -543,7 +543,7 @@ def _get_metrics(hosts, metrics, data=None):
             if proc.poll() is None:
                 continue
             del proc_map[host]
-            out, err = (f.decode() for f in proc.communicate())
+            out, err = proc.communicate()
             if proc.wait():
                 # Command failed in verbose/debug mode
                 LOG.warning(

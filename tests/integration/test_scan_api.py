@@ -170,10 +170,10 @@ async def test_format_tree(flows, run_dir, ses_test_dir, mod_test_dir):
     """It should dump results in an ascii tree format."""
     # one stopped flow
     opts = ScanOptions(states='running', format='tree')
-    flows = []
-    await main(opts, write=flows.append, scan_dir=mod_test_dir)
-    assert len(flows) == 1
-    lines = flows[0].splitlines()
+    workflows = []
+    await main(opts, write=workflows.append, scan_dir=mod_test_dir)
+    assert len(workflows) == 1
+    lines = workflows[0].splitlines()
     # this flow is hierarchically registered in the run dir already
     # it should be registered as <session test dir>/<module test dir>/<name>
     assert ses_test_dir.name in lines[0]
@@ -185,10 +185,10 @@ async def test_format_rich(flows, mod_test_dir):
     """It should print results in a long human-friendly format."""
     # one stopped flow (--colour-blind)
     opts = ScanOptions(states='running', format='rich', colour_blind=True)
-    flows = []
-    await main(opts, write=flows.append, scan_dir=mod_test_dir)
-    assert len(flows) == 1
-    lines = flows[0].splitlines()
+    workflows = []
+    await main(opts, write=workflows.append, scan_dir=mod_test_dir)
+    assert len(workflows) == 1
+    lines = workflows[0].splitlines()
 
     # test that the multi-line description was output correctly
     # with trailing lines indented correctly
@@ -226,10 +226,12 @@ async def test_format_rich(flows, mod_test_dir):
 
     # one stopped flow (--colour=always)
     opts = ScanOptions(states='running', format='rich')
-    flows = []
-    await main(opts, write=flows.append, scan_dir=mod_test_dir, color='always')
-    assert len(flows) == 1
-    lines = flows[0].splitlines()
+    workflows = []
+    await main(
+        opts, write=workflows.append, scan_dir=mod_test_dir, color='always'
+    )
+    assert len(workflows) == 1
+    lines = workflows[0].splitlines()
 
     # test that the state totals show one task running (colour mode)
     for line in lines:

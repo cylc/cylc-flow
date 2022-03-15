@@ -309,9 +309,9 @@ def tmpfile_edit(tmpfile, geditor=False):
     modtime1 = os.stat(tmpfile.name).st_mtime
     cmd = shlex.split(editor)
     cmd.append(tmpfile.name)
-    proc = Popen(cmd, stderr=PIPE)  # nosec
+    proc = Popen(cmd, stderr=PIPE, text=True)  # nosec
     # * editor command is user configurable
-    err = proc.communicate()[1].decode()
+    _, err = proc.communicate()
     ret_code = proc.wait()
     if ret_code == 0 and os.stat(tmpfile.name).st_mtime > modtime1:
         sys.stderr.write(
@@ -454,7 +454,8 @@ def main(
                     cmd,
                     platform,
                     capture_process=is_edit_mode,
-                    manage=(mode == 'tail')
+                    manage=(mode == 'tail'),
+                    text=False
                 )
             except KeyboardInterrupt:
                 # Ctrl-C while tailing.
