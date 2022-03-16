@@ -82,9 +82,10 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
                     raise ClientError(err, f"return-code={proc.returncode}")
                 return json.loads(out)
         except asyncio.TimeoutError:
+            self.timeout_handler()
             raise ClientTimeout(
-                f"Command exceeded the timeout {timeout}. "
-                f"This could be due to network problems. "
+                f"Command exceeded the timeout {timeout}s. "
+                "This could be due to network problems. "
                 "Check the workflow log."
             )
 

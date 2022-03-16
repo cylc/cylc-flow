@@ -17,7 +17,6 @@
 
 from abc import ABCMeta, abstractmethod
 import asyncio
-from functools import partial
 import os
 from shutil import which
 import socket
@@ -73,13 +72,10 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             host, port, _ = get_location(workflow)
         else:
             port = int(port)
-        self.host = host
-        self.port = port
+        self.host = self._orig_host = host
+        self.port = self._orig_port = port
         self.timeout = (
             float(timeout) if timeout is not None else self.DEFAULT_TIMEOUT
-        )
-        self.timeout_handler = partial(
-            self._timeout_handler, workflow, host, port
         )
 
     @abstractmethod
@@ -130,49 +126,45 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
 
     __call__ = serial_request
 
-    @staticmethod
-    def _timeout_handler(
-        workflow: str, host: str, port: Union[int, str]
-    ) -> None:
+    def timeout_handler(self) -> None:
         """Handle the eventuality of a communication timeout with the workflow.
 
-        Args:
-            workflow (str): workflow name
-            host (str): host name
-            port (Union[int, str]): port number
         Raises:
-            ClientError: if the workflow has already stopped.
+            WorkflowStopped: if the workflow has already stopped.
+            CyclError: if the workflow has moved to different host/port.
         """
-        if workflow is None:
-            return
-
         try:
-            contact_data: Dict[str, str] = load_contact_file(workflow)
+            contact_data: Dict[str, str] = load_contact_file(self.workflow)
         except (IOError, ValueError, ServiceFileError):
             # Contact file does not exist or corrupted, workflow should be dead
-            return
-
-        contact_host: str = contact_data.get(ContactFileFields.HOST, '?')
-        contact_port: str = contact_data.get(ContactFileFields.PORT, '?')
-        if (
-            contact_host != host
-            or contact_port != str(port)
-        ):
-            raise CylcError(
-                f'The workflow is no longer running at {host}:{port}\n'
-                f'It has moved to {contact_host}:{contact_port}'
-            )
-
-        # Cannot connect, perhaps workflow is no longer running and is leaving
-        # behind a contact file?
-        try:
-            detect_old_contact_file(workflow, contact_data)
-        except (AssertionError, ServiceFileError):
-            # old contact file exists and the workflow process still alive
-            return
+            pass
         else:
-            # the workflow has stopped
-            raise WorkflowStopped(workflow)
+            contact_host: str = contact_data.get(ContactFileFields.HOST, '?')
+            contact_port: str = contact_data.get(ContactFileFields.PORT, '?')
+            if (
+                contact_host != self._orig_host
+                or contact_port != str(self._orig_port)
+            ):
+                raise CylcError(
+                    'The workflow is no longer running at '
+                    f'{self._orig_host}:{self._orig_port}\n'
+                    f'It has moved to {contact_host}:{contact_port}'
+                )
+
+            # Cannot connect, perhaps workflow is no longer running and is
+            # leaving behind a contact file?
+            try:
+                detect_old_contact_file(self.workflow, contact_data)
+            except (AssertionError, ServiceFileError):
+                # old contact file exists and the workflow process still alive
+                pass
+            else:
+                # the workflow has stopped
+                raise WorkflowStopped(self.workflow)
+
+        host, port, _ = get_location(self.workflow)
+        if host != self.host or port != self.port:
+            raise WorkflowStopped(self.workflow)
 
 
 class WorkflowRuntimeClient(ZMQSocketBase, WorkflowRuntimeClientBase):
@@ -307,11 +299,7 @@ class WorkflowRuntimeClient(ZMQSocketBase, WorkflowRuntimeClientBase):
         if self.poller.poll(timeout):
             res = await self.socket.recv()
         else:
-            if callable(self.timeout_handler):
-                self.timeout_handler()
-            host, port, _ = get_location(self.workflow)
-            if host != self.host or port != self.port:
-                raise WorkflowStopped(self.workflow)
+            self.timeout_handler()
             raise ClientTimeout(
                 'Timeout waiting for server response.'
                 ' This could be due to network or server issues.'
