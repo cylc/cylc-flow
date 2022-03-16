@@ -15,41 +15,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from async_timeout import timeout
+from cylc.flow.network import decode_
+from cylc.flow.network.client import WorkflowRuntimeClient
 import asyncio
-from getpass import getuser
 
 import pytest
 
 
-@pytest.mark.asyncio
-@pytest.fixture(scope='module')
-async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
-    reg = mod_flow(mod_one_conf)
-    schd = mod_scheduler(reg)
-    async with mod_run(schd):
-        yield schd
-
-
-@pytest.mark.asyncio
-@pytest.fixture
-async def accident(flow, scheduler, run, one_conf):
-    reg = flow(one_conf)
-    schd = scheduler(reg)
-    async with run(schd):
-        yield schd
-
-
-@pytest.mark.asyncio
-async def test_listener(accident):
+async def test_listener(one, start, ):
     """Test listener."""
-    accident.server.replier.queue.put('STOP')
-    async with timeout(2):
-        # wait for the server to consume the STOP item from the queue
-        while True:
-            if accident.server.replier.queue.empty():
-                break
-            await asyncio.sleep(0.01)
-    # ensure the server is "closed"
-    with pytest.raises(ValueError):
-        accident.server.replier.queue.put('foobar')
-        accident.server.replier._listener()
+    async with start(one):
+        client = WorkflowRuntimeClient(one.workflow)
+        client.socket.send_string(r'Not JSON')
+        res = await client.socket.recv()
+        assert 'error' in decode_(res.decode())
+
+        one.server.replier.queue.put('STOP')
+        async with timeout(2):
+            # wait for the server to consume the STOP item from the queue
+            while True:
+                if one.server.replier.queue.empty():
+                    break
+                await asyncio.sleep(0.01)
+        # ensure the server is "closed"
+        one.server.replier.queue.put('foobar')
+        with pytest.raises(ValueError):
+            one.server.replier.listener()

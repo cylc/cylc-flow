@@ -17,7 +17,6 @@
 
 import getpass  # noqa: F401
 from queue import Queue
-from time import sleep
 
 import zmq
 
@@ -31,48 +30,29 @@ class WorkflowReplier(ZMQSocketBase):
     This class contains the logic for the ZMQ message replier.
 
     Usage:
+<<<<<<< HEAD
         * Define ...
+=======
+        * Start the replier.
+        * Call the listener to process incomming REQ and send the REP.
+
+    Message Processing:
+        * Calls the server's receiver to process the command and
+            obtain a response.
+
+    Message interface:
+        * Expects requests of the format: {"command": CMD, "args": {...}}
+        * Sends responses of the format: {"data": {...}}
+        * Sends errors in the format: {"error": {"message": MSG}}
+>>>>>>> 1f9dcdf40... expand listner test
 
     """
 
-    RECV_TIMEOUT = 1
-    """Max time the Workflow Replier will wait for an incoming
-    message in seconds.
-
-    We use a timeout here so as to give the _listener a chance to respond to
-    requests (i.e. stop) from its spawner (the scheduler).
-
-    The alternative would be to spin up a client and send a message to the
-    server, this way seems safer.
-
-    """
-
-    def __init__(self, server, context=None, barrier=None,
-                 threaded=True, daemon=False):
-        super().__init__(zmq.REP, bind=True, context=context,
-                         barrier=barrier, threaded=threaded, daemon=daemon)
+    def __init__(self, server, context=None):
+        super().__init__(zmq.REP, bind=True, context=context)
         self.server = server
         self.workflow = server.schd.workflow
-        self.queue = None
-
-    def _socket_options(self):
-        """Set socket options.
-
-        Overwrites Base method.
-
-        """
-        # create socket
-        self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
-
-    def _bespoke_start(self):
-        """Setup start items, and run listener.
-
-        Overwrites Base method.
-
-        """
-        # start accepting requests
         self.queue = Queue()
-        self._listener()
 
     def _bespoke_stop(self):
         """Stop the listener and Authenticator.
@@ -80,13 +60,16 @@ class WorkflowReplier(ZMQSocketBase):
         Overwrites Base method.
 
         """
-        LOG.debug('stopping zmq server...')
-        self.stopping = True
+        LOG.debug('stopping zmq replier...')
         if self.queue is not None:
             self.queue.put('STOP')
 
-    def _listener(self):
+    def listener(self):
         """The server main loop, listen for and serve requests."""
+        # Note: we are using CurveZMQ to secure the messages (see
+        # self.curve_auth, self.socket.curve_...key etc.). We have set up
+        # public-key cryptography on the ZMQ messaging and sockets, so
+        # there is no need to encrypt messages ourselves before sending.
         while True:
             # process any commands passed to the listener by its parent process
             if self.queue.qsize():
@@ -96,16 +79,14 @@ class WorkflowReplier(ZMQSocketBase):
                 raise ValueError('Unknown command "%s"' % command)
 
             try:
-                # wait RECV_TIMEOUT for a message
-                msg = self.socket.recv_string()
+                # Check for messages
+                msg = self.socket.recv_string(zmq.NOBLOCK)
             except zmq.error.Again:
-                # timeout, continue with the loop, this allows the listener
-                # thread to stop
-                continue
+                # No messages, break to parent loop.
+                break
             except zmq.error.ZMQError as exc:
                 LOG.exception('unexpected error: %s', exc)
                 continue
-
             # attempt to decode the message, authenticating the user in the
             # process
             try:
@@ -114,19 +95,21 @@ class WorkflowReplier(ZMQSocketBase):
                 # failed to decode message, possibly resulting from failed
                 # authentication
                 LOG.exception('failed to decode message: "%s"', exc)
+                import traceback
+                response = encode_(
+                    {
+                        'error': {
+                            'message': 'failed to decode message: "%s"' % msg,
+                            'traceback': traceback.format_exc(),
+                        }
+                    }
+                ).encode()
             else:
                 # success case - serve the request
-                res = self.server.responder(message)
+                res = self.server.receiver(message)
                 # send back the string to bytes response
                 if isinstance(res.get('data'), bytes):
                     response = res['data']
                 else:
                     response = encode_(res).encode()
-                self.socket.send(response)
-
-            # Note: we are using CurveZMQ to secure the messages (see
-            # self.curve_auth, self.socket.curve_...key etc.). We have set up
-            # public-key cryptography on the ZMQ messaging and sockets, so
-            # there is no need to encrypt messages ourselves before sending.
-
-            sleep(0)  # yield control to other threads
+            self.socket.send(response)

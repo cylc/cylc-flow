@@ -50,11 +50,10 @@ class WorkflowPublisher(ZMQSocketBase):
 
     """
 
-    def __init__(self, workflow, context=None, barrier=None,
-                 threaded=False, daemon=False):
-        super().__init__(zmq.PUB, bind=True, context=context,
-                         barrier=barrier, threaded=threaded, daemon=daemon)
-        self.workflow = workflow
+    def __init__(self, server, context=None):
+        super().__init__(zmq.PUB, bind=True, context=context)
+        self.server = server
+        self.workflow = server.schd.workflow
         self.topics = set()
 
     def _socket_options(self):
@@ -70,9 +69,6 @@ class WorkflowPublisher(ZMQSocketBase):
     def _bespoke_stop(self):
         """Bespoke stop items."""
         LOG.debug('stopping zmq publisher...')
-        # Child of server object, parent to stop loop.
-        self.loop = None
-        self.stopping = True
 
     async def send_multi(self, topic, data, serializer=None):
         """Send multi part message.

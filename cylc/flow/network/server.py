@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for workflow runtime API."""
 
+import asyncio
 import getpass  # noqa: F401
+from queue import Queue
 from textwrap import dedent
-from threading import Barrier
+from time import sleep
 from typing import Any, Dict, List, Optional, Union
 
 from graphql.execution import ExecutionResult
@@ -89,7 +91,7 @@ class WorkflowRuntimeServer:
         * Call endpoints using the function name.
 
     Message interface:
-        * Accepts requests of the format: {"command": CMD, "args": {...}}
+        * Accepts messages of the format: {"command": CMD, "args": {...}}
         * Returns responses of the format: {"data": {...}}
         * Returns error in the format: {"error": {"message": MSG}}
 
@@ -121,6 +123,9 @@ class WorkflowRuntimeServer:
 
     """
 
+    OPERATE_SLEEP_INTERVAL = 0.2
+    STOP_SLEEP_INTERVAL = 0.2
+
     def __init__(self, schd):
 
         self.zmq_context = None
@@ -128,7 +133,8 @@ class WorkflowRuntimeServer:
         self.pub_port = None
         self.replier = None
         self.publisher = None
-        self.barrier = None
+        self.loop = None
+        self.thread = None
         self.curve_auth = None
         self.client_pub_key_dir = None
 
@@ -143,10 +149,22 @@ class WorkflowRuntimeServer:
             IgnoreFieldMiddleware,
         ]
 
+        self.queue = Queue()
+        self.publish_queue = Queue()
+        self.stopping = False
+        self.stopped = True
+
     def configure(self):
         self.register_endpoints()
-        # create thread sync barrier for setup
-        self.barrier = Barrier(2, timeout=10)
+
+    def start(self, barrier):
+        """Start the TCP servers."""
+        # set asyncio loop on thread
+        try:
+            self.loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
 
         # TODO: this in zmq asyncio context?
         # Requires the scheduler main loop in asyncio first
@@ -174,45 +192,78 @@ class WorkflowRuntimeServer:
             location=(self.client_pub_key_dir)
         )
 
-        self.replier = WorkflowReplier(
-            self, context=self.zmq_context, barrier=self.barrier)
-        self.publisher = WorkflowPublisher(
-            self.schd.workflow, context=self.zmq_context)
-
-    async def start(self):
-        """Start the TCP servers."""
         min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
+        self.replier = WorkflowReplier(self, context=self.zmq_context)
         self.replier.start(min_, max_)
+        self.publisher = WorkflowPublisher(self, context=self.zmq_context)
         self.publisher.start(min_, max_)
-        # wait for threads to setup socket ports before continuing
-        self.barrier.wait()
         self.port = self.replier.port
         self.pub_port = self.publisher.port
         self.schd.data_store_mgr.delta_workflow_ports()
 
+        # wait for threads to setup socket ports before continuing
+        barrier.wait()
+
+        self.stopped = False
+
+        self.operate()
+
     async def stop(self, reason):
         """Stop the TCP servers, and clean up authentication."""
+        self.queue.put('STOP')
+        if self.thread and self.thread.is_alive():
+            while not self.stopping:
+                sleep(self.STOP_SLEEP_INTERVAL)
+
         if self.replier:
-            self.replier.stop()
+            self.replier.stop(stop_loop=False)
         if self.publisher:
             await self.publisher.publish(
                 [(b'shutdown', str(reason).encode('utf-8'))]
             )
-            self.publisher.stop()
+            self.publisher.stop(stop_loop=False)
         if self.curve_auth:
             self.curve_auth.stop()  # stop the authentication thread
+        if self.loop and self.loop.is_running():
+            self.loop.stop()
+        if self.thread and self.thread.is_alive():
+            self.thread.join()  # Wait for processes to return
 
-    def responder(self, message):
-        """Process message, coordinate publishing, return response."""
-        # TODO: coordinate publishing.
-        return self._receiver(message)
+        self.stopped = True
 
-    def _receiver(self, message):
-        """Wrap incoming messages and dispatch them to exposed methods.
+    def operate(self):
+        """Orchestrate the receive, send, publish of messages."""
+        while True:
+            # process messages from the scheduler.
+            if self.queue.qsize():
+                message = self.queue.get()
+                if message == 'STOP':
+                    self.stopping = True
+                    break
+                raise ValueError('Unknown message "%s"' % message)
+
+            # Gather and respond to any requests.
+            self.replier.listener()
+
+            # Publish all requested/queued.
+            while self.publish_queue.qsize():
+                articles = self.publish_queue.get()
+                self.loop.run_until_complete(self.publisher.publish(articles))
+
+            # Yield control to other threads
+            sleep(self.OPERATE_SLEEP_INTERVAL)
+
+    def receiver(self, message):
+        """Process incomming messages and coordinate response.
+
+        Wrap incoming messages, dispatch them to exposed methods and/or
+        coordinate a publishing stream.
 
         Args:
             message (dict): message contents
         """
+        # TODO: If requested, coordinate publishing response/stream.
+
         # determine the server method to call
         try:
             method = getattr(self, message['command'])

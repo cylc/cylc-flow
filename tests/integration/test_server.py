@@ -78,20 +78,32 @@ def test_pb_entire_workflow(myflow):
     assert data.workflow.id == myflow.id
 
 
-async def test_listener(one, start):
+async def test_stop(one, start):
     """Test listener."""
     async with start(one):
-        one.server.replier.queue.put('STOP')
+        await one.server.stop('TESTING')
         async with timeout(2):
             # wait for the server to consume the STOP item from the queue
             while True:
-                if one.server.replier.queue.empty():
+                if one.server.queue.empty():
+                    break
+                await asyncio.sleep(0.01)
+
+
+async def test_operate(one, start):
+    """Test operate."""
+    async with start(one):
+        one.server.queue.put('STOP')
+        async with timeout(2):
+            # wait for the server to consume the STOP item from the queue
+            while True:
+                if one.server.queue.empty():
                     break
                 await asyncio.sleep(0.01)
         # ensure the server is "closed"
         with pytest.raises(ValueError):
-            one.server.replier.queue.put('foobar')
-            one.server.replier._listener()
+            one.server.queue.put('foobar')
+            one.server.operate()
 
 
 async def test_receiver(one, start):
@@ -100,26 +112,26 @@ async def test_receiver(one, start):
         async with start(one):
             # start with a message that works
             msg = {'command': 'api', 'user': '', 'args': {}}
-            assert 'error' not in one.server._receiver(msg)
-            assert 'data' in one.server._receiver(msg)
+            assert 'error' not in one.server.receiver(msg)
+            assert 'data' in one.server.receiver(msg)
 
             # remove the user field - should error
             msg2 = dict(msg)
             msg2.pop('user')
-            assert 'error' in one.server._receiver(msg2)
+            assert 'error' in one.server.receiver(msg2)
 
             # remove the command field - should error
             msg3 = dict(msg)
             msg3.pop('command')
-            assert 'error' in one.server._receiver(msg3)
+            assert 'error' in one.server.receiver(msg3)
 
             # provide an invalid command - should error
             msg4 = {**msg, 'command': 'foobar'}
-            assert 'error' in one.server._receiver(msg4)
+            assert 'error' in one.server.receiver(msg4)
 
             # simulate a command failure with the original message
             # (the one which worked earlier) - should error
             def _api(*args, **kwargs):
                 raise Exception('foo')
             one.server.api = _api
-            assert 'error' in one.server._receiver(msg)
+            assert 'error' in one.server.receiver(msg)

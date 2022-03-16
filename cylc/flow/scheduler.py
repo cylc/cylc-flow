@@ -27,6 +27,7 @@ from queue import Empty, Queue
 from shlex import quote
 from subprocess import Popen, PIPE, DEVNULL
 import sys
+from threading import Barrier, Thread
 from time import sleep, time
 import traceback
 from typing import (
@@ -594,8 +595,10 @@ class Scheduler:
                     self
                 )
             )
-            await self.server.publisher.publish(
+            self.server.publish_queue.put(
                 self.data_store_mgr.publish_deltas)
+            # Yield control to other threads
+            sleep(0)
             self.profiler.start()
             await self.main_loop()
 
@@ -632,9 +635,21 @@ class Scheduler:
         """
         try:
             await self.initialise()
+
+            # Start Server before logging ports/host(s).
+            # create thread sync barrier for setup
+            barrier = Barrier(2, timeout=10)
+            self.server.thread = Thread(
+                target=self.server.start,
+                args=(barrier,),
+                daemon=False
+            )
+            self.server.thread.start()
+            barrier.wait()
+
             await self.log_start()
             await self.configure()
-            await self.server.start()
+
             self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
@@ -1632,8 +1647,10 @@ class Scheduler:
             # Publish updates:
             if self.data_store_mgr.publish_pending:
                 self.data_store_mgr.publish_pending = False
-                await self.server.publisher.publish(
+                self.server.publish_queue.put(
                     self.data_store_mgr.publish_deltas)
+                # Yield control to other threads
+                sleep(0)
         if has_updated:
             # Database update
             self.workflow_db_mgr.put_task_pool(self.pool)
