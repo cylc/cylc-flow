@@ -133,37 +133,34 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             WorkflowStopped: if the workflow has already stopped.
             CyclError: if the workflow has moved to different host/port.
         """
+        # TODO: fix overlap with cylc.flow.network.get_location() ?
         try:
             contact_data: Dict[str, str] = load_contact_file(self.workflow)
         except (IOError, ValueError, ServiceFileError):
             # Contact file does not exist or corrupted, workflow should be dead
-            pass
+            raise WorkflowStopped(self.workflow)
+
+        contact_host: str = contact_data.get(ContactFileFields.HOST, '?')
+        contact_port: str = contact_data.get(ContactFileFields.PORT, '?')
+        if (
+            contact_host != self._orig_host
+            or contact_port != str(self._orig_port)
+        ):
+            raise CylcError(
+                'The workflow is no longer running at '
+                f'{self._orig_host}:{self._orig_port}\n'
+                f'It has moved to {contact_host}:{contact_port}'
+            )
+
+        # Cannot connect, perhaps workflow is no longer running and is leaving
+        # behind a contact file?
+        try:
+            detect_old_contact_file(self.workflow, contact_data)
+        except (AssertionError, ServiceFileError):
+            # old contact file exists and the workflow process still alive
+            return
         else:
-            contact_host: str = contact_data.get(ContactFileFields.HOST, '?')
-            contact_port: str = contact_data.get(ContactFileFields.PORT, '?')
-            if (
-                contact_host != self._orig_host
-                or contact_port != str(self._orig_port)
-            ):
-                raise CylcError(
-                    'The workflow is no longer running at '
-                    f'{self._orig_host}:{self._orig_port}\n'
-                    f'It has moved to {contact_host}:{contact_port}'
-                )
-
-            # Cannot connect, perhaps workflow is no longer running and is
-            # leaving behind a contact file?
-            try:
-                detect_old_contact_file(self.workflow, contact_data)
-            except (AssertionError, ServiceFileError):
-                # old contact file exists and the workflow process still alive
-                pass
-            else:
-                # the workflow has stopped
-                raise WorkflowStopped(self.workflow)
-
-        host, port, _ = get_location(self.workflow)
-        if host != self.host or port != self.port:
+            # the workflow has stopped
             raise WorkflowStopped(self.workflow)
 
 
