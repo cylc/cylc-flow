@@ -13,11 +13,13 @@
     [[olaf]]
         # task dependent on file install already being complete
         script = """
-        cat ${CYLC_WORKFLOW_RUN_DIR}/dir1/moo
+            cat ${CYLC_WORKFLOW_RUN_DIR}/dir1/moo
         """
         platform = $CYLC_TEST_PLATFORM
 
     [[sven]]
         # task dependent on file install already being complete
-        script = """rm -r ${CYLC_WORKFLOW_RUN_DIR}/dir1 ${CYLC_WORKFLOW_RUN_DIR}/dir2"""
+        script = """
+            rm -r ${CYLC_WORKFLOW_RUN_DIR}/dir1 ${CYLC_WORKFLOW_RUN_DIR}/dir2
+        """
         platform = $CYLC_TEST_PLATFORM

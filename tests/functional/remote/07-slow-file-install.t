@@ -20,16 +20,18 @@
 export REQUIRE_PLATFORM='loc:remote comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
 set_test_number 2
-
+create_test_global_config "" "
+[platforms]
+    [[${CYLC_TEST_PLATFORM}]] 
+        rsync command = my-rsync.sh
+"
 TEST_NAME="${TEST_NAME_BASE}-installation-timing"
 install_workflow "${TEST_NAME}" "${TEST_NAME_BASE}"
 
 for DIR in "dir1" "dir2"; do
     mkdir -p "${WORKFLOW_RUN_DIR}/${DIR}"
-    touch "${WORKFLOW_RUN_DIR}/${DIR}/moo"
     echo "hello" > "${WORKFLOW_RUN_DIR}/${DIR}/moo"
-    cat "${WORKFLOW_RUN_DIR}/${DIR}/moo" >&2
-done
+    done
 
 run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
 export PATH="${WORKFLOW_RUN_DIR}/bin:$PATH"

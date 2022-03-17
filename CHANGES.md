@@ -33,6 +33,11 @@ ones in. -->
 
 Second Release Candidate for Cylc 8 suitable for acceptance testing.
 
+### Enhancements
+
+[#4736](https://github.com/cylc/cylc-flow/pull/4736) - rsync command used for
+remote file installation is now configurable.
+
 ### Fixes
 
 [#4703](https://github.com/cylc/cylc-flow/pull/4703) - Fix `ImportError` when

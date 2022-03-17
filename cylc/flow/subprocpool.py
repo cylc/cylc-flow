@@ -554,12 +554,11 @@ class SubProcPool:
         the failures may be caused by other problems.
         """
         rsync_255_fail = False
-        try:
-            platform_rsync_cmd = (
-                platform['rsync command']
-            )
-        except (TypeError, KeyError):
-            platform_rsync_cmd = 'rsync'
+        platform_rsync_cmd = (
+            platform['rsync command']
+            if platform is not None
+            else 'rsync'
+        )
         rsync_cmd = shlex.split(platform_rsync_cmd)
         if (
             ctx.cmd[0] == rsync_cmd[0]
