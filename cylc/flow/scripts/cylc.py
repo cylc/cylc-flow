@@ -21,6 +21,7 @@ from contextlib import contextmanager
 import os
 from pathlib import Path
 import sys
+from typing import Iterator, NoReturn, Optional, Tuple
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
@@ -182,8 +183,7 @@ USAGE = cparse(USAGE)
 # {name: entry_point}
 COMMANDS: dict = {
     entry_point.name: entry_point
-    for entry_point
-    in iter_entry_points('cylc.command')
+    for entry_point in iter_entry_points('cylc.command')
 }
 
 
@@ -272,17 +272,21 @@ DEAD_ENDS = {
 # fmt: on
 
 
-def execute_cmd(cmd, *args):
+def execute_cmd(cmd: str, *args: str) -> NoReturn:
     """Execute a sub-command.
 
     Args:
-        cmd (str):
-            The name of the command.
-        args (list):
-            List of command line arguments to pass to that command.
+        cmd: The name of the command.
+        args: Command line arguments to pass to that command.
 
     """
-    COMMANDS[cmd].resolve()(*args)
+    entry_point: pkg_resources.EntryPoint = COMMANDS[cmd]
+    try:
+        entry_point.resolve()(*args)
+    except ModuleNotFoundError as exc:
+        msg = handle_missing_dependency(entry_point, exc)
+        print(msg, file=sys.stderr)
+        sys.exit(1)
     sys.exit()
 
 
@@ -366,15 +370,19 @@ def parse_docstring(docstring):
     return (usage, desc)
 
 
-def iter_commands():
+def iter_commands() -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
     """Yield all Cylc sub-commands.
 
     Yields:
-        tuple - (command, description, usage)
+        (command, description, usage)
 
     """
-    for cmd, obj in sorted(COMMANDS.items()):
-        module = __import__(obj.module_name, fromlist=[''])
+    for cmd, entry_point in sorted(COMMANDS.items()):
+        try:
+            module = __import__(entry_point.module_name, fromlist=[''])
+        except ModuleNotFoundError as exc:
+            handle_missing_dependency(entry_point, exc)
+            continue
         if getattr(module, 'INTERNAL', False):
             # do not list internal commands
             continue
@@ -663,3 +671,30 @@ def main():
                 if opts.version:
                     cmd_args.append("--version")
                 execute_cmd(command, *cmd_args)
+
+
+def handle_missing_dependency(
+    entry_point: pkg_resources.EntryPoint,
+    exc: ModuleNotFoundError
+) -> str:
+    """Return a suitable error message for a missing optional dependency.
+
+    Args:
+        entry_point: The entry point that was attempted to load but caused
+            a ModuleNotFoundError.
+        exc: The ModuleNotFoundError that was caught.
+
+    Re-raises the given ModuleNotFoundError if it is unexpected.
+    """
+    # If the missing module is an optional dependency, the EntryPoint
+    # should have an attr 'extras'
+    if not entry_point.extras:
+        raise exc
+
+    msg = f"cylc {entry_point.name}: missing optional dependency '{exc.name}'"
+    if entry_point.dist:
+        msg += "\nInstall using \"pip install '{0}[{1}]'\"".format(
+            entry_point.dist.project_name,
+            ','.join(entry_point.extras)
+        )
+    return msg
