@@ -245,15 +245,15 @@ class TaskPool:
         # At restart all tasks are runahead-limited but finished and manually
         # triggered tasks (incl. --start-task's) can be released immediately.
         for itask in (
-            itask
-            for itask in self.get_tasks()
-            if itask.state.is_runahead
-            if itask.state(
+            jtask
+            for jtask in self.get_tasks()
+            if jtask.state.is_runahead
+            if jtask.state(
                 TASK_STATUS_FAILED,
                 TASK_STATUS_SUCCEEDED,
                 TASK_STATUS_EXPIRED
             )
-            or itask.is_manual_submit
+            or jtask.is_manual_submit
         ):
             self.release_runahead_task(itask)
             released = True
