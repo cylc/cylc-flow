@@ -391,7 +391,7 @@ class ISO8601Sequence(SequenceBase):
         if self.exclusions:
             self.value += '!' + str(self.exclusions)
 
-    @lru_cache(100)
+    @lru_cache(100)  # noqa B019 TODO?
     def is_on_sequence(self, point):
         """Return True if point is on-sequence."""
         # Iterate starting at recent valid points, for speed.
