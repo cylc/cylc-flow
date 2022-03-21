@@ -1768,7 +1768,7 @@ class TaskPool:
     def merge_flows(self, itask: TaskProxy, flow_nums: 'FlowNums') -> None:
         """Merge itask.flow_nums with flow_nums.
 
-        This also performs requied spawning / state changing for edge cases.
+        This also performs required spawning / state changing for edge cases.
         """
         # case 1: task has finished with incomplete outputs
         # (we reset it to waiting and re-queue so it can run again as a task
