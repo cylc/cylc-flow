@@ -371,7 +371,9 @@ def parse_docstring(docstring):
 
 
 def iter_commands() -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
-    """Yield all Cylc sub-commands.
+    """Yield all Cylc sub-commands that are available.
+
+    Skips sub-commands that require missing optional dependencies.
 
     Yields:
         (command, description, usage)
@@ -675,26 +677,23 @@ def main():
 
 def handle_missing_dependency(
     entry_point: pkg_resources.EntryPoint,
-    exc: ModuleNotFoundError
+    err: ModuleNotFoundError
 ) -> str:
     """Return a suitable error message for a missing optional dependency.
 
     Args:
         entry_point: The entry point that was attempted to load but caused
             a ModuleNotFoundError.
-        exc: The ModuleNotFoundError that was caught.
+        err: The ModuleNotFoundError that was caught.
 
     Re-raises the given ModuleNotFoundError if it is unexpected.
     """
-    # If the missing module is an optional dependency, the EntryPoint
-    # should have an attr 'extras'
-    if not entry_point.extras:
-        raise exc
-
-    msg = f"cylc {entry_point.name}: missing optional dependency '{exc.name}'"
-    if entry_point.dist:
-        msg += "\nInstall using \"pip install '{0}[{1}]'\"".format(
-            entry_point.dist.project_name,
-            ','.join(entry_point.extras)
-        )
-    return msg
+    try:
+        # Check for missing optional dependencies
+        entry_point.require()
+    except pkg_resources.DistributionNotFound as exc:
+        # Confirmed missing optional dependencies
+        return f"cylc {entry_point.name}: {exc}"
+    else:
+        # Error not due to missing optional dependencies; this is unexpected
+        raise err
