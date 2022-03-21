@@ -1474,7 +1474,7 @@ class TaskPool:
                 elif flow[0] == FLOW_NONE:
                     flow_nums = set()
                 else:
-                    flow_nums = {int(n) for n in flow_nums}
+                    flow_nums = {int(n) for n in flow}
                 itask = self.spawn_task(name, point, flow_nums, force=True)
                 if itask is None:
                     continue
