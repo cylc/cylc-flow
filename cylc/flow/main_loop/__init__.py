@@ -339,10 +339,10 @@ def load(config, additional_plugins=None):
         # load coroutines
         log = []
         for coro_name, coro in (
-                (coro_name, coro)
-                for coro_name, coro in getmembers(module)
-                if isfunction(coro)
-                if hasattr(coro, 'main_loop')
+                (corou_name, corou)
+                for corou_name, corou in getmembers(module)
+                if isfunction(corou)
+                if hasattr(corou, 'main_loop')
         ):
             log.append(coro_name)
             plugins.setdefault(
