@@ -39,6 +39,10 @@ Second Release Candidate for Cylc 8 suitable for acceptance testing.
 validating/running a Jinja2 workflow (for users who have installed Cylc
 using `pip`.)
 
+[#4737](https://github.com/cylc/cylc-flow/pull/4737) -
+Fix issue which prevented tasks with incomplete outputs from being rerun by
+subsequent flows.
+
 [#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
 flow, remove active-waiting tasks with no remaining flow numbers.
 

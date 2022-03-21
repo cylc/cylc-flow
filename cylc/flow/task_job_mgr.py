@@ -942,7 +942,7 @@ class TaskJobManager:
                 cmd = construct_ssh_cmd(
                     cmd, platform, host
                 )
-            for itask in sorted(itasks, key=lambda itask: itask.identity):
+            for itask in sorted(itasks, key=lambda jtask: jtask.identity):
                 job_log_dirs.append(
                     itask.tokens.duplicate(
                         job=str(itask.submit_num)
