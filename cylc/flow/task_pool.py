@@ -244,19 +244,17 @@ class TaskPool:
 
         # At restart all tasks are runahead-limited but finished and manually
         # triggered tasks (incl. --start-task's) can be released immediately.
-        for itask in (
-            jtask
-            for jtask in self.get_tasks()
-            if jtask.state.is_runahead
-            if jtask.state(
-                TASK_STATUS_FAILED,
-                TASK_STATUS_SUCCEEDED,
-                TASK_STATUS_EXPIRED
-            )
-            or jtask.is_manual_submit
-        ):
-            self.release_runahead_task(itask)
-            released = True
+        for itask in self.get_tasks():
+            if itask.state.is_runahead and (
+                itask.state(
+                    TASK_STATUS_FAILED,
+                    TASK_STATUS_SUCCEEDED,
+                    TASK_STATUS_EXPIRED
+                )
+                or itask.is_manual_submit
+            ):
+                self.release_runahead_task(itask)
+                released = True
 
         runahead_limit_point = self.compute_runahead()
         if not runahead_limit_point:
@@ -713,17 +711,19 @@ class TaskPool:
 
         return point_itasks
 
-    def _get_hidden_task_by_id(self, id_):
+    def _get_hidden_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return runahead pool task by ID if it exists, or None."""
         for itask_ids in list(self.hidden_pool.values()):
             with suppress(KeyError):
                 return itask_ids[id_]
+        return None
 
-    def _get_main_task_by_id(self, id_):
+    def _get_main_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return main pool task by ID if it exists, or None."""
         for itask_ids in list(self.main_pool.values()):
             with suppress(KeyError):
                 return itask_ids[id_]
+        return None
 
     def queue_task(self, itask: TaskProxy) -> None:
         """Queue a task that is ready to run."""
@@ -1241,7 +1241,9 @@ class TaskPool:
             if itask.identity == self.stop_task_id:
                 self.stop_task_finished = True
 
-    def spawn_on_all_outputs(self, itask, completed_only=False):
+    def spawn_on_all_outputs(
+        self, itask: TaskProxy, completed_only: bool = False
+    ) -> None:
         """Spawn on all (or all completed) task outputs.
 
         If completed_only is False:
