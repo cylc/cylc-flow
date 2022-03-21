@@ -1,0 +1,20 @@
+[scheduler]
+   [[events]]
+       expected task failures = 1/b
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            a => b => c
+        """
+
+[runtime]
+    [[b]]
+        script = """
+            # test $CYLC_TASK_SUBMIT_NUMBER -gt 1
+            if [[ $CYLC_TASK_SUBMIT_NUMBER -eq 1 ]]; then
+                cylc trigger --reflow "$CYLC_WORKFLOW_NAME//1/a"
+                false
+            fi
+        """
+    [[a,c]]

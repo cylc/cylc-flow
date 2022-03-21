@@ -39,6 +39,9 @@ Second Release Candidate for Cylc 8 suitable for acceptance testing.
 validating/running a Jinja2 workflow (for users who have installed Cylc
 using `pip`.)
 
+[#4737](https://github.com/cylc/cylc-flow/pull/4737) -
+Fix issue which prevented tasks with incomplete outputs from being rerun by
+subsequent flows.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
