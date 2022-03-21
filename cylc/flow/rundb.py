@@ -263,6 +263,7 @@ class CylcWorkflowDAO:
         TABLE_TASK_OUTPUTS: [
             ["cycle", {"is_primary_key": True}],
             ["name", {"is_primary_key": True}],
+            ["flow_nums", {"is_primary_key": True}],
             ["outputs"],
         ],
         TABLE_TASK_POOL: [
@@ -732,6 +733,33 @@ class CylcWorkflowDAO:
         for flow_nums, submit_num, flow_wait in self.connect().execute(
                 stmt, (name, point,)):
             ret[flow_nums] = (submit_num, flow_wait)
+        return ret
+
+    def select_task_outputs(self, name, point):
+        """Select
+
+        Return:
+            {
+                flow_nums:
+                ...,
+            }
+
+        Args:
+            name: task name
+            point: task cycle point (str)
+
+        """
+        stmt = rf'''
+                SELECT
+                   flow_nums,outputs
+                FROM
+                   {self.TABLE_TASK_OUTPUTS}
+                WHERE
+                    name==? AND cycle==?
+            '''
+        ret = {}
+        for flow_nums, outputs in self.connect().execute(stmt, (name, point,)):
+            ret[flow_nums] = outputs
         return ret
 
     def select_xtriggers_for_restart(self, callback):

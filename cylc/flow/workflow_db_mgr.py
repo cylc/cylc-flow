@@ -562,8 +562,15 @@ class WorkflowDatabaseManager:
         self._put_insert_task_x(self.TABLE_TASK_PREREQUISITES, itask, args)
 
     def put_insert_task_outputs(self, itask):
-        """Reset custom outputs for a task."""
-        self._put_insert_task_x(CylcWorkflowDAO.TABLE_TASK_OUTPUTS, itask, {})
+        """Reset outputs for a task."""
+        self._put_insert_task_x(
+            CylcWorkflowDAO.TABLE_TASK_OUTPUTS,
+            itask,
+            {
+                "flow_nums": serialise(itask.flow_nums),
+                "outputs": json.dumps([])
+            }
+        )
 
     def put_insert_abs_output(self, cycle, name, output):
         """Put INSERT statement for a new abs output."""
@@ -605,12 +612,20 @@ class WorkflowDatabaseManager:
 
     def put_update_task_outputs(self, itask):
         """Put UPDATE statement for task_outputs table."""
-        items = {}
-        for trigger, message in itask.state.outputs.get_completed_customs():
-            items[trigger] = message
-        self._put_update_task_x(
-            CylcWorkflowDAO.TABLE_TASK_OUTPUTS,
-            itask, {"outputs": json.dumps(items)})
+        outputs = []
+        for _, message in itask.state.outputs.get_completed_all():
+            outputs.append(message)
+        set_args = {
+            "outputs": json.dumps(outputs)
+        }
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name,
+            "flow_nums": serialise(itask.flow_nums),
+        }
+        self.db_updates_map.setdefault(self.TABLE_TASK_OUTPUTS, [])
+        self.db_updates_map[self.TABLE_TASK_OUTPUTS].append(
+            (set_args, where_args))
 
     def _put_update_task_x(self, table_name, itask, set_args):
         """Put UPDATE statement for a task_* table."""

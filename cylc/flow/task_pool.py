@@ -210,8 +210,7 @@ class TaskPool:
                 }
             )
             # Add row to "task_outputs" table:
-            if itask.state.outputs.has_custom_triggers():
-                self.workflow_db_mgr.put_insert_task_outputs(itask)
+            self.workflow_db_mgr.put_insert_task_outputs(itask)
         return itask
 
     def create_data_store_elements(self, itask):
@@ -424,7 +423,7 @@ class TaskPool:
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED
             ):
-                for message in json.loads(outputs_str).values():
+                for message in json.loads(outputs_str):
                     itask.state.outputs.set_completion(message, True)
                     self.data_store_mgr.delta_task_output(itask, message)
 
@@ -1139,13 +1138,13 @@ class TaskPool:
             forced: If True this is a manual spawn command.
 
         """
+        self.workflow_db_mgr.put_update_task_outputs(itask)
         if (
             output == TASK_OUTPUT_FAILED
             and self.expected_failed_tasks is not None
             and itask.identity not in self.expected_failed_tasks
         ):
             self.abort_task_failed = True
-
         try:
             children = itask.graph_children[output]
         except KeyError:
@@ -1389,9 +1388,16 @@ class TaskPool:
             itask.state.satisfy_me(self.abs_outputs_done)
 
         if flow_wait:
-            LOG.critical("spawned for flow-wait")
-            itask.state.outputs.set_all_completed()
-            self.spawn_on_all_outputs(itask, True)
+            for flow_nums_str, outputs_str in (
+                self.workflow_db_mgr.pri_dao.select_task_outputs(
+                    itask.tdef.name, str(itask.point))
+            ).items():
+                if set(flow_nums).intersection(deserialise(flow_nums_str)):
+                    for msg in json.loads(outputs_str):
+                        itask.state.outputs.set_completed_by_msg(msg)
+                    break
+            LOG.info(f"{itask} spawning on outputs after flow wait")
+            self.spawn_on_all_outputs(itask, completed_only=True)
             return None
 
         LOG.info(f"[{itask}] spawned")
