@@ -29,12 +29,14 @@ from cylc.flow.terminal import cli_function
 INTERNAL = True
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         argdoc=[
             ("JOB-LOG-ROOT", "The log/job sub-directory for the workflow"),
-            ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory"),
+            COP.optional(
+                ("JOB-LOG-DIR ...", "A point/name/submit_num sub-directory")
+            )
         ],
     )
 

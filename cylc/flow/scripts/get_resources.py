@@ -52,13 +52,11 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[
-            (
-                '[RESOURCE]',
-                'Resource to extract.'
+            COP.optional(
+                ('RESOURCE', 'Resource to extract.')
             ),
-            (
-                '[DIR]',
-                'Target directory.'
+            COP.optional(
+                ('DIR', 'Target directory.')
             )
         ]
     )

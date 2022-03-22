@@ -48,8 +48,8 @@ There are several shutdown methods:
   1. (default) stop after current active tasks finish
   2. (--now) stop immediately, orphaning current active tasks
   3. (--kill) stop after killing current active tasks
-  4. (with STOP as a cycle point) stop after cycle point STOP
-  5. (with STOP as a task ID) stop after task ID STOP has succeeded
+  4. (if ID specifies a cycle point) stop after the cycle point
+  5. (if ID specifies a task ID) stop after the task has succeeded
   6. (--wall-clock=T) stop after time T (an ISO 8601 date-time format e.g.
      CCYYMMDDThh:mm, CCYY-MM-DDThh, etc).
 
@@ -76,7 +76,10 @@ from cylc.flow.exceptions import (
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.network.schema import WorkflowStopMode
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+    ID_MULTI_ARG_DOC,
+)
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -138,13 +141,13 @@ class StopPoller(Poller):
             return False
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
         multiworkflow=True,
         argdoc=[
-            ('ID [ID ...]', 'Workflow/Cycle/Task ID(s)'),
+            ID_MULTI_ARG_DOC,
         ],
     )
 

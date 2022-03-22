@@ -32,7 +32,11 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
+    CylcOptionParser as COP,
+    icp_option,
+)
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
@@ -114,12 +118,13 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
                 print(' ' + arrow + '  ', key, '=', dct[key])
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
-        __doc__, jset=True, prep=True,
+        __doc__,
+        jset=True,
         argdoc=[
-            ('WORKFLOW_ID_1', 'Workflow ID or path to source'),
-            ('WORKFLOW_ID_2', 'Workflow ID or path to source')
+            (f'WORKFLOW_{n}', WORKFLOW_ID_OR_PATH_ARG_DOC[1])
+            for n in (1, 2)
         ]
     )
 

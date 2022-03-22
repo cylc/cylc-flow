@@ -44,7 +44,11 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
+    CylcOptionParser as COP,
+    icp_option,
+)
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -183,20 +187,21 @@ def get_config(workflow_id: str, opts: 'Values') -> WorkflowConfig:
     )
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     """CLI."""
     parser = COP(
         __doc__,
         jset=True,
-        prep=True,
         argdoc=[
-            ('WORKFLOW_ID', 'Workflow ID or path to source'),
-            ('[START]', 'Graph start; defaults to initial cycle point'),
-            (
-                '[STOP]',
+            WORKFLOW_ID_OR_PATH_ARG_DOC,
+            COP.optional(
+                ('START', 'Graph start; defaults to initial cycle point')
+            ),
+            COP.optional((
+                'STOP',
                 'Graph stop point or interval; defaults to 3 points from START'
-            )
-        ],
+            ))
+        ]
     )
 
     parser.add_option(

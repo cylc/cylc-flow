@@ -43,13 +43,15 @@ from cylc.flow.terminal import cli_function
 INTERNAL = True
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         argdoc=[
             ("INSTALL_TARGET", "Target to be initialised"),
             ("RUND", "The run directory of the workflow"),
-            ('[DIRS_TO_BE_SYMLINKED ...]', "Directories to be symlinked")
+            COP.optional(
+                ('DIRS_TO_BE_SYMLINKED ...', "Directories to be symlinked")
+            )
         ],
         color=False
     )

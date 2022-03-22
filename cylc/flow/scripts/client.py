@@ -30,7 +30,10 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.terminal import cli_function
@@ -43,9 +46,13 @@ INTERNAL = True
 
 
 def get_option_parser():
-    parser = COP(__doc__, comms=True, argdoc=[
-        ('WORKFLOW_ID', 'Workflow ID'),
-        ('METHOD', 'Network API function name')])
+    parser = COP(
+        __doc__, comms=True,
+        argdoc=[
+            WORKFLOW_ID_ARG_DOC,
+            ('METHOD', 'Network API function name')
+        ]
+    )
 
     parser.add_option(
         '-n', '--no-input',

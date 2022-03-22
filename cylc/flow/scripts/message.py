@@ -76,7 +76,10 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP
+)
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 from cylc.flow.exceptions import InputError
@@ -86,15 +89,22 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
         argdoc=[
             # TODO
-            ('[WORKFLOW_ID]', 'Workflow ID'),
-            ('[TASK-JOB]', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM'),
-            ('[[SEVERITY:]MESSAGE ...]', 'Messages')])
+            COP.optional(WORKFLOW_ID_ARG_DOC),
+            COP.optional(
+                ('TASK-JOB', 'Task job identifier CYCLE/TASK_NAME/SUBMIT_NUM')
+            ),
+            COP.optional(
+                ('[SEVERITY:]MESSAGE ...', 'Messages')
+            )
+        ]
+    )
+
     parser.add_option(
         '-s', '--severity', '-p', '--priority',
         metavar='SEVERITY',

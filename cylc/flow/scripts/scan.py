@@ -164,12 +164,10 @@ RICH_FIELDS = {
 }
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     """CLI opts for "cylc scan"."""
     parser = COP(
-        __doc__,
-        comms=True,
-        argdoc=[],
+        __doc__, comms=True
     )
 
     parser.add_option(

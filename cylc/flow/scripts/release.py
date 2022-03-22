@@ -44,7 +44,10 @@ from typing import TYPE_CHECKING
 from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    FULL_ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -84,7 +87,7 @@ def get_option_parser() -> COP:
         comms=True,
         multitask=True,
         multiworkflow=True,
-        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+        argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
     parser.add_option(
