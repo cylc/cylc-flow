@@ -44,6 +44,18 @@ from cylc.flow.loggingutil import (
 )
 
 
+icp_option = Option(
+    "--initial-cycle-point", "--icp",
+    metavar="CYCLE_POINT",
+    help=(
+        "Set the initial cycle point. "
+        "Required if not defined in flow.cylc."
+    ),
+    action="store",
+    dest="icp",
+)
+
+
 def format_shell_examples(string):
     """Put comments in the terminal "diminished" colour."""
     return cparse(
@@ -217,7 +229,6 @@ class CylcOptionParser(OptionParser):
         multiworkflow: bool = False,
         prep: bool = False,
         auto_add: bool = True,
-        icp: bool = False,
         color: bool = True,
         segregated_log: bool = False
     ) -> None:
@@ -245,7 +256,6 @@ class CylcOptionParser(OptionParser):
         self.comms = comms
         self.jset = jset
         self.prep = prep
-        self.icp = icp
         self.color = color
         # Whether to log messages that are below warning level to stdout
         # instead of stderr:
@@ -362,18 +372,6 @@ class CylcOptionParser(OptionParser):
                     "command line if they need to be overridden."
                 ),
                 action="store", default=None, dest="templatevars_file")
-
-        if self.icp:
-            self.add_option(
-                "--initial-cycle-point", "--icp",
-                metavar="CYCLE_POINT",
-                help=(
-                    "Set the initial cycle point. "
-                    "Required if not defined in flow.cylc."
-                ),
-                action="store",
-                dest="icp",
-            )
 
     def add_cylc_rose_options(self) -> None:
         """Add extra options for cylc-rose plugin if it is installed."""
