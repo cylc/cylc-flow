@@ -21,6 +21,7 @@ from contextlib import contextmanager
 import os
 from pathlib import Path
 import sys
+from typing import Iterator, NoReturn, Optional, Tuple
 
 from ansimarkup import parse as cparse
 from colorama import init as color_init
@@ -182,8 +183,7 @@ USAGE = cparse(USAGE)
 # {name: entry_point}
 COMMANDS: dict = {
     entry_point.name: entry_point
-    for entry_point
-    in iter_entry_points('cylc.command')
+    for entry_point in iter_entry_points('cylc.command')
 }
 
 
@@ -272,17 +272,21 @@ DEAD_ENDS = {
 # fmt: on
 
 
-def execute_cmd(cmd, *args):
+def execute_cmd(cmd: str, *args: str) -> NoReturn:
     """Execute a sub-command.
 
     Args:
-        cmd (str):
-            The name of the command.
-        args (list):
-            List of command line arguments to pass to that command.
+        cmd: The name of the command.
+        args: Command line arguments to pass to that command.
 
     """
-    COMMANDS[cmd].resolve()(*args)
+    entry_point: pkg_resources.EntryPoint = COMMANDS[cmd]
+    try:
+        entry_point.resolve()(*args)
+    except ModuleNotFoundError as exc:
+        msg = handle_missing_dependency(entry_point, exc)
+        print(msg, file=sys.stderr)
+        sys.exit(1)
     sys.exit()
 
 
@@ -366,15 +370,21 @@ def parse_docstring(docstring):
     return (usage, desc)
 
 
-def iter_commands():
-    """Yield all Cylc sub-commands.
+def iter_commands() -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
+    """Yield all Cylc sub-commands that are available.
+
+    Skips sub-commands that require missing optional dependencies.
 
     Yields:
-        tuple - (command, description, usage)
+        (command, description, usage)
 
     """
-    for cmd, obj in sorted(COMMANDS.items()):
-        module = __import__(obj.module_name, fromlist=[''])
+    for cmd, entry_point in sorted(COMMANDS.items()):
+        try:
+            module = __import__(entry_point.module_name, fromlist=[''])
+        except ModuleNotFoundError as exc:
+            handle_missing_dependency(entry_point, exc)
+            continue
         if getattr(module, 'INTERNAL', False):
             # do not list internal commands
             continue
@@ -663,3 +673,27 @@ def main():
                 if opts.version:
                     cmd_args.append("--version")
                 execute_cmd(command, *cmd_args)
+
+
+def handle_missing_dependency(
+    entry_point: pkg_resources.EntryPoint,
+    err: ModuleNotFoundError
+) -> str:
+    """Return a suitable error message for a missing optional dependency.
+
+    Args:
+        entry_point: The entry point that was attempted to load but caused
+            a ModuleNotFoundError.
+        err: The ModuleNotFoundError that was caught.
+
+    Re-raises the given ModuleNotFoundError if it is unexpected.
+    """
+    try:
+        # Check for missing optional dependencies
+        entry_point.require()
+    except pkg_resources.DistributionNotFound as exc:
+        # Confirmed missing optional dependencies
+        return f"cylc {entry_point.name}: {exc}"
+    else:
+        # Error not due to missing optional dependencies; this is unexpected
+        raise err
