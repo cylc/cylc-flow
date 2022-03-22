@@ -19,17 +19,14 @@
 import argparse
 from contextlib import contextmanager
 import os
-from pathlib import Path
 import sys
 
 from ansimarkup import parse as cparse
-from colorama import init as color_init
 import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow.option_parsers import format_shell_examples
-from cylc.flow.scripts import cylc_header
-from cylc.flow.terminal import print_contents
+from cylc.flow.scripts.common import cylc_header
 
 
 def get_version(long=False):
@@ -40,6 +37,7 @@ def get_version(long=False):
     locations are buried deep in the library and don't always give the right
     result, e.g. if installed with `pip install -e .`).
     """
+    from pathlib import Path
     version = f"{__version__}"
     if long:
         version += f" ({Path(sys.executable).parent.parent})"
@@ -404,6 +402,7 @@ def print_command_list(commands=None, indent=0):
             Number of spaces to put at the start of each line.
 
     """
+    from cylc.flow.terminal import print_contents
     contents = [
         (cmd, desc)
         for cmd, desc, _, in iter_commands()
@@ -419,6 +418,7 @@ def cli_help():
     # we need to do this explicitly as this command is not behind cli_function
     # (assume the cylc help is only ever requested interactively in a
     # modern terminal)
+    from colorama import init as color_init
     color_init(autoreset=True, strip=False)
     print(USAGE)
     print('Selected Sub-Commands:')

@@ -17,7 +17,6 @@
 
 import os
 import logging
-import pkg_resources
 
 
 CYLC_LOG = 'cylc'
@@ -55,6 +54,7 @@ __version__ = '8.0rc2.dev'
 
 def iter_entry_points(entry_point_name):
     """Iterate over Cylc entry points."""
+    import pkg_resources
     yield from (
         entry_point
         for entry_point in pkg_resources.iter_entry_points(entry_point_name)
