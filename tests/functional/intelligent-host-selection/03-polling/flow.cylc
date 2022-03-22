@@ -19,6 +19,7 @@ Tasks
         R1 = """
             goodhosttask:start => stop_g
             mixedhosttask:start => stop_m
+            stop_m & stop_g => full_stop
         """
 
 [runtime]
@@ -26,12 +27,10 @@ Tasks
 
     [[goodhosttask]]
         script=sleep 120 & echo $! >file; wait
-
         platform = goodhostplatform
 
     [[mixedhosttask]]
         script=sleep 120 & echo $! >file; wait
-
         platform = mixedhostplatform
 
     [[stop_g]]
@@ -44,5 +43,7 @@ Tasks
         script="""
             sleep 5  # Give the badhosts list time to empty
             cylc kill "$CYLC_WORKFLOW_ID//1/mixedhosttask" || true
-            cylc stop $CYLC_WORKFLOW_ID
         """
+
+    [[full_stop]]
+        script = cylc stop $CYLC_WORKFLOW_ID

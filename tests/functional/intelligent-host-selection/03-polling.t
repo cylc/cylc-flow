@@ -36,7 +36,7 @@ create_test_global_config "" "
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
         communication method = poll
-        execution polling intervals = PT0S, PT14M
+        execution polling intervals = 10*PT2S
         submission polling intervals = PT0S, PT41M
 
     [[mixedhostplatform]]
@@ -44,7 +44,7 @@ create_test_global_config "" "
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
         communication method = poll
-        execution polling intervals = PT0S, PT14M
+        execution polling intervals = 10*PT2S
         submission polling intervals = PT0S, PT41M
         [[[selection]]]
             method = 'definition order'
