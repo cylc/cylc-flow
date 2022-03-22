@@ -1,0 +1,25 @@
+[scheduler]
+    install = dir1/, dir2/
+    [[events]]
+        abort on stall timeout = true
+        stall timeout = PT0S
+        abort on inactivity timeout = true
+
+[scheduling]
+    [[graph]]
+        R1 = olaf => sven
+
+[runtime]
+    [[olaf]]
+        # task dependent on file install already being complete
+        script = """
+            cat ${CYLC_WORKFLOW_RUN_DIR}/dir1/moo
+        """
+        platform = $CYLC_TEST_PLATFORM
+
+    [[sven]]
+        # task dependent on file install already being complete
+        script = """
+            rm -r ${CYLC_WORKFLOW_RUN_DIR}/dir1 ${CYLC_WORKFLOW_RUN_DIR}/dir2
+        """
+        platform = $CYLC_TEST_PLATFORM

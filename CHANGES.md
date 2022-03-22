@@ -33,11 +33,13 @@ ones in. -->
 
 Second Release Candidate for Cylc 8 suitable for acceptance testing.
 
-## Enhancements
+### Enhancements
+
+[#4736](https://github.com/cylc/cylc-flow/pull/4736) - `rsync` command used for
+remote file installation is now configurable.
 
 [#4655](https://github.com/cylc/cylc-flow/pull/4655) - Enhancements to the
 provided [wrapper script](https://cylc.github.io/cylc-doc/latest/html/installation.html#managing-environments).
-
 
 ### Fixes
 
@@ -53,6 +55,9 @@ running `cylc help all` without optional dependencies installed.
 [#4730](https://github.com/cylc/cylc-flow/pull/4730) - Fix bug on the command
 line when specifying a Cylc ID that includes your username (e.g. `'~user/workflow'`).
 
+[#4737](https://github.com/cylc/cylc-flow/pull/4737) -
+Fix issue which prevented tasks with incomplete outputs from being rerun by
+subsequent flows.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
