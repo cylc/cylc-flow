@@ -1037,6 +1037,13 @@ with Conf('global.cylc', desc='''
                 with some initial options or a command that implements a
                 similar interface to ``ssh``.
             ''')
+            Conf('rsync command',
+                 VDR.V_STRING,
+                 'rsync',
+                 desc='''
+                Command used for remote file installation. This supports POSIX
+                compliant rsync implementation e.g. GNU or BSD.
+            ''')
             Conf('use login shell', VDR.V_BOOLEAN, True, desc='''
                 Whether to use a login shell or not for remote command
                 invocation.
