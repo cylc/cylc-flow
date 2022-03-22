@@ -211,6 +211,9 @@ async def run(
     if options.flow_num and int(options.max_polls) > 0:
         raise UserInputError("--flow is not compatible with --max-polls")
 
+    if options.flow_num and tokens_list:
+        raise UserInputError("--flow is not compatible with task IDs")
+
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     if int(options.max_polls) > 0:
