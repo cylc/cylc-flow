@@ -15,8 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test job polling. Set the auto clearance of badhosts to be << small time
-# so that polling will need to retry.
+# Test intelligent host selection for job polling.
+#
+# Set the peridic clearance of unreachable hosts by
+# `[scheduler][main loop][reset bad hosts]interval = PT1S` so that between
+# Submission of a job and execution polling the list of bad hosts will have
+# cleared. Having cleared bad hosts we can then test that polling goes through
+# the host selection process.
+
 export REQUIRE_PLATFORM='loc:remote fs:indep'
 
 . "$(dirname "$0")/test_header"
@@ -36,7 +42,7 @@ create_test_global_config "" "
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
         communication method = poll
-        execution polling intervals = 10*PT2S
+        execution polling intervals = 10*PT3S
         submission polling intervals = PT0S, PT41M
 
     [[mixedhostplatform]]
@@ -44,7 +50,7 @@ create_test_global_config "" "
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
         communication method = poll
-        execution polling intervals = 10*PT2S
+        execution polling intervals = 10*PT3S
         submission polling intervals = PT0S, PT41M
         [[[selection]]]
             method = 'definition order'
