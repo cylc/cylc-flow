@@ -736,27 +736,15 @@ class CylcWorkflowDAO:
         return ret
 
     def select_task_outputs(self, name, point):
-        """Select
-
-        Return:
-            {
-                flow_nums:
-                ...,
-            }
-
-        Args:
-            name: task name
-            point: task cycle point (str)
-
-        """
+        """Select task outputs for each flow."""
         stmt = rf'''
-                SELECT
-                   flow_nums,outputs
-                FROM
-                   {self.TABLE_TASK_OUTPUTS}
-                WHERE
-                    name==? AND cycle==?
-            '''
+            SELECT
+               flow_nums,outputs
+            FROM
+               {self.TABLE_TASK_OUTPUTS}
+            WHERE
+                name==? AND cycle==?
+        '''  # nosec (table name is code constant)
         ret = {}
         for flow_nums, outputs in self.connect().execute(stmt, (name, point,)):
             ret[flow_nums] = outputs
