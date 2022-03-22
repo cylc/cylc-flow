@@ -310,11 +310,10 @@ class TuiApp:
                 }
             )
         except WorkflowStopped:
-            self.client = None
             return dummy_flow({
                 'name': self.reg,
                 'id': self.reg,
-                'status': 'stopped',
+                'status': 'Workflow not found',
                 'stateTotals': {}
             })
         except (ClientError, ClientTimeout) as exc:
