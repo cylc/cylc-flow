@@ -41,7 +41,7 @@ Examples:
 
 By default stopping workflows wait for submitted and running tasks
 to complete before shutting down. You can change this behaviour
-with the "mode" option.
+with the --mode option.
 
 There are several shutdown methods:
 
@@ -63,7 +63,7 @@ which case it polls to wait for workflow shutdown."""
 
 from functools import partial
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from cylc.flow.command_polling import Poller
 from cylc.flow.exceptions import (
@@ -178,6 +178,27 @@ def get_option_parser():
     return parser
 
 
+def _validate(
+        options: 'Values',
+        stop_task: Optional[str],
+        stop_cycle: Optional[str],
+        *globs: str
+) -> None:
+    """Check option choices are valid."""
+    if stop_task is not None and options.kill:
+        raise UserInputError("--kill is not compatible with stop-task")
+    if stop_cycle is not None and options.kill:
+        raise UserInputError("--kill is not compatible with stop-cycle")
+    if stop_task and stop_cycle:
+        raise UserInputError('stop-task is not compatible with stop-cycle')
+    if options.kill and options.now:
+        raise UserInputError("--kill is not compatible with --now")
+    if options.flow_num and int(options.max_polls) > 0:
+        raise UserInputError("--flow is not compatible with --max-polls")
+    if options.flow_num and globs:
+        raise UserInputError("--flow is not compatible with task IDs")
+
+
 async def run(
     options: 'Values',
     workflow_id,
@@ -195,24 +216,7 @@ async def run(
         elif tokens['cycle']:
             stop_cycle = tokens['cycle']
 
-    # handle orthogonal options
-    if stop_task is not None and options.kill:
-        raise UserInputError("--kill is not compatible with stop-task")
-
-    if stop_cycle is not None and options.kill:
-        raise UserInputError("--kill is not compatible with stop-cycle")
-
-    if stop_task and stop_cycle:
-        raise UserInputError('stop-task is not compatible with stop-cycle')
-
-    if options.kill and options.now:
-        raise UserInputError("--kill is not compatible with --now")
-
-    if options.flow_num and int(options.max_polls) > 0:
-        raise UserInputError("--flow is not compatible with --max-polls")
-
-    if options.flow_num and tokens_list:
-        raise UserInputError("--flow is not compatible with task IDs")
+    _validate(options, stop_task, stop_cycle, *tokens_list)
 
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
