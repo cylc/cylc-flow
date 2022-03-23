@@ -88,6 +88,13 @@ jobs:
         run: |
           pytest tests/integration
 
+      - name: Upload artifact
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cylc-run (${{ matrix.os }} py-${{ matrix.python-version }})
+          path: ~/cylc-run/
+
       - name: Coverage report
         run: |
           coverage xml

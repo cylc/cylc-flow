@@ -240,7 +240,7 @@ jobs:
 
       - name: Upload artifact
         if: failure() && steps.test.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: cylc-run (${{ steps.uploadname.outputs.uploadname }})
           path: ~/cylc-run/
