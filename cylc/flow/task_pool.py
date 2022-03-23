@@ -1825,12 +1825,10 @@ class TaskPool:
         # (we spawn the outputs complete so far to allow the flow to continue
         # post merge)
         # (note we don't do this if case 1 also applies)
-        elif not itask.flow_nums:
+        elif not itask.flow_nums or itask.flow_wait:
+            itask.flow_wait = False
             self.spawn_on_all_outputs(itask, completed_only=True)
 
         # merge the flows
         itask.merge_flows(flow_nums)
-        LOG.info(
-            f"[{itask}] merged in flow(s) "
-            f"{','.join(str(f) for f in itask.flow_nums)}"
-        )
+        self.workflow_db_mgr.put_insert_task_outputs(itask)

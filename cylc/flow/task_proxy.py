@@ -18,6 +18,7 @@
 
 from collections import Counter
 from contextlib import suppress
+from copy import copy
 from fnmatch import fnmatchcase
 from time import time
 from typing import Any, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
@@ -200,7 +201,8 @@ class TaskProxy:
         if flow_nums is None:
             self.flow_nums = set()
         else:
-            self.flow_nums = flow_nums
+            # (don't share flow_nums ref with parent task)
+            self.flow_nums = copy(flow_nums)
         self.flow_wait = False
         self.point = start_point
         self.tokens = Tokens(
@@ -444,7 +446,10 @@ class TaskProxy:
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
-        # update the flow nums
+        LOG.info(
+            f"[{self}] merged in flow(s) "
+            f"{','.join(str(f) for f in flow_nums)}"
+        )
         self.flow_nums.update(flow_nums)
 
     def state_reset(
