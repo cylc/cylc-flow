@@ -33,8 +33,6 @@ ones in. -->
 
 Second Release Candidate for Cylc 8 suitable for acceptance testing.
 
-Note: Cylc 8 beta users will not be able to restart workflows run with previous Cylc 8 pre-releases due to changes in the workflow database structure.
-
 ### Enhancements
 
 [#4736](https://github.com/cylc/cylc-flow/pull/4736) - `rsync` command used for
