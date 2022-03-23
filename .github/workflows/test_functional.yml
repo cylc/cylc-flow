@@ -280,6 +280,6 @@ jobs:
       - name: Codecov upload
         uses: codecov/codecov-action@v2
         with:
-          name: '"${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}"'
+          name: '${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}'
           flags: functional-tests
           fail_ci_if_error: true
