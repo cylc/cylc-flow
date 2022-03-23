@@ -120,51 +120,11 @@ def get_option_parser():
     return parser
 
 
-def check_flow_options(opt_flow, opt_flow_wait, opt_flow_descr):
-    """Check validity of flow-related options.
-
-    Examples:
-        >>> check_flow_options([FLOW_ALL], False, None)
-
-        >>> check_flow_options([FLOW_NEW], False, "Denial is a deep river")
-
-        >>> check_flow_options([FLOW_ALL, "1"], False, None)
-        Traceback (most recent call last):
-            ...
-        cylc.flow.exceptions.UserInputError: Multiple flow options must all \
-             be integer valued
-
-        >>> check_flow_options([FLOW_ALL], False, "the quick brown fox")
-        Traceback (most recent call last):
-            ...
-        cylc.flow.exceptions.UserInputError: Metadata is only for new flows
-
-        >>> check_flow_options(["cheese"], False, None)
-        Traceback (most recent call last):
-            ...
-        cylc.flow.exceptions.UserInputError: Flow values must be integer, \
-            'all', 'new', or 'none'
-
-        >>> check_flow_options([FLOW_NONE], True, None)
-        Traceback (most recent call last):
-            ...
-        cylc.flow.exceptions.UserInputError: --wait is not compatible with \
-            --flow=new or --flow=none
-
-        >>> check_flow_options([FLOW_NEW], True, None)
-        Traceback (most recent call last):
-            ...
-        cylc.flow.exceptions.UserInputError: --wait is not compatible with \
-            --flow=new or --flow=none
-
-
-        (Note in CI we run doctests with IGNORE_EXCEPTION_DETAIL, but these
-        tests work with the detail).
-
-    """
-    for val in opt_flow:
+def _validate(options):
+    """Check validity of flow-related options."""
+    for val in options.flow:
         if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:
-            if len(opt_flow) != 1:
+            if len(options.flow) != 1:
                 raise UserInputError(ERR_OPT_FLOW_INT)
         else:
             try:
@@ -172,10 +132,10 @@ def check_flow_options(opt_flow, opt_flow_wait, opt_flow_descr):
             except ValueError:
                 raise UserInputError(ERR_OPT_FLOW_VAL.format(val))
 
-    if opt_flow_descr and opt_flow != [FLOW_NEW]:
+    if options.flow_descr and options.flow != [FLOW_NEW]:
         raise UserInputError(ERR_OPT_FLOW_META)
 
-    if opt_flow_wait and opt_flow[0] in [FLOW_NEW, FLOW_NONE]:
+    if options.flow_wait and options.flow[0] in [FLOW_NEW, FLOW_NONE]:
         raise UserInputError(ERR_OPT_FLOW_WAIT)
 
 
@@ -205,7 +165,7 @@ def main(parser: COP, options: 'Values', *ids: str):
 
     if options.flow is None:
         options.flow = [FLOW_ALL]  # default to all active flows
-    check_flow_options(options.flow, options.flow_wait, options.flow_descr)
+    _validate(options)
 
     call_multi(
         partial(run, options),

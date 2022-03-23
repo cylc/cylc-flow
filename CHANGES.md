@@ -97,12 +97,15 @@ Fix issue which prevented tasks with incomplete outputs from being rerun by
 subsequent flows.
 ### Enhancements
 
-[#4738](https://github.com/cylc/cylc-flow/pull/4738) - Implement
- `cylc trigger [--flow=]` for manual triggering with respect to active flows
-(the default), specific flows, new flows, or one-off task runs.
+[#4738](https://github.com/cylc/cylc-flow/pull/4738) and
+[#4739](https://github.com/cylc/cylc-flow/pull/4739) - Implement `cylc trigger
+[--flow=] [--wait]` for manual triggering with respect to active flows (the
+default), specific flows, new flows, or one-off task runs.
+
 
 -------------------------------------------------------------------------------
-## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
+## __cylc-8.0rc1 (<span actions:bind='release-date'>Released
+2022-02-17</span>)__
 
 First Release Candidate for Cylc 8 suitable for acceptance testing.
 
