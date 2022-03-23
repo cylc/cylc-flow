@@ -1,0 +1,46 @@
+# Task b triggers:
+#  - flow 2 at a
+#    - a(2) which waits for b to finish before succeeding (to avoid merge with b)
+#    - b waits for c:x before succeeding
+#  - flow 2 --wait at c 
+#    - c(1) waits for merge with b before succeeding
+# The merge at c should:
+#  - cancel the wait
+#  - spawn onward as flows (1,2)
+#  - retroactively spawn on c:x => x
+#
+# Task x should run even though the output c:x was completed with c in wait mode
+
+[scheduling]
+   [[graph]]
+      R1 = """
+         a => b => c => d
+         c:x => x
+      """
+[runtime]
+   [[a]]
+      script = """
+         if ((CYLC_TASK_SUBMIT_NUMBER == 2)); then
+             cylc__job__poll_grep_workflow_log "1/b running job:01 .* succeeded"
+         fi
+      """
+ 
+   [[b]]
+      script = """
+         if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
+            cylc trigger --flow=new ${CYLC_WORKFLOW_NAME}//1/a
+            cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_NAME}//1/c
+            cylc__job__poll_grep_workflow_log "1/c .*(received)x"
+            sleep 10 
+         fi
+      """
+   [[c]]
+      script = """
+         cylc message x
+         if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
+             cylc__job__poll_grep_workflow_log "merged"
+         fi
+      """
+      [[[outputs]]]
+         x = x
+   [[d, x]]
