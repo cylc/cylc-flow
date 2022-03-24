@@ -34,7 +34,8 @@ from cylc.flow.loggingutil import (
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
-    Options
+    Options,
+    icp_option,
 )
 from cylc.flow.pathutil import (
     get_workflow_run_log_name,
@@ -113,7 +114,6 @@ def get_option_parser(add_std_opts=False):
     """Parse CLI for "cylc play"."""
     parser = COP(
         PLAY_DOC,
-        icp=True,
         jset=True,
         comms=True,
         argdoc=[WORKFLOW_NAME_ARG_DOC])
@@ -126,6 +126,8 @@ def get_option_parser(add_std_opts=False):
     parser.add_option(
         "--profile", help="Output profiling (performance) information",
         action="store_true", dest="profile_mode")
+
+    parser.add_option(icp_option)
 
     parser.add_option(
         "--start-cycle-point", "--startcp",

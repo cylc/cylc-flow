@@ -56,7 +56,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id_cli import parse_id
 from cylc.flow.exceptions import UserInputError
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
@@ -70,7 +70,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         argdoc=[("[WORKFLOW_ID]", "Workflow ID or path to source")],
-        jset=True, icp=True
+        jset=True,
     )
 
     parser.add_option(
@@ -102,6 +102,8 @@ def get_option_parser():
             "looked for. An existing configuration file lower down the list "
             "overrides any settings it shares with those higher up."),
         action="store_true", default=False, dest="print_hierarchy")
+
+    parser.add_option(icp_option)
 
     platform_listing_options_group = parser.add_option_group(
         'Platform printing options')
