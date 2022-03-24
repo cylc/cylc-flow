@@ -39,6 +39,8 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
+# Regex to strip `:Default For:` notices from docs imported from the global cfg
+DEFAULT_FOR = re.compile(r'.*:[Dd]efault [Ff]or:.*')
 
 # Cylc8 Deprecation note.
 DEPRECATION_WARN = '''
@@ -384,8 +386,28 @@ with Conf(
             ''')
 
             for item, desc in EVENTS_DESCR.items():
+                # strip the `:Default For:` lines
+                desc = DEFAULT_FOR.sub('', dedent(desc))
                 if item.endswith("handlers"):
-                    Conf(item, VDR.V_STRING_LIST, desc=desc)
+                    Conf(item, VDR.V_STRING_LIST, desc=(
+                        # add examples
+                        desc + '\n' + dedent(rf'''
+                            Examples:
+
+                            .. code-block:: cylc
+
+                               # configure a single event handler
+                               {item} = echo foo
+
+                               # provide context to the handler
+                               {item} = echo %(workflow)s
+
+                               # configure multiple event handlers
+                               {item} = \
+                                    'echo %(workflow)s, %(event)s', \
+                                    'my_exe %(event)s %(message)s' \
+                                    'curl -X PUT -d event=%(event)s host:port'
+                        ''')))
                 elif item.startswith("abort on"):
                     Conf(item, VDR.V_BOOLEAN, desc=desc)
                 elif item.endswith("timeout"):

@@ -241,7 +241,7 @@ EVENTS_DESCR = {
     ),
     'abort on inactivity timeout': (
         f'''
-        :Default For; :cylc:conf:`flow.cylc \
+        :Default For: :cylc:conf:`flow.cylc \
         [scheduler][events]abort on inactivity timeout`.
 
         Whether to abort if the inactivity timer times out.
