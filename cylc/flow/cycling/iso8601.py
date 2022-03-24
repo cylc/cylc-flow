@@ -292,7 +292,7 @@ class ISO8601Sequence(SequenceBase):
                  'offset', '_cached_first_point_values',
                  '_cached_next_point_values', '_cached_valid_point_booleans',
                  '_cached_recent_valid_points', 'spec', 'abbrev_util',
-                 'recurrence', 'exclusions', 'step', 'value')
+                 'recurrence', 'exclusions', 'step', 'value', 'is_on_sequence')
 
     @classmethod
     def get_async_expr(cls, start_point=None):
@@ -306,6 +306,10 @@ class ISO8601Sequence(SequenceBase):
         SequenceBase.__init__(
             self, dep_section, context_start_point, context_end_point)
         self.dep_section = dep_section
+
+        # cache is_on_sequence
+        # see B019 - https://github.com/PyCQA/flake8-bugbear#list-of-warnings
+        self.is_on_sequence = lru_cache(maxsize=100)(self._is_on_sequence)
 
         if (
             context_start_point is None
@@ -391,8 +395,8 @@ class ISO8601Sequence(SequenceBase):
         if self.exclusions:
             self.value += '!' + str(self.exclusions)
 
-    @lru_cache(100)  # noqa B019 TODO?
-    def is_on_sequence(self, point):
+    # lru_cache'd see __init__()
+    def _is_on_sequence(self, point):
         """Return True if point is on-sequence."""
         # Iterate starting at recent valid points, for speed.
         if self.exclusions and point in self.exclusions:
