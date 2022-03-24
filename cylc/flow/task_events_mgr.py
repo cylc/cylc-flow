@@ -883,6 +883,9 @@ class TaskEventsManager():
                 self.mail_footer,
                 get_workflow_template_variables(schd, event, ''),
             )
+        self._send_mail(ctx, cmd, stdin_str, id_keys, schd)
+
+    def _send_mail(self, ctx, cmd, stdin_str, id_keys, schd):
         # SMTP server
         env = dict(os.environ)
         if self.mail_smtp:
@@ -1377,70 +1380,15 @@ class TaskEventsManager():
             # Custom event handler can be a command template string
             # or a command that takes 4 arguments (classic interface)
             # Note quote() fails on None, need str(None).
+
+            template_variables = self._get_handler_template_variables(
+                itask,
+                event,
+                message,
+                platform_name,
+            )
             try:
-                # fmt: off
-                handler_data = {
-                    EventData.JobID.value:
-                        quote(str(itask.summary['submit_method_id'])),
-                    EventData.JobRunnerName.value:
-                        quote(str(itask.summary['job_runner_name'])),
-                    EventData.CyclePoint.value:
-                        quote(str(itask.point)),
-                    EventData.Event.value:
-                        quote(event),
-                    EventData.FinishTime.value:
-                        quote(str(itask.summary['finished_time_string'])),
-                    EventData.ID.value:
-                        quote(itask.identity),
-                    EventData.Message.value:
-                        quote(message),
-                    EventData.TaskName.value:
-                        quote(itask.tdef.name),
-                    EventData.PlatformName.value:
-                        quote(platform_name),
-                    EventData.UserAtHost.value:
-                        quote(platform_name),
-                    EventData.StartTime.value:
-                        quote(str(itask.summary['started_time_string'])),
-                    EventData.SubmitNum.value:
-                        itask.submit_num,
-                    EventData.SubmitTime.value:
-                        quote(str(itask.summary['submitted_time_string'])),
-                    EventData.Workflow.value:
-                        quote(self.workflow),
-                    EventData.UUID.value:
-                        quote(self.uuid_str),
-                    # BACK COMPAT: Suite, SuiteUUID deprecated
-                    # url:
-                    #     https://github.com/cylc/cylc-flow/pull/4174
-                    # from:
-                    #     Cylc 8
-                    # remove at:
-                    #     Cylc 9
-                    EventData.Suite.value:  # deprecated
-                        quote(self.workflow),
-                    EventData.SuiteUUID.value:  # deprecated
-                        quote(self.uuid_str),
-                    EventData.TryNum.value:
-                        itask.get_try_num(),
-                    # BACK COMPAT: JobID_old, JobRunnerName_old
-                    # url:
-                    #     https://github.com/cylc/cylc-flow/pull/3992
-                    # from:
-                    #     Cylc < 8
-                    # remove at:
-                    #     Cylc9 - pending announcement of deprecation
-                    # next 2 (JobID_old, JobRunnerName_old) are deprecated
-                    EventData.JobID_old.value:
-                        quote(str(itask.summary['submit_method_id'])),
-                    EventData.JobRunnerName_old.value:
-                        quote(str(itask.summary['job_runner_name'])),
-                    # task and workflow metadata
-                    **get_event_handler_data(
-                        itask.tdef.rtconfig, self.workflow_cfg)
-                }
-                # fmt: on
-                cmd = handler % (handler_data)
+                cmd = handler % template_variables
             except KeyError as exc:
                 LOG.error(
                     f"{itask.point}/{itask.tdef.name}/{itask.submit_num:02d} "
@@ -1463,6 +1411,76 @@ class TaskEventsManager():
                     retry_delays
                 )
             )
+
+    def _get_handler_template_variables(
+        self,
+        itask,
+        event,
+        message,
+        platform_name,
+    ):
+        # fmt: off
+        return {
+            EventData.JobID.value:
+                quote(str(itask.summary['submit_method_id'])),
+            EventData.JobRunnerName.value:
+                quote(str(itask.summary['job_runner_name'])),
+            EventData.CyclePoint.value:
+                quote(str(itask.point)),
+            EventData.Event.value:
+                quote(event),
+            EventData.FinishTime.value:
+                quote(str(itask.summary['finished_time_string'])),
+            EventData.ID.value:
+                quote(itask.identity),
+            EventData.Message.value:
+                quote(message),
+            EventData.TaskName.value:
+                quote(itask.tdef.name),
+            EventData.PlatformName.value:
+                quote(platform_name),
+            EventData.UserAtHost.value:
+                quote(platform_name),
+            EventData.StartTime.value:
+                quote(str(itask.summary['started_time_string'])),
+            EventData.SubmitNum.value:
+                itask.submit_num,
+            EventData.SubmitTime.value:
+                quote(str(itask.summary['submitted_time_string'])),
+            EventData.Workflow.value:
+                quote(self.workflow),
+            EventData.UUID.value:
+                quote(self.uuid_str),
+            # BACK COMPAT: Suite, SuiteUUID deprecated
+            # url:
+            #     https://github.com/cylc/cylc-flow/pull/4174
+            # from:
+            #     Cylc 8
+            # remove at:
+            #     Cylc 9
+            EventData.Suite.value:  # deprecated
+                quote(self.workflow),
+            EventData.SuiteUUID.value:  # deprecated
+                quote(self.uuid_str),
+            EventData.TryNum.value:
+                itask.get_try_num(),
+            # BACK COMPAT: JobID_old, JobRunnerName_old
+            # url:
+            #     https://github.com/cylc/cylc-flow/pull/3992
+            # from:
+            #     Cylc < 8
+            # remove at:
+            #     Cylc9 - pending announcement of deprecation
+            # next 2 (JobID_old, JobRunnerName_old) are deprecated
+            EventData.JobID_old.value:
+                quote(str(itask.summary['submit_method_id'])),
+            EventData.JobRunnerName_old.value:
+                quote(str(itask.summary['job_runner_name'])),
+            # task and workflow metadata
+            **get_event_handler_data(
+                itask.tdef.rtconfig, self.workflow_cfg)
+        }
+        # fmt: on
 
     def _reset_job_timers(self, itask):
         """Set up poll timer and timeout for task."""

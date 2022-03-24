@@ -228,8 +228,9 @@ class WorkflowEventHandler():
             ]
         value = None
         for getter in getters:
-            value = getter.get(key)
-            if value is not None:
+            if key in getter:
+                value = getter.get(key)
+            if value is not None and value != []:
                 return value
         return default
 
@@ -273,27 +274,29 @@ class WorkflowEventHandler():
                     mail_footer_tmpl,
                     template_variables,
                 )
+            self._send_mail(event, subject, stdin_str, schd, env)
 
-            proc_ctx = SubProcContext(
-                (self.WORKFLOW_EVENT_HANDLER, event),
-                [
-                    'mail',
-                    '-s', subject,
-                    '-r', self.get_events_conf(
-                        schd.config,
-                        'from', 'notifications@' + get_host()),
-                    self.get_events_conf(schd.config, 'to', get_user()),
-                ],
-                env=env,
-                stdin_str=stdin_str)
-            if self.proc_pool.closed:
-                # Run command in foreground if process pool is closed
-                self.proc_pool.run_command(proc_ctx)
-                self._run_event_handlers_callback(proc_ctx)
-            else:
-                # Run command using process pool otherwise
-                self.proc_pool.put_command(
-                    proc_ctx, callback=self._run_event_mail_callback)
+    def _send_mail(self, event, subject, message, schd, env):
+        proc_ctx = SubProcContext(
+            (self.WORKFLOW_EVENT_HANDLER, event),
+            [
+                'mail',
+                '-s', subject,
+                '-r', self.get_events_conf(
+                    schd.config,
+                    'from', 'notifications@' + get_host()),
+                self.get_events_conf(schd.config, 'to', get_user()),
+            ],
+            env=env,
+            stdin_str=message)
+        if self.proc_pool.closed:
+            # Run command in foreground if process pool is closed
+            self.proc_pool.run_command(proc_ctx)
+            self._run_event_handlers_callback(proc_ctx)
+        else:
+            # Run command using process pool otherwise
+            self.proc_pool.put_command(
+                proc_ctx, callback=self._run_event_mail_callback)
 
     def _run_event_custom_handlers(self, schd, template_variables, event):
         """Helper for "run_event_handlers", custom event handlers."""
@@ -314,7 +317,7 @@ class WorkflowEventHandler():
             try:
                 cmd = handler % (template_variables)
             except KeyError as exc:
-                message = "%s bad template: %s" % (cmd_key, exc)
+                message = f'{cmd_key} bad template: {handler}\n{exc}'
                 LOG.error(message)
                 continue
             if cmd == handler:
