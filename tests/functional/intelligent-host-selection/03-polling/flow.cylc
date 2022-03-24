@@ -10,7 +10,7 @@ execution polling.
 
 [scheduler]
     [[events]]
-        expected task failures = 1/t1, 1/t2
+        expected task failures = 1/goodhosttask 1/mixedhosttask
 
 
 [scheduling]
@@ -20,7 +20,7 @@ execution polling.
         R1 = """
             goodhosttask:start => stop_g
             mixedhosttask:start => stop_m
-            stop_m & stop_g => full_stop
+            goodhosttask:fail & mixedhosttask:fail => full_stop
         """
 
 [runtime]
@@ -49,4 +49,3 @@ execution polling.
         """
 
     [[full_stop]]
-        script = cylc stop $CYLC_WORKFLOW_ID

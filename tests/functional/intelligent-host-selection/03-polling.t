@@ -43,7 +43,7 @@ create_test_global_config "" "
         retrieve job logs = True
         communication method = poll
         execution polling intervals = 10*PT3S
-        submission polling intervals = PT0S, PT41M
+        submission polling intervals = PT0S, 5*PT2S
 
     [[mixedhostplatform]]
         hosts = unreachable_host, ${CYLC_TEST_HOST}
@@ -51,7 +51,7 @@ create_test_global_config "" "
         retrieve job logs = True
         communication method = poll
         execution polling intervals = 10*PT3S
-        submission polling intervals = PT0S, PT41M
+        submission polling intervals = PT0S, 5*PT2S
         [[[selection]]]
             method = 'definition order'
     "
