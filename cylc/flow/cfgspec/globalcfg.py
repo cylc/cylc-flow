@@ -17,6 +17,7 @@
 
 import os
 from sys import stderr
+from textwrap import dedent
 from typing import List, Optional, Tuple, Any
 
 from contextlib import suppress
@@ -96,34 +97,24 @@ PLATFORM_META_DESCR = '''
 EVENTS_DESCR = {
     'startup handlers': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]startup handlers`.
-
         Handlers to run at scheduler startup.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``startup handler``.
-
         '''
     ),
     'shutdown handlers': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]shutdown handlers`.
-
         Handlers to run at scheduler shutdown.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``shutdown handler``.
-
         '''
     ),
     'abort handlers': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc[scheduler][events]abort handlers`.
-
         Handlers to run if the scheduler aborts.
 
         .. versionchanged:: 8.0.0
@@ -133,9 +124,6 @@ EVENTS_DESCR = {
     ),
     'workflow timeout': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]workflow timeout`.
-
         Workflow timeout interval. The timer starts counting down at scheduler
         startup. It resets on workflow restart.
 
@@ -146,9 +134,6 @@ EVENTS_DESCR = {
     ),
     'workflow timeout handlers': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]workflow timeout handlers`.
-
         Handlers to run if the workflow timer times out.
 
         .. versionadded:: 8.0.0
@@ -158,9 +143,6 @@ EVENTS_DESCR = {
     ),
     'abort on workflow timeout': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]abort on workflow timeout`.
-
         Whether to abort if the workflow timer times out.
 
         .. versionadded:: 8.0.0
@@ -170,8 +152,6 @@ EVENTS_DESCR = {
     ),
     'stall handlers': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc[scheduler][events]stall handlers`.
-
         Handlers to run if the scheduler stalls.
 
         .. versionchanged:: 8.0.0
@@ -181,8 +161,6 @@ EVENTS_DESCR = {
     ),
     'stall timeout': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc[scheduler][events]stall timeout`.
-
         The length of a timer which starts if the scheduler stalls.
 
         .. versionadded:: 8.0.0
@@ -192,9 +170,6 @@ EVENTS_DESCR = {
     ),
     'stall timeout handlers': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]stall timeout handlers`.
-
         Handlers to run if the stall timer times out.
 
         .. versionadded:: 8.0.0
@@ -204,9 +179,6 @@ EVENTS_DESCR = {
     ),
     'abort on stall timeout': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]abort on stall timeout`.
-
         Whether to abort if the stall timer times out.
 
         .. versionadded:: 8.0.0
@@ -216,9 +188,6 @@ EVENTS_DESCR = {
     ),
     'inactivity timeout': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]inactivity timeout`.
-
         Scheduler inactivity timeout interval. The timer resets when any
         workflow activity occurs.
 
@@ -229,9 +198,6 @@ EVENTS_DESCR = {
     ),
     'inactivity timeout handlers': (
         f'''
-        :Default For: :cylc:conf:`flow.cylc \
-        [scheduler][events]inactivity timeout handlers`.
-
         Handlers to run if the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
@@ -241,9 +207,6 @@ EVENTS_DESCR = {
     ),
     'abort on inactivity timeout': (
         f'''
-        :Default For; :cylc:conf:`flow.cylc \
-        [scheduler][events]abort on inactivity timeout`.
-
         Whether to abort if the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
@@ -587,6 +550,12 @@ with Conf('global.cylc', desc='''
             ''')
 
             for item, desc in EVENTS_DESCR.items():
+                desc = (
+                    ":Default For: "
+                    f":cylc:conf:`flow.cylc[scheduler][events]{item}`."
+                    "\n\n"
+                ) + dedent(desc)
+
                 if item.endswith("handlers"):
                     Conf(item, VDR.V_STRING_LIST, desc=desc)
 
