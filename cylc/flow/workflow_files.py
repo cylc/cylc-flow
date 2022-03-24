@@ -1263,15 +1263,14 @@ def infer_latest_run(
         return (path, reg)
     if not runN_path.is_symlink() or not runN_path.is_dir():
         raise WorkflowFilesError(
-            f"runN directory at {runN_path} is a broken or invalid symlink"
+            f"{runN_path} symlink not valid"
         )
     numbered_run = os.readlink(str(runN_path))
     if not re.match(r'run\d+$', numbered_run):
         # Note: the link should be relative. This means it won't work for
         # cylc 8.0b1 workflows where it was absolute (won't fix).
         raise WorkflowFilesError(
-            f"runN symlink at {runN_path} points to invalid location: "
-            f"{numbered_run}"
+            f"{runN_path} symlink target not valid: {numbered_run}"
         )
     path = runN_path.parent / numbered_run
     reg = path.relative_to(cylc_run_dir)
