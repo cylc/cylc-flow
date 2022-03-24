@@ -365,6 +365,8 @@ class SequenceBase(metaclass=ABCMeta):
         """Deprecated: alter state to offset the entire sequence."""
         pass
 
+    # NOTE: not using @abstractmethod because we need to
+    # patch this method for caching purposes
     def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
         raise NotImplementedError
