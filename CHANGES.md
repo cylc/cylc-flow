@@ -104,8 +104,7 @@ default), specific flows, new flows, or one-off task runs.
 
 
 -------------------------------------------------------------------------------
-## __cylc-8.0rc1 (<span actions:bind='release-date'>Released
-2022-02-17</span>)__
+## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
 
 First Release Candidate for Cylc 8 suitable for acceptance testing.
 
