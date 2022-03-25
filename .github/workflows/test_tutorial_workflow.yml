@@ -22,7 +22,7 @@ jobs:
           python-version: '3.7'
 
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install docs/tutorial dependencies
         uses: cylc/cylc-doc/.github/actions/install-dependencies@master
