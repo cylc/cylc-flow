@@ -43,6 +43,10 @@ provided [wrapper script](https://cylc.github.io/cylc-doc/latest/html/installati
 
 ### Fixes
 
+[#4769](https://github.com/cylc/cylc-flow/pull/4769) - Fix handling of quoted
+command args for invocation on remote run hosts.
+
+
 [#4703](https://github.com/cylc/cylc-flow/pull/4703) - Fix `ImportError` when
 validating/running a Jinja2 workflow (for users who have installed Cylc
 using `pip`.)
