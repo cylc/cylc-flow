@@ -88,8 +88,8 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     src = RESOURCE_DIR / resource_path
     if not src.exists():
         raise UserInputError(
-            f'No such resouces {resource}.'
-            '\nRun `cylc get-resouces --list` for resource names.'
+            f'No such resources {resource}.'
+            '\nRun `cylc get-resources --list` for resource names.'
         )
 
     is_tutorial = path_is_tutorial(src)
