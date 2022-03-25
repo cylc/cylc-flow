@@ -1672,6 +1672,7 @@ class WorkflowConfig:
                 )
 
         for label in xtrig_labels:
+
             try:
                 xtrig = self.cfg['scheduling']['xtriggers'][label]
             except KeyError:

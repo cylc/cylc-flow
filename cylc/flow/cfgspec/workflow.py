@@ -797,7 +797,7 @@ with Conf(
 
                 Example::
 
-                   ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
             ''')
 
         with Conf('graph', desc=f'''
