@@ -18,6 +18,7 @@
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
+from shlex import quote
 import sys
 from typing import TYPE_CHECKING
 
@@ -365,8 +366,9 @@ def _distribute(host):
     if not host:
         host = select_workflow_host()[0]
     if is_remote_host(host):
+        # quote here for (e.g.) --set='TEST="test"'
+        cmd = [quote(c) for c in sys.argv[1:]]
         # Prevent recursive host selection
-        cmd = sys.argv[1:]
         cmd.append("--host=localhost")
         _remote_cylc_cmd(cmd, host=host)
         sys.exit(0)
