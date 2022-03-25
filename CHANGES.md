@@ -36,6 +36,9 @@ ones in. -->
 [#4777](https://github.com/cylc/cylc-flow/pull/4777) -
 Reinstate the Cylc 7 template variables for xtriggers with deprecation warnings.
 
+[#4771](https://github.com/cylc/cylc-flow/pull/4771) -
+Fix issue where Cylc 7 workflows could show in `cylc scan` output and in the UI.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc2 (<span actions:bind='release-date'>Released 2022-03-23</span>)__
 

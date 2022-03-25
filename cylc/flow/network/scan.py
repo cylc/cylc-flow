@@ -83,7 +83,6 @@ CONTACT = Path(WorkflowFiles.Service.CONTACT)
 FLOW_FILES = {
     # marker files/dirs which we use to determine if something is a flow
     WorkflowFiles.Service.DIRNAME,
-    WorkflowFiles.SUITE_RC,   # cylc7 flow definition file name
     WorkflowFiles.FLOW_FILE,  # cylc8 flow definition file name
     WorkflowFiles.LOG_DIR
 }
@@ -94,20 +93,48 @@ EXCLUDE_FILES = {
 }
 
 
-def dir_is_flow(listing: Iterable[Path]) -> bool:
+def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
     """Return True if a Path contains a flow at the top level.
 
     Args:
-        listing (list):
+        listing:
             A listing of the directory in question as a list of
             ``pathlib.Path`` objects.
 
     Returns:
-        bool - True if the listing indicates that this is a flow directory.
+        - True if the directory:
+          - Is a Cylc 8 workflow.
+          - Is a Cylc 7 workflow that has not yet been run.
+          - Is a Cylc 7 workflow running under Cylc 8 in compatibility mode.
+        - False if the directory:
+          - Is not a workflow.
+        - None if the directory:
+          - Is an incompatible workflow (e.g. a Cylc 7 workflow running under
+            Cylc 7).
 
     """
     names = {path.name for path in listing}
-    return bool(FLOW_FILES & names)
+
+    if WorkflowFiles.SUITE_RC in names:
+        # a Cylc 7 workflow ...
+        for path in listing:
+            if path.name == WorkflowFiles.LOG_DIR:
+                if (path / 'workflow').exists():
+                    # Cylc 8: log/workflow/log
+                    return True
+                else:
+                    # Cylc 7: log/suite/log
+                    return None
+        # workflow doesn't have a log dir so has not been run
+        # so could be either a Cylc 7 or a Cylc 8 workflow
+        return True
+
+    if FLOW_FILES & names:
+        # a pure Cylc 8 workflow
+        return True
+
+    # random directory
+    return False
 
 
 @pipe
@@ -206,13 +233,14 @@ async def scan(
         for task in done:
             path, depth, contents = task.result()
             running.remove(task)
-            if dir_is_flow(contents):
+            is_flow = dir_is_flow(contents)
+            if is_flow:
                 # this is a flow directory
                 yield {
                     'name': str(path.relative_to(run_dir)),
                     'path': path,
                 }
-            elif depth < max_depth:
+            elif is_flow is False and depth < max_depth:
                 # we may have a nested flow, lets see...
                 _scan_subdirs(contents, depth)
         # don't allow this to become blocking
