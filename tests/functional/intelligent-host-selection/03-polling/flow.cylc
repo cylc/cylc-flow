@@ -20,7 +20,7 @@ execution polling.
         R1 = """
             goodhosttask:start => stop_g
             mixedhosttask:start => stop_m
-            goodhosttask:fail & mixedhosttask:fail => full_stop
+            goodhosttask:fail & mixedhosttask:fail
         """
 
 [runtime]
@@ -47,5 +47,3 @@ execution polling.
             sleep 5  # Give the badhosts list time to empty
             cylc kill "$CYLC_WORKFLOW_ID//1/mixedhosttask" || true
         """
-
-    [[full_stop]]
