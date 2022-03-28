@@ -20,7 +20,7 @@ import asyncio
 from functools import lru_cache
 from shlex import quote
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import ServiceFileError
@@ -360,14 +360,22 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     sys.exit(ret)
 
 
+def _protect_remote_cmd_args(cmd: List[str]) -> List[str]:
+    """Protect command args from second shell interpretation.
+
+    Escape quoting for --set="FOO='foo'" args.
+    (Separate function for unit testing.)
+    """
+    return [quote(c) for c in cmd]
+
+
 def _distribute(host):
     """Re-invoke this command on a different host if requested."""
     # Check whether a run host is explicitly specified, else select one.
     if not host:
         host = select_workflow_host()[0]
     if is_remote_host(host):
-        # quote here for (e.g.) --set='TEST="test"'
-        cmd = [quote(c) for c in sys.argv[1:]]
+        cmd = _protect_remote_cmd_args(sys.argv[1:])
         # Prevent recursive host selection
         cmd.append("--host=localhost")
         _remote_cylc_cmd(cmd, host=host)
