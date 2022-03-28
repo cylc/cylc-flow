@@ -42,7 +42,7 @@ from cylc.flow.pathutil import (
     get_workflow_file_install_log_name)
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
-from cylc.flow.scripts import cylc_header
+from cylc.flow.scripts.common import cylc_header
 from cylc.flow.workflow_files import (
     detect_old_contact_file,
     SUITERC_DEPR_MSG
