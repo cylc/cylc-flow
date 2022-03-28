@@ -8,11 +8,6 @@ Once each has started trigger a task which kills each to test the
 execution polling.
 """
 
-[scheduler]
-    [[events]]
-        expected task failures = 1/goodhosttask 1/mixedhosttask
-
-
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
