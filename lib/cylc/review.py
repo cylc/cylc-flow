@@ -306,8 +306,12 @@ class CylcReviewService(object):
         if not task_status:
             # default task statuses - if updating please also change the
             # $("#reset_task_statuses").click function in cylc-review.js
-            task_status = [state for state in TASK_STATUSES_ORDERED
-                           if state != TASK_STATUS_WAITING]
+            # If Cylc 8 defaults should include waiting.
+            if self.suite_dao.is_cylc8(user, suite):
+                task_status = TASK_STATUSES_ORDERED
+            else:
+                task_status = [state for state in TASK_STATUSES_ORDERED
+                            if state != TASK_STATUS_WAITING]
         elif not isinstance(task_status, list):
             task_status = [task_status]
 
