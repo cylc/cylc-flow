@@ -65,7 +65,7 @@ def log_platform_event(
 
 @overload
 def get_platform(
-    task_conf: Union[str, None] = None,
+    task_conf: Optional(str) = None,
     task_id: str = UNKNOWN_TASK,
     bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
@@ -134,10 +134,8 @@ def get_platform(
         else:
             # Need to calculate platform
             task_job_section, task_remote_section = {}, {}
-            if 'job' in task_conf:
-                task_job_section = task_conf['job']
-            if 'remote' in task_conf:
-                task_remote_section = task_conf['remote']
+            task_job_section = task_conf.get("job")
+            task_remote_section = task_conf.get("remote")
             return platform_from_name(
                 platform_from_job_info(
                     glbl_cfg(cached=False).get(['platforms']),
