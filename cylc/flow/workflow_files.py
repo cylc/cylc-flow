@@ -1236,6 +1236,7 @@ def infer_latest_run(
 ) -> Tuple[Path, Path]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
+    Warns users that exiplicit use of runN is unnessary.
     Args:
         path: Absolute path to the workflow dir, run dir or runN dir.
         implicit_runN: If True, add runN on the end of the path if the path
@@ -1246,14 +1247,22 @@ def infer_latest_run(
             the input arg path.
         reg: The workflow name (including the numbered run if applicable).
 
-    Raises WorkflowFilesError if the runN symlink is not valid.
+    Raises:
+        - WorkflowFilesError if the runN symlink is not valid.
+        - UserInputError if the path does not exist.
     """
     cylc_run_dir = get_cylc_run_dir()
     try:
         reg = path.relative_to(cylc_run_dir)
     except ValueError:
         raise ValueError(f"{path} is not in the cylc-run directory")
+    if not path.exists():
+        raise UserInputError(f'Path does not exist: {path}')
     if path.name == WorkflowFiles.RUN_N:
+        LOG.warning(
+            f"The use of {WorkflowFiles.RUN_N} in the Workflow ID is not"
+            f" necessary."
+        )
         runN_path = path
     elif implicit_runN:
         runN_path = path / WorkflowFiles.RUN_N

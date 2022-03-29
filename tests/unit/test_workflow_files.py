@@ -301,13 +301,32 @@ def test_infer_latest_run(
         assert infer_latest_run(path) == expected
 
 
+def test_infer_latest_run_raise_warning_for_runN(caplog, tmp_run_dir):
+    caplog.set_level(logging.WARNING, 'log')
+    cylc_run_dir: Path = tmp_run_dir()
+    run_dir = cylc_run_dir / 'run1'
+    run_dir.mkdir()
+    runN_path = cylc_run_dir / 'runN'
+    runN_path.symlink_to('run1')
+    infer_latest_run(runN_path)
+    assert ("The use of runN in the Workflow ID is not necessary."
+            ) in caplog.messages
+
+
 @pytest.mark.parametrize(
-    'reason',
-    ['not dir', 'not symlink', 'broken symlink', 'invalid target']
+    ('reason', 'error_type'),
+    [
+        ('not dir', WorkflowFilesError),
+        ('not symlink', WorkflowFilesError),
+        ('broken symlink', WorkflowFilesError),
+        ('invalid target', WorkflowFilesError),
+        ('not exist', UserInputError)
+    ]
 )
 def test_infer_latest_run__bad(
     reason: str,
-    tmp_run_dir: Callable
+    error_type: Exception,
+    tmp_run_dir: Callable,
 ) -> None:
     # -- Setup --
     cylc_run_dir: Path = tmp_run_dir()
@@ -328,10 +347,13 @@ def test_infer_latest_run__bad(
         err_msg = (
             f"{runN_path} symlink target not valid: palpatine"
         )
+    elif reason == 'not exist':
+        run_dir = run_dir / 'not-exist'
+        err_msg = f"Path does not exist: {run_dir}"
     else:
         raise ValueError(reason)
     # -- Test --
-    with pytest.raises(WorkflowFilesError) as exc:
+    with pytest.raises(error_type) as exc:
         infer_latest_run(run_dir)
     assert str(exc.value) == err_msg
 
