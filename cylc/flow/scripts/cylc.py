@@ -651,7 +651,8 @@ def main():
                     command = cmd_args.pop(0)
 
             # this is an alias to a command
-            command = ALIASES.get(command)
+            if command in ALIASES:
+                command = ALIASES.get(command)
 
             if command in DEAD_ENDS:
                 # this command has been removed but not aliased
