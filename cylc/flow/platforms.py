@@ -65,7 +65,7 @@ def log_platform_event(
 
 @overload
 def get_platform(
-    task_conf: Optional[str]= None,
+    task_conf: Optional[str] = None,
     task_id: str = UNKNOWN_TASK,
     bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
