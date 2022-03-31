@@ -111,3 +111,29 @@ def log_filter():
 @pytest.fixture(scope='session')
 def port_range():
     return glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
+
+
+@pytest.fixture
+def capcall(monkeypatch):
+    """Capture function calls without running the function.
+    Returns a list of captured calls.
+    For each function call a tuple (args: Tuple, kwargs: Dict) is added
+    to the list.
+    Example:
+        def test_something(capcall):
+            capsys = capcall('sys.exit')
+            sys.exit(1)
+            assert capsys == [(1,), {}]
+    """
+
+    def _capcall(function_string):
+        calls = []
+
+        def _call(*args, **kwargs):
+            nonlocal calls
+            calls.append((args, kwargs))
+
+        monkeypatch.setattr(function_string, _call)
+        return calls
+
+    return _capcall

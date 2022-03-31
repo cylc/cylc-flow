@@ -40,7 +40,7 @@ grep_ok 'WARNING - The event handler template variable "%(batch_sys_name)s" is d
     "${TEST_NAME_BASE}-validate.stderr" -F
 grep_ok 'WARNING - The event handler template variable "%(suite)s" is deprecated - use "%(workflow)s" instead' \
     "${TEST_NAME_BASE}-validate.stderr" -F
-grep_ok 'WARNING - The event handler template variable "%(suite_uuid)s" is deprecated - use "%(workflow_uuid)s" instead' \
+grep_ok 'WARNING - The event handler template variable "%(suite_uuid)s" is deprecated - use "%(uuid)s" instead' \
     "${TEST_NAME_BASE}-validate.stderr" -F
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
