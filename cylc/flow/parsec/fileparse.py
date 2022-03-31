@@ -458,17 +458,15 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, opts=None):
 def hashbang_and_plugin_templating_clash(
     templating: str, flines: List[str]
 ) -> Optional[str]:
-    """Check whether plugin set template engine and #!hashbang line match.
+    """Return file's hashbang/shebang, but raise TemplateVarLanguageClash
+    if plugin-set template engine and hashbang do not match.
 
     Args:
-        templating (str): [description]
-        flines (List[str]): [description]
-
-    Raises:
-        TemplateVarLanguageClash
+        templating: Template engine set by a plugin.
+        flines: The lines of text from file.
 
     Returns:
-        str: the hashbang, in lower case, to allow for users using any of
+        The hashbang, in lower case, to allow for users using any of
         ['empy', 'EmPy', 'EMPY'], or similar in other templating languages.
 
     Examples:
@@ -486,20 +484,19 @@ def hashbang_and_plugin_templating_clash(
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
     """
+    hashbang: Optional[str] = None
     # Get hashbang if possible:
-    if flines and re.match(r'^#!(.*)\s*', flines[0]):
-        hashbang = re.findall(r'^#!(.*)\s*', flines[0])[0].lower()
-    else:
-        hashbang = None
-
+    if flines:
+        match = re.match(r'^#!(\S+)', flines[0])
+        if match:
+            hashbang = match[1].lower()
     if (
         hashbang and templating
         and templating != 'template variables'
         and hashbang != templating
     ):
         raise TemplateVarLanguageClash(
-            "Plugins set templating engine = "
-            f"{templating}"
+            f"A plugin set the templating engine to {templating}"
             f" which does not match {flines[0]} set in flow.cylc."
         )
     return hashbang

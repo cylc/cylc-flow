@@ -157,8 +157,7 @@ def main(parser: COP, options: 'Values', workflow_id1: str, workflow_id2: str):
     ).cfg
     print(f"Parsing {workflow_id_2} ({workflow_file_2_})")
     config2 = WorkflowConfig(
-        workflow_id_2, workflow_file_2_, options, template_vars,
-        is_reload=True
+        workflow_id_2, workflow_file_2_, options, template_vars
     ).cfg
 
     if config1 == config2:
