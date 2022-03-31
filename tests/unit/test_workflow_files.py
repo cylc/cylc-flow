@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ast import Call
 from glob import iglob
 import logging
 import os
@@ -301,16 +300,18 @@ def test_infer_latest_run(
         assert infer_latest_run(path) == expected
 
 
-def test_infer_latest_run_raise_warning_for_runN(caplog, tmp_run_dir):
+def test_infer_latest_run_warns_for_runN(caplog, tmp_run_dir):
+    """Tests warning is produced to discourage use of /runN in workflow_id"""
     caplog.set_level(logging.WARNING, 'log')
-    cylc_run_dir: Path = tmp_run_dir()
-    run_dir = cylc_run_dir / 'run1'
-    run_dir.mkdir()
-    runN_path = cylc_run_dir / 'runN'
+    (tmp_run_dir() / 'run1').mkdir()
+    runN_path = tmp_run_dir() / 'runN'
     runN_path.symlink_to('run1')
     infer_latest_run(runN_path)
-    assert ("The use of runN in the Workflow ID is not necessary."
-            ) in caplog.messages
+    warning_raised = False
+    for x in caplog.messages:
+        if re.match("Explicit use of runN in the Workflow ID", x):
+            warning_raised = True
+    assert warning_raised is True
 
 
 @pytest.mark.parametrize(

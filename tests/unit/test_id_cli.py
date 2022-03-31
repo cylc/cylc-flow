@@ -34,6 +34,12 @@ from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.workflow_files import WorkflowFiles
 
 
+@pytest.fixture
+def mock_exists(mocker):
+    mock_exists = mocker.patch('pathlib.Path.exists')
+    mock_exists.return_value = True
+
+
 @pytest.fixture(scope='module')
 def abc_src_dir(tmp_path_factory):
     """Src dir containing three workflows, a, b & c."""
@@ -55,11 +61,9 @@ def abc_src_dir(tmp_path_factory):
         (('a//', 'b//'), ['a', 'b']),
     ]
 )
-async def test_parse_ids_workflows(ids_in, ids_out):
+async def test_parse_ids_workflows(ids_in, ids_out, mock_exists):
     """It should parse workflows & tasks."""
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        workflows, _ = await parse_ids_async(*ids_in, constraint='workflows')
+    workflows, _ = await parse_ids_async(*ids_in, constraint='workflows')
     assert list(workflows) == ids_out
     assert list(workflows.values()) == [[] for _ in workflows]
 
@@ -102,11 +106,9 @@ async def test_parse_ids_workflows_src(ids_in, ids_out, abc_src_dir):
         ),
     ]
 )
-async def test_parse_ids_tasks(ids_in, ids_out):
+async def test_parse_ids_tasks(mock_exists, ids_in, ids_out):
     """It should parse workflow tasks in two formats."""
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        workflows, _ = await parse_ids_async(*ids_in, constraint='tasks')
+    workflows, _ = await parse_ids_async(*ids_in, constraint='tasks')
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
         for workflow_id, tokens_list in workflows.items()
@@ -126,12 +128,10 @@ async def test_parse_ids_tasks(ids_in, ids_out):
         ),
     ]
 )
-async def test_parse_ids_tasks_src(ids_in, ids_out, abc_src_dir):
+async def test_parse_ids_tasks_src(mock_exists, ids_in, ids_out, abc_src_dir):
     """It should parse workflow tasks for src workflows."""
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        workflows, _ = await parse_ids_async(
-            *ids_in, constraint='tasks', src=True)
+    workflows, _ = await parse_ids_async(
+        *ids_in, constraint='tasks', src=True)
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
         for workflow_id, tokens_list in workflows.items()
@@ -155,11 +155,9 @@ async def test_parse_ids_tasks_src(ids_in, ids_out, abc_src_dir):
         (('a//', '//i', 'b//'), {'a': ['//i'], 'b': []}),
     ]
 )
-async def test_parse_ids_mixed(ids_in, ids_out):
+async def test_parse_ids_mixed(ids_in, ids_out, mock_exists):
     """It should parse mixed workflows & tasks."""
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        workflows, _ = await parse_ids_async(*ids_in, constraint='mixed')
+    workflows, _ = await parse_ids_async(*ids_in, constraint='mixed')
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
         for workflow_id, tokens_list in workflows.items()
@@ -174,11 +172,10 @@ async def test_parse_ids_mixed(ids_in, ids_out):
         (('./a', '//i', '//j', '//k'), {'a': ['//i', '//j', '//k']}),
     ]
 )
-async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir):
+async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir, mock_exists):
     """It should parse mixed workflows & tasks from src workflows."""
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        workflows, _ = await parse_ids_async(
+
+    workflows, _ = await parse_ids_async(
             *ids_in, constraint='mixed', src=True)
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
@@ -194,13 +191,11 @@ async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir):
         (('a//', 'b//', 'c//'), True),
     ]
 )
-async def test_parse_ids_max_workflows(ids_in, errors):
+async def test_parse_ids_max_workflows(ids_in, errors, mock_exists):
     """It should validate input against the max_workflows constraint."""
     try:
-        with patch.object(Path, 'exists') as mock_exists:
-            mock_exists.return_value = True
-            await parse_ids_async(
-                *ids_in, constraint='workflows', max_workflows=2)
+        await parse_ids_async(
+            *ids_in, constraint='workflows', max_workflows=2)
     except UserInputError:
         if not errors:
             raise
@@ -217,12 +212,10 @@ async def test_parse_ids_max_workflows(ids_in, errors):
         (('a//', '//i', '//j', '//k'), True),
     ]
 )
-async def test_parse_ids_max_tasks(ids_in, errors):
+async def test_parse_ids_max_tasks(ids_in, errors, mock_exists):
     """It should validate input against the max_tasks constraint."""
     try:
-        with patch.object(Path, 'exists') as mock_exists:
-            mock_exists.return_value = True
-            await parse_ids_async(*ids_in, constraint='tasks', max_tasks=2)
+        await parse_ids_async(*ids_in, constraint='tasks', max_tasks=2)
     except UserInputError:
         if not errors:
             raise
@@ -290,6 +283,7 @@ async def test_parse_ids_multi_mode(
     ids_in,
     ids_out,
     multi_mode,
+    mock_exists
 ):
     """It should glob for workflows.
 
@@ -297,13 +291,12 @@ async def test_parse_ids_multi_mode(
         More advanced tests for this in the integration tests.
 
     """
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        workflows, _multi_mode = await parse_ids_async(
-            *ids_in,
-            constraint='workflows',
-            match_workflows=True,
-        )
+
+    workflows, _multi_mode = await parse_ids_async(
+        *ids_in,
+        constraint='workflows',
+        match_workflows=True,
+    )
     assert list(workflows) == ids_out
     assert _multi_mode == multi_mode
 
@@ -407,12 +400,12 @@ async def test_parse_ids_invalid_ids(
     assert error_msg in str(exc_ctx.value)
 
 
-async def test_parse_ids_current_user(monkeypatch: pytest.MonkeyPatch):
+async def test_parse_ids_current_user(
+    monkeypatch: pytest.MonkeyPatch, mock_exists
+):
     """It should work if the user in the ID is the current user."""
     monkeypatch.setattr('cylc.flow.id_cli.get_user', lambda: 'rincewind')
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        await parse_ids_async('~rincewind/luggage', constraint='workflows')
+    await parse_ids_async('~rincewind/luggage', constraint='workflows')
 
 
 async def test_parse_ids_file(tmp_run_dir):
@@ -435,24 +428,22 @@ async def test_parse_ids_file(tmp_run_dir):
     assert 'Workflow ID cannot be a file' in str(exc_ctx.value)
 
 
-async def test_parse_ids_constraint():
+async def test_parse_ids_constraint(mock_exists):
     """It should validate input against the constraint."""
-    with patch.object(Path, 'exists') as mock_exists:
-        mock_exists.return_value = True
-        # constraint: workflows
-        await parse_ids_async('a//', constraint='workflows')
-        with pytest.raises(UserInputError):
-            await parse_ids_async('a//b', constraint='workflows')
-        # constraint: tasks
-        await parse_ids_async('a//b', constraint='tasks')
-        with pytest.raises(UserInputError):
-            await parse_ids_async('a//', constraint='tasks')
-        # constraint: mixed
-        await parse_ids_async('a//', constraint='mixed')
-        await parse_ids_async('a//b', constraint='mixed')
-        # constraint: invalid
-        with pytest.raises(ValueError):
-            await parse_ids_async('foo', constraint='bar')
+    # constraint: workflows
+    await parse_ids_async('a//', constraint='workflows')
+    with pytest.raises(UserInputError):
+        await parse_ids_async('a//b', constraint='workflows')
+    # constraint: tasks
+    await parse_ids_async('a//b', constraint='tasks')
+    with pytest.raises(UserInputError):
+        await parse_ids_async('a//', constraint='tasks')
+    # constraint: mixed
+    await parse_ids_async('a//', constraint='mixed')
+    await parse_ids_async('a//b', constraint='mixed')
+    # constraint: invalid
+    with pytest.raises(ValueError):
+        await parse_ids_async('foo', constraint='bar')
 
 
 async def test_parse_ids_src_run(abc_src_dir, tmp_run_dir):

@@ -350,7 +350,7 @@ def test_rsync_255_fail(mock_ctx, expect, ctx_kwargs):
     output = SubProcPool.rsync_255_fail(
         mock_ctx(**ctx_kwargs),
         {'ssh command': 'ssh',
-        'rsync command': 'rsync command'
+         'rsync command': 'rsync command'
         }
     )
     assert output == expect

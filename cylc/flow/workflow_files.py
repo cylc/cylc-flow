@@ -1236,7 +1236,7 @@ def infer_latest_run(
 ) -> Tuple[Path, Path]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
-    Warns users that exiplicit use of runN is unnessary.
+    Warns users that explicit use of runN is unnessary.
     Args:
         path: Absolute path to the workflow dir, run dir or runN dir.
         implicit_runN: If True, add runN on the end of the path if the path
@@ -1260,8 +1260,9 @@ def infer_latest_run(
         raise UserInputError(f'Path does not exist: {path}')
     if path.name == WorkflowFiles.RUN_N:
         LOG.warning(
-            f"The use of {WorkflowFiles.RUN_N} in the Workflow ID is not"
-            f" necessary."
+            f"Explicit use of {WorkflowFiles.RUN_N} in the Workflow ID is not"
+            f" necessary. It is used automatically to select the latest run"
+            " number."
         )
         runN_path = path
     elif implicit_runN:
