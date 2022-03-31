@@ -195,7 +195,7 @@ def node_ids_filter(tokens, state, items) -> bool:
             # match cycle/task/job state
             and (
                 not (
-                    state
+                    state is not None
                     and get_state_from_selectors(item)
                 )
                 or get_state_from_selectors(item) == state
@@ -205,7 +205,7 @@ def node_ids_filter(tokens, state, items) -> bool:
     )
 
 
-def node_filter(node, node_type, args):
+def node_filter(node, node_type, args, state):
     """Filter nodes based on attribute arguments"""
     tokens: Tokens
     if node_type in DEF_TYPES:
@@ -219,18 +219,17 @@ def node_filter(node, node_type, args):
     else:
         # live objects can be represented by a universal ID
         tokens = Tokens(node.id)
-    state = getattr(node, 'state', None)
     return (
         (
-            not (
-                state
-                and args.get('states')
+            (
+                state is None
+                or not args.get('states')
             )
             or state in args['states']
         )
-        and not (
-            args.get('exstates')
-            and state in args['exstates']
+        and (
+            not args.get('exstates')
+            or state not in args['exstates']
         )
         and (
             args.get('is_held') is None
@@ -253,9 +252,9 @@ def node_filter(node, node_type, args):
             not args.get('ids')
             or node_ids_filter(tokens, state, args['ids'])
         )
-        and not (
-            args.get('exids')
-            and node_ids_filter(tokens, state, args['exids'])
+        and (
+            not args.get('exids')
+            or not node_ids_filter(tokens, state, args['exids'])
         )
     )
 
@@ -330,14 +329,34 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             args)
 
     # nodes
+    def get_node_state(self, node, node_type):
+        """Return state, from node or data-store."""
+        if node_type in DEF_TYPES:
+            return None
+        # Don't lookup data-store state in getattr, as it might not be there.
+        # (args are evaluated first)
+        # If node has no state, it must be in the data-store.
+        with suppress(Exception):
+            return (
+                getattr(node, 'state', None)
+                or self.data_store_mgr.data[
+                    Tokens(node.id).workflow_id
+                ][node_type][node.id].state
+            )
+
     async def get_nodes_all(self, node_type, args):
         """Return nodes from all workflows, filter by args."""
         return sort_elements(
             [
-                n
+                node
                 for flow in await self.get_workflows_data(args)
-                for n in flow.get(node_type).values()
-                if node_filter(n, node_type, args)
+                for node in flow.get(node_type).values()
+                if node_filter(
+                    node,
+                    node_type,
+                    args,
+                    self.get_node_state(node, node_type)
+                )
             ],
             args,
         )
@@ -366,7 +385,12 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                 for flow in flow_data
                 for node_type in node_types
                 for node in get_data_elements(flow, nat_ids, node_type)
-                if node_filter(node, node_type, args)
+                if node_filter(
+                    node,
+                    node_type,
+                    args,
+                    self.get_node_state(node, node_type)
+                )
             ],
             args,
         )
