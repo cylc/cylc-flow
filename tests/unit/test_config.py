@@ -26,9 +26,10 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
 from cylc.flow.cycling.loader import INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
 from cylc.flow.exceptions import (
-    WorkflowConfigError,
     PointParsingError,
-    UserInputError
+    UserInputError,
+    WorkflowConfigError,
+    XtriggerConfigError,
 )
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
@@ -122,7 +123,7 @@ class TestWorkflowConfig:
                 R1 = '@oopsie => qux'
         """
         flow_file.write_text(flow_config)
-        with pytest.raises(ImportError) as excinfo:
+        with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(
                 workflow="caiman_workflow",
                 fpath=flow_file,
@@ -155,7 +156,7 @@ class TestWorkflowConfig:
                 R1 = '@oopsie => qux'
         """
         flow_file.write_text(flow_config)
-        with pytest.raises(AttributeError) as excinfo:
+        with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
                            options=Mock(spec=[]))
         assert "not found" in str(excinfo.value)
@@ -185,7 +186,7 @@ class TestWorkflowConfig:
                 R1 = '@oopsie => qux'
         """
         flow_file.write_text(flow_config)
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(
                 workflow="workflow_with_not_callable",
                 fpath=flow_file,

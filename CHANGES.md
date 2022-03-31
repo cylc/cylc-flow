@@ -29,6 +29,14 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0rc3 (<span actions:bind='release-date'>Pending</span>)__
+
+### Fixes:
+
+[#4777](https://github.com/cylc/cylc-flow/pull/4777) -
+Reinstate the Cylc 7 template variables for xtriggers with deprecation warnings.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0rc2 (<span actions:bind='release-date'>Released 2022-03-23</span>)__
 
 Second Release Candidate for Cylc 8 suitable for acceptance testing.

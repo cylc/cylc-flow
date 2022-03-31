@@ -223,6 +223,28 @@ class TaskDefError(WorkflowConfigError):
     """Exception raise for errors in TaskDef initialization."""
 
 
+class XtriggerConfigError(WorkflowConfigError):
+    """An error in an xtrigger.
+
+    For example:
+
+    * If the function module was not found.
+    * If the function was not found in the xtrigger module.
+    * If the function is not callable.
+    * If any string template in the function context
+      arguments are not present in the expected template values.
+
+    """
+
+    def __init__(self, label: str, trigger: str, message: str):
+        self.label: str = label
+        self.trigger: str = trigger
+        self.message: str = message
+
+    def __str__(self):
+        return f'[{self.label}] {self.message}'
+
+
 class ClientError(CylcError):
 
     def __init__(self, message: str, traceback: Optional[str] = None):

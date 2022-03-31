@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import suppress
+from enum import Enum
 import json
 import re
 from copy import deepcopy
@@ -22,6 +23,7 @@ from time import time
 from typing import Any, Dict, List, Optional, Tuple, Callable
 
 from cylc.flow import LOG
+from cylc.flow.exceptions import XtriggerConfigError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.xtriggers.wall_clock import wall_clock
@@ -34,20 +36,111 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.subprocpool import get_func
 
 
-# Templates for string replacement in function arg values.
-TMPL_USER_NAME = 'user_name'
-TMPL_WORKFLOW_NAME = 'workflow_name'
-TMPL_TASK_CYCLE_POINT = 'point'
-TMPL_TASK_IDENT = 'id'
-TMPL_TASK_NAME = 'name'
-TMPL_WORKFLOW_RUN_DIR = 'workflow_run_dir'
-TMPL_WORKFLOW_SHARE_DIR = 'workflow_share_dir'
-TMPL_DEBUG_MODE = 'debug'
-ARG_VAL_TEMPLATES: List[str] = [
-    TMPL_TASK_CYCLE_POINT, TMPL_TASK_IDENT, TMPL_TASK_NAME,
-    TMPL_WORKFLOW_RUN_DIR, TMPL_WORKFLOW_SHARE_DIR, TMPL_USER_NAME,
-    TMPL_WORKFLOW_NAME, TMPL_DEBUG_MODE
-]
+class TemplateVariables(Enum):
+    """Templates variables for string replacement in xtrigger functions.
+
+    The following string templates are available for use, if the trigger
+    function needs any of this information, in function arguments in the
+    workflow configuration.
+
+    .. code-block:: cylc
+
+       [scheduling]
+           initial cycle point = now
+           [[xtriggers]]
+               my_xtrigger = my_xtrigger_fcn('%(workflow)', '%(point)')
+
+    For an explanation of the substitution syntax, see
+    `String Formatting Operations in the Python documentation
+    <https://docs.python.org/3/library/stdtypes.html
+    #printf-style-string-formatting>`_.
+
+    """
+
+    CyclePoint = 'point'
+    """The cycle point of the dependent task."""
+
+    DebugMode = 'debug'
+    """True if Cylc is being run in debug mode (--debug, -vv)."""
+
+    RunDir = 'workflow_run_dir'
+    """The path to the workflow run directory."""
+
+    ShareDir = 'workflow_share_dir'
+    """The path to the workflow share directory."""
+
+    TaskID = 'id'
+    """The ID of the dependent task."""
+
+    TaskName = 'name'
+    """The name of the dependent task."""
+
+    UserName = 'user_name'
+    """The user account under which the workflow is being run."""
+
+    Workflow = 'workflow'
+    """The workflow ID."""
+
+    # BACK COMPAT: workflow_name deprecated
+    # url:
+    #     TODO
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 9
+    WorkflowName = 'workflow_name'
+    """The workflow ID.
+
+    .. deprecated:: 8.0.0
+
+       Deprecated, use ``workflow``.
+    """
+
+    # BACK COMPAT: suite_name deprecated
+    # url:
+    #     TODO
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 9
+    SuiteName = 'suite_name'
+    """The workflow ID.
+
+    .. deprecated:: 8.0.0
+
+       Deprecated, use ``workflow``.
+    """
+
+    # BACK COMPAT: suite_run_dir deprecated
+    # url:
+    #     TODO
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 9
+    SuiteRunDir = 'suite_run_dir'
+    """The path to the workflow run directory.
+
+    .. deprecated:: 8.0.0
+
+       Deprecated, use ``run_dir``.
+    """
+
+    # BACK COMPAT: suite_share_dir deprecated
+    # url:
+    #     TODO
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 9
+    SuiteShareDir = 'suite_share_dir'
+    """The path to the workflow share directory.
+
+    .. deprecated:: 8.0.0
+
+       Deprecated, use ``share_dir``.
+    """
+
 
 # Extract 'foo' from string templates '%(foo)s', avoiding '%%' escaping
 # ('%%(foo)s` is not a string template).
@@ -124,11 +217,16 @@ class XtriggerManager:
         if not user:
             user = get_user()
         self.farg_templ: Dict[str, Any] = {
-            TMPL_WORKFLOW_NAME: workflow,
-            TMPL_USER_NAME: user,
-            TMPL_WORKFLOW_RUN_DIR: workflow_run_dir,
-            TMPL_WORKFLOW_SHARE_DIR: workflow_share_dir,
-            TMPL_DEBUG_MODE: cylc.flow.flags.verbosity > 1
+            TemplateVariables.Workflow.value: workflow,
+            TemplateVariables.UserName.value: user,
+            TemplateVariables.RunDir.value: workflow_run_dir,
+            TemplateVariables.ShareDir.value: workflow_share_dir,
+            TemplateVariables.DebugMode.value: cylc.flow.flags.verbosity > 1,
+            # deprecated
+            TemplateVariables.WorkflowName.value: workflow,
+            TemplateVariables.SuiteName.value: workflow,
+            TemplateVariables.SuiteRunDir.value: workflow,
+            TemplateVariables.SuiteShareDir.value: workflow,
         }
 
         self.proc_pool = proc_pool
@@ -143,37 +241,69 @@ class XtriggerManager:
             label: xtrigger label
             fctx: function context
             fdir: function directory
+
         Raises:
-            ImportError: if the function module was not found
-            AttributeError: if the function was not found in the xtrigger
-                module
-            ValueError: if the function is not callable
-            ValueError: if any string template in the function context
-                arguments are not present in the expected template values.
+            XtriggerConfigError:
+                * If the function module was not found.
+                * If the function was not found in the xtrigger module.
+                * If the function is not callable.
+                * If any string template in the function context
+                  arguments are not present in the expected template values.
+
         """
         fname: str = fctx.func_name
         try:
             func = get_func(fname, fdir)
         except ImportError:
-            raise ImportError(
-                f"ERROR: xtrigger module '{fname}' not found")
+            raise XtriggerConfigError(
+                label,
+                fname,
+                f"xtrigger module '{fname}' not found",
+            )
         except AttributeError:
-            raise AttributeError(
-                f"ERROR: '{fname}' not found in xtrigger module '{fname}'")
+            raise XtriggerConfigError(
+                label,
+                fname,
+                f"'{fname}' not found in xtrigger module '{fname}'",
+            )
         if not callable(func):
-            raise ValueError(
-                f"ERROR: '{fname}' not callable in xtrigger module '{fname}'")
+            raise XtriggerConfigError(
+                label,
+                fname,
+                f"'{fname}' not callable in xtrigger module '{fname}'",
+            )
+
         # Check any string templates in the function arg values (note this
         # won't catch bad task-specific values - which are added dynamically).
+        template_vars = set()
         for argv in fctx.func_args + list(fctx.func_kwargs.values()):
-            try:
-                for match in RE_STR_TMPL.findall(argv):
-                    if match not in ARG_VAL_TEMPLATES:
-                        raise ValueError(
-                            f"Illegal template in xtrigger {label}: {match}")
-            except TypeError:
+            if not isinstance(argv, str):
                 # Not a string arg.
                 continue
+
+            # check template variables are valid
+            for match in RE_STR_TMPL.findall(argv):
+                try:
+                    template_vars.add(TemplateVariables(match))
+                except ValueError:
+                    raise XtriggerConfigError(
+                        label,
+                        fname,
+                        f"Illegal template in xtrigger: {match}",
+                    )
+
+        # check for deprecated template variables
+        deprecated_variables = template_vars & {
+            TemplateVariables.WorkflowName,
+            TemplateVariables.SuiteName,
+            TemplateVariables.SuiteRunDir,
+            TemplateVariables.SuiteShareDir,
+        }
+        if deprecated_variables:
+            LOG.warning(
+                f'Xtrigger "{label}" uses deprecated template variables:'
+                f' {", ".join(t.value for t in deprecated_variables)}'
+            )
 
     def add_trig(self, label: str, fctx: SubFuncContext, fdir: str) -> None:
         """Add a new xtrigger function.
@@ -241,9 +371,9 @@ class XtriggerManager:
             function context
         """
         farg_templ = {
-            TMPL_TASK_CYCLE_POINT: str(itask.point),
-            TMPL_TASK_NAME: str(itask.tdef.name),
-            TMPL_TASK_IDENT: str(itask.identity)
+            TemplateVariables.CyclePoint.value: str(itask.point),
+            TemplateVariables.TaskName.value: str(itask.tdef.name),
+            TemplateVariables.TaskID.value: str(itask.identity)
         }
         farg_templ.update(self.farg_templ)
         ctx = deepcopy(self.functx_map[label])
