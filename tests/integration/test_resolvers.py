@@ -35,7 +35,6 @@ def flow_args():
 @pytest.fixture
 def node_args():
     return {
-        'ghosts': False,
         'workflows': [],
         'exworkflows': [],
         'ids': [],
@@ -114,7 +113,6 @@ async def test_get_nodes_all(mock_flow, node_args):
     node_args['states'].append('failed')
     nodes = await mock_flow.resolvers.get_nodes_all(TASK_PROXIES, node_args)
     assert len(nodes) == 0
-    node_args['ghosts'] = True
     node_args['states'] = []
     node_args['ids'].append(Tokens(mock_flow.node_ids[0]))
     nodes = [
@@ -136,7 +134,6 @@ async def test_get_nodes_by_ids(mock_flow, node_args):
     nodes = await mock_flow.resolvers.get_nodes_by_ids(TASK_PROXIES, node_args)
     assert len(nodes) == 0
 
-    node_args['ghosts'] = True
     node_args['native_ids'] = mock_flow.node_ids
     nodes = [
         n

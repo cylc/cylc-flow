@@ -194,7 +194,10 @@ def node_ids_filter(tokens, state, items) -> bool:
             )
             # match cycle/task/job state
             and (
-                not get_state_from_selectors(item)
+                not (
+                    state
+                    and get_state_from_selectors(item)
+                )
                 or get_state_from_selectors(item) == state
             )
         )
@@ -219,12 +222,10 @@ def node_filter(node, node_type, args):
     state = getattr(node, 'state', None)
     return (
         (
-            args.get('ghosts')
-            or state
-            or node_type in DEF_TYPES
-        )
-        and (
-            not args.get('states')
+            not (
+                state
+                and args.get('states')
+            )
             or state in args['states']
         )
         and not (
