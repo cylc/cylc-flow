@@ -36,6 +36,10 @@ ones in. -->
 [#4777](https://github.com/cylc/cylc-flow/pull/4777) -
 Reinstate the Cylc 7 template variables for xtriggers with deprecation warnings.
 
+[#4720](https://github.com/cylc/cylc-flow/pull/4720) - Fix traceback in
+workflow logs when starting or reloading a workflow with an illegal item
+(e.g. typo) in the config.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc2 (<span actions:bind='release-date'>Released 2022-03-23</span>)__
 
@@ -50,10 +54,6 @@ remote file installation is now configurable.
 provided [wrapper script](https://cylc.github.io/cylc-doc/latest/html/installation.html#managing-environments).
 
 ### Fixes
-
-[#4720](https://github.com/cylc/cylc-flow/pull/4720) - Fix traceback in
-workflow logs when starting or reloading a workflow with an illegal item
-(e.g. typo) in the config.
 
 [#4703](https://github.com/cylc/cylc-flow/pull/4703) - Fix `ImportError` when
 validating/running a Jinja2 workflow (for users who have installed Cylc
