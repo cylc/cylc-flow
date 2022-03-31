@@ -1,0 +1,14 @@
+[scheduler]
+    install = changing-file
+[scheduling]
+    [[graph]]
+        R1 = "a => b => c"
+[runtime]
+    [[a]]
+        script = "cat ${CYLC_WORKFLOW_RUN_DIR}/changing-file"
+        platform = $CYLC_TEST_PLATFORM
+    [[b]]
+        script = """echo goodbye > "${CYLC_WORKFLOW_RUN_DIR}/changing-file"; cylc reload $CYLC_WORKFLOW_ID"""
+    [[c]]
+        script = "cat ${CYLC_WORKFLOW_RUN_DIR}/changing-file"
+        platform = $CYLC_TEST_PLATFORM
