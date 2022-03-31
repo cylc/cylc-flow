@@ -1,48 +1,44 @@
 [meta]
 title = "Try out scenarios for intelligent host selection."
 description = """
-Tasks
-- goodhost: a control to check that everything works
-- mixedhost contains some hosts that will and won't fail
+Runs two long running tasks on a known good platform and on a
+platform with some unreachable hosts.
+
+Once each has started trigger a task which kills each to test the
+execution polling.
 """
-
-[scheduler]
-    [[events]]
-        expected task failures = 1/t1, 1/t2
-
 
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
     [[graph]]
-        # Run good and mixed as controls
         R1 = """
             goodhosttask:start => stop_g
             mixedhosttask:start => stop_m
+            goodhosttask:fail & mixedhosttask:fail
         """
 
 [runtime]
-    [[root]]
-
     [[goodhosttask]]
+        # Sleep for a long time, expect to be killed by stop_g
         script=sleep 120 & echo $! >file; wait
-
         platform = goodhostplatform
 
     [[mixedhosttask]]
+        # Sleep for a long time, expect to be killed by stop_m
         script=sleep 120 & echo $! >file; wait
-
         platform = mixedhostplatform
 
     [[stop_g]]
+        # Kill goodhosttask when polling confirms it's started.
         script="""
             sleep 5  # Give the badhosts list time to empty
             cylc kill "$CYLC_WORKFLOW_ID//1/goodhosttask" || true
         """
 
     [[stop_m]]
+        # Kill mixedhosttask when polling confirms it's started.
         script="""
             sleep 5  # Give the badhosts list time to empty
             cylc kill "$CYLC_WORKFLOW_ID//1/mixedhosttask" || true
-            cylc stop $CYLC_WORKFLOW_ID
         """
