@@ -55,6 +55,7 @@ def test_construct_rsync_over_ssh_cmd():
         '/foo',
         '/bar',
         {
+            'rsync command': 'rsync command',
             'hosts': ['miklegard'],
             'ssh command': 'strange_ssh',
             'selection': {'method': 'definition order'},
@@ -63,7 +64,7 @@ def test_construct_rsync_over_ssh_cmd():
     )
     assert host == 'miklegard'
     assert ' '.join(cmd) == (
-        'rsync --delete --rsh=strange_ssh --include=/.service/ '
+        'rsync command --delete --rsh=strange_ssh --include=/.service/ '
         '--include=/.service/server.key -a --checksum '
         '--out-format=%o %n%L --no-t --exclude=log --exclude=share '
         '--exclude=work --include=/app/*** --include=/bin/*** '

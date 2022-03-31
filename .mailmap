@@ -1,54 +1,54 @@
-Alex Reinecke              <alex.reinecke@nrlmry.navy.mil>
-Alex Reinecke              <alex.reinecke@nrlmry.navy.mil>      P. A. Reinecke      <alex.reinecke@nrlmry.navy.mil>
-Alexander Paulsell         <alexander.paulsell@nrlmry.navy.mil> AlexanderPaulsell   <alexander.paulsell@nrlmry.navy.mil>
-Ben Fitzpatrick            <ben.fitzpatrick@metoffice.gov.uk>   benfitzpatrick      <ben.fitzpatrick@metoffice.gov.uk>
-Bruno Kinoshita            <bruno.kinoshita@niwa.co.nz>
-Bruno Kinoshita            <bruno.kinoshita@niwa.co.nz>
-Bruno Kinoshita            <brunodepaulak@yahoo.com.br>
-Bruno Kinoshita            <kinow@users.noreply.github.com>
-Chandin Wilson             <chandin.wilson@noaa.gov>
-David Matthews             <david.matthews@metoffice.gov.uk>    dpmatthews          <david.matthews@metoffice.gov.uk>
-David Sutherland           <david.sutherland@niwa.co.nz>        David Sutherland    <davidwollow@gmail.com>
+# FORMAT: <proper-name>  <proper-email>  <commit-name>  <commit-email>   
+# Omit commit-name or commit-email if same as proper
+
+Alex Reinecke              <alex.reinecke@nrlmry.navy.mil>      P. A. Reinecke
+Alexander Paulsell         <alexander.paulsell@nrlmry.navy.mil> AlexanderPaulsell
+Ben Fitzpatrick            <ben.fitzpatrick@metoffice.gov.uk>   benfitzpatrick
+Bruno Kinoshita            <kinow@apache.org>                                       <bruno.kinoshita@niwa.co.nz>
+Bruno Kinoshita            <kinow@apache.org>                                       <brunodepaulak@yahoo.com.br>
+Bruno Kinoshita            <kinow@apache.org>                                       <kinow@users.noreply.github.com>
+David Matthews             <david.matthews@metoffice.gov.uk>    dpmatthews
+David Sutherland           <david.sutherland@niwa.co.nz>                            <davidwollow@gmail.com>
 David Sutherland           <david.sutherland@niwa.co.nz>        sutherlander        <davidwollow@gmail.com>
-Declan Valters             <declan.valters@ed.ac.uk>            Declan Valters      <declan.valters@metoffice.gov.uk>
-Declan Valters             <declan.valters@ed.ac.uk>            Declan Valters      <dvalters@users.noreply.github.com>
-Hilary Oliver              <h.oliver@niwa.co.nz>
-Hilary Oliver              <hilary.j.oliver@gmail.com>
-Hilary Oliver              <hilary.j.oliver@gmail.com>
-Hilary Oliver              <hilary.oliver@niwa.co.nz>
-Hilary Oliver              <hilary@Megan-Olivers-MacBook-Pro.local>
-Hilary Oliver              <hilary@localhost.localdomain>
-Hilary Oliver              <holiver@eld084.desktop.frd.metoffice.com>
-Ivor Blockley              <ivor.blockley@bom.gov.au>           Ivor Blockley       <ivorblockley@users.noreply.github.com>
-Jonathan Thomas            <jonathan.thomas@bom.gov.au>         Jonathan Thomas     <jonty_q@yahoo.com.sg>
-Jonathan Thomas            <jonathan.thomas@bom.gov.au>         Jonathan Thomas     <jthomas@dev-laptop14.bom.gov.au>
-Jonny Williams             <jonny.williams@niwa.co.nz>          williamsjh          <jonny.williams@niwa.co.nz>
-Kerry Day                  <kerry.day@metoffice.gov.uk>         Kerry Day           <kaday@users.noreply.github.com>
+Declan Valters             <declan.valters@ed.ac.uk>                                <declan.valters@metoffice.gov.uk>
+Declan Valters             <declan.valters@ed.ac.uk>                                <dvalters@users.noreply.github.com>
+Hilary Oliver              <hilary.j.oliver@gmail.com>                              <h.oliver@niwa.co.nz>
+Hilary Oliver              <hilary.j.oliver@gmail.com>                              <hilary.oliver@niwa.co.nz>
+Hilary Oliver              <hilary.j.oliver@gmail.com>                              <hilary@Megan-Olivers-MacBook-Pro.local>
+Hilary Oliver              <hilary.j.oliver@gmail.com>                              <hilary@localhost.localdomain>
+Hilary Oliver              <hilary.j.oliver@gmail.com>                              <holiver@eld084.desktop.frd.metoffice.com>
+Hilary Oliver              <hilary.j.oliver@gmail.com>          Hilary James Oliver
+Ivor Blockley              <ivor.blockley@bom.gov.au>                               <ivorblockley@users.noreply.github.com>
+Jonathan Thomas            <jonathan.thomas@bom.gov.au>                             <jonty_q@yahoo.com.sg>
+Jonathan Thomas            <jonathan.thomas@bom.gov.au>                             <jthomas@dev-laptop14.bom.gov.au>
+Jonny Williams             <jonny.williams@niwa.co.nz>          williamsjh
+Kerry Day                  <kerry.day@metoffice.gov.uk>                             <kaday@users.noreply.github.com>
 Kerry Day                  <kerry.day@metoffice.gov.uk>         kaday               <kerry.day@metoffice.gov.uk>
-Lois Huggett               <lois.huggett@metoffice.gov.uk>      lhuggett            <lois.huggett@metoffice.gov.uk>
-Luis Kornblueh             <luis.kornblueh@zmaw.de>             Luis Kornblueh      <m214089@cinglung.fritz.box>
-Martin Dix                 <martin.dix@csiro.au>                MartinDix           <martin.dix@csiro.au>
-Martin Ryan                <martin.ryan@bom.gov.au>             Martin Ryan         <MartinRyan@users.noreply.github.com>
-Martin Ryan                <martin.ryan@bom.gov.au>             Martin Ryan         <martynmryan@gmail.com>
-Matt Shin                  <matthew.shin@metoffice.gov.uk>      Matt Shin           <matthewrmshin@gmail.com>
-Matt Shin                  <matthew.shin@metoffice.gov.uk>      Matt Shin           <matthewrmshin@yahoo.co.uk>
-Matt Shin                  <matthew.shin@metoffice.gov.uk>      matthew.shin        <matthew.shin@metoffice.gov.uk>
-Matt Shin                  <matthew.shin@metoffice.gov.uk>      matthewrmshin       <matthew.shin@metoffice.gov.uk>
+Lois Huggett               <lois.huggett@metoffice.gov.uk>      lhuggett
+Luis Kornblueh             <luis.kornblueh@zmaw.de>                                 <m214089@cinglung.fritz.box>
+Martin Dix                 <martin.dix@csiro.au>                MartinDix
+Martin Ryan                <martin.ryan@bom.gov.au>                                 <MartinRyan@users.noreply.github.com>
+Martin Ryan                <martin.ryan@bom.gov.au>                                 <martynmryan@gmail.com>
+Matt Shin                  <matthew.shin@metoffice.gov.uk>                          <matthewrmshin@gmail.com>
+Matt Shin                  <matthew.shin@metoffice.gov.uk>                          <matthewrmshin@yahoo.co.uk>
+Matt Shin                  <matthew.shin@metoffice.gov.uk>      matthew.shin
+Matt Shin                  <matthew.shin@metoffice.gov.uk>      matthewrmshin
 Matt Shin                  <matthew.shin@metoffice.gov.uk>      matthewrmshin       <matthewrmshin@yahoo.co.uk>
-Mel Hall                   <37735232+datamel@users.noreply.github.com>
-Oliver Sanders             <oliver.sanders@metoffice.gov.uk>    Oliver sanders      <oliver.sanders@metoffice.gov.uk>
-Prasanna Challuri          <Prasanna.Challuri@niwa.co.nz>       challurip           <Prasanna.Challuri@niwa.co.nz>
-Ronnie Dutta               <61982285+MetRonnie@users.noreply.github.com>
-Rosalyn Hatcher            <r.s.hatcher@reading.ac.uk>          RosalynHatcher      <r.s.hatcher@reading.ac.uk>
-Sadie Bartholomew          <sadie.bartholomew@metoffice.gov.uk> Sadie Bartholomew   <30274190+sadielbartholomew@users.noreply.github.com>
+Mel Hall                   <mel.hall@metoffice.gov.uk>                              <37735232+datamel@users.noreply.github.com>
+Oliver Sanders             <oliver.sanders@metoffice.gov.uk>    Oliver sanders
+Prasanna Challuri          <Prasanna.Challuri@niwa.co.nz>       challurip
+Ronnie Dutta               <ronnie.dutta@metoffice.gov.uk>                          <61982285+MetRonnie@users.noreply.github.com>
+Rosalyn Hatcher            <r.s.hatcher@reading.ac.uk>          RosalynHatcher
+Sadie Bartholomew          <sadie.bartholomew@metoffice.gov.uk>                     <30274190+sadielbartholomew@users.noreply.github.com>
 Sadie Bartholomew          <sadie.bartholomew@metoffice.gov.uk> Sadie L. Bartholomew <30274190+sadielbartholomew@users.noreply.github.com>
 Sadie Bartholomew          <sadie.bartholomew@metoffice.gov.uk> sadielbartholomew   <vagrant@vagrant.vm>
 Thomas Coleman             <thomas.coleman@bom.gov.au>          ColemanTom          <igenous@gmail.com>
 Thomas Coleman             <thomas.coleman@bom.gov.au>          Tom Coleman         <thomas.james.coleman@gmail.com>
-Tim Pillinger              <tim.pillinger@metoffice.gov.uk>     wxtim               <tim.pillinger@metoffice.gov.uk>
-Tim Pillinger              <26465611+wxtim@users.noreply.github.com>
-Tim Whitcomb               <tim.whitcomb@nrlmry.navy.mil>       Tim Whitcomb        <twhitcomb@gmail.com>
+Tim Pillinger              <tim.pillinger@metoffice.gov.uk>     wxtim
+Tim Pillinger               <tim.pillinger@metoffice.gov.uk>                        <26465611+wxtim@users.noreply.github.com>
+Tim Whitcomb               <tim.whitcomb@nrlmry.navy.mil>                           <twhitcomb@gmail.com>
 Tim Whitcomb               <tim.whitcomb@nrlmry.navy.mil>       trwhitcomb          <twhitcomb@gmail.com>
-Tomek Trzeciak             <tomasz.trzeciak@metoffice.gov.uk>   Tomek Trzeciak      <TomekTrzeciak@users.noreply.github.com>
+Tomek Trzeciak             <tomasz.trzeciak@metoffice.gov.uk>                       <TomekTrzeciak@users.noreply.github.com>
 Tomek Trzeciak             <tomasz.trzeciak@metoffice.gov.uk>   TomekTrzeciak       <tomasz.trzeciak@metoffice.gov.uk>
-github-actions[bot]        <41898282+github-actions[bot]@users.noreply.github.com>
+github-actions[bot]        <github-actions@noreply.github.com>                      <41898282+github-actions[bot]@users.noreply.github.com> 
+github-actions[bot]        <github-actions@noreply.github.com>  GitHub Action

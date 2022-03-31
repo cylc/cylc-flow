@@ -67,8 +67,7 @@ class WorkflowEventHandler():
             ]
         value = None
         for getter in getters:
-            if key in getter:
-                value = getter[key]
+            value = getter.get(key)
             if value is not None:
                 return value
         return default

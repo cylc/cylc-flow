@@ -466,10 +466,8 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
 
     Raises:
         CylcError:
-            * If it is not possible to tell for sure if the workflow is running
-              or not.
-            * If the workflow is not, however, the contact file cannot be
-              removed.
+            If it is not possible to tell for sure if the workflow is running
+            or not.
         ServiceFileError(CylcError):
             If old contact file exists and the workflow process still alive.
 
@@ -513,15 +511,21 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
         # ... the process isn't running so the contact file is out of date
         # remove it
         try:
-            LOG.info(
-                f'Removing contact file for {reg}'
-                ' (workflow no longer running).'
-            )
             os.unlink(fname)
-            return
+        except FileNotFoundError:
+            # contact file has been removed by another process
+            # (likely by another cylc client, no problem, safe to ignore)
+            pass
         except OSError as exc:
-            raise CylcError(
-                f'Failed to remove old contact file: "{fname}"\n{exc}'
+            # unexpected error removing the contact file
+            # (note the FileNotFoundError incorporated errno.ENOENT)
+            LOG.error(
+                f'Failed to remove contact file for {reg}:\n{exc}'
+            )
+        else:
+            LOG.info(
+                f'Removed contact file for {reg}'
+                ' (workflow no longer running).'
             )
 
 
@@ -1259,15 +1263,14 @@ def infer_latest_run(
         return (path, reg)
     if not runN_path.is_symlink() or not runN_path.is_dir():
         raise WorkflowFilesError(
-            f"runN directory at {runN_path} is a broken or invalid symlink"
+            f"{runN_path} symlink not valid"
         )
     numbered_run = os.readlink(str(runN_path))
     if not re.match(r'run\d+$', numbered_run):
         # Note: the link should be relative. This means it won't work for
         # cylc 8.0b1 workflows where it was absolute (won't fix).
         raise WorkflowFilesError(
-            f"runN symlink at {runN_path} points to invalid location: "
-            f"{numbered_run}"
+            f"{runN_path} symlink target not valid: {numbered_run}"
         )
     path = runN_path.parent / numbered_run
     reg = path.relative_to(cylc_run_dir)

@@ -314,7 +314,7 @@ def test_infer_latest_run__bad(
     run_dir = cylc_run_dir / 'sulu'
     run_dir.mkdir()
     runN_path = run_dir / 'runN'
-    err_msg = f"runN directory at {runN_path} is a broken or invalid symlink"
+    err_msg = f"{runN_path} symlink not valid"
     if reason == 'not dir':
         (run_dir / 'run1').touch()
         runN_path.symlink_to('run1')
@@ -326,8 +326,7 @@ def test_infer_latest_run__bad(
         (run_dir / 'palpatine').mkdir()
         runN_path.symlink_to('palpatine')
         err_msg = (
-            f"runN symlink at {runN_path} points to invalid "
-            "location: palpatine"
+            f"{runN_path} symlink target not valid: palpatine"
         )
     else:
         raise ValueError(reason)

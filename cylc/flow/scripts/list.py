@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -48,7 +48,6 @@ def get_option_parser():
         __doc__,
         jset=True,
         prep=True,
-        icp=True,
         argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
     )
 
@@ -90,6 +89,8 @@ def get_option_parser():
         "are optional and STOP can be an interval from START (or from the "
         "initial cycle point, by default). Use '-p , ' for the default range.",
         metavar="[START],[STOP]", action="store", default=None, dest="prange")
+
+    parser.add_option(icp_option)
 
     parser.add_cylc_rose_options()
     return parser

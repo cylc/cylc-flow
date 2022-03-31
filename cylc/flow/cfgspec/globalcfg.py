@@ -96,6 +96,9 @@ PLATFORM_META_DESCR = '''
 EVENTS_DESCR = {
     'startup handlers': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]startup handlers`.
+
         Handlers to run at scheduler startup.
 
         .. versionchanged:: 8.0.0
@@ -106,6 +109,9 @@ EVENTS_DESCR = {
     ),
     'shutdown handlers': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]shutdown handlers`.
+
         Handlers to run at scheduler shutdown.
 
         .. versionchanged:: 8.0.0
@@ -116,6 +122,8 @@ EVENTS_DESCR = {
     ),
     'abort handlers': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc[scheduler][events]abort handlers`.
+
         Handlers to run if the scheduler aborts.
 
         .. versionchanged:: 8.0.0
@@ -125,6 +133,9 @@ EVENTS_DESCR = {
     ),
     'workflow timeout': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]workflow timeout`.
+
         Workflow timeout interval. The timer starts counting down at scheduler
         startup. It resets on workflow restart.
 
@@ -135,6 +146,9 @@ EVENTS_DESCR = {
     ),
     'workflow timeout handlers': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]workflow timeout handlers`.
+
         Handlers to run if the workflow timer times out.
 
         .. versionadded:: 8.0.0
@@ -144,6 +158,9 @@ EVENTS_DESCR = {
     ),
     'abort on workflow timeout': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]abort on workflow timeout`.
+
         Whether to abort if the workflow timer times out.
 
         .. versionadded:: 8.0.0
@@ -153,6 +170,8 @@ EVENTS_DESCR = {
     ),
     'stall handlers': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc[scheduler][events]stall handlers`.
+
         Handlers to run if the scheduler stalls.
 
         .. versionchanged:: 8.0.0
@@ -162,13 +181,9 @@ EVENTS_DESCR = {
     ),
     'stall timeout': (
         f'''
-        The length of a timer which starts if the scheduler stalls.
+        :Default For: :cylc:conf:`flow.cylc[scheduler][events]stall timeout`.
 
-        A workflow will stall if there are no tasks ready to run and no
-        waiting external triggers, but the presence of incomplete
-        tasks or unsatisfied prerequisites shows the workflow did not run to
-        completion. The stall timer turns off on any post-stall task activity.
-        It resets on restarting a stalled workflow.
+        The length of a timer which starts if the scheduler stalls.
 
         .. versionadded:: 8.0.0
 
@@ -177,6 +192,9 @@ EVENTS_DESCR = {
     ),
     'stall timeout handlers': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]stall timeout handlers`.
+
         Handlers to run if the stall timer times out.
 
         .. versionadded:: 8.0.0
@@ -186,6 +204,9 @@ EVENTS_DESCR = {
     ),
     'abort on stall timeout': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]abort on stall timeout`.
+
         Whether to abort if the stall timer times out.
 
         .. versionadded:: 8.0.0
@@ -195,6 +216,9 @@ EVENTS_DESCR = {
     ),
     'inactivity timeout': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]inactivity timeout`.
+
         Scheduler inactivity timeout interval. The timer resets when any
         workflow activity occurs.
 
@@ -205,6 +229,9 @@ EVENTS_DESCR = {
     ),
     'inactivity timeout handlers': (
         f'''
+        :Default For: :cylc:conf:`flow.cylc \
+        [scheduler][events]inactivity timeout handlers`.
+
         Handlers to run if the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
@@ -214,6 +241,9 @@ EVENTS_DESCR = {
     ),
     'abort on inactivity timeout': (
         f'''
+        :Default For; :cylc:conf:`flow.cylc \
+        [scheduler][events]abort on inactivity timeout`.
+
         Whether to abort if the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
@@ -228,7 +258,7 @@ with Conf('global.cylc', desc='''
     The global configuration which defines default Cylc Flow settings
     for a user or site.
 
-    To view your global config, run:
+    To view your global config, run::
 
        $ cylc config
 
@@ -292,8 +322,7 @@ with Conf('global.cylc', desc='''
        is no longer supported.
 ''') as SPEC:
     with Conf('scheduler', desc=f'''
-        Default values for entries in :cylc:conf:`flow.cylc[scheduler]`
-        section.
+        :Defaults For: :cylc:conf:`flow.cylc[scheduler]`
 
         .. versionchanged:: 8.0.0
 
@@ -305,7 +334,7 @@ with Conf('global.cylc', desc='''
            :cylc:conf:`flow.cylc[scheduling]`.
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, False, desc='''
-            Default for :cylc:conf:`flow.cylc[scheduler]UTC mode`.
+            :Default For: :cylc:conf:`flow.cylc[scheduler]UTC mode`.
         ''')
         Conf('process pool size', VDR.V_INTEGER, 4, desc='''
             Maximum number of concurrent processes used to execute external job
@@ -453,7 +482,7 @@ with Conf('global.cylc', desc='''
                    cpu_percent() < 70
 
                    # filter out hosts with less than 1GB of RAM available
-                   virtual_memory.available > 1000000000
+                   virtual_memory().available > 1000000000
 
                    # filter out hosts with less than 1GB of disk space
                    # available on the "/" mount
@@ -542,11 +571,20 @@ with Conf('global.cylc', desc='''
             ''')
 
         with Conf('events', desc='''
-            Define site defaults for :cylc:conf:`flow.cylc[scheduler][events]`.
+            :Defaults For: :cylc:conf:`flow.cylc[scheduler][events]`.
         '''):
-            Conf('handlers', VDR.V_STRING_LIST)
-            Conf('handler events', VDR.V_STRING_LIST)
-            Conf('mail events', VDR.V_STRING_LIST)
+            Conf('handlers', VDR.V_STRING_LIST, desc='''
+                :Default For: :cylc:conf:`flow.cylc \
+                [scheduler][events]handlers`.
+            ''')
+            Conf('handler events', VDR.V_STRING_LIST, desc='''
+                :Default For: :cylc:conf:`flow.cylc \
+                [scheduler][events]handler events`.
+            ''')
+            Conf('mail events', VDR.V_STRING_LIST, desc='''
+                Default for :cylc:conf:`flow.cylc \
+                [scheduler][events]mail events`.
+            ''')
 
             for item, desc in EVENTS_DESCR.items():
                 if item.endswith("handlers"):
@@ -565,23 +603,30 @@ with Conf('global.cylc', desc='''
                     Conf(item, VDR.V_INTERVAL, def_intv, desc=desc)
 
         with Conf('mail', desc=f'''
+            :Defaults For: :cylc:conf:`flow.cylc[scheduler][mail]`.
+
             Options for email handling.
 
             .. versionchanged:: 8.0.0
 
                {REPLACES}``[cylc][events]mail <item>``.
         '''):
-            Conf('from', VDR.V_STRING)
+            Conf('from', VDR.V_STRING, desc='''
+                :Default For: :cylc:conf:`flow.cylc[scheduler][mail]from`.
+            ''')
             Conf('smtp', VDR.V_STRING)
-            Conf('to', VDR.V_STRING)
-            Conf('footer', VDR.V_STRING)
+            Conf('to', VDR.V_STRING, desc='''
+                :Default For: :cylc:conf:`flow.cylc[scheduler][mail]to`.
+            ''')
+            Conf('footer', VDR.V_STRING, desc='''
+                :Default For: :cylc:conf:`flow.cylc[scheduler][mail]footer`.
+            ''')
             Conf(
                 'task event batch interval',
                 VDR.V_INTERVAL,
                 DurationFloat(300),
                 desc='''
-                    Default for
-                    :cylc:conf:`flow.cylc
+                    :Default For: :cylc:conf:`flow.cylc \
                     [scheduler][mail]task event batch interval`
 
                     .. versionchanged:: 8.0.0
@@ -592,6 +637,8 @@ with Conf('global.cylc', desc='''
             )
 
         with Conf('main loop', desc='''
+            :Defaults For: :cylc:conf:`flow.cylc[scheduler][main loop]`.
+
             Configuration of the Cylc Scheduler's main loop.
 
             .. versionadded:: 8.0.0
@@ -609,6 +656,9 @@ with Conf('global.cylc', desc='''
                 Configure a main loop plugin.
             ''') as MainLoopPlugin:
                 Conf('interval', VDR.V_INTERVAL, desc='''
+                    :Default For: :cylc:conf:`flow.cylc \
+                    [scheduler][main loop][<plugin name>]interval`.
+
                     The interval with which this plugin is run.
 
                     .. versionadded:: 8.0.0
@@ -986,6 +1036,13 @@ with Conf('global.cylc', desc='''
                 under another user account.  The value is assumed to be ``ssh``
                 with some initial options or a command that implements a
                 similar interface to ``ssh``.
+            ''')
+            Conf('rsync command',
+                 VDR.V_STRING,
+                 'rsync',
+                 desc='''
+                Command used for remote file installation. This supports POSIX
+                compliant rsync implementation e.g. GNU or BSD.
             ''')
             Conf('use login shell', VDR.V_BOOLEAN, True, desc='''
                 Whether to use a login shell or not for remote command

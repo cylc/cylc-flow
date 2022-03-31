@@ -32,7 +32,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
@@ -116,7 +116,7 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
 
 def get_option_parser():
     parser = COP(
-        __doc__, jset=True, prep=True, icp=True,
+        __doc__, jset=True, prep=True,
         argdoc=[
             ('WORKFLOW_ID_1', 'Workflow ID or path to source'),
             ('WORKFLOW_ID_2', 'Workflow ID or path to source')
@@ -126,7 +126,10 @@ def get_option_parser():
     parser.add_option(
         "-n", "--nested",
         help="print flow.cylc section headings in nested form.",
-        action="store_true", default=False, dest="nested")
+        action="store_true", default=False, dest="nested"
+    )
+
+    parser.add_option(icp_option)
 
     return parser
 

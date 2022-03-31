@@ -17,7 +17,6 @@
 
 import os
 import logging
-import pkg_resources
 
 
 CYLC_LOG = 'cylc'
@@ -50,15 +49,16 @@ def environ_init():
 
 environ_init()
 
-__version__ = '8.0rc2.dev'
+__version__ = '8.0rc3.dev'
 
 
 def iter_entry_points(entry_point_name):
     """Iterate over Cylc entry points."""
+    import pkg_resources
     yield from (
         entry_point
         for entry_point in pkg_resources.iter_entry_points(entry_point_name)
-        # filter out the cylc namespace as it should be empty
-        # all cylc packages should take the form cylc-<name>
+        # Filter out the cylc namespace as it should be empty.
+        # All cylc packages should take the form cylc-<name>
         if entry_point.dist.key != 'cylc'
     )

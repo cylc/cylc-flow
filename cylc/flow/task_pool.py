@@ -68,7 +68,7 @@ if TYPE_CHECKING:
     from cylc.flow.taskdef import TaskDef
     from cylc.flow.task_events_mgr import TaskEventsManager
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-    from cylc.flow.flow_mgr import FlowMgr
+    from cylc.flow.flow_mgr import FlowMgr, FlowNums
 
 Pool = Dict['PointBase', Dict[str, TaskProxy]]
 
@@ -244,19 +244,17 @@ class TaskPool:
 
         # At restart all tasks are runahead-limited but finished and manually
         # triggered tasks (incl. --start-task's) can be released immediately.
-        for itask in (
-            itask
-            for itask in self.get_tasks()
-            if itask.state.is_runahead
-            if itask.state(
-                TASK_STATUS_FAILED,
-                TASK_STATUS_SUCCEEDED,
-                TASK_STATUS_EXPIRED
-            )
-            or itask.is_manual_submit
-        ):
-            self.release_runahead_task(itask)
-            released = True
+        for itask in self.get_tasks():
+            if itask.state.is_runahead and (
+                itask.state(
+                    TASK_STATUS_FAILED,
+                    TASK_STATUS_SUCCEEDED,
+                    TASK_STATUS_EXPIRED
+                )
+                or itask.is_manual_submit
+            ):
+                self.release_runahead_task(itask)
+                released = True
 
         runahead_limit_point = self.compute_runahead()
         if not runahead_limit_point:
@@ -581,11 +579,7 @@ class TaskPool:
                     not next_task.flow_nums
                     and not next_task.state.is_runahead
                 )
-                next_task.merge_flows(itask.flow_nums)
-                LOG.info(
-                    f"[{next_task}] merged in flow(s) "
-                    f"{','.join(str(f) for f in itask.flow_nums)}"
-                )
+                self.merge_flows(next_task, itask.flow_nums)
                 if retroactive_spawn:
                     # Did not belong to a flow (force-triggered) before merge.
                     # Now it does, so spawn successor, and children if needed.
@@ -717,17 +711,19 @@ class TaskPool:
 
         return point_itasks
 
-    def _get_hidden_task_by_id(self, id_):
+    def _get_hidden_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return runahead pool task by ID if it exists, or None."""
         for itask_ids in list(self.hidden_pool.values()):
             with suppress(KeyError):
                 return itask_ids[id_]
+        return None
 
-    def _get_main_task_by_id(self, id_):
+    def _get_main_task_by_id(self, id_: str) -> Optional[TaskProxy]:
         """Return main pool task by ID if it exists, or None."""
         for itask_ids in list(self.main_pool.values()):
             with suppress(KeyError):
                 return itask_ids[id_]
+        return None
 
     def queue_task(self, itask: TaskProxy) -> None:
         """Queue a task that is ready to run."""
@@ -1173,15 +1169,7 @@ class TaskPool:
             )
             if c_task is not None:
                 # Child already exists, update it.
-                if not c_task.flow_nums:
-                    # Child does not belong to a flow (force-triggered). Now
-                    # (merging) it does, so spawn outputs completed so far.
-                    self.spawn_on_all_outputs(c_task, completed_only=True)
-                c_task.merge_flows(itask.flow_nums)
-                LOG.info(
-                    f"[{c_task}] merged in flow(s) "
-                    f"{','.join(str(f) for f in itask.flow_nums)}"
-                )
+                self.merge_flows(c_task, itask.flow_nums)
                 self.workflow_db_mgr.put_insert_task_states(
                     c_task,
                     {
@@ -1253,7 +1241,9 @@ class TaskPool:
             if itask.identity == self.stop_task_id:
                 self.stop_task_finished = True
 
-    def spawn_on_all_outputs(self, itask, completed_only=False):
+    def spawn_on_all_outputs(
+        self, itask: TaskProxy, completed_only: bool = False
+    ) -> None:
         """Spawn on all (or all completed) task outputs.
 
         If completed_only is False:
@@ -1289,18 +1279,20 @@ class TaskPool:
                 if c_task is not None:
                     # already spawned
                     continue
-                # Spawn child only if itask.flow_nums is not empty.
                 c_task = self.spawn_task(c_name, c_point, itask.flow_nums)
+                if c_task is None:
+                    # not spawnable
+                    continue
                 if completed_only:
                     c_task.state.satisfy_me({
                         (str(itask.point), itask.tdef.name, output)
                     })
                     self.data_store_mgr.delta_task_prerequisite(c_task)
-
                 self.add_to_pool(c_task)
 
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
-        """Return True if name.point is within various workflow limits."""
+        """Return True if the task with the given name & point is within
+        various workflow limits."""
         if name not in self.config.get_task_name_list():
             LOG.debug('No task definition %s', name)
             return False
@@ -1776,3 +1768,34 @@ class TaskPool:
                     n_warnings += 1
                     continue
         return n_warnings, task_items
+
+    def merge_flows(self, itask: TaskProxy, flow_nums: 'FlowNums') -> None:
+        """Merge itask.flow_nums with flow_nums.
+
+        This also performs required spawning / state changing for edge cases.
+        """
+        # case 1: task has finished with incomplete outputs
+        # (we reset it to waiting and re-queue so it can run again as a task
+        # with complete outputs would)
+        if (
+            itask.state(*TASK_STATUSES_FINAL)
+            and itask.state.outputs.get_incomplete()
+        ):
+            itask.state_reset(TASK_STATUS_WAITING)
+            if not itask.state.is_queued:
+                self.queue_task(itask)
+            self.data_store_mgr.delta_task_state(itask)
+
+        # case 2: task does not belong to a flow (force-triggered no-flow).
+        # (we spawn the outputs complete so far to allow the flow to continue
+        # post merge)
+        # (note we don't do this if case 1 also applies)
+        elif not itask.flow_nums:
+            self.spawn_on_all_outputs(itask, completed_only=True)
+
+        # merge the flows
+        itask.merge_flows(flow_nums)
+        LOG.info(
+            f"[{itask}] merged in flow(s) "
+            f"{','.join(str(f) for f in itask.flow_nums)}"
+        )

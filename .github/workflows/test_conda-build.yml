@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'conda-environment.yml'
+      - '.github/workflows/test_conda-build.yml'
   schedule:
     - cron: '17 22 * * 6'
   workflow_dispatch:
@@ -14,23 +15,35 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: checkout cylc-flow
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: build conda env
         run: |
-            # The appended lines make sure that we actually build with Cylc
-            # too:
-            echo "  - pip" >> conda-evironment.yml
-            echo "  - pip": >> conda-environment.yml
-            echo "    - ." >> conda-environment.yml
-            cat conda-environment.yml
-            conda env create \
-              -f conda-environment.yml
-            . /usr/share/miniconda/etc/profile.d/conda.sh
+          # write environment file
+          env_file='conda-environment.yml'
+          echo "  - pip"  >> "$env_file"  # list pip as a dependency
+          echo "  - pip:" >> "$env_file"  # add a pip section
+          echo "    - ."  >> "$env_file"  # install cylc-flow (pip install .)
+          cat "$env_file"
+          # install environment
+          conda env create \
+            -f "$env_file" \
+            --prefix cylc-dev
+          . /usr/share/miniconda/etc/profile.d/conda.sh
+          # check cylc-flow was installed correctly
+          conda run --prefix cylc-dev cylc version --long
 
-      - name: check cylc-version
+      - name: check for activate scripts
         run: |
-          find /usr/share/miniconda/envs/cylc-dev/. -name "activate.d" | tee > activates.txt
+          # https://github.com/cylc/cylc-flow/issues/3704#issuecomment-897442365
+          # locate all activate scripts
+          find ./cylc-dev/ -name "activate.d" | tee > activates.txt
+          # ignore the conda activate script itself
+          sed -i '/cylc-dev\/etc\/conda\/activate.d/d' activates.txt
+          # check to make sure no packages have contributed new activate scripts
+          # (we rely on having a conda activate-less environment)
           if [[ $(cat activates.txt | wc -l) -ne 0 ]]; then
+              echo '::error::Found activate scripts in installation.'
+              cat activates.txt >&2
               exit 1
           fi

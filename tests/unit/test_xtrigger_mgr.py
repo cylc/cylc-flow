@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.cycling.iso8601 import ISO8601Point, ISO8601Sequence, init
+from cylc.flow.exceptions import XtriggerConfigError
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.taskdef import TaskDef
@@ -82,8 +85,23 @@ def test_add_xtrigger_with_unknown_params(xtrigger_mgr):
         func_args=[1, "name", "%(what_is_this)s"],
         func_kwargs={"location": "soweto"}
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(XtriggerConfigError):
         xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
+
+
+def test_add_xtrigger_with_deprecated_params(xtrigger_mgr, caplog):
+    """It should flag deprecated template variables."""
+    xtrig = SubFuncContext(
+        label="echo",
+        func_name="echo",
+        func_args=[1, "name", "%(suite_name)s"],
+        func_kwargs={"location": "soweto"}
+    )
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    xtrigger_mgr.add_trig("xtrig", xtrig, 'fdir')
+    assert caplog.messages == [
+        'Xtrigger "xtrig" uses deprecated template variables: suite_name'
+    ]
 
 
 def test_load_xtrigger_for_restart(xtrigger_mgr):

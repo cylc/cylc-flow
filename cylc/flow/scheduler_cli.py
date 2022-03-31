@@ -34,14 +34,15 @@ from cylc.flow.loggingutil import (
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
-    Options
+    Options,
+    icp_option,
 )
 from cylc.flow.pathutil import (
     get_workflow_run_log_name,
     get_workflow_file_install_log_name)
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
-from cylc.flow.scripts import cylc_header
+from cylc.flow.scripts.common import cylc_header
 from cylc.flow.workflow_files import (
     detect_old_contact_file,
     SUITERC_DEPR_MSG
@@ -113,7 +114,6 @@ def get_option_parser(add_std_opts=False):
     """Parse CLI for "cylc play"."""
     parser = COP(
         PLAY_DOC,
-        icp=True,
         jset=True,
         comms=True,
         argdoc=[WORKFLOW_NAME_ARG_DOC])
@@ -126,6 +126,8 @@ def get_option_parser(add_std_opts=False):
     parser.add_option(
         "--profile", help="Output profiling (performance) information",
         action="store_true", dest="profile_mode")
+
+    parser.add_option(icp_option)
 
     parser.add_option(
         "--start-cycle-point", "--startcp",
@@ -162,12 +164,15 @@ def get_option_parser(add_std_opts=False):
 
     parser.add_option(
         "--start-task", "--starttask", "-t",
-        help="Start from this task instance. Can be used multiple times "
-        "to start from multiple tasks at once. Dependence on tasks with "
-        "with cycle points earlier than the earliest start-task will be "
-        "ignored. A sub-graph of the workflow will run if selected tasks "
-        "do not lead on to the full graph.",
-        metavar="NAME.CYCLE_POINT", action="append", dest="starttask")
+        help=(
+            "Start from this task instance, given by '<cycle>/<name>'. "
+            "Can be used multiple times "
+            "to start from multiple tasks at once. Dependence on tasks with "
+            "with cycle points earlier than the earliest start-task will be "
+            "ignored. A sub-graph of the workflow will run if selected tasks "
+            "do not lead on to the full graph."
+        ),
+        metavar="TASK_ID", action="append", dest="starttask")
 
     parser.add_option(
         "--pause",

@@ -797,7 +797,7 @@ with Conf(
 
                 Example::
 
-                   ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
             ''')
 
         with Conf('graph', desc=f'''
@@ -1103,7 +1103,7 @@ with Conf(
                 behavior between submission attempts.
             ''')
             Conf('execution time limit', VDR.V_INTERVAL, desc='''
-                Set the execution (:term:`wall-clock <wall-clock time>`) time
+                Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a task job.
 
                 For ``background`` and ``at`` job runners Cylc invokes the

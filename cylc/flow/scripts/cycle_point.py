@@ -19,7 +19,9 @@
 
 """cylc cycle-point [OPTIONS] ARGS
 
-Utility for date-time cycle point arithmetic.
+Utility for simple date-time cycle point arithmetic.
+
+For more generic date-time manipulations see the "isodatetime" command.
 
 Filename templating replaces elements of a template string with corresponding
 elements of the current or given cycle point.

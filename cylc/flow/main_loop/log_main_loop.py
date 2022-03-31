@@ -27,7 +27,7 @@ from collections import deque
 import json
 from pathlib import Path
 
-from cylc.flow.main_loop import (startup, shutdown)
+from cylc.flow.main_loop import startup, shutdown
 
 try:
     import matplotlib
@@ -40,47 +40,45 @@ except ModuleNotFoundError:
 
 @startup
 async def init(scheduler, _):
-    """Patch the timings for each plugin to use an unlimited deque."""
-    for state in scheduler.main_loop_plugins['state'].values():
-        state['timings'] = deque()
+    """Override default queue length of 1.
+
+    This allows timings to accumulate, normally only the most recent is kept.
+    """
+    plugins = scheduler.main_loop_plugins
+    for plugin in plugins['timings']:
+        plugins['timings'][plugin] = deque()
 
 
 @shutdown
 async def report(scheduler, _):
     """Extract plugin function timings."""
-    data = _transpose(scheduler.main_loop_plugins['state'])
-    data = _normalise(data)
-    _plot(data, scheduler.workflow_run_dir)
-
-
-def _transpose(all_states):
-    return {
-        plugin: tuple(zip(*state['timings']))
-        for plugin, state
-        in all_states.items()
-        if state['timings']
-    }
+    data = scheduler.main_loop_plugins['timings']
+    if data:
+        data = _normalise(data)
+        _dump(data, scheduler.workflow_run_dir)
+        _plot(data, scheduler.workflow_run_dir)
 
 
 def _normalise(data):
     earliest_time = min((
-        time
-        for _, (times, _) in data.items()
-        for time in times
+        start_time
+        for _, timings in data.items()
+        for start_time, duration in timings
     ))
     return {
-        plugin_name: (
-            tuple((time - earliest_time for time in times)),
-            y_data
-        )
-        for plugin_name, (times, y_data) in data.items()
+        plugin_name: [
+            (start_time - earliest_time, duration)
+            for start_time, duration in timings
+        ]
+        for (plugin_name, _), timings in data.items()
     }
 
 
 def _dump(data, path):
     json.dump(
         data,
-        Path(path, f'{__name__}.json').open('w+')
+        Path(path, f'{__name__}.json').open('w+'),
+        indent=4
     )
     return True
 
@@ -93,7 +91,12 @@ def _plot(data, path):
     ax1.set_xlabel('Workflow Run Time (s)')
     ax1.set_ylabel('XTrigger Run Time (s)')
 
-    for plugin_name, (x_data, y_data) in data.items():
+    for plugin_name, (timings) in data.items():
+        x_data = []
+        y_data = []
+        for start_time, duration in timings:
+            x_data.append(start_time)
+            y_data.append(duration)
         ax1.scatter(x_data, y_data, label=plugin_name)
 
     ax1.set_xlim(0, ax1.get_xlim()[1])

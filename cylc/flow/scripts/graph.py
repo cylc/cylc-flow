@@ -44,7 +44,7 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import UserInputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 
@@ -246,9 +246,7 @@ def get_option_parser():
         help='Show suicide triggers. Not shown by default.',
         action='store_true', default=False, dest='show_suicide')
 
-    parser.add_option(
-        '--icp', action='store', default=None, metavar='CYCLE_POINT', help=(
-            'Set initial cycle point. Required if not defined in flow.cylc.'))
+    parser.add_option(icp_option)
 
     parser.add_option(
         '--diff',

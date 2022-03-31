@@ -338,21 +338,17 @@ def load(config, additional_plugins=None):
             raise CylcError(f'Could not load plugin: "{plugin_name}"')
         # load coroutines
         log = []
-        for coro_name, coro in (
-                (coro_name, coro)
-                for coro_name, coro in getmembers(module)
-                if isfunction(coro)
-                if hasattr(coro, 'main_loop')
-        ):
-            log.append(coro_name)
-            plugins.setdefault(
-                coro.main_loop, {}
-            )[(plugin_name, coro_name)] = coro
-            plugins['timings'][(plugin_name, coro_name)] = deque(maxlen=1)
+        for coro_name, coro in getmembers(module):
+            if isfunction(coro) and hasattr(coro, 'main_loop'):
+                log.append(coro_name)
+                plugins.setdefault(
+                    coro.main_loop, {}
+                )[(plugin_name, coro_name)] = coro
+                plugins['timings'][(plugin_name, coro_name)] = deque(maxlen=1)
         LOG.debug(
-            'Loaded main loop plugin "%s": %s',
-            plugin_name + '\n',
-            '\n'.join((f'* {x}' for x in log))
+            'Loaded main loop plugin "%s":\n%s',
+            plugin_name,
+            '\n'.join(f'* {x}' for x in log)
         )
         # set the initial state of the plugin
         plugins['state'][plugin_name] = {}

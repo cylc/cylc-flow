@@ -694,13 +694,16 @@ class WorkflowConfig:
         elif starttask:
             # Start from designated task(s).
             # Select the earliest start point for use in pre-initial ignore.
-            self.start_point = min(
-                get_point(cycle).standardise()
-                for cycle in [
+            try:
+                cycle_points = [
                     Tokens(taskid, relative=True)['cycle']
                     for taskid in self.options.starttask
                 ]
-                if cycle
+            except ValueError as exc:
+                raise UserInputError(str(exc))
+            self.start_point = min(
+                get_point(cycle).standardise()
+                for cycle in cycle_points if cycle
             )
         else:
             # Start from the initial point.
@@ -1668,6 +1671,7 @@ class WorkflowConfig:
                 )
 
         for label in xtrig_labels:
+
             try:
                 xtrig = self.cfg['scheduling']['xtriggers'][label]
             except KeyError:

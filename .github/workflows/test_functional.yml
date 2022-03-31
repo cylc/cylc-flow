@@ -77,12 +77,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 2  # required by codecov
 
       - name: Configure Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -240,7 +240,7 @@ jobs:
 
       - name: Upload artifact
         if: failure() && steps.test.outcome == 'failure'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: cylc-run (${{ steps.uploadname.outputs.uploadname }})
           path: ~/cylc-run/
@@ -280,6 +280,6 @@ jobs:
       - name: Codecov upload
         uses: codecov/codecov-action@v2
         with:
-          name: '"${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}"'
+          name: '${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}'
           flags: functional-tests
           fail_ci_if_error: true
