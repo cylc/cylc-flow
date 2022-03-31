@@ -198,7 +198,8 @@ class EventData(Enum):
     TryNum = 'try_num'
     """The job's try number.
 
-    The number of execution attempts. It starts at 1 and increments with automatic
+    The number of execution attempts.
+    It starts at 1 and increments with automatic
     :cylc:conf:`flow.cylc[runtime][<namespace>]execution retry delays`.
     """
 
