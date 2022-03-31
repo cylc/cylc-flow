@@ -198,7 +198,7 @@ class EventData(Enum):
     TryNum = 'try_num'
     """The job's try number.
 
-    The number of execution attempts, starts at 1, increments with automatic
+    The number of execution attempts. It starts at 1 and increments with automatic
     :cylc:conf:`flow.cylc[runtime][<namespace>]execution retry delays`.
     """
 
@@ -222,7 +222,7 @@ class EventData(Enum):
     JobID = 'job_id'
     """The job ID in the job runner.
 
-    I.E. The job submission ID, for background jobs this is the process ID.
+    I.E. The job submission ID. For background jobs this is the process ID.
     """
 
     JobID_old = 'batch_sys_job_id'  # deprecated
@@ -234,13 +234,13 @@ class EventData(Enum):
     """
 
     SubmitTime = 'submit_time'
-    """Date-time when the job was submitted in ISO8601 format."""
+    """Date-time when the job was submitted, in ISO8601 format."""
 
     StartTime = 'start_time'
-    """Date-time when the job started in ISO8601 format."""
+    """Date-time when the job started, in ISO8601 format."""
 
     FinishTime = 'finish_time'
-    """Date-time when the job finished in ISO8601 format."""
+    """Date-time when the job finished, in ISO8601 format."""
 
     PlatformName = 'platform_name'
     """The name of the platform where the job is submitted."""

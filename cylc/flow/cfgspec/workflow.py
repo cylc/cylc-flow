@@ -372,8 +372,8 @@ with Conf(
                 They should require little resource to run and return
                 quickly.
 
-                Template variables can be used to configure handlers
-                for a full list of supported variables see
+                Template variables can be used to configure handlers.
+                For a full list of supported variables see
                 :ref:`workflow_event_template_variables`.
             ''')
             Conf('handler events', VDR.V_STRING_LIST, None, desc='''
@@ -433,7 +433,7 @@ with Conf(
 
                    {REPLACES} ``[cylc][events]mail footer``.
 
-                Template variables may be used in the mail footer, for a list
+                Template variables may be used in the mail footer. For a list
                 of supported variables see
                 :ref:`_workflow_event_template_variables`.
 
