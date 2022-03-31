@@ -51,6 +51,9 @@ distinguishing between workflow not running and not in run-directory.
 platforms, any files configured to be installed will be updated on the remote
 platform.
 
+[#4791](https://github.com/cylc/cylc-flow/pull/4791) - Fix GraphQL node
+filtering, effecting non-state updates in the UI.
+
 [#4777](https://github.com/cylc/cylc-flow/pull/4777) -
 Reinstate the Cylc 7 template variables for xtriggers with deprecation warnings.
 
