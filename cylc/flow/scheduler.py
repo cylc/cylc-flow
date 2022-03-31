@@ -869,9 +869,8 @@ class Scheduler:
                     cylc.flow.flags.verbosity > 1 or
                     not isinstance(exc, CommandFailedError)
                 ):
-                    LOG.warning(traceback.format_exc())
-                LOG.warning(str(exc))
-                LOG.warning(f"Command failed: {cmdstr}")
+                    LOG.error(traceback.format_exc())
+                LOG.error(f"Command failed: {cmdstr}\n{exc}")
             else:
                 if n_warnings:
                     LOG.info(
