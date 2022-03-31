@@ -433,6 +433,17 @@ def cylc7_run_dir(tmp_path):
     Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow').mkdir(parents=True)
     Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow', 'log').touch()
 
+    # crazy niche case of a Cylc 7 workflow that has had its DB removed
+    # and re-run under Cylc 8
+    # (should appear in scan results)
+    cylc8 = tmp_path / 'cylc78'
+    cylc8.mkdir()
+    (cylc8 / WorkflowFiles.SUITE_RC).touch()
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow', 'log').touch()
+
     return tmp_path
 
 
@@ -444,5 +455,5 @@ async def test_scan_cylc7(cylc7_run_dir):
     assert await listify(
         scan(cylc7_run_dir)
     ) == [
-        'cylc8', 'either'
+        'cylc78', 'cylc8', 'either'
     ]
