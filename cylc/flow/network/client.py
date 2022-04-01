@@ -64,7 +64,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
         self,
         workflow: str,
         host: Optional[str] = None,
-        port: Optional[int] = None,
+        port: Union[int, str, None] = None,
         timeout: Union[float, str, None] = None
     ):
         self.workflow = workflow
@@ -233,7 +233,7 @@ class WorkflowRuntimeClient(ZMQSocketBase, WorkflowRuntimeClientBase):
         self,
         workflow: str,
         host: Optional[str] = None,
-        port: Optional[int] = None,
+        port: Union[int, str, None] = None,
         timeout: Union[float, str, None] = None,
         context: Optional[zmq.asyncio.Context] = None,
         srv_public_key_loc: Optional[str] = None

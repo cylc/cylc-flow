@@ -33,9 +33,6 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
     DEFAULT_TIMEOUT = 300  # seconds
     SLEEP_INTERVAL = 0.1
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-
     async def async_request(
         self, command: str,
         args: Optional[Dict[str, Any]] = None,
