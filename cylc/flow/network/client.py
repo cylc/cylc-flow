@@ -34,6 +34,7 @@ from cylc.flow.exceptions import (
     ServiceFileError,
     WorkflowStopped,
 )
+from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.network import (
     encode_,
     decode_,
@@ -43,9 +44,7 @@ from cylc.flow.network import (
 from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.network.server import PB_METHOD_MAP
 from cylc.flow.workflow_files import (
-    ContactFileFields,
     detect_old_contact_file,
-    load_contact_file
 )
 
 
@@ -133,18 +132,10 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             WorkflowStopped: if the workflow has already stopped.
             CyclError: if the workflow has moved to different host/port.
         """
-        # TODO: fix overlap with cylc.flow.network.get_location() ?
-        try:
-            contact_data: Dict[str, str] = load_contact_file(self.workflow)
-        except (IOError, ValueError, ServiceFileError):
-            # Contact file does not exist or corrupted, workflow should be dead
-            raise WorkflowStopped(self.workflow)
-
-        contact_host: str = contact_data.get(ContactFileFields.HOST, '?')
-        contact_port: str = contact_data.get(ContactFileFields.PORT, '?')
+        contact_host, contact_port, _ = get_location(self.workflow)
         if (
-            contact_host != self._orig_host
-            or contact_port != str(self._orig_port)
+            contact_host != get_fqdn_by_host(self._orig_host)
+            or contact_port != self._orig_port
         ):
             raise CylcError(
                 'The workflow is no longer running at '
@@ -155,7 +146,7 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
         # Cannot connect, perhaps workflow is no longer running and is leaving
         # behind a contact file?
         try:
-            detect_old_contact_file(self.workflow, contact_data)
+            detect_old_contact_file(self.workflow)
         except (AssertionError, ServiceFileError):
             # old contact file exists and the workflow process still alive
             return
