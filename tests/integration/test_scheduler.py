@@ -306,7 +306,8 @@ async def test_illegal_config_load(
             _make_flow(get_cylc_run_dir(), run_dir, one_conf, '')
             schd.queue_command('reload_workflow', {})
         assert log_filter(
-            log, level=logging.WARNING, exact_match=expected_msg
+            log, level=logging.ERROR,
+            exact_match=f"Command failed: reload_workflow()\n{expected_msg}"
         )
     else:
         with pytest.raises(ParsecError):
