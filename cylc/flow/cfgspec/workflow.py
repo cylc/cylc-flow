@@ -435,7 +435,7 @@ with Conf(
 
                 Template variables may be used in the mail footer. For a list
                 of supported variables see
-                :ref:`_workflow_event_template_variables`.
+                :ref:`workflow_event_template_variables`.
 
                 Example:
 
