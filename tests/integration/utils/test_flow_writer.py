@@ -33,12 +33,8 @@ from .flow_writer import (
 
 def test_write_header():
     """It should write out cylc configuration headings."""
-    assert _write_header('foo', 1) == [
-        '[foo]'
-    ]
-    assert _write_header('foo', 2) == [
-        '    [[foo]]'
-    ]
+    assert _write_header('foo', 1) == '[foo]'
+    assert _write_header('foo', 2) == '    [[foo]]'
 
 
 def test_write_setting_singleline():
@@ -106,9 +102,11 @@ def test_flow_config_str():
                     'pub': 'beer'
                 },
                 'baz': 42
-            }
+            },
+            'qux': 'asdf'
         }
     ) == dedent('''
+        qux = asdf
         [foo]
             baz = 42
             [[bar]]

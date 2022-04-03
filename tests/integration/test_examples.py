@@ -141,17 +141,13 @@ async def test_task_pool(one, start):
         assert len(one.pool.main_pool) == 1
 
 
-async def test_exception(flow, scheduler, run, one_conf, log_filter):
+async def test_exception(one, run, log_filter):
     """Through an exception into the scheduler to see how it will react.
 
     You have to do this from within the scheduler itself.
     The easy way is to patch the object.
 
     """
-    # Ensure exceptions are logged.
-    reg = flow(one_conf)
-    schd = scheduler(reg)
-
     class MyException(Exception):
         pass
 
@@ -159,13 +155,13 @@ async def test_exception(flow, scheduler, run, one_conf, log_filter):
     def killer():
         raise MyException('mess')
 
-    schd.main_loop = killer
+    one.main_loop = killer
 
     # make sure that this error causes the flow to shutdown
     with pytest.raises(MyException):
-        async with run(schd) as log:
-            # evil sleep - gotta let the except mechanism do its work
-            await asyncio.sleep(0.1)
+        async with run(one) as log:
+            # The `run` fixture's shutdown logic waits for the main loop to run
+            pass
 
     # make sure the exception was logged
     assert len(log_filter(
@@ -176,7 +172,7 @@ async def test_exception(flow, scheduler, run, one_conf, log_filter):
 
     # make sure the server socket has closed - a good indication of a
     # successful clean shutdown
-    assert schd.server.socket.closed
+    assert one.server.socket.closed
 
 
 @pytest.fixture(scope='module')

@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 26
 
-# Test fail no workflow source dir
+# Test fail no workflow run dir
 
 TEST_NAME="${TEST_NAME_BASE}-reinstall-no-run-dir"
 make_rnd_workflow
@@ -28,7 +28,7 @@ run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-na
 rm -rf "${RND_WORKFLOW_RUNDIR}"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: "${RND_WORKFLOW_NAME}" is not an installed workflow.
+UserInputError: Path does not exist: ${RND_WORKFLOW_RUNDIR}
 __ERR__
 purge_rnd_workflow
 

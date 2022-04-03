@@ -177,7 +177,6 @@ class WorkflowConfig:
         fpath: Union[Path, str],
         options: 'Values',
         template_vars: Optional[Mapping[str, Any]] = None,
-        is_reload: bool = False,
         output_fname: Optional[str] = None,
         xtrigger_mgr: Optional[XtriggerManager] = None,
         mem_log_func: Optional[Callable[[str], None]] = None,
@@ -506,32 +505,7 @@ class WorkflowConfig:
                     self.feet.append(foot)
         self.feet.sort()  # sort effects get_graph_raw output
 
-        # Replace workflow and task name in workflow and task URLs.
-        self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
-            'workflow_name': self.workflow}
-        # BACK COMPAT: CYLC_WORKFLOW_NAME
-        # from:
-        #     Cylc7
-        # to:
-        #     Cylc8
-        # remove at:
-        #     Cylc9
-        self.cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
-            self.workflow, self.cfg['meta']['URL'])
-        for name, cfg in self.cfg['runtime'].items():
-            cfg['meta']['URL'] = cfg['meta']['URL'] % {
-                'workflow_name': self.workflow, 'task_name': name}
-            # BACK COMPAT: CYLC_WORKFLOW_NAME, CYLC_TASK_NAME
-            # from:
-            #     Cylc7
-            # to:
-            #     Cylc8
-            # remove at:
-            #     Cylc9
-            cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
-                self.workflow, cfg['meta']['URL'])
-            cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
-                name, cfg['meta']['URL'])
+        self.process_metadata_urls()
 
         if getattr(self.options, 'is_validate', False):
             self.mem_log("config.py: before _check_circular()")
@@ -2264,3 +2238,78 @@ class WorkflowConfig:
                 "Directories can only be from the top level, please "
                 "reconfigure:" + str(illegal_includes)[1:-1])
         return includes
+
+    def process_metadata_urls(self):
+        """Process [meta]URL items."""
+        # workflow metadata
+        url = self.cfg['meta']['URL']
+        try:
+            self.cfg['meta']['URL'] = url % {
+                'workflow': self.workflow,
+            }
+        except (KeyError, ValueError):
+            try:
+                # Replace workflow and task name in workflow and task URLs.
+                # BACK COMPAT: suite_name
+                # url:
+                #     https://github.com/cylc/cylc-flow/pull/4724
+                # from:
+                #     Cylc7
+                # to:
+                #     Cylc8
+                # remove at:
+                #     Cylc9
+                self.cfg['meta']['URL'] = url % {
+                    # cylc 7
+                    'suite_name': self.workflow,
+                    # cylc 8
+                    'workflow': self.workflow,
+                }
+            except (KeyError, ValueError):
+                raise UserInputError(f'Invalid template [meta]URL: {url}')
+            else:
+                LOG.warning(
+                    'Detected deprecated template variables in [meta]URL.'
+                    '\nSee the configuration documentation for details.'
+                )
+
+        # task metadata
+        self.cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
+            self.workflow, self.cfg['meta']['URL'])
+        for name, cfg in self.cfg['runtime'].items():
+            try:
+                cfg['meta']['URL'] = cfg['meta']['URL'] % {
+                    'workflow': self.workflow,
+                    'task': name,
+                }
+            except (KeyError, ValueError):
+                # BACK COMPAT: suite_name, task_name
+                # url:
+                #     https://github.com/cylc/cylc-flow/pull/4724
+                # from:
+                #     Cylc7
+                # to:
+                #     Cylc8
+                # remove at:
+                #     Cylc9
+                try:
+                    cfg['meta']['URL'] = cfg['meta']['URL'] % {
+                        # cylc 7
+                        'suite_name': self.workflow,
+                        'task_name': name,
+                        # cylc 8
+                        'workflow': self.workflow,
+                        'task': name,
+                    }
+                except (KeyError, ValueError):
+                    raise UserInputError(f'Invalid template [meta]URL: {url}')
+                else:
+                    LOG.warning(
+                        'Detected deprecated template variables in'
+                        f' [runtime][{name}][meta]URL.'
+                        '\nSee the configuration documentation for details.'
+                    )
+            cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
+                self.workflow, cfg['meta']['URL'])
+            cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
+                name, cfg['meta']['URL'])

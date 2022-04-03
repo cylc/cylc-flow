@@ -39,6 +39,8 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
+# Regex to strip `:Default For:` notices from docs imported from the global cfg
+DEFAULT_FOR = re.compile(r'.*:[Dd]efault [Ff]or:.*')
 
 # Cylc8 Deprecation note.
 DEPRECATION_WARN = '''
@@ -137,9 +139,16 @@ with Conf(
         Conf('URL', VDR.V_STRING, '', desc='''
             A web URL to workflow documentation.
 
-            It can be retrieved at run time with the ``cylc show`` command.
-            The template ``%(workflow_name)s`` will be replaced with the actual
-            workflow name.
+            The URL can be retrieved at run time with the ``cylc show``
+            command.
+
+            The template variable ``%(workflow)s`` will be replaced with the
+            actual workflow ID.
+
+            .. deprecated:: 8.0.0
+
+               The ``%(suite_name)s`` template variable is deprecated, please
+               use ``%(workflow)s``.
 
             .. seealso::
 
@@ -147,7 +156,7 @@ with Conf(
 
             Example:
 
-            ``http://my-site.com/workflows/%(workflow_name)s/index.html``
+            ``http://my-site.com/workflows/%(workflow)s/index.html``
 
         ''')
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
@@ -362,6 +371,10 @@ with Conf(
                 ``$PATH`` (in the shell in which the scheduler runs).
                 They should require little resource to run and return
                 quickly.
+
+                Template variables can be used to configure handlers.
+                For a full list of supported variables see
+                :ref:`workflow_event_template_variables`.
             ''')
             Conf('handler events', VDR.V_STRING_LIST, None, desc='''
                 Specify the events for which workflow event
@@ -373,8 +386,28 @@ with Conf(
             ''')
 
             for item, desc in EVENTS_DESCR.items():
+                # strip the `:Default For:` lines
+                desc = DEFAULT_FOR.sub('', dedent(desc))
                 if item.endswith("handlers"):
-                    Conf(item, VDR.V_STRING_LIST, desc=desc)
+                    Conf(item, VDR.V_STRING_LIST, desc=(
+                        # add examples
+                        desc + '\n' + dedent(rf'''
+                            Examples:
+
+                            .. code-block:: cylc
+
+                               # configure a single event handler
+                               {item} = echo foo
+
+                               # provide context to the handler
+                               {item} = echo %(workflow)s
+
+                               # configure multiple event handlers
+                               {item} = \
+                                    'echo %(workflow)s, %(event)s', \
+                                    'my_exe %(event)s %(message)s' \
+                                    'curl -X PUT -d event=%(event)s host:port'
+                        ''')))
                 elif item.startswith("abort on"):
                     Conf(item, VDR.V_BOOLEAN, desc=desc)
                 elif item.endswith("timeout"):
@@ -400,14 +433,9 @@ with Conf(
 
                    {REPLACES} ``[cylc][events]mail footer``.
 
-                ================ ======================
-                Syntax           Description
-                ================ ======================
-                ``%(host)s``     Workflow host name.
-                ``%(port)s``     Workflow port number.
-                ``%(owner)s``    Workflow owner name.
-                ``%(workflow)s``    Workflow name
-                ================ ======================
+                Template variables may be used in the mail footer. For a list
+                of supported variables see
+                :ref:`workflow_event_template_variables`.
 
                 Example:
 
@@ -1172,16 +1200,24 @@ with Conf(
                         A URL link to task documentation for this task or task
                         family.
 
-                        The templates ``%(workflow_name)s`` and
-                        ``%(task_name)s`` will be replaced with the actual
-                        workflow and task names.
+                        The templates ``%(workflow)s`` and
+                        ``%(task)s`` will be replaced with the actual
+                        workflow ID and task name.
+
+                        .. deprecated:: 8.0.0
+
+                           The ``%(suite_name)s`` template variable is
+                           deprecated, please use ``%(workflow)s``.
+
+                           The ``%(task_name)s`` template variable is
+                           deprecated, please use ``%(task)s``.
 
                         See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
                         Example:
 
-                        ``http://my-site.com/workflows/%(workflow_name)s/'''
-                    '%(task_name)s.html``')
+                        ``http://my-site.com/workflows/%(workflow)s/'''
+                    '%(task)s.html``')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
 
@@ -1316,67 +1352,8 @@ with Conf(
                 quickly.
 
                 Each task event handler can be specified as a list of command
-                lines or command line templates. They can contain any or all
-                of the following patterns, which will be substituted with
-                actual values:
-
-                ``%(event)s``
-                   Event name
-                ``%(workflow)s``
-                   Workflow name
-                ``%(workflow_uuid)s``
-                   Workflow UUID string
-                ``%(point)s``
-                   Cycle point
-                ``%(name)s``
-                   Task name
-                ``%(submit_num)s``
-                   Submit number
-                ``%(try_num)s``
-                   Try number
-                ``%(id)s``
-                   Task ID (i.e. %(name)s.%(point)s)
-                ``%(job_runner_name)s``
-                   Job runner name (previously ``%(batch_sys_name)s``)
-                ``%(job_id)s``
-                   Job ID in the job runner
-                   (previously ``%(batch_sys_job_id)s``)
-                ``%(submit_time)s``
-                   Date-time when task job is submitted
-                ``%(start_time)s``
-                   Date-time when task job starts running
-                ``%(finish_time)s``
-                   Date-time when task job exits
-                ``%(platform_name)s``
-                   Name of platform where the task job is submitted
-                ``%(message)s``
-                   Event message, if any
-                Any task [meta] item, e.g.:
-                   ``%(title)s``
-                      Task title
-                   ``%(URL)s``
-                      Task URL
-                   ``%(importance)s``
-                      Example custom task metadata
-                Any workflow ``[meta]`` item, prefixed with ``workflow_``
-                   ``%(workflow_title)s``
-                      Workflow title
-                   ``%(workflow_URL)s``
-                      Workflow URL.
-                   ``%(workflow_rating)s``
-                      Example custom workflow metadata.
-
-                Otherwise, the command line will be called with the following
-                default arguments:
-
-                .. code-block:: none
-
-                   <event-handler> %(event)s %(workflow)s %(id)s %(message)s
-
-                .. note::
-
-                   Substitution patterns should not be quoted in the template
-                   strings.  This is done automatically where required.
+                lines or command line templates. For a full list of supported
+                template variables see :ref:`task_event_template_variables`.
 
                 For an explanation of the substitution syntax, see
                 `String Formatting Operations in the Python
@@ -1965,7 +1942,7 @@ def warn_about_depr_event_handler_tmpl(cfg):
             if f'%({EventData.SuiteUUID.value})' in handler:
                 LOG.warning(
                     deprecation_msg.format(EventData.SuiteUUID.value,
-                                           EventData.WorkflowUUID.value)
+                                           EventData.UUID.value)
                 )
 
 

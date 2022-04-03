@@ -18,20 +18,23 @@
 from difflib import unified_diff
 import re
 import os
-
+from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import WorkflowEventError
 from cylc.flow.pathutil import get_workflow_test_log_name
 
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
+
 
 RE_TRIG = re.compile(r'(.*? -triggered off \[.*\])$')
 
 
-def run_reftest(config, ctx):
+def run_reftest(schd: 'Scheduler') -> None:
     """Run reference test at shutdown."""
-    reffilename = config.get_ref_log_name()
-    curfilename = get_workflow_test_log_name(ctx.workflow)
+    reffilename = schd.config.get_ref_log_name()
+    curfilename = get_workflow_test_log_name(schd.workflow)
     ref = _load_reflog(reffilename)
     cur = _load_reflog(curfilename)
     if not ref:

@@ -85,13 +85,16 @@ def log_filter():
         level: Filter out records if they aren't at this logging level.
         contains: Filter out records if this string is not in the message.
         regex: Filter out records if the message doesn't match this regex.
+        exact_match: Filter out records if the message does not exactly match
+            this string.
     """
     def _log_filter(
         log: pytest.LogCaptureFixture,
         name: Optional[str] = None,
         level: Optional[int] = None,
         contains: Optional[str] = None,
-        regex: Optional[str] = None
+        regex: Optional[str] = None,
+        exact_match: Optional[str] = None,
     ) -> List[Tuple[str, int, str]]:
         return [
             (log_name, log_level, log_message)
@@ -100,6 +103,7 @@ def log_filter():
             and (level is None or level == log_level)
             and (contains is None or contains in log_message)
             and (regex is None or re.match(regex, log_message))
+            and (exact_match is None or exact_match == log_message)
         ]
     return _log_filter
 
@@ -107,3 +111,29 @@ def log_filter():
 @pytest.fixture(scope='session')
 def port_range():
     return glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
+
+
+@pytest.fixture
+def capcall(monkeypatch):
+    """Capture function calls without running the function.
+    Returns a list of captured calls.
+    For each function call a tuple (args: Tuple, kwargs: Dict) is added
+    to the list.
+    Example:
+        def test_something(capcall):
+            capsys = capcall('sys.exit')
+            sys.exit(1)
+            assert capsys == [(1,), {}]
+    """
+
+    def _capcall(function_string):
+        calls = []
+
+        def _call(*args, **kwargs):
+            nonlocal calls
+            calls.append((args, kwargs))
+
+        monkeypatch.setattr(function_string, _call)
+        return calls
+
+    return _capcall

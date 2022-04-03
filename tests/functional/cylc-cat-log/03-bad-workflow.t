@@ -24,12 +24,14 @@ BAD_NAME="NONEXISTENTWORKFLOWNAME"
 
 run_fail "${TEST_NAME_BASE}-workflow" cylc cat-log -f l "${BAD_NAME}"
 cmp_ok "${TEST_NAME_BASE}-workflow.stderr" <<__ERR__
-UserInputError: The '-f' option is for job logs only.
+UserInputError: Path does not exist: ${CYLC_RUN_DIR}/${BAD_NAME}
 __ERR__
 
+mkdir "${CYLC_RUN_DIR}/${BAD_NAME}"
+# Check a non existent file in a valid workflow results in error.
 run_fail "${TEST_NAME_BASE}-workflow" cylc cat-log -f j "${BAD_NAME}//1/garbage"
 cmp_ok "${TEST_NAME_BASE}-workflow.stderr" <<__ERR__
 file not found: ${CYLC_RUN_DIR}/${BAD_NAME}/log/job/1/garbage/NN/job
 __ERR__
-
+rm -rf "${CYLC_RUN_DIR:?}/${BAD_NAME}"
 exit

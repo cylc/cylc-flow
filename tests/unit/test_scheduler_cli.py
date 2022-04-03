@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,20 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test workflow event handler, flexible interface
-. "$(dirname "$0")/test_header"
-set_test_number 3
+"""Tests for Cylc scheduler CLI."""
 
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+from cylc.flow.scheduler_cli import _protect_remote_cmd_args
 
-workflow_run_ok "${TEST_NAME_BASE}-run1" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
-MESSAGE="('workflow-event-handler-00', 'startup') bad template: echo %(rubbish)s"
-run_ok "${TEST_NAME_BASE}-run1-log" grep -q -F "ERROR - ${MESSAGE}" "${LOG}"
-
-purge
-exit
+def test__protect_remote_cmd_args():
+    cmd = ['cylc', 'play', '-n', '--set=FOO="foo"', 'wf']
+    exp = ['cylc', 'play', '-n', '\'--set=FOO="foo"\'', 'wf']
+    assert _protect_remote_cmd_args(cmd) == exp

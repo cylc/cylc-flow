@@ -27,6 +27,11 @@ TRACEBACK_WRAPPER = textwrap.TextWrapper()
 class ParsecError(Exception):
     """Generic exception for Parsec errors."""
 
+    schd_expected: bool = False
+    """Set this flag to True on the exception if it is anticipated during
+    Cylc Scheduler run (apart from loading of config we do not expect
+    ParsecErrors during runtime)."""
+
 
 class ItemNotFoundError(ParsecError, KeyError):
     """Error raised for missing configuration items."""

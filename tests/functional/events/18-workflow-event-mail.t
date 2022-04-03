@@ -49,10 +49,10 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach ${OPT_SET} "${WORKFLOW_NAME}"
 
 contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
-b'workflow event: startup'
-b'reason: workflow starting'
-b'workflow event: shutdown'
-b'reason: AUTOMATIC'
+b'event: startup'
+b'message: workflow starting'
+b'event: shutdown'
+b'message: AUTOMATIC'
 b'see: http://localhost/stuff/${USER}/${WORKFLOW_NAME}/'
 __LOG__
 

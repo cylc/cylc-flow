@@ -23,7 +23,7 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_global_config "" "
 [scheduler]
     [[events]]
-        handlers = echo 'Your %(workflow)s workflow has a %(event)s event and URL %(workflow_url)s and workflow-priority as %(workflow-priority)s and workflow-UUID as %(workflow_uuid)s.'
+        handlers = echo 'Your %(workflow)s workflow has a %(event)s event and URL %(workflow_url)s and workflow-priority as %(workflow-priority)s and workflow-UUID as %(uuid)s.'
         handler events = startup"
     OPT_SET='-s GLOBALCFG=True'
 fi
