@@ -38,6 +38,7 @@ from metomi.isodatetime.parsers import (
     DurationParser, TimePointParser, TimeRecurrenceParser
 )
 
+from cylc.flow import LOG
 from cylc.flow.cycling import parse_exclusion
 from cylc.flow.exceptions import (
     CylcMissingContextPointError,
@@ -217,8 +218,8 @@ class CylcTimeParser:
                 repetitions = int(repetitions)
             start = result.groupdict().get("start")
             end = result.groupdict().get("end")
-            start_required = (format_num in [1, 3])
-            end_required = (format_num in [1, 4])
+            start_required = (format_num in {1, 3})
+            end_required = (format_num in {1, 4})
             start_point, start_offset = self._get_point_from_expression(
                 start, context_start_point,
                 is_required=start_required,
@@ -262,9 +263,8 @@ class CylcTimeParser:
                 intv, context=intv_context_truncated_point)
             if format_num == 1:
                 interval = None
-            if repetitions == 1:
-                # Set arbitrary interval (does not matter).
-                interval = self.duration_parser.parse("P0Y")
+            elif repetitions == 1:
+                interval = Duration(0)
             if start_point is not None:
                 if start_point.truncated:
                     start_point += context_start_point
@@ -276,9 +276,11 @@ class CylcTimeParser:
                 if end_offset is not None:
                     end_point += end_offset
 
-            if (start_point is None and repetitions is None and
-                    interval is not None and
-                    context_start_point is not None):
+            if (
+                interval and
+                start_point is None and repetitions is None and
+                context_start_point is not None
+            ):
                 # isodatetime only reverses bounded end-point recurrences.
                 # This is unbounded, and will come back in reverse order.
                 # We need to reverse it.
@@ -289,6 +291,14 @@ class CylcTimeParser:
                     repetitions += 1
                 end_point = None
 
+            if not interval and repetitions != 1 and (
+                (format_num != 1 or start_point == end_point)
+            ):
+                LOG.warning(
+                    "Cannot have more than 1 repetition for zero-duration "
+                    f"recurrence {expression}."
+                )
+
             return TimeRecurrence(
                 repetitions=repetitions,
                 start_point=start_point,
@@ -298,7 +308,9 @@ class CylcTimeParser:
 
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
-    def _get_interval_from_expression(self, expr, context=None):
+    def _get_interval_from_expression(
+        self, expr: Optional[str], context: Optional['TimePoint'] = None
+    ) -> Optional[Duration]:
         if expr is None:
             if context is None or not context.truncated:
                 return None
