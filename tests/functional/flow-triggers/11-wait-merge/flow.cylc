@@ -1,15 +1,10 @@
-# Task b triggers:
-#  - flow 2 at a
-#    - a(2) which waits for b to finish before succeeding (to avoid merge with b)
-#    - b waits for c:x before succeeding
-#  - flow 2 --wait at c 
-#    - c(1) waits for merge with b before succeeding
-# The merge at c should:
-#  - cancel the wait
-#  - spawn onward as flows (1,2)
-#  - retroactively spawn on c:x => x
-#
-# Task x should run even though the output c:x was completed with c in wait mode
+# Task b(1) triggers:
+#  - a(2), which succeeds after b(1) finishes (to avoid merge)
+#  - c(2) --wait, which succeeds after merge with b(1)
+# Then b waits for c:x before succeeding.
+# When flow 2 reaches c, it should
+#  - spawn onward to d(1,2)
+#  - retroactively spawn on c:x => x(2)
 
 [scheduling]
    [[graph]]
@@ -21,7 +16,7 @@
    [[a]]
       script = """
          if ((CYLC_TASK_SUBMIT_NUMBER == 2)); then
-             cylc__job__poll_grep_workflow_log "1/b running job:01 .* succeeded"
+             cylc__job__poll_grep_workflow_log "1/d .*(received)started"
          fi
       """
  
@@ -31,7 +26,6 @@
             cylc trigger --flow=new ${CYLC_WORKFLOW_NAME}//1/a
             cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_NAME}//1/c
             cylc__job__poll_grep_workflow_log "1/c .*(received)x"
-            sleep 10 
          fi
       """
    [[c]]
