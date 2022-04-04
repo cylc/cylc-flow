@@ -71,6 +71,7 @@ from cylc.flow.exceptions import (
     ClientTimeout,
     CylcError,
     UserInputError,
+    WorkflowStopped,
 )
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
@@ -204,9 +205,6 @@ async def run(
     workflow_id,
     *tokens_list,
 ) -> int:
-    if len(tokens_list) > 1:
-        raise Exception('Multiple TODO')
-
     # parse the stop-task or stop-cycle if provided
     stop_task = stop_cycle = None
     if tokens_list:
@@ -218,7 +216,11 @@ async def run(
 
     _validate(options, stop_task, stop_cycle, *tokens_list)
 
-    pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    try:
+        pclient = get_client(workflow_id, timeout=options.comms_timeout)
+    except WorkflowStopped:
+        # nothing to do, return a success code
+        return 0
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
@@ -271,6 +273,7 @@ def main(
         partial(run, options),
         *ids,
         constraint='mixed',
+        max_tasks=1,
     )
     if all(
         ret == 0
