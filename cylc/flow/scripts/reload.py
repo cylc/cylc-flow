@@ -40,6 +40,10 @@ workflow log config, can be changed on reload. Changes to task
 definitions take effect immediately, unless a task is already
 running at reload time.
 
+Upon reload, remote file installation will be triggered for all relevant
+platforms. Any changed files that are configured to be included in the file
+installation will be transferred to the appropriate remote platform.
+
 If the workflow was started with Jinja2 template variables set on the command
 line (cylc play --set 'FOO="bar"' WORKFLOW_ID) the same template settings apply
 to the reload (only changes to the flow.cylc file itself are reloaded).

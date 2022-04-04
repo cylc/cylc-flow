@@ -33,6 +33,11 @@ ones in. -->
 
 ### Fixes:
 
+[#4797](https://github.com/cylc/cylc-flow/pull/4797) -
+`cylc reload` now triggers a fresh remote file installation for all relevant
+platforms, any files configured to be installed will be updated on the remote
+platform.
+
 [#4777](https://github.com/cylc/cylc-flow/pull/4777) -
 Reinstate the Cylc 7 template variables for xtriggers with deprecation warnings.
 
