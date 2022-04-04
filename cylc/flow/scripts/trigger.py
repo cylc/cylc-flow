@@ -19,9 +19,18 @@
 
 Trigger tasks manually.
 
-Triggered tasks get all current active flow numbers by default, so those flows
-- if/when they catch up - will see the triggered tasks (and their children) as
-having run already, 
+Triggering an unqueued waiting task queues it, regardless of prerequisites.
+
+Triggering a queued waiting task submits it, regardless of queue limiting.
+
+Triggering a submitted or running task has no effect (already triggered).
+
+Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
+Triggering them causes them to run (or rerun) in the same flow;
+
+Beyond n=0, triggered tasks get all current active flow numbers by default. So
+those flows - if/when they catch up - will see the triggered tasks (and their
+children) as having run already. Use the --flow option to change this.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -32,18 +41,6 @@ Examples:
 
   # start a new flow by triggering 1234/foo in test
   $ cylc trigger --flow=new test//1234/foo
-
-Triggering a waiting task queues it to submit regardless of prerequisites.
-If already queued, it will submit immediately regardless of the queue limit.
-(You may need to trigger queue-limited tasks twice to run them immediately).
-
-Triggering a submitted or running task has no effect (already triggered).
-
-Tasks in the n=0 window already belong to a flow. Triggering active-waiting (or
-incomplete) tasks queues them to run (or rerun) in their own flow.
-
-Tasks triggered outside of n=0 get all active flow numbers by default. Use the
---flow option to change this.
 """
 
 from functools import partial
