@@ -41,8 +41,9 @@ definitions take effect immediately, unless a task is already
 running at reload time.
 
 Upon reload, remote file installation will be triggered for all relevant
-platforms. Any changed files that are configured to be included in the file
-installation will be transferred to the appropriate remote platform.
+platforms on the next job submit.
+Any changed files that are configured to be included in the file
+installation will be transferred to the appropriate remote platform(s).
 
 If the workflow was started with Jinja2 template variables set on the command
 line (cylc play --set 'FOO="bar"' WORKFLOW_ID) the same template settings apply
