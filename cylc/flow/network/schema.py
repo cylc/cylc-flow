@@ -39,6 +39,7 @@ from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
+from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
@@ -1405,6 +1406,10 @@ class WorkflowStopMode(graphene.Enum):
         return StopMode(self.value).describe()
 
 
+class Flow(String):
+    f"""An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
+
+
 # Mutations:
 
 # TODO: re-instate:
@@ -1743,6 +1748,27 @@ class TaskMutation:
     result = GenericScalar()
 
 
+class FlowMutationArguments:
+    flow = graphene.List(
+        graphene.NonNull(Flow),
+        default_value=[FLOW_ALL],
+        description=sstrip(f'''
+            The flow(s) to trigger these tasks in.
+
+            This should be a list of flow numbers OR a single-item list
+            containing one of the following three strings:
+
+            Alternatively this may be a single-item list containing one of
+            the following values:
+
+            * {FLOW_ALL} - Triggered tasks belong to all active flows
+              (default).
+            * {FLOW_NEW} - Triggered tasks are assigned to a new flow.
+            * {FLOW_NONE} - Triggered tasks do not belong to any flow.
+        ''')
+    )
+
+
 class Hold(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
@@ -1833,10 +1859,30 @@ class Trigger(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
-    class Arguments(TaskMutation.Arguments):
-        flow = graphene.List(String)
-        flow_wait = Boolean()
-        flow_descr = String()
+    class Arguments(TaskMutation.Arguments, FlowMutationArguments):
+        flow_wait = Boolean(
+            default_value=False,
+            description=sstrip('''
+                Should the workflow "wait" or "continue on" from this task?
+
+                If `false` the scheduler will spawn and run downstream tasks
+                as normal (default).
+
+                If `true` the scheduler will not spawn the downstream tasks
+                unless it has been caught by the same flow at a later time.
+
+                For example you might set this to True to trigger a task
+                ahead of a flow, where you don't want the scheduled to
+                "continue on" from this task until the flow has caught up
+                with it.
+            ''')
+        )
+        flow_descr = String(
+            description=sstrip('''
+                If starting a new flow, this field can be used to provide the
+                new flow with a description for later reference.
+            ''')
+        )
 
 
 def _mut_field(cls):
