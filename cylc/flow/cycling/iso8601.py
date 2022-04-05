@@ -696,7 +696,7 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
 
 
 def prev_next(
-        value: str, now: 'TimePoint', parser: 'TimePointParser'
+    value: str, now: 'TimePoint', parser: 'TimePointParser'
 ) -> Tuple['TimePoint', Optional[str]]:
     """Handle prev() and next() syntax.
 
@@ -720,10 +720,7 @@ def prev_next(
     offset: Optional[str]
     tmp, offset = tmp.split(")")
 
-    if offset.strip() == '':
-        offset = None
-    else:
-        offset = offset.strip()
+    offset = offset.strip() or None
 
     str_points: List[str] = tmp.split(";")
     timepoints: List['TimePoint'] = []
@@ -763,15 +760,15 @@ def prev_next(
     # ensure truncated dates do not have
     # time from 'now' included'
     if 'T' not in value.split(')')[0]:
-        cycle_point._hour_of_day = 0
-        cycle_point._minute_of_hour = 0
-        cycle_point._second_of_minute = 0
         # NOTE: Strictly speaking we shouldn't forcefully mutate TimePoints
         # in this way as they're meant to be immutable since
         # https://github.com/metomi/isodatetime/pull/165, however it
-        # should be ok as long as we don't call any of my_cp's methods
-        # (specifically, the ones that get cached) until after we've
-        # finished mutating it. I think.
+        # should be ok as long as the TimePoint is not used as a dict key and
+        # we don't call any of the TimePoint's cached methods until after we've
+        # finished mutating it.
+        cycle_point._hour_of_day = 0
+        cycle_point._minute_of_hour = 0
+        cycle_point._second_of_minute = 0
 
     # ensure month and day from 'now' are not included
     # where they did not appear in the truncated datetime
