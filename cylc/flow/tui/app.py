@@ -21,6 +21,7 @@ import sys
 import urwid
 from urwid import html_fragment
 from urwid.wimp import SelectableIcon
+from pathlib import Path
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.exceptions import (
@@ -28,6 +29,7 @@ from cylc.flow.exceptions import (
     ClientTimeout,
     WorkflowStopped
 )
+from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_SUBMITTED,
@@ -56,6 +58,7 @@ from cylc.flow.tui.util import (
     get_workflow_status_str,
     render_node
 )
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 urwid.set_encoding('utf8')  # required for unicode task icons
@@ -310,10 +313,20 @@ class TuiApp:
                 }
             )
         except WorkflowStopped:
+            # Distinguish stopped flow from non-existent flow.
+            full_path = Path(get_workflow_run_dir(self.reg))
+            if(
+                (full_path / WorkflowFiles.SUITE_RC).exists()
+                or (full_path / WorkflowFiles.FLOW_FILE).exists()
+            ):
+                message = "stopped"
+            else:
+                message = "workflow not found"
+
             return dummy_flow({
                 'name': self.reg,
                 'id': self.reg,
-                'status': 'Workflow not found',
+                'status': message,
                 'stateTotals': {}
             })
         except (ClientError, ClientTimeout) as exc:
