@@ -480,7 +480,7 @@ class TaskEventsManager():
                         f"{timer.delay_timeout_as_str()}"
                     )
                 if msg:
-                    LOG.critical(f"{point}/{name}/{submit_num:02d} {msg}")
+                    LOG.debug(f"{point}/{name}/{submit_num:02d} {msg}")
             # Ready to run?
             if not timer.is_delay_done() or (
                 # Avoid flooding user's mail box with mail notification.
