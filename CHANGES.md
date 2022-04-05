@@ -33,6 +33,10 @@ ones in. -->
 
 ### Fixes:
 
+[#4748](https://github.com/cylc/cylc-flow/pull/4748) -
+`cylc tui` gives a more helpful error message when a workflow is not running;
+distinguishing between workflow not running and not in run-directory.
+
 [#4797](https://github.com/cylc/cylc-flow/pull/4797) -
 `cylc reload` now triggers a fresh remote file installation for all relevant
 platforms, any files configured to be installed will be updated on the remote
