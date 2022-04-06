@@ -278,7 +278,7 @@ jobs:
           coverage report
 
       - name: Codecov upload
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           name: '${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}'
           flags: functional-tests
