@@ -80,16 +80,16 @@ from cylc.flow.workflow_files import (
 SERVICE = Path(WorkflowFiles.Service.DIRNAME)
 CONTACT = Path(WorkflowFiles.Service.CONTACT)
 
-FLOW_FILES = {
-    # marker files/dirs which we use to determine if something is a flow
+WORKFLOW_DIR_INDICATORS = {
+    # Marker files/dirs used to identify a workflow dir. (Don't use
+    # flow.cylc or we'll stop at top level of nested sub-workflows).
     WorkflowFiles.Service.DIRNAME,
-    WorkflowFiles.FLOW_FILE,  # cylc8 flow definition file name
     WorkflowFiles.LOG_DIR
 }
 
 EXCLUDE_FILES = {
     WorkflowFiles.RUN_N,
-    WorkflowFiles.Install.SOURCE
+    WorkflowFiles.Install.DIRNAME
 }
 
 
@@ -129,7 +129,7 @@ def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
         # so could be either a Cylc 7 or a Cylc 8 workflow
         return True
 
-    if FLOW_FILES & names:
+    if WORKFLOW_DIR_INDICATORS & names:
         # a pure Cylc 8 workflow
         return True
 
@@ -240,6 +240,14 @@ async def scan(
                     'name': str(path.relative_to(run_dir)),
                     'path': path,
                 }
+                # descend into any sub-workflows
+                _scan_subdirs(
+                    [
+                        c for c in contents if
+                        c.name.startswith(WorkflowFiles.SUB_WF_PREFIX)
+                    ],
+                    depth=0
+                )
             elif is_flow is False and depth < max_depth:
                 # we may have a nested flow, lets see...
                 _scan_subdirs(contents, depth)
