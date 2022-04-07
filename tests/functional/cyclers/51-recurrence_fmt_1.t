@@ -15,26 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation error message on zero-width date-time interval.
-# See issue cylc/cylc-flow#1800.
+# Test ISO 8601 recurrence format no. 1 with unbounded repetitions
 . "$(dirname "$0")/test_header"
 set_test_number 2
-
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[scheduler]
-    UTC mode = True
-[scheduling]
-    initial cycle point = 2010
-    [[graph]]
-        P0M = foo  # OOPS! zero-width interval
-[runtime]
-    [[foo]]
-        script = true
-__FLOW_CONFIG__
-
-run_fail "${TEST_NAME_BASE}" cylc validate .
-cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-SequenceDegenerateError: R/20100101T0000Z/P0Y, point format CCYYMMDDThhmmZ: equal adjacent points: 20100101T0000Z => 20100101T0000Z.
-__ERR__
-
+reftest
 exit

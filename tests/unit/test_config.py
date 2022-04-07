@@ -33,6 +33,8 @@ from cylc.flow.exceptions import (
     WorkflowConfigError,
     XtriggerConfigError,
 )
+from cylc.flow.scheduler_cli import RunOptions
+from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -40,6 +42,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED
 )
+
 
 Fixture = Any
 
@@ -1172,13 +1175,8 @@ def test_implicit_tasks(
         )
 
 
-@pytest.mark.parametrize(
-    'workflow_meta,url_type',
-    product(
-        [True, False],
-        ['good', 'bad', 'ugly', 'broken']
-    )
-)
+@pytest.mark.parametrize('workflow_meta', [True, False])
+@pytest.mark.parametrize('url_type', ['good', 'bad', 'ugly', 'broken'])
 def test_process_urls(caplog, log_filter, workflow_meta, url_type):
 
     if url_type == 'good':
@@ -1218,3 +1216,54 @@ def test_process_urls(caplog, log_filter, workflow_meta, url_type):
             caplog,
             contains='Detected deprecated template variables',
         )
+
+
+@pytest.mark.parametrize('opts', [ValidateOptions(), RunOptions()])
+@pytest.mark.parametrize(
+    'recurrence, should_warn',
+    [
+        # Format 3:
+        ('P0Y', True),
+        ('R//P0Y', True),
+        ('R2//P0Y', True),
+        ('R1//P0Y', False),
+        # Format 4:
+        ('R/P0M', True),
+        ('R1/P0M', False),
+        # Format 1:
+        ('R/2002-09-01/2002-09-01', True),
+        ('R1/2002-09-01/2002-09-01', False),
+        ('R/2002-08-31/2002-09-02', False),
+    ]
+)
+def test_zero_interval(
+    recurrence: str,
+    should_warn: bool,
+    opts: Values,
+    tmp_flow_config: Callable,
+    caplog: pytest.LogCaptureFixture,
+    log_filter: Callable,
+):
+    """Test that a zero-duration recurrence with >1 repetition gets an
+    appropriate warning."""
+    reg = 'ordinary'
+    flow_file: Path = tmp_flow_config(reg, f"""
+    [scheduler]
+        UTC mode = True
+        allow implicit tasks = True
+    [scheduling]
+        initial cycle point = 2002-08-30
+        final cycle point = 2002-09-14
+        [[graph]]
+            {recurrence} = slidescape36
+    """)
+    WorkflowConfig(reg, flow_file, options=opts)
+    logged = log_filter(
+        caplog,
+        level=logging.WARNING,
+        contains="Cannot have more than 1 repetition for zero-duration"
+    )
+    if should_warn:
+        assert logged
+    else:
+        assert not logged
