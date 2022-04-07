@@ -201,6 +201,9 @@ class WorkflowFiles:
     RUN_DIR = 'run'
     """Workflow run directory."""
 
+    SUB_WF_PREFIX = 'sub-'
+    """Directory name prefix for nested sub-workflows."""
+
     class Service:
         """The directory containing Cylc system files."""
 
