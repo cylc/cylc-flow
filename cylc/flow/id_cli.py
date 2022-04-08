@@ -495,6 +495,8 @@ def _parse_src_path(id_):
         id_ == os.curdir
         or id_.startswith(f'{os.curdir}{os.sep}')
         or Path(id_).is_absolute()
+        or id_.endswith(WorkflowFiles.FLOW_FILE)
+        or id_.endswith(WorkflowFiles.SUITE_RC)
     ):
         src_path = src_path.resolve()
         if not src_path.exists():
