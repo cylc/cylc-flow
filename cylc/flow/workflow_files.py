@@ -1257,11 +1257,13 @@ def infer_latest_run(
     except ValueError:
         raise ValueError(f"{path} is not in the cylc-run directory")
     if not path.exists():
-        raise UserInputError(f'Path does not exist: {path}')
+        raise UserInputError(
+            f'Workflow ID not found: {reg}\n(Directory not found: {path})'
+        )
     if path.name == WorkflowFiles.RUN_N:
         LOG.warning(
             f"Explicit use of {WorkflowFiles.RUN_N} in the Workflow ID is not"
-            f" necessary. It is used automatically to select the latest run"
+            " necessary. It is used automatically to select the latest run"
             " number."
         )
         runN_path = path

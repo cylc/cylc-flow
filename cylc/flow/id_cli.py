@@ -490,21 +490,53 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
 
 
 def _parse_src_path(id_):
+    """Parse CLI workflow arg to find a valid source directory.
+
+    Returns:
+      - (dir name, dir path, config file path) if id_ is a valid src dir.
+      - or None, if id_ could be a workflow ID
+
+    A valid source directory is:
+      - an existing directory that contains a worklow config file
+    and not a relative path (which could be a workflow ID), i.e. it must be:
+      - the current directory (".")
+      - or a directory path that starts with "./"
+      - or an absolute directory path
+
+    It's OK if id_ happens to match a relative path to an existing directory or
+    file (other than a workflow config file) because there could be a workflow
+    ID with the same name.
+
+    """
     src_path = Path(id_)
+
+    # First catch a common error, to avoid confusing warnings that
+    # "dir/flow.cylc" is not a valid workflow ID when the user was obviously
+    # trying (erroneously) to target a source config file.
+    if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
+        raise UserInputError(
+            f"Not a valid workflow ID or source directory: {src_path}")
+
     if (
-        id_ == os.curdir
-        or id_.startswith(f'{os.curdir}{os.sep}')
-        or Path(id_).is_absolute()
+        id_ != os.curdir
+        and not id_.startswith(f'{os.curdir}{os.sep}')
+        and not src_path.is_absolute()
     ):
-        src_path = src_path.resolve()
-        if not src_path.exists():
-            raise UserInputError(f'Path does not exist: {src_path}')
-        if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
-            src_path = src_path.parent
-        try:
-            src_file_path = check_flow_file(src_path)
-        except WorkflowFilesError:
-            raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
-        workflow_id = src_path.name
-        return workflow_id, src_path, src_file_path
-    return None
+        # Not a valid source path, but it could be a workflow ID.
+        return None
+
+    src_dir_path = src_path.resolve()
+    if not src_dir_path.exists():
+        raise UserInputError(
+            f'Source directory not found: {src_dir_path}')
+
+    if not src_dir_path.is_dir():
+        raise UserInputError(
+            f'Path is not a source directory: {src_dir_path}')
+
+    try:
+        src_file_path = check_flow_file(src_dir_path)
+    except WorkflowFilesError:
+        raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
+
+    return src_dir_path.name, src_dir_path, src_file_path
