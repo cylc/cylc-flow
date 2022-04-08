@@ -321,7 +321,10 @@ class TuiApp:
             ):
                 message = "stopped"
             else:
-                message = "workflow not found"
+                message = (
+                    f"No {WorkflowFiles.SUITE_RC} or {WorkflowFiles.FLOW_FILE}"
+                    f"found in {self.reg}."
+                )
 
             return dummy_flow({
                 'name': self.reg,
