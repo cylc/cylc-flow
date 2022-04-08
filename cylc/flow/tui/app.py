@@ -316,8 +316,8 @@ class TuiApp:
             # Distinguish stopped flow from non-existent flow.
             full_path = Path(get_workflow_run_dir(self.reg))
             if(
-                (full_path / WorkflowFiles.SUITE_RC).exists()
-                or (full_path / WorkflowFiles.FLOW_FILE).exists()
+                (full_path / WorkflowFiles.SUITE_RC).is_file()
+                or (full_path / WorkflowFiles.FLOW_FILE).is_file()
             ):
                 message = "stopped"
             else:
