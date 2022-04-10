@@ -191,6 +191,8 @@ class TaskProxy:
         is_held: bool = False,
         submit_num: int = 0,
         is_late: bool = False,
+        is_manual_submit: bool = False,
+        flow_wait: bool = False,
     ) -> None:
 
         self.tdef = tdef
@@ -203,7 +205,7 @@ class TaskProxy:
         else:
             # (don't share flow_nums ref with parent task)
             self.flow_nums = copy(flow_nums)
-        self.flow_wait = False
+        self.flow_wait = flow_wait
         self.point = start_point
         self.tokens = Tokens(
             # TODO: make these absolute?
@@ -214,7 +216,7 @@ class TaskProxy:
         self.reload_successor: Optional['TaskProxy'] = None
         self.point_as_seconds: Optional[int] = None
 
-        self.is_manual_submit = False
+        self.is_manual_submit = is_manual_submit
         self.summary: Dict[str, Any] = {
             'submitted_time': None,
             'submitted_time_string': None,

@@ -23,6 +23,7 @@ import traceback
 from typing import List, Tuple
 
 from cylc.flow import LOG
+from cylc.flow.util import deserialise
 import cylc.flow.flags
 
 
@@ -294,7 +295,7 @@ class CylcWorkflowDAO:
             ["time_updated"],
             ["submit_num", {"datatype": "INTEGER"}],
             ["status"],
-            ["flow_wait"],
+            ["flow_wait", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_TIMEOUT_TIMERS: [
             ["cycle", {"is_primary_key": True}],
@@ -711,11 +712,7 @@ class CylcWorkflowDAO:
 
         Fetch submit number and flow_nums for spawning tasks.
 
-        Return:
-            {
-                flow_nums: (submit_num, flow_wait)
-                ...,
-            }
+        Return: {submit_num: (flow_wait, flow_nums)}
 
         Args:
             name: task name
@@ -730,13 +727,17 @@ class CylcWorkflowDAO:
             r" WHERE name==? AND cycle==?"
         ) % {"name": self.TABLE_TASK_STATES}
         ret = {}
-        for flow_nums, submit_num, flow_wait in self.connect().execute(
+        for flow_nums_str, submit_num, flow_wait in self.connect().execute(
                 stmt, (name, point,)):
-            ret[flow_nums] = (submit_num, flow_wait)
+            ret[submit_num] = (flow_wait == 1, deserialise(flow_nums_str))
         return ret
 
     def select_task_outputs(self, name, point):
-        """Select task outputs for each flow."""
+        """Select task outputs for each flow.
+
+        Return: {outputs_list: flow_nums_set}
+
+        """
         stmt = rf'''
             SELECT
                flow_nums,outputs
@@ -747,7 +748,7 @@ class CylcWorkflowDAO:
         '''  # nosec (table name is code constant)
         ret = {}
         for flow_nums, outputs in self.connect().execute(stmt, (name, point,)):
-            ret[flow_nums] = outputs
+            ret[outputs] = deserialise(flow_nums)
         return ret
 
     def select_xtriggers_for_restart(self, callback):

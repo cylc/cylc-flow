@@ -390,9 +390,11 @@ class TaskPool:
                 self.config.get_taskdef(name),
                 get_point(cycle),
                 deserialise(flow_nums),
+                status=status,
                 is_held=is_held,
                 submit_num=submit_num,
-                is_late=bool(is_late))
+                is_late=bool(is_late)
+            )
         except WorkflowConfigError:
             LOG.exception(
                 f'ignoring task {name} from the workflow run database\n'
@@ -1318,7 +1320,9 @@ class TaskPool:
         name: str,
         point: 'PointBase',
         flow_nums: Set[int],
-        force: bool = False
+        force: bool = False,
+        is_manual_submit: bool = False,
+        flow_wait: bool = False,
     ) -> Optional[TaskProxy]:
         """Spawn point/name. Return the spawned task, or None.
 
@@ -1332,20 +1336,20 @@ class TaskPool:
             name, str(point)
         )
         try:
-            submit_num = max(s[0] for s in snums.values())
+            submit_num = max(s for s in snums.keys())
         except ValueError:
             # Task never spawned in any flow.
             submit_num = 0
 
-        flow_wait = False
-        for f_id, rhs in snums.items():
+        flow_wait_done = False
+        for f_wait, old_fnums in snums.values():
             # Flow_nums of previous instances.
             if (
                 not force and
-                set.intersection(flow_nums, set(json.loads(f_id)))
+                set.intersection(flow_nums, old_fnums)
             ):
-                flow_wait = rhs[1] == "1"
-                if flow_wait:
+                if f_wait:
+                    flow_wait_done = f_wait
                     break
                 # To avoid "conditional reflow" with (e.g.) "foo | bar => baz".
                 LOG.warning(
@@ -1358,7 +1362,14 @@ class TaskPool:
         if not taskdef.is_valid_point(point):
             return None
 
-        itask = TaskProxy(taskdef, point, flow_nums, submit_num=submit_num)
+        itask = TaskProxy(
+            taskdef,
+            point,
+            flow_nums,
+            submit_num=submit_num,
+            is_manual_submit=is_manual_submit,
+            flow_wait=flow_wait
+        )
         if (name, point) in self.tasks_to_hold:
             LOG.info(f"[{itask}] holding (as requested earlier)")
             self.hold_active_task(itask)
@@ -1387,12 +1398,12 @@ class TaskPool:
         if itask.state.prerequisites_are_not_all_satisfied():
             itask.state.satisfy_me(self.abs_outputs_done)
 
-        if flow_wait:
-            for flow_nums_str, outputs_str in (
+        if flow_wait_done:
+            for outputs_str, fnums in (
                 self.workflow_db_mgr.pri_dao.select_task_outputs(
                     itask.tdef.name, str(itask.point))
             ).items():
-                if set(flow_nums).intersection(deserialise(flow_nums_str)):
+                if set(flow_nums).intersection(fnums):
                     for msg in json.loads(outputs_str):
                         itask.state.outputs.set_completed_by_msg(msg)
                     break
@@ -1482,7 +1493,7 @@ class TaskPool:
                 self._get_main_task_by_id(task_id)
                 or self._get_hidden_task_by_id(task_id)
             )
-            # flow values already checked by the trigger client.
+            # Flow values already validated by the trigger client.
             if itask is None:
                 if flow[0] == FLOW_ALL:
                     flow_nums = self._get_active_flow_nums()
@@ -1491,14 +1502,24 @@ class TaskPool:
                 elif flow[0] == FLOW_NONE:
                     flow_nums = set()
                 else:
-                    flow_nums = {int(n) for n in flow}
-                itask = self.spawn_task(name, point, flow_nums, force=True)
+                    try:
+                        flow_nums = {int(n) for n in flow}
+                    except ValueError:
+                        LOG.warning(
+                            f"Trigger ignored, illegal flow values {flow}"
+                        )
+                        return 0
+                itask = self.spawn_task(
+                    name,
+                    point,
+                    flow_nums,
+                    force=True,
+                    is_manual_submit=True,
+                    flow_wait=flow_wait
+                )
                 if itask is None:
                     continue
-                # TODO PUT THESE IN TASK INIT
-                itask.is_manual_submit = True
-                itask.flow_wait = flow_wait
-                # This will queue the task.
+                # Queue the task
                 self.add_to_pool(itask, is_new=True)
             else:
                 # In pool already
@@ -1531,7 +1552,6 @@ class TaskPool:
                     "flow_nums": serialise(itask.flow_nums)
                 }
             )
-
         return len(unmatched)
 
     def sim_time_check(self, message_queue):

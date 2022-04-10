@@ -17,7 +17,7 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Trigger tasks manually.
+Trigger tasks - i.e. tell them to run even if they are not ready.
 
 Triggering an unqueued waiting task queues it, regardless of prerequisites.
 
@@ -26,11 +26,11 @@ Triggering a queued waiting task submits it, regardless of queue limiting.
 Triggering a submitted or running task has no effect (already triggered).
 
 Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
-Triggering them causes them to run (or rerun) in the same flow;
+Triggering them queues them to run (or rerun) in the same flow;
 
-Beyond n=0, triggered tasks get all current active flow numbers by default. So
-those flows - if/when they catch up - will see the triggered tasks (and their
-children) as having run already. Use the --flow option to change this.
+Beyond n=0, triggered tasks get all current active flow numbers by default, or
+specified flow numbers via the --flow option. Those flows - if/when they catch
+up - will see tasks that ran after triggering event as having run already.
 
 Examples:
   # trigger task foo in cycle 1234 in test
@@ -120,6 +120,7 @@ def get_option_parser():
 def _validate(options):
     """Check validity of flow-related options."""
     for val in options.flow:
+        val = val.strip()
         if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:
             if len(options.flow) != 1:
                 raise UserInputError(ERR_OPT_FLOW_INT)
