@@ -31,7 +31,20 @@ ones in. -->
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc3 (<span actions:bind='release-date'>Pending</span>)__
 
-### Fixes:
+Third Release Candidate for Cylc 8 suitable for acceptance testing.
+
+### Fixes
+
+[#4554](https://github.com/cylc/cylc-flow/pull/4554) - Fix incorrect
+implementation of the ISO 8601 recurrence format no. 1
+(`R<number>/<start-point>/<second-point>`)
+(see [metomi/isodatetime#45](https://github.com/metomi/isodatetime/issues/45)).
+This recurrence format was not mentioned in the Cylc documentation, so
+this is unlikely to affect you.
+
+[#4748](https://github.com/cylc/cylc-flow/pull/4748) -
+`cylc tui` gives a more helpful error message when a workflow is not running;
+distinguishing between workflow not running and not in run-directory.
 
 [#4797](https://github.com/cylc/cylc-flow/pull/4797) -
 `cylc reload` now triggers a fresh remote file installation for all relevant

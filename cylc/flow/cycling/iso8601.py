@@ -21,7 +21,7 @@ from functools import lru_cache
 import re
 from typing import List, Optional, TYPE_CHECKING, Tuple
 
-from metomi.isodatetime.data import Calendar, CALENDAR
+from metomi.isodatetime.data import Calendar, CALENDAR, Duration
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
@@ -66,7 +66,7 @@ class WorkflowSpecifics:
     point_parser: 'TimePointParser' = None
     recurrence_parser: 'TimeRecurrenceParser' = None
     iso8601_parsers: Optional[
-        Tuple['DurationParser', 'TimePointParser', 'TimeRecurrenceParser']
+        Tuple['TimePointParser', 'DurationParser', 'TimeRecurrenceParser']
     ] = None
 
 
@@ -383,10 +383,7 @@ class ISO8601Sequence(SequenceBase):
 
     def set_offset(self, i_offset):
         """Deprecated: alter state to i_offset the entire sequence."""
-        if self.recurrence.start_point is not None:
-            self.recurrence.start_point += interval_parse(str(i_offset))
-        if self.recurrence.end_point is not None:
-            self.recurrence.end_point += interval_parse(str(i_offset))
+        self.recurrence += interval_parse(str(i_offset))
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
@@ -668,13 +665,14 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
 
     # correct for year in 'now' if year only,
     # or year and time, specified in input
+        # TODO: Figure out why this correction is needed
     if re.search(r"\(-\d{2}[);T]", value):
-        now.year += 1
+        now += Duration(years=1)
 
     # correct for month in 'now' if year and month only,
     # or year, month and time, specified in input
     elif re.search(r"\(-\d{4}[);T]", value):
-        now.month_of_year += 1
+        now += Duration(months=1)
 
     # perform whatever transformation is required
     offset = None
@@ -692,13 +690,13 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
 
         offset = offset.replace('+', '')
         offset = duration_parser.parse(offset)
-        cycle_point = cycle_point + offset
+        cycle_point += offset
 
     return str(cycle_point)
 
 
 def prev_next(
-        value: str, now: 'TimePoint', parser: 'TimePointParser'
+    value: str, now: 'TimePoint', parser: 'TimePointParser'
 ) -> Tuple['TimePoint', Optional[str]]:
     """Handle prev() and next() syntax.
 
@@ -722,10 +720,7 @@ def prev_next(
     offset: Optional[str]
     tmp, offset = tmp.split(")")
 
-    if offset.strip() == '':
-        offset = None
-    else:
-        offset = offset.strip()
+    offset = offset.strip() or None
 
     str_points: List[str] = tmp.split(";")
     timepoints: List['TimePoint'] = []
@@ -765,9 +760,16 @@ def prev_next(
     # ensure truncated dates do not have
     # time from 'now' included'
     if 'T' not in value.split(')')[0]:
-        cycle_point.hour_of_day = 0
-        cycle_point.minute_of_hour = 0
-        cycle_point.second_of_minute = 0
+        # NOTE: Strictly speaking we shouldn't forcefully mutate TimePoints
+        # in this way as they're meant to be immutable since
+        # https://github.com/metomi/isodatetime/pull/165, however it
+        # should be ok as long as the TimePoint is not used as a dict key and
+        # we don't call any of the TimePoint's cached methods until after we've
+        # finished mutating it.
+        cycle_point._hour_of_day = 0
+        cycle_point._minute_of_hour = 0
+        cycle_point._second_of_minute = 0
+
     # ensure month and day from 'now' are not included
     # where they did not appear in the truncated datetime
     # NOTE: this may break when the order of tick over
@@ -775,11 +777,11 @@ def prev_next(
     # https://github.com/metomi/isodatetime/pull/101
     # case 1 - year only
     if re.search(r"\(-\d{2}[);T]", value):
-        cycle_point.month_of_year = 1
-        cycle_point.day_of_month = 1
+        cycle_point._month_of_year = 1
+        cycle_point._day_of_month = 1
     # case 2 - month only or year and month
     elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
-        cycle_point.day_of_month = 1
+        cycle_point._day_of_month = 1
 
     return cycle_point, offset
 
@@ -871,14 +873,12 @@ def get_point_relative(offset_string, base_point):
 def interval_parse(interval_string):
     """Parse an interval_string into a proper Duration class."""
     try:
-        return _interval_parse(interval_string).copy()
+        return _interval_parse(interval_string)
     except Exception:
         try:
-            return -1 * _interval_parse(
-                interval_string.replace("-", "", 1)).copy()
+            return -1 * _interval_parse(interval_string.replace("-", "", 1))
         except Exception:
-            return _interval_parse(
-                interval_string.replace("+", "", 1)).copy()
+            return _interval_parse(interval_string.replace("+", "", 1))
 
 
 def is_offset_absolute(offset_string):
@@ -899,7 +899,7 @@ def _interval_parse(interval_string):
 
 def point_parse(point_string):
     """Parse a point_string into a proper TimePoint object."""
-    return _point_parse(point_string).copy()
+    return _point_parse(point_string)
 
 
 @lru_cache(10000)
