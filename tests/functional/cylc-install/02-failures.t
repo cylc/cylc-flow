@@ -35,7 +35,7 @@ WORKFLOW_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_
 mkdir -p "${PWD}/${SOURCE_DIR_1}"
 pushd "${SOURCE_DIR_1}" || exit 1
 touch flow.cylc
-run_ok "${TEST_NAME}" cylc install --flow-name "$WORKFLOW_NAME"
+run_ok "${TEST_NAME}" cylc install --workflow-name "$WORKFLOW_NAME"
 popd || exit 1
 
 SOURCE_DIR_2="test-install-${CYLC_TEST_TIME_INIT}2/${TEST_NAME_BASE}"
@@ -43,7 +43,7 @@ WORKFLOW_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR##*tests/}/${TEST_
 mkdir -p "${PWD}/${SOURCE_DIR_2}"
 pushd "${SOURCE_DIR_2}" || exit 1
 touch flow.cylc
-run_fail "${TEST_NAME}" cylc install --flow-name "$WORKFLOW_NAME"
+run_fail "${TEST_NAME}" cylc install --workflow-name "$WORKFLOW_NAME"
 grep_ok "previous installations were from" "${TEST_NAME}.stderr"
 rm -rf "${PWD:?}/${SOURCE_DIR_1}" "${PWD:?}/${SOURCE_DIR_2}"
 purge
@@ -56,7 +56,7 @@ make_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
-run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
@@ -68,7 +68,7 @@ make_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-both-suite-and-flow-file"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
-run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Both flow.cylc and suite.rc files are present in ${RND_WORKFLOW_SOURCE}. \
 Please remove one and try again. For more information visit: \
@@ -79,7 +79,7 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-nodir"
 rm -rf "${RND_WORKFLOW_SOURCE}"
-run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --no-run-name -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
@@ -92,7 +92,7 @@ purge_rnd_workflow
 make_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-no-abs-path-flow-name"
-run_fail "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_SOURCE}" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_SOURCE}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: workflow name cannot be an absolute path: ${RND_WORKFLOW_SOURCE}
 __ERR__
@@ -108,7 +108,7 @@ __ERR__
 # Test cylc install invalid flow-name
 
 TEST_NAME="${TEST_NAME_BASE}-invalid-flow-name"
-run_fail "${TEST_NAME}" cylc install --flow-name=".invalid" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name=".invalid" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`.\`, \`-\`, numbers
 __ERR__
@@ -202,7 +202,7 @@ TEST_NAME="${TEST_NAME_BASE}-nested-rundir"
 make_rnd_workflow
 mkdir -p "${RND_WORKFLOW_RUNDIR}/.service"
 run_fail "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" \
-    --flow-name="${RND_WORKFLOW_NAME}/nested"
+    --workflow-name="${RND_WORKFLOW_NAME}/nested"
 cmp_ok "${TEST_NAME}-install.stderr" <<__ERR__
 WorkflowFilesError: Nested run directories not allowed - cannot install workflow in '${RND_WORKFLOW_RUNDIR}/nested/run1' as '${RND_WORKFLOW_RUNDIR}' is already a valid run directory.
 __ERR__
@@ -236,7 +236,7 @@ TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"
 BASE_NAME="test-install-${CYLC_TEST_TIME_INIT}"
 mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$_" || exit
 touch flow.cylc
-run_fail "${TEST_NAME}" cylc install --flow-name "$RND_WORKFLOW_NAME"
+run_fail "${TEST_NAME}" cylc install --workflow-name "$RND_WORKFLOW_NAME"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: ${RND_WORKFLOW_NAME} installation failed. Source directory should not be in ${RUN_DIR}.
 __ERR__
@@ -253,7 +253,7 @@ TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"
 BASE_NAME="test-install-${CYLC_TEST_TIME_INIT}"
 mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$_" || exit
 touch flow.cylc
-run_fail "${TEST_NAME}" cylc install --run-name=foo/bar/baz --flow-name "$RND_WORKFLOW_NAME"
+run_fail "${TEST_NAME}" cylc install --run-name=foo/bar/baz --workflow-name "$RND_WORKFLOW_NAME"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Run name cannot be a path. (You used foo/bar/baz)
 __ERR__

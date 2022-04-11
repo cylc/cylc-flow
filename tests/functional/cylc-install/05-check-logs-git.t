@@ -56,7 +56,7 @@ echo "Outside workflow" > test_file_outside_workflow
 run_ok "${TEST_NAME_BASE}-install" \
     cylc install \
         -C "$PWD/${WORKFLOW}" \
-        --flow-name "${WORKFLOW_NAME}"
+        --workflow-name "${WORKFLOW_NAME}"
 named_grep_ok \
     "File inside flow VC'd" \
     "Inside workflow" \

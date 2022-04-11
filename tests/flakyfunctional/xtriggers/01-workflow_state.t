@@ -26,7 +26,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Register and validate the upstream workflow.
 WORKFLOW_NAME_UPSTREAM="${WORKFLOW_NAME}-upstream"
-cylc install --flow-name="${WORKFLOW_NAME_UPSTREAM}" -C "${TEST_DIR}/${WORKFLOW_NAME}/upstream" --no-run-name
+cylc install --workflow-name="${WORKFLOW_NAME_UPSTREAM}" -C "${TEST_DIR}/${WORKFLOW_NAME}/upstream" --no-run-name
 run_ok "${TEST_NAME_BASE}-validate-up" cylc validate --debug "${WORKFLOW_NAME_UPSTREAM}"
 
 # Validate the downstream test workflow.

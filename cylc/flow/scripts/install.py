@@ -54,7 +54,7 @@ Examples:
 
   # Install $PWD/flow.cylc as "fido", regardless of what $PWD is, with
   # run directory ~/cylc-run/fido/run1
-  $ cylc install --flow-name=fido
+  $ cylc install --workflow-name=fido
 
   # Install $PWD/bunny/rabbit/flow.cylc as "rabbit", with run directory
   # ~/cylc-run/rabbit/run1
@@ -90,8 +90,8 @@ def get_option_parser():
     )
 
     parser.add_option(
-        "--flow-name",
-        help="Install into ~/cylc-run/<workflow_name>/runN ",
+        "--workflow-name", "-n",
+        help="Install into ~/cylc-run/<WORKFLOW_NAME>/runN ",
         action="store",
         metavar="WORKFLOW_NAME",
         default=None,
@@ -108,10 +108,12 @@ def get_option_parser():
     parser.add_option(
         "--symlink-dirs",
         help=(
-            "Enter a list, in the form 'log=path/to/store, share = $...'"
-            ". Use this option to override local symlinks for directories run,"
-            " log, work, share, share/cycle, as configured in global.cylc. "
-            "Enter an empty list \"\" to skip making localhost symlink dirs."
+            "Enter a comma-delimited list, in the form "
+            "'log=path/to/store, share = $HOME/some/path, ...'. "
+            "Use this option to override the global.cylc configuration for "
+            "local symlinks for the run, log, work, share and "
+            "share/cycle directories. "
+            "Enter an empty list '' to skip making localhost symlink dirs."
         ),
         action="store",
         dest="symlink_dirs"
@@ -119,7 +121,9 @@ def get_option_parser():
 
     parser.add_option(
         "--run-name",
-        help="Name the run.",
+        help=(
+            "Give the run a custom name instead of automatically numbering it."
+        ),
         action="store",
         metavar="RUN_NAME",
         default=None,
@@ -127,7 +131,10 @@ def get_option_parser():
 
     parser.add_option(
         "--no-run-name",
-        help="Install the workflow directly into ~/cylc-run/<workflow_name>",
+        help=(
+            "Install the workflow directly into ~/cylc-run/<workflow_name>, "
+            "without an automatic run number or custom run name."
+        ),
         action="store_true",
         default=False,
         dest="no_run_name")

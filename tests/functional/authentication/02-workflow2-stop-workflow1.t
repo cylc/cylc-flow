@@ -28,7 +28,7 @@ RND_WORKFLOW_NAME=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
 RND_WORKFLOW_SOURCE="$PWD/${RND_WORKFLOW_NAME}"
 mkdir -p "${RND_WORKFLOW_SOURCE}"
 cp -p "${TEST_SOURCE_DIR}/basic/flow.cylc" "${RND_WORKFLOW_SOURCE}"
-cylc install --flow-name="${NAME1}" --directory="${RND_WORKFLOW_SOURCE}" --no-run-name
+cylc install --workflow-name="${NAME1}" --directory="${RND_WORKFLOW_SOURCE}" --no-run-name
 
 RND_WORKFLOW_NAME2=x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)
 RND_WORKFLOW_SOURCE2="$PWD/${RND_WORKFLOW_NAME2}"
@@ -43,7 +43,7 @@ cat >"${RND_WORKFLOW_SOURCE2}/flow.cylc" <<__FLOW_CONFIG__
     [[t1]]
         script=cylc shutdown "${NAME1}"
 __FLOW_CONFIG__
-cylc install --flow-name="${NAME2}" --directory="${RND_WORKFLOW_SOURCE2}" --no-run-name
+cylc install --workflow-name="${NAME2}" --directory="${RND_WORKFLOW_SOURCE2}" --no-run-name
 cylc play --no-detach "${NAME1}" 1>'1.out' 2>&1 &
 WORKFLOW_RUN_DIR="${WORKFLOW1_RUND}" poll_workflow_running
 run_ok "${TEST_NAME_BASE}" cylc play --no-detach --abort-if-any-task-fails "${NAME2}"

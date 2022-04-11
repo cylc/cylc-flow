@@ -59,7 +59,7 @@ run_ok "${TEST_NAME_BASE}-install" \
     cylc install \
         -C "$PWD/${WORKFLOW}" \
         --no-run-name \
-        --flow-name "${WORKFLOW_NAME}"
+        --workflow-name "${WORKFLOW_NAME}"
 named_grep_ok \
     "File inside flow VC'd" \
     "Inside workflow" \

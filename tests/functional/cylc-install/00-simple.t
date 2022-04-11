@@ -70,7 +70,7 @@ TEST_NAME="${TEST_NAME_BASE}-suite.rc"
 make_rnd_workflow
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
+run_ok "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -101,7 +101,7 @@ purge_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-flow-name"
 make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}-olaf"
+run_ok "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}-olaf"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_WORKFLOW_NAME}-olaf/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -114,7 +114,7 @@ purge_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-flow-name-no-run-name"
 make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}-olaf" --no-run-name
+run_ok "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}-olaf" --no-run-name
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_WORKFLOW_NAME}-olaf from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -126,7 +126,7 @@ purge_rnd_workflow
 # Test "cylc install" --directory given (flow in --directory)
 TEST_NAME="${TEST_NAME_BASE}-option--directory"
 make_rnd_workflow
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --directory="${RND_WORKFLOW_SOURCE}"
+run_ok "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" --directory="${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
