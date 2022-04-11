@@ -356,3 +356,41 @@ cylc__job__dummy_result() {
         return 1
     fi
 }
+
+cylc__job__subworkflow() {
+    # Create and play a new instance of a subworkflow, from its installed
+    # source in the main workflow run dir.
+    local NAME="$1"
+    local DONE="$2"  # last task instance in sub-workflow, e.g. "1/foo"
+    if [[ "$NAME" != "sub-"* ]]; then
+        >&2 echo "ERROR: subworkflow name must begin with 'sub-'"
+        exit 1
+    fi
+    if [[ "$DONE" != *"/"* ]]; then
+        >&2 echo "ERROR: subworkflow final task must be 'point/name'"
+        exit 1
+    fi
+    # Set subworkflow paths and ID (includes main cycle point):
+    local SRC_DIR="${CYLC_WORKFLOW_RUN_DIR}/${NAME}"
+    local RUN_DIR="${SRC_DIR}/${CYLC_TASK_CYCLE_POINT}"
+    local ID="${RUN_DIR#*/cylc-run/}"
+    mkdir "$RUN_DIR"
+
+    # Symlink to the installed flow.cylc after renaming it to avoid
+    # detection of the template as a workflow (if not already renamed).
+    mv "${SRC_DIR}/flow.cylc" "${SRC_DIR}/sub-flow.cylc" || true
+    ln -s "${SRC_DIR}/sub-flow.cylc" "${RUN_DIR}/flow.cylc"
+
+    cylc message "Subworkflow: installed $ID from $SRC_DIR"
+
+    # Start the new sub-workflow instance (detaching).
+    cylc play "$ID"
+
+    # Wait for the subworkflow final task (allows subworkflow to stop and restart).
+    cylc message "Subworkflow: waiting for ${ID}//${DONE}"
+    cylc workflow-state \
+        --max-polls=10 --interval=10 \
+	-p "${DONE%/*}" -t "${DONE#*/}" --status succeeded "$ID"
+
+    cylc message "Subworkflow: finished ${ID}//${DONE}"
+}
