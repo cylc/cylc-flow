@@ -352,7 +352,10 @@ def test_infer_latest_run__bad(
         )
     elif reason == 'not exist':
         run_dir = run_dir / 'not-exist'
-        err_msg = f"Path does not exist: {run_dir}"
+        err_msg = (
+            f"Workflow ID not found: sulu/not-exist\n"
+            f"(Directory not found: {run_dir})"
+        )
     else:
         raise ValueError(reason)
     # -- Test --
