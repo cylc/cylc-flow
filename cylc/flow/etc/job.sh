@@ -356,3 +356,23 @@ cylc__job__dummy_result() {
         return 1
     fi
 }
+
+cylc__job__install_subworkflow() {
+    # Install a new instance of a sub-workflow from source in the main run dir,
+    # symlink flow.cylc to the source, and echo the sub-workflow ID to stdout.
+    local NAME="$1"
+    local PREFIX="$2"
+    if [[ "$NAME" != "sub-"* ]]; then
+        echo "ERROR: sub-workflow names must begin with 'sub-'" >&2
+        exit 1
+    fi
+    local SRC_DIR="${CYLC_WORKFLOW_RUN_DIR}/${NAME}"
+    local RUN_DIR="${SRC_DIR}/${PREFIX}${CYLC_TASK_CYCLE_POINT}"
+    local ID="${RUN_DIR#*/cylc-run/}"
+    # Create sub-workflow run dir.
+    mkdir "$RUN_DIR"
+    # Symlink to the source flow.cylc.
+    ln -s "${SRC_DIR}/flow.cylc" "${RUN_DIR}/flow.cylc"
+    # Echo the new workflow ID to stdout.
+    echo "$ID"
+}
