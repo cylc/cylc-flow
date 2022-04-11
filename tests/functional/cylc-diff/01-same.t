@@ -33,7 +33,7 @@ init_workflow "${TEST_NAME_BASE}-1" "${PWD}/flow.cylc"
 WORKFLOW_NAME1="${WORKFLOW_NAME}"
 # shellcheck disable=SC2153
 WORKFLOW_NAME2="${WORKFLOW_NAME1%1}2"
-cylc install --workflow-name="${WORKFLOW_NAME2}" --directory="${TEST_DIR}/${WORKFLOW_NAME1}" --no-run-name 2>'/dev/null'
+cylc install "${TEST_DIR}/${WORKFLOW_NAME1}" --workflow-name="${WORKFLOW_NAME2}" --no-run-name 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}" cylc diff "${WORKFLOW_NAME1}" "${WORKFLOW_NAME2}"
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__

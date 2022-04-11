@@ -28,7 +28,7 @@ install_workflow "${TEST_NAME_BASE}" 'polling'
 cp -r "${TEST_SOURCE_DIR}/upstream" "${TEST_DIR}/"
 # this version uses a simple Rose-style workflow name [\w-]
 UPSTREAM="${WORKFLOW_NAME}-upstream"
-cylc install --workflow-name="${UPSTREAM}" -C "${TEST_DIR}/upstream"  --no-run-name
+cylc install "${TEST_DIR}/upstream" --workflow-name="${UPSTREAM}" --no-run-name
 #-------------------------------------------------------------------------------
 # validate both workflows as tests
 TEST_NAME="${TEST_NAME_BASE}-validate-upstream"

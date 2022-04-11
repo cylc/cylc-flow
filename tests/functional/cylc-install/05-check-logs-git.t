@@ -16,13 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #------------------------------------------------------------------------------
-# Test that we only log version control info on workflow.
+# Test that we only log version control info on workflow source dir
+# when it is a subdir of a repo.
 
 . "$(dirname "$0")/test_header"
 
-git --version || skip_all "git not installed"
-
-set_test_number 5
+if ! command -v 'git' > /dev/null; then
+    skip_all 'git not installed'
+fi
+# set_test_number 6
+set_test_number 3
 
 WORKFLOW="$(date | md5sum | awk '{print $1}')"
 WORKFLOW_NAME="$(workflow_id "${TEST_NAME_BASE}")"
@@ -52,23 +55,11 @@ git commit -m "commit 0"
 echo "Inside workflow" > "${WORKFLOW}/test_file_in_workflow"
 echo "Outside workflow" > test_file_outside_workflow
 
-# Carry out actual test with abspath:
-run_ok "${TEST_NAME_BASE}-install" \
-    cylc install \
-        -C "$PWD/${WORKFLOW}" \
-        --workflow-name "${WORKFLOW_NAME}"
-named_grep_ok \
-    "File inside flow VC'd" \
-    "Inside workflow" \
-    "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
-grep_fail "Outside workflow" "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
-
 # Carry out actual test with relpath:
-cylc install -C "${WORKFLOW}"
-named_grep_ok \
-    "File inside flow VC'd" \
-    "Inside workflow" \
-    "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
-grep_fail "Outside workflow" "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
+run_ok "${TEST_NAME_BASE}-install" \
+    cylc install "./${WORKFLOW}" --workflow-name "${WORKFLOW_NAME}"
+DIFF_FILE="${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
+grep_ok "Inside workflow" "$DIFF_FILE"
+grep_fail "Outside workflow" "$DIFF_FILE"
 
 purge

@@ -130,9 +130,9 @@ def main(
             ) from None
 
     reinstall_workflow(
+        source=Path(source),
         named_run=workflow_id,
         rundir=run_dir,
-        source=source,
         dry_run=False  # TODO: ready for dry run implementation
     )
 

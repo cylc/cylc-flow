@@ -487,9 +487,9 @@ init_workflow() {
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${WORKFLOW_NAME}/flow.cylc"
     cd "${TEST_DIR}/${WORKFLOW_NAME}"
     if "${RUN_NUMS}"; then
-        cylc install --workflow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --workflow-name="${WORKFLOW_NAME}"
     else
-        cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --no-run-name --workflow-name="${WORKFLOW_NAME}"
     fi
 }
 
@@ -503,9 +503,9 @@ install_workflow() {
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${WORKFLOW_NAME}/"
     cd "${TEST_DIR}/${WORKFLOW_NAME}"
     if "$RUN_NUMS"; then
-        cylc install --workflow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --workflow-name="${WORKFLOW_NAME}"
     else
-        cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --no-run-name --workflow-name="${WORKFLOW_NAME}"
     fi
 }
 

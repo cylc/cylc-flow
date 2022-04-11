@@ -28,9 +28,19 @@ from cylc.flow.exceptions import (
 )
 from cylc.flow.platforms import get_localhost_install_target
 
+
 # Note: do not import this elsewhere, as it might bypass unit test
 # monkeypatching:
 _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
+
+EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
+    rf'''
+    ^({re.escape(os.curdir)}|{re.escape(os.pardir)})
+    ({re.escape(os.sep)}|$)
+    ''',
+    re.VERBOSE
+)
+"""Matches relative paths that are explicit (starts with ./)"""
 
 
 def expand_path(*args: Union[Path, str]) -> str:

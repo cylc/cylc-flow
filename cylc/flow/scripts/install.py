@@ -22,18 +22,25 @@ Install a new workflow.
 
 The workflow can then be started, stopped, and targeted by name.
 
-Normal installation creates a directory "~/cylc-run/WORKFLOW_NAME/", with a run
-directory "~/cylc-run/WORKFLOW_NAME/run1". A "_cylc-install/source" symlink to
-the source directory will be created in the WORKFLOW_NAME directory.
+Normal installation creates a directory "~/cylc-run/<workflow>/", with a run
+directory "~/cylc-run/<workflow>/run1". A "_cylc-install/source" symlink to
+the source directory will be created in the workflow directory.
 Any files or directories (excluding .git, .svn) from the source directory are
 copied to the new run directory.
 A ".service" directory will also be created and used for server authentication
 files at run time.
 
-If the argument WORKFLOW_NAME is used, Cylc will search for the workflow in the
-list of directories given by "global.cylc[install]source dirs", and install the
-first match. Otherwise, the workflow in the current working directory, or the
-one specified by the "--directory" option, will be installed.
+The SOURCE argument accepts three types of path:
+* implicit relative path (e.g. "foo/bar") - Cylc will search for the
+  workflow source in the list of directories given by
+  "global.cylc[install]source dirs", and install the first match.
+* explicit relative path (e.g. "./foo/bar") - Cylc will install the workflow
+  from the source that is relative to the current working directory.
+* absolute path (e.g. "~/foo/bar") - Cylc will install the workflow from the
+  source given by the path.
+
+If the SOURCE argument is not supplied, Cylc will install the workflow from
+the source in the current working directory.
 
 Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
 
@@ -44,24 +51,28 @@ Examples:
   # this will increment)
   $ cylc install dogs/fido
 
-  # Install $PWD/flow.cylc as "rabbit", if $PWD is ~/bunny/rabbit, with
+  # Install $PWD as "rabbit", if $PWD is ~/bunny/rabbit, with
   # run directory ~/cylc-run/rabbit/run1
   $ cylc install
 
-  # Install $PWD/flow.cylc as "rabbit", if $PWD is ~/bunny/rabbit, with
+  # Install $PWD as "rabbit", if $PWD is ~/bunny/rabbit, with
   # run directory ~/cylc-run/rabbit (note: no "run1" sub-directory)
   $ cylc install --no-run-name
 
-  # Install $PWD/flow.cylc as "fido", regardless of what $PWD is, with
+  # Install $PWD as "fido", regardless of what $PWD is called, with
   # run directory ~/cylc-run/fido/run1
   $ cylc install --workflow-name=fido
 
-  # Install $PWD/bunny/rabbit/flow.cylc as "rabbit", with run directory
+  # Install $PWD/bunny/rabbit/ as "rabbit", with run directory
   # ~/cylc-run/rabbit/run1
-  $ cylc install --directory=bunny/rabbit
+  $ cylc install ./bunny/rabbit
 
-  # Install $PWD/flow.cylc as "cats", if $PWD is ~/cats, overriding the
-  # run1, run2, run3 etc. structure with run directory ~/cylc-run/cats/paws
+  # Install /home/somewhere/badger as "badger", with run directory
+  # ~/cylc-run/badger/run1
+  $ cylc install /home/somewhere/badger
+
+  # Install $PWD as "cats", if $PWD is ~/cats, with run directory
+  # ~/cylc-run/cats/paws
   $ cylc install --run-name=paws
 
 The same workflow can be installed with multiple names; this results in
@@ -69,11 +80,15 @@ multiple workflow run directories that link to the same workflow definition.
 
 """
 
+from pathlib import Path
 from typing import Optional, TYPE_CHECKING, Dict, Any
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, UserInputError
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    CylcOptionParser as COP,
+)
+from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX, expand_path
 from cylc.flow.workflow_files import (
     install_workflow, search_install_source_dirs, parse_cli_sym_dirs
 )
@@ -86,7 +101,7 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__, comms=True, prep=True,
-        argdoc=[('[WORKFLOW_NAME]', 'Workflow source name')]
+        argdoc=[('[SOURCE]', 'Path to workflow source')]
     )
 
     parser.add_option(
@@ -96,14 +111,6 @@ def get_option_parser():
         metavar="WORKFLOW_NAME",
         default=None,
         dest="workflow_name")
-
-    parser.add_option(
-        "--directory", "-C",
-        help="Install the workflow found in path specfied.",
-        action="store",
-        metavar="PATH/TO/FLOW",
-        default=None,
-        dest="source")
 
     parser.add_option(
         "--symlink-dirs",
@@ -144,6 +151,22 @@ def get_option_parser():
     return parser
 
 
+def get_source_location(path: Optional[str]) -> Path:
+    """Return the workflow source location as an absolute path.
+
+    Note: does not check that the source actually exists.
+    """
+    if path is None:
+        return Path.cwd()
+    path = path.strip()
+    expanded_path = Path(expand_path(path))
+    if expanded_path.is_absolute():
+        return expanded_path
+    if EXPLICIT_RELATIVE_PATH_REGEX.match(path):
+        return Path.cwd() / expanded_path
+    return search_install_source_dirs(expanded_path)
+
+
 @cli_function(get_option_parser)
 def main(parser, opts, reg=None):
     install(parser, opts, reg)
@@ -157,25 +180,12 @@ def install(
             "options --no-run-name and --run-name are mutually exclusive."
         )
 
-    if reg is None:
-        source = opts.source
-    else:
-        if opts.source:
-            raise UserInputError(
-                "WORKFLOW_NAME and --directory are mutually exclusive."
-            )
-        source = search_install_source_dirs(reg)
-    workflow_name = opts.workflow_name or reg
-
+    source = get_source_location(reg)
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
-            if source:
-                entry_point.resolve()(srcdir=source, opts=opts)
-            else:
-                from pathlib import Path
-                entry_point.resolve()(srcdir=Path().cwd(), opts=opts)
+            entry_point.resolve()(srcdir=source, opts=opts)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
@@ -192,8 +202,8 @@ def install(
         cli_symdirs = parse_cli_sym_dirs(opts.symlink_dirs)
 
     source_dir, rundir, _workflow_name = install_workflow(
-        workflow_name=workflow_name,
         source=source,
+        workflow_name=opts.workflow_name,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,
         cli_symlink_dirs=cli_symdirs

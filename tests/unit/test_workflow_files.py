@@ -46,6 +46,7 @@ from cylc.flow.workflow_files import (
     clean,
     detect_both_flow_and_suite,
     get_rsync_rund_cmd,
+    get_source_workflow_name,
     get_symlink_dirs,
     get_workflow_source_dir,
     glob_in_run_dir,
@@ -1451,7 +1452,7 @@ def test_reinstall_workflow(tmp_path, capsys):
 
     (cylc_install_dir / "source").symlink_to(source_dir)
     run_dir = cylc_install_dir.parent
-    reinstall_workflow("flow-name", run_dir, source_dir)
+    reinstall_workflow(source_dir, "flow-name", run_dir)
     assert capsys.readouterr().out == (
         f"REINSTALLED flow-name from {source_dir}\n")
 
@@ -1471,12 +1472,12 @@ def test_search_install_source_dirs(
         filename: A file to insert into one of the source dirs.
         expected_err: Exception and message expected to be raised.
     """
-    horse_dir = Path(tmp_path, 'horse')
+    horse_dir = tmp_path / 'horse'
     horse_dir.mkdir()
-    sheep_dir = Path(tmp_path, 'sheep')
-    source_dir = sheep_dir.joinpath('baa', 'baa')
+    sheep_dir = tmp_path / 'sheep'
+    source_dir = sheep_dir / 'baa' / 'baa'
     source_dir.mkdir(parents=True)
-    source_dir_file = source_dir.joinpath(filename)
+    source_dir_file = source_dir / filename
     source_dir_file.touch()
     mock_glbl_cfg(
         'cylc.flow.workflow_files.glbl_cfg',
@@ -1491,8 +1492,9 @@ def test_search_install_source_dirs(
             search_install_source_dirs('baa/baa')
         assert msg in str(exc.value)
     else:
-        flow_file = search_install_source_dirs('baa/baa')
-        assert flow_file == source_dir
+        ret = search_install_source_dirs('baa/baa')
+        assert ret == source_dir
+        assert ret.is_absolute()
 
 
 def test_search_install_source_dirs_empty(mock_glbl_cfg: Callable):
@@ -1509,6 +1511,29 @@ def test_search_install_source_dirs_empty(mock_glbl_cfg: Callable):
     assert str(exc.value) == (
         "Cannot find workflow as 'global.cylc[install]source dirs' "
         "does not contain any paths")
+
+
+@pytest.mark.parametrize(
+    'path, expected',
+    [
+        ('/isla/nublar/dennis/nedry', 'dennis/nedry'),
+        ('/isla/sorna/paul/kirby', 'paul/kirby'),
+        ('/mos/eisley/owen/skywalker', 'skywalker')
+    ]
+)
+def test_get_source_workflow_name(
+    path: str,
+    expected: str,
+    mock_glbl_cfg: Callable
+):
+    mock_glbl_cfg(
+        'cylc.flow.workflow_files.glbl_cfg',
+        '''
+        [install]
+            source dirs = /isla/nublar, /isla/sorna
+        '''
+    )
+    assert get_source_workflow_name(Path(path)) == expected
 
 
 @pytest.mark.parametrize(
@@ -1801,12 +1826,12 @@ def test_install_workflow__max_depth(
     src_dir = tmp_src_dir('bar')
     if err_expected:
         with pytest.raises(WorkflowFilesError) as exc_info:
-            install_workflow(workflow_name, src_dir)
+            install_workflow(src_dir, workflow_name)
         assert "would exceed global.cylc[install]max depth" in str(
             exc_info.value
         )
     else:
-        install_workflow(workflow_name, src_dir)
+        install_workflow(src_dir, workflow_name)
 
 
 @pytest.mark.parametrize(
@@ -1834,10 +1859,10 @@ def test_install_workflow__next_to_flow_file(
     # Test
     if expected_exc:
         with pytest.raises(expected_exc) as exc_info:
-            install_workflow('faden', src_dir)
+            install_workflow(src_dir, 'faden')
         assert "Nested run directories not allowed" in str(exc_info.value)
     else:
-        install_workflow('faden', src_dir)
+        install_workflow(src_dir, 'faden')
 
 
 def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):

@@ -56,7 +56,7 @@ make_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
-run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
@@ -68,7 +68,7 @@ make_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-both-suite-and-flow-file"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
-run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Both flow.cylc and suite.rc files are present in ${RND_WORKFLOW_SOURCE}. \
 Please remove one and try again. For more information visit: \
@@ -79,7 +79,7 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-nodir"
 rm -rf "${RND_WORKFLOW_SOURCE}"
-run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
 __ERR__
@@ -92,7 +92,7 @@ purge_rnd_workflow
 make_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-no-abs-path-flow-name"
-run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_SOURCE}" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_SOURCE}" "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: workflow name cannot be an absolute path: ${RND_WORKFLOW_SOURCE}
 __ERR__
@@ -100,7 +100,7 @@ __ERR__
 # Test cylc install fails when given forbidden run-name
 
 TEST_NAME="${TEST_NAME_BASE}-run-name-forbidden"
-run_fail "${TEST_NAME}" cylc install --run-name=_cylc-install -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --run-name=_cylc-install "${RND_WORKFLOW_SOURCE}"
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Workflow/run name cannot contain a directory named '_cylc-install' (that filename is reserved)
 __ERR__
@@ -108,7 +108,7 @@ __ERR__
 # Test cylc install invalid flow-name
 
 TEST_NAME="${TEST_NAME_BASE}-invalid-flow-name"
-run_fail "${TEST_NAME}" cylc install --workflow-name=".invalid" -C "${RND_WORKFLOW_SOURCE}"
+run_fail "${TEST_NAME}" cylc install --workflow-name=".invalid" "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: invalid workflow name '.invalid' - cannot start with: \`.\`, \`-\`, numbers
 __ERR__
@@ -201,7 +201,7 @@ purge_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-nested-rundir"
 make_rnd_workflow
 mkdir -p "${RND_WORKFLOW_RUNDIR}/.service"
-run_fail "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" \
+run_fail "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" \
     --workflow-name="${RND_WORKFLOW_NAME}/nested"
 cmp_ok "${TEST_NAME}-install.stderr" <<__ERR__
 WorkflowFilesError: Nested run directories not allowed - cannot install workflow in '${RND_WORKFLOW_RUNDIR}/nested/run1' as '${RND_WORKFLOW_RUNDIR}' is already a valid run directory.
@@ -211,9 +211,9 @@ __ERR__
 
 TEST_NAME="${TEST_NAME_BASE}-install-moving-src-dir"
 make_rnd_workflow
-run_ok "${TEST_NAME}" cylc install -C "${RND_WORKFLOW_NAME}"
+run_ok "${TEST_NAME}" cylc install "./${RND_WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_NAME}
+INSTALLED $RND_WORKFLOW_NAME/run1 from ${PWD}/${RND_WORKFLOW_NAME}
 __OUT__
 rm -rf "${RND_WORKFLOW_SOURCE}"
 ALT_SOURCE="${TMPDIR}/${USER}/cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
@@ -222,7 +222,7 @@ touch "${ALT_SOURCE}/${RND_WORKFLOW_NAME}/flow.cylc"
 
 
 TEST_NAME="${TEST_NAME_BASE}-install-twice-moving-src-dir-raises-error"
-run_fail "${TEST_NAME}" cylc install -C "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
+run_fail "${TEST_NAME}" cylc install "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
 grep_ok "WorkflowFilesError: Symlink broken" "${TEST_NAME}.stderr"
 
 rm -rf "${ALT_SOURCE}"

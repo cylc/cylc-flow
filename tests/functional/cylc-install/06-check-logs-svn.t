@@ -56,14 +56,10 @@ echo "Outside workflow" > test_file_outside_workflow
 # Carry out actual test:
 
 run_ok "${TEST_NAME_BASE}-install" \
-    cylc install \
-        -C "$PWD/${WORKFLOW}" \
-        --no-run-name \
-        --workflow-name "${WORKFLOW_NAME}"
-named_grep_ok \
-    "File inside flow VC'd" \
-    "Inside workflow" \
-    "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
-grep_fail "Outside workflow" "${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
+    cylc install "./${WORKFLOW}" --no-run-name --workflow-name "${WORKFLOW_NAME}"
+
+DIFF_FILE="${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
+grep_ok "Inside workflow" "$DIFF_FILE"
+grep_fail "Outside workflow" "$DIFF_FILE"
 
 purge
