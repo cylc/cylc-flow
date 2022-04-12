@@ -309,6 +309,12 @@ def src_dir(tmp_path):
     src_dir.mkdir()
     src_file = src_dir / 'flow.cylc'
     src_file.touch()
+
+    other_dir = (tmp_path / 'blargh')
+    other_dir.mkdir()
+    other_file = other_dir / 'nugget'
+    other_file.touch()
+ 
     os.chdir(tmp_path)
     yield src_dir
     os.chdir(cwd_before)
@@ -357,6 +363,20 @@ def test_parse_src_path(src_dir, monkeypatch):
     # Might be a workflow ID, even though there's a matching relative path
     res = _parse_src_path('a')
     assert res is None
+
+    # Not a src directory (dir)
+    with pytest.raises(WorkflowFilesError) as exc_ctx:
+        _parse_src_path('./blargh')
+    assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
+
+    # Not a src directory (file)
+    with pytest.raises(UserInputError) as exc_ctx:
+        _parse_src_path('./blargh/nugget')
+    assert 'Path is not a source directory' in str(exc_ctx.value)
+
+    res = _parse_src_path('a')
+    assert res is None
+
 
     # move into the src dir
     monkeypatch.chdir(src_dir)
