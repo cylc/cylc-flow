@@ -19,6 +19,7 @@
 from pathlib import Path
 from random import shuffle
 import shutil
+import sys
 from typing import Optional
 
 import cylc.flow
@@ -150,8 +151,10 @@ def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
             shutil.copyfile(str(src), str(tgt))
     except IsADirectoryError as exc:
         LOG.error(f'Destination file is already directory: {exc.filename}')
+        sys.exit(1)
     except FileExistsError as exc:
         LOG.error(f'Destination directory is already a file: {exc.filename}')
+        sys.exit(1)
 
 
 def get_api_key() -> str:

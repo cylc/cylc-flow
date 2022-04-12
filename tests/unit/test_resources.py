@@ -22,6 +22,7 @@ from subprocess import run
 
 from cylc.flow.resources import (
     RESOURCE_NAMES,
+    extract_resource,
     get_resources,
     _backup,
 )
