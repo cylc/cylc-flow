@@ -1403,7 +1403,7 @@ class TaskPool:
                 self.workflow_db_mgr.pri_dao.select_task_outputs(
                     itask.tdef.name, str(itask.point))
             ).items():
-                if set(flow_nums).intersection(fnums):
+                if flow_nums.intersection(fnums):
                     for msg in json.loads(outputs_str):
                         itask.state.outputs.set_completed_by_msg(msg)
                     break
@@ -1476,6 +1476,28 @@ class TaskPool:
         Queue the task if not queued, otherwise release it to run.
 
         """
+        if set(flow).intersection({FLOW_ALL, FLOW_NEW, FLOW_NONE}):
+            if len(flow) != 1:
+                LOG.warning(
+                    f'The "flow" values {FLOW_ALL}, {FLOW_NEW} & {FLOW_NONE}'
+                    ' cannot be used in combination with integer flow numbers.'
+                )
+                return 0
+            if flow[0] == FLOW_ALL:
+                flow_nums = self._get_active_flow_nums()
+            elif flow[0] == FLOW_NEW:
+                flow_nums = {self.flow_mgr.get_new_flow(flow_descr)}
+            elif flow[0] == FLOW_NONE:
+                flow_nums = set()
+        else:
+            try:
+                flow_nums = {int(n) for n in flow}
+            except ValueError:
+                LOG.warning(
+                    f"Trigger ignored, illegal flow values {flow}"
+                )
+                return 0
+
         # n_warnings, task_items = self.match_taskdefs(items)
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
@@ -1495,20 +1517,6 @@ class TaskPool:
             )
             # Flow values already validated by the trigger client.
             if itask is None:
-                if flow[0] == FLOW_ALL:
-                    flow_nums = self._get_active_flow_nums()
-                elif flow[0] == FLOW_NEW:
-                    flow_nums = {self.flow_mgr.get_new_flow(flow_descr)}
-                elif flow[0] == FLOW_NONE:
-                    flow_nums = set()
-                else:
-                    try:
-                        flow_nums = {int(n) for n in flow}
-                    except ValueError:
-                        LOG.warning(
-                            f"Trigger ignored, illegal flow values {flow}"
-                        )
-                        return 0
                 itask = self.spawn_task(
                     name,
                     point,
