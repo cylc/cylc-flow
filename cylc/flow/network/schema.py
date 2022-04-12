@@ -1410,6 +1410,7 @@ class Flow(String):
     """An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
     # (Note docstrings can't be f-strings).
 
+
 # Mutations:
 
 # TODO: re-instate:

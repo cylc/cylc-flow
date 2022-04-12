@@ -69,7 +69,7 @@ MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
-  $flow: [String],
+  $flow: [Flow!],
   $flowWait: Boolean,
   $flowDescr: String,
 ) {
