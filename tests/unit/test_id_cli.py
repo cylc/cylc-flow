@@ -330,7 +330,7 @@ def test_parse_src_path(src_dir, monkeypatch):
             str(src_dir.resolve()) + 'xyz'
         )
 
-    # valid relative path
+    # valid ./relative path
     workflow_id, src_path, src_file_path = _parse_src_path('./a')
     assert workflow_id == 'a'
     assert src_path == src_dir
@@ -340,25 +340,37 @@ def test_parse_src_path(src_dir, monkeypatch):
     with pytest.raises(UserInputError):
         _parse_src_path('./xxx')
 
-    # relative '.' (invalid)
+    # relative '.' dir (invalid)
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         workflow_id, src_path, src_file_path = _parse_src_path('.')
     assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
 
+    # relative 'invalid/<flow-file>' (invalid)
+    with pytest.raises(UserInputError) as exc_ctx:
+        _parse_src_path('xxx/flow.cylc')
+    assert 'Not a valid workflow ID or source directory' in str(exc_ctx.value)
+
+    # Might be a workflow ID
+    res = _parse_src_path('the/quick/brown/fox')
+    assert res is None
+
+    # Might be a workflow ID, even though there's a matching relative path
+    res = _parse_src_path('a')
+    assert res is None
+
     # move into the src dir
     monkeypatch.chdir(src_dir)
 
-    # relative '.' (valid)
+    # relative '.' dir (valid)
     workflow_id, src_path, src_file_path = _parse_src_path('.')
     assert workflow_id == 'a'
     assert src_path == src_dir
     assert src_file_path == src_dir / 'flow.cylc'
 
-    # relative './<flow-file>'
-    workflow_id, src_path, src_file_path = _parse_src_path('./flow.cylc')
-    assert workflow_id == 'a'
-    assert src_path == src_dir
-    assert src_file_path == src_dir / 'flow.cylc'
+    # relative './<flow-file>' (invalid)
+    with pytest.raises(UserInputError) as exc_ctx:
+        _parse_src_path('./flow.cylc')
+    assert 'Not a valid workflow ID or source directory' in str(exc_ctx.value)
 
 
 async def test_parse_ids_src_path(src_dir):
