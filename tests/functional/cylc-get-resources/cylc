@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
+# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#------------------------------------------------------------------------------
+# Wrapper script to support multiple installed Cylc, Rose & Isodatetime
+# versions. Handles Conda and Python virtual environments, and legacy plain
+# installations.
+#
+# WRAPPER INSTALLATION AND CONFIGURATION
+# --------------------------------------
+# - Copy this script as "cylc" into default $PATH, on scheduler and job hosts
+# - Create an "isodatetime" symlink (ln -s cylc isodatetime)
+# - If using Rose, create "rose" & "rosie" symlinks
+# - Set CYLC_HOME_ROOT ("EDIT ME" below) to default to the parent directory of
+#   installed versions and set the global config locations if necessary
+#
+# HOW IT WORKS
+# ------------
+# Intercept "cylc", "rose", "rosie" and "isodatetime" commands and re-invoke
+# them with the version selected via the environment variables described below.
+#
+# Additional legacy logic is used when calling Rose with Cylc 7.
+#
+# ENVIRONMENT VARIABLES
+# ---------------------
+#
+# CYLC_VERSION - can be set by users (e.g. in .bash_profile) in order to select a
+# specific Cylc environment. If set this wrapper will look for an installed
+# environment called cylc-$CYLC_VERSION in the ROOT locations (if not set it will
+# look for an installed environment called cylc).
+# e.g.    export CYLC_VERSION=8.0.0-1
+#
+# CYLC_HOME_ROOT - location of installed Cylc environments.
+# Usually defined in this wrapper script.
+#
+# CYLC_HOME_ROOT_ALT - alternate location of installed Cylc environments.
+# Can be set by users for use with their own Cylc environments.
+# If used it must be set on workflow and job hosts, e.g. in .bash_profile.
+# e.g.    export CYLC_HOME_ROOT_ALT=$HOME/miniconda3/envs
+#
+# CYLC_ENV_NAME - gets set to the basename of the selected environment.
+# If set this defines the environment name rather than CYLC_VERSION.
+# The scheduler sets CYLC_ENV_NAME for all remote commands to ensure the same
+# environment is used on all platforms.
+# Users should not set CYLC_ENV_NAME (use CYLC_VERSION).
+#
+# CYLC_HOME - full path to the Cylc environment.
+# Can be set by users in order to use an environment outside of the ROOT
+# locations. However, it is not passed by the scheduler to remote platforms so
+# use of CYLC_VERSION & CYLC_HOME_ROOT_ALT is preferred.
+#
+# INSTALLING ENVIRONMENTS
+# -----------------------
+#
+# Releases should be installed into environments in the ROOT location, named
+# cylc-$CYLC_VERSION. We recommend using the cylc-flow version plus an additional
+# suffix to allow for multiple environments containing the same cylc-flow
+# version. e.g. cylc-8.0.0-1
+#
+# A cylc symlink should be created in the ROOT location to define the default
+# version to used. e.g. ln -s cylc-8.0.0-1 cylc
+# Other symlinks can be created in order to create additional named environments
+# for selection using CYLC_VERSION. e.g. ln -s cylc-8.0.1-1 cylc-next
+#
+# Legacy Cylc 7 and Rose 2019.01 versions can also be installed into environments
+# in the ROOT location. The legacy support for rose edit and cylc review requires
+# cylc-7 and rose-2019.01 symlinks to be created to the preferred environments.
+# e.g.    ln -s cylc-7.9.5 cylc-7
+#         ln -s rose-2019.01.5 rose-2019.01
+#
+##############################!!! EDIT ME !!!##################################
+# Centrally installed Cylc releases:
+CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
+
+# Users can set CYLC_HOME_ROOT_ALT as well (see above), e.g.:
+# CYLC_HOME_ROOT_ALT=${HOME}/miniconda3/envs
+
+# Global config locations for Cylc 8 & Rose 2 (defaults: /etc/cylc & /etc/rose)
+# export CYLC_SITE_CONF_PATH="${CYLC_SITE_CONF_PATH:-/etc/cylc}"
+# export ROSE_SITE_CONF_PATH="${ROSE_SITE_CONF_PATH:-/etc/rose}"
+###############################################################################
+
+if [[ -z "${CYLC_HOME}" ]]; then
+    if [[ -z "${CYLC_ENV_NAME}" ]]; then
+        if [[ -n "${CYLC_VERSION}" ]]; then
+            CYLC_ENV_NAME="cylc-$CYLC_VERSION"
+        else
+            # Use default version (symlink)
+            CYLC_ENV_NAME="cylc"
+        fi
+    fi
+    # CYLC_VERSION gets set to the actual version of Cylc used within workflows.
+    # Therefore we export CYLC_ENV_NAME to ensure it gets used rather than
+    # CYLC_VERSION in subsequent calls to the wrapper.
+    export CYLC_ENV_NAME
+    for ROOT in "${CYLC_HOME_ROOT}" "${CYLC_HOME_ROOT_ALT}"; do
+        if [[ -d "${ROOT}/${CYLC_ENV_NAME}" ]]; then
+            CYLC_HOME="${ROOT}/${CYLC_ENV_NAME}"
+            # If CYLC_HOME is a symlink then replace it with the real path and
+            # set CYLC_ENV_NAME to the linked environment to ensure changes to
+            # symlinked environments can't affect running workflows.
+            if [[ -L ${CYLC_HOME} ]]; then
+                CYLC_HOME=$(readlink -f "${CYLC_HOME}")
+                CYLC_ENV_NAME=${CYLC_HOME##*/}
+            fi
+            break
+        fi
+    done
+    if [[ -z "${CYLC_HOME}" ]]; then
+        MSG="ERROR: $CYLC_ENV_NAME not found in $CYLC_HOME_ROOT"
+        if [[ -n "${CYLC_HOME_ROOT_ALT}" ]]; then
+            MSG="${MSG} or ${CYLC_HOME_ROOT_ALT}"
+        fi
+        echo 1>&2 "$MSG"
+        exit 1
+    fi
+fi
+
+# Legacy support for Rose
+if [[ ${0##*/} =~ ^ros ]]; then
+    # Prior to Cylc 8, Rose used a standalone installation
+    if [[ -n "${CYLC_ENV_NAME}" ]]; then
+        ROSE_HOME_ROOT="${ROSE_HOME_ROOT:-$CYLC_HOME_ROOT}"
+        if [[ ${CYLC_ENV_NAME:-} =~ ^cylc-7 ]]; then
+            # Cylc 7: Use ROSE_HOME / ROSE_VERSION to select the installation
+            if [[ -z "${ROSE_HOME:-}" ]]; then
+                if [[ -n "${ROSE_VERSION:-}" ]]; then
+                    CYLC_HOME="${ROSE_HOME_ROOT}/rose-${ROSE_VERSION}"
+                else
+                    # Use default version (symlink)
+                    CYLC_HOME="${ROSE_HOME_ROOT}/rose"
+                fi
+            else
+                CYLC_HOME="${ROSE_HOME}"
+            fi
+        elif [[ ${1:-} == "edit" || ${1:-} == "config-edit" ]]; then
+            # Cylc 8: Use Rose 2019.01 to run "config-edit"
+            CYLC_HOME="${ROSE_HOME_ROOT}/rose-2019.01"
+        fi
+    elif [[ -z "${CYLC_ENV_NAME}" ]]; then
+        # If CYLC_HOME was set externally, use ROSE_HOME if it is set
+        CYLC_HOME="${ROSE_HOME:-$CYLC_HOME}"
+    fi
+fi
+
+# Legacy support for cylc review
+if [[ ${0##*/} == "cylc" && ${1:-} == "review" && \
+      ! ${CYLC_ENV_NAME:-} =~ ^cylc-7 ]]; then
+    # Cylc 8: Use Cylc 7 to run "review"
+    CYLC_HOME="${CYLC_HOME_ROOT}/cylc-7"
+fi
+
+if [[ ! -x "${CYLC_HOME}/bin/${0##*/}" ]]; then
+    echo 1>&2 "ERROR: ${0##*/} not found in ${CYLC_HOME}"
+    exit 1
+fi
+
+# Set PATH when running cylc hub so that configurable-http-proxy can find node
+if [[ ${0##*/} == "cylc" && ${1:-} == "hub" ]]; then
+    PATH=${CYLC_HOME}/bin:${PATH}
+fi
+
+# Run the executable from the selected installation.
+# n.b. If CYLC_HOME points to a binary inside a
+# ``conda/envs/bin directory`` this is sufficent without using
+# ``conda activate``. We avoid ``conda activate`` because:
+# - It's slow.
+# - Subsequent environment changes (conda activate or deactivate)
+#   are not straightforward.
+exec "${CYLC_HOME}/bin/${0##*/}" "$@"
