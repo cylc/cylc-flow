@@ -1749,7 +1749,12 @@ class WorkflowConfig:
         return stop_point
 
     def get_graph_raw(
-            self, start_point_str=None, stop_point_str=None, grouping=None):
+        self,
+        start_point_str=None,
+        stop_point_str=None,
+        grouping=None,
+        warn=True,
+    ):
         """Return concrete graph edges between specified cycle points.
 
         Return a family-collapsed graph if the grouping arg is not None:
@@ -1876,9 +1881,12 @@ class WorkflowConfig:
                     else:
                         lstr, rstr = self._close_families(l_id, r_id, clf_map)
                         gr_edges[point].append(
-                            (lstr, rstr, None, suicide, cond))
+                            (lstr, rstr, True, suicide, cond))
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
+
+        # mark unsatisfyable gr_edges
+        self._detect_unsatisfiable_deps(gr_edges, is_validate, warn=warn)
 
         del clf_map
         del start_point_offset_cache
@@ -1896,12 +1904,82 @@ class WorkflowConfig:
         graph_raw_edges.sort(key=lambda x: [y if y else '' for y in x[:2]])
         return graph_raw_edges
 
+    @staticmethod
+    def _detect_unsatisfiable_deps(gr_edges, is_validate, warn=True):
+        """Detect un-satisfiable tasks in a graph.
+
+        If not `is_validate` the gr_edge will be modified to mark it as
+        un-satisfiable. This transformation is used by cylc graph to change the
+        nodes appearance.
+        """
+        un_satisfiable_edges = []
+        for edges in gr_edges.values():
+            for ind, edge in enumerate(edges):
+                if not edge:
+                    continue
+                if is_validate:
+                    # gr_edges are in the is_validate format
+                    (
+                        (left_task, left_point),
+                        (right_task, right_point)
+                    ) = edge
+                    if not any(
+                        # is the task present in the graph at this cycle?
+                        (left_task, left_point) in {left, right}
+                        for left, right in gr_edges.get(left_point, [])
+                    ):
+                        # ... no, add it to the list
+                        un_satisfiable_edges.append((
+                            Tokens(
+                                cycle=str(left_point),
+                                task=left_task,
+                            ).relative_id,
+                            Tokens(
+                                cycle=str(right_point),
+                                task=right_task,
+                            ).relative_id,
+                        ))
+
+                else:
+                    # gr_edges are in the regular format
+                    left_id, right_id, _, *tail = edge
+                    ltokens = Tokens(left_id, relative=True)
+                    left_task = get_point(ltokens['task'])
+                    left_point = get_point(ltokens['cycle'])
+                    if not any(
+                        # is the task present in the graph at this cycle?
+                        left_id in {_left_id, _right_id}
+                        for _left_id, _right_id, *_ in gr_edges.get(
+                            left_point, []
+                        )
+                    ):
+                        # ... no, add it to the list
+                        un_satisfiable_edges.append((left_id, right_id))
+                        # mark the dependency as un-satisfiable
+                        # (used by cylc graph to change the nodes appearance)
+                        edges[ind] = (
+                            left_id,
+                            right_id,
+                            False,
+                            *tail
+                        )
+
+        if warn and un_satisfiable_edges:
+            LOG.warning(
+                'Detected un-satisfiable dependencies:\n* '
+                + '\n* '.join(
+                    f'{left_id} => {right_id}'
+                    for left_id, right_id
+                    in sorted(un_satisfiable_edges)
+                )
+            )
+
     def get_node_labels(self, start_point_str=None, stop_point_str=None):
         """Return dependency graph node labels."""
         ret = set()
         for edge in self.get_graph_raw(
-                start_point_str,
-                stop_point_str,
+            start_point_str,
+            stop_point_str,
         ):
             left, right = edge[0:2]
             if left:

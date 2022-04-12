@@ -890,7 +890,7 @@ class Scheduler:
     def info_get_graph_raw(self, cto, ctn, grouping=None):
         """Return raw graph."""
         return (
-            self.config.get_graph_raw(cto, ctn, grouping),
+            self.config.get_graph_raw(cto, ctn, grouping, warn=False),
             self.config.workflow_polling_tasks,
             self.config.leaves,
             self.config.feet
