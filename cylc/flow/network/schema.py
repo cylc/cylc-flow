@@ -1407,8 +1407,8 @@ class WorkflowStopMode(graphene.Enum):
 
 
 class Flow(String):
-    f"""An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
-
+    """An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
+    # (Note docstrings can't be f-strings).
 
 # Mutations:
 
