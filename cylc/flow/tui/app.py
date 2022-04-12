@@ -314,6 +314,7 @@ class TuiApp:
             )
         except WorkflowStopped:
             # Distinguish stopped flow from non-existent flow.
+            self.client = None
             full_path = Path(get_workflow_run_dir(self.reg))
             if(
                 (full_path / WorkflowFiles.SUITE_RC).is_file()
