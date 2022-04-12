@@ -106,7 +106,7 @@ def get_option_parser():
     parser.add_option(
         "--meta", metavar="DESCRIPTION", action="store",
         dest="flow_descr", default=None,
-        help="description of triggered flow (with --flow=new)."
+        help=f"description of triggered flow (with --flow={FLOW_NEW})."
     )
 
     parser.add_option(
