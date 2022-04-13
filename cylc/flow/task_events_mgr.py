@@ -724,7 +724,6 @@ class TaskEventsManager():
         elif completed_trigger:
             # Message of an as-yet unreported custom task output.
             # No state change.
-            self.workflow_db_mgr.put_update_task_outputs(itask)
             self.setup_event_handlers(itask, completed_trigger, message)
             self.spawn_func(itask, msg0)
         else:

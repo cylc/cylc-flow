@@ -16,8 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check that an incomplete failed task can be retriggered without --reflow to
-# carry on with the original flow
+# Check that an incomplete failed task can be retriggered to carry on the flow.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest

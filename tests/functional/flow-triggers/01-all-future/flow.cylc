@@ -1,0 +1,45 @@
+#!Jinja2
+
+#    flow:1
+#        a(running)
+#    flow:
+#        d(running)
+# by:
+#    cylc trigger d
+#
+# Result:
+#    The two flows never meet in the pool so never merge. But the triggered
+#    task belongs to the original flow so it does not run again.
+#
+#    flow:1
+#        a
+#        b
+#        c
+#        d
+#        e
+#        f
+
+{% if WAIT is defined %}
+   {% set OPT = "--wait" %}
+{% else %}
+   {% set OPT = "" %}
+{% endif %}
+
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = "a => b => c => d => e => f"
+[runtime]
+    [[a]]
+        script = """
+            cylc trigger {{OPT}} ${CYLC_WORKFLOW_ID}//1/d
+        {% if WAIT is not defined %}
+            cylc__job__poll_grep_workflow_log -E '1/d.*succeeded'
+        {% endif %}
+        """

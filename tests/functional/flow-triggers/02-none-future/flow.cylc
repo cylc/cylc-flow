@@ -1,0 +1,37 @@
+#    flow:1
+#        a(running)
+#    flow 2:
+#        d(running) 
+#
+#    by:
+#       cylc trigger --flow=none d
+#
+# Result:
+#    d runs once as a no-flow, and once in flow 1.
+#
+#    flow:1
+#        a
+#        b
+#        c
+#        d
+#        e
+#        f
+#    flow:none
+#        d
+
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = "a => b => c => d => e => f"
+[runtime]
+    [[a]]
+        script = """
+            cylc trigger --flow=none ${CYLC_WORKFLOW_ID}//1/d
+            cylc__job__poll_grep_workflow_log -E '1/d.*started'
+        """

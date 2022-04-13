@@ -153,7 +153,7 @@ class CylcWorkflowDBChecker:
             return any(
                 message == value
                 for outputs_str, in res
-                for value in json.loads(outputs_str).values()
+                for value in json.loads(outputs_str)
             )
 
     @staticmethod
