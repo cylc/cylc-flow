@@ -23,7 +23,7 @@ set_test_number 4
 TEST="${TEST_NAME_BASE}-overwrite-dir"
 mkdir cylc
 run_fail "${TEST}" cylc get-resources cylc
-grep_ok "Destination file is already directory" "${TEST}.stderr"
+grep_ok "Cannot extract file ${PWD}/cylc as there is an existing directory with the same name" "${TEST}.stderr"
 rm -r cylc
 
 touch syntax
