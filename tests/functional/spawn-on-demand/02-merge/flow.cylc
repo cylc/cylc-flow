@@ -19,12 +19,12 @@
             if [[ $CYLC_TASK_JOB == *01 ]]; then
                 # job(01)
                 if (( CYLC_TASK_CYCLE_POINT == 3 )); then
-                    test $CYLC_TASK_FLOWS == "1,2"
+                    test $CYLC_TASK_FLOW_NUMBERS == "1,2"
                 else
-                    test $CYLC_TASK_FLOWS == "1"
+                    test $CYLC_TASK_FLOW_NUMBERS == "1"
                 fi
             else
                 # job(02)
-                test $CYLC_TASK_FLOWS == "2"
+                test $CYLC_TASK_FLOW_NUMBERS == "2"
             fi
         """
