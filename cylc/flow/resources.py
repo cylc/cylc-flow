@@ -19,6 +19,7 @@
 from pathlib import Path
 from random import shuffle
 import shutil
+import sys
 from typing import Optional
 
 import cylc.flow
@@ -139,14 +140,27 @@ def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
         _backup(tgt)
 
     # create the target directory
-    tgt.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        tgt.parent.mkdir(parents=True, exist_ok=True)
 
-    # NOTE: shutil interfaces don't fully support Path objects at all
-    # python versions
-    if src.is_dir():
-        shutil.copytree(str(src), str(tgt))
-    else:
-        shutil.copyfile(str(src), str(tgt))
+        # NOTE: shutil interfaces don't fully support Path objects at all
+        # python versions
+        if src.is_dir():
+            shutil.copytree(str(src), str(tgt))
+        else:
+            shutil.copyfile(str(src), str(tgt))
+    except IsADirectoryError as exc:
+        LOG.error(
+            f'Cannot extract file {exc.filename} as there is an '
+            'existing directory with the same name'
+        )
+        sys.exit(1)
+    except FileExistsError as exc:
+        LOG.error(
+            f'Cannot extract directory {exc.filename} as there is an '
+            'existing file with the same name'
+        )
+        sys.exit(1)
 
 
 def get_api_key() -> str:
