@@ -91,7 +91,7 @@ class TaskPool:
     ) -> None:
 
         self.config: 'WorkflowConfig' = config
-        self.stop_point = config.final_point
+        self.stop_point = config.stop_point or config.final_point
         self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
         self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
         # TODO this is ugly:
@@ -787,13 +787,10 @@ class TaskPool:
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def set_do_reload(self, config):
+    def set_do_reload(self, config: 'WorkflowConfig') -> None:
         """Set the task pool to reload mode."""
         self.config = config
-        if config.options.stopcp:
-            self.stop_point = get_point(config.options.stopcp)
-        else:
-            self.stop_point = config.final_point
+        self.stop_point = config.stop_point or config.final_point
         self.do_reload = True
 
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()

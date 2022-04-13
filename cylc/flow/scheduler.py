@@ -47,7 +47,6 @@ from cylc.flow import (
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.id import Tokens
 from cylc.flow.flow_mgr import FLOW_NONE, FlowMgr, FLOW_NEW
@@ -493,8 +492,6 @@ class Scheduler:
             self._load_pool_from_tasks()
         else:
             self._load_pool_from_point()
-
-        self.process_stop_cycle_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.workflow_db_mgr.put_workflow_params(self)
@@ -601,8 +598,10 @@ class Scheduler:
             'Initial point: %s', self.config.initial_point, extra=log_extra)
         if self.config.start_point != self.config.initial_point:
             LOG.info(
-                'Start point: %s', self.config.start_point, extra=log_extra)
-        LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
+                f'Start point: {self.config.start_point}', extra=log_extra)
+        LOG.info(f'Final point: {self.config.final_point}', extra=log_extra)
+        if self.config.stop_point:
+            LOG.info(f'Stop point: {self.config.stop_point}', extra=log_extra)
 
         if is_quiet:
             LOG.info("Quiet mode on")
@@ -1973,34 +1972,6 @@ class Scheduler:
                         f"option --{opt}=reload is only valid for restart"
                     )
 
-    def process_stop_cycle_point(self) -> None:
-        """Set stop after cycle point.
-
-        In decreasing priority, stop cycle point (``stopcp``) is set:
-        * From the command line (``cylc play --stopcp=XYZ``).
-        * From the database.
-        * From the flow.cylc file (``[scheduling]stop after cycle point``).
-
-        However, if ``--stopcp=reload`` on the command line during restart,
-        the ``[scheduling]stop after cycle point`` value is used.
-        """
-        stoppoint = self.config.cfg['scheduling'].get('stop after cycle point')
-        if self.options.stopcp != 'reload':
-            if self.options.stopcp:
-                stoppoint = self.options.stopcp
-            # Tests whether pool has stopcp from database on restart.
-            elif (
-                self.pool.stop_point and
-                self.pool.stop_point != self.config.final_point
-            ):
-                stoppoint = self.pool.stop_point
-
-        if stoppoint is not None:
-            self.options.stopcp = str(stoppoint)
-            self.pool.set_stop_point(get_point(self.options.stopcp))
-            self.validate_finalcp()
-            self.update_data_store()
-
     async def handle_exception(self, exc: Exception) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
 
@@ -2012,22 +1983,14 @@ class Scheduler:
         await self.shutdown(exc)
         raise exc from None
 
-    def validate_finalcp(self) -> None:
-        """Warn if Stop Cycle point is on or after the final cycle point
-        """
-        if self.config.final_point is None:
-            return
-        if get_point(self.options.stopcp) > self.config.final_point:
-            LOG.warning(
-                f"Stop cycle point '{self.options.stopcp}' will have no "
-                "effect as it is after the final cycle "
-                f"point '{self.config.final_point}'.")
-
     def update_data_store(self):
         """Sets the update flag on the data store.
 
         Call this method whenever the Scheduler's state has changed in a way
         that requires a data store update.
+        See cylc.flow.workflow_status.get_workflow_status() for a
+        (non-exhaustive?) list of properties that if changed will require
+        this update.
 
         This call should often be associated with a database update.
 

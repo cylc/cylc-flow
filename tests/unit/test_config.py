@@ -16,7 +16,6 @@
 
 from optparse import Values
 from typing import Any, Callable, Dict, Optional, Tuple, Type
-from itertools import product
 from pathlib import Path
 import pytest
 import logging
@@ -656,6 +655,147 @@ def test_process_fcp(
         assert mocked_config.cfg[
             'scheduling']['final cycle point'] == expected_fcp
         assert str(mocked_config.final_point) == str(expected_fcp)
+
+
+@pytest.mark.parametrize(
+    ('cfg_stopcp', 'options_stopcp', 'expected_value',
+     'expected_options_value', 'expected_warning'),
+    [
+        pytest.param(
+            None, None, None, None, None,
+            id="No stopcp"
+        ),
+        pytest.param(
+            '1993', None, '19930101T0000+0530', None, None,
+            id="From config by default"
+        ),
+        pytest.param(
+            '1993', '1066', '10660101T0000+0530', '1066', None,
+            id="From options"
+        ),
+        pytest.param(
+            '1993', 'reload', '19930101T0000+0530', None, None,
+            id="From cfg if --stopcp=reload on restart"
+        ),
+        pytest.param(
+            '3000', None, None, None,
+            "will have no effect as it is after the final cycle point",
+            id="stopcp > fcp"
+        ),
+    ]
+)
+def test_process_stop_cycle_point(
+    cfg_stopcp: Optional[str],
+    options_stopcp: Optional[str],
+    expected_value: Optional[str],
+    expected_options_value: Optional[str],
+    expected_warning: Optional[str],
+    set_cycling_type: Callable,
+    caplog: pytest.LogCaptureFixture
+):
+    """Test WorkflowConfig.process_stop_cycle_point().
+
+    Params:
+        cfg_stopcp: [scheduling]stop after cycle point
+        options_stopcp: The stopcp from cli option / database.
+        expected_value: The expected stopcp value that gets set.
+        expected_options_value: The expected options.stopcp that gets set.
+        expected_warning: Expected warning message, if any.
+    """
+    set_cycling_type(ISO8601_CYCLING_TYPE, time_zone='+0530')
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    fcp = loader.get_point('2012').standardise()
+    mock_config = Mock(
+        cfg={
+            'scheduling': {
+                'stop after cycle point': cfg_stopcp
+            }
+        },
+        final_point=fcp,
+        stop_point=None,
+        options=RunOptions(stopcp=options_stopcp),
+    )
+
+    WorkflowConfig.process_stop_cycle_point(mock_config)
+    assert str(mock_config.stop_point) == str(expected_value)
+    assert mock_config.cfg['scheduling']['stop after cycle point'] == (
+        expected_value
+    )
+    assert mock_config.options.stopcp == expected_options_value
+    if expected_warning:
+        assert expected_warning in caplog.text
+    else:
+        assert not caplog.record_tuples
+
+
+@pytest.mark.parametrize(
+    'cfg_fcp, cfg_stopcp, opts, warning_expected',
+    [
+        pytest.param(
+            '2005', '2017', {}, True,
+            id="cfg stopcp > fcp bad"
+        ),
+        pytest.param(
+            '2017', '2017', {}, False,
+            id="cfg stopcp == fcp ok"
+        ),
+        pytest.param(
+            '', '', {'fcp': '2005', 'stopcp': '2017'}, True,
+            id="options stopcp > fcp bad"
+        ),
+        pytest.param(
+            '', '', {'fcp': '2017', 'stopcp': '2017'}, False,
+            id="options stopcp == fcp ok"
+        ),
+        pytest.param(
+            '2017', '2005', {'stopcp': '2022'}, True,
+            id="options stopcp > cfg fcp bad"
+        ),
+        pytest.param(
+            '2017', '2005', {'stopcp': '2022'}, True,
+            id="options stopcp > cfg fcp bad"
+        ),
+        pytest.param(
+            '2022', '2017', {'fcp': '2005'}, True,
+            id="cfg stopcp > options fcp bad"
+        ),
+        pytest.param(
+            '', '2022', {}, False,
+            id="no fcp"
+        ),
+    ]
+)
+def test_stopcp_after_fcp(
+    cfg_fcp: str,
+    cfg_stopcp: str,
+    opts: Dict[str, str],
+    warning_expected: bool,
+    tmp_flow_config: Callable,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Test that setting a stop after cycle point that is beyond the final
+    cycle point is handled correctly."""
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    reg = 'cassini'
+    flow_file: Path = tmp_flow_config(reg, f"""
+    [scheduler]
+        allow implicit tasks = True
+    [scheduling]
+        initial cycle point = 1997
+        final cycle point = {cfg_fcp}
+        stop after cycle point = {cfg_stopcp}
+        [[graph]]
+            P1Y = huygens
+    """)
+    cfg = WorkflowConfig(reg, flow_file, options=RunOptions(**opts))
+    msg = "will have no effect as it is after the final cycle point"
+    if warning_expected:
+        assert msg in caplog.text
+        assert cfg.stop_point is None
+    else:
+        assert msg not in caplog.text
+        if cfg_stopcp or opts.get('stopcp'):
+            assert cfg.stop_point
 
 
 @pytest.mark.parametrize(

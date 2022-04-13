@@ -22,68 +22,113 @@
 
 dumpdbtables() {
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT value FROM workflow_params WHERE key=="stopcp";' > stopcp.out
+        'SELECT value FROM workflow_params WHERE key=="stopcp";' > db_stopcp.out
     sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
-        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' > taskpool.out
+        'SELECT cycle, name, status FROM task_pool ORDER BY cycle, name;' > db_taskpool.out.out
 }
 
-set_test_number 17
+set_test_number 29
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+# Set the config stop point (accessed via Jinja2)
+export CFG_STOPCP
+CFG_STOPCP="1970"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-# Check that the config stop point gets stored in DB
+
+# Check config stop point works
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach "${WORKFLOW_NAME}" \
-    -s 'MANUAL_SHUTDOWN="1970"'
+    cylc play --no-detach "${WORKFLOW_NAME}"
+grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1970"
 dumpdbtables
-cmp_ok stopcp.out <<< '1972'
-# Note we have manually stopped before the stop point
-cmp_ok taskpool.out << '__OUT__'
+# Task 1971/hello (after stop point) should be spawned but not submitted
+cmp_ok db_taskpool.out.out << '__OUT__'
 1971|hello|waiting
 __OUT__
+# Check that the config stop point does not get stored in DB
+cmp_ok db_stopcp.out < /dev/null
 
-# Check that --stopcp=reload takes value from flow.cylc on restart
-workflow_run_ok "${TEST_NAME_BASE}-restart-cli-stopcp-reload" \
-    cylc play --no-detach --stopcp=reload "${WORKFLOW_NAME}" \
-    -s 'MANUAL_SHUTDOWN="1971"' -s 'STOPCP="1973"'
+
+CFG_STOPCP="1972"
+
+# Check that changing config stop point has worked
+workflow_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc play --no-detach "${WORKFLOW_NAME}" \
+    -s 'MANUAL_SHUTDOWN="1971"'
+grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1972"
 dumpdbtables
-cmp_ok stopcp.out <<< '1973'
-cmp_ok taskpool.out << '__OUT__'
+# Note we have manually stopped before the stop point
+cmp_ok db_taskpool.out.out << '__OUT__'
 1972|hello|waiting
 __OUT__
+cmp_ok db_stopcp.out < /dev/null
+
+
+# Check that the command line stop point works
+workflow_run_ok "${TEST_NAME_BASE}-restart-cli-stopcp" \
+    cylc play --no-detach --stopcp=1974 "${WORKFLOW_NAME}" \
+    -s 'MANUAL_SHUTDOWN="1973"'
+grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1974"
+dumpdbtables
+# Note we have manually stopped before the stop point
+cmp_ok db_taskpool.out.out << '__OUT__'
+1974|hello|waiting
+__OUT__
+# Check CLI stop point is stored in DB
+cmp_ok db_stopcp.out <<< '1974'
+
 
 # Check that the stop point stored in DB works on restart
 workflow_run_ok "${TEST_NAME_BASE}-restart-db-stopcp" \
     cylc play --no-detach "${WORKFLOW_NAME}"
+grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1974"
 dumpdbtables
-# Stop point should be removed from DB once reached
-cmp_ok stopcp.out < /dev/null
-# Task 1974/hello (after stop point) should be spawned but not submitted
-cmp_ok taskpool.out <<'__OUT__'
-1974|hello|waiting
-__OUT__
-
-# Check that the command line stop point gets stored in DB.
-workflow_run_ok "${TEST_NAME_BASE}-restart-cli-stopcp" \
-    cylc play --no-detach --stopcp=1975 "${WORKFLOW_NAME}" \
-    -s 'MANUAL_SHUTDOWN="1974"'
-dumpdbtables
-cmp_ok stopcp.out <<< '1975'
-# Note we have manually stopped before the stop point
-cmp_ok taskpool.out << '__OUT__'
+cmp_ok db_taskpool.out.out <<'__OUT__'
 1975|hello|waiting
 __OUT__
+# Stop point should be removed from DB once reached
+cmp_ok db_stopcp.out < /dev/null
+
+
+# Restart again with new CLI stop point
+workflow_run_ok "${TEST_NAME_BASE}-restart-cli-stopcp-2" \
+    cylc play --no-detach --stopcp=1978 "${WORKFLOW_NAME}" \
+    -s 'MANUAL_SHUTDOWN="1975"'
+grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1978"
+dumpdbtables
+# Note we have manually stopped before the stop point
+cmp_ok db_taskpool.out.out << '__OUT__'
+1976|hello|waiting
+__OUT__
+cmp_ok db_stopcp.out <<< '1978'
+
+
+CFG_STOPCP="1979"
+
+# Check that --stopcp=reload takes value from flow.cylc on restart
+workflow_run_ok "${TEST_NAME_BASE}-restart-cli-stopcp-reload" \
+    cylc play --no-detach --stopcp=reload "${WORKFLOW_NAME}" \
+    -s 'MANUAL_SHUTDOWN="1976"'
+grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1979"
+dumpdbtables
+cmp_ok db_taskpool.out.out << '__OUT__'
+1977|hello|waiting
+__OUT__
+# Stop point should be removed from DB if --stopcp=reload used
+cmp_ok db_stopcp.out < /dev/null
+
+
+CFG_STOPCP="1971"
 
 # Check that workflow stops immediately if restarted past stopcp
-workflow_run_ok "${TEST_NAME_BASE}-restart-final" \
-    cylc play --no-detach --stopcp=reload "${WORKFLOW_NAME}"
-# Note the config value remains as 1973 (not 1972) because Jinja2 variables persist over restart
-grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Setting stop cycle point: 1973"
+workflow_run_ok "${TEST_NAME_BASE}-restart-past-stopcp" \
+    cylc play --no-detach "${WORKFLOW_NAME}"
+grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1971"
 dumpdbtables
-cmp_ok stopcp.out < /dev/null
-cmp_ok taskpool.out << '__OUT__'
-1975|hello|waiting
+cmp_ok db_taskpool.out.out << '__OUT__'
+1977|hello|waiting
 __OUT__
+cmp_ok db_stopcp.out < /dev/null
 
 purge
