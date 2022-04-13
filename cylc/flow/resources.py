@@ -156,7 +156,10 @@ def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
         )
         sys.exit(1)
     except FileExistsError as exc:
-        LOG.error(f'Cannot extract directory {exc.filename} as there is an existing file with the same name')
+        LOG.error(
+            f'Cannot extract directory {exc.filename} as there is an '
+            'existing file with the same name'
+        )
         sys.exit(1)
 
 

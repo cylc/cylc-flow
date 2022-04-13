@@ -28,6 +28,6 @@ rm -r cylc
 
 touch syntax
 run_fail "${TEST}" cylc get-resources syntax
-grep_ok "Destination directory is already a file" "${TEST}.stderr"
+grep_ok "Cannot extract directory ${PWD}/syntax as there is an existing file with the same name" "${TEST}.stderr"
 
 exit
