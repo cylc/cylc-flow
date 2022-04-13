@@ -12,7 +12,7 @@ CREATE TABLE inheritance(namespace TEXT, inheritance TEXT, PRIMARY KEY(namespace
 INSERT INTO inheritance VALUES('root','["root"]');
 INSERT INTO inheritance VALUES('foo','["foo", "root"]');
 INSERT INTO inheritance VALUES('bar','["bar", "root"]');
-CREATE TABLE task_outputs(cycle TEXT, name TEXT, outputs TEXT, PRIMARY KEY(cycle, name));
+CREATE TABLE task_outputs(cycle TEXT, name TEXT, flow_nums TEXT, outputs TEXT, PRIMARY KEY(cycle, name, flow_nums));
 CREATE TABLE broadcast_states(point TEXT, namespace TEXT, key TEXT, value TEXT, PRIMARY KEY(point, namespace, key));
 CREATE TABLE task_timeout_timers(cycle TEXT, name TEXT, timeout REAL, PRIMARY KEY(cycle, name));
 CREATE TABLE task_states(name TEXT, cycle TEXT, time_created TEXT, time_updated TEXT, submit_num INTEGER, status TEXT, PRIMARY KEY(name, cycle));

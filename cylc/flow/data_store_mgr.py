@@ -1080,7 +1080,7 @@ class DataStoreMgr:
                         TASK_STATUS_SUCCEEDED
                     )
             ):
-                for message in json.loads(outputs_str).values():
+                for message in json.loads(outputs_str):
                     itask.state.outputs.set_completion(message, True)
             # Gather tasks with flow id.
             prereq_ids.add(f'{tokens.relative_id}/{flow_nums_str}')

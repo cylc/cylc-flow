@@ -813,23 +813,25 @@ class Resolvers(BaseResolvers):
 
     def force_trigger_tasks(
         self,
-        tasks=None,
-        reflow=False,
-        flow_descr=None,
+        tasks: Iterable[str],
+        flow: Iterable[str],
+        flow_wait: bool,
+        flow_descr: Optional[str] = None,
     ):
         """Trigger submission of task jobs where possible.
 
         Args:
             tasks (list):
                 List of identifiers or task globs.
-            reflow (bool):
-                Start new flow from triggered tasks.
+            flow (list):
+                Flow ownership of triggered tasks.
+            flow_wait (bool):
+                Wait for flows before continuing
             flow_descr (str):
                 Description of new flow.
 
         Returns:
             tuple: (outcome, message)
-
             outcome (bool)
                 True if command successfully queued.
             message (str)
@@ -841,7 +843,8 @@ class Resolvers(BaseResolvers):
                 "force_trigger_tasks",
                 (tasks or [],),
                 {
-                    "reflow": reflow,
+                    "flow": flow,
+                    "flow_wait": flow_wait,
                     "flow_descr": flow_descr
                 }
             ),

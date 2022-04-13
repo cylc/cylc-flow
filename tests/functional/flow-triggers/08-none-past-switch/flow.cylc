@@ -1,0 +1,57 @@
+# a:x? => b => c
+# a:y? => d => e
+# 
+# Start with the "x" pathway completed and re-trigger "a".
+# The second run of "a" yields the output "y".
+# 
+#    flow:1
+#        a(succeeded:x)
+#        b(succeeded)
+#        c(succeeded)
+#    flow:<new>
+#        a(running)
+#
+# by:
+#    cylc trigger --flow=none a
+#     
+# Result:
+#   Task "a" is re-run as a no-flow; so the other branch does not get run.
+#
+#    flow:1
+#        a#1 (the naturally triggered run)
+#        b
+#        c
+#    flow:none
+#        a#2 (the manually triggered run)
+
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT1M
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            a:x? => b => c
+            a:y? => d => e
+        """
+[runtime]
+    [[a]]
+        script = """
+            if (( CYLC_TASK_SUBMIT_NUMBER == 1 )); then
+                cylc message x
+            else
+                cylc message y
+            fi
+        """
+        [[[outputs]]]
+            x = x
+            y = y
+    [[c]]
+        script = """
+          cylc trigger --flow=none ${CYLC_WORKFLOW_ID}//1/a
+          cylc__job__poll_grep_workflow_log -E '1/a submitted job:02 .*started'
+        """

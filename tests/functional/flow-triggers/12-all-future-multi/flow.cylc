@@ -1,0 +1,53 @@
+#    flow:1
+#        1/a(running)
+#    flow:2
+#        3/a(running)
+#    flow:1,2
+#        5/a(running)
+#
+# Result:
+#    The task 5/a is triggered in both flows so joins the two.
+#
+#    flow:1
+#        1/a
+#        2/a
+#        3/a
+#        4/a
+#    flow:2
+#        3/a
+#        4/a
+#    flow:1,2
+#        5/a
+#        6/a
+#        7/a
+
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT1M
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 7
+    [[graph]]
+        P1 = a[-P1] => a
+
+[runtime]
+    [[a]]
+        script = """
+            if ((
+                CYLC_TASK_CYCLE_POINT == 1
+                && CYLC_TASK_SUBMIT_NUMBER == 1
+            )); then
+                # trigger 3/a in a new flow
+                cylc trigger --flow=new ${CYLC_WORKFLOW_ID}//3/a
+                cylc__job__poll_grep_workflow_log -E '3/a.*started'
+                # trigger 5/a in all flows
+                cylc trigger ${CYLC_WORKFLOW_ID}//5/a
+                cylc__job__poll_grep_workflow_log -E '5/a.*started'
+            fi
+       """

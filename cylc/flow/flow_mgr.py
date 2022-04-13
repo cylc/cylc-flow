@@ -24,6 +24,10 @@ from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
 FlowNums = Set[int]
+# Flow constants
+FLOW_ALL = "all"
+FLOW_NEW = "new"
+FLOW_NONE = "none"
 
 
 class FlowMgr:

@@ -1,0 +1,22 @@
+# Check targetting a specific flow works, with trigger --wait.
+
+# At start-up, trigger f with --wait for flow 2
+# Then when flow 1 reaches d, trigger a new flow (2) at b.
+
+# Flow 1 should overrun the manually triggered f.
+# Flow 2 should skip over it to g.
+
+[scheduling]
+   [[graph]]
+      R1 = """
+         trigger-happy
+         a => b => c => d => e => f => g
+      """
+[runtime]
+   [[a, b, c, d, e, f,g]]
+   [[trigger-happy]]
+      script = """
+         cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_NAME}//1/f
+         cylc__job__poll_grep_workflow_log "1/d submitted job:01 .*started"
+         cylc trigger --flow=new ${CYLC_WORKFLOW_NAME}//1/b
+      """

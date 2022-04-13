@@ -61,6 +61,8 @@ from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_queues.independent import IndepQueueManager
 
+from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NONE, FLOW_NEW
+
 if TYPE_CHECKING:
     from cylc.flow.config import WorkflowConfig
     from cylc.flow.cycling import IntervalBase, PointBase
@@ -208,8 +210,7 @@ class TaskPool:
                 }
             )
             # Add row to "task_outputs" table:
-            if itask.state.outputs.has_custom_triggers():
-                self.workflow_db_mgr.put_insert_task_outputs(itask)
+            self.workflow_db_mgr.put_insert_task_outputs(itask)
         return itask
 
     def create_data_store_elements(self, itask):
@@ -389,9 +390,11 @@ class TaskPool:
                 self.config.get_taskdef(name),
                 get_point(cycle),
                 deserialise(flow_nums),
+                status=status,
                 is_held=is_held,
                 submit_num=submit_num,
-                is_late=bool(is_late))
+                is_late=bool(is_late)
+            )
         except WorkflowConfigError:
             LOG.exception(
                 f'ignoring task {name} from the workflow run database\n'
@@ -422,7 +425,7 @@ class TaskPool:
                     TASK_STATUS_FAILED,
                     TASK_STATUS_SUCCEEDED
             ):
-                for message in json.loads(outputs_str).values():
+                for message in json.loads(outputs_str):
                     itask.state.outputs.set_completion(message, True)
                     self.data_store_mgr.delta_task_output(itask, message)
 
@@ -621,7 +624,7 @@ class TaskPool:
             # implicit prev-instance parent
             return
 
-        # Autospawn successor of itask if parentless and reflowing.
+        # Autospawn successor of itask if parentless
         if itask.flow_nums:
             n_task = self.spawn_successor_if_parentless(itask)
             if (
@@ -1121,7 +1124,7 @@ class TaskPool:
 
         Also set a the abort-on-task-failed flag if necessary.
 
-        If not reflow:
+        If not flowing on:
             - update existing children but don't spawn new ones
             - unless forced (manual command): spawn but with no flow number
 
@@ -1137,13 +1140,13 @@ class TaskPool:
             forced: If True this is a manual spawn command.
 
         """
+        self.workflow_db_mgr.put_update_task_outputs(itask)
         if (
             output == TASK_OUTPUT_FAILED
             and self.expected_failed_tasks is not None
             and itask.identity not in self.expected_failed_tasks
         ):
             self.abort_task_failed = True
-
         try:
             children = itask.graph_children[output]
         except KeyError:
@@ -1179,7 +1182,7 @@ class TaskPool:
                 )
                 # self.workflow_db_mgr.process_queued_ops()
 
-            elif itask.flow_nums or forced:
+            elif (itask.flow_nums or forced) and not itask.flow_wait:
                 c_task = self.spawn_task(
                     c_name, c_point, itask.flow_nums,
                 )
@@ -1317,8 +1320,14 @@ class TaskPool:
         name: str,
         point: 'PointBase',
         flow_nums: Set[int],
+        force: bool = False,
+        is_manual_submit: bool = False,
+        flow_wait: bool = False,
     ) -> Optional[TaskProxy]:
-        """Spawn point/name. Return the spawned task, or None."""
+        """Spawn point/name. Return the spawned task, or None.
+
+        Force arg used in manual triggering.
+        """
         if not self.can_spawn(name, point):
             return None
 
@@ -1327,14 +1336,21 @@ class TaskPool:
             name, str(point)
         )
         try:
-            submit_num = max(snums.values())
+            submit_num = max(s for s in snums.keys())
         except ValueError:
             # Task never spawned in any flow.
             submit_num = 0
 
-        for f_id in snums.keys():
+        flow_wait_done = False
+        for f_wait, old_fnums in snums.values():
             # Flow_nums of previous instances.
-            if set.intersection(flow_nums, set(json.loads(f_id))):
+            if (
+                not force and
+                set.intersection(flow_nums, old_fnums)
+            ):
+                if f_wait:
+                    flow_wait_done = f_wait
+                    break
                 # To avoid "conditional reflow" with (e.g.) "foo | bar => baz".
                 LOG.warning(
                     f"Task {point}/{name} already spawned in {flow_nums}"
@@ -1346,7 +1362,14 @@ class TaskPool:
         if not taskdef.is_valid_point(point):
             return None
 
-        itask = TaskProxy(taskdef, point, flow_nums, submit_num=submit_num)
+        itask = TaskProxy(
+            taskdef,
+            point,
+            flow_nums,
+            submit_num=submit_num,
+            is_manual_submit=is_manual_submit,
+            flow_wait=flow_wait
+        )
         if (name, point) in self.tasks_to_hold:
             LOG.info(f"[{itask}] holding (as requested earlier)")
             self.hold_active_task(itask)
@@ -1374,6 +1397,19 @@ class TaskPool:
         # TODO: consider doing this only for tasks with absolute prerequisites.
         if itask.state.prerequisites_are_not_all_satisfied():
             itask.state.satisfy_me(self.abs_outputs_done)
+
+        if flow_wait_done:
+            for outputs_str, fnums in (
+                self.workflow_db_mgr.pri_dao.select_task_outputs(
+                    itask.tdef.name, str(itask.point))
+            ).items():
+                if flow_nums.intersection(fnums):
+                    for msg in json.loads(outputs_str):
+                        itask.state.outputs.set_completed_by_msg(msg)
+                    break
+            LOG.info(f"{itask} spawning on outputs after flow wait")
+            self.spawn_on_all_outputs(itask, completed_only=True)
+            return None
 
         LOG.info(f"[{itask}] spawned")
         return itask
@@ -1413,6 +1449,12 @@ class TaskPool:
                     LOG.info(f"[{itask}] Forced spawning on {out}")
                     self.spawn_on_output(itask, out, forced=True)
 
+    def _get_active_flow_nums(self):
+        fnums = set()
+        for itask in self.get_all_tasks():
+            fnums.update(itask.flow_nums)
+        return fnums
+
     def remove_tasks(self, items):
         """Remove tasks from the pool."""
         itasks, _, bad_items = self.filter_task_proxies(items)
@@ -1422,20 +1464,40 @@ class TaskPool:
 
     def force_trigger_tasks(
         self, items: Iterable[str],
-        reflow: bool = False,
+        flow: List[str],
+        flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ) -> int:
-        """Trigger matching tasks, with or without reflow.
+        """Manual task triggering.
 
-        Don't get a new flow number for existing task proxies (e.g. incomplete
-        tasks). These can flow on in the original flow if retriggered.
-
-        Otherwise generate a new flow number for a new task proxy, with or
-        without reflow.
+        Don't get a new flow number for existing n=0 tasks (e.g. incomplete
+        tasks). These can carry on in the original flow if retriggered.
 
         Queue the task if not queued, otherwise release it to run.
 
         """
+        if set(flow).intersection({FLOW_ALL, FLOW_NEW, FLOW_NONE}):
+            if len(flow) != 1:
+                LOG.warning(
+                    f'The "flow" values {FLOW_ALL}, {FLOW_NEW} & {FLOW_NONE}'
+                    ' cannot be used in combination with integer flow numbers.'
+                )
+                return 0
+            if flow[0] == FLOW_ALL:
+                flow_nums = self._get_active_flow_nums()
+            elif flow[0] == FLOW_NEW:
+                flow_nums = {self.flow_mgr.get_new_flow(flow_descr)}
+            elif flow[0] == FLOW_NONE:
+                flow_nums = set()
+        else:
+            try:
+                flow_nums = {int(n) for n in flow}
+            except ValueError:
+                LOG.warning(
+                    f"Trigger ignored, illegal flow values {flow}"
+                )
+                return 0
+
         # n_warnings, task_items = self.match_taskdefs(items)
         itasks, future_tasks, unmatched = self.filter_task_proxies(
             items,
@@ -1453,17 +1515,19 @@ class TaskPool:
                 self._get_main_task_by_id(task_id)
                 or self._get_hidden_task_by_id(task_id)
             )
+            # Flow values already validated by the trigger client.
             if itask is None:
-                # Spawn with new flow number, unless no reflow.
-                if reflow:
-                    flow_nums = {self.flow_mgr.get_new_flow(flow_descr)}
-                else:
-                    flow_nums = set()
-                itask = self.spawn_task(name, point, flow_nums)
+                itask = self.spawn_task(
+                    name,
+                    point,
+                    flow_nums,
+                    force=True,
+                    is_manual_submit=True,
+                    flow_wait=flow_wait
+                )
                 if itask is None:
                     continue
-                itask.is_manual_submit = True
-                # This will queue the task.
+                # Queue the task
                 self.add_to_pool(itask, is_new=True)
             else:
                 # In pool already
@@ -1496,7 +1560,6 @@ class TaskPool:
                     "flow_nums": serialise(itask.flow_nums)
                 }
             )
-
         return len(unmatched)
 
     def sim_time_check(self, message_queue):
@@ -1790,12 +1853,10 @@ class TaskPool:
         # (we spawn the outputs complete so far to allow the flow to continue
         # post merge)
         # (note we don't do this if case 1 also applies)
-        elif not itask.flow_nums:
+        elif not itask.flow_nums or itask.flow_wait:
+            itask.flow_wait = False
             self.spawn_on_all_outputs(itask, completed_only=True)
 
         # merge the flows
         itask.merge_flows(flow_nums)
-        LOG.info(
-            f"[{itask}] merged in flow(s) "
-            f"{','.join(str(f) for f in itask.flow_nums)}"
-        )
+        self.workflow_db_mgr.put_insert_task_outputs(itask)

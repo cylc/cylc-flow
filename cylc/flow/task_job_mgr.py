@@ -545,8 +545,6 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    if itask.state.outputs.has_custom_triggers():
-                        self.workflow_db_mgr.put_update_task_outputs(itask)
 
                     itask.waiting_on_job_prep = False
                 self.proc_pool.put_command(

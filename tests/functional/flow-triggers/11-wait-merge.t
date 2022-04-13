@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,25 +16,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Get coverage up for some CLI parser errors.
-
 . "$(dirname "$0")/test_header"
-set_test_number 2
+set_test_number 4
 
-init_workflow "${TEST_NAME_BASE}" << __CONFIG__
-[scheduling]
-   [[graph]]
-       R1 = foo
-[runtime]
-   [[foo]]
-__CONFIG__
+install_and_validate "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" true
+DB="${WORKFLOW_RUN_DIR}/runN/log/db"
 
-# "cylc trigger --meta" requires --reflow
-TEST_NAME="set-trigger-fail"
-run_fail "${TEST_NAME}"  \
-    cylc trigger --meta="the quick brown" "${WORKFLOW_NAME}//1/foo"
-contains_ok "${TEST_NAME}".stderr <<__END__
-UserInputError: --meta requires --reflow
+reftest_run
+
+TEST_NAME="${TEST_NAME_BASE}-order-no-wait"
+QUERY="SELECT cycle, name,flow_nums,outputs FROM task_outputs;"
+
+run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
+
+cmp_ok "${TEST_NAME}.stdout" <<\__END__
+1|a|[1]|["submitted", "started", "succeeded"]
+1|b|[1]|["submitted", "started", "succeeded"]
+1|a|[2]|["submitted", "started", "succeeded"]
+1|c|[2]|["submitted", "started", "x"]
+1|x|[2]|["submitted", "started", "succeeded"]
+1|c|[1, 2]|["submitted", "started", "succeeded", "x"]
+1|d|[1, 2]|["submitted", "started", "succeeded"]
+1|b|[2]|["submitted", "started", "succeeded"]
 __END__
 
 purge
