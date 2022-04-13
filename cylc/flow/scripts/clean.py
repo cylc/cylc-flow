@@ -62,7 +62,7 @@ import sys
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
 from cylc.flow.loggingutil import disable_timestamps
@@ -193,7 +193,7 @@ def main(_, opts: 'Values', *ids: str):
         disable_timestamps(LOG)
 
     if opts.local_only and opts.remote_only:
-        raise UserInputError(
+        raise InputError(
             "--local and --remote options are mutually exclusive"
         )
 

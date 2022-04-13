@@ -58,7 +58,7 @@ from ansimarkup import ansiprint as cprint
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.network.scan import (
     contact_info,
     filter_name,
@@ -539,7 +539,7 @@ async def main(
             for state in opts.states
         )
     ):
-        raise UserInputError(
+        raise InputError(
             '--states must be set to a comma separated list of workflow'
             ' states. \nSee `cylc scan --help` for a list of supported'
             ' states.'

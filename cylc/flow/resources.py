@@ -25,7 +25,7 @@ from typing import Optional
 import cylc.flow
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -88,7 +88,7 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
 
     src = RESOURCE_DIR / resource_path
     if not src.exists():
-        raise UserInputError(
+        raise InputError(
             f'No such resources {resource}.'
             '\nRun `cylc get-resources --list` for resource names.'
         )

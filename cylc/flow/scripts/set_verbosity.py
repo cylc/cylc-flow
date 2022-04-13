@@ -29,7 +29,7 @@ from functools import partial
 from optparse import Values
 
 from cylc.flow import LOG_LEVELS
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -83,7 +83,7 @@ def main(parser: COP, options: 'Values', severity_str: str, *ids) -> None:
     try:
         severity = LOG_LEVELS[severity_str]
     except KeyError:
-        raise UserInputError("Illegal logging level, %s" % severity_str)
+        raise InputError("Illegal logging level, %s" % severity_str)
     call_multi(
         partial(run, options, severity),
         *ids,

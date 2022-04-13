@@ -18,7 +18,7 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Optional, List
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 
 import pytest
 from pytest import param

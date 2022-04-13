@@ -28,7 +28,7 @@ run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-n
 rm -rf "${RND_WORKFLOW_RUNDIR}"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-UserInputError: Path does not exist: ${RND_WORKFLOW_RUNDIR}
+InputError: Path does not exist: ${RND_WORKFLOW_RUNDIR}
 __ERR__
 purge_rnd_workflow
 

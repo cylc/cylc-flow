@@ -19,7 +19,7 @@ from ast import literal_eval
 from optparse import Values
 from typing import Any, Dict
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 
 
 def eval_var(var):
@@ -32,23 +32,23 @@ def eval_var(var):
         'string'
         >>> eval_var('string')
         Traceback (most recent call last):
-        cylc.flow.exceptions.UserInputError: Invalid template variable: string
+        cylc.flow.exceptions.InputError: Invalid template variable: string
         (note string values must be quoted)
         >>> eval_var('[')
         Traceback (most recent call last):
-        cylc.flow.exceptions.UserInputError: Invalid template variable: [
+        cylc.flow.exceptions.InputError: Invalid template variable: [
         (values must be valid Python literals)
 
     """
     try:
         return literal_eval(var)
     except ValueError:
-        raise UserInputError(
+        raise InputError(
             f'Invalid template variable: {var}'
             '\n(note string values must be quoted)'
         ) from None
     except SyntaxError:
-        raise UserInputError(
+        raise InputError(
             f'Invalid template variable: {var}'
             '\n(values must be valid Python literals)'
         ) from None

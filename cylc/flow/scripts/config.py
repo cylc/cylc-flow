@@ -55,7 +55,7 @@ from typing import List, Optional, TYPE_CHECKING
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.id_cli import parse_id
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.templatevars import get_template_vars
@@ -152,7 +152,7 @@ def main(
     if options.print_platform_names or options.print_platforms:
         # Get platform information:
         if ids:
-            raise UserInputError(
+            raise InputError(
                 "Workflow IDs are incompatible with --platform options."
             )
         glbl_cfg().platform_dump(

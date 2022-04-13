@@ -24,7 +24,7 @@ from typing import Dict, Iterable, Set, Union, Optional, Any
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    UserInputError, WorkflowFilesError, handle_rmtree_err
+    InputError, WorkflowFilesError, handle_rmtree_err
 )
 from cylc.flow.platforms import get_localhost_install_target
 
@@ -395,12 +395,12 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             is_dir = part.endswith(os.sep)
             part = os.path.normpath(part)
             if os.path.isabs(part):
-                raise UserInputError("--rm option cannot take absolute paths")
+                raise InputError("--rm option cannot take absolute paths")
             if (
                 part in {os.curdir, os.pardir} or
                 part.startswith(f"{os.pardir}{os.sep}")  # '../'
             ):
-                raise UserInputError(
+                raise InputError(
                     "--rm option cannot take paths that point to the "
                     "run directory or above"
                 )

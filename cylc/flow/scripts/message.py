@@ -79,7 +79,7 @@ from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.unicode_rules import TaskMessageValidator
 
 if TYPE_CHECKING:
@@ -152,7 +152,7 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         elif ':' in message_str:
             valid, err_msg = TaskMessageValidator.validate(message_str)
             if not valid:
-                raise UserInputError(
+                raise InputError(
                     f'Invalid task message "{message_str}" - {err_msg}')
             messages.append(
                 [item.strip() for item in message_str.split(':', 1)])

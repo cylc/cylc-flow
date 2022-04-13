@@ -56,7 +56,7 @@ from cylc.flow.exceptions import (
     CyclingError,
     CylcConfigError,
     CylcError,
-    UserInputError,
+    InputError,
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
@@ -1958,18 +1958,18 @@ class Scheduler:
             value = getattr(self.options, opt, None)
             if self.is_restart:
                 if value is not None:
-                    raise UserInputError(
+                    raise InputError(
                         f"option --{opt} is not valid for restart"
                     )
             elif value == 'reload':
-                raise UserInputError(
+                raise InputError(
                     f"option --{opt}=reload is not valid "
                     "(only --fcp and --stopcp can be 'reload')"
                 )
         if not self.is_restart:
             for opt in ('fcp', 'stopcp'):
                 if getattr(self.options, opt, None) == 'reload':
-                    raise UserInputError(
+                    raise InputError(
                         f"option --{opt}=reload is only valid for restart"
                     )
 
