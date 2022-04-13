@@ -150,7 +150,7 @@ def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
         else:
             shutil.copyfile(str(src), str(tgt))
     except IsADirectoryError as exc:
-        LOG.error(f'Destination file is already directory: {exc.filename}')
+        LOG.error(f'Cannot extract file {exc.filename} as there is an existing directory with the same name')
         sys.exit(1)
     except FileExistsError as exc:
         LOG.error(f'Destination directory is already a file: {exc.filename}')
