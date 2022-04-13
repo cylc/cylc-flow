@@ -76,19 +76,17 @@ def filter_none(dictionary):
 class WorkflowRuntimeServer:
     """Workflow runtime service API facade exposed via zmq.
 
-    This class contains the Cylc endpoints.
+    This class starts and coordinates the publisher and replier, and
+    contains the Cylc endpoints invoked by the receiver to provide a response
+    to incomming messages.
 
     Args:
         schd (object): The parent object instantiating the server. In
             this case, the workflow scheduler.
-        context (object): The instantiated ZeroMQ context (i.e. zmq.Context())
-            passed in from the application.
-        barrier (object): Threading Barrier object used to sync threads, for
-            the main thread to ensure socket setup has finished.
 
     Usage:
         * Define endpoints using the ``expose`` decorator.
-        * Call endpoints using the function name.
+        * Endpoints are called via the receiver using the function name.
 
     Message interface:
         * Accepts messages of the format: {"command": CMD, "args": {...}}
@@ -154,7 +152,6 @@ class WorkflowRuntimeServer:
         self.stopping = False
         self.stopped = True
 
-    def configure(self):
         self.register_endpoints()
 
     def start(self, barrier):
@@ -213,6 +210,8 @@ class WorkflowRuntimeServer:
         self.queue.put('STOP')
         if self.thread and self.thread.is_alive():
             while not self.stopping:
+                # Non-async sleep - yield to other threads rather
+                # than event loop.
                 sleep(self.STOP_SLEEP_INTERVAL)
 
         if self.replier:

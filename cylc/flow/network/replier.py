@@ -27,12 +27,11 @@ from cylc.flow.network import encode_, decode_, ZMQSocketBase
 class WorkflowReplier(ZMQSocketBase):
     """Initiate the REP part of a ZMQ REQ-REP pattern.
 
-    This class contains the logic for the ZMQ message replier.
+    This class contains the logic for the ZMQ message replier. The REQ/REP
+    pattern is serial, in that it cannot REQ or REP twice in a row. After
+    receiving you must send a response.
 
     Usage:
-<<<<<<< HEAD
-        * Define ...
-=======
         * Start the replier.
         * Call the listener to process incomming REQ and send the REP.
 
@@ -44,7 +43,6 @@ class WorkflowReplier(ZMQSocketBase):
         * Expects requests of the format: {"command": CMD, "args": {...}}
         * Sends responses of the format: {"data": {...}}
         * Sends errors in the format: {"error": {"message": MSG}}
->>>>>>> 1f9dcdf40... expand listner test
 
     """
 
@@ -65,7 +63,12 @@ class WorkflowReplier(ZMQSocketBase):
             self.queue.put('STOP')
 
     def listener(self):
-        """The server main loop, listen for and serve requests."""
+        """The server main loop, listen for and serve requests.
+
+        When called, this method will receive and respond until there are no
+        more messages then break to the caller.
+
+        """
         # Note: we are using CurveZMQ to secure the messages (see
         # self.curve_auth, self.socket.curve_...key etc.). We have set up
         # public-key cryptography on the ZMQ messaging and sockets, so
@@ -82,7 +85,7 @@ class WorkflowReplier(ZMQSocketBase):
                 # Check for messages
                 msg = self.socket.recv_string(zmq.NOBLOCK)
             except zmq.error.Again:
-                # No messages, break to parent loop.
+                # No messages, break to parent loop/caller.
                 break
             except zmq.error.ZMQError as exc:
                 LOG.exception('unexpected error: %s', exc)

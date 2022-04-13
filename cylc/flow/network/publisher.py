@@ -46,7 +46,7 @@ class WorkflowPublisher(ZMQSocketBase):
     This class contains the logic for the ZMQ message Publisher.
 
     Usage:
-        * Define ...
+        * Call publish to send items to subscribers.
 
     """
 
@@ -69,6 +69,7 @@ class WorkflowPublisher(ZMQSocketBase):
     def _bespoke_stop(self):
         """Bespoke stop items."""
         LOG.debug('stopping zmq publisher...')
+        self.stopping = True
 
     async def send_multi(self, topic, data, serializer=None):
         """Send multi part message.

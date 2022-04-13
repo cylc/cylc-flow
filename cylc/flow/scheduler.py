@@ -200,6 +200,9 @@ class Scheduler:
     options: Values
     cylc_config: DictTree  # [scheduler] config
 
+    # tcp / zmq
+    server: WorkflowRuntimeServer
+
     # Note: attributes without a default must come before those with defaults
 
     # flow information
@@ -229,9 +232,6 @@ class Scheduler:
     main_loop_plugins: Optional[dict] = None
     auto_restart_mode: Optional[AutoRestartMode] = None
     auto_restart_time: Optional[float] = None
-
-    # tcp / zmq
-    server: Optional[WorkflowRuntimeServer] = None
 
     # queue-released tasks awaiting job preparation
     pre_prep_tasks: Optional[List[TaskProxy]] = None
@@ -339,7 +339,6 @@ class Scheduler:
         self.flow_mgr = FlowMgr(self.workflow_db_mgr)
 
         self.server = WorkflowRuntimeServer(self)
-        self.server.configure()
 
         self.proc_pool = SubProcPool()
         self.command_queue = Queue()
@@ -597,7 +596,7 @@ class Scheduler:
             )
             self.server.publish_queue.put(
                 self.data_store_mgr.publish_deltas)
-            # Yield control to other threads
+            # Non-async sleep - yield to other threads rather than event loop
             sleep(0)
             self.profiler.start()
             await self.main_loop()
@@ -1649,7 +1648,8 @@ class Scheduler:
                 self.data_store_mgr.publish_pending = False
                 self.server.publish_queue.put(
                     self.data_store_mgr.publish_deltas)
-                # Yield control to other threads
+                # Non-async sleep - yield to other threads rather
+                # than event loop
                 sleep(0)
         if has_updated:
             # Database update
