@@ -46,6 +46,7 @@ from cylc.flow.workflow_files import (
     clean,
     detect_both_flow_and_suite,
     get_rsync_rund_cmd,
+    get_run_dir_info,
     get_source_workflow_name,
     get_symlink_dirs,
     get_workflow_source_dir,
@@ -1885,3 +1886,78 @@ def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):
     with pytest.raises(WorkflowFilesError) as exc_info:
         validate_source_dir(src_dir, 'dieter')
     assert "Source directory should not be in" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    'args, expected_relink, expected_run_num, expected_run_dir',
+    [
+        (
+            ['{cylc_run}/numbered', None, False],
+            True, 1, '{cylc_run}/numbered/run1'
+        ),
+        (
+            ['{cylc_run}/named', 'dukat', False],
+            False, None, '{cylc_run}/named/dukat'
+        ),
+        (
+            ['{cylc_run}/unnamed', None, True],
+            False, None, '{cylc_run}/unnamed'
+        ),
+    ]
+)
+def test_get_run_dir_info(
+    args: list,
+    expected_relink: bool,
+    expected_run_num: Optional[int],
+    expected_run_dir: Union[Path, str],
+    tmp_run_dir: Callable
+):
+    """Test get_run_dir_info().
+
+    Params:
+        args: Input args to function.
+        expected_*: Expected return values.
+    """
+    # Setup
+    cylc_run_dir: Path = tmp_run_dir()
+    sub = lambda x: Path(x.format(cylc_run=cylc_run_dir))  # noqa: E731
+    args[0] = sub(args[0])
+    expected_run_dir = sub(expected_run_dir)
+    # Test
+    assert get_run_dir_info(*args) == (
+        expected_relink, expected_run_num, expected_run_dir
+    )
+    assert expected_run_dir.is_absolute()
+
+
+def test_get_run_dir_info__increment_run_num(tmp_run_dir: Callable):
+    """Test that get_run_dir_info() increments run number and unlinks runN."""
+    # Setup
+    cylc_run_dir: Path = tmp_run_dir()
+    run_dir: Path = tmp_run_dir('gowron/run1')
+    runN = run_dir.parent / WorkflowFiles.RUN_N
+    assert os.path.lexists(runN)
+    # Test
+    assert get_run_dir_info(cylc_run_dir / 'gowron', None, False) == (
+        True, 2, cylc_run_dir / 'gowron' / 'run2'
+    )
+    assert not os.path.lexists(runN)
+
+
+def test_get_run_dir_info__fail(tmp_run_dir: Callable):
+    # Test that you can't install named runs when numbered runs exist
+    cylc_run_dir: Path = tmp_run_dir()
+    run_dir: Path = tmp_run_dir('martok/run1')
+    with pytest.raises(WorkflowFilesError) as excinfo:
+        get_run_dir_info(run_dir.parent, 'targ', False)
+    assert "contains installed numbered runs" in str(excinfo.value)
+
+    # Test that you can install numbered run in an empty dir
+    base_dir = cylc_run_dir / 'odo'
+    base_dir.mkdir()
+    get_run_dir_info(base_dir, None, False)
+    # But not when named runs exist
+    tmp_run_dir('odo/meter')
+    with pytest.raises(WorkflowFilesError) as excinfo:
+        get_run_dir_info(base_dir, None, False)
+    assert "contains an installed workflow"
