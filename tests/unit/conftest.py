@@ -168,16 +168,19 @@ def set_cycling_type(monkeypatch: pytest.MonkeyPatch):
         ctype: The cycling type (integer or iso8601).
         time_zone: If using ISO8601/datetime cycling type, you can specify a
             custom time zone to use.
+        dump_format: If using ISO8601, specify custom dump format.
     """
     def _set_cycling_type(
-        ctype: str = INTEGER_CYCLING_TYPE, time_zone: Optional[str] = None
+        ctype: str = INTEGER_CYCLING_TYPE,
+        time_zone: Optional[str] = None,
+        dump_format: Optional[str] = None,
     ) -> None:
         class _DefaultCycler:
             TYPE = ctype
         monkeypatch.setattr(
             'cylc.flow.cycling.loader.DefaultCycler', _DefaultCycler)
         if ctype == ISO8601_CYCLING_TYPE:
-            iso8601_init(time_zone=time_zone)
+            iso8601_init(time_zone=time_zone, custom_dump_format=dump_format)
     return _set_cycling_type
 
 

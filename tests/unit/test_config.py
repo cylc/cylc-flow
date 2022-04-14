@@ -657,15 +657,15 @@ def test_process_fcp(
             id="No stopcp"
         ),
         pytest.param(
-            '1993', None, '19930101T0000+0530', None, None,
+            '1993', None, '1993', None, None,
             id="From config by default"
         ),
         pytest.param(
-            '1993', '1066', '10660101T0000+0530', '1066', None,
+            '1993', '1066', '1066', '1066', None,
             id="From options"
         ),
         pytest.param(
-            '1993', 'reload', '19930101T0000+0530', None, None,
+            '1993', 'reload', '1993', None, None,
             id="From cfg if --stopcp=reload on restart"
         ),
         pytest.param(
@@ -693,7 +693,7 @@ def test_process_stop_cycle_point(
         expected_options_value: The expected options.stopcp that gets set.
         expected_warning: Expected warning message, if any.
     """
-    set_cycling_type(ISO8601_CYCLING_TYPE, time_zone='+0530')
+    set_cycling_type(ISO8601_CYCLING_TYPE, dump_format='CCYY')
     caplog.set_level(logging.WARNING, CYLC_LOG)
     fcp = loader.get_point('2012').standardise()
     mock_config = Mock(
