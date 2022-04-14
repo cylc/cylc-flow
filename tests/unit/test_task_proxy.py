@@ -43,7 +43,9 @@ def test_point_match(
     set_cycling_type(itask_point.TYPE)
     mock_itask = Mock(point=itask_point.standardise())
 
-    assert TaskProxy.point_match(mock_itask, point_str) is expected
+    assert TaskProxy.point_match(mock_itask, point_str) is expected, (
+        f"Does mock_task.point={mock_itask.point!r} match {point_str!r}?"
+    )
 
 
 @pytest.mark.parametrize(

@@ -260,10 +260,7 @@ def test_family_inheritance_and_quotes(
     [
         pytest.param(
             ISO8601_CYCLING_TYPE,
-            {
-                'initial cycle point': None,
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': None},
             None,
             None,
             (WorkflowConfigError, "requires an initial cycle point"),
@@ -271,10 +268,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             INTEGER_CYCLING_TYPE,
-            {
-                'initial cycle point': None,
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': None},
             '1',
             None,
             None,
@@ -282,10 +276,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             INTEGER_CYCLING_TYPE,
-            {
-                'initial cycle point': "now",
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': "now"},
             None,
             None,
             (PointParsingError, "invalid literal for int()"),
@@ -293,10 +284,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             INTEGER_CYCLING_TYPE,
-            {
-                'initial cycle point': "20500808T0000Z",
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': "20500808T0000Z"},
             None,
             None,
             (PointParsingError, "invalid literal for int()"),
@@ -304,10 +292,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
-            {
-                'initial cycle point': "1",
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': "1"},
             None,
             None,
             (PointParsingError, "Invalid ISO 8601 date representation"),
@@ -315,10 +300,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
-            {
-                'initial cycle point': 'now',
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': 'now'},
             '20050102T0615+0530',
             '20050102T0615+0530',
             None,
@@ -371,7 +353,10 @@ def test_process_icp(
     set_cycling_type(cycling_type, time_zone="+0530")
     mocked_config = Mock(cycling_type=cycling_type)
     mocked_config.cfg = {
-        'scheduling': scheduling_cfg
+        'scheduling': {
+            'initial cycle point constraints': [],
+            **scheduling_cfg
+        }
     }
     mocked_config.options.icp = None
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
@@ -472,7 +457,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2021',
                 'final cycle point': None,
-                'final cycle point constraints': []
             },
             None,
             None,
@@ -482,9 +466,21 @@ def test_process_startcp(
         pytest.param(
             ISO8601_CYCLING_TYPE,
             {
+                'initial cycle point': '2021',
+                'final cycle point': '',
+            },
+            None,
+            None,
+            None,
+            id="Empty fcp in cfg"
+            # Need to check this as fcp treated as string by parsec, unlike
+            # other cycle point settings
+        ),
+        pytest.param(
+            ISO8601_CYCLING_TYPE,
+            {
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
-                'final cycle point constraints': []
             },
             None,
             '20210101T0000+0530',
@@ -496,7 +492,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
-                'final cycle point constraints': []
             },
             '2019',
             '20190101T0000+0530',
@@ -508,7 +503,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '+P4D',
-                'final cycle point constraints': []
             },
             None,
             '20170215T0000+0530',
@@ -520,7 +514,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '---04',
-                'final cycle point constraints': []
             },
             None,
             '20170215T0000+0530',
@@ -533,7 +526,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '1',
                 'final cycle point': '4',
-                'final cycle point constraints': []
             },
             None,
             '4',
@@ -545,7 +537,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '1',
                 'final cycle point': '+P2',
-                'final cycle point constraints': []
             },
             None,
             '3',
@@ -557,7 +548,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2013',
                 'final cycle point': '2009',
-                'final cycle point constraints': []
             },
             None,
             None,
@@ -571,7 +561,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2013',
                 'final cycle point': '-PT1S',
-                'final cycle point constraints': []
             },
             None,
             None,
@@ -609,7 +598,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2013',
                 'final cycle point': '2021',
-                'final cycle point constraints': []
             },
             'reload',
             '20210101T0000+0530',
@@ -638,7 +626,10 @@ def test_process_fcp(
     set_cycling_type(cycling_type, time_zone='+0530')
     mocked_config = Mock(cycling_type=cycling_type)
     mocked_config.cfg = {
-        'scheduling': scheduling_cfg
+        'scheduling': {
+            'final cycle point constraints': [],
+            **scheduling_cfg
+        }
     }
     mocked_config.initial_point = loader.get_point(
         scheduling_cfg['initial cycle point']).standardise()

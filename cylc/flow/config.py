@@ -695,10 +695,9 @@ class WorkflowConfig:
         Raises:
             WorkflowConfigError - if it fails to validate
         """
-        if (
-            self.cfg['scheduling']['final cycle point'] is not None and
-            not self.cfg['scheduling']['final cycle point'].strip()
-        ):
+        if self.cfg['scheduling']['final cycle point'] == '':
+            # (Unlike other cycle point settings in config, fcp is treated as
+            # a string by parsec)
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
         if fcp_str == 'reload':

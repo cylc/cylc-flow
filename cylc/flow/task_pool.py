@@ -879,29 +879,31 @@ class TaskPool:
 
         self.do_reload = False
 
-    def set_stop_point(self, stop_point):
+    def set_stop_point(
+        self, stop_point: Optional['PointBase']
+    ) -> Optional['PointBase']:
         """Set the global workflow stop point."""
         if self.stop_point == stop_point:
-            return
+            return None
         LOG.info("Setting stop cycle point: %s", stop_point)
         self.stop_point = stop_point
-        for itask in self.get_tasks():
-            # check cycle stop or hold conditions
-            if (
-                    self.stop_point
-                    and itask.point > self.stop_point
+        if self.stop_point:
+            for itask in self.get_tasks():
+                # check cycle stop or hold conditions
+                if (
+                    itask.point > self.stop_point
                     and itask.state(
                         TASK_STATUS_WAITING,
                         is_queued=True,
                         is_held=False
                     )
-            ):
-                LOG.warning(
-                    f"[{itask}] not running (beyond workflow stop cycle) "
-                    f"{self.stop_point}"
-                )
-                if itask.state_reset(is_held=True):
-                    self.data_store_mgr.delta_task_held(itask)
+                ):
+                    LOG.warning(
+                        f"[{itask}] not running (beyond workflow stop cycle) "
+                        f"{self.stop_point}"
+                    )
+                    if itask.state_reset(is_held=True):
+                        self.data_store_mgr.delta_task_held(itask)
         return self.stop_point
 
     def can_stop(self, stop_mode):

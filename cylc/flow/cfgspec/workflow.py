@@ -557,12 +557,13 @@ with Conf(
             host (adjusted to UTC if workflow is in UTC mode but the host is
             not) to minute resolution.  Minutes (or hours, etc.) may be
             ignored depending on the value of
-
             :cylc:conf:`flow.cylc[scheduler]cycle point format`.
 
             For more information on setting the initial cycle point relative
             to the current time see :ref:`setting-the-icp-relative-to-now`.
         ''')
+        # NOTE: final cycle point is not a V_CYCLE_POINT to allow expressions
+        # such as '+P1Y' (relative to initial cycle point)
         Conf('final cycle point', VDR.V_STRING, desc='''
             The (optional) last cycle point at which tasks are run.
 
@@ -624,30 +625,29 @@ with Conf(
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[scheduling]hold after point``.
-
             Unlike the final
             cycle point, the workflow does not shut down once all tasks have
             passed this point. If this item is set you can override it on the
             command line using ``--hold-after``.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[scheduling]hold after point``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
             Shut down workflow after all tasks **pass** this cycle point.
-
-            .. versionadded:: 8.0.0
 
             The stop cycle point can be overridden on the command line using
             ``cylc play --stop-cycle-point=POINT``
 
             .. note:
 
-                Not to be confused with :cylc:conf:`[..]final cycle point`:
-                There can be more graph beyond this point, but you are
-                choosing not to run that part of the graph. You can play
-                the workflow and continue.
+               Not to be confused with :cylc:conf:`[..]final cycle point`:
+               There can be more graph beyond this point, but you are
+               choosing not to run that part of the graph. You can play
+               the workflow and continue.
 
+            .. versionadded:: 8.0.0
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
@@ -662,11 +662,6 @@ with Conf(
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
             How many cycles ahead of the slowest tasks the fastest may run.
-
-            .. versionchanged:: 8.0.0
-
-               The deprecated ``[scheduling]max active cycle points`` setting
-               was merged into this one.
 
             Runahead limiting prevents the fastest tasks in a workflow from
             getting too far ahead of the slowest ones, as documented in
@@ -695,6 +690,11 @@ with Conf(
                The runahead limit may be automatically raised if this is
                necessary to allow a future task to be triggered, preventing
                the workflow from stalling.
+
+            .. versionchanged:: 8.0.0
+
+               The deprecated ``[scheduling]max active cycle points`` setting
+               was merged into this one.
         ''')
 
         with Conf('queues', desc='''
