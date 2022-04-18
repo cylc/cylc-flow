@@ -40,7 +40,7 @@ contains_ok 'log' <<__END__
 ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh 1/foo
 ${LOG_INDENT}[(('event-handler-00', 'started'), 1) ret_code] -9
 ${LOG_INDENT}[(('event-handler-00', 'started'), 1) err] killed on timeout (PT10S)
-WARNING - 1/foo/01 ('event-handler-00', 'started') failed
+WARNING - 1/foo/01 handler:event-handler-00 for task event:started failed
 __END__
 
 cylc workflow-state "${WORKFLOW_NAME}" >'workflow-state.log'

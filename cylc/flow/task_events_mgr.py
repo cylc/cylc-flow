@@ -477,7 +477,7 @@ class TaskEventsManager():
                     )
                 elif timer.delay:
                     msg = (
-                        f"handler:{key1[0]} for task event:{key1[1]} will "
+                        f"handler:{key1[0]} for task event:{key1[1]} will"
                         f" run after {timer.delay_timeout_as_str()}"
                     )
                 if msg:
