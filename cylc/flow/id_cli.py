@@ -32,6 +32,7 @@ from cylc.flow.id import (
     contains_multiple_workflows,
     upgrade_legacy_ids,
 )
+from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX
 from cylc.flow.network.scan import (
     filter_name,
     is_active,
@@ -516,12 +517,13 @@ def _parse_src_path(id_):
     if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
         raise UserInputError(
             f"Not a valid workflow ID or source directory: {src_path}"
-            f"\n(Note you should not include {src_path.name} in the path)"
+            f"\n(Note you should not include {src_path.name}"
+            " in the workflow source path)"
         )
 
     if (
         id_ != os.curdir
-        and not id_.startswith(f'{os.curdir}{os.sep}')
+        and not EXPLICIT_RELATIVE_PATH_REGEX.match(id_)
         and not src_path.is_absolute()
     ):
         # Not a valid source path, but it could be a workflow ID.

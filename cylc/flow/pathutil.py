@@ -43,6 +43,15 @@ EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
 """Matches relative paths that are explicit (starts with ./)"""
 
 
+EXPLICIT_RELATIVE_PATH_REGEX = re.compile( 
+    rf''' 
+    ^({re.escape(os.curdir)}|{re.escape(os.pardir)}) 
+    ({re.escape(os.sep)}|$) 
+    ''', 
+    re.VERBOSE 
+) 
+
+
 def expand_path(*args: Union[Path, str]) -> str:
     """Expand both vars and user in path and normalise it, joining any
     extra args."""
