@@ -515,7 +515,9 @@ def _parse_src_path(id_):
     # trying (erroneously) to target a source config file.
     if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
         raise UserInputError(
-            f"Not a valid workflow ID or source directory: {src_path}")
+            f"Not a valid workflow ID or source directory: {src_path}"
+            f"\n(Note you should not include {src_path.name} in the path)"
+        )
 
     if (
         id_ != os.curdir
