@@ -40,7 +40,7 @@ create_test_global_config "" "
 # Test "cylc install" ensure symlinks are created
 TEST_NAME="${TEST_NAME_BASE}-symlinks-created"
 make_rnd_workflow
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" --directory="${RND_WORKFLOW_SOURCE}"
+run_ok "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -66,10 +66,10 @@ SYMDIR=${TMPDIR}/${USER}/test_cylc_cli_symlink/
 
 TEST_NAME="${TEST_NAME_BASE}-cli-opt-install"
 make_rnd_workflow
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" \
---directory="${RND_WORKFLOW_SOURCE}" \
---symlink-dirs="run= ${SYMDIR}cylctb_tmp_run_dir, log=${SYMDIR}, share=${SYMDIR}, \
-work = ${SYMDIR}"
+run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_SOURCE}" \
+    --workflow-name="${RND_WORKFLOW_NAME}" \
+    --symlink-dirs="run= ${SYMDIR}cylctb_tmp_run_dir, log=${SYMDIR}, share=${SYMDIR}, \
+    work = ${SYMDIR}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -87,7 +87,7 @@ for DIR in 'work' 'share' 'log'; do
 done
 
 INSTALL_LOG="$(find "${WORKFLOW_RUN_DIR}/log/install" -type f -name '*.log')"
- 
+
 for DIR in 'work' 'share' 'log'; do
     grep_ok "${TMPDIR}/${USER}/test_cylc_cli_symlink/cylc-run/${RND_WORKFLOW_NAME}/run1/${DIR}" "${INSTALL_LOG}"
 done
@@ -121,8 +121,8 @@ purge_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-no-sym-dirs-cli"
 make_rnd_workflow
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" \
---directory="${RND_WORKFLOW_SOURCE}" --symlink-dirs=""
+run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_SOURCE}" \
+    --workflow-name="${RND_WORKFLOW_NAME}" --symlink-dirs=""
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -164,15 +164,15 @@ rm -rf "${TMPDIR}/${USER}/test_cylc_cli_symlink/"
 purge_rnd_workflow
 
 
-# test share and share/cycle same symlinks don't error 
+# test share and share/cycle same symlinks don't error
 SYMDIR=${TMPDIR}/${USER}/test_cylc_cli_symlink/
 
 TEST_NAME="${TEST_NAME_BASE}-share-share-cycle-same-dirs"
 make_rnd_workflow
 # check install runs without failure
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" \
---directory="${RND_WORKFLOW_SOURCE}" \
---symlink-dirs="share/cycle=${SYMDIR}, share=${SYMDIR}"
+run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_SOURCE}" \
+    --workflow-name="${RND_WORKFLOW_NAME}" \
+    --symlink-dirs="share/cycle=${SYMDIR}, share=${SYMDIR}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__

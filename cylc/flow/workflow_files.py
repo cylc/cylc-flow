@@ -562,7 +562,7 @@ def get_flow_file(reg: str) -> Path:
 def get_workflow_source_dir(
     run_dir: Union[Path, str]
 ) -> Union[Tuple[str, Path], Tuple[None, None]]:
-    """Get the source directory path of the workflow in directory provided.
+    """Get the source directory path for a given workflow run directory.
 
     Args:
         run_dir: directory to check for an installed flow inside.
@@ -1453,19 +1453,20 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
     return rsync_cmd
 
 
-def reinstall_workflow(named_run, rundir, source, dry_run=False):
+def reinstall_workflow(
+    source: Path,
+    named_run: str,
+    rundir: Path,
+    dry_run: bool = False
+) -> None:
     """Reinstall workflow.
 
     Args:
-        named_run (str):
-            name of the run e.g. my-flow/run1
-        rundir (path):
-            run directory
-        source (path):
-            source directory
-        dry_run (bool):
-            if True, will not execute the file transfer but report what would
-            be changed.
+        source: source directory
+        named_run: name of the run e.g. my-flow/run1
+        rundir: run directory
+        dry_run: if True, will not execute the file transfer but report what
+            would be changed.
     """
     validate_source_dir(source, named_run)
     check_nested_dirs(rundir)
@@ -1489,12 +1490,11 @@ def reinstall_workflow(named_run, rundir, source, dry_run=False):
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
     print(f'REINSTALLED {named_run} from {source}')
     close_log(reinstall_log)
-    return
 
 
 def install_workflow(
+    source: Path,
     workflow_name: Optional[str] = None,
-    source: Optional[Union[Path, str]] = None,
     run_name: Optional[str] = None,
     no_run_name: bool = False,
     cli_symlink_dirs: Optional[Dict[str, Dict[str, Any]]] = None
@@ -1506,8 +1506,8 @@ def install_workflow(
     work, log, share, share/cycle directories.
 
     Args:
+        source: absolute path to workflow source directory.
         workflow_name: workflow name, default basename($PWD).
-        source: directory location of flow.cylc file, default $PWD.
         run_name: name of the run, overrides run1, run2, run 3 etc...
             If specified, cylc install will not create runN symlink.
         rundir: for overriding the default cylc-run directory.
@@ -1516,8 +1516,9 @@ def install_workflow(
         cli_symlink_dirs: Symlink dirs, if entered on the cli.
 
     Return:
-        source: source directory.
-        rundir: directory the workflow has been installed into.
+        source: absolute path to source directory.
+        rundir: absolute path to run directory, where the workflow has been
+            installed into.
         workflow_name: installed workflow name (which may be computed here).
 
     Raise:
@@ -1527,13 +1528,10 @@ def install_workflow(
             Another workflow already has this name (unless --redirect).
             Trying to install a workflow that is nested inside of another.
     """
-    if not source:
-        source = Path.cwd()
-    elif Path(source).name == WorkflowFiles.FLOW_FILE:
-        source = Path(source).parent
-    source = Path(expand_path(source))
+    if source.name == WorkflowFiles.FLOW_FILE:
+        source = source.parent
     if not workflow_name:
-        workflow_name = source.name
+        workflow_name = get_source_workflow_name(source)
     validate_workflow_name(workflow_name, check_reserved_names=True)
     if run_name is not None:
         if len(Path(run_name).parts) != 1:
@@ -1862,20 +1860,34 @@ def link_runN(latest_run: Union[Path, str]):
         run_n.symlink_to(latest_run.name)
 
 
-def search_install_source_dirs(workflow_name: str) -> Path:
+def search_install_source_dirs(workflow_name: Union[Path, str]) -> Path:
     """Return the path of a workflow source dir if it is present in the
     'global.cylc[install]source dirs' search path."""
-    search_path: List[str] = glbl_cfg().get(['install', 'source dirs'])
+    search_path: List[str] = get_source_dirs()
     if not search_path:
         raise WorkflowFilesError(
             "Cannot find workflow as 'global.cylc[install]source dirs' "
             "does not contain any paths")
     for path in search_path:
         try:
-            flow_file = check_flow_file(Path(path, workflow_name))
-            return flow_file.parent
+            return check_flow_file(Path(path, workflow_name)).parent
         except WorkflowFilesError:
             continue
     raise WorkflowFilesError(
         f"Could not find workflow '{workflow_name}' in: "
         f"{', '.join(search_path)}")
+
+
+def get_source_workflow_name(source: Path) -> str:
+    """Return workflow name relative to configured source dirs if possible,
+    else the basename of the given path."""
+    for dir_ in get_source_dirs():
+        try:
+            return str(source.relative_to(dir_))
+        except ValueError:
+            continue
+    return source.name
+
+
+def get_source_dirs() -> List[str]:
+    return glbl_cfg().get(['install', 'source dirs'])

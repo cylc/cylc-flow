@@ -91,7 +91,7 @@ Workflow IDs:
     Every Installed Cylc workflow has an ID.
 
     For example if we install a workflow like so:
-      $ cylc install --flow-name=foo
+      $ cylc install --workflow-name=foo
 
     We will end up with a workflow with the ID "foo/run1".
 
@@ -107,7 +107,7 @@ Workflow IDs:
       $ cylc stop foo
 
     Workflows can be installed hierarchically:
-      $ cylc install --flow-name=foo/bar/baz
+      $ cylc install --workflow-name=foo/bar/baz
 
       # play the workflow with the ID "foo/bar/baz"
       $ cylc play foo/bar/baz

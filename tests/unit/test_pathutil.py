@@ -25,6 +25,7 @@ from unittest.mock import Mock, patch, call
 
 from cylc.flow.exceptions import UserInputError, WorkflowFilesError
 from cylc.flow.pathutil import (
+    EXPLICIT_RELATIVE_PATH_REGEX,
     expand_path,
     get_dirs_to_symlink,
     get_next_rundir_number,
@@ -52,6 +53,24 @@ from .conftest import MonkeyMock
 
 
 HOME = Path.home()
+
+
+@pytest.mark.parametrize(
+    'string, match_expected',
+    [
+        ('./foo/bar', True),
+        ('../foo', True),
+        ('./', True),
+        ('../', True),
+        ('.', True),
+        ('..', True),
+        ('foo/bar', False),
+        ('.foo/bar', False),
+        ('foo/..', False),
+    ]
+)
+def test_explicit_relative_path_regex(string: str, match_expected: bool):
+    assert bool(EXPLICIT_RELATIVE_PATH_REGEX.match(string)) is match_expected
 
 
 @pytest.mark.parametrize(
