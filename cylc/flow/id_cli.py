@@ -39,7 +39,6 @@ from cylc.flow.network.scan import (
     scan,
 )
 from cylc.flow.workflow_files import (
-    WorkflowFiles,
     NO_FLOW_FILE_MSG,
     check_flow_file,
     detect_both_flow_and_suite,
@@ -510,7 +509,7 @@ def _parse_src_path(id_):
     ID with the same name.
 
     """
-    abort_if_flow_file_in_path(id_)
+    abort_if_flow_file_in_path(Path(id_))
     src_path = Path(id_)
     if (
         id_ != os.curdir
