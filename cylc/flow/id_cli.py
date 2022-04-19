@@ -47,6 +47,7 @@ from cylc.flow.workflow_files import (
     get_workflow_run_dir,
     infer_latest_run_from_id,
     validate_workflow_name,
+    abort_if_flow_file_in_path
 )
 
 
@@ -509,18 +510,8 @@ def _parse_src_path(id_):
     ID with the same name.
 
     """
+    abort_if_flow_file_in_path(id_)
     src_path = Path(id_)
-
-    # First catch a common error, to avoid confusing warnings that
-    # "dir/flow.cylc" is not a valid workflow ID when the user was obviously
-    # trying (erroneously) to target a source config file.
-    if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
-        raise UserInputError(
-            f"Not a valid workflow ID or source directory: {src_path}"
-            f"\n(Note you should not include {src_path.name}"
-            " in the workflow source path)"
-        )
-
     if (
         id_ != os.curdir
         and not EXPLICIT_RELATIVE_PATH_REGEX.match(id_)

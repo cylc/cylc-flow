@@ -1494,6 +1494,22 @@ def reinstall_workflow(
     close_log(reinstall_log)
 
 
+def abort_if_flow_file_in_path(source: str) -> None:
+    """Raise an exception if a flow file is found in a source path.
+
+    This allows us to avoid seemingly silly warnings that "path/flow.cylc"
+    is not a valid workflow ID, when "path" is valid and the user was just
+    (erroneously) trying to (e.g.) validate the config file directly.
+
+    """
+    if Path(source).name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
+        raise UserInputError(
+            f"Not a valid workflow ID or source directory: {source}"
+            f"\n(Note you should not include {Path(source).name}"
+            " in the workflow source path)"
+        )
+
+
 def install_workflow(
     source: Path,
     workflow_name: Optional[str] = None,
@@ -1530,8 +1546,11 @@ def install_workflow(
             Another workflow already has this name (unless --redirect).
             Trying to install a workflow that is nested inside of another.
     """
-    if source.name == WorkflowFiles.FLOW_FILE:
-        source = source.parent
+    if not source:
+        source = Path.cwd()
+    else:
+        abort_if_flow_file_in_path(source)
+    source = Path(expand_path(source))
     if not workflow_name:
         workflow_name = get_source_workflow_name(source)
     validate_workflow_name(workflow_name, check_reserved_names=True)
@@ -1865,6 +1884,7 @@ def link_runN(latest_run: Union[Path, str]):
 def search_install_source_dirs(workflow_name: Union[Path, str]) -> Path:
     """Return the path of a workflow source dir if it is present in the
     'global.cylc[install]source dirs' search path."""
+    abort_if_flow_file_in_path(workflow_name)
     search_path: List[str] = get_source_dirs()
     if not search_path:
         raise WorkflowFilesError(
