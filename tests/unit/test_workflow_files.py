@@ -1968,7 +1968,7 @@ def test_get_run_dir_info__fail(tmp_run_dir: Callable):
 
 
 def test_validate_abort_if_flow_file_in_path():
-    assert abort_if_flow_file_in_path("path/to/wflow") is None
+    assert abort_if_flow_file_in_path(Path("path/to/wflow")) is None
     with pytest.raises(UserInputError) as exc_info:
-        abort_if_flow_file_in_path("path/to/wflow/flow.cylc")
+        abort_if_flow_file_in_path(Path("path/to/wflow/flow.cylc"))
     assert "Not a valid workflow ID or source directory" in str(exc_info.value)

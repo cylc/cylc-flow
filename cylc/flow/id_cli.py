@@ -512,8 +512,7 @@ def _parse_src_path(id_):
     abort_if_flow_file_in_path(Path(id_))
     src_path = Path(id_)
     if (
-        id_ != os.curdir
-        and not EXPLICIT_RELATIVE_PATH_REGEX.match(id_)
+        not EXPLICIT_RELATIVE_PATH_REGEX.match(id_)
         and not src_path.is_absolute()
     ):
         # Not a valid source path, but it could be a workflow ID.

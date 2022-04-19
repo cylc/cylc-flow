@@ -33,13 +33,6 @@ from cylc.flow.platforms import get_localhost_install_target
 # monkeypatching:
 _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
 
-EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
-    rf'''
-    ^({re.escape(os.curdir)}|{re.escape(os.pardir)})
-    ({re.escape(os.sep)}|$)
-    ''',
-    re.VERBOSE
-)
 """Matches relative paths that are explicit (starts with ./)"""
 
 

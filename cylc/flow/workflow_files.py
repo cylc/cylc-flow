@@ -1546,10 +1546,7 @@ def install_workflow(
             Another workflow already has this name (unless --redirect).
             Trying to install a workflow that is nested inside of another.
     """
-    if not source:
-        source = Path.cwd()
-    else:
-        abort_if_flow_file_in_path(source)
+    abort_if_flow_file_in_path(source)
     source = Path(expand_path(source))
     if not workflow_name:
         workflow_name = get_source_workflow_name(source)
