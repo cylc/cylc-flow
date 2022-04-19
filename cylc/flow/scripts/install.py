@@ -84,10 +84,8 @@ from pathlib import Path
 from typing import Optional, TYPE_CHECKING, Dict, Any
 
 from cylc.flow import iter_entry_points
-from cylc.flow.exceptions import PluginError, UserInputError
-from cylc.flow.option_parsers import (
-    CylcOptionParser as COP,
-)
+from cylc.flow.exceptions import PluginError, InputError
+from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX, expand_path
 from cylc.flow.workflow_files import (
     install_workflow, search_install_source_dirs, parse_cli_sym_dirs
@@ -176,10 +174,9 @@ def install(
     parser: COP, opts: 'Values', reg: Optional[str] = None
 ) -> None:
     if opts.no_run_name and opts.run_name:
-        raise UserInputError(
+        raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
         )
-
     source = get_source_location(reg)
     for entry_point in iter_entry_points(
         'cylc.pre_configure'

@@ -23,7 +23,7 @@ import re
 from typing import Optional, Dict, List, Tuple, Any
 
 from cylc.flow.exceptions import (
-    UserInputError,
+    InputError,
     WorkflowFilesError,
 )
 from cylc.flow.hostuserutil import get_user
@@ -106,16 +106,16 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         # errors:
         >>> _parse_cli('////')
         Traceback (most recent call last):
-        UserInputError: Invalid ID: ////
+        InputError: Invalid ID: ////
 
         >>> parse_back('//cycle')
         Traceback (most recent call last):
-        UserInputError: Relative reference must follow an incomplete one.
+        InputError: Relative reference must follow an incomplete one.
         E.G: workflow //cycle/task
 
         >>> parse_back('workflow//cycle', '//cycle')
         Traceback (most recent call last):
-        UserInputError: Relative reference must follow an incomplete one.
+        InputError: Relative reference must follow an incomplete one.
         E.G: workflow //cycle/task
 
     """
@@ -134,7 +134,7 @@ def _parse_cli(*ids: str) -> List[Tokens]:
                 # (e.g. CLI auto completion)
                 tokens = Tokens(id_[:-1])
             else:
-                raise UserInputError(f'Invalid ID: {id_}')
+                raise InputError(f'Invalid ID: {id_}')
         is_partial = tokens.get('workflow') and not tokens.get('cycle')
         is_relative = not tokens.get('workflow')
 
@@ -172,7 +172,7 @@ def _parse_cli(*ids: str) -> List[Tokens]:
                 partials_expended = False
             elif is_relative:
                 # so a relative reference is an error
-                raise UserInputError(
+                raise InputError(
                     'Relative reference must follow an incomplete one.'
                     '\nE.G: workflow //cycle/task'
                 )
@@ -366,24 +366,24 @@ def _validate_constraint(*tokens_list, constraint=None):
     if constraint == 'workflows':
         for tokens in tokens_list:
             if tokens.is_null or tokens.is_task_like:
-                raise UserInputError('IDs must be workflows')
+                raise InputError('IDs must be workflows')
         return
     if constraint == 'tasks':
         for tokens in tokens_list:
             if tokens.is_null or not tokens.is_task_like:
-                raise UserInputError('IDs must be tasks')
+                raise InputError('IDs must be tasks')
         return
     if constraint == 'mixed':
         for tokens in tokens_list:
             if tokens.is_null:
-                raise UserInputError('IDs cannot be null.')
+                raise InputError('IDs cannot be null.')
         return
 
 
 def _validate_workflow_ids(*tokens_list, src_path):
     for ind, tokens in enumerate(tokens_list):
         if tokens['user'] and (tokens['user'] != get_user()):
-            raise UserInputError(
+            raise InputError(
                 "Operating on other users' workflows is not supported"
             )
         if not src_path:
@@ -394,7 +394,7 @@ def _validate_workflow_ids(*tokens_list, src_path):
         else:
             src_path = Path(get_workflow_run_dir(tokens['workflow']))
         if src_path.is_file():
-            raise UserInputError(
+            raise InputError(
                 f'Workflow ID cannot be a file: {tokens["workflow"]}'
             )
         detect_both_flow_and_suite(src_path)
@@ -420,11 +420,11 @@ def _validate_number(*tokens_list, max_workflows=None, max_tasks=None):
         else:
             workflows_count += 1
     if max_workflows and workflows_count > max_workflows:
-        raise UserInputError(
+        raise InputError(
             f'IDs contain too many workflows (max {max_workflows})'
         )
     if max_tasks and tasks_count > max_tasks:
-        raise UserInputError(
+        raise InputError(
             f'IDs contain too many cycles/tasks/jobs (max {max_tasks})'
         )
 
@@ -474,7 +474,7 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
     """Use "cylc scan" to expand workflow patterns."""
     workflow_sel = tokens['workflow_sel']
     if workflow_sel and workflow_sel != 'running':
-        raise UserInputError(
+        raise InputError(
             f'The workflow selector :{workflow_sel} is not'
             'currently supported.'
         )
@@ -498,7 +498,7 @@ def _parse_src_path(id_):
     ):
         src_path = src_path.resolve()
         if not src_path.exists():
-            raise UserInputError(f'Path does not exist: {src_path}')
+            raise InputError(f'Path does not exist: {src_path}')
         if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
             src_path = src_path.parent
         try:

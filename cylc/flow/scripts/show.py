@@ -40,7 +40,7 @@ from typing import Dict
 
 from ansimarkup import ansiprint
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
@@ -346,7 +346,7 @@ def main(_, options: 'Values', *ids) -> None:
     tokens_list = workflow_args[workflow_id]
 
     if tokens_list and options.task_defs:
-        raise UserInputError(
+        raise InputError(
             'Cannot query both live tasks and task definitions.'
         )
 

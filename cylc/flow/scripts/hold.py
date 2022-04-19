@@ -58,7 +58,7 @@ See also 'cylc release'.
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
@@ -118,12 +118,12 @@ def _validate(options: 'Values', *task_globs: str) -> None:
     """Check combination of options and task globs is valid."""
     if options.hold_point_string:
         if task_globs:
-            raise UserInputError(
+            raise InputError(
                 "Cannot combine --after with Cylc/Task IDs.\n"
                 "`cylc hold --after` holds all tasks after the given "
                 "cycle point.")
     elif not task_globs:
-        raise UserInputError(
+        raise InputError(
             "Must define Cycles/Tasks. See `cylc hold --help`.")
 
 

@@ -20,7 +20,7 @@ from optparse import Values
 import pytest
 from typing import Iterable, Optional, Tuple, Type
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
 from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.scripts.trigger import get_option_parser, _validate
@@ -53,7 +53,7 @@ Opts = Options(get_option_parser())
                 flow_wait=False
             ),
             (
-                UserInputError,
+                InputError,
                 "Multiple flow options must all be integer valued"
             )
         ),
@@ -64,7 +64,7 @@ Opts = Options(get_option_parser())
                 flow_descr="the quick brown fox"
             ),
             (
-                UserInputError,
+                InputError,
                 "Metadata is only for new flows"
             )
         ),
@@ -74,7 +74,7 @@ Opts = Options(get_option_parser())
                 flow_wait=False
             ),
             (
-                UserInputError,
+                InputError,
                 "Flow values must be integer, 'all', 'new', or 'none'"
             )
         ),
@@ -84,7 +84,7 @@ Opts = Options(get_option_parser())
                 flow_wait=True
             ),
             (
-                UserInputError,
+                InputError,
                 "--wait is not compatible with --flow=new or --flow=none"
             )
         ),
@@ -94,7 +94,7 @@ Opts = Options(get_option_parser())
                 flow_wait=False
             ),
             (
-                UserInputError,
+                InputError,
                 "Multiple flow options must all be integer valued"
             )
         ),
@@ -104,7 +104,7 @@ Opts = Options(get_option_parser())
                 flow_wait=False
             ),
             (
-                UserInputError,
+                InputError,
                 "Multiple flow options must all be integer valued"
             )
         ),
