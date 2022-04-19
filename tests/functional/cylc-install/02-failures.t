@@ -119,7 +119,7 @@ TEST_NAME="${TEST_NAME_BASE}--no-run-name-and--run-name-forbidden"
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_fail "${TEST_NAME}" cylc install --run-name="${RND_WORKFLOW_NAME}" --no-run-name
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-UserInputError: options --no-run-name and --run-name are mutually exclusive.
+InputError: options --no-run-name and --run-name are mutually exclusive.
 __ERR__
 popd || exit 1
 

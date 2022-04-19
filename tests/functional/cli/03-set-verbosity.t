@@ -19,5 +19,5 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 run_fail "${TEST_NAME_BASE}" cylc set-verbosity duck quack
-grep_ok 'UserInputError: Illegal logging level, duck' "${TEST_NAME_BASE}.stderr"
+grep_ok 'InputError: Illegal logging level, duck' "${TEST_NAME_BASE}.stderr"
 exit

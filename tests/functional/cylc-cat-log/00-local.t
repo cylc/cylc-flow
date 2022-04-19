@@ -33,7 +33,7 @@ contains_ok "${TEST_NAME}.stdout" "${WORKFLOW_RUN_DIR}/log/workflow/log"
 TEST_NAME=${TEST_NAME_BASE}-workflow-log-fail
 run_fail "${TEST_NAME}" cylc cat-log -f e "${WORKFLOW_NAME}"
 contains_ok "${TEST_NAME}.stderr" - << __END__
-UserInputError: The '-f' option is for job logs only.
+InputError: The '-f' option is for job logs only.
 __END__
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-out

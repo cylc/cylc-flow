@@ -46,7 +46,7 @@ from cylc.flow.exceptions import (
     PlatformError,
     PlatformLookupError,
     ServiceFileError,
-    UserInputError,
+    InputError,
     WorkflowFilesError,
     handle_rmtree_err,
 )
@@ -1249,7 +1249,7 @@ def infer_latest_run(
 
     Raises:
         - WorkflowFilesError if the runN symlink is not valid.
-        - UserInputError if the path does not exist.
+        - InputError if the path does not exist.
     """
     cylc_run_dir = get_cylc_run_dir()
     try:
@@ -1257,7 +1257,7 @@ def infer_latest_run(
     except ValueError:
         raise ValueError(f"{path} is not in the cylc-run directory")
     if not path.exists():
-        raise UserInputError(
+        raise InputError(
             f'Workflow ID not found: {reg}\n(Directory not found: {path})'
         )
     if path.name == WorkflowFiles.RUN_N:
@@ -1503,7 +1503,7 @@ def abort_if_flow_file_in_path(source: Path) -> None:
 
     """
     if source.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
-        raise UserInputError(
+        raise InputError(
             f"Not a valid workflow ID or source directory: {source}"
             f"\n(Note you should not include {source.name}"
             " in the workflow source path)"
@@ -1841,14 +1841,14 @@ def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:
             key, val = pair.split("=")
             key = key.strip()
         except ValueError:
-            raise UserInputError(
+            raise InputError(
                 'There is an error in --symlink-dirs option:'
                 f' {pair}. Try entering option in the form '
                 '--symlink-dirs=\'log=$DIR, share=$DIR2, ...\''
             )
         if key not in possible_symlink_dirs:
             dirs = ', '.join(possible_symlink_dirs)
-            raise UserInputError(
+            raise InputError(
                 f"{key} not a valid entry for --symlink-dirs. "
                 f"Configurable symlink dirs are: {dirs}"
             )

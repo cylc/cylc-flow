@@ -41,7 +41,7 @@ from tempfile import NamedTemporaryFile
 from typing import List, Optional, TYPE_CHECKING, Tuple
 
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP, icp_option
@@ -373,7 +373,7 @@ def main(
 ) -> None:
     """Implement ``cylc graph``."""
     if opts.grouping and opts.namespaces:
-        raise UserInputError('Cannot combine --group and --namespaces.')
+        raise InputError('Cannot combine --group and --namespaces.')
 
     lines: List[str] = []
     if not (opts.reference or opts.diff):

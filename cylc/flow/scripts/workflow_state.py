@@ -56,7 +56,7 @@ import sys
 from time import sleep
 from typing import TYPE_CHECKING
 
-from cylc.flow.exceptions import CylcError, UserInputError
+from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -193,16 +193,16 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
     )
 
     if options.use_task_point and options.cycle:
-        raise UserInputError(
+        raise InputError(
             "cannot specify a cycle point and use environment variable")
 
     if options.use_task_point:
         if "CYLC_TASK_CYCLE_POINT" not in os.environ:
-            raise UserInputError("CYLC_TASK_CYCLE_POINT is not defined")
+            raise InputError("CYLC_TASK_CYCLE_POINT is not defined")
         options.cycle = os.environ["CYLC_TASK_CYCLE_POINT"]
 
     if options.offset and not options.cycle:
-        raise UserInputError(
+        raise InputError(
             "You must target a cycle point to use an offset")
 
     # Attempt to apply specified offset to the targeted cycle
@@ -211,16 +211,16 @@ def main(parser: COP, options: 'Values', workflow_id: str) -> None:
 
     # Exit if both task state and message are to being polled
     if options.status and options.msg:
-        raise UserInputError("cannot poll both status and custom output")
+        raise InputError("cannot poll both status and custom output")
 
     if options.msg and not options.task and not options.cycle:
-        raise UserInputError("need a taskname and cyclepoint")
+        raise InputError("need a taskname and cyclepoint")
 
     # Exit if an invalid status is requested
     if (options.status and
             options.status not in TASK_STATUSES_ORDERED and
             options.status not in CylcWorkflowDBChecker.STATE_ALIASES):
-        raise UserInputError(f"invalid status '{options.status}'")
+        raise InputError(f"invalid status '{options.status}'")
 
     # this only runs locally
     if options.run_dir:

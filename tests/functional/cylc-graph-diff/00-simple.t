@@ -42,7 +42,7 @@ run_fail "${TEST_NAME}" \
     cylc graph "${DIFF_WORKFLOW_NAME}" --diff "${CONTROL_WORKFLOW_NAME}.bad"
 cmp_ok "${TEST_NAME}.stdout" </'dev/null'
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-UserInputError: Workflow ID not found: ${CONTROL_WORKFLOW_NAME}.bad
+InputError: Workflow ID not found: ${CONTROL_WORKFLOW_NAME}.bad
 (Directory not found: ${RUN_DIR}/${CONTROL_WORKFLOW_NAME}.bad)
 __ERR__
 #-------------------------------------------------------------------------------

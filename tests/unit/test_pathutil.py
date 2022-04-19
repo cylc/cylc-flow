@@ -23,7 +23,7 @@ from pytest import param
 from typing import Callable, Dict, Iterable, List, Set
 from unittest.mock import Mock, patch, call
 
-from cylc.flow.exceptions import UserInputError, WorkflowFilesError
+from cylc.flow.exceptions import InputError, WorkflowFilesError
 from cylc.flow.pathutil import (
     EXPLICIT_RELATIVE_PATH_REGEX,
     expand_path,
@@ -513,7 +513,7 @@ def test_parse_rm_dirs(dirs: List[str], expected: Set[str]):
 )
 def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
     """Test parse_dirs() with bad inputs"""
-    with pytest.raises(UserInputError) as exc:
+    with pytest.raises(InputError) as exc:
         parse_rm_dirs(dirs)
     assert err_msg in str(exc.value)
 

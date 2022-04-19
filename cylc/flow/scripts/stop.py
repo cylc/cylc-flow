@@ -70,7 +70,7 @@ from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
     CylcError,
-    UserInputError,
+    InputError,
     WorkflowStopped,
 )
 from cylc.flow.network.client_factory import get_client
@@ -187,17 +187,17 @@ def _validate(
 ) -> None:
     """Check option choices are valid."""
     if stop_task is not None and options.kill:
-        raise UserInputError("--kill is not compatible with stop-task")
+        raise InputError("--kill is not compatible with stop-task")
     if stop_cycle is not None and options.kill:
-        raise UserInputError("--kill is not compatible with stop-cycle")
+        raise InputError("--kill is not compatible with stop-cycle")
     if stop_task and stop_cycle:
-        raise UserInputError('stop-task is not compatible with stop-cycle')
+        raise InputError('stop-task is not compatible with stop-cycle')
     if options.kill and options.now:
-        raise UserInputError("--kill is not compatible with --now")
+        raise InputError("--kill is not compatible with --now")
     if options.flow_num and int(options.max_polls) > 0:
-        raise UserInputError("--flow is not compatible with --max-polls")
+        raise InputError("--flow is not compatible with --max-polls")
     if options.flow_num and globs:
-        raise UserInputError("--flow is not compatible with task IDs")
+        raise InputError("--flow is not compatible with task IDs")
 
 
 async def run(

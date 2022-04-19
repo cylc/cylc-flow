@@ -30,7 +30,7 @@ from cylc.flow.exceptions import (
     CylcError,
     PlatformError,
     ServiceFileError,
-    UserInputError,
+    InputError,
     WorkflowFilesError,
 )
 from cylc.flow.pathutil import parse_rm_dirs
@@ -324,7 +324,7 @@ def test_infer_latest_run_warns_for_runN(caplog, tmp_run_dir):
         ('not symlink', WorkflowFilesError),
         ('broken symlink', WorkflowFilesError),
         ('invalid target', WorkflowFilesError),
-        ('not exist', UserInputError)
+        ('not exist', InputError)
     ]
 )
 def test_infer_latest_run__bad(
@@ -1197,7 +1197,7 @@ def test_init_clean__targeted_bad(
     tmp_run_dir('chalmers')
     mock_clean = monkeymock('cylc.flow.workflow_files.clean')
     mock_remote_clean = monkeymock('cylc.flow.workflow_files.remote_clean')
-    with pytest.raises(UserInputError) as exc_info:
+    with pytest.raises(InputError) as exc_info:
         init_clean('chalmers', opts=CleanOptions(rm_dirs=rm_dirs))
     assert "cannot take paths that point to the run directory or above" in str(
         exc_info.value
@@ -1742,7 +1742,7 @@ def test_parse_cli_sym_dirs(
     """Test parse_cli_sym_dirs returns dict or correctly raises errors on cli
     symlink dir options"""
     if err_msg is not None:
-        with pytest.raises(UserInputError) as exc:
+        with pytest.raises(InputError) as exc:
             parse_cli_sym_dirs(symlink_dirs)
             assert(err_msg) in str(exc)
 
@@ -1969,6 +1969,6 @@ def test_get_run_dir_info__fail(tmp_run_dir: Callable):
 
 def test_validate_abort_if_flow_file_in_path():
     assert abort_if_flow_file_in_path(Path("path/to/wflow")) is None
-    with pytest.raises(UserInputError) as exc_info:
+    with pytest.raises(InputError) as exc_info:
         abort_if_flow_file_in_path(Path("path/to/wflow/flow.cylc"))
     assert "Not a valid workflow ID or source directory" in str(exc_info.value)

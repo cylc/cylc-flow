@@ -163,7 +163,7 @@ from textwrap import indent
 from time import time
 
 from cylc.flow import LOG, iter_entry_points
-from cylc.flow.exceptions import CylcError, UserInputError
+from cylc.flow.exceptions import CylcError, InputError
 
 
 class MainLoopPluginException(Exception):
@@ -326,7 +326,7 @@ def load(config, additional_plugins=None):
         try:
             module_name = entry_points[plugin_name.replace(' ', '_')]
         except KeyError:
-            raise UserInputError(
+            raise InputError(
                 f'No main-loop plugin: "{plugin_name}"\n'
                 + '    Available plugins:\n'
                 + indent('\n'.join(sorted(entry_points)), '        ')

@@ -63,7 +63,7 @@ from cylc.flow.exceptions import (
     IntervalParsingError,
     TaskDefError,
     ParamExpandError,
-    UserInputError
+    InputError
 )
 import cylc.flow.flags
 from cylc.flow.graph_parser import GraphParser
@@ -658,7 +658,7 @@ class WorkflowConfig:
         starttask = getattr(self.options, 'starttask', None)
 
         if startcp is not None and starttask is not None:
-            raise UserInputError(
+            raise InputError(
                 "--start-cycle-point and --start-task are mutually exclusive"
             )
         if startcp:
@@ -675,7 +675,7 @@ class WorkflowConfig:
                     for taskid in self.options.starttask
                 ]
             except ValueError as exc:
-                raise UserInputError(str(exc))
+                raise InputError(str(exc))
             self.start_point = min(
                 get_point(cycle).standardise()
                 for cycle in cycle_points if cycle
@@ -2266,7 +2266,7 @@ class WorkflowConfig:
                     'workflow': self.workflow,
                 }
             except (KeyError, ValueError):
-                raise UserInputError(f'Invalid template [meta]URL: {url}')
+                raise InputError(f'Invalid template [meta]URL: {url}')
             else:
                 LOG.warning(
                     'Detected deprecated template variables in [meta]URL.'
@@ -2302,7 +2302,7 @@ class WorkflowConfig:
                         'task': name,
                     }
                 except (KeyError, ValueError):
-                    raise UserInputError(f'Invalid template [meta]URL: {url}')
+                    raise InputError(f'Invalid template [meta]URL: {url}')
                 else:
                     LOG.warning(
                         'Detected deprecated template variables in'
