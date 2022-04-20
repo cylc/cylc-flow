@@ -39,6 +39,7 @@ import cylc.flow.flags
 from cylc.flow.id_cli import parse_id
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
     Options,
     icp_option,
@@ -53,8 +54,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         jset=True,
-        prep=True,
-        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
+        argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
     parser.add_option(

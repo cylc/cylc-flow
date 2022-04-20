@@ -96,10 +96,15 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
-        __doc__, comms=True, prep=True,
-        argdoc=[('[SOURCE]', 'Path to workflow source')]
+        __doc__,
+        comms=True,
+        argdoc=[
+            COP.optional(
+                ('SOURCE', 'Path to workflow source')
+            )
+        ]
     )
 
     parser.add_option(

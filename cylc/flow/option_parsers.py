@@ -43,6 +43,11 @@ from cylc.flow.loggingutil import (
     setup_segregated_log_streams,
 )
 
+WORKFLOW_ID_ARG_DOC = ('WORKFLOW', 'Workflow ID')
+WORKFLOW_ID_MULTI_ARG_DOC = ('WORKFLOW ...', 'Workflow ID(s)')
+WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
+ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
+FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 
 icp_option = Option(
     "--initial-cycle-point", "--icp",
@@ -227,21 +232,29 @@ class CylcOptionParser(OptionParser):
         jset: bool = False,
         multitask: bool = False,
         multiworkflow: bool = False,
-        prep: bool = False,
         auto_add: bool = True,
         color: bool = True,
         segregated_log: bool = False
     ) -> None:
-
+        """
+        Args:
+            usage: Usage instructions. Typically this will be the __doc__ of
+                the script module.
+            argdoc: The args for the command, to be inserted into the usage
+                instructions. Optional list of tuples of (name, description).
+            comms: If True, allow the --comms-timeout option.
+            jset: If True, allow the Jinja2 --set option.
+            multitask: If True, insert the multitask text into the
+                usage instructions.
+            multiworkflow: If True, insert the multiworkflow text into the
+                usage instructions.
+            auto_add: If True, allow the standard options.
+            color: If True, allow the --color option.
+            segregated_log: If False, write all logging entries to stderr.
+                If True, write entries at level < WARNING to stdout and
+                entries at level >= WARNING to stderr.
+        """
         self.auto_add = auto_add
-        if argdoc is None:
-            if prep:
-
-                # TODO
-
-                argdoc = [('WORKFLOW | PATH', 'Workflow ID or path')]
-            else:
-                argdoc = [('WORKFLOW', 'Workflow ID')]
 
         if multiworkflow:
             usage += self.MULTIWORKFLOW_USAGE
@@ -255,31 +268,26 @@ class CylcOptionParser(OptionParser):
         self.unlimited_args = False
         self.comms = comms
         self.jset = jset
-        self.prep = prep
         self.color = color
         # Whether to log messages that are below warning level to stdout
         # instead of stderr:
         self.segregated_log = segregated_log
 
-        maxlen = 0
-        for arg in argdoc:
-            if len(arg[0]) > maxlen:
-                maxlen = len(arg[0])
-
         if argdoc:
+            maxlen = max(len(arg) for arg, _ in argdoc)
             usage += "\n\nArguments:"
-            for arg in argdoc:
-                if arg[0].startswith('['):
+            for arg, descr in argdoc:
+                if arg.startswith('['):
                     self.n_optional_args += 1
                 else:
                     self.n_compulsory_args += 1
-                if arg[0].endswith('...]'):
+                if arg.rstrip(']').endswith('...'):
                     self.unlimited_args = True
 
-                args += arg[0] + " "
+                args += arg + " "
 
-                pad = (maxlen - len(arg[0])) * ' ' + '               '
-                usage += "\n   " + arg[0] + pad + arg[1]
+                pad = (maxlen - len(arg)) * ' ' + '               '
+                usage += "\n   " + arg + pad + descr
             usage = usage.replace('ARGS', args)
 
         OptionParser.__init__(
@@ -478,6 +486,13 @@ class CylcOptionParser(OptionParser):
             setup_segregated_log_streams(LOG, log_handler)
 
         return (options, args)
+
+    @staticmethod
+    def optional(arg: Tuple[str, str]) -> Tuple[str, str]:
+        """Make an argdoc tuple display as an optional arg with
+        square brackets."""
+        name, doc = arg
+        return (f'[{name}]', doc)
 
 
 class Options:

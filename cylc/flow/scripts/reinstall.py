@@ -44,7 +44,10 @@ from typing import Optional, TYPE_CHECKING
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
@@ -56,9 +59,9 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
-        __doc__, comms=True, argdoc=[('[WORKFLOW_ID]', 'Workflow ID')]
+        __doc__, comms=True, argdoc=[COP.optional(WORKFLOW_ID_ARG_DOC)]
     )
 
     parser.add_cylc_rose_options()

@@ -34,6 +34,7 @@ from cylc.flow.loggingutil import (
 )
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
     Options,
     icp_option,
@@ -95,8 +96,6 @@ happened to them while the workflow was down.
 """
 
 
-WORKFLOW_NAME_ARG_DOC = ("WORKFLOW", "Workflow name or ID")
-
 RESUME_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!
@@ -111,13 +110,14 @@ mutation (
 
 
 @lru_cache()
-def get_option_parser(add_std_opts=False):
+def get_option_parser(add_std_opts: bool = False) -> COP:
     """Parse CLI for "cylc play"."""
     parser = COP(
         PLAY_DOC,
         jset=True,
         comms=True,
-        argdoc=[WORKFLOW_NAME_ARG_DOC])
+        argdoc=[WORKFLOW_ID_ARG_DOC]
+    )
 
     parser.add_option(
         "-n", "--no-detach", "--non-daemon",

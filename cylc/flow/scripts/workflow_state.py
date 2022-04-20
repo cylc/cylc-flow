@@ -59,7 +59,10 @@ from typing import TYPE_CHECKING
 from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.command_polling import Poller
 from cylc.flow.task_state import TASK_STATUSES_ORDERED
@@ -129,7 +132,7 @@ class WorkflowPoller(Poller):
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
-        argdoc=[('WORKFLOW_ID', "Workflow ID")]
+        argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
     parser.add_option(

@@ -37,7 +37,10 @@ import sys
 from typing import TYPE_CHECKING
 
 import cylc.flow.flags
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.cylc_subproc import procopen, PIPE, DEVNULL
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
@@ -54,15 +57,18 @@ if TYPE_CHECKING:
 def get_option_parser():
     parser = COP(
         __doc__,
-        prep=True,
         jset=True,
-        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
+        argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
     parser.add_option(
-        "-e", "--error", help="Exit with error status "
-        "if " + CYLC_VERSION + " is not available on all remote platforms.",
-        action="store_true", default=False, dest="error")
+        "-e", "--error",
+        help=(
+            f"Exit with error status if {CYLC_VERSION} is not available "
+            "on all remote platforms."
+        ),
+        action="store_true", default=False, dest="error"
+    )
 
     return parser
 

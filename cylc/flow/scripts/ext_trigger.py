@@ -45,7 +45,10 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError, ClientError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
@@ -76,12 +79,12 @@ mutation (
 '''
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
         argdoc=[
-            ("WORKFLOW_ID", "Workflow ID"),
+            WORKFLOW_ID_ARG_DOC,
             ("MSG", "External trigger message"),
             ("TRIGGER_ID", "Unique trigger ID"),
         ],
