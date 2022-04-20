@@ -374,10 +374,6 @@ def test_parse_src_path(src_dir, monkeypatch):
         _parse_src_path('./blargh/nugget')
     assert 'Path is not a source directory' in str(exc_ctx.value)
 
-    res = _parse_src_path('a')
-    assert res is None
-
-
     # move into the src dir
     monkeypatch.chdir(src_dir)
 
