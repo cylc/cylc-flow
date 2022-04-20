@@ -51,6 +51,7 @@ Examples:
 
 import asyncio
 import json
+import sys
 from pathlib import Path
 from typing import Callable, Optional, TYPE_CHECKING
 
@@ -162,6 +163,9 @@ RICH_FIELDS = {
     },
 
 }
+
+
+BAD_CONTACT_FILE_MSG = "Bad contact file? {workflow_name}"
 
 
 def get_option_parser() -> COP:
@@ -278,6 +282,23 @@ def state_totals_key():
     )
 
 
+def format_and_write(write, formatter, *f_args, **f_kwargs):
+    """Wrapper for the various stdout formatters.
+
+    Format and write out scanned info, or warn of corrupted contact files
+    (which have correct name and path, but are missing required content).
+    """
+    try:
+        write(formatter(*f_args, **f_kwargs))
+    except KeyError:
+        print(
+            BAD_CONTACT_FILE_MSG.format(
+                workflow_name=f_args[0]["name"]
+            ),
+            file=sys.stderr
+        )
+
+
 def _format_json(items, _):
     """A JSON formatter."""
     return json.dumps(
@@ -368,7 +389,7 @@ async def _sorted(pipe, formatter, opts, write):
     async for item in pipe:
         ret.append(item)
     for flow in sorted(ret, key=sort_function):
-        write(formatter(flow, opts))
+        format_and_write(write, formatter, flow, opts)
 
 
 async def _serial(pipe, formatter, opts, write):
@@ -376,13 +397,13 @@ async def _serial(pipe, formatter, opts, write):
     ret = []
     async for item in pipe:
         ret.append(item)
-    write(formatter(ret, opts))
+    format_and_write(write, formatter, ret, opts)
 
 
 async def _async(pipe, formatter, opts, write):
     """List and print flows individually."""
     async for flow in pipe:
-        write(formatter(flow, opts))
+        format_and_write(write, formatter, flow, opts)
 
 
 async def _tree(pipe, formatter, opts, write):
@@ -395,6 +416,7 @@ async def _tree(pipe, formatter, opts, write):
     # construct tree
     tree = {}
     for flow in sorted(ret, key=lambda f: f['name']):
+        flow_name = flow['name']
         parts = Path(flow['name']).parts
         pointer = tree
         for part in parts[:-1]:
@@ -402,7 +424,17 @@ async def _tree(pipe, formatter, opts, write):
                 pointer[part] = {}
             pointer = pointer[part]
         flow['name'] = parts[-1]
-        item = formatter(flow, opts)
+        try:
+            item = formatter(flow, opts)
+        except KeyError:
+            print(
+                BAD_CONTACT_FILE_MSG.format(
+                    workflow_name=flow_name
+                ),
+                file=sys.stderr
+            )
+            continue
+
         if len(parts) > 1:
             item = f' {item}'
         pointer[item] = ''
