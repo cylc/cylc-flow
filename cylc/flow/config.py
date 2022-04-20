@@ -629,7 +629,8 @@ class WorkflowConfig:
                 except IsodatetimeError as exc:
                     raise WorkflowConfigError(str(exc))
         if orig_icp != icp:
-            # now/next()/prev() was used, need to store evaluated point in DB
+            # now/next()/previous() was used, need to store
+            # evaluated point in DB
             self.options.icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)

@@ -617,11 +617,11 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
+def ingest_time(value: str, now: Optional[str] = None) -> str:
     """Handle relative, truncated and prev/next cycle points.
 
     Args:
-        value: The string containing the prev()/next() stuff.
+        value: The string containing the previous()/next() stuff.
         now: A time point to use as the context for resolving the value.
     """
     # remove extraneous whitespace from cycle point
@@ -635,7 +635,7 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
         (value.startswith("-") or value.startswith("+"))
         and "P" not in value
     )
-    # prev() or next()
+    # previous() or next()
     is_prev_next = "next" in value or "previous" in value
     # offset from now (±P...)
     is_offset = value.startswith("P") or value.startswith("-P")
@@ -657,34 +657,30 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
         # missing date-time components off the front (e.g. 01T00)
         is_truncated = timepoint.truncated
 
-    if not any((is_prev_next, is_offset, is_truncated)):
+    if not (is_prev_next or is_offset or is_truncated):
         return value
 
     if now is None:
-        now = parser.parse(get_current_time_string())
-    else:
-        now = parser.parse(now)
+        now = get_current_time_string()
+    now_point = parser.parse(now)
 
-    # correct for year in 'now' if year only,
-    # or year and time, specified in input
-        # TODO: Figure out why this correction is needed
+    # correct for year in 'now' if year is the only date unit specified -
+    # https://github.com/cylc/cylc-flow/issues/4805#issuecomment-1103928604
     if re.search(r"\(-\d{2}[);T]", value):
-        now += Duration(years=1)
-
-    # correct for month in 'now' if year and month only,
-    # or year, month and time, specified in input
+        now_point += Duration(years=1)
+    # likewise correct for month if year and month are the only date units
     elif re.search(r"\(-\d{4}[);T]", value):
-        now += Duration(months=1)
+        now_point += Duration(months=1)
 
     # perform whatever transformation is required
     offset = None
     if is_prev_next:
-        cycle_point, offset = prev_next(value, now, parser)
+        cycle_point, offset = prev_next(value, now_point, parser)
     elif is_offset:
-        cycle_point = now
+        cycle_point = now_point
         offset = value
     else:  # is_truncated
-        cycle_point = now + timepoint
+        cycle_point = now_point + timepoint
 
     if offset is not None:
         # add/subtract offset duration to/from chosen timepoint
@@ -700,10 +696,10 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
 def prev_next(
     value: str, now: 'TimePoint', parser: 'TimePointParser'
 ) -> Tuple['TimePoint', Optional[str]]:
-    """Handle prev() and next() syntax.
+    """Handle previous() and next() syntax.
 
     Args:
-        value: The string containing the prev()/next() stuff.
+        value: The string containing the previous()/next() stuff.
         now: A time point to use as the context for resolving the value.
         parser: A time point parser.
 
@@ -713,7 +709,7 @@ def prev_next(
     # are we in gregorian mode (or some other eccentric calendar
     if CALENDAR.mode != Calendar.MODE_GREGORIAN:
         raise CylcConfigError(
-            'prev()/next() syntax must be used with integer or gregorian'
+            'previous()/next() syntax must be used with integer or gregorian'
             f' cycling modes ("{value}")'
         )
 
@@ -759,8 +755,8 @@ def prev_next(
 
     cycle_point = timepoints[my_diff.index(min(my_diff))]
 
-    # ensure truncated dates do not have
-    # time from 'now' included'
+    # ensure truncated dates do not have time from 'now' included' -
+    # https://github.com/metomi/isodatetime/issues/212
     if 'T' not in value.split(')')[0]:
         # NOTE: Strictly speaking we shouldn't forcefully mutate TimePoints
         # in this way as they're meant to be immutable since
@@ -771,18 +767,14 @@ def prev_next(
         cycle_point._hour_of_day = 0
         cycle_point._minute_of_hour = 0
         cycle_point._second_of_minute = 0
-
-    # ensure month and day from 'now' are not included
+    # likewise ensure month and day from 'now' are not included
     # where they did not appear in the truncated datetime
-    # NOTE: this may break when the order of tick over
-    # for time point is reversed!!!
-    # https://github.com/metomi/isodatetime/pull/101
-    # case 1 - year only
     if re.search(r"\(-\d{2}[);T]", value):
+        # case 1 - year only
         cycle_point._month_of_year = 1
         cycle_point._day_of_month = 1
-    # case 2 - month only or year and month
     elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
+        # case 2 - month only or year and month
         cycle_point._day_of_month = 1
 
     return cycle_point, offset
