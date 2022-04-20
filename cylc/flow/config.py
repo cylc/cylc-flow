@@ -786,7 +786,6 @@ class WorkflowConfig:
             not cylc.flow.flags.cylc7_back_compat
         ):
             raise WorkflowConfigError(msg)
-        LOG.warning(msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""

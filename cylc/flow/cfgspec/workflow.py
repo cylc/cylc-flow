@@ -25,6 +25,7 @@ from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES
+import cylc.flow.flags
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -107,9 +108,10 @@ with Conf(
         .. versionchanged:: 8.0.0
 
            The configuration file was previously named ``suite.rc``, but that
-           name is now deprecated. Please take action on any deprecation
-           warnings before renaming ``suite.rc`` configuration files
-           to ``flow.cylc``.
+           name is now deprecated.
+
+           The ``suite.rc`` file name now activates :ref:`cylc_7_compat_mode`,
+           to turn off compatibility mode rename to ``flow.cylc``.
     '''
 ) as SPEC:
 
@@ -1631,7 +1633,14 @@ with Conf(
 
 
 def upg(cfg, descr):
-    """Upgrade old workflow configuration."""
+    """Upgrade old workflow configuration.
+
+    NOTE: We are silencing deprecation (and only deprecation) warnings
+    when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
+    (which would loose Cylc 7 compatibility if users were to follow the
+    warnings and upgrade the syntax).
+
+    """
     u = upgrader(cfg, descr)
     u.obsolete(
         '7.8.0',
@@ -1668,27 +1677,36 @@ def upg(cfg, descr):
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],
-        ['cylc', 'mail', 'task event batch interval']
+        ['cylc', 'mail', 'task event batch interval'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
-    u.deprecate('8.0.0', ['cylc', 'parameters'], ['task parameters'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'parameters'],
+        ['task parameters'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+    )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
-        ['task parameters', 'templates']
+        ['task parameters', 'templates'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', f'mail {mail_setting}'],
-            ['cylc', 'mail', mail_setting]
+            ['cylc', 'mail', mail_setting],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
     # Task mail settings in [runtime][TASK]
     for mail_setting in ['to', 'from']:
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
-            ['runtime', '__MANY__', 'mail', mail_setting]
+            ['runtime', '__MANY__', 'mail', mail_setting],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
     u.deprecate(
         '8.0.0',
@@ -1696,7 +1714,9 @@ def upg(cfg, descr):
         None,  # This is really a .obsolete(), just with a custom message
         cvtr=converter(lambda x: x, (
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
-            'instead'))
+            'instead')
+        ),
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
@@ -1704,24 +1724,29 @@ def upg(cfg, descr):
         None,
         cvtr=converter(lambda x: x, (
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
-            'instead'))
+            'instead')
+        ),
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
-        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"')
+        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"'),
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'hold after point'],
-        ['scheduling', 'hold after cycle point']
+        ['scheduling', 'hold after cycle point'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
 
     u.deprecate(
         '8.0.0',
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
 
     for job_setting in [
@@ -1734,7 +1759,8 @@ def upg(cfg, descr):
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'job', job_setting],
-            ['runtime', '__MANY__', job_setting]
+            ['runtime', '__MANY__', job_setting],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     # Workflow timeout is now measured from start of run.
@@ -1754,7 +1780,8 @@ def upg(cfg, descr):
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', old],
-            ['cylc', 'events', new]
+            ['cylc', 'events', new],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     for old in [
@@ -1776,7 +1803,8 @@ def upg(cfg, descr):
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'events', old],
-            ['runtime', '__MANY__', 'events', f"{old}s"]
+            ['runtime', '__MANY__', 'events', f"{old}s"],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
@@ -1787,7 +1815,12 @@ def upg(cfg, descr):
                          'abort if inactivity handler fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
 
-    u.deprecate('8.0.0', ['cylc'], ['scheduler'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc'],
+        ['scheduler'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+    )
     u.upgrade()
 
     upgrade_graph_section(cfg, descr)
@@ -1797,7 +1830,7 @@ def upg(cfg, descr):
     warn_about_depr_event_handler_tmpl(cfg)
 
     # Warn about config items moved to global.cylc.
-    if 'runtime' in cfg:
+    if not cylc.flow.flags.cylc7_back_compat and 'runtime' in cfg:
         for job_setting, task in product(
             [
                 'execution polling intervals',
@@ -1810,10 +1843,10 @@ def upg(cfg, descr):
                 LOG.warning(
                     f"* (8.0.0) '[runtime][{task}]{job_setting}' - this "
                     "setting is deprecated; use "
-                    f"'global.cylc[platforms][<platform name>]{job_setting}' "
-                    "instead. "
-                    "Currently, this item will override the corresponding "
-                    "item in global.cylc, "
+                    "'global.cylc[platforms][<platform name>]"
+                    f"{job_setting}' "
+                    "instead. Currently, this item will override"
+                    " the corresponding item in global.cylc, "
                     "but support for this will be removed in Cylc 9."
                 )
 
@@ -1845,7 +1878,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     elif key == 'graph' and isinstance(value, str):
                         graphdict[key] = value
                         keys.add(key)
-                if keys:
+                if keys and not cylc.flow.flags.cylc7_back_compat:
                     LOG.warning(
                         'deprecated graph items were automatically upgraded '
                         f'in "{descr}":\n'

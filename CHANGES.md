@@ -35,6 +35,9 @@ Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Fixes
 
+[#4829](https://github.com/cylc/cylc-flow/pull/4829) -
+Suppress deprecated configuration warnings in Cylc 7 compatibility mode.
+
 [#4554](https://github.com/cylc/cylc-flow/pull/4554) - Fix incorrect
 implementation of the ISO 8601 recurrence format no. 1
 (`R<number>/<start-point>/<second-point>`)
