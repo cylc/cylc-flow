@@ -42,6 +42,9 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4830](https://github.com/cylc/cylc-flow/pull/4830) -
+Workflow scan now detects Cylc 7 suites installed, but not yet run, by Cylc 8.
+
 [#4554](https://github.com/cylc/cylc-flow/pull/4554) - Fix incorrect
 implementation of the ISO 8601 recurrence format no. 1
 (`R<number>/<start-point>/<second-point>`)
