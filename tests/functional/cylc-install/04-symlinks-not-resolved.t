@@ -39,7 +39,7 @@ mkdir -p "${elsewhere}/foo"
 ln -s "${elsewhere}/foo" "bar"
 
 # Install the workflow:
-run_ok "$TEST_NAME_BASE" cylc install --no-run-name --directory "$PWD" --symlink-dirs=run="${elsewhere}/bar"
+run_ok "$TEST_NAME_BASE" cylc install --no-run-name --symlink-dirs=run="${elsewhere}/bar"
 
 # Check the installed workflow:
 ls -l "$RUN_DIR/$(basename "$PWD")" > list

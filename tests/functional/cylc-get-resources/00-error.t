@@ -15,25 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation fails for special implicit tasks
+# Cylc get-resources doesn't overwrite a file with a dir, or vice-versa:
+
 . "$(dirname "$0")/test_header"
-set_test_number 2
-cat >'flow.cylc' <<'__FLOW_CONFIG__'
-[scheduling]
-    initial cycle point = 20200101
-    [[special tasks]]
-        clock-trigger = foo(PT0M)
-    [[graph]]
-        T00 = bar
-[runtime]
-    [[bar]]
-        script = true
-__FLOW_CONFIG__
-run_fail "${TEST_NAME_BASE}" cylc validate "${PWD}"
-cmp_ok "${TEST_NAME_BASE}.stderr" << '__ERR__'
-WorkflowConfigError: implicit tasks detected (no entry under [runtime]):
-    * foo
-To allow implicit tasks, use 'flow.cylc[scheduler]allow implicit tasks'
-See https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility
-__ERR__
+set_test_number 4
+
+TEST="${TEST_NAME_BASE}-overwrite-dir"
+mkdir cylc
+run_fail "${TEST}" cylc get-resources cylc
+grep_ok "Cannot extract file ${PWD}/cylc as there is an existing directory with the same name" "${TEST}.stderr"
+rm -r cylc
+
+touch syntax
+run_fail "${TEST}" cylc get-resources syntax
+grep_ok "Cannot extract directory ${PWD}/syntax as there is an existing file with the same name" "${TEST}.stderr"
+
 exit

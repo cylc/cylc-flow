@@ -29,7 +29,7 @@ from cylc.flow.cycling import loader
 from cylc.flow.cycling.loader import INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
 from cylc.flow.exceptions import (
     PointParsingError,
-    UserInputError,
+    InputError,
     WorkflowConfigError,
     XtriggerConfigError,
 )
@@ -426,7 +426,7 @@ def test_process_icp(
             ['20090802T0615+0530/foo'],
             None,
             (
-                UserInputError,
+                InputError,
                 "--start-cycle-point and --start-task are mutually exclusive"
             ),
         )
@@ -1200,7 +1200,7 @@ def test_process_urls(caplog, log_filter, workflow_meta, url_type):
     if url_type == 'good':
         WorkflowConfig.process_metadata_urls(config)
     elif url_type in {'bad', 'broken'}:
-        with pytest.raises(UserInputError):
+        with pytest.raises(InputError):
             WorkflowConfig.process_metadata_urls(config)
     elif url_type == 'ugly':
         WorkflowConfig.process_metadata_urls(config)

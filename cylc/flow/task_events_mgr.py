@@ -463,7 +463,8 @@ class TaskEventsManager():
             if not timer.is_timeout_set():
                 if timer.next() is None:
                     LOG.warning(
-                        f"{point}/{name}/{submit_num:02d} {key1} failed"
+                        f"{point}/{name}/{submit_num:02d}"
+                        f" handler:{key1[0]} for task event:{key1[1]} failed"
                     )
                     self.remove_event_timer(id_key)
                     continue
@@ -471,16 +472,16 @@ class TaskEventsManager():
                 msg = None
                 if timer.num > 1:
                     msg = (
-                        f"{key1} failed, "
-                        f"retrying in {timer.delay_timeout_as_str()}"
+                        f"handler:{key1[0]} for task event:{key1[1]} failed,"
+                        f" retrying in {timer.delay_timeout_as_str()}"
                     )
                 elif timer.delay:
                     msg = (
-                        f"{key1} will run after "
-                        f"{timer.delay_timeout_as_str()}"
+                        f"handler:{key1[0]} for task event:{key1[1]} will"
+                        f" run after {timer.delay_timeout_as_str()}"
                     )
                 if msg:
-                    LOG.critical(f"{point}/{name}/{submit_num:02d} {msg}")
+                    LOG.debug(f"{point}/{name}/{submit_num:02d} {msg}")
             # Ready to run?
             if not timer.is_delay_done() or (
                 # Avoid flooding user's mail box with mail notification.

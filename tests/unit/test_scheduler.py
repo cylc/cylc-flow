@@ -20,7 +20,7 @@ from types import SimpleNamespace
 from typing import Any, List
 from unittest.mock import create_autospec, Mock, patch
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import RunOptions
 
@@ -144,6 +144,6 @@ def test_check_startup_opts(
     for opt in opts_to_test:
         mocked_scheduler = Mock(is_restart=is_restart)
         mocked_scheduler.options = SimpleNamespace(**{opt: 'reload'})
-        with pytest.raises(UserInputError) as excinfo:
+        with pytest.raises(InputError) as excinfo:
             Scheduler._check_startup_opts(mocked_scheduler)
         assert(err_msg.format(opt) in str(excinfo))

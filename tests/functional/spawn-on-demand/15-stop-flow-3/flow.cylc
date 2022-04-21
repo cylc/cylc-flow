@@ -1,0 +1,23 @@
+# This should shut down cleanly without running "never" or "never_again".
+
+# The scheduler must remove flow_num 1 from task "c" to prevent spawning of
+# "never_again" AND remove the n=0 active-waiting task "never" from the pool
+# because it hasn't become active yet (otherwise the inactivity timer will
+# abort the run because the xtrigger never succeeds).
+
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        inactivity timeout = PT20S
+        abort on inactivity timeout = True
+[scheduling]
+    [[xtriggers]]
+        x = xrandom("0", "10")  # never succeeds
+    [[graph]]
+        R1 = """
+               @x => never
+               c => never_again 
+             """
+[runtime]
+    [[c]]
+       script = "cylc stop --flow=1 $CYLC_WORKFLOW_ID"

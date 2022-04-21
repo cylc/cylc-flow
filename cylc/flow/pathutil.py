@@ -24,13 +24,23 @@ from typing import Dict, Iterable, Set, Union, Optional, Any
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    UserInputError, WorkflowFilesError, handle_rmtree_err
+    InputError, WorkflowFilesError, handle_rmtree_err
 )
 from cylc.flow.platforms import get_localhost_install_target
+
 
 # Note: do not import this elsewhere, as it might bypass unit test
 # monkeypatching:
 _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
+
+EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
+    rf'''
+    ^({re.escape(os.curdir)}|{re.escape(os.pardir)})
+    ({re.escape(os.sep)}|$)
+    ''',
+    re.VERBOSE
+)
+"""Matches relative paths that are explicit (starts with ./)"""
 
 
 def expand_path(*args: Union[Path, str]) -> str:
@@ -385,12 +395,12 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             is_dir = part.endswith(os.sep)
             part = os.path.normpath(part)
             if os.path.isabs(part):
-                raise UserInputError("--rm option cannot take absolute paths")
+                raise InputError("--rm option cannot take absolute paths")
             if (
                 part in {os.curdir, os.pardir} or
                 part.startswith(f"{os.pardir}{os.sep}")  # '../'
             ):
-                raise UserInputError(
+                raise InputError(
                     "--rm option cannot take paths that point to the "
                     "run directory or above"
                 )

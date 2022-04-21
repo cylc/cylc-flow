@@ -56,11 +56,11 @@ class PluginError(CylcError):
         )
 
 
-class UserInputError(CylcError):
+class InputError(CylcError):
     """Exception covering erroneous user input to a Cylc interface.
 
     Ideally this would be handled in the interface (e.g. argument parser).
-    If this isn't possible raise UserInputError.
+    If this isn't possible raise InputError.
 
     """
 

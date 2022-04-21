@@ -1642,10 +1642,23 @@ class TaskPool:
         )
 
     def stop_flow(self, flow_num):
-        """Stop a particular flow_num from spawning any further."""
+        """Stop a given flow from spawning any further.
+
+        Remove the flow number from every task in the pool, and remove any task
+        with no remaining flow numbers if it is not already active.
+        """
         for itask in self.get_all_tasks():
-            with suppress(KeyError):
+            try:
                 itask.flow_nums.remove(flow_num)
+            except KeyError:
+                continue
+            else:
+                if (
+                    not itask.state(
+                        *TASK_STATUSES_ACTIVE, TASK_STATUS_PREPARING)
+                    and not itask.flow_nums
+                ):
+                    self.remove(itask, "flow stopped")
 
     def log_task_pool(self, log_lvl=logging.DEBUG):
         """Log content of task and prerequisite pools in debug mode."""

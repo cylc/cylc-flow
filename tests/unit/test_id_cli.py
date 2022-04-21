@@ -20,7 +20,7 @@ import pytest
 from unittest.mock import patch
 
 from cylc.flow.async_util import pipe
-from cylc.flow.exceptions import UserInputError, WorkflowFilesError
+from cylc.flow.exceptions import InputError, WorkflowFilesError
 from cylc.flow.id import detokenise, tokenise, Tokens
 from cylc.flow.id_cli import (
     _expand_workflow_tokens,
@@ -196,12 +196,12 @@ async def test_parse_ids_max_workflows(ids_in, errors, mock_exists):
     try:
         await parse_ids_async(
             *ids_in, constraint='workflows', max_workflows=2)
-    except UserInputError:
+    except InputError:
         if not errors:
             raise
     else:
         if errors:
-            raise Exception('Should have raised UserInputError')
+            raise Exception('Should have raised InputError')
 
 
 @pytest.mark.parametrize(
@@ -216,12 +216,12 @@ async def test_parse_ids_max_tasks(ids_in, errors, mock_exists):
     """It should validate input against the max_tasks constraint."""
     try:
         await parse_ids_async(*ids_in, constraint='tasks', max_tasks=2)
-    except UserInputError:
+    except InputError:
         if not errors:
             raise
     else:
         if errors:
-            raise Exception('Should have raised UserInputError')
+            raise Exception('Should have raised InputError')
 
 
 async def test_parse_ids_infer_run_name(tmp_run_dir):
@@ -309,6 +309,12 @@ def src_dir(tmp_path):
     src_dir.mkdir()
     src_file = src_dir / 'flow.cylc'
     src_file.touch()
+
+    other_dir = (tmp_path / 'blargh')
+    other_dir.mkdir()
+    other_file = other_dir / 'nugget'
+    other_file.touch()
+ 
     os.chdir(tmp_path)
     yield src_dir
     os.chdir(cwd_before)
@@ -325,40 +331,62 @@ def test_parse_src_path(src_dir, monkeypatch):
     assert src_file_path == src_dir / 'flow.cylc'
 
     # broken absolute path
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         workflow_id, src_path, src_file_path = _parse_src_path(
             str(src_dir.resolve()) + 'xyz'
         )
 
-    # valid relative path
+    # valid ./relative path
     workflow_id, src_path, src_file_path = _parse_src_path('./a')
     assert workflow_id == 'a'
     assert src_path == src_dir
     assert src_file_path == src_dir / 'flow.cylc'
 
     # broken relative path
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _parse_src_path('./xxx')
 
-    # relative '.' (invalid)
+    # relative '.' dir (invalid)
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         workflow_id, src_path, src_file_path = _parse_src_path('.')
     assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
 
+    # relative 'invalid/<flow-file>' (invalid)
+    with pytest.raises(InputError) as exc_ctx:
+        _parse_src_path('xxx/flow.cylc')
+    assert 'Not a valid workflow ID or source directory' in str(exc_ctx.value)
+
+    # Might be a workflow ID
+    res = _parse_src_path('the/quick/brown/fox')
+    assert res is None
+
+    # Might be a workflow ID, even though there's a matching relative path
+    res = _parse_src_path('a')
+    assert res is None
+
+    # Not a src directory (dir)
+    with pytest.raises(WorkflowFilesError) as exc_ctx:
+        _parse_src_path('./blargh')
+    assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
+
+    # Not a src directory (file)
+    with pytest.raises(InputError) as exc_ctx:
+        _parse_src_path('./blargh/nugget')
+    assert 'Path is not a source directory' in str(exc_ctx.value)
+
     # move into the src dir
     monkeypatch.chdir(src_dir)
 
-    # relative '.' (valid)
+    # relative '.' dir (valid)
     workflow_id, src_path, src_file_path = _parse_src_path('.')
     assert workflow_id == 'a'
     assert src_path == src_dir
     assert src_file_path == src_dir / 'flow.cylc'
 
-    # relative './<flow-file>'
-    workflow_id, src_path, src_file_path = _parse_src_path('./flow.cylc')
-    assert workflow_id == 'a'
-    assert src_path == src_dir
-    assert src_file_path == src_dir / 'flow.cylc'
+    # relative './<flow-file>' (invalid)
+    with pytest.raises(InputError) as exc_ctx:
+        _parse_src_path('./flow.cylc')
+    assert 'Not a valid workflow ID or source directory' in str(exc_ctx.value)
 
 
 async def test_parse_ids_src_path(src_dir):
@@ -432,11 +460,11 @@ async def test_parse_ids_constraint(mock_exists):
     """It should validate input against the constraint."""
     # constraint: workflows
     await parse_ids_async('a//', constraint='workflows')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         await parse_ids_async('a//b', constraint='workflows')
     # constraint: tasks
     await parse_ids_async('a//b', constraint='tasks')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         await parse_ids_async('a//', constraint='tasks')
     # constraint: mixed
     await parse_ids_async('a//', constraint='mixed')
@@ -472,29 +500,29 @@ def test_validate_constraint():
     """It should validate tokens against the constraint."""
     # constraint=workflows
     _validate_constraint(Tokens(workflow='a'), constraint='workflows')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_constraint(Tokens(cycle='a'), constraint='workflows')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_constraint(Tokens(), constraint='workflows')
     # constraint=tasks
     _validate_constraint(Tokens(cycle='a'), constraint='tasks')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_constraint(Tokens(workflow='a'), constraint='tasks')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_constraint(Tokens(), constraint='tasks')
     # constraint=mixed
     _validate_constraint(Tokens(workflow='a'), constraint='mixed')
     _validate_constraint(Tokens(cycle='a'), constraint='mixed')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_constraint(Tokens(), constraint='mixed')
 
 
 def test_validate_workflow_ids(tmp_run_dir):
     _validate_workflow_ids(Tokens('workflow'), src_path='')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_workflow_ids(Tokens('~alice/workflow'), src_path='')
     run_dir = tmp_run_dir('b')
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_workflow_ids(
             Tokens('workflow'),
             src_path=run_dir / 'flow.cylc',
@@ -503,12 +531,12 @@ def test_validate_workflow_ids(tmp_run_dir):
 
 def test_validate_number():
     _validate_number(Tokens('a'), max_workflows=1)
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_number(Tokens('a'), Tokens('b'), max_workflows=1)
     t1 = Tokens(cycle='1')
     t2 = Tokens(cycle='2')
     _validate_number(t1, max_tasks=1)
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         _validate_number(t1, t2, max_tasks=1)
 
 
@@ -529,5 +557,5 @@ async def test_expand_workflow_tokens_impl_selector(no_scan):
     tokens = tokenise('~user/*')
     await _expand_workflow_tokens([tokens])
     tokens['workflow_sel'] = 'stopped'
-    with pytest.raises(UserInputError):
+    with pytest.raises(InputError):
         await _expand_workflow_tokens([tokens])

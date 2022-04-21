@@ -33,10 +33,20 @@ ones in. -->
 
 Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
+### Enhancements
+
+[#4823](https://github.com/cylc/cylc-flow/pull/4823) - Remove the `--directory`
+option for `cylc install` (the functionality has been merged into the
+workflow source argument), and rename the `--flow-name` option to
+`--workflow-name`.
+
 ### Fixes
 
 [#4829](https://github.com/cylc/cylc-flow/pull/4829) -
 Suppress deprecated configuration warnings in Cylc 7 compatibility mode.
+
+[#4830](https://github.com/cylc/cylc-flow/pull/4830) -
+Workflow scan now detects Cylc 7 suites installed, but not yet run, by Cylc 8.
 
 [#4554](https://github.com/cylc/cylc-flow/pull/4554) - Fix incorrect
 implementation of the ISO 8601 recurrence format no. 1
@@ -53,6 +63,9 @@ distinguishing between workflow not running and not in run-directory.
 `cylc reload` now triggers a fresh remote file installation for all relevant
 platforms, any files configured to be installed will be updated on the remote
 platform.
+
+[#4791](https://github.com/cylc/cylc-flow/pull/4791) - Fix GraphQL node
+filtering, affecting non-state updates in the UI.
 
 [#4777](https://github.com/cylc/cylc-flow/pull/4777) -
 Reinstate the Cylc 7 template variables for xtriggers with deprecation warnings.
@@ -105,6 +118,9 @@ subsequent flows.
 [--flow=] [--wait]` for manual triggering with respect to active flows (the
 default), specific flows, new flows, or one-off task runs.
 
+
+[#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
+flow, remove active-waiting tasks with no remaining flow numbers.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__

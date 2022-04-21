@@ -31,10 +31,13 @@ from cylc.flow.terminal import cli_function
 INTERNAL = True
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
-        __doc__, argdoc=[("INSTALL_TARGET", "target platform to be tidied"),
-                         ("RUND", "The run directory of the workflow")]
+        __doc__,
+        argdoc=[
+            ("INSTALL_TARGET", "target platform to be tidied"),
+            ("RUND", "The run directory of the workflow")
+        ]
     )
 
     return parser

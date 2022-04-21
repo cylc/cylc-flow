@@ -63,11 +63,12 @@ from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
+    ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
     verbosity_to_opts,
 )
@@ -219,12 +220,12 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
         return proc.wait()
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     """Set up the CLI option parser."""
     parser = COP(
         __doc__,
         argdoc=[
-            ("ID [...]", "Workflow/Cycle/Task ID"),
+            ID_MULTI_ARG_DOC,
         ]
     )
 
@@ -365,7 +366,7 @@ def main(
     if not tokens or not tokens.get('task'):
         # Cat workflow logs, local only.
         if options.filename is not None:
-            raise UserInputError("The '-f' option is for job logs only.")
+            raise InputError("The '-f' option is for job logs only.")
 
         logpath = get_workflow_run_log_name(workflow_id)
         if options.rotation_num:
@@ -374,7 +375,7 @@ def main(
             try:
                 logpath = logs[int(options.rotation_num)]
             except IndexError:
-                raise UserInputError(
+                raise InputError(
                     "max rotation %d" % (len(logs) - 1))
         tail_tmpl = os.path.expandvars(
             get_platform()["tail command template"]
@@ -389,7 +390,7 @@ def main(
     else:
         # Cat task job logs, may be on workflow or job host.
         if options.rotation_num is not None:
-            raise UserInputError(
+            raise InputError(
                 "only workflow (not job) logs get rotated")
         task = tokens['task']
         point = tokens['cycle']

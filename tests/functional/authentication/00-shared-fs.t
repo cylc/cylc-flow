@@ -28,7 +28,7 @@ WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 WORKFLOW_RUN_DIR="$RUN_DIR/${WORKFLOW_NAME}"
 mkdir -p "$(dirname "${WORKFLOW_RUN_DIR}")"
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${WORKFLOW_RUN_DIR}"
-cylc install --flow-name="${WORKFLOW_NAME}" --no-run-name 2>'/dev/null'
+cylc install --workflow-name="${WORKFLOW_NAME}" --no-run-name 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 

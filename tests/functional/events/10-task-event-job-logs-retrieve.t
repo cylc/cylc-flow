@@ -50,11 +50,11 @@ cmp_ok 'edited-activities.log' <<'__LOG__'
 __LOG__
 
 grep -F 'will run after' "${WORKFLOW_RUN_DIR}/log/workflow/log" \
-    | cut -d' ' -f 4-10 | sort >"edited-log"
+    | cut -d' ' -f 4-12 | sort >"edited-log"
 cmp_ok 'edited-log' <<'__LOG__'
-1/t1/01 ('job-logs-retrieve', 'retry') will run after PT5S
-1/t1/02 ('job-logs-retrieve', 'retry') will run after PT5S
-1/t1/03 ('job-logs-retrieve', 'succeeded') will run after PT5S
+1/t1/01 handler:job-logs-retrieve for task event:retry will run after PT5S
+1/t1/02 handler:job-logs-retrieve for task event:retry will run after PT5S
+1/t1/03 handler:job-logs-retrieve for task event:succeeded will run after PT5S
 __LOG__
 
 purge

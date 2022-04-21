@@ -36,5 +36,5 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[t-1, t+1, t%1, t@1]]
         script = true
 __FLOW_CONFIG__
-run_ok "${TEST_NAME_BASE}" cylc validate "${PWD}/flow.cylc"
+run_ok "${TEST_NAME_BASE}" cylc validate "${PWD}"
 exit

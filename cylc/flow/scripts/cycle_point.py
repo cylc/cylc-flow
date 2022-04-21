@@ -66,12 +66,16 @@ import metomi.isodatetime.parsers
 from metomi.isodatetime.exceptions import IsodatetimeError
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         color=False,
         argdoc=[
-            ('[POINT]', 'ISO8601 date-time, default=$CYLC_TASK_CYCLE_POINT')])
+            COP.optional(
+                ('POINT', 'ISO8601 date-time, default=$CYLC_TASK_CYCLE_POINT')
+            )
+        ]
+    )
 
     parser.add_option(
         "--offset-hours", metavar="HOURS",

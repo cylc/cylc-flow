@@ -20,7 +20,7 @@ from optparse import Values
 import pytest
 from typing import Iterable, Optional, Tuple, Type
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.stop import get_option_parser, _validate
 
@@ -43,35 +43,35 @@ Opts = Options(get_option_parser())
             None,
             '10',
             None,
-            (UserInputError, "--kill is not compatible with stop-cycle")
+            (InputError, "--kill is not compatible with stop-cycle")
         ),
         (
             Opts(),
             '10/foo',
             '10',
             None,
-            (UserInputError, "stop-task is not compatible with stop-cycle")
+            (InputError, "stop-task is not compatible with stop-cycle")
         ),
         (
             Opts(kill=True, now=True),
             None,
             None,
             None,
-            (UserInputError, "--kill is not compatible with --now")
+            (InputError, "--kill is not compatible with --now")
         ),
         (
             Opts(flow_num=2, max_polls=2),
             None,
             None,
             None,
-            (UserInputError, "--flow is not compatible with --max-polls")
+            (InputError, "--flow is not compatible with --max-polls")
         ),
         (
             Opts(flow_num=2),
             None,
             None,
             '*',
-            (UserInputError, "--flow is not compatible with task IDs")
+            (InputError, "--flow is not compatible with task IDs")
         ),
     ]
 )

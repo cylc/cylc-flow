@@ -46,10 +46,13 @@ Examples:
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    FULL_ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.terminal import cli_function
 from cylc.flow.flow_mgr import FLOW_NONE, FLOW_NEW, FLOW_ALL
 
@@ -86,13 +89,13 @@ mutation (
 '''
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
         multitask=True,
         multiworkflow=True,
-        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+        argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
     parser.add_option(
@@ -123,18 +126,18 @@ def _validate(options):
         val = val.strip()
         if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:
             if len(options.flow) != 1:
-                raise UserInputError(ERR_OPT_FLOW_INT)
+                raise InputError(ERR_OPT_FLOW_INT)
         else:
             try:
                 int(val)
             except ValueError:
-                raise UserInputError(ERR_OPT_FLOW_VAL.format(val))
+                raise InputError(ERR_OPT_FLOW_VAL.format(val))
 
     if options.flow_descr and options.flow != [FLOW_NEW]:
-        raise UserInputError(ERR_OPT_FLOW_META)
+        raise InputError(ERR_OPT_FLOW_META)
 
     if options.flow_wait and options.flow[0] in [FLOW_NEW, FLOW_NONE]:
-        raise UserInputError(ERR_OPT_FLOW_WAIT)
+        raise InputError(ERR_OPT_FLOW_WAIT)
 
 
 async def run(options: 'Values', workflow_id: str, *tokens_list):
