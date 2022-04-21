@@ -60,7 +60,8 @@ from cylc.flow.workflow_files import (
     reinstall_workflow,
     search_install_source_dirs,
     validate_source_dir,
-    validate_workflow_name
+    validate_workflow_name,
+    abort_if_flow_file_in_path
 )
 
 from .conftest import MonkeyMock
@@ -352,7 +353,10 @@ def test_infer_latest_run__bad(
         )
     elif reason == 'not exist':
         run_dir = run_dir / 'not-exist'
-        err_msg = f"Path does not exist: {run_dir}"
+        err_msg = (
+            f"Workflow ID not found: sulu/not-exist\n"
+            f"(Directory not found: {run_dir})"
+        )
     else:
         raise ValueError(reason)
     # -- Test --
@@ -1961,3 +1965,10 @@ def test_get_run_dir_info__fail(tmp_run_dir: Callable):
     with pytest.raises(WorkflowFilesError) as excinfo:
         get_run_dir_info(base_dir, None, False)
     assert "contains an installed workflow"
+
+
+def test_validate_abort_if_flow_file_in_path():
+    assert abort_if_flow_file_in_path(Path("path/to/wflow")) is None
+    with pytest.raises(InputError) as exc_info:
+        abort_if_flow_file_in_path(Path("path/to/wflow/flow.cylc"))
+    assert "Not a valid workflow ID or source directory" in str(exc_info.value)

@@ -17,7 +17,6 @@
 
 import asyncio
 import fnmatch
-import os
 from pathlib import Path
 import re
 from typing import Optional, Dict, List, Tuple, Any
@@ -32,13 +31,13 @@ from cylc.flow.id import (
     contains_multiple_workflows,
     upgrade_legacy_ids,
 )
+from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX
 from cylc.flow.network.scan import (
     filter_name,
     is_active,
     scan,
 )
 from cylc.flow.workflow_files import (
-    WorkflowFiles,
     NO_FLOW_FILE_MSG,
     check_flow_file,
     detect_both_flow_and_suite,
@@ -46,6 +45,7 @@ from cylc.flow.workflow_files import (
     get_workflow_run_dir,
     infer_latest_run_from_id,
     validate_workflow_name,
+    abort_if_flow_file_in_path
 )
 
 
@@ -490,21 +490,43 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
 
 
 def _parse_src_path(id_):
+    """Parse CLI workflow arg to find a valid source directory.
+
+    Returns:
+      - (dir name, dir path, config file path) if id_ is a valid src dir.
+      - or None, if id_ could be a workflow ID
+
+    A valid source directory is:
+      - an existing directory that contains a worklow config file
+    and not a relative path (which could be a workflow ID), i.e. it must be:
+      - the current directory (".")
+      - or a directory path that starts with "./"
+      - or an absolute directory path
+
+    It's OK if id_ happens to match a relative path to an existing directory or
+    file (other than a workflow config file) because there could be a workflow
+    ID with the same name.
+
+    """
+    abort_if_flow_file_in_path(Path(id_))
     src_path = Path(id_)
     if (
-        id_ == os.curdir
-        or id_.startswith(f'{os.curdir}{os.sep}')
-        or Path(id_).is_absolute()
+        not EXPLICIT_RELATIVE_PATH_REGEX.match(id_)
+        and not src_path.is_absolute()
     ):
-        src_path = src_path.resolve()
-        if not src_path.exists():
-            raise InputError(f'Path does not exist: {src_path}')
-        if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
-            src_path = src_path.parent
-        try:
-            src_file_path = check_flow_file(src_path)
-        except WorkflowFilesError:
-            raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
-        workflow_id = src_path.name
-        return workflow_id, src_path, src_file_path
-    return None
+        # Not a valid source path, but it could be a workflow ID.
+        return None
+
+    src_dir_path = src_path.resolve()
+    if not src_dir_path.exists():
+        raise InputError(f'Source directory not found: {src_dir_path}')
+
+    if not src_dir_path.is_dir():
+        raise InputError(f'Path is not a source directory: {src_dir_path}')
+
+    try:
+        src_file_path = check_flow_file(src_dir_path)
+    except WorkflowFilesError:
+        raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
+
+    return src_dir_path.name, src_dir_path, src_file_path

@@ -24,7 +24,8 @@ BAD_NAME="NONEXISTENTWORKFLOWNAME"
 
 run_fail "${TEST_NAME_BASE}-workflow" cylc cat-log -f l "${BAD_NAME}"
 cmp_ok "${TEST_NAME_BASE}-workflow.stderr" <<__ERR__
-InputError: Path does not exist: ${CYLC_RUN_DIR}/${BAD_NAME}
+InputError: Workflow ID not found: ${BAD_NAME}
+(Directory not found: ${CYLC_RUN_DIR}/${BAD_NAME})
 __ERR__
 
 mkdir "${CYLC_RUN_DIR}/${BAD_NAME}"

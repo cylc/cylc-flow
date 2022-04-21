@@ -28,7 +28,7 @@ cat > flow.cylc <<__HEREDOC__
         R1 = foo
 __HEREDOC__
 
-run_ok "$TEST_NAME_BASE" cylc validate "$PWD"/flow.cylc
+run_ok "$TEST_NAME_BASE" cylc validate "$PWD"
 
 TEST_FOLDERS=()
 MSG="Nested install directories not allowed"
