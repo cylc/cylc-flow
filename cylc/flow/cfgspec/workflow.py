@@ -110,8 +110,8 @@ with Conf(
            The configuration file was previously named ``suite.rc``, but that
            name is now deprecated.
 
-           The ``suite.rc`` file name now activates :ref:`cylc_7_compat_mode`,
-           to turn off compatibility mode rename to ``flow.cylc``.
+           The ``suite.rc`` file name now activates :ref:`cylc_7_compat_mode`.
+           Rename to ``flow.cylc`` to turn off compatibility mode.
     '''
 ) as SPEC:
 
