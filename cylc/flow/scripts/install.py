@@ -18,7 +18,7 @@
 
 """cylc install [OPTIONS] ARGS
 
-Install a new workflow.
+Install a workflow into ~/cylc-run.
 
 The workflow can then be started, stopped, and targeted by name.
 
@@ -30,19 +30,17 @@ copied to the new run directory.
 A ".service" directory will also be created and used for server authentication
 files at run time.
 
-The SOURCE argument accepts three types of path:
-* implicit relative path (e.g. "foo/bar") - Cylc will search for the
-  workflow source in the list of directories given by
-  "global.cylc[install]source dirs", and install the first match.
-* explicit relative path (e.g. "./foo/bar") - Cylc will install the workflow
-  from the source that is relative to the current working directory.
-* absolute path (e.g. "~/foo/bar") - Cylc will install the workflow from the
-  source given by the path.
+If SOURCE_NAME is supplied, Cylc will search for the workflow source in the
+list of directories given by "global.cylc[install]source dirs", and install
+the first match.
 
-If the SOURCE argument is not supplied, Cylc will install the workflow from
-the source in the current working directory.
+If PATH is supplied, Cylc will install the workflow from the source given
+by the path. Relative paths must start with "./" to avoid ambiguity with
+SOURCE_NAME (i.e. "foo/bar" will be interpreted as a source name, whereas
+"./foo/bar" will be interpreted as a path).
 
-Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
+If no argument is supplied, Cylc will install the workflow from the source
+in the current working directory.
 
 Examples:
   # Install workflow "dogs/fido" from the first match in
@@ -102,7 +100,7 @@ def get_option_parser() -> COP:
         comms=True,
         argdoc=[
             COP.optional(
-                ('SOURCE', 'Path to workflow source')
+                ('SOURCE_NAME | PATH', 'Workflow source name or path')
             )
         ]
     )
