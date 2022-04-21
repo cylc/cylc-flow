@@ -80,13 +80,6 @@ from cylc.flow.workflow_files import (
 SERVICE = Path(WorkflowFiles.Service.DIRNAME)
 CONTACT = Path(WorkflowFiles.Service.CONTACT)
 
-FLOW_FILES = {
-    # marker files/dirs which we use to determine if something is a flow
-    WorkflowFiles.Service.DIRNAME,
-    WorkflowFiles.FLOW_FILE,  # cylc8 flow definition file name
-    WorkflowFiles.LOG_DIR
-}
-
 EXCLUDE_FILES = {
     WorkflowFiles.RUN_N,
     WorkflowFiles.Install.SOURCE
@@ -115,26 +108,45 @@ def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
     """
     names = {path.name for path in listing}
 
-    if WorkflowFiles.SUITE_RC in names:
-        # a Cylc 7 workflow ...
+    # Cylc 8:
+    # - "cylc install" creates a source dir link and a "log' directory as
+    #   well as installing the flow.cylc or suite.rc, but only the workflow
+    #   definition is needed for it to be runnable by Cylc 8.
+
+    # Cylc 7:
+    # - suites manually registered in-place do not have a suite.rc in the run
+    #   directory and cannot be run by Cylc 8
+    # - suites installed (manually or by "rose suite-run") can be run by Cylc 8
+    #   if not already run by Cylc 7
+    # - "rose suite-run --install-only" creates a "log/suite" directory
+    # - running with Cylc 7 creates "log/suite/log"
+
+    if WorkflowFiles.FLOW_FILE in names:
+        # A Cylc 8 workflow.
+        return True
+
+    elif WorkflowFiles.SUITE_RC in names:
+        # An installed Cylc 7 workflow ...
         for path in listing:
             if path.name == WorkflowFiles.LOG_DIR:
-                if (path / 'workflow').exists():
-                    # Cylc 8: log/workflow/log
-                    return True
-                else:
-                    # Cylc 7: log/suite/log
+                if (
+                        (path / 'suite' / 'log').exists()
+                        and not (path / 'workflow').exists()
+                ):
+                    # ... already run by Cylc 7 (and not re-run by Cylc 8 after
+                    # removing the DB)
                     return None
-        # workflow doesn't have a log dir so has not been run
-        # so could be either a Cylc 7 or a Cylc 8 workflow
+                else:
+                    # ... can be run by Cylc 8
+                    return True
+
+        # Has not been run (and not installed by "rose suite-run" or
+        # "cylc install"). Can be run by Cylc 8.
         return True
 
-    if FLOW_FILES & names:
-        # a pure Cylc 8 workflow
-        return True
-
-    # random directory
-    return False
+    else:
+        # A random directory
+        return False
 
 
 @pipe

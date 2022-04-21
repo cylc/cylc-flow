@@ -50,6 +50,7 @@ def init_flows(tmp_path, running=None, registered=None, un_registered=None):
     def make_registered(name, running=False):
         run_d = Path(tmp_path, name)
         run_d.mkdir(parents=True, exist_ok=True)
+        (run_d / "flow.cylc").touch()
         if "run" in name:
             root = Path(tmp_path, name).parent
             with suppress(FileExistsError):
