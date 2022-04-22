@@ -51,7 +51,6 @@ Examples:
 
 import asyncio
 import json
-import sys
 from pathlib import Path
 from typing import Callable, Optional, TYPE_CHECKING
 
@@ -165,7 +164,7 @@ RICH_FIELDS = {
 }
 
 
-BAD_CONTACT_FILE_MSG = "Bad contact file? {workflow_name}"
+BAD_CONTACT_FILE_MSG = "Bad contact file: {flow_name}"
 
 
 def get_option_parser() -> COP:
@@ -282,23 +281,6 @@ def state_totals_key():
     )
 
 
-def format_and_write(write, formatter, *f_args, **f_kwargs):
-    """Wrapper for the various stdout formatters.
-
-    Format and write out scanned info, or warn of corrupted contact files
-    (which have correct name and path, but are missing required content).
-    """
-    try:
-        write(formatter(*f_args, **f_kwargs))
-    except KeyError:
-        print(
-            BAD_CONTACT_FILE_MSG.format(
-                workflow_name=f_args[0]["name"]
-            ),
-            file=sys.stderr
-        )
-
-
 def _format_json(items, _):
     """A JSON formatter."""
     return json.dumps(
@@ -317,7 +299,11 @@ def _format_json(items, _):
 def _format_plain(flow, _):
     """A single line format of the form: <name> [<host>:<port>]"""
     if flow.get('contact'):
-        return f'<b>{flow["name"]}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}'
+        try:
+            return f"<b>{flow['name']}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}"
+        except KeyError:
+            LOG.warning(BAD_CONTACT_FILE_MSG.format(flow_name=flow['name']))
+            return None
     else:
         return f'<{DIM}><b>{flow["name"]}</b></{DIM}>'
 
@@ -389,7 +375,9 @@ async def _sorted(pipe, formatter, opts, write):
     async for item in pipe:
         ret.append(item)
     for flow in sorted(ret, key=sort_function):
-        format_and_write(write, formatter, flow, opts)
+        out = formatter(flow, opts)
+        if out is not None:
+            write(out)
 
 
 async def _serial(pipe, formatter, opts, write):
@@ -397,13 +385,17 @@ async def _serial(pipe, formatter, opts, write):
     ret = []
     async for item in pipe:
         ret.append(item)
-    format_and_write(write, formatter, ret, opts)
+    out = formatter(ret, opts)
+    if out is not None:
+        write(out)
 
 
 async def _async(pipe, formatter, opts, write):
     """List and print flows individually."""
     async for flow in pipe:
-        format_and_write(write, formatter, flow, opts)
+        out = formatter(flow, opts)
+        if out is not None:
+            write(out)
 
 
 async def _tree(pipe, formatter, opts, write):
@@ -416,7 +408,6 @@ async def _tree(pipe, formatter, opts, write):
     # construct tree
     tree = {}
     for flow in sorted(ret, key=lambda f: f['name']):
-        flow_name = flow['name']
         parts = Path(flow['name']).parts
         pointer = tree
         for part in parts[:-1]:
@@ -424,15 +415,8 @@ async def _tree(pipe, formatter, opts, write):
                 pointer[part] = {}
             pointer = pointer[part]
         flow['name'] = parts[-1]
-        try:
-            item = formatter(flow, opts)
-        except KeyError:
-            print(
-                BAD_CONTACT_FILE_MSG.format(
-                    workflow_name=flow_name
-                ),
-                file=sys.stderr
-            )
+        item = formatter(flow, opts)
+        if item is None:
             continue
 
         if len(parts) > 1:

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import pytest
 from pathlib import Path
 
 from cylc.flow.scripts.scan import (
@@ -22,7 +22,6 @@ from cylc.flow.scripts.scan import (
     get_pipe,
     _format_plain,
     FLOW_STATES,
-    format_and_write,
     BAD_CONTACT_FILE_MSG
 )
 
@@ -39,14 +38,14 @@ def test_ping_connection():
     assert 'graphql_query' in repr(pipe)
 
 
-def test_good_contact_info(capsys, monkeypatch):
-    """Check correct printing of workflow contact information."""
+def test_good_contact_info(
+        monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+    """Check correct reporting of workflow contact information."""
     port = 8888
     host = "wizard"
     name = "blargh/run1"
-    format_and_write(
-        sys.stdout.write,
-        _format_plain,
+    res = _format_plain(
         {
             "name": name,
             "contact": Path("/path/to/blargh/run1"),
@@ -55,25 +54,24 @@ def test_good_contact_info(capsys, monkeypatch):
         },
         None
     )
-    outerr = capsys.readouterr()
-    assert name in outerr.out
-    assert f"{host}:{port}" in outerr.out
+    assert name in res
+    assert f"{host}:{port}" in res
 
 
-def test_bad_contact_info(capsys, monkeypatch):
-    """Check correct printing of bad contact info.
+def test_bad_contact_info(
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+    """Check correct reporting of bad workflow contact information.
 
-    Missing contact keys should result in a warning, not crash scan.
+    Missing contact keys should result in a warning.
     """
     name = "blargh/run1"
-    format_and_write(
-        sys.stdout.write,
-        _format_plain,
+    _format_plain(
         {
             "name": name,
             "contact": Path("/path/to/blargh/run1"),
         },
         None
     )
-    outerr = capsys.readouterr()
-    assert BAD_CONTACT_FILE_MSG.format(workflow_name=name) in outerr.err
+    assert BAD_CONTACT_FILE_MSG.format(flow_name=name) in caplog.text
