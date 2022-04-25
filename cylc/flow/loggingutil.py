@@ -176,6 +176,11 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     def should_rollover(self, record):
         """Should rollover?"""
+        current_load_type = self.get_load_type()
+        existing_load_type = self.existing_log_load_type()
+        # Rollover if the load type has changed.
+        if existing_load_type and current_load_type != existing_load_type:
+            return True
         if self.stamp is None or self.stream is None:
             return True
         max_bytes = glbl_cfg().get(
