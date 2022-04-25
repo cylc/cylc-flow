@@ -1119,7 +1119,7 @@ class Scheduler:
             xtrigger_mgr=self.xtrigger_mgr,
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
-                self.workflow_run_dir, 'log', 'flow-config',
+                self.workflow_run_dir, 'log', 'config',
                 workflow_files.WorkflowFiles.FLOW_FILE_PROCESSED
             ),
             run_dir=self.workflow_run_dir,

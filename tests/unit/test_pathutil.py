@@ -125,7 +125,7 @@ def test_get_remote_workflow_run_dirs(
     [(get_workflow_run_dir, ''),
      (get_workflow_run_job_dir, '/log/job'),
      (get_workflow_run_log_dir, '/log/workflow'),
-     (get_workflow_run_config_log_dir, '/log/flow-config'),
+     (get_workflow_run_config_log_dir, '/log/config'),
      (get_workflow_run_share_dir, '/share'),
      (get_workflow_run_work_dir, '/work')]
 )
@@ -185,7 +185,7 @@ def test_make_workflow_run_tree(
         '',
         'log/workflow',
         'log/job',
-        'log/flow-config',
+        'log/config',
         'share',
         'work'
     ]:

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "log/flow-config/*-<mode>.cylc" files that are generated on workflow start up.
+# Test "log/config/*-<mode>.cylc" files that are generated on workflow start up.
 . "$(dirname "$0")/test_header"
 set_test_number 10
 
@@ -47,7 +47,7 @@ workflow_run_ok "${TEST_NAME_BASE}-restart" \
     cylc play --set 'WEATHER="good"' --no-detach "${WORKFLOW_NAME}"
 
 # Check for 3 generated *.cylc files
-LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
+LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/config"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
@@ -57,7 +57,7 @@ restart.cylc
 start.cylc
 __OUT__
 
-LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/flow-config"
+LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/config"
 START_CONFIG="$(ls "${LOGD}/"*-start.cylc)"
 REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
 RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"

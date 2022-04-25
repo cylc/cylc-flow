@@ -107,7 +107,7 @@ def get_workflow_file_install_log_dir(workflow, *args):
 
 def get_workflow_run_config_log_dir(workflow, *args):
     """Return workflow run flow.cylc log directory, join any extra args."""
-    return get_workflow_run_dir(workflow, 'log', 'flow-config', *args)
+    return get_workflow_run_dir(workflow, 'log', 'config', *args)
 
 
 def get_workflow_run_pub_db_name(workflow):
