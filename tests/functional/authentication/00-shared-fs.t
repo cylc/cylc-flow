@@ -37,7 +37,7 @@ cylc play --debug --no-detach --reference-test \
 WORKFLOW_PID="$!"
 
 # Poll for job to fail
-WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Note: double poll existence of workflow log on workflow host and then localhost to
 # avoid any issues with unstable mounting of the shared file system.
 poll ssh -oBatchMode=yes -n "${CYLC_TEST_HOST}" test -e "${WORKFLOW_LOG}"

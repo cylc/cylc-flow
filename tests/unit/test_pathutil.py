@@ -33,8 +33,8 @@ from cylc.flow.pathutil import (
     get_remote_workflow_run_job_dir,
     get_workflow_run_dir,
     get_workflow_run_job_dir,
-    get_workflow_run_log_dir,
-    get_workflow_run_log_name,
+    get_workflow_run_scheduler_log_dir,
+    get_workflow_run_scheduler_log_name,
     get_workflow_run_pub_db_name,
     get_workflow_run_config_log_dir,
     get_workflow_run_share_dir,
@@ -124,7 +124,7 @@ def test_get_remote_workflow_run_dirs(
     'func, tail1',
     [(get_workflow_run_dir, ''),
      (get_workflow_run_job_dir, '/log/job'),
-     (get_workflow_run_log_dir, '/log/workflow'),
+     (get_workflow_run_scheduler_log_dir, '/log/scheduler'),
      (get_workflow_run_config_log_dir, '/log/config'),
      (get_workflow_run_share_dir, '/share'),
      (get_workflow_run_work_dir, '/work')]
@@ -153,9 +153,9 @@ def test_get_workflow_run_dirs(
 
 @pytest.mark.parametrize(
     'func, tail',
-    [(get_workflow_run_log_name, '/log/workflow/log'),
+    [(get_workflow_run_scheduler_log_name, '/log/scheduler/log'),
      (get_workflow_run_pub_db_name, '/log/db'),
-     (get_workflow_test_log_name, '/log/workflow/reftest.log')]
+     (get_workflow_test_log_name, '/log/scheduler/reftest.log')]
 )
 def test_get_workflow_run_names(func: Callable, tail: str) -> None:
     """Usage of get_workflow_run_*name.
@@ -183,7 +183,7 @@ def test_make_workflow_run_tree(
     # Check that directories have been created
     for subdir in [
         '',
-        'log/workflow',
+        'log/scheduler',
         'log/job',
         'log/config',
         'share',

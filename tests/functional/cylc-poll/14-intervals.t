@@ -31,7 +31,7 @@ create_test_global_config '
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-LOG_FILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOG_FILE="${WORKFLOW_RUN_DIR}/log/schedulerr/log"
 
 PRE_MSG='health:'
 for INDEX in 1 2; do

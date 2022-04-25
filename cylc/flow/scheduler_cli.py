@@ -40,7 +40,7 @@ from cylc.flow.option_parsers import (
     Options,
     icp_option,
 )
-from cylc.flow.pathutil import get_workflow_run_log_name
+from cylc.flow.pathutil import get_workflow_run_scheduler_log_name
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
@@ -260,7 +260,7 @@ def _open_logs(id_, no_detach):
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    log_path = get_workflow_run_log_name(id_)
+    log_path = get_workflow_run_scheduler_log_name(id_)
     LOG.addHandler(
         TimestampRotatingFileHandler(log_path, no_detach)
     )

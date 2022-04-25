@@ -80,7 +80,7 @@ from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
-    get_workflow_run_log_dir,
+    get_workflow_run_scheduler_log_dir,
     get_workflow_run_config_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
@@ -303,7 +303,7 @@ class Scheduler:
         self.workflow_run_dir = get_workflow_run_dir(self.workflow)
         self.workflow_work_dir = get_workflow_run_work_dir(self.workflow)
         self.workflow_share_dir = get_workflow_run_share_dir(self.workflow)
-        self.workflow_log_dir = get_workflow_run_log_dir(self.workflow)
+        self.workflow_log_dir = get_workflow_run_scheduler_log_dir(self.workflow)
 
         # Create ZMQ keys
         key_housekeeping(

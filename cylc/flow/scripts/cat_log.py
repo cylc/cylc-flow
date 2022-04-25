@@ -76,7 +76,7 @@ from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
     get_workflow_run_job_dir,
-    get_workflow_run_log_name,
+    get_workflow_run_scheduler_log_name,
     get_workflow_run_pub_db_name)
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -368,7 +368,7 @@ def main(
         if options.filename is not None:
             raise InputError("The '-f' option is for job logs only.")
 
-        logpath = get_workflow_run_log_name(workflow_id)
+        logpath = get_workflow_run_scheduler_log_name(workflow_id)
         if options.rotation_num:
             logs = glob('%s.*' % logpath)
             logs.sort(key=os.path.getmtime, reverse=True)

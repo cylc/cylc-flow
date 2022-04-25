@@ -70,7 +70,7 @@ cylc__job__main() {
     echo
     # Derived environment variables
     export CYLC_WORKFLOW_RUN_DIR="${CYLC_RUN_DIR}/${CYLC_WORKFLOW_ID}"
-    export CYLC_WORKFLOW_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/workflow"
+    export CYLC_WORKFLOW_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/scheduler"
     export CYLC_WORKFLOW_SHARE_DIR="${CYLC_WORKFLOW_RUN_DIR}/share"
     export CYLC_WORKFLOW_WORK_DIR="${CYLC_WORKFLOW_RUN_DIR}/work"
     export CYLC_TASK_CYCLE_POINT="${CYLC_TASK_JOB%%/*}"
