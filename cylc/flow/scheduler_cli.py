@@ -22,7 +22,7 @@ from shlex import quote
 import sys
 from typing import TYPE_CHECKING, List
 
-from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
@@ -40,9 +40,7 @@ from cylc.flow.option_parsers import (
     Options,
     icp_option,
 )
-from cylc.flow.pathutil import (
-    get_workflow_run_log_name,
-    get_workflow_file_install_log_name)
+from cylc.flow.pathutil import get_workflow_run_log_name
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
@@ -265,11 +263,6 @@ def _open_logs(id_, no_detach):
     log_path = get_workflow_run_log_name(id_)
     LOG.addHandler(
         TimestampRotatingFileHandler(log_path, no_detach)
-    )
-    # Add file installation log
-    file_install_log_path = get_workflow_file_install_log_name(id_)
-    RSYNC_LOG.addHandler(
-        TimestampRotatingFileHandler(file_install_log_path, no_detach)
     )
 
 

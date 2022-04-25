@@ -613,6 +613,7 @@ class Scheduler:
         try:
             if self.is_restart:
                 self.restart_remote_init()
+                self.task_job_mgr.task_remote_mgr.is_restart = True
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -1489,6 +1490,7 @@ class Scheduler:
                 self.data_store_mgr.initiate_data_model(reloaded=True)
                 # Reset the remote init map to trigger fresh file installation
                 self.task_job_mgr.task_remote_mgr.remote_init_map.clear()
+                self.task_job_mgr.task_remote_mgr.is_reload = True
                 self.pool.reload_taskdefs()
                 # Load jobs from DB
                 self.workflow_db_mgr.pri_dao.select_jobs_for_restart(

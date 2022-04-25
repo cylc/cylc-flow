@@ -98,10 +98,10 @@ def get_workflow_run_log_name(workflow):
     return get_workflow_run_dir(workflow, 'log', 'workflow', 'log')
 
 
-def get_workflow_file_install_log_name(workflow):
-    """Return workflow file install log file path."""
+def get_workflow_file_install_log_dir(workflow, *args):
+    """Return workflow file install log file dir, join any extra args."""
     return get_workflow_run_dir(
-        workflow, 'log', 'workflow', 'file-installation-log'
+        workflow, 'log', 'remote-install', *args
     )
 
 

@@ -35,7 +35,7 @@ import sys
 from textwrap import dedent
 from typing import Any, Dict, Optional, List, Tuple
 
-from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow import LOG
 from cylc.flow.terminal import supports_color
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
@@ -477,12 +477,11 @@ class CylcOptionParser(OptionParser):
         #    for verbosity agnostic outputs.
         # 2. Scheduler will remove this handler when it becomes a daemon.
         LOG.setLevel(verbosity_to_log_level(options.verbosity))
-        RSYNC_LOG.setLevel(logging.INFO)
         # Remove NullHandler before add the StreamHandler
-        for log in (LOG, RSYNC_LOG):
-            while log.handlers:
-                log.handlers[0].close()
-                log.removeHandler(log.handlers[0])
+
+        while LOG.handlers:
+            LOG.handlers[0].close()
+            LOG.removeHandler(LOG.handlers[0])
         log_handler = logging.StreamHandler(sys.stderr)
         log_handler.setFormatter(CylcLogFormatter(
             timestamp=options.log_timestamp,
