@@ -15,41 +15,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test log rolling.
+# Test scheduler logs create start/restart logs correctly
+
 
 . "$(dirname "$0")/test_header"
-set_test_number 11
+set_test_number 6
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
-        abort on stall timeout = True
+        abort on stall timeout = true
         stall timeout = PT0S
+        abort on inactivity timeout = true
+        inactivity timeout = PT1M
 [scheduling]
-    cycling mode = integer
-    initial cycle point = 1
-    final cycle point = 20
     [[graph]]
-        P1 = t1 & t2 & t3
+        R1 = foo => bar
 [runtime]
-    [[t1, t2, t3]]
+    [[foo]]
+        script = cylc__job__wait_cylc_message_started; cylc stop --now --now "${CYLC_WORKFLOW_ID}"
+    [[bar]]
         script = true
 __FLOW_CONFIG__
 
-create_test_global_config '' '
-[scheduler]
-    [[logging]]
-        rolling archive length = 8
-        maximum size in bytes = 2048
-'
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate "${WORKFLOW_NAME}"
-workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --debug --no-detach "${WORKFLOW_NAME}"
-FILES="$(ls "${HOME}/cylc-run/${WORKFLOW_NAME}/log/scheduler/"*.log)"
-run_ok "${TEST_NAME_BASE}-n-logs" test 8 -eq "$(wc -l <<<"${FILES}")"
-for FILE in ${FILES}; do
-    run_ok "${TEST_NAME_BASE}-log-size" test "$(stat -c'%s' "${FILE}")" -le 2048
-done
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
+
+# wait for shut down
+poll_grep_workflow_log "INFO - DONE"
+find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*start.log" | wc -l >'find-start-log'
+cmp_ok 'find-start-log' <<< '1'
+workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}"
+find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*restart.log" | wc -l >'find-restart-log'
+cmp_ok 'find-restart-log' <<< '1'
+grep_ok "Run: (re)start=1 log=1" "$HOME/cylc-run/${WORKFLOW_NAME}/log/scheduler/log"
 
 purge
-exit

@@ -69,7 +69,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # should try remote-init on bad_host{1,2} then fail
 log_scan \
     "${TEST_NAME_BASE}-badhostplatformgroup" \
-    "${WORKFLOW_RUN_DIR}/log/schedulerr/log" 1 0 \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     'platform: badhostplatform - remote init (on bad_host1)' \
     'platform: badhostplatform - Could not connect to bad_host1.' \
     'platform: badhostplatform - remote init (on bad_host2)' \

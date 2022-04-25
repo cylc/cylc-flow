@@ -19,7 +19,7 @@
 
 export REQUIRE_PLATFORM='loc:remote comms:?(tcp|ssh)'
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 4
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
@@ -35,6 +35,10 @@ workflow_run_ok "${TEST_NAME}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 # If new remote file install has completed task c job.out should have goodbye in it
 grep_ok "goodbye" "${WORKFLOW_RUN_DIR}/log/job/1/c/01/job.out"
+
+
+find "${WORKFLOW_RUN_DIR}/log/remote-install" -type f -name "*log" | wc -l >'find-remote-install-log'
+cmp_ok 'find-remote-install-log' <<< '2'
 
 purge
 exit

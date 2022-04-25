@@ -525,10 +525,11 @@ class TaskRemoteMgr:
         file_name = self.get_log_file_name(
             install_target
         )
-        install_log_path = get_workflow_file_install_log_dir(self.workflow,file_name)
+        install_log_path = get_workflow_file_install_log_dir(
+            self.workflow, file_name)
 
         if ctx.out:
-            Path(install_log_path).parent.mkdir(parents=True)
+            Path(install_log_path).parent.mkdir(parents=True, exist_ok=True)
             with open(install_log_path, 'a') as install_log:
                 install_log.write(
                     'File installation information for '

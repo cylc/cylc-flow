@@ -38,7 +38,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 
 LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 WORKFLOW_UUID="$(sqlite3 "${LOGD}/db" 'SELECT value FROM workflow_params WHERE key=="uuid_str"')"
-LOG_FILE="${LOGD}/workflow/log"
+LOG_FILE="${LOGD}/scheduler/log"
 grep_ok "\\[('workflow-event-handler-00', 'startup') ret_code\\] 0" "${LOG_FILE}"
 grep_ok "\\[('workflow-event-handler-00', 'startup') out\\] Your ${WORKFLOW_NAME} workflow has a startup event and URL http://myworkflows.com/${WORKFLOW_NAME}.html and workflow-priority as HIGH and workflow-UUID as ${WORKFLOW_UUID}." "${LOG_FILE}"
 

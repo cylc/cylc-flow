@@ -20,7 +20,6 @@ import logging
 
 
 CYLC_LOG = 'cylc'
-FILE_INSTALL_LOG = 'cylc-rsync'
 
 LOG = logging.getLogger(CYLC_LOG)
 # Start with a null handler

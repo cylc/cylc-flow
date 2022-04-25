@@ -24,6 +24,7 @@ from unittest import mock
 from cylc.flow import LOG
 from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler, CylcLogFormatter)
+from cylc.flow.scheduler import Scheduler
 
 
 @mock.patch("cylc.flow.loggingutil.glbl_cfg")
@@ -38,7 +39,8 @@ def test_value_error_raises_system_exit(
         mocked = mock.MagicMock()
         mocked_glbl_cfg.return_value = mocked
         mocked.get.return_value = 100
-        file_handler = TimestampRotatingFileHandler(tf.name, False)
+        scheduler = mock.create_autospec(Scheduler)
+        file_handler = TimestampRotatingFileHandler(tf.name, scheduler, False)
         # next line is important as pytest can have a "Bad file descriptor"
         # due to a FileHandler with default "a" (pytest tries to r/w).
         file_handler.mode = "a+"

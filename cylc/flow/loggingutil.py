@@ -25,6 +25,7 @@ from contextlib import suppress
 from glob import glob
 import logging
 import os
+from pathlib import Path
 import re
 import sys
 import textwrap
@@ -36,6 +37,9 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.wallclock import (
     get_current_time_string, get_time_string_from_unix_time
 )
+
+
+LOG_FILE_EXTENSION = '.log'
 
 
 class CylcLogFormatter(logging.Formatter):
@@ -129,12 +133,15 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     FILE_NUM = 'cylc_log_num'
     MIN_BYTES = 1024
 
-    def __init__(self, log_file_path, no_detach=False, timestamp=True):
+    def __init__(
+        self, log_file_path, scheduler, no_detach=False, timestamp=True
+    ):
         logging.FileHandler.__init__(self, log_file_path)
         self.no_detach = no_detach
         self.stamp = None
         self.formatter = CylcLogFormatter(timestamp=timestamp)
         self.header_records = []
+        self.scheduler = scheduler
 
     def emit(self, record):
         """Emit a record, rollover log if necessary."""
@@ -149,8 +156,23 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         except Exception:
             self.handleError(record)
 
+    def existing_log_load_type(self):
+        """Return a log load type, if one currently exists"""
+        try:
+            existing_log_name = os.readlink(self.baseFilename)
+        except OSError:
+            return None
+        for load_type in ['restart', 'start']:  # check restart first
+            if existing_log_name.find(load_type) > 0:
+                return load_type
+
     def should_rollover(self, record):
         """Should rollover?"""
+        current_load_type = self.get_load_type()
+        existing_load_type = self.existing_log_load_type()
+        # Rollover if the load type has changed.
+        if existing_load_type and current_load_type != existing_load_type:
+            return True
         if self.stamp is None or self.stream is None:
             return True
         max_bytes = glbl_cfg().get(
@@ -166,11 +188,15 @@ class TimestampRotatingFileHandler(logging.FileHandler):
             raise SystemExit(exc)
         return self.stream.tell() + len(msg.encode('utf8')) >= max_bytes
 
+    def get_load_type(self):
+        """Establish current load type, as perceived by scheduler."""
+        return self.scheduler.current_load_type or 'start'
+
     def do_rollover(self):
         """Create and rollover log file if necessary."""
         # Generate new file name
         self.stamp = get_current_time_string(use_basic_format=True)
-        filename = self.baseFilename + '.' + self.stamp
+        filename = self.get_filename()
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         # Touch file
         with open(filename, 'w+'):
@@ -184,7 +210,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         arch_len = glbl_cfg().get(
             ['scheduler', 'logging', 'rolling archive length'])
         if arch_len:
-            log_files = glob(self.baseFilename + '.*')
+            log_files = glob(str(Path(self.baseFilename).parent / '*.log'))
             log_files.sort()
             while len(log_files) > arch_len:
                 os.unlink(log_files.pop(0))
@@ -205,6 +231,14 @@ class TimestampRotatingFileHandler(logging.FileHandler):
                 header_record.args = header_record.args[0:-1] + (
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)
+
+    def get_filename(self):
+        """Build filename for log"""
+        base_dir = Path(self.baseFilename).parent
+        filename = base_dir.joinpath(
+            self.stamp + '-' + self.get_load_type() + LOG_FILE_EXTENSION
+        )
+        return filename
 
 
 class ReferenceLogFileHandler(logging.FileHandler):

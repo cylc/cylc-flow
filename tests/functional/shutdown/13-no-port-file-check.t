@@ -39,6 +39,6 @@ SRVD="$RUN_DIR/${WORKFLOW_NAME}/.service"
 LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 grep_ok \
     "${SRVD}/contact: contact file corrupted/modified and may be left" \
-    "${LOGD}/workflow/log"
+    "${LOGD}/scheduler/log"
 purge
 exit

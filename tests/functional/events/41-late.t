@@ -22,7 +22,7 @@ set_test_number 4
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLOW_NAME}"
-grep_ok 'late (late-time=.*)' "${WORKFLOW_RUN_DIR}/log/schedulerr/log"
+grep_ok 'late (late-time=.*)' "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 grep_ok 'late (late-time=.*)' "${WORKFLOW_RUN_DIR}/log/scheduler/my-handler.out"
 
 purge

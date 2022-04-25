@@ -254,7 +254,7 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_, no_detach):
+def _open_logs(id_, scheduler, no_detach):
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
         while LOG.handlers:
@@ -262,7 +262,7 @@ def _open_logs(id_, no_detach):
             LOG.removeHandler(LOG.handlers[0])
     log_path = get_workflow_run_scheduler_log_name(id_)
     LOG.addHandler(
-        TimestampRotatingFileHandler(log_path, no_detach)
+        TimestampRotatingFileHandler(log_path, scheduler, no_detach)
     )
 
 
@@ -336,7 +336,7 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         daemonize(scheduler)
 
     # setup loggers
-    _open_logs(workflow_id, options.no_detach)
+    _open_logs(workflow_id, scheduler, options.no_detach)
 
     # run the workflow
     ret = asyncio.run(

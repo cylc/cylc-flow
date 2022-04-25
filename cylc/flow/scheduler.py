@@ -251,6 +251,9 @@ class Scheduler:
 
     time_next_kill: Optional[float] = None
 
+    # Load type used for logging purposes, e.g. restart, reload
+    current_load_type = None
+
     def __init__(self, reg: str, options: Values) -> None:
         # flow information
         self.workflow = reg
@@ -303,7 +306,8 @@ class Scheduler:
         self.workflow_run_dir = get_workflow_run_dir(self.workflow)
         self.workflow_work_dir = get_workflow_run_work_dir(self.workflow)
         self.workflow_share_dir = get_workflow_run_share_dir(self.workflow)
-        self.workflow_log_dir = get_workflow_run_scheduler_log_dir(self.workflow)
+        self.workflow_log_dir = get_workflow_run_scheduler_log_dir(
+            self.workflow)
 
         # Create ZMQ keys
         key_housekeeping(
@@ -409,6 +413,7 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.profiler = Profiler(self, self.options.profile_mode)
+        self.current_load_type = None
 
     async def configure(self):
         """Configure the scheduler.
@@ -420,14 +425,17 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
 
-        # Print workflow name to disambiguate in case of inferred run number
-        LOG.info(f"Workflow: {self.workflow}")
-
         self.is_restart = self.workflow_db_mgr.restart_check()
         # Note: since cylc play replaced cylc run/restart, we wait until this
         # point before setting self.is_restart as we couldn't tell if
         # we're restarting until now.
 
+        # Ensure load type is recorded before logging to get correct log file
+        if self.is_restart:
+            self.current_load_type = 'restart'
+
+        # Print workflow name to disambiguate in case of inferred run number
+        LOG.info(f"Workflow: {self.workflow}")
         self._check_startup_opts()
 
         if self.is_restart:
@@ -745,6 +753,7 @@ class Scheduler:
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""
+        self.task_job_mgr.task_remote_mgr.is_restart = True
         distinct_install_target_platforms = []
         for itask in self.pool.get_tasks():
             itask.platform['install target'] = (
