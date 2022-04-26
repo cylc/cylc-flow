@@ -190,7 +190,7 @@ __OUT__
 TEST_NAME="${TEST_NAME_BASE}-install-twice-same-run-name-2nd-install"
 run_fail "${TEST_NAME}" cylc install --run-name=olaf
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: "${RND_WORKFLOW_RUNDIR}/olaf" exists.
+WorkflowFilesError: '${RND_WORKFLOW_RUNDIR}/olaf' already exists
 __ERR__
 popd || exit 1
 purge_rnd_workflow

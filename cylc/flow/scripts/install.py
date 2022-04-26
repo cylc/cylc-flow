@@ -22,25 +22,28 @@ Install a workflow into ~/cylc-run.
 
 The workflow can then be started, stopped, and targeted by name.
 
-Normal installation creates a directory "~/cylc-run/<workflow>/", with a run
-directory "~/cylc-run/<workflow>/run1". A "_cylc-install/source" symlink to
-the source directory will be created in the workflow directory.
-Any files or directories (excluding .git, .svn) from the source directory are
-copied to the new run directory.
-A ".service" directory will also be created and used for server authentication
-files at run time.
+Normal installation creates a numbered run directory
+"~/cylc-run/<workflow-name>/run<number>".
 
-If SOURCE_NAME is supplied, Cylc will search for the workflow source in the
+If a SOURCE_NAME is supplied, Cylc will search for the workflow source in the
 list of directories given by "global.cylc[install]source dirs", and install
-the first match.
+the first match. The installed workflow name will be the same as SOURCE_NAME,
+unless --workflow-name is used.
 
-If PATH is supplied, Cylc will install the workflow from the source given
-by the path. Relative paths must start with "./" to avoid ambiguity with
+If a PATH is supplied, Cylc will install the workflow from the source directory
+given by the path. Relative paths must start with "./" to avoid ambiguity with
 SOURCE_NAME (i.e. "foo/bar" will be interpreted as a source name, whereas
-"./foo/bar" will be interpreted as a path).
+"./foo/bar" will be interpreted as a path). The installed workflow name will
+be the basename of the path, unless --workflow-name is used.
 
 If no argument is supplied, Cylc will install the workflow from the source
 in the current working directory.
+
+A "_cylc-install/source" symlink to the source directory will be created in
+"~/cylc-run/<workflow-name>". Any files or directories (excluding .git, .svn)
+from the source directory are copied to the new run directory. A ".service"
+directory will also be created in the run directory; this is used for server
+authentication files at runtime.
 
 Examples:
   # Install workflow "dogs/fido" from the first match in
@@ -100,7 +103,8 @@ def get_option_parser() -> COP:
         comms=True,
         argdoc=[
             COP.optional(
-                ('SOURCE_NAME | PATH', 'Workflow source name or path')
+                ('SOURCE_NAME | PATH',
+                 'Workflow source name or path to source directory')
             )
         ]
     )

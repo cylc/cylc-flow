@@ -1543,7 +1543,7 @@ def install_workflow(
         WorkflowFilesError:
             No flow.cylc file found in source location.
             Illegal name (can look like a relative path, but not absolute).
-            Another workflow already has this name (unless --redirect).
+            Another workflow already has this name.
             Trying to install a workflow that is nested inside of another.
     """
     abort_if_flow_file_in_path(source)
@@ -1572,9 +1572,8 @@ def install_workflow(
     check_nested_dirs(rundir, run_path_base)
     if rundir.exists():
         raise WorkflowFilesError(
-            f'"{rundir}" exists.\n'
-            " To install a new run use `cylc install --run-name`,"
-            " or to reinstall use `cylc reinstall`."
+            f"'{rundir}' already exists\n"
+            "To reinstall, use `cylc reinstall`"
         )
     symlinks_created = {}
     named_run = workflow_name
