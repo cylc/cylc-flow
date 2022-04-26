@@ -473,8 +473,8 @@ def test_process_startcp(
             None,
             None,
             id="Empty fcp in cfg"
-            # Need to check this as fcp treated as string by parsec, unlike
-            # other cycle point settings
+            # This test is needed because fcp is treated as string by parsec,
+            # unlike other cycle point settings (allows for e.g. '+P1Y')
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,

@@ -697,7 +697,7 @@ class WorkflowConfig:
         """
         if self.cfg['scheduling']['final cycle point'] == '':
             # (Unlike other cycle point settings in config, fcp is treated as
-            # a string by parsec)
+            # a string by parsec to allow for expressions like '+P1Y')
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
         if fcp_str == 'reload':

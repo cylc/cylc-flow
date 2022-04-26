@@ -693,8 +693,8 @@ with Conf(
 
             .. versionchanged:: 8.0.0
 
-               The deprecated ``[scheduling]max active cycle points`` setting
-               was merged into this one.
+               The integer (``Pn``) type limit was introduced to replace the
+               deprecated ``[scheduling]max active cycle points = n`` setting.
         ''')
 
         with Conf('queues', desc='''
