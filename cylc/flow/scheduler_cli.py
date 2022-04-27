@@ -340,17 +340,17 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         from cylc.flow.daemonize import daemonize
         daemonize(scheduler)
 
-    # Check for existence for db to determine if restart or not
-    restart = Path(
-        get_workflow_run_dir(
-            workflow_id,
-            WorkflowFiles.Service.DIRNAME,
-            WorkflowFiles.Service.DB
-        )
-    ).exists()
-
-    # setup loggers
-    _open_logs(workflow_id, options.no_detach, restart=restart)
+    # setup loggers, checking for existence for db to determine if restart
+    _open_logs(
+        workflow_id,
+        options.no_detach,
+        restart=Path(
+            get_workflow_run_dir(
+                workflow_id,
+                WorkflowFiles.Service.DIRNAME,
+                WorkflowFiles.Service.DB
+            )
+        ).exists())
 
     # run the workflow
     ret = asyncio.run(
