@@ -53,4 +53,4 @@ grep_ok "Run: (re)start=1 log=1" "$HOME/cylc-run/${WORKFLOW_NAME}/log/scheduler/
 # This tests that there is only one start and retart log created.
 find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*start.log" | wc -l >'find-logs'
 cmp_ok 'find-logs' <<< '2'
-#purge
+purge

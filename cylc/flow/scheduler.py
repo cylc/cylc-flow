@@ -251,8 +251,6 @@ class Scheduler:
 
     time_next_kill: Optional[float] = None
 
-    # Load type used for logging purposes, e.g. restart, reload
-    current_load_type = None
 
     def __init__(self, reg: str, options: Values) -> None:
         # flow information
@@ -413,7 +411,6 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.profiler = Profiler(self, self.options.profile_mode)
-        self.current_load_type = None
 
     async def configure(self):
         """Configure the scheduler.
@@ -425,14 +422,8 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
 
+        # Database check determines if it is a restart
         self.is_restart = self.workflow_db_mgr.restart_check()
-        # Note: since cylc play replaced cylc run/restart, we wait until this
-        # point before setting self.is_restart as we couldn't tell if
-        # we're restarting until now.
-
-        # Ensure load type is recorded before logging to get correct log file
-        if self.is_restart:
-            self.current_load_type = 'restart'
 
         # Print workflow name to disambiguate in case of inferred run number
         LOG.info(f"Workflow: {self.workflow}")

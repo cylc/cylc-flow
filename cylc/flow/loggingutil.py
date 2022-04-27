@@ -134,14 +134,14 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     MIN_BYTES = 1024
 
     def __init__(
-        self, log_file_path, scheduler, no_detach=False, timestamp=True
+        self, log_file_path, no_detach=False, timestamp=True, restart=False
     ):
         logging.FileHandler.__init__(self, log_file_path)
         self.no_detach = no_detach
         self.stamp = None
         self.formatter = CylcLogFormatter(timestamp=timestamp)
         self.header_records = []
-        self.scheduler = scheduler
+        self.restart = restart
 
     def emit(self, record):
         """Emit a record, rollover log if necessary."""
@@ -193,7 +193,9 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     def get_load_type(self):
         """Establish current load type, as perceived by scheduler."""
-        return self.scheduler.current_load_type or 'start'
+        if self.restart:
+            return 'restart'
+        return 'start'
 
     def do_rollover(self):
         """Create and rollover log file if necessary."""

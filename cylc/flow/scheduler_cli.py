@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc play" CLI."""
 
+from pathlib import Path
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
@@ -40,13 +41,14 @@ from cylc.flow.option_parsers import (
     Options,
     icp_option,
 )
-from cylc.flow.pathutil import get_workflow_run_scheduler_log_name
+from cylc.flow.pathutil import get_workflow_run_dir, get_workflow_run_scheduler_log_name
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
 from cylc.flow.workflow_files import (
     detect_old_contact_file,
-    SUITERC_DEPR_MSG
+    SUITERC_DEPR_MSG,
+    WorkflowFiles
 )
 from cylc.flow.terminal import cli_function
 
@@ -254,7 +256,7 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_, scheduler, no_detach):
+def _open_logs(id_, no_detach, restart=False):
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
         while LOG.handlers:
@@ -262,7 +264,7 @@ def _open_logs(id_, scheduler, no_detach):
             LOG.removeHandler(LOG.handlers[0])
     log_path = get_workflow_run_scheduler_log_name(id_)
     LOG.addHandler(
-        TimestampRotatingFileHandler(log_path, scheduler, no_detach)
+        TimestampRotatingFileHandler(log_path, no_detach, restart=restart)
     )
 
 
@@ -335,8 +337,14 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         from cylc.flow.daemonize import daemonize
         daemonize(scheduler)
 
+    # Check for existence for db to determine if restart or not
+    restart=False
+    if Path(get_workflow_run_dir(workflow_id, WorkflowFiles.Service.DIRNAME,
+            WorkflowFiles.Service.DB)).exists():
+        restart = True
+
     # setup loggers
-    _open_logs(workflow_id, scheduler, options.no_detach)
+    _open_logs(workflow_id, options.no_detach, restart=restart)
 
     # run the workflow
     ret = asyncio.run(
