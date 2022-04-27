@@ -15,10 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc play" CLI."""
 
-from pathlib import Path
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
+from pathlib import Path
 from shlex import quote
 import sys
 from typing import TYPE_CHECKING, List
@@ -41,7 +41,10 @@ from cylc.flow.option_parsers import (
     Options,
     icp_option,
 )
-from cylc.flow.pathutil import get_workflow_run_dir, get_workflow_run_scheduler_log_name
+from cylc.flow.pathutil import (
+    get_workflow_run_dir,
+    get_workflow_run_scheduler_log_name
+)
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
@@ -338,7 +341,7 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         daemonize(scheduler)
 
     # Check for existence for db to determine if restart or not
-    restart=False
+    restart = False
     if Path(get_workflow_run_dir(workflow_id, WorkflowFiles.Service.DIRNAME,
             WorkflowFiles.Service.DB)).exists():
         restart = True

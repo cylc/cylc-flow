@@ -251,7 +251,6 @@ class Scheduler:
 
     time_next_kill: Optional[float] = None
 
-
     def __init__(self, reg: str, options: Values) -> None:
         # flow information
         self.workflow = reg
