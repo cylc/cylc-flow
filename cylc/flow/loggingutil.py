@@ -146,7 +146,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     def emit(self, record):
         """Emit a record, rollover log if necessary."""
         try:
-            if self.should_rollover(record):
+            if self.load_type_change() or self.should_rollover(record):
                 self.do_rollover()
             if record.__dict__.get(self.FILE_HEADER_FLAG):
                 self.header_records.append(record)
@@ -155,6 +155,14 @@ class TimestampRotatingFileHandler(logging.FileHandler):
             raise
         except Exception:
             self.handleError(record)
+
+    def load_type_change(self):
+        """Check for start/restart log change needed"""
+        current_load_type = self.get_load_type()
+        existing_load_type = self.existing_log_load_type()
+        # Rollover if the load type has changed.
+        if existing_load_type and current_load_type != existing_load_type:
+            return True
 
     def existing_log_load_type(self):
         """Return a log load type, if one currently exists"""
@@ -168,11 +176,6 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     def should_rollover(self, record):
         """Should rollover?"""
-        current_load_type = self.get_load_type()
-        existing_load_type = self.existing_log_load_type()
-        # Rollover if the load type has changed.
-        if existing_load_type and current_load_type != existing_load_type:
-            return True
         if self.stamp is None or self.stream is None:
             return True
         max_bytes = glbl_cfg().get(

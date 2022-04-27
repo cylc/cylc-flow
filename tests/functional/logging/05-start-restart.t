@@ -19,7 +19,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 7
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     [[events]]
@@ -39,15 +39,18 @@ __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug "${WORKFLOW_NAME}"
 
 # wait for shut down
 poll_grep_workflow_log "INFO - DONE"
 find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*start.log" | wc -l >'find-start-log'
 cmp_ok 'find-start-log' <<< '1'
-workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play --debug "${WORKFLOW_NAME}"
 find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*restart.log" | wc -l >'find-restart-log'
 cmp_ok 'find-restart-log' <<< '1'
 grep_ok "Run: (re)start=1 log=1" "$HOME/cylc-run/${WORKFLOW_NAME}/log/scheduler/log"
 
-purge
+# This tests that there is only one start and retart log created.
+find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*start.log" | wc -l >'find-logs'
+cmp_ok 'find-logs' <<< '2'
+#purge
