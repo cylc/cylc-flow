@@ -15,27 +15,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Cylc 7 should not run a Cylc 8 workflow
+# Cylc 7 should not run a suite.rc workflow that was previously run with Cylc 8
 
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 5
+
+which sqlite3 > /dev/null || skip_all "sqlite3 not installed?"
 
 SUITE_NAME="cylctb-${CYLC_TEST_TIME_INIT}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-mkdir -p "$SUITE_RUN_DIR"
-cat > "${SUITE_RUN_DIR}/flow.cylc" << __FLOW__
-# Darmok and Jalad at Tanagra
-__FLOW__
+mkdir -p "${SUITE_RUN_DIR}/.service"
+cat > "${SUITE_RUN_DIR}/suite.rc" << __SUITERC__
+[scheduling]
+    initial cycle point = 2002
+    [[dependencies]]
+        [[[R1]]]
+            graph = foo
+__SUITERC__
+# Recreate Cylc 8 database
+sqlite3 "${SUITE_RUN_DIR}/.service/db" < "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/db.sqlite3"
 
-TEST_NAME="${TEST_NAME_BASE}-fail"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+
+MSG="Suite Cylc version .* is incompatible"
+
+TEST_NAME="${TEST_NAME_BASE}-run"
 suite_run_fail "$TEST_NAME" cylc run "$SUITE_NAME"
+grep_ok "$MSG" "${TEST_NAME}.stderr"
 
-CYLC_TEST_DIFF_CMD="diff -u -Z" cmp_ok "${TEST_NAME}.stderr" << __EOF__
-ERROR: Cannot run - flow.cylc (Cylc 8) file detected in suite run dir.
-__EOF__
+TEST_NAME="${TEST_NAME_BASE}-restart"
+suite_run_fail "$TEST_NAME" cylc restart "$SUITE_NAME"
+grep_ok "$MSG" "${TEST_NAME}.stderr"
 
-exists_fail "${SUITE_RUN_DIR}/.service"
-
-rm -r "$SUITE_RUN_DIR"
-rm -d "$TEST_SOURCE_DIR_BASE" 2> /dev/null || true
+purge_suite "$SUITE_NAME"
 exit

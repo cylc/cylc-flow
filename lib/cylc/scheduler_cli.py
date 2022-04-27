@@ -20,7 +20,6 @@
 import os
 import sys
 
-from cylc import LOG
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flags
 from cylc.host_appointer import HostAppointer, EmptyHostList
@@ -89,15 +88,17 @@ def main(is_restart=False):
         # Replace this process with "cylc run REG ..." for 'ps -f'.
         os.execv(sys.argv[0], [sys.argv[0]] + [reg] + sys.argv[1:])
 
+    reg = args[0]
+
     # Check suite is not already running before start of host selection.
     try:
-        SuiteSrvFilesManager().detect_old_contact_file(args[0])
+        SuiteSrvFilesManager().detect_old_contact_file(reg)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
 
     # Create auth files if needed. On a shared FS if the suite host changes
     # this may (will?) renew the ssl.cert to reflect the change in host name.
-    SuiteSrvFilesManager().create_auth_files(args[0])
+    SuiteSrvFilesManager().create_auth_files(reg)
 
     # Check whether a run host is explicitly specified, else select one.
     if not options.host:
@@ -120,15 +121,15 @@ def main(is_restart=False):
         sys.exit()
 
     try:
-        SuiteSrvFilesManager().get_suite_source_dir(args[0], options.owner)
+        SuiteSrvFilesManager().get_suite_source_dir(reg, options.owner)
     except SuiteServiceFileError:
         # Source path is assumed to be the run directory
         SuiteSrvFilesManager().register(
-            args[0],
-            glbl_cfg().get_derived_host_item(args[0], 'suite run directory'))
+            reg, glbl_cfg().get_derived_host_item(reg, 'suite run directory')
+        )
 
     try:
-        scheduler = Scheduler(is_restart, options, args)
+        scheduler = Scheduler(is_restart, options, reg)
     except SuiteServiceFileError as exc:
         sys.exit(exc)
     scheduler.start()
