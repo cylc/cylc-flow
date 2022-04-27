@@ -17,8 +17,11 @@
 #------------------------------------------------------------------------------
 # Test backwards compatibility for suite.rc files
 
+# Includes a test for warning about recurrence format 1 which changed
+# implementation - https://github.com/cylc/cylc-flow/pull/4554
+
 . "$(dirname "$0")/test_header"
-set_test_number 2
+set_test_number 3
 
 init_suiterc() {
     local TEST_NAME="$1"
@@ -33,8 +36,9 @@ init_suiterc "${TEST_NAME_BASE}" <<'__FLOW__'
 [scheduler]
     allow implicit tasks = True
 [scheduling]
+    initial cycle point = 2000
     [[graph]]
-        R1 = foo => bar
+        R2/2000/2001 = foo => bar
 __FLOW__
 
 MSG=$(python -c 'from cylc.flow.workflow_files import SUITERC_DEPR_MSG;
@@ -42,4 +46,6 @@ print(SUITERC_DEPR_MSG)')
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate .
-grep_ok "$MSG" "${TEST_NAME_BASE}-validate.stderr"
+grep_ok "$MSG" "${TEST_NAME}.stderr"
+grep_ok "The recurrence 'R2/2000/2001' is unlikely to behave the same way as in Cylc 7 " \
+    "${TEST_NAME}.stderr"

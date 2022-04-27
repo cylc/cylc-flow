@@ -42,6 +42,9 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4829](https://github.com/cylc/cylc-flow/pull/4829) -
+Suppress deprecated configuration warnings in Cylc 7 compatibility mode.
+
 [#4830](https://github.com/cylc/cylc-flow/pull/4830) -
 Workflow scan now detects Cylc 7 suites installed, but not yet run, by Cylc 8.
 

@@ -1096,22 +1096,22 @@ def test_success_after_optional_submit(tmp_flow_config, graph):
     ]
 )
 @pytest.mark.parametrize(
-    'cylc7_compat, rose_suite_conf, expected_exc, expected_log_level',
+    'cylc7_compat, rose_suite_conf, expected_exc',
     [
         pytest.param(
-            False, False, WorkflowConfigError, None,
+            False, False, WorkflowConfigError,
             id="Default"
         ),
         pytest.param(
-            False, True, WorkflowConfigError, None,
+            False, True, WorkflowConfigError,
             id="rose-suite.conf present"
         ),
         pytest.param(
-            True, False, None, logging.WARNING,
+            True, False, None,
             id="Cylc 7 back-compat"
         ),
         pytest.param(
-            True, True, WorkflowConfigError, None,
+            True, True, WorkflowConfigError,
             id="Cylc 7 back-compat, rose-suite.conf present"
         ),
     ]
@@ -1121,7 +1121,6 @@ def test_implicit_tasks(
     cylc7_compat: bool,
     rose_suite_conf: bool,
     expected_exc: Optional[Type[Exception]],
-    expected_log_level: Optional[int],
     caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
     monkeypatch: pytest.MonkeyPatch,
@@ -1135,9 +1134,6 @@ def test_implicit_tasks(
         cylc7_compat: Whether Cylc 7 backwards compatibility is turned on.
         rose_suite_conf: Whether a rose-suite.conf file is present in run dir.
         expected_exc: Exception expected to be raised only when
-            "[scheduler]allow implicit tasks" is not set.
-        expected_log_level: Expected logging severity level for the
-            "implicit tasks detected" message only when
             "[scheduler]allow implicit tasks" is not set.
     """
     # Setup
@@ -1158,7 +1154,6 @@ def test_implicit_tasks(
     caplog.set_level(logging.DEBUG, CYLC_LOG)
     if allow_implicit_tasks is True:
         expected_exc = None
-        expected_log_level = logging.DEBUG
     elif allow_implicit_tasks is False:
         expected_exc = WorkflowConfigError
     # Test
@@ -1170,9 +1165,6 @@ def test_implicit_tasks(
         assert expected_msg in str(exc.value)
     else:
         WorkflowConfig(**args)
-        assert log_filter(
-            caplog, level=expected_log_level, contains=expected_msg
-        )
 
 
 @pytest.mark.parametrize('workflow_meta', [True, False])
