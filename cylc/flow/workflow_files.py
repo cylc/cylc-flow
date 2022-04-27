@@ -340,8 +340,10 @@ To start a new run, stop the old one first with one or more of these:
 """
 
 SUITERC_DEPR_MSG = (
-    f"Backward compatibility mode ON for CYLC 7 '{WorkflowFiles.SUITE_RC}' config files. "
-    f"When ready to upgrade, rename the file to {WorkflowFiles.FLOW_FILE} then address "
+    "Backward compatibility mode ON for CYLC 7"
+    f" '{WorkflowFiles.SUITE_RC}' config files."
+    " When ready to upgrade, rename the file to"
+    f" {WorkflowFiles.FLOW_FILE} then address "
     "any resulting validation errors and warnings."
 )
 
