@@ -22,6 +22,14 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
+## __cylc-7.8.12 (Upcoming)__
+
+### Fixes
+
+[#4838](https://github.com/cylc/cylc-flow/pull/4838) - fix bug where Cylc 7
+would still be able to run a `suite.rc` workflow previously run with Cylc 8.
+
+
 ## __cylc-7.8.11 (2022-03-07)__
 
 ### Fixes
@@ -40,11 +48,11 @@ Rose Bunch logs correctly.
 
 ### Fixes
 
-[#4429](https://github.com/cylc/cylc-flow/pull/4429) - cylc review: handle 
+[#4429](https://github.com/cylc/cylc-flow/pull/4429) - cylc review: handle
 log files with names changed at Cylc 8.
 
 [#4437](https://github.com/cylc/cylc-flow/pull/4437) - fix for slow polling
-generating an incorrect submit-failed result. 
+generating an incorrect submit-failed result.
 
 
 -------------------------------------------------------------------------------
