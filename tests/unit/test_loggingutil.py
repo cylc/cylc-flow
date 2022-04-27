@@ -39,8 +39,7 @@ def test_value_error_raises_system_exit(
         mocked = mock.MagicMock()
         mocked_glbl_cfg.return_value = mocked
         mocked.get.return_value = 100
-        scheduler = mock.create_autospec(Scheduler)
-        file_handler = TimestampRotatingFileHandler(tf.name, scheduler, False)
+        file_handler = TimestampRotatingFileHandler(tf.name, False)
         # next line is important as pytest can have a "Bad file descriptor"
         # due to a FileHandler with default "a" (pytest tries to r/w).
         file_handler.mode = "a+"
