@@ -334,7 +334,8 @@ grep_ok() {
     shift 2
     OPTS="$*"
     local TEST_NAME="$(basename "${FILE}")-grep-ok"
-    if grep "${OPTS}" -q -e "${BRE}" "${FILE}"; then
+    # shellcheck disable=SC2086
+    if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
         return
     fi
