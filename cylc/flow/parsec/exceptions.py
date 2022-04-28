@@ -17,6 +17,7 @@
 from copy import copy
 import os
 import textwrap
+import typing as t
 
 from cylc.flow.parsec.util import itemstr
 
@@ -68,10 +69,40 @@ class NotSingleItemError(ParsecError, TypeError):
 
 
 class FileParseError(ParsecError):
-    """Error raised when attempting to read in the config file(s)."""
+    """Error raised when attempting to read in the config file(s).
 
-    def __init__(self, reason, index=None, line=None, lines=None,
-                 err_type=None, fpath=None, help_lines=None):
+    Args:
+        reason:
+            Description of error.
+        err_type:
+            Classification of error (e.g. Jinja2Error).
+        help_lines:
+            Additional info to include in the exception.
+
+    Args (ways of providing exception context - TODO rationalise this!):
+        lines:
+            (preferred) Dictionary in the format
+            {filename: [context_line, ..., error_line]}
+        index:
+            The line number of the error in the config (counting from the
+            shebang line *not* the first line).
+        line:
+            The line of the error in the config.
+        fpath:
+            The path to the file containing the error.
+
+    """
+
+    def __init__(
+        self,
+        reason: str,
+        index: t.Optional[int] = None,
+        line: t.Optional[str] = None,
+        lines: t.Optional[t.Dict[str, t.List[str]]] = None,
+        err_type: t.Optional[str] = None,
+        fpath: t.Optional[str] = None,
+        help_lines: t.Optional[t.Iterable[str]] = None,
+    ):
         self.reason = reason
         self.line_num = index + 1 if index is not None else None
         self.line = line
@@ -80,7 +111,7 @@ class FileParseError(ParsecError):
         self.fpath = fpath
         self.help_lines = help_lines or []
 
-    def __str__(self):
+    def __str__(self) -> str:
         msg = ''
         msg += self.reason
 
@@ -94,10 +125,11 @@ class FileParseError(ParsecError):
         if self.line:
             msg += ":\n   " + self.line.strip()
         if self.lines:
-            msg += "\nContext lines:\n" + "\n".join(self.lines)
-            msg += "\t<--"
-            if self.err_type:
-                msg += ' %s' % self.err_type
+            for filename, lines in self.lines.items():
+                msg += f'\nFile {filename}\n  ' + '\n  '.join(lines)
+                msg += "\t<--"
+                if self.err_type:
+                    msg += ' %s' % self.err_type
         help_lines = list(self.help_lines)
         if self.line_num:
             # TODO - make 'view' function independent of cylc:
@@ -116,11 +148,27 @@ class EmPyError(FileParseError):
 
 
 class Jinja2Error(FileParseError):
-    """Wrapper class for Jinja2 exceptions."""
+    """Wrapper class for Jinja2 exceptions.
 
-    def __init__(self, exception, lines=None, filename=None):
+    Args:
+        exception:
+            The exception being re-raised
+        lines:
+            Dictionary in the format
+            {filename: [context_line, ..., error_line]}
+        filename:
+            Alternative to "lines" where less detail is available.
+
+    """
+
+    def __init__(
+        self,
+        exception: Exception,
+        lines: t.Optional[t.Dict[str, t.List[str]]] = None,
+        filename: t.Optional[str] = None,
+    ):
         # extract the first sentence of exception
-        msg = str(exception)
+        msg: str = str(exception)
         try:
             msg, tail = msg.split('. ', 1)
         except ValueError:
