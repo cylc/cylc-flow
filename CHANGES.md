@@ -35,8 +35,16 @@ Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4836](https://github.com/cylc/cylc-flow/pull/4836) - The log directory has
+been tidied. Workflow logs are now found in `log/scheduler` rather than
+`log/workflow`, filenames now include `start`/`restart`. Other minor directory
+changes. Remote file installation logs are now per install target.
+
 [#4938](https://github.com/cylc/cylc-flow/pull/4938) - Detect bad Platforms
 config: background and at job runners should have a single host.
+
+[#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
+error messages when workflow CLI commands fail.
 
 [#4877](https://github.com/cylc/cylc-flow/pull/4877) - Upgrade the version of
 Jinja2 used by Cylc from 2.11 to 3.0.
@@ -91,7 +99,6 @@ the `--reflow` option from earlier pre-release versions.
 
 [#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
 flow, remove active-waiting tasks with no remaining flow numbers.
-
 
 [#4854](https://github.com/cylc/cylc-flow/pull/4854)
 - Expansion and merger of comma separated platform definitions permitted.
