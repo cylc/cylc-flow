@@ -163,7 +163,7 @@ from textwrap import indent
 from time import time
 
 from cylc.flow import LOG, iter_entry_points
-from cylc.flow.exceptions import CylcError, InputError
+from cylc.flow.exceptions import CylcError, InputError, PluginError
 
 
 class MainLoopPluginException(Exception):
@@ -324,7 +324,7 @@ def load(config, additional_plugins=None):
     for plugin_name in config['plugins'] + additional_plugins:
         # get plugin
         try:
-            module_name = entry_points[plugin_name.replace(' ', '_')]
+            entry_point = entry_points[plugin_name.replace(' ', '_')]
         except KeyError:
             raise InputError(
                 f'No main-loop plugin: "{plugin_name}"\n'
@@ -333,9 +333,11 @@ def load(config, additional_plugins=None):
             )
         # load plugin
         try:
-            module = module_name.load()
-        except Exception:
-            raise CylcError(f'Could not load plugin: "{plugin_name}"')
+            module = entry_point.load()
+        except Exception as exc:
+            raise PluginError(
+                'cylc.main_loop', entry_point.name, exc
+            )
         # load coroutines
         log = []
         for coro_name, coro in getmembers(module):
