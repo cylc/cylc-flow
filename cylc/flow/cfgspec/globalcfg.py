@@ -973,57 +973,75 @@ with Conf('global.cylc', desc='''
             ''')
             # TODO ensure that it is possible to over-ride the following three
             # settings in workflow config.
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, desc=f'''
+            Conf('submission polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(900)],
+                 desc=f'''
                 List of intervals at which to poll status of job submission.
 
                 {MOVEDFROMJOB}
 
                 Cylc can poll submitted jobs to catch problems that
                 prevent the submitted job from executing at all, such as
-                deletion from an external job runner queue. Routine
-                polling is done only for the polling ``task communication
-                method`` unless workflow-specific polling is configured in
-                the workflow configuration. A list of interval values can be
-                specified as for execution polling but a single value
-                is probably sufficient for job submission polling.
+                deletion from an external job runner queue. A list of interval
+                values can be specified, with the last value used repeatedly
+                until the task starts running.
+                Multipliers can be used as shorthand as in the example below.
 
                 Example::
 
-                   5*PT1M, 10*PT5M
+                   5*PT2M, PT5M
+
+                Note that if the polling
+                :cylc:conf:`[..]task communication method`
+                is used then Cylc relies on the polling to detect when a task
+                starts running so you are likely to want to configure more
+                frequent polling.
             ''')
             Conf('submission retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
             {MOVEDFROMJOB}
             ''')
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, desc=f'''
+            Conf('execution polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(900)],
+                 desc=f'''
                 List of intervals at which to poll status of job execution.
 
                 {MOVEDFROMJOB}
 
                 Cylc can poll running jobs to catch problems that prevent task
                 messages from being sent back to the workflow, such as hard job
-                kills, network outages, or unplanned task host shutdown.
-                Routine polling is done only for the polling *task
-                communication method* (below) unless polling is
-                configured in the workflow configuration.  A list of interval
-                values can be specified, with the last value used repeatedly
-                until the task is finished - this allows more frequent polling
-                near the beginning and end of the anticipated task run time.
+                kills, network outages, or unplanned task host shutdown. A list
+                of interval values can be specified, with the last value used
+                repeatedly until the task is finished or until the execution
+                time limit is reached.
                 Multipliers can be used as shorthand as in the example below.
 
                 Example::
 
-                   5*PT1M, 10*PT5M
+                   5*PT2M, PT5M
+
+                Note that if the polling
+                :cylc:conf:`[..]task communication method`
+                is used then Cylc relies on the polling to detect when a task
+                starts running so you are likely to want to configure more
+                frequent polling.
             ''')
             Conf('execution time limit polling intervals',
-                 VDR.V_INTERVAL_LIST, desc='''
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(60), DurationFloat(120), DurationFloat(420)],
+                 desc='''
                 List of intervals after execution time limit to poll jobs.
 
-                The intervals between polling after a task job (submitted to
-                the relevant job runner on the relevant host) exceeds its
-                execution time limit. The default setting is PT1M, PT2M, PT7M.
-                The accumulated times (in minutes) for these intervals will be
-                roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
-                exceeds its execution time limit.
+                After a task job exceeds its execution time limit Cylc can poll
+                more frequently in the expectation that the task should have
+                completed. A list of interval values can be specified, with the
+                last value used repeatedly until the task reports as finished.
+                Multipliers can be used as shorthand as in the example below.
+
+                Example::
+
+                   5*PT2M, PT5M
             ''')
             Conf('ssh command',
                  VDR.V_STRING,
