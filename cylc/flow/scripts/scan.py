@@ -405,9 +405,17 @@ async def _tree(pipe, formatter, opts, write):
     async for flow in pipe:
         ret.append(flow)
 
-    # construct tree
     tree = {}
-    for flow in sorted(ret, key=lambda f: f['name']):
+    _construct_tree(ret, tree, formatter, opts, write)
+
+    # print tree
+    ret = get_tree(tree, '', sort=False, use_unicode=True)
+    write('\n'.join(ret))
+
+
+def _construct_tree(flows, tree, formatter, opts, write):
+    """Construct the tree, for given flows and formatter."""
+    for flow in sorted(flows, key=lambda f: f['name']):
         parts = Path(flow['name']).parts
         pointer = tree
         for part in parts[:-1]:
@@ -422,10 +430,6 @@ async def _tree(pipe, formatter, opts, write):
         if len(parts) > 1:
             item = f' {item}'
         pointer[item] = ''
-
-    # print tree
-    ret = get_tree(tree, '', sort=False, use_unicode=True)
-    write('\n'.join(ret))
 
 
 def get_pipe(opts, formatter, scan_dir=None):

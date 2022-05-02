@@ -21,6 +21,7 @@ from cylc.flow.scripts.scan import (
     ScanOptions,
     get_pipe,
     _format_plain,
+    _construct_tree,
     FLOW_STATES,
     BAD_CONTACT_FILE_MSG
 )
@@ -38,9 +39,7 @@ def test_ping_connection():
     assert 'graphql_query' in repr(pipe)
 
 
-def test_good_contact_info(
-        monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+def test_good_contact_info() -> None:
     """Check correct reporting of workflow contact information."""
     port = 8888
     host = "wizard"
@@ -48,7 +47,7 @@ def test_good_contact_info(
     res = _format_plain(
         {
             "name": name,
-            "contact": Path("/path/to/blargh/run1"),
+            "contact": Path(f"/path/to/{name}"),
             "CYLC_WORKFLOW_HOST": host,
             "CYLC_WORKFLOW_PORT": port,
         },
@@ -58,10 +57,7 @@ def test_good_contact_info(
     assert f"{host}:{port}" in res
 
 
-def test_bad_contact_info(
-        caplog: pytest.LogCaptureFixture,
-        monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+def test_bad_contact_info(caplog: pytest.LogCaptureFixture) -> None:
     """Check correct reporting of bad workflow contact information.
 
     Missing contact keys should result in a warning.
@@ -70,8 +66,28 @@ def test_bad_contact_info(
     _format_plain(
         {
             "name": name,
-            "contact": Path("/path/to/blargh/run1"),
+            "contact": Path(f"/path/to/{name}"),
         },
         None
     )
     assert BAD_CONTACT_FILE_MSG.format(flow_name=name) in caplog.text
+
+
+def test_bad_contact_info_tree(caplog: pytest.LogCaptureFixture) -> None:
+    """Check correct reporting of bad workflow contact information.
+
+    Missing contact keys should result in a warning.
+    """
+    name = "blargh/run1"
+    flows = [{
+        "name": name,
+        "contact": Path(f"/path/to/{name}"),
+    }]
+    tree = {}
+    _construct_tree(flows, tree, _format_plain, None, None)
+
+    # Error during tree formatting: reports only the last name component.
+    assert (
+        BAD_CONTACT_FILE_MSG.format(flow_name=f"{Path(name).name}")
+        in caplog.text
+    )
