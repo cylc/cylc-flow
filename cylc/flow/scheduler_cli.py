@@ -356,7 +356,8 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     # NOTE: any threads which include sleep statements could cause
     #       sys.exit to hang if not shutdown properly
     LOG.info("DONE")
-    close_log(LOG)
+    for log in (LOG, RSYNC_LOG):
+        close_log(log)
     sys.exit(ret)
 
 
