@@ -42,17 +42,24 @@ class CylcError(Exception):
 
 
 class PluginError(CylcError):
-    """Represents an error arising from a Cylc plugin."""
+    """Represents an error arising from a Cylc plugin.
 
-    def __init__(self, entry_point, plugin_name, exc):
+    Args:
+        entry_point: The plugin entry point as defined in setup.cfg
+            (e.g. 'cylc.main_loop')
+        plugin_name: Name of the plugin
+        exc: Original exception caught when trying to run the plugin
+    """
+
+    def __init__(self, entry_point: str, plugin_name: str, exc: Exception):
         self.entry_point = entry_point
         self.plugin_name = plugin_name
         self.exc = exc
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
-            f'Error in plugin {self.entry_point}.{self.plugin_name}'
-            f'\n{self.exc}'
+            f"Error in plugin {self.entry_point}.{self.plugin_name}\n"
+            f"{type(self.exc).__name__}: {self.exc}"
         )
 
 
