@@ -43,7 +43,7 @@ from cylc.flow.option_parsers import (
 )
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
-    get_workflow_run_scheduler_log_name
+    get_workflow_run_scheduler_log_path
 )
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
@@ -265,7 +265,7 @@ def _open_logs(id_, no_detach, restart=False):
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    log_path = get_workflow_run_scheduler_log_name(id_)
+    log_path = get_workflow_run_scheduler_log_path(id_)
     LOG.addHandler(
         TimestampRotatingFileHandler(log_path, no_detach, restart=restart)
     )
@@ -343,7 +343,9 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     # Check for existence for db to determine if restart or not
     restart = Path(
         get_workflow_run_dir(
-            workflow_id, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB
+            workflow_id,
+            WorkflowFiles.Service.DIRNAME,
+            WorkflowFiles.Service.DB
         )
     ).exists()
 

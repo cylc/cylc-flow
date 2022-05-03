@@ -61,7 +61,7 @@ from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
 )
-from cylc.flow.pathutil import get_workflow_run_pub_db_name
+from cylc.flow.pathutil import get_workflow_run_pub_db_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import cli_function
 
@@ -173,7 +173,7 @@ def format_rows(header, rows):
 def _get_dao(workflow):
     """Return the DAO (public) for workflow."""
     return CylcWorkflowDAO(
-        get_workflow_run_pub_db_name(workflow), is_public=True)
+        get_workflow_run_pub_db_path(workflow), is_public=True)
 
 
 class TimingSummary:

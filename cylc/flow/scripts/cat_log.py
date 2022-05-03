@@ -76,8 +76,8 @@ from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
     get_workflow_run_job_dir,
-    get_workflow_run_scheduler_log_name,
-    get_workflow_run_pub_db_name)
+    get_workflow_run_scheduler_log_path,
+    get_workflow_run_pub_db_path)
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_job_logs import (
@@ -281,7 +281,7 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
 
     """
     workflow_dao = CylcWorkflowDAO(
-        get_workflow_run_pub_db_name(workflow_id), is_public=True)
+        get_workflow_run_pub_db_path(workflow_id), is_public=True)
     task_job_data = workflow_dao.select_task_job(point, task, submit_num)
     workflow_dao.close()
     if task_job_data is None:
@@ -368,7 +368,7 @@ def main(
         if options.filename is not None:
             raise InputError("The '-f' option is for job logs only.")
 
-        logpath = get_workflow_run_scheduler_log_name(workflow_id)
+        logpath = get_workflow_run_scheduler_log_path(workflow_id)
         if options.rotation_num:
             logs = glob('%s.*' % logpath)
             logs.sort(key=os.path.getmtime, reverse=True)

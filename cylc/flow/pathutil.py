@@ -93,7 +93,7 @@ def get_workflow_run_scheduler_log_dir(workflow, *args):
     return get_workflow_run_dir(workflow, 'log', 'scheduler', *args)
 
 
-def get_workflow_run_scheduler_log_name(workflow):
+def get_workflow_run_scheduler_log_path(workflow):
     """Return workflow run log file path."""
     return get_workflow_run_dir(workflow, 'log', 'scheduler', 'log')
 
@@ -110,7 +110,7 @@ def get_workflow_run_config_log_dir(workflow, *args):
     return get_workflow_run_dir(workflow, 'log', 'config', *args)
 
 
-def get_workflow_run_pub_db_name(workflow):
+def get_workflow_run_pub_db_path(workflow):
     """Return workflow run public database file path."""
     return get_workflow_run_dir(workflow, 'log', 'db')
 
@@ -125,7 +125,7 @@ def get_workflow_run_work_dir(workflow, *args):
     return get_workflow_run_dir(workflow, 'work', *args)
 
 
-def get_workflow_test_log_name(workflow):
+def get_workflow_test_log_path(workflow):
     """Return workflow run ref test log file path."""
     return get_workflow_run_dir(workflow, 'log', 'scheduler', 'reftest.log')
 

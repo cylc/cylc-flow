@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import WorkflowEventError
-from cylc.flow.pathutil import get_workflow_test_log_name
+from cylc.flow.pathutil import get_workflow_test_log_path
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -34,7 +34,7 @@ RE_TRIG = re.compile(r'(^.*? -triggered off \[.*\].*$)')
 def run_reftest(schd: 'Scheduler') -> None:
     """Run reference test at shutdown."""
     reffilename = schd.config.get_ref_log_name()
-    curfilename = get_workflow_test_log_name(schd.workflow)
+    curfilename = get_workflow_test_log_path(schd.workflow)
     ref = _load_reflog(reffilename, False)
     if not ref:
         raise WorkflowEventError("No triggering events in reference log.")

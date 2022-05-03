@@ -84,7 +84,7 @@ from cylc.flow.pathutil import (
     get_workflow_run_config_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
-    get_workflow_test_log_name,
+    get_workflow_test_log_path,
     make_workflow_run_tree,
     get_workflow_name_from_id
 )
@@ -469,7 +469,7 @@ class Scheduler:
                 self.config.get_ref_log_name()))
         elif self.options.reftest:
             LOG.addHandler(ReferenceLogFileHandler(
-                get_workflow_test_log_name(self.workflow)))
+                get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
             self.config,
