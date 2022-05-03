@@ -176,15 +176,16 @@ with Conf(
         {REPLACES} ``[cylc]``
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, desc='''
-            If ``True``, the workflow will use UTC as the time zone for
-            cycle points and timestamps in the logs.
+            If ``True``, UTC will be used as the time zone for timestamps in
+            the logs. If ``False``, the local/system time zone will be used.
 
             This may also be set in the global config:
             :cylc:conf:`global.cylc[scheduler]UTC mode`.
 
-            If instead you only want to set a time zone for cycle points,
-            leaving log timestamps to use the local/system time zone,
-            see :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
+            .. seealso::
+
+               To set a time zone for cycle points, see
+               :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
         ''')
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
@@ -203,7 +204,9 @@ with Conf(
             .. admonition:: Cylc 7 compatibility mode
 
                In :ref:`Cylc_7_compat_mode`, implicit tasks are still
-               allowed unless you explicitly set this to ``False``.
+               allowed unless you explicitly set this to ``False``, or
+               unless a ``rose-suite.conf`` file is present (to maintain
+               backward compatibility with Rose 2019).
 
             .. versionadded:: 8.0.0
         ''')
