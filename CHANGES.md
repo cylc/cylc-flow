@@ -35,6 +35,9 @@ Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4828](https://github.com/cylc/cylc-flow/pull/4828) - scan CLI: corrupt
+workflow contact files should result in a warning, not a crash.
+
 [#4823](https://github.com/cylc/cylc-flow/pull/4823) - Remove the `--directory`
 option for `cylc install` (the functionality has been merged into the
 workflow source argument), and rename the `--flow-name` option to
