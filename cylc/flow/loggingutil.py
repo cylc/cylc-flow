@@ -215,7 +215,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         arch_len = glbl_cfg().get(
             ['scheduler', 'logging', 'rolling archive length'])
         if arch_len:
-            log_files = glob(str(Path(self.baseFilename).parent / '*.log'))
+            log_files = glob(str(Path(self.baseFilename).parent / f"*{LOG_FILE_EXTENSION}"))
             log_files.sort()
             while len(log_files) > arch_len:
                 os.unlink(log_files.pop(0))
