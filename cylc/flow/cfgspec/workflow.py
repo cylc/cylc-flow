@@ -16,7 +16,6 @@
 """Define all legal items and values for cylc workflow definition files."""
 
 import contextlib
-from itertools import product
 import re
 from textwrap import dedent
 from typing import Any, Dict, Optional, Set
@@ -24,7 +23,7 @@ from typing import Any, Dict, Optional, Set
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES
+from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES, SPEC as GSPEC
 import cylc.flow.flags
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
@@ -1118,7 +1117,16 @@ with Conf(
                 'execution polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                desc=f'''
+                    {
+                        GSPEC['platforms']['__MANY__'][
+                        'execution polling intervals'].desc
+                    }
+
+                    This config item overrides
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    execution polling intervals`
+                    '''
             )
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
                 Cylc can automate resubmission of a failed task job.
@@ -1149,13 +1157,31 @@ with Conf(
                 'submission polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                desc=f'''
+                    {
+                        GSPEC['platforms']['__MANY__'][
+                        'submission polling intervals'].desc
+                    }
+
+                    This config item overrides
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    submission polling intervals`.
+                    '''
             )
             Conf(
                 'submission retry delays',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                desc=f'''
+                    {
+                        GSPEC['platforms']['__MANY__'][
+                        'submission retry delays'].desc
+                    }
+
+                    This config item overrides
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    submission retry delays`
+                    '''
             )
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
@@ -1828,27 +1854,6 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
-
-    # Warn about config items moved to global.cylc.
-    if not cylc.flow.flags.cylc7_back_compat and 'runtime' in cfg:
-        for job_setting, task in product(
-            [
-                'execution polling intervals',
-                'submission polling intervals',
-                'submission retry delays'
-            ],
-            cfg['runtime'].keys()
-        ):
-            if job_setting in cfg['runtime'][task]:
-                LOG.warning(
-                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this "
-                    "setting is deprecated; use "
-                    "'global.cylc[platforms][<platform name>]"
-                    f"{job_setting}' "
-                    "instead. Currently, this item will override"
-                    " the corresponding item in global.cylc, "
-                    "but support for this will be removed in Cylc 9."
-                )
 
 
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:

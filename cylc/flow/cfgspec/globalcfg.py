@@ -66,11 +66,6 @@ SYSPATH = [
 
 TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
 REPLACES = 'This item was previously called '
-MOVEDFROMJOB = '''
-.. versionchanged:: 8.0.0
-
-   Moved from ``suite.rc[runtime][<namespace>]job``.
-'''
 
 
 PLATFORM_META_DESCR = '''
@@ -939,6 +934,10 @@ with Conf('global.cylc', desc='''
                  * ``background``
                  * ``slurm``
                  *  ``pbs``
+
+                .. seealso::
+
+                   :ref:`List of built-in Job Runners <AvailableMethods>`
             ''')
             Conf('job runner command template', VDR.V_STRING, desc=f'''
                 Set the command used by the chosen job runner.
@@ -951,9 +950,11 @@ with Conf('global.cylc', desc='''
                 The template's ``%(job)s`` will be
                 substituted by the job file path.
             ''')
-            Conf('shell', VDR.V_STRING, '/bin/bash', desc=f'''
+            Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
 
-                {MOVEDFROMJOB}
+                .. versionchanged:: 8.0.0
+
+                   Moved from ``suite.rc[runtime][<namespace>]job``.
 
             ''')
             Conf('communication method',
@@ -971,15 +972,11 @@ with Conf('global.cylc', desc='''
                 ssh
                    Use non-interactive ssh for task communications
             ''')
-            # TODO ensure that it is possible to over-ride the following three
-            # settings in workflow config.
             Conf('submission polling intervals',
                  VDR.V_INTERVAL_LIST,
                  [DurationFloat(900)],
-                 desc=f'''
+                 desc='''
                 List of intervals at which to poll status of job submission.
-
-                {MOVEDFROMJOB}
 
                 Cylc can poll submitted jobs to catch problems that
                 prevent the submitted job from executing at all, such as
@@ -993,21 +990,31 @@ with Conf('global.cylc', desc='''
                    5*PT2M, PT5M
 
                 Note that if the polling
-                :cylc:conf:`[..]task communication method`
+                :cylc:conf:`global.cylc[platforms][<platform name>]
+                communication method`
                 is used then Cylc relies on the polling to detect when a task
                 starts running so you are likely to want to configure more
                 frequent polling.
             ''')
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
-            {MOVEDFROMJOB}
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None,
+                 desc='''
+                Cylc can automate resubmission of a task job which has not
+                been submitted sucessfully.
+
+                Execution retry delays are a list of ISO 8601
+                durations/intervals which tell Cylc how long to wait before
+                resubmitting a failed job.
+
+                Each time Cylc resubmits a task job it will increment the
+                variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
+                environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
+                behavior between submission attempts.
             ''')
             Conf('execution polling intervals',
                  VDR.V_INTERVAL_LIST,
                  [DurationFloat(900)],
-                 desc=f'''
+                 desc='''
                 List of intervals at which to poll status of job execution.
-
-                {MOVEDFROMJOB}
 
                 Cylc can poll running jobs to catch problems that prevent task
                 messages from being sent back to the workflow, such as hard job
@@ -1022,7 +1029,8 @@ with Conf('global.cylc', desc='''
                    5*PT2M, PT5M
 
                 Note that if the polling
-                :cylc:conf:`[..]task communication method`
+                :cylc:conf:`global.cylc[platforms][<platform name>]
+                communication method`
                 is used then Cylc relies on the polling to detect when a task
                 starts running so you are likely to want to configure more
                 frequent polling.
