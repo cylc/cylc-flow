@@ -471,3 +471,29 @@ async def test_preparing_tasks_on_restart(one_conf, flow, scheduler, start):
     async with start(one):
         task = one.pool.filter_task_proxies(['*'])[0][0]
         assert task.state(TASK_STATUS_SUCCEEDED)
+
+
+async def test_reload_stopcp(
+    flow: Callable, scheduler: Callable, start: Callable
+):
+    """Test that the task pool stopping point does not revert to the final
+    cycle point on reload."""
+    cfg = {
+        'scheduler': {
+            'allow implicit tasks': True,
+            'cycle point format': 'CCYY',
+        },
+        'scheduling': {
+            'initial cycle point': 2010,
+            'stop after cycle point': 2020,
+            'final cycle point': 2030,
+            'graph': {
+                'P1Y': 'anakin'
+            }
+        }
+    }
+    schd: Scheduler = scheduler(flow(cfg))
+    async with start(schd):
+        assert str(schd.pool.stop_point) == '2020'
+        schd.command_reload_workflow()
+        assert str(schd.pool.stop_point) == '2020'

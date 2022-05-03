@@ -580,6 +580,8 @@ with Conf(
             This item can be overridden on the command line using
             ``cylc play --initial-cycle-point`` or ``--icp``.
         ''')
+        # NOTE: final cycle point is not a V_CYCLE_POINT to allow expressions
+        # such as '+P1Y' (relative to initial cycle point)
         Conf('final cycle point', VDR.V_STRING, desc='''
             The (optional) last cycle point at which tasks are run.
 
@@ -641,17 +643,17 @@ with Conf(
                {REPLACES}``[scheduling]hold after point``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
-            Shut down workflow after all tasks pass this cycle point.
+            Shut down the workflow after all tasks pass this cycle point.
 
             The stop cycle point can be overridden on the command line using
             ``cylc play --stop-cycle-point=POINT``
 
             .. note:
 
-                Not to be confused with :cylc:conf:`[..]final cycle point`:
-                There can be more graph beyond this point, but you are
-                choosing not to run that part of the graph. You can play
-                the workflow and continue.
+               Not to be confused with :cylc:conf:`[..]final cycle point`:
+               There can be more graph beyond this point, but you are
+               choosing not to run that part of the graph. You can play
+               the workflow and continue.
 
             .. versionadded:: 8.0.0
         ''')
@@ -668,11 +670,6 @@ with Conf(
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
             How many cycles ahead of the slowest tasks the fastest may run.
-
-            .. versionchanged:: 8.0.0
-
-               The deprecated ``[scheduling]max active cycle points`` setting
-               was merged into this one.
 
             Runahead limiting prevents the fastest tasks in a workflow from
             getting too far ahead of the slowest ones, as documented in
@@ -701,6 +698,11 @@ with Conf(
                The runahead limit may be automatically raised if this is
                necessary to allow a future task to be triggered, preventing
                the workflow from stalling.
+
+            .. versionchanged:: 8.0.0
+
+               The integer (``Pn``) type limit was introduced to replace the
+               deprecated ``[scheduling]max active cycle points = n`` setting.
         ''')
 
         with Conf('queues', desc='''
