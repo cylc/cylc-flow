@@ -109,7 +109,6 @@ with Conf(
 
            The configuration file was previously named ``suite.rc``, but that
            name is now deprecated.
-
            The ``suite.rc`` file name now activates :ref:`cylc_7_compat_mode`.
            Rename to ``flow.cylc`` to turn off compatibility mode.
     '''
@@ -177,15 +176,20 @@ with Conf(
         {REPLACES} ``[cylc]``
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, desc='''
-            If true, workflow will use UTC as the time zone and for
-            logging timestamps.
+            If ``True``, the workflow will use UTC as the time zone for
+            cycle points and timestamps in the logs.
 
+            This may also be set in the global config:
+            :cylc:conf:`global.cylc[scheduler]UTC mode`.
+
+            If instead you only want to set a time zone for cycle points,
+            leaving log timestamps to use the local/system time zone,
+            see :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
         ''')
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
-            Allow tasks not defined in :cylc:conf:`flow.cylc[runtime]`.
-
-            .. versionadded:: 8.0.0
+            Allow tasks in the graph that are not defined in
+            :cylc:conf:`flow.cylc[runtime]`.
 
             :term:`Implicit tasks <implicit task>` are tasks without explicit
             definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
@@ -196,24 +200,25 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-            In :ref:`Cylc 7 backward compatibility mode <Cylc_7_compat_mode>`,
-            implicit tasks are still allowed unless you explicitly set
-            this to ``False``.
+            .. admonition:: Cylc 7 compatibility mode
+
+               In :ref:`Cylc_7_compat_mode`, implicit tasks are still
+               allowed unless you explicitly set this to ``False``.
+
+            .. versionadded:: 8.0.0
         ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''
             Configure directories and files to be installed on remote hosts.
 
-            .. versionadded:: 8.0.0
-
             .. note::
 
                The following directories are installed by default:
 
-                * app
-                * bin
-                * etc
-                * lib
+               * app
+               * bin
+               * etc
+               * lib
 
                And include the server.key file (from the .service
                directory), this is required for authentication.
@@ -227,53 +232,64 @@ with Conf(
             .. code-block:: none
 
                 ~/cylc-run/workflow_x
-                |__dir1/
-                |__dir2/
-                |__file1
-                |__file2
+                |-- dir1/
+                |-- dir2/
+                |-- file1
+                `-- file2
 
             .. code-block:: cylc
 
                 [scheduler]
                     install = dir/, dir2/, file1, file2
-                ''')
+
+            .. versionadded:: 8.0.0
+        ''')
 
         Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT, desc='''
-            Set the date-time format that Cylc uses for
+            Set the datetime format and precision that Cylc uses for
             :term:`cycle points<cycle point>` in :term:`datetime cycling`
             workflows.
 
-            To alter the timezone used in the date-time cycle point
-            format, see :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-            To alter the number of expanded year digits (for years
-            below 0 or above 9999), see
-            :cylc:conf:`flow.cylc
-            [scheduler]cycle point num expanded year digits`.
+            .. seealso::
 
-            Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
+               * To alter the time zone used in the datetime cycle point
+                 format, see
+                 :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
+               * To alter the number of expanded year digits (for years
+                 below 0 or above 9999), see
+                 :cylc:conf:`flow.cylc
+                 [scheduler]cycle point num expanded year digits`.
+
+            By default, Cylc uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
             case of UTC) or ``CCYYMMDDThhmm±hhmm`` format for writing
-            date-time cycle points, following the :term:`ISO8601` standard.
+            datetime cycle points, following the :term:`ISO 8601` standard.
 
             You may use the `isodatetime library's syntax
             <https://github.com/metomi/isodatetime#dates-and-times>`_ to set
-            the cycle point format, as demonstrated in the previous paragraph.
+            the cycle point format.
 
             You can also use a subset of the strptime/strftime POSIX
             standard - supported tokens are ``%F``, ``%H``, ``%M``, ``%S``,
             ``%Y``, ``%d``, ``%j``, ``%m``, ``%s``, ``%z``.
 
-            The time zone you specify here will be used only for
-            writing/dumping cycle points. Cycle points that are input without
-            time zones will default to UTC (``Z``) unless
-            :cylc:conf:`flow.cylc[scheduler]cycle point time zone` or
-            is set or
-            :ref:`Cylc_7_compat_mode` is enabled.
-            Not specifying a time zone here is inadvisable as it leads to
-            ambiguity.
+            If specifying a format here, we recommend including a time zone -
+            this will be used for displaying cycle points only. To avoid
+            confusion, we recommend using the same time zone as
+            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
 
-            The ISO8601 extended date-time format cannot be used
-            (``CCYY-MM-DDThh:mm``) as cycle points are used in job-log and work
+            The ISO 8601 *extended* datetime format (``CCYY-MM-DDThh:mm``)
+            cannot be used, as cycle points are used in job-log and work
             directory paths where the ":" character is invalid.
+
+            .. warning::
+
+               The smallest unit included in the format sets the precision
+               of cycle points in the workflow.
+               If the precision is lower than the smallest unit
+               in a graph recurrence, the workflow will fail.
+               For example, if you set a format of ``CCYY``, and have a
+               recurrence ``R/2000/P8M``, then both the first and second
+               cycle points will be ``2000``, which is invalid.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
             Enable negative years or years more than four digits long.
@@ -291,8 +307,49 @@ with Conf(
             This number defaults to 0 (no sign or extra digits used).
         ''')
         Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE, desc='''
-            Time zone to be used for date-time cycle points if not otherwise
+            Time zone to be used for datetime cycle points if not otherwise
             specified.
+
+            This time zone will be used for
+            datetime cycle point dumping and inferring the time zone of cycle
+            points that are input without time zones.
+
+            Time zones should be expressed as :term:`ISO8601` time zone offsets
+            from UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``,
+            with ``Z`` representing the special case of ``+0000`` (UTC).
+            Cycle points will be converted to the time zone you give and will
+            be represented with this string at the end.
+
+            If not set, it will default to UTC (``Z``).
+
+            .. admonition:: Cylc 7 compatibility mode
+
+               In :ref:`Cylc_7_compat_mode`, it will default to the
+               local/system time zone, rather than UTC.
+
+            The time zone will persist over reloads/restarts following any
+            local time zone changes (e.g. if the
+            workflow is run during winter time, then stopped, then restarted
+            after summer time has begun, the cycle points will remain
+            in winter time). Changing this setting after the workflow has
+            first started will have no effect.
+
+            If you use a custom
+            :cylc:conf:`flow.cylc[scheduler]cycle point format`, it is a good
+            idea to set the same time zone here. If you specify a different
+            one here, it will only be used for inferring timezone-less cycle
+            points; cycle points will be displayed in the time zone from the
+            cycle point format.
+
+            .. caution::
+
+               It is not recommended to write the time zone with a ":"
+               (e.g. ``+05:30``), given that the time zone is used as part of
+               task output filenames.
+
+            .. seealso::
+
+               :cylc:conf:`flow.cylc[scheduler]UTC mode`
 
             .. versionchanged:: 7.8.9/7.9.4
 
@@ -301,44 +358,8 @@ with Conf(
 
             .. versionchanged:: 8.0.0
 
-               The default timezone is now ``Z`` and not the local time of the
-               first workflow start.
-
-            You may set your own time zone choice here, which will be used for
-            date-time cycle point dumping and inferring the time zone of cycle
-            points that are input without time zones.
-
-            Time zones should be expressed as :term:`ISO8601` time zone offsets
-            from UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``,
-            with ``Z`` representing the special ``+0000`` case. Cycle points
-            will be converted to the time zone you give and will be
-            represented with this string at the end.
-
-            If cycle point time zone isn't set (and
-            :cylc:conf:`flow.cylc[scheduler]UTC mode`
-            is also not set), then it will default to:
-
-            - If your workflow is defined in a ``suite.rc`` file (Cylc 7
-              compatibility mode): local time zone when the workflow started.
-            - If your workflow is defined in a ``flow.cylc`` file: "Z" (UTC)
-
-            This will persist over local time zone changes (e.g. if the
-            workflow is run during winter time, then stopped, then restarted
-            after summer time has begun, the cycle points will remain
-            in winter time).
-
-            If this isn't set, and UTC mode is set to True, then this will
-            default to ``Z``. If you use a custom
-            :cylc:conf:`flow.cylc[scheduler]cycle point format`, it is a good
-            idea to set the same time zone here. If you specify a different
-            one here, it will only be used for inferring timezone-less cycle
-            points, while dumping will use the one from the cycle point format.
-
-            .. caution::
-
-               It is not recommended to write the time zone with a ":"
-               (e.g. ``+05:30``), given that the time zone is used as part of
-               task output filenames.
+               The default time zone is now ``Z`` instead of the local time of
+               the first workflow start.
         ''')
 
         with Conf(   # noqa: SIM117 (keep same format)
@@ -431,10 +452,6 @@ with Conf(
                 Specify a string or string template for footers of
                 emails sent for both workflow and task events.
 
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES} ``[cylc][events]mail footer``.
-
                 Template variables may be used in the mail footer. For a list
                 of supported variables see
                 :ref:`workflow_event_template_variables`.
@@ -443,6 +460,9 @@ with Conf(
 
                 ``mail footer = see http://ahost/%(owner)s/notes/%(workflow)s``
 
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES} ``[cylc][events]mail footer``.
             ''')
             Conf('to', VDR.V_STRING, desc=f'''
                 A list of email addresses that event notifications
@@ -464,23 +484,23 @@ with Conf(
                 Gather all task event notifications in the given interval
                 into a single email.
 
+                Useful to prevent being overwhelmed by emails.
+
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``[cylc]mail interval``.
-
-                Useful to prevent being overwhelmed by emails.
             ''')
 
-    with Conf('task parameters', desc=f'''
+    with Conf('task parameters', desc='''
         Set task parameters and parameter templates.
-
-        .. versionchanged:: 8.0.0
-
-           {REPLACES}``[cylc][parameters]`` and
-           ``[cylc][parameter templates]``.
 
         Define parameter values here for use in expanding
         :ref:`parameterized tasks <User Guide Param>`.
+
+        .. versionchanged:: 8.0.0
+
+           This section replaces ``[cylc][parameters]`` and
+           ``[cylc][parameter templates]``.
     '''):
         Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
             A custom parameter to use in a workflow.
@@ -532,6 +552,10 @@ with Conf(
 
     with Conf('scheduling', desc='''
         This section allows Cylc to determine when tasks are ready to run.
+
+        Any cycle points defined here without a time zone will use the
+        time zone from
+        :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
     '''):
         Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
             The earliest cycle point at which any task can run.
@@ -539,50 +563,28 @@ with Conf(
             In a cold start each cycling task (unless specifically excluded
             under :cylc:conf:`[..][special tasks]`) will be loaded into the
             workflow with this cycle point, or with the closest subsequent
-            valid cycle point for the task. This item can be overridden on the
-            command line, using ``cylc play --initial-cycle-point`` or
-            ``--icp``.
+            valid cycle point for the task.
 
             In integer cycling, the default is ``1``.
 
-            In date-time cycling, if you do not provide time zone information
-            for this, it will be assumed to be UTC or in the time
-            zone determined by
-            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-
-            .. admonition:: Compatibility mode
-
-               In :ref:`backwards compatibility mode <Cylc_7_compat_mode>`
-               the time zone defaults to local time rather than UTC.
-
             The string ``now`` converts to the current datetime on the workflow
-            host (adjusted to UTC if workflow is in UTC mode but the host is
-            not) to minute resolution.  Minutes (or hours, etc.) may be
-            ignored depending on the value of
-
-            :cylc:conf:`flow.cylc[scheduler]cycle point format`.
+            host when first starting the workflow (with precision determined
+            by :cylc:conf:`flow.cylc[scheduler]cycle point format`).
 
             For more information on setting the initial cycle point relative
             to the current time see :ref:`setting-the-icp-relative-to-now`.
+
+            This item can be overridden on the command line using
+            ``cylc play --initial-cycle-point`` or ``--icp``.
         ''')
         Conf('final cycle point', VDR.V_STRING, desc='''
             The (optional) last cycle point at which tasks are run.
 
-            Cycling tasks are held once they pass the final cycle point, if
-            one is specified. Once all tasks have achieved this state the
-            workflow will shut down. If this item is set you can override it
-            on the command line using ``cylc play --final-cycle-point`` or
-            ``--fcp``.
+            Once all tasks have reached this cycle point, the
+            workflow will shut down.
 
-            In date-time cycling, if you do not provide time zone information
-            for this, it will be assumed to be UTC, or the time zone
-            determined by
-            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-
-            .. admonition:: Compatibility mode
-
-               In :ref:`backwards compatibility mode <Cylc_7_compat_mode>`
-               the time zone defaults to local time rather than UTC.
+            This item can be overridden on the command line using
+            ``cylc play --final-cycle-point`` or ``--fcp``.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules to allow only some initial datetime cycle points.
@@ -626,19 +628,17 @@ with Conf(
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[scheduling]hold after point``.
-
             Unlike the final
             cycle point, the workflow does not shut down once all tasks have
             passed this point. If this item is set you can override it on the
             command line using ``--hold-after``.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[scheduling]hold after point``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
-            Shut down workflow after all tasks **pass** this cycle point.
-
-            .. versionadded:: 8.0.0
+            Shut down workflow after all tasks pass this cycle point.
 
             The stop cycle point can be overridden on the command line using
             ``cylc play --stop-cycle-point=POINT``
@@ -650,6 +650,7 @@ with Conf(
                 choosing not to run that part of the graph. You can play
                 the workflow and continue.
 
+            .. versionadded:: 8.0.0
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
@@ -833,10 +834,6 @@ with Conf(
         with Conf('graph', desc=f'''
             The workflow graph is defined under this section.
 
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[runtime][dependencies][graph]``.
-
             You can plot the dependency graph as you work on it, with
             ``cylc graph``.
 
@@ -844,6 +841,9 @@ with Conf(
 
                :ref:`User Guide Scheduling`.
 
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[runtime][dependencies][graph]``.
         '''):
             Conf('<recurrence>', VDR.V_STRING, desc='''
                 The recurrence defines the sequence of cycle points
@@ -858,7 +858,7 @@ with Conf(
 
                 Example Recurrences:
 
-                date-time cycling:
+                datetime cycling:
                    * ``R1`` - once at the initial cycle point
                    * ``T00,T06,T12,T18`` - daily at 00:00, 06:00, 12:00
                      & 18:00
@@ -997,11 +997,11 @@ with Conf(
                 :cylc:conf:`global.cylc[platforms]` or
                 :cylc:conf:`global.cylc[platform groups]`.
 
-                .. versionadded:: 8.0.0
-
                 The platform specifies the host(s) that the tasks' jobs
                 will run on and where (if necessary) files need to be
                 installed, and what job runner will be used.
+
+                .. versionadded:: 8.0.0
             ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this task or task family.
@@ -1437,33 +1437,33 @@ with Conf(
 
                     .. versionchanged:: 8.0.0
 
-                       {REPLACES}``[runtime][task][events]mail to``
+                       {REPLACES}``[runtime][task][events]mail from``
                 ''')
                 Conf('to', VDR.V_STRING, desc=f'''
                     A list of email addresses to send task event
                     notifications.
 
-                    .. versionchanged:: 8.0.0
-
-                       {REPLACES}``[runtime][task][events]mail from``
-
                     The list can be any address accepted by the
                     ``mail`` command.
+
+                    .. versionchanged:: 8.0.0
+
+                       {REPLACES}``[runtime][task][events]mail to``
                 ''')
 
             with Conf('workflow state polling', desc=f'''
                 Configure automatic workflow polling tasks as described in
                 :ref:`WorkflowStatePolling`.
 
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[runtime][<namespace>]suite state polling``.
-
                 The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,
                 except that the target workflow name and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>]suite state polling``.
             '''):
                 Conf('user', VDR.V_STRING, desc='''
                     Username of your account on the workflow host.
