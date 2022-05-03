@@ -117,8 +117,8 @@ class CylcTimeParser:
 
     def __init__(
         self,
-        context_start_point: Union['ISO8601Point', str, None],
-        context_end_point: Union['ISO8601Point', str, None],
+        context_start_point: Union['ISO8601Point', 'TimePoint', str, None],
+        context_end_point: Union['ISO8601Point', 'TimePoint', str, None],
         parsers: Tuple[TimePointParser, DurationParser, TimeRecurrenceParser]
     ):
         if context_start_point is not None:
@@ -132,11 +132,11 @@ class CylcTimeParser:
         if isinstance(context_start_point, str):
             context_start_point = self._get_point_from_expression(
                 context_start_point, None)[0]
-        self.context_start_point = context_start_point
+        self.context_start_point: Optional['TimePoint'] = context_start_point
         if isinstance(context_end_point, str):
             context_end_point = self._get_point_from_expression(
                 context_end_point, None)[0]
-        self.context_end_point = context_end_point
+        self.context_end_point: Optional['TimePoint'] = context_end_point
 
     @staticmethod
     def initiate_parsers(num_expanded_year_digits=0, dump_format=None,
@@ -169,11 +169,13 @@ class CylcTimeParser:
 
         return (timepoint_parser, DurationParser(), TimeRecurrenceParser())
 
-    def parse_interval(self, expr):
+    def parse_interval(self, expr: str) -> Duration:
         """Parse an interval (duration) in full ISO date/time format."""
         return self.duration_parser.parse(expr)
 
-    def parse_timepoint(self, expr, context_point=None):
+    def parse_timepoint(
+        self, expr: str, context_point: Optional['TimePoint'] = None
+    ) -> 'TimePoint':
         """Parse an expression in abbrev. or full ISO date/time format.
 
         expression should be a string such as 20010205T00Z, or a
@@ -199,9 +201,12 @@ class CylcTimeParser:
             ("'%s': not a valid cylc-shorthand or full " % expr) +
             "ISO 8601 date representation")
 
-    def parse_recurrence(self, expression,
-                         context_start_point=None,
-                         context_end_point=None):
+    def parse_recurrence(
+        self,
+        expression: str,
+        context_start_point: Optional['TimePoint'] = None,
+        context_end_point: Optional['TimePoint'] = None
+    ) -> Tuple[TimeRecurrence, list]:
         """Parse an expression in abbrev. or full ISO recurrence format."""
         expression, exclusions = parse_exclusion(str(expression))
 

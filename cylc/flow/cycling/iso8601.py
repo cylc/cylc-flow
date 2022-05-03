@@ -523,7 +523,9 @@ class ISO8601Sequence(SequenceBase):
             self._cached_recent_valid_points.pop(0)
         self._cached_recent_valid_points.append(next_point)
 
-    def get_next_point_on_sequence(self, point):
+    def get_next_point_on_sequence(
+        self, point: ISO8601Point
+    ) -> Optional[ISO8601Point]:
         """Return the on-sequence point > point assuming that point is
         on-sequence, or None if out of bounds."""
         result = None
