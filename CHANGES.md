@@ -67,8 +67,8 @@ distinguishing between workflow not running and not in run-directory.
 platforms, any files configured to be installed will be updated on the remote
 platform.
 
-[#4791](https://github.com/cylc/cylc-flow/pull/4791) - Fix GraphQL node
-filtering, affecting non-state updates in the UI.
+[#4791](https://github.com/cylc/cylc-flow/pull/4791) - Fix bug where task
+outputs would not show up in the UI.
 
 [#4777](https://github.com/cylc/cylc-flow/pull/4777) -
 Reinstate the Cylc 7 template variables for xtriggers with deprecation warnings.
@@ -79,6 +79,11 @@ Fix issue where Cylc 7 workflows could show in `cylc scan` output and in the UI.
 [#4720](https://github.com/cylc/cylc-flow/pull/4720) - Fix traceback in
 workflow logs when starting or reloading a workflow with an illegal item
 (e.g. typo) in the config.
+
+[#4827](https://github.com/cylc/cylc-flow/pull/4827) - Fix bug where specifying
+an invalid `--stopcp` would corrupt the workflow database. Also fix
+inconsistency between how `[scheduling]stop after cycle point` was handled
+on reload/restart compared to the other cycle point settings.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc2 (<span actions:bind='release-date'>Released 2022-03-23</span>)__
