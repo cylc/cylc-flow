@@ -341,10 +341,11 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         daemonize(scheduler)
 
     # Check for existence for db to determine if restart or not
-    restart = False
-    if Path(get_workflow_run_dir(workflow_id, WorkflowFiles.Service.DIRNAME,
-            WorkflowFiles.Service.DB)).exists():
-        restart = True
+    restart = Path(
+        get_workflow_run_dir(
+            workflow_id, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB
+        )
+    ).exists()
 
     # setup loggers
     _open_logs(workflow_id, options.no_detach, restart=restart)
