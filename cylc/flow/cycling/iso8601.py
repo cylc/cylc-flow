@@ -864,7 +864,7 @@ def get_point_relative(offset_string, base_point):
     except IsodatetimeError:
         return ISO8601Point(str(
             WorkflowSpecifics.abbrev_util.parse_timepoint(
-                offset_string, context_point=_point_parse(base_point.value))
+                offset_string, context_point=point_parse(base_point.value))
         ))
     else:
         return base_point + interval
@@ -897,13 +897,13 @@ def _interval_parse(interval_string):
     return WorkflowSpecifics.interval_parser.parse(interval_string)
 
 
-def point_parse(point_string):
+def point_parse(point_string: str) -> 'TimePoint':
     """Parse a point_string into a proper TimePoint object."""
-    return _point_parse(point_string)
+    return _point_parse(point_string, WorkflowSpecifics.DUMP_FORMAT)
 
 
 @lru_cache(10000)
-def _point_parse(point_string):
+def _point_parse(point_string, _dump_fmt):
     """Parse a point_string into a proper TimePoint object."""
     if "%" in WorkflowSpecifics.DUMP_FORMAT:
         # May be a custom not-quite ISO 8601 dump format.

@@ -91,7 +91,7 @@ class TaskPool:
     ) -> None:
 
         self.config: 'WorkflowConfig' = config
-        self.stop_point = config.final_point
+        self.stop_point = config.stop_point or config.final_point
         self.workflow_db_mgr: 'WorkflowDatabaseManager' = workflow_db_mgr
         self.task_events_mgr: 'TaskEventsManager' = task_events_mgr
         # TODO this is ugly:
@@ -787,13 +787,10 @@ class TaskPool:
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def set_do_reload(self, config):
+    def set_do_reload(self, config: 'WorkflowConfig') -> None:
         """Set the task pool to reload mode."""
         self.config = config
-        if config.options.stopcp:
-            self.stop_point = get_point(config.options.stopcp)
-        else:
-            self.stop_point = config.final_point
+        self.stop_point = config.stop_point or config.final_point
         self.do_reload = True
 
         self.custom_runahead_limit = self.config.get_custom_runahead_limit()
@@ -882,29 +879,31 @@ class TaskPool:
 
         self.do_reload = False
 
-    def set_stop_point(self, stop_point):
+    def set_stop_point(
+        self, stop_point: Optional['PointBase']
+    ) -> Optional['PointBase']:
         """Set the global workflow stop point."""
         if self.stop_point == stop_point:
-            return
+            return None
         LOG.info("Setting stop cycle point: %s", stop_point)
         self.stop_point = stop_point
-        for itask in self.get_tasks():
-            # check cycle stop or hold conditions
-            if (
-                    self.stop_point
-                    and itask.point > self.stop_point
+        if self.stop_point:
+            for itask in self.get_tasks():
+                # check cycle stop or hold conditions
+                if (
+                    itask.point > self.stop_point
                     and itask.state(
                         TASK_STATUS_WAITING,
                         is_queued=True,
                         is_held=False
                     )
-            ):
-                LOG.warning(
-                    f"[{itask}] not running (beyond workflow stop cycle) "
-                    f"{self.stop_point}"
-                )
-                if itask.state_reset(is_held=True):
-                    self.data_store_mgr.delta_task_held(itask)
+                ):
+                    LOG.warning(
+                        f"[{itask}] not running (beyond workflow stop cycle) "
+                        f"{self.stop_point}"
+                    )
+                    if itask.state_reset(is_held=True):
+                        self.data_store_mgr.delta_task_held(itask)
         return self.stop_point
 
     def can_stop(self, stop_mode):

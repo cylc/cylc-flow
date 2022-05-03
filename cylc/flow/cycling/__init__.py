@@ -91,7 +91,7 @@ class PointBase(metaclass=ABCMeta):
         """Compare self to other point, returning a 'cmp'-like result."""
         pass
 
-    def standardise(self):
+    def standardise(self) -> 'PointBase':
         """Format self.value into a standard representation and check it."""
         return self
 

@@ -212,6 +212,7 @@ class WorkflowConfig:
 
         self.initial_point: 'PointBase'
         self.start_point: 'PointBase'
+        self.stop_point: Optional['PointBase'] = None
         self.final_point: Optional['PointBase'] = None
         self.sequences: List['SequenceBase'] = []
         self.actual_first_point: Optional['PointBase'] = None
@@ -384,6 +385,7 @@ class WorkflowConfig:
         self.process_initial_cycle_point()
         self.process_start_cycle_point()
         self.process_final_cycle_point()
+        self.process_stop_cycle_point()
 
         # Parse special task cycle point offsets, and replace family names.
         LOG.debug("Parsing [special tasks]")
@@ -693,10 +695,9 @@ class WorkflowConfig:
         Raises:
             WorkflowConfigError - if it fails to validate
         """
-        if (
-            self.cfg['scheduling']['final cycle point'] is not None and
-            not self.cfg['scheduling']['final cycle point'].strip()
-        ):
+        if self.cfg['scheduling']['final cycle point'] == '':
+            # (Unlike other cycle point settings in config, fcp is treated as
+            # a string by parsec to allow for expressions like '+P1Y')
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
         if fcp_str == 'reload':
@@ -742,6 +743,34 @@ class WorkflowConfig:
                 raise WorkflowConfigError(
                     f"Final cycle point {self.final_point} does not "
                     f"meet the constraints {constraints}")
+
+    def process_stop_cycle_point(self) -> None:
+        """Set the stop after cycle point.
+
+        In decreasing priority, it is set:
+        * From the command line option (``--stopcp=XYZ``) or database.
+        * From the flow.cylc file (``[scheduling]stop after cycle point``).
+
+        However, if ``--stopcp=reload`` on the command line during restart,
+        the ``[scheduling]stop after cycle point`` value is used.
+        """
+        stopcp_str: Optional[str] = getattr(self.options, 'stopcp', None)
+        if stopcp_str == 'reload':
+            stopcp_str = self.options.stopcp = None
+        if stopcp_str is None:
+            stopcp_str = self.cfg['scheduling']['stop after cycle point']
+
+        if stopcp_str is not None:
+            self.stop_point = get_point(stopcp_str).standardise()
+            if self.final_point and (self.stop_point > self.final_point):
+                LOG.warning(
+                    f"Stop cycle point '{self.stop_point}' will have no "
+                    "effect as it is after the final cycle "
+                    f"point '{self.final_point}'."
+                )
+                self.stop_point = None
+            stopcp_str = str(self.stop_point) if self.stop_point else None
+            self.cfg['scheduling']['stop after cycle point'] = stopcp_str
 
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
