@@ -18,7 +18,7 @@
 # Test execution time limit works correctly with polling intervals
 
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 6
 
 init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduling]
@@ -44,6 +44,11 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 cylc play "${WORKFLOW_NAME}"
 
 poll_grep_workflow_log "INFO - DONE"
+
 grep_workflow_log_ok grep-limit10M "\[1/limit10M running job:01 flows:1\] health: execution timeout=PT20M, polling intervals=3\*PT30S,PT9M30S,PT2M,PT7M,..."
+grep_workflow_log_ok grep-limit1H "\[1/limit1H running job:01 flows:1\] health: execution timeout=PT1H10M, polling intervals=3\*PT30S,PT10M,PT49M30S,PT2M,PT7M,..."
+grep_workflow_log_ok grep-limit70S "\[1/limit70S running job:01 flows:1\] health: execution timeout=PT11M10S, polling intervals=2\*PT30S,PT1M10S,PT2M,PT7M,..."
 grep_workflow_log_ok grep-limit95M "\[1/limit95M running job:01 flows:1\] health: execution timeout=PT1H45M, polling intervals=3\*PT30S,PT10M,PT1H,PT24M30S,PT2M,PT7M,..."
+grep_workflow_log_ok grep-no-limit "\[1/nolimit running job:01 flows:1\] health: execution timeout=None, polling intervals=3\*PT30S,PT10M,PT1H,..."
+
 purge
