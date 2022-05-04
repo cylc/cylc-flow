@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Check that setting the platform to localhost for dummy mode doesn't
 # cause conflicts with Cylc 7 settings
-# TODO Remove test at Cylc 9.
+# TODO Remove test at Cylc 8.x.
 . "$(dirname "$0")/test_header"
 set_test_number 3
 

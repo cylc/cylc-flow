@@ -1458,7 +1458,7 @@ class TaskEventsManager():
             # from:
             #     Cylc 8
             # remove at:
-            #     Cylc 9
+            #     Cylc 8.x
             EventData.Suite.value:  # deprecated
                 quote(self.workflow),
             EventData.SuiteUUID.value:  # deprecated
@@ -1471,7 +1471,7 @@ class TaskEventsManager():
             # from:
             #     Cylc < 8
             # remove at:
-            #     Cylc9 - pending announcement of deprecation
+            #     Cylc8.x - pending announcement of deprecation
             # next 2 (JobID_old, JobRunnerName_old) are deprecated
             EventData.JobID_old.value:
                 quote(str(itask.summary['submit_method_id'])),

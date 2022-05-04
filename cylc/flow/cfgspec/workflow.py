@@ -51,7 +51,8 @@ DEPRECATION_WARN = '''
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
 
-   **It will not be available at Cylc 9**.
+
+   This will be removed in a future version of Cylc 8.
 
    Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
 '''
@@ -63,8 +64,8 @@ DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
 
    This config item has been moved to a platform setting in the
    :cylc:conf:`global.cylc[platforms]` section. It will be used by the
-   automated platform upgrade mechanism at Cylc 8, and deprecated
-   at Cylc 9.
+   automated platform upgrade mechanism and remove in a future version
+   of Cylc 8.
 
    Ideally, as a user this should be set by your site admins
    and you will only need to pick a suitable
@@ -1628,7 +1629,7 @@ with Conf(
 
                 This was done to allow users to control the order of
                 definition of the variables. This section will be removed
-                in Cylc 9.
+                in a later version of Cylc 8.
 
                 For the time being, the contents of this section will be
                 prepended to the ``[environment]`` section when running
@@ -1846,13 +1847,11 @@ def upg(cfg, descr):
         ):
             if job_setting in cfg['runtime'][task]:
                 LOG.warning(
-                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this "
-                    "setting is deprecated; use "
-                    "'global.cylc[platforms][<platform name>]"
-                    f"{job_setting}' "
-                    "instead. Currently, this item will override"
-                    " the corresponding item in global.cylc, "
-                    "but support for this will be removed in Cylc 9."
+                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this"
+                    " setting is deprecated; use"
+                    f" 'global.cylc[platforms][<platform name>]{job_setting}'"
+                    " instead. Currently, this item will override"
+                    " the corresponding item in global.cylc."
                 )
 
 
@@ -1948,8 +1947,8 @@ def warn_about_depr_platform(cfg):
             if depr:
                 msg = "\n".join(depr)
                 LOG.warning(
-                    f'Task {task_name}: deprecated "host" and "batch system" '
-                    f'will be removed at Cylc 9 - upgrade to platform:\n{msg}'
+                    f'Task {task_name}: deprecated "host" and "batch system"'
+                    f' use "platform".\n{msg}'
                 )
 
 

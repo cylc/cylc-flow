@@ -165,7 +165,7 @@ def addict(cfig, key, val, parents, index):
             # to:
             #     Cylc8
             # remove at:
-            #     Cylc9
+            #     Cylc8.x
             parents[0:2] == ['scheduling', 'dependencies']
         ):
             # append the new graph string to the existing one
