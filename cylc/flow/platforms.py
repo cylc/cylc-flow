@@ -49,6 +49,16 @@ HOST_SELECTION_METHODS = {
 }
 
 
+class LocalhostWarning:
+    """Store a note of whether a warning about localhost being overridden by
+    a regex has been issued."""
+    WARNED = False
+
+    @classmethod
+    def _set_true(cls):
+        cls.WARNED = True
+
+
 def log_platform_event(
     event: str,
     platform: dict,
@@ -200,6 +210,17 @@ def platform_from_name(
                 platform_name
             )
         ):
+            if (
+                # If the platform_name_re contains special regex chars
+                re.escape(platform_name_re) != platform_name_re
+                and re.match(platform_name_re, 'localhost')
+                and LocalhostWarning.WARNED is False
+            ):
+                LOG.warn(
+                    f'"localhost" settings will be defined by '
+                    f'global.cylc[platforms][{platform_name_re}]'
+                )
+                LocalhostWarning._set_true()
             # Deepcopy prevents contaminating platforms with data
             # from other platforms matching platform_name_re
             platform_data = deepcopy(platforms[platform_name_re])
