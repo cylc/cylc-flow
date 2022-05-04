@@ -17,6 +17,7 @@
 from itertools import product
 import logging
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -28,6 +29,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.workflow_files import (
     ContactFileFields as CFF,
     WorkflowFiles,
+    _is_process_running,
     detect_old_contact_file,
     dump_contact_file,
     load_contact_file,
@@ -203,7 +205,7 @@ def test_detect_old_contact_file_removal_errors(
 
     """
     # patch the is_process_running method
-    def _is_process_running(*args):
+    def mocked_is_process_running(*args):
         nonlocal workflow
         nonlocal process_running
         if not contact_present_after:
@@ -213,7 +215,7 @@ def test_detect_old_contact_file_removal_errors(
 
     monkeypatch.setattr(
         'cylc.flow.workflow_files._is_process_running',
-        _is_process_running,
+        mocked_is_process_running,
     )
 
     # patch the contact file removal
@@ -265,3 +267,48 @@ def test_detect_old_contact_file_removal_errors(
             '\nmocked-os-error'
         ),
     )) is remove_failed
+
+
+def test_is_process_running_dirty_output(monkeypatch, caplog):
+    """Ensure _is_process_running can handle polluted output.
+
+    E.G. this can happen if there is an echo statement in the `.bashrc`.
+    """
+
+    stdout = None
+
+    class Popen():
+
+        def __init__(self, *args, **kwargs):
+            self.returncode = 0
+
+        def communicate(self, *args, **kwargs):
+            nonlocal stdout
+            return (stdout, '')
+
+    monkeypatch.setattr(
+        'cylc.flow.workflow_files.Popen',
+        Popen,
+    )
+
+    # respond with something Cylc should be able to make sense of
+    stdout = dedent('''
+        % simulated stdout pollution %
+        [{
+            "cmdline": ["expected", "command"]
+        }]
+    ''')
+
+    caplog.set_level(logging.WARN, logger=CYLC_LOG)
+    assert _is_process_running('localhost', 1, 'expected command')
+    assert not caplog.record_tuples
+    assert not _is_process_running('localhost', 1, 'slartibartfast')
+    assert not caplog.record_tuples
+
+    # respond with something totally non-sensical
+    stdout = 'sir henry'
+    with pytest.raises(CylcError):
+        _is_process_running('localhost', 1, 'expected command')
+
+    # the command output should be in the debug message
+    assert 'sir henry' in caplog.records[0].message

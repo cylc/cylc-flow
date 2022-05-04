@@ -21,7 +21,6 @@ from contextlib import suppress
 from enum import Enum
 from functools import partial
 import glob
-import json
 import logging
 import os
 from pathlib import Path
@@ -50,6 +49,7 @@ from cylc.flow.exceptions import (
     WorkflowFilesError,
     handle_rmtree_err,
 )
+from cylc.flow.loggingutil import CylcLogFormatter, close_log
 from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
@@ -76,11 +76,11 @@ from cylc.flow.remote import (
     _construct_ssh_cmd,
     construct_ssh_cmd,
 )
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.loggingutil import CylcLogFormatter, close_log
+from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
 from cylc.flow.wallclock import get_current_time_string
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -435,17 +435,27 @@ def _is_process_running(
         # because the process does not exist
         return False
 
+    error = False
     if proc.returncode:
         # the psutil call failed in some other way e.g. network issues
         LOG.debug(
             f'$ {cli_format(cmd)}  # returned {proc.returncode}\n{err}'
         )
+        error = True
+    else:
+        try:
+            process = parse_dirty_json(out)[0]
+        except ValueError:
+            # the JSON cannot be parsed, log it
+            LOG.warn(f'Could not parse JSON:\n{out}')
+            error = True
+
+    if error:
         raise CylcError(
             f'Cannot determine whether workflow is running on {host}.'
             f'\n{command}'
         )
 
-    process = json.loads(out)[0]
     return cli_format(process['cmdline']) == command
 
 
