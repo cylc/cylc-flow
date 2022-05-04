@@ -1903,15 +1903,17 @@ def upgrade_param_env_templates(cfg, descr):
         for task_name, task_items in cfg['runtime'].items():
             if 'parameter environment templates' not in task_items:
                 continue
-            if first_warn is True:
+            if not cylc.flow.flags.cylc7_back_compat:
+                if first_warn:
+                    LOG.warning(
+                        'deprecated items automatically upgraded in '
+                        f'"{descr}":'
+                    )
+                    first_warn = False
                 LOG.warning(
-                    f'deprecated items automatically upgraded in "{descr}":'
+                    f' * (8.0.0) {dep % task_name} contents prepended to '
+                    f'{new % task_name}'
                 )
-                first_warn = False
-            LOG.warning(
-                f' * (8.0.0) {dep % task_name} contents prepended to '
-                f'{new % task_name}'
-            )
             for key, val in reversed(
                     task_items['parameter environment templates'].items()):
                 if 'environment' in task_items:
@@ -1941,7 +1943,7 @@ def warn_about_depr_platform(cfg):
             fail_if_platform_and_host_conflict(task_cfg, task_name)
             # Fail if backticks subshell e.g. platform = `foo`:
             is_platform_definition_subshell(task_cfg['platform'])
-        else:
+        elif not cylc.flow.flags.cylc7_back_compat:
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
@@ -1953,7 +1955,7 @@ def warn_about_depr_platform(cfg):
 
 def warn_about_depr_event_handler_tmpl(cfg):
     """Warn if deprecated template strings appear in event handlers."""
-    if 'runtime' not in cfg:
+    if 'runtime' not in cfg or cylc.flow.flags.cylc7_back_compat:
         return
     deprecation_msg = (
         'The event handler template variable "%({0})s" is deprecated - '
