@@ -87,7 +87,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 9
+    #     Cylc 8.x
     WorkflowName = 'workflow_name'
     """The workflow ID.
 
@@ -102,7 +102,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 9
+    #     Cylc 8.x
     SuiteName = 'suite_name'
     """The workflow ID.
 
@@ -117,7 +117,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 9
+    #     Cylc 8.x
     SuiteRunDir = 'suite_run_dir'
     """The path to the workflow run directory.
 
@@ -132,7 +132,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 9
+    #     Cylc 8.x
     SuiteShareDir = 'suite_share_dir'
     """The path to the workflow share directory.
 
