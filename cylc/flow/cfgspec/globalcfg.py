@@ -978,37 +978,17 @@ with Conf('global.cylc', desc='''
                  desc='''
                 List of intervals at which to poll status of job submission.
 
-                Cylc can poll submitted jobs to catch problems that
-                prevent the submitted job from executing at all, such as
-                deletion from an external job runner queue. A list of interval
-                values can be specified, with the last value used repeatedly
-                until the task starts running.
-                Multipliers can be used as shorthand as in the example below.
-
-                Example::
-
-                   5*PT2M, PT5M
-
-                Note that if the polling
-                :cylc:conf:`global.cylc[platforms][<platform name>]
-                communication method`
-                is used then Cylc relies on the polling to detect when a task
-                starts running so you are likely to want to configure more
-                frequent polling.
+                This config item is the default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>]
+                submission polling intervals`.
             ''')
             Conf('submission retry delays', VDR.V_INTERVAL_LIST, None,
                  desc='''
-                Cylc can automate resubmission of a task job which has not
-                been submitted sucessfully.
+                Cylc can automatically resubmit jobs after submission failures.
 
-                Execution retry delays are a list of ISO 8601
-                durations/intervals which tell Cylc how long to wait before
-                resubmitting a failed job.
-
-                Each time Cylc resubmits a task job it will increment the
-                variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
-                environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
-                behavior between submission attempts.
+                This config item is the default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>]
+                submission retry delays`
             ''')
             Conf('execution polling intervals',
                  VDR.V_INTERVAL_LIST,
@@ -1016,24 +996,8 @@ with Conf('global.cylc', desc='''
                  desc='''
                 List of intervals at which to poll status of job execution.
 
-                Cylc can poll running jobs to catch problems that prevent task
-                messages from being sent back to the workflow, such as hard job
-                kills, network outages, or unplanned task host shutdown. A list
-                of interval values can be specified, with the last value used
-                repeatedly until the task is finished or until the execution
-                time limit is reached.
-                Multipliers can be used as shorthand as in the example below.
-
-                Example::
-
-                   5*PT2M, PT5M
-
-                Note that if the polling
-                :cylc:conf:`global.cylc[platforms][<platform name>]
-                communication method`
-                is used then Cylc relies on the polling to detect when a task
-                starts running so you are likely to want to configure more
-                frequent polling.
+                Default for :cylc:conf:`flow.cylc[runtime][<namespace>]
+                execution polling intervals`.
             ''')
             Conf('execution time limit polling intervals',
                  VDR.V_INTERVAL_LIST,
@@ -1041,10 +1005,10 @@ with Conf('global.cylc', desc='''
                  desc='''
                 List of intervals after execution time limit to poll jobs.
 
-                After a task job exceeds its execution time limit Cylc can poll
-                more frequently in the expectation that the task should have
-                completed. A list of interval values can be specified, with the
-                last value used repeatedly until the task reports as finished.
+                If a job exceeds its execution time limit, Cylc can poll
+                more frequently to detect the expected job completion quickly.
+                The last interval in the list is used repeatedly until the job
+                completes.
                 Multipliers can be used as shorthand as in the example below.
 
                 Example::

@@ -23,7 +23,7 @@ from typing import Any, Dict, Optional, Set
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES, SPEC as GSPEC
+from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES
 import cylc.flow.flags
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
@@ -1111,17 +1111,33 @@ with Conf(
 
                 Example:
 
-                ``$CYLC_TASK_CYCLE_POINT/shared/``
+                   ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
             Conf(
                 'execution polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=f'''
-                    {
-                        GSPEC['platforms']['__MANY__'][
-                        'execution polling intervals'].desc
-                    }
+                desc='''
+                    List of intervals at which to poll status of job execution.
+
+                    Cylc can poll running jobs to catch problems that prevent
+                    task messages from being sent back to the workflow, such
+                    as hard job kills, network outages, or unplanned job
+                    host shutdown. A list of interval values can be specified,
+                    with the last value used repeatedly until the task is
+                    finished or until the execution time limit is reached.
+                    Multipliers can be used as shorthand as in the example
+                    below.
+
+                    Example::
+
+                       5*PT2M, PT5M
+
+                    Note that if the polling
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    communication method` is used then Cylc relies on polling
+                    to detect all task state changes, so you may want to
+                    configure more frequent polling.
 
                     This config item overrides
                     :cylc:conf:`global.cylc[platforms][<platform name>]
@@ -1157,11 +1173,29 @@ with Conf(
                 'submission polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=f'''
-                    {
-                        GSPEC['platforms']['__MANY__'][
-                        'submission polling intervals'].desc
-                    }
+                desc='''
+                    List of intervals at which to poll status of job
+                    submission.
+
+                    Cylc can poll submitted jobs to catch problems that
+                    prevent the submitted job from executing at all, such as
+                    deletion from an external job runner queue. A list of
+                    interval values can be specified, with the last value
+                    used repeatedly until the task starts running.
+                    Multipliers can be used as shorthand as in the example
+                    below.
+
+                    Example::
+
+                       5*PT2M, PT5M
+
+                    Note that if the polling
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    communication method`
+                    is used then Cylc relies on polling to detect all task
+                    state changes,
+                    so you may want to configure more
+                    frequent polling.
 
                     This config item overrides
                     :cylc:conf:`global.cylc[platforms][<platform name>]
@@ -1172,11 +1206,12 @@ with Conf(
                 'submission retry delays',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=f'''
-                    {
-                        GSPEC['platforms']['__MANY__'][
-                        'submission retry delays'].desc
-                    }
+                desc='''
+                    Cylc can automatically resubmit jobs after submission
+                    failures.
+
+                    A list of intervals which define when the scheduler will
+                    resubmit jobs if submission fails.
 
                     This config item overrides
                     :cylc:conf:`global.cylc[platforms][<platform name>]
