@@ -1511,13 +1511,15 @@ class TaskEventsManager():
                 if not time_limit_delays:
                     time_limit_delays = [60, 120, 420]
                 timeout = time_limit + sum(time_limit_delays)
-                # Remove excessive polling before time limit
-                while sum(delays) > time_limit:
-                    del delays[-1]
-                # But fill up the gap before time limit
-                if delays:
-                    size = int((time_limit - sum(delays)) / delays[-1])
-                    delays.extend([delays[-1]] * size)
+                if sum(delays) > time_limit:
+                    # Remove excessive polling before time limit
+                    while sum(delays) > time_limit:
+                        del delays[-1]
+                else:
+                    # Fill up the gap before time limit
+                    if delays:
+                        size = int((time_limit - sum(delays)) / delays[-1])
+                        delays.extend([delays[-1]] * size)
                 time_limit_delays[0] += time_limit - sum(delays)
                 delays += time_limit_delays
         else:  # if itask.state.status == TASK_STATUS_SUBMITTED:

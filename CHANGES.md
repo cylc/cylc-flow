@@ -45,6 +45,10 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4844](https://github.com/cylc/cylc-flow/pull/4844) - Fixes bug where
+execution polling intervals used in combination with an execution time limit
+resulted in incorrect polling intervals.
+
 [#4829](https://github.com/cylc/cylc-flow/pull/4829) -
 Suppress deprecated configuration warnings in Cylc 7 compatibility mode.
 
