@@ -33,7 +33,7 @@ from cylc.flow.parsec.config import (
 )
 from cylc.flow.parsec.exceptions import ParsecError, ItemNotFoundError
 from cylc.flow.parsec.upgrade import upgrader
-from cylc.flow.parsec.util import printcfg
+from cylc.flow.parsec.util import printcfg, expand_many_section
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR,
     DurationFloat,
@@ -1493,6 +1493,7 @@ class GlobalConfig(ParsecConfig):
 
         self._set_default_editors()
         self._no_platform_group_name_overlap()
+        self._expand_platforms()
 
     def _set_default_editors(self):
         # default to $[G]EDITOR unless an editor is defined in the config
@@ -1520,6 +1521,17 @@ class GlobalConfig(ParsecConfig):
                 for name in names_in_platforms_and_groups:
                     msg += f'\n * {name}'
                 raise GlobalConfigError(msg)
+
+    def _expand_platforms(self):
+        """Expand comma separated platform names.
+
+        E.G. turn [platforms][foo, bar] into [platforms][foo] and
+        platforms[bar].
+        """
+        if self.sparse.get('platforms'):
+            self.sparse['platforms'] = expand_many_section(
+                self.sparse['platforms']
+            )
 
     def platform_dump(
         self,

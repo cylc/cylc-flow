@@ -20,8 +20,16 @@ import pytest
 
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import (
-    itemstr, listjoin, m_override, pdeepcopy, poverride, printcfg,
-    replicate, un_many
+    SECTION_EXPAND_PATTERN,
+    expand_many_section,
+    itemstr,
+    listjoin,
+    m_override,
+    pdeepcopy,
+    poverride,
+    printcfg,
+    replicate,
+    un_many,
 )
 
 
@@ -417,3 +425,95 @@ def test_itemstr_no_parents():
 def test_itemstr_no_parents_no_value():
     text = itemstr(parents=None, item="Value", value=None)
     assert text == 'Value'
+
+
+# --- expand_many_section
+
+@pytest.mark.parametrize(
+    'in_,out',
+    [
+        # basically a fancy version of string.split(',')
+        ('foo', ['foo']),
+        ('foo,bar', ['foo', 'bar']),
+        ('foo, bar', ['foo', ' bar']),  # doesn't remove whitespace
+        # except that it doesn't split quoted things
+        ('"foo", "bar"', ['"foo"', ' "bar"']),
+        ('"foo,", "b,ar"', ['"foo,"', ' "b,ar"']),  # doesn't split in " quotes
+        ("'foo', 'bar'", ["'foo'", " 'bar'"]),
+        ("'foo,', 'b,ar'", ["'foo,'", " 'b,ar'"]),  # doesn"t split in ' quotes
+    ]
+)
+def test_SECTION_EXPAND_PATTERN(in_, out):
+    """It should split sections which contain commas.
+
+    This is used in order to expand [foo, bar] into [foo] and [bar].
+    """
+    assert SECTION_EXPAND_PATTERN.findall(in_) == out
+
+
+@pytest.mark.parametrize(
+    'in_,out',
+    [
+        ('foo,bar', ['foo', 'bar']),
+        ('foo , bar', ['foo', 'bar']),
+        ('"foo", "bar"', ['foo', 'bar']),
+        ('"foo,", "b,ar"', ['foo,', 'b,ar']),
+    ]
+)
+def test_expand_many_section_expand(in_, out):
+    """It should expand sections which contain commas.
+
+    E.G. it should expand [foo, bar] into [foo] and [bar].
+    """
+    config = {in_: {'whatever': True}}
+    assert list(expand_many_section(config)) == out
+
+
+def test_expand_many_section_order():
+    """It should maintain order when expanding sections."""
+    assert list(expand_many_section({
+        'a': {},
+        'b, a': {},
+        'c, b, a, d': {},
+        'e': {},
+        'a, e': {},
+        'f, e': {},
+        'g, h': {},
+    })) == ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+
+
+def test_expand_many_section_merge():
+    """It should merge sections together in definition order."""
+    config = expand_many_section({
+        'b': {'x': 1},
+        'b, a, c, d': {'x': 2},
+        'c': {'x': 3},
+    })
+    assert config == {
+        'b': {'x': 2},
+        'a': {'x': 2},
+        'c': {'x': 3},
+        'd': {'x': 2},
+    }
+    # bonus marks: ensure all values coppied rather than referenced
+    config['a']['x'] = 4
+    assert config['b']['x'] == 2
+
+
+def test_expand_many_section_merge_deep():
+    """It should deep-merge nested sections - see replicate()."""
+    config = expand_many_section({
+        'b': {'x': {'y': 1}},
+        'b, a, c, d': {'x': {'y': 2}},
+        'c': {'x': {'y': 3}},
+    })
+    assert config == {
+        'b': {'x': {'y': 2}},
+        'a': {'x': {'y': 2}},
+        'c': {'x': {'y': 3}},
+        'd': {'x': {'y': 2}},
+    }
+    # bonus marks: ensure all values are unique objects
+    # (i.e. they have been coppied rather than referenced)
+    config['a']['x']['y'] = 4
+    assert config['b']['x']['y'] == 2

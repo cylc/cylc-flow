@@ -58,3 +58,40 @@ def test_dump_platform_details(capsys, fake_global_conf):
         '[platform groups]\n    [[BAR]]\n        platforms = mario, sonic\n'
     )
     assert expected == out
+
+
+def test_expand_platforms(tmp_path):
+    """It should expand comma separated platform definitions."""
+    glblcfg = GlobalConfig(SPEC)
+    (tmp_path / 'global.cylc').write_text('''
+    [platforms]
+        [[foo]]
+            [[[meta]]]
+                x = 1
+        [["bar"]]  # double quoted name
+            [[[meta]]]
+                x = 2
+        [[baz, bar, pub]]  # baz before bar to test order is handled correctly
+            [[[meta]]]
+                x = 3
+        [['pub']]  # single quoted name
+            [[[meta]]]
+                x = 4
+    ''')
+    glblcfg.loadcfg(tmp_path / 'global.cylc')
+    glblcfg._expand_platforms()
+
+    # ensure the definition order is preserved
+    assert glblcfg.get(['platforms']).keys() == [
+        'localhost',
+        'foo',
+        'bar',
+        'baz',
+        'pub',
+    ]
+
+    # ensure sections are correctly deep-merged
+    assert glblcfg.get(['platforms', 'foo', 'meta', 'x']) == '1'
+    assert glblcfg.get(['platforms', 'bar', 'meta', 'x']) == '3'
+    assert glblcfg.get(['platforms', 'baz', 'meta', 'x']) == '3'
+    assert glblcfg.get(['platforms', 'pub', 'meta', 'x']) == '4'
