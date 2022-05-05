@@ -86,6 +86,13 @@ EXCLUDE_FILES = {
 }
 
 
+REQUIRED_FIELDS = [
+    ContactFileFields.API,
+    ContactFileFields.HOST,
+    ContactFileFields.NAME
+]
+
+
 def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
     """Return True if a Path contains a flow at the top level.
 
@@ -314,6 +321,16 @@ async def contact_info(flow):
         await load_contact_file_async(flow['name'], run_dir=flow['path'])
     )
     return flow
+
+
+@pipe
+async def validate_contact_info(flow):
+    """Return flow if contact file is valid"""
+    for contact_field in REQUIRED_FIELDS:
+        try:
+            flow[contact_field]
+        except KeyError:
+            return False
 
 
 def parse_requirement(requirement_string):
