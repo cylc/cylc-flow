@@ -374,23 +374,31 @@ cylc__job__subworkflow() {
     local SRC_DIR="${CYLC_WORKFLOW_RUN_DIR}/${NAME}"
     local RUN_DIR="${SRC_DIR}/${CYLC_TASK_CYCLE_POINT}"
     local ID="${RUN_DIR#*/cylc-run/}"
-    mkdir "$RUN_DIR"
 
-    # Symlink to the installed flow.cylc after renaming it to avoid
-    # detection of the template as a workflow (if not already renamed).
-    mv "${SRC_DIR}/flow.cylc" "${SRC_DIR}/sub-flow.cylc" || true
-    ln -s "${SRC_DIR}/sub-flow.cylc" "${RUN_DIR}/flow.cylc"
+    if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
+        cylc message "Installing subworkflow $ID from $SRC_DIR"
+        mkdir "$RUN_DIR"
+        # Symlink to the installed flow.cylc after renaming it to avoid
+        # detection of the template as a workflow (if not already renamed).
+        mv "${SRC_DIR}/flow.cylc" "${SRC_DIR}/sub-flow.cylc" || true
+        ln -s "${SRC_DIR}/sub-flow.cylc" "${RUN_DIR}/flow.cylc"
+    fi
 
-    cylc message "Subworkflow: installed $ID from $SRC_DIR"
-
-    # Start the new sub-workflow instance (detaching).
+    # Start the sub-workflow instance (detaching).
     cylc play "$ID"
 
     # Wait for the subworkflow final task (allows subworkflow to stop and restart).
-    cylc message "Subworkflow: waiting for ${ID}//${DONE}"
-    cylc workflow-state \
-        --max-polls=10 --interval=10 \
-	-p "${DONE%/*}" -t "${DONE#*/}" --status succeeded "$ID"
+    while cylc ping ${ID}; do
+        echo "... still running"
+        sleep 10
+    done
 
-    cylc message "Subworkflow: finished ${ID}//${DONE}"
+    if cylc workflow-state --max-polls=1 \
+	    -p "${DONE%/*}" -t "${DONE#*/}" --status succeeded "$ID"
+    then
+       echo "... succeeded"
+    else
+       echo "... failed"
+       exit 1
+    fi
 }
