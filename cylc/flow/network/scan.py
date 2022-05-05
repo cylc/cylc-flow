@@ -331,6 +331,7 @@ async def validate_contact_info(flow):
             flow[contact_field]
         except KeyError:
             return False
+    return flow
 
 
 def parse_requirement(requirement_string):
