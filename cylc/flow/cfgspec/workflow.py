@@ -1123,9 +1123,11 @@ with Conf(
                     Cylc can poll running jobs to catch problems that prevent
                     task messages from being sent back to the workflow, such
                     as hard job kills, network outages, or unplanned job
-                    host shutdown. A list of interval values can be specified,
-                    with the last value used repeatedly until the task is
-                    finished or until the execution time limit is reached.
+                    host shutdown.
+
+                    The lasst interval in the list is used repeatedly until
+                    the job completes.
+
                     Multipliers can be used as shorthand as in the example
                     below.
 
@@ -1179,9 +1181,11 @@ with Conf(
 
                     Cylc can poll submitted jobs to catch problems that
                     prevent the submitted job from executing at all, such as
-                    deletion from an external job runner queue. A list of
-                    interval values can be specified, with the last value
-                    used repeatedly until the task starts running.
+                    deletion from an external job runner queue.
+
+                    The last value is used repeatedly until the task starts
+                    running.
+
                     Multipliers can be used as shorthand as in the example
                     below.
 
