@@ -1629,7 +1629,7 @@ with Conf(
 
                 This was done to allow users to control the order of
                 definition of the variables. This section will be removed
-                in a later version of Cylc 8.
+                in a future version of Cylc 8.
 
                 For the time being, the contents of this section will be
                 prepended to the ``[environment]`` section when running
