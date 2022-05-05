@@ -447,7 +447,7 @@ def _is_process_running(
             process = parse_dirty_json(out)[0]
         except ValueError:
             # the JSON cannot be parsed, log it
-            LOG.warn(f'Could not parse JSON:\n{out}')
+            LOG.warning(f'Could not parse JSON:\n{out}')
             error = True
 
     if error:
