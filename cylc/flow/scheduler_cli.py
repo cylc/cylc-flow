@@ -147,7 +147,6 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
             "Set the final cycle point. "
             "This command line option overrides the workflow "
             "config option '[scheduling]final cycle point'. "
-            "Use a value of 'reload' to reload from flow.cylc in a restart."
         ),
         metavar="CYCLE_POINT", action="store", dest="fcp")
 
@@ -159,7 +158,6 @@ def get_option_parser(add_std_opts: bool = False) -> COP:
             "(Not to be confused with the final cycle point.) "
             "This command line option overrides the workflow "
             "config option '[scheduling]stop after cycle point'. "
-            "Use a value of 'reload' to reload from flow.cylc in a restart."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
@@ -356,7 +354,8 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     # NOTE: any threads which include sleep statements could cause
     #       sys.exit to hang if not shutdown properly
     LOG.info("DONE")
-    close_log(LOG)
+    for log in (LOG, RSYNC_LOG):
+        close_log(log)
     sys.exit(ret)
 
 

@@ -86,7 +86,7 @@ class EventData(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 9
+    #     Cylc 8.x
     Suite = 'suite'
     """The workflow ID
 
@@ -101,7 +101,7 @@ class EventData(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 9
+    #     Cylc 8.x
     Suite_UUID = 'suite_uuid'
     """The unique identification string for this workflow run.
 
@@ -116,7 +116,7 @@ class EventData(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 9
+    #     Cylc 8.x
     SuiteURL = 'suite_url'
     """The URL defined in :cylc:conf:`flow.cylc[meta]URL`.
 
@@ -158,7 +158,7 @@ def get_template_variables(
         # from:
         #     Cylc 8
         # remove at:
-        #     Cylc 9
+        #     Cylc 8.x
         EventData.Suite.value:
             schd.workflow,
         EventData.Suite_UUID.value:
