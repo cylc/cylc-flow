@@ -1791,7 +1791,6 @@ def validate_source_dir(
     """Ensure the source directory is valid:
         - has flow file
         - does not contain reserved dir names
-        - is not inside ~/cylc-run.
 
     Args:
         source: Path to source directory
@@ -1799,7 +1798,6 @@ def validate_source_dir(
         WorkflowFilesError:
             If log, share, work or _cylc-install directories exist in the
             source directory.
-            Cylc installing from within the cylc-run dir
     """
     # Ensure source dir does not contain log, share, work, _cylc-install
     for dir_ in WorkflowFiles.RESERVED_DIRNAMES:
@@ -1809,14 +1807,6 @@ def validate_source_dir(
                 f"- {dir_} exists in source directory."
             )
     cylc_run_dir = get_cylc_run_dir()
-    if is_relative_to(
-        os.path.abspath(os.path.realpath(source)),
-        os.path.abspath(os.path.realpath(cylc_run_dir))
-    ):
-        raise WorkflowFilesError(
-            f"{workflow_name} installation failed. Source directory "
-            f"should not be in {cylc_run_dir}."
-        )
     check_flow_file(source)
 
 
