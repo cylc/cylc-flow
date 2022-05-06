@@ -349,6 +349,7 @@ class WorkflowConfig:
         # Done before inheritance to avoid repetition
         self.check_env_names()
         self.check_param_env_tmpls()
+        self.check_for_owner(self.cfg['runtime'])
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
@@ -462,7 +463,6 @@ class WorkflowConfig:
 
         self.process_config_env()
 
-        self.check_for_owner(self.cfg['runtime'])
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
         self.mem_log("config.py: after load_graph()")
@@ -2349,14 +2349,16 @@ class WorkflowConfig:
         """
         owners = {}
         for task, tdef in tasks.items():
-            owner = tdef.get('remote', {}).get('owner', None)
-            if owner:
-                owners[task] = owner
+            remote = tdef.get('remote', None)
+            if remote:
+                owner = remote.get('owner', None)
+                if owner:
+                    owners[task] = owner
         if owners:
             msg = (
-                '"[runtime][task][remote]owner" is obsolete at Cylc 8.'
+                '"[runtime][task][remote]owner" is deprecated at Cylc 8.'
                 '\nsee https://cylc.github.io/cylc-doc/latest/'
-                'html/7-to-8/major-changes/remote-owner.html'
+                'html/7-to-8/index.html'
                 f'\nFirst {min(len(owners), 5)} tasks:'
             )
             for task, _ in list(owners.items())[:5]:
