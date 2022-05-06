@@ -35,6 +35,10 @@ Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4854](https://github.com/cylc/cylc-flow/pull/4854) - Platform definition
+regular expressions which match "localhost" but are not "localhost" are now
+explicitly forbidden and will raise an exception.
+
 [#4828](https://github.com/cylc/cylc-flow/pull/4828) - scan CLI: corrupt
 workflow contact files should result in a warning, not a crash.
 
