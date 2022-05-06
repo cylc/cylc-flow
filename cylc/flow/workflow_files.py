@@ -54,7 +54,6 @@ from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
-    is_relative_to,
     make_localhost_symlinks,
     parse_rm_dirs,
     remove_dir_and_target,
@@ -1806,7 +1805,6 @@ def validate_source_dir(
                 f"{workflow_name} installation failed. "
                 f"- {dir_} exists in source directory."
             )
-    cylc_run_dir = get_cylc_run_dir()
     check_flow_file(source)
 
 
