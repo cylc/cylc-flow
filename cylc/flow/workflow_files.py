@@ -617,7 +617,7 @@ def load_contact_file(reg: str) -> Dict[str, str]:
         # from:
         #     Cylc 8
         # remove at:
-        #     Cylc 9
+        #     Cylc 8.x
         data[key.replace('SUITE', 'WORKFLOW')] = value
     return data
 
@@ -643,7 +643,7 @@ async def load_contact_file_async(reg, run_dir=None):
                 # from:
                 #     Cylc 8
                 # remove at:
-                #     Cylc 9
+                #     Cylc 8.x
                 data[key.replace('SUITE', 'WORKFLOW')] = value
             return data
     except IOError:

@@ -92,13 +92,13 @@ def get_platform(
 
 
 # BACK COMPAT: get_platform
-#     At Cylc 9 remove all Cylc7 upgrade logic.
+#     At Cylc 8.x remove all Cylc7 upgrade logic.
 # from:
 #     Cylc8
 # to:
-#     Cylc9
+#     Cylc8.x
 # remove at:
-#     Cylc9
+#     Cylc8.x
 def get_platform(
     task_conf: Union[str, Dict[str, Any], None] = None,
     task_id: str = UNKNOWN_TASK,

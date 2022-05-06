@@ -2286,7 +2286,7 @@ class WorkflowConfig:
                 # to:
                 #     Cylc8
                 # remove at:
-                #     Cylc9
+                #     Cylc8.x
                 self.cfg['meta']['URL'] = url % {
                     # cylc 7
                     'suite_name': self.workflow,
@@ -2319,7 +2319,7 @@ class WorkflowConfig:
                 # to:
                 #     Cylc8
                 # remove at:
-                #     Cylc9
+                #     Cylc8.x
                 try:
                     cfg['meta']['URL'] = cfg['meta']['URL'] % {
                         # cylc 7

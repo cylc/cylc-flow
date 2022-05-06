@@ -51,7 +51,8 @@ DEPRECATION_WARN = '''
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
 
-   **It will not be available at Cylc 9**.
+
+   This will be removed in a future version of Cylc 8.
 
    Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
 '''
@@ -63,8 +64,8 @@ DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
 
    This config item has been moved to a platform setting in the
    :cylc:conf:`global.cylc[platforms]` section. It will be used by the
-   automated platform upgrade mechanism at Cylc 8, and deprecated
-   at Cylc 9.
+   automated platform upgrade mechanism and remove in a future version
+   of Cylc 8.
 
    Ideally, as a user this should be set by your site admins
    and you will only need to pick a suitable
@@ -1628,7 +1629,7 @@ with Conf(
 
                 This was done to allow users to control the order of
                 definition of the variables. This section will be removed
-                in Cylc 9.
+                in a future version of Cylc 8.
 
                 For the time being, the contents of this section will be
                 prepended to the ``[environment]`` section when running
@@ -1846,13 +1847,11 @@ def upg(cfg, descr):
         ):
             if job_setting in cfg['runtime'][task]:
                 LOG.warning(
-                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this "
-                    "setting is deprecated; use "
-                    "'global.cylc[platforms][<platform name>]"
-                    f"{job_setting}' "
-                    "instead. Currently, this item will override"
-                    " the corresponding item in global.cylc, "
-                    "but support for this will be removed in Cylc 9."
+                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this"
+                    " setting is deprecated; use"
+                    f" 'global.cylc[platforms][<platform name>]{job_setting}'"
+                    " instead. Currently, this item will override"
+                    " the corresponding item in global.cylc."
                 )
 
 
@@ -1903,15 +1902,17 @@ def upgrade_param_env_templates(cfg, descr):
         for task_name, task_items in cfg['runtime'].items():
             if 'parameter environment templates' not in task_items:
                 continue
-            if first_warn is True:
+            if not cylc.flow.flags.cylc7_back_compat:
+                if first_warn:
+                    LOG.warning(
+                        'deprecated items automatically upgraded in '
+                        f'"{descr}":'
+                    )
+                    first_warn = False
                 LOG.warning(
-                    f'deprecated items automatically upgraded in "{descr}":'
+                    f' * (8.0.0) {dep % task_name} contents prepended to '
+                    f'{new % task_name}'
                 )
-                first_warn = False
-            LOG.warning(
-                f' * (8.0.0) {dep % task_name} contents prepended to '
-                f'{new % task_name}'
-            )
             for key, val in reversed(
                     task_items['parameter environment templates'].items()):
                 if 'environment' in task_items:
@@ -1941,19 +1942,19 @@ def warn_about_depr_platform(cfg):
             fail_if_platform_and_host_conflict(task_cfg, task_name)
             # Fail if backticks subshell e.g. platform = `foo`:
             is_platform_definition_subshell(task_cfg['platform'])
-        else:
+        elif not cylc.flow.flags.cylc7_back_compat:
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
                 LOG.warning(
-                    f'Task {task_name}: deprecated "host" and "batch system" '
-                    f'will be removed at Cylc 9 - upgrade to platform:\n{msg}'
+                    f'Task {task_name}: deprecated "host" and "batch system"'
+                    f' use "platform".\n{msg}'
                 )
 
 
 def warn_about_depr_event_handler_tmpl(cfg):
     """Warn if deprecated template strings appear in event handlers."""
-    if 'runtime' not in cfg:
+    if 'runtime' not in cfg or cylc.flow.flags.cylc7_back_compat:
         return
     deprecation_msg = (
         'The event handler template variable "%({0})s" is deprecated - '
