@@ -2359,7 +2359,8 @@ class WorkflowConfig:
                 '"[runtime][task][remote]owner" is deprecated at Cylc 8.'
                 '\nsee https://cylc.github.io/cylc-doc/latest/'
                 'html/7-to-8/index.html'
+                f'\nFirst {min(len(owners), 5)} tasks:'
             )
-            for task, owner in owners.items():
-                msg += f'\n - Task "{task}" has owner "{owner}"'
+            for task, owner in list(owners.items())[:5]:
+                msg += f'\n  * {task}"'
             raise WorkflowConfigError(msg)
