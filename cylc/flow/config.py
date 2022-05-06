@@ -2356,7 +2356,7 @@ class WorkflowConfig:
             msg = (
                 '"[runtime][task][remote]owner" is obsolete at Cylc 8.'
                 '\nsee https://cylc.github.io/cylc-doc/latest/'
-                'html/7-to-8/index.html'
+                'html/7-to-8/major-changes/remote-owner.html'
                 f'\nFirst {min(len(owners), 5)} tasks:'
             )
             for task, _ in list(owners.items())[:5]:
