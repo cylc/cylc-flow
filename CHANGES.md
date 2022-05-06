@@ -45,6 +45,11 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow config parsing
+will fail if
+[owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
+owner setting is used, as that setting no longer has any effect.
+
 [#4844](https://github.com/cylc/cylc-flow/pull/4844) - Fixes bug where
 execution polling intervals used in combination with an execution time limit
 resulted in incorrect polling intervals.

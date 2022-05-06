@@ -462,6 +462,7 @@ class WorkflowConfig:
 
         self.process_config_env()
 
+        self.check_for_owner(self.cfg['runtime'])
         self.mem_log("config.py: before load_graph()")
         self.load_graph()
         self.mem_log("config.py: after load_graph()")
@@ -2341,3 +2342,24 @@ class WorkflowConfig:
                 self.workflow, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
+
+    @staticmethod
+    def check_for_owner(tasks: Dict) -> None:
+        """Raise exception if [runtime][task][remote]owner
+        """
+        owners = {}
+        for task, tdef in tasks.items():
+            remote = tdef.get('remote', None)
+            if remote:
+                owner = remote.get('owner', None)
+                if owner:
+                    owners[task] = owner
+        if owners:
+            msg = (
+                '"[runtime][task][remote]owner" is deprecated at Cylc 8.'
+                '\nsee https://cylc.github.io/cylc-doc/latest/'
+                'html/7-to-8/index.html'
+            )
+            for task, owner in owners.items():
+                msg += f'\n - Task "{task}" has owner "{owner}"'
+            raise WorkflowConfigError(msg)

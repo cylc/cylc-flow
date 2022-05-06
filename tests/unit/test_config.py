@@ -1390,3 +1390,38 @@ def test_zero_interval(
         assert logged
     else:
         assert not logged
+
+
+@pytest.mark.parametrize(
+    'tasks',
+    (
+        pytest.param(
+            {'foo': {'remote': {'host': 'bar'}}},
+            id='no-owners'
+        ),
+        pytest.param(
+            {'foo': {'remote': {'owner': 'tim'}}},
+            id='one-owner'
+        ),
+        pytest.param(
+            {
+                'foo': {'remote': {'owner': 'tim'}},
+                'bar': {'remote': {'owner': 'oliver'}},
+                'baz': {'remote': {'owner': 'ronnie'}},
+            },
+            id='many-owners'
+        ),
+    )
+)
+def test_check_for_owner(tasks):
+    """check_for_owner raises a list of [runtime][task][remote]owner set."""
+    if 'owner' in str(tasks):
+        with pytest.raises(WorkflowConfigError) as exc:
+            WorkflowConfig.check_for_owner(tasks)
+        # Assert is the correct error message:
+        assert exc.match('owner\" is deprecated')
+        # Assert error message has right number of lines:
+        assert len(str(exc.value).split('\n')) == 2 + len(tasks)
+    else:
+        # Assert function doesn't raise if no owner set:
+        assert WorkflowConfig.check_for_owner(tasks) is None
