@@ -1884,12 +1884,6 @@ def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):
     with pytest.raises(WorkflowFilesError) as exc_info:
         validate_source_dir(src_dir, 'roland')
     assert "exists in source directory" in str(exc_info.value)
-    # Test that src dir is not allowed to be inside ~/cylc-run
-    src_dir = cylc_run_dir / 'dieter'
-    src_dir.mkdir()
-    with pytest.raises(WorkflowFilesError) as exc_info:
-        validate_source_dir(src_dir, 'dieter')
-    assert "Source directory should not be in" in str(exc_info.value)
 
 
 @pytest.mark.parametrize(
