@@ -1131,7 +1131,7 @@ with Conf(
                     as hard job kills, network outages, or unplanned job
                     host shutdown.
 
-                    The lasst interval in the list is used repeatedly until
+                    The last interval in the list is used repeatedly until
                     the job completes.
 
                     Multipliers can be used as shorthand as in the example
