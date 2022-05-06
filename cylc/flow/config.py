@@ -2361,6 +2361,6 @@ class WorkflowConfig:
                 'html/7-to-8/index.html'
                 f'\nFirst {min(len(owners), 5)} tasks:'
             )
-            for task, owner in list(owners.items())[:5]:
+            for task, _ in list(owners.items())[:5]:
                 msg += f'\n  * {task}"'
             raise WorkflowConfigError(msg)

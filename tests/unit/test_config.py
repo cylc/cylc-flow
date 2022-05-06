@@ -1409,7 +1409,19 @@ def test_zero_interval(
                 'bar': {'remote': {'owner': 'oliver'}},
                 'baz': {'remote': {'owner': 'ronnie'}},
             },
-            id='many-owners'
+            id='3-owners'
+        ),
+        pytest.param(
+            {
+                'foo': {'remote': {'owner': 'tim'}},
+                'bar': {'remote': {'owner': 'oliver'}},
+                'baz': {'remote': {'owner': 'ronnie'}},
+                'qux': {'remote': {'owner': 'tim'}},
+                'aleph': {'remote': {'owner': 'oliver'}},
+                'bet': {'remote': {'owner': 'ronnie'}},
+
+            },
+            id='6-owners'
         ),
     )
 )
@@ -1421,7 +1433,6 @@ def test_check_for_owner(tasks):
         # Assert is the correct error message:
         assert exc.match('owner\" is deprecated')
         # Assert error message has right number of lines:
-        assert len(str(exc.value).split('\n')) == 2 + len(tasks)
     else:
         # Assert function doesn't raise if no owner set:
         assert WorkflowConfig.check_for_owner(tasks) is None
