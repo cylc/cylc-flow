@@ -2349,11 +2349,9 @@ class WorkflowConfig:
         """
         owners = {}
         for task, tdef in tasks.items():
-            remote = tdef.get('remote', None)
-            if remote:
-                owner = remote.get('owner', None)
-                if owner:
-                    owners[task] = owner
+            owner = tdef.get('remote', {}).get('owner', None)
+            if owner:
+                owners[task] = owner
         if owners:
             msg = (
                 '"[runtime][task][remote]owner" is deprecated at Cylc 8.'
