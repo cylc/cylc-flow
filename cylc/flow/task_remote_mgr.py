@@ -126,7 +126,7 @@ class TaskRemoteMgr:
         """
         # BACK COMPAT: references to "host"
         # remove at:
-        #     Cylc9
+        #     Cylc8.x
         if not command:
             return 'localhost'
 
@@ -159,7 +159,7 @@ class TaskRemoteMgr:
         # Environment variable substitution
         command = os.path.expandvars(command)
         # Remote?
-        # TODO - Remove at Cylc 9 as this only makes sense with host logic
+        # TODO - Remove at Cylc 8.x as this only makes sense with host logic
         if host_check is True:
             if is_remote_host(command):
                 return command

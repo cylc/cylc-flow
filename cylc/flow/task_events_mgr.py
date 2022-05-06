@@ -1457,7 +1457,7 @@ class TaskEventsManager():
             # from:
             #     Cylc 8
             # remove at:
-            #     Cylc 9
+            #     Cylc 8.x
             EventData.Suite.value:  # deprecated
                 quote(self.workflow),
             EventData.SuiteUUID.value:  # deprecated
@@ -1470,7 +1470,7 @@ class TaskEventsManager():
             # from:
             #     Cylc < 8
             # remove at:
-            #     Cylc9 - pending announcement of deprecation
+            #     Cylc8.x - pending announcement of deprecation
             # next 2 (JobID_old, JobRunnerName_old) are deprecated
             EventData.JobID_old.value:
                 quote(str(itask.summary['submit_method_id'])),
@@ -1507,13 +1507,15 @@ class TaskEventsManager():
                 time_limit_delays = itask.platform.get(
                     'execution time limit polling intervals')
                 timeout = time_limit + sum(time_limit_delays)
-                # Remove excessive polling before time limit
-                while sum(delays) > time_limit:
-                    del delays[-1]
-                # But fill up the gap before time limit
-                if delays:
-                    size = int((time_limit - sum(delays)) / delays[-1])
-                    delays.extend([delays[-1]] * size)
+                if sum(delays) > time_limit:
+                    # Remove excessive polling before time limit
+                    while sum(delays) > time_limit:
+                        del delays[-1]
+                else:
+                    # Fill up the gap before time limit
+                    if delays:
+                        size = int((time_limit - sum(delays)) / delays[-1])
+                        delays.extend([delays[-1]] * size)
                 time_limit_delays[0] += time_limit - sum(delays)
                 delays += time_limit_delays
         else:  # if itask.state.status == TASK_STATUS_SUBMITTED:
