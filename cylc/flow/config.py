@@ -2353,9 +2353,11 @@ class WorkflowConfig:
             if owner:
                 owners[task] = owner
         if owners:
+            # TODO: Convert URL to a stable or latest release doc after 8.0
+            # https://github.com/cylc/cylc-flow/issues/4663
             msg = (
                 '"[runtime][task][remote]owner" is obsolete at Cylc 8.'
-                '\nsee https://cylc.github.io/cylc-doc/latest/'
+                '\nsee https://cylc.github.io/cylc-doc/nightly/'
                 'html/7-to-8/major-changes/remote-owner.html'
                 f'\nFirst {min(len(owners), 5)} tasks:'
             )
