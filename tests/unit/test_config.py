@@ -1431,7 +1431,7 @@ def test_check_for_owner(runtime_cfg):
         with pytest.raises(WorkflowConfigError) as exc:
             WorkflowConfig.check_for_owner(runtime_cfg)
         # Assert is the correct error message:
-        assert exc.match('owner\" is deprecated')
+        assert exc.match('owner\" is obsolete')
         # Assert error message has right number of lines:
     else:
         # Assert function doesn't raise if no owner set:
