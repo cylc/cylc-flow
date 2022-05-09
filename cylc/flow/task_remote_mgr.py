@@ -56,6 +56,7 @@ from cylc.flow.platforms import (
 )
 from cylc.flow.remote import construct_rsync_over_ssh_cmd, construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
+from cylc.flow.util import format_cmd
 from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import (
     KeyInfo,
@@ -532,13 +533,14 @@ class TaskRemoteMgr:
             Path(install_log_path).parent.mkdir(parents=True, exist_ok=True)
             with open(install_log_path, 'a') as install_log:
                 install_log.write(
-                    'File installation information for '
-                    f'{install_target}:\n{ctx.out}'
+                    f'$ {format_cmd(ctx.cmd, maxlen=80)}'
+                    '\n\n### STDOUT:'
+                    f'\n{ctx.out}'
                 )
                 if ctx.err:
                     install_log.write(
-                        '\n File installation error for '
-                        f'{install_target}:\n{ctx.err}'
+                        '\n\n### STDERR:'
+                        f'\n{ctx.err}'
                     )
         if ctx.ret_code == 0:
             # Both file installation and remote init success

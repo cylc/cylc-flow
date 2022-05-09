@@ -134,14 +134,19 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     MIN_BYTES = 1024
 
     def __init__(
-        self, log_file_path, no_detach=False, timestamp=True, restart=False
+        self,
+        log_file_path,
+        no_detach=False,
+        log_num=0,
+        timestamp=True,
+        restart=False
     ):
         logging.FileHandler.__init__(self, log_file_path)
         self.no_detach = no_detach
-        self.stamp = None
         self.formatter = CylcLogFormatter(timestamp=timestamp)
         self.header_records = []
         self.restart = restart
+        self.log_num = log_num
         self.load_type_change()
 
     def emit(self, record):
@@ -177,7 +182,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     def should_rollover(self, record):
         """Should rollover?"""
-        if self.stamp is None or self.stream is None:
+        if self.log_num == 0 or self.stream is None:
             return True
         max_bytes = glbl_cfg().get(
             ['scheduler', 'logging', 'maximum size in bytes'])
@@ -201,8 +206,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     def do_rollover(self):
         """Create and rollover log file if necessary."""
         # Generate new file name
-        self.stamp = get_current_time_string(use_basic_format=True)
-        filename = self.get_filename()
+        filename = self.get_new_log_filename()
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         # Touch file
         with open(filename, 'w+'):
@@ -240,11 +244,12 @@ class TimestampRotatingFileHandler(logging.FileHandler):
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)
 
-    def get_filename(self):
+    def get_new_log_filename(self):
         """Build filename for log"""
         base_dir = Path(self.baseFilename).parent
+        self.log_num += 1
         filename = base_dir.joinpath(
-            self.stamp + '-' + self.get_load_type() + LOG_FILE_EXTENSION
+            self.get_load_type() + '-' + str(self.log_num) + LOG_FILE_EXTENSION
         )
         return filename
 

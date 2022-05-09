@@ -45,6 +45,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
+
 FILES="$(ls "${HOME}/cylc-run/${WORKFLOW_NAME}/log/scheduler/"*.log)"
 run_ok "${TEST_NAME_BASE}-n-logs" test 8 -eq "$(wc -l <<<"${FILES}")"
 for FILE in ${FILES}; do

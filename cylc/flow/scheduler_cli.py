@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc play" CLI."""
 
+import sqlite3
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
@@ -259,7 +260,7 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_, no_detach, restart=False):
+def _open_logs(id_, no_detach, restart=False, log_num=1):
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
         while LOG.handlers:
@@ -267,7 +268,7 @@ def _open_logs(id_, no_detach, restart=False):
             LOG.removeHandler(LOG.handlers[0])
     log_path = get_workflow_run_scheduler_log_path(id_)
     LOG.addHandler(
-        TimestampRotatingFileHandler(log_path, no_detach, restart=restart)
+        TimestampRotatingFileHandler(log_path, no_detach, log_num,restart=restart)
     )
 
 
@@ -339,8 +340,39 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     if not options.no_detach:
         from cylc.flow.daemonize import daemonize
         daemonize(scheduler)
+    
+    # check for existence for db to determine if restart
+    db_path = Path(
+            get_workflow_run_dir(
+                workflow_id,
+                WorkflowFiles.Service.DIRNAME,
+                WorkflowFiles.Service.DB
+            )
+            )
+    # we will be incrementing this
+    log_num=0
+    restart = db_path.exists()
+    if restart:
+        # Access the db to check for restart number (needed for log file name)
+        # open db
+        # read db for n_restart increment it
+        try:
+            conn = sqlite3.connect(db_path, timeout=10.0)
+            previous_restart_version = int(conn.execute(rf"""
+            SELECT
+                value
+            FROM
+                'workflow_params'
+            WHERE
+                key == 'n_restart'
+        """ ).fetchone()[0])
+            conn.close()
+            log_num = previous_restart_version 
+        except Exception:
+            # Catch all exceptions here with no recourse.
+            pass
 
-    # setup loggers, checking for existence for db to determine if restart
+    # setup loggers
     _open_logs(
         workflow_id,
         options.no_detach,
@@ -350,7 +382,8 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
                 WorkflowFiles.Service.DIRNAME,
                 WorkflowFiles.Service.DB
             )
-        ).exists())
+        ).exists(),
+        log_num=log_num)
 
     # run the workflow
     ret = asyncio.run(
