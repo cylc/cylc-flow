@@ -45,6 +45,10 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4863](https://github.com/cylc/cylc-flow/pull/4863) - Execution timeout is no
+longer set based on execution time limit. Fixes bug where execution timeout
+would get overridden.
+
 [#4844](https://github.com/cylc/cylc-flow/pull/4844) - Fixes bug where
 execution polling intervals used in combination with an execution time limit
 resulted in incorrect polling intervals.

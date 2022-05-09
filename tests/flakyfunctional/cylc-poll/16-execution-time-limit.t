@@ -58,12 +58,12 @@ __PYTHON__
 LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
 # Test logging of the "next job poll" message when task starts.
 TEST_NAME="${TEST_NAME_BASE}-log-entry"
-LINE="$(grep '\[1/foo\ .* execution timeout=PT10S' "${LOG}")"
-run_ok "${TEST_NAME}" grep -q 'health: execution timeout=PT10S' <<< "${LINE}"
+LINE="$(grep '\[1/foo\ .* execution timeout=None, polling intervals=' "${LOG}")"
+run_ok "${TEST_NAME}" grep -q 'health: execution timeout=None, polling intervals=' <<< "${LINE}"
 # Determine poll times.
 PREDICTED_POLL_TIME=$(time_offset \
     "$(cut -d ' ' -f 1 <<< "${LINE}")" \
-    "$(sed -n 's/^.*execution timeout=\([^,]\+\).*$/\1/p' <<< "${LINE}")")
+    "PT10S") # PT5S time limit + PT5S polling interval
 ACTUAL_POLL_TIME=$(sed -n \
     's|\(.*\) INFO - \[1/foo running .* (polled)failed .*|\1|p' "${LOG}")
 
