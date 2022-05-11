@@ -95,6 +95,7 @@ from cylc.flow.platforms import (
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
 from cylc.flow.subprocpool import SubProcPool
+from cylc.flow.templatevars import eval_var
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_events import WorkflowEventHandler
 from cylc.flow.workflow_status import StopMode, AutoRestartMode
@@ -1236,7 +1237,7 @@ class Scheduler:
         key, value = row
         # Command line argument takes precedence
         if key not in self.template_vars:
-            self.template_vars[key] = value
+            self.template_vars[key] = eval_var(value)
 
     def run_event_handlers(self, event, reason=""):
         """Run a workflow event handler.
