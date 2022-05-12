@@ -31,12 +31,13 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
         script = sleep 1
 __FLOW_CONFIG__
 run_fail "${TEST_NAME_BASE}" cylc validate .
-cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
+cmp_ok_re "${TEST_NAME_BASE}.stderr" <<'__ERROR__'
 Jinja2Error: You can only sort by either "key" or "value"
-Context lines:
-[scheduling]
-    [[graph]]
-        R1 = {{ foo|dictsort(by='by') }}	<-- FilterArgumentError
+File.*
+  {% set foo = {} %}
+  \[scheduling\]
+      \[\[graph\]\]
+          R1 = {{ foo\|dictsort\(by='by'\) }}	<-- FilterArgumentError
 __ERROR__
 
 exit

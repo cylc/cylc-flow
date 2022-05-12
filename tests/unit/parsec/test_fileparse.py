@@ -135,11 +135,15 @@ def test_file_parse_error():
     error = FileParseError("", line="test")
     assert str(error) == ":\n   test"
 
-    error = FileParseError("", lines=["a", "b"])
-    assert str(error) == (
-        "\nContext lines:\n"
-        "a\nb\t<--"
-    )
+    error = FileParseError("ERROR", lines={"a": ["1", "2"], "b": ["3"]})
+    assert str(error) == '\n'.join([
+        'ERROR',
+        'File a',
+        '  1',
+        '  2\t<--',
+        'File b',
+        '  3\t<--'
+    ])
 
 
 def test_addsect():
