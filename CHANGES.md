@@ -45,6 +45,10 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4864](https://github.com/cylc/cylc-flow/pull/4864) - Allow strings
+and more complex data type template variables to be stored correctly
+in the workflow database.
+
 [#4844](https://github.com/cylc/cylc-flow/pull/4844) - Fixes bug where
 execution polling intervals used in combination with an execution time limit
 resulted in incorrect polling intervals.
