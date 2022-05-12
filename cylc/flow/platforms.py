@@ -191,8 +191,9 @@ def platform_from_name(
             and re.match(platform_name_re, 'localhost')
         ):
             raise PlatformLookupError(
-                f'"localhost" settings will be defined by '
-                f'global.cylc[platforms][{platform_name_re}]'
+                'The "localhost" platform cannot be defined using a '
+                'regular expression. See the documentation for '
+                '"global.cylc[platforms][localhost]" for more information.'
             )
     # The list is reversed to allow user-set platforms (which are loaded
     # later than site set platforms) to be matched first and override site

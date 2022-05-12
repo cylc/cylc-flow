@@ -43,16 +43,18 @@ cat > "${RND_WORKFLOW_SOURCE}/flow.cylc" <<__HEREDOC__
 __HEREDOC__
 
 
+ERR_STR='cannot be defined using a regular expression'
+
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_fail "${TEST_NAME}" cylc validate "${RND_WORKFLOW_SOURCE}"
-grep_ok '"localhost" settings will be defined by global.cylc[platforms][localh...]' \
+grep_ok "${ERR_STR}" \
     "${TEST_NAME}.stderr" -F
 
 TEST_NAME="${TEST_NAME_BASE}-cylc-install"
 run_fail "${TEST_NAME}" cylc install \
     "${RND_WORKFLOW_SOURCE}" \
     --workflow-name "${RND_WORKFLOW_NAME}"
-grep_ok '"localhost" settings will be defined by global.cylc[platforms][localh...]' \
+grep_ok "${ERR_STR}" \
     "${TEST_NAME}.stderr" -F
 
 purge_rnd_workflow

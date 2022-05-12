@@ -906,6 +906,18 @@ with Conf('global.cylc', desc='''
                If you had a supercomputer with multiple login nodes this would
                be a single platform with multiple :cylc:conf:`hosts`.
 
+            .. warning::
+
+               ``[platforms][localhost]`` may be set, to override default
+               settings, but regular expressions which match "localhost"
+               may not. Use comma separated lists instead:
+
+               .. code-block:: cylc
+
+                  [platforms]
+                      [[localhost|cylc-server-..]]  # error
+                      [[localhost, cylc-server-..]]  # ok
+
             .. seealso::
 
                - :ref:`MajorChangesPlatforms` in the Cylc 8 migration guide.
