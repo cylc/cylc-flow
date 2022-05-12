@@ -1110,7 +1110,7 @@ class TaskJobManager:
         # - Platform exists, host doesn't = eval platform_name
         # - host exists - eval host_n
         # remove at:
-        #     Cylc9
+        #     Cylc8.x
         if (
             rtconfig['platform'] is not None and
             rtconfig['remote']['host'] is not None

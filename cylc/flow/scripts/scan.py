@@ -164,6 +164,9 @@ RICH_FIELDS = {
 }
 
 
+BAD_CONTACT_FILE_MSG = "Bad contact file: {flow_name}"
+
+
 def get_option_parser() -> COP:
     """CLI opts for "cylc scan"."""
     parser = COP(
@@ -296,7 +299,11 @@ def _format_json(items, _):
 def _format_plain(flow, _):
     """A single line format of the form: <name> [<host>:<port>]"""
     if flow.get('contact'):
-        return f'<b>{flow["name"]}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}'
+        try:
+            return f"<b>{flow['name']}</b> {flow[Cont.HOST]}:{flow[Cont.PORT]}"
+        except KeyError:
+            LOG.warning(BAD_CONTACT_FILE_MSG.format(flow_name=flow['name']))
+            return None
     else:
         return f'<{DIM}><b>{flow["name"]}</b></{DIM}>'
 
@@ -368,7 +375,9 @@ async def _sorted(pipe, formatter, opts, write):
     async for item in pipe:
         ret.append(item)
     for flow in sorted(ret, key=sort_function):
-        write(formatter(flow, opts))
+        out = formatter(flow, opts)
+        if out is not None:
+            write(out)
 
 
 async def _serial(pipe, formatter, opts, write):
@@ -376,13 +385,17 @@ async def _serial(pipe, formatter, opts, write):
     ret = []
     async for item in pipe:
         ret.append(item)
-    write(formatter(ret, opts))
+    out = formatter(ret, opts)
+    if out is not None:
+        write(out)
 
 
 async def _async(pipe, formatter, opts, write):
     """List and print flows individually."""
     async for flow in pipe:
-        write(formatter(flow, opts))
+        out = formatter(flow, opts)
+        if out is not None:
+            write(out)
 
 
 async def _tree(pipe, formatter, opts, write):
@@ -392,9 +405,17 @@ async def _tree(pipe, formatter, opts, write):
     async for flow in pipe:
         ret.append(flow)
 
-    # construct tree
     tree = {}
-    for flow in sorted(ret, key=lambda f: f['name']):
+    _construct_tree(ret, tree, formatter, opts, write)
+
+    # print tree
+    ret = get_tree(tree, '', sort=False, use_unicode=True)
+    write('\n'.join(ret))
+
+
+def _construct_tree(flows, tree, formatter, opts, write):
+    """Construct the tree, for given flows and formatter."""
+    for flow in sorted(flows, key=lambda f: f['name']):
         parts = Path(flow['name']).parts
         pointer = tree
         for part in parts[:-1]:
@@ -403,13 +424,12 @@ async def _tree(pipe, formatter, opts, write):
             pointer = pointer[part]
         flow['name'] = parts[-1]
         item = formatter(flow, opts)
+        if item is None:
+            continue
+
         if len(parts) > 1:
             item = f' {item}'
         pointer[item] = ''
-
-    # print tree
-    ret = get_tree(tree, '', sort=False, use_unicode=True)
-    write('\n'.join(ret))
 
 
 def get_pipe(opts, formatter, scan_dir=None):

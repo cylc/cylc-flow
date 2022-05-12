@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------
 # Test for Timezone = Z
-# TODO deprecated suite.rc section at Cylc 9
+# TODO remove deprecated suite.rc section at Cylc 8.x
 
 . "$(dirname "$0")/test_header"
 
