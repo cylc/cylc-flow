@@ -30,12 +30,13 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 {{ 1 / 'foo' }}
 __FLOW_CONFIG__
 run_fail "${TEST_NAME}" cylc validate .
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error: unsupported operand type(s) for /: 'int' and 'str'
-Context lines:
-    [[graph]]
-        R1 = foo
-{{ 1 / 'foo' }}	<-- TypeError
+cmp_ok_re "${TEST_NAME}.stderr" <<'__ERROR__'
+Jinja2Error: unsupported operand type\(s\) .* 'int' and 'str'
+File.*
+  \[scheduling\]
+      \[\[graph\]\]
+          R1 = foo
+  {{ 1 / 'foo' }}	<-- TypeError
 __ERROR__
 
 TEST_NAME="${TEST_NAME}-value-error"
@@ -45,12 +46,12 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
 {% set a, b, c = foo %}
 __FLOW_CONFIG__
 run_fail "${TEST_NAME}" cylc validate .
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error: not enough values to unpack (expected 3, got 2)
-Context lines:
-#!Jinja2
-{% set foo = [1, 2] %}
-{% set a, b, c = foo %}	<-- ValueError
+cmp_ok_re "${TEST_NAME}.stderr" <<'__ERROR__'
+Jinja2Error: not enough values to unpack \(expected 3, got 2\)
+File.*
+  #!Jinja2
+  {% set foo = \[1, 2\] %}
+  {% set a, b, c = foo %}	<-- ValueError
 __ERROR__
 
 exit
