@@ -23,12 +23,13 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
 run_fail "${TEST_NAME}" cylc validate .
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
+cmp_ok_re "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: flow-foo.cylc
-Context lines:
-        R1 = foo
-[runtime]
-{% include 'flow-foo.cylc' %}	<-- TemplateNotFound
+File.*
+      \[\[graph\]\]
+          R1 = foo
+  \[runtime\]
+  {% include 'flow-foo.cylc' %}	<-- TemplateNotFound
 __ERROR__
 #-------------------------------------------------------------------------------
 purge

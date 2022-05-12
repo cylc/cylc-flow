@@ -19,13 +19,14 @@ Importing code should catch ImportError in case Jinja2 is not installed.
 """
 
 from contextlib import suppress
+from glob import glob
 import importlib
 import os
 import pkgutil
 import re
 import sys
 import traceback
-from glob import glob
+import typing as t
 
 from jinja2 import (
     BaseLoader,
@@ -39,7 +40,9 @@ from jinja2 import (
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import Jinja2Error
 
-TRACEBACK_LINENO = re.compile(r'(\s+)?File "<template>", line (\d+)')
+TRACEBACK_LINENO = re.compile(
+    r'\s+?File "(?P<file>.*)", line (?P<line>\d+), in .*template'
+)
 CONTEXT_LINES = 3
 
 
@@ -189,22 +192,65 @@ def jinja2environment(dir_=None):
     return env
 
 
-def get_error_location():
-    """Extract template line number from end of traceback.
+def get_error_lines(
+    base_template_file: str,
+    template_lines: t.List[str],
+) -> t.Dict[str, t.List[str]]:
+    """Extract exception lines from Jinja2 tracebacks.
 
     Returns:
-        int: The line number or None if not found.
+        {filename: [exception_line, ...]}
+
+        There may be multiple entries due to {% include %} statements.
 
     """
+    ret = {}
     for line in reversed(traceback.format_exc().splitlines()):
         match = TRACEBACK_LINENO.match(line)
+        lines = None
         if match:
-            return int(match.groups()[1])
-    return None
+            filename = match.groupdict()['file']
+            lineno = int(match.groupdict()['line'])
+            start_line = max(lineno - CONTEXT_LINES, 0)
+            if filename == '<template>':
+                filename = base_template_file
+                lineno += 1  # shebang line ignored by jinja2
+                lines = template_lines[start_line:lineno]
+            else:
+                with suppress(FileNotFoundError):  # noqa: SIM117
+                    with open(filename, 'r') as jinja2_file:
+                        jinja2_file.seek(start_line, 0)
+                        lines = [
+                            # use splitlines to remove the newline char at the
+                            # end of the line
+                            jinja2_file.readline().splitlines()[0]
+                            for _ in range(CONTEXT_LINES)
+                        ]
+            if lines:
+                ret[filename] = lines
+
+    return ret
 
 
-def jinja2process(flines, dir_, template_vars=None):
-    """Pass configure file through Jinja2 processor."""
+def jinja2process(
+    fpath: str,
+    flines: t.List[str],
+    dir_: str,
+    template_vars: t.Dict[str, t.Any] = None,
+) -> t.List[str]:
+    """Pass configure file through Jinja2 processor.
+
+    Args:
+        fpath:
+            The path to the root template file (i.e. the flow.cylc file)
+        flines:
+            List of template lines to process.
+        dir_:
+            The path to the configuration directory.
+        template_vars:
+            Dictionary of template variables.
+
+    """
     # Load file lines into a template, excluding '#!jinja2' so that
     # '#!cylc-x.y.z' rises to the top. Callers should handle jinja2
     # TemplateSyntaxerror and TemplateError.
@@ -240,18 +286,17 @@ def jinja2process(flines, dir_, template_vars=None):
                 lines = []
                 for _ in range(CONTEXT_LINES):
                     lines.append(include_file.readline().splitlines()[0])
-        if lines:
-            # extract context lines from source lines
-            lines = lines[max(exc.lineno - CONTEXT_LINES, 0):exc.lineno]
 
-        raise Jinja2Error(exc, lines=lines, filename=filename)
+        raise Jinja2Error(
+            exc,
+            lines=get_error_lines(fpath, flines),
+            filename=filename
+        )
     except Exception as exc:
-        lineno = get_error_location()
-        lines = None
-        if lineno:
-            lineno += 1  # shebang line ignored by jinja2
-            lines = flines[max(lineno - CONTEXT_LINES, 0):lineno]
-        raise Jinja2Error(exc, lines=lines)
+        raise Jinja2Error(
+            exc,
+            lines=get_error_lines(fpath, flines),
+        )
 
     flow_config = []
     for line in lines:
