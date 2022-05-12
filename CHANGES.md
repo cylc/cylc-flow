@@ -48,6 +48,10 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4864](https://github.com/cylc/cylc-flow/pull/4864) - Allow strings
+and more complex data type template variables to be stored correctly
+in the workflow database.
+
 [#4863](https://github.com/cylc/cylc-flow/pull/4863) - Execution timeout is no
 longer set based on execution time limit. Fixes bug where execution timeout
 would get overridden.
