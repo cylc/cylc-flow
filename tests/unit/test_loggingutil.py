@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from pathlib import Path
 import tempfile
 import pytest
 
@@ -26,6 +27,7 @@ from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler, CylcLogFormatter)
 from cylc.flow.scheduler import Scheduler
 
+from typing import Callable
 
 @mock.patch("cylc.flow.loggingutil.glbl_cfg")
 def test_value_error_raises_system_exit(
@@ -102,3 +104,28 @@ def test_CylcLogFormatter__init__dev_info(dev_info, expect):
     """dev_info switch changes the logging format string."""
     formatter = CylcLogFormatter(dev_info=dev_info)
     assert formatter._fmt == expect
+
+
+def test_update_log_archive(tmp_run_dir: Callable):
+    """Test log archive performs as expected"""
+    
+    run_dir = tmp_run_dir('some_workflow')
+    log_dir = Path(run_dir / 'log' / 'scheduler')
+    log_dir.mkdir(exist_ok=True, parents=True)
+    log_file = log_dir.joinpath('log')
+    log_file.touch()
+    log_object = TimestampRotatingFileHandler(log_file,
+                                              no_detach=False,
+                                              log_num=0
+                                              )
+
+    for i in range(1, 14):
+        (log_dir/f'start-{str(i)}.log').touch()
+    log_object.update_log_archive(4)
+    assert list((log_dir.iterdir())).sort()==[
+        Path(log_dir/'log'),
+        Path(log_dir/'start-10.log'),
+        Path(log_dir/'start-11.log'),
+        Path(log_dir/'start-12.log'),
+        Path(log_dir/'start-13.log')].sort()
+

@@ -78,7 +78,6 @@ from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
     get_workflow_run_job_dir,
-    get_workflow_run_scheduler_log_dir,
     get_workflow_run_pub_db_path,
     get_workflow_run_scheduler_log_path)
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill

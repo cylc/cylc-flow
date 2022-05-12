@@ -34,9 +34,7 @@ from typing import Optional
 from ansimarkup import parse as cparse
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.wallclock import (
-    get_current_time_string, get_time_string_from_unix_time
-)
+from cylc.flow.wallclock import get_time_string_from_unix_time
 
 
 LOG_FILE_EXTENSION = '.log'
@@ -220,12 +218,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         arch_len = glbl_cfg().get(
             ['scheduler', 'logging', 'rolling archive length'])
         if arch_len:
-            log_files = glob(str(
-                Path(self.baseFilename).parent / f"*{LOG_FILE_EXTENSION}")
-            )
-            log_files.sort()
-            while len(log_files) > arch_len:
-                os.unlink(log_files.pop(0))
+            self.update_log_archive(arch_len)
         # Reopen stream, redirect STDOUT and STDERR to log
         if self.stream:
             self.stream.close()
@@ -243,6 +236,19 @@ class TimestampRotatingFileHandler(logging.FileHandler):
                 header_record.args = header_record.args[0:-1] + (
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)
+
+    def update_log_archive(self, arch_len):
+        """Maintain configured log file archive.
+            - Sort logs by file modification time
+            - Delete old log files in line with archive length configured in
+              Global Config.
+        """
+        log_files = glob(str(
+            Path(self.baseFilename).parent / f"*{LOG_FILE_EXTENSION}"))
+        # Sort log files by modification time
+        log_files.sort(key=os.path.getmtime)
+        while len(log_files) > arch_len:
+            os.unlink(log_files.pop(0))
 
     def get_new_log_filename(self):
         """Build filename for log"""

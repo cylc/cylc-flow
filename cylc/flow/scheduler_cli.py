@@ -268,7 +268,11 @@ def _open_logs(id_, no_detach, restart=False, log_num=1):
             LOG.removeHandler(LOG.handlers[0])
     log_path = get_workflow_run_scheduler_log_path(id_)
     LOG.addHandler(
-        TimestampRotatingFileHandler(log_path, no_detach, log_num,restart=restart)
+        TimestampRotatingFileHandler(
+            log_path,
+            no_detach,
+            log_num,
+            restart=restart)
     )
 
 
@@ -340,17 +344,15 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     if not options.no_detach:
         from cylc.flow.daemonize import daemonize
         daemonize(scheduler)
-    
     # check for existence for db to determine if restart
     db_path = Path(
-            get_workflow_run_dir(
-                workflow_id,
-                WorkflowFiles.Service.DIRNAME,
-                WorkflowFiles.Service.DB
-            )
-            )
-    # we will be incrementing this
-    log_num=0
+        get_workflow_run_dir(
+            workflow_id,
+            WorkflowFiles.Service.DIRNAME,
+            WorkflowFiles.Service.DB
+        )
+    )
+    log_num = 0
     restart = db_path.exists()
     if restart:
         # Access the db to check for restart number (needed for log file name)
@@ -358,16 +360,16 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         # read db for n_restart increment it
         try:
             conn = sqlite3.connect(db_path, timeout=10.0)
-            previous_restart_version = int(conn.execute(rf"""
+            previous_restart_version = int(conn.execute(r"""
             SELECT
                 value
             FROM
                 'workflow_params'
             WHERE
                 key == 'n_restart'
-        """ ).fetchone()[0])
+            """).fetchone()[0])
             conn.close()
-            log_num = previous_restart_version 
+            log_num = previous_restart_version
         except Exception:
             # Catch all exceptions here with no recourse.
             pass
