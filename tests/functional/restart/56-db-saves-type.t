@@ -21,9 +21,10 @@ set_test_number 3
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 #!Jinja2
 
-{{ assert(a_str is string, 'variable "a_str" was not a string') }}
-{{ assert(an_int is integer, 'variable "an_int" was not an int') }}
-{{ assert(a_float is float, 'variable "a_float" was not a float') }}
+{{ assert(a_str == 'foo', 'variable "a_str" was not a string') }}
+{{ assert(an_int == 24, 'variable "an_int" was not an int') }}
+{{ assert(a_float ==  1.1111, 'variable "a_float" was not a float') }}
+{{ assert(complex == {'foo': [True, 42, 'string']}, 'Complex variable did not validate')}}
 
 
 [scheduler]
@@ -36,15 +37,13 @@ __FLOW_CONFIG__
 
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
-    --set "a_str='foo'" --set "an_int=24" --set "a_float=1.1111"
+    --set "a_str='foo'" --set "an_int=24" --set "a_float=1.1111" --set "complex={'foo': [True, 42, 'string']}"
+
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug "${WORKFLOW_NAME}" --pause\
-    --set "a_str='foo'" --set "an_int=24" --set "a_float=1.1111"
+    --set "a_str='foo'" --set "an_int=24" --set "a_float=1.1111" --set "complex={'foo': [True, 42, 'string']}"
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT * FROM workflow_template_vars' >'sqlite3.out'
-
-# Chop the bottom of the file off to avoid issues with Cylc Version.
-head -n 3 sqlite3.out > sqlite3.out2
 
 cylc stop "${WORKFLOW_NAME}"
 
