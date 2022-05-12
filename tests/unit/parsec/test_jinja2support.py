@@ -65,14 +65,14 @@ def test_jinja2environment(tmp_path):
 def test_jinja2process(tmp_path):
     lines = ["skipped", "My name is {{ name }}", ""]
     variables = {'name': 'Cylc'}
-    r = jinja2process(lines, tmp_path, variables)
+    r = jinja2process(None, lines, tmp_path, variables)
     assert ['My name is Cylc'] == r
 
 
 def test_jinja2process_missing_variables(tmp_path):
     lines = ["skipped", "My name is {{ name }}", ""]
     with pytest.raises(Jinja2Error) as exc:
-        jinja2process(lines, tmp_path, template_vars=None)
+        jinja2process(None, lines, tmp_path, template_vars=None)
         assert 'jinja2.UndefinedError' in str(exc)
 
 

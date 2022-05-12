@@ -23,12 +23,13 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
 run_fail "${TEST_NAME}" cylc validate .
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
+cmp_ok_re "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: 'UNDEFINED_WHATEVER' is undefined
-Context lines:
-    [[graph]]
-        R1 = foo
-    [[[{{ UNDEFINED_WHATEVER }}]]]	<-- UndefinedError
+File.*
+  \[scheduling\]
+      \[\[graph\]\]
+          R1 = foo
+      \[\[\[{{ UNDEFINED_WHATEVER }}\]\]\]	<-- UndefinedError
 __ERROR__
 #-------------------------------------------------------------------------------
 purge

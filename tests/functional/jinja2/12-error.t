@@ -15,23 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation for a bad Jinja2 TemplateSyntaxError in a workflow cylc include.
+# ensure parsec can pull out the Jinja2 error lines even when they are behind
+# an include statement
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
 set_test_number 2
+
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-val"
-run_fail "${TEST_NAME}" cylc validate .
-cmp_ok_re "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error: Encountered unknown tag 'end'.
-Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
-The innermost block that needs to be closed is 'if'.
-File.*
-          {% if true %}
-          R1 = foo
-          {% end if %	<-- TemplateSyntaxError
-__ERROR__
-#-------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}-validate"
+run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
+cmp_ok_re "${TEST_NAME}.stderr" <<__HERE__
+Jinja2Error: .* some error
+File .*foo.cylc
+  # line before error
+  {{ raise\('some error'\) }}
+  # line after error.*<-- Exception
+File .*flow.cylc
+  #!Jinja2
+  
+  # line before include
+  {% include "foo.cylc" %}.*<-- Exception
+__HERE__
+
 purge
 exit

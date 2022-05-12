@@ -1510,7 +1510,6 @@ class TaskEventsManager():
                     'execution time limit polling intervals')
                 if not time_limit_delays:
                     time_limit_delays = [60, 120, 420]
-                timeout = time_limit + sum(time_limit_delays)
                 if sum(delays) > time_limit:
                     # Remove excessive polling before time limit
                     while sum(delays) > time_limit:

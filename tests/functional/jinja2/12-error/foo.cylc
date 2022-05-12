@@ -1,0 +1,3 @@
+# line before error
+{{ raise('some error') }}
+# line after error

@@ -41,7 +41,7 @@ class TestEmpysupport1(unittest.TestCase):
         variables = {'name': 'Cylc'}
         template_dir = tempfile.gettempdir()
 
-        r = empysupport.empyprocess(lines, template_dir, variables)
+        r = empysupport.empyprocess(None, lines, template_dir, variables)
         # after this, we would normally have an error in unittest as follows:
         # AttributeError: ProxyFile instance has no attribute 'getvalue'
         # That's due to a Proxy installed by EmPy to replace sys.stdout.
@@ -56,7 +56,7 @@ class TestEmpysupport1(unittest.TestCase):
         lines = []
         template_dir = tempfile.gettempdir()
 
-        r = empysupport.empyprocess(lines, template_dir)
+        r = empysupport.empyprocess(None, lines, template_dir)
 
         self.assertEqual(0, len(r))
 
