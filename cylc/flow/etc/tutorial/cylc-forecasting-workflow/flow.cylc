@@ -1,3 +1,7 @@
+#!jinja2
+
+{% from "sys" import path, executable %}
+
 [scheduler]
     UTC mode = True
 [task parameters]
@@ -42,6 +46,11 @@
             RESOLUTION = 0.2
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
             DOMAIN = -12,48,5,61  # Do not change!
+
+            # These environment variables ensure that tasks can
+            # run in the same environment as the workflow:
+            PYTHONPATH = {{':'.join(path)}}
+            PATH = $(dirname {{executable}}):$PATH
 
     [[get_observations<station>]]
         script = get-observations
