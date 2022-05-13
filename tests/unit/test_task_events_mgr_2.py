@@ -61,16 +61,12 @@ def test_get_remote_conf(broadcast, remote, platforms, expected):
     assert task_events_mgr._get_remote_conf(itask, 'host') == expected
 
 
-DEFAULT = [900]
-
-
 @pytest.mark.parametrize(
     "broadcast, workflow, platforms, expected",
     [
         ([800], [700], [600], [800]),
         (None, [700], [600], [700]),
         (None, None, [600], [600]),
-        (None, None, None, DEFAULT),
     ]
 )
 def test_get_workflow_platforms_conf(broadcast, workflow, platforms, expected):
@@ -100,6 +96,6 @@ def test_get_workflow_platforms_conf(broadcast, workflow, platforms, expected):
     )
 
     assert (
-        task_events_mgr._get_workflow_platforms_conf(itask, KEY, DEFAULT) ==
+        task_events_mgr._get_workflow_platforms_conf(itask, KEY) ==
         expected
     )

@@ -66,11 +66,6 @@ SYSPATH = [
 
 TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
 REPLACES = 'This item was previously called '
-MOVEDFROMJOB = '''
-.. versionchanged:: 8.0.0
-
-   Moved from ``suite.rc[runtime][<namespace>]job``.
-'''
 
 
 PLATFORM_META_DESCR = '''
@@ -939,6 +934,10 @@ with Conf('global.cylc', desc='''
                  * ``background``
                  * ``slurm``
                  *  ``pbs``
+
+                .. seealso::
+
+                   :ref:`List of built-in Job Runners <AvailableMethods>`
             ''')
             Conf('job runner command template', VDR.V_STRING, desc=f'''
                 Set the command used by the chosen job runner.
@@ -951,9 +950,11 @@ with Conf('global.cylc', desc='''
                 The template's ``%(job)s`` will be
                 substituted by the job file path.
             ''')
-            Conf('shell', VDR.V_STRING, '/bin/bash', desc=f'''
+            Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
 
-                {MOVEDFROMJOB}
+                .. versionchanged:: 8.0.0
+
+                   Moved from ``suite.rc[runtime][<namespace>]job``.
 
             ''')
             Conf('communication method',
@@ -971,59 +972,48 @@ with Conf('global.cylc', desc='''
                 ssh
                    Use non-interactive ssh for task communications
             ''')
-            # TODO ensure that it is possible to over-ride the following three
-            # settings in workflow config.
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, desc=f'''
+            Conf('submission polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(900)],
+                 desc='''
                 List of intervals at which to poll status of job submission.
 
-                {MOVEDFROMJOB}
-
-                Cylc can poll submitted jobs to catch problems that
-                prevent the submitted job from executing at all, such as
-                deletion from an external job runner queue. Routine
-                polling is done only for the polling ``task communication
-                method`` unless workflow-specific polling is configured in
-                the workflow configuration. A list of interval values can be
-                specified as for execution polling but a single value
-                is probably sufficient for job submission polling.
-
-                Example::
-
-                   5*PT1M, 10*PT5M
+                This config item is the default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>]
+                submission polling intervals`.
             ''')
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
-            {MOVEDFROMJOB}
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None,
+                 desc='''
+                Cylc can automatically resubmit jobs after submission failures.
+
+                This config item is the default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>]
+                submission retry delays`
             ''')
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, desc=f'''
+            Conf('execution polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(900)],
+                 desc='''
                 List of intervals at which to poll status of job execution.
 
-                {MOVEDFROMJOB}
+                Default for :cylc:conf:`flow.cylc[runtime][<namespace>]
+                execution polling intervals`.
+            ''')
+            Conf('execution time limit polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(60), DurationFloat(120), DurationFloat(420)],
+                 desc='''
+                List of intervals after execution time limit to poll jobs.
 
-                Cylc can poll running jobs to catch problems that prevent task
-                messages from being sent back to the workflow, such as hard job
-                kills, network outages, or unplanned task host shutdown.
-                Routine polling is done only for the polling *task
-                communication method* (below) unless polling is
-                configured in the workflow configuration.  A list of interval
-                values can be specified, with the last value used repeatedly
-                until the task is finished - this allows more frequent polling
-                near the beginning and end of the anticipated task run time.
+                If a job exceeds its execution time limit, Cylc can poll
+                more frequently to detect the expected job completion quickly.
+                The last interval in the list is used repeatedly until the job
+                completes.
                 Multipliers can be used as shorthand as in the example below.
 
                 Example::
 
-                   5*PT1M, 10*PT5M
-            ''')
-            Conf('execution time limit polling intervals',
-                 VDR.V_INTERVAL_LIST, desc='''
-                List of intervals after execution time limit to poll jobs.
-
-                The intervals between polling after a task job (submitted to
-                the relevant job runner on the relevant host) exceeds its
-                execution time limit. The default setting is PT1M, PT2M, PT7M.
-                The accumulated times (in minutes) for these intervals will be
-                roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
-                exceeds its execution time limit.
+                   5*PT2M, PT5M
             ''')
             Conf('ssh command',
                  VDR.V_STRING,
