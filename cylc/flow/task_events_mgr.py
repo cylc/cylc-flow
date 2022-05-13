@@ -1506,7 +1506,6 @@ class TaskEventsManager():
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
                 time_limit_delays = itask.platform.get(
                     'execution time limit polling intervals')
-                timeout = time_limit + sum(time_limit_delays)
                 if sum(delays) > time_limit:
                     # Remove excessive polling before time limit
                     while sum(delays) > time_limit:

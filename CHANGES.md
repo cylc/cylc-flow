@@ -35,6 +35,9 @@ Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4842](https://github.com/cylc/cylc-flow/pull/4842) -
+Improve Jinja2 error reporting when the error is behind an `{% include`.
+
 [#4828](https://github.com/cylc/cylc-flow/pull/4828) - scan CLI: corrupt
 workflow contact files should result in a warning, not a crash.
 
@@ -44,6 +47,14 @@ workflow source argument), and rename the `--flow-name` option to
 `--workflow-name`.
 
 ### Fixes
+
+[#4864](https://github.com/cylc/cylc-flow/pull/4864) - Allow strings
+and more complex data type template variables to be stored correctly
+in the workflow database.
+
+[#4863](https://github.com/cylc/cylc-flow/pull/4863) - Execution timeout is no
+longer set based on execution time limit. Fixes bug where execution timeout
+would get overridden.
 
 [#4844](https://github.com/cylc/cylc-flow/pull/4844) - Fixes bug where
 execution polling intervals used in combination with an execution time limit

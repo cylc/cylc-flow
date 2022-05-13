@@ -23,15 +23,15 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-val"
 run_fail "${TEST_NAME}" cylc validate .
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
+cmp_ok_re "${TEST_NAME}.stderr" <<'__ERROR__'
 Jinja2Error: Encountered unknown tag 'end'.
 Error in file "flow-includeme.cylc"
 Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
 The innermost block that needs to be closed is 'if'.
-Context lines:
-        {% if true %}
-        R1 = foo
-        {% end if %	<-- TemplateSyntaxError
+File .*
+          {% if true %}
+          R1 = foo
+          {% end if %	<-- TemplateSyntaxError
 __ERROR__
 #-------------------------------------------------------------------------------
 purge
