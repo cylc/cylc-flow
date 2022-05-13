@@ -41,3 +41,5 @@
     [[forecast]]
     [[get_rainfall]]
     [[post_process_exeter]]
+
+{% include 'etc/python-job.settings' %}
