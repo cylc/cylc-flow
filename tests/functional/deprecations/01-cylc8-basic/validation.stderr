@@ -50,6 +50,3 @@ WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged
 WARNING - deprecated graph items were automatically upgraded in "workflow definition":
      * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
            P1D
-WARNING - * (8.0.0) '[runtime][foo, cat, dog]execution polling intervals' - this setting is deprecated; use 'global.cylc[platforms][<platform name>]execution polling intervals' instead. Currently, this item will override the corresponding item in global.cylc.
-WARNING - * (8.0.0) '[runtime][foo, cat, dog]submission polling intervals' - this setting is deprecated; use 'global.cylc[platforms][<platform name>]submission polling intervals' instead. Currently, this item will override the corresponding item in global.cylc.
-WARNING - * (8.0.0) '[runtime][foo, cat, dog]submission retry delays' - this setting is deprecated; use 'global.cylc[platforms][<platform name>]submission retry delays' instead. Currently, this item will override the corresponding item in global.cylc.

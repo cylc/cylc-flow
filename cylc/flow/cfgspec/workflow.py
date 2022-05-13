@@ -16,7 +16,6 @@
 """Define all legal items and values for cylc workflow definition files."""
 
 import contextlib
-from itertools import product
 import re
 from textwrap import dedent
 from typing import Any, Dict, Optional, Set
@@ -1118,13 +1117,40 @@ with Conf(
 
                 Example:
 
-                ``$CYLC_TASK_CYCLE_POINT/shared/``
+                   ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
             Conf(
                 'execution polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                desc='''
+                    List of intervals at which to poll status of job execution.
+
+                    Cylc can poll running jobs to catch problems that prevent
+                    task messages from being sent back to the workflow, such
+                    as hard job kills, network outages, or unplanned job
+                    host shutdown.
+
+                    The last interval in the list is used repeatedly until
+                    the job completes.
+
+                    Multipliers can be used as shorthand as in the example
+                    below.
+
+                    Example::
+
+                       5*PT2M, PT5M
+
+                    Note that if the polling
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    communication method` is used then Cylc relies on polling
+                    to detect all task state changes, so you may want to
+                    configure more frequent polling.
+
+                    This config item overrides
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    execution polling intervals`
+                    '''
             )
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
                 Cylc can automate resubmission of a failed task job.
@@ -1155,13 +1181,52 @@ with Conf(
                 'submission polling intervals',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                desc='''
+                    List of intervals at which to poll status of job
+                    submission.
+
+                    Cylc can poll submitted jobs to catch problems that
+                    prevent the submitted job from executing at all, such as
+                    deletion from an external job runner queue.
+
+                    The last value is used repeatedly until the task starts
+                    running.
+
+                    Multipliers can be used as shorthand as in the example
+                    below.
+
+                    Example::
+
+                       5*PT2M, PT5M
+
+                    Note that if the polling
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    communication method`
+                    is used then Cylc relies on polling to detect all task
+                    state changes,
+                    so you may want to configure more
+                    frequent polling.
+
+                    This config item overrides
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    submission polling intervals`.
+                    '''
             )
             Conf(
                 'submission retry delays',
                 VDR.V_INTERVAL_LIST,
                 None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                desc='''
+                    Cylc can automatically resubmit jobs after submission
+                    failures.
+
+                    A list of intervals which define when the scheduler will
+                    resubmit jobs if submission fails.
+
+                    This config item overrides
+                    :cylc:conf:`global.cylc[platforms][<platform name>]
+                    submission retry delays`
+                    '''
             )
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
@@ -1834,25 +1899,6 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
-
-    # Warn about config items moved to global.cylc.
-    if not cylc.flow.flags.cylc7_back_compat and 'runtime' in cfg:
-        for job_setting, task in product(
-            [
-                'execution polling intervals',
-                'submission polling intervals',
-                'submission retry delays'
-            ],
-            cfg['runtime'].keys()
-        ):
-            if job_setting in cfg['runtime'][task]:
-                LOG.warning(
-                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this"
-                    " setting is deprecated; use"
-                    f" 'global.cylc[platforms][<platform name>]{job_setting}'"
-                    " instead. Currently, this item will override"
-                    " the corresponding item in global.cylc."
-                )
 
 
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:

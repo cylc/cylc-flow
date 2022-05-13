@@ -20,7 +20,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 47
+set_test_number 45
 
 create_test_global_config '' '
 [install]
@@ -226,23 +226,6 @@ run_fail "${TEST_NAME}" cylc install "${ALT_SOURCE}/${RND_WORKFLOW_NAME}"
 grep_ok "WorkflowFilesError: Symlink broken" "${TEST_NAME}.stderr"
 
 rm -rf "${ALT_SOURCE}"
-purge_rnd_workflow
-
-# -----------------------------------------------------------------------------
-# Test cylc install can not be run from within the cylc-run directory
-
-make_rnd_workflow
-TEST_NAME="${TEST_NAME_BASE}-forbid-cylc-run-dir-install"
-BASE_NAME="test-install-${CYLC_TEST_TIME_INIT}"
-mkdir -p "${RUN_DIR}/${BASE_NAME}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME}" && cd "$_" || exit
-touch flow.cylc
-run_fail "${TEST_NAME}" cylc install --workflow-name "$RND_WORKFLOW_NAME"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: ${RND_WORKFLOW_NAME} installation failed. Source directory should not be in ${RUN_DIR}.
-__ERR__
-
-cd "${RUN_DIR}" || exit
-rm -rf "${BASE_NAME}"
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------

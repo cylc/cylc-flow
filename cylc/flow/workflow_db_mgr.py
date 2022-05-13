@@ -395,7 +395,7 @@ class WorkflowDatabaseManager:
         """
         for key, value in template_vars.items():
             self.db_inserts_map[self.TABLE_WORKFLOW_TEMPLATE_VARS].append(
-                {"key": key, "value": value})
+                {"key": key, "value": repr(value)})
 
     def put_task_event_timers(self, task_events_mgr):
         """Put statements to update the task_action_timers table."""
