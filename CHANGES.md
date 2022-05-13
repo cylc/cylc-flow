@@ -35,6 +35,10 @@ Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4854](https://github.com/cylc/cylc-flow/pull/4854)
+- Expansion and merger of comma separate platform definitions permitted.
+- Platform definition regular expressions which match "localhost" but are not
+  "localhost" are now explicitly forbidden and will raise an exception.
 
 [#4842](https://github.com/cylc/cylc-flow/pull/4842) -
 Improve Jinja2 error reporting when the error is behind an `{% include`.
