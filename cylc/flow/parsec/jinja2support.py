@@ -207,12 +207,12 @@ def get_error_lines(
     ret = {}
     for line in reversed(traceback.format_exc().splitlines()):
         match = TRACEBACK_LINENO.match(line)
-        lines = None
+        lines: t.List[str] = []
         if match:
             filename = match.groupdict()['file']
             lineno = int(match.groupdict()['line'])
             start_line = max(lineno - CONTEXT_LINES, 0)
-            if filename == '<template>':
+            if filename in {'<template>', '<unknown>'}:
                 filename = base_template_file
                 lineno += 1  # shebang line ignored by jinja2
                 lines = template_lines[start_line:lineno]
