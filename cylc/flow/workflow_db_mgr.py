@@ -676,7 +676,12 @@ class WorkflowDatabaseManager:
         if not os.path.isfile(self.pri_path):
             raise FileNotFoundError(self.pri_path)
         incompat_msg = (
-            f"Workflow database is incompatible with Cylc {CYLC_VERSION}")
+            f"Workflow database is incompatible with Cylc {CYLC_VERSION}"
+        )
+        manual_rm_msg = (
+            "If you are sure you want to operate on this workflow, please "
+            f"delete the database file at {self.pri_path}"
+        )
         pri_dao = self.get_pri_dao()
         try:
             last_run_ver = pri_dao.connect().execute(
@@ -691,7 +696,9 @@ class WorkflowDatabaseManager:
                 [self.KEY_CYLC_VERSION]
             ).fetchone()[0]
         except TypeError:
-            raise ServiceFileError(f"{incompat_msg}, or is corrupted")
+            raise ServiceFileError(
+                f"{incompat_msg}, or is corrupted.\n{manual_rm_msg}"
+            )
         finally:
             pri_dao.close()
         last_run_ver = parse_version(last_run_ver)
@@ -700,4 +707,6 @@ class WorkflowDatabaseManager:
         )
         if last_run_ver <= restart_incompat_ver:
             raise ServiceFileError(
-                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})")
+                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})."
+                f"\n{manual_rm_msg}"
+            )
