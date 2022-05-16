@@ -18,7 +18,7 @@
 
 """cylc show [OPTIONS] ARGS
 
-Display workflow and task information.
+Display workflow and task information, for tasks in the datastore window.
 
 Query a running workflow for:
   # view workflow metadata
@@ -30,7 +30,10 @@ Query a running workflow for:
   # view prerequisites & outputs for a live task
   $ cylc show my_workflow//1/my_task
 
-Prerequisite and output status is indicated for current active tasks.
+Output completion status is shown for all tasks in the datastore window.
+
+Prerequisite satisfaction is not shown for past tasks reloaded from the
+workflow database.
 """
 
 import json
@@ -48,7 +51,6 @@ from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
     TASK_STATUS_RUNNING
 )
-
 from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
     CylcOptionParser as COP
