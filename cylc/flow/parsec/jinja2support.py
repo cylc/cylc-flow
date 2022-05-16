@@ -216,16 +216,16 @@ def get_error_lines(
                 filename = base_template_file
                 lineno += 1  # shebang line ignored by jinja2
                 lines = template_lines[start_line:lineno]
-            else:
-                with suppress(FileNotFoundError):  # noqa: SIM117
-                    with open(filename, 'r') as jinja2_file:
-                        jinja2_file.seek(start_line, 0)
-                        lines = [
-                            # use splitlines to remove the newline char at the
-                            # end of the line
-                            jinja2_file.readline().splitlines()[0]
-                            for _ in range(CONTEXT_LINES)
-                        ]
+            elif os.path.isfile(filename):
+                with open(filename, 'r') as jinja2_file:
+                    for i, fline in enumerate(jinja2_file, start=1):
+                        if i < start_line:
+                            continue
+                        if i > lineno:
+                            break
+                        # use splitlines to remove the newline char at the
+                        # end of the line
+                        lines.append(fline.splitlines()[0])
             if lines:
                 ret[filename] = lines
 
