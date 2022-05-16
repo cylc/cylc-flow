@@ -18,7 +18,7 @@
 # Test cylc show multiple tasks
 . "$(dirname "$0")/test_header"
 
-set_test_number 3
+set_test_number 4
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -74,6 +74,21 @@ outputs: ('-': not completed)
   - 2018/t1 succeeded
   - 2018/t1 failed
 __TXT__
+
+contains_ok "${RUND}/show2.txt" <<'__TXT__'
+
+TASK NAME: t1
+title: (not given)
+description: (not given)
+URL: (not given)
+
+TASK NAME: t2
+title: beer
+description: better than water
+abv: 12%
+URL: beer.com
+__TXT__
+
 
 purge
 exit

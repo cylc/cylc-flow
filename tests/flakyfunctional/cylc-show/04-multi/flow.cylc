@@ -8,7 +8,7 @@
     initial cycle point = 2016
     final cycle point = 2018
     [[graph]]
-        P1Y = t1[-P1Y]:start => t1
+        P1Y = t1[-P1Y]:start => t1 & t2
 
 [runtime]
     [[t1]]
@@ -18,12 +18,20 @@
                 # Ensure workflow knows about current task started
                 cylc__job__wait_cylc_message_started
                 sleep 5
-                cylc show "${CYLC_WORKFLOW_ID}//*/t1" >"${CYLC_WORKFLOW_RUN_DIR}/show.txt"
+                cylc show "${CYLC_WORKFLOW_ID}//*/t1" \
+                    >"${CYLC_WORKFLOW_RUN_DIR}/show.txt"
+                cylc show --task-def=t1 --task-def=t2 "${CYLC_WORKFLOW_ID}" \
+                    >"${CYLC_WORKFLOW_RUN_DIR}/show2.txt"
             else
                 while [[ ! -s "${CYLC_WORKFLOW_RUN_DIR}/show.txt" ]]; do
                     sleep 1
                 done
             fi
         """
-        [[[job]]]
-            execution time limit = PT1M
+        execution time limit = PT1M
+    [[t2]]
+        [[[meta]]]
+           title = beer
+           description = better than water
+           URL = beer.com
+           abv = 12%
