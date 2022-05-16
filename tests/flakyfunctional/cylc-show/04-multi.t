@@ -27,50 +27,46 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 RUND="${RUN_DIR}/${WORKFLOW_NAME}"
-cat "${RUND}/show.txt" >&2
 contains_ok "${RUND}/show.txt" <<'__TXT__'
-------
+
 Task ID: 2016/t1
 title: (not given)
 description: (not given)
 URL: (not given)
-
-prerequisites (- => not satisfied):
+state: running
+prerequisites: ('-': not satisfied)
   + 2015/t1 started
-
-outputs (- => not completed):
+outputs: ('-': not completed)
   - 2016/t1 expired
   + 2016/t1 submitted
   - 2016/t1 submit-failed
   + 2016/t1 started
   - 2016/t1 succeeded
   - 2016/t1 failed
-------
+
 Task ID: 2017/t1
 title: (not given)
 description: (not given)
 URL: (not given)
-
-prerequisites (- => not satisfied):
+state: running
+prerequisites: ('-': not satisfied)
   + 2016/t1 started
-
-outputs (- => not completed):
+outputs: ('-': not completed)
   - 2017/t1 expired
   + 2017/t1 submitted
   - 2017/t1 submit-failed
   + 2017/t1 started
   - 2017/t1 succeeded
   - 2017/t1 failed
-------
+
 Task ID: 2018/t1
 title: (not given)
 description: (not given)
 URL: (not given)
-
-prerequisites (- => not satisfied):
+state: running
+prerequisites: ('-': not satisfied)
   + 2017/t1 started
-
-outputs (- => not completed):
+outputs: ('-': not completed)
   - 2018/t1 expired
   + 2018/t1 submitted
   - 2018/t1 submit-failed
