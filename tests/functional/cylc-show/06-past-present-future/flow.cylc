@@ -1,0 +1,11 @@
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        inactivity timeout = PT1M
+        abort on inactivity timeout = True
+[scheduling]
+    [[graph]]
+        R1 = "a => b => c => d => e"
+[runtime]
+    [[c]]
+        script = "sleep 60"
