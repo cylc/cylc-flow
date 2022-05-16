@@ -6,12 +6,8 @@
 ;; ____________________________________________________________________________
 ;;
 ;; = Instructions =
-;;    Place this file in a directory on your emacs load path (or symlink it)
-;;    e.g.
-;;         mkdir -p $HOME/.emacs.d/lisp
-;;         ln -s $CYLC_HOME/etc/syntax/cylc-mode.el ~/.emacs.d/lisp/
-;;
-;;    and in your $HOME/.emacs file add the following lines:
+;;    Place this file in $HOME/.emacs.d/lisp/ (create this directory if it
+;;    doesn't exist) and add the following lines in your $HOME/.emacs file:
 ;;
 ;;         (add-to-list 'load-path "~/.emacs.d/lisp/")
 ;;         (require 'cylc-mode)
