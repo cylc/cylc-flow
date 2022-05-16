@@ -114,11 +114,7 @@
   (run-hooks 'cylc-mode-hook))
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("suite*.rc" . cylc-mode))
-(setq auto-mode-alist
-  (append
-    '(("suite*.rc" . cylc-mode)
-      ("*.cylc" . cylc-mode))
-   auto-mode-alist))
+(add-to-list 'auto-mode-alist '("suite.*\\.rc\\'" . cylc-mode))
+(add-to-list 'auto-mode-alist '("\\.cylc\\'" . cylc-mode))
 
 (provide 'cylc-mode)
