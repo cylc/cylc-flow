@@ -1,0 +1,4 @@
+#!Jinja2
+# line before
+{% set x = %}
+# line after

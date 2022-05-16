@@ -28,6 +28,7 @@ Jinja2Error: Encountered unknown tag 'end'.
 Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
 The innermost block that needs to be closed is 'if'.
 File.*
+      \[\[graph\]\]
           {% if true %}
           R1 = foo
           {% end if %	<-- TemplateSyntaxError
