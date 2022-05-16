@@ -31,28 +31,30 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 # loaded from the DB.
 cylc play "${WORKFLOW_NAME}"
 cylc workflow-state -t c -p 1 --max-polls=10 --interval=2 --status=running \
-   ${WORKFLOW_NAME} 
-cylc stop --now --max-polls=10 --interval=2 ${WORKFLOW_NAME}
+   "${WORKFLOW_NAME}"
+cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 cylc workflow-state -t c -p 1 --max-polls=10 --interval=2 --status=running \
-   ${WORKFLOW_NAME} 
-cylc play ${WORKFLOW_NAME}
-cylc show ${WORKFLOW_NAME}//1/b > show.past
-cylc show ${WORKFLOW_NAME}//1/c > show.present
-cylc show ${WORKFLOW_NAME}//1/d > show.future
-cylc stop --now --max-polls=10 --interval=2 ${WORKFLOW_NAME}
+   "${WORKFLOW_NAME}"
+cylc play "${WORKFLOW_NAME}"
 
-TEST_NAME=${TEST_NAME_BASE}-show.past
+cylc show "${WORKFLOW_NAME}//1/b" > show.past
+cylc show "${WORKFLOW_NAME}//1/c" > show.present
+cylc show "${WORKFLOW_NAME}//1/d" > show.future
+
+cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
+
+TEST_NAME="${TEST_NAME_BASE}-show.past"
 contains_ok show.past <<__END__
 prerequisites: (n/a for past tasks)
 __END__
 
-TEST_NAME=${TEST_NAME_BASE}-show.present
+TEST_NAME="${TEST_NAME_BASE}-show.present"
 contains_ok show.present <<__END__
 prerequisites: ('-': not satisfied)
   + 1/b succeeded
 __END__
 
-TEST_NAME=${TEST_NAME_BASE}-show.future
+TEST_NAME="${TEST_NAME_BASE}-show.future"
 contains_ok show.future <<__END__
 prerequisites: ('-': not satisfied)
   - 1/c succeeded
