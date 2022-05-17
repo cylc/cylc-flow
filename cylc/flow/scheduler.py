@@ -66,7 +66,10 @@ from cylc.flow.hostuserutil import (
 )
 from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
-    ReferenceLogFileHandler
+    ReferenceLogFileHandler,
+    get_next_log_number,
+    get_reload_number,
+    get_sorted_logs_by_time
 )
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
@@ -280,6 +283,16 @@ class Scheduler:
         self.barrier = Barrier(3, timeout=10)
 
         self.timers: Dict[str, Timer] = {}
+        self.workflow_run_dir = get_workflow_run_dir(self.workflow)
+        self.is_restart = Path(
+            get_workflow_run_dir(
+                self.workflow,
+                workflow_files.WorkflowFiles.Service.DIRNAME,
+                workflow_files.WorkflowFiles.Service.DB
+            )).exists()
+        self.workflow_db_mgr = WorkflowDatabaseManager(
+            workflow_files.get_workflow_srv_dir(self.workflow),  # pri_d
+            os.path.join(self.workflow_run_dir, 'log'))  # pub_d
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
@@ -300,7 +313,6 @@ class Scheduler:
 
         # directory information
         self.flow_file = workflow_files.get_flow_file(self.workflow)
-        self.workflow_run_dir = get_workflow_run_dir(self.workflow)
         self.workflow_work_dir = get_workflow_run_work_dir(self.workflow)
         self.workflow_share_dir = get_workflow_run_share_dir(self.workflow)
         self.workflow_log_dir = get_workflow_run_scheduler_log_dir(
@@ -332,9 +344,7 @@ class Scheduler:
         * Initialise managers.
 
         """
-        self.workflow_db_mgr = WorkflowDatabaseManager(
-            workflow_files.get_workflow_srv_dir(self.workflow),  # pri_d
-            os.path.join(self.workflow_run_dir, 'log'))  # pub_d
+
         self.data_store_mgr = DataStoreMgr(self)
         self.broadcast_mgr = BroadcastMgr(
             self.workflow_db_mgr, self.data_store_mgr)
@@ -410,19 +420,16 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.profiler = Profiler(self, self.options.profile_mode)
+        self.n_restart = self.workflow_db_mgr.n_restart
 
     async def configure(self):
         """Configure the scheduler.
 
-        * Load the flow configuration.
         * Load/write workflow parameters from the DB.
         * Get the data store rolling.
 
         """
         self.profiler.log_memory("scheduler.py: start configure")
-
-        # Database check determines if it is a restart
-        self.is_restart = self.workflow_db_mgr.restart_check()
 
         # Print workflow name to disambiguate in case of inferred run number
         LOG.info(f"Workflow: {self.workflow}")
@@ -438,15 +445,6 @@ class Scheduler:
                 pri_dao.execute_queued_items()
             finally:
                 pri_dao.close()
-
-        self.profiler.log_memory("scheduler.py: before load_flow_file")
-        try:
-            self.load_flow_file()
-        except ParsecError as exc:
-            # Mark this exc as expected (see docstring for .schd_expected):
-            exc.schd_expected = True
-            raise exc
-        self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
 
@@ -557,18 +555,12 @@ class Scheduler:
         self.data_store_mgr.delta_workflow_ports()
 
     async def log_start(self):
-        if self.is_restart:
-            n_restart = self.workflow_db_mgr.n_restart
-        else:
-            n_restart = 0
-
         is_quiet = (cylc.flow.flags.verbosity < 0)
         log_level = LOG.getEffectiveLevel()
+        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
         if is_quiet:
             # Temporarily change logging level to log important info
             LOG.setLevel(logging.INFO)
-
-        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
         log_extra_num = {
             TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
             TimestampRotatingFileHandler.FILE_NUM: 1}
@@ -588,8 +580,12 @@ class Scheduler:
             extra=log_extra,
         )
         LOG.info(
-            'Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
+            'Run: (re)start=%d log=%d',
+            self.workflow_db_mgr.n_restart,
+            1,
+            extra=log_extra_num)
         LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
+
         # Note that the following lines must be present at the top of
         # the workflow log file for use in reference test runs:
         LOG.info('Run mode: %s', self.config.run_mode(), extra=log_extra)
@@ -601,7 +597,6 @@ class Scheduler:
         LOG.info(f'Final point: {self.config.final_point}', extra=log_extra)
         if self.config.stop_point:
             LOG.info(f'Stop point: {self.config.stop_point}', extra=log_extra)
-
         if is_quiet:
             LOG.info("Quiet mode on")
             LOG.setLevel(log_level)
@@ -657,9 +652,17 @@ class Scheduler:
         """
         try:
             await self.initialise()
+            self.profiler.log_memory("scheduler.py: before load_flow_file")
+            try:
+                self.load_flow_file()
+            except ParsecError as exc:
+                # Mark this exc as expected
+                exc.schd_expected = True
+                raise exc
+            self.profiler.log_memory("scheduler.py: after load_flow_file")
+            await self.log_start()
             await self.configure()
             await self.start_servers()
-            await self.log_start()
             self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
@@ -1133,18 +1136,24 @@ class Scheduler:
 
         self.flow_file_update_time = time()
         # Dump the loaded flow.cylc file for future reference.
-        time_str = get_current_time_string(
-            override_use_utc=True, use_basic_format=True,
-            display_sub_seconds=False
-        )
+        config_dir = get_workflow_run_config_log_dir(
+            self.workflow)
+        config_logs = get_sorted_logs_by_time(config_dir, "*[0-9].cylc")
         if is_reload:
             load_type = "reload"
+            load_type_num = get_reload_number(config_logs)
         elif self.is_restart:
             load_type = "restart"
+            load_type_num = f'{self.n_restart:02d}'
         else:
             load_type = "start"
+            load_type_num = '01'
+        if config_logs:
+            log_num = get_next_log_number(config_logs[-1])
+        else:
+            log_num = '01'
         file_name = get_workflow_run_config_log_dir(
-            self.workflow, f"{time_str}-{load_type}.cylc")
+            self.workflow, f"{log_num}-{load_type}-{load_type_num}.cylc")
         with open(file_name, "w") as handle:
             handle.write("# cylc-version: %s\n" % CYLC_VERSION)
             self.config.pcfg.idump(sparse=True, handle=handle)

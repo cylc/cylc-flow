@@ -49,7 +49,12 @@ from cylc.flow.exceptions import (
     WorkflowFilesError,
     handle_rmtree_err,
 )
-from cylc.flow.loggingutil import CylcLogFormatter, close_log
+from cylc.flow.loggingutil import (
+    CylcLogFormatter,
+    close_log,
+    get_next_log_number,
+    get_sorted_logs_by_time
+)
 from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
@@ -78,7 +83,6 @@ from cylc.flow.remote import (
 from cylc.flow.terminal import parse_dirty_json
 from cylc.flow.unicode_rules import WorkflowNameValidator
 from cylc.flow.util import cli_format
-from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 if TYPE_CHECKING:
@@ -1397,17 +1401,18 @@ def _get_logger(rund, log_name):
 
 def _open_install_log(rund, logger):
     """Open Cylc log handlers for install/reinstall."""
-    time_str = get_current_time_string(
-        override_use_utc=True, use_basic_format=True,
-        display_sub_seconds=False
-    )
     rund = Path(rund).expanduser()
     log_type = logger.name[logger.name.startswith('cylc-') and len('cylc-'):]
-    log_path = Path(
+    log_dir = Path(
         rund,
         WorkflowFiles.LOG_DIR,
-        'install',
-        f"{time_str}-{log_type}.log")
+        'install')
+    log_files = get_sorted_logs_by_time(log_dir, '*.log')
+    if log_files:
+        log_num = get_next_log_number(log_files[-1])
+    else:
+        log_num = '01'
+    log_path = Path(log_dir, f"{log_num}-{log_type}.log")
     log_parent_dir = log_path.parent
     log_parent_dir.mkdir(exist_ok=True, parents=True)
     handler = logging.FileHandler(log_path)

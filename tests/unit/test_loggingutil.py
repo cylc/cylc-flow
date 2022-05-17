@@ -24,7 +24,11 @@ from unittest import mock
 
 from cylc.flow import LOG
 from cylc.flow.loggingutil import (
-    TimestampRotatingFileHandler, CylcLogFormatter)
+    TimestampRotatingFileHandler,
+    CylcLogFormatter,
+    get_reload_number,
+    get_sorted_logs_by_time
+)
 from cylc.flow.scheduler import Scheduler
 
 from typing import Callable
@@ -116,7 +120,7 @@ def test_update_log_archive(tmp_run_dir: Callable):
     log_file.touch()
     log_object = TimestampRotatingFileHandler(log_file,
                                               no_detach=False,
-                                              log_num=0
+                                              restart_num=0
                                               )
 
     for i in range(1, 14):
@@ -129,3 +133,24 @@ def test_update_log_archive(tmp_run_dir: Callable):
         Path(log_dir/'start-12.log'),
         Path(log_dir/'start-13.log')].sort()
 
+
+def test_get_reload_number(tmp_run_dir: Callable):
+    run_dir = tmp_run_dir('reloaded_workflow')
+    config_log_dir = Path(run_dir / 'log' / 'config')
+    config_log_dir.mkdir(exist_ok=True, parents=True)
+    for i in range(1, 10):
+        (config_log_dir/f'0{str(i)}-reload-0{str(i)}.cylc').touch()
+    config_logs = get_sorted_logs_by_time(config_log_dir, "*.cylc")
+
+    assert get_reload_number(config_logs)=='10'
+
+
+def test_get_reload_number_no_reload_logs(tmp_run_dir: Callable):
+    run_dir = tmp_run_dir('reloaded_workflow')
+    config_log_dir = Path(run_dir / 'log' / 'config')
+    config_log_dir.mkdir(exist_ok=True, parents=True)
+    for i in range(1, 3):
+        (config_log_dir/f'0{str(i)}-restart-0{str(i)}.cylc').touch()
+    config_logs = get_sorted_logs_by_time(config_log_dir, "*.cylc")
+
+    assert get_reload_number(config_logs)=='01'

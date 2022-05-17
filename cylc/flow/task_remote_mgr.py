@@ -57,7 +57,6 @@ from cylc.flow.platforms import (
 from cylc.flow.remote import construct_rsync_over_ssh_cmd, construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.util import format_cmd
-from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.workflow_files import (
     KeyInfo,
     KeyOwner,
@@ -66,6 +65,8 @@ from cylc.flow.workflow_files import (
     get_contact_file,
     get_workflow_srv_dir,
 )
+
+from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
 
 if TYPE_CHECKING:
     from zmq.auth.thread import ThreadAuthenticator
@@ -523,8 +524,10 @@ class TaskRemoteMgr:
         Sets remote_init_map to REMOTE_FILE_INSTALL_DONE on success and to
         REMOTE_FILE_INSTALL_FAILED on error.
          """
+        install_log_dir = get_workflow_file_install_log_dir(
+            self.workflow)
         file_name = self.get_log_file_name(
-            install_target
+            install_target, install_log_dir
         )
         install_log_path = get_workflow_file_install_log_dir(
             self.workflow, file_name)
@@ -561,12 +564,14 @@ class TaskRemoteMgr:
 
     def get_log_file_name(
         self,
-        install_target
+        install_target,
+        install_log_dir
     ):
-        time_str = get_current_time_string(
-            override_use_utc=True, use_basic_format=True,
-            display_sub_seconds=False
-        )
+        log_files = get_sorted_logs_by_time(install_log_dir, '*.log')
+        if log_files:
+            log_num = get_next_log_number(log_files[-1])
+        else:
+            log_num = '01'
         load_type = "start"
         if self.is_reload:
             load_type = "reload"
@@ -574,7 +579,7 @@ class TaskRemoteMgr:
         elif self.is_restart:
             load_type = "restart"
             self.is_restart = False  # reset marker
-        file_name = f"{time_str}-{load_type}-{install_target}.log"
+        file_name = f"{log_num}-{load_type}-{install_target}.log"
         return file_name
 
     def _remote_init_items(self, comms_meth: CommsMeth):

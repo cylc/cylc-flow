@@ -29,7 +29,7 @@ from pathlib import Path
 import re
 import sys
 import textwrap
-from typing import Optional
+from typing import List, Optional
 
 from ansimarkup import parse as cparse
 
@@ -38,6 +38,8 @@ from cylc.flow.wallclock import get_time_string_from_unix_time
 
 
 LOG_FILE_EXTENSION = '.log'
+START_LOAD_TYPE = 'start'
+RESTART_LOAD_TYPE = 'restart'
 
 
 class CylcLogFormatter(logging.Formatter):
@@ -135,17 +137,15 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         self,
         log_file_path,
         no_detach=False,
-        log_num=0,
+        restart_num=0,
         timestamp=True,
-        restart=False
     ):
         logging.FileHandler.__init__(self, log_file_path)
         self.no_detach = no_detach
         self.formatter = CylcLogFormatter(timestamp=timestamp)
         self.header_records = []
-        self.restart = restart
-        self.log_num = log_num
-        self.load_type_change()
+        self.restart_num = restart_num
+        self.log_num = None
 
     def emit(self, record):
         """Emit a record, rollover log if necessary."""
@@ -166,7 +166,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         existing_load_type = self.existing_log_load_type()
         # Rollover if the load type has changed.
         if existing_load_type and current_load_type != existing_load_type:
-            self.do_rollover()
+            return True
 
     def existing_log_load_type(self):
         """Return a log load type, if one currently exists"""
@@ -174,13 +174,16 @@ class TimestampRotatingFileHandler(logging.FileHandler):
             existing_log_name = os.readlink(self.baseFilename)
         except OSError:
             return None
-        for load_type in ['restart', 'start']:  # check restart first
+        # find load type, check restart first
+        for load_type in [RESTART_LOAD_TYPE, START_LOAD_TYPE]:
             if existing_log_name.find(load_type) > 0:
                 return load_type
 
     def should_rollover(self, record):
         """Should rollover?"""
-        if self.log_num == 0 or self.stream is None:
+        if (self.log_num is None or
+                self.stream is None or
+                self.load_type_change()):
             return True
         max_bytes = glbl_cfg().get(
             ['scheduler', 'logging', 'maximum size in bytes'])
@@ -197,12 +200,13 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     def get_load_type(self):
         """Establish current load type, as perceived by scheduler."""
-        if self.restart:
-            return 'restart'
-        return 'start'
+        if self.restart_num > 0:
+            return RESTART_LOAD_TYPE
+        return START_LOAD_TYPE
 
     def do_rollover(self):
         """Create and rollover log file if necessary."""
+        self.set_log_num()
         # Generate new file name
         filename = self.get_new_log_filename()
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -232,7 +236,7 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         for header_record in self.header_records:
             if self.FILE_NUM in header_record.__dict__:
                 # Increment log file number
-                header_record.__dict__[self.FILE_NUM] += 1
+                header_record.__dict__[self.FILE_NUM] = self.log_num
                 header_record.args = header_record.args[0:-1] + (
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)
@@ -243,21 +247,38 @@ class TimestampRotatingFileHandler(logging.FileHandler):
             - Delete old log files in line with archive length configured in
               Global Config.
         """
-        log_files = glob(str(
-            Path(self.baseFilename).parent / f"*{LOG_FILE_EXTENSION}"))
-        # Sort log files by modification time
-        log_files.sort(key=os.path.getmtime)
+        log_files = get_sorted_logs_by_time(
+            Path(self.baseFilename).parent, f"*{LOG_FILE_EXTENSION}")
         while len(log_files) > arch_len:
             os.unlink(log_files.pop(0))
 
     def get_new_log_filename(self):
         """Build filename for log"""
         base_dir = Path(self.baseFilename).parent
-        self.log_num += 1
+        load_type = self.get_load_type()
+        if load_type == START_LOAD_TYPE:
+            run_num = 1
+        if load_type == RESTART_LOAD_TYPE:
+            run_num = self.restart_num + 1
         filename = base_dir.joinpath(
-            self.get_load_type() + '-' + str(self.log_num) + LOG_FILE_EXTENSION
+            f'{self.log_num:02d}' +
+            '-' +
+            load_type +
+            '-' +
+            f'{run_num:02d}' +
+            LOG_FILE_EXTENSION
         )
         return filename
+
+    def set_log_num(self):
+        if not self.log_num:
+            try:
+                current_log = os.readlink(self.baseFilename)
+                self.log_num = int(get_next_log_number(current_log))
+            except OSError:
+                self.log_num = 1
+        else:
+            self.log_num = int(self.log_num) + 1
 
 
 class ReferenceLogFileHandler(logging.FileHandler):
@@ -346,3 +367,55 @@ def close_log(logger: logging.Logger) -> None:
             # suppress traceback which `logging` might try to write to the
             # log we are trying to close
             handler.close()
+
+
+def get_next_log_number(log: str) -> str:
+    """Returns the log number for the log specified.
+
+    Log name formats are of the form :
+        <log number>-<load type>-<load type count>
+    When given the log it returns the next log number, with padded 0s.
+
+    Examples:
+        >>> get_next_log_number('01-restart-02.log')
+            '02'
+        >>> get_next_log_number('/some/path/to/19-start-20.cylc')
+            '20'
+        >>> get_next_log_number('199-start-08.log')
+            '200'
+        >>> get_next_log_number('blah')
+            '01'
+    """
+    try:
+        stripped_log = os.path.basename(log)
+        next_log_num = int(stripped_log.partition("-")[0]) + 1
+    except ValueError:
+        next_log_num = 1
+    return f'{next_log_num:02d}'
+
+
+def get_sorted_logs_by_time(log_dir: str, pattern: str) -> List[str]:
+    """Returns logs from directory provided, sorted by modification time"""
+    log_files = glob(str(Path(log_dir).joinpath(pattern)))
+    # Sort log files by modification time
+    sorted_files = sorted(log_files, key=os.path.getmtime)
+    return sorted_files
+
+
+def get_reload_number(config_logs: List[str]) -> str:
+    """Find the next reload number, for log filename.
+    """
+    if not config_logs:
+        return '01'
+    else:
+        reload_logs = [
+            i for i in config_logs if 'reload' in os.path.basename(i)
+        ]
+        if reload_logs:
+            latest_reload_log = sorted(
+                reload_logs, key=os.path.getmtime).pop(-1)
+            next_reload_num = int(
+                latest_reload_log.rpartition("-")[2].replace('.cylc', '')) + 1
+        else:
+            return '01'
+        return f'{next_reload_num:02d}'

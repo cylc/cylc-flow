@@ -103,6 +103,7 @@ class WorkflowDatabaseManager:
                 pub_d, CylcWorkflowDAO.DB_FILE_BASE_NAME)
         self.pri_dao = None
         self.pub_dao = None
+        self.n_restart = 0
 
         self.db_deletes_map: Dict[str, List[DbArgDict]] = {
             self.TABLE_BROADCAST_STATES: [],
@@ -329,6 +330,10 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_CYLC_VERSION, "value": CYLC_VERSION},
             {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
         ])
+        if schd.is_restart is False:
+            self.put_workflow_params_1(
+                self.KEY_RESTART_COUNT, 0
+            )
         if schd.config.cycle_point_dump_format is not None:
             self.put_workflow_params_1(
                 self.KEY_CYCLE_POINT_FORMAT,
@@ -648,27 +653,30 @@ class WorkflowDatabaseManager:
                 f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def restart_check(self) -> bool:
+    def restart_check(self) -> int:
         """Check & vacuum the runtime DB for a restart.
+
+        Increment the restart number in the DB.
 
         Raises ServiceFileError if DB is incompatible.
 
-        Returns False if DB doesn't exist, else True.
+        Returns 0 if DB doesn't exist, else restart number.
         """
         try:
             self.check_workflow_db_compatibility()
         except FileNotFoundError:
-            return False
+            return 0
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot restart - {exc}")
         pri_dao = self.get_pri_dao()
         try:
             pri_dao.vacuum()
             self.n_restart = pri_dao.select_workflow_params_restart_count() + 1
-            self.put_workflow_params_1(self.KEY_RESTART_COUNT, self.n_restart)
+            self.put_workflow_params_1(
+                self.KEY_RESTART_COUNT, self.n_restart)
         finally:
             pri_dao.close()
-        return True
+        return self.n_restart
 
     def check_workflow_db_compatibility(self):
         """Raises ServiceFileError if the existing workflow database is
