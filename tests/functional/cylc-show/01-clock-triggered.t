@@ -37,19 +37,17 @@ contains_ok "${TEST_NAME}.stdout" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
-
-prerequisites (- => not satisfied):
+state: running
+prerequisites: ('-': not satisfied)
   + 20141106T0900Z/woo succeeded
-
-outputs (- => not completed):
+outputs: ('-': not completed)
   - 20141106T0900Z/foo expired
   + 20141106T0900Z/foo submitted
   - 20141106T0900Z/foo submit-failed
   + 20141106T0900Z/foo started
   - 20141106T0900Z/foo succeeded
   - 20141106T0900Z/foo failed
-
-other (- => not satisfied):
+other: ('-': not satisfied)
   + Clock trigger time reached
   o Triggers at ... 2014-11-06T09:05:00Z
 __SHOW_OUTPUT__

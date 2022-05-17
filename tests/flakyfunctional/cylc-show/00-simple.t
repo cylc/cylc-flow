@@ -53,11 +53,10 @@ title: a task
 description: jumped over the lazy dog
 baz: pub
 URL: (not given)
-
-prerequisites (- => not satisfied):
+state: running
+prerequisites: ('-': not satisfied)
   + 20141106T0900Z/bar succeeded
-
-outputs (- => not completed):
+outputs: ('-': not completed)
   - 20141106T0900Z/foo expired
   + 20141106T0900Z/foo submitted
   - 20141106T0900Z/foo submit-failed
@@ -94,6 +93,7 @@ cmp_json "${TEST_NAME}-taskinstance" "${TEST_NAME}-taskinstance" \
         "name": "foo",
         "id": "~${USER}/${WORKFLOW_NAME}//20141106T0900Z/foo",
         "cyclePoint": "20141106T0900Z",
+        "state": "running",
         "task": {
             "meta": {
                 "title": "a task",

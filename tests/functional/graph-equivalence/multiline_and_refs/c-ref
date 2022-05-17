@@ -1,6 +1,5 @@
-prerequisites (- => not satisfied):
+prerequisites: ('-': not satisfied)
   - 1/a succeeded
   - 1/b succeeded
-
-outputs (- => not completed):
+outputs: ('-': not completed)
   (None)

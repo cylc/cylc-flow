@@ -56,6 +56,9 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4873](https://github.com/cylc/cylc-flow/pull/4873) - `cylc show`: don't
+show prerequisites of past tasks recalled from the DB as unsatisfied.
+
 [#4875](https://github.com/cylc/cylc-flow/pull/4864) - Fix the file name
 pattern matching used for emacs syntax highlighting.
 
