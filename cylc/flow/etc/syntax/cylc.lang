@@ -5,7 +5,7 @@
 
  = Instructions =
 
- To use it, place or symlink this file in
+ To use it, place this file in
  ~/.local/share/gtksourceview-2.0/language-specs/ - or, if possible,
  /usr/share/gtksourceview-2.0/language-specs/
 

@@ -56,6 +56,9 @@ workflow source argument), and rename the `--flow-name` option to
 
 ### Fixes
 
+[#4875](https://github.com/cylc/cylc-flow/pull/4864) - Fix the file name
+pattern matching used for emacs syntax highlighting.
+
 [#4864](https://github.com/cylc/cylc-flow/pull/4864) - Allow strings
 and more complex data type template variables to be stored correctly
 in the workflow database.
