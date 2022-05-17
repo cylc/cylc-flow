@@ -37,7 +37,7 @@ TEST_NAME="${TEST_NAME_BASE}-run-2"
 workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-show.past"
-contains_ok $WORKFLOW_RUN_DIR/show-b.txt <<__END__
+contains_ok "$WORKFLOW_RUN_DIR/show-b.txt" <<__END__
 state: succeeded
 prerequisites: (n/a for past tasks)
 __END__
