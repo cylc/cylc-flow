@@ -20,6 +20,7 @@ The copy and override functions below assume values are either dicts
 """
 
 from copy import copy
+import re
 import sys
 
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -355,3 +356,65 @@ def itemstr(parents=None, item=None, value=None):
         text = str(value)
 
     return text
+
+
+# pattern for picking out comma separated items which does not split commas
+# inside of quotes
+SECTION_EXPAND_PATTERN = re.compile(
+    r'''
+        (?:
+          [^,"']+
+          |
+          "[^"]*"
+          |
+          '[^']*'
+        )+
+    ''',
+    re.X
+)
+
+
+def dequote(string: str, chars='"\'') -> str:
+    """Simple approach to strip quotes from strings.
+
+    Examples:
+        >>> dequote('"foo"')
+        'foo'
+        >>> dequote("'foo'")
+        'foo'
+        >>> dequote('a"b"c')
+        'a"b"c'
+
+    """
+    if len(string) < 2:
+        return string
+    for char in chars:
+        if string[0] == char and string[-1] == char:
+            return string[1:-1]
+    return string
+
+
+def expand_many_section(config):
+    """Expand comma separated entries.
+
+    Intended for use in __MANY__ sections i.e. ones in which headings are
+    user defined.
+
+    Returns the expanded config i.e. does not modify it in place (this is
+    necessary to preserve definition order).
+    """
+    ret = {}
+    for section_name, section in config.items():
+        expanded_names = [
+            dequote(name.strip()).strip()
+            for name in SECTION_EXPAND_PATTERN.findall(section_name)
+        ]
+        for name in expanded_names:
+            if name in ret:
+                # already defined -> merge
+                replicate(ret[name], section)
+
+            else:
+                ret[name] = {}
+                replicate(ret[name], section)
+    return ret
