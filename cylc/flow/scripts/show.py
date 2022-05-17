@@ -18,7 +18,7 @@
 
 """cylc show [OPTIONS] ARGS
 
-Display workflow and task information, for tasks in the datastore window.
+Display workflow and task information, for tasks in the current n-window.
 
 Query a running workflow for:
   # view workflow metadata
@@ -30,7 +30,7 @@ Query a running workflow for:
   # view prerequisites & outputs for a live task
   $ cylc show my_workflow//1/my_task
 
-Output completion status is shown for all tasks in the datastore window.
+Output completion status is shown for all tasks in the current n-window.
 
 Prerequisite satisfaction is not shown for past tasks reloaded from the
 workflow database.
