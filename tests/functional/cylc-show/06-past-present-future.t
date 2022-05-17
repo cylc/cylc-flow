@@ -20,42 +20,38 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 6
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-# play workflow, shutdown and restart at task c so that task b (in n=1) gets
-# loaded from the DB.
-cylc play "${WORKFLOW_NAME}"
-cylc workflow-state -t c -p 1 --max-polls=10 --interval=2 --status=running \
-   "${WORKFLOW_NAME}"
-cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
-cylc workflow-state -t c -p 1 --max-polls=10 --interval=2 --status=running \
-   "${WORKFLOW_NAME}"
-cylc play "${WORKFLOW_NAME}"
+# First run: task c shuts the scheduler down then fails.
+TEST_NAME="${TEST_NAME_BASE}-run-1"
+workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
-cylc show "${WORKFLOW_NAME}//1/b" > show.past
-cylc show "${WORKFLOW_NAME}//1/c" > show.present
-cylc show "${WORKFLOW_NAME}//1/d" > show.future
-
-cylc stop --now --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
+# Restart: task kick-c triggers off of c's failure, and re-triggers c.
+# Then, c runs `cylc show` on tasks b, c, and d.
+TEST_NAME="${TEST_NAME_BASE}-run-2"
+workflow_run_ok "${TEST_NAME}" cylc play --no-detach --debug "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-show.past"
-contains_ok show.past <<__END__
+contains_ok $WORKFLOW_RUN_DIR/show-b.txt <<__END__
+state: succeeded
 prerequisites: (n/a for past tasks)
 __END__
 
 TEST_NAME="${TEST_NAME_BASE}-show.present"
-contains_ok show.present <<__END__
+contains_ok "${WORKFLOW_RUN_DIR}/show-c.txt" <<__END__
+state: running
 prerequisites: ('-': not satisfied)
   + 1/b succeeded
 __END__
 
 TEST_NAME="${TEST_NAME_BASE}-show.future"
-contains_ok show.future <<__END__
+contains_ok "${WORKFLOW_RUN_DIR}/show-d.txt" <<__END__
+state: waiting
 prerequisites: ('-': not satisfied)
   - 1/c succeeded
 __END__
