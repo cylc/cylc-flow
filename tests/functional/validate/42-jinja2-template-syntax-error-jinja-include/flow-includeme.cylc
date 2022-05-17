@@ -1,3 +1,0 @@
-        {% if true %}
-        R1 = foo
-        {% end if %

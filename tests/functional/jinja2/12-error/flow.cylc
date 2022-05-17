@@ -1,5 +1,0 @@
-#!Jinja2
-
-# line before include
-{% include "foo.cylc" %}
-# line after include

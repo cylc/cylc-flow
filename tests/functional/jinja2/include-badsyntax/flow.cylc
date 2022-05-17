@@ -1,9 +1,10 @@
 #!Jinja2
 {% set MYVAR = "this is a set variable" %}
 
+[scheduler]
+    allow implicit tasks = True
 [scheduling]
     [[graph]]
         R1 = "a => FAM"
-
 [runtime]
 {% include 'runtime-bad.cylc' %}

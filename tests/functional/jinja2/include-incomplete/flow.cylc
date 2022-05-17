@@ -4,6 +4,5 @@
 [scheduling]
     [[graph]]
         R1 = "a => FAM"
-
 [runtime]
 {% include 'runtime-incomplete.cylc' %}
