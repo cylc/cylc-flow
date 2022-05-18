@@ -294,7 +294,7 @@ def test_infer_latest_run(
     run_dir.mkdir(parents=True)
 
     path: Path = Path(path.format(cylc_run=cylc_run_dir))
-    expected = (cylc_run_dir / expected_reg, Path(expected_reg))
+    expected = (cylc_run_dir / expected_reg, expected_reg)
 
     # Test
     assert infer_latest_run(path, implicit_runN) == expected
@@ -303,18 +303,23 @@ def test_infer_latest_run(
         assert infer_latest_run(path) == expected
 
 
-def test_infer_latest_run_warns_for_runN(caplog, tmp_run_dir):
+@pytest.mark.parametrize('warn_arg', [True, False])
+def test_infer_latest_run_warns_for_runN(
+    warn_arg: bool,
+    caplog: pytest.LogCaptureFixture,
+    log_filter: Callable,
+    tmp_run_dir: Callable,
+):
     """Tests warning is produced to discourage use of /runN in workflow_id"""
-    caplog.set_level(logging.WARNING, 'log')
     (tmp_run_dir() / 'run1').mkdir()
     runN_path = tmp_run_dir() / 'runN'
     runN_path.symlink_to('run1')
-    infer_latest_run(runN_path)
-    warning_raised = False
-    for x in caplog.messages:
-        if re.match("Explicit use of runN in the Workflow ID", x):
-            warning_raised = True
-    assert warning_raised is True
+    infer_latest_run(runN_path, warn_runN=warn_arg)
+    filtered_log = log_filter(
+        caplog, level=logging.WARNING,
+        contains="You do not need to include runN in the workflow ID"
+    )
+    assert filtered_log if warn_arg else not filtered_log
 
 
 @pytest.mark.parametrize(
@@ -329,7 +334,7 @@ def test_infer_latest_run_warns_for_runN(caplog, tmp_run_dir):
 )
 def test_infer_latest_run__bad(
     reason: str,
-    error_type: Exception,
+    error_type: Type[Exception],
     tmp_run_dir: Callable,
 ) -> None:
     # -- Setup --
@@ -360,9 +365,9 @@ def test_infer_latest_run__bad(
     else:
         raise ValueError(reason)
     # -- Test --
-    with pytest.raises(error_type) as exc:
+    with pytest.raises(error_type) as excinfo:
         infer_latest_run(run_dir)
-    assert str(exc.value) == err_msg
+    assert str(excinfo.value) == err_msg
 
 
 @pytest.mark.parametrize(
