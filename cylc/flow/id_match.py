@@ -26,9 +26,12 @@ from typing import (
     # overload,
 )
 
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+
 from cylc.flow import LOG
 from cylc.flow.id import IDTokens, Tokens
 from cylc.flow.id_cli import contains_fnmatch
+from cylc.flow.cycling.loader import get_point
 
 if TYPE_CHECKING:
     # from typing_extensions import Literal
@@ -152,8 +155,7 @@ def filter_ids(
                 for icycle, itasks in pool.items():
                     if not itasks:
                         continue
-                    str_cycle = str(icycle)
-                    if not match(str_cycle, cycle):
+                    if not point_match(icycle, cycle, pattern_match):
                         continue
                     if cycle_sel == '*':
                         cycles.append(icycle)
@@ -164,7 +166,7 @@ def filter_ids(
                             break
 
         # filter by task
-        elif lowest_token == IDTokens.Task:  # noqa: SIM106
+        elif lowest_token == IDTokens.Task:
             cycle = tokens[IDTokens.Cycle.value]
             cycle_sel_raw = tokens.get(IDTokens.Cycle.value + '_sel')
             cycle_sel = cycle_sel_raw or '*'
@@ -173,8 +175,7 @@ def filter_ids(
             task_sel = task_sel_raw or '*'
             for pool in pools:
                 for icycle, itasks in pool.items():
-                    str_cycle = str(icycle)
-                    if not match(str_cycle, cycle):
+                    if not point_match(icycle, cycle, pattern_match):
                         continue
                     for itask in itasks.values():
                         if (
@@ -236,3 +237,22 @@ def filter_ids(
                     _tasks.extend(pool[icycle].values())
         ret = _tasks
     return ret, _not_matched
+
+
+def point_match(
+    point: 'PointBase', value: str, pattern_match: bool = True
+) -> bool:
+    """Return whether a cycle point matches a string/pattern.
+
+    Args:
+        point: Cycle point to compare against.
+        value: String/pattern to test.
+        pattern_match: Whether to allow glob patterns in the value.
+    """
+    try:
+        return point == get_point(value)
+    except (ValueError, ISO8601SyntaxError):
+        # Could be glob pattern
+        if pattern_match:
+            return fnmatchcase(str(point), value)
+        return False

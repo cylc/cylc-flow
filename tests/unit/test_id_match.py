@@ -15,42 +15,46 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, Callable
 
 import pytest
 
 from cylc.flow.id import IDTokens, Tokens
-from cylc.flow.id_match import filter_ids
+from cylc.flow.id_match import filter_ids, point_match
 from cylc.flow.task_pool import Pool
+from cylc.flow.cycling.integer import IntegerPoint, CYCLER_TYPE_INTEGER
+from cylc.flow.cycling.iso8601 import ISO8601Point
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
 
 
 @pytest.fixture
-def task_pool():
+def task_pool(set_cycling_type: Callable):
     def _task_proxy(id_, hier):
         tokens = Tokens(id_, relative=True)
-        itask = SimpleNamespace()
-        itask.id_ = id_
-        itask.point = int(tokens['cycle'])
-        itask.state = SimpleNamespace()
-        itask.state.status = tokens['task_sel']
-        itask.tdef = SimpleNamespace()
-        itask.tdef.name = tokens['task']
-        if tokens['task'] in hier:
-            hier = hier[tokens['task']]
-        else:
-            hier = []
+        hier = hier.get(tokens['task'], [])
         hier.append('root')
-        itask.tdef.namespace_hierarchy = hier
-        return itask
+        return SimpleNamespace(
+            id_=id_,
+            point=IntegerPoint(tokens['cycle']),
+            state=SimpleNamespace(status=tokens['task_sel']),
+            tdef=SimpleNamespace(
+                name=tokens['task'],
+                namespace_hierarchy=hier
+            ),
+        )
 
     def _task_pool(pool, hier) -> 'Pool':
         return {
-            cycle: {
+            IntegerPoint(cycle): {
                 id_.split(':')[0]: _task_proxy(id_, hier)
                 for id_ in ids
             }
             for cycle, ids in pool.items()
         }
 
+    set_cycling_type(CYCLER_TYPE_INTEGER)
     return _task_pool
 
 
@@ -180,7 +184,7 @@ def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
     )
 
     _matched, _not_matched = filter_ids([pool], ids, out=IDTokens.Cycle)
-    assert _matched == matched
+    assert _matched == [IntegerPoint(i) for i in matched]
     assert _not_matched == not_matched
 
 
@@ -295,3 +299,29 @@ def test_filter_ids_log_errors(caplog):
     _, _not_matched = filter_ids({}, ['/////'])
     assert _not_matched == ['/////']
     assert caplog.record_tuples == [('cylc', 30, 'Invalid ID: /////')]
+
+
+@pytest.mark.parametrize(
+    'point, value, pattern_match, expected',
+    [
+        (IntegerPoint(23), '23', True, True),
+        (IntegerPoint(23), '23', False, True),
+        (IntegerPoint(23), '2*', True, True),
+        (IntegerPoint(23), '2*', False, False),
+        (IntegerPoint(23), '2a', True, False),
+        (ISO8601Point('2049-01-01T00:00Z'), '2049', True, True),
+        (ISO8601Point('2049-01-01T00:00Z'), '2049', False, True),
+        (ISO8601Point('2049-03-01T00:00Z'), '2049', True, False),
+        (ISO8601Point('2049-03-01T00:00Z'), '2049*', True, True),
+        (ISO8601Point('2049-03-01T00:00Z'), '2049*', False, False),
+        (ISO8601Point('2049-01-01T00:00Z'), '20490101T00Z', False, True),
+        (ISO8601Point('2049-01-01T00:00Z'), '20490101T03+03', False, True),
+        (ISO8601Point('2049-01-01T00:00Z'), '2049a', True, False),
+    ]
+)
+def test_point_match(
+    point: 'PointBase', value: str, pattern_match: bool, expected: bool,
+    set_cycling_type: Callable
+):
+    set_cycling_type(point.TYPE, time_zone='Z')
+    assert point_match(point, value, pattern_match) is expected
