@@ -455,11 +455,13 @@ class TaskProxy:
         self.flow_nums.update(flow_nums)
 
     def state_reset(
-        self, status=None, is_held=None, is_queued=None, is_runahead=None
+        self, status=None, is_held=None, is_queued=None, is_runahead=None,
+        silent=False
     ) -> bool:
         """Set new state and log the change. Return whether it changed."""
         before = str(self)
         if self.state.reset(status, is_held, is_queued, is_runahead):
-            LOG.info(f"[{before}] => {self.state}")
+            if not silent:
+                LOG.info(f"[{before}] => {self.state}")
             return True
         return False

@@ -1067,11 +1067,11 @@ class DataStoreMgr:
                     flow_nums != itask.flow_nums and
                     not is_parent
             ):
-                itask.state_reset(TASK_STATUS_WAITING)
+                itask.state_reset(TASK_STATUS_WAITING, silent=True)
                 continue
             else:
                 itask.flow_nums = flow_nums
-                itask.state_reset(status)
+                itask.state_reset(status, silent=True)
             if (
                     outputs_str is not None
                     and itask.state(
