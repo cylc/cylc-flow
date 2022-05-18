@@ -1493,7 +1493,7 @@ class GlobalConfig(ParsecConfig):
                     LOG.error(f'bad {conf_type} {fname}')
                     raise
 
-        # Expand platforms needs to be performed fist because it
+        # Expand platforms needs to be performed first because it
         # manipulates the sparse config.
         self._expand_platforms()
         self._set_default_editors()
