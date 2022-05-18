@@ -1496,13 +1496,17 @@ class GlobalConfig(ParsecConfig):
         # Expand platforms needs to be performed first because it
         # manipulates the sparse config.
         self._expand_platforms()
+
+        # Flesh out with defaults
+        self.expand()
+
         self._set_default_editors()
         self._no_platform_group_name_overlap()
 
     def _set_default_editors(self):
         # default to $[G]EDITOR unless an editor is defined in the config
         # NOTE: use `or` to handle cases where an env var is set to ''
-        cfg = self.get()
+        cfg = self.get(sparse=False)
         if not cfg['editors']['terminal']:
             cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
         if not cfg['editors']['gui']:

@@ -118,6 +118,9 @@ class ParsecConfig:
             [sec1]
                 [[sec2]]
                     item = value
+
+        NOTE: Side effect when sparse is False: the config gets expanded
+        (if not previously expanded).
         """
         if sparse:
             cfg = self.sparse
