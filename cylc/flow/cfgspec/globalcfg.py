@@ -1493,9 +1493,11 @@ class GlobalConfig(ParsecConfig):
                     LOG.error(f'bad {conf_type} {fname}')
                     raise
 
+        # Expand platforms needs to be performed fist because it
+        # manipulates the sparse config.
+        self._expand_platforms()
         self._set_default_editors()
         self._no_platform_group_name_overlap()
-        self._expand_platforms()
 
     def _set_default_editors(self):
         # default to $[G]EDITOR unless an editor is defined in the config
