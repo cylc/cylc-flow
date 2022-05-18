@@ -18,6 +18,7 @@ from fnmatch import fnmatchcase
 from typing import (
     Any,
     Callable,
+    Dict,
     Iterable,
     List,
     TYPE_CHECKING,
@@ -112,7 +113,7 @@ def filter_ids(
     _not_matched: 'List[str]' = []
 
     # enable / disable pattern matching
-    match: 'Callable[[Any, Any], bool]'
+    match: Callable[[Any, Any], bool]
     if pattern_match:
         match = fnmatchcase
     else:
@@ -131,7 +132,7 @@ def filter_ids(
             ]
             _not_matched.extend(pattern_ids)
 
-    id_tokens_map = {}
+    id_tokens_map: Dict[str, Tokens] = {}
     for id_ in ids:
         try:
             id_tokens_map[id_] = Tokens(id_, relative=True)
@@ -190,15 +191,7 @@ def filter_ids(
                                 or match(itask.state.status, cycle_sel)
                             )
                             # check namespace name
-                            and (
-                                # task name
-                                match(itask.tdef.name, task)
-                                # family name
-                                or any(
-                                    match(ns, task)
-                                    for ns in itask.tdef.namespace_hierarchy
-                                )
-                            )
+                            and itask.name_match(task, match_func=match)
                             # check task selector
                             and (
                                 (
@@ -223,7 +216,7 @@ def filter_ids(
             _cycles.extend(cycles)
             _tasks.extend(tasks)
 
-    ret: 'List[Any]' = []
+    ret: List[Any] = []
     if out == IDTokens.Cycle:
         _cycles.extend({
             itask.point

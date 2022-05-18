@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Callable
+from unittest.mock import create_autospec
 
 import pytest
 
@@ -24,9 +24,15 @@ from cylc.flow.id_match import filter_ids, point_match
 from cylc.flow.task_pool import Pool
 from cylc.flow.cycling.integer import IntegerPoint, CYCLER_TYPE_INTEGER
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.task_proxy import TaskProxy
+from cylc.flow.taskdef import TaskDef
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
+
+
+def get_task_id(itask: TaskProxy) -> str:
+    return f"{itask.tokens.relative_id}:{itask.state.status}"
 
 
 @pytest.fixture
@@ -35,14 +41,12 @@ def task_pool(set_cycling_type: Callable):
         tokens = Tokens(id_, relative=True)
         hier = hier.get(tokens['task'], [])
         hier.append('root')
-        return SimpleNamespace(
-            id_=id_,
-            point=IntegerPoint(tokens['cycle']),
-            state=SimpleNamespace(status=tokens['task_sel']),
-            tdef=SimpleNamespace(
-                name=tokens['task'],
-                namespace_hierarchy=hier
-            ),
+        tdef = create_autospec(TaskDef, namespace_hierarchy=hier)
+        tdef.name = tokens['task']
+        return TaskProxy(
+            tdef,
+            start_point=IntegerPoint(tokens['cycle']),
+            status=tokens['task_sel'],
         )
 
     def _task_pool(pool, hier) -> 'Pool':
@@ -123,7 +127,7 @@ def test_filter_ids_task_mode(task_pool, ids, matched, not_matched):
     )
 
     _matched, _not_matched = filter_ids([pool], ids)
-    assert [itask.id_ for itask in _matched] == matched
+    assert [get_task_id(itask) for itask in _matched] == matched
     assert _not_matched == not_matched
 
 
@@ -216,7 +220,7 @@ def test_filter_ids_pattern_match_off(task_pool):
         out=IDTokens.Task,
         pattern_match=False,
     )
-    assert [itask.id_ for itask in _matched] == ['1/a:x']
+    assert [get_task_id(itask) for itask in _matched] == ['1/a:x']
     assert _not_matched == []
 
 
@@ -238,7 +242,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
         out=IDTokens.Task,
         pattern_match=True,
     )
-    assert [itask.id_ for itask in _matched] == ['1/a:x']
+    assert [get_task_id(itask) for itask in _matched] == ['1/a:x']
     assert _not_matched == []
 
     # ensure pattern matching can be disabled
@@ -249,7 +253,7 @@ def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
         out=IDTokens.Task,
         pattern_match=False,
     )
-    assert [itask.id_ for itask in _matched] == []
+    assert [get_task_id(itask) for itask in _matched] == []
     assert _not_matched == ['*/*']
 
     # ensure the ID is logged
@@ -285,7 +289,7 @@ def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
         pattern_match=False,
     )
 
-    assert [itask.id_ for itask in _matched] == matched
+    assert [get_task_id(itask) for itask in _matched] == matched
     assert _not_matched == not_matched
 
 
