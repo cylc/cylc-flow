@@ -29,24 +29,35 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0rc4 (<span actions:bind='release-date'>Upcoming</span>)__
+
+Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
+
+### Fixes
+
+[#4881](https://github.com/cylc/cylc-flow/pull/4881) - Fix bug where commands
+targeting a specific cycle point would not work if using an abbreviated
+cycle point format.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0rc3 (<span actions:bind='release-date'>Released 2022-05-19</span>)__
 
 Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
-
 [#4738](https://github.com/cylc/cylc-flow/pull/4738) and
 [#4739](https://github.com/cylc/cylc-flow/pull/4739) - Implement `cylc trigger
 [--flow=] [--wait]` for manual triggering with respect to active flows (the
-default), specific flows, new flows, or one-off task runs.
+default), specific flows, new flows, or one-off task runs. This replaces
+the `--reflow` option from earlier pre-release versions.
 
 [#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
 flow, remove active-waiting tasks with no remaining flow numbers.
 
 
 [#4854](https://github.com/cylc/cylc-flow/pull/4854)
-- Expansion and merger of comma separate platform definitions permitted.
+- Expansion and merger of comma separated platform definitions permitted.
 - Platform definition regular expressions which match "localhost" but are not
   "localhost" are now explicitly forbidden and will raise an exception.
 
