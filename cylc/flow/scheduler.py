@@ -420,6 +420,12 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.profiler = Profiler(self, self.options.profile_mode)
+        self.is_restart = Path(
+            get_workflow_run_dir(
+                self.workflow,
+                workflow_files.WorkflowFiles.Service.DIRNAME,
+                workflow_files.WorkflowFiles.Service.DB
+            )).exists()
         self.n_restart = self.workflow_db_mgr.n_restart
 
     async def configure(self):
@@ -434,17 +440,6 @@ class Scheduler:
         # Print workflow name to disambiguate in case of inferred run number
         LOG.info(f"Workflow: {self.workflow}")
         self._check_startup_opts()
-
-        if self.is_restart:
-            pri_dao = self.workflow_db_mgr.get_pri_dao()
-            try:
-                # This logic handles lack of initial cycle point in flow.cylc
-                # Things that can't change on workflow reload.
-                pri_dao.select_workflow_params(self._load_workflow_params)
-                pri_dao.select_workflow_template_vars(self._load_template_vars)
-                pri_dao.execute_queued_items()
-            finally:
-                pri_dao.close()
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
 

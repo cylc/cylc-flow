@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc play" CLI."""
 
+from pathlib import Path
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
@@ -22,6 +23,7 @@ from shlex import quote
 import sys
 from typing import TYPE_CHECKING, List
 
+from cylc.flow import workflow_files
 from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
@@ -41,6 +43,7 @@ from cylc.flow.option_parsers import (
     icp_option,
 )
 from cylc.flow.pathutil import (
+    get_workflow_run_dir,
     get_workflow_run_scheduler_log_path
 )
 from cylc.flow.remote import _remote_cylc_cmd
@@ -341,6 +344,24 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         daemonize(scheduler)
 
     restart_num = scheduler.workflow_db_mgr.restart_check()
+    is_restart = Path(
+            get_workflow_run_dir(
+                workflow_id,
+                workflow_files.WorkflowFiles.Service.DIRNAME,
+                workflow_files.WorkflowFiles.Service.DB
+            )).exists()
+    if is_restart:
+        pri_dao = scheduler.workflow_db_mgr.get_pri_dao()
+        try:
+            # This logic handles lack of initial cycle point in flow.cylc
+            # Things that can't change on workflow reload.
+            pri_dao.select_workflow_params(
+                scheduler._load_workflow_params)
+            pri_dao.select_workflow_template_vars(
+                scheduler._load_template_vars)
+            pri_dao.execute_queued_items()
+        finally:
+            pri_dao.close()
     # setup loggers
     _open_logs(
         workflow_id,

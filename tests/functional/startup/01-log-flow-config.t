@@ -49,18 +49,18 @@ workflow_run_ok "${TEST_NAME_BASE}-restart" \
 # Check for 3 generated *.cylc files
 LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/config"
 # shellcheck disable=SC2012
-ls "${LOGD}" | sed -e 's/.*-//g' | sort >'ls.out'
+ls "${LOGD}" | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
-processed.cylc
-reload.cylc
-restart.cylc
-start.cylc
+01-start-01.cylc
+02-reload-01.cylc
+03-restart-01.cylc
+flow-processed.cylc
 __OUT__
 
 LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/config"
-START_CONFIG="$(ls "${LOGD}/"*-start.cylc)"
-REL_CONFIG="$(ls "${LOGD}/"*-reload.cylc)"
-RES_CONFIG="$(ls "${LOGD}/"*-restart.cylc)"
+START_CONFIG="$(ls "${LOGD}/"*-start*.cylc)"
+REL_CONFIG="$(ls "${LOGD}/"*-reload*.cylc)"
+RES_CONFIG="$(ls "${LOGD}/"*-restart*.cylc)"
 mkdir start_config
 mkdir res_config
 cp "$START_CONFIG" start_config/flow.cylc
