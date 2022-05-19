@@ -35,6 +35,16 @@ Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+
+[#4738](https://github.com/cylc/cylc-flow/pull/4738) and
+[#4739](https://github.com/cylc/cylc-flow/pull/4739) - Implement `cylc trigger
+[--flow=] [--wait]` for manual triggering with respect to active flows (the
+default), specific flows, new flows, or one-off task runs.
+
+[#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
+flow, remove active-waiting tasks with no remaining flow numbers.
+
+
 [#4854](https://github.com/cylc/cylc-flow/pull/4854)
 - Expansion and merger of comma separate platform definitions permitted.
 - Platform definition regular expressions which match "localhost" but are not
@@ -117,6 +127,10 @@ on reload/restart compared to the other cycle point settings.
 [#4872](https://github.com/cylc/cylc-flow/pull/4872) - Fix bug preventing
 `cylc clean <workflow_name>/runN` from working.
 
+[#4769](https://github.com/cylc/cylc-flow/pull/4769) - Fix handling of quoted
+command args for invocation on remote run hosts.
+
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc2 (<span actions:bind='release-date'>Released 2022-03-23</span>)__
 
@@ -131,10 +145,6 @@ remote file installation is now configurable.
 provided [wrapper script](https://cylc.github.io/cylc-doc/latest/html/installation.html#managing-environments).
 
 ### Fixes
-
-[#4769](https://github.com/cylc/cylc-flow/pull/4769) - Fix handling of quoted
-command args for invocation on remote run hosts.
-
 
 [#4703](https://github.com/cylc/cylc-flow/pull/4703) - Fix `ImportError` when
 validating/running a Jinja2 workflow (for users who have installed Cylc
@@ -151,16 +161,6 @@ line when specifying a Cylc ID that includes your username (e.g. `'~user/workflo
 [#4737](https://github.com/cylc/cylc-flow/pull/4737) -
 Fix issue which prevented tasks with incomplete outputs from being rerun by
 subsequent flows.
-### Enhancements
-
-[#4738](https://github.com/cylc/cylc-flow/pull/4738) and
-[#4739](https://github.com/cylc/cylc-flow/pull/4739) - Implement `cylc trigger
-[--flow=] [--wait]` for manual triggering with respect to active flows (the
-default), specific flows, new flows, or one-off task runs.
-
-
-[#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
-flow, remove active-waiting tasks with no remaining flow numbers.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__
