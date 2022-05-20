@@ -17,7 +17,7 @@
 from copy import deepcopy
 import re
 from textwrap import dedent
-from typing import List
+from typing import TYPE_CHECKING, Callable, Iterable, List, Optional
 
 from cylc.flow.context_node import ContextNode
 from cylc.flow.parsec.exceptions import (
@@ -31,12 +31,22 @@ from cylc.flow.parsec.validate import parsec_validate, ParsecValidator as VDR
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import itemstr, m_override, replicate, un_many
 
+if TYPE_CHECKING:
+    from optparse import Values
+
 
 class ParsecConfig:
     """Object wrapper for parsec functions."""
 
-    def __init__(self, spec, upgrader=None, output_fname=None, tvars=None,
-                 validator=None, options=None):
+    def __init__(
+        self,
+        spec: 'ConfigNode',
+        upgrader: Optional[Callable[[dict, str], None]] = None,
+        output_fname: Optional[str] = None,
+        tvars: Optional[dict] = None,
+        validator: Optional[Callable] = None,
+        options: Optional['Values'] = None
+    ):
         """Instatiate a parsec config object.
 
         Args:
@@ -85,21 +95,22 @@ class ParsecConfig:
         """Validate sparse config against the file spec."""
         return self.validator(sparse, self.spec)
 
-    def expand(self):
+    def expand(self) -> None:
         """Flesh out undefined items with defaults, if any, from the spec."""
         if not self.dense:
             dense = OrderedDictWithDefaults()
             # Populate dict with default values from the spec
-            stack = [[dense, self.spec]]
+            stack = [(dense, self.spec)]
             while stack:
                 defs, spec = stack.pop()
+                node: ConfigNode
                 for node in spec:
                     if not node.is_leaf():
                         if node.name not in defs:
                             defs[node.name] = OrderedDictWithDefaults()
                         stack.append((defs[node.name], node))
                     else:
-                        if node.default is ConfigNode.UNSET:
+                        if node.default == ConfigNode.UNSET:
                             if node.vdr and node.vdr.endswith('_LIST'):
                                 defs[node.name] = []
                             else:
@@ -111,9 +122,8 @@ class ParsecConfig:
             un_many(dense)
             self.dense = dense
 
-    def get(self, keys=None, sparse=False):
-        """
-        Retrieve items or sections, sparse or dense, by list of keys:
+    def get(self, keys: Optional[Iterable[str]] = None, sparse: bool = False):
+        """Retrieve items or sections, sparse or dense, by list of keys:
         [sec1,sec2,item] =>
             [sec1]
                 [[sec2]]
@@ -128,7 +138,7 @@ class ParsecConfig:
             self.expand()
             cfg = self.dense
 
-        parents = []
+        parents: List[str] = []
         if keys:
             for key in keys:
                 try:
@@ -220,20 +230,20 @@ class ConfigNode(ContextNode):
     """A Cylc configuration schema, section, or setting.
 
     Attributes:
-        vdr (str):
+        vdr:
             The config type (i.e. parsec validator).
-        options (list):
+        options:
             List of possible options.
             TODO: allow this to be a dict with help info
-        default (object):
+        default:
             The default value.
-        desc (str):
+        desc:
             A description of the config.
             Note this gets dedented and stripped.
-        display_name (str):
+        display_name:
             This is the user-facing name of the config.
             Note the regular ``name`` might be ``__MANY__``.
-        meta (ConfigNode):
+        meta:
             Another ConfigNode to use as a template for this one.
 
             This is useful if you want to create a specific instance of
@@ -256,13 +266,13 @@ class ConfigNode(ContextNode):
     )
 
     def __init__(
-            self,
-            name,
-            vdr=VDR.V_STRING,
-            default=UNSET,
-            options=None,
-            desc=None,
-            meta=None
+        self,
+        name: str,
+        vdr: str = VDR.V_STRING,
+        default: object = UNSET,
+        options: Optional[list] = None,
+        desc: Optional[str] = None,
+        meta: Optional['ConfigNode'] = None
     ):
         display_name = name
         if name.startswith('<'):
