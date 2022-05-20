@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import Iterable, Optional
+from typing import Optional
 
 
 class ContextNode():
@@ -134,7 +134,22 @@ class ContextNode():
             return self._children.__getitem__(name)
         raise TypeError('This is not a leaf node')
 
-    def __str__(self):
+    def get(self, *names: str):
+        """Retrieve the node given by the list of names.
+
+        Example:
+            >>> with ContextNode('a') as a:
+            ...     with ContextNode('b') as b:
+            ...          c = ContextNode('c')
+            >>> a.get('b', 'c')
+            a/b/c
+        """
+        node = self
+        for name in names:
+            node = node[name]
+        return node
+
+    def __str__(self) -> str:
         if self.is_root():
             fmt = self.ROOT_NAME_FMT
         elif not self.is_leaf():

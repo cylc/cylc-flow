@@ -144,7 +144,10 @@ class ParsecConfig:
                 try:
                     cfg = cfg[key]
                 except (KeyError, TypeError):
-                    if parents in self.manyparents or key in self.get(parents):
+                    if (
+                        parents in self.manyparents or
+                        key in self.spec.get(*parents)
+                    ):
                         raise ItemNotFoundError(itemstr(parents, key))
                     raise InvalidConfigError(
                         itemstr(parents, key), self.spec.name
