@@ -17,8 +17,9 @@
 import logging
 from pathlib import Path
 import tempfile
+from time import sleep
 import pytest
-
+import os
 from pytest import param
 from unittest import mock
 
@@ -32,6 +33,7 @@ from cylc.flow.loggingutil import (
 from cylc.flow.scheduler import Scheduler
 
 from typing import Callable
+
 
 @mock.patch("cylc.flow.loggingutil.glbl_cfg")
 def test_value_error_raises_system_exit(
@@ -112,7 +114,6 @@ def test_CylcLogFormatter__init__dev_info(dev_info, expect):
 
 def test_update_log_archive(tmp_run_dir: Callable):
     """Test log archive performs as expected"""
-    
     run_dir = tmp_run_dir('some_workflow')
     log_dir = Path(run_dir / 'log' / 'scheduler')
     log_dir.mkdir(exist_ok=True, parents=True)
@@ -126,7 +127,7 @@ def test_update_log_archive(tmp_run_dir: Callable):
     for i in range(1, 14):
         (log_dir/f'start-{str(i)}.log').touch()
     log_object.update_log_archive(4)
-    assert list((log_dir.iterdir())).sort()==[
+    assert list((log_dir.iterdir())).sort() == [
         Path(log_dir/'log'),
         Path(log_dir/'start-10.log'),
         Path(log_dir/'start-11.log'),
@@ -138,16 +139,20 @@ def test_get_sorted_logs_by_time(tmp_run_dir: Callable):
     run_dir = tmp_run_dir('some_workflow')
     config_log_dir = Path(run_dir / 'log' / 'config')
     config_log_dir.mkdir(exist_ok=True, parents=True)
-    Path(config_log_dir/f'01-start-01.cylc').touch()
-    (config_log_dir/f'02-start-01.cylc').touch()
-    (config_log_dir/f'03-restart-01.cylc').touch()
-    (config_log_dir/f'04-reload-01.cylc').touch()
+    for file in ['01-start-01.cylc',
+                 '02-start-01.cylc',
+                 '03-restart-01.cylc',
+                 '04-reload-01.cylc']:
+        Path(config_log_dir/file).touch()
+        # Sleep required to ensure modification times are sufficiently
+        # different for sort
+        sleep(0.1)
     loggies = get_sorted_logs_by_time(config_log_dir, "*.cylc")
     assert loggies == [f'{config_log_dir}/01-start-01.cylc',
                        f'{config_log_dir}/02-start-01.cylc',
                        f'{config_log_dir}/03-restart-01.cylc',
-                       f'{config_log_dir}/04-reload-01.cylc'
-                       ]
+                       f'{config_log_dir}/04-reload-01.cylc']
+
 
 def test_get_reload_number(tmp_run_dir: Callable):
     run_dir = tmp_run_dir('some_reloaded_workflow')
@@ -155,9 +160,12 @@ def test_get_reload_number(tmp_run_dir: Callable):
     config_log_dir.mkdir(exist_ok=True, parents=True)
     for i in range(1, 10):
         (config_log_dir/f'0{str(i)}-reload-0{str(i)}.cylc').touch()
+        # Sleep required to ensure modification times are sufficiently
+        # different for sort
+        sleep(0.1)
     config_logs = get_sorted_logs_by_time(config_log_dir, "*.cylc")
 
-    assert get_reload_number(config_logs)=='10'
+    assert get_reload_number(config_logs) == '10'
 
 
 def test_get_reload_number_no_reload_logs(tmp_run_dir: Callable):
@@ -168,4 +176,4 @@ def test_get_reload_number_no_reload_logs(tmp_run_dir: Callable):
         (config_log_dir/f'0{str(i)}-restart-0{str(i)}.cylc').touch()
     config_logs = get_sorted_logs_by_time(config_log_dir, "*.cylc")
 
-    assert get_reload_number(config_logs)=='01'
+    assert get_reload_number(config_logs) == '01'

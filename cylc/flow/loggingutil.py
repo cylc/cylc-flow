@@ -411,8 +411,7 @@ def get_reload_number(config_logs: List[str]) -> str:
             i for i in config_logs if 'reload' in os.path.basename(i)
         ]
         if reload_logs:
-            latest_reload_log = sorted(
-                reload_logs, key=os.path.getmtime).pop(-1)
+            latest_reload_log = reload_logs.pop(-1)
             next_reload_num = int(
                 latest_reload_log.rpartition("-")[2].replace('.cylc', '')) + 1
         else:
