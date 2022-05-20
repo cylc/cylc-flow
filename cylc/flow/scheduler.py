@@ -439,7 +439,6 @@ class Scheduler:
 
         # Print workflow name to disambiguate in case of inferred run number
         LOG.info(f"Workflow: {self.workflow}")
-        self._check_startup_opts()
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
 

@@ -134,8 +134,23 @@ def test_update_log_archive(tmp_run_dir: Callable):
         Path(log_dir/'start-13.log')].sort()
 
 
+def test_get_sorted_logs_by_time(tmp_run_dir: Callable):
+    run_dir = tmp_run_dir('some_workflow')
+    config_log_dir = Path(run_dir / 'log' / 'config')
+    config_log_dir.mkdir(exist_ok=True, parents=True)
+    Path(config_log_dir/f'01-start-01.cylc').touch()
+    (config_log_dir/f'02-start-01.cylc').touch()
+    (config_log_dir/f'03-restart-01.cylc').touch()
+    (config_log_dir/f'04-reload-01.cylc').touch()
+    loggies = get_sorted_logs_by_time(config_log_dir, "*.cylc")
+    assert loggies == [f'{config_log_dir}/01-start-01.cylc',
+                       f'{config_log_dir}/02-start-01.cylc',
+                       f'{config_log_dir}/03-restart-01.cylc',
+                       f'{config_log_dir}/04-reload-01.cylc'
+                       ]
+
 def test_get_reload_number(tmp_run_dir: Callable):
-    run_dir = tmp_run_dir('reloaded_workflow')
+    run_dir = tmp_run_dir('some_reloaded_workflow')
     config_log_dir = Path(run_dir / 'log' / 'config')
     config_log_dir.mkdir(exist_ok=True, parents=True)
     for i in range(1, 10):
@@ -146,7 +161,7 @@ def test_get_reload_number(tmp_run_dir: Callable):
 
 
 def test_get_reload_number_no_reload_logs(tmp_run_dir: Callable):
-    run_dir = tmp_run_dir('reloaded_workflow')
+    run_dir = tmp_run_dir('another_reloaded_workflow')
     config_log_dir = Path(run_dir / 'log' / 'config')
     config_log_dir.mkdir(exist_ok=True, parents=True)
     for i in range(1, 3):

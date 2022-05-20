@@ -45,6 +45,7 @@ sed -i "s/$(cylc --version)/<SOME-VERSION>/g" "${NAME}"
 cmp_ok "${NAME}" << __EOF__
 UTC_mode|0
 cylc_version|<SOME-VERSION>
+n_restart|0
 __EOF__
 
 NAME='select-task-events.out'

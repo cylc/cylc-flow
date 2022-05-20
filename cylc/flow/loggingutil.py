@@ -395,11 +395,10 @@ def get_next_log_number(log: str) -> str:
 
 
 def get_sorted_logs_by_time(log_dir: str, pattern: str) -> List[str]:
-    """Returns logs from directory provided, sorted by modification time"""
+    """Returns time sorted logs from directory provided, filtered by pattern"""
     log_files = glob(str(Path(log_dir).joinpath(pattern)))
     # Sort log files by modification time
-    sorted_files = sorted(log_files, key=os.path.getmtime)
-    return sorted_files
+    return sorted(log_files, key=os.path.getmtime)
 
 
 def get_reload_number(config_logs: List[str]) -> str:
