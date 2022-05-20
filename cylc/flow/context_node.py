@@ -127,7 +127,7 @@ class ContextNode():
         return iter([])
 
     def __contains__(self, name: str) -> bool:
-        return name in self._children
+        return name in self._children  # type: ignore[operator]  # TODO
 
     def __getitem__(self, name: str):
         if self._children:

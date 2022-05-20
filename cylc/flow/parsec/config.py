@@ -286,10 +286,11 @@ class ConfigNode(ContextNode):
         if meta:
             # inherit items from the template configuration
             self._children = deepcopy(meta._children)
-            for child in self._children.values():
-                # record that these configurations have been inherited
-                # (this is used to prevent documenting settings twice)
-                child.meta = True
+            if self._children:
+                for child in self._children.values():
+                    # record that these configurations have been inherited
+                    # (this is used to prevent documenting settings twice)
+                    child.meta = True
 
         self.display_name = display_name
         self.vdr = vdr
