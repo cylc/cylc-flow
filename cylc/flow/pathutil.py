@@ -251,7 +251,11 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
         except OSError:
             raise WorkflowFilesError(
                 f"Error when symlinking. Failed to unlink bad symlink {path}.")
-    target.mkdir(parents=True, exist_ok=True)
+    try:
+        target.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        raise WorkflowFilesError(f"Symlink target already exists: {target}.")
+ 
 
     # This is needed in case share and share/cycle have the same symlink dir:
     if path.exists():
