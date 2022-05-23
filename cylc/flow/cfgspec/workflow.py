@@ -1347,7 +1347,7 @@ with Conf(
                     .. seealso::
 
                         `Documentation on changes to remote owner
-                        <https://cylc.github.io/cylc-doc/nightly/html/
+                        <https://cylc.github.io/cylc-doc/latest/html/
                         7-to-8/major-changes/remote-owner.html>`_
                 """)
                 Conf('retrieve job logs', VDR.V_BOOLEAN)
