@@ -315,17 +315,20 @@ class CylcReviewService(object):
             page = 1
 
         # Set list of task states depending on Cylc version 7 or 8
-        if self.suite_dao.is_cylc8(user, suite):
-            task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
-        else:
+        from sqlite3 import ProgrammingError
+        try:
+            if self.suite_dao.is_cylc8(user, suite):
+                task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
+            else:
+                task_statuses_ordered = TASK_STATUSES_ORDERED
+        except ProgrammingError:
             task_statuses_ordered = TASK_STATUSES_ORDERED
 
         # get selected task states
         if not task_status:
             # default task statuses - if updating please also change the
             # $("#reset_task_statuses").click function in cylc-review.js
-            task_status = [state for state in task_statuses_ordered
-                           if state != TASK_STATUS_WAITING]
+            task_status = list(task_statuses_ordered)
         elif not isinstance(task_status, list):
             task_status = [task_status]
 
