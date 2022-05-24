@@ -33,6 +33,11 @@ ones in. -->
 
 Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
+### Enhancements
+
+[#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
+in `global.cylc[install]source dirs`.
+
 ### Fixes
 
 [#4881](https://github.com/cylc/cylc-flow/pull/4881) - Fix bug where commands

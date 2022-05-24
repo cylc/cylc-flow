@@ -16,8 +16,9 @@
 """Cylc site and user configuration file spec."""
 
 import os
+from pathlib import Path
 from sys import stderr
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
 from pkg_resources import parse_version
@@ -31,7 +32,11 @@ from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
 )
-from cylc.flow.parsec.exceptions import ParsecError, ItemNotFoundError
+from cylc.flow.parsec.exceptions import (
+    ParsecError,
+    ItemNotFoundError,
+    ValidationError,
+)
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.util import printcfg, expand_many_section
 from cylc.flow.parsec.validate import (
@@ -1450,7 +1455,7 @@ class GlobalConfig(ParsecConfig):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def get_inst(cls, cached=True):
+    def get_inst(cls, cached: bool = True) -> 'GlobalConfig':
         """Return a GlobalConfig instance.
 
         Args:
@@ -1469,11 +1474,17 @@ class GlobalConfig(ParsecConfig):
             cls._DEFAULT.load()
         return cls._DEFAULT
 
-    def _load(self, fname, conf_type):
-        if os.access(fname, os.F_OK | os.R_OK):
+    def _load(self, fname: Union[Path, str], conf_type: str) -> None:
+        if not os.access(fname, os.F_OK | os.R_OK):
+            return
+        try:
             self.loadcfg(fname, conf_type)
+            self._validate_source_dirs()
+        except ParsecError:
+            LOG.error(f'bad {conf_type} {fname}')
+            raise
 
-    def load(self):
+    def load(self) -> None:
         """Load or reload configuration from files."""
         self.sparse.clear()
         self.dense.clear()
@@ -1487,22 +1498,39 @@ class GlobalConfig(ParsecConfig):
             # Use default locations.
             for conf_type, conf_dir in self.conf_dir_hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
-                try:
-                    self._load(fname, conf_type)
-                except ParsecError:
-                    LOG.error(f'bad {conf_type} {fname}')
-                    raise
+                self._load(fname, conf_type)
 
         # Expand platforms needs to be performed first because it
         # manipulates the sparse config.
         self._expand_platforms()
+
+        # Flesh out with defaults
+        self.expand()
+
         self._set_default_editors()
         self._no_platform_group_name_overlap()
+
+    def _validate_source_dirs(self) -> None:
+        """Check source dirs are absolute paths."""
+        keys = ['install', 'source dirs']
+        try:
+            src_dirs: List[str] = self.get(keys, sparse=True)
+        except ItemNotFoundError:
+            return
+        for item in src_dirs:
+            path = Path(item)
+            # Do not expand user/env vars - it is ok if they don't exist
+            if not (
+                path.is_absolute() or path.parts[0].startswith(('~', '$'))
+            ):
+                raise ValidationError(
+                    keys, value=item, msg="must be an absolute path"
+                )
 
     def _set_default_editors(self):
         # default to $[G]EDITOR unless an editor is defined in the config
         # NOTE: use `or` to handle cases where an env var is set to ''
-        cfg = self.get()
+        cfg = self.get(sparse=False)
         if not cfg['editors']['terminal']:
             cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
         if not cfg['editors']['gui']:
