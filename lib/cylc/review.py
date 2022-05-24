@@ -51,6 +51,18 @@ from cylc.ws import get_util_home
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
+CYLC8_TASK_STATUSES_ORDERED = [
+    'expired',
+    'failed',
+    'preparing',
+    'running',
+    'submitted',
+    'submit-failed',
+    'succeeded',
+    'waiting',
+]
+
+
 class CylcReviewService(object):
 
     """'Cylc Review Service."""
@@ -302,18 +314,24 @@ class CylcReviewService(object):
         else:
             page = 1
 
+        # Set list of task states depending on Cylc version 7 or 8
+        if self.suite_dao.is_cylc8(user, suite):
+            task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
+        else:
+            task_statuses_ordered = TASK_STATUSES_ORDERED
+
         # get selected task states
         if not task_status:
             # default task statuses - if updating please also change the
             # $("#reset_task_statuses").click function in cylc-review.js
-            task_status = [state for state in TASK_STATUSES_ORDERED
+            task_status = [state for state in task_statuses_ordered
                            if state != TASK_STATUS_WAITING]
         elif not isinstance(task_status, list):
             task_status = [task_status]
 
         # generate list of all task states [(state, "0" or "1"), ...]
         task_statuses = [(status, "1" if status in task_status else "0")
-                         for status in TASK_STATUSES_ORDERED]
+                         for status in task_statuses_ordered]
 
         data = {
             "cycles": cycles,
