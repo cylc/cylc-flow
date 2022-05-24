@@ -167,7 +167,7 @@ def filter_ids(
                             break
 
         # filter by task
-        elif lowest_token == IDTokens.Task:
+        elif lowest_token == IDTokens.Task:   # noqa SIM106
             cycle = tokens[IDTokens.Cycle.value]
             cycle_sel_raw = tokens.get(IDTokens.Cycle.value + '_sel')
             cycle_sel = cycle_sel_raw or '*'
