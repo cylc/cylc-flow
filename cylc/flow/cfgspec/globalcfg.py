@@ -1308,6 +1308,17 @@ with Conf('global.cylc', desc='''
                       be appropriate if following the pattern
                       ``hosts = main, backup, failsafe``.
                 ''')
+            with Conf('directives', desc='''
+                Job runner (batch scheduler) directives.
+
+                Default directives for :cylc:conf:
+                `flow.cylc[runtime][<namespace>][directives]`
+            '''):
+                Conf('<directive>', VDR.V_STRING, desc='''
+                    Example directives for the built-in job runner handlers
+                    are shown in :ref:`AvailableMethods`.
+                ''')
+
         with Conf('localhost', meta=Platform, desc='''
             A default platform defining settings for jobs to be run on the
             same host as the workflow scheduler.

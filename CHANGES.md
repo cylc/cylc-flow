@@ -33,6 +33,11 @@ ones in. -->
 
 Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
+### Enhancements
+
+[#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
+default job runner directives for plaforms.
+
 ### Fixes
 
 [#4881](https://github.com/cylc/cylc-flow/pull/4881) - Fix bug where commands

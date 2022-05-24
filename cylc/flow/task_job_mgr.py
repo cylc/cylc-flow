@@ -1278,6 +1278,27 @@ class TaskJobManager:
             job_d=job_d
         )
 
+    @staticmethod
+    def default_dict_merger(defaults, tdef):
+        """Use directive from platform if not set in rtconfig.
+
+        For item in defaults add item to output if not in tdef.
+
+        Examples:
+        >>> defaults = {'use': 1, 'override': 1}
+        >>> tdef = {'override': 2, 'nodefault': 1}
+        >>> result = TaskJobManager.default_dict_merger(defaults, tdef)
+        >>> {i: result[i] for i in sorted(result)}
+        {'nodefault': 1, 'override': 2, 'use': 1}
+        """
+        output = {}
+        for key in set(list(defaults.keys()) + list(tdef.keys())):
+            if key in defaults and key not in tdef:
+                output[key] = defaults[key]
+            else:
+                output[key] = tdef[key]
+        return output
+
     def get_job_conf(
         self,
         workflow,
@@ -1299,7 +1320,9 @@ class TaskJobManager:
                 itask.platform['job runner command template']
             ),
             'dependencies': itask.state.get_resolved_dependencies(),
-            'directives': rtconfig['directives'],
+            'directives': self.default_dict_merger(
+                itask.platform['directives'], rtconfig['directives']
+            ),
             'environment': rtconfig['environment'],
             'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
             'env-script': rtconfig['env-script'],
