@@ -341,23 +341,21 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     scheduler._check_startup_opts()
     restart_num = scheduler.workflow_db_mgr.restart_check()
     is_restart = bool(restart_num)
-    if is_restart:
-        pri_dao = scheduler.workflow_db_mgr.get_pri_dao()
-        try:
-            # This logic handles lack of initial cycle point in flow.cylc
-            # Things that can't change on workflow reload.
-            pri_dao.select_workflow_params(
-                scheduler._load_workflow_params)
-            pri_dao.select_workflow_template_vars(
-                scheduler._load_template_vars)
-            pri_dao.execute_queued_items()
-        finally:
-            pri_dao.close()
     # setup loggers
     _open_logs(
         workflow_id,
         options.no_detach,
         restart_num=restart_num)
+    log_extra_num = {
+        TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
+        TimestampRotatingFileHandler.FILE_NUM: 1}
+    LOG.info(
+        'Run: (re)start=%d log=%d',
+        restart_num,
+        1,
+        extra=log_extra_num)
+    if is_restart:
+        scheduler.load_workflow_params_and_tmpl_vars()
 
     # run the workflow
     ret = asyncio.run(

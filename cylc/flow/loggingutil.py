@@ -181,9 +181,9 @@ class TimestampRotatingFileHandler(logging.FileHandler):
 
     def should_rollover(self, record):
         """Should rollover?"""
-        if (self.log_num is None or
-                self.stream is None or
-                self.load_type_change()):
+        if (self.stream is None or
+                self.load_type_change() or
+                self.log_num is None):
             return True
         max_bytes = glbl_cfg().get(
             ['scheduler', 'logging', 'maximum size in bytes'])
@@ -236,7 +236,10 @@ class TimestampRotatingFileHandler(logging.FileHandler):
         for header_record in self.header_records:
             if self.FILE_NUM in header_record.__dict__:
                 # Increment log file number
-                header_record.__dict__[self.FILE_NUM] = self.log_num
+                header_record.__dict__[self.FILE_NUM] += 1
+                # strip the hard coded log number (1) from the log message
+                # replace with the log count number of that run.
+                # Note this is different from the log number in the file name.
                 header_record.args = header_record.args[0:-1] + (
                     header_record.__dict__[self.FILE_NUM],)
             logging.FileHandler.emit(self, header_record)

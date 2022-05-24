@@ -441,7 +441,6 @@ class Scheduler:
         LOG.info(f"Workflow: {self.workflow}")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
-
         if not self.is_restart:
             # Set workflow params that would otherwise be loaded from database:
             self.options.utc_mode = get_utc_mode()
@@ -537,6 +536,19 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: end configure")
 
+    def load_workflow_params_and_tmpl_vars(self):
+        """Load workflow params and template variables"""
+        pri_dao = self.workflow_db_mgr.get_pri_dao()
+        try:
+            # This logic handles lack of initial cycle point in flow.cylc
+            # Things that can't change on workflow reload.
+            pri_dao.select_workflow_params(self._load_workflow_params)
+            pri_dao.select_workflow_template_vars(self._load_template_vars)
+            pri_dao.execute_queued_items()
+
+        finally:
+            pri_dao.close()
+
     async def start_servers(self):
         """Start the TCP servers."""
         min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
@@ -555,9 +567,6 @@ class Scheduler:
         if is_quiet:
             # Temporarily change logging level to log important info
             LOG.setLevel(logging.INFO)
-        log_extra_num = {
-            TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
-            TimestampRotatingFileHandler.FILE_NUM: 1}
         LOG.info(
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
@@ -573,11 +582,6 @@ class Scheduler:
                 'port': self.pub_port},
             extra=log_extra,
         )
-        LOG.info(
-            'Run: (re)start=%d log=%d',
-            self.workflow_db_mgr.n_restart,
-            1,
-            extra=log_extra_num)
         LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
 
         # Note that the following lines must be present at the top of
