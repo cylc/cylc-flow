@@ -35,6 +35,9 @@ Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Fixes
 
+[#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
+prompt if no matching workflows.
+
 [#4881](https://github.com/cylc/cylc-flow/pull/4881) - Fix bug where commands
 targeting a specific cycle point would not work if using an abbreviated
 cycle point format.
