@@ -36,7 +36,7 @@ Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 ### Enhancements
 
 [#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
-default job runner directives for plaforms.
+default job runner directives for platforms.
 
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.

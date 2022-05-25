@@ -1314,10 +1314,10 @@ with Conf('global.cylc', desc='''
                       ``hosts = main, backup, failsafe``.
                 ''')
             with Conf('directives', desc='''
-                Job runner (batch scheduler) directives.
-
-                Default directives for :cylc:conf:
+                :Defaults for: :cylc:conf:
                 `flow.cylc[runtime][<namespace>][directives]`
+
+                Job runner (batch scheduler) directives.
             '''):
                 Conf('<directive>', VDR.V_STRING, desc='''
                     Example directives for the built-in job runner handlers
