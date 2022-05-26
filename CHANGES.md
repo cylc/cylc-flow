@@ -40,6 +40,11 @@ in `global.cylc[install]source dirs`.
 
 ### Fixes
 
+[#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow config parsing
+will fail if
+[owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
+owner setting is used, as that setting no longer has any effect.
+
 [#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
 prompt if no matching workflows.
 
@@ -82,8 +87,6 @@ workflow contact files should result in a warning, not a crash.
 option for `cylc install` (the functionality has been merged into the
 workflow source argument), and rename the `--flow-name` option to
 `--workflow-name`.
-
-### Fixes
 
 [#4873](https://github.com/cylc/cylc-flow/pull/4873) - `cylc show`: don't
 show prerequisites of past tasks recalled from the DB as unsatisfied.
@@ -717,7 +720,7 @@ rsyncing the following files on install and reinstall:
 - `opt/rose-suite-cylc-install.conf`
 These files should be handled by the cylc-rose plugin if you require them.
 
-[#4126](https://github.com/cylc/cylc-flow/pull/4126) - Make obselete the config
+[#4126](https://github.com/cylc/cylc-flow/pull/4126) - Make obsolete the config
 ``flow.cylc:[runtime][__TASK__][remote]suite definition directory``.
 
 [#4098](https://github.com/cylc/cylc-flow/pull/4098) - Provide a dictionary called

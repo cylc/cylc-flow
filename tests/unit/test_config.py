@@ -1390,3 +1390,49 @@ def test_zero_interval(
         assert logged
     else:
         assert not logged
+
+
+@pytest.mark.parametrize(
+    'runtime_cfg',
+    (
+        pytest.param(
+            {'foo': {'remote': {'host': 'bar'}}},
+            id='no-owners'
+        ),
+        pytest.param(
+            {'foo': {'remote': {'owner': 'tim'}}},
+            id='one-owner'
+        ),
+        pytest.param(
+            {
+                'foo': {'remote': {'owner': 'tim'}},
+                'bar': {'remote': {'owner': 'oliver'}},
+                'baz': {'remote': {'owner': 'ronnie'}},
+            },
+            id='3-owners'
+        ),
+        pytest.param(
+            {
+                'foo': {'remote': {'owner': 'tim'}},
+                'bar': {'remote': {'owner': 'oliver'}},
+                'baz': {'remote': {'owner': 'ronnie'}},
+                'qux': {'remote': {'owner': 'tim'}},
+                'aleph': {'remote': {'owner': 'oliver'}},
+                'bet': {'remote': {'owner': 'ronnie'}},
+
+            },
+            id='6-owners'
+        ),
+    )
+)
+def test_check_for_owner(runtime_cfg):
+    """check_for_owner raises a list of [runtime][task][remote]owner set."""
+    if 'owner' in str(runtime_cfg):
+        with pytest.raises(WorkflowConfigError) as exc:
+            WorkflowConfig.check_for_owner(runtime_cfg)
+        # Assert is the correct error message:
+        assert exc.match('owner\" is obsolete')
+        # Assert error message has right number of lines:
+    else:
+        # Assert function doesn't raise if no owner set:
+        assert WorkflowConfig.check_for_owner(runtime_cfg) is None

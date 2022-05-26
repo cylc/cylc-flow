@@ -52,7 +52,7 @@ class ParsecConfig:
         Args:
             spec: Specification for the config.
             upgrader: An upgrader function, which converts old config items
-                to new ones, or returns errors for obselete items.
+                to new ones, or returns errors for obsolete items.
             output_fname: Filename to dump parsed config to.
             tvars: Template variables.
             validator: Function checkin that config is valid; defaults to

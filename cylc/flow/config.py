@@ -349,6 +349,7 @@ class WorkflowConfig:
         # Done before inheritance to avoid repetition
         self.check_env_names()
         self.check_param_env_tmpls()
+        self.check_for_owner(self.cfg['runtime'])
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
@@ -2341,3 +2342,25 @@ class WorkflowConfig:
                 self.workflow, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
+
+    @staticmethod
+    def check_for_owner(tasks: Dict) -> None:
+        """Raise exception if [runtime][task][remote]owner
+        """
+        owners = {}
+        for task, tdef in tasks.items():
+            owner = tdef.get('remote', {}).get('owner', None)
+            if owner:
+                owners[task] = owner
+        if owners:
+            # TODO: Convert URL to a stable or latest release doc after 8.0
+            # https://github.com/cylc/cylc-flow/issues/4663
+            msg = (
+                '"[runtime][task][remote]owner" is obsolete at Cylc 8.'
+                '\nsee https://cylc.github.io/cylc-doc/nightly/'
+                'html/7-to-8/major-changes/remote-owner.html'
+                f'\nFirst {min(len(owners), 5)} tasks:'
+            )
+            for task, _ in list(owners.items())[:5]:
+                msg += f'\n  * {task}"'
+            raise WorkflowConfigError(msg)
