@@ -3,6 +3,5 @@
     allow implicit tasks = True
 [scheduling]
     [[graph]]
-        R1 = foo
+%include flow-includeme.cylc
 [runtime]
-{% include 'flow-foo.cylc' %}

@@ -184,6 +184,17 @@ def platform_from_name(
                 bad_hosts=bad_hosts
             )
 
+    for platform_name_re in list(platforms):
+        if (
+            # If the platform_name_re contains special regex chars
+            re.escape(platform_name_re) != platform_name_re
+            and re.match(platform_name_re, 'localhost')
+        ):
+            raise PlatformLookupError(
+                'The "localhost" platform cannot be defined using a '
+                'regular expression. See the documentation for '
+                '"global.cylc[platforms][localhost]" for more information.'
+            )
     # The list is reversed to allow user-set platforms (which are loaded
     # later than site set platforms) to be matched first and override site
     # defined platforms.

@@ -51,19 +51,17 @@ contains_ok "${TEST_NAME}.stdout" <<__SHOW_OUTPUT__
 title: (not given)
 description: (not given)
 URL: (not given)
-
-prerequisites (- => not satisfied):
+state: running
+prerequisites: ('-': not satisfied)
   + 20140808T0900$TZ_OFFSET_BASIC/woo succeeded
-
-outputs (- => not completed):
+outputs: ('-': not completed)
   - 20140808T0900$TZ_OFFSET_BASIC/foo expired
   + 20140808T0900$TZ_OFFSET_BASIC/foo submitted
   - 20140808T0900$TZ_OFFSET_BASIC/foo submit-failed
   + 20140808T0900$TZ_OFFSET_BASIC/foo started
   - 20140808T0900$TZ_OFFSET_BASIC/foo succeeded
   - 20140808T0900$TZ_OFFSET_BASIC/foo failed
-
-other (- => not satisfied):
+other: ('-': not satisfied)
   + Clock trigger time reached
   o Triggers at ... 2014-08-08T09:05:00$TZ_OFFSET_EXTENDED
 __SHOW_OUTPUT__

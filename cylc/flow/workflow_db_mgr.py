@@ -395,7 +395,7 @@ class WorkflowDatabaseManager:
         """
         for key, value in template_vars.items():
             self.db_inserts_map[self.TABLE_WORKFLOW_TEMPLATE_VARS].append(
-                {"key": key, "value": value})
+                {"key": key, "value": repr(value)})
 
     def put_task_event_timers(self, task_events_mgr):
         """Put statements to update the task_action_timers table."""
@@ -452,11 +452,11 @@ class WorkflowDatabaseManager:
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
-        # We can comment this out to keep prereq history for the data-store:
+        # Comment this out to retain the trigger-time prereq status of past
+        # tasks (but then the prerequisite table will grow indefinitely):
         self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
-        # No need to do:
+        # This should already be done by self.put_task_event_timers above:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-        # Should already be done by self.put_task_event_timers above.
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
             for prereq in itask.state.prerequisites:
@@ -676,7 +676,12 @@ class WorkflowDatabaseManager:
         if not os.path.isfile(self.pri_path):
             raise FileNotFoundError(self.pri_path)
         incompat_msg = (
-            f"Workflow database is incompatible with Cylc {CYLC_VERSION}")
+            f"Workflow database is incompatible with Cylc {CYLC_VERSION}"
+        )
+        manual_rm_msg = (
+            "If you are sure you want to operate on this workflow, please "
+            f"delete the database file at {self.pri_path}"
+        )
         pri_dao = self.get_pri_dao()
         try:
             last_run_ver = pri_dao.connect().execute(
@@ -691,7 +696,9 @@ class WorkflowDatabaseManager:
                 [self.KEY_CYLC_VERSION]
             ).fetchone()[0]
         except TypeError:
-            raise ServiceFileError(f"{incompat_msg}, or is corrupted")
+            raise ServiceFileError(
+                f"{incompat_msg}, or is corrupted.\n{manual_rm_msg}"
+            )
         finally:
             pri_dao.close()
         last_run_ver = parse_version(last_run_ver)
@@ -700,4 +707,6 @@ class WorkflowDatabaseManager:
         )
         if last_run_ver <= restart_incompat_ver:
             raise ServiceFileError(
-                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})")
+                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})."
+                f"\n{manual_rm_msg}"
+            )

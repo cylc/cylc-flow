@@ -29,11 +29,56 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
-## __cylc-8.0rc3 (<span actions:bind='release-date'>Pending</span>)__
+## __cylc-8.0rc4 (<span actions:bind='release-date'>Upcoming</span>)__
+
+Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
+
+### Enhancements
+
+[#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
+in `global.cylc[install]source dirs`.
+
+### Fixes
+
+[#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow config parsing
+will fail if
+[owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
+owner setting is used, as that setting no longer has any effect.
+
+[#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
+prompt if no matching workflows.
+
+[#4881](https://github.com/cylc/cylc-flow/pull/4881) - Fix bug where commands
+targeting a specific cycle point would not work if using an abbreviated
+cycle point format.
+
+-------------------------------------------------------------------------------
+## __cylc-8.0rc3 (<span actions:bind='release-date'>Released 2022-05-19</span>)__
 
 Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
+
+[#4738](https://github.com/cylc/cylc-flow/pull/4738) and
+[#4739](https://github.com/cylc/cylc-flow/pull/4739) - Implement `cylc trigger
+[--flow=] [--wait]` for manual triggering with respect to active flows (the
+default), specific flows, new flows, or one-off task runs. This replaces
+the `--reflow` option from earlier pre-release versions.
+
+[#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
+flow, remove active-waiting tasks with no remaining flow numbers.
+
+
+[#4854](https://github.com/cylc/cylc-flow/pull/4854)
+- Expansion and merger of comma separated platform definitions permitted.
+- Platform definition regular expressions which match "localhost" but are not
+  "localhost" are now explicitly forbidden and will raise an exception.
+
+[#4842](https://github.com/cylc/cylc-flow/pull/4842) -
+Improve Jinja2 error reporting when the error is behind an `{% include`.
+
+[#4861](https://github.com/cylc/cylc-flow/pull/4861) - Allow workflow source
+ directories to be under `cylc-run`.
 
 [#4828](https://github.com/cylc/cylc-flow/pull/4828) - scan CLI: corrupt
 workflow contact files should result in a warning, not a crash.
@@ -43,12 +88,19 @@ option for `cylc install` (the functionality has been merged into the
 workflow source argument), and rename the `--flow-name` option to
 `--workflow-name`.
 
-### Fixes
+[#4873](https://github.com/cylc/cylc-flow/pull/4873) - `cylc show`: don't
+show prerequisites of past tasks recalled from the DB as unsatisfied.
 
-[#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow config parsing
-will fail if
-[owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
-owner setting is used, as that setting no longer has any effect.
+[#4875](https://github.com/cylc/cylc-flow/pull/4864) - Fix the file name
+pattern matching used for emacs syntax highlighting.
+
+[#4864](https://github.com/cylc/cylc-flow/pull/4864) - Allow strings
+and more complex data type template variables to be stored correctly
+in the workflow database.
+
+[#4863](https://github.com/cylc/cylc-flow/pull/4863) - Execution timeout is no
+longer set based on execution time limit. Fixes bug where execution timeout
+would get overridden.
 
 [#4844](https://github.com/cylc/cylc-flow/pull/4844) - Fixes bug where
 execution polling intervals used in combination with an execution time limit
@@ -94,6 +146,13 @@ an invalid `--stopcp` would corrupt the workflow database. Also fix
 inconsistency between how `[scheduling]stop after cycle point` was handled
 on reload/restart compared to the other cycle point settings.
 
+[#4872](https://github.com/cylc/cylc-flow/pull/4872) - Fix bug preventing
+`cylc clean <workflow_name>/runN` from working.
+
+[#4769](https://github.com/cylc/cylc-flow/pull/4769) - Fix handling of quoted
+command args for invocation on remote run hosts.
+
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc2 (<span actions:bind='release-date'>Released 2022-03-23</span>)__
 
@@ -108,10 +167,6 @@ remote file installation is now configurable.
 provided [wrapper script](https://cylc.github.io/cylc-doc/latest/html/installation.html#managing-environments).
 
 ### Fixes
-
-[#4769](https://github.com/cylc/cylc-flow/pull/4769) - Fix handling of quoted
-command args for invocation on remote run hosts.
-
 
 [#4703](https://github.com/cylc/cylc-flow/pull/4703) - Fix `ImportError` when
 validating/running a Jinja2 workflow (for users who have installed Cylc
@@ -128,16 +183,6 @@ line when specifying a Cylc ID that includes your username (e.g. `'~user/workflo
 [#4737](https://github.com/cylc/cylc-flow/pull/4737) -
 Fix issue which prevented tasks with incomplete outputs from being rerun by
 subsequent flows.
-### Enhancements
-
-[#4738](https://github.com/cylc/cylc-flow/pull/4738) and
-[#4739](https://github.com/cylc/cylc-flow/pull/4739) - Implement `cylc trigger
-[--flow=] [--wait]` for manual triggering with respect to active flows (the
-default), specific flows, new flows, or one-off task runs.
-
-
-[#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
-flow, remove active-waiting tasks with no remaining flow numbers.
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0rc1 (<span actions:bind='release-date'>Released 2022-02-17</span>)__

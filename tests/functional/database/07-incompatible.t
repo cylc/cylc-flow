@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
-# Test that restarting a Cylc 7 workflow fails due to database incompatibility,
+# Test that operating on a Cylc 7 workflow fails due to database incompatibility,
 # and that suitable error message is given.
 
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 5
 
 install_workflow
 # install the cylc7 restart database
@@ -27,12 +27,14 @@ SRV_DIR="${WORKFLOW_RUN_DIR}/.service"
 mkdir "$SRV_DIR"
 sqlite3 "${SRV_DIR}/db" < 'db.sqlite3'
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "$WORKFLOW_NAME"
 
-TEST_NAME="${TEST_NAME_BASE}-restart-fail"
-workflow_run_fail "$TEST_NAME" cylc play "${WORKFLOW_NAME}"
+for cmd in play clean; do
+    TEST_NAME="${TEST_NAME_BASE}-${cmd}-fail"
+    run_fail "$TEST_NAME" cylc "$cmd" "$WORKFLOW_NAME"
 
-grep_ok 'Workflow database is incompatible' "${TEST_NAME}.stderr"
+    grep_ok 'Workflow database is incompatible' "${TEST_NAME}.stderr"
+done
 
 purge
 

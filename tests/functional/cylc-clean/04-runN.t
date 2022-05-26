@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,15 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# jinja2 test for fail to validate when including a file with incomplete loop
+# -----------------------------------------------------------------------------
+# Test cleaning latest run using <workflow_name>/runN
+
 . "$(dirname "$0")/test_header"
-#-------------------------------------------------------------------------------
-set_test_number 1
-#-------------------------------------------------------------------------------
-install_workflow "${TEST_NAME_BASE}" include-incomplete
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-#-------------------------------------------------------------------------------
+set_test_number 5
+
+install_workflow "$TEST_NAME_BASE" basic-workflow true
+
+exists_ok "${WORKFLOW_RUN_DIR}/run1"
+exists_ok "${WORKFLOW_RUN_DIR}/runN"
+
+run_ok "${TEST_NAME_BASE}-clean" cylc clean "${WORKFLOW_NAME}/runN"
+
+exists_fail "${WORKFLOW_RUN_DIR}/run1"
+exists_fail "${WORKFLOW_RUN_DIR}/runN"
+
 purge

@@ -206,7 +206,17 @@ def node_ids_filter(tokens, state, items) -> bool:
 
 
 def node_filter(node, node_type, args, state):
-    """Filter nodes based on attribute arguments"""
+    """Filter nodes based on attribute arguments.
+
+    Args:
+        node: The node to filter (from the data or delta store).
+        node_type: The type of the node being filtered.
+        args: The query arguments.
+        state: The state of the node that is being filtered.
+            Note: can be None for non-tasks e.g. task definitions where
+            state filtering does not apply.
+
+    """
     tokens: Tokens
     if node_type in DEF_TYPES:
         # namespace nodes don't fit into the universal ID scheme so must
@@ -333,12 +343,14 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         """Return state, from node or data-store."""
         if node_type in DEF_TYPES:
             return None
-        # Don't lookup data-store state in getattr, as it might not be there.
-        # (args are evaluated first)
-        # If node has no state, it must be in the data-store.
+        # NOTE: dont access "state" directly as the attribute might not exist
         with suppress(Exception):
             return (
+                # try to retrieve the state from the node
+                # (could be a delta-store node which might not have a state)
                 getattr(node, 'state', None)
+                # fall back to the data store (because this could be a
+                # delta-store node which might not have the state field set)
                 or self.data_store_mgr.data[
                     Tokens(node.id).workflow_id
                 ][node_type][node.id].state

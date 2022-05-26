@@ -440,14 +440,13 @@ class TaskEventsManager():
             itask.platform[key]
         )
 
-    def _get_workflow_platforms_conf(self, itask, key, default):
+    def _get_workflow_platforms_conf(self, itask, key):
         """Return top level [runtime] items that default to platforms."""
         overrides = self.broadcast_mgr.get_broadcast(itask.identity)
         return (
             overrides.get(key) or
             itask.tdef.rtconfig[key] or
-            itask.platform[key] or
-            default
+            itask.platform[key]
         )
 
     def process_events(self, schd: 'Scheduler') -> None:
@@ -1502,15 +1501,11 @@ class TaskEventsManager():
             timeout_key = 'execution timeout'
             timeout = self._get_events_conf(itask, timeout_key)
             delays = list(self._get_workflow_platforms_conf(
-                itask, 'execution polling intervals',
-                default=[900]))  # default 15 minute intervals
+                itask, 'execution polling intervals'))
             if itask.summary[self.KEY_EXECUTE_TIME_LIMIT]:
                 time_limit = itask.summary[self.KEY_EXECUTE_TIME_LIMIT]
                 time_limit_delays = itask.platform.get(
                     'execution time limit polling intervals')
-                if not time_limit_delays:
-                    time_limit_delays = [60, 120, 420]
-                timeout = time_limit + sum(time_limit_delays)
                 if sum(delays) > time_limit:
                     # Remove excessive polling before time limit
                     while sum(delays) > time_limit:
@@ -1527,8 +1522,7 @@ class TaskEventsManager():
             timeout_key = 'submission timeout'
             timeout = self._get_events_conf(itask, timeout_key)
             delays = list(self._get_workflow_platforms_conf(
-                itask, 'submission polling intervals',
-                default=[900]))
+                itask, 'submission polling intervals'))
         try:
             itask.timeout = timeref + float(timeout)
             timeout_str = intvl_as_str(timeout)

@@ -54,7 +54,6 @@ from cylc.flow.pathutil import (
     expand_path,
     get_cylc_run_dir,
     get_workflow_run_dir,
-    is_relative_to,
     make_localhost_symlinks,
     parse_rm_dirs,
     remove_dir_and_target,
@@ -766,10 +765,14 @@ def init_clean(reg: str, opts: 'Values') -> None:
     scheduler filesystem and remote hosts.
 
     Args:
-        reg: Workflow name.
+        reg: Workflow name/ID.
         opts: CLI options object for cylc clean.
     """
     local_run_dir = Path(get_workflow_run_dir(reg))
+    with suppress(InputError):
+        local_run_dir, reg = infer_latest_run(
+            local_run_dir, implicit_runN=False, warn_runN=False
+        )
     try:
         _clean_check(opts, reg, local_run_dir)
     except FileNotFoundError as exc:
@@ -1239,20 +1242,21 @@ def check_reserved_dir_names(name: Union[Path, str]) -> None:
 def infer_latest_run_from_id(workflow_id: str) -> str:
     run_dir = Path(get_workflow_run_dir(workflow_id))
     _, reg = infer_latest_run(run_dir)
-    return str(reg)
+    return reg
 
 
 def infer_latest_run(
     path: Path,
     implicit_runN: bool = True,
-) -> Tuple[Path, Path]:
+    warn_runN: bool = True,
+) -> Tuple[Path, str]:
     """Infer the numbered run dir if the workflow has a runN symlink.
 
-    Warns users that explicit use of runN is unnessary.
     Args:
         path: Absolute path to the workflow dir, run dir or runN dir.
         implicit_runN: If True, add runN on the end of the path if the path
             doesn't include it.
+        warn_runN: If True, warn that explicit use of runN is unnecessary.
 
     Returns:
         path: Absolute path of the numbered run dir if applicable, otherwise
@@ -1265,7 +1269,7 @@ def infer_latest_run(
     """
     cylc_run_dir = get_cylc_run_dir()
     try:
-        reg = path.relative_to(cylc_run_dir)
+        reg = str(path.relative_to(cylc_run_dir))
     except ValueError:
         raise ValueError(f"{path} is not in the cylc-run directory")
     if not path.exists():
@@ -1273,12 +1277,13 @@ def infer_latest_run(
             f'Workflow ID not found: {reg}\n(Directory not found: {path})'
         )
     if path.name == WorkflowFiles.RUN_N:
-        LOG.warning(
-            f"Explicit use of {WorkflowFiles.RUN_N} in the Workflow ID is not"
-            " necessary. It is used automatically to select the latest run"
-            " number."
-        )
         runN_path = path
+        if warn_runN:
+            LOG.warning(
+                f"You do not need to include {WorkflowFiles.RUN_N} in the "
+                "workflow ID; Cylc will select the latest run if just the "
+                "workflow name is used"
+            )
     elif implicit_runN:
         runN_path = path / WorkflowFiles.RUN_N
         if not os.path.lexists(runN_path):
@@ -1289,7 +1294,7 @@ def infer_latest_run(
         raise WorkflowFilesError(
             f"{runN_path} symlink not valid"
         )
-    numbered_run = os.readlink(str(runN_path))
+    numbered_run = os.readlink(runN_path)
     if not re.match(r'run\d+$', numbered_run):
         # Note: the link should be relative. This means it won't work for
         # cylc 8.0b1 workflows where it was absolute (won't fix).
@@ -1297,7 +1302,7 @@ def infer_latest_run(
             f"{runN_path} symlink target not valid: {numbered_run}"
         )
     path = runN_path.parent / numbered_run
-    reg = path.relative_to(cylc_run_dir)
+    reg = str(path.relative_to(cylc_run_dir))
     return (path, reg)
 
 
@@ -1791,7 +1796,6 @@ def validate_source_dir(
     """Ensure the source directory is valid:
         - has flow file
         - does not contain reserved dir names
-        - is not inside ~/cylc-run.
 
     Args:
         source: Path to source directory
@@ -1799,7 +1803,6 @@ def validate_source_dir(
         WorkflowFilesError:
             If log, share, work or _cylc-install directories exist in the
             source directory.
-            Cylc installing from within the cylc-run dir
     """
     # Ensure source dir does not contain log, share, work, _cylc-install
     for dir_ in WorkflowFiles.RESERVED_DIRNAMES:
@@ -1808,15 +1811,6 @@ def validate_source_dir(
                 f"{workflow_name} installation failed. "
                 f"- {dir_} exists in source directory."
             )
-    cylc_run_dir = get_cylc_run_dir()
-    if is_relative_to(
-        os.path.abspath(os.path.realpath(source)),
-        os.path.abspath(os.path.realpath(cylc_run_dir))
-    ):
-        raise WorkflowFilesError(
-            f"{workflow_name} installation failed. Source directory "
-            f"should not be in {cylc_run_dir}."
-        )
     check_flow_file(source)
 
 

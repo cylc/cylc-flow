@@ -21,12 +21,30 @@ Importing code should catch ImportError in case EmPy is not installed.
 from io import StringIO
 import em
 import os
+import typing as t
 
 from cylc.flow.parsec.exceptions import EmPyError
 
 
-def empyprocess(flines, dir_, template_vars=None):
-    """Pass configure file through EmPy processor."""
+def empyprocess(
+    _fpath: str,
+    flines: t.List[str],
+    dir_: str,
+    template_vars: t.Dict[str, t.Any] = None,
+) -> t.List[str]:
+    """Pass configure file through EmPy processor.
+
+    Args:
+        _fpath:
+            The path to the root template file (i.e. the flow.cylc file)
+        flines:
+            List of template lines to process.
+        dir_:
+            The path to the configuration directory.
+        template_vars:
+            Dictionary of template variables.
+
+    """
 
     cwd = os.getcwd()
 
@@ -38,7 +56,10 @@ def empyprocess(flines, dir_, template_vars=None):
         interpreter.file(ftempl, '<template>', template_vars)
     except Exception as exc:
         lineno = interpreter.contexts[-1].identify()[1]
-        raise EmPyError(str(exc), lines=flines[max(lineno - 4, 0): lineno])
+        raise EmPyError(
+            str(exc),
+            lines={'<template>': flines[max(lineno - 4, 0): lineno]},
+        )
     finally:
         interpreter.shutdown()
         xworkflow = xtempl.getvalue()

@@ -15,24 +15,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation for a bad Jinja2 TemplateSyntaxError in a jinja include.
+# Test cylc config expansion of platform section.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 2
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-val"
-run_fail "${TEST_NAME}" cylc validate .
-cmp_ok "${TEST_NAME}.stderr" <<'__ERROR__'
-Jinja2Error: Encountered unknown tag 'end'.
-Error in file "flow-includeme.cylc"
-Jinja was looking for the following tags: 'elif' or 'else' or 'endif'.
-The innermost block that needs to be closed is 'if'.
-Context lines:
-        {% if true %}
-        R1 = foo
-        {% end if %	<-- TemplateSyntaxError
-__ERROR__
-#-------------------------------------------------------------------------------
-purge
+cat > "global.cylc" <<__HEREDOC__
+[platforms]
+    [[ \
+        foo, bar..., \
+        baz\d\d, qux\S\S \
+    ]]
+        hosts = of_melkor, of_valar
+__HEREDOC__
+
+export CYLC_CONF_PATH="${PWD}"
+
+TEST_NAME="${TEST_NAME_BASE}-names"
+run_ok "${TEST_NAME}" cylc config --platform-names
+cmp_ok "${TEST_NAME}.stdout" <<__HEREDOC__
+localhost
+foo
+bar...
+baz\d\d
+qux\S\S
+
+__HEREDOC__
+
 exit

@@ -974,7 +974,6 @@ class TaskJobManager:
                 submit_delays = rtconfig['submission retry delays']
             else:
                 submit_delays = itask.platform['submission retry delays']
-            # TODO: same for execution delays?
 
             for key, delays in [
                     (

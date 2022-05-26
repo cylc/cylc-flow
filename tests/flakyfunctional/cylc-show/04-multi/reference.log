@@ -1,5 +1,8 @@
 Initial point: 2016
 Final point: 2018
 2016/t1 -triggered off ['2015/t1']
+2016/t2 -triggered off ['2015/t1']
 2017/t1 -triggered off ['2016/t1']
+2017/t2 -triggered off ['2016/t1']
 2018/t1 -triggered off ['2017/t1']
+2018/t2 -triggered off ['2017/t1']

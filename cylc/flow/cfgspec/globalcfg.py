@@ -16,8 +16,9 @@
 """Cylc site and user configuration file spec."""
 
 import os
+from pathlib import Path
 from sys import stderr
-from typing import List, Optional, Tuple, Any
+from typing import List, Optional, Tuple, Any, Union
 
 from contextlib import suppress
 from pkg_resources import parse_version
@@ -31,9 +32,13 @@ from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig,
 )
-from cylc.flow.parsec.exceptions import ParsecError, ItemNotFoundError
+from cylc.flow.parsec.exceptions import (
+    ParsecError,
+    ItemNotFoundError,
+    ValidationError,
+)
 from cylc.flow.parsec.upgrade import upgrader
-from cylc.flow.parsec.util import printcfg
+from cylc.flow.parsec.util import printcfg, expand_many_section
 from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR,
     DurationFloat,
@@ -66,11 +71,6 @@ SYSPATH = [
 
 TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
 REPLACES = 'This item was previously called '
-MOVEDFROMJOB = '''
-.. versionchanged:: 8.0.0
-
-   Moved from ``suite.rc[runtime][<namespace>]job``.
-'''
 
 
 PLATFORM_META_DESCR = '''
@@ -906,6 +906,18 @@ with Conf('global.cylc', desc='''
                If you had a supercomputer with multiple login nodes this would
                be a single platform with multiple :cylc:conf:`hosts`.
 
+            .. warning::
+
+               ``[platforms][localhost]`` may be set, to override default
+               settings, but regular expressions which match "localhost"
+               may not. Use comma separated lists instead:
+
+               .. code-block:: cylc
+
+                  [platforms]
+                      [[localhost|cylc-server-..]]  # error
+                      [[localhost, cylc-server-..]]  # ok
+
             .. seealso::
 
                - :ref:`MajorChangesPlatforms` in the Cylc 8 migration guide.
@@ -939,6 +951,10 @@ with Conf('global.cylc', desc='''
                  * ``background``
                  * ``slurm``
                  *  ``pbs``
+
+                .. seealso::
+
+                   :ref:`List of built-in Job Runners <AvailableMethods>`
             ''')
             Conf('job runner command template', VDR.V_STRING, desc=f'''
                 Set the command used by the chosen job runner.
@@ -951,9 +967,11 @@ with Conf('global.cylc', desc='''
                 The template's ``%(job)s`` will be
                 substituted by the job file path.
             ''')
-            Conf('shell', VDR.V_STRING, '/bin/bash', desc=f'''
+            Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
 
-                {MOVEDFROMJOB}
+                .. versionchanged:: 8.0.0
+
+                   Moved from ``suite.rc[runtime][<namespace>]job``.
 
             ''')
             Conf('communication method',
@@ -971,59 +989,48 @@ with Conf('global.cylc', desc='''
                 ssh
                    Use non-interactive ssh for task communications
             ''')
-            # TODO ensure that it is possible to over-ride the following three
-            # settings in workflow config.
-            Conf('submission polling intervals', VDR.V_INTERVAL_LIST, desc=f'''
+            Conf('submission polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(900)],
+                 desc='''
                 List of intervals at which to poll status of job submission.
 
-                {MOVEDFROMJOB}
-
-                Cylc can poll submitted jobs to catch problems that
-                prevent the submitted job from executing at all, such as
-                deletion from an external job runner queue. Routine
-                polling is done only for the polling ``task communication
-                method`` unless workflow-specific polling is configured in
-                the workflow configuration. A list of interval values can be
-                specified as for execution polling but a single value
-                is probably sufficient for job submission polling.
-
-                Example::
-
-                   5*PT1M, 10*PT5M
+                This config item is the default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>]
+                submission polling intervals`.
             ''')
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
-            {MOVEDFROMJOB}
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None,
+                 desc='''
+                Cylc can automatically resubmit jobs after submission failures.
+
+                This config item is the default for
+                :cylc:conf:`flow.cylc[runtime][<namespace>]
+                submission retry delays`
             ''')
-            Conf('execution polling intervals', VDR.V_INTERVAL_LIST, desc=f'''
+            Conf('execution polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(900)],
+                 desc='''
                 List of intervals at which to poll status of job execution.
 
-                {MOVEDFROMJOB}
+                Default for :cylc:conf:`flow.cylc[runtime][<namespace>]
+                execution polling intervals`.
+            ''')
+            Conf('execution time limit polling intervals',
+                 VDR.V_INTERVAL_LIST,
+                 [DurationFloat(60), DurationFloat(120), DurationFloat(420)],
+                 desc='''
+                List of intervals after execution time limit to poll jobs.
 
-                Cylc can poll running jobs to catch problems that prevent task
-                messages from being sent back to the workflow, such as hard job
-                kills, network outages, or unplanned task host shutdown.
-                Routine polling is done only for the polling *task
-                communication method* (below) unless polling is
-                configured in the workflow configuration.  A list of interval
-                values can be specified, with the last value used repeatedly
-                until the task is finished - this allows more frequent polling
-                near the beginning and end of the anticipated task run time.
+                If a job exceeds its execution time limit, Cylc can poll
+                more frequently to detect the expected job completion quickly.
+                The last interval in the list is used repeatedly until the job
+                completes.
                 Multipliers can be used as shorthand as in the example below.
 
                 Example::
 
-                   5*PT1M, 10*PT5M
-            ''')
-            Conf('execution time limit polling intervals',
-                 VDR.V_INTERVAL_LIST, desc='''
-                List of intervals after execution time limit to poll jobs.
-
-                The intervals between polling after a task job (submitted to
-                the relevant job runner on the relevant host) exceeds its
-                execution time limit. The default setting is PT1M, PT2M, PT7M.
-                The accumulated times (in minutes) for these intervals will be
-                roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
-                exceeds its execution time limit.
+                   5*PT2M, PT5M
             ''')
             Conf('ssh command',
                  VDR.V_STRING,
@@ -1448,7 +1455,7 @@ class GlobalConfig(ParsecConfig):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def get_inst(cls, cached=True):
+    def get_inst(cls, cached: bool = True) -> 'GlobalConfig':
         """Return a GlobalConfig instance.
 
         Args:
@@ -1467,11 +1474,17 @@ class GlobalConfig(ParsecConfig):
             cls._DEFAULT.load()
         return cls._DEFAULT
 
-    def _load(self, fname, conf_type):
-        if os.access(fname, os.F_OK | os.R_OK):
+    def _load(self, fname: Union[Path, str], conf_type: str) -> None:
+        if not os.access(fname, os.F_OK | os.R_OK):
+            return
+        try:
             self.loadcfg(fname, conf_type)
+            self._validate_source_dirs()
+        except ParsecError:
+            LOG.error(f'bad {conf_type} {fname}')
+            raise
 
-    def load(self):
+    def load(self) -> None:
         """Load or reload configuration from files."""
         self.sparse.clear()
         self.dense.clear()
@@ -1485,19 +1498,39 @@ class GlobalConfig(ParsecConfig):
             # Use default locations.
             for conf_type, conf_dir in self.conf_dir_hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
-                try:
-                    self._load(fname, conf_type)
-                except ParsecError:
-                    LOG.error(f'bad {conf_type} {fname}')
-                    raise
+                self._load(fname, conf_type)
+
+        # Expand platforms needs to be performed first because it
+        # manipulates the sparse config.
+        self._expand_platforms()
+
+        # Flesh out with defaults
+        self.expand()
 
         self._set_default_editors()
         self._no_platform_group_name_overlap()
 
+    def _validate_source_dirs(self) -> None:
+        """Check source dirs are absolute paths."""
+        keys = ['install', 'source dirs']
+        try:
+            src_dirs: List[str] = self.get(keys, sparse=True)
+        except ItemNotFoundError:
+            return
+        for item in src_dirs:
+            path = Path(item)
+            # Do not expand user/env vars - it is ok if they don't exist
+            if not (
+                path.is_absolute() or path.parts[0].startswith(('~', '$'))
+            ):
+                raise ValidationError(
+                    keys, value=item, msg="must be an absolute path"
+                )
+
     def _set_default_editors(self):
         # default to $[G]EDITOR unless an editor is defined in the config
         # NOTE: use `or` to handle cases where an env var is set to ''
-        cfg = self.get()
+        cfg = self.get(sparse=False)
         if not cfg['editors']['terminal']:
             cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
         if not cfg['editors']['gui']:
@@ -1520,6 +1553,17 @@ class GlobalConfig(ParsecConfig):
                 for name in names_in_platforms_and_groups:
                     msg += f'\n * {name}'
                 raise GlobalConfigError(msg)
+
+    def _expand_platforms(self):
+        """Expand comma separated platform names.
+
+        E.G. turn [platforms][foo, bar] into [platforms][foo] and
+        platforms[bar].
+        """
+        if self.sparse.get('platforms'):
+            self.sparse['platforms'] = expand_many_section(
+                self.sparse['platforms']
+            )
 
     def platform_dump(
         self,

@@ -14,16 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
 import tempfile
 
 import pytest
 
-from cylc.flow.parsec import config
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
     ParsecConfig
 )
-from cylc.flow.parsec.exceptions import IllegalItemError, InvalidConfigError
+from cylc.flow.parsec.exceptions import (
+    IllegalItemError,
+    InvalidConfigError,
+    ItemNotFoundError,
+)
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.upgrade import upgrader
 from cylc.flow.parsec.validate import (
@@ -31,16 +35,11 @@ from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR
 )
 
-from . import (
-    config as parse_config,
-    sample_spec,
-)
-
 
 def test_loadcfg(sample_spec):
     with tempfile.NamedTemporaryFile() as output_file_name:
         with tempfile.NamedTemporaryFile() as rcfile:
-            parsec_config = config.ParsecConfig(
+            parsec_config = ParsecConfig(
                 spec=sample_spec,
                 upgrader=None,  # new spec
                 output_fname=output_file_name.name,
@@ -79,7 +78,7 @@ def test_loadcfg_override(sample_spec):
     """Test that loading a second config file overrides common settings but
     leaves in settings only present in the first"""
     with tempfile.NamedTemporaryFile() as output_file_name:
-        parsec_config = config.ParsecConfig(
+        parsec_config = ParsecConfig(
             spec=sample_spec,
             upgrader=None,
             output_fname=output_file_name.name,
@@ -118,7 +117,7 @@ def test_loadcfg_with_upgrade(sample_spec):
 
     with tempfile.NamedTemporaryFile() as output_file_name:
         with tempfile.NamedTemporaryFile() as rcfile:
-            parsec_config = config.ParsecConfig(
+            parsec_config = ParsecConfig(
                 spec=sample_spec,
                 upgrader=upg,
                 output_fname=output_file_name.name,
@@ -157,12 +156,12 @@ def test_validate():
     :return:
     """
 
-    with Conf('myconf') as spec:
+    with Conf('myconf') as spec:  # noqa: SIM117
         with Conf('section'):
             Conf('name', VDR.V_STRING)
             Conf('address', VDR.V_STRING)
 
-    parsec_config = config.ParsecConfig(
+    parsec_config = ParsecConfig(
         spec=spec,
         upgrader=None,  # new spec
         output_fname=None,  # not going to call the loadcfg
@@ -186,90 +185,57 @@ def test_validate():
 
 
 @pytest.fixture
-def sample_spec_2():
+def parsec_config_2(tmp_path: Path):
     with Conf('myconf') as spec:
         with Conf('section'):
             Conf('name', VDR.V_STRING)
             Conf('address', VDR.V_INTEGER_LIST)
         with Conf('allow_many'):
             Conf('<user defined>', VDR.V_STRING, '')
-    return spec
+    parsec_config = ParsecConfig(spec, validator=cylc_config_validate)
+    conf_file = tmp_path / 'myconf'
+    conf_file.write_text("""
+    [section]
+    name = test
+    [allow_many]
+    anything = yup
+    """)
+    parsec_config.loadcfg(conf_file, "1.0")
+    return parsec_config
 
 
-def test_expand(sample_spec_2):
-    with tempfile.NamedTemporaryFile() as output_file_name:
-        with tempfile.NamedTemporaryFile() as rcfile:
-            parsec_config = config.ParsecConfig(
-                spec=sample_spec_2,
-                upgrader=None,
-                output_fname=output_file_name.name,
-                tvars=None,
-                validator=cylc_config_validate
-            )
-            rcfile.write("""
-                    [section]
-                    name = test
-                    [allow_many]
-                    anything = yup
-                    """.encode())
-            rcfile.seek(0)
-            parsec_config.loadcfg(rcfile.name, "1.0")
-
-            parsec_config.expand()
-
-            sparse = parsec_config.sparse
-            assert 'yup' == sparse['allow_many']['anything']
-            assert '__MANY__' not in sparse['allow_many']
+def test_expand(parsec_config_2: ParsecConfig):
+    parsec_config_2.expand()
+    sparse = parsec_config_2.sparse
+    assert sparse['allow_many']['anything'] == 'yup'
+    assert '__MANY__' not in sparse['allow_many']
 
 
-def test_get_item(sample_spec_2):
-    with tempfile.NamedTemporaryFile() as output_file_name:
-        with tempfile.NamedTemporaryFile() as rcfile:
-            parsec_config = config.ParsecConfig(
-                spec=sample_spec_2,
-                upgrader=None,
-                output_fname=output_file_name.name,
-                tvars=None,
-                validator=cylc_config_validate
-            )
-            rcfile.write("""
-                            [section]
-                            name = test
-                            [allow_many]
-                            anything = yup
-                            """.encode())
-            rcfile.seek(0)
-            parsec_config.loadcfg(rcfile.name, "1.0")
+def test_get(parsec_config_2: ParsecConfig):
+    cfg = parsec_config_2.get(keys=None, sparse=False)
+    assert parsec_config_2.dense == cfg
 
-            cfg = parsec_config.get(keys=None, sparse=None)
-            assert parsec_config.dense == cfg
+    cfg = parsec_config_2.get(keys=None, sparse=True)
+    assert parsec_config_2.sparse == cfg
 
-            cfg = parsec_config.get(keys=None, sparse=True)
-            assert parsec_config.sparse == cfg
+    cfg = parsec_config_2.get(keys=['section'], sparse=True)
+    assert parsec_config_2.sparse['section'] == cfg
 
-            cfg = parsec_config.get(keys=['section'], sparse=True)
-            assert parsec_config.sparse['section'] == cfg
+    with pytest.raises(InvalidConfigError):
+        parsec_config_2.get(keys=['alloy_many', 'a'], sparse=True)
 
-            with pytest.raises(InvalidConfigError):
-                cfg = parsec_config.get(keys=['allow-many', 'a'], sparse=True)
+    cfg = parsec_config_2.get(keys=['section', 'name'], sparse=True)
+    assert cfg == 'test'
 
-            cfg = parsec_config.get(keys=['section', 'name'], sparse=True)
-            assert cfg == 'test'
+    with pytest.raises(InvalidConfigError):
+        parsec_config_2.get(keys=['section', 'a'], sparse=True)
 
-            with pytest.raises(config.InvalidConfigError):
-                parsec_config.get(keys=['section', 'a'], sparse=True)
-
-            with pytest.raises(config.ItemNotFoundError):
-                parsec_config.get(keys=['allow_many', 'a'], sparse=True)
+    with pytest.raises(ItemNotFoundError):
+        parsec_config_2.get(keys=['allow_many', 'a'], sparse=True)
 
 
-def test_not_single_item_error():
-    error = config.NotSingleItemError("internal error")
-    assert 'not a singular item: internal error' == str(error)
-
-
-def test_mdump_none(parse_config, sample_spec, capsys):
-    cfg = parse_config(sample_spec, '''
+def test_mdump_none(config, sample_spec, capsys):
+    cfg = config(sample_spec, '''
         [section1]
             value1 = abc
             value2 = def
@@ -280,8 +246,8 @@ def test_mdump_none(parse_config, sample_spec, capsys):
     assert std.err == ''
 
 
-def test_mdump_some(parse_config, sample_spec, capsys):
-    cfg = parse_config(sample_spec, '''
+def test_mdump_some(config, sample_spec, capsys):
+    cfg = config(sample_spec, '''
         [section1]
             value1 = abc
             value2 = def
@@ -297,8 +263,8 @@ def test_mdump_some(parse_config, sample_spec, capsys):
     assert std.err == ''
 
 
-def test_mdump_oneline(parse_config, sample_spec, capsys):
-    cfg = parse_config(sample_spec, '''
+def test_mdump_oneline(config, sample_spec, capsys):
+    cfg = config(sample_spec, '''
         [section1]
             value1 = abc
             value2 = def
@@ -315,19 +281,19 @@ def test_mdump_oneline(parse_config, sample_spec, capsys):
     assert std.err == ''
 
 
-def test_get_none(parse_config):
-    cfg = parse_config(sample_spec, '')  # blank config
+def test_get_none(config, sample_spec):
+    cfg = config(sample_spec, '')  # blank config
     assert cfg.get(sparse=True) == {}
 
 
-def test__get_namespace_parents(parse_config):
+def test__get_namespace_parents():
     """It returns a list of parents and nothing else"""
-    def spec_():
-        with Conf('myconfig') as myconf:
-            with Conf('some_parent'):
-                with Conf('manythings'):
-                    Conf('<thing>')
+    with Conf('myconfig') as myconf:
+        with Conf('some_parent'):  # noqa: SIM117
+            with Conf('manythings'):
+                Conf('<thing>')
+        with Conf('other_parent'):
+            Conf('other_thing')
 
-        return myconf
-    cfg = ParsecConfig(spec_())
+    cfg = ParsecConfig(myconf)
     assert cfg.manyparents == [['some_parent', 'manythings']]
