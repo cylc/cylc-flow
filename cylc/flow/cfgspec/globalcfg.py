@@ -1314,8 +1314,8 @@ with Conf('global.cylc', desc='''
                       ``hosts = main, backup, failsafe``.
                 ''')
             with Conf('directives', desc='''
-                :Defaults for: :cylc:conf:
-                `flow.cylc[runtime][<namespace>][directives]`
+                :Defaults for: :cylc:conf:`flow.cylc\
+                [runtime][<namespace>][directives]`
 
                 Job runner (batch scheduler) directives.
             '''):
