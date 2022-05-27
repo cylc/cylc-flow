@@ -49,6 +49,8 @@ WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
 ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
 FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 
+SHORTLINK_TO_ICP_DOCS="https://bit.ly/3MYHqVh"
+
 icp_option = Option(
     "--initial-cycle-point", "--icp",
     metavar="CYCLE_POINT or OFFSET",
@@ -56,7 +58,7 @@ icp_option = Option(
         "Set the initial cycle point."
         "Required if not defined in flow.cylc."
         "\nMay be either an absolute point or an offset: See "
-        "https://bit.ly/3MYHqVh"
+        f"{SHORTLINK_TO_ICP_DOCS}"
     ),
     action="store",
     dest="icp",
