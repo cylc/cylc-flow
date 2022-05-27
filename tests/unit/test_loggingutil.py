@@ -27,7 +27,7 @@ from cylc.flow import LOG
 from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
     CylcLogFormatter,
-    get_reload_number,
+    get_reload_start_number,
     get_sorted_logs_by_time
 )
 from cylc.flow.scheduler import Scheduler
@@ -124,15 +124,13 @@ def test_update_log_archive(tmp_run_dir: Callable):
                                               restart_num=0
                                               )
 
-    for i in range(1, 14):
-        (log_dir/f'start-{str(i)}.log').touch()
-    log_object.update_log_archive(4)
+    for i in range(1, 5):
+        (log_dir/f'{str(i)}-start-{str(i)}.log').touch()
+    log_object.update_log_archive(2)
     assert list((log_dir.iterdir())).sort() == [
         Path(log_dir/'log'),
-        Path(log_dir/'start-10.log'),
-        Path(log_dir/'start-11.log'),
-        Path(log_dir/'start-12.log'),
-        Path(log_dir/'start-13.log')].sort()
+        Path(log_dir/'03-start-03.log'),
+        Path(log_dir/'04-start-04.log')].sort()
 
 
 def test_get_sorted_logs_by_time(tmp_run_dir: Callable):
@@ -141,8 +139,8 @@ def test_get_sorted_logs_by_time(tmp_run_dir: Callable):
     config_log_dir.mkdir(exist_ok=True, parents=True)
     for file in ['01-start-01.cylc',
                  '02-start-01.cylc',
-                 '03-restart-01.cylc',
-                 '04-reload-01.cylc']:
+                 '03-restart-02.cylc',
+                 '04-reload-02.cylc']:
         Path(config_log_dir/file).touch()
         # Sleep required to ensure modification times are sufficiently
         # different for sort
@@ -150,30 +148,32 @@ def test_get_sorted_logs_by_time(tmp_run_dir: Callable):
     loggies = get_sorted_logs_by_time(config_log_dir, "*.cylc")
     assert loggies == [f'{config_log_dir}/01-start-01.cylc',
                        f'{config_log_dir}/02-start-01.cylc',
-                       f'{config_log_dir}/03-restart-01.cylc',
-                       f'{config_log_dir}/04-reload-01.cylc']
+                       f'{config_log_dir}/03-restart-02.cylc',
+                       f'{config_log_dir}/04-reload-02.cylc']
 
 
 def test_get_reload_number(tmp_run_dir: Callable):
     run_dir = tmp_run_dir('some_reloaded_workflow')
     config_log_dir = Path(run_dir / 'log' / 'config')
     config_log_dir.mkdir(exist_ok=True, parents=True)
-    for i in range(1, 10):
-        (config_log_dir/f'0{str(i)}-reload-0{str(i)}.cylc').touch()
-        # Sleep required to ensure modification times are sufficiently
+    for file in [
+        '01-start-01.cylc',
+        '02-reload-01.cylc',
+        '03-restart-02.cylc',
+        '04-restart-02.cylc'
+    ]:
+        (config_log_dir/file).touch()
+        # Sleeps required to ensure modification times are sufficiently
         # different for sort
         sleep(0.1)
     config_logs = get_sorted_logs_by_time(config_log_dir, "*.cylc")
 
-    assert get_reload_number(config_logs) == '10'
+    assert get_reload_start_number(config_logs) == '02'
 
 
-def test_get_reload_number_no_reload_logs(tmp_run_dir: Callable):
+def test_get_reload_number_no_logs(tmp_run_dir: Callable):
     run_dir = tmp_run_dir('another_reloaded_workflow')
     config_log_dir = Path(run_dir / 'log' / 'config')
     config_log_dir.mkdir(exist_ok=True, parents=True)
-    for i in range(1, 3):
-        (config_log_dir/f'0{str(i)}-restart-0{str(i)}.cylc').touch()
     config_logs = get_sorted_logs_by_time(config_log_dir, "*.cylc")
-
-    assert get_reload_number(config_logs) == '01'
+    assert get_reload_start_number(config_logs) == '01'

@@ -46,14 +46,14 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
     cylc play --set 'WEATHER="good"' --no-detach "${WORKFLOW_NAME}"
 
-# Check for 3 generated *.cylc files
+# Check for 4 generated *.cylc files
 LOGD="${RUN_DIR}/${WORKFLOW_NAME}/log/config"
 # shellcheck disable=SC2012
 ls "${LOGD}" | sort >'ls.out'
 cmp_ok 'ls.out' <<'__OUT__'
 01-start-01.cylc
 02-reload-01.cylc
-03-restart-01.cylc
+03-restart-02.cylc
 flow-processed.cylc
 __OUT__
 
@@ -65,7 +65,7 @@ mkdir start_config
 mkdir res_config
 cp "$START_CONFIG" start_config/flow.cylc
 cp "$RES_CONFIG" res_config/flow.cylc
-# The generated *-run.cylc and *-reload.cylc should be identical
+# The generated *-start*.cylc and *-reload*.cylc should be identical
 # The generated *.cylc files should validate
 cmp_ok "${START_CONFIG}" "${REL_CONFIG}"
 run_ok "${TEST_NAME_BASE}-validate-start-config" cylc validate ./start_config

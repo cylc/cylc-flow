@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test scheduler logs create start/restart logs correctly
-
+# Test start/restart/reload config logs are created correctly
 
 . "$(dirname "$0")/test_header"
 set_test_number 7
@@ -28,13 +27,18 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         abort on inactivity timeout = true
         inactivity timeout = PT1M
 [scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
     [[graph]]
-        R1 = foo => bar
+        P1 = """foo => bar
+                bar[-P1] =>foo
+        """
 [runtime]
     [[foo]]
-        script = cylc__job__wait_cylc_message_started; cylc stop --now --now "${CYLC_WORKFLOW_ID}"
+        script = cylc__job__wait_cylc_message_started;sleep 20; cylc reload "${CYLC_WORKFLOW_ID}"
     [[bar]]
-        script = true
+        script = cylc stop --now --now "${CYLC_WORKFLOW_ID}"
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
@@ -43,15 +47,16 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug "${WORKFLOW_NAME}"
 
 # wait for shut down
 poll_grep_workflow_log "INFO - DONE"
-find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*-start*.log" | wc -l >'find-start-log'
-cmp_ok 'find-start-log' <<< '1'
-workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play --debug "${WORKFLOW_NAME}"
-find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*restart*.log" | wc -l >'find-restart-log'
-cmp_ok 'find-restart-log' <<< '1'
-grep_ok "Run: (re)start=2 log=1" "$HOME/cylc-run/${WORKFLOW_NAME}/log/scheduler/log"
 
-# This tests that there is only one start and retart log created.
-find "${WORKFLOW_RUN_DIR}/log/scheduler" -type f -name "*.log" | wc -l >'find-logs'
-cmp_ok 'find-logs' <<< '2'
+# Check config logs.
+
+exists_ok "${WORKFLOW_RUN_DIR}/log/config/01-start-01.cylc"
+exists_ok "${WORKFLOW_RUN_DIR}/log/config/02-reload-01.cylc"
+
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug "${WORKFLOW_NAME}"
+poll_grep_workflow_log "INFO - DONE"
+
+exists_ok "${WORKFLOW_RUN_DIR}/log/config/03-restart-02.cylc"
+exists_ok "${WORKFLOW_RUN_DIR}/log/config/04-reload-02.cylc"
 
 purge

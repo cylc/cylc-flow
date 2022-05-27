@@ -68,7 +68,7 @@ from cylc.flow.loggingutil import (
     TimestampRotatingFileHandler,
     ReferenceLogFileHandler,
     get_next_log_number,
-    get_reload_number,
+    get_reload_start_number,
     get_sorted_logs_by_time
 )
 from cylc.flow.timer import Timer
@@ -284,15 +284,11 @@ class Scheduler:
 
         self.timers: Dict[str, Timer] = {}
         self.workflow_run_dir = get_workflow_run_dir(self.workflow)
-        self.is_restart = Path(
-            get_workflow_run_dir(
-                self.workflow,
-                workflow_files.WorkflowFiles.Service.DIRNAME,
-                workflow_files.WorkflowFiles.Service.DB
-            )).exists()
         self.workflow_db_mgr = WorkflowDatabaseManager(
             workflow_files.get_workflow_srv_dir(self.workflow),  # pri_d
-            os.path.join(self.workflow_run_dir, 'log'))  # pub_d
+            os.path.join(self.workflow_run_dir, 'log')  # pub_d
+        )
+        self.is_restart = Path(self.workflow_db_mgr.pri_path).exists()
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
@@ -420,12 +416,6 @@ class Scheduler:
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         self.profiler = Profiler(self, self.options.profile_mode)
-        self.is_restart = Path(
-            get_workflow_run_dir(
-                self.workflow,
-                workflow_files.WorkflowFiles.Service.DIRNAME,
-                workflow_files.WorkflowFiles.Service.DB
-            )).exists()
         self.n_restart = self.workflow_db_mgr.n_restart
 
     async def configure(self):
@@ -441,6 +431,7 @@ class Scheduler:
         LOG.info(f"Workflow: {self.workflow}")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
+
         if not self.is_restart:
             # Set workflow params that would otherwise be loaded from database:
             self.options.utc_mode = get_utc_mode()
@@ -563,10 +554,10 @@ class Scheduler:
     async def log_start(self):
         is_quiet = (cylc.flow.flags.verbosity < 0)
         log_level = LOG.getEffectiveLevel()
-        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
         if is_quiet:
             # Temporarily change logging level to log important info
             LOG.setLevel(logging.INFO)
+        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
         LOG.info(
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
@@ -583,7 +574,6 @@ class Scheduler:
             extra=log_extra,
         )
         LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
-
         # Note that the following lines must be present at the top of
         # the workflow log file for use in reference test runs:
         LOG.info('Run mode: %s', self.config.run_mode(), extra=log_extra)
@@ -1137,19 +1127,20 @@ class Scheduler:
         config_dir = get_workflow_run_config_log_dir(
             self.workflow)
         config_logs = get_sorted_logs_by_time(config_dir, "*[0-9].cylc")
-        if is_reload:
-            load_type = "reload"
-            load_type_num = get_reload_number(config_logs)
-        elif self.is_restart:
-            load_type = "restart"
-            load_type_num = f'{self.n_restart:02d}'
-        else:
-            load_type = "start"
-            load_type_num = '01'
         if config_logs:
             log_num = get_next_log_number(config_logs[-1])
         else:
             log_num = '01'
+        if is_reload:
+            load_type = "reload"
+            load_type_num = get_reload_start_number(config_logs)
+        elif self.is_restart:
+            load_type = "restart"
+            restart_num = self.n_restart + 1
+            load_type_num = f'{restart_num:02d}'
+        else:
+            load_type = "start"
+            load_type_num = '01'
         file_name = get_workflow_run_config_log_dir(
             self.workflow, f"{log_num}-{load_type}-{load_type_num}.cylc")
         with open(file_name, "w") as handle:
@@ -1439,7 +1430,6 @@ class Scheduler:
         cmd = ['cylc', 'play', quote(self.workflow)]
         if self.options.abort_if_any_task_fails:
             cmd.append('--abort-if-any-task-fails')
-
         for attempt_no in range(max_retries):
             new_host = select_workflow_host(cached=False)[0]
             LOG.info(f'Attempting to restart on "{new_host}"')

@@ -95,7 +95,7 @@ def get_workflow_run_scheduler_log_dir(workflow, *args):
 
 def get_workflow_run_scheduler_log_path(workflow):
     """Return workflow run log file path."""
-    return get_workflow_run_dir(workflow, 'log', 'scheduler', 'log')
+    return get_workflow_run_scheduler_log_dir(workflow, 'log')
 
 
 def get_workflow_file_install_log_dir(workflow, *args):
@@ -127,7 +127,7 @@ def get_workflow_run_work_dir(workflow, *args):
 
 def get_workflow_test_log_path(workflow):
     """Return workflow run ref test log file path."""
-    return get_workflow_run_dir(workflow, 'log', 'scheduler', 'reftest.log')
+    return get_workflow_run_scheduler_log_dir(workflow, 'reftest.log')
 
 
 def make_workflow_run_tree(workflow):
