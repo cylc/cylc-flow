@@ -51,10 +51,12 @@ FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 
 icp_option = Option(
     "--initial-cycle-point", "--icp",
-    metavar="CYCLE_POINT",
+    metavar="CYCLE_POINT or OFFSET",
     help=(
-        "Set the initial cycle point. "
+        "Set the initial cycle point."
         "Required if not defined in flow.cylc."
+        "\nMay be either an absolute point or an offset: See "
+        "https://bit.ly/3MYHqVh"
     ),
     action="store",
     dest="icp",
