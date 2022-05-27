@@ -49,7 +49,7 @@ WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
 ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
 FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 
-SHORTLINK_TO_ICP_DOCS="https://bit.ly/3MYHqVh"
+SHORTLINK_TO_ICP_DOCS = "https://bit.ly/3MYHqVh"
 
 icp_option = Option(
     "--initial-cycle-point", "--icp",
