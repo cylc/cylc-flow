@@ -113,7 +113,7 @@ MUTATION = '''
 mutation (
     $wFlows: [WorkflowID]!,
     $bMode: BroadcastMode!,
-    $cPoints: [CyclePoint],
+    $cPoints: [BroadcastCyclePoint],
     $nSpaces: [NamespaceName],
     $bSettings: [BroadcastSetting],
     $bCutoff: CyclePoint

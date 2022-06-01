@@ -1304,6 +1304,11 @@ class BroadcastSetting(GenericScalar):
     """
 
 
+class BroadcastCyclePoint(graphene.String):
+    """A cycle point or `*`."""
+    # (broadcast supports either of those two but not cycle point globs)
+
+
 class TaskStatus(graphene.Enum):
     """The status of a task in a workflow."""
 
@@ -1450,7 +1455,7 @@ class Broadcast(Mutation):
             required=True
         )
         cycle_points = graphene.List(
-            CyclePoint,
+            BroadcastCyclePoint,
             description=sstrip('''
                 List of cycle points to target (or `*` to cancel all all-cycle
                 broadcasts without canceling all specific-cycle broadcasts).
