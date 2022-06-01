@@ -46,6 +46,9 @@ in `global.cylc[install]source dirs`.
 
 ### Fixes
 
+[#4891](https://github.com/cylc/cylc-flow/pull/4891) - Fix bug that could cause
+past jobs to be omitted in the UI.
+
 [#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow config parsing
 will fail if
 [owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
@@ -93,6 +96,8 @@ workflow contact files should result in a warning, not a crash.
 option for `cylc install` (the functionality has been merged into the
 workflow source argument), and rename the `--flow-name` option to
 `--workflow-name`.
+
+### Fixes
 
 [#4873](https://github.com/cylc/cylc-flow/pull/4873) - `cylc show`: don't
 show prerequisites of past tasks recalled from the DB as unsatisfied.
