@@ -35,6 +35,9 @@ Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4877](https://github.com/cylc/cylc-flow/pull/4877) - Upgrade the version of
+Jinja2 used by Cylc from 2.11 to 3.0.
+
 [#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
 default job runner directives for platforms.
 
