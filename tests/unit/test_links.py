@@ -20,11 +20,12 @@ Reason for doing this here:
 - As we have more links it's worth checking them here, rather than waiting
   for them to show up in Cylc.
 """
-
+from functools import lru_cache
 from pathlib import Path
 import re
 from shlex import split
 from subprocess import run
+from time import sleep
 import pytest
 import urllib
 
@@ -37,29 +38,41 @@ EXCLUDE = [
 
 def get_links():
     searchdir = Path(__file__).parent.parent.parent / 'cylc/flow'
+    results = {}
     for file_ in searchdir.rglob('*.py'):
-        for url in re.findall(r'(https?:\/\/.*?)[\n\s\>`"\',]', file_.read_text()):
-            if url not in EXCLUDE:
-                yield {'file': file_, 'url': url}
+        for url in re.findall(
+            r'(https?:\/\/.*?)[\n\s\>`"\',]', file_.read_text()
+        ):
+            if url not in EXCLUDE and url in results:
+                results[url].append(file_)
+            if url not in EXCLUDE and url not in results:
+                results[url] = [file_]
+    return results
 
 
 @pytest.mark.parametrize(
-    'link', [
+    'link, files', [
         pytest.param(
             link,
-            id=f"{link['url']}"
+            files,
+            id=f"{link}"
         )
-        for link in get_links()
+        for link, files in get_links().items()
     ]
 )
-def test_embedded_url(link):
+def test_embedded_url(link, files):
     try:
-        assert urllib.request.urlopen(link['url']).getcode() == 200
+        urllib.request.urlopen(link).getcode()
     except urllib.error.HTTPError as exc:
-        # Allowing 403 - just because a site forbids us doens't mean the
-        # link is wrong.
-        if exc.code != 403:
-            raise Exception(f'{exc} | {link["url"]} | {link["file"]}')
+        # Sleep and retry to reduce risk of flakiness:
+        sleep(10)
+        try:
+            urllib.request.urlopen(link).getcode()
+        except urllib.error.HTTPError as exc:
+            # Allowing 403 - just because a site forbids us doens't mean the
+            # link is wrong.
+            if exc.code != 403:
+                raise Exception(f'{exc} | {link} | {", ".join(files)}')
 
 
 
