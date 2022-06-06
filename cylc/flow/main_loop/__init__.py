@@ -321,7 +321,7 @@ def load(config, additional_plugins=None):
         'state': {},
         'timings': {}
     }
-    for plugin_name in config['plugins'] + additional_plugins:
+    for plugin_name in set(config['plugins'] + additional_plugins):
         # get plugin
         try:
             entry_point = entry_points[plugin_name.replace(' ', '_')]
