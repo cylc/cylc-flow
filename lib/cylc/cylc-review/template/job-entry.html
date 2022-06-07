@@ -13,6 +13,7 @@
      no_fuzzy_time_str) | safe
 ) -%}
 <tr class="entry"><!-- entry row -->
+{% if entry.submit_num > 0 %}
   <td>
     <!-- entry: task status -->
     {% if entry.task_status == "succeeded" -%}
@@ -236,5 +237,8 @@
         </ul>
       {% endif -%}<!-- entry.seq_logs_indexes -->
     </small>
+
   </td>
+  {% endif %}
+
 </tr><!-- entry row -->
