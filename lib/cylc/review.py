@@ -36,6 +36,7 @@ import os
 import pwd
 import re
 import shlex
+from sqlite3 import ProgrammingError
 import tarfile
 from tempfile import NamedTemporaryFile
 from time import gmtime, strftime
@@ -45,7 +46,7 @@ import urllib
 from cylc.hostuserutil import get_host
 from cylc.review_dao import CylcReviewDAO
 from cylc.task_state import (
-    TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS, TASK_STATUS_WAITING)
+    TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
 from cylc.version import CYLC_VERSION
 from cylc.ws import get_util_home
 from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
@@ -315,7 +316,6 @@ class CylcReviewService(object):
             page = 1
 
         # Set list of task states depending on Cylc version 7 or 8
-        from sqlite3 import ProgrammingError
         task_statuses_ordered = TASK_STATUSES_ORDERED
         try:
             if self.suite_dao.is_cylc8(user, suite):
