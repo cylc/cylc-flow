@@ -316,14 +316,12 @@ class CylcReviewService(object):
 
         # Set list of task states depending on Cylc version 7 or 8
         from sqlite3 import ProgrammingError
+        task_statuses_ordered = TASK_STATUSES_ORDERED
         try:
             if self.suite_dao.is_cylc8(user, suite):
                 task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
-            else:
-                task_statuses_ordered = TASK_STATUSES_ORDERED
         except ProgrammingError:
-            task_statuses_ordered = TASK_STATUSES_ORDERED
-
+            pass
         # get selected task states
         if not task_status:
             # default task statuses - if updating please also change the
