@@ -50,6 +50,7 @@ def get_links():
     return results
 
 
+@pytest.mark.linkcheck
 @pytest.mark.parametrize(
     'link, files', [
         pytest.param(
