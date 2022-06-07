@@ -652,7 +652,7 @@ with Conf('global.cylc', desc='''
                     starting new workflows.
 
                     Only enabled plugins are loaded, plugins can be enabled
-                    in three ways:
+                    in two ways:
 
                     Globally:
                        To enable a plugin for all workflows add it to:
@@ -676,7 +676,7 @@ with Conf('global.cylc', desc='''
                 .. note::
 
                    Only the configured list of :cylc:conf:`[..]plugins`
-                   are loaded when a scheduler is started.
+                   is loaded when a scheduler is started.
             ''') as MainLoopPlugin:
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     :Default For: :cylc:conf:`flow.cylc \
@@ -709,7 +709,7 @@ with Conf('global.cylc', desc='''
                 .. versionadded:: 8.0.0
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
-                    The interval with which this plugin is run.
+                    The interval between runs of this plugin.
 
                     .. versionadded:: 8.0.0
                 ''')

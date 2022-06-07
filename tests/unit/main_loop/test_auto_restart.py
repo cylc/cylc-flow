@@ -293,7 +293,7 @@ async def test_log_config_error(caplog, log_filter, monkeypatch, exc_class):
     # make the global config raise an error
     def global_config_load_error(*args, **kwargs):
         nonlocal exc_class
-        raise exc_class('something event more bizarrely inexplicable')
+        raise exc_class('something even more bizarrely inexplicable')
 
     monkeypatch.setattr(
         'cylc.flow.main_loop.auto_restart.glbl_cfg',
@@ -307,4 +307,4 @@ async def test_log_config_error(caplog, log_filter, monkeypatch, exc_class):
     # the error should have been logged
     assert len(caplog.messages) == 1
     assert 'an error in the global config' in caplog.messages[0]
-    assert 'something event more bizarrely inexplicable' in caplog.messages[0]
+    assert 'something even more bizarrely inexplicable' in caplog.messages[0]
