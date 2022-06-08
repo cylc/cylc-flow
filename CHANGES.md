@@ -29,6 +29,8 @@ management and does not bundle Jinja2.
 [#4838](https://github.com/cylc/cylc-flow/pull/4838) - fix bug where Cylc 7
 would still be able to run a `suite.rc` workflow previously run with Cylc 8.
 
+[#4897](https://github.com/cylc/cylc-flow/pull/4897) - In Cylc Review task jobs
+view: Only allow filtering by Cylc 8 task states for Cylc 8 workflows.
 
 ## __cylc-7.8.11 (2022-03-07)__
 
