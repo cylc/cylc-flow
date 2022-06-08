@@ -345,16 +345,7 @@ class TaskProxy:
 
     def next_point(self):
         """Return the next cycle point."""
-        p_next = None
-        adjusted = []
-        for seq in self.tdef.sequences:
-            nxt = seq.get_next_point(self.point)
-            if nxt:
-                # may be None if beyond the sequence bounds
-                adjusted.append(nxt)
-        if adjusted:
-            p_next = min(adjusted)
-        return p_next
+        return self.tdef.next_point(self.point)
 
     def is_ready_to_run(self) -> Tuple[bool, ...]:
         """Is this task ready to run?

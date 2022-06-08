@@ -213,8 +213,7 @@ class WorkflowConfig:
         self._start_point_for_actual_first_point: Optional['PointBase'] = None
 
         self.task_param_vars = {}  # type: ignore # TODO figure out type
-        self.custom_runahead_limit: Optional['IntervalBase'] = None
-        self.max_num_active_cycle_points = None
+        self.runahead_limit: Optional['IntervalBase'] = None
 
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime: Dict[str, dict] = {  # TODO figure out type
@@ -1181,7 +1180,7 @@ class WorkflowConfig:
     #         LOG.info(log_msg)
 
     def process_runahead_limit(self):
-        """Extract the runahead limits information."""
+        """Extract runahead limit information."""
         limit = self.cfg['scheduling']['runahead limit']
         if limit.isdigit():
             limit = f'PT{limit}H'
@@ -1193,27 +1192,19 @@ class WorkflowConfig:
         time_limit_regexes = DurationParser.DURATION_REGEXES
 
         if number_limit_regex.fullmatch(limit):
-            self.custom_runahead_limit = IntegerInterval(limit)
+            self.runahead_limit = IntegerInterval(limit)
             # Handle "runahead limit = P0":
-            if self.custom_runahead_limit.is_null():
-                self.custom_runahead_limit = IntegerInterval('P1')
+            if self.runahead_limit.is_null():
+                self.runahead_limit = IntegerInterval('P1')
         elif (  # noqa: SIM106
             self.cycling_type == ISO8601_CYCLING_TYPE
             and any(tlr.fullmatch(limit) for tlr in time_limit_regexes)
         ):
-            self.custom_runahead_limit = ISO8601Interval(limit)
+            self.runahead_limit = ISO8601Interval(limit)
         else:
             raise WorkflowConfigError(
                 f'bad runahead limit "{limit}" for {self.cycling_type} '
                 'cycling type')
-
-    def get_custom_runahead_limit(self):
-        """Return the custom runahead limit (may be None)."""
-        return self.custom_runahead_limit
-
-    def get_max_num_active_cycle_points(self):
-        """Return the maximum allowed number of pool cycle points."""
-        return self.max_num_active_cycle_points
 
     def get_config(self, args, sparse=False):
         return self.pcfg.get(args, sparse)

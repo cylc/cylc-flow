@@ -26,8 +26,6 @@ import logging
 import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.cycling.loader import get_point, standardise_point_string
-from cylc.flow.cycling.integer import IntegerInterval
-from cylc.flow.cycling.iso8601 import ISO8601Interval
 from cylc.flow.exceptions import WorkflowConfigError, PointParsingError
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.id_cli import contains_fnmatch
@@ -100,12 +98,9 @@ class TaskPool:
         self.flow_mgr: 'FlowMgr' = flow_mgr
 
         self.do_reload = False
-        self.custom_runahead_limit = self.config.get_custom_runahead_limit()
         self.max_future_offset: Optional['IntervalBase'] = None
         self._prev_runahead_base_point: Optional['PointBase'] = None
-        self.max_num_active_cycle_points: int = (
-            self.config.get_max_num_active_cycle_points())
-        self._prev_runahead_sequence_points: Optional[List['PointBase']] = None
+        self.runahead_limit_point: Optional['PointBase'] = None
 
         self.main_pool: Pool = {}
         self.hidden_pool: Pool = {}
@@ -168,12 +163,27 @@ class TaskPool:
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
 
-    def add_to_pool(self, itask, is_new=True):
-        """Add a new task to the hidden or main pool.
+    def load_from_point(self):
+        """Load the task pool for the workflow start point.
 
-        Tasks whose recurrences allow them to spawn beyond the workflow
-        stop point are added to the pool in the held state, ready to be
-        released if the workflow stop point is changed.
+        Add every parentless task out to the runahead limit.
+        """
+        flow_num = self.flow_mgr.get_new_flow(
+            f"original flow from {self.config.start_point}")
+        self.compute_runahead()
+        for name in self.config.get_task_name_list():
+            tdef = self.config.get_taskdef(name)
+            point = tdef.first_point(self.config.start_point)
+            self.spawn_to_rh_limit(tdef, point, {flow_num}, abs_ok=False)
+
+    def add_to_pool(self, itask, is_new: bool = True) -> None:
+        """Add a task to the hidden (if not satisfied) or main task pool.
+
+        If task already exists in the hidden pool and is satisfied, move it to
+        main. TODO: can this be clarified? (Used to update prereqs via
+        spawn-on-outputs).
+
+        (is_new is False inidcates load from DB at restart).
 
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
@@ -199,19 +209,25 @@ class TaskPool:
             self.create_data_store_elements(itask)
 
         if is_new:
-            # Add row to "task_states" table:
+            # Add row to "task_states" table.
+            now = get_current_time_string()
             self.workflow_db_mgr.put_insert_task_states(
                 itask,
                 {
-                    "time_created": get_current_time_string(),
-                    "time_updated": get_current_time_string(),
+                    "time_created": now,
+                    "time_updated": now,
                     "status": itask.state.status,
                     "flow_nums": serialise(itask.flow_nums)
                 }
             )
             # Add row to "task_outputs" table:
             self.workflow_db_mgr.put_insert_task_outputs(itask)
-        return itask
+
+        if itask.tdef.max_future_prereq_offset is not None:
+            # (Must do this once added to the pool).
+            self.set_max_future_offset()
+
+        LOG.info(f"[{itask}] added to task pool")
 
     def create_data_store_elements(self, itask):
         """Create the node window elements about given task proxy."""
@@ -225,16 +241,11 @@ class TaskPool:
         self.data_store_mgr.delta_task_runahead(itask)
 
     def release_runahead_tasks(self):
-        """Release runahead tasks to restrict active cycle points.
-
-        Compute runahead limit, and release tasks if they are below the limit
-        point (and <= the stop point, if there is one).
-
-        Incomplete tasks and partially satisfied prerequisites are counted
-        toward the runahead limit, because they represent tasks that will
-        (or may, in the case of prerequisites) yet run at their cycle points.
+        """Release tasks below the runahead limit.
 
         Return True if any tasks released, else False.
+        Call if RH limit changes.
+        TODO: call from that method?
 
         """
         if not self.main_pool:
@@ -243,6 +254,7 @@ class TaskPool:
 
         released = False
 
+        # TODO: JUST DO THIS AT RESTART?
         # At restart all tasks are runahead-limited but finished and manually
         # triggered tasks (incl. --start-task's) can be released immediately.
         for itask in self.get_tasks():
@@ -254,11 +266,10 @@ class TaskPool:
                 )
                 or itask.is_manual_submit
             ):
-                self.release_runahead_task(itask)
+                self.rh_release_and_queue(itask)  # (WON'T QUEUE IF NOT READY)
                 released = True
 
-        runahead_limit_point = self.compute_runahead()
-        if not runahead_limit_point:
+        if not self.runahead_limit_point:
             return released
 
         # An intermediate list is needed here: auto-spawning of parentless
@@ -267,107 +278,131 @@ class TaskPool:
             itask
             for point, itask_id_map in self.main_pool.items()
             for itask in itask_id_map.values()
-            if point <= runahead_limit_point
+            if point <= self.runahead_limit_point
             if itask.state.is_runahead
         ]
 
         for itask in release_me:
-            self.release_runahead_task(itask, runahead_limit_point)
+            self.rh_release_and_queue(itask)
+            self.spawn_to_rh_limit(
+                itask.tdef,
+                itask.tdef.next_point(itask.point),
+                itask.flow_nums
+            )
             released = True
 
         return released
 
-    def compute_runahead(self):
-        points = []
-        for point, itasks in sorted(self.get_tasks_by_point().items()):
-            if (
-                points  # got the limit already so this point too
-                or any(
-                    not itask.state(
-                        TASK_STATUS_FAILED,
-                        TASK_STATUS_SUCCEEDED,
-                        TASK_STATUS_EXPIRED
-                    )
-                    or (
-                        # For Cylc 7 back-compat, ignore incomplete tasks.
-                        # (Success is required in back-compat mode, so failed
-                        # tasks end up as incomplete; and Cylc 7 ignores
-                        # failed tasks when computing the runahead limit).
-                        itask.state.outputs.is_incomplete()
-                        and not cylc.flow.flags.cylc7_back_compat
-                    )
-                    for itask in itasks
-                )
-            ):
-                points.append(point)
+    def compute_runahead(self, force=False) -> bool:
+        """Compute the runahead limit; return True if it changed.
 
+        Start from earliest point with unfinished tasks. Partially satisfied
+        and incomplete tasks count too because they may yet run, or be run,
+        at their respective cycle points.
+
+        The limit itself is limited by workflow stop point, if there is one.
+        And adjusted upward on the fly if tasks with future offsets appear.
+        """
+        points: List['PointBase'] = []
+        if not self.main_pool:
+            # Start at first point in each sequence, after the initial point.
+            pts = set()
+            for seq in self.config.sequences:
+                pts.add(seq.get_first_point(self.config.start_point))
+            points = list(pts)
+        else:
+            # Find the earliest point with unfinished tasks.
+            for point, itasks in sorted(self.get_tasks_by_point().items()):
+                if (
+                    points  # got the limit already so this point too
+                    or any(
+                        not itask.state(
+                            TASK_STATUS_FAILED,
+                            TASK_STATUS_SUCCEEDED,
+                            TASK_STATUS_EXPIRED
+                        )
+                        or (
+                            # For Cylc 7 back-compat, ignore incomplete tasks.
+                            # (Success is required in back-compat mode, so failed
+                            # tasks end up as incomplete; and Cylc 7 ignores
+                            # failed tasks when computing the runahead limit).
+                            itask.state.outputs.is_incomplete()
+                            and not cylc.flow.flags.cylc7_back_compat
+                        )
+                        for itask in itasks
+                    )
+                ):
+                    points.append(point)
         if not points:
-            return None
+            return False
+        base_point = min(points)
 
-        # Get the earliest point with unfinished tasks.
-        runahead_base_point = min(points)
+        if self._prev_runahead_base_point is None:
+            self._prev_runahead_base_point = base_point
 
-        runahead_number_limit = None
-        runahead_time_limit = None
-        if isinstance(self.custom_runahead_limit, IntegerInterval):
-            runahead_number_limit = int(self.custom_runahead_limit)
-        elif isinstance(self.custom_runahead_limit, ISO8601Interval):
-            runahead_time_limit = self.custom_runahead_limit
+        # No change if base point unchanged or limit already at stop point.
+        if (
+            not force
+            and self.runahead_limit_point is not None
+            and (
+                base_point == self._prev_runahead_base_point
+                or self.stop_point == self.runahead_limit_point
+            )
+        ):
+            return False
+        self._prev_runahead_base_point = base_point
+
+        try:
+            limit = int(self.config.runahead_limit)  # type: ignore
+        except TypeError:
+            count_cycles = False
+            limit = self.config.runahead_limit
+        else:
+            count_cycles = True
+
+        # TODO: IF FORCE AND NO CHANGE NEED TO CACHE CYCLES!
+        # (max future offset compute)
 
         # Get all cycling points possible after the runahead base point.
-        if (self._prev_runahead_base_point is not None and
-                runahead_base_point == self._prev_runahead_base_point):
-            # Cache for speed.
-            sequence_points = self._prev_runahead_sequence_points
-        else:
-            sequence_points = set()
-            for sequence in self.config.sequences:
-                seq_point = sequence.get_next_point(runahead_base_point)
-                count = 1
-                while seq_point is not None:
-                    if runahead_time_limit is not None:
-                        if seq_point > (runahead_base_point +
-                                        runahead_time_limit):
-                            break
-                    else:
-                        if count > runahead_number_limit:
-                            break
-                        count += 1
-                    sequence_points.add(seq_point)
-                    seq_point = sequence.get_next_point(seq_point)
-            self._prev_runahead_sequence_points = sequence_points
-            self._prev_runahead_base_point = runahead_base_point
+        # from pudebug import go; go()
+        sequence_points = set()
+        for sequence in self.config.sequences:
+            seq_point = sequence.get_next_point(base_point)
+            count = 1
+            while seq_point is not None:
+                if count_cycles:
+                    # P1 allows one cycle to run.
+                    #  TODO - off by one error! (should be count > limit)
+                    if count >= limit:
+                        break
+                else:
+                    # PT0H allows one cycle to run.
+                    if seq_point > base_point + limit:
+                        break
+                count += 1
+                sequence_points.add(seq_point)
+                seq_point = sequence.get_next_point(seq_point)
 
         points = set(points).union(sequence_points)
-
-        if runahead_number_limit is not None:
-            # Calculate which tasks to release based on a maximum number of
-            # active cycle points (active meaning non-finished tasks).
-            runahead_limit_point = sorted(points)[:runahead_number_limit][-1]
-            if self.max_future_offset is not None:
-                # For the first N points, release their future trigger tasks.
-                runahead_limit_point += self.max_future_offset
+        if count_cycles:
+            # Some sequences may have different intervals.
+            limit_point = sorted(points)[:limit][-1]
         else:
-            # Calculate which tasks to release based on a maximum duration
-            # measured from the oldest non-finished task.
-            runahead_limit_point = runahead_base_point + runahead_time_limit
+            # We already stopped at the runahead limit.
+            limit_point = sorted(points)[-1]
 
-            if (
-                self._prev_runahead_base_point is None
-                or self._prev_runahead_base_point != runahead_base_point
-                and runahead_time_limit < self.max_future_offset
-            ):
-                LOG.warning(
-                    f'runahead limit "{runahead_time_limit}" '
-                    'is less than future triggering offset '
-                    f'"{self.max_future_offset}"; workflow may stall.'
-                )
-            self._prev_runahead_base_point = runahead_base_point
+        log_msg = f"Runahead limit: {limit_point}"
+        # Adjust for future offset and stop point, if necessary.
+        if self.max_future_offset is not None:
+            limit_point += self.max_future_offset
+            log_msg += f" -> {limit_point} (future offset)"
+        if self.stop_point and limit_point > self.stop_point:
+            limit_point = self.stop_point
+            log_msg += f"-> {limit_point} (stop point)"
 
-        if self.stop_point and runahead_limit_point > self.stop_point:
-            runahead_limit_point = self.stop_point
-
-        return runahead_limit_point
+        self.runahead_limit_point = limit_point
+        LOG.info(log_msg)
+        return True
 
     def update_flow_mgr(self):
         flow_nums_seen = set()
@@ -458,9 +493,11 @@ class TaskPool:
                 for key, _ in itask_prereq.satisfied.items():
                     itask_prereq.satisfied[key] = sat[key]
 
-            itask.state_reset(status)
-            itask.state_reset(is_runahead=True)
+            if itask.state_reset(status, is_runahead=True):
+                self.data_store_mgr.delta_task_runahead(itask)
             self.add_to_pool(itask, is_new=False)
+            self.compute_runahead()
+            self.release_runahead_tasks()
 
     def load_db_task_action_timers(self, row_idx, row):
         """Load a task action timer, e.g. event handlers, retry states."""
@@ -551,95 +588,53 @@ class TaskPool:
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
-    def spawn_successor_if_parentless(
-            self, itask: TaskProxy
-    ) -> Optional[TaskProxy]:
-        """Spawn next-cycle instance of itask if parentless.
+    def rh_release_and_queue(self, itask) -> None:
+        """Release a task from runahead limiting, and queue it if ready.
 
-        This includes:
-            - tasks with no parents at the next point
-            - tasks with all parents before the workflow start point
-            - absolute-triggered tasks (after the first instance is spawned)
-        """
-        next_point = itask.next_point()
-        if next_point is None:
-            return None
-
-        parent_points = itask.tdef.get_parent_points(next_point)
-        if (
-            not parent_points
-            or all(x < self.config.start_point for x in parent_points)
-            or itask.tdef.has_only_abs_triggers(next_point)
-        ):
-            taskid = Tokens(
-                cycle=str(next_point),
-                task=itask.tdef.name,
-            ).relative_id
-            next_task = (
-                self._get_hidden_task_by_id(taskid)
-                or self._get_main_task_by_id(taskid)
-            )
-            if next_task is None:
-                # Does not exist yet, spawn it.
-                next_task = self.spawn_task(
-                    itask.tdef.name, next_point, itask.flow_nums)
-            else:
-                # Already exists
-                retroactive_spawn = (
-                    not next_task.flow_nums
-                    and not next_task.state.is_runahead
-                )
-                self.merge_flows(next_task, itask.flow_nums)
-                if retroactive_spawn:
-                    # Did not belong to a flow (force-triggered) before merge.
-                    # Now it does, so spawn successor, and children if needed.
-                    LOG.debug(
-                        f"[{next_task}] spawning children retroactively"
-                        " post flow merge."
-                    )
-                    self.spawn_successor_if_parentless(next_task)
-                    self.spawn_on_all_outputs(next_task, completed_only=True)
-
-            if next_task:
-                self.add_to_pool(next_task)
-                return next_task
-        return None
-
-    def release_runahead_task(
-        self,
-        itask: TaskProxy,
-        runahead_limit_point: Optional['PointBase'] = None
-    ) -> None:
-        """Release itask from runahead limiting.
-
-        Also auto-spawn next instance if:
-        - no parents to do it
-        - has absolute triggers (these are satisfied already by definition)
+        Check the task against the RH limit before calling this method (in
+        forced triggering we need to release even if beyond the limit).
         """
         if itask.state_reset(is_runahead=False):
             self.data_store_mgr.delta_task_runahead(itask)
-
-        # Queue if ready to run
         if all(itask.is_ready_to_run()):
             # (otherwise waiting on xtriggers etc.)
             self.queue_task(itask)
 
-        if itask.tdef.max_future_prereq_offset is not None:
-            self.set_max_future_offset()
-
-        if itask.tdef.sequential:
-            # implicit prev-instance parent
+    def spawn_to_rh_limit(self, tdef, point, flow_nums, abs_ok=True) -> None:
+        """Spawn parentless task instances from point to runahead limit."""
+        if not flow_nums:
+            # force-triggered no-flow task.
             return
+        if self.runahead_limit_point is None:
+            self.compute_runahead()
+        while point is not None and (point <= self.runahead_limit_point):
+            if tdef.is_parentless(point, abs_ok):
+                ntask = self.spawn_x(point, tdef.name, flow_nums)
+                if ntask is not None:
+                    self.add_to_pool(ntask)
+                    self.rh_release_and_queue(ntask)
+            point = tdef.next_point(point)
 
-        # Autospawn successor of itask if parentless
-        if itask.flow_nums:
-            n_task = self.spawn_successor_if_parentless(itask)
-            if (
-                n_task and
-                runahead_limit_point and
-                n_task.point <= runahead_limit_point
-            ):
-                self.release_runahead_task(n_task, runahead_limit_point)
+        # Once more (for the rh-limited task: don't rh release it!)
+        if point is not None and tdef.is_parentless(point, abs_ok):
+            ntask = self.spawn_x(point, tdef.name, flow_nums)
+            if ntask is not None:
+                self.add_to_pool(ntask)
+
+    def spawn_x(self, point, name, flow_nums):
+        # TODO RENAME OR CONSOLIDATE WITH other spawn methods.
+        taskid = Tokens(cycle=str(point), task=name).relative_id
+        ntask = (
+            self._get_hidden_task_by_id(taskid)
+            or self._get_main_task_by_id(taskid)
+        )
+        if ntask is None:
+            # Does not exist yet, spawn it.
+            ntask = self.spawn_task(name, point, flow_nums)
+        else:
+            # Already exists
+            self.merge_flows(ntask, flow_nums)
+        return ntask  # may be None
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool (e.g. after a reload)."""
@@ -766,7 +761,6 @@ class TaskPool:
             itask.state_reset(is_queued=False)
             itask.waiting_on_job_prep = True
             self.data_store_mgr.delta_task_queued(itask)
-            LOG.info(f"Queue released: {itask.identity}")
 
             if cylc.flow.flags.cylc7_back_compat:
                 # Cylc 7 Back Compat: spawn downstream to cause Cylc 7 style
@@ -786,23 +780,26 @@ class TaskPool:
 
     def set_max_future_offset(self):
         """Calculate the latest required future trigger offset."""
+        orig = self.max_future_offset
         max_offset = None
         for itask in self.get_tasks():
-            if (itask.tdef.max_future_prereq_offset is not None and
-                    (max_offset is None or
-                     itask.tdef.max_future_prereq_offset > max_offset)):
+            if (
+                itask.tdef.max_future_prereq_offset is not None
+                and (
+                    max_offset is None or
+                    itask.tdef.max_future_prereq_offset > max_offset
+                )
+            ):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
+        if max_offset != orig and self.compute_runahead(force=True):
+            self.release_runahead_tasks()
 
     def set_do_reload(self, config: 'WorkflowConfig') -> None:
         """Set the task pool to reload mode."""
         self.config = config
         self.stop_point = config.stop_point or config.final_point
         self.do_reload = True
-
-        self.custom_runahead_limit = self.config.get_custom_runahead_limit()
-        self.max_num_active_cycle_points = (
-            self.config.get_max_num_active_cycle_points())
 
         # find any old tasks that have been removed from the workflow
         old_task_name_list = self.task_name_list
@@ -885,33 +882,37 @@ class TaskPool:
                 self.queue_task(itask)
 
         self.do_reload = False
+        # Force a runahead limit recompute in case the limit config changed.
+        # TODO: only recompute it if the config did change.
+        if self.compute_runahead(force=True):
+            self.release_runahead_tasks()
 
-    def set_stop_point(
-        self, stop_point: Optional['PointBase']
-    ) -> Optional['PointBase']:
-        """Set the global workflow stop point."""
+    def set_stop_point(self, stop_point: 'PointBase') -> bool:
+        """Set the workflow stop cycle point.
+
+        And reset the runahead limit if less than the stop point.
+        """
         if self.stop_point == stop_point:
-            return None
-        LOG.info("Setting stop cycle point: %s", stop_point)
+            LOG.info(f"Stop point unchanged: {stop_point}")
+            return False
+
+        LOG.info("Setting stop point: {stop_point}")
         self.stop_point = stop_point
-        if self.stop_point:
-            for itask in self.get_tasks():
-                # check cycle stop or hold conditions
+
+        if (
+            self.runahead_limit_point is not None
+            and self.runahead_limit_point > stop_point
+        ):
+            self.runahead_limit_point = stop_point
+            # Now handle existing waiting tasks (e.g. xtriggered).
+            for itask in self.get_all_tasks():
                 if (
-                    itask.point > self.stop_point
-                    and itask.state(
-                        TASK_STATUS_WAITING,
-                        is_queued=True,
-                        is_held=False
-                    )
+                    itask.point > stop_point
+                    and itask.state(TASK_STATUS_WAITING)
+                    and itask.state_reset(is_runahead=True)
                 ):
-                    LOG.warning(
-                        f"[{itask}] not running (beyond workflow stop cycle) "
-                        f"{self.stop_point}"
-                    )
-                    if itask.state_reset(is_held=True):
-                        self.data_store_mgr.delta_task_held(itask)
-        return self.stop_point
+                    self.data_store_mgr.delta_task_runahead(itask)
+        return True
 
     def can_stop(self, stop_mode):
         """Return True if workflow can stop.
@@ -1014,7 +1015,7 @@ class TaskPool:
                 unsat[itask.identity].append(f"{point}/{name}:{output}")
         if unsat:
             LOG.warning(
-                "Unsatisfied prerequisites:\n"
+                "Partially satisfied prerequisites:\n"
                 + "\n".join(
                     f"  * {id_} is waiting on {others}"
                     for id_, others in unsat.items()
@@ -1029,7 +1030,7 @@ class TaskPool:
 
         Is stalled if not paused and contains only:
           - incomplete tasks
-          - partially satisfied prerequisites
+          - partially satisfied prerequisites (below stop point)
           - runahead-limited tasks (held back by the above)
         """
         if any(
@@ -1142,7 +1143,6 @@ class TaskPool:
         Args:
             tasks: List of identifiers or task globs.
             outputs: List of outputs to spawn on.
-            flow_num: Flow number to attribute the outputs.
             forced: If True this is a manual spawn command.
 
         """
@@ -1188,7 +1188,6 @@ class TaskPool:
                     }
                 )
                 # self.workflow_db_mgr.process_queued_ops()
-
             elif (
                 c_task is None
                 and (itask.flow_nums or forced)
@@ -1197,9 +1196,7 @@ class TaskPool:
                 # If child is not in the pool already, and parent belongs to a
                 # flow (so it can spawn children), and parent is not waiting
                 # for an upcoming flow merge before spawning ... then spawn it.
-                c_task = self.spawn_task(
-                    c_name, c_point, itask.flow_nums,
-                )
+                c_task = self.spawn_task(c_name, c_point, itask.flow_nums)
 
             if c_task is not None:
                 # Update downstream prerequisites directly.
@@ -1219,6 +1216,11 @@ class TaskPool:
                     self.data_store_mgr.delta_task_prerequisite(t)
                     # Add it to the hidden pool or move it to the main pool.
                     self.add_to_pool(t)
+                    if t.point <= self.runahead_limit_point:
+                        # TODO CAN ADD-TO-POOL DO THE RELEASE?
+                        self.rh_release_and_queue(t)
+                        # TODO DO WE NEED MAIN LOOP RH RELEASE AS WELL?
+                        self.spawn_to_rh_limit(t.tdef, t.point, t.flow_nums)
 
                     # Event-driven suicide.
                     if (
@@ -1255,6 +1257,9 @@ class TaskPool:
         else:
             # Remove as completed.
             self.remove(itask, 'finished')
+            # See if runahead limit can move on.
+            if self.compute_runahead():
+                self.release_runahead_tasks()
             if itask.identity == self.stop_task_id:
                 self.stop_task_finished = True
 
@@ -1306,6 +1311,11 @@ class TaskPool:
                     })
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
+                if (
+                    self.runahead_limit_point is not None
+                    and c_task.point <= self.runahead_limit_point
+                ):
+                    self.rh_release_and_queue(c_task)
 
     def can_spawn(self, name: str, point: 'PointBase') -> bool:
         """Return True if the task with the given name & point is within
@@ -1519,35 +1529,23 @@ class TaskPool:
             warn=False,
         )
 
-        # spawn future tasks
+        # Spawn future tasks.
         for name, point in future_tasks:
-            task_id = Tokens(
-                cycle=str(point),
-                task=name,
-            ).relative_id
-            itask = (
-                self._get_main_task_by_id(task_id)
-                or self._get_hidden_task_by_id(task_id)
+            # (Flow values already validated by the trigger client).
+            itask = self.spawn_task(
+                name,
+                point,
+                flow_nums,
+                force=True,
+                is_manual_submit=True,
+                flow_wait=flow_wait
             )
-            # Flow values already validated by the trigger client.
             if itask is None:
-                itask = self.spawn_task(
-                    name,
-                    point,
-                    flow_nums,
-                    force=True,
-                    is_manual_submit=True,
-                    flow_wait=flow_wait
-                )
-                if itask is None:
-                    continue
-                # Queue the task
-                self.add_to_pool(itask, is_new=True)
-            else:
-                # In pool already
-                itasks.append(itask)
+                continue
+            self.add_to_pool(itask, is_new=True)
+            itasks.append(itask)
 
-        # trigger tasks if not already preparing or active
+        # Trigger matched tasks if not already active.
         for itask in itasks:
             if itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 LOG.warning(f"[{itask}] ignoring trigger - already active")
@@ -1559,21 +1557,19 @@ class TaskPool:
                 # (could also be unhandled failed)
                 self.data_store_mgr.delta_task_state(itask)
             # (No need to set prerequisites satisfied here).
-            if not itask.state.is_queued:
-                self.queue_task(itask)
-                LOG.info(
-                    f"[{itask}] queued, trigger again to submit now."
+            if itask.state.is_runahead:
+                # Release from runahead, and queue it.
+                self.rh_release_and_queue(itask)
+                self.spawn_to_rh_limit(
+                    itask.tdef,
+                    itask.tdef.next_point(itask.point),
+                    itask.flow_nums
                 )
             else:
+                # De-queue it to run now.
                 self.task_queue_mgr.force_release_task(itask)
 
-            self.workflow_db_mgr.put_insert_task_states(
-                itask,
-                {
-                    "status": itask.state.status,
-                    "flow_nums": serialise(itask.flow_nums)
-                }
-            )
+            self.workflow_db_mgr.put_update_task_state(itask)
         return len(unmatched)
 
     def sim_time_check(self, message_queue):
@@ -1860,7 +1856,7 @@ class TaskPool:
         return n_warnings, task_items
 
     def merge_flows(self, itask: TaskProxy, flow_nums: 'FlowNums') -> None:
-        """Merge itask.flow_nums with flow_nums.
+        """Merge flow_nums with itask.flow_nums.
 
         This also performs required spawning / state changing for edge cases.
         """
@@ -1872,18 +1868,26 @@ class TaskPool:
             and itask.state.outputs.get_incomplete()
         ):
             itask.state_reset(TASK_STATUS_WAITING)
+            itask.merge_flows(flow_nums)
             if not itask.state.is_queued:
                 self.queue_task(itask)
             self.data_store_mgr.delta_task_state(itask)
 
         # case 2: task does not belong to a flow (force-triggered no-flow).
-        # (we spawn the outputs complete so far to allow the flow to continue
+        # (we spawn the outputs completed so far to allow the flow to continue
         # post merge)
         # (note we don't do this if case 1 also applies)
         elif not itask.flow_nums or itask.flow_wait:
             itask.flow_wait = False
+            itask.merge_flows(flow_nums)
+            LOG.info(
+                f"[{itask}] retroactive spawn on outputs"
+                " (flow merged to no-flow task)."
+            )
             self.spawn_on_all_outputs(itask, completed_only=True)
+            self.spawn_to_rh_limit(
+                itask.tdef, itask.next_point(), itask.flow_nums)
+        else:
+            itask.merge_flows(flow_nums)
 
-        # merge the flows
-        itask.merge_flows(flow_nums)
         self.workflow_db_mgr.put_insert_task_outputs(itask)

@@ -205,7 +205,6 @@ class TaskDef:
             sequence, {}).setdefault(
                 trigger.output, []).append((taskname, trigger))
 
-    # graph_parents not currently used, but might be soon:
     def add_graph_parent(self, trigger, parent, sequence):
         """Record task instances that I depend on.
           {
@@ -310,3 +309,58 @@ class TaskDef:
             LOG.warning("%s%s, %s" % (
                 self.ERR_PREFIX_TASK_NOT_ON_SEQUENCE, self.name, point))
         return is_valid_point
+
+    def first_point(self, icp):
+        """Return the first point for this task."""
+        point = None
+        adjusted = []
+        for seq in self.sequences:
+            pt = seq.get_first_point(icp)
+            if pt:
+                # may be None if beyond the sequence bounds
+                adjusted.append(pt)
+        if adjusted:
+            point = min(adjusted)
+        return point
+
+    def next_point(self, point):
+        """Return the next cycle point after point."""
+        p_next = None
+        adjusted = []
+        for seq in self.sequences:
+            nxt = seq.get_next_point(point)
+            if nxt:
+                # may be None if beyond the sequence bounds
+                adjusted.append(nxt)
+        if adjusted:
+            p_next = min(adjusted)
+        return p_next
+
+    def is_parentless(self, point, abs_ok=True):
+        """Return True if no parents at point.
+
+        A task can have parents at some points and not at others.
+
+        Tasks are parentless they have no parents, of if the parents:
+          - are below the workflow initial cycle point (we ignore them)
+          - the parents are only absolute triggers (we can consider these
+          satisfied once the first child is spawned).
+
+        How absolute-triggered tasks are handled: at start-up, do not spawn
+        out to RH limit if has only abs parents. Wait for the first instance to
+        be spawned by the parent. THEN when they are RH released, spawn their
+        successors to RH even if abs-only-parented (because at that point the
+        abs trigger is satisified).
+        """
+        if not self.graph_parents:
+            # No parents at any point
+            return True
+        if self.sequential:
+            # Implicit parents
+            return False
+        parent_points = self.get_parent_points(point)
+        return (
+            not parent_points
+            or all(x < self.start_point for x in parent_points)
+            or (abs_ok and self.has_only_abs_triggers(point))
+        )

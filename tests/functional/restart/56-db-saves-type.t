@@ -45,7 +45,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" 'SELECT * FROM workflow_template_vars' >'sqlite3.out'
 
-cylc stop "${WORKFLOW_NAME}"
+cylc stop --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-restart" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
