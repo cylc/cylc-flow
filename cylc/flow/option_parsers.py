@@ -58,7 +58,7 @@ icp_option = Option(
         "Set the initial cycle point. "
         "Required if not defined in flow.cylc."
         "\nMay be either an absolute point or an offset: See "
-        f"{SHORTLINK_TO_ICP_DOCS}"
+        f"{SHORTLINK_TO_ICP_DOCS}" (Cylc documentation link).
     ),
     action="store",
     dest="icp",
