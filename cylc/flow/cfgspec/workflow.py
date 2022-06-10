@@ -23,7 +23,11 @@ from typing import Any, Dict, Optional, Set
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES
+from cylc.flow.cfgspec.globalcfg import (
+    EVENT_SETTINGS,
+    REPLACES,
+    UTC_MODE_DESCR,
+)
 import cylc.flow.flags
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
@@ -39,8 +43,10 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
-# Regex to strip `:Default For:` notices from docs imported from the global cfg
-DEFAULT_FOR = re.compile(r'.*:[Dd]efault [Ff]or:.*')
+GLOBAL_DEFAULT = (
+    "The default value is set in the global config: "
+    ":cylc:conf:`global.cylc{}`."
+)
 
 # Cylc8 Deprecation note.
 REPLACED_BY_PLATFORMS = '''
@@ -160,12 +166,10 @@ with Conf(
 
            {REPLACES} ``[cylc]``
     '''):
-        Conf('UTC mode', VDR.V_BOOLEAN, desc='''
-            If ``True``, UTC will be used as the time zone for timestamps in
-            the logs. If ``False``, the local/system time zone will be used.
+        Conf('UTC mode', VDR.V_BOOLEAN, desc=f'''
+            {UTC_MODE_DESCR}
 
-            This may also be set in the global config:
-            :cylc:conf:`global.cylc[scheduler]UTC mode`.
+            {GLOBAL_DEFAULT.format("[scheduler]UTC mode")}
 
             .. seealso::
 
@@ -396,9 +400,11 @@ with Conf(
                 should be sent.
             ''')
 
-            for item, desc in EVENTS_DESCR.items():
-                # strip the `:Default For:` lines
-                desc = DEFAULT_FOR.sub('', dedent(desc))
+            for item, desc in EVENT_SETTINGS.items():
+                desc = GLOBAL_DEFAULT.format(
+                    f"[scheduler][events]{item}"
+                ) + "\n\n" + dedent(desc)
+
                 if item.endswith("handlers"):
                     Conf(item, VDR.V_STRING_LIST, desc=(
                         # add examples
