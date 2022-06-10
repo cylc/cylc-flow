@@ -155,7 +155,10 @@ with Conf(
         ''')
     with Conf('scheduler', desc=f'''
         Settings for the scheduler.
-        {REPLACES} ``[cylc]``
+
+        .. versionchanged:: 8.0.0
+
+           {REPLACES} ``[cylc]``
     '''):
         Conf('UTC mode', VDR.V_BOOLEAN, desc='''
             If ``True``, UTC will be used as the time zone for timestamps in
