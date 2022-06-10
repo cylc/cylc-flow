@@ -77,7 +77,6 @@ UTC_MODE_DESCR = (
 )
 
 
-TIMEOUT_DESCR = "Previously, 'timeout' was a stall timeout."
 REPLACES = 'This item was previously called '
 
 
@@ -132,31 +131,25 @@ EVENT_SETTINGS = {
         '''
     ),
     'workflow timeout': (
-        f'''
+        '''
         Workflow timeout interval. The timer starts counting down at scheduler
         startup. It resets on workflow restart.
 
         .. versionadded:: 8.0.0
-
-           {TIMEOUT_DESCR}
         '''
     ),
     'workflow timeout handlers': (
-        f'''
+        '''
         Handlers to run if the workflow timer times out.
 
         .. versionadded:: 8.0.0
-
-           {TIMEOUT_DESCR}
         '''
     ),
     'abort on workflow timeout': (
-        f'''
+        '''
         Whether to abort if the workflow timer times out.
 
         .. versionadded:: 8.0.0
-
-           {TIMEOUT_DESCR}
         '''
     ),
     'stall handlers': (
@@ -172,27 +165,27 @@ EVENT_SETTINGS = {
         f'''
         The length of a timer which starts if the scheduler stalls.
 
-        .. versionadded:: 8.0.0
+        .. versionchanged:: 8.0.0
 
-           {TIMEOUT_DESCR}
+           {REPLACES}``timeout``.
         '''
     ),
     'stall timeout handlers': (
         f'''
         Handlers to run if the stall timer times out.
 
-        .. versionadded:: 8.0.0
+        .. versionchanged:: 8.0.0
 
-           {TIMEOUT_DESCR}
+           {REPLACES}``timeout handler``.
         '''
     ),
     'abort on stall timeout': (
         f'''
         Whether to abort if the stall timer times out.
 
-        .. versionadded:: 8.0.0
+        .. versionchanged:: 8.0.0
 
-           {TIMEOUT_DESCR}
+           {REPLACES}``abort on timeout``.
         '''
     ),
     'inactivity timeout': (
