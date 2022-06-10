@@ -145,7 +145,7 @@ def filter_ids(
             if tokens.get(lowest_token.value):
                 break
 
-        cycles = []
+        cycles = set()
         tasks = []
 
         # filter by cycle
@@ -159,12 +159,14 @@ def filter_ids(
                     if not point_match(icycle, cycle, pattern_match):
                         continue
                     if cycle_sel == '*':
-                        cycles.append(icycle)
+                        cycles.add(icycle)
                         continue
                     for itask in itasks.values():
                         if match(itask.state.status, cycle_sel):
-                            cycles.append(icycle)
+                            cycles.add(icycle)
                             break
+
+            cycles = list(cycles)
 
         # filter by task
         elif lowest_token == IDTokens.Task:   # noqa SIM106
