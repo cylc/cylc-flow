@@ -43,32 +43,14 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 DEFAULT_FOR = re.compile(r'.*:[Dd]efault [Ff]or:.*')
 
 # Cylc8 Deprecation note.
-DEPRECATION_WARN = '''
-.. deprecated:: 8.0.0
-
+REPLACED_BY_PLATFORMS = '''
 .. warning::
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
 
-
    This will be removed in a future version of Cylc 8.
 
    Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
-'''
-
-DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
-.. deprecated:: 8.0.0
-
-.. warning::
-
-   This config item has been moved to a platform setting in the
-   :cylc:conf:`global.cylc[platforms]` section. It will be used by the
-   automated platform upgrade mechanism and remove in a future version
-   of Cylc 8.
-
-   Ideally, as a user this should be set by your site admins
-   and you will only need to pick a suitable
-   :cylc:conf:`flow.cylc[runtime][<namespace>]platform`.
 '''
 
 
@@ -80,17 +62,17 @@ def get_script_common_text(this: str, example: Optional[str] = None):
     Other user-defined script items:
 
     ''')
-    for item in [
+    for item in (
         'init-script', 'env-script', 'pre-script', 'script', 'post-script',
         'err-script', 'exit-script'
-    ]:
+    ):
         if item != this:
             text += f"* :cylc:conf:`[..]{item}`\n"
     text += dedent(f'''
 
- Example::
+    Example::
 
-        {example if example else 'echo "Hello World"'}
+       {example if example else 'echo "Hello World"'}
     ''')
     return text
 
@@ -1119,39 +1101,35 @@ with Conf(
 
                    ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
-            Conf(
-                'execution polling intervals',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc='''
-                    List of intervals at which to poll status of job execution.
+            Conf('execution polling intervals', VDR.V_INTERVAL_LIST,
+                 None, desc='''
+                List of intervals at which to poll status of job execution.
 
-                    Cylc can poll running jobs to catch problems that prevent
-                    task messages from being sent back to the workflow, such
-                    as hard job kills, network outages, or unplanned job
-                    host shutdown.
+                Cylc can poll running jobs to catch problems that prevent
+                task messages from being sent back to the workflow, such
+                as hard job kills, network outages, or unplanned job
+                host shutdown.
 
-                    The last interval in the list is used repeatedly until
-                    the job completes.
+                The last interval in the list is used repeatedly until
+                the job completes.
 
-                    Multipliers can be used as shorthand as in the example
-                    below.
+                Multipliers can be used as shorthand as in the example
+                below.
 
-                    Example::
+                Example::
 
-                       5*PT2M, PT5M
+                   5*PT2M, PT5M
 
-                    Note that if the polling
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    communication method` is used then Cylc relies on polling
-                    to detect all task state changes, so you may want to
-                    configure more frequent polling.
+                Note that if the polling
+                :cylc:conf:`global.cylc[platforms][<platform name>]
+                communication method` is used then Cylc relies on polling
+                to detect all task state changes, so you may want to
+                configure more frequent polling.
 
-                    This config item overrides
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    execution polling intervals`
-                    '''
-            )
+                This config item overrides
+                :cylc:conf:`global.cylc[platforms][<platform name>]
+                execution polling intervals`
+            ''')
             Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
                 Cylc can automate resubmission of a failed task job.
 
@@ -1177,57 +1155,49 @@ with Conf(
                 intervals using :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
             ''')
-            Conf(
-                'submission polling intervals',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc='''
-                    List of intervals at which to poll status of job
-                    submission.
+            Conf('submission polling intervals', VDR.V_INTERVAL_LIST,
+                 None, desc='''
+                List of intervals at which to poll status of job
+                submission.
 
-                    Cylc can poll submitted jobs to catch problems that
-                    prevent the submitted job from executing at all, such as
-                    deletion from an external job runner queue.
+                Cylc can poll submitted jobs to catch problems that
+                prevent the submitted job from executing at all, such as
+                deletion from an external job runner queue.
 
-                    The last value is used repeatedly until the task starts
-                    running.
+                The last value is used repeatedly until the task starts
+                running.
 
-                    Multipliers can be used as shorthand as in the example
-                    below.
+                Multipliers can be used as shorthand as in the example
+                below.
 
-                    Example::
+                Example::
 
-                       5*PT2M, PT5M
+                   5*PT2M, PT5M
 
-                    Note that if the polling
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    communication method`
-                    is used then Cylc relies on polling to detect all task
-                    state changes,
-                    so you may want to configure more
-                    frequent polling.
+                Note that if the polling
+                :cylc:conf:`global.cylc[platforms][<platform name>]
+                communication method`
+                is used then Cylc relies on polling to detect all task
+                state changes,
+                so you may want to configure more
+                frequent polling.
 
-                    This config item overrides
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    submission polling intervals`.
-                    '''
-            )
-            Conf(
-                'submission retry delays',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc='''
-                    Cylc can automatically resubmit jobs after submission
-                    failures.
+                This config item overrides
+                :cylc:conf:`global.cylc[platforms][<platform name>]
+                submission polling intervals`.
+            ''')
+            Conf('submission retry delays', VDR.V_INTERVAL_LIST,
+                 None, desc='''
+                Cylc can automatically resubmit jobs after submission
+                failures.
 
-                    A list of intervals which define when the scheduler will
-                    resubmit jobs if submission fails.
+                A list of intervals which define when the scheduler will
+                resubmit jobs if submission fails.
 
-                    This config item overrides
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    submission retry delays`
-                    '''
-            )
+                This config item overrides
+                :cylc:conf:`global.cylc[platforms][<platform name>]
+                submission retry delays`
+            ''')
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
 
@@ -1395,14 +1365,19 @@ with Conf(
                 ''')
 
             with Conf('job', desc=dedent('''
+                .. deprecated:: 8.0.0
+
                 This section configures the means by which cylc submits task
                 job scripts to run.
 
-            ''') + DEPRECATION_WARN):
+            ''') + REPLACED_BY_PLATFORMS):
                 Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
 
-            with Conf('remote', desc=DEPRECATION_WARN):
+            with Conf('remote', desc=dedent('''
+                .. deprecated:: 8.0.0
+
+            ''') + REPLACED_BY_PLATFORMS):
                 Conf('host', VDR.V_STRING)
                 # TODO: Convert URL to a stable or latest release doc after 8.0
                 # https://github.com/cylc/cylc-flow/issues/4663
@@ -1411,9 +1386,9 @@ with Conf(
 
                     .. seealso::
 
-                        `Documentation on changes to remote owner
-                        <https://cylc.github.io/cylc-doc/latest/html/
-                        7-to-8/major-changes/remote-owner.html>`_
+                       `Documentation on changes to remote owner
+                       <https://cylc.github.io/cylc-doc/latest/html/
+                       7-to-8/major-changes/remote-owner.html>`_
                 """)
                 Conf('retrieve job logs', VDR.V_BOOLEAN)
                 Conf('retrieve job logs max size', VDR.V_STRING)
