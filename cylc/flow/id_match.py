@@ -166,8 +166,6 @@ def filter_ids(
                             cycles.add(icycle)
                             break
 
-            cycles = list(cycles)
-
         # filter by task
         elif lowest_token == IDTokens.Task:   # noqa SIM106
             cycle = tokens[IDTokens.Cycle.value]
@@ -215,7 +213,7 @@ def filter_ids(
             if warn:
                 LOG.warning(f"No active tasks matching: {id_}")
         else:
-            _cycles.extend(cycles)
+            _cycles.extend(list(cycles))
             _tasks.extend(tasks)
 
     ret: List[Any] = []
