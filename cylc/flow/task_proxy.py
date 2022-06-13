@@ -439,6 +439,10 @@ class TaskProxy:
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
+        if flow_nums == self.flow_nums:
+            # Not a merge if in the same flow. E.g. for "A & B => C" if A
+            # spawns C first, B will find C is already in the task pool.
+            return
         LOG.info(
             f"[{self}] merged in flow(s) "
             f"{','.join(str(f) for f in flow_nums)}"
