@@ -587,7 +587,16 @@ with Conf('global.cylc', desc='''
             Conf('from', VDR.V_STRING, desc='''
                 :Default For: :cylc:conf:`flow.cylc[scheduler][mail]from`.
             ''')
-            Conf('smtp', VDR.V_STRING)
+            Conf('smtp', VDR.V_STRING, desc='''
+                Specify the SMTP server for sending workflow event email
+                notifications.
+
+                This cannot be configured in ``flow.cylc``.
+
+                Example::
+
+                   smtp.yourorg
+            ''')
             Conf('to', VDR.V_STRING, desc='''
                 :Default For: :cylc:conf:`flow.cylc[scheduler][mail]to`.
             ''')
@@ -638,7 +647,7 @@ with Conf('global.cylc', desc='''
                        .. hint::
 
                           This *appends* to the configured list of plugins
-                          rather than *overriding* it.
+                          rather than overriding it.
 
                     .. versionadded:: 8.0.0
             ''')
