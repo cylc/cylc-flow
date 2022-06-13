@@ -325,7 +325,14 @@ async def contact_info(flow):
 
 @pipe
 async def validate_contact_info(flow):
-    """Return flow if contact file is valid"""
+    """Return flow if contact file is valid.
+
+    This checks that the contact file contains the minimal set of fields
+    required for most purposes.
+
+    This helps to protect against blank or corrupted (yet valid) contact files
+    which would otherwise pass through without raising errors.
+    """
     for contact_field in REQUIRED_FIELDS:
         try:
             flow[contact_field]
