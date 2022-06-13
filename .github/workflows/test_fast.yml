@@ -19,7 +19,7 @@ jobs:
           - os: 'macos-latest'
             python-version: '3.7'
     env:
-      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
+      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes -m "linktest or not linktest"
 
     steps:
       - name: Checkout
