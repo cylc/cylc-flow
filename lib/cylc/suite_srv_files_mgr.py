@@ -828,3 +828,16 @@ To start a new run, stop the old one first with one or more of these:
                 "Cannot run - flow.cylc (Cylc 8) file detected in "
                 "suite run dir. "
             )
+
+    @staticmethod
+    def check_for_cylc8_install_dir(run_dir, reg):
+        """Raise error if _cylc-install dir in run dir or above."""
+        if (
+            os.path.isdir(os.path.join(run_dir, '_cylc-install'))
+        ) or (
+            len(reg.split(os.sep)) > 1 and
+            os.path.isdir(os.path.join(run_dir, '..', '_cylc-install'))
+        ):
+            raise SuiteServiceFileError(
+                "Cannot run - Cylc 8 _cylc-install directory detected"
+            )

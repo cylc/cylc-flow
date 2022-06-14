@@ -2061,10 +2061,17 @@ conditions; see `cylc conditions`.
             self.config, key, default)
 
     def abort_if_cylc8_run_dir(self):
-        """Abort if the run directory is a Cylc 8 one (if it has flow.cylc
-        or a Cylc 8 DB)"""
+        """Abort if the run directory is a Cylc 8 one:
+
+        - flow.cylc file
+        - _cylc-install dir
+        - Cylc 8 DB
+        """
         try:
             SuiteSrvFilesManager.check_for_cylc8_flow_file(self.suite_run_dir)
+            SuiteSrvFilesManager.check_for_cylc8_install_dir(
+                self.suite_run_dir, self.suite
+            )
             self.suite_db_mgr.check_forward_compatibility()
         except (SuiteServiceFileError, SuiteCylcVersionError) as exc:
             sys.exit("ERROR: {}".format(exc))
