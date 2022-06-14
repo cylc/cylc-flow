@@ -72,6 +72,10 @@ SYSPATH = [
 
 
 REPLACES = 'This item was previously called '
+PLATFORM_REPLACES = (
+    "(Replaces the deprecated setting "
+    ":cylc:conf:`flow.cylc[runtime][<namespace>]{}`.)"
+)
 
 
 PLATFORM_META_DESCR = '''
@@ -550,39 +554,35 @@ with Conf('global.cylc', desc='''
             Maximum number of concurrent processes used to execute external job
             submission, event handlers, and job poll and kill commands
 
+            .. seealso::
+
+               :ref:`Managing External Command Execution`.
+
             .. versionchanged:: 8.0.0
 
                Moved into the ``[scheduler]`` section from the top level.
-
-            .. seealso::
-
-                :ref:`Managing External Command Execution`.
-
         ''')
         Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600),
              desc='''
             After this interval Cylc will kill long running commands in the
             process pool.
 
-            .. versionchanged:: 8.0.0
-
-               Moved into the ``[scheduler]`` section from the top level.
-
             .. seealso::
 
                :ref:`Managing External Command Execution`.
 
             .. note::
+
                The default is set quite high to avoid killing important
                processes when the system is under load.
+
+            .. versionchanged:: 8.0.0
+
+               Moved into the ``[scheduler]`` section from the top level.
         ''')
         Conf('auto restart delay', VDR.V_INTERVAL, desc=f'''
             Maximum number of seconds the auto-restart mechanism will delay
             before restarting workflows.
-
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``global.rc[suite servers]auto restart delay``.
 
             When a host is set to automatically
             shutdown/restart it waits a random period of time
@@ -594,28 +594,31 @@ with Conf('global.cylc', desc='''
 
                :ref:`auto-stop-restart`
 
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``global.rc[suite servers]auto restart delay``.
         ''')
         with Conf('run hosts', desc=f'''
             Configure workflow hosts and ports for starting workflows.
 
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[suite servers]``.
-
             Additionally configure host selection settings specifying how to
             determine the most suitable run host at any given time from those
             configured.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[suite servers]``.
         '''):
             Conf('available', VDR.V_SPACELESS_STRING_LIST, desc=f'''
                 A list of workflow run hosts.
 
+                Cylc will choose one of these hosts for a workflow to start on.
+                (Unless an explicit host is provided as an option to the
+                ``cylc play --host=<myhost>`` command.)
+
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``[suite servers]run hosts``.
-
-               Cylc will choose one of these hosts for a workflow to start on.
-               (Unless an explicit host is provided as an option to the
-               ``cylc play --host=<myhost>`` command.)
             ''')
             Conf('ports', VDR.V_RANGE, Range((43001, 43101)),
                  desc=f'''
@@ -633,10 +636,6 @@ with Conf('global.cylc', desc='''
             Conf('condemned', VDR.V_ABSOLUTE_HOST_LIST, desc=f'''
                 These hosts will not be used to run jobs.
 
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[suite servers]condemned hosts``.
-
                 If workflows are already running on
                 condemned hosts, Cylc will shut them down and
                 restart them on different hosts.
@@ -644,13 +643,13 @@ with Conf('global.cylc', desc='''
                 .. seealso::
 
                    :ref:`auto-stop-restart`
-            ''')
-            Conf('ranking', VDR.V_STRING, desc=f'''
-                Rank and filter run hosts based on system information.
 
                 .. versionchanged:: 8.0.0
 
-                   {REPLACES}``[suite servers][run host select]rank``.
+                   {REPLACES}``[suite servers]condemned hosts``.
+            ''')
+            Conf('ranking', VDR.V_STRING, desc=f'''
+                Rank and filter run hosts based on system information.
 
                 Ranking can be used to provide load balancing to ensure no
                 single run host is overloaded. It also provides thresholds
@@ -714,18 +713,22 @@ with Conf('global.cylc', desc='''
                    # if two hosts have the same CPU count
                    # then rank them by CPU usage
                    cpu_percent()
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[suite servers][run host select]rank``.
             ''')
 
         with Conf('host self-identification', desc=f'''
             How Cylc determines and shares the identity of the workflow host.
 
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[suite host self-identification]``.
-
             The workflow host's identity must be determined locally by cylc and
             passed to running tasks (via ``$CYLC_WORKFLOW_HOST``) so that task
             messages can target the right workflow on the right host.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[suite host self-identification]``.
         '''):
             # TODO
             # Is it conceivable that different remote task hosts at the same
@@ -737,10 +740,6 @@ with Conf('global.cylc', desc='''
                 desc=f'''
                     Determines how cylc finds the identity of the
                     workflow host.
-
-                    .. versionchanged:: 8.0.0
-
-                       {REPLACES}``[suite host self-identification]``.
 
                     Options:
 
@@ -759,6 +758,10 @@ with Conf('global.cylc', desc='''
                        (only to be used as a last resort) Manually specified
                        host name or IP address (requires *host*) of the
                        workflow host.
+
+                    .. versionchanged:: 8.0.0
+
+                       {REPLACES}``[suite host self-identification]``.
             ''')
             Conf('target', VDR.V_STRING, 'google.com', desc=f'''
                 Target for use by the *address* self-identification method.
@@ -848,12 +851,12 @@ with Conf('global.cylc', desc='''
                     Configure the default main loop plugins to use when
                     starting new workflows.
 
-                    Only enabled plugins are loaded, plugins can be enabled
+                    Only enabled plugins are loaded. Plugins can be enabled
                     in two ways:
 
                     Globally:
-                       To enable a plugin for all workflows add it to:
-                       :cylc:conf:`global.cylc[scheduler][main loop]plugins`
+                       To enable a plugin for all workflows add it to this
+                       setting.
                     Per-Run:
                        To enable a plugin for a one-off run of a workflow,
                        specify it on the command line with
@@ -1105,11 +1108,9 @@ with Conf('global.cylc', desc='''
         with Conf('<platform name>', desc='''
             Configuration defining a platform.
 
-            .. versionadded:: 8.0.0
-
-               Many of the items in platform definitions have been moved from
-               ``flow.cylc[runtime][<namespace>][job]`` and
-               ``flow.cylc[runtime][<namespace>][remote]``
+            Many of these settings replace those of the same name from the
+            deprecated :cylc:conf:`flow.cylc[runtime][<namespace>][job]` and
+            :cylc:conf:`flow.cylc[runtime][<namespace>][remote]` sections.
 
             Platform names can be regular expressions: If you have a set of
             compute resources such as ``bigmachine1, bigmachine2`` or
@@ -1148,6 +1149,7 @@ with Conf('global.cylc', desc='''
                - :ref:`AdminGuide.PlatformConfigs`, an administrator's guide to
                  platform configurations.
 
+            .. versionadded:: 8.0.0
         ''') as Platform:
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
@@ -1157,18 +1159,13 @@ with Conf('global.cylc', desc='''
                 A list of hosts from which the job host can be selected using
                 :cylc:conf:`[..][selection]method`.
 
-                .. versionadded:: 8.0.0
-
                 All hosts should share a file system.
+
+                .. versionadded:: 8.0.0
             ''')
             Conf('job runner', VDR.V_STRING, 'background', desc=f'''
                 The batch system/job submit method used to run jobs on the
                 platform.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}
-                   ``suite.rc[runtime][<namespace>][job]batch system``.
 
                 Examples:
 
@@ -1179,24 +1176,28 @@ with Conf('global.cylc', desc='''
                 .. seealso::
 
                    :ref:`List of built-in Job Runners <AvailableMethods>`
+
+                .. versionadded:: 8.0.0
+
+                   {PLATFORM_REPLACES.format("[job]batch system")}
             ''')
             Conf('job runner command template', VDR.V_STRING, desc=f'''
                 Set the command used by the chosen job runner.
 
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``suite.rc[runtime][<namespace>][job]
-                   batch system command template``.
-
                 The template's ``%(job)s`` will be
                 substituted by the job file path.
+
+                .. versionadded:: 8.0.0
+
+                   {PLATFORM_REPLACES.format(
+                       "[job]batch submit command template"
+                    )}
             ''')
             Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
 
                 .. versionchanged:: 8.0.0
 
                    Moved from ``suite.rc[runtime][<namespace>]job``.
-
             ''')
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
@@ -1307,11 +1308,6 @@ with Conf('global.cylc', desc='''
                 The path containing the ``cylc`` executable on a remote
                 platform.
 
-                .. versionchanged:: 8.0.0
-
-                   Moved from ``suite.rc[runtime][<namespace>][job]
-                   cylc executable``.
-
                 This may be necessary if the ``cylc`` executable is not in the
                 ``$PATH`` for an ``ssh`` call.
                 Test whether this is the case by using
@@ -1336,6 +1332,11 @@ with Conf('global.cylc', desc='''
 
                    See :ref:`managing environments` for more information on
                    the wrapper script.
+
+                .. versionchanged:: 8.0.0
+
+                   Moved from ``suite.rc[runtime][<namespace>][job]
+                   cylc executable``.
             ''')
             Conf('global init-script', VDR.V_STRING, desc='''
                 A per-platform script which is run before other job scripts.
@@ -1519,8 +1520,6 @@ with Conf('global.cylc', desc='''
                      desc='''
                     Method for choosing the job host from the platform.
 
-                    .. versionadded:: 8.0.0
-
                     .. rubric:: Available options
 
                     - ``random``: Choose randomly from the list of hosts.
@@ -1530,6 +1529,8 @@ with Conf('global.cylc', desc='''
                       this is likely to cause load imbalances, but might
                       be appropriate if following the pattern
                       ``hosts = main, backup, failsafe``.
+
+                    .. versionadded:: 8.0.0
                 ''')
             with Conf('directives', desc=(
                 default_for(
@@ -1561,7 +1562,6 @@ with Conf('global.cylc', desc='''
         Platform groups allow you to group together platforms which would
         all be suitable for a given job.
 
-        .. versionadded:: 8.0.0
 
         When Cylc sets up a task job it will pick a platform from a group.
         Cylc will then use the selected platform for all interactions with
@@ -1574,9 +1574,11 @@ with Conf('global.cylc', desc='''
 
         .. seealso::
 
-            - :ref:`MajorChangesPlatforms` in the Cylc 8 migration guide.
-            - :ref:`AdminGuide.PlatformConfigs`, an guide to platform
-              configurations.
+           - :ref:`MajorChangesPlatforms` in the Cylc 8 migration guide.
+           - :ref:`AdminGuide.PlatformConfigs`, an guide to platform
+             configurations.
+
+        .. versionadded:: 8.0.0
     '''):  # noqa: SIM117 (keep same format)
         with Conf('<group>'):
             with Conf('meta', desc=PLATFORM_META_DESCR):
@@ -1597,13 +1599,13 @@ with Conf('global.cylc', desc='''
                     desc='''
                         Method for selecting platform from group.
 
-                        .. versionadded:: 8.0.0
-
                         options:
 
                         - random: Suitable for an identical pool of platforms.
                         - definition order: Pick the first available platform
                           from the list.
+
+                        .. versionadded:: 8.0.0
                     '''
                 )
     # task
