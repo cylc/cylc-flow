@@ -19,8 +19,8 @@ from pathlib import Path
 import tempfile
 from time import sleep
 import pytest
-import os
 from pytest import param
+from typing import Callable
 from unittest import mock
 
 from cylc.flow import LOG
@@ -30,9 +30,6 @@ from cylc.flow.loggingutil import (
     get_reload_start_number,
     get_sorted_logs_by_time
 )
-from cylc.flow.scheduler import Scheduler
-
-from typing import Callable
 
 
 @mock.patch("cylc.flow.loggingutil.glbl_cfg")
@@ -119,18 +116,17 @@ def test_update_log_archive(tmp_run_dir: Callable):
     log_dir.mkdir(exist_ok=True, parents=True)
     log_file = log_dir.joinpath('log')
     log_file.touch()
-    log_object = TimestampRotatingFileHandler(log_file,
-                                              no_detach=False,
-                                              restart_num=0
-                                              )
+    log_object = TimestampRotatingFileHandler(
+        log_file, no_detach=False, restart_num=0
+    )
 
     for i in range(1, 5):
-        (log_dir/f'{str(i)}-start-{str(i)}.log').touch()
+        (log_dir / f'{i:02d}-start-{i:02d}.log').touch()
     log_object.update_log_archive(2)
     assert list((log_dir.iterdir())).sort() == [
-        Path(log_dir/'log'),
-        Path(log_dir/'03-start-03.log'),
-        Path(log_dir/'04-start-04.log')].sort()
+        Path(log_dir / 'log'),
+        Path(log_dir / '03-start-03.log'),
+        Path(log_dir / '04-start-04.log')].sort()
 
 
 def test_get_sorted_logs_by_time(tmp_run_dir: Callable):
@@ -141,7 +137,7 @@ def test_get_sorted_logs_by_time(tmp_run_dir: Callable):
                  '02-start-01.cylc',
                  '03-restart-02.cylc',
                  '04-reload-02.cylc']:
-        Path(config_log_dir/file).touch()
+        (config_log_dir / file).touch()
         # Sleep required to ensure modification times are sufficiently
         # different for sort
         sleep(0.1)
@@ -162,7 +158,7 @@ def test_get_reload_number(tmp_run_dir: Callable):
         '03-restart-02.cylc',
         '04-restart-02.cylc'
     ]:
-        (config_log_dir/file).touch()
+        (config_log_dir / file).touch()
         # Sleeps required to ensure modification times are sufficiently
         # different for sort
         sleep(0.1)

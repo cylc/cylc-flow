@@ -27,36 +27,50 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         abort on inactivity timeout = true
         inactivity timeout = PT1M
 [scheduling]
-    cycling mode = integer
-    initial cycle point = 1
-    final cycle point = 2
     [[graph]]
-        P1 = """foo => bar
-                bar[-P1] =>foo
-        """
+        R1 = reloader1 => stopper => reloader2
 [runtime]
-    [[foo]]
-        script = cylc__job__wait_cylc_message_started;sleep 20; cylc reload "${CYLC_WORKFLOW_ID}"
-    [[bar]]
+    [[reloader1, reloader2]]
+        script = cylc reload "${CYLC_WORKFLOW_ID}"
+    [[stopper]]
         script = cylc stop --now --now "${CYLC_WORKFLOW_ID}"
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 
-# wait for shut down
-poll_grep_workflow_log "INFO - DONE"
+# Check scheduler logs.
+ls "${WORKFLOW_RUN_DIR}/log/scheduler/" > schd_1.out
+cmp_ok schd_1.out << __EOF__
+01-start-01.log
+log
+__EOF__
 
 # Check config logs.
+ls "${WORKFLOW_RUN_DIR}/log/config/" > conf_1.out
+cmp_ok conf_1.out << __EOF__
+01-start-01.cylc
+02-reload-01.cylc
+flow-processed.cylc
+__EOF__
 
-exists_ok "${WORKFLOW_RUN_DIR}/log/config/01-start-01.cylc"
-exists_ok "${WORKFLOW_RUN_DIR}/log/config/02-reload-01.cylc"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug "${WORKFLOW_NAME}"
-poll_grep_workflow_log "INFO - DONE"
+ls "${WORKFLOW_RUN_DIR}/log/scheduler/" > schd_2.out
+cmp_ok schd_2.out << __EOF__
+01-start-01.log
+02-restart-02.log
+log
+__EOF__
 
-exists_ok "${WORKFLOW_RUN_DIR}/log/config/03-restart-02.cylc"
-exists_ok "${WORKFLOW_RUN_DIR}/log/config/04-reload-02.cylc"
+ls "${WORKFLOW_RUN_DIR}/log/config/" > conf_2.out
+cmp_ok conf_2.out << __EOF__
+01-start-01.cylc
+02-reload-01.cylc
+03-restart-02.cylc
+04-reload-02.cylc
+flow-processed.cylc
+__EOF__
 
 purge

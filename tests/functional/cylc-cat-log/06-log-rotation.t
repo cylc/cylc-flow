@@ -23,9 +23,9 @@ init_workflow "${TEST_NAME_BASE}" '/dev/null'
 # Populate its cylc-run dir with empty log files.
 LOG_DIR="$(dirname "$(cylc cat-log -m p "${WORKFLOW_NAME}")")"
 mkdir -p "${LOG_DIR}"
-touch -t '201001011200.00' "${LOG_DIR}/start-1.log"
-touch -t '201001011200.01' "${LOG_DIR}/start-2.log"
-touch -t '201001011200.02' "${LOG_DIR}/restart-1.log"
+touch -t '201001011200.00' "${LOG_DIR}/01-start-01.log"
+touch -t '201001011200.01' "${LOG_DIR}/02-start-01.log"
+touch -t '201001011200.02' "${LOG_DIR}/03-restart-02.log"
 
 # Test log rotation.
 for I in {0..2}; do
@@ -33,9 +33,9 @@ for I in {0..2}; do
 done >'result'
 
 cmp_ok 'result' <<'__CMP__'
-restart-1.log
-start-2.log
-start-1.log
+03-restart-02.log
+02-start-01.log
+01-start-01.log
 __CMP__
 
 purge

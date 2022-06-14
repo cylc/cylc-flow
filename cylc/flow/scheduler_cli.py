@@ -350,7 +350,7 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
         TimestampRotatingFileHandler.FILE_NUM: 1}
     LOG.info(
-        'Run: (re)start=%d log=%d',
+        'Run: (re)start number=%d, log rollover=%d',
         restart_num + 1,
         1,  # hard code 1 which is updated later if required
         extra=log_extra_num)

@@ -33,7 +33,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = """
             cylc__job__wait_cylc_message_started
             cylc stop --now "${CYLC_WORKFLOW_ID}"
-            cylc__job__poll_grep_workflow_log -F 'Run: (re)start=1'
+            cylc__job__poll_grep_workflow_log -F 'Run: (re)start number=1'
             # Should be good to send succeeded message at this point
         """
 __FLOW_CONFIG__

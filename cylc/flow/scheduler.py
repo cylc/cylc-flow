@@ -1434,6 +1434,8 @@ class Scheduler:
             new_host = select_workflow_host(cached=False)[0]
             LOG.info(f'Attempting to restart on "{new_host}"')
 
+#            LOG.info(f'Attempting to restart on "{new_host}"', extra={"restart_flag":True})
+
             # proc will start with current env (incl CYLC_HOME etc)
             proc = Popen(  # nosec
                 [*cmd, f'--host={new_host}'],
@@ -1453,7 +1455,9 @@ class Scheduler:
                     f"{proc.communicate()[1].decode()}")
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
-                LOG.info(f'Workflow now running on "{new_host}".')
+                LOG.info(f'Attempting to restart on "{new_host}"')
+
+#                LOG.info(f'Workflow now running on "{new_host}".', extra={"restart_flag":True})
                 return True
         LOG.critical(
             'Workflow unable to automatically restart after '
