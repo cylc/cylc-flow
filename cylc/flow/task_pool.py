@@ -371,12 +371,11 @@ class TaskPool:
             count = 1
             while seq_point is not None:
                 if count_cycles:
-                    # P1 allows one cycle to run.
-                    #  TODO - off by one error! (should be count > limit)
-                    if count >= limit:
+                    # P0 allows only the base cycle point to run.
+                    if count > 1 + limit:
                         break
                 else:
-                    # PT0H allows one cycle to run.
+                    # PT0H allows only the base cycle point to run.
                     if seq_point > base_point + limit:
                         break
                 count += 1
@@ -386,7 +385,7 @@ class TaskPool:
         points = set(points).union(sequence_points)
         if count_cycles:
             # Some sequences may have different intervals.
-            limit_point = sorted(points)[:limit][-1]
+            limit_point = sorted(points)[:(limit + 1)][-1]
         else:
             # We already stopped at the runahead limit.
             limit_point = sorted(points)[-1]

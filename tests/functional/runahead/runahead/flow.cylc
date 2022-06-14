@@ -5,7 +5,7 @@
         abort on stall timeout = True
 [scheduling]
     cycling mode = integer
-    runahead limit = P4
+    runahead limit = P3
     initial cycle point = 1
     final cycle point = 20
     [[graph]]

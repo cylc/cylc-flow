@@ -615,7 +615,7 @@ with Conf(
             datetime calendars: 360 day (12 months of 30 days in a year),
             365 day (never a leap year) and 366 day (always a leap year).
         ''')
-        Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
+        Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
             How many cycles ahead of the slowest tasks the fastest may run.
 
             Runahead limiting prevents the fastest tasks in a workflow from

@@ -44,7 +44,7 @@ EXAMPLE_FLOW_CFG = {
         'cycling mode': 'integer',
         'initial cycle point': 1,
         'final cycle point': 10,
-        'runahead limit': 'P4',
+        'runahead limit': 'P3',
         'graph': {
             'P1': 'foo & bar',
             'R1/2': 'foo[1] => pub'  # 2/pub doesn't spawn at start

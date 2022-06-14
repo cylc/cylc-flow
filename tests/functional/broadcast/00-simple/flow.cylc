@@ -15,7 +15,7 @@
     final cycle point   = 20100809T00
     # Ensure the first cycle finishes before the second (last) one, so that the
     # broadcast to foo in the first cycle expires before shutdown:
-    runahead limit = P1
+    runahead limit = P0
     [[graph]]
         R1 = "prep => check & foo"
         T00 = """

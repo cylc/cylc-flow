@@ -1193,9 +1193,6 @@ class WorkflowConfig:
 
         if number_limit_regex.fullmatch(limit):
             self.runahead_limit = IntegerInterval(limit)
-            # Handle "runahead limit = P0":
-            if self.runahead_limit.is_null():
-                self.runahead_limit = IntegerInterval('P1')
         elif (  # noqa: SIM106
             self.cycling_type == ISO8601_CYCLING_TYPE
             and any(tlr.fullmatch(limit) for tlr in time_limit_regexes)
