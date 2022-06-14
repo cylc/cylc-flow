@@ -71,12 +71,6 @@ SYSPATH = [
 ]
 
 
-UTC_MODE_DESCR = (
-    "If ``True``, UTC will be used as the time zone for timestamps in "
-    "the logs. If ``False``, the local/system time zone will be used."
-)
-
-
 REPLACES = 'This item was previously called '
 
 
@@ -98,125 +92,385 @@ PLATFORM_META_DESCR = '''
 
 '''
 
+# ----------------------------------------------------------------------------
+# Config items shared between global and workflow config:
+SCHEDULER_DESCR = f'''
+Settings for the scheduler.
 
-# Event config descriptions shared between global and workflow config.
-EVENT_SETTINGS = {
-    'startup handlers': (
-        f'''
+.. note::
+
+   Not to be confused with :cylc:conf:`flow.cylc[scheduling]`.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[cylc]``
+'''
+
+UTC_MODE_DESCR = '''
+If ``True``, UTC will be used as the time zone for timestamps in
+the logs. If ``False``, the local/system time zone will be used.
+
+.. seealso::
+
+   To set a time zone for cycle points, see
+   :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
+'''
+
+EVENTS_SETTINGS = {  # workflow events
+    'handlers': '''
+        Configure :term:`event handlers` that run when certain workflow
+        events occur.
+
+        This section configures *workflow* event handlers; see
+        :cylc:conf:`flow.cylc[runtime][<namespace>][events]` for *task* event
+        handlers.
+
+        Event handlers can be held in the workflow ``bin/`` directory,
+        otherwise it is up to you to ensure their location is in ``$PATH``
+        (in the shell in which the scheduler runs). They should require
+        little resource to run and return quickly.
+
+        Template variables can be used to configure handlers. For a full list
+        of supported variables see :ref:`workflow_event_template_variables`.
+    ''',
+    'handler events': '''
+        Specify the events for which workflow event handlers should be invoked.
+    ''',
+    'mail events': '''
+        Specify the workflow events for which notification emails should
+        be sent.
+    ''',
+    'startup handlers': f'''
         Handlers to run at scheduler startup.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``startup handler``.
-
-        '''
-    ),
-    'shutdown handlers': (
-        f'''
+    ''',
+    'shutdown handlers': f'''
         Handlers to run at scheduler shutdown.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``shutdown handler``.
-
-        '''
-    ),
-    'abort handlers': (
-        f'''
+    ''',
+    'abort handlers': f'''
         Handlers to run if the scheduler aborts.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``aborted handler``.
-        '''
-    ),
-    'workflow timeout': (
-        '''
+    ''',
+    'workflow timeout': '''
         Workflow timeout interval. The timer starts counting down at scheduler
         startup. It resets on workflow restart.
 
         .. versionadded:: 8.0.0
-        '''
-    ),
-    'workflow timeout handlers': (
-        '''
+    ''',
+    'workflow timeout handlers': '''
         Handlers to run if the workflow timer times out.
 
         .. versionadded:: 8.0.0
-        '''
-    ),
-    'abort on workflow timeout': (
-        '''
+    ''',
+    'abort on workflow timeout': '''
         Whether to abort if the workflow timer times out.
 
         .. versionadded:: 8.0.0
-        '''
-    ),
-    'stall handlers': (
-        f'''
+    ''',
+    'stall handlers': f'''
         Handlers to run if the scheduler stalls.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``stalled handler``.
-        '''
-    ),
-    'stall timeout': (
-        f'''
+    ''',
+    'stall timeout': f'''
         The length of a timer which starts if the scheduler stalls.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``timeout``.
-        '''
-    ),
-    'stall timeout handlers': (
-        f'''
+    ''',
+    'stall timeout handlers': f'''
         Handlers to run if the stall timer times out.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``timeout handler``.
-        '''
-    ),
-    'abort on stall timeout': (
-        f'''
+    ''',
+    'abort on stall timeout': f'''
         Whether to abort if the stall timer times out.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on timeout``.
-        '''
-    ),
-    'inactivity timeout': (
-        f'''
+    ''',
+    'inactivity timeout': f'''
         Scheduler inactivity timeout interval. The timer resets when any
         workflow activity occurs.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES} ``inactivity``.
-        '''
-    ),
-    'inactivity timeout handlers': (
-        f'''
+    ''',
+    'inactivity timeout handlers': f'''
         Handlers to run if the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``inactivity handler``.
-        '''
-    ),
-    'abort on inactivity timeout': (
-        f'''
+    ''',
+    'abort on inactivity timeout': f'''
         Whether to abort if the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
 
            {REPLACES}``abort on inactivity``.
-        '''
-    )
+    '''
 }
+
+MAIL_DESCR = f'''
+Settings for the scheduler to send event emails.
+
+These settings are used for both workflow and task events.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[cylc][events]mail <item>``.
+'''
+
+MAIL_FROM_DESCR = f'''
+Specify an alternative ``from`` email address for workflow event notifications.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[cylc][events]mail from``.
+'''
+
+MAIL_TO_DESCR = f'''
+A list of email addresses that event notifications should be sent to.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[cylc][events]mail to``.
+'''
+
+MAIL_FOOTER_DESCR = f'''
+Specify a string or string template for footers of emails sent for both
+workflow and task events.
+
+Template variables may be used in the mail footer. For a list of supported
+variables see :ref:`workflow_event_template_variables`.
+
+Example::
+
+   footer = see http://ahost/%(owner)s/notes/%(workflow)s``
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[cylc][events]mail footer``.
+'''
+
+MAIL_INTERVAL_DESCR = f'''
+Gather all task event notifications in the given interval into a single email.
+
+Useful to prevent being overwhelmed by emails.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[cylc]task event mail interval``.
+'''
+
+MAIN_LOOP_DESCR = '''
+Configuration of main loop plugins for the scheduler.
+
+For a list of built in plugins see :ref:`Main Loop Plugins <BuiltInPlugins>`.
+
+.. versionadded:: 8.0.0
+'''
+
+MAIN_LOOP_PLUGIN_DESCR = '''
+Configure a main loop plugin.
+
+.. note::
+
+   Only the configured list of
+   :cylc:conf:`global.cylc[scheduler][main loop]plugins`
+   is loaded when a scheduler is started.
+
+.. versionadded:: 8.0.0
+'''
+
+MAIN_LOOP_PLUGIN_INTERVAL_DESCR = '''
+Interval at which the plugin is invoked.
+
+.. versionadded:: 8.0.0
+'''
+
+DIRECTIVES_DESCR = '''
+Job runner (batch scheduler) directives.
+
+Supported for use with job runners:
+
+- pbs
+- slurm
+- loadleveler
+- lsf
+- sge
+- slurm_packjob
+- moab
+
+Directives are written to the top of the task job script in the correct format
+for the job runner.
+
+Specifying directives individually like this allows use of default directives
+for task families which can be individually overridden at lower levels of the
+runtime namespace hierarchy.
+'''
+
+DIRECTIVES_ITEM_DESCR = '''
+Example directives for the built-in job runner handlers are shown in
+:ref:`AvailableMethods`.
+'''
+
+SUBMISSION_POLL_DESCR = f'''
+List of intervals at which to poll status of job submission.
+
+Cylc can poll submitted jobs to catch problems that prevent the submitted job
+from executing at all, such as deletion from an external job runner queue.
+
+The last value is used repeatedly until the task starts running.
+
+Multipliers can be used as shorthand as in the example below.
+
+Example::
+
+   5*PT2M, PT5M
+
+Note that if the polling
+:cylc:conf:`global.cylc[platforms][<platform name>]communication method`
+is used then Cylc relies on polling to detect all task state changes,
+so you may want to configure more frequent polling.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[runtime][<namespace>][job]submission polling intervals``.
+'''
+
+SUBMISSION_RETY_DESCR = f'''
+Cylc can automatically resubmit jobs after submission failures.
+
+A list of intervals which define when the scheduler will resubmit jobs if
+submission fails.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[runtime][<namespace>][job]submission retry delays``.
+'''
+
+EXECUTION_POLL_DESCR = '''
+List of intervals at which to poll status of job execution.
+
+Cylc can poll running jobs to catch problems that prevent task messages from
+being sent back to the workflow, such as hard job kills, network outages, or
+unplanned job host shutdown.
+
+The last interval in the list is used repeatedly until the job completes.
+
+Multipliers can be used as shorthand as in the example below.
+
+Example::
+
+   5*PT2M, PT5M
+
+Note that if the polling
+:cylc:conf:`global.cylc[platforms][<platform name>]communication method` is
+used then Cylc relies on polling to detect all task state changes, so you may
+want to configure more frequent polling.
+'''
+
+TASK_EVENTS_DESCR = '''
+Configure :term:`event handlers` that run when certain task events occur.
+
+This section configures specific *task* event handlers; see
+:cylc:conf:`flow.cylc[scheduler][events]` for *workflow* event handlers.
+
+Event handlers can be held in the workflow ``bin/`` directory, otherwise it is
+up to you to ensure their location is in ``$PATH`` (in the shell in which the
+scheduler runs). They should require little resource to run and return quickly.
+
+Each task event handler can be specified as a list of command lines or command
+line templates. For a full list of supported template variables see
+:ref:`task_event_template_variables`.
+
+For an explanation of the substitution syntax, see
+`String Formatting Operations in the Python documentation
+<https://docs.python.org/3/library/stdtypes.html
+#printf-style-string-formatting>`_.
+
+Additional variables can be passed to event handlers using
+:ref:`Jinja2 <User Guide Jinja2>`.
+'''
+
+TASK_EVENTS_SETTINGS = {
+    'handlers': '''
+        Specify a list of command lines or command line templates as task
+        event handlers.
+    ''',
+    'execution timeout': '''
+        If a task has not finished after the specified interval, the execution
+        timeout event handler(s) will be called.
+    ''',
+    'handler events': '''
+        Specify the events for which the general task event handlers should
+        be invoked.
+
+        Example::
+
+           submission failed, failed
+    ''',
+    'handler retry delays': '''
+        Specify an initial delay before running an event handler command and
+        any retry delays in case the command returns a non-zero code.
+
+        The default behaviour is to run an event handler command once without
+        any delay.
+
+        Example::
+
+           PT10S, PT1M, PT5M
+    ''',
+    'mail events': '''
+        Specify the events for which notification emails should be sent.
+
+        Example::
+
+           submission failed, failed
+    ''',
+    'submission timeout': '''
+        If a task has not started after the specified interval, the submission
+        timeout event handler(s) will be called.
+    '''
+}
+
+# ----------------------------------------------------------------------------
+
+
+def short_descr(text: str) -> str:
+    """Get dedented one-paragraph description from long description."""
+    return dedent(text).split('\n\n', 1)[0]
+
+
+def default_for(
+    text: str, config_path: str, section: bool = False
+) -> str:
+    """Get dedented short description and insert a 'Default(s) For' directive
+    that links to this config item's flow.cylc counterpart."""
+    directive = f":Default{'s' if section else ''} For:"
+    return (
+        f"{directive} :cylc:conf:`flow.cylc{config_path}`.\n\n"
+        f"{short_descr(text)}"
+    )
 
 
 with Conf('global.cylc', desc='''
@@ -286,23 +540,12 @@ with Conf('global.cylc', desc='''
        Prior to Cylc 8, ``global.cylc`` was named ``global.rc``, but that name
        is no longer supported.
 ''') as SPEC:
-    with Conf('scheduler', desc=f'''
-        :Defaults For: :cylc:conf:`flow.cylc[scheduler]`
-
-        .. versionchanged:: 8.0.0
-
-           {REPLACES}``[cylc]``.
-
-        .. note::
-
-           :cylc:conf:`global.cylc[scheduler]` should not be confused with
-           :cylc:conf:`flow.cylc[scheduling]`.
-    '''):
-        Conf('UTC mode', VDR.V_BOOLEAN, False, desc=f'''
-            :Default For: :cylc:conf:`flow.cylc[scheduler]UTC mode`.
-
-            {UTC_MODE_DESCR}
-        ''')
+    with Conf('scheduler', desc=(
+        default_for(SCHEDULER_DESCR, "[scheduler]", section=True)
+    )):
+        Conf('UTC mode', VDR.V_BOOLEAN, False, desc=(
+            default_for(UTC_MODE_DESCR, "[scheduler]UTC mode")
+        ))
         Conf('process pool size', VDR.V_INTEGER, 4, desc='''
             Maximum number of concurrent processes used to execute external job
             submission, event handlers, and job poll and kill commands
@@ -540,53 +783,32 @@ with Conf('global.cylc', desc='''
         with Conf('events', desc='''
             :Defaults For: :cylc:conf:`flow.cylc[scheduler][events]`.
         '''):
-            Conf('handlers', VDR.V_STRING_LIST, desc='''
-                :Default For: :cylc:conf:`flow.cylc \
-                [scheduler][events]handlers`.
-            ''')
-            Conf('handler events', VDR.V_STRING_LIST, desc='''
-                :Default For: :cylc:conf:`flow.cylc \
-                [scheduler][events]handler events`.
-            ''')
-            Conf('mail events', VDR.V_STRING_LIST, desc='''
-                Default for :cylc:conf:`flow.cylc \
-                [scheduler][events]mail events`.
-            ''')
-
-            for item, desc in EVENT_SETTINGS.items():
-                desc = (
-                    ":Default For: "
-                    f":cylc:conf:`flow.cylc[scheduler][events]{item}`."
-                    "\n\n"
-                ) + dedent(desc)
-
-                if item.endswith("handlers"):
-                    Conf(item, VDR.V_STRING_LIST, desc=desc)
-
+            for item, desc in EVENTS_SETTINGS.items():
+                desc = default_for(desc, f"[scheduler][events]{item}")
+                vdr_type = VDR.V_STRING_LIST
+                default: Any = Conf.UNSET
+                if (
+                    item in {'handlers', 'handler events', 'mail events'} or
+                    item.endswith("handlers")
+                ):
+                    pass
                 elif item.startswith("abort on"):
+                    vdr_type = VDR.V_BOOLEAN
                     default = (item == "abort on stall timeout")
-                    Conf(item, VDR.V_BOOLEAN, default, desc=desc)
-
                 elif item.endswith("timeout"):
+                    vdr_type = VDR.V_INTERVAL
                     if item == "stall timeout":
-                        def_intv: Optional['DurationFloat'] = (
-                            DurationFloat(3600))
+                        default = DurationFloat(3600)
                     else:
-                        def_intv = None
-                    Conf(item, VDR.V_INTERVAL, def_intv, desc=desc)
+                        default = None
+                Conf(item, vdr_type, default, desc=desc)
 
-        with Conf('mail', desc=f'''
-            :Defaults For: :cylc:conf:`flow.cylc[scheduler][mail]`.
-
-            Options for email handling.
-
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[cylc][events]mail <item>``.
-        '''):
-            Conf('from', VDR.V_STRING, desc='''
-                :Default For: :cylc:conf:`flow.cylc[scheduler][mail]from`.
-            ''')
+        with Conf('mail', desc=(
+            default_for(MAIL_DESCR, "[scheduler][mail]", section=True)
+        )):
+            Conf('from', VDR.V_STRING, desc=(
+                default_for(MAIL_FROM_DESCR, "[scheduler][mail]from")
+            ))
             Conf('smtp', VDR.V_STRING, desc='''
                 Specify the SMTP server for sending workflow event email
                 notifications.
@@ -597,34 +819,27 @@ with Conf('global.cylc', desc='''
 
                    smtp.yourorg
             ''')
-            Conf('to', VDR.V_STRING, desc='''
-                :Default For: :cylc:conf:`flow.cylc[scheduler][mail]to`.
-            ''')
-            Conf('footer', VDR.V_STRING, desc='''
-                :Default For: :cylc:conf:`flow.cylc[scheduler][mail]footer`.
-            ''')
+            Conf('to', VDR.V_STRING, desc=(
+                default_for(MAIL_TO_DESCR, "[scheduler][mail]to")
+            ))
+            Conf('footer', VDR.V_STRING, desc=(
+                default_for(MAIL_FOOTER_DESCR, "[scheduler][mail]footer")
+            ))
             Conf(
                 'task event batch interval',
                 VDR.V_INTERVAL,
                 DurationFloat(300),
-                desc='''
-                    :Default For: :cylc:conf:`flow.cylc \
-                    [scheduler][mail]task event batch interval`
-
-                    .. versionchanged:: 8.0.0
-
-                       This item was previously
-                       ``[cylc]task event mail interval``
-                '''
+                desc=default_for(
+                    MAIL_INTERVAL_DESCR,
+                    "[scheduler][mail]task event batch interval"
+                )
             )
 
-        with Conf('main loop', desc='''
-            :Defaults For: :cylc:conf:`flow.cylc[scheduler][main loop]`.
-
-            Configuration of the Cylc Scheduler's main loop.
-
-            .. versionadded:: 8.0.0
-        '''):
+        with Conf('main loop', desc=(
+            default_for(
+                MAIN_LOOP_DESCR, "[scheduler][main loop]", section=True
+            )
+        )):
             Conf(
                 'plugins',
                 VDR.V_STRING_LIST,
@@ -652,33 +867,27 @@ with Conf('global.cylc', desc='''
                     .. versionadded:: 8.0.0
             ''')
 
-            with Conf('<plugin name>', desc='''
-                Configure a main loop plugin.
-
-                .. note::
-
-                   Only the configured list of :cylc:conf:`[..]plugins`
-                   is loaded when a scheduler is started.
-            ''') as MainLoopPlugin:
-                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
-                    :Default For: :cylc:conf:`flow.cylc \
-                    [scheduler][main loop][<plugin name>]interval`.
-
-                    The interval with which this plugin is run.
-
-                    .. versionadded:: 8.0.0
-                ''')
+            with Conf('<plugin name>', desc=(
+                default_for(
+                    MAIN_LOOP_PLUGIN_DESCR,
+                    "[scheduler][main loop][<plugin name>]",
+                    section=True
+                )
+            )) as MainLoopPlugin:
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc=(
+                    default_for(
+                        MAIN_LOOP_PLUGIN_INTERVAL_DESCR,
+                        "[scheduler][main loop][<plugin name>]interval"
+                    )
+                ))
 
             with Conf('health check', meta=MainLoopPlugin, desc='''
                 Checks the integrity of the workflow run directory.
 
                 .. versionadded:: 8.0.0
             '''):
-                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
-                    The interval with which this plugin is run.
-
-                    .. versionadded:: 8.0.0
-                ''')
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(600),
+                     desc=MAIN_LOOP_PLUGIN_INTERVAL_DESCR)
 
             with Conf('auto restart', meta=MainLoopPlugin, desc='''
                 Automatically migrates workflows between servers.
@@ -690,11 +899,8 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
             '''):
-                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
-                    The interval between runs of this plugin.
-
-                    .. versionadded:: 8.0.0
-                ''')
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(600),
+                     desc=MAIN_LOOP_PLUGIN_INTERVAL_DESCR)
 
             with Conf('reset bad hosts', meta=MainLoopPlugin, desc='''
                 Periodically clear the scheduler list of unreachable (bad)
@@ -702,11 +908,8 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
             '''):
-                Conf('interval', VDR.V_INTERVAL, DurationFloat(1800), desc='''
-                    How often (in seconds) to run this plugin.
-
-                    .. versionadded:: 8.0.0
-                ''')
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(1800),
+                     desc=MAIN_LOOP_PLUGIN_INTERVAL_DESCR)
 
         with Conf('logging', desc=f'''
             Settings for the workflow event log.
@@ -1010,33 +1213,27 @@ with Conf('global.cylc', desc='''
                 ssh
                    Use non-interactive ssh for task communications
             ''')
-            Conf('submission polling intervals',
-                 VDR.V_INTERVAL_LIST,
-                 [DurationFloat(900)],
-                 desc='''
-                List of intervals at which to poll status of job submission.
-
-                This config item is the default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>]
-                submission polling intervals`.
-            ''')
-            Conf('submission retry delays', VDR.V_INTERVAL_LIST, None,
-                 desc='''
-                Cylc can automatically resubmit jobs after submission failures.
-
-                This config item is the default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>]
-                submission retry delays`
-            ''')
-            Conf('execution polling intervals',
-                 VDR.V_INTERVAL_LIST,
-                 [DurationFloat(900)],
-                 desc='''
-                List of intervals at which to poll status of job execution.
-
-                Default for :cylc:conf:`flow.cylc[runtime][<namespace>]
-                execution polling intervals`.
-            ''')
+            Conf(
+                'submission polling intervals', VDR.V_INTERVAL_LIST,
+                [DurationFloat(900)], desc=default_for(
+                    SUBMISSION_POLL_DESCR,
+                    "[runtime][<namespace>]submission polling intervals"
+                )
+            )
+            Conf(
+                'submission retry delays', VDR.V_INTERVAL_LIST, None,
+                desc=default_for(
+                    SUBMISSION_RETY_DESCR,
+                    "[runtime][<namespace>]submission retry delays"
+                )
+            )
+            Conf(
+                'execution polling intervals', VDR.V_INTERVAL_LIST,
+                [DurationFloat(900)], desc=default_for(
+                    EXECUTION_POLL_DESCR,
+                    "[runtime][<namespace>]execution polling intervals"
+                )
+            )
             Conf('execution time limit polling intervals',
                  VDR.V_INTERVAL_LIST,
                  [DurationFloat(60), DurationFloat(120), DurationFloat(420)],
@@ -1334,16 +1531,15 @@ with Conf('global.cylc', desc='''
                       be appropriate if following the pattern
                       ``hosts = main, backup, failsafe``.
                 ''')
-            with Conf('directives', desc='''
-                :Defaults for: :cylc:conf:`flow.cylc\
-                [runtime][<namespace>][directives]`
-
-                Job runner (batch scheduler) directives.
-            '''):
-                Conf('<directive>', VDR.V_STRING, desc='''
-                    Example directives for the built-in job runner handlers
-                    are shown in :ref:`AvailableMethods`.
-                ''')
+            with Conf('directives', desc=(
+                default_for(
+                    DIRECTIVES_DESCR,
+                    "[runtime][<namespace>][directives]",
+                    section=True
+                )
+            )):
+                Conf('<directive>', VDR.V_STRING,
+                     desc=short_descr(DIRECTIVES_ITEM_DESCR))
 
         with Conf('localhost', meta=Platform, desc='''
             A default platform defining settings for jobs to be run on the
@@ -1411,16 +1607,47 @@ with Conf('global.cylc', desc='''
                     '''
                 )
     # task
-    with Conf('task events', desc='''
-        Global site/user defaults for
-        :cylc:conf:`flow.cylc[runtime][<namespace>][events]`.
-    '''):
-        Conf('execution timeout', VDR.V_INTERVAL)
-        Conf('handlers', VDR.V_STRING_LIST)
-        Conf('handler events', VDR.V_STRING_LIST)
-        Conf('handler retry delays', VDR.V_INTERVAL_LIST, None)
-        Conf('mail events', VDR.V_STRING_LIST)
-        Conf('submission timeout', VDR.V_INTERVAL)
+    with Conf('task events', desc=(
+        default_for(
+            TASK_EVENTS_DESCR, "[runtime][<namespace>][events]", section=True
+        )
+    )):
+        Conf('execution timeout', VDR.V_INTERVAL, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['execution timeout'],
+                "[runtime][<namespace>][events]execution timeout"
+            )
+        ))
+        Conf('handlers', VDR.V_STRING_LIST, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['handlers'],
+                "[runtime][<namespace>][events]handlers"
+            )
+        ))
+        Conf('handler events', VDR.V_STRING_LIST, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['handler events'],
+                "[runtime][<namespace>][events]handler events"
+            )
+        ))
+        Conf('handler retry delays', VDR.V_INTERVAL_LIST, None, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['handler retry delays'],
+                "[runtime][<namespace>][events]handler retry delays"
+            )
+        ))
+        Conf('mail events', VDR.V_STRING_LIST, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['mail events'],
+                "[runtime][<namespace>][events]mail events"
+            )
+        ))
+        Conf('submission timeout', VDR.V_INTERVAL, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['submission timeout'],
+                "[runtime][<namespace>][events]submission timeout"
+            )
+        ))
 
 
 def upg(cfg, descr):
