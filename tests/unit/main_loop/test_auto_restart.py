@@ -20,13 +20,14 @@ from unittest.mock import Mock
 import pytest
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.exceptions import HostSelectException
-from cylc.flow.hostuserutil import get_fqdn_by_host
+from cylc.flow.exceptions import CylcConfigError, HostSelectException
 from cylc.flow.main_loop.auto_restart import (
-    _should_auto_restart,
     _can_auto_restart,
-    _set_auto_restart
+    _set_auto_restart,
+    _should_auto_restart,
+    auto_restart,
 )
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.workflow_status import (
     AutoRestartMode,
     StopMode
@@ -280,3 +281,30 @@ def test_set_auto_restart_without_delay(monkeypatch, caplog):
         [(*_, msg)] = caplog.record_tuples
         assert 'will automatically restart' in msg
     assert called
+
+
+@pytest.mark.parametrize('exc_class', [ParsecError, CylcConfigError])
+async def test_log_config_error(caplog, log_filter, monkeypatch, exc_class):
+    """It should log errors in the global config.
+
+    When errors are present in the global config they should be caught and
+    logged nicely rather than left to spill over as traceback in the log.
+    """
+    # make the global config raise an error
+    def global_config_load_error(*args, **kwargs):
+        nonlocal exc_class
+        raise exc_class('something even more bizarrely inexplicable')
+
+    monkeypatch.setattr(
+        'cylc.flow.main_loop.auto_restart.glbl_cfg',
+        global_config_load_error,
+    )
+
+    # call the auto_restart plugin, the error should be caught
+    caplog.clear()
+    assert await auto_restart(None, None) is False
+
+    # the error should have been logged
+    assert len(caplog.messages) == 1
+    assert 'an error in the global config' in caplog.messages[0]
+    assert 'something even more bizarrely inexplicable' in caplog.messages[0]

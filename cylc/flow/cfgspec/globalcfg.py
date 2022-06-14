@@ -643,19 +643,42 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.0.0
         '''):
-            Conf('plugins', VDR.V_STRING_LIST,
-                 ['health check', 'reset bad hosts'],
-                 desc='''
-                     Configure the default main loop plugins to use when
-                     starting new workflows.
+            Conf(
+                'plugins',
+                VDR.V_STRING_LIST,
+                ['health check', 'reset bad hosts'],
+                desc='''
+                    Configure the default main loop plugins to use when
+                    starting new workflows.
 
-                     .. versionadded:: 8.0.0
+                    Only enabled plugins are loaded, plugins can be enabled
+                    in two ways:
+
+                    Globally:
+                       To enable a plugin for all workflows add it to:
+                       :cylc:conf:`global.cylc[scheduler][main loop]plugins`
+                    Per-Run:
+                       To enable a plugin for a one-off run of a workflow,
+                       specify it on the command line with
+                       ``cylc play --main-loop``.
+
+                       .. hint::
+
+                          This *appends* to the configured list of plugins
+                          rather than *overriding* it.
+
+                    .. versionadded:: 8.0.0
             ''')
 
             with Conf('<plugin name>', desc='''
                 Configure a main loop plugin.
+
+                .. note::
+
+                   Only the configured list of :cylc:conf:`[..]plugins`
+                   is loaded when a scheduler is started.
             ''') as MainLoopPlugin:
-                Conf('interval', VDR.V_INTERVAL, desc='''
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     :Default For: :cylc:conf:`flow.cylc \
                     [scheduler][main loop][<plugin name>]interval`.
 
@@ -671,6 +694,22 @@ with Conf('global.cylc', desc='''
             '''):
                 Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
                     The interval with which this plugin is run.
+
+                    .. versionadded:: 8.0.0
+                ''')
+
+            with Conf('auto restart', meta=MainLoopPlugin, desc='''
+                Automatically migrates workflows between servers.
+
+                For more information see:
+
+                * :ref:`Submitting Workflows To a Pool Of Hosts`.
+                * :py:mod:`cylc.flow.main_loop.auto_restart`
+
+                .. versionadded:: 8.0.0
+            '''):
+                Conf('interval', VDR.V_INTERVAL, DurationFloat(600), desc='''
+                    The interval between runs of this plugin.
 
                     .. versionadded:: 8.0.0
                 ''')
