@@ -79,21 +79,22 @@ PLATFORM_REPLACES = (
 
 
 PLATFORM_META_DESCR = '''
-    Metadata for this platform or platform group.
+Metadata for this platform or platform group.
 
-    Allows writers of platform configurations to add information
-    about platform usage. There are no-preset items because
-    Cylc does not use any platform (or group) metadata internally.
+Allows writers of platform configurations to add information
+about platform usage. There are no-preset items because
+Cylc does not use any platform (or group) metadata internally.
 
-    Users can then see information about defined platforms using::
+Users can then see information about defined platforms using::
 
-        cylc config -i [platforms]
-        cylc config -i [platform groups]
+   cylc config -i [platforms]
+   cylc config -i [platform groups]
 
-    .. seealso::
+.. seealso::
 
-        :ref:`AdminGuide.PlatformConfigs`
+   :ref:`AdminGuide.PlatformConfigs`
 
+.. versionadded:: 8.0.0
 '''
 
 # ----------------------------------------------------------------------------
@@ -233,14 +234,12 @@ EVENTS_SETTINGS = {  # workflow events
     '''
 }
 
-MAIL_DESCR = f'''
+MAIL_DESCR = '''
 Settings for the scheduler to send event emails.
 
 These settings are used for both workflow and task events.
 
-.. versionchanged:: 8.0.0
-
-   {REPLACES}``[cylc][events]mail <item>``.
+.. versionadded:: 8.0.0
 '''
 
 MAIL_FROM_DESCR = f'''
@@ -372,7 +371,7 @@ submission fails.
    {REPLACES}``[runtime][<namespace>][job]submission retry delays``.
 '''
 
-EXECUTION_POLL_DESCR = '''
+EXECUTION_POLL_DESCR = f'''
 List of intervals at which to poll status of job execution.
 
 Cylc can poll running jobs to catch problems that prevent task messages from
@@ -391,6 +390,10 @@ Note that if the polling
 :cylc:conf:`global.cylc[platforms][<platform name>]communication method` is
 used then Cylc relies on polling to detect all task state changes, so you may
 want to configure more frequent polling.
+
+.. versionchanged:: 8.0.0
+
+   {REPLACES}``[runtime][<namespace>][job]execution polling intervals``.
 '''
 
 TASK_EVENTS_DESCR = '''
@@ -1097,20 +1100,20 @@ with Conf('global.cylc', desc='''
         Platforms allow you to define compute resources available at your
         site.
 
-        .. versionadded:: 8.0.0
-
         A platform consists of a group of one or more hosts which share a
         file system and a job runner (batch system).
 
         A platform must allow interaction with the same task job from *any*
         of its hosts.
+
+        .. versionadded:: 8.0.0
     '''):
         with Conf('<platform name>', desc='''
             Configuration defining a platform.
 
-            Many of these settings replace those of the same name from the
-            deprecated :cylc:conf:`flow.cylc[runtime][<namespace>][job]` and
-            :cylc:conf:`flow.cylc[runtime][<namespace>][remote]` sections.
+            Many of these settings have replaced those of the same name from
+            the old Cylc 7 ``suite.rc[runtime][<namespace>][job]/[remote]``
+            and ``global.rc[hosts][<host>]`` sections.
 
             Platform names can be regular expressions: If you have a set of
             compute resources such as ``bigmachine1, bigmachine2`` or
@@ -1154,6 +1157,8 @@ with Conf('global.cylc', desc='''
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
+
+                    .. versionadded:: 8.0.0
                 ''')
             Conf('hosts', VDR.V_STRING_LIST, desc='''
                 A list of hosts from which the job host can be selected using
@@ -1201,7 +1206,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
-                 options=[meth.value for meth in CommsMeth], desc='''
+                 options=[meth.value for meth in CommsMeth], desc=f'''
                 The means by which task progress messages are reported back to
                 the running workflow.
 
@@ -1213,6 +1218,11 @@ with Conf('global.cylc', desc='''
                    The workflow polls for task status (no task messaging)
                 ssh
                    Use non-interactive ssh for task communications
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]task communication
+                   method``.
             ''')
             Conf(
                 'submission polling intervals', VDR.V_INTERVAL_LIST,
@@ -1238,7 +1248,7 @@ with Conf('global.cylc', desc='''
             Conf('execution time limit polling intervals',
                  VDR.V_INTERVAL_LIST,
                  [DurationFloat(60), DurationFloat(120), DurationFloat(420)],
-                 desc='''
+                 desc=f'''
                 List of intervals after execution time limit to poll jobs.
 
                 If a job exceeds its execution time limit, Cylc can poll
@@ -1250,11 +1260,16 @@ with Conf('global.cylc', desc='''
                 Example::
 
                    5*PT2M, PT5M
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>][batch systems]
+                   [<system>]execution time limit polling``.
             ''')
             Conf('ssh command',
                  VDR.V_STRING,
                  'ssh -oBatchMode=yes -oConnectTimeout=10',
-                 desc='''
+                 desc=f'''
                 A communication command used to invoke commands on this
                 platform.
 
@@ -1262,6 +1277,10 @@ with Conf('global.cylc', desc='''
                 under another user account.  The value is assumed to be ``ssh``
                 with some initial options or a command that implements a
                 similar interface to ``ssh``.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]ssh command``.
             ''')
             Conf('rsync command',
                  VDR.V_STRING,
@@ -1269,8 +1288,10 @@ with Conf('global.cylc', desc='''
                  desc='''
                 Command used for remote file installation. This supports POSIX
                 compliant rsync implementation e.g. GNU or BSD.
+
+                .. versionadded:: 8.0.0
             ''')
-            Conf('use login shell', VDR.V_BOOLEAN, True, desc='''
+            Conf('use login shell', VDR.V_BOOLEAN, True, desc=f'''
                 Whether to use a login shell or not for remote command
                 invocation.
 
@@ -1303,6 +1324,10 @@ with Conf('global.cylc', desc='''
                 which will use the default shell on the remote machine,
                 sourcing ``~/.bashrc`` (or ``~/.cshrc``) to set up the
                 environment.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]use login shell``.
             ''')
             Conf('cylc path', VDR.V_STRING, desc='''
                 The path containing the ``cylc`` executable on a remote
@@ -1338,7 +1363,7 @@ with Conf('global.cylc', desc='''
                    Moved from ``suite.rc[runtime][<namespace>][job]
                    cylc executable``.
             ''')
-            Conf('global init-script', VDR.V_STRING, desc='''
+            Conf('global init-script', VDR.V_STRING, desc=f'''
                 A per-platform script which is run before other job scripts.
 
                 This should be used sparingly to perform any shell
@@ -1358,43 +1383,67 @@ with Conf('global.cylc', desc='''
                    * The job environment is not available to this script.
                    * In debug mode this script will not be included in
                      xtrace output.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]global init-script``.
             ''')
             Conf('copyable environment variables', VDR.V_STRING_LIST, '',
-                 desc='''
+                 desc=f'''
                 A list containing the names of the environment variables to
                 be copied from the scheduler to a job.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]copyable
+                   environment variables``.
             ''')
-            Conf('retrieve job logs', VDR.V_BOOLEAN, desc='''
-                Global default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]
-                retrieve job logs`.
+            Conf('retrieve job logs', VDR.V_BOOLEAN, desc=f'''
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]retrieve job logs``.
+                   {PLATFORM_REPLACES.format("[remote]retrieve job logs")}
             ''')
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a',
-                 desc='''
+                 desc=f'''
                 If ``rsync -a`` is unavailable or insufficient to retrieve job
                 logs from a remote platform, you can use this setting to
                 specify a suitable command.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]retrieve job logs
+                   command``.
             ''')
-            Conf('retrieve job logs max size', VDR.V_STRING, desc='''
-                Global default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]
-                retrieve job logs max size` for this platform.
+            Conf('retrieve job logs max size', VDR.V_STRING, desc=f'''
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]retrieve job logs
+                   max size``.
+                   {PLATFORM_REPLACES.format(
+                       "[remote]retrieve job logs max size")}
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
-                 desc='''
-                Global default for
-                :cylc:conf:`flow.cylc[runtime][<namespace>][remote]
-                retrieve job logs retry delays`
-                for this platform.
+                 desc=f'''
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]retrieve job logs
+                   retry delays``.
+                   {PLATFORM_REPLACES.format(
+                       "[remote]retrieve job logs retry delays")}
             ''')
             Conf('tail command template',
-                 VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc='''
+                 VDR.V_STRING, 'tail -n +1 -F %(filename)s', desc=f'''
                 A command template (with ``%(filename)s`` substitution) to
                 tail-follow job logs this platform, by ``cylc cat-log``.
 
                 You are are unlikely to need to override this.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>]tail command template``.
             ''')
-            Conf('err tailer', VDR.V_STRING, desc='''
+            Conf('err tailer', VDR.V_STRING, desc=f'''
                 A command template (with ``%(job_id)s`` substitution) that can
                 be used to tail-follow the stderr stream of a running job if
                 SYSTEM does not use the normal log file location while the job
@@ -1405,8 +1454,13 @@ with Conf('global.cylc', desc='''
 
                    # for PBS
                    qcat -f -e %(job_id)s
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>][batch systems]
+                   [<system>]err tailer``.
             ''')
-            Conf('out tailer', VDR.V_STRING, desc='''
+            Conf('out tailer', VDR.V_STRING, desc=f'''
                 A command template (with ``%(job_id)s`` substitution) that can
                 be used to tail-follow the stdout stream of a running job if
                 SYSTEM does not use the normal log file location while the job
@@ -1417,8 +1471,13 @@ with Conf('global.cylc', desc='''
 
                    # for PBS
                    qcat -f -o %(job_id)s
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>][batch systems]
+                   [<system>]out tailer``.
             ''')
-            Conf('err viewer', VDR.V_STRING, desc='''
+            Conf('err viewer', VDR.V_STRING, desc=f'''
                 A command template (with ``%(job_id)s`` substitution) that can
                 be used to view the stderr stream of a running job if SYSTEM
                 does not use the normal log file location while the job is
@@ -1428,8 +1487,13 @@ with Conf('global.cylc', desc='''
 
                    # for PBS
                    qcat -e %(job_id)s
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>][batch systems]
+                   [<system>]err viewer``.
             ''')
-            Conf('out viewer', VDR.V_STRING, desc='''
+            Conf('out viewer', VDR.V_STRING, desc=f'''
                 A command template (with ``%(job_id)s`` substitution) that can
                 be used to view the stdout stream of a running job if SYSTEM
                 does not use the normal log file location while the job is
@@ -1439,13 +1503,23 @@ with Conf('global.cylc', desc='''
 
                    # for PBS
                    qcat -o %(job_id)s
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>][batch systems]
+                   [<system>]out viewer``.
             ''')
-            Conf('job name length maximum', VDR.V_INTEGER, desc='''
+            Conf('job name length maximum', VDR.V_INTEGER, desc=f'''
                 The maximum length for job name acceptable by a job runner on
                 a given host.  Currently, this setting is only meaningful for
                 PBS jobs. For example, PBS 12 or older will fail a job submit
                 if the job name has more than 15 characters; whereas PBS 13
                 accepts up to 236 characters.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``global.rc[hosts][<host>][batch systems]
+                   [<system>]job name length maximum``.
             ''')
             Conf('install target', VDR.V_STRING, desc='''
                 This defaults to the platform name. This will be used as the
@@ -1457,6 +1531,8 @@ with Conf('global.cylc', desc='''
                    [platforms]
                        [[Platform_A]]
                            install target = localhost
+
+                .. versionadded:: 8.0.0
             ''')
 
             Conf('clean job submission environment', VDR.V_BOOLEAN, False,
@@ -1482,6 +1558,8 @@ with Conf('global.cylc', desc='''
 
                 A standard set of executable paths is passed through to clean
                 environments, and can be added to if necessary.
+
+                .. versionadded:: 8.0.0
             ''')
 
             Conf('job submission environment pass-through', VDR.V_STRING_LIST,
@@ -1492,6 +1570,8 @@ with Conf('global.cylc', desc='''
                 ``$HOME`` is passed automatically.
 
                 You are unlikely to need this.
+
+                .. versionadded:: 8.0.0
             ''')
             Conf('job submission executable paths', VDR.V_STRING_LIST,
                  desc=f'''
@@ -1499,6 +1579,8 @@ with Conf('global.cylc', desc='''
                 submission subprocess beyond the standard locations
                 {", ".join(f"``{i}``" for i in SYSPATH)}.
                 You are unlikely to need this.
+
+                .. versionadded:: 8.0.0
             ''')
             Conf('max batch submit size', VDR.V_INTEGER, default=100, desc='''
                 Limits the maximum number of jobs that can be submitted at
@@ -1509,6 +1591,8 @@ with Conf('global.cylc', desc='''
                 numbers of jobs can cause problems with some submission
                 systems so for safety there is an upper limit on the number
                 of job submissions which can be batched together.
+
+                .. versionadded:: 8.0.0
             ''')
             with Conf('selection', desc='''
                 How to select platform from list of hosts.
@@ -1537,7 +1621,7 @@ with Conf('global.cylc', desc='''
                     DIRECTIVES_DESCR,
                     "[runtime][<namespace>][directives]",
                     section=True
-                )
+                ) + "\n\n" + ".. versionadded:: 8.0.0"
             )):
                 Conf('<directive>', VDR.V_STRING,
                      desc=short_descr(DIRECTIVES_ITEM_DESCR))
@@ -1552,6 +1636,8 @@ with Conf('global.cylc', desc='''
                host: In this case **"localhost" will refer to the host where
                the scheduler is running and not the computer where you
                ran "cylc play"**.
+
+            .. versionadded:: 8.0.0
         '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
             with Conf('selection', meta=Selection):
@@ -1584,6 +1670,8 @@ with Conf('global.cylc', desc='''
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
+
+                    .. versionadded:: 8.0.0
                 ''')
             Conf('platforms', VDR.V_STRING_LIST, desc='''
                 A list of platforms which can be selected if
@@ -1612,7 +1700,7 @@ with Conf('global.cylc', desc='''
     with Conf('task events', desc=(
         default_for(
             TASK_EVENTS_DESCR, "[runtime][<namespace>][events]", section=True
-        )
+        ) + "\n\n" + ".. versionadded:: 8.0.0"
     )):
         Conf('execution timeout', VDR.V_INTERVAL, desc=(
             default_for(

@@ -441,7 +441,7 @@ with Conf(
                 )
             ))
 
-    with Conf('task parameters', desc='''
+    with Conf('task parameters', desc=f'''
         Set task parameters and parameter templates.
 
         Define parameter values here for use in expanding
@@ -449,8 +449,7 @@ with Conf(
 
         .. versionchanged:: 8.0.0
 
-           This section replaces ``[cylc][parameters]`` and
-           ``[cylc][parameter templates]``.
+           {REPLACES}``[cylc][parameters]``.
     '''):
         Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
             A custom parameter to use in a workflow.
@@ -461,12 +460,16 @@ with Conf(
             - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
             - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
         ''')
-        with Conf('templates', desc='''
+        with Conf('templates', desc=f'''
             Cylc will expand each parameterized task name using a string
             template.
 
             You can set templates for any parameter name here to override the
             default template.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[cylc][parameter templates]``.
         '''):
             Conf('<parameter>', VDR.V_STRING, desc='''
                 A template for a parameter.
@@ -797,7 +800,7 @@ with Conf(
 
                {REPLACES}``[runtime][dependencies][graph]``.
         '''):
-            Conf('<recurrence>', VDR.V_STRING, desc='''
+            Conf('<recurrence>', VDR.V_STRING, desc=f'''
                 The recurrence defines the sequence of cycle points
                 for which the dependency graph is valid.
 
@@ -892,6 +895,11 @@ with Conf(
 
                      # bar triggers if submission of foo fails
                      foo:submit-fail => bar
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}
+                   ``[runtime][dependencies][graph][<recurrence>]graph``.
             ''')
 
     with Conf('runtime',  # noqa: SIM117 (keep same format)
@@ -1072,7 +1080,7 @@ with Conf(
                     "[platforms][<platform name>]execution polling intervals"
                 )
             )
-            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
                 Cylc can automate resubmission of a failed task job.
 
                 Execution retry delays are a list of ISO 8601
@@ -1083,8 +1091,13 @@ with Conf(
                 variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
                 environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
                 behavior between submission attempts.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>][job]execution
+                   retry delays``.
             ''')
-            Conf('execution time limit', VDR.V_INTERVAL, desc='''
+            Conf('execution time limit', VDR.V_INTERVAL, desc=f'''
                 Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a task job.
 
@@ -1096,6 +1109,11 @@ with Conf(
                 poll the job multiple times. You can set polling
                 intervals using :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>][job]execution
+                   time limit``.
             ''')
             Conf(
                 'submission polling intervals', VDR.V_INTERVAL_LIST, None,
@@ -1347,6 +1365,9 @@ with Conf(
                         "[task events]submission timeout"
                     )
                 ))
+                # TODO: add descriptions for the handlers below. Some of them
+                # didn't have any mention in the Cylc 7 suiterc ref docs, but
+                # a look at git blame indicates none of them are new in Cylc 8.
                 Conf('expired handlers', VDR.V_STRING_LIST, None)
                 Conf('late offset', VDR.V_INTERVAL, None)
                 Conf('late handlers', VDR.V_STRING_LIST, None)
