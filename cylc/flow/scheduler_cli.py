@@ -31,7 +31,7 @@ from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.loggingutil import (
     close_log,
-    TimestampRotatingFileHandler,
+    RotatingLogFileHandler,
 )
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
@@ -254,7 +254,7 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_, no_detach, restart_num=0):
+def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
         while LOG.handlers:
@@ -262,10 +262,11 @@ def _open_logs(id_, no_detach, restart_num=0):
             LOG.removeHandler(LOG.handlers[0])
     log_path = get_workflow_run_scheduler_log_path(id_)
     LOG.addHandler(
-        TimestampRotatingFileHandler(
+        RotatingLogFileHandler(
             log_path,
             no_detach,
-            restart_num=restart_num)
+            restart_num=restart_num
+        )
     )
 
 
@@ -338,24 +339,12 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         from cylc.flow.daemonize import daemonize
         daemonize(scheduler)
 
-    scheduler._check_startup_opts()
-    restart_num = scheduler.workflow_db_mgr.restart_check()
-    is_restart = bool(restart_num)
     # setup loggers
     _open_logs(
         workflow_id,
         options.no_detach,
-        restart_num=restart_num)
-    log_extra_num = {
-        TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
-        TimestampRotatingFileHandler.FILE_NUM: 1}
-    LOG.info(
-        'Run: (re)start number=%d, log rollover=%d',
-        restart_num + 1,
-        1,  # hard code 1 which is updated later if required
-        extra=log_extra_num)
-    if is_restart:
-        scheduler.load_workflow_params_and_tmpl_vars()
+        restart_num=scheduler.get_restart_num()
+    )
 
     # run the workflow
     ret = asyncio.run(

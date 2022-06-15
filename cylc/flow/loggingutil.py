@@ -121,12 +121,13 @@ class CylcLogFormatter(logging.Formatter):
         return get_time_string_from_unix_time(record.created)
 
 
-class TimestampRotatingFileHandler(logging.FileHandler):
-    """Rotating workflow logs using creation time stamps for names.
+class RotatingLogFileHandler(logging.FileHandler):
+    """Rotating workflow logs using cumulative log number and (re)start number
+    for names.
 
     Argument:
         log_file_path: path to the log file
-        no_detach: non-detach mode? (Default=False)
+        no_detach: non-detach mode?
         restart_num: restart number for the run
         timestamp: Add timestamp to log formatting?
     """
@@ -134,6 +135,12 @@ class TimestampRotatingFileHandler(logging.FileHandler):
     FILE_HEADER_FLAG = 'cylc_log_file_header'
     FILE_NUM = 'cylc_log_num'
     MIN_BYTES = 1024
+
+    extra = {FILE_HEADER_FLAG: True}
+    extra_num = {
+        FILE_HEADER_FLAG: True,
+        FILE_NUM: 1
+    }
 
     def __init__(
         self,

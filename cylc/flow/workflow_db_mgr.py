@@ -216,9 +216,12 @@ class WorkflowDatabaseManager:
         """
         if not is_restart:
             try:
+                # Note: it should no longer be possible to have DB as we now
+                # detect restart based on whether DB exists...
                 os.unlink(self.pri_path)
             except OSError:
-                # Just in case the path is a directory!
+                # ... however, in case there is a directory at the path for
+                # some bizarre reason:
                 rmtree(self.pri_path, ignore_errors=True)
         self.pri_dao = self.get_pri_dao()
         os.chmod(self.pri_path, PERM_PRIVATE)
@@ -653,19 +656,18 @@ class WorkflowDatabaseManager:
                 f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def restart_check(self) -> int:
+    def restart_check(self) -> None:
         """Check & vacuum the runtime DB for a restart.
 
-        Increment the restart number in the DB.
+        Increments the restart number in the DB. Sets self.n_restart.
 
         Raises ServiceFileError if DB is incompatible.
-
-        Returns 0 if DB doesn't exist, else restart number.
         """
+        if self.n_restart != 0:
+            # This will not raise unless the method is mistakenly called twice
+            raise RuntimeError("restart check must only happen once")
         try:
             self.check_workflow_db_compatibility()
-        except FileNotFoundError:
-            return 0
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot restart - {exc}")
         pri_dao = self.get_pri_dao()
@@ -676,7 +678,6 @@ class WorkflowDatabaseManager:
                 self.KEY_RESTART_COUNT, self.n_restart)
         finally:
             pri_dao.close()
-        return self.n_restart
 
     def check_workflow_db_compatibility(self):
         """Raises ServiceFileError if the existing workflow database is

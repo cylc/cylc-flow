@@ -25,7 +25,7 @@ from unittest import mock
 
 from cylc.flow import LOG
 from cylc.flow.loggingutil import (
-    TimestampRotatingFileHandler,
+    RotatingLogFileHandler,
     CylcLogFormatter,
     get_reload_start_number,
     get_sorted_logs_by_time
@@ -44,7 +44,7 @@ def test_value_error_raises_system_exit(
         mocked = mock.MagicMock()
         mocked_glbl_cfg.return_value = mocked
         mocked.get.return_value = 100
-        file_handler = TimestampRotatingFileHandler(tf.name, False)
+        file_handler = RotatingLogFileHandler(tf.name, False)
         # next line is important as pytest can have a "Bad file descriptor"
         # due to a FileHandler with default "a" (pytest tries to r/w).
         file_handler.mode = "a+"
@@ -116,7 +116,7 @@ def test_update_log_archive(tmp_run_dir: Callable):
     log_dir.mkdir(exist_ok=True, parents=True)
     log_file = log_dir.joinpath('log')
     log_file.touch()
-    log_object = TimestampRotatingFileHandler(
+    log_object = RotatingLogFileHandler(
         log_file, no_detach=False, restart_num=0
     )
 

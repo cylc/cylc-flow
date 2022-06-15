@@ -40,6 +40,7 @@ pub_db="${WORKFLOW_RUN_DIR}/log/db"
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}"
 
+poll_workflow_running
 poll_workflow_stopped  # This waits for contact file to be removed
 # Delete the DB without delay
 rm -f "$pri_db" "$pub_db"

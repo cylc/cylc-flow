@@ -110,7 +110,9 @@
 #     poll_workflow_running
 #         Shorthand for 'poll test -e "${WORKFLOW_RUN_DIR}/.service/contact"'
 #     poll_workflow_stopped
-#         Shorthand for 'poll "!" test -e "${WORKFLOW_RUN_DIR}/.service/contact"'
+#         Shorthand for 'poll "!" test -e "${WORKFLOW_RUN_DIR}/.service/contact"'.
+#         Note that you might want to call poll_workflow_running before this as
+#         it may return before contact file is created in the first place.
 #     get_workflow_uuid
 #         Extract the UUID from the contact file or echo '' if not present.
 #     poll_workflow_restart [TIMEOUT [UUID]]
