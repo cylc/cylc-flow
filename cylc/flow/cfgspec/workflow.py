@@ -616,40 +616,31 @@ with Conf(
             365 day (never a leap year) and 366 day (always a leap year).
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P4', desc='''
-            How many cycles ahead of the slowest tasks the fastest may run.
+             The scheduler runahead limit determines how many consecutive cycle
+             points can be active at once. The base point of the runahead
+             calculation is the lowest-valued point with :term:`active` or
+             :term:`incomplete` tasks present.
 
-            Runahead limiting prevents the fastest tasks in a workflow from
-            getting too far ahead of the slowest ones, as documented in
-            :ref:`RunaheadLimit`.
+             An integer interval value of ``Pn`` allows up to ``n+1`` cycle
+             points (including the base point) to be active at once.
 
-            This limit on the number of consecutive spawned cycle points is
-            specified by an interval between the least and most recent: either
-            an integer (e.g. ``P3`` -  works for both :term:`integer cycling`
-            and :term:`datetime cycling`), or a time interval (e.g. ``PT12H`` -
-            only works for datetime cycling). Alternatively, if a raw number is
-            given, e.g. ``7``, it will be taken to mean ``PT7H``, though this
-            usage is deprecated.
+             The default runahead limit is ``P4``, i.e. 5 active points
+             including the base point.
 
-            .. note::
+             Datetime cycling workflows can optionally use a datetime interval
+             value instead, in which case the number of active cycle points
+             within the interval depends on the cycling intervals present.
 
-               The integer limit format is irrespective of the labelling of
-               cycle points. For example, if the runahead limit is ``P3`` and
-               you have a workflow *solely* consisting of a task that repeats
-               "every four cycles", it would still spawn three consecutive
-               cycle points at a time (starting with 1, 5 and 9). This is
-               because the workflow is functionally equivalent to one where the
-               task repeats every cycle.
+             .. seealso::
 
-            .. note::
-
-               The runahead limit may be automatically raised if this is
-               necessary to allow a future task to be triggered, preventing
-               the workflow from stalling.
+                :ref:`RunaheadLimit`
 
             .. versionchanged:: 8.0.0
 
-               The integer (``Pn``) type limit was introduced to replace the
-               deprecated ``[scheduling]max active cycle points = n`` setting.
+               The integer format ``Pn`` was introduced to replace the
+               deprecated ``[scheduling]max active cycle points = m``
+               (with ``n = m-1``) and unify it with the existing datetime
+               interval ``runahead limit`` setting.
         ''')
 
         with Conf('queues', desc='''
@@ -676,7 +667,7 @@ with Conf(
 
             .. seealso::
 
-               See also :ref:`InternalQueues`.
+               :ref:`InternalQueues`.
         '''):
             with Conf('<queue name>', desc='''
                 Section heading for configuration of a single queue.
@@ -1467,8 +1458,11 @@ with Conf(
                 identity variables, which are exported earlier in the task job
                 script. Variable assignment expressions can use cylc
                 utility commands because access to cylc is also configured
-                earlier in the script. See also
-                :ref:`TaskExecutionEnvironment`.
+                earlier in the script.
+
+                .. seealso::
+
+                   :ref:`TaskExecutionEnvironment`.
 
                 You can also specify job environment templates here for
                 :ref:`parameterized tasks <User Guide Param>`.
