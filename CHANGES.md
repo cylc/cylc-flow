@@ -22,9 +22,12 @@ cylc-7.9.x (which requires Python 2.7) bundles Jinja2 2.11.
 cylc-8 (master branch, Python 3 - not yet released) uses proper Python package
 management and does not bundle Jinja2.
 
-## __cylc-7.8.12 ()__
+## __cylc-7.8.12 (Upcoming)__
 
 ### Fixes
+
+[#4838](https://github.com/cylc/cylc-flow/pull/4838) - fix bug where Cylc 7
+would still be able to run a `suite.rc` workflow previously run with Cylc 8.
 
 [#4897](https://github.com/cylc/cylc-flow/pull/4897) - In Cylc Review task jobs
 view: Only allow filtering by Cylc 8 task states for Cylc 8 workflows.

@@ -452,6 +452,8 @@ To start a new run, stop the old one first with one or more of these:
             reg (str): suite name, default basename($PWD).
             source (str): directory location of suite.rc file, default $PWD.
             redirect (bool): allow reuse of existing name and run directory.
+            rundir (str): if specified, symlink ~/cylc-run/<reg> to the
+                dir named <reg> found under this path.
 
         Return:
             The registered suite name (which may be computed here).
@@ -483,18 +485,20 @@ To start a new run, stop the old one first with one or more of these:
 
         # Create service dir if necessary.
         srv_d = self.get_suite_srv_dir(reg)
+        suite_run_d, srv_d_name = os.path.split(srv_d)
+        self.check_for_cylc8_flow_file(suite_run_d)
         if rundir is None:
             mkdir_p(srv_d)
         else:
-            suite_run_d, srv_d_name = os.path.split(srv_d)
+            # symlink ~/cylc-run/<reg> to <rundir>/<reg>
             alt_suite_run_d = os.path.join(rundir, reg)
-            alt_srv_d = os.path.join(rundir, reg, srv_d_name)
+            alt_srv_d = os.path.join(alt_suite_run_d, srv_d_name)
             mkdir_p(alt_srv_d)
             mkdir_p(os.path.dirname(suite_run_d))
-            if os.path.islink(suite_run_d) and not os.path.exists(suite_run_d):
-                # Remove a bad symlink.
-                os.unlink(suite_run_d)
             if not os.path.exists(suite_run_d):
+                if os.path.islink(suite_run_d):
+                    # Remove a bad symlink.
+                    os.unlink(suite_run_d)
                 os.symlink(alt_suite_run_d, suite_run_d)
             elif not os.path.islink(suite_run_d):
                 raise SuiteServiceFileError(
@@ -820,7 +824,20 @@ To start a new run, stop the old one first with one or more of these:
     def check_for_cylc8_flow_file(run_dir):
         flow_file_path = os.path.join(run_dir, 'flow.cylc')
         if os.path.isfile(flow_file_path):
-            sys.exit(
-                "ERROR: Cannot run - flow.cylc (Cylc 8) file detected in "
+            raise SuiteServiceFileError(
+                "Cannot run - flow.cylc (Cylc 8) file detected in "
                 "suite run dir. "
+            )
+
+    @staticmethod
+    def check_for_cylc8_install_dir(run_dir, reg):
+        """Raise error if _cylc-install dir in run dir or above."""
+        if (
+            os.path.isdir(os.path.join(run_dir, '_cylc-install'))
+        ) or (
+            len(reg.split(os.sep)) > 1 and
+            os.path.isdir(os.path.join(run_dir, '..', '_cylc-install'))
+        ):
+            raise SuiteServiceFileError(
+                "Cannot run - Cylc 8 _cylc-install directory detected"
             )

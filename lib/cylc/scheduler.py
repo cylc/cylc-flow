@@ -145,11 +145,11 @@ class Scheduler(object):
     REF_LOG_TEXTS = (
         'triggered off', 'Initial point', 'Start point', 'Final point')
 
-    def __init__(self, is_restart, options, args):
+    def __init__(self, is_restart, options, reg):
         self.options = options
         self.profiler = Profiler(self.options.profile_mode)
         self.suite_srv_files_mgr = SuiteSrvFilesManager()
-        self.suite = args[0]
+        self.suite = reg
         self.uuid_str = SchedulerUUID()
         self.suite_dir = self.suite_srv_files_mgr.get_suite_source_dir(
             self.suite)
@@ -213,8 +213,9 @@ class Scheduler(object):
         self.already_timed_out = False
 
         self.suite_db_mgr = SuiteDatabaseManager(
-            self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),  # pri_d
-            os.path.join(self.suite_run_dir, 'log'))                 # pub_d
+            pri_d=self.suite_srv_files_mgr.get_suite_srv_dir(self.suite),
+            pub_d=os.path.join(self.suite_run_dir, 'log')
+        )
         self.broadcast_mgr = BroadcastMgr(self.suite_db_mgr)
         self.xtrigger_mgr = XtriggerManager(
             self.suite, self.owner, self.broadcast_mgr, self.suite_run_dir,
@@ -234,7 +235,7 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
-        SuiteSrvFilesManager.check_for_cylc8_flow_file(self.suite_run_dir)
+        self.abort_if_cylc8_run_dir()
 
         self._start_print_blurb()
 
@@ -2058,3 +2059,19 @@ conditions; see `cylc conditions`.
         """Return a named [cylc][[events]] configuration."""
         return self.suite_event_handler.get_events_conf(
             self.config, key, default)
+
+    def abort_if_cylc8_run_dir(self):
+        """Abort if the run directory is a Cylc 8 one:
+
+        - flow.cylc file
+        - _cylc-install dir
+        - Cylc 8 DB
+        """
+        try:
+            SuiteSrvFilesManager.check_for_cylc8_flow_file(self.suite_run_dir)
+            SuiteSrvFilesManager.check_for_cylc8_install_dir(
+                self.suite_run_dir, self.suite
+            )
+            self.suite_db_mgr.check_forward_compatibility()
+        except (SuiteServiceFileError, SuiteCylcVersionError) as exc:
+            sys.exit("ERROR: {}".format(exc))

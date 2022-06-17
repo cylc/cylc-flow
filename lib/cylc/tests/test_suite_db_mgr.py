@@ -36,10 +36,13 @@ COMMIT;
 
 
 @pytest.fixture
-def tmp_dao():
+def tmp_dao(monkeypatch):
     """Provides an sqlite3 connection and a mock CylcSuiteDAO."""
     conn = sqlite3.connect(':memory:')
     mock_dao = Mock(connect=lambda: conn)
+    monkeypatch.setattr(
+        'cylc.suite_db_mgr.CylcSuiteDAO', lambda *a, **k: mock_dao
+    )
     yield (conn, mock_dao)
     conn.close()
 
@@ -57,8 +60,10 @@ def test_check_forward_compatibility__cylc_7_ok(tmp_dao):
         COMMIT;
         """
     )
-    SuiteDatabaseManager.check_forward_compatibility(mock_dao)
-    mock_dao.close.assert_not_called()
+    SuiteDatabaseManager().check_forward_compatibility()
+    mock_dao.create_tables.assert_not_called()
+    mock_dao.close.assert_called()
+
 
 def test_check_forward_compatibility__cylc_7_7_0_ok(tmp_dao):
     """SuiteDatabaseManager.check_forward_compatibility() should not raise for
@@ -67,8 +72,9 @@ def test_check_forward_compatibility__cylc_7_7_0_ok(tmp_dao):
     conn.executescript(db_params_dump.format(
         table='suite_params', version='7.7.0'
     ))
-    SuiteDatabaseManager.check_forward_compatibility(mock_dao)
-    mock_dao.close.assert_not_called()
+    SuiteDatabaseManager().check_forward_compatibility()
+    mock_dao.create_tables.assert_not_called()
+    mock_dao.close.assert_called()
 
 
 def test_check_forward_compatibility__cylc_8_fail(tmp_dao):
@@ -79,5 +85,6 @@ def test_check_forward_compatibility__cylc_8_fail(tmp_dao):
         table='workflow_params', version='8.0b2.dev'
     ))
     with pytest.raises(SuiteCylcVersionError):
-        SuiteDatabaseManager.check_forward_compatibility(mock_dao)
+        SuiteDatabaseManager().check_forward_compatibility()
+    mock_dao.create_tables.assert_not_called()
     mock_dao.close.assert_called()

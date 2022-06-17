@@ -30,7 +30,6 @@ import os
 from shutil import copy, rmtree
 from sqlite3 import OperationalError
 from subprocess import call
-import sys
 from tempfile import mkstemp
 
 
@@ -38,7 +37,7 @@ from cylc import LOG
 from cylc.broadcast_report import get_broadcast_change_iter
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_srv_files_mgr import (
-    SuiteCylcVersionError, SuiteServiceFileError
+    SuiteCylcVersionError,
 )
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import get_current_time_string, get_utc_mode
@@ -524,28 +523,29 @@ class SuiteDatabaseManager(object):
             pri_dao = self.get_pri_dao()
             pri_dao.upgrade_pickle_to_json()
 
-        try:
-            self.check_forward_compatibility(pri_dao)
-        except (SuiteServiceFileError, SuiteCylcVersionError) as exc:
-            sys.exit("ERROR: {}".format(exc))
-
         # Vacuum the primary/private database file
         pri_dao.vacuum()
         pri_dao.close()
 
-    @staticmethod
-    def check_forward_compatibility(pri_dao):
+    def check_forward_compatibility(self):
         """Raises if the existing suite database is incompatible with the
         current version of Cylc."""
-        # Check for Cylc 8 workflow_params table:
+        if not os.path.exists(self.pri_path):
+            return
+        pri_dao = CylcSuiteDAO(
+            self.pri_path,
+            is_public=True  # prevent creation of tables
+        )
         try:
+            # Check for Cylc 8 workflow_params table:
             last_run_ver = pri_dao.connect().execute(
                 'SELECT value FROM workflow_params WHERE key == "cylc_version"'
             ).fetchone()
         except OperationalError:
             # Ok - no workflow_params table
             return
-        pri_dao.close()
+        finally:
+            pri_dao.close()
         if last_run_ver is None:
             last_run_ver = '(unknown)'
         else:

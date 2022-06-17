@@ -43,8 +43,7 @@ class TestScheduler(unittest.TestCase):
         result in an IOError. This, combined with other variables, may cause
         an infinite loop. So it is better that it is ignored."""
         options = Options()
-        args = ["suiteA"]
-        scheduler = Scheduler(is_restart=False, options=options, args=args)
+        scheduler = Scheduler(is_restart=False, options=options, reg="suiteA")
 
         handler = mock.MagicMock()
         handler.close.side_effect = IOError
