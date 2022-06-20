@@ -40,7 +40,7 @@ from shutil import which
 from subprocess import Popen, PIPE
 import sys
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, TYPE_CHECKING, Tuple
+from typing import Dict, List, Optional, TYPE_CHECKING, Tuple, Callable
 
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import InputError, CylcError
@@ -141,6 +141,9 @@ def _get_graph_nodes_edges(
         return [], []
 
     # set sort keys based on cycling mode
+    # (note sorting is very important for the reference format)
+    node_sort: Optional[Callable]
+    edge_sort: Optional[Callable]
     if config.cfg['scheduling']['cycling mode'] == 'integer':
         # integer sorting
         node_sort = sort_integer_node
