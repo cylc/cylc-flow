@@ -165,10 +165,10 @@ class WorkflowConfig:
     VIS_N_POINTS = 3
 
     CYLC7_GRAPH_COMPAT_MSG = (
-        "Cylc 7 graph compatibility: making success outputs 'required' (to"
-        " retain failed tasks in the pool) and pre-spawning graph children (to"
-        " replicate Cylc 7 stall behaviour). Please refer to documentation on"
-        " upgrading Cylc 7 graphs to Cylc 8."
+        "Note there are key changes to graph branching and stall behaviour "
+        "when renaming to 'flow.cylc'. Please refer to the docs: "
+        "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
+        "#optional-and-expected-task-outputs"
     )
 
     def __init__(
