@@ -16,7 +16,6 @@
 
 """Shared utilities for Cylc scripts."""
 
-from re import sub
 from itertools import zip_longest
 from ansimarkup import strip
 
@@ -28,31 +27,31 @@ from cylc.flow.terminal import get_width
 # fmt: off
 LOGO_LETTERS = (
     (
-        "ooo",
-        "oo ",
-        "oooo",
+        '▗███',
+        '██  ',
+        '▝███',
     ),
     (
-        "oo oo",
-        "ooooo",
-        " ooo",
+        '▝█▙ ▟█▘',
+        '  ▜█▛  ',
+        '  ▐█▌  ',
     ),
     (
-        "oo ",
-        "ooo",
-        "ooo",
+        '▐█  ',
+        '▐█  ',
+        '▐██▌',
     ),
     (
-        "oooo",
-        "oo  ",
-        "oooo",
+        '▗███▙ ',
+        '██    ',
+        '▝███▛ ',
     )
 )
 # fmt: on
 
 LOGO = [
     ''.join(
-        sub('o', f'<white,{tag}> </white,{tag}>', letter[ind])
+        f'<{tag}>{letter[ind]}</{tag}>'
         for tag, letter in zip(
             ('red', 'yellow', 'green', 'blue'),
             LOGO_LETTERS
