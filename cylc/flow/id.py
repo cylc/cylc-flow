@@ -22,6 +22,7 @@ This module contains the abstract ID tokenising/detokenising code.
 from enum import Enum
 import re
 from typing import (
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -781,13 +782,19 @@ def detokenise(
     return '/'.join(identifier)
 
 
-def upgrade_legacy_ids(*ids: str) -> List[str]:
+def upgrade_legacy_ids(*ids: str, relative=False) -> List[str]:
     """Reformat IDs from legacy to contemporary format:
 
     If no upgrading is required it returns the identifiers unchanged.
 
     Args:
-        *ids (tuple): Identifier list.
+        *ids:
+            Identifier list.
+        relative:
+            If `False` then `ids` must describe absolute ID(s) e.g:
+                workflow task1.cycle1 task2.cycle2
+            If `True` then `ids` should be relative e.g:
+                task1.cycle1 task2.cycle2
 
     Returns:
         tuple/list - Identifier list.
@@ -815,13 +822,27 @@ def upgrade_legacy_ids(*ids: str) -> List[str]:
         >>> upgrade_legacy_ids('workflow', 'task.123:abc', '234/task:def')
         ['workflow', '//123/task:abc', '//234/task:def']
 
+        # upgrade relative IDs:
+        >>> upgrade_legacy_ids('x.1', relative=True)
+        ['1/x']
+        >>> upgrade_legacy_ids('x.1', 'x.2', 'x.3:s', relative=True)
+        ['1/x', '2/x', '3/x:s']
+
     """
-    if len(ids) < 2:
+    if not relative and len(ids) < 2:
         # only legacy relative references require upgrade => abort
         return list(ids)
 
-    legacy_ids = [ids[0]]
-    for id_ in ids[1:]:
+    legacy_ids: List[str]
+    _ids: Iterable[str]
+    if relative:
+        legacy_ids = []
+        _ids = ids
+    else:
+        legacy_ids = [ids[0]]
+        _ids = ids[1:]
+
+    for id_ in _ids:
         try:
             tokens = legacy_tokenise(id_)
         except ValueError:
@@ -830,7 +851,7 @@ def upgrade_legacy_ids(*ids: str) -> List[str]:
         else:
             # upgrade this token
             legacy_ids.append(
-                detokenise(tokens, selectors=True)
+                detokenise(tokens, selectors=True, relative=relative)
             )
 
     LOG.warning(

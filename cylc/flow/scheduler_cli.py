@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, List
 from cylc.flow import LOG, RSYNC_LOG
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
+from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.id_cli import parse_ids
@@ -411,4 +412,9 @@ async def _run(scheduler: Scheduler) -> int:
 @cli_function(get_option_parser)
 def play(parser: COP, options: 'Values', id_: str):
     """Implement cylc play."""
+    if options.starttask:
+        options.starttask = upgrade_legacy_ids(
+            *options.starttask,
+            relative=True,
+        )
     return scheduler_cli(options, id_)
