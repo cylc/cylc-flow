@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import asyncio
 import fnmatch
 from pathlib import Path
 import re
 from typing import Optional, Dict, List, Tuple, Any
 
+from cylc.flow import LOG
 from cylc.flow.exceptions import (
     InputError,
     WorkflowFilesError,
@@ -397,6 +397,16 @@ def _validate_workflow_ids(*tokens_list, src_path):
             raise InputError(
                 f'Workflow ID cannot be a file: {tokens["workflow"]}'
             )
+        if tokens['cycle'] and tokens['cycle'].startswith('run'):
+            # issue a warning if the run number is provided after the //
+            # separator e.g. workflow//run1 rather than workflow/run1//
+            suggested = Tokens(
+                user=tokens['user'],
+                workflow=f'{tokens["workflow"]}/{tokens["cycle"]}',
+                cycle=tokens['task'],
+                task=tokens['job'],
+            )
+            LOG.warning(f'Did you mean: {suggested.id}')
         detect_both_flow_and_suite(src_path)
 
 

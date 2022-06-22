@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from pathlib import Path
 import pytest
-from unittest.mock import patch
 
 from cylc.flow.async_util import pipe
 from cylc.flow.exceptions import InputError, WorkflowFilesError
@@ -176,7 +176,8 @@ async def test_parse_ids_mixed_src(ids_in, ids_out, abc_src_dir, mock_exists):
     """It should parse mixed workflows & tasks from src workflows."""
 
     workflows, _ = await parse_ids_async(
-            *ids_in, constraint='mixed', src=True)
+        *ids_in, constraint='mixed', src=True
+    )
     assert {
         workflow_id: [detokenise(tokens) for tokens in tokens_list]
         for workflow_id, tokens_list in workflows.items()
@@ -314,7 +315,7 @@ def src_dir(tmp_path):
     other_dir.mkdir()
     other_file = other_dir / 'nugget'
     other_file.touch()
- 
+
     os.chdir(tmp_path)
     yield src_dir
     os.chdir(cwd_before)
@@ -517,7 +518,7 @@ def test_validate_constraint():
         _validate_constraint(Tokens(), constraint='mixed')
 
 
-def test_validate_workflow_ids(tmp_run_dir):
+def test_validate_workflow_ids_basic(tmp_run_dir):
     _validate_workflow_ids(Tokens('workflow'), src_path='')
     with pytest.raises(InputError):
         _validate_workflow_ids(Tokens('~alice/workflow'), src_path='')
@@ -527,6 +528,20 @@ def test_validate_workflow_ids(tmp_run_dir):
             Tokens('workflow'),
             src_path=run_dir / 'flow.cylc',
         )
+
+
+def test_validate_workflow_ids_warning(caplog):
+    """It should warn when the run number is provided as a cycle point."""
+    caplog.set_level(logging.WARN)
+    _validate_workflow_ids(Tokens('workflow/run1//cycle/task'), src_path='')
+    assert caplog.messages == []
+
+    _validate_workflow_ids(Tokens('workflow//run1'), src_path='')
+    assert caplog.messages == ['Did you mean: workflow/run1']
+
+    caplog.clear()
+    _validate_workflow_ids(Tokens('workflow//run1/cycle/task'), src_path='')
+    assert caplog.messages == ['Did you mean: workflow/run1//cycle/task']
 
 
 def test_validate_number():
