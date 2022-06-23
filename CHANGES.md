@@ -46,6 +46,9 @@ in `global.cylc[install]source dirs`.
 
 ### Fixes
 
+[#4931](https://github.com/cylc/cylc-flow/pull/4931) - Fix cylc install for
+installing workflows from multi-level directories.
+
 [#4926](https://github.com/cylc/cylc-flow/pull/4926) - Fix a docstring
 formatting problem presenting in the UI mutation flow argument info.
 
