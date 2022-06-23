@@ -32,10 +32,6 @@ Examples:
   $ cylc install myflow --no-run-name
   # To reinstall this workflow run:
   $ cylc reinstall myflow
-
-  # To reinstall a workflow from within the cylc-run directory of a previously
-  # installed workflow:
-  $ cylc reinstall
 """
 
 from pathlib import Path
@@ -48,7 +44,7 @@ from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
 )
-from cylc.flow.pathutil import get_cylc_run_dir, get_workflow_run_dir
+from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.workflow_files import (
     get_workflow_source_dir,
     reinstall_workflow,
@@ -61,7 +57,7 @@ if TYPE_CHECKING:
 
 def get_option_parser() -> COP:
     parser = COP(
-        __doc__, comms=True, argdoc=[COP.optional(WORKFLOW_ID_ARG_DOC)]
+        __doc__, comms=True, argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
     parser.add_cylc_rose_options()
@@ -90,20 +86,10 @@ def main(
 ) -> None:
     run_dir: Optional[Path]
     workflow_id: str
-    if args is None:
-        try:
-            workflow_id = str(Path.cwd().relative_to(
-                Path(get_cylc_run_dir()).resolve()
-            ))
-        except ValueError:
-            raise WorkflowFilesError(
-                "The current working directory is not a workflow run directory"
-            )
-    else:
-        workflow_id, *_ = parse_id(
-            args,
-            constraint='workflows',
-        )
+    workflow_id, *_ = parse_id(
+        args,
+        constraint='workflows',
+    )
     run_dir = Path(get_workflow_run_dir(workflow_id))
     if not run_dir.is_dir():
         raise WorkflowFilesError(
