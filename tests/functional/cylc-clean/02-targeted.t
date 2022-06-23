@@ -35,7 +35,7 @@ create_test_global_config "" "
             log = ${TEST_DIR}/${SYM_NAME}/other
             share = ${TEST_DIR}/${SYM_NAME}/other
             work = ${TEST_DIR}/${SYM_NAME}/other
-            # Need to override any symlink dirs set in global-tests.cylc:
+            # Need to override any symlink dirs set in global.cylc:
             share/cycle =
 "
 install_workflow "${TEST_NAME_BASE}" basic-workflow
