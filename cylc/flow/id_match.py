@@ -145,6 +145,8 @@ def filter_ids(
             if tokens.get(lowest_token.value):
                 break
 
+        # This needs to be a set to avoid getting two copies of matched tasks
+        # in cycle points that appear in both pools:
         cycles = set()
         tasks = []
 
