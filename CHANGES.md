@@ -46,6 +46,9 @@ in `global.cylc[install]source dirs`.
 
 ### Fixes
 
+[#4926](https://github.com/cylc/cylc-flow/pull/4926) - Fix a docstring
+formatting problem presenting in the UI mutation flow argument info.
+
 [#4891](https://github.com/cylc/cylc-flow/pull/4891) - Fix bug that could cause
 past jobs to be omitted in the UI.
 
