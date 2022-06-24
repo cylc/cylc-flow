@@ -18,7 +18,6 @@ from glob import iglob
 import logging
 import os
 from pathlib import Path
-from posixpath import expanduser
 import pytest
 import re
 import shutil
