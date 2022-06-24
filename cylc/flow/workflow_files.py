@@ -1907,8 +1907,7 @@ def get_source_workflow_name(source: Path) -> str:
     else the basename of the given path."""
     for dir_ in get_source_dirs():
         try:
-            workflow_name = str(source.relative_to(Path(dir_).expanduser()))
-            return workflow_name
+            return str(source.relative_to(expand_path(dir_)))
         except ValueError:
             continue
     return source.name
