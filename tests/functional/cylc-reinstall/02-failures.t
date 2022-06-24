@@ -88,8 +88,8 @@ __ERR__
     popd || exit 1
 done
 
-# Test cylc reinstall (args given) raises error when no source dir.
-TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-rasies-error2"
+# Test cylc reinstall raises error when no source dir.
+TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-raises-error"
 make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
 run_ok "${TEST_NAME}-install" cylc install --no-run-name --workflow-name="${RND_WORKFLOW_NAME}"
