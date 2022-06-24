@@ -1540,7 +1540,7 @@ def test_get_source_workflow_name(
         'cylc.flow.workflow_files.glbl_cfg',
         '''
         [install]
-            source dirs = ~/isla/nublar, ~/isla/sorna
+            source dirs = ~/isla/nublar, ${HOME}/isla/sorna
         '''
     )
     assert get_source_workflow_name(Path(path).expanduser()) == expected
