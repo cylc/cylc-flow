@@ -218,16 +218,13 @@ with Conf(
 
                The following directories are installed by default:
 
-               * app
-               * bin
-               * etc
-               * lib
-
-               And include the server.key file (from the .service
-               directory), this is required for authentication.
+               * ``app/``
+               * ``bin/``
+               * ``etc/``
+               * ``lib/``
 
                These should be located in the top level of your Cylc workflow,
-               i.e. the directory that contains your flow.cylc file.
+               i.e. the directory that contains your ``flow.cylc`` file.
 
             Directories must have a trailing slash.
             For example, to add the following items to your file installation:
