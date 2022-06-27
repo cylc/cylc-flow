@@ -28,7 +28,7 @@ from cylc.flow.workflow_files import (
     KeyType,
     WorkflowFiles
 )
-from cylc.flow.pathutil import make_symlink
+from cylc.flow.pathutil import make_symlink_dir
 from cylc.flow.resources import get_resources
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_DONE,
@@ -105,7 +105,7 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
             print(f'Error occurred when symlinking.'
                   f' {target} contains an invalid environment variable.')
             return
-        make_symlink(path, target)
+        make_symlink_dir(path, target)
     srvd = os.path.join(rund, WorkflowFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
 

@@ -293,7 +293,7 @@ def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
     mocked_get_workflow_run_dir.return_value = "rund"
     for v in ('DOH', 'DEE'):
         monkeypatch.setenv(v, 'expanded')
-    mocked_make_symlink = monkeymock('cylc.flow.pathutil.make_symlink')
+    mocked_make_symlink = monkeymock('cylc.flow.pathutil.make_symlink_dir')
 
     make_localhost_symlinks('rund', 'workflow')
     mocked_make_symlink.assert_has_calls([
@@ -303,24 +303,26 @@ def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
     ])
 
 
-@patch('os.path.expandvars')
 @patch('cylc.flow.pathutil.get_workflow_run_dir')
-@patch('cylc.flow.pathutil.make_symlink')
+@patch('cylc.flow.pathutil.make_symlink_dir')
 @patch('cylc.flow.pathutil.get_dirs_to_symlink')
 def test_incorrect_environment_variables_raise_error(
-        mocked_dirs_to_symlink,
-        mocked_make_symlink,
-        mocked_get_workflow_run_dir, mocked_expandvars):
+    mocked_dirs_to_symlink,
+    mocked_make_symlink,
+    mocked_get_workflow_run_dir,
+    monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.delenv('doh', raising=False)
     mocked_dirs_to_symlink.return_value = {
         'run': '$doh/cylc-run/test_workflow'}
     mocked_get_workflow_run_dir.return_value = "rund"
-    mocked_expandvars.return_value = "$doh"
 
-    with pytest.raises(WorkflowFilesError, match=r"Unable to create symlink"
-                       r" to \$doh. '\$doh/cylc-run/test_workflow' contains an"
-                       " invalid environment variable. Please check "
-                       "configuration."):
+    with pytest.raises(WorkflowFilesError) as excinfo:
         make_localhost_symlinks('rund', 'test_workflow')
+    assert (
+        "'$doh/cylc-run/test_workflow' contains an invalid "
+        "environment variable"
+    ) in str(excinfo.value)
 
 
 @pytest.mark.parametrize(

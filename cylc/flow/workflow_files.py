@@ -698,8 +698,8 @@ def register(
         symlinks_created = make_localhost_symlinks(
             get_workflow_run_dir(workflow_name), workflow_name)
         if symlinks_created:
-            for src, dst in symlinks_created.items():
-                LOG.info(f"Symlink created from {src} to {dst}")
+            for target, symlink in symlinks_created.items():
+                LOG.info(f"Symlink created: {symlink} -> {target}")
     # Create service dir if necessary.
     srv_d = get_workflow_srv_dir(workflow_name)
     os.makedirs(srv_d, exist_ok=True)
@@ -1602,8 +1602,8 @@ def install_workflow(
         rundir, named_run, symlink_conf=cli_symlink_dirs)
     install_log = _get_logger(rundir, 'cylc-install')
     if symlinks_created:
-        for src, dst in symlinks_created.items():
-            install_log.info(f"Symlink created from {src} to {dst}")
+        for target, symlink in symlinks_created.items():
+            install_log.info(f"Symlink created: {symlink} -> {target}")
     try:
         rundir.mkdir(exist_ok=True, parents=True)
     except FileExistsError:
