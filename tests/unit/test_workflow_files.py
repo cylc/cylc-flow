@@ -1875,6 +1875,43 @@ def test_install_workflow__next_to_flow_file(
         install_workflow(src_dir, 'faden')
 
 
+def test_install_workflow__symlink_target_exists(
+    tmp_path: Path,
+    tmp_src_dir: Callable,
+    tmp_run_dir: Callable,
+    mock_glbl_cfg: Callable,
+):
+    """Test that you can't install workflow when run dir symlink dir target
+    already exists."""
+    reg = 'smeagol'
+    src_dir: Path = tmp_src_dir(reg)
+    tmp_run_dir()
+    sym_run = tmp_path / 'sym-run'
+    sym_log = tmp_path / 'sym-log'
+    mock_glbl_cfg(
+        'cylc.flow.pathutil.glbl_cfg',
+        f'''
+        [install]
+            [[symlink dirs]]
+                [[[localhost]]]
+                    run = {sym_run}
+                    log = {sym_log}
+        '''
+    )
+    msg = "Symlink dir target already exists: .*{}"
+    # Test:
+    (sym_run / 'cylc-run' / reg / 'run1').mkdir(parents=True)
+    with pytest.raises(WorkflowFilesError, match=msg.format(sym_run)):
+        install_workflow(src_dir)
+
+    shutil.rmtree(sym_run)
+    (
+        sym_log / 'cylc-run' / reg / 'run1' / WorkflowFiles.LOG_DIR
+    ).mkdir(parents=True)
+    with pytest.raises(WorkflowFilesError, match=msg.format(sym_log)):
+        install_workflow(src_dir)
+
+
 def test_validate_source_dir(tmp_run_dir: Callable, tmp_src_dir: Callable):
     cylc_run_dir: Path = tmp_run_dir()
     src_dir: Path = tmp_src_dir('ludlow')
