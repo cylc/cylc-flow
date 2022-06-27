@@ -350,7 +350,7 @@ def test_parse_src_path(src_dir, monkeypatch):
     # relative '.' dir (invalid)
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         workflow_id, src_path, src_file_path = _parse_src_path('.')
-    assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
+    assert 'No flow.cylc or suite.rc in' in str(exc_ctx.value)
 
     # relative 'invalid/<flow-file>' (invalid)
     with pytest.raises(InputError) as exc_ctx:
@@ -368,7 +368,7 @@ def test_parse_src_path(src_dir, monkeypatch):
     # Not a src directory (dir)
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         _parse_src_path('./blargh')
-    assert 'No flow.cylc or suite.rc in .' in str(exc_ctx.value)
+    assert 'No flow.cylc or suite.rc in' in str(exc_ctx.value)
 
     # Not a src directory (file)
     with pytest.raises(InputError) as exc_ctx:

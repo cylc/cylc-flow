@@ -35,6 +35,9 @@ Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix: `cylc validate .`
+gave an unhelpful/untrue error if `suite.rc` and `flow.cylc` both existed.
+
 [#4877](https://github.com/cylc/cylc-flow/pull/4877) - Upgrade the version of
 Jinja2 used by Cylc from 2.11 to 3.0.
 
