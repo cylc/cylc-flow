@@ -283,5 +283,6 @@ def cli_function(
                     )
                     sys.exit(1)
                 raise exc from None
+        wrapper.parser_function = parser_function  # type: ignore
         return wrapper
     return inner
