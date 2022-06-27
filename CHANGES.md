@@ -44,10 +44,10 @@ Jinja2 used by Cylc from 2.11 to 3.0.
 [#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
 default job runner directives for platforms.
 
+### Fixes
+
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.
-
-### Fixes
 
 [#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
 error messages when workflow CLI commands fail.
@@ -64,13 +64,16 @@ formatting problem presenting in the UI mutation flow argument info.
 [#4891](https://github.com/cylc/cylc-flow/pull/4891) - Fix bug that could cause
 past jobs to be omitted in the UI.
 
-[#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow config parsing
-will fail if
+[#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow validation
+now fails if
 [owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
-owner setting is used, as that setting no longer has any effect.
+is used, as that setting no longer has any effect.
 
 [#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
 prompt if no matching workflows.
+
+[#4890](https://github.com/cylc/cylc-flow/pull/4890) - `cylc install`: don't
+overwrite symlink dir targets if they were not cleaned properly before.
 
 [#4881](https://github.com/cylc/cylc-flow/pull/4881) - Fix bug where commands
 targeting a specific cycle point would not work if using an abbreviated
