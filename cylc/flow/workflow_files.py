@@ -1904,7 +1904,10 @@ def search_install_source_dirs(workflow_name: Union[Path, str]) -> Path:
 
 def get_source_workflow_name(source: Path) -> str:
     """Return workflow name relative to configured source dirs if possible,
-    else the basename of the given path."""
+    else the basename of the given path.
+    Note the source path provided should be fully expanded (user and env vars)
+    and normalised.
+    """
     for dir_ in get_source_dirs():
         try:
             return str(source.relative_to(expand_path(dir_)))
