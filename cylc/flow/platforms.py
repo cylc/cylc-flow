@@ -663,16 +663,14 @@ def get_localhost_install_target() -> str:
     return get_install_target_from_platform(localhost)
 
 
-def validate_platforms() -> None:
+def _validate(platforms) -> None:
     """Check for invalid or inconsistent platforms config.
 
     Some job runners require a single host (where job ID is only valid on the
     specific submission host.)
     """
     bad_platforms = []
-    for name, deets in glbl_cfg(cached=True).get(
-        ['platforms'], sparse=True
-    ).items():
+    for name, deets in platforms.items():
         runner = deets.get('job runner', 'background')
         hosts = deets.get('hosts', [])
         if runner in SINGLE_HOST_JOB_RUNNERS and len(hosts) > 1:
@@ -682,3 +680,10 @@ def validate_platforms() -> None:
         for name, runner, hosts in bad_platforms:
             msg += f'\n * {name} {runner} hosts: {", ".join(hosts)}'
         raise GlobalConfigError(msg)
+
+
+def validate_platforms() -> None:
+    """Check for invalid or inconsistent platforms config."""
+    _validate(
+        glbl_cfg(cached=True).get(['platforms'], sparse=True)
+    )
