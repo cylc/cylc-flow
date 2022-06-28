@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 20
+set_test_number 22
 
 create_test_global_config "" "
 [install]
@@ -143,6 +143,12 @@ mv "${RND_WORKFLOW_NAME}/flow.cylc" "${RND_WORKFLOW_NAME}/${SUB_DIR}"
 run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}/${SUB_DIR}"
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED ${RND_WORKFLOW_NAME}/${SUB_DIR}/run1 from ${RND_WORKFLOW_SOURCE}/$SUB_DIR
+__OUT__
+TEST_NAME="${TEST_NAME_BASE}-multi-level-from-pwd"
+pushd "${RND_WORKFLOW_SOURCE}/$SUB_DIR" || exit 1
+run_ok "${TEST_NAME}" cylc install
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED ${RND_WORKFLOW_NAME}/${SUB_DIR}/run2 from ${RND_WORKFLOW_SOURCE}/${SUB_DIR}
 __OUT__
 popd || exit 1
 purge_rnd_workflow

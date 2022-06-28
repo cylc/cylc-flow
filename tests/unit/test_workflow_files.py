@@ -1543,7 +1543,8 @@ def test_get_source_workflow_name(
             source dirs = ~/isla/nublar, ${HOME}/isla/sorna
         '''
     )
-    assert get_source_workflow_name(Path(path).expanduser()) == expected
+    assert get_source_workflow_name(
+        Path(path).expanduser().resolve()) == expected
 
 
 @pytest.mark.parametrize(

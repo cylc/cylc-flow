@@ -1564,7 +1564,7 @@ def install_workflow(
             Trying to install a workflow that is nested inside of another.
     """
     abort_if_flow_file_in_path(source)
-    source = Path(expand_path(source))
+    source = Path(expand_path(source)).resolve()
     if not workflow_name:
         workflow_name = get_source_workflow_name(source)
     validate_workflow_name(workflow_name, check_reserved_names=True)
@@ -1910,7 +1910,7 @@ def get_source_workflow_name(source: Path) -> str:
     """
     for dir_ in get_source_dirs():
         try:
-            return str(source.relative_to(expand_path(dir_)))
+            return str(source.relative_to(Path(expand_path(dir_)).resolve()))
         except ValueError:
             continue
     return source.name
