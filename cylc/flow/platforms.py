@@ -18,6 +18,7 @@
 
 import random
 import re
+from contextlib import suppress
 from copy import deepcopy
 from typing import (
     Any, Dict, Iterable, List, Optional, Tuple, Set, Union, overload
@@ -684,10 +685,7 @@ def _validate(platforms) -> None:
 
 def validate_platforms() -> None:
     """Check for invalid or inconsistent platforms config."""
-    try:
+    with suppress(ItemNotFoundError):
         _validate(
             glbl_cfg(cached=True).get(['platforms'], sparse=True)
         )
-    except ItemNotFoundError:
-        # no platforms defined
-        pass
