@@ -26,6 +26,7 @@ from pkg_resources import parse_version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.platforms import validate_platforms
 from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
@@ -1858,6 +1859,7 @@ class GlobalConfig(ParsecConfig):
 
         self._set_default_editors()
         self._no_platform_group_name_overlap()
+        validate_platforms()
 
     def _validate_source_dirs(self) -> None:
         """Check source dirs are absolute paths."""

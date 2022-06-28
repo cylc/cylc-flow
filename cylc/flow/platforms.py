@@ -26,6 +26,7 @@ from typing import (
 from cylc.flow import LOG
 
 from cylc.flow.exceptions import (
+    GlobalConfigError,
     PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
@@ -38,6 +39,8 @@ FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
     ('job', 'batch system', [None]),
     ('job', 'batch submit command template', [None])
 )
+
+SINGLE_HOST_JOB_RUNNERS = ['background', 'at']
 
 # Regex to check whether a string is a command
 HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -658,3 +661,24 @@ def get_localhost_install_target() -> str:
     """Returns the install target of localhost platform"""
     localhost = get_platform()
     return get_install_target_from_platform(localhost)
+
+
+def validate_platforms() -> None:
+    """Check for invalid or inconsistent platforms config.
+
+    Some job runners require a single host (where job ID is only valid on the
+    specific submission host.)
+    """
+    bad_platforms = []
+    for name, deets in glbl_cfg(cached=True).get(
+        ['platforms'], sparse=True
+    ).items():
+        runner = deets.get('job runner', 'background')
+        hosts = deets.get('hosts', [])
+        if runner in SINGLE_HOST_JOB_RUNNERS and len(hosts) > 1:
+            bad_platforms.append((name, runner, hosts))
+    if bad_platforms:
+        msg = '"background" and "at" are single-host job runners:'
+        for name, runner, hosts in bad_platforms:
+            msg += f'\n * {name} {runner} hosts: {", ".join(hosts)}'
+        raise GlobalConfigError(msg)
