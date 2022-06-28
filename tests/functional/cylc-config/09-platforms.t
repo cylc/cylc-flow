@@ -23,8 +23,10 @@ set_test_number 5
 cat > "global.cylc" <<__HEREDOC__
 [platforms]
     [[foo]]
+        job runner = slurm
         hosts = of_melkor, of_valar
     [[bar]]
+        job runner = slurm
         hosts = of_orcs, of_gondor
 [platform groups]
     [[FOO]]
@@ -58,7 +60,7 @@ Platform Groups
 __HEREDOC__
 
 TEST_NAME="${TEST_NAME_BASE}-s"
-head -n 8 > just_platforms < global.cylc
+head -n 10 > just_platforms < global.cylc
 run_ok "${TEST_NAME}" cylc config --platforms
 cmp_ok "${TEST_NAME}.stdout" "just_platforms"
 

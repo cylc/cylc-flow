@@ -27,6 +27,9 @@ set_test_number 3
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+# Install the fake background job runner.
+cp -r "${TEST_SOURCE_DIR}/lib" "${WORKFLOW_RUN_DIR}"
+
 create_test_global_config '' "
     [scheduler]
         [[main loop]]
