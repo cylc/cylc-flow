@@ -1680,6 +1680,13 @@ with Conf('global.cylc', desc='''
                 the name of this platform group.
 
                 .. versionadded:: 8.0.0
+
+                .. note::
+
+                   Some job runners ("background", "at") require a single-host
+                   platform, because the job ID is only valid on the submission
+                   host.
+
             ''')
             with Conf('selection'):
                 Conf(

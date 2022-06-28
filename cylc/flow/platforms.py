@@ -30,7 +30,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
-
+from cylc.flow.parsec.config import ItemNotFoundError
 
 UNKNOWN_TASK = 'unknown task'
 
@@ -684,6 +684,10 @@ def _validate(platforms) -> None:
 
 def validate_platforms() -> None:
     """Check for invalid or inconsistent platforms config."""
-    _validate(
-        glbl_cfg(cached=True).get(['platforms'], sparse=True)
-    )
+    try:
+        _validate(
+            glbl_cfg(cached=True).get(['platforms'], sparse=True)
+        )
+    except ItemNotFoundError:
+        # no platforms defined
+        pass
