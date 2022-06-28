@@ -389,6 +389,12 @@ def test_parse_src_path(src_dir, monkeypatch):
         _parse_src_path('./flow.cylc')
     assert 'Not a valid workflow ID or source directory' in str(exc_ctx.value)
 
+    # suite.rc & flow.cylc both present:
+    (src_dir / 'suite.rc').touch()
+    with pytest.raises(WorkflowFilesError) as exc_ctx:
+        _parse_src_path(str(src_dir))
+    assert 'Both flow.cylc and suite.rc files' in str(exc_ctx.value)
+
 
 async def test_parse_ids_src_path(src_dir):
     workflows, src_path = await parse_ids_async(
