@@ -2000,8 +2000,9 @@ def warn_about_depr_platform(cfg):
             if depr:
                 msg = "\n".join(depr)
                 LOG.warning(
-                    f'Task {task_name}: deprecated "host" and "batch system"'
-                    f' use "platform".\n{msg}'
+                    "deprecated settings found "
+                    f"(please replace with [runtime][{task_name}]platform):"
+                    f"\n{msg}"
                 )
 
 
