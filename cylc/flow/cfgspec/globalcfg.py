@@ -737,7 +737,7 @@ with Conf('global.cylc', desc='''
 
                {REPLACES}``[suite logging]``.
         '''):
-            Conf('rolling archive length', VDR.V_INTEGER, 5, desc='''
+            Conf('rolling archive length', VDR.V_INTEGER, 15, desc='''
                 How many rolled logs to retain in the archive.
             ''')
             Conf('maximum size in bytes', VDR.V_INTEGER, 1000000, desc='''
