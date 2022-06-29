@@ -23,7 +23,27 @@ from typing import Any, Dict, Optional, Set
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES
+from cylc.flow.cfgspec.globalcfg import (
+    DIRECTIVES_DESCR,
+    DIRECTIVES_ITEM_DESCR,
+    EVENTS_SETTINGS,
+    EXECUTION_POLL_DESCR,
+    MAIL_DESCR,
+    MAIL_FOOTER_DESCR,
+    MAIL_FROM_DESCR,
+    MAIL_INTERVAL_DESCR,
+    MAIL_TO_DESCR,
+    MAIN_LOOP_DESCR,
+    MAIN_LOOP_PLUGIN_DESCR,
+    MAIN_LOOP_PLUGIN_INTERVAL_DESCR,
+    REPLACES,
+    SCHEDULER_DESCR,
+    SUBMISSION_POLL_DESCR,
+    SUBMISSION_RETY_DESCR,
+    TASK_EVENTS_DESCR,
+    TASK_EVENTS_SETTINGS,
+    UTC_MODE_DESCR,
+)
 import cylc.flow.flags
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
@@ -39,37 +59,29 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
-# Regex to strip `:Default For:` notices from docs imported from the global cfg
-DEFAULT_FOR = re.compile(r'.*:[Dd]efault [Ff]or:.*')
-
 # Cylc8 Deprecation note.
-DEPRECATION_WARN = '''
-.. deprecated:: 8.0.0
-
+REPLACED_BY_PLATFORMS = '''
 .. warning::
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
-
 
    This will be removed in a future version of Cylc 8.
 
    Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
 '''
 
-DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
-.. deprecated:: 8.0.0
 
-.. warning::
-
-   This config item has been moved to a platform setting in the
-   :cylc:conf:`global.cylc[platforms]` section. It will be used by the
-   automated platform upgrade mechanism and remove in a future version
-   of Cylc 8.
-
-   Ideally, as a user this should be set by your site admins
-   and you will only need to pick a suitable
-   :cylc:conf:`flow.cylc[runtime][<namespace>]platform`.
-'''
+def global_default(text: str, config_path: str) -> str:
+    """Insert a link to this config item's global counterpart after the first
+    paragraph of the description text. Also dedents.
+    """
+    first, sep, rest = dedent(text).partition('\n\n')
+    return (
+        f"{first}\n\n"
+        "The default value is set in the global config: "
+        f":cylc:conf:`global.cylc{config_path}`."
+        f"{sep}{rest}"
+    )
 
 
 def get_script_common_text(this: str, example: Optional[str] = None):
@@ -80,17 +92,17 @@ def get_script_common_text(this: str, example: Optional[str] = None):
     Other user-defined script items:
 
     ''')
-    for item in [
+    for item in (
         'init-script', 'env-script', 'pre-script', 'script', 'post-script',
         'err-script', 'exit-script'
-    ]:
+    ):
         if item != this:
             text += f"* :cylc:conf:`[..]{item}`\n"
     text += dedent(f'''
 
- Example::
+    Example::
 
-        {example if example else 'echo "Hello World"'}
+       {example if example else 'echo "Hello World"'}
     ''')
     return text
 
@@ -171,22 +183,12 @@ with Conf(
             "workflow-priority". An event handler could then respond to
             failure events in a way set by "workflow-priority".
         ''')
-    with Conf('scheduler', desc=f'''
-        Settings for the scheduler.
-        {REPLACES} ``[cylc]``
-    '''):
-        Conf('UTC mode', VDR.V_BOOLEAN, desc='''
-            If ``True``, UTC will be used as the time zone for timestamps in
-            the logs. If ``False``, the local/system time zone will be used.
-
-            This may also be set in the global config:
-            :cylc:conf:`global.cylc[scheduler]UTC mode`.
-
-            .. seealso::
-
-               To set a time zone for cycle points, see
-               :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-        ''')
+    with Conf('scheduler', desc=(
+        global_default(SCHEDULER_DESCR, "[scheduler]")
+    )):
+        Conf('UTC mode', VDR.V_BOOLEAN, desc=(
+            global_default(UTC_MODE_DESCR, "[scheduler]UTC mode")
+        ))
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
             Allow tasks in the graph that are not defined in
@@ -367,134 +369,79 @@ with Conf(
 
         with Conf(   # noqa: SIM117 (keep same format)
             'main loop',
-            desc='''
-                Allows the specification of main loop plugins for Cylc.
-
-                For a list of built in plugins see
-                :ref:`Main Loop Plugins <BuiltInPlugins>`.
-
-                .. versionadded:: 8.0.0
-            '''
+            desc=global_default(MAIN_LOOP_DESCR, "[scheduler][main loop]")
         ):
-            with Conf('<plugin name>'):
-                Conf('interval', VDR.V_INTERVAL, desc='''
-                    Interval (in seconds) at which the plugin is invoked.
-                ''')
+            with Conf('<plugin name>', desc=(
+                global_default(
+                    MAIN_LOOP_PLUGIN_DESCR,
+                    "[scheduler][main loop][<plugin name>]"
+                )
+            )):
+                Conf('interval', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        MAIN_LOOP_PLUGIN_INTERVAL_DESCR,
+                        "[scheduler][main loop][<plugin name>]interval"
+                    )
+                ))
 
         with Conf('events'):
-            # Note: default of None for V_STRING_LIST is used to differentiate
-            # between: value not set vs value set to empty
-            Conf('handlers', VDR.V_STRING_LIST, None, desc='''
-                Configure :term:`event handlers` that run when certain
-                workflow events occur.
+            for item, desc in EVENTS_SETTINGS.items():
+                desc = global_default(desc, f"[scheduler][events]{item}")
+                vdr_type = VDR.V_STRING_LIST
+                default: Any = Conf.UNSET
+                if item in {'handlers', 'handler events', 'mail events'}:
+                    # Note: default of None for V_STRING_LIST is used to
+                    # differentiate between not set vs set to empty
+                    default = None
+                elif item.endswith("handlers"):
+                    desc = desc + '\n\n' + dedent(rf'''
+                        Examples:
 
-                This section configures workflow event handlers; see
-                :cylc:conf:`flow.cylc[runtime][<namespace>][events]` for
-                task event handlers.
+                        .. code-block:: cylc
 
-                Event handlers can be held in the workflow ``bin/`` directory,
-                otherwise it is up to you to ensure their location is in
-                ``$PATH`` (in the shell in which the scheduler runs).
-                They should require little resource to run and return
-                quickly.
+                           # configure a single event handler
+                           {item} = echo foo
 
-                Template variables can be used to configure handlers.
-                For a full list of supported variables see
-                :ref:`workflow_event_template_variables`.
-            ''')
-            Conf('handler events', VDR.V_STRING_LIST, None, desc='''
-                Specify the events for which workflow event
-                handlers should be invoked.
-            ''')
-            Conf('mail events', VDR.V_STRING_LIST, None, desc='''
-                Specify the workflow events for which notification emails
-                should be sent.
-            ''')
+                           # provide context to the handler
+                           {item} = echo %(workflow)s
 
-            for item, desc in EVENTS_DESCR.items():
-                # strip the `:Default For:` lines
-                desc = DEFAULT_FOR.sub('', dedent(desc))
-                if item.endswith("handlers"):
-                    Conf(item, VDR.V_STRING_LIST, desc=(
-                        # add examples
-                        desc + '\n' + dedent(rf'''
-                            Examples:
-
-                            .. code-block:: cylc
-
-                               # configure a single event handler
-                               {item} = echo foo
-
-                               # provide context to the handler
-                               {item} = echo %(workflow)s
-
-                               # configure multiple event handlers
-                               {item} = \
-                                    'echo %(workflow)s, %(event)s', \
-                                    'my_exe %(event)s %(message)s' \
-                                    'curl -X PUT -d event=%(event)s host:port'
-                        ''')))
+                           # configure multiple event handlers
+                           {item} = \
+                               'echo %(workflow)s, %(event)s', \
+                               'my_exe %(event)s %(message)s' \
+                               'curl -X PUT -d event=%(event)s host:port'
+                    ''')
                 elif item.startswith("abort on"):
-                    Conf(item, VDR.V_BOOLEAN, desc=desc)
+                    vdr_type = VDR.V_BOOLEAN
                 elif item.endswith("timeout"):
-                    Conf(item, VDR.V_INTERVAL, desc=desc)
+                    vdr_type = VDR.V_INTERVAL
+                Conf(item, vdr_type, default, desc=desc)
 
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
                 (For Cylc developers writing a functional tests only)
                 List of tasks that are expected to fail in the test.
             ''')
 
-        with Conf('mail', desc='''
-            Settings for the scheduler to send event emails.
+        with Conf('mail', desc=(
+            global_default(MAIL_DESCR, "[scheduler][mail]")
+        )):
+            Conf('footer', VDR.V_STRING, desc=(
+                global_default(MAIL_FOOTER_DESCR, "[scheduler][mail]footer")
+            ))
+            Conf('to', VDR.V_STRING, desc=(
+                global_default(MAIL_TO_DESCR, "[scheduler][mail]to")
+            ))
+            Conf('from', VDR.V_STRING, desc=(
+                global_default(MAIL_FROM_DESCR, "[scheduler][mail]from")
+            ))
+            Conf('task event batch interval', VDR.V_INTERVAL, desc=(
+                global_default(
+                    MAIL_INTERVAL_DESCR,
+                    "[scheduler][mail]task event batch interval"
+                )
+            ))
 
-            These settings are used for both workflow and task events.
-
-            .. versionadded:: 8.0.0
-        '''):
-            Conf('footer', VDR.V_STRING, desc=f'''
-                Specify a string or string template for footers of
-                emails sent for both workflow and task events.
-
-                Template variables may be used in the mail footer. For a list
-                of supported variables see
-                :ref:`workflow_event_template_variables`.
-
-                Example:
-
-                ``mail footer = see http://ahost/%(owner)s/notes/%(workflow)s``
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES} ``[cylc][events]mail footer``.
-            ''')
-            Conf('to', VDR.V_STRING, desc=f'''
-                A list of email addresses that event notifications
-                should be sent to.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[cylc][events]mail to``.
-            ''')
-            Conf('from', VDR.V_STRING, desc=f'''
-                Specify an alternative ``from`` email address for workflow
-                event notifications.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[cylc][events]mail from``.
-            ''')
-            Conf('task event batch interval', VDR.V_INTERVAL, desc=f'''
-                Gather all task event notifications in the given interval
-                into a single email.
-
-                Useful to prevent being overwhelmed by emails.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[cylc]mail interval``.
-            ''')
-
-    with Conf('task parameters', desc='''
+    with Conf('task parameters', desc=f'''
         Set task parameters and parameter templates.
 
         Define parameter values here for use in expanding
@@ -502,8 +449,7 @@ with Conf(
 
         .. versionchanged:: 8.0.0
 
-           This section replaces ``[cylc][parameters]`` and
-           ``[cylc][parameter templates]``.
+           {REPLACES}``[cylc][parameters]``.
     '''):
         Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
             A custom parameter to use in a workflow.
@@ -514,12 +460,16 @@ with Conf(
             - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
             - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
         ''')
-        with Conf('templates', desc='''
+        with Conf('templates', desc=f'''
             Cylc will expand each parameterized task name using a string
             template.
 
             You can set templates for any parameter name here to override the
             default template.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[cylc][parameter templates]``.
         '''):
             Conf('<parameter>', VDR.V_STRING, desc='''
                 A template for a parameter.
@@ -850,7 +800,7 @@ with Conf(
 
                {REPLACES}``[runtime][dependencies][graph]``.
         '''):
-            Conf('<recurrence>', VDR.V_STRING, desc='''
+            Conf('<recurrence>', VDR.V_STRING, desc=f'''
                 The recurrence defines the sequence of cycle points
                 for which the dependency graph is valid.
 
@@ -945,6 +895,11 @@ with Conf(
 
                      # bar triggers if submission of foo fails
                      foo:submit-fail => bar
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}
+                   ``[runtime][dependencies][graph][<recurrence>]graph``.
             ''')
 
     with Conf('runtime',  # noqa: SIM117 (keep same format)
@@ -983,7 +938,6 @@ with Conf(
                Names may not contain ``:`` or ``.``.
 
                See :ref:`task namespace rules. <namespace-names>`
-
 
             Examples of legal values:
 
@@ -1120,39 +1074,13 @@ with Conf(
                    ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
             Conf(
-                'execution polling intervals',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc='''
-                    List of intervals at which to poll status of job execution.
-
-                    Cylc can poll running jobs to catch problems that prevent
-                    task messages from being sent back to the workflow, such
-                    as hard job kills, network outages, or unplanned job
-                    host shutdown.
-
-                    The last interval in the list is used repeatedly until
-                    the job completes.
-
-                    Multipliers can be used as shorthand as in the example
-                    below.
-
-                    Example::
-
-                       5*PT2M, PT5M
-
-                    Note that if the polling
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    communication method` is used then Cylc relies on polling
-                    to detect all task state changes, so you may want to
-                    configure more frequent polling.
-
-                    This config item overrides
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    execution polling intervals`
-                    '''
+                'execution polling intervals', VDR.V_INTERVAL_LIST, None,
+                desc=global_default(
+                    EXECUTION_POLL_DESCR,
+                    "[platforms][<platform name>]execution polling intervals"
+                )
             )
-            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
                 Cylc can automate resubmission of a failed task job.
 
                 Execution retry delays are a list of ISO 8601
@@ -1163,8 +1091,13 @@ with Conf(
                 variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
                 environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
                 behavior between submission attempts.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>][job]execution
+                   retry delays``.
             ''')
-            Conf('execution time limit', VDR.V_INTERVAL, desc='''
+            Conf('execution time limit', VDR.V_INTERVAL, desc=f'''
                 Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a task job.
 
@@ -1176,57 +1109,25 @@ with Conf(
                 poll the job multiple times. You can set polling
                 intervals using :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>][job]execution
+                   time limit``.
             ''')
             Conf(
-                'submission polling intervals',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc='''
-                    List of intervals at which to poll status of job
-                    submission.
-
-                    Cylc can poll submitted jobs to catch problems that
-                    prevent the submitted job from executing at all, such as
-                    deletion from an external job runner queue.
-
-                    The last value is used repeatedly until the task starts
-                    running.
-
-                    Multipliers can be used as shorthand as in the example
-                    below.
-
-                    Example::
-
-                       5*PT2M, PT5M
-
-                    Note that if the polling
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    communication method`
-                    is used then Cylc relies on polling to detect all task
-                    state changes,
-                    so you may want to configure more
-                    frequent polling.
-
-                    This config item overrides
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    submission polling intervals`.
-                    '''
+                'submission polling intervals', VDR.V_INTERVAL_LIST, None,
+                desc=global_default(
+                    SUBMISSION_POLL_DESCR,
+                    "[platforms][<platform name>]submission polling intervals"
+                )
             )
             Conf(
-                'submission retry delays',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc='''
-                    Cylc can automatically resubmit jobs after submission
-                    failures.
-
-                    A list of intervals which define when the scheduler will
-                    resubmit jobs if submission fails.
-
-                    This config item overrides
-                    :cylc:conf:`global.cylc[platforms][<platform name>]
-                    submission retry delays`
-                    '''
+                'submission retry delays', VDR.V_INTERVAL_LIST, None,
+                desc=global_default(
+                    SUBMISSION_RETY_DESCR,
+                    "[platforms][<platform name>]submission retry delays"
+                )
             )
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
@@ -1395,14 +1296,19 @@ with Conf(
                 ''')
 
             with Conf('job', desc=dedent('''
+                .. deprecated:: 8.0.0
+
                 This section configures the means by which cylc submits task
                 job scripts to run.
 
-            ''') + DEPRECATION_WARN):
+            ''') + REPLACED_BY_PLATFORMS):
                 Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
 
-            with Conf('remote', desc=DEPRECATION_WARN):
+            with Conf('remote', desc=dedent('''
+                .. deprecated:: 8.0.0
+
+            ''') + REPLACED_BY_PLATFORMS):
                 Conf('host', VDR.V_STRING)
                 # TODO: Convert URL to a stable or latest release doc after 8.0
                 # https://github.com/cylc/cylc-flow/issues/4663
@@ -1411,86 +1317,57 @@ with Conf(
 
                     .. seealso::
 
-                        `Documentation on changes to remote owner
-                        <https://cylc.github.io/cylc-doc/latest/html/
-                        7-to-8/major-changes/remote-owner.html>`_
+                       `Documentation on changes to remote owner
+                       <https://cylc.github.io/cylc-doc/latest/html/
+                       7-to-8/major-changes/remote-owner.html>`_
                 """)
                 Conf('retrieve job logs', VDR.V_BOOLEAN)
                 Conf('retrieve job logs max size', VDR.V_STRING)
                 Conf('retrieve job logs retry delays',
                      VDR.V_INTERVAL_LIST, None)
 
-            with Conf('events', desc='''
-                Configure :term:`event handlers` that run when certain task
-                events occur.
-
-                This section configures specific task event
-                handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
-                workflow event handlers.
-
-                Event handlers can be held in the workflow ``bin/`` directory,
-                otherwise it is up to you to ensure their location is in
-                ``$PATH`` (in the shell in which the scheduler runs).
-                They should require little resource to run and return
-                quickly.
-
-                Each task event handler can be specified as a list of command
-                lines or command line templates. For a full list of supported
-                template variables see :ref:`task_event_template_variables`.
-
-                For an explanation of the substitution syntax, see
-                `String Formatting Operations in the Python
-                documentation
-                <https://docs.python.org/3/library/stdtypes.html
-                #printf-style-string-formatting>`_.
-
-                Additional variables can be passed to event handlers using
-                :ref:`Jinja2 <User Guide Jinja2>`.
-                .
-            '''):
-                Conf('execution timeout', VDR.V_INTERVAL, desc='''
-                    If a task has not finished after the specified ISO 8601
-                    duration/interval, the *execution timeout* event
-                    handler(s) will be called.
-                ''')
-                Conf('handlers', VDR.V_STRING_LIST, None, desc='''
-                    Specify a list of command lines or command line templates
-                    as task event handlers.
-                ''')
-                Conf('handler events', VDR.V_STRING_LIST, None, desc='''
-                    Specify the events for which the general task event
-                    handlers should be invoked.
-
-                    Example:
-
-                    ``submission failed, failed``
-                ''')
-                Conf('handler retry delays', VDR.V_INTERVAL_LIST, None,
-                     desc='''
-                    Specify an initial delay before running an event handler
-                    command and any retry delays in case the command returns a
-                    non-zero code.
-
-                    The default behaviour is to run an event
-                    handler command once without any delay.
-
-                    Example:
-
-                    ``PT10S, PT1M, PT5M``
-                ''')
-                Conf('mail events', VDR.V_STRING_LIST, None, desc='''
-                    Specify the events for which notification emails should be
-                    sent.
-
-                    Example:
-
-                    ``submission failed, failed``
-                ''')
-                Conf('submission timeout', VDR.V_INTERVAL, desc='''
-                    If a task has not started after the specified ISO 8601
-                    duration/interval, the *submission timeout* event
-                    handler(s) will be called.
-                ''')
+            with Conf('events', desc=(
+                global_default(TASK_EVENTS_DESCR, "[task events]")
+            )):
+                Conf('execution timeout', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['execution timeout'],
+                        "[task events]execution timeout"
+                    )
+                ))
+                Conf('handlers', VDR.V_STRING_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['handlers'],
+                        "[task events]handlers"
+                    )
+                ))
+                Conf('handler events', VDR.V_STRING_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['handler events'],
+                        "[task events]handler events"
+                    )
+                ))
+                Conf('handler retry delays', VDR.V_INTERVAL_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['handler retry delays'],
+                        "[task events]handler retry delays"
+                    )
+                ))
+                Conf('mail events', VDR.V_STRING_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['mail events'],
+                        "[task events]mail events"
+                    )
+                ))
+                Conf('submission timeout', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['submission timeout'],
+                        "[task events]submission timeout"
+                    )
+                ))
+                # TODO: add descriptions for the handlers below. Some of them
+                # didn't have any mention in the Cylc 7 suiterc ref docs, but
+                # a look at git blame indicates none of them are new in Cylc 8.
                 Conf('expired handlers', VDR.V_STRING_LIST, None)
                 Conf('late offset', VDR.V_INTERVAL, None)
                 Conf('late handlers', VDR.V_STRING_LIST, None)
@@ -1647,31 +1524,13 @@ with Conf(
                        moved here.
                 ''')
 
-            with Conf('directives', desc='''
-                Job runner (batch scheduler) directives.
-
-                Supported for use with job runners:
-
-                - pbs
-                - slurm
-                - loadleveler
-                - lsf
-                - sge
-                - slurm_packjob
-                - moab
-
-                Directives are written to the top of the task job script
-                in the correct format for the job runner.
-
-                Specifying directives individually like this allows
-                use of default directives for task families which can be
-                individually overridden at lower levels of the runtime
-                namespace hierarchy.
-            '''):
-                Conf('<directive>', VDR.V_STRING, desc='''
-                    Example directives for the built-in job runner handlers
-                    are shown in :ref:`AvailableMethods`.
-                ''')
+            with Conf('directives', desc=(
+                global_default(
+                    DIRECTIVES_DESCR,
+                    "[platforms][<platform name>][directives]"
+                )
+            )):
+                Conf('<directive>', VDR.V_STRING, desc=DIRECTIVES_ITEM_DESCR)
 
             with Conf('outputs', desc='''
                 Register custom task outputs for use in message triggering in
