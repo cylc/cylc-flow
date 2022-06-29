@@ -20,6 +20,13 @@
 
 Reinstall a previously installed workflow.
 
+WARNING: this uninstalls previously-installed files that have since been
+removed from the source directory, by detecting files outside of the standard
+run sub-directory locations (share, work, log) that are not present in the
+source directory. If your workflow tasks write to the top level run directory,
+use the --no-delete option or (preferably) configure your .cylcignore file
+appropriately, to protect these files from deletion.
+
 Examples:
   # Having previously installed:
   $ cylc install myflow
@@ -61,12 +68,18 @@ def get_option_parser() -> COP:
     )
 
     parser.add_option(
-        "--delete", "-d",
-        help="Delete previously installed files that have been removed from"
-        " the source directory.",
+        "--no-delete", "-n",
+        help=(
+            "Do not delete files outside of the standard run sub-directories"
+            " (work, share, etc.) that are not present in the source"
+            " directory. NOTE: we recommend use of a .cylcignore file in the"
+            " source directory rather than this option, because that does"
+            " not prevent removal of previously-installed files that are"
+            " no longer needed."
+        ),
         action='store_true',
         default=False,
-        dest="delete"
+        dest="no_delete"
     )
 
     parser.add_cylc_rose_options()
@@ -131,7 +144,7 @@ def main(
         source=Path(source),
         named_run=workflow_id,
         rundir=run_dir,
-        delete=opts.delete,
+        delete=not opts.no_delete,
         dry_run=False  # TODO: ready for dry run implementation
     )
 
