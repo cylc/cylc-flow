@@ -46,6 +46,9 @@ in `global.cylc[install]source dirs`.
 
 ### Fixes
 
+[#4941](https://github.com/cylc/cylc-flow/pull/4941) - Fix job state for
+platform submit-failures.
+
 [#4926](https://github.com/cylc/cylc-flow/pull/4926) - Fix a docstring
 formatting problem presenting in the UI mutation flow argument info.
 
