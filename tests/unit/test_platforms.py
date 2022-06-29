@@ -28,7 +28,7 @@ from cylc.flow.platforms import (
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
     generic_items_match,
-    _validate
+    _validate_single_host
 )
 from cylc.flow.exceptions import (
     PlatformLookupError,
@@ -189,9 +189,15 @@ def test_platform_not_there():
         platform_from_name('moooo', PLATFORMS)
 
 
-def test_invalid_platforms():
+@pytest.mark.parametrize(
+    'platform',
+    [
+        {i: j} for i, j in PLATFORMS_INVALID.items()
+    ]
+)
+def test_invalid_platforms(platform):
     with pytest.raises(GlobalConfigError):
-        _validate(PLATFORMS_INVALID)
+        _validate_single_host(platform)
 
 
 def test_similar_but_not_exact_match():

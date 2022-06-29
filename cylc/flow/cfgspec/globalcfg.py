@@ -1866,7 +1866,8 @@ class GlobalConfig(ParsecConfig):
 
         self._set_default_editors()
         self._no_platform_group_name_overlap()
-        validate_platforms()
+        with suppress(KeyError):
+            validate_platforms(self.sparse['platforms'])
 
     def _validate_source_dirs(self) -> None:
         """Check source dirs are absolute paths."""

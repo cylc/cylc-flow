@@ -18,7 +18,6 @@
 
 import random
 import re
-from contextlib import suppress
 from copy import deepcopy
 from typing import (
     Any, Dict, Iterable, List, Optional, Tuple, Set, Union, overload
@@ -41,6 +40,7 @@ FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
     ('job', 'batch submit command template', [None])
 )
 
+DEFAULT_JOB_RUNNER = 'background'
 SINGLE_HOST_JOB_RUNNERS = ['background', 'at']
 
 # Regex to check whether a string is a command
@@ -664,28 +664,34 @@ def get_localhost_install_target() -> str:
     return get_install_target_from_platform(localhost)
 
 
-def _validate(platforms) -> None:
-    """Check for invalid or inconsistent platforms config.
+def _validate_single_host(platforms_cfg) -> None:
+    """Check that single-host platforms only specify a single host.
 
-    Some job runners require a single host (where job ID is only valid on the
-    specific submission host.)
+    Some job runners don't work across multiple hosts; the job ID is only valid
+    on the specific submission host.
     """
     bad_platforms = []
-    for name, deets in platforms.items():
-        runner = deets.get('job runner', 'background')
-        hosts = deets.get('hosts', [])
+    runners = set()
+    for name, config in platforms_cfg.items():
+        runner = config.get('job runner', DEFAULT_JOB_RUNNER)
+        hosts = config.get('hosts', [])
         if runner in SINGLE_HOST_JOB_RUNNERS and len(hosts) > 1:
             bad_platforms.append((name, runner, hosts))
+            runners.add(runner)
     if bad_platforms:
-        msg = '"background" and "at" are single-host job runners:'
+        if len(runners) > 1:
+            grammar = ["are", "s"]
+        else:
+            grammar = ["is a", ""]
+        msg = (
+            f"{', '.join(runners)} {grammar[0]} single-host"
+            f" job runner{grammar[1]}:"
+        )
         for name, runner, hosts in bad_platforms:
-            msg += f'\n * {name} {runner} hosts: {", ".join(hosts)}'
+            msg += f'\n * Platform {name} ({runner}) hosts: {", ".join(hosts)}'
         raise GlobalConfigError(msg)
 
 
-def validate_platforms() -> None:
+def validate_platforms(platforms_cfg: Dict[str, Any]) -> None:
     """Check for invalid or inconsistent platforms config."""
-    with suppress(ItemNotFoundError):
-        _validate(
-            glbl_cfg(cached=True).get(['platforms'], sparse=True)
-        )
+    _validate_single_host(platforms_cfg)
