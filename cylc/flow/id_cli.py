@@ -23,7 +23,6 @@ from typing import Optional, Dict, List, Tuple, Any
 from cylc.flow import LOG
 from cylc.flow.exceptions import (
     InputError,
-    WorkflowFilesError,
 )
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.id import (
@@ -38,7 +37,6 @@ from cylc.flow.network.scan import (
     scan,
 )
 from cylc.flow.workflow_files import (
-    NO_FLOW_FILE_MSG,
     check_flow_file,
     detect_both_flow_and_suite,
     get_flow_file,
@@ -534,9 +532,6 @@ def _parse_src_path(id_):
     if not src_dir_path.is_dir():
         raise InputError(f'Path is not a source directory: {src_dir_path}')
 
-    try:
-        src_file_path = check_flow_file(src_dir_path)
-    except WorkflowFilesError:
-        raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
+    src_file_path = check_flow_file(src_dir_path)
 
     return src_dir_path.name, src_dir_path, src_file_path
