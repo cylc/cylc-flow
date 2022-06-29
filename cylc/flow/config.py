@@ -164,13 +164,6 @@ class WorkflowConfig:
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
     VIS_N_POINTS = 3
 
-    CYLC7_GRAPH_COMPAT_MSG = (
-        "Note there are key changes to graph branching and stall behaviour "
-        "when renaming to 'flow.cylc'. Please refer to the docs: "
-        "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
-        "#optional-and-expected-task-outputs"
-    )
-
     def __init__(
         self,
         workflow: str,
@@ -2011,8 +2004,6 @@ class WorkflowConfig:
                 sections.append((section, value))
 
         # Parse and process each graph section.
-        if cylc.flow.flags.cylc7_back_compat:
-            LOG.warning(self.__class__.CYLC7_GRAPH_COMPAT_MSG)
         task_triggers = {}
         task_output_opt = {}
         for section, graph in sections:

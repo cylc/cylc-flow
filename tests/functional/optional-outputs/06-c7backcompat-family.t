@@ -18,7 +18,7 @@
 # Cylc 7 stall backward compatibility, complex family case.
 
 . "$(dirname "$0")/test_header"
-set_test_number 13
+set_test_number 12
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -29,10 +29,6 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 DEPR_MSG_1=$(python -c \
   'from cylc.flow.workflow_files import SUITERC_DEPR_MSG; print(SUITERC_DEPR_MSG)')
 grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
-
-DEPR_MSG_2=$(python -c \
-  'from cylc.flow.config import WorkflowConfig as cfg; print(cfg.CYLC7_GRAPH_COMPAT_MSG);')
-grep_ok "${DEPR_MSG_2}" "${TEST_NAME}.stderr"
 
 # Should stall and abort with unsatisfied "stall" tasks.
 workflow_run_fail "${TEST_NAME_BASE}-run" \
