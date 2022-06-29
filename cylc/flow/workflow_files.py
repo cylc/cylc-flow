@@ -1426,7 +1426,7 @@ def _open_install_log(rund, logger):
     logger.addHandler(handler)
 
 
-def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
+def get_rsync_rund_cmd(src, dst, delete=False, dry_run=False):
     """Create and return the rsync command used for cylc install/re-install.
 
     Args:
@@ -1434,8 +1434,8 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
             file path location of source directory
         dst (str):
             file path location of destination directory
-        reinstall (bool):
-            indicate reinstall (--delete option added)
+        delete (bool):
+            add --delete option added (for reinstall)
         dry-run (bool):
             indicate dry-run, rsync will not take place but report output if a
             real run were to be executed
@@ -1447,7 +1447,7 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
     rsync_cmd = ["rsync"] + DEFAULT_RSYNC_OPTS
     if dry_run:
         rsync_cmd.append("--dry-run")
-    if reinstall:
+    if delete:
         rsync_cmd.append('--delete')
     for exclude in [
         '.git',
@@ -1476,6 +1476,7 @@ def reinstall_workflow(
     source: Path,
     named_run: str,
     rundir: Path,
+    delete: bool = False,
     dry_run: bool = False
 ) -> None:
     """Reinstall workflow.
@@ -1493,7 +1494,7 @@ def reinstall_workflow(
     reinstall_log.info(f"Reinstalling \"{named_run}\", from "
                        f"\"{source}\" to \"{rundir}\"")
     rsync_cmd = get_rsync_rund_cmd(
-        source, rundir, reinstall=True, dry_run=dry_run)
+        source, rundir, delete=delete, dry_run=dry_run)
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
@@ -1506,8 +1507,9 @@ def reinstall_workflow(
             f"An error occurred when copying files from {source} to {rundir}")
         reinstall_log.warning(f" Error: {stderr}")
     check_flow_file(rundir)
-    reinstall_log.info(f'REINSTALLED {named_run} from {source}')
-    print(f'REINSTALLED {named_run} from {source}')
+    msg = f'REINSTALLED {named_run} from {source}'
+    reinstall_log.info(msg)
+    print(msg)
     close_log(reinstall_log)
 
 

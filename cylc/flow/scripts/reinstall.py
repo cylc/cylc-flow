@@ -60,6 +60,15 @@ def get_option_parser() -> COP:
         __doc__, comms=True, argdoc=[WORKFLOW_ID_ARG_DOC]
     )
 
+    parser.add_option(
+        "--delete", "-d",
+        help="Delete previously installed files that have been removed from"
+        " the source directory.",
+        action='store_true',
+        default=False,
+        dest="delete"
+    )
+
     parser.add_cylc_rose_options()
     try:
         # If cylc-rose plugin is available
@@ -122,6 +131,7 @@ def main(
         source=Path(source),
         named_run=workflow_id,
         rundir=run_dir,
+        delete=opts.delete,
         dry_run=False  # TODO: ready for dry run implementation
     )
 
