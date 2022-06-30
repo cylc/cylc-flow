@@ -338,22 +338,11 @@ To start a new run, stop the old one first with one or more of these:
 * ssh -n "%(host)s" kill %(pid)s   # final brute force!
 """
 
-SUITERC_DEPR_MSG = (
-    "Backward compatibility mode ON for CYLC 7"
-    f" '{WorkflowFiles.SUITE_RC}' config files."
-    " When ready to upgrade, rename the file to"
-    f" {WorkflowFiles.FLOW_FILE} then address "
-    "any resulting validation errors and warnings."
-)
+SUITERC_DEPR_MSG = "Backward compatibility mode ON"
 
 NO_FLOW_FILE_MSG = (
     f"No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "
     "in {}"
-)
-
-REG_CLASH_MSG = (
-    "The specified reg could refer to ./{0} or ~/cylc-run/{1}. "
-    "This command will use ./{0}."
 )
 
 NESTED_DIRS_MSG = (
