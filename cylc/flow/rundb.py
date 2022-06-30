@@ -188,6 +188,7 @@ class CylcWorkflowDAO:
     TABLE_TASKS_TO_HOLD = "tasks_to_hold"
     TABLE_XTRIGGERS = "xtriggers"
     TABLE_ABS_OUTPUTS = "absolute_outputs"
+    TABLE_REMOTE_INIT = "remote_init"
 
     TABLES_ATTRS = {
         TABLE_BROADCAST_EVENTS: [
@@ -310,6 +311,10 @@ class CylcWorkflowDAO:
         TABLE_TASKS_TO_HOLD: [
             ["name"],
             ["cycle"],
+        ],
+        TABLE_REMOTE_INIT: [
+            ["install_target", {"is_primary_key": True}],
+            ["status"],
         ],
     }
 
@@ -697,6 +702,27 @@ class CylcWorkflowDAO:
                 platform_name
             FROM
                 {self.TABLE_TASK_JOBS}
+        '''  # nosec (table name is code constant)
+        return {i[0] for i in self.connect().execute(stmt)}
+
+    def select_install_targets_to_clean(self):
+        """Return install targets onto which a workflow has installed files.
+
+        Use this to determine which install targets require remote clean.
+        """
+        from cylc.flow.task_remote_mgr import REMOTE_INIT_CHANGES_MADE
+        statuses = ", ".join(
+            f'"{status}"'
+            for status in REMOTE_INIT_CHANGES_MADE
+        )
+        print(statuses)
+        stmt = rf'''
+            SELECT
+                install_target
+            FROM
+                {self.TABLE_REMOTE_INIT}
+            WHERE
+                status in ( {statuses} )
         '''  # nosec (table name is code constant)
         return {i[0] for i in self.connect().execute(stmt)}
 

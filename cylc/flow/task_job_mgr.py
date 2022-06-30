@@ -90,13 +90,15 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUCCEEDED
 )
 from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_255,
     REMOTE_FILE_INSTALL_DONE,
     REMOTE_FILE_INSTALL_FAILED,
     REMOTE_FILE_INSTALL_IN_PROGRESS,
-    REMOTE_INIT_IN_PROGRESS,
     REMOTE_INIT_255,
-    REMOTE_FILE_INSTALL_255,
-    REMOTE_INIT_DONE, REMOTE_INIT_FAILED,
+    REMOTE_INIT_DONE,
+    REMOTE_INIT_FAILED,
+    REMOTE_INIT_IN_PROGRESS,
+    REMOTE_INIT_NO_HOSTS,
     TaskRemoteMgr
 )
 from cylc.flow.task_state import (
@@ -152,7 +154,11 @@ class TaskJobManager:
         self.bad_hosts = bad_hosts
         self.bad_hosts_to_clear = set()
         self.task_remote_mgr = TaskRemoteMgr(
-            workflow, proc_pool, self.bad_hosts)
+            workflow,
+            proc_pool,
+            self.bad_hosts,
+            workflow_db_mgr.put_remote_init_item,
+        )
 
     def check_task_jobs(self, workflow, task_pool):
         """Check submission and execution timeout and polling timers.
@@ -453,7 +459,9 @@ class TaskJobManager:
                 continue
 
             if ri_map[install_target] in {
-                REMOTE_INIT_FAILED, REMOTE_FILE_INSTALL_FAILED
+                REMOTE_INIT_FAILED,
+                REMOTE_FILE_INSTALL_FAILED,
+                REMOTE_INIT_NO_HOSTS,
             }:
                 # Remote init or install failed. Set submit-failed for all
                 # affected tasks and remove target from remote init map

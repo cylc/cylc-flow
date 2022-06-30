@@ -69,12 +69,30 @@ if TYPE_CHECKING:
 # Remote installation literals
 REMOTE_INIT_DONE = 'REMOTE INIT DONE'
 REMOTE_INIT_FAILED = 'REMOTE INIT FAILED'
+REMOTE_INIT_NO_HOSTS = 'REMOTE INIT FAILED - NO AVAILABLE HOSTS'
 REMOTE_INIT_IN_PROGRESS = 'REMOTE INIT IN PROGRESS'
 REMOTE_FILE_INSTALL_DONE = 'REMOTE FILE INSTALL DONE'
 REMOTE_FILE_INSTALL_IN_PROGRESS = 'REMOTE FILE INSTALL IN PROGRESS'
 REMOTE_FILE_INSTALL_FAILED = 'REMOTE FILE INSTALL FAILED'
 REMOTE_INIT_255 = 'REMOTE INIT 255'
 REMOTE_FILE_INSTALL_255 = 'REMOTE FILE INSTALL 255'
+
+# the set of remote init states for which files will have or may have been
+# installed onto the install target
+# (used to determine when remote clean should be attempted)
+REMOTE_INIT_CHANGES_MADE = {
+    # remote init completed
+    REMOTE_INIT_DONE,
+    # remote init in progress - files may have been installed
+    REMOTE_INIT_IN_PROGRESS,
+    REMOTE_FILE_INSTALL_IN_PROGRESS,
+    # remote init failed - files may have been installed
+    REMOTE_FILE_INSTALL_FAILED,
+    REMOTE_INIT_FAILED,
+    # file install failed - the first step (i.e. the remote init) must have
+    # succeeded for the file install to have started
+    REMOTE_FILE_INSTALL_255,
+}
 
 
 class RemoteTidyQueueTuple(NamedTuple):
@@ -83,16 +101,35 @@ class RemoteTidyQueueTuple(NamedTuple):
     proc: 'Popen[str]'
 
 
+class RIMap(dict):
+    """Remote-init map.
+
+    The mapping which stores the status of remote-init operations on install
+    targets consisting of install_target:status pairs.
+
+    This is a reactive dictionary, remote init statuses are automatically
+    queued for DB write when updated.
+    """
+
+    def __init__(self, update, *args, **kwargs):
+        self._update = update
+        dict.__init__(self, *args, **kwargs)
+
+    def __setitem__(self, key, value):
+        dict.__setitem__(self, key, value)
+        self._update(key, value)
+
+
 class TaskRemoteMgr:
     """Manage task job remote initialisation, tidy, selection."""
 
-    def __init__(self, workflow, proc_pool, bad_hosts):
+    def __init__(self, workflow, proc_pool, bad_hosts, put_remote_init_item):
         self.workflow = workflow
         self.proc_pool = proc_pool
         # self.remote_command_map = {command: host|PlatformError|None}
         self.remote_command_map = {}
         # self.remote_init_map = {(install target): status, ...}
-        self.remote_init_map = {}
+        self.remote_init_map = RIMap(put_remote_init_item)
         self.uuid_str = None
         # This flag is turned on when a host init/select command completes
         self.ready = False
@@ -237,7 +274,7 @@ class TaskRemoteMgr:
                 )
             )
             self.remote_init_map[
-                platform['install target']] = REMOTE_INIT_FAILED
+                platform['install target']] = REMOTE_INIT_NO_HOSTS
             self.bad_hosts -= set(platform['hosts'])
             self.ready = True
         else:

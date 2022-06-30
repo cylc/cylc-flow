@@ -187,6 +187,12 @@ class WorkflowDatabaseManager:
         """Delete workflow stop task from workflow_params table."""
         self.delete_workflow_params(self.KEY_STOP_TASK)
 
+    def delete_remote_init_item(self, install_target):
+        self.db_deletes_map.setdefault(CylcWorkflowDAO.TABLE_REMOTE_INIT, [])
+        self.db_deletes_map[CylcWorkflowDAO.TABLE_REMOTE_INIT].append(
+            {'install_target': install_target}
+        )
+
     def get_pri_dao(self):
         """Return the primary DAO."""
         return CylcWorkflowDAO(self.pri_path)
@@ -626,6 +632,14 @@ class WorkflowDatabaseManager:
         self.db_updates_map.setdefault(self.TABLE_TASK_OUTPUTS, [])
         self.db_updates_map[self.TABLE_TASK_OUTPUTS].append(
             (set_args, where_args))
+
+    def put_remote_init_item(self, install_target: str, status: str) -> None:
+        """Insert or update a remote init / fileinstall status."""
+        self.db_inserts_map.setdefault(CylcWorkflowDAO.TABLE_REMOTE_INIT, [])
+        self.db_inserts_map[CylcWorkflowDAO.TABLE_REMOTE_INIT].append({
+            'install_target': install_target,
+            'status': status,
+        })
 
     def _put_update_task_x(self, table_name, itask, set_args):
         """Put UPDATE statement for a task_* table."""

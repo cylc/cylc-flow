@@ -65,6 +65,8 @@ from cylc.flow.platforms import (
     get_host_from_platform,
     get_install_target_to_platforms_map,
     get_localhost_install_target,
+    get_install_target_from_platform,
+    get_platform,
 )
 from cylc.flow.hostuserutil import (
     get_user,
@@ -785,7 +787,7 @@ def init_clean(reg: str, opts: 'Values') -> None:
     if not opts.local_only:
         platform_names = None
         try:
-            platform_names = get_platforms_from_db(local_run_dir)
+            install_target_map = get_platforms_from_db(local_run_dir)
         except FileNotFoundError:
             if opts.remote_only:
                 raise ServiceFileError(
@@ -797,10 +799,15 @@ def init_clean(reg: str, opts: 'Values') -> None:
             )
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot clean {reg} - {exc}")
+        except PlatformLookupError as exc:
+            raise PlatformLookupError(
+                f"Cannot clean {reg} on remote platforms as the workflow"
+                " database is out of date/inconsistent with the global config"
+                f" - {exc}")
 
-        if platform_names and platform_names != {'localhost'}:
+        if install_target_map and install_target_map != {'localhost'}:
             remote_clean(
-                reg, platform_names, opts.rm_dirs, opts.remote_timeout
+                reg, install_target_map, opts.rm_dirs, opts.remote_timeout
             )
 
     if not opts.remote_only:
@@ -968,7 +975,7 @@ def _clean_using_glob(
 
 def remote_clean(
     reg: str,
-    platform_names: Iterable[str],
+    install_targets_map,
     rm_dirs: Optional[List[str]] = None,
     timeout: str = '120'
 ) -> None:
@@ -982,13 +989,6 @@ def remote_clean(
         rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling.
     """
-    try:
-        install_targets_map = (
-            get_install_target_to_platforms_map(platform_names))
-    except PlatformLookupError as exc:
-        raise PlatformLookupError(
-            f"Cannot clean {reg} on remote platforms as the workflow database "
-            f"is out of date/inconsistent with the global config - {exc}")
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(
         _remote_clean_cmd, reg=reg, rm_dirs=rm_dirs, timeout=timeout
@@ -1167,6 +1167,9 @@ def get_platforms_from_db(run_dir):
     """Load the set of names of platforms (that jobs ran on) from the
     workflow database.
 
+    Note this filters out any platforms on which remote-init had not made
+    any changes (e.g. total failure).
+
     Args:
         run_dir (str): The workflow run directory.
     """
@@ -1176,9 +1179,22 @@ def get_platforms_from_db(run_dir):
     try:
         pri_dao = workflow_db_mgr.get_pri_dao()
         platform_names = pri_dao.select_task_job_platforms()
-        return platform_names
+        install_targets = pri_dao.select_install_targets_to_clean()
     finally:
         pri_dao.close()
+
+    install_target_map = (
+        get_install_target_to_platforms_map(platform_names)
+    )
+
+    for install_target in set(install_target_map) - set(install_targets):
+        LOG.debug(
+            f'skipping install target {install_target}'
+            ' - remote init not attempted'
+        )
+        install_target_map.pop(install_target)
+
+    return install_target_map
 
 
 def check_deprecation(path, warn=True):
