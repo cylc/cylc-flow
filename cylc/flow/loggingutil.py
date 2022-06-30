@@ -172,9 +172,7 @@ class RotatingLogFileHandler(logging.FileHandler):
     def load_type_change(self):
         """Has there been a load-type change, e.g. restart?"""
         current_load_type = self.get_load_type()
-
         existing_load_type = self.existing_log_load_type()
-#        current_load_type = self.get_load_type() #  moved this down here
         # Rollover if the load type has changed.
         if existing_load_type and current_load_type != existing_load_type:
             return True
@@ -193,9 +191,6 @@ class RotatingLogFileHandler(logging.FileHandler):
 
     def should_rollover(self, record):
         """Should rollover?"""
-        # for header_record in self.header_records:
-        #     if "restart_flag" in header_record.__dict__:
-        #         return True
         if (self.stream is None or
                 self.load_type_change() or
                 self.log_num is None):
@@ -215,15 +210,12 @@ class RotatingLogFileHandler(logging.FileHandler):
 
     def get_load_type(self):
         """Establish current load type, as perceived by scheduler."""
-      #  print(f"{self.restart_num}.........in get load type ")
         if self.restart_num > 0:
             return RESTART_LOAD_TYPE
         return START_LOAD_TYPE
 
     def do_rollover(self):
         """Create and rollover log file if necessary."""
-    #    self.get_log_info()
-        self.set_log_num()
         # Generate new file name
         filename = self.get_new_log_filename()
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -279,11 +271,9 @@ class RotatingLogFileHandler(logging.FileHandler):
         load_type = self.get_load_type()
         if load_type == START_LOAD_TYPE:
             run_num = 1
-            #start_num = 1
         elif load_type == RESTART_LOAD_TYPE:
-           # start_num = self.restart_num + 1
-           run_num = self.restart_num + 1 
-       # self.log_num = self.get_log_info()
+            run_num = self.restart_num + 1
+        self.set_log_num()
         filename = base_dir.joinpath(
             f'{self.log_num:02d}-{load_type}-{run_num:02d}{LOG_FILE_EXTENSION}'
         )
@@ -298,30 +288,7 @@ class RotatingLogFileHandler(logging.FileHandler):
                 self.log_num = 1
         else:
             self.log_num = int(self.log_num) + 1
-        # try:
-        #     current_log = os.readlink(self.baseFilename)
-        #     log_num = int(get_next_log_number(current_log))
-        #     log_type = self.get_log_load_type(current_log)
-        # except OSError:
-        #     return 1
 
-# def get_log_name_parts(log:str):
-#     """Returns the load type of the given log
-#         Examples:
-#     >>> get_log_name_parts('path/to/log/199-restart-887.log')
-#         ('199', 'restart', '887')
-#     >>> get_log_name_parts('01-restart-02.log')
-#         ('01', 'restart', '02')
-#     >>> get_log_name_parts('19-start-20.cylc')
-#         ('19', 'start', '20')
-#     >>> get_log_name_parts('blah')
-#     """
-#     try:
-#         log_file = Path(log).name
-#         filename = re.match('(\d+)-(start|restart)-(\d+)', log_file)
-#         return (filename[1], filename[2], filename[3])
-#     except TypeError:
-#         return None
 
 class ReferenceLogFileHandler(logging.FileHandler):
     """A handler class which writes filtered reference logging records

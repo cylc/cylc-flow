@@ -43,9 +43,6 @@ changes. Remote file installation logs are now per install target.
 [#4938](https://github.com/cylc/cylc-flow/pull/4938) - Detect bad Platforms
 config: background and at job runners should have a single host.
 
-[#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
-error messages when workflow CLI commands fail.
-
 [#4877](https://github.com/cylc/cylc-flow/pull/4877) - Upgrade the version of
 Jinja2 used by Cylc from 2.11 to 3.0.
 
