@@ -24,6 +24,8 @@ export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 #-------------------------------------------------------------------------------
 set_test_number 4
 
+# Uses a fake background job runner to get around the single host restriction.
+
 create_test_global_config "" "
 [platforms]
     [[goodhostplatform]]
@@ -32,6 +34,7 @@ create_test_global_config "" "
         retrieve job logs = True
 
     [[mixedhostplatform]]
+        job runner = my_background
         hosts = unreachable_host, ${CYLC_TEST_HOST}
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
@@ -41,6 +44,9 @@ create_test_global_config "" "
 #-------------------------------------------------------------------------------
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+# Install the fake background job runner.
+cp -r "${TEST_SOURCE_DIR}/lib" "${WORKFLOW_RUN_DIR}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 

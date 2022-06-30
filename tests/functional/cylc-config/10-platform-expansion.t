@@ -27,6 +27,7 @@ cat > "global.cylc" <<__HEREDOC__
         baz\d\d, qux\S\S \
     ]]
         hosts = of_melkor, of_valar
+        job runner = slurm
 __HEREDOC__
 
 export CYLC_CONF_PATH="${PWD}"

@@ -26,6 +26,7 @@ from pkg_resources import parse_version
 
 from cylc.flow import LOG
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.platforms import validate_platforms
 from cylc.flow.exceptions import GlobalConfigError
 from cylc.flow.hostuserutil import get_user_home
 from cylc.flow.network.client_factory import CommsMeth
@@ -1679,6 +1680,13 @@ with Conf('global.cylc', desc='''
                 the name of this platform group.
 
                 .. versionadded:: 8.0.0
+
+                .. note::
+
+                   Some job runners ("background", "at") require a single-host
+                   platform, because the job ID is only valid on the submission
+                   host.
+
             ''')
             with Conf('selection'):
                 Conf(
@@ -1858,6 +1866,8 @@ class GlobalConfig(ParsecConfig):
 
         self._set_default_editors()
         self._no_platform_group_name_overlap()
+        with suppress(KeyError):
+            validate_platforms(self.sparse['platforms'])
 
     def _validate_source_dirs(self) -> None:
         """Check source dirs are absolute paths."""
