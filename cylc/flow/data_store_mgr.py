@@ -1146,7 +1146,18 @@ class DataStoreMgr:
         update_time = time()
         tp_tokens = Tokens(tp_id)
         j_tokens = tp_tokens.duplicate(job=str(sub_num))
-        j_id = j_tokens.id
+        j_id, job = self.store_node_fetcher(
+            j_tokens['task'],
+            j_tokens['cycle'],
+            j_tokens['job'],
+        )
+        if job:
+            # Job already exists (i.e. post-submission submit failure)
+            return
+
+        if status not in JOB_STATUS_SET:
+            status = TASK_STATUS_PREPARING
+
         j_buf = PbJob(
             stamp=f'{j_id}@{update_time}',
             id=j_id,
@@ -1207,6 +1218,13 @@ class DataStoreMgr:
             platform_name
         ) = row
 
+        tp_id, tproxy = self.store_node_fetcher(name, point_string)
+        if not tproxy:
+            return
+        tp_tokens = Tokens(tp_id)
+        j_tokens = tp_tokens.duplicate(job=str(submit_num))
+        j_id = j_tokens.id
+
         if run_status is not None:
             if run_status == 0:
                 status = TASK_STATUS_SUCCEEDED
@@ -1222,12 +1240,6 @@ class DataStoreMgr:
         else:
             status = TASK_STATUS_PREPARING
 
-        tp_id, tproxy = self.store_node_fetcher(name, point_string)
-        if not tproxy:
-            return
-        tp_tokens = Tokens(tp_id)
-        j_tokens = tp_tokens.duplicate(job=str(submit_num))
-        j_id = j_tokens.id
         try:
             update_time = time()
             j_buf = PbJob(
