@@ -782,30 +782,44 @@ def init_clean(reg: str, opts: 'Values') -> None:
     # Parse --rm option to make sure it's valid
     rm_dirs = parse_rm_dirs(opts.rm_dirs) if opts.rm_dirs else None
 
+    remote_clean_failed = False
+    err = ""
     if not opts.local_only:
         platform_names = None
         try:
             platform_names = get_platforms_from_db(local_run_dir)
         except FileNotFoundError:
-            if opts.remote_only:
-                raise ServiceFileError(
-                    f"No workflow database for {reg} - cannot perform "
-                    "remote clean"
-                )
-            LOG.info(
-                f"No workflow database for {reg} - will only clean locally"
+            remote_clean_failed = True
+            err = (
+                f"No workflow database for {reg} - cannot perform "
+                "remote clean"
             )
         except ServiceFileError as exc:
-            raise ServiceFileError(f"Cannot clean {reg} - {exc}")
+            remote_clean_failed = True
+            err = f"Cannot clean {reg} - {exc}"
+        else:
+            if platform_names and platform_names != {'localhost'}:
+                try:
+                    remote_clean(
+                        reg, platform_names, opts.rm_dirs, opts.remote_timeout
+                    )
+                except (PlatformLookupError, CylcError) as exc:
+                    remote_clean_failed = True
+                    err = str(exc)
 
-        if platform_names and platform_names != {'localhost'}:
-            remote_clean(
-                reg, platform_names, opts.rm_dirs, opts.remote_timeout
-            )
-
-    if not opts.remote_only:
-        # Must be after remote clean
-        clean(reg, local_run_dir, rm_dirs)
+    if opts.remote_only:
+        if remote_clean_failed:
+            raise CylcError(err)
+    else:
+        if remote_clean_failed:
+            # Deleting the db would prohibit future remote cleaning (e.g. if
+            # the remote host was temporarily down).
+            LOG.error(err)
+            raise CylcError(
+                f"Not cleaning {reg} locally because remote clean failed.")
+        else:
+            # Clean locally - must be done after remote.
+            clean(reg, local_run_dir, rm_dirs)
 
 
 def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
