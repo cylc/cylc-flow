@@ -1224,7 +1224,7 @@ def test_success_after_optional_submit(tmp_flow_config, graph):
     ]
 )
 @pytest.mark.parametrize(
-    'cylc7_compat, rose_suite_conf, expected_exc, extra_msg',
+    'cylc7_compat, rose_suite_conf, expected_exc, extra_msg_expected',
     [
         pytest.param(
             False, False, WorkflowConfigError, True,
@@ -1249,7 +1249,7 @@ def test_implicit_tasks(
     cylc7_compat: bool,
     rose_suite_conf: bool,
     expected_exc: Optional[Type[Exception]],
-    extra_msg: bool,
+    extra_msg_expected: bool,
     caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
     monkeypatch: pytest.MonkeyPatch,
@@ -1264,8 +1264,8 @@ def test_implicit_tasks(
         rose_suite_conf: Whether a rose-suite.conf file is present in run dir.
         expected_exc: Exception expected to be raised only when
             "[scheduler]allow implicit tasks" is not set.
-        extra_msg: If True, there should be the note on how to allow implicit
-            tasks in the err msg.
+        extra_msg_expected: If True, there should be the note on how to allow
+            implicit tasks in the err msg.
     """
     # Setup
     reg = 'rincewind'
@@ -1287,14 +1287,16 @@ def test_implicit_tasks(
         expected_exc = None
     elif allow_implicit_tasks is False:
         expected_exc = WorkflowConfigError
+    extra_msg_expected &= (allow_implicit_tasks is None)
     # Test
     args: dict = {'workflow': reg, 'fpath': flow_file, 'options': None}
     expected_msg = r"implicit tasks detected.*"
-    if allow_implicit_tasks is not False and extra_msg:
-        expected_msg += r"[\s\S]*To allow implicit tasks.*"
     if expected_exc:
-        with pytest.raises(expected_exc, match=expected_msg):
+        with pytest.raises(expected_exc, match=expected_msg) as excinfo:
             WorkflowConfig(**args)
+        assert (
+            "To allow implicit tasks" in str(excinfo.value)
+        ) is extra_msg_expected
     else:
         WorkflowConfig(**args)
 
