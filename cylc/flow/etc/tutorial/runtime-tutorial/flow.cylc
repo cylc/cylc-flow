@@ -1,3 +1,4 @@
+#!jinja2
 [scheduler]
     UTC mode = True
 
@@ -41,3 +42,5 @@
     [[forecast]]
     [[get_rainfall]]
     [[post_process_exeter]]
+
+{% include 'etc/python-job.settings' %}

@@ -1,3 +1,4 @@
+#!jinja2
 [scheduler]
     UTC mode = True
 [task parameters]
@@ -91,3 +92,5 @@
     [[post_process<site>]]
         # Generate a forecast for the location <site> 60 minutes in the future.
         script = post-process $CYLC_TASK_PARAM_site 60
+
+{% include 'etc/python-job.settings' %}

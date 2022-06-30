@@ -639,19 +639,18 @@ class CylcWorkflowDAO:
     def select_jobs_for_restart(self, callback):
         """Select from task_pool+task_states+task_jobs for restart.
 
-        Invoke callback(row_idx, row) on each row, where each row contains:
-            [cycle, name, status, submit_num, time_submit, time_run,
-             time_run_exit, job_runner_name, job_id, platform_name]
+        Invoke callback(row_idx, row) on each row of the result.
         """
         form_stmt = r"""
             SELECT
                 %(task_pool)s.cycle,
                 %(task_pool)s.name,
-                %(task_pool)s.status,
-                %(task_states)s.submit_num,
+                %(task_jobs)s.submit_num,
                 %(task_jobs)s.time_submit,
+                %(task_jobs)s.submit_status,
                 %(task_jobs)s.time_run,
                 %(task_jobs)s.time_run_exit,
+                %(task_jobs)s.run_status,
                 %(task_jobs)s.job_runner_name,
                 %(task_jobs)s.job_id,
                 %(task_jobs)s.platform_name
@@ -661,15 +660,9 @@ class CylcWorkflowDAO:
                 %(task_pool)s
             ON  %(task_jobs)s.cycle == %(task_pool)s.cycle AND
                 %(task_jobs)s.name == %(task_pool)s.name
-            JOIN
-                %(task_states)s
-            ON  %(task_jobs)s.cycle == %(task_states)s.cycle AND
-                %(task_jobs)s.name == %(task_states)s.name AND
-                %(task_jobs)s.submit_num == %(task_states)s.submit_num
         """
         form_data = {
             "task_pool": self.TABLE_TASK_POOL,
-            "task_states": self.TABLE_TASK_STATES,
             "task_jobs": self.TABLE_TASK_JOBS,
         }
         stmt = form_stmt % form_data
@@ -970,11 +963,12 @@ class CylcWorkflowDAO:
             SELECT
                 %(task_states)s.cycle,
                 %(task_states)s.name,
-                %(task_states)s.status,
-                %(task_states)s.submit_num,
+                %(task_jobs)s.submit_num,
                 %(task_jobs)s.time_submit,
+                %(task_jobs)s.submit_status,
                 %(task_jobs)s.time_run,
                 %(task_jobs)s.time_run_exit,
+                %(task_jobs)s.run_status,
                 %(task_jobs)s.job_runner_name,
                 %(task_jobs)s.job_id,
                 %(task_jobs)s.platform_name
@@ -983,8 +977,7 @@ class CylcWorkflowDAO:
             JOIN
                 %(task_states)s
             ON  %(task_jobs)s.cycle == %(task_states)s.cycle AND
-                %(task_jobs)s.name == %(task_states)s.name AND
-                %(task_jobs)s.submit_num == %(task_states)s.submit_num
+                %(task_jobs)s.name == %(task_states)s.name
             WHERE
                 %(task_states)s.cycle || '/' || %(task_states)s.name IN (
                     %(task_ids)s

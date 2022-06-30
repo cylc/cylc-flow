@@ -338,22 +338,11 @@ To start a new run, stop the old one first with one or more of these:
 * ssh -n "%(host)s" kill %(pid)s   # final brute force!
 """
 
-SUITERC_DEPR_MSG = (
-    "Backward compatibility mode ON for CYLC 7"
-    f" '{WorkflowFiles.SUITE_RC}' config files."
-    " When ready to upgrade, rename the file to"
-    f" {WorkflowFiles.FLOW_FILE} then address "
-    "any resulting validation errors and warnings."
-)
+SUITERC_DEPR_MSG = "Backward compatibility mode ON"
 
 NO_FLOW_FILE_MSG = (
     f"No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "
     "in {}"
-)
-
-REG_CLASH_MSG = (
-    "The specified reg could refer to ./{0} or ~/cylc-run/{1}. "
-    "This command will use ./{0}."
 )
 
 NESTED_DIRS_MSG = (
@@ -1564,7 +1553,7 @@ def install_workflow(
             Trying to install a workflow that is nested inside of another.
     """
     abort_if_flow_file_in_path(source)
-    source = Path(expand_path(source))
+    source = Path(expand_path(source)).resolve()
     if not workflow_name:
         workflow_name = get_source_workflow_name(source)
     validate_workflow_name(workflow_name, check_reserved_names=True)
@@ -1904,10 +1893,13 @@ def search_install_source_dirs(workflow_name: Union[Path, str]) -> Path:
 
 def get_source_workflow_name(source: Path) -> str:
     """Return workflow name relative to configured source dirs if possible,
-    else the basename of the given path."""
+    else the basename of the given path.
+    Note the source path provided should be fully expanded (user and env vars)
+    and normalised.
+    """
     for dir_ in get_source_dirs():
         try:
-            return str(source.relative_to(dir_))
+            return str(source.relative_to(Path(expand_path(dir_)).resolve()))
         except ValueError:
             continue
     return source.name

@@ -1,3 +1,4 @@
+#!jinja2
 [scheduler]
     UTC mode = True
 [scheduling]
@@ -50,3 +51,5 @@
             print(choice(['Windy', 'Rainy', 'Sunny', 'Snowy']))
             "
         """
+
+{% include 'etc/python-job.settings' %}

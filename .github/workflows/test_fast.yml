@@ -19,14 +19,14 @@ jobs:
           - os: 'macos-latest'
             python-version: '3.7'
     env:
-      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
+      PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes -m "linktest or not linktest"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Configure Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 

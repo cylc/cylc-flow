@@ -1154,8 +1154,6 @@ class TaskEventsManager():
             "time_submit_exit": event_time,
             "submit_status": 1,
         })
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
-        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
         itask.summary['submit_method_id'] = None
         self.reset_inactivity_timer_func()
         if (
@@ -1178,10 +1176,13 @@ class TaskEventsManager():
             LOG.warning(f"[{itask}] {delay_msg}")
             msg = f"job {self.EVENT_SUBMIT_FAILED}, {delay_msg}"
             self.setup_event_handlers(itask, self.EVENT_SUBMIT_RETRY, msg)
-        self._reset_job_timers(itask)
 
         # Register newly submit-failed job with the database and datastore.
+        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
         self._insert_task_job(itask, event_time, self.JOB_SUBMIT_FAIL_FLAG)
+        self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMIT_FAILED)
+
+        self._reset_job_timers(itask)
 
         return no_retries
 

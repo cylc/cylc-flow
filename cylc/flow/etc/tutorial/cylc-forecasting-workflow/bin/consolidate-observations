@@ -81,8 +81,8 @@ def get_wind_fields():
     data.sort(key=lambda x: x[1])
 
     # Convert data into (lat, lng, (wind_x, wind_y)) components.
-    x_coords = [datum[0] for datum in data]
-    y_coords = [datum[1] for datum in data]
+    x_coords = [datum[1] for datum in data]
+    y_coords = [datum[0] for datum in data]
     z_coords = [(datum[3] * math.sin(math.radians(datum[2])),
                  datum[3] * math.cos(math.radians(datum[2])))
                 for datum in data]

@@ -29,24 +29,72 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0rc4 (<span actions:bind='release-date'>Upcoming</span>)__
+
+Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
+
+### Enhancements
+
+[#4938](https://github.com/cylc/cylc-flow/pull/4938) - Detect bad Platforms
+config: background and at job runners should have a single host.
+
+[#4877](https://github.com/cylc/cylc-flow/pull/4877) - Upgrade the version of
+Jinja2 used by Cylc from 2.11 to 3.0.
+
+[#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
+default job runner directives for platforms.
+
+[#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
+in `global.cylc[install]source dirs`.
+
+### Fixes
+
+[#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
+error messages when workflow CLI commands fail.
+
+[#4941](https://github.com/cylc/cylc-flow/pull/4941) - Fix job state for
+platform submit-failures.
+
+[#4931](https://github.com/cylc/cylc-flow/pull/4931) - Fix cylc install for
+installing workflows from multi-level directories.
+
+[#4926](https://github.com/cylc/cylc-flow/pull/4926) - Fix a docstring
+formatting problem presenting in the UI mutation flow argument info.
+
+[#4891](https://github.com/cylc/cylc-flow/pull/4891) - Fix bug that could cause
+past jobs to be omitted in the UI.
+
+[#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow config parsing
+will fail if
+[owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
+owner setting is used, as that setting no longer has any effect.
+
+[#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
+prompt if no matching workflows.
+
+[#4881](https://github.com/cylc/cylc-flow/pull/4881) - Fix bug where commands
+targeting a specific cycle point would not work if using an abbreviated
+cycle point format.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0rc3 (<span actions:bind='release-date'>Released 2022-05-19</span>)__
 
 Third Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
-
 [#4738](https://github.com/cylc/cylc-flow/pull/4738) and
 [#4739](https://github.com/cylc/cylc-flow/pull/4739) - Implement `cylc trigger
 [--flow=] [--wait]` for manual triggering with respect to active flows (the
-default), specific flows, new flows, or one-off task runs.
+default), specific flows, new flows, or one-off task runs. This replaces
+the `--reflow` option from earlier pre-release versions.
 
 [#4743](https://github.com/cylc/cylc-flow/pull/4743) - On stopping a specific
 flow, remove active-waiting tasks with no remaining flow numbers.
 
 
 [#4854](https://github.com/cylc/cylc-flow/pull/4854)
-- Expansion and merger of comma separate platform definitions permitted.
+- Expansion and merger of comma separated platform definitions permitted.
 - Platform definition regular expressions which match "localhost" but are not
   "localhost" are now explicitly forbidden and will raise an exception.
 
@@ -698,7 +746,7 @@ rsyncing the following files on install and reinstall:
 - `opt/rose-suite-cylc-install.conf`
 These files should be handled by the cylc-rose plugin if you require them.
 
-[#4126](https://github.com/cylc/cylc-flow/pull/4126) - Make obselete the config
+[#4126](https://github.com/cylc/cylc-flow/pull/4126) - Make obsolete the config
 ``flow.cylc:[runtime][__TASK__][remote]suite definition directory``.
 
 [#4098](https://github.com/cylc/cylc-flow/pull/4098) - Provide a dictionary called

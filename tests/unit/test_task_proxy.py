@@ -20,32 +20,8 @@ from typing import Callable, Optional
 from unittest.mock import Mock
 
 from cylc.flow.cycling import PointBase
-from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.task_proxy import TaskProxy
-
-
-@pytest.mark.parametrize(
-    'itask_point, point_str, expected',
-    [param(IntegerPoint(5), '5', True, id="Integer, basic"),
-     param(IntegerPoint(5), '*', True, id="Integer, glob"),
-     param(IntegerPoint(5), None, True, id="None same as glob(*)"),
-     param(ISO8601Point('2012'), '2012-01-01', True, id="ISO, basic"),
-     param(ISO8601Point('2012'), '2012*', True, id="ISO, glob"),
-     param(ISO8601Point('2012'), '2012-*', False,
-           id="ISO, bad glob (must use short datetime format)")]
-)
-def test_point_match(
-    itask_point: PointBase, point_str: Optional[str], expected: bool,
-    set_cycling_type: Callable
-) -> None:
-    """Test TaskProxy.point_match()."""
-    set_cycling_type(itask_point.TYPE)
-    mock_itask = Mock(point=itask_point.standardise())
-
-    assert TaskProxy.point_match(mock_itask, point_str) is expected, (
-        f"Does mock_task.point={mock_itask.point!r} match {point_str!r}?"
-    )
 
 
 @pytest.mark.parametrize(

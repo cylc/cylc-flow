@@ -27,9 +27,13 @@ from cylc.flow.platforms import (
     platform_from_name, platform_from_job_info,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
-    generic_items_match
+    generic_items_match,
+    _validate_single_host
 )
-from cylc.flow.exceptions import PlatformLookupError
+from cylc.flow.exceptions import (
+    PlatformLookupError,
+    GlobalConfigError
+)
 
 PLATFORMS = {
     'desktop[0-9]{2}|laptop[0-9]{2}': {
@@ -108,6 +112,20 @@ PLATFORMS_TREK = {
 }
 
 
+PLATFORMS_INVALID = {
+    'enterprise': {
+        'hosts': ['kirk', 'picard'],
+        'install target': 'picard',
+        'job runner': 'background'  # requires one host
+    },
+    'voyager': {
+        'hosts': ['janeway', 'seven-of-nine'],
+        'install target': 'janeway',
+        'job runner': 'at'  # requires one host
+    }
+}
+
+
 # ----------------------------------------------------------------------------
 # Tests of platform_from_name
 # ----------------------------------------------------------------------------
@@ -169,6 +187,17 @@ def test_basic(PLATFORMS, platform, expected):
 def test_platform_not_there():
     with pytest.raises(PlatformLookupError):
         platform_from_name('moooo', PLATFORMS)
+
+
+@pytest.mark.parametrize(
+    'platform',
+    [
+        {i: j} for i, j in PLATFORMS_INVALID.items()
+    ]
+)
+def test_invalid_platforms(platform):
+    with pytest.raises(GlobalConfigError):
+        _validate_single_host(platform)
 
 
 def test_similar_but_not_exact_match():

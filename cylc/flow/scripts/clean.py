@@ -183,6 +183,10 @@ async def run(*ids: str, opts: 'Values') -> None:
     # expand partial workflow ids (including run names)
     workflows, multi_mode = await scan(workflows, multi_mode)
 
+    if not workflows:
+        LOG.warning(f"No workflows matching {', '.join(ids)}")
+        return
+
     workflows.sort()
     if multi_mode and not opts.skip_interactive:
         prompt(workflows)  # prompt for approval or exit

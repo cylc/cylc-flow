@@ -23,6 +23,18 @@ if ! command -v 'tree' >'/dev/null'; then
 fi
 set_test_number 6
 
+# Need to override any symlink dirs set in global.cylc:
+create_test_global_config "" "
+[install]
+    [[symlink dirs]]
+        [[[localhost]]]
+            run =
+            log =
+            work =
+            share =
+            share/cycle =
+"
+
 # Test cylc install copies files to run dir successfully.
 TEST_NAME="${TEST_NAME_BASE}-basic"
 make_rnd_workflow

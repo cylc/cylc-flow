@@ -49,12 +49,16 @@ WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
 ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
 FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
 
+SHORTLINK_TO_ICP_DOCS = "https://bit.ly/3MYHqVh"
+
 icp_option = Option(
     "--initial-cycle-point", "--icp",
-    metavar="CYCLE_POINT",
+    metavar="CYCLE_POINT or OFFSET",
     help=(
         "Set the initial cycle point. "
         "Required if not defined in flow.cylc."
+        "\nMay be either an absolute point or an offset: See "
+        f"{SHORTLINK_TO_ICP_DOCS} (Cylc documentation link)."
     ),
     action="store",
     dest="icp",
@@ -71,6 +75,15 @@ def format_shell_examples(string):
             flags=re.M
         )
     )
+
+
+def verbosity_to_log_level(verb: int) -> int:
+    """Convert Cylc verbosity to log severity level."""
+    if verb < 0:
+        return logging.WARNING
+    if verb > 0:
+        return logging.DEBUG
+    return logging.INFO
 
 
 def verbosity_to_opts(verb: int) -> List[str]:
@@ -463,12 +476,7 @@ class CylcOptionParser(OptionParser):
         #    better choice for the logging stream. This allows us to use STDOUT
         #    for verbosity agnostic outputs.
         # 2. Scheduler will remove this handler when it becomes a daemon.
-        if options.verbosity < 0:
-            LOG.setLevel(logging.WARNING)
-        elif options.verbosity > 0:
-            LOG.setLevel(logging.DEBUG)
-        else:
-            LOG.setLevel(logging.INFO)
+        LOG.setLevel(verbosity_to_log_level(options.verbosity))
         RSYNC_LOG.setLevel(logging.INFO)
         # Remove NullHandler before add the StreamHandler
         for log in (LOG, RSYNC_LOG):
@@ -526,9 +534,9 @@ class Options:
 
         But you can't create new options at initiation, this gives us basic
         input validation:
-        >>> opts(e=6)
+        >>> PythonOptions(e=6)
         Traceback (most recent call last):
-        TypeError: 'Values' object is not callable
+        ValueError: e
 
         You can reuse the object multiple times
         >>> opts2 = PythonOptions(a=2)
@@ -542,6 +550,8 @@ class Options:
     ) -> None:
         if overrides is None:
             overrides = {}
+        if isinstance(parser, CylcOptionParser) and parser.auto_add:
+            parser.add_std_options()
         self.defaults = {**parser.defaults, **overrides}
 
     def __call__(self, **kwargs) -> Values:

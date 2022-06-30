@@ -91,10 +91,11 @@ import traceback
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import HostSelectException
+from cylc.flow.exceptions import CylcConfigError, HostSelectException
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.main_loop import periodic
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.workflow_status import AutoRestartMode
 from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str
@@ -104,7 +105,16 @@ from cylc.flow.wallclock import (
 @periodic
 async def auto_restart(scheduler, _):
     """Automatically restart the workflow if configured to do so."""
-    current_glbl_cfg = glbl_cfg(cached=False)
+    try:
+        current_glbl_cfg = glbl_cfg(cached=False)
+    except (CylcConfigError, ParsecError) as exc:
+        LOG.error(
+            'auto restart: an error in the global config is preventing it from'
+            f' being reloaded:\n{exc}'
+        )
+        # skip check - we can't do anything until the global config has been
+        # fixed
+        return False  # return False to make testing easier
     mode = _should_auto_restart(scheduler, current_glbl_cfg)
 
     if mode:

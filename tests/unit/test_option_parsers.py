@@ -21,7 +21,7 @@ import sys
 import io
 from contextlib import redirect_stdout
 import cylc.flow.flags
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import CylcOptionParser as COP, Options
 
 
 USAGE_WITH_COMMENT = "usage \n # comment"
@@ -85,3 +85,11 @@ def test_help_nocolor(monkeypatch: pytest.MonkeyPatch, parser: COP):
     with redirect_stdout(f):
         parser.print_help()
     assert (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)
+
+
+def test_Options_std_opts():
+    """Test Python Options API with standard options."""
+    parser = COP(USAGE_WITH_COMMENT, auto_add=True)
+    MyOptions = Options(parser)
+    MyValues = MyOptions(verbosity=1)
+    assert MyValues.verbosity == 1

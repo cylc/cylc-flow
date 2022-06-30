@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 18
+set_test_number 22
 
 create_test_global_config "" "
 [install]
@@ -127,6 +127,28 @@ TEST_NAME="${TEST_NAME_BASE}-install-twice-2"
 run_ok "${TEST_NAME}" cylc install
 contains_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run2 from ${RND_WORKFLOW_SOURCE}
+__OUT__
+popd || exit 1
+purge_rnd_workflow
+
+# -----------------------------------------------------------------------------
+# Test running cylc install with multi level name works correctly
+TEST_NAME="${TEST_NAME_BASE}-install-multi-level"
+pushd cylc-src || exit 1
+make_rnd_workflow
+SUB_DIR="cylctb-x$(< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c6)"
+mkdir "${RND_WORKFLOW_NAME}/${SUB_DIR}"
+mv "${RND_WORKFLOW_NAME}/flow.cylc" "${RND_WORKFLOW_NAME}/${SUB_DIR}"
+
+run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_NAME}/${SUB_DIR}"
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED ${RND_WORKFLOW_NAME}/${SUB_DIR}/run1 from ${RND_WORKFLOW_SOURCE}/$SUB_DIR
+__OUT__
+TEST_NAME="${TEST_NAME_BASE}-multi-level-from-pwd"
+pushd "${RND_WORKFLOW_SOURCE}/$SUB_DIR" || exit 1
+run_ok "${TEST_NAME}" cylc install
+contains_ok "${TEST_NAME}.stdout" <<__OUT__
+INSTALLED ${RND_WORKFLOW_NAME}/${SUB_DIR}/run2 from ${RND_WORKFLOW_SOURCE}/${SUB_DIR}
 __OUT__
 popd || exit 1
 purge_rnd_workflow

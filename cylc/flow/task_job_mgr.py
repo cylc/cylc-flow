@@ -1299,7 +1299,9 @@ class TaskJobManager:
                 itask.platform['job runner command template']
             ),
             'dependencies': itask.state.get_resolved_dependencies(),
-            'directives': rtconfig['directives'],
+            'directives': {
+                **itask.platform['directives'], **rtconfig['directives']
+            },
             'environment': rtconfig['environment'],
             'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
             'env-script': rtconfig['env-script'],

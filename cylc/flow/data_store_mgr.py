@@ -77,6 +77,7 @@ from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -149,6 +150,7 @@ DELTAS_MAP = {
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 
 JOB_STATUSES_ALL = [
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -1144,7 +1146,18 @@ class DataStoreMgr:
         update_time = time()
         tp_tokens = Tokens(tp_id)
         j_tokens = tp_tokens.duplicate(job=str(sub_num))
-        j_id = j_tokens.id
+        j_id, job = self.store_node_fetcher(
+            j_tokens['task'],
+            j_tokens['cycle'],
+            j_tokens['job'],
+        )
+        if job:
+            # Job already exists (i.e. post-submission submit failure)
+            return
+
+        if status not in JOB_STATUS_SET:
+            status = TASK_STATUS_PREPARING
+
         j_buf = PbJob(
             stamp=f'{j_id}@{update_time}',
             id=j_id,
@@ -1191,16 +1204,42 @@ class DataStoreMgr:
         """Load job element from DB post restart."""
         if row_idx == 0:
             LOG.info("LOADING job data")
-        (point_string, name, status, submit_num, time_submit, time_run,
-         time_run_exit, job_runner_name, job_id, platform_name) = row
-        if status not in JOB_STATUS_SET:
-            return
+        (
+            point_string,
+            name,
+            submit_num,
+            time_submit,
+            submit_status,
+            time_run,
+            time_run_exit,
+            run_status,
+            job_runner_name,
+            job_id,
+            platform_name
+        ) = row
+
         tp_id, tproxy = self.store_node_fetcher(name, point_string)
         if not tproxy:
             return
         tp_tokens = Tokens(tp_id)
         j_tokens = tp_tokens.duplicate(job=str(submit_num))
         j_id = j_tokens.id
+
+        if run_status is not None:
+            if run_status == 0:
+                status = TASK_STATUS_SUCCEEDED
+            else:
+                status = TASK_STATUS_FAILED
+        elif time_run is not None:
+            status = TASK_STATUS_RUNNING
+        elif submit_status is not None:
+            if submit_status == 0:
+                status = TASK_STATUS_SUBMITTED
+            else:
+                status = TASK_STATUS_SUBMIT_FAILED
+        else:
+            status = TASK_STATUS_PREPARING
+
         try:
             update_time = time()
             j_buf = PbJob(

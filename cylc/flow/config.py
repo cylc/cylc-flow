@@ -164,13 +164,6 @@ class WorkflowConfig:
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
     VIS_N_POINTS = 3
 
-    CYLC7_GRAPH_COMPAT_MSG = (
-        "Cylc 7 graph compatibility: making success outputs 'required' (to"
-        " retain failed tasks in the pool) and pre-spawning graph children (to"
-        " replicate Cylc 7 stall behaviour). Please refer to documentation on"
-        " upgrading Cylc 7 graphs to Cylc 8."
-    )
-
     def __init__(
         self,
         workflow: str,
@@ -349,6 +342,7 @@ class WorkflowConfig:
         # Done before inheritance to avoid repetition
         self.check_env_names()
         self.check_param_env_tmpls()
+        self.check_for_owner(self.cfg['runtime'])
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
@@ -628,7 +622,8 @@ class WorkflowConfig:
                 except IsodatetimeError as exc:
                     raise WorkflowConfigError(str(exc))
         if orig_icp != icp:
-            # now/next()/prev() was used, need to store evaluated point in DB
+            # now/next()/previous() was used, need to store
+            # evaluated point in DB
             self.options.icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
@@ -801,20 +796,21 @@ class WorkflowConfig:
             raise WorkflowConfigError(msg)
 
         # Otherwise "[scheduler]allow implicit tasks" is not set
-        msg = (
+
+        # Allow implicit tasks in back-compat mode (unless rose-suite.conf
+        # present, to maintain compat with Rose 2019)
+        if (
+            cylc.flow.flags.cylc7_back_compat and
+            not Path(self.run_dir, 'rose-suite.conf').is_file()
+        ):
+            LOG.debug(msg)
+            return
+
+        raise WorkflowConfigError(
             f"{msg}\n"
             "To allow implicit tasks, use "
-            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'\n"
-            "See https://cylc.github.io/cylc-doc/latest/html/"
-            "7-to-8/summary.html#backward-compatibility"
+            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
         )
-        # Allow implicit tasks in Cylc 7 back-compat mode (but not if
-        # rose-suite.conf present, to maintain compat with Rose 2019)
-        if (
-            Path(self.run_dir, 'rose-suite.conf').is_file() or
-            not cylc.flow.flags.cylc7_back_compat
-        ):
-            raise WorkflowConfigError(msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
@@ -2009,8 +2005,6 @@ class WorkflowConfig:
                 sections.append((section, value))
 
         # Parse and process each graph section.
-        if cylc.flow.flags.cylc7_back_compat:
-            LOG.warning(self.__class__.CYLC7_GRAPH_COMPAT_MSG)
         task_triggers = {}
         task_output_opt = {}
         for section, graph in sections:
@@ -2341,3 +2335,25 @@ class WorkflowConfig:
                 self.workflow, cfg['meta']['URL'])
             cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
                 name, cfg['meta']['URL'])
+
+    @staticmethod
+    def check_for_owner(tasks: Dict) -> None:
+        """Raise exception if [runtime][task][remote]owner
+        """
+        owners = {}
+        for task, tdef in tasks.items():
+            owner = tdef.get('remote', {}).get('owner', None)
+            if owner:
+                owners[task] = owner
+        if owners:
+            # TODO: Convert URL to a stable or latest release doc after 8.0
+            # https://github.com/cylc/cylc-flow/issues/4663
+            msg = (
+                '"[runtime][task][remote]owner" is obsolete at Cylc 8.'
+                '\nsee https://cylc.github.io/cylc-doc/nightly/'
+                'html/7-to-8/major-changes/remote-owner.html'
+                f'\nFirst {min(len(owners), 5)} tasks:'
+            )
+            for task, _ in list(owners.items())[:5]:
+                msg += f'\n  * {task}"'
+            raise WorkflowConfigError(msg)

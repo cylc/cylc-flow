@@ -27,7 +27,7 @@ jobs:
         ref: ${{ env.MERGE_SHA }}
 
     - name: Setup Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         # return to 3.x once compatible with 3.10+ (pyuv)
         python-version: '3.9'

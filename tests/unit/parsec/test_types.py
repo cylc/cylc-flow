@@ -32,10 +32,6 @@ from cylc.flow.parsec.validate import (
     CylcConfigValidator as VDR
 )
 
-from . import (
-    config as parse_config
-)
-
 
 @pytest.fixture
 def generate_spec():
@@ -52,7 +48,7 @@ def generate_spec():
             cylc.flow.parsec.config.ConfigNode
 
         """
-        with Conf('/') as myconf:
+        with Conf('/') as myconf:  # noqa: SIM117
             with Conf(typ):
                 Conf('<item>', validator)
         return myconf
@@ -104,7 +100,7 @@ def generate_config():
     return _inner
 
 
-def test_types(generate_spec, generate_config, parse_config):
+def test_types(generate_spec, generate_config, config):
     """Test type parsing.
 
     Test every facetious combination of:
@@ -144,7 +140,7 @@ def test_types(generate_spec, generate_config, parse_config):
     ]:
         spec = generate_spec(typ, validator)
         conf = generate_config(typ, string_repr)
-        cfg = parse_config(spec, conf)
+        cfg = config(spec, conf)
         assert all((
             value == parsed_value
             for value in cfg.get()[typ].values()

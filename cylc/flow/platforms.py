@@ -26,10 +26,10 @@ from typing import (
 from cylc.flow import LOG
 
 from cylc.flow.exceptions import (
+    GlobalConfigError,
     PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
-
 
 UNKNOWN_TASK = 'unknown task'
 
@@ -38,6 +38,9 @@ FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
     ('job', 'batch system', [None]),
     ('job', 'batch submit command template', [None])
 )
+
+DEFAULT_JOB_RUNNER = 'background'
+SINGLE_HOST_JOB_RUNNERS = ['background', 'at']
 
 # Regex to check whether a string is a command
 HOST_REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
@@ -658,3 +661,36 @@ def get_localhost_install_target() -> str:
     """Returns the install target of localhost platform"""
     localhost = get_platform()
     return get_install_target_from_platform(localhost)
+
+
+def _validate_single_host(platforms_cfg) -> None:
+    """Check that single-host platforms only specify a single host.
+
+    Some job runners don't work across multiple hosts; the job ID is only valid
+    on the specific submission host.
+    """
+    bad_platforms = []
+    runners = set()
+    for name, config in platforms_cfg.items():
+        runner = config.get('job runner', DEFAULT_JOB_RUNNER)
+        hosts = config.get('hosts', [])
+        if runner in SINGLE_HOST_JOB_RUNNERS and len(hosts) > 1:
+            bad_platforms.append((name, runner, hosts))
+            runners.add(runner)
+    if bad_platforms:
+        if len(runners) > 1:
+            grammar = ["are", "s"]
+        else:
+            grammar = ["is a", ""]
+        msg = (
+            f"{', '.join(runners)} {grammar[0]} single-host"
+            f" job runner{grammar[1]}:"
+        )
+        for name, runner, hosts in bad_platforms:
+            msg += f'\n * Platform {name} ({runner}) hosts: {", ".join(hosts)}'
+        raise GlobalConfigError(msg)
+
+
+def validate_platforms(platforms_cfg: Dict[str, Any]) -> None:
+    """Check for invalid or inconsistent platforms config."""
+    _validate_single_host(platforms_cfg)

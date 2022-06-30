@@ -17,17 +17,16 @@
 """Provide a class to represent a task proxy in a running workflow."""
 
 from collections import Counter
-from contextlib import suppress
 from copy import copy
 from fnmatch import fnmatchcase
 from time import time
-from typing import Any, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
+from typing import (
+    Any, Callable, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
+)
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
 from cylc.flow import LOG
-from cylc.flow.cycling.loader import standardise_point_string
-from cylc.flow.exceptions import PointParsingError
 from cylc.flow.id import Tokens
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
@@ -420,17 +419,6 @@ class TaskProxy:
         for timer in self.try_timers.values():
             timer.timeout = None
 
-    def point_match(self, point: Optional[str]) -> bool:
-        """Return whether a string/glob matches the task's point.
-
-        None is treated as '*'.
-        """
-        if point is None:
-            return True
-        with suppress(PointParsingError):  # point_str may be a glob
-            point = standardise_point_string(point)
-        return fnmatchcase(str(self.point), point)
-
     def status_match(self, status: Optional[str]) -> bool:
         """Return whether a string matches the task's status.
 
@@ -438,16 +426,23 @@ class TaskProxy:
         """
         return (not status) or self.state.status == status
 
-    def name_match(self, name: str) -> bool:
-        """Return whether a string/glob matches the task's name."""
-        if fnmatchcase(self.tdef.name, name):
-            return True
-        return any(
-            fnmatchcase(ns, name) for ns in self.tdef.namespace_hierarchy
+    def name_match(
+        self,
+        value: str,
+        match_func: Callable[[Any, Any], bool] = fnmatchcase
+    ) -> bool:
+        """Return whether a string/pattern matches the task's name or any of
+        its parent family names."""
+        return match_func(self.tdef.name, value) or any(
+            match_func(ns, value) for ns in self.tdef.namespace_hierarchy
         )
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
+        if flow_nums == self.flow_nums:
+            # Not a merge if in the same flow. E.g. for "A & B => C" if A
+            # spawns C first, B will find C is already in the task pool.
+            return
         LOG.info(
             f"[{self}] merged in flow(s) "
             f"{','.join(str(f) for f in flow_nums)}"

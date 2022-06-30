@@ -27,6 +27,7 @@ from cylc.flow.network.scan import (
     cylc_version,
     filter_name,
     graphql_query,
+    validate_contact_info
 )
 from cylc.flow.workflow_files import (
     ContactFileFields,
@@ -141,3 +142,29 @@ def test_graphql_query_preproc():
           bb
         }
     ''')
+
+
+async def test_validate_contact_file(tmp_path):
+    """Ensure rejection for missing fields"""
+
+    flow = {
+        'name': 'foo',
+        'path': tmp_path / 'foo',
+    }
+    # contact_info has already loaded info from contact file (missing fields)
+    assert await validate_contact_info.func(flow) is False
+
+
+async def test_validate_contact_file_no_missing_fields(tmp_path):
+    """Ensure rejection for missing fields"""
+    version = ContactFileFields.API
+    name = ContactFileFields.NAME
+    host = ContactFileFields.HOST
+    flow = {
+        'name': 'foo',
+        'path': tmp_path / 'foo',
+        version: 1,
+        name: 'moo',
+        host: 'hosty'
+    }
+    assert await validate_contact_info.func(flow) == flow

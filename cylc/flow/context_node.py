@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from typing import Optional
+
+
 class ContextNode():
     """A class for defining nested objects.
 
@@ -84,7 +87,7 @@ class ContextNode():
 
     DATA: dict = {}
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self._parent = None
         self._children = None
@@ -123,15 +126,30 @@ class ContextNode():
             return iter(self._children.values())
         return iter([])
 
-    def __contains__(self, name):
-        return name in self._children
+    def __contains__(self, name: str) -> bool:
+        return name in self._children  # type: ignore[operator]  # TODO
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         if self._children:
             return self._children.__getitem__(name)
         raise TypeError('This is not a leaf node')
 
-    def __str__(self):
+    def get(self, *names: str):
+        """Retrieve the node given by the list of names.
+
+        Example:
+            >>> with ContextNode('a') as a:
+            ...     with ContextNode('b') as b:
+            ...          c = ContextNode('c')
+            >>> a.get('b', 'c')
+            a/b/c
+        """
+        node = self
+        for name in names:
+            node = node[name]
+        return node
+
+    def __str__(self) -> str:
         if self.is_root():
             fmt = self.ROOT_NAME_FMT
         elif not self.is_leaf():
@@ -143,7 +161,7 @@ class ContextNode():
             for key in self.__slots__
         })
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.SEP.join(
             [
                 str(node)
@@ -153,22 +171,12 @@ class ContextNode():
             ]
         )
 
-    def is_root(self):
-        """Return True if this is a root node.
-
-        Returns:
-            bool
-
-        """
+    def is_root(self) -> bool:
+        """Return True if this is a root node."""
         return self._parent is None
 
-    def is_leaf(self):
-        """Return True if this is a leaf node.
-
-        Returns:
-            bool
-
-        """
+    def is_leaf(self) -> bool:
+        """Return True if this is a leaf node."""
         return self._children is None
 
     def parents(self):
@@ -192,14 +200,14 @@ class ContextNode():
             yield pointer
             pointer = pointer._parent
 
-    def walk(self, depth=None, level=0):
+    def walk(self, depth: Optional[int] = None, _level: int = 0):
         """Walk the context tree starting at this node.
 
         Args:
-            depth (int):
+            depth:
                 The max depth below the current node to yield.
-            level (int):
-                For recursive use, do not specify.
+            _level:
+                (For recursive use, do not specify.)
 
         Yields:
             tuple - (level, node)
@@ -219,13 +227,13 @@ class ContextNode():
             [(0, a/b/c)]
 
         """
-        if depth is not None and level >= depth:
+        if depth is not None and _level >= depth:
             return
-        if level == 0:
+        if _level == 0:
             yield (0, self)
         for child in self:
-            yield (level + 1, child)
-            yield from child.walk(depth=depth, level=level + 1)
+            yield (_level + 1, child)
+            yield from child.walk(depth=depth, _level=_level + 1)
 
     def tree(self):
         """Return a string representation of the tree starting at this node.

@@ -1526,9 +1526,9 @@ def test_search_install_source_dirs_empty(mock_glbl_cfg: Callable):
 @pytest.mark.parametrize(
     'path, expected',
     [
-        ('/isla/nublar/dennis/nedry', 'dennis/nedry'),
-        ('/isla/sorna/paul/kirby', 'paul/kirby'),
-        ('/mos/eisley/owen/skywalker', 'skywalker')
+        ('~/isla/nublar/dennis/nedry', 'dennis/nedry'),
+        ('~/isla/sorna/paul/kirby', 'paul/kirby'),
+        ('~/mos/eisley/owen/skywalker', 'skywalker')
     ]
 )
 def test_get_source_workflow_name(
@@ -1540,10 +1540,11 @@ def test_get_source_workflow_name(
         'cylc.flow.workflow_files.glbl_cfg',
         '''
         [install]
-            source dirs = /isla/nublar, /isla/sorna
+            source dirs = ~/isla/nublar, ${HOME}/isla/sorna
         '''
     )
-    assert get_source_workflow_name(Path(path)) == expected
+    assert get_source_workflow_name(
+        Path(path).expanduser().resolve()) == expected
 
 
 @pytest.mark.parametrize(
