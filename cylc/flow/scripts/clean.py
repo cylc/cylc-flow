@@ -192,7 +192,10 @@ async def run(*ids: str, opts: 'Values') -> None:
         prompt(workflows)  # prompt for approval or exit
 
     for workflow in sorted(workflows):
-        init_clean(workflow, opts)
+        try:
+            init_clean(workflow, opts)
+        except Exception as exc:
+            LOG.warning(exc)
 
 
 @cli_function(get_option_parser)
