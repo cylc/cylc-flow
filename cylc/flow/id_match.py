@@ -145,7 +145,9 @@ def filter_ids(
             if tokens.get(lowest_token.value):
                 break
 
-        cycles = []
+        # This needs to be a set to avoid getting two copies of matched tasks
+        # in cycle points that appear in both pools:
+        cycles = set()
         tasks = []
 
         # filter by cycle
@@ -159,11 +161,11 @@ def filter_ids(
                     if not point_match(icycle, cycle, pattern_match):
                         continue
                     if cycle_sel == '*':
-                        cycles.append(icycle)
+                        cycles.add(icycle)
                         continue
                     for itask in itasks.values():
                         if match(itask.state.status, cycle_sel):
-                            cycles.append(icycle)
+                            cycles.add(icycle)
                             break
 
         # filter by task

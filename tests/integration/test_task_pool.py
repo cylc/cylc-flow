@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow import CYLC_LOG
+from copy import deepcopy
 import logging
 import pytest
 from pytest import param
@@ -194,6 +195,60 @@ async def test_filter_task_proxies(
     """
     caplog.set_level(logging.WARNING, CYLC_LOG)
     task_pool = mod_example_flow.pool
+    itasks, _, bad_items = task_pool.filter_task_proxies(items)
+    task_ids = [itask.identity for itask in itasks]
+    assert sorted(task_ids) == sorted(expected_task_ids)
+    assert sorted(bad_items) == sorted(expected_bad_items)
+    assert_expected_log(caplog, expected_warnings)
+
+
+@pytest.mark.parametrize(
+    'items, expected_task_ids, expected_bad_items, expected_warnings',
+    [
+        param(
+            ['*:waiting'],
+            ['1/waz', '1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
+             '4/bar', '5/foo', '5/bar'], [], [],
+            id="Task state"
+        ),
+    ]
+)
+async def test_filter_task_proxies_hidden(
+    items: List[str],
+    expected_task_ids: List[str],
+    expected_bad_items: List[str],
+    expected_warnings: List[str],
+    mod_example_flow: Scheduler,
+    caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test TaskPool.filter_task_proxies().
+
+    This is the same as test_filter_task_proxies except we artificially add a
+    new proxy "1/waz" to the hidden pool. Filtering should find a single copy
+    each of the hidden and main pool tasks.
+
+    See GitHub #4909: a bug in filtering was doubling up tasks in cycle points
+    that appeared in both pools.
+
+    The NOTE before EXAMPLE_FLOW_CFG above explains which tasks should be
+    expected for the tests here.
+
+    Params:
+        items: Arg passed to filter_task_proxies().
+        expected_task_ids: IDs of the TaskProxys that are expected to be
+            returned, of the form "{point}/{name}"/
+        expected_bad_items: Expected to be returned.
+        expected_warnings: Expected to be logged.
+    """
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    task_pool = mod_example_flow.pool
+
+    # Duplicate a task proxy, rename it, and add it to the hidden pool.
+    a_task = deepcopy(task_pool.get_tasks()[0])
+    a_task.identity = "1/waz"
+    task_pool.hidden_pool.setdefault(a_task.point, {})
+    task_pool.hidden_pool[a_task.point][a_task.identity] = a_task
+
     itasks, _, bad_items = task_pool.filter_task_proxies(items)
     task_ids = [itask.identity for itask in itasks]
     assert sorted(task_ids) == sorted(expected_task_ids)

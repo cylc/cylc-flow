@@ -52,6 +52,9 @@ in `global.cylc[install]source dirs`.
 [#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
 error messages when workflow CLI commands fail.
 
+[#4941](https://github.com/cylc/cylc-flow/pull/4941) - Fix job state for
+platform submit-failures.
+
 [#4931](https://github.com/cylc/cylc-flow/pull/4931) - Fix cylc install for
 installing workflows from multi-level directories.
 
