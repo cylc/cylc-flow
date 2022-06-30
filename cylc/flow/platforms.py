@@ -30,7 +30,6 @@ from cylc.flow.exceptions import (
     PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
-from cylc.flow.parsec.config import ItemNotFoundError
 
 UNKNOWN_TASK = 'unknown task'
 
