@@ -1270,6 +1270,7 @@ class Scheduler:
 
             # Start the job submission process.
             self.is_updated = True
+            self.reset_inactivity_timer()
 
             self.task_job_mgr.task_remote_mgr.rsync_includes = (
                 self.config.get_validated_rsync_includes())
