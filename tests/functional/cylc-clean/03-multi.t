@@ -18,7 +18,7 @@
 # Test cleaning multiple run dirs
 
 . "$(dirname "$0")/test_header"
-set_test_number 8
+set_test_number 14
 
 for _ in 1 2; do
     install_workflow "$TEST_NAME_BASE" basic-workflow true
@@ -36,6 +36,27 @@ exists_ok "${WORKFLOW_RUN_DIR}/run2"
 # Should work with --yes:
 run_ok "${TEST_NAME_BASE}-yes" cylc clean -y "$WORKFLOW_NAME"
 exists_fail "${WORKFLOW_RUN_DIR}/run1"
+exists_fail "${WORKFLOW_RUN_DIR}/run2"
+
+# Should continue cleaning a list of worflows even if one fails.
+
+for _ in 1 2; do
+    install_workflow "$TEST_NAME_BASE" basic-workflow true
+done
+
+exists_ok "${WORKFLOW_RUN_DIR}/run1"
+exists_ok "${WORKFLOW_RUN_DIR}/run2"
+
+mkdir "${WORKFLOW_RUN_DIR}/run1/.service"
+touch "${WORKFLOW_RUN_DIR}/run1/.service/db"  # corrupted db!
+
+TEST_NAME="${TEST_NAME_BASE}-yes-no" 
+run_ok "${TEST_NAME}" \
+    cylc clean -y "$WORKFLOW_NAME/run1" "$WORKFLOW_NAME/run2"
+
+grep_ok "Cannot clean .*/run1" "${TEST_NAME}.stderr" -e
+
+exists_ok "${WORKFLOW_RUN_DIR}/run1"
 exists_fail "${WORKFLOW_RUN_DIR}/run2"
 
 purge
