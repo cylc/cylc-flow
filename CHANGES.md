@@ -57,6 +57,9 @@ triggers in back-compat mode.
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.
 
+[#4906](https://github.com/cylc/cylc-flow/pull/4906) - Fix delayed spawning of
+parentless tasks that have parents in some cycle points.
+
 [#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
 error messages when workflow CLI commands fail.
 
