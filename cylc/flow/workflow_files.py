@@ -1433,10 +1433,13 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         list: command to use for rsync.
 
     """
+    check_deprecation(src)
     rsync_cmd = ["rsync"] + DEFAULT_RSYNC_OPTS
     if dry_run:
         rsync_cmd.append("--dry-run")
-    if reinstall:
+    if reinstall and not cylc.flow.flags.cylc7_back_compat:
+        # In back-compat mode don't delete external (non source-dir) files
+        # deployed to the run directory (would break many Cylc 7 suites).
         rsync_cmd.append('--delete')
     for exclude in [
         '.git',
