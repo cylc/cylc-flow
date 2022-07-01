@@ -1771,9 +1771,13 @@ def test_is_installed(tmp_run_dir: Callable, reg, installed, named, expected):
     assert actual == expected
 
 
-def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
+def test_get_rsync_rund_cmd(
+    tmp_src_dir: Callable,
+    tmp_run_dir: Callable
+):
     """Test rsync command for cylc install/reinstall excludes cylc dirs.
     """
+    src_dir = tmp_src_dir('foo')
     cylc_run_dir: Path = tmp_run_dir('rsync_flow', installed=True, named=False)
     for wdir in [
         WorkflowFiles.WORK_DIR,
@@ -1781,12 +1785,12 @@ def test_get_rsync_rund_cmd(tmp_run_dir: Callable):
         WorkflowFiles.LOG_DIR,
     ]:
         cylc_run_dir.joinpath(wdir).mkdir(exist_ok=True)
-    actual_cmd = get_rsync_rund_cmd('blah', cylc_run_dir)
+    actual_cmd = get_rsync_rund_cmd(src_dir, cylc_run_dir)
     assert actual_cmd == [
         'rsync', '-a', '--checksum', '--out-format=%o %n%L', '--no-t',
         '--exclude=log', '--exclude=work', '--exclude=share',
         '--exclude=_cylc-install', '--exclude=.service',
-        'blah/', f'{cylc_run_dir}/']
+        f'{src_dir}/', f'{cylc_run_dir}/']
 
 
 @pytest.mark.parametrize(
