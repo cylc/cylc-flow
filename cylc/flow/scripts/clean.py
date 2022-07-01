@@ -62,7 +62,7 @@ import sys
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import InputError
+from cylc.flow.exceptions import CylcError, InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
 from cylc.flow.loggingutil import disable_timestamps
@@ -191,11 +191,15 @@ async def run(*ids: str, opts: 'Values') -> None:
     if multi_mode and not opts.skip_interactive:
         prompt(workflows)  # prompt for approval or exit
 
+    failed = []
     for workflow in sorted(workflows):
         try:
             init_clean(workflow, opts)
         except Exception as exc:
+            failed.append(workflow)
             LOG.warning(exc)
+    if failed:
+        raise CylcError(f"Clean failed: {', '.join(failed)}")
 
 
 @cli_function(get_option_parser)
