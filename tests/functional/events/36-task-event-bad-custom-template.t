@@ -31,7 +31,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 grep_ok \
     'WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
 exit

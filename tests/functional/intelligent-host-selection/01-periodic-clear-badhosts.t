@@ -58,7 +58,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 # scrape platform events from the log
 sed -n \
     's/.* - \(platform: .*\)/\1/p' \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" \
     > platform-log
 
 # check this matches expectations

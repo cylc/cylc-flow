@@ -24,6 +24,7 @@ This module provides logic to:
 
 from collections import deque
 from contextlib import suppress
+from pathlib import Path
 from cylc.flow.option_parsers import verbosity_to_opts
 import os
 from shlex import quote
@@ -33,7 +34,7 @@ import tarfile
 from time import sleep, time
 from typing import Any, Deque, Dict, TYPE_CHECKING, List, NamedTuple, Tuple
 
-from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow import LOG
 from cylc.flow.exceptions import PlatformError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_host
@@ -41,6 +42,7 @@ from cylc.flow.network.client_factory import CommsMeth
 from cylc.flow.pathutil import (
     get_dirs_to_symlink,
     get_remote_workflow_run_dir,
+    get_workflow_file_install_log_dir,
     get_workflow_run_dir,
 )
 from cylc.flow.platforms import (
@@ -54,6 +56,7 @@ from cylc.flow.platforms import (
 )
 from cylc.flow.remote import construct_rsync_over_ssh_cmd, construct_ssh_cmd
 from cylc.flow.subprocctx import SubProcContext
+from cylc.flow.util import format_cmd
 from cylc.flow.workflow_files import (
     KeyInfo,
     KeyOwner,
@@ -62,6 +65,8 @@ from cylc.flow.workflow_files import (
     get_contact_file,
     get_workflow_srv_dir,
 )
+
+from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
 
 if TYPE_CHECKING:
     from zmq.auth.thread import ThreadAuthenticator
@@ -98,6 +103,8 @@ class TaskRemoteMgr:
         self.ready = False
         self.rsync_includes = None
         self.bad_hosts = bad_hosts
+        self.is_reload = False
+        self.is_restart = False
 
     def subshell_eval(self, command, command_pattern, host_check=True):
         """Evaluate a task platform from a subshell string.
@@ -506,8 +513,7 @@ class TaskRemoteMgr:
     def _file_install_callback_255(self, ctx, platform, install_target):
         """Callback when file installation exits.
 
-        Sets remote_init_map to REMOTE_FILE_INSTALL_DONE on success and to
-        REMOTE_FILE_INSTALL_FAILED on error.
+        Sets remote_init_map to REMOTE_FILE_INSTALL_255.
          """
         self.remote_init_map[install_target] = REMOTE_FILE_INSTALL_255
         self.ready = True
@@ -518,10 +524,27 @@ class TaskRemoteMgr:
         Sets remote_init_map to REMOTE_FILE_INSTALL_DONE on success and to
         REMOTE_FILE_INSTALL_FAILED on error.
          """
+        install_log_dir = get_workflow_file_install_log_dir(
+            self.workflow)
+        file_name = self.get_log_file_name(
+            install_target, install_log_dir
+        )
+        install_log_path = get_workflow_file_install_log_dir(
+            self.workflow, file_name)
+
         if ctx.out:
-            RSYNC_LOG.info(
-                'File installation information for '
-                f'{install_target}:\n{ctx.out}')
+            Path(install_log_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(install_log_path, 'a') as install_log:
+                install_log.write(
+                    f'$ {format_cmd(ctx.cmd, maxlen=80)}'
+                    '\n\n### STDOUT:'
+                    f'\n{ctx.out}'
+                )
+                if ctx.err:
+                    install_log.write(
+                        '\n\n### STDERR:'
+                        f'\n{ctx.err}'
+                    )
         if ctx.ret_code == 0:
             # Both file installation and remote init success
             LOG.debug(f"File installation complete for {install_target}")
@@ -538,6 +561,26 @@ class TaskRemoteMgr:
                 )
             )
             self.ready = True
+
+    def get_log_file_name(
+        self,
+        install_target,
+        install_log_dir
+    ):
+        log_files = get_sorted_logs_by_time(install_log_dir, '*.log')
+        if log_files:
+            log_num = get_next_log_number(log_files[-1])
+        else:
+            log_num = '01'
+        load_type = "start"
+        if self.is_reload:
+            load_type = "reload"
+            self.is_reload = False  # reset marker
+        elif self.is_restart:
+            load_type = "restart"
+            self.is_restart = False  # reset marker
+        file_name = f"{log_num}-{load_type}-{install_target}.log"
+        return file_name
 
     def _remote_init_items(self, comms_meth: CommsMeth):
         """Return list of items to install based on communication method.

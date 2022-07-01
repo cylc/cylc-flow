@@ -33,8 +33,8 @@ SYM_WORKFLOW_RUND="${WORKFLOW_RUN_DIR}-sym"
 SYM_WORKFLOW_NAME="${WORKFLOW_NAME}-sym"
 ln -s "$(basename "${WORKFLOW_NAME}")" "${SYM_WORKFLOW_RUND}"
 run_fail "${TEST_NAME_BASE}-run" cylc play "${SYM_WORKFLOW_NAME}" --debug --no-detach
-grep_ok 'CRITICAL - Workflow shutting down' "${WORKFLOW_RUN_DIR}/log/workflow/log".*
-grep_ok 'unable to open database file' "${WORKFLOW_RUN_DIR}/log/workflow/log".*
+grep_ok 'CRITICAL - Workflow shutting down' "${WORKFLOW_RUN_DIR}/log/scheduler/"*.log
+grep_ok 'unable to open database file' "${WORKFLOW_RUN_DIR}/log/scheduler/"*.log
 
 rm -f "${SYM_WORKFLOW_RUND}"
 purge

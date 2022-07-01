@@ -20,13 +20,10 @@ import logging
 
 
 CYLC_LOG = 'cylc'
-FILE_INSTALL_LOG = 'cylc-rsync'
 
 LOG = logging.getLogger(CYLC_LOG)
-RSYNC_LOG = logging.getLogger(FILE_INSTALL_LOG)
 # Start with a null handler
-for log in (LOG, RSYNC_LOG):
-    log.addHandler(logging.NullHandler())
+LOG.addHandler(logging.NullHandler())
 
 LOG_LEVELS = {
     "INFO": logging.INFO,

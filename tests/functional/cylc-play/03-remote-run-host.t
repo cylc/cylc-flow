@@ -34,7 +34,7 @@ init_workflow "${TEST_NAME_BASE}" <<< '
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --host="${CYLC_TEST_HOST}" --no-detach
 
-grep_ok "Scheduler:.*${CYLC_TEST_HOST}" "${WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_ok "Scheduler:.*${CYLC_TEST_HOST}" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
 exit

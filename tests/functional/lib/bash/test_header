@@ -104,13 +104,15 @@
 #     poll_grep ...
 #         Shorthand for 'poll grep -s ...'.
 #     poll_grep_workflow_log ...
-#         Shorthand for 'poll_grep ... "${WORKFLOW_RUN_DIR}/log/workflow/log"'
+#         Shorthand for 'poll_grep ... "${WORKFLOW_RUN_DIR}/log/scheduler/log"'
 #     poll_pid_done PID
 #         Poll until process with PID is done.
 #     poll_workflow_running
 #         Shorthand for 'poll test -e "${WORKFLOW_RUN_DIR}/.service/contact"'
 #     poll_workflow_stopped
-#         Shorthand for 'poll "!" test -e "${WORKFLOW_RUN_DIR}/.service/contact"'
+#         Shorthand for 'poll "!" test -e "${WORKFLOW_RUN_DIR}/.service/contact"'.
+#         Note that you might want to call poll_workflow_running before this as
+#         it may return before contact file is created in the first place.
 #     get_workflow_uuid
 #         Extract the UUID from the contact file or echo '' if not present.
 #     poll_workflow_restart [TIMEOUT [UUID]]
@@ -279,7 +281,7 @@ workflow_run_ok() {
     fi
     fail "${TEST_NAME}"
     WORKFLOW_RUN_FAILS=true
-    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/workflow"
+    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/scheduler"
     mkdir -p "${WORKFLOW_LOG_DIR}" # directory may not exist if run fails very early
     dump_std "${TEST_NAME}"
 }
@@ -293,7 +295,7 @@ workflow_run_fail() {
     fi
     fail "${TEST_NAME}"
     WORKFLOW_RUN_FAILS=true
-    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/workflow"
+    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/scheduler"
     mkdir -p "${WORKFLOW_LOG_DIR}" # directory may not exist if run fails very early
     dump_std "${TEST_NAME}"
 }
@@ -428,7 +430,7 @@ grep_ok() {
 grep_workflow_log_ok() {
     local TEST_NAME="$1"
     shift
-    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/workflow/log"; then
+    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/scheduler/log"; then
       ok "${TEST_NAME}"
     else
       fail "${TEST_NAME}"
@@ -704,7 +706,7 @@ poll_grep() {
 }
 
 poll_grep_workflow_log() {
-    poll grep -s "$@" "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    poll grep -s "$@" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 }
 
 poll_pid_done() {

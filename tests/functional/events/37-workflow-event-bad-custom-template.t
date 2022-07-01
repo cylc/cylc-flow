@@ -25,7 +25,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run1" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
-LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 MESSAGE="('workflow-event-handler-00', 'startup') bad template: echo %(rubbish)s"
 run_ok "${TEST_NAME_BASE}-run1-log" grep -q -F "ERROR - ${MESSAGE}" "${LOG}"
 

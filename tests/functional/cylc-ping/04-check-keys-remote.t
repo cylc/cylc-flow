@@ -74,7 +74,7 @@ else
     # target so might not be $CYLC_TEST_PLATFORM
     grep_ok \
         "platform: .* - remote tidy (on $CYLC_TEST_HOST)" \
-        "${WORKFLOW_RUN_DIR}/log/workflow/log"
+        "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 fi
 
 # ensure the keys got removed again afterwards

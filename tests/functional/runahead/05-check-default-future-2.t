@@ -41,7 +41,7 @@ cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1000Z"
 # this by PT6H due to fact that wibble spawned.
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-check-aborted
-LOG="$RUN_DIR/${WORKFLOW_NAME}/log/workflow/log"
+LOG="$RUN_DIR/${WORKFLOW_NAME}/log/scheduler/log"
 grep_ok 'Workflow shutting down - "abort on inactivity timeout" is set' "${LOG}"
 #-------------------------------------------------------------------------------
 purge

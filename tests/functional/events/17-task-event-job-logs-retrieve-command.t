@@ -48,7 +48,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
        -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 
 WORKFLOW_LOG_D="${RUN_DIR}/${WORKFLOW_NAME}/log"
-sed 's/^.* -v //' "${WORKFLOW_LOG_D}/workflow/my-rsync.log" >'my-rsync.log.edited'
+sed 's/^.* -v //' "${WORKFLOW_LOG_D}/scheduler/my-rsync.log" >'my-rsync.log.edited'
 
 OPT_HEAD='--include=/1 --include=/1/t1'
 OPT_TAIL='--exclude=/**'

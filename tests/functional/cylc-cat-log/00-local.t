@@ -28,7 +28,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-workflow-log-log
 run_ok "${TEST_NAME}" cylc cat-log "${WORKFLOW_NAME}"
-contains_ok "${TEST_NAME}.stdout" "${WORKFLOW_RUN_DIR}/log/workflow/log"
+contains_ok "${TEST_NAME}.stdout" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-workflow-log-fail
 run_fail "${TEST_NAME}" cylc cat-log -f e "${WORKFLOW_NAME}"

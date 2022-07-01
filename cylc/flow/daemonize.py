@@ -21,7 +21,7 @@ import os
 import sys
 from time import sleep, time
 
-from cylc.flow.pathutil import get_workflow_run_log_name
+from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 
 WORKFLOW_INFO_TMPL = (
     "%(workflow)s: %(host)s PID=%(pid)s\n"
@@ -40,7 +40,7 @@ def daemonize(schd):
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
 
     """
-    logfname = get_workflow_run_log_name(schd.workflow)
+    logfname = get_workflow_run_scheduler_log_path(schd.workflow)
     try:
         old_log_mtime = os.stat(logfname).st_mtime
     except OSError:

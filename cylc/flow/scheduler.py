@@ -65,8 +65,11 @@ from cylc.flow.hostuserutil import (
     is_remote_platform
 )
 from cylc.flow.loggingutil import (
-    TimestampRotatingFileHandler,
-    ReferenceLogFileHandler
+    RotatingLogFileHandler,
+    ReferenceLogFileHandler,
+    get_next_log_number,
+    get_reload_start_number,
+    get_sorted_logs_by_time
 )
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
@@ -80,11 +83,11 @@ from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
-    get_workflow_run_log_dir,
+    get_workflow_run_scheduler_log_dir,
     get_workflow_run_config_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
-    get_workflow_test_log_name,
+    get_workflow_test_log_path,
     make_workflow_run_tree,
     get_workflow_name_from_id
 )
@@ -168,6 +171,14 @@ class Scheduler:
     host: str
     id: str  # noqa: A003 (instance attr not local)
     uuid_str: str
+    is_restart: bool
+
+    # directories
+    workflow_dir: str
+    workflow_log_dir: str
+    workflow_run_dir: str
+    workflow_share_dir: str
+    workflow_work_dir: str
 
     # managers
     profiler: Profiler
@@ -203,20 +214,12 @@ class Scheduler:
     flow_file_update_time: Optional[float] = None
 
     # run options
-    is_restart: Optional[bool] = None
     template_vars: Optional[dict] = None
 
     # workflow params
     stop_mode: Optional[StopMode] = None
     stop_task: Optional[str] = None
     stop_clock_time: Optional[int] = None
-
-    # directories
-    workflow_dir: Optional[str] = None
-    workflow_log_dir: Optional[str] = None
-    workflow_run_dir: Optional[str] = None
-    workflow_share_dir: Optional[str] = None
-    workflow_work_dir: Optional[str] = None
 
     # task event loop
     is_paused: Optional[bool] = None
@@ -281,6 +284,19 @@ class Scheduler:
 
         self.timers: Dict[str, Timer] = {}
 
+        self.workflow_run_dir = get_workflow_run_dir(self.workflow)
+        self.workflow_work_dir = get_workflow_run_work_dir(self.workflow)
+        self.workflow_share_dir = get_workflow_run_share_dir(self.workflow)
+        self.workflow_log_dir = get_workflow_run_scheduler_log_dir(
+            self.workflow
+        )
+
+        self.workflow_db_mgr = WorkflowDatabaseManager(
+            pri_d=workflow_files.get_workflow_srv_dir(self.workflow),
+            pub_d=os.path.join(self.workflow_run_dir, 'log')
+        )
+        self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
+
     async def install(self):
         """Get the filesystem in the right state to run the flow.
         * Validate flowfiles
@@ -289,6 +305,9 @@ class Scheduler:
         * Copy Python files.
 
         """
+        if self.is_restart:
+            self.workflow_db_mgr.restart_check()
+
         # Install
         source, _ = workflow_files.get_workflow_source_dir(Path.cwd())
         if source is None:
@@ -298,12 +317,8 @@ class Scheduler:
 
         make_workflow_run_tree(self.workflow)
 
-        # directory information
+        # Get & check workflow file
         self.flow_file = workflow_files.get_flow_file(self.workflow)
-        self.workflow_run_dir = get_workflow_run_dir(self.workflow)
-        self.workflow_work_dir = get_workflow_run_work_dir(self.workflow)
-        self.workflow_share_dir = get_workflow_run_share_dir(self.workflow)
-        self.workflow_log_dir = get_workflow_run_log_dir(self.workflow)
 
         # Create ZMQ keys
         key_housekeeping(
@@ -331,9 +346,6 @@ class Scheduler:
         * Initialise managers.
 
         """
-        self.workflow_db_mgr = WorkflowDatabaseManager(
-            workflow_files.get_workflow_srv_dir(self.workflow),  # pri_d
-            os.path.join(self.workflow_run_dir, 'log'))  # pub_d
         self.data_store_mgr = DataStoreMgr(self)
         self.broadcast_mgr = BroadcastMgr(
             self.workflow_db_mgr, self.data_store_mgr)
@@ -420,26 +432,10 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
 
-        # Print workflow name to disambiguate in case of inferred run number
-        LOG.info(f"Workflow: {self.workflow}")
-
-        self.is_restart = self.workflow_db_mgr.restart_check()
-        # Note: since cylc play replaced cylc run/restart, we wait until this
-        # point before setting self.is_restart as we couldn't tell if
-        # we're restarting until now.
-
         self._check_startup_opts()
 
         if self.is_restart:
-            pri_dao = self.workflow_db_mgr.get_pri_dao()
-            try:
-                # This logic handles lack of initial cycle point in flow.cylc
-                # Things that can't change on workflow reload.
-                pri_dao.select_workflow_params(self._load_workflow_params)
-                pri_dao.select_workflow_template_vars(self._load_template_vars)
-                pri_dao.execute_queued_items()
-            finally:
-                pri_dao.close()
+            self.load_workflow_params_and_tmpl_vars()
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -458,6 +454,31 @@ class Scheduler:
             self.options.cycle_point_tz = (
                 self.config.cfg['scheduler']['cycle point time zone'])
 
+        # Note that the following lines must be present at the top of
+        # the workflow log file for use in reference test runs:
+        LOG.info(
+            f'Run mode: {self.config.run_mode()}',
+            extra=RotatingLogFileHandler.extra
+        )
+        LOG.info(
+            f'Initial point: {self.config.initial_point}',
+            extra=RotatingLogFileHandler.extra
+        )
+        if self.config.start_point != self.config.initial_point:
+            LOG.info(
+                f'Start point: {self.config.start_point}',
+                extra=RotatingLogFileHandler.extra
+            )
+        LOG.info(
+            f'Final point: {self.config.final_point}',
+            extra=RotatingLogFileHandler.extra
+        )
+        if self.config.stop_point:
+            LOG.info(
+                f'Stop point: {self.config.stop_point}',
+                extra=RotatingLogFileHandler.extra
+            )
+
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
         self.task_events_mgr.mail_interval = self.cylc_config['mail'][
@@ -471,7 +492,7 @@ class Scheduler:
                 self.config.get_ref_log_name()))
         elif self.options.reftest:
             LOG.addHandler(ReferenceLogFileHandler(
-                get_workflow_test_log_name(self.workflow)))
+                get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
             self.config,
@@ -547,6 +568,19 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: end configure")
 
+    def load_workflow_params_and_tmpl_vars(self) -> None:
+        """Load workflow params and template variables"""
+        pri_dao = self.workflow_db_mgr.get_pri_dao()
+        try:
+            # This logic handles lack of initial cycle point in flow.cylc and
+            # things that can't change on workflow restart/reload.
+            pri_dao.select_workflow_params(self._load_workflow_params)
+            pri_dao.select_workflow_template_vars(self._load_template_vars)
+            pri_dao.execute_queued_items()
+
+        finally:
+            pri_dao.close()
+
     async def start_servers(self):
         """Start the TCP servers."""
         min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
@@ -558,51 +592,41 @@ class Scheduler:
         self.pub_port = self.publisher.port
         self.data_store_mgr.delta_workflow_ports()
 
-    async def log_start(self):
-        if self.is_restart:
-            n_restart = self.workflow_db_mgr.n_restart
-        else:
-            n_restart = 0
-
+    async def log_start(self) -> None:
         is_quiet = (cylc.flow.flags.verbosity < 0)
         log_level = LOG.getEffectiveLevel()
         if is_quiet:
             # Temporarily change logging level to log important info
             LOG.setLevel(logging.INFO)
 
-        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
-        log_extra_num = {
-            TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
-            TimestampRotatingFileHandler.FILE_NUM: 1}
+        # Print workflow name to disambiguate in case of inferred run number
+        LOG.info(f"Workflow: {self.workflow}")
         LOG.info(
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
                 'port': self.port,
                 'pid': os.getpid()},
-            extra=log_extra,
+            extra=RotatingLogFileHandler.extra,
         )
         LOG.info(
             self.START_PUB_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
                 'port': self.pub_port},
-            extra=log_extra,
+            extra=RotatingLogFileHandler.extra,
+        )
+        restart_num = self.get_restart_num() + 1
+        LOG.info(
+            'Run: (re)start number=%d, log rollover=%d',
+            restart_num,
+            1,  # hard code 1 which is updated later if required
+            extra=RotatingLogFileHandler.extra_num
         )
         LOG.info(
-            'Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
-        LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
-        # Note that the following lines must be present at the top of
-        # the workflow log file for use in reference test runs:
-        LOG.info('Run mode: %s', self.config.run_mode(), extra=log_extra)
-        LOG.info(
-            'Initial point: %s', self.config.initial_point, extra=log_extra)
-        if self.config.start_point != self.config.initial_point:
-            LOG.info(
-                f'Start point: {self.config.start_point}', extra=log_extra)
-        LOG.info(f'Final point: {self.config.final_point}', extra=log_extra)
-        if self.config.stop_point:
-            LOG.info(f'Stop point: {self.config.stop_point}', extra=log_extra)
+            f'Cylc version: {CYLC_VERSION}',
+            extra=RotatingLogFileHandler.extra
+        )
 
         if is_quiet:
             LOG.info("Quiet mode on")
@@ -613,6 +637,7 @@ class Scheduler:
         try:
             if self.is_restart:
                 self.restart_remote_init()
+                self.task_job_mgr.task_remote_mgr.is_restart = True
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -658,9 +683,9 @@ class Scheduler:
         """
         try:
             await self.initialise()
+            await self.log_start()
             await self.configure()
             await self.start_servers()
-            await self.log_start()
             self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
@@ -744,6 +769,7 @@ class Scheduler:
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""
+        self.task_job_mgr.task_remote_mgr.is_restart = True
         distinct_install_target_platforms = []
         for itask in self.pool.get_tasks():
             itask.platform['install target'] = (
@@ -1052,6 +1078,17 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_params(self)
         self.is_updated = True
 
+    def get_restart_num(self) -> int:
+        """Return the number of the restart, else 0 if not a restart.
+
+        Performs DB restart-check the first time this is called.
+        """
+        if not self.is_restart:
+            return 0
+        if self.workflow_db_mgr.n_restart == 0:
+            self.workflow_db_mgr.restart_check()
+        return self.workflow_db_mgr.n_restart
+
     def get_contact_data(self) -> Dict[str, str]:
         """Extract contact data from this Scheduler.
 
@@ -1118,7 +1155,7 @@ class Scheduler:
             xtrigger_mgr=self.xtrigger_mgr,
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
-                self.workflow_run_dir, 'log', 'flow-config',
+                self.workflow_run_dir, 'log', 'config',
                 workflow_files.WorkflowFiles.FLOW_FILE_PROCESSED
             ),
             run_dir=self.workflow_run_dir,
@@ -1133,18 +1170,25 @@ class Scheduler:
 
         self.flow_file_update_time = time()
         # Dump the loaded flow.cylc file for future reference.
-        time_str = get_current_time_string(
-            override_use_utc=True, use_basic_format=True,
-            display_sub_seconds=False
-        )
+        config_dir = get_workflow_run_config_log_dir(
+            self.workflow)
+        config_logs = get_sorted_logs_by_time(config_dir, "*[0-9].cylc")
+        if config_logs:
+            log_num = get_next_log_number(config_logs[-1])
+        else:
+            log_num = '01'
         if is_reload:
             load_type = "reload"
+            load_type_num = get_reload_start_number(config_logs)
         elif self.is_restart:
             load_type = "restart"
+            restart_num = self.get_restart_num() + 1
+            load_type_num = f'{restart_num:02d}'
         else:
             load_type = "start"
+            load_type_num = '01'
         file_name = get_workflow_run_config_log_dir(
-            self.workflow, f"{time_str}-{load_type}.cylc")
+            self.workflow, f"{log_num}-{load_type}-{load_type_num}.cylc")
         with open(file_name, "w") as handle:
             handle.write("# cylc-version: %s\n" % CYLC_VERSION)
             self.config.pcfg.idump(sparse=True, handle=handle)
@@ -1432,11 +1476,9 @@ class Scheduler:
         cmd = ['cylc', 'play', quote(self.workflow)]
         if self.options.abort_if_any_task_fails:
             cmd.append('--abort-if-any-task-fails')
-
         for attempt_no in range(max_retries):
             new_host = select_workflow_host(cached=False)[0]
             LOG.info(f'Attempting to restart on "{new_host}"')
-
             # proc will start with current env (incl CYLC_HOME etc)
             proc = Popen(  # nosec
                 [*cmd, f'--host={new_host}'],
@@ -1489,6 +1531,7 @@ class Scheduler:
                 self.data_store_mgr.initiate_data_model(reloaded=True)
                 # Reset the remote init map to trigger fresh file installation
                 self.task_job_mgr.task_remote_mgr.remote_init_map.clear()
+                self.task_job_mgr.task_remote_mgr.is_reload = True
                 self.pool.reload_taskdefs()
                 # Load jobs from DB
                 self.workflow_db_mgr.pri_dao.select_jobs_for_restart(

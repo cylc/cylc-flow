@@ -70,7 +70,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach \
     "${WORKFLOW_NAME}"
 
-LOGFILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.

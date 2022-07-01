@@ -32,8 +32,8 @@ cmp_ok "${WORKFLOWD}/file" <<'__TEXT__'
 1
 2
 __TEXT__
-grep_ok 'LOADING task action timers' "${WORKFLOWD}/log/workflow/log"
-grep_ok "+ 1/t01 \[\['event-handler-00', 'succeeded'\], 1\]" "${WORKFLOWD}/log/workflow/log"
+grep_ok 'LOADING task action timers' "${WORKFLOWD}/log/scheduler/log"
+grep_ok "+ 1/t01 \[\['event-handler-00', 'succeeded'\], 1\]" "${WORKFLOWD}/log/scheduler/log"
 
 purge
 exit

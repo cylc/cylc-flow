@@ -44,7 +44,6 @@ grep_ok 'WARNING - The event handler template variable "%(suite_uuid)s" is depre
     "${TEST_NAME_BASE}-validate.stderr" -F
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
-poll_workflow_stopped
 
 FOO_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
 grep_ok "\[(('event-handler-00', 'started'), 1) out\] job_id = [0-9]\+; job_runner_name = background; workflow = ${WORKFLOW_NAME}; workflow_uuid = [a-f0-9\-]\+" "$FOO_ACTIVITY_LOG"

@@ -26,7 +26,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
 grep_ok "ERROR - Workflow shutting down - AUTOMATIC(ON-TASK-FAILURE)" \
-    "${LOGD}/workflow/log"
+    "${LOGD}/scheduler/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that 1/t1 event handler runs
 run_ok "${TEST_NAME_BASE}-activity-log" \

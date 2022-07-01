@@ -28,14 +28,14 @@ create_test_global_config '
 '
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate \
-    --set=WORKFLOW_LOG_DIR=\""${WORKFLOW_RUN_DIR}/log/workflow"\" \
+    --set=WORKFLOW_LOG_DIR=\""${WORKFLOW_RUN_DIR}/log/scheduler"\" \
     "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach \
-    --set=WORKFLOW_LOG_DIR=\""${WORKFLOW_RUN_DIR}/log/workflow"\" \
+    --set=WORKFLOW_LOG_DIR=\""${WORKFLOW_RUN_DIR}/log/scheduler"\" \
     "${WORKFLOW_NAME}"
 sort -u 'events.log' >'expected.events.log'
-sed 's/ (after .*)$//' "${WORKFLOW_RUN_DIR}/log/workflow/events.log" | sort -u \
+sed 's/ (after .*)$//' "${WORKFLOW_RUN_DIR}/log/scheduler/events.log" | sort -u \
     >'actual.events.log'
 cmp_ok 'actual.events.log' 'expected.events.log'
 #-------------------------------------------------------------------------------

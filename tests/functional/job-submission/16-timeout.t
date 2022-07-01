@@ -42,7 +42,7 @@ cylc cat-log "${WORKFLOW_NAME}" \
        | sed -e 's/^.* \(ERROR\)/\1/' > log
 
 WORKFLOW_LOG_DIR=$(cylc cat-log -m p "${WORKFLOW_NAME}")
-JOB_LOG_DIR="${WORKFLOW_LOG_DIR%workflow/log}"
+JOB_LOG_DIR="${WORKFLOW_LOG_DIR%scheduler/log}"
 JOB_LOG_DIR="${JOB_LOG_DIR/$HOME/\$HOME}"
 
 DEFAULT_PATHS='--path=/bin --path=/usr/bin --path=/usr/local/bin --path=/sbin --path=/usr/sbin --path=/usr/local/sbin'

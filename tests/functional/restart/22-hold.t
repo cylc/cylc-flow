@@ -40,7 +40,7 @@ cmp_ok 'tasks_to_hold-1.out' << __EOF__
 __EOF__
 
 workflow_run_ok "${TEST_NAME_BASE}-restart" cylc play "${WORKFLOW_NAME}" --debug --no-detach
-grep_ok 'INFO - + 2016/t2 waiting (held)' "${WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_ok 'INFO - + 2016/t2 waiting (held)' "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Check task pool
 sqlite3 "${WORKFLOW_RUN_DIR}/log/db" \
     'SELECT * FROM task_pool' >'task_pool-end.out'

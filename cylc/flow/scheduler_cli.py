@@ -22,7 +22,7 @@ from shlex import quote
 import sys
 from typing import TYPE_CHECKING, List
 
-from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
@@ -31,7 +31,7 @@ from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.loggingutil import (
     close_log,
-    TimestampRotatingFileHandler,
+    RotatingLogFileHandler,
 )
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
@@ -40,9 +40,7 @@ from cylc.flow.option_parsers import (
     Options,
     icp_option,
 )
-from cylc.flow.pathutil import (
-    get_workflow_run_log_name,
-    get_workflow_file_install_log_name)
+from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
 from cylc.flow.scripts.common import cylc_header
@@ -256,20 +254,19 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_, no_detach):
+def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    log_path = get_workflow_run_log_name(id_)
+    log_path = get_workflow_run_scheduler_log_path(id_)
     LOG.addHandler(
-        TimestampRotatingFileHandler(log_path, no_detach)
-    )
-    # Add file installation log
-    file_install_log_path = get_workflow_file_install_log_name(id_)
-    RSYNC_LOG.addHandler(
-        TimestampRotatingFileHandler(file_install_log_path, no_detach)
+        RotatingLogFileHandler(
+            log_path,
+            no_detach,
+            restart_num=restart_num
+        )
     )
 
 
@@ -343,7 +340,11 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         daemonize(scheduler)
 
     # setup loggers
-    _open_logs(workflow_id, options.no_detach)
+    _open_logs(
+        workflow_id,
+        options.no_detach,
+        restart_num=scheduler.get_restart_num()
+    )
 
     # run the workflow
     ret = asyncio.run(
@@ -355,8 +356,7 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     # NOTE: any threads which include sleep statements could cause
     #       sys.exit to hang if not shutdown properly
     LOG.info("DONE")
-    for log in (LOG, RSYNC_LOG):
-        close_log(log)
+    close_log(LOG)
     sys.exit(ret)
 
 

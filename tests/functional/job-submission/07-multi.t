@@ -30,7 +30,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     "${WORKFLOW_NAME}"
 
 RUN_DIR="$RUN_DIR/${WORKFLOW_NAME}"
-LOG="${RUN_DIR}/log/workflow/log"
+LOG="${RUN_DIR}/log/scheduler/log"
 sed -n 's/^.*\(cylc jobs-submit\)/\1/p' "${LOG}" | sort -u >'edited-workflow-log'
 
 PATHOPTS="--path=/bin --path=/usr/bin --path=/usr/local/bin --path=/sbin --path=/usr/sbin --path=/usr/local/sbin"

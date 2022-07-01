@@ -69,7 +69,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # should try remote-init on bad_host{1,2} then fail
 log_scan \
     "${TEST_NAME_BASE}-badhostplatformgroup" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     'platform: badhostplatform - remote init (on bad_host1)' \
     'platform: badhostplatform - Could not connect to bad_host1.' \
     'platform: badhostplatform - remote init (on bad_host2)' \
@@ -78,7 +78,7 @@ log_scan \
 # should try remote-init on unreachable_host, then $CYLC_TEST_HOST then pass
 log_scan \
     "${TEST_NAME_BASE}-goodplatformgroup" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     "platform: ${CYLC_TEST_PLATFORM} - remote init (on unreachable_host)" \
     "platform: ${CYLC_TEST_PLATFORM} - Could not connect to unreachable_host." \
     "platform: ${CYLC_TEST_PLATFORM} - remote init (on ${CYLC_TEST_HOST})" \

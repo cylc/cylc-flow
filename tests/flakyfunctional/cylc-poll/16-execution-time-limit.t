@@ -55,7 +55,7 @@ print(
 __PYTHON__
 }
 #-------------------------------------------------------------------------------
-LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Test logging of the "next job poll" message when task starts.
 TEST_NAME="${TEST_NAME_BASE}-log-entry"
 LINE="$(grep '\[1/foo\ .* execution timeout=None, polling intervals=' "${LOG}")"

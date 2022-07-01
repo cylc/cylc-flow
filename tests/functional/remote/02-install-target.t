@@ -38,7 +38,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}" \
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug \
     --no-detach \
      "${WORKFLOW_NAME}" -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'"
-grep_ok "REMOTE INIT NOT REQUIRED for localhost" "${WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_ok "REMOTE INIT NOT REQUIRED for localhost" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
 exit

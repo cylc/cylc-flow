@@ -40,7 +40,7 @@ run_ok "${TEST_NAME_BASE}-validate" \
 
 run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach --debug
 
-WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 log_scan "${TEST_NAME_BASE}-orphaned" "${WORKFLOW_LOG}" 1 1 \
     'Orphaned task jobs.*' \

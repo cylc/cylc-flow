@@ -58,10 +58,10 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 
 named_grep_ok "unreachable host warning" \
     'unreachable_host has been added to the list of unreachable hosts' \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Ensure that retrying in this context doesn't increment try number:
-grep_fail "1/mixedhosttask/02" "${WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_fail "1/mixedhosttask/02" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
 exit 0

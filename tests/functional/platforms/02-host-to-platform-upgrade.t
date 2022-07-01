@@ -51,7 +51,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     -s CYLC_TEST_HOST_FQDN="'$(ssh "$CYLC_TEST_HOST" hostname -f)'" \
     "${WORKFLOW_NAME}"
 
-grep "host=" "${WORKFLOW_RUN_DIR}/log/workflow/log" > hosts.log
+grep "host=" "${WORKFLOW_RUN_DIR}/log/scheduler/log" > hosts.log
 
 grep_ok "\[2/t2.*\].*host=${CYLC_TEST_HOST}" hosts.log
 

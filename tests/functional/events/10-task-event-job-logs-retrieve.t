@@ -49,7 +49,7 @@ cmp_ok 'edited-activities.log' <<'__LOG__'
 [(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
 __LOG__
 
-grep -F 'will run after' "${WORKFLOW_RUN_DIR}/log/workflow/log" \
+grep -F 'will run after' "${WORKFLOW_RUN_DIR}/log/scheduler/log" \
     | cut -d' ' -f 4-12 | sort >"edited-log"
 cmp_ok 'edited-log' <<'__LOG__'
 1/t1/01 handler:job-logs-retrieve for task event:retry will run after PT5S

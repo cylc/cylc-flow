@@ -76,7 +76,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
-    get_workflow_run_log_dir,
+    get_workflow_run_scheduler_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
     get_workflow_name_from_id
@@ -188,7 +188,8 @@ class WorkflowConfig:
         self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
-        self.log_dir = log_dir or get_workflow_run_log_dir(self.workflow)
+        self.log_dir = (log_dir or
+                        get_workflow_run_scheduler_log_dir(self.workflow))
         self.share_dir = share_dir or get_workflow_run_share_dir(self.workflow)
         self.work_dir = work_dir or get_workflow_run_work_dir(self.workflow)
         self.options = options

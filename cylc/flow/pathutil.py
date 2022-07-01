@@ -88,29 +88,29 @@ def get_workflow_run_job_dir(workflow, *args):
     return get_workflow_run_dir(workflow, 'log', 'job', *args)
 
 
-def get_workflow_run_log_dir(workflow, *args):
+def get_workflow_run_scheduler_log_dir(workflow, *args):
     """Return workflow run log directory, join any extra args."""
-    return get_workflow_run_dir(workflow, 'log', 'workflow', *args)
+    return get_workflow_run_dir(workflow, 'log', 'scheduler', *args)
 
 
-def get_workflow_run_log_name(workflow):
+def get_workflow_run_scheduler_log_path(workflow):
     """Return workflow run log file path."""
-    return get_workflow_run_dir(workflow, 'log', 'workflow', 'log')
+    return get_workflow_run_scheduler_log_dir(workflow, 'log')
 
 
-def get_workflow_file_install_log_name(workflow):
-    """Return workflow file install log file path."""
+def get_workflow_file_install_log_dir(workflow, *args):
+    """Return workflow file install log file dir, join any extra args."""
     return get_workflow_run_dir(
-        workflow, 'log', 'workflow', 'file-installation-log'
+        workflow, 'log', 'remote-install', *args
     )
 
 
 def get_workflow_run_config_log_dir(workflow, *args):
     """Return workflow run flow.cylc log directory, join any extra args."""
-    return get_workflow_run_dir(workflow, 'log', 'flow-config', *args)
+    return get_workflow_run_dir(workflow, 'log', 'config', *args)
 
 
-def get_workflow_run_pub_db_name(workflow):
+def get_workflow_run_pub_db_path(workflow):
     """Return workflow run public database file path."""
     return get_workflow_run_dir(workflow, 'log', 'db')
 
@@ -125,16 +125,16 @@ def get_workflow_run_work_dir(workflow, *args):
     return get_workflow_run_dir(workflow, 'work', *args)
 
 
-def get_workflow_test_log_name(workflow):
+def get_workflow_test_log_path(workflow):
     """Return workflow run ref test log file path."""
-    return get_workflow_run_dir(workflow, 'log', 'workflow', 'reftest.log')
+    return get_workflow_run_scheduler_log_dir(workflow, 'reftest.log')
 
 
 def make_workflow_run_tree(workflow):
     """Create all top-level cylc-run output dirs on the workflow host."""
     for dir_ in (
         get_workflow_run_dir(workflow),
-        get_workflow_run_log_dir(workflow),
+        get_workflow_run_scheduler_log_dir(workflow),
         get_workflow_run_job_dir(workflow),
         get_workflow_run_config_log_dir(workflow),
         get_workflow_run_share_dir(workflow),

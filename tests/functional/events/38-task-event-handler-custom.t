@@ -24,7 +24,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"
 FOO_ACTIVITY_LOG="${WORKFLOW_RUN_DIR}/log/job/1/foo/NN/job-activity.log"
-WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 grep_ok \
 "\[(('event-handler-00', 'custom-1'), 1) out\] !!CUSTOM!! 1/foo fugu Data ready for barring" \
     "${FOO_ACTIVITY_LOG}"

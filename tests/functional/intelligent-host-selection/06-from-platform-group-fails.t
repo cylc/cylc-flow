@@ -49,7 +49,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-logfile="${WORKFLOW_RUN_DIR}/log/workflow/log"
+logfile="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check workflow fails for the reason we want it to fail
 named_grep_ok \

@@ -27,6 +27,4 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 TEST_NAME=${TEST_NAME_BASE}-auto-stop
 workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-poll_workflow_stopped
-
 purge

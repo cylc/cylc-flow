@@ -33,7 +33,7 @@ create_test_global_config "
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-LOG_FILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOG_FILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 PRE_MSG='health:'
 POST_MSG='.*, polling intervals=10\*PT6S...'

@@ -34,7 +34,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-sed -e 's/^.* \([EW]\)/\1/' "${WORKFLOW_RUN_DIR}/log/workflow/log" >'log'
+sed -e 's/^.* \([EW]\)/\1/' "${WORKFLOW_RUN_DIR}/log/scheduler/log" >'log'
 
 contains_ok 'log' <<__END__
 ERROR - [(('event-handler-00', 'started'), 1) cmd] sleeper.sh 1/foo

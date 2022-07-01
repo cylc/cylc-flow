@@ -50,7 +50,7 @@ grep_for_stall run
 
 # Rinse and repeat
 workflow_run_fail "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --no-detach
-grep_workflow_log_ok grep-restart 'Run: \(re\)start=1 log=1' -E
+grep_workflow_log_ok grep-restart 'Run: \(re\)start number=2, log rollover=1' -E
 grep_for_stall rstart
 
 purge

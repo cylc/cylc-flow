@@ -24,7 +24,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 LOGD="$RUN_DIR/${WORKFLOW_NAME}/log"
-grep_ok 'INFO - Workflow shutting down - REQUEST(NOW)' "${LOGD}/workflow/log"
+grep_ok 'INFO - Workflow shutting down - REQUEST(NOW)' "${LOGD}/scheduler/log"
 JLOGD="${LOGD}/job/1/t1/01"
 # Check that 1/t1 event handler runs
 run_ok "${TEST_NAME_BASE}-activity-log-succeeded" \

@@ -79,14 +79,13 @@ log_scan "${TEST_NAME}-stop" "${FILE}" 40 1 \
     'Waiting for jobs running on localhost to complete' \
     'Waiting for jobs running on localhost to complete' \
     'Workflow shutting down - REQUEST(NOW-NOW)' \
-    "Attempting to restart on \"${CYLC_TEST_HOST2}\"" \
-    "Workflow now running on \"${CYLC_TEST_HOST2}\"" \
-
+    "Attempting to restart on \"${CYLC_TEST_HOST2}\""
 # we shouldn't have any orphaned tasks because we should
 # have waited for them to complete
 grep_fail 'orphaned task' "${FILE}"
 
 poll_workflow_restart
+grep_workflow_log_ok "restart-log-grep" "Workflow now running on \"${CYLC_TEST_HOST2}\""
 #-------------------------------------------------------------------------------
 # auto stop-restart - force mode:
 #     ensure the workflow DOESN'T WAIT for local jobs to complete before stopping
