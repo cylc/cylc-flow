@@ -158,7 +158,7 @@ def make_localhost_symlinks(
 
     Returns:
         Dictionary of symlinks with sources as keys and
-        destinations as values: ``{source: destination}``
+        destinations as values: ``{target: symlink}``
 
     """
     symlinks_created = {}
@@ -177,9 +177,9 @@ def make_localhost_symlinks(
         if '$' in target:
             raise WorkflowFilesError(
                 f'Unable to create symlink to {target}.'
-                f' \'{value}\' contains an invalid environment variable.'
+                f" '{value}' contains an invalid environment variable."
                 ' Please check configuration.')
-        symlink_success = make_symlink(symlink_path, target)
+        symlink_success = make_symlink_dir(symlink_path, target)
         # Symlink info returned for logging purposes. Symlinks should be
         # created before logs as the log dir may be a symlink.
         if symlink_success:
@@ -191,10 +191,11 @@ def get_dirs_to_symlink(
     install_target: str,
     workflow_name: str,
     symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None
-) -> Dict[str, Any]:
+) -> Dict[str, str]:
     """Returns dictionary of directories to symlink.
 
     Note the paths should remain unexpanded, to be expanded on the remote.
+
     Args:
         install_target: Symlinks to be created on this install target
         flow_name: full name of the run, e.g. myflow/run1
@@ -205,7 +206,7 @@ def get_dirs_to_symlink(
     Returns:
         dirs_to_symlink: [directory: symlink_path]
     """
-    dirs_to_symlink: Dict[str, Any] = {}
+    dirs_to_symlink: Dict[str, str] = {}
     if symlink_conf is None:
         symlink_conf = glbl_cfg().get(['install', 'symlink dirs'])
     if install_target not in symlink_conf.keys():
@@ -223,12 +224,14 @@ def get_dirs_to_symlink(
     return dirs_to_symlink
 
 
-def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
+def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
     """Makes symlinks for directories.
 
     Args:
         path: Absolute path of the desired symlink.
         target: Absolute path of the symlink's target directory.
+
+    Returns True if symlink created, or False if skipped.
     """
     path = Path(path)
     target = Path(target)
@@ -251,7 +254,14 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
         except OSError:
             raise WorkflowFilesError(
                 f"Error when symlinking. Failed to unlink bad symlink {path}.")
-    target.mkdir(parents=True, exist_ok=True)
+    try:
+        target.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        raise WorkflowFilesError(
+            f"Symlink dir target already exists: ({path} ->) {target}\n"
+            "Tip: in future, use 'cylc clean' instead of manually deleting "
+            "workflow run dirs."
+        )
 
     # This is needed in case share and share/cycle have the same symlink dir:
     if path.exists():
@@ -280,10 +290,10 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
         if os.path.exists(path):
             target = os.path.realpath(path)
             LOG.info(
-                f'Removing symlink target directory: ({path} ->) {target}'
+                "Removing symlink and its target directory: "
+                f"{path} -> {target}"
             )
             rmtree(target, onerror=handle_rmtree_err)
-            LOG.info(f'Removing symlink: {path}')
         else:
             LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
