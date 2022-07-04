@@ -1349,9 +1349,9 @@ with Conf(
                        7-to-8/major-changes/remote-owner.html>`_
                 """)
                 Conf('retrieve job logs', VDR.V_BOOLEAN,
-                    desc=REPLACED_BY_PLATFORMS)
+                     desc=REPLACED_BY_PLATFORMS)
                 Conf('retrieve job logs max size', VDR.V_STRING,
-                    desc=REPLACED_BY_PLATFORMS)
+                     desc=REPLACED_BY_PLATFORMS)
                 Conf('retrieve job logs retry delays',
                      VDR.V_INTERVAL_LIST, None,
                      desc=REPLACED_BY_PLATFORMS)
@@ -1395,24 +1395,76 @@ with Conf(
                         "[task events]submission timeout"
                     )
                 ))
-                # TODO: add descriptions for the handlers below. Some of them
-                # didn't have any mention in the Cylc 7 suiterc ref docs, but
-                # a look at git blame indicates none of them are new in Cylc 8.
-                Conf('expired handlers', VDR.V_STRING_LIST, None)
-                Conf('late offset', VDR.V_INTERVAL, None)
-                Conf('late handlers', VDR.V_STRING_LIST, None)
-                Conf('submitted handlers', VDR.V_STRING_LIST, None)
-                Conf('started handlers', VDR.V_STRING_LIST, None)
-                Conf('succeeded handlers', VDR.V_STRING_LIST, None)
-                Conf('failed handlers', VDR.V_STRING_LIST, None)
-                Conf('submission failed handlers', VDR.V_STRING_LIST, None)
-                Conf('warning handlers', VDR.V_STRING_LIST, None)
-                Conf('critical handlers', VDR.V_STRING_LIST, None)
-                Conf('retry handlers', VDR.V_STRING_LIST, None)
-                Conf('submission retry handlers', VDR.V_STRING_LIST, None)
-                Conf('execution timeout handlers', VDR.V_STRING_LIST, None)
-                Conf('submission timeout handlers', VDR.V_STRING_LIST, None)
-                Conf('custom handlers', VDR.V_STRING_LIST, None)
+                Conf('expired handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task has expired.
+
+                    .. caution::
+
+                       Due to changes to the Cylc 8 scheduling algorithm
+                       this event is unlikely to occur.
+                ''')
+                Conf('late offset', VDR.V_INTERVAL, None, desc='''
+                    How long to wait for this task to be triggered before
+                    running
+                    :cylc:conf:`flow.cylc[runtime][<namespace>][events]
+                    late handlers`.
+                ''')
+                Conf('late handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task is never active and is late.
+
+                    .. caution::
+
+                       Due to changes to the Cylc 8 scheduling algorithm
+                       this event is unlikely to occur until the task is about
+                       to submit anyway.
+                ''')
+                Conf('submitted handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task is submitted.
+                ''')
+                Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task is started.
+                ''')
+                Conf('succeeded handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task succeeds.
+                ''')
+                Conf('failed handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task fails.
+                ''')
+                Conf('submission failed handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Invoke if submission of this task fails.
+                ''')
+                Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task repors a message with severity
+                    "WARNING".
+                ''')
+                Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task repors a message with severity
+                    "CRITICAL".
+                ''')
+                Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task failed but will retry.
+                ''')
+                Conf('submission retry handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Invoke if this task failed to submit but will retry.
+                ''')
+                Conf('execution timeout handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Invoke if this task execution exceeds
+                        :cylc:conf:`flow.cylc[runtime][<namespace>]
+                        execution time limit`.
+                ''')
+                Conf('submission timeout handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Invoke if this task execution exceeds
+                        :cylc:conf:`flow.cylc[runtime][<namespace>]
+                        submission timeout`.
+                ''')
+                Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
+                    Invoke if this task repors a message with severity
+                    "CUSTOM".
+                ''')
 
             with Conf('mail', desc='''
                 Email notification settings for task events.
