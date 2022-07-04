@@ -1651,7 +1651,9 @@ with Conf(
                 prepended to the ``[environment]`` section when running
                 a workflow.
             '''):
-                Conf('<parameter>', VDR.V_STRING)
+                Conf('<parameter>', VDR.V_STRING, desc='''
+                    .. deprecated:: 7.8.7/7.9.2
+                ''')
 
 
 def upg(cfg, descr):
