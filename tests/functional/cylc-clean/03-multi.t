@@ -51,7 +51,7 @@ mkdir "${WORKFLOW_RUN_DIR}/run1/.service"
 touch "${WORKFLOW_RUN_DIR}/run1/.service/db"  # corrupted db!
 
 TEST_NAME="${TEST_NAME_BASE}-yes-no" 
-run_ok "${TEST_NAME}" \
+run_fail "${TEST_NAME}" \
     cylc clean -y "$WORKFLOW_NAME/run1" "$WORKFLOW_NAME/run2"
 
 grep_ok "Cannot clean .*/run1" "${TEST_NAME}.stderr" -e
