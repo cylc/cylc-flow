@@ -49,7 +49,7 @@ run_ok "${TEST_NAME}" cylc lint . -r 728
 named_grep_ok "do-not-upgrade-check-if-compat-mode" "No checks" "${TEST_NAME}.stderr"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset2"
-run_ok "${TEST_NAME}" cylc lint .
+run_ok "${TEST_NAME}" cylc lint . -r all
 named_grep_ok "do-not-upgrade-check-if-compat-mode2" "only for style" "${TEST_NAME}.stderr"
 
 rm suite.rc
