@@ -63,7 +63,8 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REPLACED_BY_PLATFORMS = '''
 .. warning::
 
-   Deprecated section kept for compatibility with Cylc 7 workflow definitions.
+   Deprecated section or item kept for compatibility with Cylc 7 workflow
+   definitions.
 
    This will be removed in a future version of Cylc 8.
 
@@ -1312,14 +1313,30 @@ with Conf(
                 job scripts to run.
 
             ''') + REPLACED_BY_PLATFORMS):
-                Conf('batch system', VDR.V_STRING)
-                Conf('batch submit command template', VDR.V_STRING)
+                Conf('batch system', VDR.V_STRING, desc='''
+                    Batch/Queuing system upon which to run jobs.
+
+                    .. seealso::
+
+                       Kept for back compatibility but replaced by
+                       :cylc:conf:`global.cylc[platforms][<platform name>]
+                       job runner`.
+                ''')
+                Conf('batch submit command template', VDR.V_STRING, desc='''
+                    Set command used by chosen batch system.
+
+                    .. seealso::
+
+                       Kept for back compatibility but replaced by
+                       :cylc:conf:`global.cylc[platforms][<platform name>]
+                       job runner command template`.
+                ''')
 
             with Conf('remote', desc=dedent('''
                 .. deprecated:: 8.0.0
 
             ''') + REPLACED_BY_PLATFORMS):
-                Conf('host', VDR.V_STRING)
+                Conf('host', VDR.V_STRING, desc=REPLACED_BY_PLATFORMS)
                 # TODO: Convert URL to a stable or latest release doc after 8.0
                 # https://github.com/cylc/cylc-flow/issues/4663
                 Conf('owner', VDR.V_STRING, desc="""
@@ -1331,10 +1348,13 @@ with Conf(
                        <https://cylc.github.io/cylc-doc/latest/html/
                        7-to-8/major-changes/remote-owner.html>`_
                 """)
-                Conf('retrieve job logs', VDR.V_BOOLEAN)
-                Conf('retrieve job logs max size', VDR.V_STRING)
+                Conf('retrieve job logs', VDR.V_BOOLEAN,
+                    desc=REPLACED_BY_PLATFORMS)
+                Conf('retrieve job logs max size', VDR.V_STRING,
+                    desc=REPLACED_BY_PLATFORMS)
                 Conf('retrieve job logs retry delays',
-                     VDR.V_INTERVAL_LIST, None)
+                     VDR.V_INTERVAL_LIST, None,
+                     desc=REPLACED_BY_PLATFORMS)
 
             with Conf('events', desc=(
                 global_default(TASK_EVENTS_DESCR, "[task events]")
