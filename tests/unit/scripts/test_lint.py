@@ -139,7 +139,7 @@ def test_check_cylc_file_7to8(create_testable_file, number, capsys):
 
 def test_check_cylc_file_7to8_has_shebang(create_testable_file):
     """Jinja2 code comments will not be added if shebang present"""
-    result = create_testable_file('#!jinja2\n{{FOO}}', 'all').out
+    result = create_testable_file('#!jinja2\n{{FOO}}', '[scheduler]').out
     assert result == ''
 
 def test_check_cylc_file_line_no(create_testable_file, capsys):

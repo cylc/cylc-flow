@@ -341,7 +341,7 @@ CHECKS = {
             'url': STYLE_GUIDE + 'tab-characters'
         },
         # Not a full test, but if a non section is not indented...
-        re.compile(r'^[^\[|\s]'): {
+        re.compile(r'^[^\{\[|\s]'): {
             'short': 'Item not indented.',
             'url': STYLE_GUIDE + 'indentation'
         },
