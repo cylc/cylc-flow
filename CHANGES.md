@@ -52,6 +52,9 @@ default job runner directives for platforms.
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.
 
+[#4900](https://github.com/cylc/cylc-flow/pull/4900) - Added a command to assist
+with upgrading Cylc 7 workflows to Cylc 8: Try `cylc 728 <workflow-dir>`.
+
 ### Fixes
 
 [#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
