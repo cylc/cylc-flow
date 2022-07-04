@@ -694,8 +694,21 @@ with Conf(
                     Assigned tasks will automatically be removed
                     from the default queue.
                 ''')
-            with Conf('default', meta=Queue):
-                Conf('limit', VDR.V_INTEGER, 0)
+            with Conf('default', meta=Queue, desc='''
+                The default queue - all tasks are assigned to this queue.
+                Designed to allow you to set
+                :cylc:conf:`flow.cylc[scheduling][queues][default]limit`.
+            '''):
+                Conf('limit', VDR.V_INTEGER, 0, desc='''
+                    If no other queues are set up one can use this config
+                    item to control the total number of tasks running.
+
+                    .. seealso::
+
+                       - :cylc:conf:`flow.cylc[scheduling]
+                         [queues][<queue name>]limit`
+                       - :ref:`InternalQueues`
+                ''')
 
         with Conf('special tasks', desc='''
             This section is used to identify tasks with special behaviour.
