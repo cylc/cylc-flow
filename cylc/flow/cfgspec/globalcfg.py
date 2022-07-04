@@ -985,7 +985,8 @@ with Conf('global.cylc', desc='''
             .. versionadded:: 8.0.0
         """):
             with Conf('<install target>', desc="""
-                Install target where directories to be symlinked are located.
+                :ref:`Install_target` where directories to be symlinked are 
+                located.
             """):
                 Conf('run', VDR.V_STRING, None, desc="""
                     Alternative location for the run dir.
