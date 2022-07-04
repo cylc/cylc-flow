@@ -66,9 +66,8 @@ async def workflow(flow, scheduler, one_conf, run_dir):
     await schd.install()
 
     from collections import namedtuple
-    Server = namedtuple('Server', ['port'])
-    schd.server = Server(1234)
-    schd.publisher = Server(2345)
+    Server = namedtuple('Server', ['port', 'pub_port'])
+    schd.server = Server(1234, pub_port=2345)
 
     contact_data = schd.get_contact_data()
     contact_file = Path(

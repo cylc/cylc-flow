@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from time import sleep
-from threading import Barrier
 
 import pytest
 import zmq
@@ -54,18 +53,10 @@ def test_single_port(myflow, port_range):
 def test_start(myflow, port_range):
     """Test socket start."""
     setup_keys(myflow)  # auth keys are required for comms
-    barrier = Barrier(2, timeout=20)
-    publisher = ZMQSocketBase(zmq.PUB, workflow=myflow, bind=True,
-                              barrier=barrier, threaded=True, daemon=True)
-    assert publisher.barrier.n_waiting == 0
+    publisher = ZMQSocketBase(zmq.PUB, workflow=myflow, bind=True)
     assert publisher.loop is None
     assert publisher.port is None
     publisher.start(*port_range)
-    # barrier.wait() doesn't seem to work properly here
-    # so this workaround will do
-    while publisher.barrier.n_waiting < 1:
-        sleep(0.2)
-    assert barrier.wait() == 1
     assert publisher.loop is not None
     assert publisher.port is not None
     publisher.stop()
@@ -74,17 +65,8 @@ def test_start(myflow, port_range):
 def test_stop(myflow, port_range):
     """Test socket/thread stop."""
     setup_keys(myflow)  # auth keys are required for comms
-    barrier = Barrier(2, timeout=20)
-    publisher = ZMQSocketBase(zmq.PUB, workflow=myflow, bind=True,
-                              barrier=barrier, threaded=True, daemon=True)
+    publisher = ZMQSocketBase(zmq.PUB, workflow=myflow, bind=True)
     publisher.start(*port_range)
-    # barrier.wait() doesn't seem to work properly here
-    # so this workaround will do
-    while publisher.barrier.n_waiting < 1:
-        sleep(0.1)
-    barrier.wait()
     assert not publisher.socket.closed
-    assert publisher.thread.is_alive()
     publisher.stop()
     assert publisher.socket.closed
-    assert not publisher.thread.is_alive()

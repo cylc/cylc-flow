@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Server for workflow runtime API."""
 
+import asyncio
 import getpass  # noqa: F401
 from queue import Queue
 from textwrap import dedent
@@ -24,13 +25,16 @@ from typing import Any, Dict, List, Optional, Union
 from graphql.execution import ExecutionResult
 from graphql.execution.executors.asyncio import AsyncioExecutor
 import zmq
+from zmq.auth.thread import ThreadAuthenticator
 
-from cylc.flow import LOG
-from cylc.flow.network import encode_, decode_, ZMQSocketBase
+from cylc.flow import LOG, workflow_files
+from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.network.authorisation import authorise
 from cylc.flow.network.graphql import (
     CylcGraphQLBackend, IgnoreFieldMiddleware, instantiate_middleware
 )
+from cylc.flow.network.publisher import WorkflowPublisher
+from cylc.flow.network.replier import WorkflowReplier
 from cylc.flow.network.resolvers import Resolvers
 from cylc.flow.network.schema import schema
 from cylc.flow.data_store_mgr import DELTAS_MAP
@@ -69,25 +73,23 @@ def filter_none(dictionary):
     }
 
 
-class WorkflowRuntimeServer(ZMQSocketBase):
+class WorkflowRuntimeServer:
     """Workflow runtime service API facade exposed via zmq.
 
-    This class contains the Cylc endpoints.
+    This class starts and coordinates the publisher and replier, and
+    contains the Cylc endpoints invoked by the receiver to provide a response
+    to incomming messages.
 
     Args:
         schd (object): The parent object instantiating the server. In
             this case, the workflow scheduler.
-        context (object): The instantiated ZeroMQ context (i.e. zmq.Context())
-            passed in from the application.
-        barrier (object): Threading Barrier object used to sync threads, for
-            the main thread to ensure socket setup has finished.
 
     Usage:
         * Define endpoints using the ``expose`` decorator.
-        * Call endpoints using the function name.
+        * Endpoints are called via the receiver using the function name.
 
     Message interface:
-        * Accepts requests of the format: {"command": CMD, "args": {...}}
+        * Accepts messages of the format: {"command": CMD, "args": {...}}
         * Returns responses of the format: {"data": {...}}
         * Returns error in the format: {"error": {"message": MSG}}
 
@@ -119,27 +121,24 @@ class WorkflowRuntimeServer(ZMQSocketBase):
 
     """
 
-    RECV_TIMEOUT = 1
-    """Max time the WorkflowRuntimeServer will wait for an incoming
-    message in seconds.
+    OPERATE_SLEEP_INTERVAL = 0.2
+    STOP_SLEEP_INTERVAL = 0.2
 
-    We use a timeout here so as to give the _listener a chance to respond to
-    requests (i.e. stop) from its spawner (the scheduler).
+    def __init__(self, schd):
 
-    The alternative would be to spin up a client and send a message to the
-    server, this way seems safer.
+        self.zmq_context = None
+        self.port = None
+        self.pub_port = None
+        self.replier = None
+        self.publisher = None
+        self.loop = None
+        self.thread = None
+        self.curve_auth = None
+        self.client_pub_key_dir = None
 
-    """
-
-    def __init__(self, schd, context=None, barrier=None,
-                 threaded=True, daemon=False):
-        super().__init__(zmq.REP, bind=True, context=context,
-                         barrier=barrier, threaded=threaded, daemon=daemon)
         self.schd = schd
-        self.workflow = schd.workflow
         self.public_priv = None  # update in get_public_priv()
         self.endpoints = None
-        self.queue = None
         self.resolvers = Resolvers(
             self.schd.data_store_mgr,
             schd=self.schd
@@ -148,89 +147,122 @@ class WorkflowRuntimeServer(ZMQSocketBase):
             IgnoreFieldMiddleware,
         ]
 
-    def _socket_options(self):
-        """Set socket options.
-
-        Overwrites Base method.
-
-        """
-        # create socket
-        self.socket.RCVTIMEO = int(self.RECV_TIMEOUT) * 1000
-
-    def _bespoke_start(self):
-        """Setup start items, and run listener.
-
-        Overwrites Base method.
-
-        """
-        # start accepting requests
         self.queue = Queue()
+        self.publish_queue = Queue()
+        self.stopping = False
+        self.stopped = True
+
         self.register_endpoints()
-        self._listener()
 
-    def _bespoke_stop(self):
-        """Stop the listener and Authenticator.
+    def start(self, barrier):
+        """Start the TCP servers."""
+        # set asyncio loop on thread
+        try:
+            self.loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
 
-        Overwrites Base method.
+        # TODO: this in zmq asyncio context?
+        # Requires the scheduler main loop in asyncio first
+        # And use of concurrent.futures.ThreadPoolExecutor?
+        self.zmq_context = zmq.Context()
+        # create an authenticator for the ZMQ context
+        self.curve_auth = ThreadAuthenticator(self.zmq_context, log=LOG)
+        self.curve_auth.start()  # start the authentication thread
 
-        """
-        LOG.debug('stopping zmq server...')
-        self.stopping = True
-        if self.queue is not None:
-            self.queue.put('STOP')
+        # Setting the location means that the CurveZMQ auth will only
+        # accept public client certificates from the given directory, as
+        # generated by a user when they initiate a ZMQ socket ready to
+        # connect to a server.
+        workflow_srv_dir = workflow_files.get_workflow_srv_dir(
+            self.schd.workflow)
+        client_pub_keyinfo = workflow_files.KeyInfo(
+            workflow_files.KeyType.PUBLIC,
+            workflow_files.KeyOwner.CLIENT,
+            workflow_srv_dir=workflow_srv_dir)
+        self.client_pub_key_dir = client_pub_keyinfo.key_path
 
-    def _listener(self) -> None:
-        """The server main loop, listen for and serve requests."""
+        # Initial load for the localhost key.
+        self.curve_auth.configure_curve(
+            domain='*',
+            location=(self.client_pub_key_dir)
+        )
+
+        min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
+        self.replier = WorkflowReplier(self, context=self.zmq_context)
+        self.replier.start(min_, max_)
+        self.publisher = WorkflowPublisher(self, context=self.zmq_context)
+        self.publisher.start(min_, max_)
+        self.port = self.replier.port
+        self.pub_port = self.publisher.port
+        self.schd.data_store_mgr.delta_workflow_ports()
+
+        # wait for threads to setup socket ports before continuing
+        barrier.wait()
+
+        self.stopped = False
+
+        self.operate()
+
+    async def stop(self, reason):
+        """Stop the TCP servers, and clean up authentication."""
+        self.queue.put('STOP')
+        if self.thread and self.thread.is_alive():
+            while not self.stopping:
+                # Non-async sleep - yield to other threads rather
+                # than event loop.
+                sleep(self.STOP_SLEEP_INTERVAL)
+
+        if self.replier:
+            self.replier.stop(stop_loop=False)
+        if self.publisher:
+            await self.publisher.publish(
+                [(b'shutdown', str(reason).encode('utf-8'))]
+            )
+            self.publisher.stop(stop_loop=False)
+        if self.curve_auth:
+            self.curve_auth.stop()  # stop the authentication thread
+        if self.loop and self.loop.is_running():
+            self.loop.stop()
+        if self.thread and self.thread.is_alive():
+            self.thread.join()  # Wait for processes to return
+
+        self.stopped = True
+
+    def operate(self):
+        """Orchestrate the receive, send, publish of messages."""
         while True:
-            # process any commands passed to the listener by its parent process
+            # process messages from the scheduler.
             if self.queue.qsize():
-                command = self.queue.get()
-                if command == 'STOP':
+                message = self.queue.get()
+                if message == 'STOP':
+                    self.stopping = True
                     break
-                raise ValueError('Unknown command "%s"' % command)
+                raise ValueError('Unknown message "%s"' % message)
 
-            try:
-                # wait RECV_TIMEOUT for a message
-                msg = self.socket.recv_string()
-            except zmq.error.Again:
-                # timeout, continue with the loop, this allows the listener
-                # thread to stop
-                continue
-            except zmq.error.ZMQError as exc:
-                LOG.exception('unexpected error: %s', exc)
-                continue
+            # Gather and respond to any requests.
+            self.replier.listener()
 
-            # attempt to decode the message, authenticating the user in the
-            # process
-            try:
-                message = decode_(msg)
-            except Exception as exc:  # purposefully catch generic exception
-                # failed to decode message, possibly resulting from failed
-                # authentication
-                LOG.exception('failed to decode message: "%s"', exc)
-            else:
-                # success case - serve the request
-                res = self._receiver(message)
-                if message['command'] in PB_METHOD_MAP:
-                    response = res['data']
-                else:
-                    response = encode_(res).encode()
-                # send back the string to bytes response
-                self.socket.send(response)
+            # Publish all requested/queued.
+            while self.publish_queue.qsize():
+                articles = self.publish_queue.get()
+                self.loop.run_until_complete(self.publisher.publish(articles))
 
-            # Note: we are using CurveZMQ to secure the messages (see
-            # self.curve_auth, self.socket.curve_...key etc.). We have set up
-            # public-key cryptography on the ZMQ messaging and sockets, so
-            # there is no need to encrypt messages ourselves before sending.
+            # Yield control to other threads
+            sleep(self.OPERATE_SLEEP_INTERVAL)
 
-            sleep(0)  # yield control to other threads
+    def receiver(self, message):
+        """Process incomming messages and coordinate response.
 
-    def _receiver(self, message):
-        """Wrap incoming messages and dispatch them to exposed methods.
+        Wrap incoming messages, dispatch them to exposed methods and/or
+        coordinate a publishing stream.
 
         Args:
             message (dict): message contents
         """
+        # TODO: If requested, coordinate publishing response/stream.
+
         # determine the server method to call
         try:
             method = getattr(self, message['command'])
