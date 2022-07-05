@@ -99,7 +99,7 @@ async def test_shutdown(flow, scheduler, start, one_conf):
     schd = scheduler(reg)
     async with start(schd):
         pass
-    assert schd.server.socket.closed
+    assert schd.server.replier.socket.closed
 
 
 async def test_install(flow, scheduler, one_conf, run_dir):
@@ -172,7 +172,7 @@ async def test_exception(one, run, log_filter):
 
     # make sure the server socket has closed - a good indication of a
     # successful clean shutdown
-    assert one.server.socket.closed
+    assert one.server.replier.socket.closed
 
 
 @pytest.fixture(scope='module')
