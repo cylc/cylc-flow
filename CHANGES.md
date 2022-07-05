@@ -53,7 +53,7 @@ default job runner directives for platforms.
 in `global.cylc[install]source dirs`.
 
 [#4900](https://github.com/cylc/cylc-flow/pull/4900) - Added a command to assist
-with upgrading Cylc 7 workflows to Cylc 8: Try `cylc 728 <workflow-dir>`.
+with upgrading Cylc 7 workflows to Cylc 8: Try `cylc lint <workflow-dir>`.
 
 ### Fixes
 
