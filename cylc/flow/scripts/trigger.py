@@ -19,11 +19,8 @@
 
 Force tasks to run despite unsatisfied prerequisites.
 
-Triggering an unqueued waiting task queues it, regardless of prerequisites.
-
-Triggering a queued task submits it, regardless of queue limiting.
-
-Triggering an active task has no effect (it already triggered).
+* Triggering an unqueued waiting task queues it, regardless of prerequisites.* Triggering a queued task submits it, regardless of queue limiting.
+* Triggering an active task has no effect (it already triggered).
 
 Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
 Triggering them queues them to run (or rerun) in the same flow.

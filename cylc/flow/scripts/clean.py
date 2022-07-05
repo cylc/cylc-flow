@@ -18,7 +18,10 @@
 
 """cylc clean [OPTIONS] ARGS
 
-Remove a stopped workflow from the local scheduler filesystem and remote hosts.
+Delete a stopped workflow.
+
+Remove workflow files from the local scheduler filesystem and any remote hosts
+the workflow was installed on.
 
 NOTE: this command is intended for workflows installed with `cylc install`. If
 this is run for a workflow that was instead written directly in ~/cylc-run and
@@ -54,7 +57,6 @@ Examples:
 
   # Only remove the workflow on remote install targets
   $ cylc clean foo/bar --remote-only
-
 """
 
 import asyncio

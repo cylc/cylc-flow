@@ -429,6 +429,22 @@ def cli_help():
     # modern terminal)
     from colorama import init as color_init
     color_init(autoreset=True, strip=False)
+    commands = [
+        'clean',
+        'hold',
+        'install',
+        'kill',
+        'pause',
+        'play',
+        'release',
+        'scan',
+        'stop',
+        'trigger',
+        'tui',
+        'validate',
+    ]
+    if 'gui' in COMMANDS:
+        commands.append('gui')
     print(USAGE)
     sys.exit(0)
 
