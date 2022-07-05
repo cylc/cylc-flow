@@ -14,19 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Cylc 728 looks through one or more folders for ``suite*.rc`` files and
+"""Cylc lint looks through one or more folders for ``suite*.rc`` files and
 search for Cylc 7 syntax which may be problematic at Cylc 8.
 
 Can be run either as a linter or "in place" (``-i``), leaving comments
-in files. If used in the "in place" mode it is recommended that you ensure
-that you have recorded the state of your workflow in a version control
-system before starting.
+in files.
 
 .. warning::
 
-   When run with ``-i`` (``--inplace``) mode ``Cylc 728`` changes your files.
+   When run with ``-i`` (``--inplace``) mode ``Cylc lint`` changes your files.
    We strongly recommend committing your workflow to version control
-   before using ``Cylc 728 -i``.
+   before using ``Cylc lint -i``.
 
 Usage
 ^^^^^
@@ -34,15 +32,15 @@ Usage
 .. code-block:: bash
 
    # run as a linter
-   cylc 728 <paths to workflow directories to check>
+   cylc lint <paths to workflow directories to check>
 
    # run inplace
-   cylc 728 --inplace <paths to workflow directories to check>
-   cylc 728 -i <paths to workflow directories to check>
+   cylc lint --inplace <paths to workflow directories to check>
+   cylc lint -i <paths to workflow directories to check>
 
    # Get information about errors:
-   cylc 728 --reference
-   cylc 728 -r
+   cylc lint --reference
+   cylc lint -r
 
 Change Codes
 ^^^^^^^^^^^^
