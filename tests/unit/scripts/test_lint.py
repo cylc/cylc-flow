@@ -25,7 +25,7 @@ from cylc.flow.scripts.lint import (
     CHECKS,
     check_cylc_file,
     get_cylc_files,
-    get_reference,
+    get_reference_rst,
     parse_checks
 )
 

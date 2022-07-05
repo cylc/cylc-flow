@@ -1609,7 +1609,7 @@ def upg(cfg, descr):
         '8.0.0',
         ['cylc', 'simulation', 'disable suite event handlers'])
     u.obsolete('8.0.0', ['cylc', 'simulation'])
-    u.obsolete('8.0.0', ['visualization'])
+    u.obsolete('8.0.0', ['visualization'], is_section=True)
     u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points']),
     u.deprecate(
         '8.0.0',
@@ -1765,6 +1765,8 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
+
+    return u
 
 
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:

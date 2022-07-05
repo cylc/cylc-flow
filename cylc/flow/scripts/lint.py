@@ -359,6 +359,52 @@ CHECKS = {
 }
 
 
+def list_to_config(path_):
+    """Prettify a config list"""
+    output = ''
+    for item in path_[:-1]:
+        output += f'[{item}]'
+    output += path_[-1]
+    return output
+
+
+def get_upgrader_info():
+    """Extract info about obseletions and deprecations from Parsec Objects."""
+    from cylc.flow.cfgspec.workflow import upg, SPEC
+    from cylc.flow.parsec.config import ParsecConfig
+    conf = ParsecConfig(SPEC, upg)
+    upgrades = conf.upgrader(conf.dense, '').upgrades
+    deprecations = {}
+
+    for version, upgrades_for_version in upgrades.items():
+        for upgrade in upgrades_for_version:
+            # Set a flag indicating that a variable has been moved.
+            if upgrade['new'] is None:
+                short = f'{list_to_config(upgrade["old"])} is not '
+                'available at Cylc 8'
+            else:
+                short = f'{list_to_config(upgrade["old"])} is now '
+                '{list_to_config(upgrade["new"])}'
+
+            # Check whether upgrade is section:
+            if upgrade['is_section']:
+                section_depth = len(upgrade['old'])
+                start = r'\[' * section_depth
+                end = r'\]' * section_depth
+                name = upgrade["old"][-1]
+                regex = re.compile(fr'{start}\s*{name}\s*{end}')
+            else:
+                name = upgrade["old"][-1]
+                regex = re.compile(rf'{name}\s=\s.*')
+
+
+            deprecations[regex] = {
+                'short': short,
+                'url': f'',
+            }
+    return deprecations
+
+
 def get_checkset_from_name(name):
     """Take a ruleset name and return a ruleset code
 
@@ -385,7 +431,9 @@ def parse_checks(check_arg):
     parsedchecks = {}
     purpose_filters = get_checkset_from_name(check_arg)
 
-    for purpose, checks in CHECKS.items():
+    checks = {'U': get_upgrader_info(), 'S': CHECKS['S']}
+
+    for purpose, checks in checks.items():
         if purpose in purpose_filters:
             for index, (pattern, meta) in enumerate(checks.items()):
                 meta.update({'purpose': purpose})
