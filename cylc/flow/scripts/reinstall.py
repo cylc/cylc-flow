@@ -23,19 +23,22 @@ Reinstall a previously installed workflow.
 Examples:
   # Having previously installed:
   $ cylc install myflow
+
   # To reinstall the latest run:
   $ cylc reinstall myflow
+
   # Or, to reinstall a specific run:
   $ cylc reinstall myflow/run2
 
-  # Having previously installed:
-  $ cylc install myflow --no-run-name
-  # To reinstall this workflow run:
-  $ cylc reinstall myflow
+  # View the changes reinstall would make:
+  $ cylc reinstall myflow --dry-run
 """
 
 from pathlib import Path
+import sys
 from typing import Optional, TYPE_CHECKING
+
+from ansimarkup import parse as cparse
 
 from cylc.flow import iter_entry_points
 from cylc.flow.exceptions import PluginError, WorkflowFilesError
@@ -75,7 +78,40 @@ def get_option_parser() -> COP:
             dest="clear_rose_install_opts"
         )
 
+    parser.add_option(
+        '--dry', '--dry-run',
+        action='store_true',
+        help='Show the changes reinstallation would make.'
+    )
+
     return parser
+
+
+def format_rsync_out(out):
+    """Format rsync stdout for presenting to users.
+
+    Note: Output formats of different rsync implementations may differ so keep
+          this code simple and robust.
+
+    """
+    lines = []
+    for line in out.splitlines():
+        if line[0:4] == 'send':
+            # file added or updated
+            lines.append(cparse(f'<green>{line}</green>'))
+        elif line[0:4] == 'del.':
+            # file deleted
+            lines.append(cparse(f'<red>{line}</red>'))
+        elif line == 'cannot delete non-empty directory: opt':
+            # These "cannot delete non-empty directory" messages can arise
+            # as a result of excluding files within sub-directories.
+            # This opt dir message is likely to occur when a rose-suit.conf
+            # file is present.
+            continue
+        else:
+            # other uncategorised log line
+            lines.append(line)
+    return lines
 
 
 @cli_function(get_option_parser)
@@ -104,41 +140,58 @@ def main(
             f'Restore the source or modify the "{source_symlink}"'
             ' symlink to continue.'
         )
-    for entry_point in iter_entry_points(
-        'cylc.pre_configure'
-    ):
-        try:
-            entry_point.resolve()(srcdir=source, opts=opts)
-        except Exception as exc:
-            # NOTE: except Exception (purposefully vague)
-            # this is to separate plugin from core Cylc errors
-            raise PluginError(
-                'cylc.pre_configure',
-                entry_point.name,
-                exc
-            ) from None
 
-    reinstall_workflow(
+    if not opts.dry:
+        for entry_point in iter_entry_points(
+            'cylc.pre_configure'
+        ):
+            try:
+                entry_point.resolve()(srcdir=source, opts=opts)
+            except Exception as exc:
+                # NOTE: except Exception (purposefully vague)
+                # this is to separate plugin from core Cylc errors
+                raise PluginError(
+                    'cylc.pre_configure',
+                    entry_point.name,
+                    exc
+                ) from None
+
+    stdout = reinstall_workflow(
         source=Path(source),
         named_run=workflow_id,
         rundir=run_dir,
-        dry_run=False  # TODO: ready for dry run implementation
+        dry_run=opts.dry,
     )
 
-    for entry_point in iter_entry_points(
-        'cylc.post_install'
-    ):
-        try:
-            entry_point.resolve()(
-                srcdir=source,
-                opts=opts,
-                rundir=str(run_dir)
-            )
-        except Exception as exc:
-            # NOTE: except Exception (purposefully vague)
-            # this is to separate plugin from core Cylc errors
-            raise PluginError(
-                'cylc.post_install',
-                entry_point.name,
-                exc
-            ) from None
+    if Path(source, 'rose-suite.conf').is_file():
+        print(
+            cparse(
+                '<blue>'
+                'NOTE: Files created by Rose file installation will show as'
+                ' deleted.'
+                '\n      They will be re-created during the reinstall'
+                ' process.'
+                '</blue>',
+            ),
+            file=sys.stderr,
+        )
+    print('\n'.join(format_rsync_out(stdout)), file=sys.stderr)
+
+    if not opts.dry:
+        for entry_point in iter_entry_points(
+            'cylc.post_install'
+        ):
+            try:
+                entry_point.resolve()(
+                    srcdir=source,
+                    opts=opts,
+                    rundir=str(run_dir)
+                )
+            except Exception as exc:
+                # NOTE: except Exception (purposefully vague)
+                # this is to separate plugin from core Cylc errors
+                raise PluginError(
+                    'cylc.post_install',
+                    entry_point.name,
+                    exc
+                ) from None

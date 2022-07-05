@@ -1389,12 +1389,24 @@ def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
     return get_workflow_run_dir(path)
 
 
-def _get_logger(rund, log_name):
-    """Get log and create and open if necessary."""
+def _get_logger(rund, log_name, open_file=True):
+    """Get log and create and open if necessary.
+
+    Args:
+        rund:
+            The workflow run directory of the associated workflow.
+        log_name:
+            The name of the log to open.
+        open_file:
+            Open the appropriate log file and add it as a file handler to
+            the logger. I.E. Start writing the log to a file if not already
+            doing so.
+
+    """
     logger = logging.getLogger(log_name)
     if logger.getEffectiveLevel != logging.INFO:
         logger.setLevel(logging.INFO)
-    if not logger.hasHandlers():
+    if open_file and not logger.hasHandlers():
         _open_install_log(rund, logger)
     return logger
 
@@ -1471,7 +1483,7 @@ def reinstall_workflow(
     named_run: str,
     rundir: Path,
     dry_run: bool = False
-) -> None:
+) -> str:
     """Reinstall workflow.
 
     Args:
@@ -1480,29 +1492,45 @@ def reinstall_workflow(
         rundir: run directory
         dry_run: if True, will not execute the file transfer but report what
             would be changed.
+
+    Returns:
+        Stdout from the rsync command.
+
     """
     validate_source_dir(source, named_run)
     check_nested_dirs(rundir)
-    reinstall_log = _get_logger(rundir, 'cylc-reinstall')
-    reinstall_log.info(f"Reinstalling \"{named_run}\", from "
-                       f"\"{source}\" to \"{rundir}\"")
+    reinstall_log = _get_logger(
+        rundir,
+        'cylc-reinstall',
+        open_file=not dry_run,  # don't open the log file for --dry-run
+    )
+    reinstall_log.info(
+        f'Reinstalling "{named_run}", from "{source}" to "{rundir}"'
+    )
     rsync_cmd = get_rsync_rund_cmd(
-        source, rundir, reinstall=True, dry_run=dry_run)
+        source,
+        rundir,
+        reinstall=True,
+        dry_run=dry_run,
+    )
+    reinstall_log.info(cli_format(rsync_cmd))
+    # print(cli_format(rsync_cmd))
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
-    reinstall_log.info(
-        f"Copying files from {source} to {rundir}"
-        f'\n{stdout}'
-    )
+
     if proc.returncode != 0:
         reinstall_log.warning(
-            f"An error occurred when copying files from {source} to {rundir}")
+            f"An error occurred when copying files from {source} to {rundir}"
+        )
         reinstall_log.warning(f" Error: {stderr}")
     check_flow_file(rundir)
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
-    print(f'REINSTALLED {named_run} from {source}')
+    print(
+        f'REINSTALL{"ED" if not dry_run else ""} {named_run} from {source}'
+    )
     close_log(reinstall_log)
+    return stdout
 
 
 def abort_if_flow_file_in_path(source: Path) -> None:
