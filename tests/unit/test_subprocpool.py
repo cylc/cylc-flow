@@ -309,11 +309,12 @@ def test__run_command_exit_rsync_fails(mock_ctx):
         bad_hosts=badhosts,
         callback=print,
         callback_args=[
-            'Welcome to Magrathea',
             {
                 'name': 'Magrathea',
                 'ssh command': 'ssh',
-            }
+                'rsync command': 'rsync command'
+            },
+            'Welcome to Magrathea',
         ]
     )
     assert badhosts == {'foo', 'bar', 'mouse'}
@@ -348,6 +349,8 @@ def test_rsync_255_fail(mock_ctx, expect, ctx_kwargs):
     """
     output = SubProcPool.rsync_255_fail(
         mock_ctx(**ctx_kwargs),
-        {'ssh command': 'ssh'}
+        {'ssh command': 'ssh',
+         'rsync command': 'rsync command'
+        }
     )
     assert output == expect

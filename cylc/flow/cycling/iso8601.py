@@ -21,7 +21,7 @@ from functools import lru_cache
 import re
 from typing import List, Optional, TYPE_CHECKING, Tuple
 
-from metomi.isodatetime.data import Calendar, CALENDAR
+from metomi.isodatetime.data import Calendar, CALENDAR, Duration
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
@@ -66,7 +66,7 @@ class WorkflowSpecifics:
     point_parser: 'TimePointParser' = None
     recurrence_parser: 'TimeRecurrenceParser' = None
     iso8601_parsers: Optional[
-        Tuple['DurationParser', 'TimePointParser', 'TimeRecurrenceParser']
+        Tuple['TimePointParser', 'DurationParser', 'TimeRecurrenceParser']
     ] = None
 
 
@@ -292,7 +292,7 @@ class ISO8601Sequence(SequenceBase):
                  'offset', '_cached_first_point_values',
                  '_cached_next_point_values', '_cached_valid_point_booleans',
                  '_cached_recent_valid_points', 'spec', 'abbrev_util',
-                 'recurrence', 'exclusions', 'step', 'value')
+                 'recurrence', 'exclusions', 'step', 'value', 'is_on_sequence')
 
     @classmethod
     def get_async_expr(cls, start_point=None):
@@ -306,6 +306,10 @@ class ISO8601Sequence(SequenceBase):
         SequenceBase.__init__(
             self, dep_section, context_start_point, context_end_point)
         self.dep_section = dep_section
+
+        # cache is_on_sequence
+        # see B019 - https://github.com/PyCQA/flake8-bugbear#list-of-warnings
+        self.is_on_sequence = lru_cache(maxsize=100)(self._is_on_sequence)
 
         if (
             context_start_point is None
@@ -379,10 +383,7 @@ class ISO8601Sequence(SequenceBase):
 
     def set_offset(self, i_offset):
         """Deprecated: alter state to i_offset the entire sequence."""
-        if self.recurrence.start_point is not None:
-            self.recurrence.start_point += interval_parse(str(i_offset))
-        if self.recurrence.end_point is not None:
-            self.recurrence.end_point += interval_parse(str(i_offset))
+        self.recurrence += interval_parse(str(i_offset))
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
@@ -391,8 +392,8 @@ class ISO8601Sequence(SequenceBase):
         if self.exclusions:
             self.value += '!' + str(self.exclusions)
 
-    @lru_cache(100)
-    def is_on_sequence(self, point):
+    # lru_cache'd see __init__()
+    def _is_on_sequence(self, point):
         """Return True if point is on-sequence."""
         # Iterate starting at recent valid points, for speed.
         if self.exclusions and point in self.exclusions:
@@ -522,7 +523,9 @@ class ISO8601Sequence(SequenceBase):
             self._cached_recent_valid_points.pop(0)
         self._cached_recent_valid_points.append(next_point)
 
-    def get_next_point_on_sequence(self, point):
+    def get_next_point_on_sequence(
+        self, point: ISO8601Point
+    ) -> Optional[ISO8601Point]:
         """Return the on-sequence point > point assuming that point is
         on-sequence, or None if out of bounds."""
         result = None
@@ -614,11 +617,11 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
+def ingest_time(value: str, now: Optional[str] = None) -> str:
     """Handle relative, truncated and prev/next cycle points.
 
     Args:
-        value: The string containing the prev()/next() stuff.
+        value: The string containing the previous()/next() stuff.
         now: A time point to use as the context for resolving the value.
     """
     # remove extraneous whitespace from cycle point
@@ -632,7 +635,7 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
         (value.startswith("-") or value.startswith("+"))
         and "P" not in value
     )
-    # prev() or next()
+    # previous() or next()
     is_prev_next = "next" in value or "previous" in value
     # offset from now (±P...)
     is_offset = value.startswith("P") or value.startswith("-P")
@@ -654,33 +657,30 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
         # missing date-time components off the front (e.g. 01T00)
         is_truncated = timepoint.truncated
 
-    if not any((is_prev_next, is_offset, is_truncated)):
+    if not (is_prev_next or is_offset or is_truncated):
         return value
 
     if now is None:
-        now = parser.parse(get_current_time_string())
-    else:
-        now = parser.parse(now)
+        now = get_current_time_string()
+    now_point = parser.parse(now)
 
-    # correct for year in 'now' if year only,
-    # or year and time, specified in input
+    # correct for year in 'now' if year is the only date unit specified -
+    # https://github.com/cylc/cylc-flow/issues/4805#issuecomment-1103928604
     if re.search(r"\(-\d{2}[);T]", value):
-        now.year += 1
-
-    # correct for month in 'now' if year and month only,
-    # or year, month and time, specified in input
+        now_point += Duration(years=1)
+    # likewise correct for month if year and month are the only date units
     elif re.search(r"\(-\d{4}[);T]", value):
-        now.month_of_year += 1
+        now_point += Duration(months=1)
 
     # perform whatever transformation is required
     offset = None
     if is_prev_next:
-        cycle_point, offset = prev_next(value, now, parser)
+        cycle_point, offset = prev_next(value, now_point, parser)
     elif is_offset:
-        cycle_point = now
+        cycle_point = now_point
         offset = value
     else:  # is_truncated
-        cycle_point = now + timepoint
+        cycle_point = now_point + timepoint
 
     if offset is not None:
         # add/subtract offset duration to/from chosen timepoint
@@ -688,18 +688,18 @@ def ingest_time(value: str, now: Optional['TimePoint'] = None) -> str:
 
         offset = offset.replace('+', '')
         offset = duration_parser.parse(offset)
-        cycle_point = cycle_point + offset
+        cycle_point += offset
 
     return str(cycle_point)
 
 
 def prev_next(
-        value: str, now: 'TimePoint', parser: 'TimePointParser'
+    value: str, now: 'TimePoint', parser: 'TimePointParser'
 ) -> Tuple['TimePoint', Optional[str]]:
-    """Handle prev() and next() syntax.
+    """Handle previous() and next() syntax.
 
     Args:
-        value: The string containing the prev()/next() stuff.
+        value: The string containing the previous()/next() stuff.
         now: A time point to use as the context for resolving the value.
         parser: A time point parser.
 
@@ -709,7 +709,7 @@ def prev_next(
     # are we in gregorian mode (or some other eccentric calendar
     if CALENDAR.mode != Calendar.MODE_GREGORIAN:
         raise CylcConfigError(
-            'prev()/next() syntax must be used with integer or gregorian'
+            'previous()/next() syntax must be used with integer or gregorian'
             f' cycling modes ("{value}")'
         )
 
@@ -718,10 +718,7 @@ def prev_next(
     offset: Optional[str]
     tmp, offset = tmp.split(")")
 
-    if offset.strip() == '':
-        offset = None
-    else:
-        offset = offset.strip()
+    offset = offset.strip() or None
 
     str_points: List[str] = tmp.split(";")
     timepoints: List['TimePoint'] = []
@@ -758,24 +755,27 @@ def prev_next(
 
     cycle_point = timepoints[my_diff.index(min(my_diff))]
 
-    # ensure truncated dates do not have
-    # time from 'now' included'
+    # ensure truncated dates do not have time from 'now' included' -
+    # https://github.com/metomi/isodatetime/issues/212
     if 'T' not in value.split(')')[0]:
-        cycle_point.hour_of_day = 0
-        cycle_point.minute_of_hour = 0
-        cycle_point.second_of_minute = 0
-    # ensure month and day from 'now' are not included
+        # NOTE: Strictly speaking we shouldn't forcefully mutate TimePoints
+        # in this way as they're meant to be immutable since
+        # https://github.com/metomi/isodatetime/pull/165, however it
+        # should be ok as long as the TimePoint is not used as a dict key and
+        # we don't call any of the TimePoint's cached methods until after we've
+        # finished mutating it.
+        cycle_point._hour_of_day = 0
+        cycle_point._minute_of_hour = 0
+        cycle_point._second_of_minute = 0
+    # likewise ensure month and day from 'now' are not included
     # where they did not appear in the truncated datetime
-    # NOTE: this may break when the order of tick over
-    # for time point is reversed!!!
-    # https://github.com/metomi/isodatetime/pull/101
-    # case 1 - year only
     if re.search(r"\(-\d{2}[);T]", value):
-        cycle_point.month_of_year = 1
-        cycle_point.day_of_month = 1
-    # case 2 - month only or year and month
+        # case 1 - year only
+        cycle_point._month_of_year = 1
+        cycle_point._day_of_month = 1
     elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
-        cycle_point.day_of_month = 1
+        # case 2 - month only or year and month
+        cycle_point._day_of_month = 1
 
     return cycle_point, offset
 
@@ -858,7 +858,7 @@ def get_point_relative(offset_string, base_point):
     except IsodatetimeError:
         return ISO8601Point(str(
             WorkflowSpecifics.abbrev_util.parse_timepoint(
-                offset_string, context_point=_point_parse(base_point.value))
+                offset_string, context_point=point_parse(base_point.value))
         ))
     else:
         return base_point + interval
@@ -867,14 +867,12 @@ def get_point_relative(offset_string, base_point):
 def interval_parse(interval_string):
     """Parse an interval_string into a proper Duration class."""
     try:
-        return _interval_parse(interval_string).copy()
+        return _interval_parse(interval_string)
     except Exception:
         try:
-            return -1 * _interval_parse(
-                interval_string.replace("-", "", 1)).copy()
+            return -1 * _interval_parse(interval_string.replace("-", "", 1))
         except Exception:
-            return _interval_parse(
-                interval_string.replace("+", "", 1)).copy()
+            return _interval_parse(interval_string.replace("+", "", 1))
 
 
 def is_offset_absolute(offset_string):
@@ -893,13 +891,13 @@ def _interval_parse(interval_string):
     return WorkflowSpecifics.interval_parser.parse(interval_string)
 
 
-def point_parse(point_string):
+def point_parse(point_string: str) -> 'TimePoint':
     """Parse a point_string into a proper TimePoint object."""
-    return _point_parse(point_string).copy()
+    return _point_parse(point_string, WorkflowSpecifics.DUMP_FORMAT)
 
 
 @lru_cache(10000)
-def _point_parse(point_string):
+def _point_parse(point_string, _dump_fmt):
     """Parse a point_string into a proper TimePoint object."""
     if "%" in WorkflowSpecifics.DUMP_FORMAT:
         # May be a custom not-quite ISO 8601 dump format.

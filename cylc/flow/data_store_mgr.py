@@ -77,6 +77,7 @@ from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -149,6 +150,7 @@ DELTAS_MAP = {
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 
 JOB_STATUSES_ALL = [
+    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -554,8 +556,8 @@ class DataStoreMgr:
         workflow.name = self.schd.workflow
         workflow.owner = self.schd.owner
         workflow.host = self.schd.host
-        workflow.port = self.schd.port or -1
-        workflow.pub_port = self.schd.pub_port or -1
+        workflow.port = self.schd.server.port or -1
+        workflow.pub_port = self.schd.server.pub_port or -1
         user_defined_meta = {}
         for key, val in config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
@@ -1067,11 +1069,11 @@ class DataStoreMgr:
                     flow_nums != itask.flow_nums and
                     not is_parent
             ):
-                itask.state_reset(TASK_STATUS_WAITING)
+                itask.state_reset(TASK_STATUS_WAITING, silent=True)
                 continue
             else:
                 itask.flow_nums = flow_nums
-                itask.state_reset(status)
+                itask.state_reset(status, silent=True)
             if (
                     outputs_str is not None
                     and itask.state(
@@ -1080,7 +1082,7 @@ class DataStoreMgr:
                         TASK_STATUS_SUCCEEDED
                     )
             ):
-                for message in json.loads(outputs_str).values():
+                for message in json.loads(outputs_str):
                     itask.state.outputs.set_completion(message, True)
             # Gather tasks with flow id.
             prereq_ids.add(f'{tokens.relative_id}/{flow_nums_str}')
@@ -1144,7 +1146,18 @@ class DataStoreMgr:
         update_time = time()
         tp_tokens = Tokens(tp_id)
         j_tokens = tp_tokens.duplicate(job=str(sub_num))
-        j_id = j_tokens.id
+        j_id, job = self.store_node_fetcher(
+            j_tokens['task'],
+            j_tokens['cycle'],
+            j_tokens['job'],
+        )
+        if job:
+            # Job already exists (i.e. post-submission submit failure)
+            return
+
+        if status not in JOB_STATUS_SET:
+            status = TASK_STATUS_PREPARING
+
         j_buf = PbJob(
             stamp=f'{j_id}@{update_time}',
             id=j_id,
@@ -1191,16 +1204,42 @@ class DataStoreMgr:
         """Load job element from DB post restart."""
         if row_idx == 0:
             LOG.info("LOADING job data")
-        (point_string, name, status, submit_num, time_submit, time_run,
-         time_run_exit, job_runner_name, job_id, platform_name) = row
-        if status not in JOB_STATUS_SET:
-            return
+        (
+            point_string,
+            name,
+            submit_num,
+            time_submit,
+            submit_status,
+            time_run,
+            time_run_exit,
+            run_status,
+            job_runner_name,
+            job_id,
+            platform_name
+        ) = row
+
         tp_id, tproxy = self.store_node_fetcher(name, point_string)
         if not tproxy:
             return
         tp_tokens = Tokens(tp_id)
         j_tokens = tp_tokens.duplicate(job=str(submit_num))
         j_id = j_tokens.id
+
+        if run_status is not None:
+            if run_status == 0:
+                status = TASK_STATUS_SUCCEEDED
+            else:
+                status = TASK_STATUS_FAILED
+        elif time_run is not None:
+            status = TASK_STATUS_RUNNING
+        elif submit_status is not None:
+            if submit_status == 0:
+                status = TASK_STATUS_SUBMITTED
+            else:
+                status = TASK_STATUS_SUBMIT_FAILED
+        else:
+            status = TASK_STATUS_PREPARING
+
         try:
             update_time = time()
             j_buf = PbJob(
@@ -1609,8 +1648,8 @@ class DataStoreMgr:
         w_delta.last_updated = time()
         w_delta.stamp = f'{w_delta.id}@{w_delta.last_updated}'
 
-        w_delta.port = self.schd.port
-        w_delta.pub_port = self.schd.pub_port
+        w_delta.port = self.schd.server.port
+        w_delta.pub_port = self.schd.server.pub_port
         self.updates_pending = True
 
     def delta_broadcast(self):

@@ -15,46 +15,136 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for the Cylc GlobalConfig object."""
 
-from cylc.flow.cfgspec.globalcfg import GlobalConfig, SPEC
-from io import StringIO
+from pathlib import Path
+from typing import Callable
 
 import pytest
 
+from cylc.flow.cfgspec.globalcfg import GlobalConfig, SPEC
+from cylc.flow.parsec.exceptions import ValidationError
+from cylc.flow.parsec.validate import cylc_config_validate
+
+
 TEST_CONF = '''
-    [platforms]
-        [[foo]]
-            hosts = of_morgoth
-    [platform groups]
-        [[BAR]]
-            platforms = mario, sonic
-    [task events]
-        # Checking that config items that aren't platforms or platform groups
-        # are not output.
+[platforms]
+    [[foo]]
+        hosts = of_morgoth
+[platform groups]
+    [[BAR]]
+        platforms = mario, sonic
+[task events]
+    # Checking that config items that aren't platforms or platform groups
+    # are not output.
 '''
 
 
 @pytest.fixture
-def fake_global_conf(tmp_path):
-    glblcfg = GlobalConfig(SPEC)
-    (tmp_path / 'global.cylc').write_text(TEST_CONF)
-    glblcfg.loadcfg(tmp_path / 'global.cylc')
-    return glblcfg
+def mock_global_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Create a mock GlobalConfig object, given the global.cylc contents as
+    a string."""
+    def _mock_global_config(cfg: str) -> GlobalConfig:
+        glblcfg = GlobalConfig(SPEC, validator=cylc_config_validate)
+        conf_path = tmp_path / GlobalConfig.CONF_BASENAME
+        conf_path.write_text(cfg)
+        monkeypatch.setenv("CYLC_CONF_PATH", str(conf_path.parent))
+        glblcfg.loadcfg(conf_path)
+        return glblcfg
+
+    return _mock_global_config
 
 
-def test_dump_platform_names(capsys, fake_global_conf):
+def test_dump_platform_names(capsys, mock_global_config):
     """It dumps lists of platform names, nothing else."""
-    fake_global_conf.dump_platform_names(fake_global_conf)
+    glblcfg: GlobalConfig = mock_global_config(TEST_CONF)
+    glblcfg.dump_platform_names(glblcfg)
     stdout, _ = capsys.readouterr()
     expected = 'localhost\nfoo\nBAR\n'
     assert stdout == expected
 
 
-def test_dump_platform_details(capsys, fake_global_conf):
+def test_dump_platform_details(capsys, mock_global_config):
     """It dumps lists of platform spec."""
-    fake_global_conf.dump_platform_details(fake_global_conf)
+    glblcfg: GlobalConfig = mock_global_config(TEST_CONF)
+    glblcfg.dump_platform_details(glblcfg)
     out, _ = capsys.readouterr()
     expected = (
         '[platforms]\n    [[foo]]\n        hosts = of_morgoth\n'
         '[platform groups]\n    [[BAR]]\n        platforms = mario, sonic\n'
     )
     assert expected == out
+
+
+def test_expand_platforms(tmp_path: Path, mock_global_config: Callable):
+    """It should expand comma separated platform definitions."""
+    glblcfg: GlobalConfig = mock_global_config('''
+    [platforms]
+        [[foo]]
+            [[[meta]]]
+                x = 1
+        [["bar"]]  # double quoted name
+            [[[meta]]]
+                x = 2
+        [[baz, bar, pub]]  # baz before bar to test order is handled correctly
+            [[[meta]]]
+                x = 3
+        [['pub']]  # single quoted name
+            [[[meta]]]
+                x = 4
+    ''')
+    glblcfg._expand_platforms()
+
+    # ensure the definition order is preserved
+    assert glblcfg.get(['platforms']).keys() == [
+        'localhost',
+        'foo',
+        'bar',
+        'baz',
+        'pub',
+    ]
+
+    # ensure sections are correctly deep-merged
+    assert glblcfg.get(['platforms', 'foo', 'meta', 'x']) == '1'
+    assert glblcfg.get(['platforms', 'bar', 'meta', 'x']) == '3'
+    assert glblcfg.get(['platforms', 'baz', 'meta', 'x']) == '3'
+    assert glblcfg.get(['platforms', 'pub', 'meta', 'x']) == '4'
+
+
+@pytest.mark.parametrize(
+    'src_dir, err_expected',
+    [
+        pytest.param(
+            '/theoden/rohan', False,
+            id="Abs path ok"
+        ),
+        pytest.param(
+            'theoden/rohan', True,
+            id="Rel path bad"
+        ),
+        pytest.param(
+            '~theoden/rohan', False,
+            id="Starts with usr - ok"
+        ),
+        pytest.param(
+            '$THEODEN/rohan', False,
+            id="Starts with env var - ok"
+        ),
+        pytest.param(
+            'rohan/$THEODEN', True,
+            id="Rel path with env var not at start - bad"
+        ),
+    ]
+)
+def test_source_dir_validation(
+    src_dir: str, err_expected: bool,
+    tmp_path: Path, mock_global_config: Callable
+):
+    glblcfg: GlobalConfig = mock_global_config(f'''
+    [install]
+        source dirs = /denethor/gondor, {src_dir}
+    ''')
+    if err_expected:
+        with pytest.raises(ValidationError) as excinfo:
+            glblcfg.load()
+        assert "must be an absolute path" in str(excinfo.value)
+    else:
+        glblcfg.load()

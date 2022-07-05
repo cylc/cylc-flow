@@ -19,7 +19,9 @@
 
 """cylc cycle-point [OPTIONS] ARGS
 
-Utility for date-time cycle point arithmetic.
+Utility for simple date-time cycle point arithmetic.
+
+For more generic date-time manipulations see the "isodatetime" command.
 
 Filename templating replaces elements of a template string with corresponding
 elements of the current or given cycle point.
@@ -64,12 +66,16 @@ import metomi.isodatetime.parsers
 from metomi.isodatetime.exceptions import IsodatetimeError
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         color=False,
         argdoc=[
-            ('[POINT]', 'ISO8601 date-time, default=$CYLC_TASK_CYCLE_POINT')])
+            COP.optional(
+                ('POINT', 'ISO8601 date-time, default=$CYLC_TASK_CYCLE_POINT')
+            )
+        ]
+    )
 
     parser.add_option(
         "--offset-hours", metavar="HOURS",

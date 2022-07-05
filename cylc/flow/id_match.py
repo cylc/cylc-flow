@@ -18,6 +18,7 @@ from fnmatch import fnmatchcase
 from typing import (
     Any,
     Callable,
+    Dict,
     Iterable,
     List,
     TYPE_CHECKING,
@@ -26,9 +27,12 @@ from typing import (
     # overload,
 )
 
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+
 from cylc.flow import LOG
 from cylc.flow.id import IDTokens, Tokens
 from cylc.flow.id_cli import contains_fnmatch
+from cylc.flow.cycling.loader import get_point
 
 if TYPE_CHECKING:
     # from typing_extensions import Literal
@@ -109,7 +113,7 @@ def filter_ids(
     _not_matched: 'List[str]' = []
 
     # enable / disable pattern matching
-    match: 'Callable[[Any, Any], bool]'
+    match: Callable[[Any, Any], bool]
     if pattern_match:
         match = fnmatchcase
     else:
@@ -128,7 +132,7 @@ def filter_ids(
             ]
             _not_matched.extend(pattern_ids)
 
-    id_tokens_map = {}
+    id_tokens_map: Dict[str, Tokens] = {}
     for id_ in ids:
         try:
             id_tokens_map[id_] = Tokens(id_, relative=True)
@@ -141,7 +145,9 @@ def filter_ids(
             if tokens.get(lowest_token.value):
                 break
 
-        cycles = []
+        # This needs to be a set to avoid getting two copies of matched tasks
+        # in cycle points that appear in both pools:
+        cycles = set()
         tasks = []
 
         # filter by cycle
@@ -152,19 +158,18 @@ def filter_ids(
                 for icycle, itasks in pool.items():
                     if not itasks:
                         continue
-                    str_cycle = str(icycle)
-                    if not match(str_cycle, cycle):
+                    if not point_match(icycle, cycle, pattern_match):
                         continue
                     if cycle_sel == '*':
-                        cycles.append(icycle)
+                        cycles.add(icycle)
                         continue
                     for itask in itasks.values():
                         if match(itask.state.status, cycle_sel):
-                            cycles.append(icycle)
+                            cycles.add(icycle)
                             break
 
         # filter by task
-        elif lowest_token == IDTokens.Task:  # noqa: SIM106
+        elif lowest_token == IDTokens.Task:   # noqa SIM106
             cycle = tokens[IDTokens.Cycle.value]
             cycle_sel_raw = tokens.get(IDTokens.Cycle.value + '_sel')
             cycle_sel = cycle_sel_raw or '*'
@@ -173,8 +178,7 @@ def filter_ids(
             task_sel = task_sel_raw or '*'
             for pool in pools:
                 for icycle, itasks in pool.items():
-                    str_cycle = str(icycle)
-                    if not match(str_cycle, cycle):
+                    if not point_match(icycle, cycle, pattern_match):
                         continue
                     for itask in itasks.values():
                         if (
@@ -189,15 +193,7 @@ def filter_ids(
                                 or match(itask.state.status, cycle_sel)
                             )
                             # check namespace name
-                            and (
-                                # task name
-                                match(itask.tdef.name, task)
-                                # family name
-                                or any(
-                                    match(ns, task)
-                                    for ns in itask.tdef.namespace_hierarchy
-                                )
-                            )
+                            and itask.name_match(task, match_func=match)
                             # check task selector
                             and (
                                 (
@@ -222,7 +218,7 @@ def filter_ids(
             _cycles.extend(cycles)
             _tasks.extend(tasks)
 
-    ret: 'List[Any]' = []
+    ret: List[Any] = []
     if out == IDTokens.Cycle:
         _cycles.extend({
             itask.point
@@ -236,3 +232,22 @@ def filter_ids(
                     _tasks.extend(pool[icycle].values())
         ret = _tasks
     return ret, _not_matched
+
+
+def point_match(
+    point: 'PointBase', value: str, pattern_match: bool = True
+) -> bool:
+    """Return whether a cycle point matches a string/pattern.
+
+    Args:
+        point: Cycle point to compare against.
+        value: String/pattern to test.
+        pattern_match: Whether to allow glob patterns in the value.
+    """
+    try:
+        return point == get_point(value)
+    except (ValueError, ISO8601SyntaxError):
+        # Could be glob pattern
+        if pattern_match:
+            return fnmatchcase(str(point), value)
+        return False

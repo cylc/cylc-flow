@@ -55,6 +55,7 @@ Examples:
 import os
 from contextlib import suppress
 from glob import glob
+from pathlib import Path
 import shlex
 from stat import S_IRUSR
 from subprocess import Popen, PIPE, DEVNULL
@@ -63,11 +64,13 @@ from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.id_cli import parse_id
+from cylc.flow.loggingutil import LOG_FILE_EXTENSION
 from cylc.flow.option_parsers import (
+    ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
     verbosity_to_opts,
 )
@@ -75,14 +78,15 @@ from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
     get_workflow_run_job_dir,
-    get_workflow_run_log_name,
-    get_workflow_run_pub_db_name)
+    get_workflow_run_pub_db_path,
+    get_workflow_run_scheduler_log_path)
 from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_job_logs import (
     JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
 from cylc.flow.terminal import cli_function
 from cylc.flow.platforms import get_platform
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -219,12 +223,12 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
         return proc.wait()
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     """Set up the CLI option parser."""
     parser = COP(
         __doc__,
         argdoc=[
-            ("ID [...]", "Workflow/Cycle/Task ID"),
+            ID_MULTI_ARG_DOC,
         ]
     )
 
@@ -280,7 +284,7 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
 
     """
     workflow_dao = CylcWorkflowDAO(
-        get_workflow_run_pub_db_name(workflow_id), is_public=True)
+        get_workflow_run_pub_db_path(workflow_id), is_public=True)
     task_job_data = workflow_dao.select_task_job(point, task, submit_num)
     workflow_dao.close()
     if task_job_data is None:
@@ -365,16 +369,17 @@ def main(
     if not tokens or not tokens.get('task'):
         # Cat workflow logs, local only.
         if options.filename is not None:
-            raise UserInputError("The '-f' option is for job logs only.")
+            raise InputError("The '-f' option is for job logs only.")
 
-        logpath = get_workflow_run_log_name(workflow_id)
+        logpath = get_workflow_run_scheduler_log_path(workflow_id)
         if options.rotation_num:
-            logs = glob('%s.*' % logpath)
+            log_dir = Path(logpath).parent
+            logs = glob(f'{log_dir}/*{LOG_FILE_EXTENSION}')
             logs.sort(key=os.path.getmtime, reverse=True)
             try:
                 logpath = logs[int(options.rotation_num)]
             except IndexError:
-                raise UserInputError(
+                raise InputError(
                     "max rotation %d" % (len(logs) - 1))
         tail_tmpl = os.path.expandvars(
             get_platform()["tail command template"]
@@ -389,7 +394,7 @@ def main(
     else:
         # Cat task job logs, may be on workflow or job host.
         if options.rotation_num is not None:
-            raise UserInputError(
+            raise InputError(
                 "only workflow (not job) logs get rotated")
         task = tokens['task']
         point = tokens['cycle']

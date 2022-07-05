@@ -40,9 +40,9 @@ cat >'flow.cylc' <<'__FLOW_CONFIG__'
     [[c]]
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${PWD}/flow.cylc"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${PWD}"
 
-graph_workflow "${PWD}/flow.cylc" "graph.plain" \
+graph_workflow "${PWD}" "graph.plain" \
    -g A -g B -g X 20000101T0000Z 20000103T0000Z
 cmp_ok 'graph.plain' - <<'__GRAPH__'
 edge "20000101T0000Z/A" "20000102T0000Z/c"

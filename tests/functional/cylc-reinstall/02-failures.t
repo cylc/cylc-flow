@@ -18,17 +18,18 @@
 #------------------------------------------------------------------------------
 # Test workflow reinstallation expected failures
 . "$(dirname "$0")/test_header"
-set_test_number 26
+set_test_number 23
 
-# Test fail no workflow source dir
+# Test fail no workflow run dir
 
 TEST_NAME="${TEST_NAME_BASE}-reinstall-no-run-dir"
 make_rnd_workflow
-run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
+run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -rf "${RND_WORKFLOW_RUNDIR}"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: "${RND_WORKFLOW_NAME}" is not an installed workflow.
+InputError: Workflow ID not found: ${RND_WORKFLOW_RUNDIR#*/cylc-run/}
+(Directory not found: ${RND_WORKFLOW_RUNDIR})
 __ERR__
 purge_rnd_workflow
 
@@ -36,7 +37,7 @@ purge_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-dir"
 make_rnd_workflow
-run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
+run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -rf "${RND_WORKFLOW_SOURCE}"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
@@ -49,7 +50,7 @@ purge_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 make_rnd_workflow
-run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
+run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
@@ -61,7 +62,7 @@ purge_rnd_workflow
 
 TEST_NAME="${TEST_NAME_BASE}-both-flow-and-suite-file"
 make_rnd_workflow
-run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}" --no-run-name
+run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
@@ -77,7 +78,7 @@ for DIR in 'work' 'share' 'log' '_cylc-install'; do
     TEST_NAME="${TEST_NAME_BASE}-${DIR}-forbidden-in-source"
     make_rnd_workflow
     pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-    cylc install --no-run-name --flow-name="${RND_WORKFLOW_NAME}"
+    cylc install --no-run-name --workflow-name="${RND_WORKFLOW_NAME}"
     mkdir ${DIR}
     run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
     cmp_ok "${TEST_NAME}.stderr" <<__ERR__
@@ -87,26 +88,11 @@ __ERR__
     popd || exit 1
 done
 
-# Test cylc reinstall (no args given) raises error when no source dir.
-TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-rasies-error"
+# Test cylc reinstall raises error when no source dir.
+TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-raises-error"
 make_rnd_workflow
 pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-install" cylc install --no-run-name --flow-name="${RND_WORKFLOW_NAME}"
-pushd "${RND_WORKFLOW_RUNDIR}" || exit 1
-rm -rf "_cylc-install"
-run_fail "${TEST_NAME}-reinstall" cylc reinstall
-cmp_ok "${TEST_NAME}-reinstall.stderr" <<__ERR__
-WorkflowFilesError: "${RND_WORKFLOW_NAME}" was not installed with cylc install.
-__ERR__
-popd || exit 1
-popd || exit 1
-purge_rnd_workflow
-
-# Test cylc reinstall (args given) raises error when no source dir.
-TEST_NAME="${TEST_NAME_BASE}-reinstall-no-source-rasies-error2"
-make_rnd_workflow
-pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-install" cylc install --no-run-name --flow-name="${RND_WORKFLOW_NAME}"
+run_ok "${TEST_NAME}-install" cylc install --no-run-name --workflow-name="${RND_WORKFLOW_NAME}"
 pushd "${RND_WORKFLOW_RUNDIR}" || exit 1
 rm -rf "_cylc-install"
 run_fail "${TEST_NAME}-reinstall" cylc reinstall "$RND_WORKFLOW_NAME"

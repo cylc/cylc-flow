@@ -49,7 +49,7 @@ poll_workflow_running
 
 cylc stop --now --now "${WORKFLOW_NAME}"
 
-log_scan "${TEST_NAME_BASE}-log-scan" "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
+log_scan "${TEST_NAME_BASE}-log-scan" "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     'LOADING workflow parameters' \
     '+ cycle point time zone = +0100'
 

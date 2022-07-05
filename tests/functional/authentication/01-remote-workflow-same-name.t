@@ -34,9 +34,8 @@ scp ${SSH_OPTS} -pqr "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/"* \
     "${CYLC_TEST_HOST}:${SRC_DIR}"
 # shellcheck disable=SC2086
 run_ok "${TEST_NAME_BASE}-install" \
-    ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
-    CYLC_VERSION="$(cylc version)" cylc install --flow-name="${WORKFLOW_NAME}" \
-    --no-run-name --directory="${SRC_DIR}"
+    ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" bash -lc \
+    "CYLC_VERSION=$(cylc version) cylc install ${SRC_DIR} --workflow-name=${WORKFLOW_NAME} --no-run-name"
 
 workflow_run_ok "${TEST_NAME_BASE}" \
     cylc play --debug --no-detach --reference-test "${WORKFLOW_NAME}"

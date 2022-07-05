@@ -91,7 +91,7 @@ class PointBase(metaclass=ABCMeta):
         """Compare self to other point, returning a 'cmp'-like result."""
         pass
 
-    def standardise(self):
+    def standardise(self) -> 'PointBase':
         """Format self.value into a standard representation and check it."""
         return self
 
@@ -365,10 +365,11 @@ class SequenceBase(metaclass=ABCMeta):
         """Deprecated: alter state to offset the entire sequence."""
         pass
 
-    @abstractmethod
+    # NOTE: not using @abstractmethod because we need to
+    # patch this method for caching purposes
     def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def is_valid(self, point):

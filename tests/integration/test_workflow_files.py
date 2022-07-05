@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from itertools import product
 import logging
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -27,6 +29,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.workflow_files import (
     ContactFileFields as CFF,
     WorkflowFiles,
+    _is_process_running,
     detect_old_contact_file,
     dump_contact_file,
     load_contact_file,
@@ -63,9 +66,8 @@ async def workflow(flow, scheduler, one_conf, run_dir):
     await schd.install()
 
     from collections import namedtuple
-    Server = namedtuple('Server', ['port'])
-    schd.server = Server(1234)
-    schd.publisher = Server(2345)
+    Server = namedtuple('Server', ['port', 'pub_port'])
+    schd.server = Server(1234, pub_port=2345)
 
     contact_data = schd.get_contact_data()
     contact_file = Path(
@@ -146,7 +148,7 @@ def test_detect_old_contact_file_old_run(workflow, caplog, log_filter):
 
     # as a side effect the contact file should have been removed
     assert not workflow.contact_file.exists()
-    assert log_filter(caplog, contains='Removing contact file')
+    assert log_filter(caplog, contains='Removed contact file')
 
 
 def test_detect_old_contact_file_none(workflow):
@@ -160,3 +162,152 @@ def test_detect_old_contact_file_none(workflow):
 
     # it should not recreate the contact file
     assert not workflow.contact_file.exists()
+
+
+@pytest.mark.parametrize(
+    'process_running,contact_present_after,raises_error',
+    filter(
+        lambda x: x != (False, False, True),  # logically impossible
+        product([True, False], repeat=3),
+    )
+)
+def test_detect_old_contact_file_removal_errors(
+    workflow,
+    monkeypatch,
+    caplog,
+    log_filter,
+    process_running,
+    contact_present_after,
+    raises_error,
+):
+    """Test issues with removing the contact file are handled correctly.
+
+    Args:
+        process_running:
+            If True we will make it look like the workflow process is still
+            running (i.e. the workflow is still running). In this case
+            detect_old_contact_file should *not* attempt to remove the contact
+            file.
+        contact_present_after:
+            If False we will make the contact file disappear midway through
+            the operation. This can happen because:
+
+            * detect_old_contact_file in another client.
+            * cylc clean.
+            * Aliens.
+
+            This is fine, nothing should be logged.
+        raises_error:
+            If True we will make it look like removing the contact file
+            resulted in an OS error (not a FileNotFoundError). This error
+            should be logged.
+
+    """
+    # patch the is_process_running method
+    def mocked_is_process_running(*args):
+        nonlocal workflow
+        nonlocal process_running
+        if not contact_present_after:
+            # remove the contact file midway through detect_old_contact_file
+            workflow.contact_file.unlink()
+        return process_running
+
+    monkeypatch.setattr(
+        'cylc.flow.workflow_files._is_process_running',
+        mocked_is_process_running,
+    )
+
+    # patch the contact file removal
+    def _unlink(*args):
+        raise OSError('mocked-os-error')
+
+    if raises_error:
+        # force os.unlink to raise an arbitrary error
+        monkeypatch.setattr(
+            'cylc.flow.workflow_files.os.unlink',
+            _unlink,
+        )
+
+    caplog.set_level(logging.INFO, logger=CYLC_LOG)
+
+    # try to remove the contact file
+    if process_running:
+        # this should error if the process is running
+        with pytest.raises(ServiceFileError):
+            detect_old_contact_file(workflow.reg)
+    else:
+        detect_old_contact_file(workflow.reg)
+
+    # decide which log messages we should expect to see
+    if process_running:
+        remove_succeeded = False
+        remove_failed = False
+    else:
+        if contact_present_after:
+            if raises_error:
+                remove_succeeded = False
+                remove_failed = True
+            else:
+                remove_succeeded = True
+                remove_failed = False
+        else:
+            remove_succeeded = False
+            remove_failed = False
+
+    # check the appropriate messages were logged
+    assert bool(log_filter(
+        caplog,
+        contains='Removed contact file',
+    )) is remove_succeeded
+    assert bool(log_filter(
+        caplog,
+        contains=(
+            f'Failed to remove contact file for {workflow.reg}:'
+            '\nmocked-os-error'
+        ),
+    )) is remove_failed
+
+
+def test_is_process_running_dirty_output(monkeypatch, caplog):
+    """Ensure _is_process_running can handle polluted output.
+
+    E.G. this can happen if there is an echo statement in the `.bashrc`.
+    """
+
+    stdout = None
+
+    class Popen():
+
+        def __init__(self, *args, **kwargs):
+            self.returncode = 0
+
+        def communicate(self, *args, **kwargs):
+            nonlocal stdout
+            return (stdout, '')
+
+    monkeypatch.setattr(
+        'cylc.flow.workflow_files.Popen',
+        Popen,
+    )
+
+    # respond with something Cylc should be able to make sense of
+    stdout = dedent('''
+        % simulated stdout pollution %
+        [{
+            "cmdline": ["expected", "command"]
+        }]
+    ''')
+
+    caplog.set_level(logging.WARN, logger=CYLC_LOG)
+    assert _is_process_running('localhost', 1, 'expected command')
+    assert not caplog.record_tuples
+    assert not _is_process_running('localhost', 1, 'slartibartfast')
+    assert not caplog.record_tuples
+
+    # respond with something totally non-sensical
+    stdout = 'sir henry'
+    with pytest.raises(CylcError):
+        _is_process_running('localhost', 1, 'expected command')
+
+    # the command output should be in the debug message
+    assert 'sir henry' in caplog.records[0].message

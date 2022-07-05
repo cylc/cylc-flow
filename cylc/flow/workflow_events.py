@@ -15,9 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Workflow event handler."""
 
-from collections import namedtuple
+from enum import Enum
 import os
 from shlex import quote
+from typing import Dict, Union, TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -25,10 +26,170 @@ from cylc.flow.hostuserutil import get_host, get_user
 from cylc.flow.log_diagnosis import run_reftest
 from cylc.flow.subprocctx import SubProcContext
 
+if TYPE_CHECKING:
+    from cylc.flow.scheduler import Scheduler
 
-WorkflowEventContext = namedtuple(
-    "WorkflowEventContext",
-    ["event", "reason", "workflow", "uuid_str", "owner", "host", "port"])
+
+class EventData(Enum):
+    """The following variables are available to workflow event handlers.
+
+    They can be templated into event handlers with Python percent style string
+    formatting e.g:
+
+    .. code-block:: none
+
+       %(workflow)s is running on %(host)s
+
+    .. note::
+
+       Substitution patterns should not be quoted in the template strings.
+       This is done automatically where required.
+
+    For an explanation of the substitution syntax, see
+    `String Formatting Operations in the Python documentation
+    <https://docs.python.org/3/library/stdtypes.html
+    #printf-style-string-formatting>`_.
+
+    """
+
+    Event = 'event'
+    """The type of workflow event that has occurred e.g. ``stall``."""
+
+    Message = 'message'
+    """Additional information about the event."""
+
+    Workflow = 'workflow'
+    """The workflow ID"""
+
+    Host = 'host'
+    """The host where the workflow is running."""
+
+    Port = 'port'
+    """The port where the workflow is running."""
+
+    Owner = 'owner'
+    """The user account under which the workflow is running."""
+
+    UUID = 'uuid'
+    """The unique identification string for this workflow run.
+
+    This string is preserved for the lifetime of the scheduler and is restored
+    from the database on restart.
+    """
+
+    WorkflowURL = 'workflow_url'
+    """The URL defined in :cylc:conf:`flow.cylc[meta]URL`."""
+
+    # BACK COMPAT: "suite" deprecated
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 8.x
+    Suite = 'suite'
+    """The workflow ID
+
+    .. deprecated:: 8.0.0
+
+       Use "workflow".
+    """
+
+    # BACK COMPAT: "suite_uuid" deprecated
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 8.x
+    Suite_UUID = 'suite_uuid'
+    """The unique identification string for this workflow run.
+
+    .. deprecated:: 8.0.0
+
+       Use "uuid_str".
+    """
+
+    # BACK COMPAT: "suite_url" deprecated
+    # url:
+    #     https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
+    # from:
+    #     Cylc 8
+    # remove at:
+    #     Cylc 8.x
+    SuiteURL = 'suite_url'
+    """The URL defined in :cylc:conf:`flow.cylc[meta]URL`.
+
+    .. deprecated:: 8.0.0
+
+       Use "workflow_url".
+    """
+
+
+def get_template_variables(
+    schd: 'Scheduler',
+    event: str,
+    reason: str
+) -> Dict[str, Union[str, int]]:
+    """Return a dictionary of template varaibles for a workflow event."""
+    workflow_url: str = schd.config.cfg['meta'].get('URL', '')
+    return {
+        # scheduler properties
+        EventData.Event.value:
+            event,
+        EventData.Message.value:
+            reason,
+        EventData.Workflow.value:
+            schd.workflow,
+        EventData.Host.value:
+            schd.host,
+        EventData.Port.value:
+            (schd.server.port if schd.server else -1),
+        EventData.Owner.value:
+            schd.owner,
+        EventData.UUID.value:
+            schd.uuid_str,
+        EventData.WorkflowURL.value:
+            workflow_url,
+
+        # BACK COMPAT: "suite", "suite_uuid", "suite_url"
+        # url:
+        #     https://github.com/cylc/cylc-flow/pull/4724 (&4714)
+        # from:
+        #     Cylc 8
+        # remove at:
+        #     Cylc 8.x
+        EventData.Suite.value:
+            schd.workflow,
+        EventData.Suite_UUID.value:
+            schd.uuid_str,
+        EventData.SuiteURL.value:
+            workflow_url,
+
+        # workflow metadata
+        **{
+            key: quote(value)
+            for key, value in schd.config.cfg['meta'].items()
+            if key != 'URL'
+        },  # noqa: E122
+    }
+
+
+def process_mail_footer(
+    mail_footer_tmpl: str,
+    template_vars,
+) -> str:
+    """Process mail footer for workflow or task events.
+
+    Returns an empty string if issues occur in processing.
+    """
+    try:
+        return (mail_footer_tmpl + '\n') % template_vars
+    except (KeyError, ValueError):
+        LOG.warning(
+            f'Ignoring bad mail footer template: {mail_footer_tmpl}'
+        )
+    return ''
 
 
 class WorkflowEventHandler():
@@ -68,127 +229,107 @@ class WorkflowEventHandler():
         value = None
         for getter in getters:
             if key in getter:
-                value = getter[key]
-            if value is not None:
+                value = getter.get(key)
+            if value is not None and value != []:
                 return value
         return default
 
-    def handle(self, config, ctx):
+    def handle(self, schd: 'Scheduler', event: str, reason: str) -> None:
         """Handle a workflow event."""
-        self._run_event_mail(config, ctx)
-        self._run_event_custom_handlers(config, ctx)
-        if config.options.reftest and ctx.event == self.EVENT_SHUTDOWN:
-            run_reftest(config, ctx)
+        template_variables = get_template_variables(schd, event, reason)
+        self._run_event_mail(schd, template_variables, event)
+        self._run_event_custom_handlers(schd, template_variables, event)
+        if schd.config.options.reftest and event == self.EVENT_SHUTDOWN:
+            run_reftest(schd)
 
-    def _run_event_mail(self, config, ctx):
+    def _run_event_mail(self, schd, template_variables, event):
         """Helper for "run_event_handlers", do mail notification."""
-        if ctx.event in self.get_events_conf(config, 'mail events', []):
+        if event in self.get_events_conf(schd.config, 'mail events', []):
             # SMTP server
             env = dict(os.environ)
-            mail_smtp = self.get_events_conf(config, 'smtp')
+            mail_smtp = self.get_events_conf(schd.config, 'smtp')
             if mail_smtp:
                 env['smtp'] = mail_smtp
-            subject = '[workflow %(event)s] %(workflow)s' % {
-                'workflow': ctx.workflow, 'event': ctx.event}
+            subject = (
+                f'[workflow %({EventData.Event.value})s]'
+                f' %({EventData.Workflow.value})s' % (
+                    template_variables
+                )
+            )
             stdin_str = ''
-            for name, value in [
-                    ('workflow event', ctx.event),
-                    ('reason', ctx.reason),
-                    ('workflow', ctx.workflow),
-                    ('host', ctx.host),
-                    ('port', ctx.port),
-                    ('owner', ctx.owner)]:
+            for key in (
+                EventData.Event.value,
+                EventData.Message.value,
+                EventData.Workflow.value,
+                EventData.Host.value,
+                EventData.Port.value,
+                EventData.Owner.value,
+            ):
+                value = template_variables.get(key, None)
                 if value:
-                    stdin_str += '%s: %s\n' % (name, value)
-            mail_footer_tmpl = self.get_events_conf(config, 'footer')
+                    stdin_str += '%s: %s\n' % (key, value)
+            mail_footer_tmpl = self.get_events_conf(schd.config, 'footer')
             if mail_footer_tmpl:
-                # BACK COMPAT: "suite" deprecated
-                # url:
-                #     https://github.com/cylc/cylc-flow/pull/4174
-                # from:
-                #     Cylc 8
-                # remove at:
-                #     Cylc 9
-                try:
-                    stdin_str_footer = (mail_footer_tmpl + '\n') % {
-                        'host': ctx.host,
-                        'port': ctx.port,
-                        'owner': ctx.owner,
-                        'suite': ctx.workflow,  # deprecated
-                        'workflow': ctx.workflow}
-                except KeyError:
-                    LOG.warning(
-                        "Ignoring bad mail footer template: %s" % (
-                            mail_footer_tmpl))
-                else:
-                    stdin_str += stdin_str_footer
-            proc_ctx = SubProcContext(
-                (self.WORKFLOW_EVENT_HANDLER, ctx.event),
-                [
-                    'mail',
-                    '-s', subject,
-                    '-r', self.get_events_conf(
-                        config,
-                        'from', 'notifications@' + get_host()),
-                    self.get_events_conf(config, 'to', get_user()),
-                ],
-                env=env,
-                stdin_str=stdin_str)
-            if self.proc_pool.closed:
-                # Run command in foreground if process pool is closed
-                self.proc_pool.run_command(proc_ctx)
-                self._run_event_handlers_callback(proc_ctx)
-            else:
-                # Run command using process pool otherwise
-                self.proc_pool.put_command(
-                    proc_ctx, callback=self._run_event_mail_callback)
+                stdin_str += process_mail_footer(
+                    mail_footer_tmpl,
+                    template_variables,
+                )
+            self._send_mail(event, subject, stdin_str, schd, env)
 
-    def _run_event_custom_handlers(self, config, ctx):
+    def _send_mail(self, event, subject, message, schd, env):
+        proc_ctx = SubProcContext(
+            (self.WORKFLOW_EVENT_HANDLER, event),
+            [
+                'mail',
+                '-s', subject,
+                '-r', self.get_events_conf(
+                    schd.config,
+                    'from', 'notifications@' + get_host()),
+                self.get_events_conf(schd.config, 'to', get_user()),
+            ],
+            env=env,
+            stdin_str=message)
+        if self.proc_pool.closed:
+            # Run command in foreground if process pool is closed
+            self.proc_pool.run_command(proc_ctx)
+            self._run_event_handlers_callback(proc_ctx)
+        else:
+            # Run command using process pool otherwise
+            self.proc_pool.put_command(
+                proc_ctx, callback=self._run_event_mail_callback)
+
+    def _run_event_custom_handlers(self, schd, template_variables, event):
         """Helper for "run_event_handlers", custom event handlers."""
         # Look for event handlers
         # 1. Handlers for specific event
         # 2. General handlers
-        handlers = self.get_events_conf(config, '%s handlers' % ctx.event)
+        config = schd.config
+        handlers = self.get_events_conf(config, '%s handlers' % event)
         if not handlers and (
-                ctx.event in
-                self.get_events_conf(config, 'handler events', [])):
+            event in
+            self.get_events_conf(config, 'handler events', [])
+        ):
             handlers = self.get_events_conf(config, 'handlers')
         if not handlers:
             return
         for i, handler in enumerate(handlers):
-            cmd_key = ('%s-%02d' % (self.WORKFLOW_EVENT_HANDLER, i), ctx.event)
-            # Handler command may be a string for substitution
-            # BACK COMPAT: suite, suite_uuid are deprecated
-            # url:
-            #     https://github.com/cylc/cylc-flow/pull/4174
-            # from:
-            #     Cylc 8
-            # remove at:
-            #     Cylc 9
+            cmd_key = ('%s-%02d' % (self.WORKFLOW_EVENT_HANDLER, i), event)
             try:
-                handler_data = {
-                    'event': quote(ctx.event),
-                    'message': quote(ctx.reason),
-                    'workflow': quote(ctx.workflow),
-                    'workflow_uuid': quote(ctx.uuid_str),
-                    'suite': quote(ctx.workflow),  # deprecated
-                    'suite_uuid': quote(ctx.uuid_str),  # deprecated
-                }
-                if config.cfg['meta']:
-                    for key, value in config.cfg['meta'].items():
-                        if key == "URL":
-                            handler_data["workflow_url"] = quote(value)
-                            handler_data["suite_url"] = quote(value)
-                        handler_data[key] = quote(value)
-                cmd = handler % (handler_data)
+                cmd = handler % (template_variables)
             except KeyError as exc:
-                message = "%s bad template: %s" % (cmd_key, exc)
+                message = f'{cmd_key} bad template: {handler}\n{exc}'
                 LOG.error(message)
                 continue
             if cmd == handler:
                 # Nothing substituted, assume classic interface
-                cmd = "%s '%s' '%s' '%s'" % (
-                    handler, ctx.event, ctx.workflow, ctx.reason)
+                cmd = (
+                    f"%(handler)s"
+                    f" '%({EventData.Event.value})s'"
+                    f" '%({EventData.Workflow.value})s'"
+                    f" '%({EventData.Message.value})s'"
+                ) % (
+                    {'handler': handler, **template_variables}
+                )
             proc_ctx = SubProcContext(
                 cmd_key,
                 cmd,

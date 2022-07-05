@@ -62,11 +62,15 @@ import sys
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.id_cli import parse_ids_async
 from cylc.flow.loggingutil import disable_timestamps
-from cylc.flow.option_parsers import CylcOptionParser as COP, Options
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP,
+    Options,
+)
 from cylc.flow.terminal import cli_function, is_terminal
 from cylc.flow.workflow_files import init_clean, get_contained_workflows
 
@@ -78,7 +82,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         multiworkflow=True,
-        argdoc=[('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow IDs')],
+        argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
         segregated_log=True,
     )
 
@@ -179,6 +183,10 @@ async def run(*ids: str, opts: 'Values') -> None:
     # expand partial workflow ids (including run names)
     workflows, multi_mode = await scan(workflows, multi_mode)
 
+    if not workflows:
+        LOG.warning(f"No workflows matching {', '.join(ids)}")
+        return
+
     workflows.sort()
     if multi_mode and not opts.skip_interactive:
         prompt(workflows)  # prompt for approval or exit
@@ -193,7 +201,7 @@ def main(_, opts: 'Values', *ids: str):
         disable_timestamps(LOG)
 
     if opts.local_only and opts.remote_only:
-        raise UserInputError(
+        raise InputError(
             "--local and --remote options are mutually exclusive"
         )
 

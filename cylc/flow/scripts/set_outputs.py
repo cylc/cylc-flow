@@ -24,8 +24,7 @@ depend on those outputs. By default it marks tasks as succeeded.
 This allows you to manually intervene with Cylc's scheduling algorithm by
 artificially satisfying outputs of tasks.
 
-If a flow number is given, the child tasks will start (or continue) that flow,
-otherwise no reflow will occur.
+If a flow number is given, the child tasks will start (or continue) that flow.
 
 Examples:
   # For example, for the following dependency graph:
@@ -52,7 +51,10 @@ from optparse import Values
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    FULL_ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.terminal import cli_function
 
 MUTATION = '''
@@ -74,13 +76,13 @@ mutation (
 '''
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
         multitask=True,
         multiworkflow=True,
-        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+        argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
     parser.add_option(

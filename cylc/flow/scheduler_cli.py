@@ -18,30 +18,32 @@
 from ansimarkup import parse as cparse
 import asyncio
 from functools import lru_cache
+from shlex import quote
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
-from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow import LOG
 from cylc.flow.exceptions import ServiceFileError
 import cylc.flow.flags
+from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.loggingutil import (
     close_log,
-    TimestampRotatingFileHandler,
+    RotatingLogFileHandler,
 )
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
-    Options
+    Options,
+    icp_option,
 )
-from cylc.flow.pathutil import (
-    get_workflow_run_log_name,
-    get_workflow_file_install_log_name)
+from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import _remote_cylc_cmd
 from cylc.flow.scheduler import Scheduler, SchedulerError
-from cylc.flow.scripts import cylc_header
+from cylc.flow.scripts.common import cylc_header
 from cylc.flow.workflow_files import (
     detect_old_contact_file,
     SUITERC_DEPR_MSG
@@ -93,8 +95,6 @@ happened to them while the workflow was down.
 """
 
 
-WORKFLOW_NAME_ARG_DOC = ("WORKFLOW", "Workflow name or ID")
-
 RESUME_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!
@@ -109,14 +109,14 @@ mutation (
 
 
 @lru_cache()
-def get_option_parser(add_std_opts=False):
+def get_option_parser(add_std_opts: bool = False) -> COP:
     """Parse CLI for "cylc play"."""
     parser = COP(
         PLAY_DOC,
-        icp=True,
         jset=True,
         comms=True,
-        argdoc=[WORKFLOW_NAME_ARG_DOC])
+        argdoc=[WORKFLOW_ID_ARG_DOC]
+    )
 
     parser.add_option(
         "-n", "--no-detach", "--non-daemon",
@@ -126,6 +126,8 @@ def get_option_parser(add_std_opts=False):
     parser.add_option(
         "--profile", help="Output profiling (performance) information",
         action="store_true", dest="profile_mode")
+
+    parser.add_option(icp_option)
 
     parser.add_option(
         "--start-cycle-point", "--startcp",
@@ -144,7 +146,6 @@ def get_option_parser(add_std_opts=False):
             "Set the final cycle point. "
             "This command line option overrides the workflow "
             "config option '[scheduling]final cycle point'. "
-            "Use a value of 'reload' to reload from flow.cylc in a restart."
         ),
         metavar="CYCLE_POINT", action="store", dest="fcp")
 
@@ -156,7 +157,6 @@ def get_option_parser(add_std_opts=False):
             "(Not to be confused with the final cycle point.) "
             "This command line option overrides the workflow "
             "config option '[scheduling]stop after cycle point'. "
-            "Use a value of 'reload' to reload from flow.cylc in a restart."
         ),
         metavar="CYCLE_POINT", action="store", dest="stopcp")
 
@@ -254,20 +254,19 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_, no_detach):
+def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
     """Open Cylc log handlers for a flow run."""
     if not no_detach:
         while LOG.handlers:
             LOG.handlers[0].close()
             LOG.removeHandler(LOG.handlers[0])
-    log_path = get_workflow_run_log_name(id_)
+    log_path = get_workflow_run_scheduler_log_path(id_)
     LOG.addHandler(
-        TimestampRotatingFileHandler(log_path, no_detach)
-    )
-    # Add file installation log
-    file_install_log_path = get_workflow_file_install_log_name(id_)
-    RSYNC_LOG.addHandler(
-        TimestampRotatingFileHandler(file_install_log_path, no_detach)
+        RotatingLogFileHandler(
+            log_path,
+            no_detach,
+            restart_num=restart_num
+        )
     )
 
 
@@ -341,7 +340,11 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
         daemonize(scheduler)
 
     # setup loggers
-    _open_logs(workflow_id, options.no_detach)
+    _open_logs(
+        workflow_id,
+        options.no_detach,
+        restart_num=scheduler.get_restart_num()
+    )
 
     # run the workflow
     ret = asyncio.run(
@@ -357,14 +360,23 @@ def scheduler_cli(options: 'Values', workflow_id: str) -> None:
     sys.exit(ret)
 
 
+def _protect_remote_cmd_args(cmd: List[str]) -> List[str]:
+    """Protect command args from second shell interpretation.
+
+    Escape quoting for --set="FOO='foo'" args.
+    (Separate function for unit testing.)
+    """
+    return [quote(c) for c in cmd]
+
+
 def _distribute(host):
     """Re-invoke this command on a different host if requested."""
     # Check whether a run host is explicitly specified, else select one.
     if not host:
         host = select_workflow_host()[0]
     if is_remote_host(host):
+        cmd = _protect_remote_cmd_args(sys.argv[1:])
         # Prevent recursive host selection
-        cmd = sys.argv[1:]
         cmd.append("--host=localhost")
         _remote_cylc_cmd(cmd, host=host)
         sys.exit(0)
@@ -400,4 +412,9 @@ async def _run(scheduler: Scheduler) -> int:
 @cli_function(get_option_parser)
 def play(parser: COP, options: 'Values', id_: str):
     """Implement cylc play."""
+    if options.starttask:
+        options.starttask = upgrade_legacy_ids(
+            *options.starttask,
+            relative=True,
+        )
     return scheduler_cli(options, id_)

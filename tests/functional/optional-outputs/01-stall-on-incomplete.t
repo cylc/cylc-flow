@@ -28,7 +28,7 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play -n --reference-test --debug "${WORKFLOW_NAME}"
 
-LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 grep_ok "Incomplete tasks" "${LOG}"
 grep_ok "1/foo did not complete required outputs: \['y'\]" "${LOG}"
 grep_ok "Workflow stalled" "${LOG}"

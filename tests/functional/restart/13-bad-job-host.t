@@ -31,7 +31,7 @@ for DB_NAME in 'log/db' '.service/db'; do
         'UPDATE task_jobs SET platform_name="garbage" WHERE name=="t-remote";'
 done
 workflow_run_fail "${TEST_NAME_BASE}-restart" cylc play --debug --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
-grep_ok PlatformLookupError "${CYLC_WORKFLOW_RUN_DIR}/log/workflow/log"
+grep_ok PlatformLookupError "${CYLC_WORKFLOW_RUN_DIR}/log/scheduler/log"
 #-------------------------------------------------------------------------------
 purge
 exit

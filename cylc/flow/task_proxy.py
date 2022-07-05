@@ -17,16 +17,16 @@
 """Provide a class to represent a task proxy in a running workflow."""
 
 from collections import Counter
-from contextlib import suppress
+from copy import copy
 from fnmatch import fnmatchcase
 from time import time
-from typing import Any, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
+from typing import (
+    Any, Callable, Dict, List, Set, Tuple, Optional, TYPE_CHECKING
+)
 
 from metomi.isodatetime.timezone import get_local_time_zone
 
 from cylc.flow import LOG
-from cylc.flow.cycling.loader import standardise_point_string
-from cylc.flow.exceptions import PointParsingError
 from cylc.flow.id import Tokens
 from cylc.flow.platforms import get_platform
 from cylc.flow.task_action_timer import TimerFlags
@@ -134,7 +134,9 @@ class TaskProxy:
         .graph_children (dict)
             graph children: {msg: [(name, point), ...]}
         .flow_nums:
-            flow_nums
+            flows I belong to
+         flow_wait:
+            wait for flow merge before spawning children
         .waiting_on_job_prep:
             task waiting on job prep
 
@@ -142,7 +144,7 @@ class TaskProxy:
         tdef: The definition object of this task.
         start_point: Start point to calculate the task's cycle point on
             start-up or the cycle point for subsequent tasks.
-        flow_nums: Which flow within the scheduler this task belongs to.
+        flow_nums: Which flows this task belongs to.
         status: Task state string.
         is_held: True if the task is held, else False.
         submit_num: Number of times the task has attempted job submission.
@@ -170,6 +172,7 @@ class TaskProxy:
         'state',
         'summary',
         'flow_nums',
+        'flow_wait',
         'graph_children',
         'platform',
         'timeout',
@@ -187,6 +190,8 @@ class TaskProxy:
         is_held: bool = False,
         submit_num: int = 0,
         is_late: bool = False,
+        is_manual_submit: bool = False,
+        flow_wait: bool = False,
     ) -> None:
 
         self.tdef = tdef
@@ -197,7 +202,9 @@ class TaskProxy:
         if flow_nums is None:
             self.flow_nums = set()
         else:
-            self.flow_nums = flow_nums
+            # (don't share flow_nums ref with parent task)
+            self.flow_nums = copy(flow_nums)
+        self.flow_wait = flow_wait
         self.point = start_point
         self.tokens = Tokens(
             # TODO: make these absolute?
@@ -208,7 +215,7 @@ class TaskProxy:
         self.reload_successor: Optional['TaskProxy'] = None
         self.point_as_seconds: Optional[int] = None
 
-        self.is_manual_submit = False
+        self.is_manual_submit = is_manual_submit
         self.summary: Dict[str, Any] = {
             'submitted_time': None,
             'submitted_time_string': None,
@@ -221,7 +228,8 @@ class TaskProxy:
             'execution_time_limit': None,
             'job_runner_name': None,
             'submit_method_id': None,
-            'flow_nums': set()
+            'flow_nums': set(),
+            'flow_wait': self.flow_wait
         }
 
         self.local_job_file_path: Optional[str] = None
@@ -261,6 +269,7 @@ class TaskProxy:
         """Copy attributes to successor on reload of this task proxy."""
         self.reload_successor = reload_successor
         reload_successor.submit_num = self.submit_num
+        reload_successor.flow_wait = self.flow_wait
         reload_successor.is_manual_submit = self.is_manual_submit
         reload_successor.summary = self.summary
         reload_successor.local_job_file_path = self.local_job_file_path
@@ -298,8 +307,7 @@ class TaskProxy:
         """Compute and store my cycle point as seconds since epoch."""
         if self.point_as_seconds is None:
             iso_timepoint = point_parse(str(self.point))
-            self.point_as_seconds = int(iso_timepoint.get(
-                'seconds_since_unix_epoch'))
+            self.point_as_seconds = int(iso_timepoint.seconds_since_unix_epoch)
             if iso_timepoint.time_zone.unknown:
                 utc_offset_hours, utc_offset_minutes = (
                     get_local_time_zone())
@@ -324,7 +332,7 @@ class TaskProxy:
             else:
                 trigger_time = self.point + ISO8601Interval(offset_str)
             self.clock_trigger_time = int(
-                point_parse(str(trigger_time)).get('seconds_since_unix_epoch')
+                point_parse(str(trigger_time)).seconds_since_unix_epoch
             )
         return self.clock_trigger_time
 
@@ -411,17 +419,6 @@ class TaskProxy:
         for timer in self.try_timers.values():
             timer.timeout = None
 
-    def point_match(self, point: Optional[str]) -> bool:
-        """Return whether a string/glob matches the task's point.
-
-        None is treated as '*'.
-        """
-        if point is None:
-            return True
-        with suppress(PointParsingError):  # point_str may be a glob
-            point = standardise_point_string(point)
-        return fnmatchcase(str(self.point), point)
-
     def status_match(self, status: Optional[str]) -> bool:
         """Return whether a string matches the task's status.
 
@@ -429,24 +426,37 @@ class TaskProxy:
         """
         return (not status) or self.state.status == status
 
-    def name_match(self, name: str) -> bool:
-        """Return whether a string/glob matches the task's name."""
-        if fnmatchcase(self.tdef.name, name):
-            return True
-        return any(
-            fnmatchcase(ns, name) for ns in self.tdef.namespace_hierarchy
+    def name_match(
+        self,
+        value: str,
+        match_func: Callable[[Any, Any], bool] = fnmatchcase
+    ) -> bool:
+        """Return whether a string/pattern matches the task's name or any of
+        its parent family names."""
+        return match_func(self.tdef.name, value) or any(
+            match_func(ns, value) for ns in self.tdef.namespace_hierarchy
         )
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
+        if flow_nums == self.flow_nums:
+            # Not a merge if in the same flow. E.g. for "A & B => C" if A
+            # spawns C first, B will find C is already in the task pool.
+            return
+        LOG.info(
+            f"[{self}] merged in flow(s) "
+            f"{','.join(str(f) for f in flow_nums)}"
+        )
         self.flow_nums.update(flow_nums)
 
     def state_reset(
-        self, status=None, is_held=None, is_queued=None, is_runahead=None
+        self, status=None, is_held=None, is_queued=None, is_runahead=None,
+        silent=False
     ) -> bool:
         """Set new state and log the change. Return whether it changed."""
         before = str(self)
         if self.state.reset(status, is_held, is_queued, is_runahead):
-            LOG.info(f"[{before}] => {self.state}")
+            if not silent:
+                LOG.info(f"[{before}] => {self.state}")
             return True
         return False

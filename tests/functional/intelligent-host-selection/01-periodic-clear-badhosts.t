@@ -27,6 +27,9 @@ set_test_number 3
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+# Install the fake background job runner.
+cp -r "${TEST_SOURCE_DIR}/lib" "${WORKFLOW_RUN_DIR}"
+
 create_test_global_config '' "
     [scheduler]
         [[main loop]]
@@ -55,7 +58,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 # scrape platform events from the log
 sed -n \
     's/.* - \(platform: .*\)/\1/p' \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" \
     > platform-log
 
 # check this matches expectations

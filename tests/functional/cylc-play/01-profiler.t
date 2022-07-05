@@ -40,6 +40,6 @@ exists_ok 'profile.prof'
 run_ok "${TEST_NAME_BASE}-run" \
     cylc play "${WORKFLOW_NAME}" --profile --no-detach
 
-exists_ok "${RUN_DIR}/${WORKFLOW_NAME}/log/workflow/profile.prof"
+exists_ok "${RUN_DIR}/${WORKFLOW_NAME}/log/scheduler/profile.prof"
 
 purge

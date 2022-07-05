@@ -42,7 +42,7 @@ run_ok "${TEST_NAME_BASE}-install" cylc install 2>'/dev/null'
 popd || exit 1
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${RND_WORKFLOW_RUNDIR}/runN"
 run_ok "${TEST_NAME_BASE}-play" cylc play "${RND_WORKFLOW_NAME}/runN" --pause
-LOG="${RND_WORKFLOW_RUNDIR}/run1/log/workflow/log"
+LOG="${RND_WORKFLOW_RUNDIR}/run1/log/scheduler/log"
 run_ok "${TEST_NAME_BASE}-stop" cylc stop --now --now "${RND_WORKFLOW_NAME}/run1"
 log_scan "${TEST_NAME_BASE}-log-stop" "${LOG}" 20 1 \
 "INFO - Workflow shutting down - REQUEST(NOW-NOW)"

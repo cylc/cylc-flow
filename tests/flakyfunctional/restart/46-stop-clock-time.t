@@ -69,7 +69,7 @@ workflow_run_ok "${TEST_NAME_BASE}-restart-1" \
     cylc play "${WORKFLOW_NAME}" --no-detach
 dumpdbtables
 cmp_ok 'stopclocktime.out' <'/dev/null'
-cut -d ' ' -f 4- "${WORKFLOW_RUN_DIR}/log/workflow/log" >'log.edited'
+cut -d ' ' -f 4- "${WORKFLOW_RUN_DIR}/log/scheduler/log" >'log.edited'
 if [[ "$(date +%:z)" == '+00:00' ]]; then
     CLOCKTIMESTR="$(date --date="@${CLOCKTIME}" +%FT%TZ)"
 else

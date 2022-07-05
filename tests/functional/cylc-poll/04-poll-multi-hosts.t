@@ -29,7 +29,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 RUN_DIR="$RUN_DIR/${WORKFLOW_NAME}"
-LOG="${RUN_DIR}/log/workflow/log"
+LOG="${RUN_DIR}/log/scheduler/log"
 sed -n 's/^.*\(cylc jobs-poll\)/\1/p' "${LOG}" | sort -u >'edited-workflow-log'
 
 sort >'edited-workflow-log-ref' <<__LOG__

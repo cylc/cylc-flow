@@ -15,12 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
+from typing import List
 
 import sys
 import io
 from contextlib import redirect_stdout
 import cylc.flow.flags
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import CylcOptionParser as COP, Options
 
 
 USAGE_WITH_COMMENT = "usage \n # comment"
@@ -28,11 +29,15 @@ USAGE_WITH_COMMENT = "usage \n # comment"
 
 @pytest.fixture(scope='module')
 def parser():
-    return COP('usage')
+    return COP(
+        USAGE_WITH_COMMENT,
+        argdoc=[('SOME_ARG', "Description of SOME_ARG")]
+    )
 
 
 @pytest.mark.parametrize(
-    'args,verbosity', [
+    'args,verbosity',
+    [
         ([], 0),
         (['-v'], 1),
         (['-v', '-v', '-v'], 3),
@@ -44,7 +49,11 @@ def parser():
         (['--debug', '-v'], 3),
     ]
 )
-def test_verbosity(args, verbosity, parser, monkeypatch):
+def test_verbosity(
+    args: List[str],
+    verbosity: int,
+    parser: COP, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """-v, -q, --debug should be additive."""
     # patch the cylc.flow.flags value so that it gets reset after the test
     monkeypatch.setattr('cylc.flow.flags.verbosity', None)
@@ -54,11 +63,10 @@ def test_verbosity(args, verbosity, parser, monkeypatch):
     assert cylc.flow.flags.verbosity == verbosity
 
 
-def test_help_color(monkeypatch):
+def test_help_color(monkeypatch: pytest.MonkeyPatch, parser: COP):
     """Test for colorized comments in 'cylc cmd --help --color=always'."""
     # This colorization is done on the fly when help is printed.
     monkeypatch.setattr("sys.argv", ['cmd', 'foo', '--color=always'])
-    parser = COP(USAGE_WITH_COMMENT)
     parser.parse_args(None)
     assert parser.values.color == "always"
     f = io.StringIO()
@@ -67,14 +75,21 @@ def test_help_color(monkeypatch):
     assert not (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)
 
 
-def test_help_nocolor(monkeypatch):
+def test_help_nocolor(monkeypatch: pytest.MonkeyPatch, parser: COP):
     """Test for no colorization in 'cylc cmd --help --color=never'."""
     # This colorization is done on the fly when help is printed.
     monkeypatch.setattr(sys, "argv", ['cmd', 'foo', '--color=never'])
-    parser = COP(USAGE_WITH_COMMENT)
     parser.parse_args(None)
     assert parser.values.color == "never"
     f = io.StringIO()
     with redirect_stdout(f):
         parser.print_help()
     assert (f.getvalue()).startswith("Usage: " + USAGE_WITH_COMMENT)
+
+
+def test_Options_std_opts():
+    """Test Python Options API with standard options."""
+    parser = COP(USAGE_WITH_COMMENT, auto_add=True)
+    MyOptions = Options(parser)
+    MyValues = MyOptions(verbosity=1)
+    assert MyValues.verbosity == 1

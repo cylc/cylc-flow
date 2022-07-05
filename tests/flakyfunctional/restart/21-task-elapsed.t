@@ -46,7 +46,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 workflow_run_ok "${TEST_NAME_BASE}-restart-1" \
     cylc play "${WORKFLOW_NAME}" --stopcp=2028 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
-    "${RUND}/log/workflow/log" >'restart-1.out'
+    "${RUND}/log/scheduler/log" >'restart-1.out'
 contains_ok "restart-1.out" <<'__OUT__'
 LOADING task run times
 + t2: %d,%d,%d,%d,%d
@@ -55,7 +55,7 @@ __OUT__
 workflow_run_ok "${TEST_NAME_BASE}-restart-2" \
     cylc play "${WORKFLOW_NAME}" --stopcp=2030 --debug --no-detach
 sed -n '/LOADING task run times/,+2{s/^.* INFO - //;s/[0-9]\(,\|$\)/%d\1/g;p}' \
-    "${RUND}/log/workflow/log" >'restart-2.out'
+    "${RUND}/log/scheduler/log" >'restart-2.out'
 contains_ok 'restart-2.out' <<'__OUT__'
 LOADING task run times
 + t2: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d

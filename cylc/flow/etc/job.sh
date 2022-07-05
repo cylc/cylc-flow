@@ -70,7 +70,7 @@ cylc__job__main() {
     echo
     # Derived environment variables
     export CYLC_WORKFLOW_RUN_DIR="${CYLC_RUN_DIR}/${CYLC_WORKFLOW_ID}"
-    export CYLC_WORKFLOW_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/workflow"
+    export CYLC_WORKFLOW_LOG_DIR="${CYLC_WORKFLOW_RUN_DIR}/log/scheduler"
     export CYLC_WORKFLOW_SHARE_DIR="${CYLC_WORKFLOW_RUN_DIR}/share"
     export CYLC_WORKFLOW_WORK_DIR="${CYLC_WORKFLOW_RUN_DIR}/work"
     export CYLC_TASK_CYCLE_POINT="${CYLC_TASK_JOB%%/*}"
@@ -103,14 +103,14 @@ cylc__job__main() {
         export CYLC_WORKFLOW_HOST CYLC_WORKFLOW_OWNER
         # BACK COMPAT: DEPRECATED environment variables
         # remove at:
-        #     Cylc9
+        #     Cylc8.x
         export CYLC_SUITE_HOST="${CYLC_WORKFLOW_HOST}"
         export CYLC_SUITE_OWNER="${CYLC_WORKFLOW_OWNER}"
     fi
 
     # BACK COMPAT: DEPRECATED environment variables
     # remove at:
-    #     Cylc9
+    #     Cylc8.x
     export CYLC_SUITE_SHARE_DIR="${CYLC_WORKFLOW_SHARE_DIR}"
     export CYLC_SUITE_SHARE_PATH="${CYLC_WORKFLOW_SHARE_DIR}"
     export CYLC_SUITE_NAME="${CYLC_WORKFLOW_ID}"

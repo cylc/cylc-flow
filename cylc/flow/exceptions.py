@@ -42,25 +42,32 @@ class CylcError(Exception):
 
 
 class PluginError(CylcError):
-    """Represents an error arising from a Cylc plugin."""
+    """Represents an error arising from a Cylc plugin.
 
-    def __init__(self, entry_point, plugin_name, exc):
+    Args:
+        entry_point: The plugin entry point as defined in setup.cfg
+            (e.g. 'cylc.main_loop')
+        plugin_name: Name of the plugin
+        exc: Original exception caught when trying to run the plugin
+    """
+
+    def __init__(self, entry_point: str, plugin_name: str, exc: Exception):
         self.entry_point = entry_point
         self.plugin_name = plugin_name
         self.exc = exc
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
-            f'Error in plugin {self.entry_point}.{self.plugin_name}'
-            f'\n{self.exc}'
+            f"Error in plugin {self.entry_point}.{self.plugin_name}\n"
+            f"{type(self.exc).__name__}: {self.exc}"
         )
 
 
-class UserInputError(CylcError):
+class InputError(CylcError):
     """Exception covering erroneous user input to a Cylc interface.
 
     Ideally this would be handled in the interface (e.g. argument parser).
-    If this isn't possible raise UserInputError.
+    If this isn't possible raise InputError.
 
     """
 
@@ -221,6 +228,28 @@ class PlatformError(CylcError):
 
 class TaskDefError(WorkflowConfigError):
     """Exception raise for errors in TaskDef initialization."""
+
+
+class XtriggerConfigError(WorkflowConfigError):
+    """An error in an xtrigger.
+
+    For example:
+
+    * If the function module was not found.
+    * If the function was not found in the xtrigger module.
+    * If the function is not callable.
+    * If any string template in the function context
+      arguments are not present in the expected template values.
+
+    """
+
+    def __init__(self, label: str, trigger: str, message: str):
+        self.label: str = label
+        self.trigger: str = trigger
+        self.message: str = message
+
+    def __str__(self):
+        return f'[{self.label}] {self.message}'
 
 
 class ClientError(CylcError):

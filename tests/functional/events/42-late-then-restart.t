@@ -25,11 +25,11 @@ run_ok "${TEST_NAME_BASE}-restart" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 # Check that the workflow has emitted a single late event.
 grep -c 'WARNING.*late (late-time=.*)' \
-    <(cat "${WORKFLOW_RUN_DIR}/log/workflow/log."*) \
+    <(cat "${WORKFLOW_RUN_DIR}/log/scheduler/"*.log) \
     >'grep-log.out'
 cmp_ok 'grep-log.out' <<<'1'
 grep -c 'late (late-time=.*)' \
-    "${WORKFLOW_RUN_DIR}/log/workflow/my-handler.out" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/my-handler.out" \
     > 'grep-my-handler.out'
 cmp_ok 'grep-my-handler.out' <<<'1'
 

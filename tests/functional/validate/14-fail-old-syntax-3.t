@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +25,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME=${TEST_NAME_BASE}
 run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__END__
-IllegalValueError: (type=ISO 8601 interval) [runtime][root][events]execution timeout = 3
+IllegalValueError: (type=ISO 8601 interval) [runtime][root][events]execution timeout = 3 - (Invalid ISO 8601 duration representation: 3)
 __END__
 #-------------------------------------------------------------------------------
 purge

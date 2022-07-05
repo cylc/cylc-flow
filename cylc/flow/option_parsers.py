@@ -35,12 +35,33 @@ import sys
 from textwrap import dedent
 from typing import Any, Dict, Optional, List, Tuple
 
-from cylc.flow import LOG, RSYNC_LOG
+from cylc.flow import LOG
 from cylc.flow.terminal import supports_color
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
     setup_segregated_log_streams,
+)
+
+WORKFLOW_ID_ARG_DOC = ('WORKFLOW', 'Workflow ID')
+WORKFLOW_ID_MULTI_ARG_DOC = ('WORKFLOW ...', 'Workflow ID(s)')
+WORKFLOW_ID_OR_PATH_ARG_DOC = ('WORKFLOW | PATH', 'Workflow ID or path')
+ID_MULTI_ARG_DOC = ('ID ...', 'Workflow/Cycle/Family/Task ID(s)')
+FULL_ID_MULTI_ARG_DOC = ('ID ...', 'Cycle/Family/Task ID(s)')
+
+SHORTLINK_TO_ICP_DOCS = "https://bit.ly/3MYHqVh"
+
+icp_option = Option(
+    "--initial-cycle-point", "--icp",
+    metavar="CYCLE_POINT or OFFSET",
+    help=(
+        "Set the initial cycle point. "
+        "Required if not defined in flow.cylc."
+        "\nMay be either an absolute point or an offset: See "
+        f"{SHORTLINK_TO_ICP_DOCS} (Cylc documentation link)."
+    ),
+    action="store",
+    dest="icp",
 )
 
 
@@ -54,6 +75,15 @@ def format_shell_examples(string):
             flags=re.M
         )
     )
+
+
+def verbosity_to_log_level(verb: int) -> int:
+    """Convert Cylc verbosity to log severity level."""
+    if verb < 0:
+        return logging.WARNING
+    if verb > 0:
+        return logging.DEBUG
+    return logging.INFO
 
 
 def verbosity_to_opts(verb: int) -> List[str]:
@@ -215,22 +245,29 @@ class CylcOptionParser(OptionParser):
         jset: bool = False,
         multitask: bool = False,
         multiworkflow: bool = False,
-        prep: bool = False,
         auto_add: bool = True,
-        icp: bool = False,
         color: bool = True,
         segregated_log: bool = False
     ) -> None:
-
+        """
+        Args:
+            usage: Usage instructions. Typically this will be the __doc__ of
+                the script module.
+            argdoc: The args for the command, to be inserted into the usage
+                instructions. Optional list of tuples of (name, description).
+            comms: If True, allow the --comms-timeout option.
+            jset: If True, allow the Jinja2 --set option.
+            multitask: If True, insert the multitask text into the
+                usage instructions.
+            multiworkflow: If True, insert the multiworkflow text into the
+                usage instructions.
+            auto_add: If True, allow the standard options.
+            color: If True, allow the --color option.
+            segregated_log: If False, write all logging entries to stderr.
+                If True, write entries at level < WARNING to stdout and
+                entries at level >= WARNING to stderr.
+        """
         self.auto_add = auto_add
-        if argdoc is None:
-            if prep:
-
-                # TODO
-
-                argdoc = [('WORKFLOW | PATH', 'Workflow ID or path')]
-            else:
-                argdoc = [('WORKFLOW', 'Workflow ID')]
 
         if multiworkflow:
             usage += self.MULTIWORKFLOW_USAGE
@@ -244,32 +281,26 @@ class CylcOptionParser(OptionParser):
         self.unlimited_args = False
         self.comms = comms
         self.jset = jset
-        self.prep = prep
-        self.icp = icp
         self.color = color
         # Whether to log messages that are below warning level to stdout
         # instead of stderr:
         self.segregated_log = segregated_log
 
-        maxlen = 0
-        for arg in argdoc:
-            if len(arg[0]) > maxlen:
-                maxlen = len(arg[0])
-
         if argdoc:
+            maxlen = max(len(arg) for arg, _ in argdoc)
             usage += "\n\nArguments:"
-            for arg in argdoc:
-                if arg[0].startswith('['):
+            for arg, descr in argdoc:
+                if arg.startswith('['):
                     self.n_optional_args += 1
                 else:
                     self.n_compulsory_args += 1
-                if arg[0].endswith('...]'):
+                if arg.rstrip(']').endswith('...'):
                     self.unlimited_args = True
 
-                args += arg[0] + " "
+                args += arg + " "
 
-                pad = (maxlen - len(arg[0])) * ' ' + '               '
-                usage += "\n   " + arg[0] + pad + arg[1]
+                pad = (maxlen - len(arg)) * ' ' + '               '
+                usage += "\n   " + arg + pad + descr
             usage = usage.replace('ARGS', args)
 
         OptionParser.__init__(
@@ -363,18 +394,6 @@ class CylcOptionParser(OptionParser):
                 ),
                 action="store", default=None, dest="templatevars_file")
 
-        if self.icp:
-            self.add_option(
-                "--initial-cycle-point", "--icp",
-                metavar="CYCLE_POINT",
-                help=(
-                    "Set the initial cycle point. "
-                    "Required if not defined in flow.cylc."
-                ),
-                action="store",
-                dest="icp",
-            )
-
     def add_cylc_rose_options(self) -> None:
         """Add extra options for cylc-rose plugin if it is installed."""
         try:
@@ -457,18 +476,12 @@ class CylcOptionParser(OptionParser):
         #    better choice for the logging stream. This allows us to use STDOUT
         #    for verbosity agnostic outputs.
         # 2. Scheduler will remove this handler when it becomes a daemon.
-        if options.verbosity < 0:
-            LOG.setLevel(logging.WARNING)
-        elif options.verbosity > 0:
-            LOG.setLevel(logging.DEBUG)
-        else:
-            LOG.setLevel(logging.INFO)
-        RSYNC_LOG.setLevel(logging.INFO)
+        LOG.setLevel(verbosity_to_log_level(options.verbosity))
         # Remove NullHandler before add the StreamHandler
-        for log in (LOG, RSYNC_LOG):
-            while log.handlers:
-                log.handlers[0].close()
-                log.removeHandler(log.handlers[0])
+
+        while LOG.handlers:
+            LOG.handlers[0].close()
+            LOG.removeHandler(LOG.handlers[0])
         log_handler = logging.StreamHandler(sys.stderr)
         log_handler.setFormatter(CylcLogFormatter(
             timestamp=options.log_timestamp,
@@ -480,6 +493,13 @@ class CylcOptionParser(OptionParser):
             setup_segregated_log_streams(LOG, log_handler)
 
         return (options, args)
+
+    @staticmethod
+    def optional(arg: Tuple[str, str]) -> Tuple[str, str]:
+        """Make an argdoc tuple display as an optional arg with
+        square brackets."""
+        name, doc = arg
+        return (f'[{name}]', doc)
 
 
 class Options:
@@ -513,9 +533,9 @@ class Options:
 
         But you can't create new options at initiation, this gives us basic
         input validation:
-        >>> opts(e=6)
+        >>> PythonOptions(e=6)
         Traceback (most recent call last):
-        TypeError: 'Values' object is not callable
+        ValueError: e
 
         You can reuse the object multiple times
         >>> opts2 = PythonOptions(a=2)
@@ -529,6 +549,8 @@ class Options:
     ) -> None:
         if overrides is None:
             overrides = {}
+        if isinstance(parser, CylcOptionParser) and parser.auto_add:
+            parser.add_std_options()
         self.defaults = {**parser.defaults, **overrides}
 
     def __call__(self, **kwargs) -> Values:

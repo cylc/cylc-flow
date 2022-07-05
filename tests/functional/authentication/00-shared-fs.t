@@ -28,7 +28,7 @@ WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 WORKFLOW_RUN_DIR="$RUN_DIR/${WORKFLOW_NAME}"
 mkdir -p "$(dirname "${WORKFLOW_RUN_DIR}")"
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}" "${WORKFLOW_RUN_DIR}"
-cylc install --flow-name="${WORKFLOW_NAME}" --no-run-name 2>'/dev/null'
+cylc install --workflow-name="${WORKFLOW_NAME}" --no-run-name 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
@@ -37,7 +37,7 @@ cylc play --debug --no-detach --reference-test \
 WORKFLOW_PID="$!"
 
 # Poll for job to fail
-WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Note: double poll existence of workflow log on workflow host and then localhost to
 # avoid any issues with unstable mounting of the shared file system.
 poll ssh -oBatchMode=yes -n "${CYLC_TEST_HOST}" test -e "${WORKFLOW_LOG}"

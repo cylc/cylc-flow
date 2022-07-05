@@ -45,7 +45,7 @@ workflow_run_fail "${TEST_NAME_BASE}-run" \
 
 # Check that the workflow failed because no matching platform could be found.
 grep_ok "\[jobs-submit err\] No platform found matching your task"\
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
 exit

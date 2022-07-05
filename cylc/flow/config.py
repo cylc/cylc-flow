@@ -63,7 +63,7 @@ from cylc.flow.exceptions import (
     IntervalParsingError,
     TaskDefError,
     ParamExpandError,
-    UserInputError
+    InputError
 )
 import cylc.flow.flags
 from cylc.flow.graph_parser import GraphParser
@@ -76,7 +76,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import replicate
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
-    get_workflow_run_log_dir,
+    get_workflow_run_scheduler_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
     get_workflow_name_from_id
@@ -164,20 +164,12 @@ class WorkflowConfig:
     CHECK_CIRCULAR_LIMIT = 100  # If no. tasks > this, don't check circular
     VIS_N_POINTS = 3
 
-    CYLC7_GRAPH_COMPAT_MSG = (
-        "Cylc 7 graph compatibility: making success outputs 'required' (to"
-        " retain failed tasks in the pool) and pre-spawning graph children (to"
-        " replicate Cylc 7 stall behaviour). Please refer to documentation on"
-        " upgrading Cylc 7 graphs to Cylc 8."
-    )
-
     def __init__(
         self,
         workflow: str,
         fpath: Union[Path, str],
         options: 'Values',
         template_vars: Optional[Mapping[str, Any]] = None,
-        is_reload: bool = False,
         output_fname: Optional[str] = None,
         xtrigger_mgr: Optional[XtriggerManager] = None,
         mem_log_func: Optional[Callable[[str], None]] = None,
@@ -196,7 +188,8 @@ class WorkflowConfig:
         self.fpath = str(fpath)  # workflow definition
         self.fdir = os.path.dirname(fpath)
         self.run_dir = run_dir or get_workflow_run_dir(self.workflow)
-        self.log_dir = log_dir or get_workflow_run_log_dir(self.workflow)
+        self.log_dir = (log_dir or
+                        get_workflow_run_scheduler_log_dir(self.workflow))
         self.share_dir = share_dir or get_workflow_run_share_dir(self.workflow)
         self.work_dir = work_dir or get_workflow_run_work_dir(self.workflow)
         self.options = options
@@ -213,6 +206,7 @@ class WorkflowConfig:
 
         self.initial_point: 'PointBase'
         self.start_point: 'PointBase'
+        self.stop_point: Optional['PointBase'] = None
         self.final_point: Optional['PointBase'] = None
         self.sequences: List['SequenceBase'] = []
         self.actual_first_point: Optional['PointBase'] = None
@@ -349,6 +343,7 @@ class WorkflowConfig:
         # Done before inheritance to avoid repetition
         self.check_env_names()
         self.check_param_env_tmpls()
+        self.check_for_owner(self.cfg['runtime'])
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
@@ -385,6 +380,7 @@ class WorkflowConfig:
         self.process_initial_cycle_point()
         self.process_start_cycle_point()
         self.process_final_cycle_point()
+        self.process_stop_cycle_point()
 
         # Parse special task cycle point offsets, and replace family names.
         LOG.debug("Parsing [special tasks]")
@@ -506,32 +502,7 @@ class WorkflowConfig:
                     self.feet.append(foot)
         self.feet.sort()  # sort effects get_graph_raw output
 
-        # Replace workflow and task name in workflow and task URLs.
-        self.cfg['meta']['URL'] = self.cfg['meta']['URL'] % {
-            'workflow_name': self.workflow}
-        # BACK COMPAT: CYLC_WORKFLOW_NAME
-        # from:
-        #     Cylc7
-        # to:
-        #     Cylc8
-        # remove at:
-        #     Cylc9
-        self.cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
-            self.workflow, self.cfg['meta']['URL'])
-        for name, cfg in self.cfg['runtime'].items():
-            cfg['meta']['URL'] = cfg['meta']['URL'] % {
-                'workflow_name': self.workflow, 'task_name': name}
-            # BACK COMPAT: CYLC_WORKFLOW_NAME, CYLC_TASK_NAME
-            # from:
-            #     Cylc7
-            # to:
-            #     Cylc8
-            # remove at:
-            #     Cylc9
-            cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
-                self.workflow, cfg['meta']['URL'])
-            cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
-                name, cfg['meta']['URL'])
+        self.process_metadata_urls()
 
         if getattr(self.options, 'is_validate', False):
             self.mem_log("config.py: before _check_circular()")
@@ -652,7 +623,8 @@ class WorkflowConfig:
                 except IsodatetimeError as exc:
                     raise WorkflowConfigError(str(exc))
         if orig_icp != icp:
-            # now/next()/prev() was used, need to store evaluated point in DB
+            # now/next()/previous() was used, need to store
+            # evaluated point in DB
             self.options.icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
@@ -684,7 +656,7 @@ class WorkflowConfig:
         starttask = getattr(self.options, 'starttask', None)
 
         if startcp is not None and starttask is not None:
-            raise UserInputError(
+            raise InputError(
                 "--start-cycle-point and --start-task are mutually exclusive"
             )
         if startcp:
@@ -701,7 +673,7 @@ class WorkflowConfig:
                     for taskid in self.options.starttask
                 ]
             except ValueError as exc:
-                raise UserInputError(str(exc))
+                raise InputError(str(exc))
             self.start_point = min(
                 get_point(cycle).standardise()
                 for cycle in cycle_points if cycle
@@ -719,10 +691,9 @@ class WorkflowConfig:
         Raises:
             WorkflowConfigError - if it fails to validate
         """
-        if (
-            self.cfg['scheduling']['final cycle point'] is not None and
-            not self.cfg['scheduling']['final cycle point'].strip()
-        ):
+        if self.cfg['scheduling']['final cycle point'] == '':
+            # (Unlike other cycle point settings in config, fcp is treated as
+            # a string by parsec to allow for expressions like '+P1Y')
             self.cfg['scheduling']['final cycle point'] = None
         fcp_str = getattr(self.options, 'fcp', None)
         if fcp_str == 'reload':
@@ -769,6 +740,34 @@ class WorkflowConfig:
                     f"Final cycle point {self.final_point} does not "
                     f"meet the constraints {constraints}")
 
+    def process_stop_cycle_point(self) -> None:
+        """Set the stop after cycle point.
+
+        In decreasing priority, it is set:
+        * From the command line option (``--stopcp=XYZ``) or database.
+        * From the flow.cylc file (``[scheduling]stop after cycle point``).
+
+        However, if ``--stopcp=reload`` on the command line during restart,
+        the ``[scheduling]stop after cycle point`` value is used.
+        """
+        stopcp_str: Optional[str] = getattr(self.options, 'stopcp', None)
+        if stopcp_str == 'reload':
+            stopcp_str = self.options.stopcp = None
+        if stopcp_str is None:
+            stopcp_str = self.cfg['scheduling']['stop after cycle point']
+
+        if stopcp_str is not None:
+            self.stop_point = get_point(stopcp_str).standardise()
+            if self.final_point and (self.stop_point > self.final_point):
+                LOG.warning(
+                    f"Stop cycle point '{self.stop_point}' will have no "
+                    "effect as it is after the final cycle "
+                    f"point '{self.final_point}'."
+                )
+                self.stop_point = None
+            stopcp_str = str(self.stop_point) if self.stop_point else None
+            self.cfg['scheduling']['stop after cycle point'] = stopcp_str
+
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
         queue config, unless allowed by config."""
@@ -796,23 +795,20 @@ class WorkflowConfig:
             is_disallowed = False
         if is_disallowed:
             raise WorkflowConfigError(msg)
-
         # Otherwise "[scheduler]allow implicit tasks" is not set
-        msg = (
-            f"{msg}\n"
-            "To allow implicit tasks, use "
-            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'\n"
-            "See https://cylc.github.io/cylc-doc/latest/html/"
-            "7-to-8/summary.html#backward-compatibility"
-        )
-        # Allow implicit tasks in Cylc 7 back-compat mode (but not if
-        # rose-suite.conf present, to maintain compat with Rose 2019)
-        if (
-            Path(self.run_dir, 'rose-suite.conf').is_file() or
-            not cylc.flow.flags.cylc7_back_compat
-        ):
-            raise WorkflowConfigError(msg)
-        LOG.warning(msg)
+
+        if not cylc.flow.flags.cylc7_back_compat:
+            msg += (
+                "\nTo allow implicit tasks, use "
+                f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+            )
+        # Allow implicit tasks in back-compat mode unless rose-suite.conf
+        # present (to maintain compat with Rose 2019)
+        elif not Path(self.run_dir, 'rose-suite.conf').is_file():
+            LOG.debug(msg)
+            return
+
+        raise WorkflowConfigError(msg)
 
     def _check_circular(self):
         """Check for circular dependence in graph."""
@@ -1672,6 +1668,7 @@ class WorkflowConfig:
                 )
 
         for label in xtrig_labels:
+
             try:
                 xtrig = self.cfg['scheduling']['xtriggers'][label]
             except KeyError:
@@ -2006,8 +2003,6 @@ class WorkflowConfig:
                 sections.append((section, value))
 
         # Parse and process each graph section.
-        if cylc.flow.flags.cylc7_back_compat:
-            LOG.warning(self.__class__.CYLC7_GRAPH_COMPAT_MSG)
         task_triggers = {}
         task_output_opt = {}
         for section, graph in sections:
@@ -2263,3 +2258,100 @@ class WorkflowConfig:
                 "Directories can only be from the top level, please "
                 "reconfigure:" + str(illegal_includes)[1:-1])
         return includes
+
+    def process_metadata_urls(self):
+        """Process [meta]URL items."""
+        # workflow metadata
+        url = self.cfg['meta']['URL']
+        try:
+            self.cfg['meta']['URL'] = url % {
+                'workflow': self.workflow,
+            }
+        except (KeyError, ValueError):
+            try:
+                # Replace workflow and task name in workflow and task URLs.
+                # BACK COMPAT: suite_name
+                # url:
+                #     https://github.com/cylc/cylc-flow/pull/4724
+                # from:
+                #     Cylc7
+                # to:
+                #     Cylc8
+                # remove at:
+                #     Cylc8.x
+                self.cfg['meta']['URL'] = url % {
+                    # cylc 7
+                    'suite_name': self.workflow,
+                    # cylc 8
+                    'workflow': self.workflow,
+                }
+            except (KeyError, ValueError):
+                raise InputError(f'Invalid template [meta]URL: {url}')
+            else:
+                LOG.warning(
+                    'Detected deprecated template variables in [meta]URL.'
+                    '\nSee the configuration documentation for details.'
+                )
+
+        # task metadata
+        self.cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
+            self.workflow, self.cfg['meta']['URL'])
+        for name, cfg in self.cfg['runtime'].items():
+            try:
+                cfg['meta']['URL'] = cfg['meta']['URL'] % {
+                    'workflow': self.workflow,
+                    'task': name,
+                }
+            except (KeyError, ValueError):
+                # BACK COMPAT: suite_name, task_name
+                # url:
+                #     https://github.com/cylc/cylc-flow/pull/4724
+                # from:
+                #     Cylc7
+                # to:
+                #     Cylc8
+                # remove at:
+                #     Cylc8.x
+                try:
+                    cfg['meta']['URL'] = cfg['meta']['URL'] % {
+                        # cylc 7
+                        'suite_name': self.workflow,
+                        'task_name': name,
+                        # cylc 8
+                        'workflow': self.workflow,
+                        'task': name,
+                    }
+                except (KeyError, ValueError):
+                    raise InputError(f'Invalid template [meta]URL: {url}')
+                else:
+                    LOG.warning(
+                        'Detected deprecated template variables in'
+                        f' [runtime][{name}][meta]URL.'
+                        '\nSee the configuration documentation for details.'
+                    )
+            cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
+                self.workflow, cfg['meta']['URL'])
+            cfg['meta']['URL'] = RE_TASK_NAME_VAR.sub(
+                name, cfg['meta']['URL'])
+
+    @staticmethod
+    def check_for_owner(tasks: Dict) -> None:
+        """Raise exception if [runtime][task][remote]owner
+        """
+        owners = {}
+        for task, tdef in tasks.items():
+            owner = tdef.get('remote', {}).get('owner', None)
+            if owner:
+                owners[task] = owner
+        if owners:
+            # TODO: Convert URL to a stable or latest release doc after 8.0
+            # https://github.com/cylc/cylc-flow/issues/4663
+            msg = (
+                '"[runtime][task][remote]owner" is obsolete at Cylc 8.'
+                '\nsee https://cylc.github.io/cylc-doc/nightly/'
+                'html/7-to-8/major-changes/remote-owner.html'
+                f'\nFirst {min(len(owners), 5)} tasks:'
+            )
+            for task, _ in list(owners.items())[:5]:
+                msg += f'\n  * {task}"'
+            raise WorkflowConfigError(msg)

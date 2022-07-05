@@ -30,15 +30,26 @@ time for inter-cycle task references such as "foo[-P6Y] => foo".
 """
 
 import re
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
-import metomi.isodatetime.data
-import metomi.isodatetime.parsers
+from metomi.isodatetime.data import Duration, TimeRecurrence
 from metomi.isodatetime.exceptions import IsodatetimeError
+from metomi.isodatetime.parsers import (
+    DurationParser, TimePointParser, TimeRecurrenceParser
+)
 
+from cylc.flow import LOG
 from cylc.flow.cycling import parse_exclusion
 from cylc.flow.exceptions import (
-    CylcTimeSyntaxError, CylcMissingContextPointError,
-    CylcMissingFinalCyclePointError)
+    CylcMissingContextPointError,
+    CylcMissingFinalCyclePointError,
+    CylcTimeSyntaxError,
+)
+import cylc.flow.flags
+
+if TYPE_CHECKING:
+    from metomi.isodatetime.data import TimePoint
+    from cylc.flow.cycling.iso8601 import ISO8601Point
 
 
 UTC_UTC_OFFSET_HOURS_MINUTES = (0, 0)
@@ -66,7 +77,7 @@ class CylcTimeParser:
 
     RECURRENCE_FORMAT_REGEXES = [
         (re.compile(r"^(?P<start>[^PR/][^/]*)$"), 3),
-        (re.compile(r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/]"
+        (re.compile(r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/]"
                     "[^/]*)$"), 1),
         (re.compile(r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$"), 3),
         (re.compile(r"^(?P<intv>P[^/]*)$"), 3),
@@ -104,22 +115,28 @@ class CylcTimeParser:
     __slots__ = ('timepoint_parser', 'duration_parser', 'recurrence_parser',
                  'context_start_point', 'context_end_point')
 
-    def __init__(self, context_start_point, context_end_point, parsers):
+    def __init__(
+        self,
+        context_start_point: Union['ISO8601Point', 'TimePoint', str, None],
+        context_end_point: Union['ISO8601Point', 'TimePoint', str, None],
+        parsers: Tuple[TimePointParser, DurationParser, TimeRecurrenceParser]
+    ):
         if context_start_point is not None:
             context_start_point = str(context_start_point)
         if context_end_point is not None:
             context_end_point = str(context_end_point)
         self.timepoint_parser, self.duration_parser, self.recurrence_parser = (
-            parsers)
+            parsers
+        )
 
         if isinstance(context_start_point, str):
             context_start_point = self._get_point_from_expression(
                 context_start_point, None)[0]
-        self.context_start_point = context_start_point
+        self.context_start_point: Optional['TimePoint'] = context_start_point
         if isinstance(context_end_point, str):
             context_end_point = self._get_point_from_expression(
                 context_end_point, None)[0]
-        self.context_end_point = context_end_point
+        self.context_end_point: Optional['TimePoint'] = context_end_point
 
     @staticmethod
     def initiate_parsers(num_expanded_year_digits=0, dump_format=None,
@@ -142,7 +159,7 @@ class CylcTimeParser:
             else:
                 dump_format = "CCYYMMDDThhmmZ"
 
-        timepoint_parser = metomi.isodatetime.parsers.TimePointParser(
+        timepoint_parser = TimePointParser(
             allow_only_basic=False,
             allow_truncated=True,
             num_expanded_year_digits=num_expanded_year_digits,
@@ -150,16 +167,15 @@ class CylcTimeParser:
             assumed_time_zone=assumed_time_zone
         )
 
-        return (timepoint_parser,
-                metomi.isodatetime.parsers.DurationParser(),
-                metomi.isodatetime.parsers.TimeRecurrenceParser()
-                )
+        return (timepoint_parser, DurationParser(), TimeRecurrenceParser())
 
-    def parse_interval(self, expr):
+    def parse_interval(self, expr: str) -> Duration:
         """Parse an interval (duration) in full ISO date/time format."""
         return self.duration_parser.parse(expr)
 
-    def parse_timepoint(self, expr, context_point=None):
+    def parse_timepoint(
+        self, expr: str, context_point: Optional['TimePoint'] = None
+    ) -> 'TimePoint':
         """Parse an expression in abbrev. or full ISO date/time format.
 
         expression should be a string such as 20010205T00Z, or a
@@ -185,9 +201,12 @@ class CylcTimeParser:
             ("'%s': not a valid cylc-shorthand or full " % expr) +
             "ISO 8601 date representation")
 
-    def parse_recurrence(self, expression,
-                         context_start_point=None,
-                         context_end_point=None):
+    def parse_recurrence(
+        self,
+        expression: str,
+        context_start_point: Optional['TimePoint'] = None,
+        context_end_point: Optional['TimePoint'] = None
+    ) -> Tuple[TimeRecurrence, list]:
         """Parse an expression in abbrev. or full ISO recurrence format."""
         expression, exclusions = parse_exclusion(str(expression))
 
@@ -205,8 +224,8 @@ class CylcTimeParser:
                 repetitions = int(repetitions)
             start = result.groupdict().get("start")
             end = result.groupdict().get("end")
-            start_required = (format_num in [1, 3])
-            end_required = (format_num in [1, 4])
+            start_required = (format_num in {1, 3})
+            end_required = (format_num in {1, 4})
             start_point, start_offset = self._get_point_from_expression(
                 start, context_start_point,
                 is_required=start_required,
@@ -250,9 +269,8 @@ class CylcTimeParser:
                 intv, context=intv_context_truncated_point)
             if format_num == 1:
                 interval = None
-            if repetitions == 1:
-                # Set arbitrary interval (does not matter).
-                interval = self.duration_parser.parse("P0Y")
+            elif repetitions == 1:
+                interval = Duration(0)
             if start_point is not None:
                 if start_point.truncated:
                     start_point += context_start_point
@@ -264,9 +282,11 @@ class CylcTimeParser:
                 if end_offset is not None:
                     end_point += end_offset
 
-            if (start_point is None and repetitions is None and
-                    interval is not None and
-                    context_start_point is not None):
+            if (
+                interval and
+                start_point is None and repetitions is None and
+                context_start_point is not None
+            ):
                 # isodatetime only reverses bounded end-point recurrences.
                 # This is unbounded, and will come back in reverse order.
                 # We need to reverse it.
@@ -277,7 +297,24 @@ class CylcTimeParser:
                     repetitions += 1
                 end_point = None
 
-            return metomi.isodatetime.data.TimeRecurrence(
+            if not interval and repetitions != 1 and (
+                (format_num != 1 or start_point == end_point)
+            ):
+                LOG.warning(
+                    "Cannot have more than 1 repetition for zero-duration "
+                    f"recurrence {expression}."
+                )
+
+            if cylc.flow.flags.cylc7_back_compat and format_num == 1:
+                LOG.warning(
+                    f"The recurrence '{expression}' is unlikely to behave "
+                    "the same way as in Cylc 7 as that implementation was "
+                    "incorrect (see https://cylc.github.io/cylc-doc/latest/"
+                    "html/user-guide/writing-workflows/scheduling.html"
+                    "#format-1-r-limit-datetime-datetime)"
+                )
+
+            return TimeRecurrence(
                 repetitions=repetitions,
                 start_point=start_point,
                 duration=interval,
@@ -286,7 +323,9 @@ class CylcTimeParser:
 
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
-    def _get_interval_from_expression(self, expr, context=None):
+    def _get_interval_from_expression(
+        self, expr: Optional[str], context: Optional['TimePoint'] = None
+    ) -> Optional[Duration]:
         if expr is None:
             if context is None or not context.truncated:
                 return None
@@ -310,13 +349,18 @@ class CylcTimeParser:
                 kwargs = {"minutes": 1}
             if not kwargs:
                 return None
-            return metomi.isodatetime.data.Duration(**kwargs)
+            return Duration(**kwargs)
         return self.duration_parser.parse(expr)
 
-    def _get_min_from_expression(self, expr, context):
-        points = [x.strip()
-                  for x in re.findall(self.MIN_REGEX, expr)[0].split(",")]
-        ptslist = []
+    def _get_min_from_expression(
+        self,
+        expr: str,
+        context: 'TimePoint'
+    ) -> str:
+        points: List[str] = [
+            x.strip() for x in re.findall(self.MIN_REGEX, expr)[0].split(",")
+        ]
+        ptslist: List['TimePoint'] = []
         min_entry = ""
         for point in points:
             cpoint, offset = self._get_point_from_expression(
@@ -331,8 +375,13 @@ class CylcTimeParser:
                 min_entry = point
         return min_entry
 
-    def _get_point_from_expression(self, expr, context, is_required=False,
-                                   allow_truncated=False):
+    def _get_point_from_expression(
+        self,
+        expr: Optional[str],
+        context: 'TimePoint',
+        is_required: bool = False,
+        allow_truncated: bool = False
+    ) -> Tuple[Optional['TimePoint'], Optional[Duration]]:
         """Gets a TimePoint from an expression"""
         if expr is None:
             if is_required and allow_truncated:
@@ -340,16 +389,16 @@ class CylcTimeParser:
                     raise CylcMissingContextPointError(
                         "Missing context cycle point."
                     )
-                return context.copy(), None
+                return context, None
             return None, None
-        expr_point = None
-        expr_offset = None
+        expr_point: Optional['TimePoint'] = None
+        expr_offset: Optional[Duration] = None
 
         if expr.startswith("min("):
             expr = self._get_min_from_expression(expr, context)
 
         if self.OFFSET_REGEX.search(expr):
-            chain_expr = self.CHAIN_REGEX.findall(expr)
+            chain_expr: List[str] = self.CHAIN_REGEX.findall(expr)
             expr = ""
             for item in chain_expr:
                 if "P" not in item:
@@ -365,10 +414,10 @@ class CylcTimeParser:
                 else:
                     expr_offset = expr_offset + expr_offset_item
         if not expr and allow_truncated:
-            return context.copy(), expr_offset
+            return context, expr_offset
         for invalid_rec, msg in self.POINT_INVALID_FOR_CYLC_REGEXES:
             if invalid_rec.search(expr):
-                raise CylcTimeSyntaxError("'%s': %s" % (expr, msg))
+                raise CylcTimeSyntaxError(f"'{expr}': {msg}")
         expr_to_parse = expr
         if expr.endswith("T"):
             expr_to_parse = expr + "00"
@@ -389,5 +438,6 @@ class CylcTimeParser:
                             continue
                         return expr_point, expr_offset
         raise CylcTimeSyntaxError(
-            ("'%s': not a valid cylc-shorthand or full " % expr) +
-            "ISO 8601 date representation")
+            f"'{expr}': not a valid cylc-shorthand or full "
+            "ISO 8601 date representation"
+        )

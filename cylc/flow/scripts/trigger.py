@@ -17,67 +17,70 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Manually trigger workflow tasks.
+Trigger tasks - i.e. tell them to run even if they are not ready.
+
+Triggering an unqueued waiting task queues it, regardless of prerequisites.
+
+Triggering a queued waiting task submits it, regardless of queue limiting.
+
+Triggering a submitted or running task has no effect (already triggered).
+
+Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
+Triggering them queues them to run (or rerun) in the same flow;
+
+Beyond n=0, triggered tasks get all current active flow numbers by default, or
+specified flow numbers via the --flow option. Those flows - if/when they catch
+up - will see tasks that ran after triggering event as having run already.
 
 Examples:
-  # trigger task foo in cycle 1234 in my_flow
-  $ cylc trigger my_flow//1234/foo
+  # trigger task foo in cycle 1234 in test
+  $ cylc trigger test//1234/foo
 
-  # trigger all failed tasks in my_flow
-  $ cylc trigger 'my_flow//*:failed'
+  # trigger all failed tasks in test
+  $ cylc trigger 'test//*:failed'
 
-  # start a new "flow" by triggering 1234/foo
-  $ cylc trigger --reflow my_flow//1234/foo
-
-Manually triggering a task queues it to run regardless of satisfaction of its
-prerequisites. (This refers to Cylc internal queues).
-
-Manually triggering a queued task causes it to submit immediately, regardless
-of the queue limit.
-
-Manually triggering an active task has no effect, because multiple concurrent
-instances of the same task job aren't allowed. Active tasks are in the
-submitted or running states.
-
-Manually triggering an incomplete task queues it to run again and continue its
-assigned flow. Incomplete tasks finished without completing expected outputs.
-
-Manually triggering an "active-waiting" task queues it to run immediately in
-its flow. Active-waiting tasks have satisfied task-prerequisites but are held
-back by queue limit, runahead limit, clock trigger, xtrigger, or task hold.
-They are already assigned to a flow - that of the parent tasks that satisfied
-their prerequisites.
-
-Other tasks (those outside of the n=0 graph window) do not yet belong to a
-flow. Manual triggering of these with --reflow will start a new flow; otherwise
-only the triggered task will run.
-
+  # start a new flow by triggering 1234/foo in test
+  $ cylc trigger --flow=new test//1234/foo
 """
 
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    FULL_ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.terminal import cli_function
+from cylc.flow.flow_mgr import FLOW_NONE, FLOW_NEW, FLOW_ALL
 
 if TYPE_CHECKING:
     from optparse import Values
+
+
+ERR_OPT_FLOW_VAL = "Flow values must be integer, 'all', 'new', or 'none'"
+ERR_OPT_FLOW_INT = "Multiple flow options must all be integer valued"
+ERR_OPT_FLOW_META = "Metadata is only for new flows"
+ERR_OPT_FLOW_WAIT = (
+    f"--wait is not compatible with --flow={FLOW_NEW} or --flow={FLOW_NONE}"
+)
 
 
 MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
-  $reflow: Boolean,
+  $flow: [Flow!],
+  $flowWait: Boolean,
   $flowDescr: String,
 ) {
   trigger (
     workflows: $wFlows,
     tasks: $tasks,
-    reflow: $reflow,
+    flow: $flow,
+    flowWait: $flowWait,
     flowDescr: $flowDescr
   ) {
     result
@@ -86,28 +89,55 @@ mutation (
 '''
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
         multitask=True,
         multiworkflow=True,
-        argdoc=[('ID [ID ...]', 'Cycle/Family/Task ID(s)')],
+        argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
     parser.add_option(
-        "--reflow", action="store_true",
-        dest="reflow", default=False,
-        help="Start a new flow from the triggered task."
+        "--flow", action="append", dest="flow", metavar="FLOW",
+        help=f"Assign the triggered task to all active flows ({FLOW_ALL});"
+             f" no flow ({FLOW_NONE}); a new flow ({FLOW_NEW});"
+             f" or a specific flow (e.g. 2). The default is {FLOW_ALL}."
+             " Reuse the option to assign multiple specific flows."
     )
 
     parser.add_option(
         "--meta", metavar="DESCRIPTION", action="store",
         dest="flow_descr", default=None,
-        help="(with --reflow) a descriptive string for the new flow."
+        help=f"description of triggered flow (with --flow={FLOW_NEW})."
+    )
+
+    parser.add_option(
+        "--wait", action="store_true", default=False, dest="flow_wait",
+        help="Wait for merge with current active flows before flowing on."
     )
 
     return parser
+
+
+def _validate(options):
+    """Check validity of flow-related options."""
+    for val in options.flow:
+        val = val.strip()
+        if val in [FLOW_NONE, FLOW_NEW, FLOW_ALL]:
+            if len(options.flow) != 1:
+                raise InputError(ERR_OPT_FLOW_INT)
+        else:
+            try:
+                int(val)
+            except ValueError:
+                raise InputError(ERR_OPT_FLOW_VAL.format(val))
+
+    if options.flow_descr and options.flow != [FLOW_NEW]:
+        raise InputError(ERR_OPT_FLOW_META)
+
+    if options.flow_wait and options.flow[0] in [FLOW_NEW, FLOW_NONE]:
+        raise InputError(ERR_OPT_FLOW_WAIT)
 
 
 async def run(options: 'Values', workflow_id: str, *tokens_list):
@@ -121,7 +151,8 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
                 tokens.relative_id
                 for tokens in tokens_list
             ],
-            'reflow': options.reflow,
+            'flow': options.flow,
+            'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
         }
     }
@@ -132,8 +163,11 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *ids: str):
     """CLI for "cylc trigger"."""
-    if options.flow_descr and not options.reflow:
-        raise UserInputError("--meta requires --reflow")
+
+    if options.flow is None:
+        options.flow = [FLOW_ALL]  # default to all active flows
+    _validate(options)
+
     call_multi(
         partial(run, options),
         *ids,

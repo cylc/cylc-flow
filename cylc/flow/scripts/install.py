@@ -18,24 +18,32 @@
 
 """cylc install [OPTIONS] ARGS
 
-Install a new workflow.
+Install a workflow into ~/cylc-run.
 
 The workflow can then be started, stopped, and targeted by name.
 
-Normal installation creates a directory "~/cylc-run/WORKFLOW_NAME/", with a run
-directory "~/cylc-run/WORKFLOW_NAME/run1". A "_cylc-install/source" symlink to
-the source directory will be created in the WORKFLOW_NAME directory.
-Any files or directories (excluding .git, .svn) from the source directory are
-copied to the new run directory.
-A ".service" directory will also be created and used for server authentication
-files at run time.
+Normal installation creates a numbered run directory
+"~/cylc-run/<workflow-name>/run<number>".
 
-If the argument WORKFLOW_NAME is used, Cylc will search for the workflow in the
-list of directories given by "global.cylc[install]source dirs", and install the
-first match. Otherwise, the workflow in the current working directory, or the
-one specified by the "--directory" option, will be installed.
+If a SOURCE_NAME is supplied, Cylc will search for the workflow source in the
+list of directories given by "global.cylc[install]source dirs", and install
+the first match. The installed workflow name will be the same as SOURCE_NAME,
+unless --workflow-name is used.
 
-Workflow names can be hierarchical, corresponding to the path under ~/cylc-run.
+If a PATH is supplied, Cylc will install the workflow from the source directory
+given by the path. Relative paths must start with "./" to avoid ambiguity with
+SOURCE_NAME (i.e. "foo/bar" will be interpreted as a source name, whereas
+"./foo/bar" will be interpreted as a path). The installed workflow name will
+be the basename of the path, unless --workflow-name is used.
+
+If no argument is supplied, Cylc will install the workflow from the source
+in the current working directory.
+
+A "_cylc-install/source" symlink to the source directory will be created in
+"~/cylc-run/<workflow-name>". Any files or directories (excluding .git, .svn)
+from the source directory are copied to the new run directory. A ".service"
+directory will also be created in the run directory; this is used for server
+authentication files at runtime.
 
 Examples:
   # Install workflow "dogs/fido" from the first match in
@@ -44,24 +52,28 @@ Examples:
   # this will increment)
   $ cylc install dogs/fido
 
-  # Install $PWD/flow.cylc as "rabbit", if $PWD is ~/bunny/rabbit, with
+  # Install $PWD as "rabbit", if $PWD is ~/bunny/rabbit, with
   # run directory ~/cylc-run/rabbit/run1
   $ cylc install
 
-  # Install $PWD/flow.cylc as "rabbit", if $PWD is ~/bunny/rabbit, with
+  # Install $PWD as "rabbit", if $PWD is ~/bunny/rabbit, with
   # run directory ~/cylc-run/rabbit (note: no "run1" sub-directory)
   $ cylc install --no-run-name
 
-  # Install $PWD/flow.cylc as "fido", regardless of what $PWD is, with
+  # Install $PWD as "fido", regardless of what $PWD is called, with
   # run directory ~/cylc-run/fido/run1
-  $ cylc install --flow-name=fido
+  $ cylc install --workflow-name=fido
 
-  # Install $PWD/bunny/rabbit/flow.cylc as "rabbit", with run directory
+  # Install $PWD/bunny/rabbit/ as "rabbit", with run directory
   # ~/cylc-run/rabbit/run1
-  $ cylc install --directory=bunny/rabbit
+  $ cylc install ./bunny/rabbit
 
-  # Install $PWD/flow.cylc as "cats", if $PWD is ~/cats, overriding the
-  # run1, run2, run3 etc. structure with run directory ~/cylc-run/cats/paws
+  # Install /home/somewhere/badger as "badger", with run directory
+  # ~/cylc-run/badger/run1
+  $ cylc install /home/somewhere/badger
+
+  # Install $PWD as "cats", if $PWD is ~/cats, with run directory
+  # ~/cylc-run/cats/paws
   $ cylc install --run-name=paws
 
 The same workflow can be installed with multiple names; this results in
@@ -69,11 +81,13 @@ multiple workflow run directories that link to the same workflow definition.
 
 """
 
+from pathlib import Path
 from typing import Optional, TYPE_CHECKING, Dict, Any
 
 from cylc.flow import iter_entry_points
-from cylc.flow.exceptions import PluginError, UserInputError
+from cylc.flow.exceptions import PluginError, InputError
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX, expand_path
 from cylc.flow.workflow_files import (
     install_workflow, search_install_source_dirs, parse_cli_sym_dirs
 )
@@ -83,35 +97,35 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
-        __doc__, comms=True, prep=True,
-        argdoc=[('[WORKFLOW_NAME]', 'Workflow source name')]
+        __doc__,
+        comms=True,
+        argdoc=[
+            COP.optional(
+                ('SOURCE_NAME | PATH',
+                 'Workflow source name or path to source directory')
+            )
+        ]
     )
 
     parser.add_option(
-        "--flow-name",
-        help="Install into ~/cylc-run/<workflow_name>/runN ",
+        "--workflow-name", "-n",
+        help="Install into ~/cylc-run/<WORKFLOW_NAME>/runN ",
         action="store",
         metavar="WORKFLOW_NAME",
         default=None,
         dest="workflow_name")
 
     parser.add_option(
-        "--directory", "-C",
-        help="Install the workflow found in path specfied.",
-        action="store",
-        metavar="PATH/TO/FLOW",
-        default=None,
-        dest="source")
-
-    parser.add_option(
         "--symlink-dirs",
         help=(
-            "Enter a list, in the form 'log=path/to/store, share = $...'"
-            ". Use this option to override local symlinks for directories run,"
-            " log, work, share, share/cycle, as configured in global.cylc. "
-            "Enter an empty list \"\" to skip making localhost symlink dirs."
+            "Enter a comma-delimited list, in the form "
+            "'log=path/to/store, share = $HOME/some/path, ...'. "
+            "Use this option to override the global.cylc configuration for "
+            "local symlinks for the run, log, work, share and "
+            "share/cycle directories. "
+            "Enter an empty list '' to skip making localhost symlink dirs."
         ),
         action="store",
         dest="symlink_dirs"
@@ -119,7 +133,9 @@ def get_option_parser():
 
     parser.add_option(
         "--run-name",
-        help="Name the run.",
+        help=(
+            "Give the run a custom name instead of automatically numbering it."
+        ),
         action="store",
         metavar="RUN_NAME",
         default=None,
@@ -127,7 +143,10 @@ def get_option_parser():
 
     parser.add_option(
         "--no-run-name",
-        help="Install the workflow directly into ~/cylc-run/<workflow_name>",
+        help=(
+            "Install the workflow directly into ~/cylc-run/<workflow_name>, "
+            "without an automatic run number or custom run name."
+        ),
         action="store_true",
         default=False,
         dest="no_run_name")
@@ -135,6 +154,22 @@ def get_option_parser():
     parser.add_cylc_rose_options()
 
     return parser
+
+
+def get_source_location(path: Optional[str]) -> Path:
+    """Return the workflow source location as an absolute path.
+
+    Note: does not check that the source actually exists.
+    """
+    if path is None:
+        return Path.cwd()
+    path = path.strip()
+    expanded_path = Path(expand_path(path))
+    if expanded_path.is_absolute():
+        return expanded_path
+    if EXPLICIT_RELATIVE_PATH_REGEX.match(path):
+        return Path.cwd() / expanded_path
+    return search_install_source_dirs(expanded_path)
 
 
 @cli_function(get_option_parser)
@@ -146,29 +181,15 @@ def install(
     parser: COP, opts: 'Values', reg: Optional[str] = None
 ) -> None:
     if opts.no_run_name and opts.run_name:
-        raise UserInputError(
+        raise InputError(
             "options --no-run-name and --run-name are mutually exclusive."
         )
-
-    if reg is None:
-        source = opts.source
-    else:
-        if opts.source:
-            raise UserInputError(
-                "WORKFLOW_NAME and --directory are mutually exclusive."
-            )
-        source = search_install_source_dirs(reg)
-    workflow_name = opts.workflow_name or reg
-
+    source = get_source_location(reg)
     for entry_point in iter_entry_points(
         'cylc.pre_configure'
     ):
         try:
-            if source:
-                entry_point.resolve()(srcdir=source, opts=opts)
-            else:
-                from pathlib import Path
-                entry_point.resolve()(srcdir=Path().cwd(), opts=opts)
+            entry_point.resolve()(srcdir=source, opts=opts)
         except Exception as exc:
             # NOTE: except Exception (purposefully vague)
             # this is to separate plugin from core Cylc errors
@@ -185,8 +206,8 @@ def install(
         cli_symdirs = parse_cli_sym_dirs(opts.symlink_dirs)
 
     source_dir, rundir, _workflow_name = install_workflow(
-        workflow_name=workflow_name,
         source=source,
+        workflow_name=opts.workflow_name,
         run_name=opts.run_name,
         no_run_name=opts.no_run_name,
         cli_symlink_dirs=cli_symdirs

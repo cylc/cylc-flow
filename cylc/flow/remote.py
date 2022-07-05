@@ -202,8 +202,9 @@ def construct_rsync_over_ssh_cmd(
     """
     dst_host = get_host_from_platform(platform, bad_hosts=bad_hosts)
     ssh_cmd = platform['ssh command']
-    rsync_cmd = [
-        "rsync",
+    command = platform['rsync command']
+    rsync_cmd = shlex.split(command)
+    rsync_options = [
         "--delete",
         "--rsh=" + ssh_cmd,
         "--include=/.service/",
@@ -211,7 +212,7 @@ def construct_rsync_over_ssh_cmd(
     ] + DEFAULT_RSYNC_OPTS
     # Note to future devs - be wary of changing the order of the following
     # rsync options, rsync is very particular about order of in/ex-cludes.
-
+    rsync_cmd.extend(rsync_options)
     for exclude in ['log', 'share', 'work']:
         rsync_cmd.append(f"--exclude={exclude}")
     default_includes = [

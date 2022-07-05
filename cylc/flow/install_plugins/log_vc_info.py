@@ -190,7 +190,7 @@ def get_vc_info(path: Union[Path, str]) -> Optional[Dict[str, Any]]:
 
 
 def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
-    """Run a command, return stdout.
+    """Run a VCS command, return stdout.
 
     Args:
         vcs: The version control system.
@@ -198,7 +198,9 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
         cwd: Directory to run the command in.
 
     Raises:
-        OSError: with stderr if non-zero return code.
+        VCSNotInstalledError: The VCS is not found.
+        VCSMissingBaseError: There is no base commit in the repo.
+        OSError: Non-zero return code for VCS command.
     """
     cmd = [vcs, *args]
     try:
@@ -218,8 +220,7 @@ def _run_cmd(vcs: str, args: Iterable[str], cwd: Union[Path, str]) -> str:
     ret_code = proc.wait()
     out, err = proc.communicate()
     if ret_code:
-        if any(err.lower().startswith(msg)
-               for msg in NO_BASE_ERRS[vcs]):
+        if any(err.lower().startswith(msg) for msg in NO_BASE_ERRS[vcs]):
             # No base commit in repo
             raise VCSMissingBaseError(vcs, cwd)
         raise OSError(ret_code, err)

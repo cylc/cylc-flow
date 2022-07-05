@@ -80,34 +80,80 @@ from cylc.flow.workflow_files import (
 SERVICE = Path(WorkflowFiles.Service.DIRNAME)
 CONTACT = Path(WorkflowFiles.Service.CONTACT)
 
-FLOW_FILES = {
-    # marker files/dirs which we use to determine if something is a flow
-    WorkflowFiles.Service.DIRNAME,
-    WorkflowFiles.SUITE_RC,   # cylc7 flow definition file name
-    WorkflowFiles.FLOW_FILE,  # cylc8 flow definition file name
-    WorkflowFiles.LOG_DIR
-}
-
 EXCLUDE_FILES = {
     WorkflowFiles.RUN_N,
     WorkflowFiles.Install.SOURCE
 }
 
 
-def dir_is_flow(listing: Iterable[Path]) -> bool:
+REQUIRED_FIELDS = [
+    ContactFileFields.API,
+    ContactFileFields.HOST,
+    ContactFileFields.NAME
+]
+
+
+def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
     """Return True if a Path contains a flow at the top level.
 
     Args:
-        listing (list):
+        listing:
             A listing of the directory in question as a list of
             ``pathlib.Path`` objects.
 
     Returns:
-        bool - True if the listing indicates that this is a flow directory.
+        - True if the directory:
+          - Is a Cylc 8 workflow.
+          - Is a Cylc 7 workflow that has not yet been run.
+          - Is a Cylc 7 workflow running under Cylc 8 in compatibility mode.
+        - False if the directory:
+          - Is not a workflow.
+        - None if the directory:
+          - Is an incompatible workflow (e.g. a Cylc 7 workflow running under
+            Cylc 7).
 
     """
     names = {path.name for path in listing}
-    return bool(FLOW_FILES & names)
+
+    # Cylc 8:
+    # - "cylc install" creates a source dir link and a "log' directory as
+    #   well as installing the flow.cylc or suite.rc, but only the workflow
+    #   definition is needed for it to be runnable by Cylc 8.
+
+    # Cylc 7:
+    # - suites manually registered in-place do not have a suite.rc in the run
+    #   directory and cannot be run by Cylc 8
+    # - suites installed (manually or by "rose suite-run") can be run by Cylc 8
+    #   if not already run by Cylc 7
+    # - "rose suite-run --install-only" creates a "log/suite" directory
+    # - running with Cylc 7 creates "log/suite/log"
+
+    if WorkflowFiles.FLOW_FILE in names:
+        # A Cylc 8 workflow.
+        return True
+
+    elif WorkflowFiles.SUITE_RC in names:
+        # An installed Cylc 7 workflow ...
+        for path in listing:
+            if path.name == WorkflowFiles.LOG_DIR:
+                if (
+                        (path / 'suite' / 'log').exists()
+                        and not (path / 'workflow').exists()
+                ):
+                    # ... already run by Cylc 7 (and not re-run by Cylc 8 after
+                    # removing the DB)
+                    return None
+                else:
+                    # ... can be run by Cylc 8
+                    return True
+
+        # Has not been run (and not installed by "rose suite-run" or
+        # "cylc install"). Can be run by Cylc 8.
+        return True
+
+    else:
+        # A random directory
+        return False
 
 
 @pipe
@@ -206,13 +252,14 @@ async def scan(
         for task in done:
             path, depth, contents = task.result()
             running.remove(task)
-            if dir_is_flow(contents):
+            is_flow = dir_is_flow(contents)
+            if is_flow:
                 # this is a flow directory
                 yield {
                     'name': str(path.relative_to(run_dir)),
                     'path': path,
                 }
-            elif depth < max_depth:
+            elif is_flow is False and depth < max_depth:
                 # we may have a nested flow, lets see...
                 _scan_subdirs(contents, depth)
         # don't allow this to become blocking
@@ -273,6 +320,24 @@ async def contact_info(flow):
     flow.update(
         await load_contact_file_async(flow['name'], run_dir=flow['path'])
     )
+    return flow
+
+
+@pipe
+async def validate_contact_info(flow):
+    """Return flow if contact file is valid.
+
+    This checks that the contact file contains the minimal set of fields
+    required for most purposes.
+
+    This helps to protect against blank or corrupted (yet valid) contact files
+    which would otherwise pass through without raising errors.
+    """
+    for contact_field in REQUIRED_FIELDS:
+        try:
+            flow[contact_field]
+        except KeyError:
+            return False
     return flow
 
 

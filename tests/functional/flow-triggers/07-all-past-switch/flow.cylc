@@ -1,0 +1,69 @@
+#!Jinja2
+
+# a:x? => b => c
+# a:y? => d => e
+# 
+# Start with the "x" pathway completed and re-trigger "a".
+# The second run of "a" yields the output "y".
+# 
+#    flow:1
+#        a(succeeded:x)
+#        b(succeeded)
+#        c(succeeded)
+#    flow:<new>
+#        a(running)
+#
+# by:
+#    cylc trigger [--wait] a
+#     
+# Result:
+#   Task "a" is re-run, the workflow runs on from there following the "y" pathway.
+#   (UNLESS --wait, in which case the y pathway doesn't run before shutdown).
+#
+#   flow:1
+#       a#2 (the naturally triggered run)
+#       a#2 (the manually triggered run)
+#       b (the naturally triggered "x" pathway)
+#       c (the naturally triggered "x" pathway)
+#       d (the manually triggered "y" pathway)
+#       e (the manually triggered "y" pathway)
+
+{% if WAIT is defined %}
+   {% set OPT = "--wait" %}
+{% else %}
+   {% set OPT = "" %}
+{% endif %}
+
+[scheduler]
+    allow implicit tasks = True
+    [[events]]
+        abort on stall timeout = True
+        stall timeout = PT0S
+        abort on inactivity timeout = True
+        inactivity timeout = PT1M
+
+[scheduling]
+    [[graph]]
+        R1 = """
+            a:x? => b => c
+            a:y? => d => e
+        """
+[runtime]
+    [[a]]
+        script = """
+            if (( CYLC_TASK_SUBMIT_NUMBER == 1 )); then
+                cylc message x
+            else
+                cylc message y
+            fi
+        """
+        [[[outputs]]]
+            x = x
+            y = y
+    [[c]]
+        script = """
+          if (( CYLC_TASK_SUBMIT_NUMBER == 1 )); then
+	      cylc trigger {{OPT}} ${CYLC_WORKFLOW_ID}//1/a
+	      cylc__job__poll_grep_workflow_log -E '1/a running job:02 .*succeeded'
+          fi
+        """

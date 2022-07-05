@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #------------------------------------------------------------------------
 # Test for Timezone = Z
-# TODO deprecated suite.rc section at Cylc 9
+# TODO remove deprecated suite.rc section at Cylc 8.x
 
 . "$(dirname "$0")/test_header"
 
@@ -36,7 +36,7 @@ __FLOW_CONFIG__
 
 WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
 
-cylc install --no-run-name --flow-name="${WORKFLOW_NAME}"
+cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}"
 
 # Pick a deliberately peculier timezone;
 export TZ=Australia/Eucla
@@ -55,7 +55,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         R1 = foo
 __FLOW_CONFIG__
 
-cylc install --no-run-name --flow-name="${WORKFLOW_NAME}-foo"
+cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}-foo"
 
 run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}-foo" --no-detach
 grep_ok "+08:45 INFO" "${TEST_NAME_BASE}.stderr"

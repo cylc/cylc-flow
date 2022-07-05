@@ -27,7 +27,7 @@ from queue import Empty, Queue
 from shlex import quote
 from subprocess import Popen, PIPE, DEVNULL
 import sys
-from threading import Barrier
+from threading import Barrier, Thread
 from time import sleep, time
 import traceback
 from typing import (
@@ -36,8 +36,6 @@ from typing import (
 from uuid import uuid4
 
 import psutil
-import zmq
-from zmq.auth.thread import ThreadAuthenticator
 
 from metomi.isodatetime.parsers import TimePointParser
 
@@ -47,12 +45,15 @@ from cylc.flow import (
 from cylc.flow.broadcast_mgr import BroadcastMgr
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.id import Tokens
-from cylc.flow.flow_mgr import FlowMgr
+from cylc.flow.flow_mgr import FLOW_NONE, FlowMgr, FLOW_NEW
 from cylc.flow.exceptions import (
-    CommandFailedError, CyclingError, CylcError, UserInputError
+    CommandFailedError,
+    CyclingError,
+    CylcConfigError,
+    CylcError,
+    InputError,
 )
 import cylc.flow.flags
 from cylc.flow.host_select import select_workflow_host
@@ -62,26 +63,28 @@ from cylc.flow.hostuserutil import (
     is_remote_platform
 )
 from cylc.flow.loggingutil import (
-    TimestampRotatingFileHandler,
-    ReferenceLogFileHandler
+    RotatingLogFileHandler,
+    ReferenceLogFileHandler,
+    get_next_log_number,
+    get_reload_start_number,
+    get_sorted_logs_by_time
 )
 from cylc.flow.timer import Timer
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
-from cylc.flow.network.publisher import WorkflowPublisher
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
 from cylc.flow.option_parsers import verbosity_to_env
-from cylc.flow.parsec.exceptions import TemplateVarLanguageClash
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
-    get_workflow_run_log_dir,
+    get_workflow_run_scheduler_log_dir,
     get_workflow_run_config_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
-    get_workflow_test_log_name,
+    get_workflow_test_log_path,
     make_workflow_run_tree,
     get_workflow_name_from_id
 )
@@ -92,9 +95,9 @@ from cylc.flow.platforms import (
 from cylc.flow.profiler import Profiler
 from cylc.flow.resources import get_resources
 from cylc.flow.subprocpool import SubProcPool
+from cylc.flow.templatevars import eval_var
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.workflow_events import (
-    WorkflowEventContext, WorkflowEventHandler)
+from cylc.flow.workflow_events import WorkflowEventHandler
 from cylc.flow.workflow_status import StopMode, AutoRestartMode
 from cylc.flow import workflow_files
 from cylc.flow.taskdef import TaskDef
@@ -125,12 +128,10 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 class SchedulerStop(CylcError):
     """Scheduler normal stop."""
-    pass
 
 
 class SchedulerError(CylcError):
     """Scheduler expected error stop."""
-    pass
 
 
 @dataclass
@@ -155,7 +156,7 @@ class Scheduler:
     START_MESSAGE_PREFIX = 'Scheduler: '
     START_MESSAGE_TMPL = (
         START_MESSAGE_PREFIX +
-        'url=%(comms_method)s://%(host)s:%(port)s/ pid=%(pid)s')
+        'url=%(comms_method)s://%(host)s:%(port)s pid=%(pid)s')
     START_PUB_MESSAGE_PREFIX = 'Workflow publisher: '
     START_PUB_MESSAGE_TMPL = (
         START_PUB_MESSAGE_PREFIX +
@@ -167,6 +168,14 @@ class Scheduler:
     host: str
     id: str  # noqa: A003 (instance attr not local)
     uuid_str: str
+    is_restart: bool
+
+    # directories
+    workflow_dir: str
+    workflow_log_dir: str
+    workflow_run_dir: str
+    workflow_share_dir: str
+    workflow_work_dir: str
 
     # managers
     profiler: Profiler
@@ -191,6 +200,9 @@ class Scheduler:
     options: Values
     cylc_config: DictTree  # [scheduler] config
 
+    # tcp / zmq
+    server: WorkflowRuntimeServer
+
     # Note: attributes without a default must come before those with defaults
 
     # flow information
@@ -202,20 +214,12 @@ class Scheduler:
     flow_file_update_time: Optional[float] = None
 
     # run options
-    is_restart: Optional[bool] = None
     template_vars: Optional[dict] = None
 
     # workflow params
     stop_mode: Optional[StopMode] = None
     stop_task: Optional[str] = None
     stop_clock_time: Optional[int] = None
-
-    # directories
-    workflow_dir: Optional[str] = None
-    workflow_log_dir: Optional[str] = None
-    workflow_run_dir: Optional[str] = None
-    workflow_share_dir: Optional[str] = None
-    workflow_work_dir: Optional[str] = None
 
     # task event loop
     is_paused: Optional[bool] = None
@@ -228,16 +232,6 @@ class Scheduler:
     main_loop_plugins: Optional[dict] = None
     auto_restart_mode: Optional[AutoRestartMode] = None
     auto_restart_time: Optional[float] = None
-
-    # tcp / zmq
-    zmq_context: Optional[zmq.Context] = None
-    port: Optional[int] = None
-    pub_port: Optional[int] = None
-    server: Optional[WorkflowRuntimeServer] = None
-    publisher: Optional[WorkflowPublisher] = None
-    barrier: Optional[Barrier] = None
-    curve_auth: Optional[ThreadAuthenticator] = None
-    client_pub_key_dir: Optional[str] = None
 
     # queue-released tasks awaiting job preparation
     pre_prep_tasks: Optional[List[TaskProxy]] = None
@@ -275,10 +269,20 @@ class Scheduler:
 
         self.restored_stop_task_id = None
 
-        # create thread sync barrier for setup
-        self.barrier = Barrier(3, timeout=10)
-
         self.timers: Dict[str, Timer] = {}
+
+        self.workflow_run_dir = get_workflow_run_dir(self.workflow)
+        self.workflow_work_dir = get_workflow_run_work_dir(self.workflow)
+        self.workflow_share_dir = get_workflow_run_share_dir(self.workflow)
+        self.workflow_log_dir = get_workflow_run_scheduler_log_dir(
+            self.workflow
+        )
+
+        self.workflow_db_mgr = WorkflowDatabaseManager(
+            pri_d=workflow_files.get_workflow_srv_dir(self.workflow),
+            pub_d=os.path.join(self.workflow_run_dir, 'log')
+        )
+        self.is_restart = Path(self.workflow_db_mgr.pri_path).is_file()
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
@@ -288,6 +292,9 @@ class Scheduler:
         * Copy Python files.
 
         """
+        if self.is_restart:
+            self.workflow_db_mgr.restart_check()
+
         # Install
         source, _ = workflow_files.get_workflow_source_dir(Path.cwd())
         if source is None:
@@ -297,12 +304,8 @@ class Scheduler:
 
         make_workflow_run_tree(self.workflow)
 
-        # directory information
+        # Get & check workflow file
         self.flow_file = workflow_files.get_flow_file(self.workflow)
-        self.workflow_run_dir = get_workflow_run_dir(self.workflow)
-        self.workflow_work_dir = get_workflow_run_work_dir(self.workflow)
-        self.workflow_share_dir = get_workflow_run_share_dir(self.workflow)
-        self.workflow_log_dir = get_workflow_run_log_dir(self.workflow)
 
         # Create ZMQ keys
         key_housekeeping(
@@ -330,44 +333,13 @@ class Scheduler:
         * Initialise managers.
 
         """
-        self.workflow_db_mgr = WorkflowDatabaseManager(
-            workflow_files.get_workflow_srv_dir(self.workflow),  # pri_d
-            os.path.join(self.workflow_run_dir, 'log'))  # pub_d
         self.data_store_mgr = DataStoreMgr(self)
         self.broadcast_mgr = BroadcastMgr(
             self.workflow_db_mgr, self.data_store_mgr)
         self.flow_mgr = FlowMgr(self.workflow_db_mgr)
 
-        # *** Network Related ***
-        # TODO: this in zmq asyncio context?
-        # Requires the Cylc main loop in asyncio first
-        # And use of concurrent.futures.ThreadPoolExecutor?
-        self.zmq_context = zmq.Context()
-        # create an authenticator for the ZMQ context
-        self.curve_auth = ThreadAuthenticator(self.zmq_context, log=LOG)
-        self.curve_auth.start()  # start the authentication thread
+        self.server = WorkflowRuntimeServer(self)
 
-        # Setting the location means that the CurveZMQ auth will only
-        # accept public client certificates from the given directory, as
-        # generated by a user when they initiate a ZMQ socket ready to
-        # connect to a server.
-        workflow_srv_dir = workflow_files.get_workflow_srv_dir(self.workflow)
-        client_pub_keyinfo = workflow_files.KeyInfo(
-            workflow_files.KeyType.PUBLIC,
-            workflow_files.KeyOwner.CLIENT,
-            workflow_srv_dir=workflow_srv_dir)
-        self.client_pub_key_dir = client_pub_keyinfo.key_path
-
-        # Initial load for the localhost key.
-        self.curve_auth.configure_curve(
-            domain='*',
-            location=(self.client_pub_key_dir)
-        )
-
-        self.server = WorkflowRuntimeServer(
-            self, context=self.zmq_context, barrier=self.barrier)
-        self.publisher = WorkflowPublisher(
-            self.workflow, context=self.zmq_context, barrier=self.barrier)
         self.proc_pool = SubProcPool()
         self.command_queue = Queue()
         self.message_queue = Queue()
@@ -419,29 +391,18 @@ class Scheduler:
         """
         self.profiler.log_memory("scheduler.py: start configure")
 
-        # Print workflow name to disambiguate in case of inferred run number
-        LOG.info(f"Workflow: {self.workflow}")
-
-        self.is_restart = self.workflow_db_mgr.restart_check()
-        # Note: since cylc play replaced cylc run/restart, we wait until this
-        # point before setting self.is_restart as we couldn't tell if
-        # we're restarting until now.
-
         self._check_startup_opts()
 
         if self.is_restart:
-            pri_dao = self.workflow_db_mgr.get_pri_dao()
-            try:
-                # This logic handles lack of initial cycle point in flow.cylc
-                # Things that can't change on workflow reload.
-                pri_dao.select_workflow_params(self._load_workflow_params)
-                pri_dao.select_workflow_template_vars(self._load_template_vars)
-                pri_dao.execute_queued_items()
-            finally:
-                pri_dao.close()
+            self.load_workflow_params_and_tmpl_vars()
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
-        self.load_flow_file()
+        try:
+            self.load_flow_file()
+        except ParsecError as exc:
+            # Mark this exc as expected (see docstring for .schd_expected):
+            exc.schd_expected = True
+            raise exc
         self.profiler.log_memory("scheduler.py: after load_flow_file")
 
         self.workflow_db_mgr.on_workflow_start(self.is_restart)
@@ -451,6 +412,31 @@ class Scheduler:
             self.options.utc_mode = get_utc_mode()
             self.options.cycle_point_tz = (
                 self.config.cfg['scheduler']['cycle point time zone'])
+
+        # Note that the following lines must be present at the top of
+        # the workflow log file for use in reference test runs:
+        LOG.info(
+            f'Run mode: {self.config.run_mode()}',
+            extra=RotatingLogFileHandler.extra
+        )
+        LOG.info(
+            f'Initial point: {self.config.initial_point}',
+            extra=RotatingLogFileHandler.extra
+        )
+        if self.config.start_point != self.config.initial_point:
+            LOG.info(
+                f'Start point: {self.config.start_point}',
+                extra=RotatingLogFileHandler.extra
+            )
+        LOG.info(
+            f'Final point: {self.config.final_point}',
+            extra=RotatingLogFileHandler.extra
+        )
+        if self.config.stop_point:
+            LOG.info(
+                f'Stop point: {self.config.stop_point}',
+                extra=RotatingLogFileHandler.extra
+            )
 
         self.broadcast_mgr.linearized_ancestors.update(
             self.config.get_linearized_ancestors())
@@ -465,7 +451,7 @@ class Scheduler:
                 self.config.get_ref_log_name()))
         elif self.options.reftest:
             LOG.addHandler(ReferenceLogFileHandler(
-                get_workflow_test_log_name(self.workflow)))
+                get_workflow_test_log_path(self.workflow)))
 
         self.pool = TaskPool(
             self.config,
@@ -487,8 +473,6 @@ class Scheduler:
             self._load_pool_from_tasks()
         else:
             self._load_pool_from_point()
-
-        self.process_stop_cycle_point()
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.workflow_db_mgr.put_workflow_params(self)
@@ -543,60 +527,54 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: end configure")
 
-    async def start_servers(self):
-        """Start the TCP servers."""
-        min_, max_ = glbl_cfg().get(['scheduler', 'run hosts', 'ports'])
-        self.server.start(min_, max_)
-        self.publisher.start(min_, max_)
-        # wait for threads to setup socket ports before continuing
-        self.barrier.wait()
-        self.port = self.server.port
-        self.pub_port = self.publisher.port
-        self.data_store_mgr.delta_workflow_ports()
+    def load_workflow_params_and_tmpl_vars(self) -> None:
+        """Load workflow params and template variables"""
+        pri_dao = self.workflow_db_mgr.get_pri_dao()
+        try:
+            # This logic handles lack of initial cycle point in flow.cylc and
+            # things that can't change on workflow restart/reload.
+            pri_dao.select_workflow_params(self._load_workflow_params)
+            pri_dao.select_workflow_template_vars(self._load_template_vars)
+            pri_dao.execute_queued_items()
 
-    async def log_start(self):
-        if self.is_restart:
-            n_restart = self.workflow_db_mgr.n_restart
-        else:
-            n_restart = 0
+        finally:
+            pri_dao.close()
 
+    async def log_start(self) -> None:
         is_quiet = (cylc.flow.flags.verbosity < 0)
         log_level = LOG.getEffectiveLevel()
         if is_quiet:
             # Temporarily change logging level to log important info
             LOG.setLevel(logging.INFO)
 
-        log_extra = {TimestampRotatingFileHandler.FILE_HEADER_FLAG: True}
-        log_extra_num = {
-            TimestampRotatingFileHandler.FILE_HEADER_FLAG: True,
-            TimestampRotatingFileHandler.FILE_NUM: 1}
+        # Print workflow name to disambiguate in case of inferred run number
+        LOG.info(f"Workflow: {self.workflow}")
         LOG.info(
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
-                'port': self.port,
+                'port': self.server.port,
                 'pid': os.getpid()},
-            extra=log_extra,
+            extra=RotatingLogFileHandler.extra,
         )
         LOG.info(
             self.START_PUB_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
-                'port': self.pub_port},
-            extra=log_extra,
+                'port': self.server.pub_port},
+            extra=RotatingLogFileHandler.extra,
+        )
+        restart_num = self.get_restart_num() + 1
+        LOG.info(
+            'Run: (re)start number=%d, log rollover=%d',
+            restart_num,
+            1,  # hard code 1 which is updated later if required
+            extra=RotatingLogFileHandler.extra_num
         )
         LOG.info(
-            'Run: (re)start=%d log=%d', n_restart, 1, extra=log_extra_num)
-        LOG.info('Cylc version: %s', CYLC_VERSION, extra=log_extra)
-        # Note that the following lines must be present at the top of
-        # the workflow log file for use in reference test runs:
-        LOG.info('Run mode: %s', self.config.run_mode(), extra=log_extra)
-        LOG.info(
-            'Initial point: %s', self.config.initial_point, extra=log_extra)
-        if self.config.start_point != self.config.initial_point:
-            LOG.info(
-                'Start point: %s', self.config.start_point, extra=log_extra)
-        LOG.info('Final point: %s', self.config.final_point, extra=log_extra)
+            f'Cylc version: {CYLC_VERSION}',
+            extra=RotatingLogFileHandler.extra
+        )
 
         if is_quiet:
             LOG.info("Quiet mode on")
@@ -607,6 +585,7 @@ class Scheduler:
         try:
             if self.is_restart:
                 self.restart_remote_init()
+                self.task_job_mgr.task_remote_mgr.is_restart = True
             self.run_event_handlers(self.EVENT_STARTUP, 'workflow starting')
             await asyncio.gather(
                 *main_loop.get_runners(
@@ -615,7 +594,10 @@ class Scheduler:
                     self
                 )
             )
-            await self.publisher.publish(self.data_store_mgr.publish_deltas)
+            self.server.publish_queue.put(
+                self.data_store_mgr.publish_deltas)
+            # Non-async sleep - yield to other threads rather than event loop
+            sleep(0)
             self.profiler.start()
             await self.main_loop()
 
@@ -652,9 +634,21 @@ class Scheduler:
         """
         try:
             await self.initialise()
-            await self.configure()
-            await self.start_servers()
+
+            # Start Server before logging ports/host(s).
+            # create thread sync barrier for setup
+            barrier = Barrier(2, timeout=10)
+            self.server.thread = Thread(
+                target=self.server.start,
+                args=(barrier,),
+                daemon=False
+            )
+            self.server.thread.start()
+            barrier.wait()
+
             await self.log_start()
+            await self.configure()
+
             self._configure_contact()
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             await self.handle_exception(exc)
@@ -675,7 +669,7 @@ class Scheduler:
         # flow number set in this call:
         self.pool.force_trigger_tasks(
             self.options.starttask,
-            reflow=True,
+            flow=[FLOW_NEW],
             flow_descr=f"original flow from {self.options.starttask}"
         )
 
@@ -738,6 +732,7 @@ class Scheduler:
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""
+        self.task_job_mgr.task_remote_mgr.is_restart = True
         distinct_install_target_platforms = []
         for itask in self.pool.get_tasks():
             itask.platform['install target'] = (
@@ -758,8 +753,8 @@ class Scheduler:
         incomplete_init = False
         for platform in distinct_install_target_platforms:
             self.task_job_mgr.task_remote_mgr.remote_init(
-                platform, self.curve_auth,
-                self.client_pub_key_dir)
+                platform, self.server.curve_auth,
+                self.server.client_pub_key_dir)
             status = self.task_job_mgr.task_remote_mgr.remote_init_map[
                 platform['install target']]
             if status in (REMOTE_INIT_IN_PROGRESS,
@@ -833,7 +828,7 @@ class Scheduler:
         """Return a command processing method or raise AttributeError."""
         return getattr(self, f'command_{command_name}')
 
-    def queue_command(self, command, kwargs):
+    def queue_command(self, command: str, kwargs: dict) -> None:
         self.command_queue.put((
             command,
             tuple(kwargs.values()), {}
@@ -863,15 +858,14 @@ class Scheduler:
             except SchedulerStop:
                 LOG.info(f"Command succeeded: {cmdstr}")
                 raise
-            except (CommandFailedError, Exception) as exc:
+            except Exception as exc:
                 # Don't let a bad command bring the workflow down.
                 if (
                     cylc.flow.flags.verbosity > 1 or
                     not isinstance(exc, CommandFailedError)
                 ):
-                    LOG.warning(traceback.format_exc())
-                LOG.warning(str(exc))
-                LOG.warning(f"Command failed: {cmdstr}")
+                    LOG.error(traceback.format_exc())
+                LOG.error(f"Command failed: {cmdstr}\n{exc}")
             else:
                 if n_warnings:
                     LOG.info(
@@ -918,7 +912,7 @@ class Scheduler:
             # schedule shutdown after wallclock time passes provided time
             parser = TimePointParser()
             self.set_stop_clock(
-                int(parser.parse(clock_time).get("seconds_since_unix_epoch"))
+                int(parser.parse(clock_time).seconds_since_unix_epoch)
             )
         elif task:
             # schedule shutdown after task succeeds
@@ -1025,7 +1019,10 @@ class Scheduler:
         pri_dao = self.workflow_db_mgr.get_pri_dao()
         pri_dao.select_workflow_params(self._load_workflow_params)
 
-        self.load_flow_file(is_reload=True)
+        try:
+            self.load_flow_file(is_reload=True)
+        except (ParsecError, CylcConfigError) as exc:
+            raise CommandFailedError(f"{type(exc).__name__}: {exc}")
         self.broadcast_mgr.linearized_ancestors = (
             self.config.get_linearized_ancestors())
         self.pool.set_do_reload(self.config)
@@ -1043,6 +1040,17 @@ class Scheduler:
         self.workflow_db_mgr.put_runtime_inheritance(self.config)
         self.workflow_db_mgr.put_workflow_params(self)
         self.is_updated = True
+
+    def get_restart_num(self) -> int:
+        """Return the number of the restart, else 0 if not a restart.
+
+        Performs DB restart-check the first time this is called.
+        """
+        if not self.is_restart:
+            return 0
+        if self.workflow_db_mgr.n_restart == 0:
+            self.workflow_db_mgr.restart_check()
+        return self.workflow_db_mgr.n_restart
 
     def get_contact_data(self) -> Dict[str, str]:
         """Extract contact data from this Scheduler.
@@ -1068,7 +1076,7 @@ class Scheduler:
             fields.COMMAND:
                 cli_format(proc.cmdline()),
             fields.PUBLISH_PORT:
-                str(self.publisher.port),  # type: ignore
+                str(self.server.pub_port),  # type: ignore
             fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:  # type: ignore
                 self.workflow_run_dir,
             fields.UUID:
@@ -1107,11 +1115,10 @@ class Scheduler:
             self.flow_file,
             self.options,
             self.template_vars,
-            is_reload=is_reload,
             xtrigger_mgr=self.xtrigger_mgr,
             mem_log_func=self.profiler.log_memory,
             output_fname=os.path.join(
-                self.workflow_run_dir, 'log', 'flow-config',
+                self.workflow_run_dir, 'log', 'config',
                 workflow_files.WorkflowFiles.FLOW_FILE_PROCESSED
             ),
             run_dir=self.workflow_run_dir,
@@ -1123,20 +1130,28 @@ class Scheduler:
             self.config.cfg['scheduler'],
             glbl_cfg().get(['scheduler'])
         )
+
         self.flow_file_update_time = time()
         # Dump the loaded flow.cylc file for future reference.
-        time_str = get_current_time_string(
-            override_use_utc=True, use_basic_format=True,
-            display_sub_seconds=False
-        )
+        config_dir = get_workflow_run_config_log_dir(
+            self.workflow)
+        config_logs = get_sorted_logs_by_time(config_dir, "*[0-9].cylc")
+        if config_logs:
+            log_num = get_next_log_number(config_logs[-1])
+        else:
+            log_num = '01'
         if is_reload:
             load_type = "reload"
+            load_type_num = get_reload_start_number(config_logs)
         elif self.is_restart:
             load_type = "restart"
+            restart_num = self.get_restart_num() + 1
+            load_type_num = f'{restart_num:02d}'
         else:
             load_type = "start"
+            load_type_num = '01'
         file_name = get_workflow_run_config_log_dir(
-            self.workflow, f"{time_str}-{load_type}.cylc")
+            self.workflow, f"{log_num}-{load_type}-{load_type_num}.cylc")
         with open(file_name, "w") as handle:
             handle.write("# cylc-version: %s\n" % CYLC_VERSION)
             self.config.pcfg.idump(sparse=True, handle=handle)
@@ -1229,7 +1244,7 @@ class Scheduler:
         key, value = row
         # Command line argument takes precedence
         if key not in self.template_vars:
-            self.template_vars[key] = value
+            self.template_vars[key] = eval_var(value)
 
     def run_event_handlers(self, event, reason=""):
         """Run a workflow event handler.
@@ -1242,9 +1257,7 @@ class Scheduler:
                 conf.run_mode('simulation', 'dummy')
             ):
                 return
-        self.workflow_event_handler.handle(conf, WorkflowEventContext(
-            event, str(reason), self.workflow, self.uuid_str, self.owner,
-            self.host, self.server.port))
+        self.workflow_event_handler.handle(self, event, str(reason))
 
     def release_queued_tasks(self):
         """Release queued tasks, and submit task jobs.
@@ -1290,14 +1303,18 @@ class Scheduler:
             for itask in self.task_job_mgr.submit_task_jobs(
                 self.workflow,
                 self.pre_prep_tasks,
-                self.curve_auth,
-                self.client_pub_key_dir,
+                self.server.curve_auth,
+                self.server.client_pub_key_dir,
                 self.config.run_mode('simulation')
             ):
-                # (Not using f"{itask}"_here to avoid breaking func tests)
+                if itask.flow_nums:
+                    flow = ','.join(str(i) for i in itask.flow_nums)
+                else:
+                    flow = FLOW_NONE
                 meth(
                     f"{itask.identity} -triggered off "
                     f"{itask.state.get_resolved_dependencies()}"
+                    f" in flow {flow}"
                 )
 
     def process_workflow_db_queue(self):
@@ -1422,11 +1439,9 @@ class Scheduler:
         cmd = ['cylc', 'play', quote(self.workflow)]
         if self.options.abort_if_any_task_fails:
             cmd.append('--abort-if-any-task-fails')
-
         for attempt_no in range(max_retries):
             new_host = select_workflow_host(cached=False)[0]
             LOG.info(f'Attempting to restart on "{new_host}"')
-
             # proc will start with current env (incl CYLC_HOME etc)
             proc = Popen(  # nosec
                 [*cmd, f'--host={new_host}'],
@@ -1477,6 +1492,9 @@ class Scheduler:
             if self.pool.do_reload:
                 # Re-initialise data model on reload
                 self.data_store_mgr.initiate_data_model(reloaded=True)
+                # Reset the remote init map to trigger fresh file installation
+                self.task_job_mgr.task_remote_mgr.remote_init_map.clear()
+                self.task_job_mgr.task_remote_mgr.is_reload = True
                 self.pool.reload_taskdefs()
                 # Load jobs from DB
                 self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
@@ -1628,8 +1646,11 @@ class Scheduler:
             # Publish updates:
             if self.data_store_mgr.publish_pending:
                 self.data_store_mgr.publish_pending = False
-                await self.publisher.publish(
+                self.server.publish_queue.put(
                     self.data_store_mgr.publish_deltas)
+                # Non-async sleep - yield to other threads rather
+                # than event loop
+                sleep(0)
         if has_updated:
             # Database update
             self.workflow_db_mgr.put_task_pool(self.pool)
@@ -1699,12 +1720,15 @@ class Scheduler:
             if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
-            LOG.error(f'Workflow shutting down - {reason}')
-        elif isinstance(reason, (CylcError, TemplateVarLanguageClash)):
+            LOG.error(f"Workflow shutting down - {reason}")
+        elif isinstance(reason, CylcError) or (
+            isinstance(reason, ParsecError) and reason.schd_expected
+        ):
             LOG.error(
-                "Workflow shutting down - "
-                f"{reason.__class__.__name__}: {reason}")
+                f"Workflow shutting down - {type(reason).__name__}: {reason}"
+            )
             if cylc.flow.flags.verbosity > 1:
+                # Print traceback
                 LOG.exception(reason)
         else:
             LOG.exception(reason)
@@ -1735,14 +1759,7 @@ class Scheduler:
                 LOG.exception(exc)
 
         if self.server:
-            self.server.stop()
-        if self.publisher:
-            await self.publisher.publish(
-                [(b'shutdown', str(reason).encode('utf-8'))]
-            )
-            self.publisher.stop()
-        if self.curve_auth:
-            self.curve_auth.stop()  # stop the authentication thread
+            await self.server.stop(reason)
 
         # Flush errors and info before removing workflow contact file
         sys.stdout.flush()
@@ -1771,6 +1788,10 @@ class Scheduler:
             except OSError as exc:
                 LOG.warning(f"failed to remove workflow contact file: {fname}")
                 LOG.exception(exc)
+            else:
+                # Useful to identify that this Scheduler has shut down
+                # properly (e.g. in tests):
+                self.contact_data = None
             if self.task_job_mgr:
                 self.task_job_mgr.task_remote_mgr.remote_tidy()
 
@@ -1868,9 +1889,10 @@ class Scheduler:
         self.workflow_db_mgr.delete_workflow_paused()
         self.update_data_store()
 
-    def command_force_trigger_tasks(self, items, reflow, flow_descr):
-        """Trigger tasks."""
-        return self.pool.force_trigger_tasks(items, reflow, flow_descr)
+    def command_force_trigger_tasks(self, items, flow, flow_wait, flow_descr):
+        """Manual task trigger."""
+        return self.pool.force_trigger_tasks(
+            items, flow, flow_wait, flow_descr)
 
     def command_force_spawn_children(self, items, outputs, flow_num):
         """Force spawn task successors.
@@ -1937,48 +1959,20 @@ class Scheduler:
             value = getattr(self.options, opt, None)
             if self.is_restart:
                 if value is not None:
-                    raise UserInputError(
+                    raise InputError(
                         f"option --{opt} is not valid for restart"
                     )
             elif value == 'reload':
-                raise UserInputError(
+                raise InputError(
                     f"option --{opt}=reload is not valid "
                     "(only --fcp and --stopcp can be 'reload')"
                 )
         if not self.is_restart:
             for opt in ('fcp', 'stopcp'):
                 if getattr(self.options, opt, None) == 'reload':
-                    raise UserInputError(
+                    raise InputError(
                         f"option --{opt}=reload is only valid for restart"
                     )
-
-    def process_stop_cycle_point(self) -> None:
-        """Set stop after cycle point.
-
-        In decreasing priority, stop cycle point (``stopcp``) is set:
-        * From the command line (``cylc play --stopcp=XYZ``).
-        * From the database.
-        * From the flow.cylc file (``[scheduling]stop after cycle point``).
-
-        However, if ``--stopcp=reload`` on the command line during restart,
-        the ``[scheduling]stop after cycle point`` value is used.
-        """
-        stoppoint = self.config.cfg['scheduling'].get('stop after cycle point')
-        if self.options.stopcp != 'reload':
-            if self.options.stopcp:
-                stoppoint = self.options.stopcp
-            # Tests whether pool has stopcp from database on restart.
-            elif (
-                self.pool.stop_point and
-                self.pool.stop_point != self.config.final_point
-            ):
-                stoppoint = self.pool.stop_point
-
-        if stoppoint is not None:
-            self.options.stopcp = str(stoppoint)
-            self.pool.set_stop_point(get_point(self.options.stopcp))
-            self.validate_finalcp()
-            self.update_data_store()
 
     async def handle_exception(self, exc: Exception) -> NoReturn:
         """Gracefully shut down the scheduler given a caught exception.
@@ -1991,22 +1985,14 @@ class Scheduler:
         await self.shutdown(exc)
         raise exc from None
 
-    def validate_finalcp(self) -> None:
-        """Warn if Stop Cycle point is on or after the final cycle point
-        """
-        if self.config.final_point is None:
-            return
-        if get_point(self.options.stopcp) > self.config.final_point:
-            LOG.warning(
-                f"Stop cycle point '{self.options.stopcp}' will have no "
-                "effect as it is after the final cycle "
-                f"point '{self.config.final_point}'.")
-
     def update_data_store(self):
         """Sets the update flag on the data store.
 
         Call this method whenever the Scheduler's state has changed in a way
         that requires a data store update.
+        See cylc.flow.workflow_status.get_workflow_status() for a
+        (non-exhaustive?) list of properties that if changed will require
+        this update.
 
         This call should often be associated with a database update.
 

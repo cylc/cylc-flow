@@ -50,6 +50,10 @@
 #         compare files. However, if an alternate command such as "xxdiff -D"
 #         is desirable (e.g. for debugging),
 #         "export CYLC_TEST_DIFF_CMD=xxdiff -D".
+#     cmp_ok_re FILE_TEST FILE_CONTROL
+#         Match a file against a regex file line by line.
+#         Reads in the test and control files line by line and checks the test
+#         line re.match'es the control line.
 #     cmp_json FILE_TEST [FILE_CONTROL]
 #         Alternative implementation to cmp_json_ok, compare two JSON files
 #         and display any differences as a unified(ish) diff:
@@ -100,13 +104,15 @@
 #     poll_grep ...
 #         Shorthand for 'poll grep -s ...'.
 #     poll_grep_workflow_log ...
-#         Shorthand for 'poll_grep ... "${WORKFLOW_RUN_DIR}/log/workflow/log"'
+#         Shorthand for 'poll_grep ... "${WORKFLOW_RUN_DIR}/log/scheduler/log"'
 #     poll_pid_done PID
 #         Poll until process with PID is done.
 #     poll_workflow_running
 #         Shorthand for 'poll test -e "${WORKFLOW_RUN_DIR}/.service/contact"'
 #     poll_workflow_stopped
-#         Shorthand for 'poll "!" test -e "${WORKFLOW_RUN_DIR}/.service/contact"'
+#         Shorthand for 'poll "!" test -e "${WORKFLOW_RUN_DIR}/.service/contact"'.
+#         Note that you might want to call poll_workflow_running before this as
+#         it may return before contact file is created in the first place.
 #     get_workflow_uuid
 #         Extract the UUID from the contact file or echo '' if not present.
 #     poll_workflow_restart [TIMEOUT [UUID]]
@@ -275,7 +281,7 @@ workflow_run_ok() {
     fi
     fail "${TEST_NAME}"
     WORKFLOW_RUN_FAILS=true
-    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/workflow"
+    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/scheduler"
     mkdir -p "${WORKFLOW_LOG_DIR}" # directory may not exist if run fails very early
     dump_std "${TEST_NAME}"
 }
@@ -289,7 +295,7 @@ workflow_run_fail() {
     fi
     fail "${TEST_NAME}"
     WORKFLOW_RUN_FAILS=true
-    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/workflow"
+    WORKFLOW_LOG_DIR="${WORKFLOW_RUN_DIR}/log/scheduler"
     mkdir -p "${WORKFLOW_LOG_DIR}" # directory may not exist if run fails very early
     dump_std "${TEST_NAME}"
 }
@@ -309,6 +315,50 @@ cmp_ok() {
     fi
     dump_std "$TEST_NAME"
     fail "${TEST_NAME}"
+}
+
+cmp_ok_re() {
+    local FILE_TEST="$1"
+    local FILE_CONTROL="${2:--}"
+    local TEST_NAME
+    TEST_NAME="$(basename "${FILE_TEST}")-cmp-ok"
+    if python3 -c '
+import re
+import sys
+
+def compare(test_file, control_file):
+    for ind, (test_line, control_line) in enumerate(
+        zip(test_file, control_file)
+    ):
+        if test_line is None:
+            sys.stderr.write("Test file is missing lines")
+            sys.exit(1)
+        if control_line is None:
+            sys.stderr.write("Test file has extra lines")
+            sys.exit(1)
+        if not re.match(control_line, test_line):
+            sys.stderr.write(
+                f"Line {ind+1}: \"{test_line}\" does not match /{control_line}/"
+                .replace("\n", "")
+            )
+            sys.exit(1)
+
+test_filename, control_filename = sys.argv[1:3]
+with open(test_filename, "r") as test_file:
+    if control_filename == "-":
+        compare(test_file, sys.stdin)
+    else:
+        with open(control_filename, "r") as control_file:
+            compare(test_file, control_file)
+' "${FILE_TEST}" "${FILE_CONTROL}"; then
+        ok "${TEST_NAME}"
+    else
+        (
+            echo -e '\n# Test file:'
+            cat "${FILE_TEST}"
+        ) >&2
+        fail "${TEST_NAME}"
+    fi
 }
 
 cmp_json() {
@@ -380,7 +430,7 @@ grep_ok() {
 grep_workflow_log_ok() {
     local TEST_NAME="$1"
     shift
-    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/workflow/log"; then
+    if grep -s "$@" "${WORKFLOW_RUN_DIR}/log/scheduler/log"; then
       ok "${TEST_NAME}"
     else
       fail "${TEST_NAME}"
@@ -487,9 +537,9 @@ init_workflow() {
     cat "${FLOW_CONFIG}" >"${TEST_DIR}/${WORKFLOW_NAME}/flow.cylc"
     cd "${TEST_DIR}/${WORKFLOW_NAME}"
     if "${RUN_NUMS}"; then
-        cylc install --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --workflow-name="${WORKFLOW_NAME}"
     else
-        cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --no-run-name --workflow-name="${WORKFLOW_NAME}"
     fi
 }
 
@@ -503,9 +553,9 @@ install_workflow() {
     cp -r "${TEST_SOURCE_DIR}/${TEST_SOURCE_BASE}/"* "${TEST_DIR}/${WORKFLOW_NAME}/"
     cd "${TEST_DIR}/${WORKFLOW_NAME}"
     if "$RUN_NUMS"; then
-        cylc install --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --workflow-name="${WORKFLOW_NAME}"
     else
-        cylc install --no-run-name --flow-name="${WORKFLOW_NAME}" --directory="${TEST_DIR}/${WORKFLOW_NAME}"
+        cylc install "${TEST_DIR}/${WORKFLOW_NAME}" --no-run-name --workflow-name="${WORKFLOW_NAME}"
     fi
 }
 
@@ -656,7 +706,7 @@ poll_grep() {
 }
 
 poll_grep_workflow_log() {
-    poll grep -s "$@" "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    poll grep -s "$@" "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 }
 
 poll_pid_done() {
@@ -779,7 +829,7 @@ mock_smtpd_kill() {  # Logic borrowed from Rose
 install_and_validate() {
     # First part of the reftest function, to allow separate use.
     # Expect 1 OK test.
-    local TEST_NAME="${1:-${TEST_NAME_BASE}}-validate"
+    local TEST_NAME="${1:-${TEST_NAME_BASE}}"
     install_workflow "$@"
     run_ok "${TEST_NAME}-validate" cylc validate "${WORKFLOW_NAME}"
 }

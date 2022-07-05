@@ -25,14 +25,18 @@ export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 #-------------------------------------------------------------------------------
 set_test_number 11
 
+# Uses a fake background job runner to get around the single host restriction.
+
 create_test_global_config "" "
 [platforms]
     [[${CYLC_TEST_PLATFORM}]]
         # mixed host platform
+        job runner = my_background
         hosts = unreachable_host, ${CYLC_TEST_HOST}
         [[[selection]]]
             method = 'definition order'
     [[badhostplatform]]
+        job runner = my_background
         hosts = bad_host1, bad_host2
         [[[selection]]]
             method = 'definition order'
@@ -54,6 +58,9 @@ create_test_global_config "" "
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+# Install the fake background job runner.
+cp -r "${TEST_SOURCE_DIR}/lib" "${WORKFLOW_RUN_DIR}"
+
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_ok "${TEST_NAME_BASE}-run" \
@@ -62,7 +69,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # should try remote-init on bad_host{1,2} then fail
 log_scan \
     "${TEST_NAME_BASE}-badhostplatformgroup" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     'platform: badhostplatform - remote init (on bad_host1)' \
     'platform: badhostplatform - Could not connect to bad_host1.' \
     'platform: badhostplatform - remote init (on bad_host2)' \
@@ -71,7 +78,7 @@ log_scan \
 # should try remote-init on unreachable_host, then $CYLC_TEST_HOST then pass
 log_scan \
     "${TEST_NAME_BASE}-goodplatformgroup" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log" 1 0 \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     "platform: ${CYLC_TEST_PLATFORM} - remote init (on unreachable_host)" \
     "platform: ${CYLC_TEST_PLATFORM} - Could not connect to unreachable_host." \
     "platform: ${CYLC_TEST_PLATFORM} - remote init (on ${CYLC_TEST_HOST})" \

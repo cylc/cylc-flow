@@ -31,11 +31,10 @@ parsec config file parsing:
 """
 
 import os
+from pathlib import Path
 import re
 import sys
-
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+import typing as t
 
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow import LOG
@@ -165,7 +164,7 @@ def addict(cfig, key, val, parents, index):
             # to:
             #     Cylc8
             # remove at:
-            #     Cylc9
+            #     Cylc8.x
             parents[0:2] == ['scheduling', 'dependencies']
         ):
             # append the new graph string to the existing one
@@ -305,9 +304,9 @@ def process_plugins(fpath, opts):
 
 
 def merge_template_vars(
-    native_tvars: Dict[str, Any],
-    plugin_result: Dict[str, Any]
-) -> Dict[str, Any]:
+    native_tvars: t.Dict[str, t.Any],
+    plugin_result: t.Dict[str, t.Any]
+) -> t.Dict[str, t.Any]:
     """Manage the merger of Cylc Native and Plugin template variables.
 
     Args:
@@ -348,7 +347,12 @@ def merge_template_vars(
         return native_tvars
 
 
-def read_and_proc(fpath, template_vars=None, viewcfg=None, opts=None):
+def read_and_proc(
+    fpath: str,
+    template_vars: t.Optional[t.Dict[str, t.Any]] = None,
+    viewcfg: t.Any = None,
+    opts: t.Any = None,
+) -> t.List[str]:
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
@@ -424,7 +428,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, opts=None):
                 raise ParsecError('EmPy Python package must be installed '
                                   'to process file: ' + fpath)
             flines = empyprocess(
-                flines, fdir, template_vars
+                fpath, flines, fdir, template_vars
             )
 
     # process with Jinja2
@@ -444,7 +448,7 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, opts=None):
                 raise ParsecError('Jinja2 Python package must be installed '
                                   'to process file: ' + fpath)
             flines = jinja2process(
-                flines, fdir, template_vars
+                fpath, flines, fdir, template_vars
             )
 
     # concatenate continuation lines
@@ -456,19 +460,17 @@ def read_and_proc(fpath, template_vars=None, viewcfg=None, opts=None):
 
 
 def hashbang_and_plugin_templating_clash(
-    templating: str, flines: List[str]
-) -> Optional[str]:
-    """Check whether plugin set template engine and #!hashbang line match.
+    templating: str, flines: t.List[str]
+) -> t.Optional[str]:
+    """Return file's hashbang/shebang, but raise TemplateVarLanguageClash
+    if plugin-set template engine and hashbang do not match.
 
     Args:
-        templating (str): [description]
-        flines (List[str]): [description]
-
-    Raises:
-        TemplateVarLanguageClash
+        templating: Template engine set by a plugin.
+        flines: The lines of text from file.
 
     Returns:
-        str: the hashbang, in lower case, to allow for users using any of
+        The hashbang, in lower case, to allow for users using any of
         ['empy', 'EmPy', 'EMPY'], or similar in other templating languages.
 
     Examples:
@@ -486,26 +488,30 @@ def hashbang_and_plugin_templating_clash(
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
     """
+    hashbang: t.Optional[str] = None
     # Get hashbang if possible:
-    if flines and re.match(r'^#!(.*)\s*', flines[0]):
-        hashbang = re.findall(r'^#!(.*)\s*', flines[0])[0].lower()
-    else:
-        hashbang = None
-
+    if flines:
+        match = re.match(r'^#!(\S+)', flines[0])
+        if match:
+            hashbang = match[1].lower()
     if (
         hashbang and templating
         and templating != 'template variables'
         and hashbang != templating
     ):
         raise TemplateVarLanguageClash(
-            "Plugins set templating engine = "
-            f"{templating}"
+            f"A plugin set the templating engine to {templating}"
             f" which does not match {flines[0]} set in flow.cylc."
         )
     return hashbang
 
 
-def parse(fpath, output_fname=None, template_vars=None, opts=None):
+def parse(
+    fpath: str,
+    output_fname: t.Optional[str] = None,
+    template_vars: t.Optional[t.Dict[str, t.Any]] = None,
+    opts: t.Any = None,
+) -> OrderedDictWithDefaults:
     """Parse file items line-by-line into a corresponding nested dict."""
 
     # read and process the file (jinja2, include-files, line continuation)
@@ -517,7 +523,7 @@ def parse(fpath, output_fname=None, template_vars=None, opts=None):
 
     nesting_level = 0
     config = OrderedDictWithDefaults()
-    parents = []
+    parents: t.List[str] = []
 
     maxline = len(flines) - 1
     index = -1

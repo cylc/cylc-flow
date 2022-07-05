@@ -95,8 +95,8 @@ for ear in $(seq 1 "${EARS}"); do
     log_scan2 "${TEST_NAME_BASE}-${ear}-stop" "${FILE}" 40 1 \
         'The Cylc workflow host will soon become un-available' \
         'Workflow shutting down - REQUEST(NOW-NOW)' \
-        "Attempting to restart on \"${JOKERS}\"" \
-        "Workflow now running on \"${JOKERS}\"" \
+        "Attempting to restart on \"${JOKERS}\""\
+        "Workflow now running on \"${JOKERS}\""
 
     poll_workflow_restart
 

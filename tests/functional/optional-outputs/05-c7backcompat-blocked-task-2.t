@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Cylc 7 stall backward compatibility, multi-parent case  
+# Cylc 7 stall backward compatibility, multi-parent case
 
 . "$(dirname "$0")/test_header"
-set_test_number 8
+set_test_number 7
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -29,10 +29,6 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 DEPR_MSG_1=$(python -c \
   'from cylc.flow.workflow_files import SUITERC_DEPR_MSG; print(SUITERC_DEPR_MSG)')
 grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
-
-DEPR_MSG_2=$(python -c \
-  'from cylc.flow.config import WorkflowConfig as cfg; print(cfg.CYLC7_GRAPH_COMPAT_MSG);')
-grep_ok "${DEPR_MSG_2}" "${TEST_NAME}.stderr"
 
 # Should stall and abort with an unsatisfied prerequisite.
 workflow_run_fail "${TEST_NAME_BASE}-run" \

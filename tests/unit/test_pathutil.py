@@ -23,8 +23,9 @@ from pytest import param
 from typing import Callable, Dict, Iterable, List, Set
 from unittest.mock import Mock, patch, call
 
-from cylc.flow.exceptions import UserInputError, WorkflowFilesError
+from cylc.flow.exceptions import InputError, WorkflowFilesError
 from cylc.flow.pathutil import (
+    EXPLICIT_RELATIVE_PATH_REGEX,
     expand_path,
     get_dirs_to_symlink,
     get_next_rundir_number,
@@ -32,13 +33,13 @@ from cylc.flow.pathutil import (
     get_remote_workflow_run_job_dir,
     get_workflow_run_dir,
     get_workflow_run_job_dir,
-    get_workflow_run_log_dir,
-    get_workflow_run_log_name,
-    get_workflow_run_pub_db_name,
+    get_workflow_run_scheduler_log_dir,
+    get_workflow_run_scheduler_log_path,
+    get_workflow_run_pub_db_path,
     get_workflow_run_config_log_dir,
     get_workflow_run_share_dir,
     get_workflow_run_work_dir,
-    get_workflow_test_log_name,
+    get_workflow_test_log_path,
     make_localhost_symlinks,
     make_workflow_run_tree,
     parse_rm_dirs,
@@ -52,6 +53,24 @@ from .conftest import MonkeyMock
 
 
 HOME = Path.home()
+
+
+@pytest.mark.parametrize(
+    'string, match_expected',
+    [
+        ('./foo/bar', True),
+        ('../foo', True),
+        ('./', True),
+        ('../', True),
+        ('.', True),
+        ('..', True),
+        ('foo/bar', False),
+        ('.foo/bar', False),
+        ('foo/..', False),
+    ]
+)
+def test_explicit_relative_path_regex(string: str, match_expected: bool):
+    assert bool(EXPLICIT_RELATIVE_PATH_REGEX.match(string)) is match_expected
 
 
 @pytest.mark.parametrize(
@@ -105,8 +124,8 @@ def test_get_remote_workflow_run_dirs(
     'func, tail1',
     [(get_workflow_run_dir, ''),
      (get_workflow_run_job_dir, '/log/job'),
-     (get_workflow_run_log_dir, '/log/workflow'),
-     (get_workflow_run_config_log_dir, '/log/flow-config'),
+     (get_workflow_run_scheduler_log_dir, '/log/scheduler'),
+     (get_workflow_run_config_log_dir, '/log/config'),
      (get_workflow_run_share_dir, '/share'),
      (get_workflow_run_work_dir, '/work')]
 )
@@ -134,9 +153,9 @@ def test_get_workflow_run_dirs(
 
 @pytest.mark.parametrize(
     'func, tail',
-    [(get_workflow_run_log_name, '/log/workflow/log'),
-     (get_workflow_run_pub_db_name, '/log/db'),
-     (get_workflow_test_log_name, '/log/workflow/reftest.log')]
+    [(get_workflow_run_scheduler_log_path, '/log/scheduler/log'),
+     (get_workflow_run_pub_db_path, '/log/db'),
+     (get_workflow_test_log_path, '/log/scheduler/reftest.log')]
 )
 def test_get_workflow_run_names(func: Callable, tail: str) -> None:
     """Usage of get_workflow_run_*name.
@@ -164,9 +183,9 @@ def test_make_workflow_run_tree(
     # Check that directories have been created
     for subdir in [
         '',
-        'log/workflow',
+        'log/scheduler',
         'log/job',
-        'log/flow-config',
+        'log/config',
         'share',
         'work'
     ]:
@@ -274,7 +293,7 @@ def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
     mocked_get_workflow_run_dir.return_value = "rund"
     for v in ('DOH', 'DEE'):
         monkeypatch.setenv(v, 'expanded')
-    mocked_make_symlink = monkeymock('cylc.flow.pathutil.make_symlink')
+    mocked_make_symlink = monkeymock('cylc.flow.pathutil.make_symlink_dir')
 
     make_localhost_symlinks('rund', 'workflow')
     mocked_make_symlink.assert_has_calls([
@@ -284,24 +303,26 @@ def test_make_localhost_symlinks_calls_make_symlink_for_each_key_value_dir(
     ])
 
 
-@patch('os.path.expandvars')
 @patch('cylc.flow.pathutil.get_workflow_run_dir')
-@patch('cylc.flow.pathutil.make_symlink')
+@patch('cylc.flow.pathutil.make_symlink_dir')
 @patch('cylc.flow.pathutil.get_dirs_to_symlink')
 def test_incorrect_environment_variables_raise_error(
-        mocked_dirs_to_symlink,
-        mocked_make_symlink,
-        mocked_get_workflow_run_dir, mocked_expandvars):
+    mocked_dirs_to_symlink,
+    mocked_make_symlink,
+    mocked_get_workflow_run_dir,
+    monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.delenv('doh', raising=False)
     mocked_dirs_to_symlink.return_value = {
         'run': '$doh/cylc-run/test_workflow'}
     mocked_get_workflow_run_dir.return_value = "rund"
-    mocked_expandvars.return_value = "$doh"
 
-    with pytest.raises(WorkflowFilesError, match=r"Unable to create symlink"
-                       r" to \$doh. '\$doh/cylc-run/test_workflow' contains an"
-                       " invalid environment variable. Please check "
-                       "configuration."):
+    with pytest.raises(WorkflowFilesError) as excinfo:
         make_localhost_symlinks('rund', 'test_workflow')
+    assert (
+        "'$doh/cylc-run/test_workflow' contains an invalid "
+        "environment variable"
+    ) in str(excinfo.value)
 
 
 @pytest.mark.parametrize(
@@ -494,7 +515,7 @@ def test_parse_rm_dirs(dirs: List[str], expected: Set[str]):
 )
 def test_parse_rm_dirs__bad(dirs: List[str], err_msg: str):
     """Test parse_dirs() with bad inputs"""
-    with pytest.raises(UserInputError) as exc:
+    with pytest.raises(InputError) as exc:
         parse_rm_dirs(dirs)
     assert err_msg in str(exc.value)
 

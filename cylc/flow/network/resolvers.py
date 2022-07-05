@@ -194,7 +194,10 @@ def node_ids_filter(tokens, state, items) -> bool:
             )
             # match cycle/task/job state
             and (
-                not get_state_from_selectors(item)
+                not (
+                    state is not None
+                    and get_state_from_selectors(item)
+                )
                 or get_state_from_selectors(item) == state
             )
         )
@@ -202,8 +205,18 @@ def node_ids_filter(tokens, state, items) -> bool:
     )
 
 
-def node_filter(node, node_type, args):
-    """Filter nodes based on attribute arguments"""
+def node_filter(node, node_type, args, state):
+    """Filter nodes based on attribute arguments.
+
+    Args:
+        node: The node to filter (from the data or delta store).
+        node_type: The type of the node being filtered.
+        args: The query arguments.
+        state: The state of the node that is being filtered.
+            Note: can be None for non-tasks e.g. task definitions where
+            state filtering does not apply.
+
+    """
     tokens: Tokens
     if node_type in DEF_TYPES:
         # namespace nodes don't fit into the universal ID scheme so must
@@ -216,20 +229,17 @@ def node_filter(node, node_type, args):
     else:
         # live objects can be represented by a universal ID
         tokens = Tokens(node.id)
-    state = getattr(node, 'state', None)
     return (
         (
-            args.get('ghosts')
-            or state
-            or node_type in DEF_TYPES
-        )
-        and (
-            not args.get('states')
+            (
+                state is None
+                or not args.get('states')
+            )
             or state in args['states']
         )
-        and not (
-            args.get('exstates')
-            and state in args['exstates']
+        and (
+            not args.get('exstates')
+            or state not in args['exstates']
         )
         and (
             args.get('is_held') is None
@@ -252,9 +262,9 @@ def node_filter(node, node_type, args):
             not args.get('ids')
             or node_ids_filter(tokens, state, args['ids'])
         )
-        and not (
-            args.get('exids')
-            and node_ids_filter(tokens, state, args['exids'])
+        and (
+            not args.get('exids')
+            or not node_ids_filter(tokens, state, args['exids'])
         )
     )
 
@@ -329,14 +339,36 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             args)
 
     # nodes
+    def get_node_state(self, node, node_type):
+        """Return state, from node or data-store."""
+        if node_type in DEF_TYPES:
+            return None
+        # NOTE: dont access "state" directly as the attribute might not exist
+        with suppress(Exception):
+            return (
+                # try to retrieve the state from the node
+                # (could be a delta-store node which might not have a state)
+                getattr(node, 'state', None)
+                # fall back to the data store (because this could be a
+                # delta-store node which might not have the state field set)
+                or self.data_store_mgr.data[
+                    Tokens(node.id).workflow_id
+                ][node_type][node.id].state
+            )
+
     async def get_nodes_all(self, node_type, args):
         """Return nodes from all workflows, filter by args."""
         return sort_elements(
             [
-                n
+                node
                 for flow in await self.get_workflows_data(args)
-                for n in flow.get(node_type).values()
-                if node_filter(n, node_type, args)
+                for node in flow.get(node_type).values()
+                if node_filter(
+                    node,
+                    node_type,
+                    args,
+                    self.get_node_state(node, node_type)
+                )
             ],
             args,
         )
@@ -365,7 +397,12 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                 for flow in flow_data
                 for node_type in node_types
                 for node in get_data_elements(flow, nat_ids, node_type)
-                if node_filter(node, node_type, args)
+                if node_filter(
+                    node,
+                    node_type,
+                    args,
+                    self.get_node_state(node, node_type)
+                )
             ],
             args,
         )
@@ -813,23 +850,25 @@ class Resolvers(BaseResolvers):
 
     def force_trigger_tasks(
         self,
-        tasks=None,
-        reflow=False,
-        flow_descr=None,
+        tasks: Iterable[str],
+        flow: Iterable[str],
+        flow_wait: bool,
+        flow_descr: Optional[str] = None,
     ):
         """Trigger submission of task jobs where possible.
 
         Args:
             tasks (list):
                 List of identifiers or task globs.
-            reflow (bool):
-                Start new flow from triggered tasks.
+            flow (list):
+                Flow ownership of triggered tasks.
+            flow_wait (bool):
+                Wait for flows before continuing
             flow_descr (str):
                 Description of new flow.
 
         Returns:
             tuple: (outcome, message)
-
             outcome (bool)
                 True if command successfully queued.
             message (str)
@@ -841,7 +880,8 @@ class Resolvers(BaseResolvers):
                 "force_trigger_tasks",
                 (tasks or [],),
                 {
-                    "reflow": reflow,
+                    "flow": flow,
+                    "flow_wait": flow_wait,
                     "flow_descr": flow_descr
                 }
             ),

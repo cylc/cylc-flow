@@ -11,11 +11,6 @@
     initial cycle point = 20100101T0000Z
     final cycle point   = 20100102T0000Z
     [[graph]]
-        # TODO SOD: original graph (and reference log) changed to remove the
-        # intercycle dependence. This could be restored now that we can trigger
-        # without reflow in SoD.
-        #   T00, T06, T12, T18 = bar[-PT6H] => foo => bar
-        #   T18 = inserter => bar
         T00, T06, T12, T18 = foo => bar
         T18 = inserter => bar
 
@@ -26,5 +21,5 @@
     [[foo,bar]]
     [[inserter]]
         script = """
-            cylc trigger --reflow --meta="other" "$CYLC_WORKFLOW_ID//20100101T1200Z/foo"
+            cylc trigger --flow=new --meta="other" "$CYLC_WORKFLOW_ID//20100101T1200Z/foo"
         """

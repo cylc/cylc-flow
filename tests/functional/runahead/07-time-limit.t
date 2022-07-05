@@ -35,7 +35,7 @@ run_ok "$TEST_NAME" sqlite3 "$DB" \
 cmp_ok "${TEST_NAME}.stdout" <<< "20200101T0400Z"
 #-------------------------------------------------------------------------------
 grep_ok 'Workflow shutting down - "abort on stall timeout" is set' \
-  "${WORKFLOW_RUN_DIR}/log/workflow/log"
+  "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 #-------------------------------------------------------------------------------
 purge
 exit

@@ -24,7 +24,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
-LOG="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 run_ok "${TEST_NAME_BASE}-log-1" \
     grep -F '[jobs-poll err] 1/t1/01/job.status: incomplete job runner info' "${LOG}"
 run_ok "${TEST_NAME_BASE}-log-2" \

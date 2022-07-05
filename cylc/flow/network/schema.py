@@ -39,6 +39,7 @@ from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
 from cylc.flow.broadcast_mgr import ALL_CYCLE_POINTS_STRS, addict
+from cylc.flow.flow_mgr import FLOW_ALL, FLOW_NEW, FLOW_NONE
 from cylc.flow.id import Tokens
 from cylc.flow.task_outputs import SORT_ORDERS
 from cylc.flow.task_state import (
@@ -148,7 +149,6 @@ class SortArgs(InputObjectType):
     reverse = Boolean(default_value=False)
 
 
-GHOSTS_DEFAULT = Boolean(default_value=False)
 STRIP_NULL_DEFAULT = Argument(
     Boolean, description="A flag that when enabled strips out those fields "
                          "not set in the protobuf object. And when this flag "
@@ -633,7 +633,6 @@ class Workflow(ObjectType):
         lambda: TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -642,7 +641,6 @@ class Workflow(ObjectType):
         lambda: FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -665,7 +663,6 @@ class Workflow(ObjectType):
     nodes_edges = Field(
         lambda: NodesEdges,
         args=NODES_EDGES_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -757,7 +754,6 @@ class Task(ObjectType):
         lambda: TaskProxy,
         description="""Associated cycle point proxies""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -865,6 +861,7 @@ class TaskProxy(ObjectType):
     is_queued = Boolean()
     is_runahead = Boolean()
     flow_nums = String()
+    flow_wait = Boolean()
     depth = Int()
     job_submits = Int()
     outputs = graphene.List(
@@ -912,7 +909,6 @@ class TaskProxy(ObjectType):
         lambda: FamilyProxy,
         description="""Task parents.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -921,7 +917,6 @@ class TaskProxy(ObjectType):
         lambda: FamilyProxy,
         description="""Task first parent.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -930,7 +925,6 @@ class TaskProxy(ObjectType):
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -948,7 +942,6 @@ class Family(ObjectType):
         lambda: FamilyProxy,
         description="""Associated cycle point proxies""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -1014,7 +1007,6 @@ class FamilyProxy(ObjectType):
         TaskProxy,
         description="""Descendant task proxies.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -1023,7 +1015,6 @@ class FamilyProxy(ObjectType):
         lambda: FamilyProxy,
         description="""Descendant family proxies.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -1032,7 +1023,6 @@ class FamilyProxy(ObjectType):
         lambda: FamilyProxy,
         description="""Task first parent.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -1041,7 +1031,6 @@ class FamilyProxy(ObjectType):
         lambda: FamilyProxy,
         description="""First parent ancestors.""",
         args=PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
@@ -1152,7 +1141,6 @@ class Queries(ObjectType):
         TaskProxy,
         description=TaskProxy._meta.description,
         args=ALL_PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
     family = Field(
@@ -1177,7 +1165,6 @@ class Queries(ObjectType):
         FamilyProxy,
         description=FamilyProxy._meta.description,
         args=ALL_PROXY_ARGS,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_all)
     edges = graphene.List(
@@ -1190,7 +1177,6 @@ class Queries(ObjectType):
         NodesEdges,
         description=NodesEdges._meta.description,
         args=NODES_EDGES_ARGS_ALL,
-        ghosts=GHOSTS_DEFAULT,
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_nodes_edges)
 
@@ -1402,6 +1388,12 @@ class WorkflowStopMode(graphene.Enum):
     @property
     def description(self):
         return StopMode(self.value).describe()
+
+
+class Flow(String):
+    __doc__ = (
+        f"""An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
+    )
 
 
 # Mutations:
@@ -1742,6 +1734,27 @@ class TaskMutation:
     result = GenericScalar()
 
 
+class FlowMutationArguments:
+    flow = graphene.List(
+        graphene.NonNull(Flow),
+        default_value=[FLOW_ALL],
+        description=sstrip(f'''
+            The flow(s) to trigger these tasks in.
+
+            This should be a list of flow numbers OR a single-item list
+            containing one of the following three strings:
+
+            Alternatively this may be a single-item list containing one of
+            the following values:
+
+            * {FLOW_ALL} - Triggered tasks belong to all active flows
+              (default).
+            * {FLOW_NEW} - Triggered tasks are assigned to a new flow.
+            * {FLOW_NONE} - Triggered tasks do not belong to any flow.
+        ''')
+    )
+
+
 class Hold(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
@@ -1832,9 +1845,30 @@ class Trigger(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
-    class Arguments(TaskMutation.Arguments):
-        reflow = Boolean()
-        flow_descr = String()
+    class Arguments(TaskMutation.Arguments, FlowMutationArguments):
+        flow_wait = Boolean(
+            default_value=False,
+            description=sstrip('''
+                Should the workflow "wait" or "continue on" from this task?
+
+                If `false` the scheduler will spawn and run downstream tasks
+                as normal (default).
+
+                If `true` the scheduler will not spawn the downstream tasks
+                unless it has been caught by the same flow at a later time.
+
+                For example you might set this to True to trigger a task
+                ahead of a flow, where you don't want the scheduled to
+                "continue on" from this task until the flow has caught up
+                with it.
+            ''')
+        )
+        flow_descr = String(
+            description=sstrip('''
+                If starting a new flow, this field can be used to provide the
+                new flow with a description for later reference.
+            ''')
+        )
 
 
 def _mut_field(cls):
@@ -1943,7 +1977,6 @@ class Delta(Interface):
         FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
-        ghosts=Boolean(default_value=True),
         strip_null=Boolean(),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
@@ -1971,7 +2004,6 @@ class Delta(Interface):
         TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
-        ghosts=Boolean(default_value=True),
         strip_null=Boolean(),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
@@ -2020,7 +2052,6 @@ class Updated(ObjectType):
         FamilyProxy,
         description="""Family cycle instances.""",
         args=PROXY_ARGS,
-        ghosts=Boolean(default_value=False),
         strip_null=Boolean(),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
@@ -2048,7 +2079,6 @@ class Updated(ObjectType):
         TaskProxy,
         description="""Task cycle instances.""",
         args=PROXY_ARGS,
-        ghosts=Boolean(default_value=False),
         strip_null=Boolean(),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_UPDATED),
@@ -2172,7 +2202,6 @@ class Subscriptions(ObjectType):
         TaskProxy,
         description=TaskProxy._meta.description,
         id=ID(required=True),
-        ghosts=Boolean(default_value=True),
         strip_null=Boolean(default_value=True),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
@@ -2184,7 +2213,6 @@ class Subscriptions(ObjectType):
         TaskProxy,
         description=TaskProxy._meta.description,
         args=ALL_PROXY_ARGS,
-        ghosts=Boolean(default_value=True),
         strip_null=Boolean(default_value=True),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
@@ -2218,7 +2246,6 @@ class Subscriptions(ObjectType):
         FamilyProxy,
         description=FamilyProxy._meta.description,
         id=ID(required=True),
-        ghosts=Boolean(default_value=True),
         strip_null=Boolean(default_value=True),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
@@ -2230,7 +2257,6 @@ class Subscriptions(ObjectType):
         FamilyProxy,
         description=FamilyProxy._meta.description,
         args=ALL_PROXY_ARGS,
-        ghosts=Boolean(default_value=True),
         strip_null=Boolean(default_value=True),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),
@@ -2253,7 +2279,6 @@ class Subscriptions(ObjectType):
         NodesEdges,
         description=NodesEdges._meta.description,
         args=NODES_EDGES_ARGS_ALL,
-        ghosts=Boolean(default_value=True),
         strip_null=Boolean(default_value=True),
         delta_store=Boolean(default_value=True),
         delta_type=String(default_value=DELTA_ADDED),

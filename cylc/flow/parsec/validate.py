@@ -30,7 +30,7 @@ from textwrap import dedent
 from metomi.isodatetime.data import Duration, TimePoint, Calendar
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.parsers import TimePointParser, DurationParser
-from metomi.isodatetime.exceptions import IsodatetimeError
+from metomi.isodatetime.exceptions import IsodatetimeError, ISO8601SyntaxError
 
 from cylc.flow.parsec.exceptions import (
     ListValueError, IllegalValueError, IllegalItemError)
@@ -260,8 +260,8 @@ class ParsecValidator:
             return None
         try:
             return float(value)
-        except ValueError:
-            raise IllegalValueError('float', keys, value)
+        except ValueError as exc:
+            raise IllegalValueError('float', keys, value, exc=exc)
 
     @classmethod
     def coerce_float_list(cls, value, keys):
@@ -289,8 +289,8 @@ class ParsecValidator:
             return None
         try:
             return int(value)
-        except ValueError:
-            raise IllegalValueError('int', keys, value)
+        except ValueError as exc:
+            raise IllegalValueError('int', keys, value, exc=exc)
 
     @classmethod
     def coerce_int_list(cls, value, keys):
@@ -783,12 +783,17 @@ class CylcConfigValidator(ParsecValidator):
                 else:
                     parser.parse(value)
                 return value
-            except IsodatetimeError:
-                raise IllegalValueError("cycle point", keys, value)
+            except IsodatetimeError as exc:
+                raise IllegalValueError('cycle point', keys, value, exc=exc)
         try:
             TimePointParser().parse(value)
-        except IsodatetimeError:
-            raise IllegalValueError('cycle point', keys, value)
+        except IsodatetimeError as exc:
+            if isinstance(exc, ISO8601SyntaxError):
+                # Don't know cycling mode yet, so override ISO8601-specific msg
+                details = {'msg': "Invalid cycle point"}
+            else:
+                details = {'exc': exc}
+            raise IllegalValueError('cycle point', keys, value, **details)
         return value
 
     @classmethod
@@ -827,8 +832,10 @@ class CylcConfigValidator(ParsecValidator):
         if '%' in value:
             try:
                 TimePointDumper().strftime(test_timepoint, value)
-            except IsodatetimeError:
-                raise IllegalValueError('cycle point format', keys, value)
+            except IsodatetimeError as exc:
+                raise IllegalValueError(
+                    'cycle point format', keys, value, exc=exc
+                )
             return value
         if 'X' in value:
             for i in range(1, 101):
@@ -842,8 +849,8 @@ class CylcConfigValidator(ParsecValidator):
         dumper = TimePointDumper()
         try:
             dumper.dump(test_timepoint, value)
-        except IsodatetimeError:
-            raise IllegalValueError('cycle point format', keys, value)
+        except IsodatetimeError as exc:
+            raise IllegalValueError('cycle point format', keys, value, exc=exc)
         return value
 
     @classmethod
@@ -874,9 +881,10 @@ class CylcConfigValidator(ParsecValidator):
         parser = TimePointParser(allow_only_basic=True)
         try:
             parser.parse(test_timepoint_string)
-        except ValueError:  # not IsodatetimeError as too specific
+        except ValueError as exc:  # not IsodatetimeError as too specific
             raise IllegalValueError(
-                'cycle point time zone format', keys, value)
+                'cycle point time zone format', keys, value, exc=exc
+            )
         return value
 
     @classmethod
@@ -894,8 +902,8 @@ class CylcConfigValidator(ParsecValidator):
             return None
         try:
             interval = DurationParser().parse(value)
-        except IsodatetimeError:
-            raise IllegalValueError("ISO 8601 interval", keys, value)
+        except IsodatetimeError as exc:
+            raise IllegalValueError("ISO 8601 interval", keys, value, exc=exc)
         days, seconds = interval.get_days_and_seconds()
         return DurationFloat(
             days * Calendar.default().SECONDS_IN_DAY + seconds)

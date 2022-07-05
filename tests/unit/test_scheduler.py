@@ -18,98 +18,13 @@
 import pytest
 from types import SimpleNamespace
 from typing import Any, List
-from unittest.mock import create_autospec, Mock, patch
+from unittest.mock import Mock
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.scheduler_cli import RunOptions
 
 Fixture = Any
-
-
-@pytest.mark.parametrize(
-    'options, expected',
-    [
-        pytest.param(
-            {
-                'is_restart': True,
-                'cli_stop_point': 'reload',
-                'db_stop_point': '1991'  # DB value should be ignored
-            },
-            '1993',
-            id="From cfg if --stopcp=reload on restart"
-        ),
-        pytest.param(
-            {
-                'cli_stop_point': '1066'
-            },
-            '1066',
-            id="From CLI if --stopcp used"
-        ),
-        pytest.param(
-            {
-                'is_restart': True,
-                'cli_stop_point': '1066',
-                'db_stop_point': '1991'  # DB value should be ignored
-            },
-            '1066',
-            id="From CLI if --stopcp used on restart"
-        ),
-        pytest.param(
-            {
-                'is_restart': True,
-                'db_stop_point': '1991'
-            },
-            '1991',
-            id="From DB on restart"
-        ),
-        pytest.param(
-            {},
-            '1993',
-            id="From flow.cylc value by default"
-        ),
-        pytest.param(
-            {
-                'cfg': {
-                    'scheduling': {}
-                }
-            },
-            None,
-            id="None if not set anywhere"
-        )
-    ]
-)
-@patch('cylc.flow.scheduler.get_point')
-def test_process_stop_cycle_point(get_point, options, expected):
-    # Mock the get_point function - we don't care here
-    get_point.return_value = None
-    inputs = {
-        'is_restart': False,
-        'cfg': {
-            'scheduling': {
-                'stop after cycle point': '1993'
-            }
-        },
-        'final_point': '2000',
-    }
-    inputs.update(options)
-
-    # Create a mock scheduler object and assign values to it.
-    scheduler = create_autospec(Scheduler)
-    scheduler.is_restart = inputs.get('is_restart')
-    scheduler.options = RunOptions(stopcp=inputs.get('cli_stop_point'))
-    # Set-up fake config object
-    scheduler.config = SimpleNamespace(
-        final_point=inputs.get('final_point'),
-        cfg=inputs.get('cfg')
-    )
-    # Set up fake taskpool
-    scheduler.pool = Mock(
-        stop_point=inputs.get('db_stop_point')
-    )
-
-    Scheduler.process_stop_cycle_point(scheduler)
-    assert scheduler.options.stopcp == expected
 
 
 @pytest.mark.parametrize(
@@ -144,6 +59,6 @@ def test_check_startup_opts(
     for opt in opts_to_test:
         mocked_scheduler = Mock(is_restart=is_restart)
         mocked_scheduler.options = SimpleNamespace(**{opt: 'reload'})
-        with pytest.raises(UserInputError) as excinfo:
+        with pytest.raises(InputError) as excinfo:
             Scheduler._check_startup_opts(mocked_scheduler)
         assert(err_msg.format(opt) in str(excinfo))

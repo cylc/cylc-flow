@@ -52,7 +52,7 @@ $(declare -f poll_grep)
 if (( CYLC_TASK_CYCLE_POINT == CYLC_WORKFLOW_INITIAL_CYCLE_POINT )); then
    sed -i 's/^.*remove*$//g' "\${CYLC_WORKFLOW_RUN_DIR}/flow.cylc"
    cylc reload "\${CYLC_WORKFLOW_ID}"
-   poll_grep -F 'Reload complete' "\${CYLC_WORKFLOW_RUN_DIR}/log/workflow/log"
+   poll_grep -F 'Reload complete' "\${CYLC_WORKFLOW_RUN_DIR}/log/scheduler/log"
    # kill the long-running orphaned bar task.
    kill "\$(cat "\${CYLC_WORKFLOW_RUN_DIR}/work/1/bar/pid")"
 fi

@@ -46,15 +46,14 @@ class WorkflowPublisher(ZMQSocketBase):
     This class contains the logic for the ZMQ message Publisher.
 
     Usage:
-        * Define ...
+        * Call publish to send items to subscribers.
 
     """
 
-    def __init__(self, workflow, context=None, barrier=None,
-                 threaded=True, daemon=False):
-        super().__init__(zmq.PUB, bind=True, context=context,
-                         barrier=barrier, threaded=threaded, daemon=daemon)
-        self.workflow = workflow
+    def __init__(self, server, context=None):
+        super().__init__(zmq.PUB, bind=True, context=context)
+        self.server = server
+        self.workflow = server.schd.workflow
         self.topics = set()
 
     def _socket_options(self):

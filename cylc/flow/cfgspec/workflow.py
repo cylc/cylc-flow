@@ -16,7 +16,6 @@
 """Define all legal items and values for cylc workflow definition files."""
 
 import contextlib
-from itertools import product
 import re
 from textwrap import dedent
 from typing import Any, Dict, Optional, Set
@@ -24,7 +23,28 @@ from typing import Any, Dict, Optional, Set
 from metomi.isodatetime.data import Calendar
 
 from cylc.flow import LOG
-from cylc.flow.cfgspec.globalcfg import EVENTS_DESCR, REPLACES
+from cylc.flow.cfgspec.globalcfg import (
+    DIRECTIVES_DESCR,
+    DIRECTIVES_ITEM_DESCR,
+    EVENTS_SETTINGS,
+    EXECUTION_POLL_DESCR,
+    MAIL_DESCR,
+    MAIL_FOOTER_DESCR,
+    MAIL_FROM_DESCR,
+    MAIL_INTERVAL_DESCR,
+    MAIL_TO_DESCR,
+    MAIN_LOOP_DESCR,
+    MAIN_LOOP_PLUGIN_DESCR,
+    MAIN_LOOP_PLUGIN_INTERVAL_DESCR,
+    REPLACES,
+    SCHEDULER_DESCR,
+    SUBMISSION_POLL_DESCR,
+    SUBMISSION_RETY_DESCR,
+    TASK_EVENTS_DESCR,
+    TASK_EVENTS_SETTINGS,
+    UTC_MODE_DESCR,
+)
+import cylc.flow.flags
 from cylc.flow.parsec.exceptions import UpgradeError
 from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -39,34 +59,29 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
-
 # Cylc8 Deprecation note.
-DEPRECATION_WARN = '''
-.. deprecated:: 8.0.0
-
+REPLACED_BY_PLATFORMS = '''
 .. warning::
 
    Deprecated section kept for compatibility with Cylc 7 workflow definitions.
 
-   **It will not be available at Cylc 9**.
+   This will be removed in a future version of Cylc 8.
 
    Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
 '''
 
-DEPRECATED_IN_FAVOUR_OF_PLATFORMS = '''
-.. deprecated:: 8.0.0
 
-.. warning::
-
-   This config item has been moved to a platform setting in the
-   :cylc:conf:`global.cylc[platforms]` section. It will be used by the
-   automated platform upgrade mechanism at Cylc 8, and deprecated
-   at Cylc 9.
-
-   Ideally, as a user this should be set by your site admins
-   and you will only need to pick a suitable
-   :cylc:conf:`flow.cylc[runtime][<namespace>]platform`.
-'''
+def global_default(text: str, config_path: str) -> str:
+    """Insert a link to this config item's global counterpart after the first
+    paragraph of the description text. Also dedents.
+    """
+    first, sep, rest = dedent(text).partition('\n\n')
+    return (
+        f"{first}\n\n"
+        "The default value is set in the global config: "
+        f":cylc:conf:`global.cylc{config_path}`."
+        f"{sep}{rest}"
+    )
 
 
 def get_script_common_text(this: str, example: Optional[str] = None):
@@ -77,17 +92,17 @@ def get_script_common_text(this: str, example: Optional[str] = None):
     Other user-defined script items:
 
     ''')
-    for item in [
+    for item in (
         'init-script', 'env-script', 'pre-script', 'script', 'post-script',
         'err-script', 'exit-script'
-    ]:
+    ):
         if item != this:
             text += f"* :cylc:conf:`[..]{item}`\n"
     text += dedent(f'''
 
- Example::
+    Example::
 
-        {example if example else 'echo "Hello World"'}
+       {example if example else 'echo "Hello World"'}
     ''')
     return text
 
@@ -105,9 +120,9 @@ with Conf(
         .. versionchanged:: 8.0.0
 
            The configuration file was previously named ``suite.rc``, but that
-           name is now deprecated. Please take action on any deprecation
-           warnings before renaming ``suite.rc`` configuration files
-           to ``flow.cylc``.
+           name is now deprecated.
+           The ``suite.rc`` file name now activates :ref:`cylc_7_compat_mode`.
+           Rename to ``flow.cylc`` to turn off compatibility mode.
     '''
 ) as SPEC:
 
@@ -137,9 +152,16 @@ with Conf(
         Conf('URL', VDR.V_STRING, '', desc='''
             A web URL to workflow documentation.
 
-            It can be retrieved at run time with the ``cylc show`` command.
-            The template ``%(workflow_name)s`` will be replaced with the actual
-            workflow name.
+            The URL can be retrieved at run time with the ``cylc show``
+            command.
+
+            The template variable ``%(workflow)s`` will be replaced with the
+            actual workflow ID.
+
+            .. deprecated:: 8.0.0
+
+               The ``%(suite_name)s`` template variable is deprecated, please
+               use ``%(workflow)s``.
 
             .. seealso::
 
@@ -147,7 +169,7 @@ with Conf(
 
             Example:
 
-            ``http://my-site.com/workflows/%(workflow_name)s/index.html``
+            ``http://my-site.com/workflows/%(workflow)s/index.html``
 
         ''')
         Conf('<custom metadata>', VDR.V_STRING, '', desc='''
@@ -161,20 +183,16 @@ with Conf(
             "workflow-priority". An event handler could then respond to
             failure events in a way set by "workflow-priority".
         ''')
-    with Conf('scheduler', desc=f'''
-        Settings for the scheduler.
-        {REPLACES} ``[cylc]``
-    '''):
-        Conf('UTC mode', VDR.V_BOOLEAN, desc='''
-            If true, workflow will use UTC as the time zone and for
-            logging timestamps.
-
-        ''')
+    with Conf('scheduler', desc=(
+        global_default(SCHEDULER_DESCR, "[scheduler]")
+    )):
+        Conf('UTC mode', VDR.V_BOOLEAN, desc=(
+            global_default(UTC_MODE_DESCR, "[scheduler]UTC mode")
+        ))
 
         Conf('allow implicit tasks', VDR.V_BOOLEAN, default=False, desc='''
-            Allow tasks not defined in :cylc:conf:`flow.cylc[runtime]`.
-
-            .. versionadded:: 8.0.0
+            Allow tasks in the graph that are not defined in
+            :cylc:conf:`flow.cylc[runtime]`.
 
             :term:`Implicit tasks <implicit task>` are tasks without explicit
             definitions in :cylc:conf:`flow.cylc[runtime]`. By default,
@@ -185,30 +203,30 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-            In :ref:`Cylc 7 backward compatibility mode <Cylc_7_compat_mode>`,
-            implicit tasks are still allowed unless you explicitly set
-            this to ``False``.
+            .. admonition:: Cylc 7 compatibility mode
+
+               In :ref:`Cylc_7_compat_mode`, implicit tasks are still
+               allowed unless you explicitly set this to ``False``, or
+               unless a ``rose-suite.conf`` file is present (to maintain
+               backward compatibility with Rose 2019).
+
+            .. versionadded:: 8.0.0
         ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''
             Configure directories and files to be installed on remote hosts.
 
-            .. versionadded:: 8.0.0
-
             .. note::
 
                The following directories are installed by default:
 
-                * app
-                * bin
-                * etc
-                * lib
-
-               And include the server.key file (from the .service
-               directory), this is required for authentication.
+               * ``app/``
+               * ``bin/``
+               * ``etc/``
+               * ``lib/``
 
                These should be located in the top level of your Cylc workflow,
-               i.e. the directory that contains your flow.cylc file.
+               i.e. the directory that contains your ``flow.cylc`` file.
 
             Directories must have a trailing slash.
             For example, to add the following items to your file installation:
@@ -216,53 +234,64 @@ with Conf(
             .. code-block:: none
 
                 ~/cylc-run/workflow_x
-                |__dir1/
-                |__dir2/
-                |__file1
-                |__file2
+                |-- dir1/
+                |-- dir2/
+                |-- file1
+                `-- file2
 
             .. code-block:: cylc
 
                 [scheduler]
                     install = dir/, dir2/, file1, file2
-                ''')
+
+            .. versionadded:: 8.0.0
+        ''')
 
         Conf('cycle point format', VDR.V_CYCLE_POINT_FORMAT, desc='''
-            Set the date-time format that Cylc uses for
+            Set the datetime format and precision that Cylc uses for
             :term:`cycle points<cycle point>` in :term:`datetime cycling`
             workflows.
 
-            To alter the timezone used in the date-time cycle point
-            format, see :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-            To alter the number of expanded year digits (for years
-            below 0 or above 9999), see
-            :cylc:conf:`flow.cylc
-            [scheduler]cycle point num expanded year digits`.
+            .. seealso::
 
-            Cylc usually uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
+               * To alter the time zone used in the datetime cycle point
+                 format, see
+                 :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
+               * To alter the number of expanded year digits (for years
+                 below 0 or above 9999), see
+                 :cylc:conf:`flow.cylc
+                 [scheduler]cycle point num expanded year digits`.
+
+            By default, Cylc uses a ``CCYYMMDDThhmmZ`` (``Z`` in the special
             case of UTC) or ``CCYYMMDDThhmm±hhmm`` format for writing
-            date-time cycle points, following the :term:`ISO8601` standard.
+            datetime cycle points, following the :term:`ISO 8601` standard.
 
             You may use the `isodatetime library's syntax
             <https://github.com/metomi/isodatetime#dates-and-times>`_ to set
-            the cycle point format, as demonstrated in the previous paragraph.
+            the cycle point format.
 
             You can also use a subset of the strptime/strftime POSIX
             standard - supported tokens are ``%F``, ``%H``, ``%M``, ``%S``,
             ``%Y``, ``%d``, ``%j``, ``%m``, ``%s``, ``%z``.
 
-            The time zone you specify here will be used only for
-            writing/dumping cycle points. Cycle points that are input without
-            time zones will default to UTC (``Z``) unless
-            :cylc:conf:`flow.cylc[scheduler]cycle point time zone` or
-            is set or
-            :ref:`Cylc_7_compat_mode` is enabled.
-            Not specifying a time zone here is inadvisable as it leads to
-            ambiguity.
+            If specifying a format here, we recommend including a time zone -
+            this will be used for displaying cycle points only. To avoid
+            confusion, we recommend using the same time zone as
+            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
 
-            The ISO8601 extended date-time format cannot be used
-            (``CCYY-MM-DDThh:mm``) as cycle points are used in job-log and work
+            The ISO 8601 *extended* datetime format (``CCYY-MM-DDThh:mm``)
+            cannot be used, as cycle points are used in job-log and work
             directory paths where the ":" character is invalid.
+
+            .. warning::
+
+               The smallest unit included in the format sets the precision
+               of cycle points in the workflow.
+               If the precision is lower than the smallest unit
+               in a graph recurrence, the workflow will fail.
+               For example, if you set a format of ``CCYY``, and have a
+               recurrence ``R/2000/P8M``, then both the first and second
+               cycle points will be ``2000``, which is invalid.
         ''')
         Conf('cycle point num expanded year digits', VDR.V_INTEGER, 0, desc='''
             Enable negative years or years more than four digits long.
@@ -280,8 +309,49 @@ with Conf(
             This number defaults to 0 (no sign or extra digits used).
         ''')
         Conf('cycle point time zone', VDR.V_CYCLE_POINT_TIME_ZONE, desc='''
-            Time zone to be used for date-time cycle points if not otherwise
+            Time zone to be used for datetime cycle points if not otherwise
             specified.
+
+            This time zone will be used for
+            datetime cycle point dumping and inferring the time zone of cycle
+            points that are input without time zones.
+
+            Time zones should be expressed as :term:`ISO8601` time zone offsets
+            from UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``,
+            with ``Z`` representing the special case of ``+0000`` (UTC).
+            Cycle points will be converted to the time zone you give and will
+            be represented with this string at the end.
+
+            If not set, it will default to UTC (``Z``).
+
+            .. admonition:: Cylc 7 compatibility mode
+
+               In :ref:`Cylc_7_compat_mode`, it will default to the
+               local/system time zone, rather than UTC.
+
+            The time zone will persist over reloads/restarts following any
+            local time zone changes (e.g. if the
+            workflow is run during winter time, then stopped, then restarted
+            after summer time has begun, the cycle points will remain
+            in winter time). Changing this setting after the workflow has
+            first started will have no effect.
+
+            If you use a custom
+            :cylc:conf:`flow.cylc[scheduler]cycle point format`, it is a good
+            idea to set the same time zone here. If you specify a different
+            one here, it will only be used for inferring timezone-less cycle
+            points; cycle points will be displayed in the time zone from the
+            cycle point format.
+
+            .. caution::
+
+               It is not recommended to write the time zone with a ":"
+               (e.g. ``+05:30``), given that the time zone is used as part of
+               task output filenames.
+
+            .. seealso::
+
+               :cylc:conf:`flow.cylc[scheduler]UTC mode`
 
             .. versionchanged:: 7.8.9/7.9.4
 
@@ -290,167 +360,93 @@ with Conf(
 
             .. versionchanged:: 8.0.0
 
-               The default timezone is now ``Z`` and not the local time of the
-               first workflow start.
-
-            You may set your own time zone choice here, which will be used for
-            date-time cycle point dumping and inferring the time zone of cycle
-            points that are input without time zones.
-
-            Time zones should be expressed as :term:`ISO8601` time zone offsets
-            from UTC, such as ``+13``, ``+1300``, ``-0500`` or ``+0645``,
-            with ``Z`` representing the special ``+0000`` case. Cycle points
-            will be converted to the time zone you give and will be
-            represented with this string at the end.
-
-            If cycle point time zone isn't set (and
-            :cylc:conf:`flow.cylc[scheduler]UTC mode`
-            is also not set), then it will default to:
-
-            - If your workflow is defined in a ``suite.rc`` file (Cylc 7
-              compatibility mode): local time zone when the workflow started.
-            - If your workflow is defined in a ``flow.cylc`` file: "Z" (UTC)
-
-            This will persist over local time zone changes (e.g. if the
-            workflow is run during winter time, then stopped, then restarted
-            after summer time has begun, the cycle points will remain
-            in winter time).
-
-            If this isn't set, and UTC mode is set to True, then this will
-            default to ``Z``. If you use a custom
-            :cylc:conf:`flow.cylc[scheduler]cycle point format`, it is a good
-            idea to set the same time zone here. If you specify a different
-            one here, it will only be used for inferring timezone-less cycle
-            points, while dumping will use the one from the cycle point format.
-
-            .. caution::
-
-               It is not recommended to write the time zone with a ":"
-               (e.g. ``+05:30``), given that the time zone is used as part of
-               task output filenames.
+               The default time zone is now ``Z`` instead of the local time of
+               the first workflow start.
         ''')
 
         with Conf(   # noqa: SIM117 (keep same format)
             'main loop',
-            desc='''
-                Allows the specification of main loop plugins for Cylc.
-
-                For a list of built in plugins see
-                :ref:`Main Loop Plugins <BuiltInPlugins>`.
-
-                .. versionadded:: 8.0.0
-            '''
+            desc=global_default(MAIN_LOOP_DESCR, "[scheduler][main loop]")
         ):
-            with Conf('<plugin name>'):
-                Conf('interval', VDR.V_INTERVAL, desc='''
-                    Interval (in seconds) at which the plugin is invoked.
-                ''')
+            with Conf('<plugin name>', desc=(
+                global_default(
+                    MAIN_LOOP_PLUGIN_DESCR,
+                    "[scheduler][main loop][<plugin name>]"
+                )
+            )):
+                Conf('interval', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        MAIN_LOOP_PLUGIN_INTERVAL_DESCR,
+                        "[scheduler][main loop][<plugin name>]interval"
+                    )
+                ))
 
         with Conf('events'):
-            # Note: default of None for V_STRING_LIST is used to differentiate
-            # between: value not set vs value set to empty
-            Conf('handlers', VDR.V_STRING_LIST, None, desc='''
-                Configure :term:`event handlers` that run when certain
-                workflow events occur.
+            for item, desc in EVENTS_SETTINGS.items():
+                desc = global_default(desc, f"[scheduler][events]{item}")
+                vdr_type = VDR.V_STRING_LIST
+                default: Any = Conf.UNSET
+                if item in {'handlers', 'handler events', 'mail events'}:
+                    # Note: default of None for V_STRING_LIST is used to
+                    # differentiate between not set vs set to empty
+                    default = None
+                elif item.endswith("handlers"):
+                    desc = desc + '\n\n' + dedent(rf'''
+                        Examples:
 
-                This section configures workflow event handlers; see
-                :cylc:conf:`flow.cylc[runtime][<namespace>][events]` for
-                task event handlers.
+                        .. code-block:: cylc
 
-                Event handlers can be held in the workflow ``bin/`` directory,
-                otherwise it is up to you to ensure their location is in
-                ``$PATH`` (in the shell in which the scheduler runs).
-                They should require little resource to run and return
-                quickly.
-            ''')
-            Conf('handler events', VDR.V_STRING_LIST, None, desc='''
-                Specify the events for which workflow event
-                handlers should be invoked.
-            ''')
-            Conf('mail events', VDR.V_STRING_LIST, None, desc='''
-                Specify the workflow events for which notification emails
-                should be sent.
-            ''')
+                           # configure a single event handler
+                           {item} = echo foo
 
-            for item, desc in EVENTS_DESCR.items():
-                if item.endswith("handlers"):
-                    Conf(item, VDR.V_STRING_LIST, desc=desc)
+                           # provide context to the handler
+                           {item} = echo %(workflow)s
+
+                           # configure multiple event handlers
+                           {item} = \
+                               'echo %(workflow)s, %(event)s', \
+                               'my_exe %(event)s %(message)s' \
+                               'curl -X PUT -d event=%(event)s host:port'
+                    ''')
                 elif item.startswith("abort on"):
-                    Conf(item, VDR.V_BOOLEAN, desc=desc)
+                    vdr_type = VDR.V_BOOLEAN
                 elif item.endswith("timeout"):
-                    Conf(item, VDR.V_INTERVAL, desc=desc)
+                    vdr_type = VDR.V_INTERVAL
+                Conf(item, vdr_type, default, desc=desc)
 
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
                 (For Cylc developers writing a functional tests only)
                 List of tasks that are expected to fail in the test.
             ''')
 
-        with Conf('mail', desc='''
-            Settings for the scheduler to send event emails.
-
-            These settings are used for both workflow and task events.
-
-            .. versionadded:: 8.0.0
-        '''):
-            Conf('footer', VDR.V_STRING, desc=f'''
-                Specify a string or string template for footers of
-                emails sent for both workflow and task events.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES} ``[cylc][events]mail footer``.
-
-                ================ ======================
-                Syntax           Description
-                ================ ======================
-                ``%(host)s``     Workflow host name.
-                ``%(port)s``     Workflow port number.
-                ``%(owner)s``    Workflow owner name.
-                ``%(workflow)s``    Workflow name
-                ================ ======================
-
-                Example:
-
-                ``mail footer = see http://ahost/%(owner)s/notes/%(workflow)s``
-
-            ''')
-            Conf('to', VDR.V_STRING, desc=f'''
-                A list of email addresses that event notifications
-                should be sent to.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[cylc][events]mail to``.
-            ''')
-            Conf('from', VDR.V_STRING, desc=f'''
-                Specify an alternative ``from`` email address for workflow
-                event notifications.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[cylc][events]mail from``.
-            ''')
-            Conf('task event batch interval', VDR.V_INTERVAL, desc=f'''
-                Gather all task event notifications in the given interval
-                into a single email.
-
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[cylc]mail interval``.
-
-                Useful to prevent being overwhelmed by emails.
-            ''')
+        with Conf('mail', desc=(
+            global_default(MAIL_DESCR, "[scheduler][mail]")
+        )):
+            Conf('footer', VDR.V_STRING, desc=(
+                global_default(MAIL_FOOTER_DESCR, "[scheduler][mail]footer")
+            ))
+            Conf('to', VDR.V_STRING, desc=(
+                global_default(MAIL_TO_DESCR, "[scheduler][mail]to")
+            ))
+            Conf('from', VDR.V_STRING, desc=(
+                global_default(MAIL_FROM_DESCR, "[scheduler][mail]from")
+            ))
+            Conf('task event batch interval', VDR.V_INTERVAL, desc=(
+                global_default(
+                    MAIL_INTERVAL_DESCR,
+                    "[scheduler][mail]task event batch interval"
+                )
+            ))
 
     with Conf('task parameters', desc=f'''
         Set task parameters and parameter templates.
 
-        .. versionchanged:: 8.0.0
-
-           {REPLACES}``[cylc][parameters]`` and
-           ``[cylc][parameter templates]``.
-
         Define parameter values here for use in expanding
         :ref:`parameterized tasks <User Guide Param>`.
+
+        .. versionchanged:: 8.0.0
+
+           {REPLACES}``[cylc][parameters]``.
     '''):
         Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
             A custom parameter to use in a workflow.
@@ -461,12 +457,16 @@ with Conf(
             - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
             - ``mem = -11..-7..2``  (equivalent to ``-11, -9, -7``).
         ''')
-        with Conf('templates', desc='''
+        with Conf('templates', desc=f'''
             Cylc will expand each parameterized task name using a string
             template.
 
             You can set templates for any parameter name here to override the
             default template.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[cylc][parameter templates]``.
         '''):
             Conf('<parameter>', VDR.V_STRING, desc='''
                 A template for a parameter.
@@ -502,6 +502,10 @@ with Conf(
 
     with Conf('scheduling', desc='''
         This section allows Cylc to determine when tasks are ready to run.
+
+        Any cycle points defined here without a time zone will use the
+        time zone from
+        :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
     '''):
         Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
             The earliest cycle point at which any task can run.
@@ -509,50 +513,30 @@ with Conf(
             In a cold start each cycling task (unless specifically excluded
             under :cylc:conf:`[..][special tasks]`) will be loaded into the
             workflow with this cycle point, or with the closest subsequent
-            valid cycle point for the task. This item can be overridden on the
-            command line, using ``cylc play --initial-cycle-point`` or
-            ``--icp``.
+            valid cycle point for the task.
 
             In integer cycling, the default is ``1``.
 
-            In date-time cycling, if you do not provide time zone information
-            for this, it will be assumed to be UTC or in the time
-            zone determined by
-            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-
-            .. admonition:: Compatibility mode
-
-               In :ref:`backwards compatibility mode <Cylc_7_compat_mode>`
-               the time zone defaults to local time rather than UTC.
-
             The string ``now`` converts to the current datetime on the workflow
-            host (adjusted to UTC if workflow is in UTC mode but the host is
-            not) to minute resolution.  Minutes (or hours, etc.) may be
-            ignored depending on the value of
-
-            :cylc:conf:`flow.cylc[scheduler]cycle point format`.
+            host when first starting the workflow (with precision determined
+            by :cylc:conf:`flow.cylc[scheduler]cycle point format`).
 
             For more information on setting the initial cycle point relative
             to the current time see :ref:`setting-the-icp-relative-to-now`.
+
+            This item can be overridden on the command line using
+            ``cylc play --initial-cycle-point`` or ``--icp``.
         ''')
+        # NOTE: final cycle point is not a V_CYCLE_POINT to allow expressions
+        # such as '+P1Y' (relative to initial cycle point)
         Conf('final cycle point', VDR.V_STRING, desc='''
             The (optional) last cycle point at which tasks are run.
 
-            Cycling tasks are held once they pass the final cycle point, if
-            one is specified. Once all tasks have achieved this state the
-            workflow will shut down. If this item is set you can override it
-            on the command line using ``cylc play --final-cycle-point`` or
-            ``--fcp``.
+            Once all tasks have reached this cycle point, the
+            workflow will shut down.
 
-            In date-time cycling, if you do not provide time zone information
-            for this, it will be assumed to be UTC, or the time zone
-            determined by
-            :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
-
-            .. admonition:: Compatibility mode
-
-               In :ref:`backwards compatibility mode <Cylc_7_compat_mode>`
-               the time zone defaults to local time rather than UTC.
+            This item can be overridden on the command line using
+            ``cylc play --final-cycle-point`` or ``--fcp``.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
             Rules to allow only some initial datetime cycle points.
@@ -596,30 +580,29 @@ with Conf(
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[scheduling]hold after point``.
-
             Unlike the final
             cycle point, the workflow does not shut down once all tasks have
             passed this point. If this item is set you can override it on the
             command line using ``--hold-after``.
+
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[scheduling]hold after point``.
         ''')
         Conf('stop after cycle point', VDR.V_CYCLE_POINT, desc='''
-            Shut down workflow after all tasks **pass** this cycle point.
-
-            .. versionadded:: 8.0.0
+            Shut down the workflow after all tasks pass this cycle point.
 
             The stop cycle point can be overridden on the command line using
             ``cylc play --stop-cycle-point=POINT``
 
             .. note:
 
-                Not to be confused with :cylc:conf:`[..]final cycle point`:
-                There can be more graph beyond this point, but you are
-                choosing not to run that part of the graph. You can play
-                the workflow and continue.
+               Not to be confused with :cylc:conf:`[..]final cycle point`:
+               There can be more graph beyond this point, but you are
+               choosing not to run that part of the graph. You can play
+               the workflow and continue.
 
+            .. versionadded:: 8.0.0
         ''')
         Conf('cycling mode', VDR.V_STRING, Calendar.MODE_GREGORIAN,
              options=list(Calendar.MODES) + ['integer'], desc='''
@@ -634,11 +617,6 @@ with Conf(
         ''')
         Conf('runahead limit', VDR.V_STRING, 'P5', desc='''
             How many cycles ahead of the slowest tasks the fastest may run.
-
-            .. versionchanged:: 8.0.0
-
-               The deprecated ``[scheduling]max active cycle points`` setting
-               was merged into this one.
 
             Runahead limiting prevents the fastest tasks in a workflow from
             getting too far ahead of the slowest ones, as documented in
@@ -667,6 +645,11 @@ with Conf(
                The runahead limit may be automatically raised if this is
                necessary to allow a future task to be triggered, preventing
                the workflow from stalling.
+
+            .. versionchanged:: 8.0.0
+
+               The integer (``Pn``) type limit was introduced to replace the
+               deprecated ``[scheduling]max active cycle points = n`` setting.
         ''')
 
         with Conf('queues', desc='''
@@ -797,15 +780,11 @@ with Conf(
 
                 Example::
 
-                   ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
             ''')
 
         with Conf('graph', desc=f'''
             The workflow graph is defined under this section.
-
-            .. versionchanged:: 8.0.0
-
-               {REPLACES}``[runtime][dependencies][graph]``.
 
             You can plot the dependency graph as you work on it, with
             ``cylc graph``.
@@ -814,8 +793,11 @@ with Conf(
 
                :ref:`User Guide Scheduling`.
 
+            .. versionchanged:: 8.0.0
+
+               {REPLACES}``[runtime][dependencies][graph]``.
         '''):
-            Conf('<recurrence>', VDR.V_STRING, desc='''
+            Conf('<recurrence>', VDR.V_STRING, desc=f'''
                 The recurrence defines the sequence of cycle points
                 for which the dependency graph is valid.
 
@@ -828,7 +810,7 @@ with Conf(
 
                 Example Recurrences:
 
-                date-time cycling:
+                datetime cycling:
                    * ``R1`` - once at the initial cycle point
                    * ``T00,T06,T12,T18`` - daily at 00:00, 06:00, 12:00
                      & 18:00
@@ -910,6 +892,11 @@ with Conf(
 
                      # bar triggers if submission of foo fails
                      foo:submit-fail => bar
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}
+                   ``[runtime][dependencies][graph][<recurrence>]graph``.
             ''')
 
     with Conf('runtime',  # noqa: SIM117 (keep same format)
@@ -949,7 +936,6 @@ with Conf(
 
                See :ref:`task namespace rules. <namespace-names>`
 
-
             Examples of legal values:
 
             - ``[foo]``
@@ -967,11 +953,11 @@ with Conf(
                 :cylc:conf:`global.cylc[platforms]` or
                 :cylc:conf:`global.cylc[platform groups]`.
 
-                .. versionadded:: 8.0.0
-
                 The platform specifies the host(s) that the tasks' jobs
                 will run on and where (if necessary) files need to be
                 installed, and what job runner will be used.
+
+                .. versionadded:: 8.0.0
             ''')
             Conf('inherit', VDR.V_STRING_LIST, desc='''
                 A list of the immediate parent(s) of this task or task family.
@@ -1082,15 +1068,16 @@ with Conf(
 
                 Example:
 
-                ``$CYLC_TASK_CYCLE_POINT/shared/``
+                   ``$CYLC_TASK_CYCLE_POINT/shared/``
             ''')
             Conf(
-                'execution polling intervals',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                'execution polling intervals', VDR.V_INTERVAL_LIST, None,
+                desc=global_default(
+                    EXECUTION_POLL_DESCR,
+                    "[platforms][<platform name>]execution polling intervals"
+                )
             )
-            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc='''
+            Conf('execution retry delays', VDR.V_INTERVAL_LIST, None, desc=f'''
                 Cylc can automate resubmission of a failed task job.
 
                 Execution retry delays are a list of ISO 8601
@@ -1101,9 +1088,14 @@ with Conf(
                 variable ``$CYLC_TASK_TRY_NUMBER`` in the task execution
                 environment. ``$CYLC_TASK_TRY_NUMBER`` allows you to vary task
                 behavior between submission attempts.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>][job]execution
+                   retry delays``.
             ''')
-            Conf('execution time limit', VDR.V_INTERVAL, desc='''
-                Set the execution (:term:`wall-clock <wall-clock time>`) time
+            Conf('execution time limit', VDR.V_INTERVAL, desc=f'''
+                Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a task job.
 
                 For ``background`` and ``at`` job runners Cylc invokes the
@@ -1114,18 +1106,25 @@ with Conf(
                 poll the job multiple times. You can set polling
                 intervals using :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>][job]execution
+                   time limit``.
             ''')
             Conf(
-                'submission polling intervals',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                'submission polling intervals', VDR.V_INTERVAL_LIST, None,
+                desc=global_default(
+                    SUBMISSION_POLL_DESCR,
+                    "[platforms][<platform name>]submission polling intervals"
+                )
             )
             Conf(
-                'submission retry delays',
-                VDR.V_INTERVAL_LIST,
-                None,
-                desc=DEPRECATED_IN_FAVOUR_OF_PLATFORMS
+                'submission retry delays', VDR.V_INTERVAL_LIST, None,
+                desc=global_default(
+                    SUBMISSION_RETY_DESCR,
+                    "[platforms][<platform name>]submission retry delays"
+                )
             )
             with Conf('meta', desc=r'''
                 Metadata for the task or task family.
@@ -1172,16 +1171,24 @@ with Conf(
                         A URL link to task documentation for this task or task
                         family.
 
-                        The templates ``%(workflow_name)s`` and
-                        ``%(task_name)s`` will be replaced with the actual
-                        workflow and task names.
+                        The templates ``%(workflow)s`` and
+                        ``%(task)s`` will be replaced with the actual
+                        workflow ID and task name.
+
+                        .. deprecated:: 8.0.0
+
+                           The ``%(suite_name)s`` template variable is
+                           deprecated, please use ``%(workflow)s``.
+
+                           The ``%(task_name)s`` template variable is
+                           deprecated, please use ``%(task)s``.
 
                         See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
                         Example:
 
-                        ``http://my-site.com/workflows/%(workflow_name)s/'''
-                    '%(task_name)s.html``')
+                        ``http://my-site.com/workflows/%(workflow)s/'''
+                    '%(task)s.html``')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
 
@@ -1286,151 +1293,78 @@ with Conf(
                 ''')
 
             with Conf('job', desc=dedent('''
+                .. deprecated:: 8.0.0
+
                 This section configures the means by which cylc submits task
                 job scripts to run.
 
-            ''') + DEPRECATION_WARN):
+            ''') + REPLACED_BY_PLATFORMS):
                 Conf('batch system', VDR.V_STRING)
                 Conf('batch submit command template', VDR.V_STRING)
 
-            with Conf('remote', desc=DEPRECATION_WARN):
+            with Conf('remote', desc=dedent('''
+                .. deprecated:: 8.0.0
+
+            ''') + REPLACED_BY_PLATFORMS):
                 Conf('host', VDR.V_STRING)
-                Conf('owner', VDR.V_STRING)
+                # TODO: Convert URL to a stable or latest release doc after 8.0
+                # https://github.com/cylc/cylc-flow/issues/4663
+                Conf('owner', VDR.V_STRING, desc="""
+                    This setting is obsolete at Cylc 8.
+
+                    .. seealso::
+
+                       `Documentation on changes to remote owner
+                       <https://cylc.github.io/cylc-doc/latest/html/
+                       7-to-8/major-changes/remote-owner.html>`_
+                """)
                 Conf('retrieve job logs', VDR.V_BOOLEAN)
                 Conf('retrieve job logs max size', VDR.V_STRING)
                 Conf('retrieve job logs retry delays',
                      VDR.V_INTERVAL_LIST, None)
 
-            with Conf('events', desc='''
-                Configure :term:`event handlers` that run when certain task
-                events occur.
-
-                This section configures specific task event
-                handlers; see :cylc:conf:`flow.cylc[scheduler][events]` for
-                workflow event handlers.
-
-                Event handlers can be held in the workflow ``bin/`` directory,
-                otherwise it is up to you to ensure their location is in
-                ``$PATH`` (in the shell in which the scheduler runs).
-                They should require little resource to run and return
-                quickly.
-
-                Each task event handler can be specified as a list of command
-                lines or command line templates. They can contain any or all
-                of the following patterns, which will be substituted with
-                actual values:
-
-                ``%(event)s``
-                   Event name
-                ``%(workflow)s``
-                   Workflow name
-                ``%(workflow_uuid)s``
-                   Workflow UUID string
-                ``%(point)s``
-                   Cycle point
-                ``%(name)s``
-                   Task name
-                ``%(submit_num)s``
-                   Submit number
-                ``%(try_num)s``
-                   Try number
-                ``%(id)s``
-                   Task ID (i.e. %(name)s.%(point)s)
-                ``%(job_runner_name)s``
-                   Job runner name (previously ``%(batch_sys_name)s``)
-                ``%(job_id)s``
-                   Job ID in the job runner
-                   (previously ``%(batch_sys_job_id)s``)
-                ``%(submit_time)s``
-                   Date-time when task job is submitted
-                ``%(start_time)s``
-                   Date-time when task job starts running
-                ``%(finish_time)s``
-                   Date-time when task job exits
-                ``%(platform_name)s``
-                   Name of platform where the task job is submitted
-                ``%(message)s``
-                   Event message, if any
-                Any task [meta] item, e.g.:
-                   ``%(title)s``
-                      Task title
-                   ``%(URL)s``
-                      Task URL
-                   ``%(importance)s``
-                      Example custom task metadata
-                Any workflow ``[meta]`` item, prefixed with ``workflow_``
-                   ``%(workflow_title)s``
-                      Workflow title
-                   ``%(workflow_URL)s``
-                      Workflow URL.
-                   ``%(workflow_rating)s``
-                      Example custom workflow metadata.
-
-                Otherwise, the command line will be called with the following
-                default arguments:
-
-                .. code-block:: none
-
-                   <event-handler> %(event)s %(workflow)s %(id)s %(message)s
-
-                .. note::
-
-                   Substitution patterns should not be quoted in the template
-                   strings.  This is done automatically where required.
-
-                For an explanation of the substitution syntax, see
-                `String Formatting Operations in the Python
-                documentation
-                <https://docs.python.org/3/library/stdtypes.html
-                #printf-style-string-formatting>`_.
-
-                Additional variables can be passed to event handlers using
-                :ref:`Jinja2 <User Guide Jinja2>`.
-                .
-            '''):
-                Conf('execution timeout', VDR.V_INTERVAL, desc='''
-                    If a task has not finished after the specified ISO 8601
-                    duration/interval, the *execution timeout* event
-                    handler(s) will be called.
-                ''')
-                Conf('handlers', VDR.V_STRING_LIST, None, desc='''
-                    Specify a list of command lines or command line templates
-                    as task event handlers.
-                ''')
-                Conf('handler events', VDR.V_STRING_LIST, None, desc='''
-                    Specify the events for which the general task event
-                    handlers should be invoked.
-
-                    Example:
-
-                    ``submission failed, failed``
-                ''')
-                Conf('handler retry delays', VDR.V_INTERVAL_LIST, None,
-                     desc='''
-                    Specify an initial delay before running an event handler
-                    command and any retry delays in case the command returns a
-                    non-zero code.
-
-                    The default behaviour is to run an event
-                    handler command once without any delay.
-
-                    Example:
-
-                    ``PT10S, PT1M, PT5M``
-                ''')
-                Conf('mail events', VDR.V_STRING_LIST, None, desc='''
-                    Specify the events for which notification emails should be
-                    sent.
-
-                    Example:
-
-                    ``submission failed, failed``
-                ''')
-                Conf('submission timeout', VDR.V_INTERVAL, desc='''
-                    If a task has not started after the specified ISO 8601
-                    duration/interval, the *submission timeout* event
-                    handler(s) will be called.
-                ''')
+            with Conf('events', desc=(
+                global_default(TASK_EVENTS_DESCR, "[task events]")
+            )):
+                Conf('execution timeout', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['execution timeout'],
+                        "[task events]execution timeout"
+                    )
+                ))
+                Conf('handlers', VDR.V_STRING_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['handlers'],
+                        "[task events]handlers"
+                    )
+                ))
+                Conf('handler events', VDR.V_STRING_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['handler events'],
+                        "[task events]handler events"
+                    )
+                ))
+                Conf('handler retry delays', VDR.V_INTERVAL_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['handler retry delays'],
+                        "[task events]handler retry delays"
+                    )
+                ))
+                Conf('mail events', VDR.V_STRING_LIST, None, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['mail events'],
+                        "[task events]mail events"
+                    )
+                ))
+                Conf('submission timeout', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['submission timeout'],
+                        "[task events]submission timeout"
+                    )
+                ))
+                # TODO: add descriptions for the handlers below. Some of them
+                # didn't have any mention in the Cylc 7 suiterc ref docs, but
+                # a look at git blame indicates none of them are new in Cylc 8.
                 Conf('expired handlers', VDR.V_STRING_LIST, None)
                 Conf('late offset', VDR.V_INTERVAL, None)
                 Conf('late handlers', VDR.V_STRING_LIST, None)
@@ -1458,33 +1392,33 @@ with Conf(
 
                     .. versionchanged:: 8.0.0
 
-                       {REPLACES}``[runtime][task][events]mail to``
+                       {REPLACES}``[runtime][task][events]mail from``
                 ''')
                 Conf('to', VDR.V_STRING, desc=f'''
                     A list of email addresses to send task event
                     notifications.
 
-                    .. versionchanged:: 8.0.0
-
-                       {REPLACES}``[runtime][task][events]mail from``
-
                     The list can be any address accepted by the
                     ``mail`` command.
+
+                    .. versionchanged:: 8.0.0
+
+                       {REPLACES}``[runtime][task][events]mail to``
                 ''')
 
             with Conf('workflow state polling', desc=f'''
                 Configure automatic workflow polling tasks as described in
                 :ref:`WorkflowStatePolling`.
 
-                .. versionchanged:: 8.0.0
-
-                   {REPLACES}``[runtime][<namespace>]suite state polling``.
-
                 The items in this section reflect
                 options and defaults of the ``cylc workflow-state`` command,
                 except that the target workflow name and the
                 ``--task``, ``--cycle``, and ``--status`` options are
                 taken from the graph notation.
+
+                .. versionchanged:: 8.0.0
+
+                   {REPLACES}``[runtime][<namespace>]suite state polling``.
             '''):
                 Conf('user', VDR.V_STRING, desc='''
                     Username of your account on the workflow host.
@@ -1587,31 +1521,13 @@ with Conf(
                        moved here.
                 ''')
 
-            with Conf('directives', desc='''
-                Job runner (batch scheduler) directives.
-
-                Supported for use with job runners:
-
-                - pbs
-                - slurm
-                - loadleveler
-                - lsf
-                - sge
-                - slurm_packjob
-                - moab
-
-                Directives are written to the top of the task job script
-                in the correct format for the job runner.
-
-                Specifying directives individually like this allows
-                use of default directives for task families which can be
-                individually overridden at lower levels of the runtime
-                namespace hierarchy.
-            '''):
-                Conf('<directive>', VDR.V_STRING, desc='''
-                    Example directives for the built-in job runner handlers
-                    are shown in :ref:`AvailableMethods`.
-                ''')
+            with Conf('directives', desc=(
+                global_default(
+                    DIRECTIVES_DESCR,
+                    "[platforms][<platform name>][directives]"
+                )
+            )):
+                Conf('<directive>', VDR.V_STRING, desc=DIRECTIVES_ITEM_DESCR)
 
             with Conf('outputs', desc='''
                 Register custom task outputs for use in message triggering in
@@ -1644,7 +1560,7 @@ with Conf(
 
                 This was done to allow users to control the order of
                 definition of the variables. This section will be removed
-                in Cylc 9.
+                in a future version of Cylc 8.
 
                 For the time being, the contents of this section will be
                 prepended to the ``[environment]`` section when running
@@ -1654,7 +1570,14 @@ with Conf(
 
 
 def upg(cfg, descr):
-    """Upgrade old workflow configuration."""
+    """Upgrade old workflow configuration.
+
+    NOTE: We are silencing deprecation (and only deprecation) warnings
+    when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
+    (which would loose Cylc 7 compatibility if users were to follow the
+    warnings and upgrade the syntax).
+
+    """
     u = upgrader(cfg, descr)
     u.obsolete(
         '7.8.0',
@@ -1691,27 +1614,36 @@ def upg(cfg, descr):
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],
-        ['cylc', 'mail', 'task event batch interval']
+        ['cylc', 'mail', 'task event batch interval'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
-    u.deprecate('8.0.0', ['cylc', 'parameters'], ['task parameters'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc', 'parameters'],
+        ['task parameters'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+    )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
-        ['task parameters', 'templates']
+        ['task parameters', 'templates'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', f'mail {mail_setting}'],
-            ['cylc', 'mail', mail_setting]
+            ['cylc', 'mail', mail_setting],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
     # Task mail settings in [runtime][TASK]
     for mail_setting in ['to', 'from']:
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
-            ['runtime', '__MANY__', 'mail', mail_setting]
+            ['runtime', '__MANY__', 'mail', mail_setting],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
     u.deprecate(
         '8.0.0',
@@ -1719,7 +1651,9 @@ def upg(cfg, descr):
         None,  # This is really a .obsolete(), just with a custom message
         cvtr=converter(lambda x: x, (
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
-            'instead'))
+            'instead')
+        ),
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
@@ -1727,24 +1661,29 @@ def upg(cfg, descr):
         None,
         cvtr=converter(lambda x: x, (
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
-            'instead'))
+            'instead')
+        ),
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'max active cycle points'],
         ['scheduling', 'runahead limit'],
-        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"')
+        cvtr=converter(lambda x: f'P{x}' if x != '' else '', '"n" -> "Pn"'),
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'hold after point'],
-        ['scheduling', 'hold after cycle point']
+        ['scheduling', 'hold after cycle point'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
 
     u.deprecate(
         '8.0.0',
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
+        silent=cylc.flow.flags.cylc7_back_compat,
     )
 
     for job_setting in [
@@ -1757,7 +1696,8 @@ def upg(cfg, descr):
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'job', job_setting],
-            ['runtime', '__MANY__', job_setting]
+            ['runtime', '__MANY__', job_setting],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     # Workflow timeout is now measured from start of run.
@@ -1777,7 +1717,8 @@ def upg(cfg, descr):
         u.deprecate(
             '8.0.0',
             ['cylc', 'events', old],
-            ['cylc', 'events', new]
+            ['cylc', 'events', new],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     for old in [
@@ -1799,7 +1740,8 @@ def upg(cfg, descr):
         u.deprecate(
             '8.0.0',
             ['runtime', '__MANY__', 'events', old],
-            ['runtime', '__MANY__', 'events', f"{old}s"]
+            ['runtime', '__MANY__', 'events', f"{old}s"],
+            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
@@ -1810,7 +1752,12 @@ def upg(cfg, descr):
                          'abort if inactivity handler fails'])
     u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
 
-    u.deprecate('8.0.0', ['cylc'], ['scheduler'])
+    u.deprecate(
+        '8.0.0',
+        ['cylc'],
+        ['scheduler'],
+        silent=cylc.flow.flags.cylc7_back_compat,
+    )
     u.upgrade()
 
     upgrade_graph_section(cfg, descr)
@@ -1818,27 +1765,6 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
-
-    # Warn about config items moved to global.cylc.
-    if 'runtime' in cfg:
-        for job_setting, task in product(
-            [
-                'execution polling intervals',
-                'submission polling intervals',
-                'submission retry delays'
-            ],
-            cfg['runtime'].keys()
-        ):
-            if job_setting in cfg['runtime'][task]:
-                LOG.warning(
-                    f"* (8.0.0) '[runtime][{task}]{job_setting}' - this "
-                    "setting is deprecated; use "
-                    f"'global.cylc[platforms][<platform name>]{job_setting}' "
-                    "instead. "
-                    "Currently, this item will override the corresponding "
-                    "item in global.cylc, "
-                    "but support for this will be removed in Cylc 9."
-                )
 
 
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
@@ -1868,7 +1794,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     elif key == 'graph' and isinstance(value, str):
                         graphdict[key] = value
                         keys.add(key)
-                if keys:
+                if keys and not cylc.flow.flags.cylc7_back_compat:
                     LOG.warning(
                         'deprecated graph items were automatically upgraded '
                         f'in "{descr}":\n'
@@ -1888,15 +1814,17 @@ def upgrade_param_env_templates(cfg, descr):
         for task_name, task_items in cfg['runtime'].items():
             if 'parameter environment templates' not in task_items:
                 continue
-            if first_warn is True:
+            if not cylc.flow.flags.cylc7_back_compat:
+                if first_warn:
+                    LOG.warning(
+                        'deprecated items automatically upgraded in '
+                        f'"{descr}":'
+                    )
+                    first_warn = False
                 LOG.warning(
-                    f'deprecated items automatically upgraded in "{descr}":'
+                    f' * (8.0.0) {dep % task_name} contents prepended to '
+                    f'{new % task_name}'
                 )
-                first_warn = False
-            LOG.warning(
-                f' * (8.0.0) {dep % task_name} contents prepended to '
-                f'{new % task_name}'
-            )
             for key, val in reversed(
                     task_items['parameter environment templates'].items()):
                 if 'environment' in task_items:
@@ -1926,19 +1854,20 @@ def warn_about_depr_platform(cfg):
             fail_if_platform_and_host_conflict(task_cfg, task_name)
             # Fail if backticks subshell e.g. platform = `foo`:
             is_platform_definition_subshell(task_cfg['platform'])
-        else:
+        elif not cylc.flow.flags.cylc7_back_compat:
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
                 LOG.warning(
-                    f'Task {task_name}: deprecated "host" and "batch system" '
-                    f'will be removed at Cylc 9 - upgrade to platform:\n{msg}'
+                    "deprecated settings found "
+                    f"(please replace with [runtime][{task_name}]platform):"
+                    f"\n{msg}"
                 )
 
 
 def warn_about_depr_event_handler_tmpl(cfg):
     """Warn if deprecated template strings appear in event handlers."""
-    if 'runtime' not in cfg:
+    if 'runtime' not in cfg or cylc.flow.flags.cylc7_back_compat:
         return
     deprecation_msg = (
         'The event handler template variable "%({0})s" is deprecated - '
@@ -1965,7 +1894,7 @@ def warn_about_depr_event_handler_tmpl(cfg):
             if f'%({EventData.SuiteUUID.value})' in handler:
                 LOG.warning(
                     deprecation_msg.format(EventData.SuiteUUID.value,
-                                           EventData.WorkflowUUID.value)
+                                           EventData.UUID.value)
                 )
 
 

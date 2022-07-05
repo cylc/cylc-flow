@@ -36,6 +36,6 @@ cmp_ok "${TEST_NAME}.stdout" <<< "20100101T1200Z"
 # i.e. should have spawned 5 cycle points from initial T00
 #-------------------------------------------------------------------------------
 grep_ok 'Workflow shutting down - "abort on stall timeout" is set' \
-  "${WORKFLOW_RUN_DIR}/log/workflow/log"
+  "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 #-------------------------------------------------------------------------------
 purge

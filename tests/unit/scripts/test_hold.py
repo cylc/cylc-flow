@@ -20,7 +20,7 @@ from optparse import Values
 import pytest
 from typing import Iterable, Optional, Tuple, Type
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.hold import get_option_parser, _validate
 
@@ -36,12 +36,12 @@ Opts = Options(get_option_parser())
         (
             Opts(hold_point_string='2'),
             ['*'],
-            (UserInputError, "Cannot combine --after with Cylc/Task ID")
+            (InputError, "Cannot combine --after with Cylc/Task ID")
         ),
         (
             Opts(),
             [],
-            (UserInputError, "Must define Cycles/Tasks")
+            (InputError, "Must define Cycles/Tasks")
         ),
     ]
 )

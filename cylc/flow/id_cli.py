@@ -14,17 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import asyncio
 import fnmatch
-import os
 from pathlib import Path
 import re
 from typing import Optional, Dict, List, Tuple, Any
 
+from cylc.flow import LOG
 from cylc.flow.exceptions import (
-    UserInputError,
-    WorkflowFilesError,
+    InputError,
 )
 from cylc.flow.hostuserutil import get_user
 from cylc.flow.id import (
@@ -32,20 +30,20 @@ from cylc.flow.id import (
     contains_multiple_workflows,
     upgrade_legacy_ids,
 )
+from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX
 from cylc.flow.network.scan import (
     filter_name,
     is_active,
     scan,
 )
 from cylc.flow.workflow_files import (
-    WorkflowFiles,
-    NO_FLOW_FILE_MSG,
     check_flow_file,
     detect_both_flow_and_suite,
     get_flow_file,
     get_workflow_run_dir,
     infer_latest_run_from_id,
     validate_workflow_name,
+    abort_if_flow_file_in_path
 )
 
 
@@ -106,16 +104,16 @@ def _parse_cli(*ids: str) -> List[Tokens]:
         # errors:
         >>> _parse_cli('////')
         Traceback (most recent call last):
-        UserInputError: Invalid ID: ////
+        InputError: Invalid ID: ////
 
         >>> parse_back('//cycle')
         Traceback (most recent call last):
-        UserInputError: Relative reference must follow an incomplete one.
+        InputError: Relative reference must follow an incomplete one.
         E.G: workflow //cycle/task
 
         >>> parse_back('workflow//cycle', '//cycle')
         Traceback (most recent call last):
-        UserInputError: Relative reference must follow an incomplete one.
+        InputError: Relative reference must follow an incomplete one.
         E.G: workflow //cycle/task
 
     """
@@ -134,7 +132,7 @@ def _parse_cli(*ids: str) -> List[Tokens]:
                 # (e.g. CLI auto completion)
                 tokens = Tokens(id_[:-1])
             else:
-                raise UserInputError(f'Invalid ID: {id_}')
+                raise InputError(f'Invalid ID: {id_}')
         is_partial = tokens.get('workflow') and not tokens.get('cycle')
         is_relative = not tokens.get('workflow')
 
@@ -172,7 +170,7 @@ def _parse_cli(*ids: str) -> List[Tokens]:
                 partials_expended = False
             elif is_relative:
                 # so a relative reference is an error
-                raise UserInputError(
+                raise InputError(
                     'Relative reference must follow an incomplete one.'
                     '\nE.G: workflow //cycle/task'
                 )
@@ -366,24 +364,24 @@ def _validate_constraint(*tokens_list, constraint=None):
     if constraint == 'workflows':
         for tokens in tokens_list:
             if tokens.is_null or tokens.is_task_like:
-                raise UserInputError('IDs must be workflows')
+                raise InputError('IDs must be workflows')
         return
     if constraint == 'tasks':
         for tokens in tokens_list:
             if tokens.is_null or not tokens.is_task_like:
-                raise UserInputError('IDs must be tasks')
+                raise InputError('IDs must be tasks')
         return
     if constraint == 'mixed':
         for tokens in tokens_list:
             if tokens.is_null:
-                raise UserInputError('IDs cannot be null.')
+                raise InputError('IDs cannot be null.')
         return
 
 
 def _validate_workflow_ids(*tokens_list, src_path):
     for ind, tokens in enumerate(tokens_list):
         if tokens['user'] and (tokens['user'] != get_user()):
-            raise UserInputError(
+            raise InputError(
                 "Operating on other users' workflows is not supported"
             )
         if not src_path:
@@ -394,9 +392,19 @@ def _validate_workflow_ids(*tokens_list, src_path):
         else:
             src_path = Path(get_workflow_run_dir(tokens['workflow']))
         if src_path.is_file():
-            raise UserInputError(
+            raise InputError(
                 f'Workflow ID cannot be a file: {tokens["workflow"]}'
             )
+        if tokens['cycle'] and tokens['cycle'].startswith('run'):
+            # issue a warning if the run number is provided after the //
+            # separator e.g. workflow//run1 rather than workflow/run1//
+            suggested = Tokens(
+                user=tokens['user'],
+                workflow=f'{tokens["workflow"]}/{tokens["cycle"]}',
+                cycle=tokens['task'],
+                task=tokens['job'],
+            )
+            LOG.warning(f'Did you mean: {suggested.id}')
         detect_both_flow_and_suite(src_path)
 
 
@@ -420,11 +428,11 @@ def _validate_number(*tokens_list, max_workflows=None, max_tasks=None):
         else:
             workflows_count += 1
     if max_workflows and workflows_count > max_workflows:
-        raise UserInputError(
+        raise InputError(
             f'IDs contain too many workflows (max {max_workflows})'
         )
     if max_tasks and tasks_count > max_tasks:
-        raise UserInputError(
+        raise InputError(
             f'IDs contain too many cycles/tasks/jobs (max {max_tasks})'
         )
 
@@ -474,7 +482,7 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
     """Use "cylc scan" to expand workflow patterns."""
     workflow_sel = tokens['workflow_sel']
     if workflow_sel and workflow_sel != 'running':
-        raise UserInputError(
+        raise InputError(
             f'The workflow selector :{workflow_sel} is not'
             'currently supported.'
         )
@@ -490,21 +498,40 @@ async def _expand_workflow_tokens_impl(tokens, match_active=True):
 
 
 def _parse_src_path(id_):
+    """Parse CLI workflow arg to find a valid source directory.
+
+    Returns:
+      - (dir name, dir path, config file path) if id_ is a valid src dir.
+      - or None, if id_ could be a workflow ID
+
+    A valid source directory is:
+      - an existing directory that contains a worklow config file
+    and not a relative path (which could be a workflow ID), i.e. it must be:
+      - the current directory (".")
+      - or a directory path that starts with "./"
+      - or an absolute directory path
+
+    It's OK if id_ happens to match a relative path to an existing directory or
+    file (other than a workflow config file) because there could be a workflow
+    ID with the same name.
+
+    """
+    abort_if_flow_file_in_path(Path(id_))
     src_path = Path(id_)
     if (
-        id_ == os.curdir
-        or id_.startswith(f'{os.curdir}{os.sep}')
-        or Path(id_).is_absolute()
+        not EXPLICIT_RELATIVE_PATH_REGEX.match(id_)
+        and not src_path.is_absolute()
     ):
-        src_path = src_path.resolve()
-        if not src_path.exists():
-            raise UserInputError(f'Path does not exist: {src_path}')
-        if src_path.name in {WorkflowFiles.FLOW_FILE, WorkflowFiles.SUITE_RC}:
-            src_path = src_path.parent
-        try:
-            src_file_path = check_flow_file(src_path)
-        except WorkflowFilesError:
-            raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(id_))
-        workflow_id = src_path.name
-        return workflow_id, src_path, src_file_path
-    return None
+        # Not a valid source path, but it could be a workflow ID.
+        return None
+
+    src_dir_path = src_path.resolve()
+    if not src_dir_path.exists():
+        raise InputError(f'Source directory not found: {src_dir_path}')
+
+    if not src_dir_path.is_dir():
+        raise InputError(f'Path is not a source directory: {src_dir_path}')
+
+    src_file_path = check_flow_file(src_dir_path)
+
+    return src_dir_path.name, src_dir_path, src_file_path

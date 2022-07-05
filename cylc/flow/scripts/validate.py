@@ -39,8 +39,10 @@ import cylc.flow.flags
 from cylc.flow.id_cli import parse_id
 from cylc.flow.loggingutil import disable_timestamps
 from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
     CylcOptionParser as COP,
-    Options
+    Options,
+    icp_option,
 )
 from cylc.flow.profiler import Profiler
 from cylc.flow.task_proxy import TaskProxy
@@ -52,9 +54,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         jset=True,
-        prep=True,
-        icp=True,
-        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
+        argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
     parser.add_option(
@@ -78,6 +78,8 @@ def get_option_parser():
         "-u", "--run-mode", help="Validate for run mode.", action="store",
         default="live", dest="run_mode",
         choices=['live', 'dummy', 'simulation'])
+
+    parser.add_option(icp_option)
 
     parser.add_cylc_rose_options()
 

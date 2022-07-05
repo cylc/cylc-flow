@@ -62,16 +62,21 @@ class TaskOutputs:
         self._required = set()
         # Add outputs from task def.
         for trigger, (message, required) in tdef.outputs.items():
-            self.add(message, trigger, required=required)
+            self._add(message, trigger, required=required)
 
-    def add(self, message, trigger=None, is_completed=False, required=False):
+    def _add(self, message, trigger, is_completed=False, required=False):
         """Add a new output message"""
-        if trigger is None:
-            trigger = message
         self._by_message[message] = [trigger, message, is_completed]
         self._by_trigger[trigger] = self._by_message[message]
         if required:
             self._required.add(trigger)
+
+    def set_completed_by_msg(self, message):
+        """For flow trigger --wait: set completed outputs from the DB."""
+        for trig, msg, _ in self._by_trigger.values():
+            if message == msg:
+                self._add(message, trig, True, trig in self._required)
+                break
 
     def all_completed(self):
         """Return True if all all outputs completed."""
@@ -96,14 +101,14 @@ class TaskOutputs:
                 ret.append(value[_MESSAGE])
         return ret
 
-    def get_completed_customs(self):
-        """Return all completed custom outputs.
+    def get_completed_all(self):
+        """Return all completed outputs.
 
         Return a list in this form: [(trigger1, message1), ...]
         """
         ret = []
         for value in self.get_all():
-            if value[_IS_COMPLETED] and value[_TRIGGER] not in SORT_ORDERS:
+            if value[_IS_COMPLETED]:
                 ret.append((value[_TRIGGER], value[_MESSAGE]))
         return ret
 

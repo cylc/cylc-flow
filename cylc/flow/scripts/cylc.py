@@ -19,17 +19,15 @@
 import argparse
 from contextlib import contextmanager
 import os
-from pathlib import Path
 import sys
+from typing import Iterator, NoReturn, Optional, Tuple
 
 from ansimarkup import parse as cparse
-from colorama import init as color_init
 import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
 from cylc.flow.option_parsers import format_shell_examples
-from cylc.flow.scripts import cylc_header
-from cylc.flow.terminal import print_contents
+from cylc.flow.scripts.common import cylc_header
 
 
 def get_version(long=False):
@@ -40,6 +38,7 @@ def get_version(long=False):
     locations are buried deep in the library and don't always give the right
     result, e.g. if installed with `pip install -e .`).
     """
+    from pathlib import Path
     version = f"{__version__}"
     if long:
         version += f" ({Path(sys.executable).parent.parent})"
@@ -92,7 +91,7 @@ Workflow IDs:
     Every Installed Cylc workflow has an ID.
 
     For example if we install a workflow like so:
-      $ cylc install --flow-name=foo
+      $ cylc install --workflow-name=foo
 
     We will end up with a workflow with the ID "foo/run1".
 
@@ -108,7 +107,7 @@ Workflow IDs:
       $ cylc stop foo
 
     Workflows can be installed hierarchically:
-      $ cylc install --flow-name=foo/bar/baz
+      $ cylc install --workflow-name=foo/bar/baz
 
       # play the workflow with the ID "foo/bar/baz"
       $ cylc play foo/bar/baz
@@ -182,8 +181,7 @@ USAGE = cparse(USAGE)
 # {name: entry_point}
 COMMANDS: dict = {
     entry_point.name: entry_point
-    for entry_point
-    in iter_entry_points('cylc.command')
+    for entry_point in iter_entry_points('cylc.command')
 }
 
 
@@ -214,8 +212,8 @@ DEAD_ENDS = {
         'use standard tools to inspect the environment'
         ' e.g. https://pypi.org/project/pipdeptree/',
     'checkpoint':
-        'DB checkpoints have been removed, use a reflow to '
-        '"rewind" a workflow.',
+        'DB checkpoints have been removed. You can now "rewind" a'
+        ' workflow by triggering the flow anywhere in the graph.',
     'conditions':
         'cylc conditions has been replaced by cylc help license',
     'documentation':
@@ -272,17 +270,21 @@ DEAD_ENDS = {
 # fmt: on
 
 
-def execute_cmd(cmd, *args):
+def execute_cmd(cmd: str, *args: str) -> NoReturn:
     """Execute a sub-command.
 
     Args:
-        cmd (str):
-            The name of the command.
-        args (list):
-            List of command line arguments to pass to that command.
+        cmd: The name of the command.
+        args: Command line arguments to pass to that command.
 
     """
-    COMMANDS[cmd].resolve()(*args)
+    entry_point: pkg_resources.EntryPoint = COMMANDS[cmd]
+    try:
+        entry_point.resolve()(*args)
+    except ModuleNotFoundError as exc:
+        msg = handle_missing_dependency(entry_point, exc)
+        print(msg, file=sys.stderr)
+        sys.exit(1)
     sys.exit()
 
 
@@ -366,15 +368,21 @@ def parse_docstring(docstring):
     return (usage, desc)
 
 
-def iter_commands():
-    """Yield all Cylc sub-commands.
+def iter_commands() -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
+    """Yield all Cylc sub-commands that are available.
+
+    Skips sub-commands that require missing optional dependencies.
 
     Yields:
-        tuple - (command, description, usage)
+        (command, description, usage)
 
     """
-    for cmd, obj in sorted(COMMANDS.items()):
-        module = __import__(obj.module_name, fromlist=[''])
+    for cmd, entry_point in sorted(COMMANDS.items()):
+        try:
+            module = __import__(entry_point.module_name, fromlist=[''])
+        except ModuleNotFoundError as exc:
+            handle_missing_dependency(entry_point, exc)
+            continue
         if getattr(module, 'INTERNAL', False):
             # do not list internal commands
             continue
@@ -404,6 +412,7 @@ def print_command_list(commands=None, indent=0):
             Number of spaces to put at the start of each line.
 
     """
+    from cylc.flow.terminal import print_contents
     contents = [
         (cmd, desc)
         for cmd, desc, _, in iter_commands()
@@ -419,6 +428,7 @@ def cli_help():
     # we need to do this explicitly as this command is not behind cli_function
     # (assume the cylc help is only ever requested interactively in a
     # modern terminal)
+    from colorama import init as color_init
     color_init(autoreset=True, strip=False)
     print(USAGE)
     print('Selected Sub-Commands:')
@@ -640,9 +650,9 @@ def main():
                 else:
                     command = cmd_args.pop(0)
 
+            # this is an alias to a command
             if command in ALIASES:
-                # this is an alias to a command
-                command = ALIASES[command]
+                command = ALIASES.get(command)
 
             if command in DEAD_ENDS:
                 # this command has been removed but not aliased
@@ -663,3 +673,27 @@ def main():
                 if opts.version:
                     cmd_args.append("--version")
                 execute_cmd(command, *cmd_args)
+
+
+def handle_missing_dependency(
+    entry_point: pkg_resources.EntryPoint,
+    err: ModuleNotFoundError
+) -> str:
+    """Return a suitable error message for a missing optional dependency.
+
+    Args:
+        entry_point: The entry point that was attempted to load but caused
+            a ModuleNotFoundError.
+        err: The ModuleNotFoundError that was caught.
+
+    Re-raises the given ModuleNotFoundError if it is unexpected.
+    """
+    try:
+        # Check for missing optional dependencies
+        entry_point.require()
+    except pkg_resources.DistributionNotFound as exc:
+        # Confirmed missing optional dependencies
+        return f"cylc {entry_point.name}: {exc}"
+    else:
+        # Error not due to missing optional dependencies; this is unexpected
+        raise err

@@ -226,7 +226,7 @@ class JobFileWriter:
         handle.write(
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         handle.write(
-            "\n    export CYLC_TASK_FLOWS="
+            "\n    export CYLC_TASK_FLOW_NUMBERS="
             f"{','.join(str(f) for f in job_conf['flow_nums'])}"
         )
         # Standard parameter environment variables

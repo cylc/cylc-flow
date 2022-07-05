@@ -43,7 +43,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play \
 
 grep_ok \
     "# will invoke in batches, sizes=\[2, 2, 1\]" \
-    "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # tidy up
 purge

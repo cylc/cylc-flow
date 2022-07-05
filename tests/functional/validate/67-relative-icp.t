@@ -16,25 +16,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Checking that syntax of relative initial cycle point is validated.
-# NOTE: THIS TEST WILL FAIL FROM 01/01/2117
+# Note: remember to update this test after 01/01/2117
 
 . "$(dirname "$0")/test_header"
-
-set_test_number 2
+set_test_number 3
 
 cat >'flow.cylc' <<'__FLOW_CONFIG__'
 [scheduler]
     UTC mode = true
+    allow implicit tasks = True
 [scheduling]
     initial cycle point = previous(-17T1200Z; -18T1200Z) - P1D
     [[graph]]
         P1D = t1
-[runtime]
-    [[t1]]
-        script = true
 __FLOW_CONFIG__
 
-run_ok "${TEST_NAME_BASE}" cylc graph --reference .
-grep_ok "20171231T1200Z/t1" "${TEST_NAME_BASE}.stdout"
+run_ok "${TEST_NAME_BASE}-val" cylc validate .
+
+TEST_NAME="${TEST_NAME_BASE}-graph"
+run_ok "$TEST_NAME" cylc graph --reference .
+grep_ok "20171231T1200Z/t1" "${TEST_NAME}.stdout"
 
 exit

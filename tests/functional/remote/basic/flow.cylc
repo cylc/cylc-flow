@@ -1,5 +1,7 @@
 #!Jinja2
-
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = foo

@@ -163,7 +163,7 @@ from textwrap import indent
 from time import time
 
 from cylc.flow import LOG, iter_entry_points
-from cylc.flow.exceptions import CylcError, UserInputError
+from cylc.flow.exceptions import CylcError, InputError, PluginError
 
 
 class MainLoopPluginException(Exception):
@@ -321,34 +321,32 @@ def load(config, additional_plugins=None):
         'state': {},
         'timings': {}
     }
-    for plugin_name in config['plugins'] + additional_plugins:
+    for plugin_name in set(config['plugins'] + additional_plugins):
         # get plugin
         try:
-            module_name = entry_points[plugin_name.replace(' ', '_')]
+            entry_point = entry_points[plugin_name.replace(' ', '_')]
         except KeyError:
-            raise UserInputError(
+            raise InputError(
                 f'No main-loop plugin: "{plugin_name}"\n'
                 + '    Available plugins:\n'
                 + indent('\n'.join(sorted(entry_points)), '        ')
             )
         # load plugin
         try:
-            module = module_name.load()
-        except Exception:
-            raise CylcError(f'Could not load plugin: "{plugin_name}"')
+            module = entry_point.load()
+        except Exception as exc:
+            raise PluginError(
+                'cylc.main_loop', entry_point.name, exc
+            )
         # load coroutines
         log = []
-        for coro_name, coro in (
-                (coro_name, coro)
-                for coro_name, coro in getmembers(module)
-                if isfunction(coro)
-                if hasattr(coro, 'main_loop')
-        ):
-            log.append(coro_name)
-            plugins.setdefault(
-                coro.main_loop, {}
-            )[(plugin_name, coro_name)] = coro
-            plugins['timings'][(plugin_name, coro_name)] = deque(maxlen=1)
+        for coro_name, coro in getmembers(module):
+            if isfunction(coro) and hasattr(coro, 'main_loop'):
+                log.append(coro_name)
+                plugins.setdefault(
+                    coro.main_loop, {}
+                )[(plugin_name, coro_name)] = coro
+                plugins['timings'][(plugin_name, coro_name)] = deque(maxlen=1)
         LOG.debug(
             'Loaded main loop plugin "%s":\n%s',
             plugin_name,

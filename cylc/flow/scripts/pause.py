@@ -35,7 +35,10 @@ Not to be confused with `cylc hold`.
 from functools import partial
 from typing import TYPE_CHECKING
 
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.multi import call_multi
 from cylc.flow.terminal import cli_function
@@ -57,13 +60,13 @@ mutation (
 '''
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         comms=True,
         multitask=True,
         multiworkflow=True,
-        argdoc=[('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow ID(s)')],
+        argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
     return parser
 

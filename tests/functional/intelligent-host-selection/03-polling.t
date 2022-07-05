@@ -15,14 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test job polling. Set the auto clearance of badhosts to be << small time
-# so that polling will need to retry.
+# Test intelligent host selection for job polling.
+#
+# Set the peridic clearance of unreachable hosts by
+# `[scheduler][main loop][reset bad hosts]interval = PT1S` so that between
+# Submission of a job and execution polling the list of bad hosts will have
+# cleared. Having cleared bad hosts we can then test that polling goes through
+# the host selection process.
+
 export REQUIRE_PLATFORM='loc:remote fs:indep'
 
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
 set_test_number 4
+
+# Uses a fake background job runner to get around the single host restriction.
 
 create_test_global_config "" "
 [scheduler]
@@ -36,21 +44,25 @@ create_test_global_config "" "
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
         communication method = poll
-        execution polling intervals = PT0S, PT14M
-        submission polling intervals = PT0S, PT41M
+        execution polling intervals = 10*PT3S
+        submission polling intervals = PT0S, 5*PT2S
 
     [[mixedhostplatform]]
+        job runner = my_background
         hosts = unreachable_host, ${CYLC_TEST_HOST}
         install target = ${CYLC_TEST_INSTALL_TARGET}
         retrieve job logs = True
         communication method = poll
-        execution polling intervals = PT0S, PT14M
-        submission polling intervals = PT0S, PT41M
+        execution polling intervals = 10*PT3S
+        submission polling intervals = PT0S, 5*PT2S
         [[[selection]]]
             method = 'definition order'
     "
 #-------------------------------------------------------------------------------
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+# Install the fake background job runner.
+cp -r "${TEST_SOURCE_DIR}/lib" "${WORKFLOW_RUN_DIR}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
@@ -58,7 +70,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach \
     "${WORKFLOW_NAME}"
 
-LOGFILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.

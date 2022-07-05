@@ -91,10 +91,13 @@ from cylc.flow.broadcast_report import (
     get_broadcast_change_report,
 )
 from cylc.flow.cfgspec.workflow import SPEC, upg
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.parsec.validate import cylc_config_validate
 from cylc.flow.print_tree import get_tree
@@ -161,7 +164,7 @@ def get_rdict(left, right=None):
     left can be key, [key], [key1]key2, [key1][key2], [key1][key2]key3, etc.
     """
     if left == "inherit":
-        raise UserInputError(
+        raise InputError(
             "Inheritance cannot be changed by broadcast")
     rdict = {}
     cur_dict = rdict
@@ -225,13 +228,13 @@ def report_bad_options(bad_options, is_set=False):
     return bad_opts
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     """CLI for "cylc broadcast"."""
     parser = COP(
         __doc__,
         comms=True,
         multiworkflow=True,
-        argdoc=[('WORKFLOW_ID [WORKFLOW_ID ...]', 'Workflow ID(s)')],
+        argdoc=[WORKFLOW_ID_MULTI_ARG_DOC],
     )
 
     parser.add_option(
@@ -346,7 +349,7 @@ async def run(options: 'Values', workflow_id):
                 query_kwargs['variables']['nIds'] = [options.showtask]
             except ValueError:
                 # TODO validate showtask?
-                raise UserInputError(
+                raise InputError(
                     'TASK_ID_GLOB must be in the format: cycle/task'
                 )
         result = await pclient.async_request('graphql', query_kwargs)
@@ -381,7 +384,7 @@ async def run(options: 'Values', workflow_id):
         settings = []
         for option_item in options.cancel:
             if "=" in option_item:
-                raise UserInputError(
+                raise InputError(
                     "--cancel=[SEC]ITEM does not take a value")
             option_item = option_item.strip()
             setting = get_rdict(option_item)
@@ -400,7 +403,7 @@ async def run(options: 'Values', workflow_id):
         settings = []
         for option_item in options.settings:
             if "=" not in option_item:
-                raise UserInputError(
+                raise InputError(
                     "--set=[SEC]ITEM=VALUE requires a value")
             lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
             setting = get_rdict(lhs, rhs)

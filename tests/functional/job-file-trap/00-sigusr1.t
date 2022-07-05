@@ -58,7 +58,7 @@ run_tests() {
         'SELECT status FROM task_states WHERE name=="t1";' >"${TEST_NAME}-db-t1"
     cmp_ok "${TEST_NAME}-db-t1" - <<<'succeeded'
     # Test reference
-    grep_ok 'WORKFLOW REFERENCE TEST PASSED' "${WORKFLOW_RUN_DIR}/log/workflow/log"
+    grep_ok 'WORKFLOW REFERENCE TEST PASSED' "${WORKFLOW_RUN_DIR}/log/scheduler/log"
     purge
     exit
 }

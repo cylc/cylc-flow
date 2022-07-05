@@ -57,8 +57,11 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.pathutil import get_workflow_run_pub_db_name
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP,
+)
+from cylc.flow.pathutil import get_workflow_run_pub_db_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.terminal import cli_function
 
@@ -86,10 +89,10 @@ def smart_open(filename=None):
             fh.close()
 
 
-def get_option_parser():
+def get_option_parser() -> COP:
     parser = COP(
         __doc__,
-        argdoc=[('WORKFLOW_ID', 'Workflow ID')]
+        argdoc=[WORKFLOW_ID_ARG_DOC]
     )
     parser.add_option(
         "-r", "--raw",
@@ -170,7 +173,7 @@ def format_rows(header, rows):
 def _get_dao(workflow):
     """Return the DAO (public) for workflow."""
     return CylcWorkflowDAO(
-        get_workflow_run_pub_db_name(workflow), is_public=True)
+        get_workflow_run_pub_db_path(workflow), is_public=True)
 
 
 class TimingSummary:

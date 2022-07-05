@@ -18,7 +18,7 @@
 
 """cylc show [OPTIONS] ARGS
 
-Display workflow and task information.
+Display workflow and task information, for tasks in the current n-window.
 
 Query a running workflow for:
   # view workflow metadata
@@ -30,7 +30,10 @@ Query a running workflow for:
   # view prerequisites & outputs for a live task
   $ cylc show my_workflow//1/my_task
 
-Prerequisite and output status is indicated for current active tasks.
+Output completion status is shown for all tasks in the current n-window.
+
+Prerequisite satisfaction is not shown for past tasks reloaded from the
+workflow database.
 """
 
 import json
@@ -40,11 +43,18 @@ from typing import Dict
 
 from ansimarkup import ansiprint
 
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.id import Tokens
 from cylc.flow.id_cli import parse_ids
 from cylc.flow.network.client_factory import get_client
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.task_state import (
+    TASK_STATUSES_ORDERED,
+    TASK_STATUS_RUNNING
+)
+from cylc.flow.option_parsers import (
+    ID_MULTI_ARG_DOC,
+    CylcOptionParser as COP
+)
 from cylc.flow.terminal import cli_function
 
 
@@ -81,6 +91,7 @@ query ($wFlows: [ID]!, $taskIds: [ID]) {
     id
     name
     cyclePoint
+    state
     task {
       meta {
         title
@@ -151,7 +162,7 @@ def get_option_parser():
         __doc__,
         comms=True,
         multitask=True,
-        argdoc=[('ID [ID ...]', 'Workflow/Cycle/Family/Task ID(s)')],
+        argdoc=[ID_MULTI_ARG_DOC],
     )
 
     parser.add_option(
@@ -225,11 +236,12 @@ def prereqs_and_outputs_query(
     multi = len(results['taskProxies']) > 1
     for t_proxy in results['taskProxies']:
         task_id = Tokens(t_proxy['id']).relative_id
+        state = t_proxy['state']
         if options.json:
             json_filter.update({task_id: t_proxy})
         else:
             if multi:
-                ansiprint(f'------\n<bold>Task ID:</bold> {task_id}')
+                ansiprint(f'\n<bold>Task ID:</bold> {task_id}')
             prereqs = []
             for item in t_proxy['prerequisites']:
                 prefix = ''
@@ -260,18 +272,30 @@ def prereqs_and_outputs_query(
                     ansiprint(
                         f'<bold>{key}:</bold>'
                         f' {value or "<m>(not given)</m>"}')
-                ansiprint(
-                    '\n<bold>prerequisites</bold>'
-                    ' (<red>- => not satisfied</red>):')
-                if not prereqs:
-                    print('  (None)')
-                for _, prefix, msg, state in prereqs:
-                    print_msg_state(f'{prefix}{msg}', state)
 
+                ansiprint(f'<bold>state:</bold> {state}')
+
+                # prerequisites
+                pre_txt = "<bold>prerequisites:</bold>"
+                if not prereqs:
+                    ansiprint(f"{pre_txt} (None)")
+                elif (
+                    TASK_STATUSES_ORDERED.index(state) >
+                    TASK_STATUSES_ORDERED.index(TASK_STATUS_RUNNING)
+                ):
+                    # We only store prerequisites in the DB for n>0.
+                    ansiprint(f"{pre_txt} (n/a for past tasks)")
+                else:
+                    ansiprint(
+                        f"{pre_txt} ('<red>-</red>': not satisfied)")
+                    for _, prefix, msg, state in prereqs:
+                        print_msg_state(f'{prefix}{msg}', state)
+
+                # outputs
                 ansiprint(
-                    '\n<bold>outputs</bold>'
-                    ' (<red>- => not completed</red>):')
-                if not t_proxy['outputs']:
+                    '<bold>outputs:</bold>'
+                    " ('<red>-</red>': not completed)")
+                if not t_proxy['outputs']:  # (Not possible - standard outputs)
                     print('  (None)')
                 for output in t_proxy['outputs']:
                     info = f'{task_id} {output["label"]}'
@@ -282,8 +306,7 @@ def prereqs_and_outputs_query(
                         or t_proxy['xtriggers']
                 ):
                     ansiprint(
-                        '\n<bold>other</bold>'
-                        ' (<red>- => not satisfied</red>):')
+                        "<bold>other:</bold> ('<red>-</red>': not satisfied)")
                     if t_proxy['clockTrigger']['timeString']:
                         state = t_proxy['clockTrigger']['satisfied']
                         time_str = t_proxy['clockTrigger']['timeString']
@@ -303,7 +326,7 @@ def prereqs_and_outputs_query(
                             state)
     if not results['taskProxies']:
         ansiprint(
-            f"<red>No matching tasks found: {', '.join(ids_list)}",
+            f"<red>No matching n=0 tasks found: {', '.join(ids_list)}",
             file=sys.stderr)
         return 1
     return 0
@@ -327,7 +350,7 @@ def task_meta_query(workflow_id, task_names, pclient, options, json_filter):
             json_filter.update({task['name']: flat_data})
         else:
             if multi:
-                print(f'----\nTASK NAME: {task["name"]}')
+                print(f'\nTASK NAME: {task["name"]}')
             for key, value in sorted(flat_data.items(), reverse=True):
                 ansiprint(
                     f'<bold>{key}:</bold> {value or "<m>(not given)</m>"}')
@@ -346,7 +369,7 @@ def main(_, options: 'Values', *ids) -> None:
     tokens_list = workflow_args[workflow_id]
 
     if tokens_list and options.task_defs:
-        raise UserInputError(
+        raise InputError(
             'Cannot query both live tasks and task definitions.'
         )
 

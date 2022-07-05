@@ -22,11 +22,16 @@
 . "$(dirname "$0")/test_header"
 set_test_number 12
 #-------------------------------------------------------------------------------
+
+# Uses a fake background job runner to get around the single host restriction.
+
 create_test_global_config "" "
 [platforms]
     [[badhostplatform1]]
+        job runner = my_background
         hosts = bad_host1, bad_host2
     [[badhostplatform2]]
+        job runner = my_background
         hosts = bad_host3, bad_host4
 
 [platform groups]
@@ -36,12 +41,15 @@ create_test_global_config "" "
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+# Install the fake background job runner.
+cp -r "${TEST_SOURCE_DIR}/lib" "${WORKFLOW_RUN_DIR}"
+
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-logfile="${WORKFLOW_RUN_DIR}/log/workflow/log"
+logfile="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check workflow fails for the reason we want it to fail
 named_grep_ok \

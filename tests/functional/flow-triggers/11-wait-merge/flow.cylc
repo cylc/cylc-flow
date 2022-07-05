@@ -1,0 +1,40 @@
+# Task b(1) triggers:
+#  - a(2), which succeeds after b(1) finishes (to avoid merge)
+#  - c(2) --wait, which succeeds after merge with b(1)
+# Then b waits for c:x before succeeding.
+# When flow 2 reaches c, it should
+#  - spawn onward to d(1,2)
+#  - retroactively spawn on c:x => x(2)
+
+[scheduling]
+   [[graph]]
+      R1 = """
+         a => b => c => d
+         c:x => x
+      """
+[runtime]
+   [[a]]
+      script = """
+         if ((CYLC_TASK_SUBMIT_NUMBER == 2)); then
+             cylc__job__poll_grep_workflow_log "1/d .*(received)started"
+         fi
+      """
+ 
+   [[b]]
+      script = """
+         if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
+            cylc trigger --flow=new ${CYLC_WORKFLOW_NAME}//1/a
+            cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_NAME}//1/c
+            cylc__job__poll_grep_workflow_log "1/c .*(received)x"
+         fi
+      """
+   [[c]]
+      script = """
+         cylc message x
+         if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
+             cylc__job__poll_grep_workflow_log "merged"
+         fi
+      """
+      [[[outputs]]]
+         x = x
+   [[d, x]]

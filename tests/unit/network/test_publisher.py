@@ -24,14 +24,3 @@ def test_serialize_data():
     assert serialize_data(str1, None) == str1
     assert serialize_data(str1, 'encode', 'utf-8') == str1.encode('utf-8')
     assert serialize_data(str1, bytes, 'utf-8') == bytes(str1, 'utf-8')
-
-
-def test_start_stop(port_range):
-    pub = WorkflowPublisher('beef')
-    assert not pub.loop
-    pub.start(*port_range)
-    sleep(1)  # TODO - remove this evil sleep
-    assert not pub.socket.closed
-    assert pub.loop
-    pub.stop()
-    assert pub.socket.closed

@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow re-installation
 . "$(dirname "$0")/test_header"
-set_test_number 21
+set_test_number 11
 
 # Test basic cylc reinstall, named run given
 TEST_NAME="${TEST_NAME_BASE}-basic-named-run"
@@ -39,7 +39,7 @@ purge_rnd_workflow
 TEST_NAME="${TEST_NAME_BASE}-named-flow"
 make_rnd_workflow
 pushd "${TMPDIR}" || exit 1
-run_ok "${TEST_NAME}-install" cylc install -C "${RND_WORKFLOW_SOURCE}" --flow-name="${RND_WORKFLOW_NAME}"
+run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}-install.stdout" <<__OUT__
 INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
@@ -56,46 +56,12 @@ TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 make_rnd_workflow
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
-run_ok "${TEST_NAME}" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
+run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
 __OUT__
 
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
-purge_rnd_workflow
-
-# Test cylc reinstall from within rundir, no args given
-TEST_NAME="${TEST_NAME_BASE}-no-args"
-make_rnd_workflow
-run_ok "${TEST_NAME}-install" cylc install --flow-name="${RND_WORKFLOW_NAME}" -C "${RND_WORKFLOW_SOURCE}"
-cmp_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}
-__OUT__
-pushd "${RND_WORKFLOW_RUNDIR}/run1" || exit 1
-touch "${RND_WORKFLOW_SOURCE}/new_file"
-run_ok "${TEST_NAME}-reinstall" cylc reinstall
-REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run1/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
-exists_ok new_file
-popd || exit 1
-purge_rnd_workflow
-
-# Test cylc reinstall from within rundir, no args given
-TEST_NAME="${TEST_NAME_BASE}-no-args-no-run-name"
-make_rnd_workflow
-pushd "${RND_WORKFLOW_SOURCE}" || exit 1
-run_ok "${TEST_NAME}-install" cylc install --no-run-name -C "${RND_WORKFLOW_SOURCE}"
-cmp_ok "${TEST_NAME}-install.stdout" <<__OUT__
-INSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE}
-__OUT__
-pushd "${RND_WORKFLOW_RUNDIR}" || exit 1
-touch "${RND_WORKFLOW_SOURCE}/new_file"
-run_ok "${TEST_NAME}-reinstall" cylc reinstall
-REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/log/install" -type f -name '*reinstall.log')"
-grep_ok "REINSTALLED ${RND_WORKFLOW_NAME} from ${RND_WORKFLOW_SOURCE}" "${REINSTALL_LOG}"
-exists_ok new_file
-popd || exit 1
-popd || exit 1
 purge_rnd_workflow
 
 exit

@@ -38,8 +38,6 @@ def test_get_platform_no_args():
         'localhost',
         'localhost, otherplatform',
         'otherplatform, localhost',
-        'otherplatform|localhost',
-        'localhost|otherplatform',
         'localhost, xylophone\\d{1,5}'
     ]
 )

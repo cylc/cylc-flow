@@ -545,8 +545,6 @@ class TaskJobManager:
                     # write flag so that subsequent manual retrigger will
                     # generate a new job file.
                     itask.local_job_file_path = None
-                    if itask.state.outputs.has_custom_triggers():
-                        self.workflow_db_mgr.put_update_task_outputs(itask)
 
                     itask.waiting_on_job_prep = False
                 self.proc_pool.put_command(
@@ -942,7 +940,7 @@ class TaskJobManager:
                 cmd = construct_ssh_cmd(
                     cmd, platform, host
                 )
-            for itask in sorted(itasks, key=lambda itask: itask.identity):
+            for itask in sorted(itasks, key=lambda task: task.identity):
                 job_log_dirs.append(
                     itask.tokens.duplicate(
                         job=str(itask.submit_num)
@@ -976,7 +974,6 @@ class TaskJobManager:
                 submit_delays = rtconfig['submission retry delays']
             else:
                 submit_delays = itask.platform['submission retry delays']
-            # TODO: same for execution delays?
 
             for key, delays in [
                     (
@@ -1112,7 +1109,7 @@ class TaskJobManager:
         # - Platform exists, host doesn't = eval platform_name
         # - host exists - eval host_n
         # remove at:
-        #     Cylc9
+        #     Cylc8.x
         if (
             rtconfig['platform'] is not None and
             rtconfig['remote']['host'] is not None
@@ -1302,7 +1299,9 @@ class TaskJobManager:
                 itask.platform['job runner command template']
             ),
             'dependencies': itask.state.get_resolved_dependencies(),
-            'directives': rtconfig['directives'],
+            'directives': {
+                **itask.platform['directives'], **rtconfig['directives']
+            },
             'environment': rtconfig['environment'],
             'execution_time_limit': itask.summary[self.KEY_EXECUTE_TIME_LIMIT],
             'env-script': rtconfig['env-script'],

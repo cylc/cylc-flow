@@ -1,0 +1,7 @@
+#!jinja2
+[scheduler]
+    allow implicit tasks = True
+[scheduling]
+    [[graph]]
+%include flow-includeme.cylc
+[runtime]

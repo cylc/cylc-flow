@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+from time import sleep
 import pytest
-from typing import Any
+from typing import (Any, Optional)
 from unittest.mock import MagicMock, Mock
 
 from cylc.flow.network.client_factory import CommsMeth
@@ -65,3 +67,36 @@ def test_remote_init_skip(
     assert mock_task_remote_mgr.proc_pool.put_command.called is call_expected
     status = mock_task_remote_mgr.remote_init_map[install_target]
     assert status == expected_status
+
+
+@pytest.mark.parametrize(
+    'install_target, load_type, expected',
+    [
+        ('install_target', None, '03-start-install_target.log'),
+        ('some_install_target',
+         'restart',
+         '03-restart-some_install_target.log'),
+        ('another_install_target',
+         'reload',
+         '03-reload-another_install_target.log')
+    ]
+)
+def test_get_log_file_name(tmp_path,
+                           install_target: str,
+                           load_type: Optional[str],
+                           expected: str):
+    task_remote_mgr = TaskRemoteMgr('some_workflow', None, None)
+    if load_type == 'restart':
+        task_remote_mgr.is_restart = True
+    elif load_type == 'reload':
+        task_remote_mgr.is_reload = True
+    # else load type is start (no flag required)
+    run_dir = tmp_path
+    log_dir = Path(run_dir/'some_workflow'/'log'/'remote-install')
+    log_dir.mkdir(parents=True)
+    for log_num in range(1, 3):
+        Path(f"{log_dir}/{log_num:02d}-start-{install_target}.log").touch()
+        sleep(0.1)
+    log_name = task_remote_mgr.get_log_file_name(
+        install_target, install_log_dir=log_dir)
+    assert log_name == expected

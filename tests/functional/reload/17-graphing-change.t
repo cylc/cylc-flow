@@ -23,14 +23,14 @@ set_test_number 12
 grep_workflow_log_n_times() {
     TEXT="$1"
     N_TIMES="$2"
-    [[ $(grep -c "$TEXT" "${WORKFLOW_RUN_DIR}/log/workflow/log") == "$N_TIMES" ]]
+    [[ $(grep -c "$TEXT" "${WORKFLOW_RUN_DIR}/log/scheduler/log") == "$N_TIMES" ]]
 }
 #-------------------------------------------------------------------------------
 # test reporting of added tasks
 
 # install workflow
 install_workflow "${TEST_NAME_BASE}" 'graphing-change'
-LOG_FILE="${WORKFLOW_RUN_DIR}/log/workflow/log"
+LOG_FILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # start workflow in paused mode
 run_ok "${TEST_NAME_BASE}-add-run" cylc play --debug --pause "${WORKFLOW_NAME}"

@@ -24,13 +24,23 @@ from typing import Dict, Iterable, Set, Union, Optional, Any
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    UserInputError, WorkflowFilesError, handle_rmtree_err
+    InputError, WorkflowFilesError, handle_rmtree_err
 )
 from cylc.flow.platforms import get_localhost_install_target
+
 
 # Note: do not import this elsewhere, as it might bypass unit test
 # monkeypatching:
 _CYLC_RUN_DIR = os.path.join('$HOME', 'cylc-run')
+
+EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
+    rf'''
+    ^({re.escape(os.curdir)}|{re.escape(os.pardir)})
+    ({re.escape(os.sep)}|$)
+    ''',
+    re.VERBOSE
+)
+"""Matches relative paths that are explicit (starts with ./)"""
 
 
 def expand_path(*args: Union[Path, str]) -> str:
@@ -78,29 +88,29 @@ def get_workflow_run_job_dir(workflow, *args):
     return get_workflow_run_dir(workflow, 'log', 'job', *args)
 
 
-def get_workflow_run_log_dir(workflow, *args):
+def get_workflow_run_scheduler_log_dir(workflow, *args):
     """Return workflow run log directory, join any extra args."""
-    return get_workflow_run_dir(workflow, 'log', 'workflow', *args)
+    return get_workflow_run_dir(workflow, 'log', 'scheduler', *args)
 
 
-def get_workflow_run_log_name(workflow):
+def get_workflow_run_scheduler_log_path(workflow):
     """Return workflow run log file path."""
-    return get_workflow_run_dir(workflow, 'log', 'workflow', 'log')
+    return get_workflow_run_scheduler_log_dir(workflow, 'log')
 
 
-def get_workflow_file_install_log_name(workflow):
-    """Return workflow file install log file path."""
+def get_workflow_file_install_log_dir(workflow, *args):
+    """Return workflow file install log file dir, join any extra args."""
     return get_workflow_run_dir(
-        workflow, 'log', 'workflow', 'file-installation-log'
+        workflow, 'log', 'remote-install', *args
     )
 
 
 def get_workflow_run_config_log_dir(workflow, *args):
     """Return workflow run flow.cylc log directory, join any extra args."""
-    return get_workflow_run_dir(workflow, 'log', 'flow-config', *args)
+    return get_workflow_run_dir(workflow, 'log', 'config', *args)
 
 
-def get_workflow_run_pub_db_name(workflow):
+def get_workflow_run_pub_db_path(workflow):
     """Return workflow run public database file path."""
     return get_workflow_run_dir(workflow, 'log', 'db')
 
@@ -115,16 +125,16 @@ def get_workflow_run_work_dir(workflow, *args):
     return get_workflow_run_dir(workflow, 'work', *args)
 
 
-def get_workflow_test_log_name(workflow):
+def get_workflow_test_log_path(workflow):
     """Return workflow run ref test log file path."""
-    return get_workflow_run_dir(workflow, 'log', 'workflow', 'reftest.log')
+    return get_workflow_run_scheduler_log_dir(workflow, 'reftest.log')
 
 
 def make_workflow_run_tree(workflow):
     """Create all top-level cylc-run output dirs on the workflow host."""
     for dir_ in (
         get_workflow_run_dir(workflow),
-        get_workflow_run_log_dir(workflow),
+        get_workflow_run_scheduler_log_dir(workflow),
         get_workflow_run_job_dir(workflow),
         get_workflow_run_config_log_dir(workflow),
         get_workflow_run_share_dir(workflow),
@@ -148,7 +158,7 @@ def make_localhost_symlinks(
 
     Returns:
         Dictionary of symlinks with sources as keys and
-        destinations as values: ``{source: destination}``
+        destinations as values: ``{target: symlink}``
 
     """
     symlinks_created = {}
@@ -167,9 +177,9 @@ def make_localhost_symlinks(
         if '$' in target:
             raise WorkflowFilesError(
                 f'Unable to create symlink to {target}.'
-                f' \'{value}\' contains an invalid environment variable.'
+                f" '{value}' contains an invalid environment variable."
                 ' Please check configuration.')
-        symlink_success = make_symlink(symlink_path, target)
+        symlink_success = make_symlink_dir(symlink_path, target)
         # Symlink info returned for logging purposes. Symlinks should be
         # created before logs as the log dir may be a symlink.
         if symlink_success:
@@ -181,10 +191,11 @@ def get_dirs_to_symlink(
     install_target: str,
     workflow_name: str,
     symlink_conf: Optional[Dict[str, Dict[str, Any]]] = None
-) -> Dict[str, Any]:
+) -> Dict[str, str]:
     """Returns dictionary of directories to symlink.
 
     Note the paths should remain unexpanded, to be expanded on the remote.
+
     Args:
         install_target: Symlinks to be created on this install target
         flow_name: full name of the run, e.g. myflow/run1
@@ -195,7 +206,7 @@ def get_dirs_to_symlink(
     Returns:
         dirs_to_symlink: [directory: symlink_path]
     """
-    dirs_to_symlink: Dict[str, Any] = {}
+    dirs_to_symlink: Dict[str, str] = {}
     if symlink_conf is None:
         symlink_conf = glbl_cfg().get(['install', 'symlink dirs'])
     if install_target not in symlink_conf.keys():
@@ -213,12 +224,14 @@ def get_dirs_to_symlink(
     return dirs_to_symlink
 
 
-def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
+def make_symlink_dir(path: Union[Path, str], target: Union[Path, str]) -> bool:
     """Makes symlinks for directories.
 
     Args:
         path: Absolute path of the desired symlink.
         target: Absolute path of the symlink's target directory.
+
+    Returns True if symlink created, or False if skipped.
     """
     path = Path(path)
     target = Path(target)
@@ -241,7 +254,14 @@ def make_symlink(path: Union[Path, str], target: Union[Path, str]) -> bool:
         except OSError:
             raise WorkflowFilesError(
                 f"Error when symlinking. Failed to unlink bad symlink {path}.")
-    target.mkdir(parents=True, exist_ok=True)
+    try:
+        target.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        raise WorkflowFilesError(
+            f"Symlink dir target already exists: ({path} ->) {target}\n"
+            "Tip: in future, use 'cylc clean' instead of manually deleting "
+            "workflow run dirs."
+        )
 
     # This is needed in case share and share/cycle have the same symlink dir:
     if path.exists():
@@ -270,10 +290,10 @@ def remove_dir_and_target(path: Union[Path, str]) -> None:
         if os.path.exists(path):
             target = os.path.realpath(path)
             LOG.info(
-                f'Removing symlink target directory: ({path} ->) {target}'
+                "Removing symlink and its target directory: "
+                f"{path} -> {target}"
             )
             rmtree(target, onerror=handle_rmtree_err)
-            LOG.info(f'Removing symlink: {path}')
         else:
             LOG.info(f'Removing broken symlink: {path}')
         os.remove(path)
@@ -385,12 +405,12 @@ def parse_rm_dirs(rm_dirs: Iterable[str]) -> Set[str]:
             is_dir = part.endswith(os.sep)
             part = os.path.normpath(part)
             if os.path.isabs(part):
-                raise UserInputError("--rm option cannot take absolute paths")
+                raise InputError("--rm option cannot take absolute paths")
             if (
                 part in {os.curdir, os.pardir} or
                 part.startswith(f"{os.pardir}{os.sep}")  # '../'
             ):
-                raise UserInputError(
+                raise InputError(
                     "--rm option cannot take paths that point to the "
                     "run directory or above"
                 )

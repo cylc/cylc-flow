@@ -42,7 +42,10 @@ from typing import TYPE_CHECKING
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_OR_PATH_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.templatevars import load_template_vars
 from cylc.flow.terminal import cli_function
@@ -55,8 +58,7 @@ def get_option_parser():
     parser = COP(
         __doc__,
         jset=True,
-        prep=True,
-        argdoc=[('WORKFLOW_ID', 'Workflow ID or path to source')],
+        argdoc=[WORKFLOW_ID_OR_PATH_ARG_DOC],
     )
 
     parser.add_option(

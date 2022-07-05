@@ -19,12 +19,13 @@
 from pathlib import Path
 from random import shuffle
 import shutil
+import sys
 from typing import Optional
 
 import cylc.flow
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.exceptions import UserInputError
+from cylc.flow.exceptions import InputError
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -87,9 +88,9 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
 
     src = RESOURCE_DIR / resource_path
     if not src.exists():
-        raise UserInputError(
-            f'No such resouces {resource}.'
-            '\nRun `cylc get-resouces --list` for resource names.'
+        raise InputError(
+            f'No such resources {resource}.'
+            '\nRun `cylc get-resources --list` for resource names.'
         )
 
     is_tutorial = path_is_tutorial(src)
@@ -139,14 +140,27 @@ def extract_resource(src: Path, tgt: Path, is_tutorial: bool = False) -> None:
         _backup(tgt)
 
     # create the target directory
-    tgt.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        tgt.parent.mkdir(parents=True, exist_ok=True)
 
-    # NOTE: shutil interfaces don't fully support Path objects at all
-    # python versions
-    if src.is_dir():
-        shutil.copytree(str(src), str(tgt))
-    else:
-        shutil.copyfile(str(src), str(tgt))
+        # NOTE: shutil interfaces don't fully support Path objects at all
+        # python versions
+        if src.is_dir():
+            shutil.copytree(str(src), str(tgt))
+        else:
+            shutil.copyfile(str(src), str(tgt))
+    except IsADirectoryError as exc:
+        LOG.error(
+            f'Cannot extract file {exc.filename} as there is an '
+            'existing directory with the same name'
+        )
+        sys.exit(1)
+    except FileExistsError as exc:
+        LOG.error(
+            f'Cannot extract directory {exc.filename} as there is an '
+            'existing file with the same name'
+        )
+        sys.exit(1)
 
 
 def get_api_key() -> str:

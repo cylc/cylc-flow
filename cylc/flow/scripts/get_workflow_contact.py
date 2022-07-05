@@ -24,7 +24,10 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError, ServiceFileError
 from cylc.flow.id_cli import parse_id
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.option_parsers import (
+    WORKFLOW_ID_ARG_DOC,
+    CylcOptionParser as COP,
+)
 from cylc.flow.workflow_files import load_contact_file
 from cylc.flow.terminal import cli_function
 
@@ -33,7 +36,7 @@ if TYPE_CHECKING:
 
 
 def get_option_parser():
-    return COP(__doc__, argdoc=[('WORKFLOW_ID', 'Workflow ID')])
+    return COP(__doc__, argdoc=[WORKFLOW_ID_ARG_DOC])
 
 
 @cli_function(get_option_parser)

@@ -50,6 +50,7 @@ def init_flows(tmp_path, running=None, registered=None, un_registered=None):
     def make_registered(name, running=False):
         run_d = Path(tmp_path, name)
         run_d.mkdir(parents=True, exist_ok=True)
+        (run_d / "flow.cylc").touch()
         if "run" in name:
             root = Path(tmp_path, name).parent
             with suppress(FileExistsError):
@@ -394,7 +395,7 @@ async def test_scan_sigstop(
     schd = scheduler(reg)
     async with start(schd):
         # stop the server to make the flow un-responsive
-        schd.server.stop()
+        await schd.server.stop('make-unresponsive')
         # try scanning the workflow
         pipe = scan(test_dir) | graphql_query(['status'])
         caplog.clear()
@@ -406,3 +407,61 @@ async def test_scan_sigstop(
             (30, f'Workflow not running: {name}')
             in [(level, msg) for _, level, msg in caplog.record_tuples]
         )
+
+
+@pytest.fixture
+def cylc7_run_dir(tmp_path):
+    """A run directory containing three Cylc 7 workflows."""
+    # a workflow that has not yet been run
+    # (could be run by either cylc 7 or 8 so should appear in scan results)
+    either = tmp_path / 'either'
+    either.mkdir()
+    (either / WorkflowFiles.SUITE_RC).touch()
+
+    # a Cylc 7 workflow that has been / is being run by Cylc 7
+    # (should not appear in scan results)
+    cylc7 = tmp_path / 'cylc7'
+    cylc7.mkdir()
+    (cylc7 / WorkflowFiles.SUITE_RC).touch()
+    Path(cylc7, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
+    Path(cylc7, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
+
+    # a Cylc 7 workflow running under Cylc 8 in compatibility mode
+    # (should appear in scan results)
+    cylc8 = tmp_path / 'cylc8'
+    cylc8.mkdir()
+    (cylc8 / WorkflowFiles.SUITE_RC).touch()
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow', 'log').touch()
+
+    # a Cylc 7 workflow installed by Cylc 8 but not run yet.
+    # (should appear in scan results)
+    cylc8a = tmp_path / 'cylc8a'
+    cylc8a.mkdir()
+    (cylc8a / WorkflowFiles.SUITE_RC).touch()
+    Path(cylc8a, WorkflowFiles.LOG_DIR, 'install').mkdir(parents=True)
+
+    # crazy niche case of a Cylc 7 workflow that has had its DB removed
+    # and re-run under Cylc 8
+    # (should appear in scan results)
+    cylc8 = tmp_path / 'cylc78'
+    cylc8.mkdir()
+    (cylc8 / WorkflowFiles.SUITE_RC).touch()
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow', 'log').touch()
+
+    return tmp_path
+
+
+async def test_scan_cylc7(cylc7_run_dir):
+    """It should exclude Cylc 7 workflows from scan results.
+
+    Unless they are running under Cylc 8 in Cylc 7 compatibility mode.
+    """
+    assert await listify(
+        scan(cylc7_run_dir)
+    ) == [
+        'cylc78', 'cylc8', 'cylc8a', 'either'
+    ]

@@ -31,7 +31,7 @@ async def test_publisher(flow, scheduler, run, one_conf, port_range):
         subscriber = WorkflowSubscriber(
             schd.workflow,
             host=schd.host,
-            port=schd.publisher.port,
+            port=schd.server.pub_port,
             topics=[b'workflow']
         )
 

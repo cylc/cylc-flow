@@ -103,6 +103,7 @@ class WorkflowDatabaseManager:
                 pub_d, CylcWorkflowDAO.DB_FILE_BASE_NAME)
         self.pri_dao = None
         self.pub_dao = None
+        self.n_restart = 0
 
         self.db_deletes_map: Dict[str, List[DbArgDict]] = {
             self.TABLE_BROADCAST_STATES: [],
@@ -215,9 +216,12 @@ class WorkflowDatabaseManager:
         """
         if not is_restart:
             try:
+                # Note: it should no longer be possible to have DB as we now
+                # detect restart based on whether DB exists...
                 os.unlink(self.pri_path)
             except OSError:
-                # Just in case the path is a directory!
+                # ... however, in case there is a directory at the path for
+                # some bizarre reason:
                 rmtree(self.pri_path, ignore_errors=True)
         self.pri_dao = self.get_pri_dao()
         os.chmod(self.pri_path, PERM_PRIVATE)
@@ -329,6 +333,10 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_CYLC_VERSION, "value": CYLC_VERSION},
             {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
         ])
+        if schd.is_restart is False:
+            self.put_workflow_params_1(
+                self.KEY_RESTART_COUNT, 0
+            )
         if schd.config.cycle_point_dump_format is not None:
             self.put_workflow_params_1(
                 self.KEY_CYCLE_POINT_FORMAT,
@@ -395,7 +403,7 @@ class WorkflowDatabaseManager:
         """
         for key, value in template_vars.items():
             self.db_inserts_map[self.TABLE_WORKFLOW_TEMPLATE_VARS].append(
-                {"key": key, "value": value})
+                {"key": key, "value": repr(value)})
 
     def put_task_event_timers(self, task_events_mgr):
         """Put statements to update the task_action_timers table."""
@@ -432,7 +440,8 @@ class WorkflowDatabaseManager:
         """
         set_args = {
             "time_updated": itask.state.time_updated,
-            "status": itask.state.status
+            "status": itask.state.status,
+            "flow_wait": itask.flow_wait
         }
         where_args = {
             "cycle": str(itask.point),
@@ -451,11 +460,11 @@ class WorkflowDatabaseManager:
         relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
-        # We can comment this out to keep prereq history for the data-store:
+        # Comment this out to retain the trigger-time prereq status of past
+        # tasks (but then the prerequisite table will grow indefinitely):
         self.db_deletes_map[self.TABLE_TASK_PREREQUISITES].append({})
-        # No need to do:
+        # This should already be done by self.put_task_event_timers above:
         # self.db_deletes_map[self.TABLE_TASK_ACTION_TIMERS].append({})
-        # Should already be done by self.put_task_event_timers above.
         self.db_deletes_map[self.TABLE_TASK_TIMEOUT_TIMERS].append({})
         for itask in pool.get_all_tasks():
             for prereq in itask.state.prerequisites:
@@ -561,8 +570,15 @@ class WorkflowDatabaseManager:
         self._put_insert_task_x(self.TABLE_TASK_PREREQUISITES, itask, args)
 
     def put_insert_task_outputs(self, itask):
-        """Reset custom outputs for a task."""
-        self._put_insert_task_x(CylcWorkflowDAO.TABLE_TASK_OUTPUTS, itask, {})
+        """Reset outputs for a task."""
+        self._put_insert_task_x(
+            CylcWorkflowDAO.TABLE_TASK_OUTPUTS,
+            itask,
+            {
+                "flow_nums": serialise(itask.flow_nums),
+                "outputs": json.dumps([])
+            }
+        )
 
     def put_insert_abs_output(self, cycle, name, output):
         """Put INSERT statement for a new abs output."""
@@ -604,12 +620,20 @@ class WorkflowDatabaseManager:
 
     def put_update_task_outputs(self, itask):
         """Put UPDATE statement for task_outputs table."""
-        items = {}
-        for trigger, message in itask.state.outputs.get_completed_customs():
-            items[trigger] = message
-        self._put_update_task_x(
-            CylcWorkflowDAO.TABLE_TASK_OUTPUTS,
-            itask, {"outputs": json.dumps(items)})
+        outputs = []
+        for _, message in itask.state.outputs.get_completed_all():
+            outputs.append(message)
+        set_args = {
+            "outputs": json.dumps(outputs)
+        }
+        where_args = {
+            "cycle": str(itask.point),
+            "name": itask.tdef.name,
+            "flow_nums": serialise(itask.flow_nums),
+        }
+        self.db_updates_map.setdefault(self.TABLE_TASK_OUTPUTS, [])
+        self.db_updates_map[self.TABLE_TASK_OUTPUTS].append(
+            (set_args, where_args))
 
     def _put_update_task_x(self, table_name, itask, set_args):
         """Put UPDATE statement for a task_* table."""
@@ -632,27 +656,28 @@ class WorkflowDatabaseManager:
                 f"{self.pri_dao.db_file_name}")
             self.pub_dao.n_tries = 0
 
-    def restart_check(self) -> bool:
+    def restart_check(self) -> None:
         """Check & vacuum the runtime DB for a restart.
 
-        Raises ServiceFileError if DB is incompatible.
+        Increments the restart number in the DB. Sets self.n_restart.
 
-        Returns False if DB doesn't exist, else True.
+        Raises ServiceFileError if DB is incompatible.
         """
+        if self.n_restart != 0:
+            # This will not raise unless the method is mistakenly called twice
+            raise RuntimeError("restart check must only happen once")
         try:
             self.check_workflow_db_compatibility()
-        except FileNotFoundError:
-            return False
         except ServiceFileError as exc:
             raise ServiceFileError(f"Cannot restart - {exc}")
         pri_dao = self.get_pri_dao()
         try:
             pri_dao.vacuum()
             self.n_restart = pri_dao.select_workflow_params_restart_count() + 1
-            self.put_workflow_params_1(self.KEY_RESTART_COUNT, self.n_restart)
+            self.put_workflow_params_1(
+                self.KEY_RESTART_COUNT, self.n_restart)
         finally:
             pri_dao.close()
-        return True
 
     def check_workflow_db_compatibility(self):
         """Raises ServiceFileError if the existing workflow database is
@@ -660,7 +685,12 @@ class WorkflowDatabaseManager:
         if not os.path.isfile(self.pri_path):
             raise FileNotFoundError(self.pri_path)
         incompat_msg = (
-            f"Workflow database is incompatible with Cylc {CYLC_VERSION}")
+            f"Workflow database is incompatible with Cylc {CYLC_VERSION}"
+        )
+        manual_rm_msg = (
+            "If you are sure you want to operate on this workflow, please "
+            f"delete the database file at {self.pri_path}"
+        )
         pri_dao = self.get_pri_dao()
         try:
             last_run_ver = pri_dao.connect().execute(
@@ -675,7 +705,9 @@ class WorkflowDatabaseManager:
                 [self.KEY_CYLC_VERSION]
             ).fetchone()[0]
         except TypeError:
-            raise ServiceFileError(f"{incompat_msg}, or is corrupted")
+            raise ServiceFileError(
+                f"{incompat_msg}, or is corrupted.\n{manual_rm_msg}"
+            )
         finally:
             pri_dao.close()
         last_run_ver = parse_version(last_run_ver)
@@ -684,4 +716,6 @@ class WorkflowDatabaseManager:
         )
         if last_run_ver <= restart_incompat_ver:
             raise ServiceFileError(
-                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})")
+                f"{incompat_msg} (workflow last run with Cylc {last_run_ver})."
+                f"\n{manual_rm_msg}"
+            )

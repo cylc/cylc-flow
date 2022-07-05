@@ -19,6 +19,7 @@ from typing import Any, Callable, Dict, Optional, Tuple, Type
 from pathlib import Path
 import pytest
 import logging
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 from cylc.flow import CYLC_LOG
@@ -26,10 +27,13 @@ from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
 from cylc.flow.cycling.loader import INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
 from cylc.flow.exceptions import (
-    WorkflowConfigError,
     PointParsingError,
-    UserInputError
+    InputError,
+    WorkflowConfigError,
+    XtriggerConfigError,
 )
+from cylc.flow.scheduler_cli import RunOptions
+from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.wallclock import get_utc_mode, set_utc_mode
 from cylc.flow.xtrigger_mgr import XtriggerManager
@@ -37,6 +41,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED
 )
+
 
 Fixture = Any
 
@@ -122,7 +127,7 @@ class TestWorkflowConfig:
                 R1 = '@oopsie => qux'
         """
         flow_file.write_text(flow_config)
-        with pytest.raises(ImportError) as excinfo:
+        with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(
                 workflow="caiman_workflow",
                 fpath=flow_file,
@@ -155,7 +160,7 @@ class TestWorkflowConfig:
                 R1 = '@oopsie => qux'
         """
         flow_file.write_text(flow_config)
-        with pytest.raises(AttributeError) as excinfo:
+        with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(workflow="capybara_workflow", fpath=flow_file,
                            options=Mock(spec=[]))
         assert "not found" in str(excinfo.value)
@@ -185,7 +190,7 @@ class TestWorkflowConfig:
                 R1 = '@oopsie => qux'
         """
         flow_file.write_text(flow_config)
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(XtriggerConfigError) as excinfo:
             WorkflowConfig(
                 workflow="workflow_with_not_callable",
                 fpath=flow_file,
@@ -255,10 +260,7 @@ def test_family_inheritance_and_quotes(
     [
         pytest.param(
             ISO8601_CYCLING_TYPE,
-            {
-                'initial cycle point': None,
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': None},
             None,
             None,
             (WorkflowConfigError, "requires an initial cycle point"),
@@ -266,10 +268,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             INTEGER_CYCLING_TYPE,
-            {
-                'initial cycle point': None,
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': None},
             '1',
             None,
             None,
@@ -277,10 +276,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             INTEGER_CYCLING_TYPE,
-            {
-                'initial cycle point': "now",
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': "now"},
             None,
             None,
             (PointParsingError, "invalid literal for int()"),
@@ -288,10 +284,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             INTEGER_CYCLING_TYPE,
-            {
-                'initial cycle point': "20500808T0000Z",
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': "20500808T0000Z"},
             None,
             None,
             (PointParsingError, "invalid literal for int()"),
@@ -299,10 +292,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
-            {
-                'initial cycle point': "1",
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': "1"},
             None,
             None,
             (PointParsingError, "Invalid ISO 8601 date representation"),
@@ -310,10 +300,7 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
-            {
-                'initial cycle point': 'now',
-                'initial cycle point constraints': []
-            },
+            {'initial cycle point': 'now'},
             '20050102T0615+0530',
             '20050102T0615+0530',
             None,
@@ -366,7 +353,10 @@ def test_process_icp(
     set_cycling_type(cycling_type, time_zone="+0530")
     mocked_config = Mock(cycling_type=cycling_type)
     mocked_config.cfg = {
-        'scheduling': scheduling_cfg
+        'scheduling': {
+            'initial cycle point constraints': [],
+            **scheduling_cfg
+        }
     }
     mocked_config.options.icp = None
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
@@ -420,7 +410,7 @@ def test_process_icp(
             ['20090802T0615+0530/foo'],
             None,
             (
-                UserInputError,
+                InputError,
                 "--start-cycle-point and --start-task are mutually exclusive"
             ),
         )
@@ -467,7 +457,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2021',
                 'final cycle point': None,
-                'final cycle point constraints': []
             },
             None,
             None,
@@ -477,9 +466,21 @@ def test_process_startcp(
         pytest.param(
             ISO8601_CYCLING_TYPE,
             {
+                'initial cycle point': '2021',
+                'final cycle point': '',
+            },
+            None,
+            None,
+            None,
+            id="Empty fcp in cfg"
+            # This test is needed because fcp is treated as string by parsec,
+            # unlike other cycle point settings (allows for e.g. '+P1Y')
+        ),
+        pytest.param(
+            ISO8601_CYCLING_TYPE,
+            {
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
-                'final cycle point constraints': []
             },
             None,
             '20210101T0000+0530',
@@ -491,7 +492,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2016',
                 'final cycle point': '2021',
-                'final cycle point constraints': []
             },
             '2019',
             '20190101T0000+0530',
@@ -503,7 +503,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '+P4D',
-                'final cycle point constraints': []
             },
             None,
             '20170215T0000+0530',
@@ -515,7 +514,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2017-02-11',
                 'final cycle point': '---04',
-                'final cycle point constraints': []
             },
             None,
             '20170215T0000+0530',
@@ -528,7 +526,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '1',
                 'final cycle point': '4',
-                'final cycle point constraints': []
             },
             None,
             '4',
@@ -540,7 +537,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '1',
                 'final cycle point': '+P2',
-                'final cycle point constraints': []
             },
             None,
             '3',
@@ -552,7 +548,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2013',
                 'final cycle point': '2009',
-                'final cycle point constraints': []
             },
             None,
             None,
@@ -566,7 +561,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2013',
                 'final cycle point': '-PT1S',
-                'final cycle point constraints': []
             },
             None,
             None,
@@ -604,7 +598,6 @@ def test_process_startcp(
             {
                 'initial cycle point': '2013',
                 'final cycle point': '2021',
-                'final cycle point constraints': []
             },
             'reload',
             '20210101T0000+0530',
@@ -633,7 +626,10 @@ def test_process_fcp(
     set_cycling_type(cycling_type, time_zone='+0530')
     mocked_config = Mock(cycling_type=cycling_type)
     mocked_config.cfg = {
-        'scheduling': scheduling_cfg
+        'scheduling': {
+            'final cycle point constraints': [],
+            **scheduling_cfg
+        }
     }
     mocked_config.initial_point = loader.get_point(
         scheduling_cfg['initial cycle point']).standardise()
@@ -650,6 +646,147 @@ def test_process_fcp(
         assert mocked_config.cfg[
             'scheduling']['final cycle point'] == expected_fcp
         assert str(mocked_config.final_point) == str(expected_fcp)
+
+
+@pytest.mark.parametrize(
+    ('cfg_stopcp', 'options_stopcp', 'expected_value',
+     'expected_options_value', 'expected_warning'),
+    [
+        pytest.param(
+            None, None, None, None, None,
+            id="No stopcp"
+        ),
+        pytest.param(
+            '1993', None, '1993', None, None,
+            id="From config by default"
+        ),
+        pytest.param(
+            '1993', '1066', '1066', '1066', None,
+            id="From options"
+        ),
+        pytest.param(
+            '1993', 'reload', '1993', None, None,
+            id="From cfg if --stopcp=reload on restart"
+        ),
+        pytest.param(
+            '3000', None, None, None,
+            "will have no effect as it is after the final cycle point",
+            id="stopcp > fcp"
+        ),
+    ]
+)
+def test_process_stop_cycle_point(
+    cfg_stopcp: Optional[str],
+    options_stopcp: Optional[str],
+    expected_value: Optional[str],
+    expected_options_value: Optional[str],
+    expected_warning: Optional[str],
+    set_cycling_type: Callable,
+    caplog: pytest.LogCaptureFixture
+):
+    """Test WorkflowConfig.process_stop_cycle_point().
+
+    Params:
+        cfg_stopcp: [scheduling]stop after cycle point
+        options_stopcp: The stopcp from cli option / database.
+        expected_value: The expected stopcp value that gets set.
+        expected_options_value: The expected options.stopcp that gets set.
+        expected_warning: Expected warning message, if any.
+    """
+    set_cycling_type(ISO8601_CYCLING_TYPE, dump_format='CCYY')
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    fcp = loader.get_point('2012').standardise()
+    mock_config = Mock(
+        cfg={
+            'scheduling': {
+                'stop after cycle point': cfg_stopcp
+            }
+        },
+        final_point=fcp,
+        stop_point=None,
+        options=RunOptions(stopcp=options_stopcp),
+    )
+
+    WorkflowConfig.process_stop_cycle_point(mock_config)
+    assert str(mock_config.stop_point) == str(expected_value)
+    assert mock_config.cfg['scheduling']['stop after cycle point'] == (
+        expected_value
+    )
+    assert mock_config.options.stopcp == expected_options_value
+    if expected_warning:
+        assert expected_warning in caplog.text
+    else:
+        assert not caplog.record_tuples
+
+
+@pytest.mark.parametrize(
+    'cfg_fcp, cfg_stopcp, opts, warning_expected',
+    [
+        pytest.param(
+            '2005', '2017', {}, True,
+            id="cfg stopcp > fcp bad"
+        ),
+        pytest.param(
+            '2017', '2017', {}, False,
+            id="cfg stopcp == fcp ok"
+        ),
+        pytest.param(
+            '', '', {'fcp': '2005', 'stopcp': '2017'}, True,
+            id="options stopcp > fcp bad"
+        ),
+        pytest.param(
+            '', '', {'fcp': '2017', 'stopcp': '2017'}, False,
+            id="options stopcp == fcp ok"
+        ),
+        pytest.param(
+            '2017', '2005', {'stopcp': '2022'}, True,
+            id="options stopcp > cfg fcp bad"
+        ),
+        pytest.param(
+            '2017', '2005', {'stopcp': '2022'}, True,
+            id="options stopcp > cfg fcp bad"
+        ),
+        pytest.param(
+            '2022', '2017', {'fcp': '2005'}, True,
+            id="cfg stopcp > options fcp bad"
+        ),
+        pytest.param(
+            '', '2022', {}, False,
+            id="no fcp"
+        ),
+    ]
+)
+def test_stopcp_after_fcp(
+    cfg_fcp: str,
+    cfg_stopcp: str,
+    opts: Dict[str, str],
+    warning_expected: bool,
+    tmp_flow_config: Callable,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Test that setting a stop after cycle point that is beyond the final
+    cycle point is handled correctly."""
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    reg = 'cassini'
+    flow_file: Path = tmp_flow_config(reg, f"""
+    [scheduler]
+        allow implicit tasks = True
+    [scheduling]
+        initial cycle point = 1997
+        final cycle point = {cfg_fcp}
+        stop after cycle point = {cfg_stopcp}
+        [[graph]]
+            P1Y = huygens
+    """)
+    cfg = WorkflowConfig(reg, flow_file, options=RunOptions(**opts))
+    msg = "will have no effect as it is after the final cycle point"
+    if warning_expected:
+        assert msg in caplog.text
+        assert cfg.stop_point is None
+    else:
+        assert msg not in caplog.text
+        if cfg_stopcp or opts.get('stopcp'):
+            assert cfg.stop_point
 
 
 @pytest.mark.parametrize(
@@ -997,16 +1134,14 @@ def test_invalid_custom_output_msg(tmp_flow_config: Callable):
     ) in str(cm.value)
 
 
-def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch, caplog):
+def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch):
     """Test optional and required outputs Cylc 7 back compat mode.
 
     Success outputs should be required, others optional. Tested here because
     success is set to required after graph parsing, in taskdef processing.
 
     """
-    caplog.set_level(logging.WARNING, CYLC_LOG)
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat', True)
+    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
     reg = 'custom_out2'
     flow_file = tmp_flow_config(reg, '''
     [scheduling]
@@ -1024,7 +1159,6 @@ def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch, caplog):
     ''')
 
     cfg = WorkflowConfig(workflow=reg, fpath=flow_file, options=None)
-    assert WorkflowConfig.CYLC7_GRAPH_COMPAT_MSG in caplog.text
 
     for taskdef in cfg.taskdefs.values():
         for output, (_, required) in taskdef.outputs.items():
@@ -1090,22 +1224,22 @@ def test_success_after_optional_submit(tmp_flow_config, graph):
     ]
 )
 @pytest.mark.parametrize(
-    'cylc7_compat, rose_suite_conf, expected_exc, expected_log_level',
+    'cylc7_compat, rose_suite_conf, expected_exc, extra_msg_expected',
     [
         pytest.param(
-            False, False, WorkflowConfigError, None,
+            False, False, WorkflowConfigError, True,
             id="Default"
         ),
         pytest.param(
-            False, True, WorkflowConfigError, None,
+            False, True, WorkflowConfigError, True,
             id="rose-suite.conf present"
         ),
         pytest.param(
-            True, False, None, logging.WARNING,
+            True, False, None, False,
             id="Cylc 7 back-compat"
         ),
         pytest.param(
-            True, True, WorkflowConfigError, None,
+            True, True, WorkflowConfigError, False,
             id="Cylc 7 back-compat, rose-suite.conf present"
         ),
     ]
@@ -1115,7 +1249,7 @@ def test_implicit_tasks(
     cylc7_compat: bool,
     rose_suite_conf: bool,
     expected_exc: Optional[Type[Exception]],
-    expected_log_level: Optional[int],
+    extra_msg_expected: bool,
     caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
     monkeypatch: pytest.MonkeyPatch,
@@ -1130,9 +1264,8 @@ def test_implicit_tasks(
         rose_suite_conf: Whether a rose-suite.conf file is present in run dir.
         expected_exc: Exception expected to be raised only when
             "[scheduler]allow implicit tasks" is not set.
-        expected_log_level: Expected logging severity level for the
-            "implicit tasks detected" message only when
-            "[scheduler]allow implicit tasks" is not set.
+        extra_msg_expected: If True, there should be the note on how to allow
+            implicit tasks in the err msg.
     """
     # Setup
     reg = 'rincewind'
@@ -1152,18 +1285,157 @@ def test_implicit_tasks(
     caplog.set_level(logging.DEBUG, CYLC_LOG)
     if allow_implicit_tasks is True:
         expected_exc = None
-        expected_log_level = logging.DEBUG
     elif allow_implicit_tasks is False:
         expected_exc = WorkflowConfigError
+    extra_msg_expected &= (allow_implicit_tasks is None)
     # Test
     args: dict = {'workflow': reg, 'fpath': flow_file, 'options': None}
-    expected_msg = "implicit tasks detected"
+    expected_msg = r"implicit tasks detected.*"
     if expected_exc:
-        with pytest.raises(expected_exc) as exc:
+        with pytest.raises(expected_exc, match=expected_msg) as excinfo:
             WorkflowConfig(**args)
-        assert expected_msg in str(exc.value)
+        assert (
+            "To allow implicit tasks" in str(excinfo.value)
+        ) is extra_msg_expected
     else:
         WorkflowConfig(**args)
+
+
+@pytest.mark.parametrize('workflow_meta', [True, False])
+@pytest.mark.parametrize('url_type', ['good', 'bad', 'ugly', 'broken'])
+def test_process_urls(caplog, log_filter, workflow_meta, url_type):
+
+    if url_type == 'good':
+        # valid cylc 8 syntax
+        url = '%(workflow)s'
+    elif url_type == 'bad':
+        # no variable called "foo"
+        url = '%(foo)s'
+    elif url_type == 'broken':
+        # invalid syntax (missing the trailing "s")
+        url = '%(suite_name)'
+    elif url_type == 'ugly':
+        # valid cylc 7 syntax
+        url = '%(suite_name)s'
+
+    config = SimpleNamespace()
+    config.workflow = 'my-workflow'
+    if workflow_meta:
+        config.cfg = {
+            'meta': {'URL': url},
+            'runtime': {}
+        }
+    else:
+        config.cfg = {
+            'meta': {'URL': ''},
+            'runtime': {'foo': {'meta': {'URL': url}}},
+        }
+
+    if url_type == 'good':
+        WorkflowConfig.process_metadata_urls(config)
+    elif url_type in {'bad', 'broken'}:
+        with pytest.raises(InputError):
+            WorkflowConfig.process_metadata_urls(config)
+    elif url_type == 'ugly':
+        WorkflowConfig.process_metadata_urls(config)
         assert log_filter(
-            caplog, level=expected_log_level, contains=expected_msg
+            caplog,
+            contains='Detected deprecated template variables',
         )
+
+
+@pytest.mark.parametrize('opts', [ValidateOptions(), RunOptions()])
+@pytest.mark.parametrize(
+    'recurrence, should_warn',
+    [
+        # Format 3:
+        ('P0Y', True),
+        ('R//P0Y', True),
+        ('R2//P0Y', True),
+        ('R1//P0Y', False),
+        # Format 4:
+        ('R/P0M', True),
+        ('R1/P0M', False),
+        # Format 1:
+        ('R/2002-09-01/2002-09-01', True),
+        ('R1/2002-09-01/2002-09-01', False),
+        ('R/2002-08-31/2002-09-02', False),
+    ]
+)
+def test_zero_interval(
+    recurrence: str,
+    should_warn: bool,
+    opts: Values,
+    tmp_flow_config: Callable,
+    caplog: pytest.LogCaptureFixture,
+    log_filter: Callable,
+):
+    """Test that a zero-duration recurrence with >1 repetition gets an
+    appropriate warning."""
+    reg = 'ordinary'
+    flow_file: Path = tmp_flow_config(reg, f"""
+    [scheduler]
+        UTC mode = True
+        allow implicit tasks = True
+    [scheduling]
+        initial cycle point = 2002-08-30
+        final cycle point = 2002-09-14
+        [[graph]]
+            {recurrence} = slidescape36
+    """)
+    WorkflowConfig(reg, flow_file, options=opts)
+    logged = log_filter(
+        caplog,
+        level=logging.WARNING,
+        contains="Cannot have more than 1 repetition for zero-duration"
+    )
+    if should_warn:
+        assert logged
+    else:
+        assert not logged
+
+
+@pytest.mark.parametrize(
+    'runtime_cfg',
+    (
+        pytest.param(
+            {'foo': {'remote': {'host': 'bar'}}},
+            id='no-owners'
+        ),
+        pytest.param(
+            {'foo': {'remote': {'owner': 'tim'}}},
+            id='one-owner'
+        ),
+        pytest.param(
+            {
+                'foo': {'remote': {'owner': 'tim'}},
+                'bar': {'remote': {'owner': 'oliver'}},
+                'baz': {'remote': {'owner': 'ronnie'}},
+            },
+            id='3-owners'
+        ),
+        pytest.param(
+            {
+                'foo': {'remote': {'owner': 'tim'}},
+                'bar': {'remote': {'owner': 'oliver'}},
+                'baz': {'remote': {'owner': 'ronnie'}},
+                'qux': {'remote': {'owner': 'tim'}},
+                'aleph': {'remote': {'owner': 'oliver'}},
+                'bet': {'remote': {'owner': 'ronnie'}},
+
+            },
+            id='6-owners'
+        ),
+    )
+)
+def test_check_for_owner(runtime_cfg):
+    """check_for_owner raises a list of [runtime][task][remote]owner set."""
+    if 'owner' in str(runtime_cfg):
+        with pytest.raises(WorkflowConfigError) as exc:
+            WorkflowConfig.check_for_owner(runtime_cfg)
+        # Assert is the correct error message:
+        assert exc.match('owner\" is obsolete')
+        # Assert error message has right number of lines:
+    else:
+        # Assert function doesn't raise if no owner set:
+        assert WorkflowConfig.check_for_owner(runtime_cfg) is None

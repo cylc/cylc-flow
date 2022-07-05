@@ -23,6 +23,13 @@ from cylc.flow import LOG
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
+FlowNums = Set[int]
+# Flow constants
+FLOW_ALL = "all"
+FLOW_NEW = "new"
+FLOW_NONE = "none"
+
+
 class FlowMgr:
     """Logic to manage flow counter and flow metadata."""
 
@@ -55,7 +62,7 @@ class FlowMgr:
         )
         return self.counter
 
-    def load_from_db(self, flow_nums: Set[int]) -> None:
+    def load_from_db(self, flow_nums: FlowNums) -> None:
         """Load flow data for scheduler restart.
 
         Sets the flow counter to the max flow number in the DB.

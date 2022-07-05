@@ -554,8 +554,14 @@ class SubProcPool:
         the failures may be caused by other problems.
         """
         rsync_255_fail = False
+        platform_rsync_cmd = (
+            platform['rsync command']
+            if platform is not None
+            else 'rsync'
+        )
+        rsync_cmd = shlex.split(platform_rsync_cmd)
         if (
-            ctx.cmd[0] == 'rsync'
+            ctx.cmd[0] == rsync_cmd[0]
             and ctx.ret_code not in [0, 255]
             and is_remote_host(ctx.host)
         ):
@@ -575,7 +581,7 @@ class SubProcPool:
             if ssh_test.returncode == 255:
                 rsync_255_fail = True
         elif (
-            ctx.cmd[0] == 'rsync'
+            ctx.cmd[0] == rsync_cmd[0]
             and ctx.ret_code == 255
         ):
             rsync_255_fail = True
