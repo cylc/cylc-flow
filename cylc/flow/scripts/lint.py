@@ -14,37 +14,29 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Cylc lint looks through one or more folders for ``suite*.rc`` files and
+COP_DOC = """Cylc lint looks through one or more folders for
+"*.cylc" and "*.rc" files and
 search for Cylc 7 syntax which may be problematic at Cylc 8.
 
-Can be run either as a linter or "in place" (``-i``), leaving comments
+Can be run either as a linter or "in place" ("-i"), leaving comments
 in files.
 
-.. warning::
-
-   When run with ``-i`` (``--inplace``) mode ``Cylc lint`` changes your files.
-   We strongly recommend committing your workflow to version control
-   before using ``Cylc lint -i``.
+When run with ``-i`` (``--inplace``) mode ``Cylc lint`` changes your files.
+We strongly recommend committing your workflow to version control
+before using ``Cylc lint -i``.
 
 Usage
-^^^^^
 
-.. code-block:: bash
+# run as a linter
+cylc lint <paths to workflow directories to check>
 
-   # run as a linter
-   cylc lint <paths to workflow directories to check>
+# run inplace
+cylc lint --inplace <paths to workflow directories to check>
+cylc lint -i <paths to workflow directories to check>
 
-   # run inplace
-   cylc lint --inplace <paths to workflow directories to check>
-   cylc lint -i <paths to workflow directories to check>
-
-   # Get information about errors:
-   cylc lint --reference
-   cylc lint -r
-
-Change Codes
-^^^^^^^^^^^^
-
+# Get information about errors:
+cylc lint --reference
+cylc lint -r
 """
 from colorama import Fore
 from optparse import Values
@@ -273,13 +265,6 @@ CHECKS = {
             'short': (
                 '``[runtime][<namespace>][job]`` is deprecated, '
                 'use ``[runtime][<namespace>]platform``'
-                '\n    (the following items can be moved to '
-                '``[runtime][<namespace>]``:'
-                '\n    - ``execution retry delays``'
-                '\n    - ``submission retry delays``'
-                '\n    - ``execution polling intervals``'
-                '\n    - ``submission polling intervals``'
-                '\n    - ``execution time limit``'
             ),
             'url': 'major-changes/platforms.html#platforms'
         },
@@ -465,7 +450,7 @@ def get_cylc_files(base: Path) -> Generator[Path, None, None]:
                 yield path
 
 
-def get_reference(checks):
+def get_reference_rst(checks):
     """Print a reference for checks to be carried out.
 
     Returns:
@@ -483,7 +468,44 @@ def get_reference(checks):
 
         # Fill a template with info about the issue.
         template = (
-            '{checkset}{index:003d} ``{title}``:\n    {summary}\n'
+            '{checkset}{index:003d}\n^^^^\n{summary}\n'
+            'see - {url}\n\n'
+        )
+        if meta['url'].startswith('http'):
+            url = meta['url']
+        else:
+            url = URL_STUB + meta['url']
+        msg = template.format(
+            title=check.pattern.replace('\\', ''),
+            checkset=meta['purpose'],
+            summary=meta['short'],
+            url=url,
+            index=meta['index'],
+        )
+        output += msg
+    output += '\n'
+    return output
+
+
+def get_reference_text(checks):
+    """Print a reference for checks to be carried out.
+
+    Returns:
+        RST compatible text.
+    """
+    output = ''
+    current_checkset = ''
+    for check, meta in checks.items():
+        # Check if the purpose has changed - if so create a new
+        # section title:
+        if meta['purpose'] != current_checkset:
+            current_checkset = meta['purpose']
+            title = CHECKS_DESC[meta["purpose"]]
+            output += f'\n{title}\n{"-" * len(title)}\n\n'
+
+        # Fill a template with info about the issue.
+        template = (
+            '{checkset}{index:003d}:\n    {summary}\n'
             '    see - {url}\n'
         )
         if meta['url'].startswith('http'):
@@ -504,7 +526,7 @@ def get_reference(checks):
 
 def get_option_parser() -> COP:
     parser = COP(
-        __doc__,
+        COP_DOC,
         argdoc=[COP.optional(('DIR ...', 'Directories to lint'))],
     )
     parser.add_option(
@@ -526,12 +548,25 @@ def get_option_parser() -> COP:
         choices=('728', 'style', 'all'),
         dest='linter'
     )
+    parser.add_option(
+        '--reference', '--ref', '-R',
+        help=(
+            'Print Reference for error codes.'
+        ),
+        action='store_true',
+        default=False,
+        dest='ref_mode'
+    )
 
     return parser
 
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *targets) -> None:
+
+    if options.ref_mode:
+        print(get_reference_text(parse_checks(options.linter)))
+        exit(0)
 
     # Expand paths so that message will return full path
     # & ensure that CWD is used if no path is given:
@@ -576,6 +611,7 @@ def main(parser: COP, options: 'Values', *targets) -> None:
         # Summing up:
         if count > 0:
             color = Fore.YELLOW
+            exit(1)
         else:
             color = Fore.GREEN
         msg = (
@@ -584,5 +620,4 @@ def main(parser: COP, options: 'Values', *targets) -> None:
         )
         print(f'{color}{"-" * len(msg)}\n{msg}')
 
-
-__doc__ += get_reference(parse_checks('all'))
+__doc__ = get_reference_rst(parse_checks('all'))
