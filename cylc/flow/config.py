@@ -2083,8 +2083,9 @@ class WorkflowConfig:
 
         if suicides and not cylc.flow.flags.cylc7_back_compat:
             LOG.warning(
-                f"{suicides} suicide triggers detected. These are rarely"
-                " needed in Cylc 8 - have you upgraded from Cylc 7 syntax?"
+                f"{suicides} suicide trigger(s) detected. These are rarely "
+                "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
+                "latest/html/7-to-8/major-changes/suicide-triggers.html"
             )
 
     def set_required_outputs(
