@@ -1,11 +1,14 @@
 # When a task with a finish trigger fails:
 # Cylc 7:
-#   No runahead stall (failed tasks ignored) but stall due to failed tasks at FCP
+#   No runahead stall (failed tasks are ignored in computing runahead) but
+#   stall when nothing else to do (e.g. final cycle point) due to failed tasks
+#   in the pool.
 # Cylc 8 back-compat mode:
 #   Replicate Cylc 7 behaviour by making success outputs required and ignoring
 #   incomplete tasks in runahead computation.
 # Cylc 8 non-back-compat mode:
-#   No runahead stall and no stall at FCP, because :finish implies success optional. 
+#   No runahead stall and no stall at final cycle point, because finish
+#   triggers imply success is optional (i.e. no incomplete tasks created). 
 
 [scheduler]
     [[events]]
