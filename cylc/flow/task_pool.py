@@ -288,7 +288,14 @@ class TaskPool:
                         TASK_STATUS_SUCCEEDED,
                         TASK_STATUS_EXPIRED
                     )
-                    or itask.state.outputs.is_incomplete()
+                    or (
+                        # For Cylc 7 back-compat, ignore incomplete tasks.
+                        # (All :succeed is required in back-compat mode, so
+                        # failed tasks end up incomplete; and Cylc 7 ignores
+                        # failed tasks in computing the runhead limit).
+                        itask.state.outputs.is_incomplete()
+                        and not cylc.flow.flags.cylc7_back_compat
+                    )
                     for itask in itasks
                 )
             ):
