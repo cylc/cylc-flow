@@ -26,8 +26,9 @@ import os
 from pathlib import Path
 from random import shuffle
 import re
-import shutil
 from subprocess import Popen, PIPE, DEVNULL, TimeoutExpired
+import shlex
+import shutil
 from time import sleep
 from typing import (
     Any, Container, Deque, Dict, Iterable, List, NamedTuple, Optional, Set,
@@ -1450,7 +1451,10 @@ def get_rsync_rund_cmd(src, dst, reinstall=False, dry_run=False):
         list: command to use for rsync.
 
     """
-    rsync_cmd = ["rsync"] + DEFAULT_RSYNC_OPTS
+    rsync_cmd = shlex.split(
+        glbl_cfg().get(['platforms', 'localhost', 'rsync command'])
+    )
+    rsync_cmd += DEFAULT_RSYNC_OPTS
     if dry_run:
         rsync_cmd.append("--dry-run")
     if reinstall:
@@ -1493,6 +1497,10 @@ def reinstall_workflow(
         dry_run: if True, will not execute the file transfer but report what
             would be changed.
 
+    Raises:
+        WorkflowFilesError:
+            If rsync returns non-zero.
+
     Returns:
         Stdout from the rsync command.
 
@@ -1514,16 +1522,19 @@ def reinstall_workflow(
         dry_run=dry_run,
     )
     reinstall_log.info(cli_format(rsync_cmd))
-    # print(cli_format(rsync_cmd))
+    LOG.debug(cli_format(rsync_cmd))
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
     stdout, stderr = proc.communicate()
+    stdout = stdout.strip()
+    stderr = stderr.strip()
 
     if proc.returncode != 0:
-        reinstall_log.warning(
-            f"An error occurred when copying files from {source} to {rundir}"
+        raise WorkflowFilesError(
+            f'An error occurred reinstalling from {source} to {rundir}'
+            f'\n{stderr}'
         )
-        reinstall_log.warning(f" Error: {stderr}")
+
     check_flow_file(rundir)
     reinstall_log.info(f'REINSTALLED {named_run} from {source}')
     print(
