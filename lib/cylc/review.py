@@ -794,7 +794,10 @@ class CylcReviewService(object):
             "log/suite/log*",
             "log/suite/file-installation-log.*",
             "log/install/*",
-            "log/flow-config/*"
+            "log/flow-config/*",
+            "log/config/*",
+            "log/scheduler/*.log",
+            "log/remote-install/*.log"
         ]
         for glob_pattern in EXTRA_FILES:
             for f_name in glob(os.path.join(dir_, glob_pattern)):
