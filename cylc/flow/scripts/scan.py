@@ -72,15 +72,12 @@ from cylc.flow.option_parsers import (
     Options
 )
 from cylc.flow.print_tree import get_tree
-from cylc.flow.terminal import cli_function
+from cylc.flow.terminal import cli_function, DIM
 from cylc.flow.util import natural_sort_key
 from cylc.flow.workflow_files import ContactFileFields as Cont
 
 if TYPE_CHECKING:
     from optparse import Values
-
-# default grey colour (do not use "dim", it is not sufficiently portable)
-DIM = 'fg 248'
 
 # all supported workflow states
 FLOW_STATES = {

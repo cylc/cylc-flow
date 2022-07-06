@@ -26,7 +26,10 @@ from ansimarkup import parse as cparse
 import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
-from cylc.flow.option_parsers import format_shell_examples
+from cylc.flow.option_parsers import (
+    format_help_headings,
+    format_shell_examples,
+)
 from cylc.flow.scripts.common import cylc_header
 
 
@@ -173,8 +176,7 @@ Filters
 
 # because this command is not served from behind cli_function like the
 # other cylc commands we have to manually patch in colour support
-USAGE = format_shell_examples(USAGE)
-USAGE = cparse(USAGE)
+USAGE = cparse(format_help_headings(format_shell_examples(USAGE)))
 
 # all sub-commands
 # {name: entry_point}
@@ -429,22 +431,6 @@ def cli_help():
     # modern terminal)
     from colorama import init as color_init
     color_init(autoreset=True, strip=False)
-    commands = [
-        'clean',
-        'hold',
-        'install',
-        'kill',
-        'pause',
-        'play',
-        'release',
-        'scan',
-        'stop',
-        'trigger',
-        'tui',
-        'validate',
-    ]
-    if 'gui' in COMMANDS:
-        commands.append('gui')
     print(USAGE)
     sys.exit(0)
 

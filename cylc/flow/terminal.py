@@ -40,6 +40,9 @@ from cylc.flow.parsec.exceptions import ParsecError
 # CLI exception message format
 EXC_EXIT = cparse('<red><bold>{name}: </bold>{exc}</red>')
 
+# default grey colour (do not use "dim", it is not sufficiently portable)
+DIM = 'fg 248'
+
 
 def is_terminal():
     """Determine if running in (and printing to) a terminal."""
@@ -174,7 +177,6 @@ def parse_dirty_json(stdout):
                 stdout = stdout.split('\n', 1)[1]
             except IndexError:
                 break
-    # raise ValueError(f'Invalid JSON: {orig}')
     raise ValueError(orig)
 
 
