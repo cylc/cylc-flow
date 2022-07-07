@@ -395,7 +395,8 @@ def get_upgrader_info():
                 regex = re.compile(fr'{start}\s*{name}\s*{end}')
             else:
                 name = upgrade["old"][-1]
-                regex = re.compile(rf'{name}\s=\s.*')
+                expr = rf'{name}\s*=\s*.*'
+                regex = re.compile(expr)
 
 
             deprecations[regex] = {
@@ -435,7 +436,7 @@ def parse_checks(check_arg):
 
     for purpose, checks in checks.items():
         if purpose in purpose_filters:
-            for index, (pattern, meta) in enumerate(checks.items()):
+            for index, (pattern, meta) in enumerate(checks.items(), start=1):
                 meta.update({'purpose': purpose})
                 meta.update({'index': index})
                 parsedchecks.update({pattern: meta})

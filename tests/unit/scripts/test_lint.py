@@ -26,6 +26,7 @@ from cylc.flow.scripts.lint import (
     check_cylc_file,
     get_cylc_files,
     get_reference_rst,
+    get_upgrader_info,
     parse_checks
 )
 
@@ -65,6 +66,7 @@ TEST_FILE = """
         abort on inactivity = 30
     [[parameters]]
     [[parameter templates]]
+        template = "foo"
     [[mail]]
         task event mail interval    = PT4M # deliberately added lots of spaces.
 
@@ -83,6 +85,7 @@ TEST_FILE = """
         {% from 'cylc.flow' import LOG %}
         script = {{HELLOWORLD}}
         suite state polling = PT1H
+        reset timer=PT1H
         [[[remote]]]
             host = parasite
             suite definition directory = '/home/bar'
@@ -124,16 +127,17 @@ def create_testable_file(monkeypatch, capsys):
 
 
 @pytest.mark.parametrize(
-    'number', range(len(CHECKS['U']))
+    'number', range(len(parse_checks('728')))
 )
 def test_check_cylc_file_7to8(create_testable_file, number, capsys):
     try:
         result = create_testable_file(TEST_FILE, '728').out
         assert f'[U{number:03d}]' in result
     except AssertionError:
+        checks = parse_checks('728')
         raise AssertionError(
             f'missing error number U{number:03d}'
-            f'{[*CHECKS["U"].keys()][number]}'
+            f'{[*checks.keys()][number]}'
         )
 
 
@@ -173,15 +177,16 @@ def create_testable_dir(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'number', range(len(CHECKS['U']))
+    'number', range(len(parse_checks('728')))
 )
 def test_check_cylc_file_inplace(create_testable_dir, number):
     try:
         assert f'[U{number:03d}]' in create_testable_dir
     except AssertionError:
+        checks = parse_checks('728')
         raise AssertionError(
             f'missing error number {number:03d}:7-to-8 - '
-            f'{[*CHECKS["U"].keys()][number]}'
+            f'{[*checks.keys()][number]}'
         )
 
 
@@ -205,7 +210,7 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
 
 def test_get_reference():
     """It produces a reference file for our linting."""
-    ref = get_reference({
+    ref = get_reference_rst({
         re.compile('not a regex'): {
             'short': 'section `[vizualization]` has been removed.',
             'url': 'some url or other',
@@ -215,9 +220,9 @@ def test_get_reference():
     })
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
-        'U042 ``not a regex``:\n    section `[vizualization]` has been '
-        'removed.\n    see -'
+        'U042\n^^^^\nsection `[vizualization]` has been '
+        'removed.\nsee -'
         ' https://cylc.github.io/cylc-doc/latest/html/7-to-8/some url'
-        ' or other\n\n'
+        ' or other\n\n\n'
     )
     assert ref == expect
