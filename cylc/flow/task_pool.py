@@ -1187,6 +1187,9 @@ class TaskPool:
                 and (itask.flow_nums or forced)
                 and not itask.flow_wait
             ):
+                # If child is not in the pool already, and parent belongs to a
+                # flow (so it can spawn children), and parent is not waiting
+                # for an upcoming flow merge before spawning ... then spawn it.
                 c_task = self.spawn_task(
                     c_name, c_point, itask.flow_nums,
                 )
