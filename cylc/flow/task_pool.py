@@ -1170,8 +1170,8 @@ class TaskPool:
                 or self._get_main_task_by_id(c_taskid)
             )
             if c_task is not None and c_task != itask:
-                # (Avoid self-suicide: a:fail => !a)
                 # Child already exists, update it.
+                # (unless trying to remove itself: a:fail => !a)
                 self.merge_flows(c_task, itask.flow_nums)
                 self.workflow_db_mgr.put_insert_task_states(
                     c_task,
