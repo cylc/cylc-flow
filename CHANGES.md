@@ -35,6 +35,10 @@ Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4964](https://github.com/cylc/cylc-flow/pull/4964) -
+`cylc reinstall` now displays the changes it would make when run
+interactively and has improved help / documentaiton.
+
 [#4836](https://github.com/cylc/cylc-flow/pull/4836) - The log directory has
 been tidied. Workflow logs are now found in `log/scheduler` rather than
 `log/workflow`, filenames now include `start`/`restart`. Other minor directory
