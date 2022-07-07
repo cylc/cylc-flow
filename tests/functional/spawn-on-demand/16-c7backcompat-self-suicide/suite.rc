@@ -3,7 +3,7 @@
 # GitHub cylc-flow #4968: self-induced suicide should not retrigger foo below.
 [scheduler]
     [[events]]
-        stall timeout = PT10S
+        stall timeout = PT0S
         abort on stall timeout = True
         expected task failures = 1/foo
 [scheduling]
