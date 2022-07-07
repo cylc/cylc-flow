@@ -5,7 +5,7 @@
 
 [scheduler]
     [[events]]
-         stall timeout = PT10S
+         stall timeout = PT0S
          abort on stall timeout = True
          expected task failures = 1/bad, 2/bad
 [scheduling]
