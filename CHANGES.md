@@ -51,6 +51,9 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#4970](https://github.com/cylc/cylc-flow/pull/4970) - Fix handling of suicide
+triggers in back-compat mode.
+
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.
 

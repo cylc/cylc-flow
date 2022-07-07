@@ -1,0 +1,27 @@
+# suite.rc: Cylc 8 back compat mode.
+
+# GitHub cylc-flow #4968: self-induced suicide in the example below should not
+# cause shutdown after the initial cycle point.
+
+[scheduler]
+    [[events]]
+         stall timeout = PT0S
+         abort on stall timeout = True
+         expected task failures = 1/bad, 2/bad
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 2
+    [[dependencies]]
+        [[[R1]]]
+            graph = init
+        [[[P1]]]
+            graph = """
+                init[^] => bad => good
+                bad:fail => !bad & !good
+            """
+[runtime]
+    [[init, good]]
+        script = true
+    [[bad]]
+        script = false

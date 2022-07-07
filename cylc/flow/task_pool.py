@@ -1176,8 +1176,9 @@ class TaskPool:
                 self._get_hidden_task_by_id(c_taskid)
                 or self._get_main_task_by_id(c_taskid)
             )
-            if c_task is not None:
+            if c_task is not None and c_task != itask:
                 # Child already exists, update it.
+                # (unless trying to remove itself: a:fail => !a)
                 self.merge_flows(c_task, itask.flow_nums)
                 self.workflow_db_mgr.put_insert_task_states(
                     c_task,
@@ -1188,7 +1189,14 @@ class TaskPool:
                 )
                 # self.workflow_db_mgr.process_queued_ops()
 
-            elif (itask.flow_nums or forced) and not itask.flow_wait:
+            elif (
+                c_task is None
+                and (itask.flow_nums or forced)
+                and not itask.flow_wait
+            ):
+                # If child is not in the pool already, and parent belongs to a
+                # flow (so it can spawn children), and parent is not waiting
+                # for an upcoming flow merge before spawning ... then spawn it.
                 c_task = self.spawn_task(
                     c_name, c_point, itask.flow_nums,
                 )

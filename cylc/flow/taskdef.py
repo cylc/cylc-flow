@@ -291,7 +291,9 @@ class TaskDef:
                 for trig in dep.task_triggers:
                     if (
                         trig.offset_is_absolute or
-                        trig.offset_is_from_icp
+                        trig.offset_is_from_icp or
+                        # Don't count self-suicide as a normal trigger.
+                        dep.suicide and trig.task_name == self.name
                     ):
                         has_abs = True
                     else:
