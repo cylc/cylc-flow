@@ -100,6 +100,7 @@ class TaskPool:
         self.do_reload = False
         self.max_future_offset: Optional['IntervalBase'] = None
         self._prev_runahead_base_point: Optional['PointBase'] = None
+        self._prev_runahead_sequence_points: Optional[Set['PointBase']] = None
         self.runahead_limit_point: Optional['PointBase'] = None
 
         self.main_pool: Pool = {}
@@ -293,11 +294,13 @@ class TaskPool:
         """Compute the runahead limit; return True if it changed.
 
         Start from earliest point with unfinished tasks. Partially satisfied
-        and incomplete tasks count too because they may yet run, or be run,
-        at their respective cycle points.
+        and incomplete tasks count too because they still need to run.
 
-        The limit itself is limited by workflow stop point, if there is one.
-        And adjusted upward on the fly if tasks with future offsets appear.
+        The limit itself is limited by workflow stop point, if there is one,
+        and adjusted upward on the fly if tasks with future offsets appear.
+
+        With force=True we recompute the limit even if the base point has not
+        changed (needed if max_future_offset changed).
         """
         points: List['PointBase'] = []
         if not self.main_pool:
@@ -336,17 +339,17 @@ class TaskPool:
         if self._prev_runahead_base_point is None:
             self._prev_runahead_base_point = base_point
 
-        # No change if base point unchanged or limit already at stop point.
         if (
             not force
             and self.runahead_limit_point is not None
             and (
                 base_point == self._prev_runahead_base_point
-                or self.stop_point == self.runahead_limit_point
+                or self.runahead_limit_point == self.stop_point
             )
         ):
+            # No need to recompute the list of points if the base point did not
+            # change or the runahead limit is already at stop point.
             return False
-        self._prev_runahead_base_point = base_point
 
         try:
             limit = int(self.config.runahead_limit)  # type: ignore
@@ -356,29 +359,34 @@ class TaskPool:
         else:
             count_cycles = True
 
-        # TODO: IF FORCE AND NO CHANGE NEED TO CACHE CYCLES!
-        # (max future offset compute)
-
-        # Get all cycling points possible after the runahead base point.
-        # from pudebug import go; go()
-        sequence_points = set()
-        for sequence in self.config.sequences:
-            seq_point = sequence.get_next_point(base_point)
-            count = 1
-            while seq_point is not None:
-                if count_cycles:
-                    # P0 allows only the base cycle point to run.
-                    if count > 1 + limit:
-                        break
-                else:
-                    # PT0H allows only the base cycle point to run.
-                    if seq_point > base_point + limit:
-                        break
-                count += 1
-                sequence_points.add(seq_point)
-                seq_point = sequence.get_next_point(seq_point)
+        # Get all cycle points possible after the runahead base point.
+        if (self._prev_runahead_sequence_points and
+                base_point == self._prev_runahead_base_point):
+            # Cache for speed.
+            sequence_points = self._prev_runahead_sequence_points
+        else:
+            # Recompute possible points.
+            sequence_points = set()
+            for sequence in self.config.sequences:
+                seq_point = sequence.get_next_point(base_point)
+                count = 1
+                while seq_point is not None:
+                    if count_cycles:
+                        # P0 allows only the base cycle point to run.
+                        if count > 1 + limit:
+                            break
+                    else:
+                        # PT0H allows only the base cycle point to run.
+                        if seq_point > base_point + limit:
+                            break
+                    count += 1
+                    sequence_points.add(seq_point)
+                    seq_point = sequence.get_next_point(seq_point)
+            self._prev_runahead_sequence_points = sequence_points
+            self._prev_runahead_base_point = base_point
 
         points = set(points).union(sequence_points)
+
         if count_cycles:
             # Some sequences may have different intervals.
             limit_point = sorted(points)[:(limit + 1)][-1]
@@ -386,17 +394,17 @@ class TaskPool:
             # We already stopped at the runahead limit.
             limit_point = sorted(points)[-1]
 
-        log_msg = f"Runahead limit: {limit_point}"
         # Adjust for future offset and stop point, if necessary.
+        pre_adj_limit = limit_point
         if self.max_future_offset is not None:
             limit_point += self.max_future_offset
-            log_msg += f" -> {limit_point} (future offset)"
+            LOG.debug(f"{pre_adj_limit} -> {limit_point} (future offset)")
         if self.stop_point and limit_point > self.stop_point:
             limit_point = self.stop_point
-            log_msg += f"-> {limit_point} (stop point)"
+            LOG.debug(f"{pre_adj_limit} -> {limit_point} (stop point)")
+        LOG.info(f"Runahead limit: {limit_point}")
 
         self.runahead_limit_point = limit_point
-        LOG.info(log_msg)
         return True
 
     def update_flow_mgr(self):
