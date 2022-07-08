@@ -305,10 +305,10 @@ class TaskPool:
         points: List['PointBase'] = []
         if not self.main_pool:
             # Start at first point in each sequence, after the initial point.
-            pts = set()
-            for seq in self.config.sequences:
-                pts.add(seq.get_first_point(self.config.start_point))
-            points = list(pts)
+            points = list({
+                seq.get_first_point(self.config.start_point)
+                for seq in self.config.sequences
+            })
         else:
             # Find the earliest point with unfinished tasks.
             for point, itasks in sorted(self.get_tasks_by_point().items()):
