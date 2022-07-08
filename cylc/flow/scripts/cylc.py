@@ -46,32 +46,24 @@ def get_version(long=False):
 
 
 USAGE = f"""{cylc_header()}
-Cylc ("silk") orchestrates complex cycling (and non-cycling) workflows.
+Cylc ("silk") efficiently manages distributed cycling workflows.
+This is Open Source software (GPL-3.0): see "cylc help license".
 
 Version:
-  $ cylc version --long           # print cylc-flow version and install path
+  $ cylc version --long
   {get_version(True)}
 
 Usage:
-  $ cylc help license             # view the Cylc license (GPL-3.0)
-  $ cylc help all                 # list all commands
-  $ cylc validate <workflow>      # validate a workflow configuration
-  $ cylc install <workflow>       # install a workflow
-  $ cylc play <workflow>          # run/resume a workflow
-  $ cylc scan                     # list all running workflows (by default)
-  $ cylc tui <workflow>           # view/control workflows in the terminal
-  $ cylc stop <workflow>          # stop a running workflow
+  $ cylc <sub-command> <OPTS> <ARGS>
 
-Command Abbreviation:
-  # Commands can be abbreviated as long as there is no ambiguity in
-  # the abbreviated command:
-  $ cylc trigger WORKFLOW//CYCLE/TASK    # trigger TASK in WORKFLOW
-  $ cylc trig WORKFLOW//CYCLE/TASK       # ditto
-  $ cylc tr WORKFLOW//CYCLE/TASK         # ditto
-  $ cylc t                               # Error: ambiguous command
+Selected sub-commands are listed below. To view ALL sub-commands:
+  $ cylc help all
+
+To view sub-command help:
+  $ cylc <sub-command> --help
 
 Cylc IDs:
-  Cylc IDs take the form:
+  Workflows and tasks are uniquely identified by IDs of the form:
     workflow//cycle/task
 
   You can split an ID at the // so following two IDs are equivalent:
@@ -80,10 +72,16 @@ Cylc IDs:
 
   IDs can be written as globs:
     *//                 # All workflows
-    workflow//*         # All cycles in "workflow"
-    workflow//cycle/*   # All tasks in "workflow" in "cycle"
+    workflow//*         # All cycle points in "workflow"
+    workflow//cycle/*   # All tasks in cycle point "cycle" of "workflow"
 
-  For more information type "cylc help id".
+  $ cylc help id        # More information on IDs
+
+Cylc commands can be abbreviated:
+  $ cylc trigger WORKFLOW//CYCLE/TASK    # trigger TASK in WORKFLOW
+  $ cylc trig WORKFLOW//CYCLE/TASK       # ditto
+  $ cylc tr WORKFLOW//CYCLE/TASK         # ditto
+  $ cylc t                               # ERROR: trigger or tui?
 """
 
 ID_HELP = '''
@@ -431,7 +429,10 @@ def cli_help():
     from colorama import init as color_init
     color_init(autoreset=True, strip=False)
     print(USAGE)
-    print('Selected Sub-Commands:')
+    print(
+        'Selected sub-commands '
+        '(type "cylc help all" to see ALL sub-commands):'
+    )
     print_command_list(
         # print a short list of the main cylc commands
         commands=[
@@ -449,7 +450,6 @@ def cli_help():
         ],
         indent=2
     )
-    print('\nTo see all commands run: cylc help all')
     sys.exit(0)
 
 
