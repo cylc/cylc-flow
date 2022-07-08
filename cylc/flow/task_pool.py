@@ -322,9 +322,9 @@ class TaskPool:
                         )
                         or (
                             # For Cylc 7 back-compat, ignore incomplete tasks.
-                            # (Success is required in back-compat mode, so failed
-                            # tasks end up as incomplete; and Cylc 7 ignores
-                            # failed tasks when computing the runahead limit).
+                            # (Success is required in back-compat mode, so
+                            # failedtasks end up as incomplete; and Cylc 7
+                            # ignores failed tasks in computing the limit).
                             itask.state.outputs.is_incomplete()
                             and not cylc.flow.flags.cylc7_back_compat
                         )
@@ -1257,6 +1257,13 @@ class TaskPool:
                 f"[{itask}] did not complete required outputs:"
                 f" {incomplete}"
             )
+            if (
+                cylc.flow.flags.cylc7_back_compat
+                and self.compute_runahead()
+            ):
+                # Recompute runahead limit (and release tasks) as incomplete
+                # tasks don't count toward the limit in back-compat mode.
+                self.release_runahead_tasks()
         else:
             # Remove as completed.
             self.remove(itask, 'finished')
