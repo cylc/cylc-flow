@@ -179,12 +179,10 @@ class TaskPool:
     def add_to_pool(self, itask, is_new: bool = True) -> None:
         """Add a task to the hidden (if not satisfied) or main task pool.
 
-        If task already exists in the hidden pool and is satisfied, move it to
-        main. TODO: can this be clarified? (Used to update prereqs via
-        spawn-on-outputs).
+        If the task already exists in the hidden pool and is satisfied, move it
+        to the main pool.
 
         (is_new is False inidcates load from DB at restart).
-
         """
         if itask.is_task_prereqs_not_done() and not itask.is_manual_submit:
             # Add to hidden pool if not satisfied.
@@ -227,7 +225,7 @@ class TaskPool:
             # (Must do this once added to the pool).
             self.set_max_future_offset()
 
-        LOG.info(f"[{itask}] added to task pool")
+        LOG.debug(f"[{itask}] added to task pool")
 
     def create_data_store_elements(self, itask):
         """Create the node window elements about given task proxy."""
@@ -243,10 +241,8 @@ class TaskPool:
     def release_runahead_tasks(self):
         """Release tasks below the runahead limit.
 
-        Return True if any tasks released, else False.
-        Call if RH limit changes.
-        TODO: call from that method?
-
+        Return True if any tasks are released, else False.
+        Call when RH limit changes.
         """
         if not self.main_pool:
             # (At start-up main pool might not exist yet)
