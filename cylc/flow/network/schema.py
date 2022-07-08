@@ -1415,7 +1415,7 @@ class Broadcast(Mutation):
 
             A broadcast can set/override any `[runtime]` configuration for all
             cycles or for a specific cycle. If a task is affected by
-            specific-cycle and an all-cycle broadcasts at the same time, the
+            specific-cycle and all-cycle broadcasts at the same time, the
             specific takes precedence.
 
             Broadcasts can also target all tasks, specific tasks or families of
