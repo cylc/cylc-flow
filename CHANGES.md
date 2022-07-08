@@ -51,6 +51,9 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#4976](https://github.com/cylc/cylc-flow/pull/4976) - Fix bug causing tasks
+to be stuck in UI due to discontinued graph of optional outputs.
+
 [#4975](https://github.com/cylc/cylc-flow/pull/4975) - Fix selection of
 platforms from `[job]` and `[remote]` configs.
 
