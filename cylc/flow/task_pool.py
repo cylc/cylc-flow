@@ -293,6 +293,11 @@ class TaskPool:
     def compute_runahead(self, force=False) -> bool:
         """Compute the runahead limit; return True if it changed.
 
+        To be called if the runahead base point might have changed:
+           - a task completed expected outputs, or expired
+           - (Cylc7 back compat: a task succeeded or failed)
+        Or if max future offset might have changed.
+
         Start from earliest point with unfinished tasks. Partially satisfied
         and incomplete tasks count too because they still need to run.
 
@@ -603,6 +608,23 @@ class TaskPool:
             # (otherwise waiting on xtriggers etc.)
             self.queue_task(itask)
 
+    def _get_spawned_or_merged_task(
+        self, point: 'PointBase', name: str, flow_nums: 'FlowNums'
+    ) -> Optional[TaskProxy]:
+        """Return new or existing task point/name with merged flow_nums"""
+        taskid = Tokens(cycle=str(point), task=name).relative_id
+        ntask = (
+            self._get_hidden_task_by_id(taskid)
+            or self._get_main_task_by_id(taskid)
+        )
+        if ntask is None:
+            # ntask does not exist: spawn it in the flow.
+            ntask = self.spawn_task(name, point, flow_nums)
+        else:
+            # ntask already exists (n=0 or incomplete): merge flows.
+            self.merge_flows(ntask, flow_nums)
+        return ntask  # may be None
+
     def spawn_to_rh_limit(self, tdef, point, flow_nums, abs_ok=True) -> None:
         """Spawn parentless task instances from point to runahead limit."""
         if not flow_nums:
@@ -612,7 +634,9 @@ class TaskPool:
             self.compute_runahead()
         while point is not None and (point <= self.runahead_limit_point):
             if tdef.is_parentless(point, abs_ok):
-                ntask = self.spawn_x(point, tdef.name, flow_nums)
+                ntask = self._get_spawned_or_merged_task(
+                    point, tdef.name, flow_nums
+                )
                 if ntask is not None:
                     self.add_to_pool(ntask)
                     self.rh_release_and_queue(ntask)
@@ -620,24 +644,11 @@ class TaskPool:
 
         # Once more (for the rh-limited task: don't rh release it!)
         if point is not None and tdef.is_parentless(point, abs_ok):
-            ntask = self.spawn_x(point, tdef.name, flow_nums)
+            ntask = self._get_spawned_or_merged_task(
+                point, tdef.name, flow_nums
+            )
             if ntask is not None:
                 self.add_to_pool(ntask)
-
-    def spawn_x(self, point, name, flow_nums):
-        # TODO RENAME OR CONSOLIDATE WITH other spawn methods.
-        taskid = Tokens(cycle=str(point), task=name).relative_id
-        ntask = (
-            self._get_hidden_task_by_id(taskid)
-            or self._get_main_task_by_id(taskid)
-        )
-        if ntask is None:
-            # Does not exist yet, spawn it.
-            ntask = self.spawn_task(name, point, flow_nums)
-        else:
-            # Already exists
-            self.merge_flows(ntask, flow_nums)
-        return ntask  # may be None
 
     def remove(self, itask, reason=""):
         """Remove a task from the pool (e.g. after a reload)."""
@@ -1180,8 +1191,7 @@ class TaskPool:
                 or self._get_main_task_by_id(c_taskid)
             )
             if c_task is not None and c_task != itask:
-                # Child already exists, update it.
-                # (unless trying to remove itself: a:fail => !a)
+                # (Avoid self-suicide: A => !A)
                 self.merge_flows(c_task, itask.flow_nums)
                 self.workflow_db_mgr.put_insert_task_states(
                     c_task,
@@ -1202,7 +1212,7 @@ class TaskPool:
                 c_task = self.spawn_task(c_name, c_point, itask.flow_nums)
 
             if c_task is not None:
-                # Update downstream prerequisites directly.
+                # Have child task, update its prerequisites.
                 if is_abs:
                     tasks, *_ = self.filter_task_proxies(
                         [f'*/{c_name}'],
@@ -1220,11 +1230,8 @@ class TaskPool:
                     # Add it to the hidden pool or move it to the main pool.
                     self.add_to_pool(t)
                     if t.point <= self.runahead_limit_point:
-                        # TODO CAN ADD-TO-POOL DO THE RELEASE?
                         self.rh_release_and_queue(t)
-                        # TODO DO WE NEED MAIN LOOP RH RELEASE AS WELL?
                         self.spawn_to_rh_limit(t.tdef, t.point, t.flow_nums)
-
                     # Event-driven suicide.
                     if (
                         t.state.suicide_prerequisites and
@@ -1233,13 +1240,14 @@ class TaskPool:
                         suicide.append(t)
 
         for c_task in suicide:
+            msg = self.__class__.SUICIDE_MSG
             if c_task.state(
                     TASK_STATUS_PREPARING,
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING,
                     is_held=False):
-                LOG.warning(f"[{c_task}] suiciding while active")
-            self.remove(c_task, self.__class__.SUICIDE_MSG)
+                msg += " suiciding while active"
+            self.remove(c_task, msg)
 
         if not forced and output in [
             TASK_OUTPUT_SUCCEEDED,
@@ -1249,29 +1257,41 @@ class TaskPool:
             self.remove_if_complete(itask)
 
     def remove_if_complete(self, itask):
-        """Remove itask if finished and required outputs are complete."""
-        incomplete = itask.state.outputs.get_incomplete()
-        if incomplete:
-            # Retain as incomplete.
-            LOG.warning(
-                f"[{itask}] did not complete required outputs:"
-                f" {incomplete}"
-            )
-            if (
-                cylc.flow.flags.cylc7_back_compat
-                and self.compute_runahead()
-            ):
-                # Recompute runahead limit (and release tasks) as incomplete
-                # tasks don't count toward the limit in back-compat mode.
-                self.release_runahead_tasks()
-        else:
-            # Remove as completed.
-            self.remove(itask, 'finished')
-            # See if runahead limit can move on.
+        """Remove finished itask if required outputs are complete.
+
+        Cylc 8:
+            - if complete:
+              - remove task and recompute runahead
+            - else (incomplete):
+              - retain
+
+        Cylc 7 back compat:
+            - if succeeded:
+                - remove task and recompute runahead
+            else (failed):
+                - retain and recompute runahead
+                  (C7 failed tasks don't count toward runahead limit)
+        """
+        if cylc.flow.flags.cylc7_back_compat:
+            if not itask.state(TASK_STATUS_FAILED):
+                self.remove(itask, 'finished')
             if self.compute_runahead():
                 self.release_runahead_tasks()
-            if itask.identity == self.stop_task_id:
-                self.stop_task_finished = True
+        else:
+            incomplete = itask.state.outputs.get_incomplete()
+            if incomplete:
+                # Retain as incomplete.
+                LOG.warning(
+                    f"[{itask}] did not complete required outputs:"
+                    f" {incomplete}"
+                )
+            else:
+                # Remove as completed.
+                self.remove(itask, 'finished')
+                if itask.identity == self.stop_task_id:
+                    self.stop_task_finished = True
+                if self.compute_runahead():
+                    self.release_runahead_tasks()
 
     def spawn_on_all_outputs(
         self, itask: TaskProxy, completed_only: bool = False
@@ -1866,38 +1886,38 @@ class TaskPool:
         return n_warnings, task_items
 
     def merge_flows(self, itask: TaskProxy, flow_nums: 'FlowNums') -> None:
-        """Merge flow_nums with itask.flow_nums.
+        """Merge flow_nums into itask.flow_nums, for existing itask.
+
+        This is required when we try to spawn a task instance that already
+        exists in the pool (i.e., with the same name and cycle point).
 
         This also performs required spawning / state changing for edge cases.
         """
-        # case 1: task has finished with incomplete outputs
-        # (we reset it to waiting and re-queue so it can run again as a task
-        # with complete outputs would)
+        if flow_nums == itask.flow_nums:
+            # Don't do anything if trying to spawn the same task in the same
+            # flow. This arises downstream of an AND trigger (if "A & B => C"
+            # and A spawns C first, B will find C is already in the pool),
+            # and via suicide triggers ("A =>!A": A tries to spawn itself).
+            return
+
         if (
             itask.state(*TASK_STATUSES_FINAL)
             and itask.state.outputs.get_incomplete()
         ):
-            itask.state_reset(TASK_STATUS_WAITING)
+            # Re-queue incomplete task to run again in the merged flow.
+            LOG.info(f"[{itask}] incomplete task absorbed by new flow.")
             itask.merge_flows(flow_nums)
-            if not itask.state.is_queued:
-                self.queue_task(itask)
+            itask.state_reset(TASK_STATUS_WAITING)
+            self.queue_task(itask)
             self.data_store_mgr.delta_task_state(itask)
 
-        # case 2: task does not belong to a flow (force-triggered no-flow).
-        # (we spawn the outputs completed so far to allow the flow to continue
-        # post merge)
-        # (note we don't do this if case 1 also applies)
         elif not itask.flow_nums or itask.flow_wait:
-            itask.flow_wait = False
+            # 2. Retro-spawn on completed outputs and continue as merged flow.
+            LOG.info(f"[{itask}] spawning on pre-merge outputs")
             itask.merge_flows(flow_nums)
-            LOG.info(
-                f"[{itask}] retroactive spawn on outputs"
-                " (flow merged to no-flow task)."
-            )
+            itask.flow_wait = False
             self.spawn_on_all_outputs(itask, completed_only=True)
             self.spawn_to_rh_limit(
                 itask.tdef, itask.next_point(), itask.flow_nums)
         else:
             itask.merge_flows(flow_nums)
-
-        self.workflow_db_mgr.put_insert_task_outputs(itask)
