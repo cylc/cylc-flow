@@ -251,9 +251,9 @@ class TaskPool:
 
         released = False
 
-        # TODO: JUST DO THIS AT RESTART?
         # At restart all tasks are runahead-limited but finished and manually
         # triggered tasks (incl. --start-task's) can be released immediately.
+        # TODO: can we just do this at restart?
         for itask in self.get_tasks():
             if itask.state.is_runahead and (
                 itask.state(
@@ -293,10 +293,12 @@ class TaskPool:
     def compute_runahead(self, force=False) -> bool:
         """Compute the runahead limit; return True if it changed.
 
-        To be called if the runahead base point might have changed:
+        To be called if:
+        * The runahead base point might have changed:
            - a task completed expected outputs, or expired
            - (Cylc7 back compat: a task succeeded or failed)
-        Or if max future offset might have changed.
+        * The max future offset might have changed.
+        * The runahead limit config or task pool might have changed (reload).
 
         Start from earliest point with unfinished tasks. Partially satisfied
         and incomplete tasks count too because they still need to run.
@@ -305,7 +307,7 @@ class TaskPool:
         and adjusted upward on the fly if tasks with future offsets appear.
 
         With force=True we recompute the limit even if the base point has not
-        changed (needed if max_future_offset changed).
+        changed (needed if max_future_offset changed, or on reload).
         """
         points: List['PointBase'] = []
         if not self.main_pool:
@@ -365,8 +367,11 @@ class TaskPool:
             count_cycles = True
 
         # Get all cycle points possible after the runahead base point.
-        if (self._prev_runahead_sequence_points and
-                base_point == self._prev_runahead_base_point):
+        if (
+            not force
+            and self._prev_runahead_sequence_points
+            and base_point == self._prev_runahead_base_point
+        ):
             # Cache for speed.
             sequence_points = self._prev_runahead_sequence_points
         else:
@@ -896,10 +901,6 @@ class TaskPool:
                 self.queue_task(itask)
 
         self.do_reload = False
-        # Force a runahead limit recompute in case the limit config changed.
-        # TODO: only recompute it if the config did change.
-        if self.compute_runahead(force=True):
-            self.release_runahead_tasks()
 
     def set_stop_point(self, stop_point: 'PointBase') -> bool:
         """Set the workflow stop cycle point.

@@ -1478,6 +1478,8 @@ class Scheduler:
                 self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
                     self.data_store_mgr.insert_db_job)
                 LOG.info("Reload completed.")
+                if self.pool.compute_runahead(force=True):
+                    self.pool.release_runahead_tasks()
                 self.is_reloaded = True
                 self.is_updated = True
 
