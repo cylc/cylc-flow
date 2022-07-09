@@ -47,7 +47,7 @@ def get_version(long=False):
 
 USAGE = f"""{cylc_header()}
 Cylc ("silk") efficiently manages distributed cycling workflows.
-This is Open Source software (GPL-3.0): see "cylc help license".
+Cylc is Open Source software (GPL-3.0): see "cylc help license".
 
 Version:
   $ cylc version --long
