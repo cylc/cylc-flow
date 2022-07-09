@@ -63,7 +63,7 @@ To view sub-command help:
   $ cylc <sub-command> --help
 
 Cylc IDs:
-  Workflows and tasks are uniquely identified by IDs of the form:
+  Workflows and tasks are identified by IDs of the form:
     workflow//cycle/task
 
   You can split an ID at the // so following two IDs are equivalent:
