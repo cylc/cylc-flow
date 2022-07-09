@@ -53,14 +53,16 @@ Version:
   $ cylc version --long
   {get_version(True)}
 
-Usage:
-  $ cylc <sub-command> <OPTS> <ARGS>
+Quick Start:
+  $ cylc install <path>       # install a workflow
+  $ cylc play <workflow_id>   # run or resume a workflow
+  $ cylc stop <workflow_id>   # stop a workflow
+  $ cylc clean <workflow_id>  # delete an installed workflow
+  $ cylc gui                  # start the in-browser web UI
+  $ cylc tui <workflow_id>    # start the in-terminal UI
 
-Selected sub-commands are listed below. To view ALL sub-commands:
-  $ cylc help all
-
-To view sub-command help:
-  $ cylc <sub-command> --help
+  $ cylc help all             # see all cylc commands
+  $ cylc <command> --help     # specific command help
 
 Cylc IDs:
   Workflows and tasks are identified by IDs of the form:
@@ -78,9 +80,9 @@ Cylc IDs:
   $ cylc help id        # More information on IDs
 
 Cylc commands can be abbreviated:
-  $ cylc trigger WORKFLOW//CYCLE/TASK    # trigger TASK in WORKFLOW
-  $ cylc trig WORKFLOW//CYCLE/TASK       # ditto
-  $ cylc t                               # ERROR: trigger or tui?
+  $ cylc trigger workflow//cycle/task    # trigger task in workflow
+  $ cylc trig workflow//cycle/task       # trigger task in workflow
+  $ cylc t                               # error: trigger or tui?
 """
 
 ID_HELP = '''
@@ -428,27 +430,6 @@ def cli_help():
     from colorama import init as color_init
     color_init(autoreset=True, strip=False)
     print(USAGE)
-    print(
-        'Selected sub-commands '
-        '(type "cylc help all" to see ALL sub-commands):'
-    )
-    print_command_list(
-        # print a short list of the main cylc commands
-        commands=[
-            'hold',
-            'install',
-            'kill',
-            'pause',
-            'play',
-            'release',
-            'scan',
-            'stop',
-            'trigger',
-            'tui',
-            'validate'
-        ],
-        indent=2
-    )
     sys.exit(0)
 
 
