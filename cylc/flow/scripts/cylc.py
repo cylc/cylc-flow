@@ -80,7 +80,6 @@ Cylc IDs:
 Cylc commands can be abbreviated:
   $ cylc trigger WORKFLOW//CYCLE/TASK    # trigger TASK in WORKFLOW
   $ cylc trig WORKFLOW//CYCLE/TASK       # ditto
-  $ cylc tr WORKFLOW//CYCLE/TASK         # ditto
   $ cylc t                               # ERROR: trigger or tui?
 """
 
