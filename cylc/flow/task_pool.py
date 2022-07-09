@@ -245,29 +245,11 @@ class TaskPool:
         Return True if any tasks are released, else False.
         Call when RH limit changes.
         """
-        if not self.main_pool:
+        if not self.main_pool or not self.runahead_limit_point:
             # (At start-up main pool might not exist yet)
             return False
 
         released = False
-
-        # At restart all tasks are runahead-limited but finished and manually
-        # triggered tasks (incl. --start-task's) can be released immediately.
-        # TODO: can we just do this at restart?
-        for itask in self.get_tasks():
-            if itask.state.is_runahead and (
-                itask.state(
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED,
-                    TASK_STATUS_EXPIRED
-                )
-                or itask.is_manual_submit
-            ):
-                self.rh_release_and_queue(itask)  # (WON'T QUEUE IF NOT READY)
-                released = True
-
-        if not self.runahead_limit_point:
-            return released
 
         # An intermediate list is needed here: auto-spawning of parentless
         # tasks can cause the task pool to change size during iteration.
@@ -509,6 +491,19 @@ class TaskPool:
             if itask.state_reset(status, is_runahead=True):
                 self.data_store_mgr.delta_task_runahead(itask)
             self.add_to_pool(itask, is_new=False)
+
+            # All tasks load as runahead-limited, but finished and manually
+            # triggered tasks (incl. --start-task's) can be released now.
+            if (
+                itask.state(
+                    TASK_STATUS_FAILED,
+                    TASK_STATUS_SUCCEEDED,
+                    TASK_STATUS_EXPIRED
+                )
+                or itask.is_manual_submit
+            ):
+                self.rh_release_and_queue(itask)
+
             self.compute_runahead()
             self.release_runahead_tasks()
 
