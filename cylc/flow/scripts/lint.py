@@ -376,23 +376,31 @@ def get_upgrader_info():
     upgrades = conf.upgrader(conf.dense, '').upgrades
     deprecations = {}
 
-    for version, upgrades_for_version in upgrades.items():
+    for _, upgrades_for_version in upgrades.items():
         for upgrade in upgrades_for_version:
             # Set a flag indicating that a variable has been moved.
             if upgrade['new'] is None:
-                short = (f'{list_to_config(upgrade["old"])} is not '
-                'available at Cylc 8')
+                short = (
+                    f'{list_to_config(upgrade["old"])} is not '
+                    'available at Cylc 8'
+                )
+            elif upgrade["old"][-1] == upgrade['new'][-1]:
+                # Where an item with the same name has been moved
+                # a 1 line regex isn't going to work.
+                continue
             else:
-                short = (f'{list_to_config(upgrade["old"])} is now '
-                f'{list_to_config(upgrade["new"])}')
+                short = (
+                    f'{list_to_config(upgrade["old"])} is now '
+                    f'{list_to_config(upgrade["new"])}'
+                )
 
             # Check whether upgrade is section:
-            if upgrade['is_section']:
+            if upgrade['is_section'] is True:
                 section_depth = len(upgrade['old'])
                 start = r'\[' * section_depth
                 end = r'\]' * section_depth
                 name = upgrade["old"][-1]
-                regex = re.compile(fr'\*{start}\s*{name}\s*{end}')
+                regex = re.compile(fr'{start}\s*{name}\s*{end}')
             else:
                 name = upgrade["old"][-1]
                 expr = rf'{name}\s*=\s*.*'
@@ -400,7 +408,7 @@ def get_upgrader_info():
 
             deprecations[regex] = {
                 'short': short,
-                'url': f'',
+                'url': '',
             }
     return deprecations
 
@@ -433,9 +441,9 @@ def parse_checks(check_arg):
 
     checks = {'U': get_upgrader_info(), 'S': CHECKS['S']}
 
-    for purpose, checks in checks.items():
+    for purpose, ruleset in checks.items():
         if purpose in purpose_filters:
-            for index, (pattern, meta) in enumerate(checks.items(), start=1):
+            for index, (pattern, meta) in enumerate(ruleset.items(), start=1):
                 meta.update({'purpose': purpose})
                 meta.update({'index': index})
                 parsedchecks.update({pattern: meta})
@@ -668,5 +676,6 @@ def main(parser: COP, options: 'Values', *targets) -> None:
             f'rules and found {count} issues.'
         )
         print(f'{color}{"-" * len(msg)}\n{msg}')
+
 
 __doc__ = get_reference_rst(parse_checks('all'))

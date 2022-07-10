@@ -1686,6 +1686,7 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True
     )
 
     for job_setting in [

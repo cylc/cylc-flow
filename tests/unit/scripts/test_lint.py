@@ -20,14 +20,12 @@ import difflib
 from pathlib import Path
 import pytest
 import re
-from types import SimpleNamespace
 
 from cylc.flow.scripts.lint import (
     CHECKS,
     check_cylc_file,
     get_cylc_files,
-    get_reference_rst,
-    get_upgrader_info,
+    get_reference_text,
     parse_checks
 )
 
@@ -38,8 +36,8 @@ TEST_FILE = """
 [cylc]
     include at start-up = foo
     exclude at start-up = bar
+    reset timer = false
     log resolved dependencies = True
-    reset inactivity timer = True
     required run mode = False
     health check interval = PT10M
     abort if any task fails = true
@@ -47,18 +45,26 @@ TEST_FILE = """
     disable automatic shutdown = false
     reference test = true
     spawn to max active cycle points = false
-    force run mode = dummy
     [[simulation]]
         disable suite event handlers = true
     [[authentication]]
     [[environment]]
+    force run mode = dummy
     [[events]]
+        reset inactivity timer = 42
         abort on stalled = True
+        abort on timeout = False
         abort if startup handler fails= True  # deliberately not added a space.
         abort if shutdown handler fails= True
         abort if timeout handler fails = True
         abort if stalled handler fails = True
         abort if inactivity handler fails = False
+        aborted handler = woo
+        stalled handler = bar
+        timeout handler = bas
+        shutdown handler = qux
+        startup handler = now
+        inactivity handler = bored
         mail to = eleanor.rigby@beatles.lv
         mail from = fr.mckenzie@beatles.lv
         mail footer = "Collecting The Rice"
@@ -68,7 +74,6 @@ TEST_FILE = """
         abort on inactivity = 30
     [[parameters]]
     [[parameter templates]]
-        template = "foo"
     [[mail]]
         task event mail interval    = PT4M # deliberately added lots of spaces.
 
@@ -86,8 +91,8 @@ TEST_FILE = """
         extra log files = True
         {% from 'cylc.flow' import LOG %}
         script = {{HELLOWORLD}}
-        suite state polling = PT1H
-        reset timer=PT1H
+        [[[suite state polling]]]
+            template = and
         [[[remote]]]
             host = parasite
             suite definition directory = '/home/bar'
@@ -123,26 +128,23 @@ LINT_TEST_FILE += ('\nscript = the quick brown fox jumps over the lazy dog '
 def create_testable_file(monkeypatch, capsys):
     def _inner(test_file, checks):
         monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
-        checks = parse_checks(checks)
-        check_cylc_file(Path('x'), checks)
-        readouterr = capsys.readouterr()
-        return SimpleNamespace(**{
-            'out': readouterr.out,
-            'err': readouterr.err,
-            'checks': checks
-        })
+        check_cylc_file(Path('x'), parse_checks(checks))
+        return capsys.readouterr()
     return _inner
 
 
-def test_check_cylc_file_7to8(create_testable_file):
-    result = create_testable_file(TEST_FILE, '728')
-    out = []
-    for check, meta in result.checks.items():
-        try:
-            assert f'[U{meta["index"]:03d}]' in result.out
-        except:
-            out
-
+@pytest.mark.parametrize(
+    'number', range(1, len(CHECKS['U']) + 1)
+)
+def test_check_cylc_file_7to8(create_testable_file, number, capsys):
+    # try:
+    result = create_testable_file(TEST_FILE, '728').out
+    assert f'[U{number:03d}]' in result
+    # except AssertionError:
+    #     raise AssertionError(
+    #         f'missing error number U{number:03d}'
+    #         f'{[*CHECKS["U"].keys()][number]}'
+    #     )
 
 
 def test_check_cylc_file_7to8_has_shebang(create_testable_file):
@@ -161,7 +163,7 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
 )
 def test_check_cylc_file_lint(create_testable_file, number):
     try:
-        assert f'[S{number:03d}]' in create_testable_file(
+        assert f'[S{number + 1:03d}]' in create_testable_file(
             LINT_TEST_FILE, 'lint').out
     except AssertionError:
         raise AssertionError(
@@ -181,16 +183,15 @@ def create_testable_dir(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'number', range(len(parse_checks('728')))
+    'number', range(len(CHECKS['U']))
 )
 def test_check_cylc_file_inplace(create_testable_dir, number):
     try:
-        assert f'[U{number:03d}]' in create_testable_dir
+        assert f'[U{number + 1:03d}]' in create_testable_dir
     except AssertionError:
-        checks = parse_checks('728')
         raise AssertionError(
             f'missing error number {number:03d}:7-to-8 - '
-            f'{[*checks.keys()][number]}'
+            f'{[*CHECKS["U"].keys()][number]}'
         )
 
 
@@ -214,7 +215,7 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
 
 def test_get_reference():
     """It produces a reference file for our linting."""
-    ref = get_reference_rst({
+    ref = get_reference_text({
         re.compile('not a regex'): {
             'short': 'section `[vizualization]` has been removed.',
             'url': 'some url or other',
@@ -224,9 +225,9 @@ def test_get_reference():
     })
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
-        'U042\n^^^^\nsection `[vizualization]` has been '
-        'removed.\nsee -'
+        'U042:\n    section `[vizualization]` has been '
+        'removed.\n    see -'
         ' https://cylc.github.io/cylc-doc/latest/html/7-to-8/some url'
-        ' or other\n\n\n'
+        ' or other\n\n'
     )
     assert ref == expect
