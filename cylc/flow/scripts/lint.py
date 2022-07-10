@@ -62,300 +62,43 @@ FILEGLOBS = ['*.rc', '*.cylc']
 JINJA2_SHEBANG = '#!jinja2'
 JINJA2_FOUND_WITHOUT_SHEBANG = 'jinja2 found: no shebang (#!jinja2)'
 CHECKS_DESC = {'U': '7 to 8 upgrades', 'S': 'Style'}
-CHECKS = {
-    'U': {
-        re.compile(SECTION1.format('visualization')): {
-            'short': 'section ``[visualization]`` has been removed.',
-            'url': 'summary.html#new-web-and-terminal-uis'
-        },
-        re.compile(SECTION1.format('cylc')): {
-            'short': 'section ``[cylc]`` is now called ``[scheduler]``.',
-            'url': 'summary.html#terminology'
-        },
-        re.compile(SECTION2.format('authentication')): {
-            'short': '``[cylc][authentication]`` is now obsolete.',
-            'url': ''
-        },
-        re.compile(r'^\s*include at start-up\s*='): {
-            'short': '``[cylc]include at start up`` is obsolete.',
-            'url': (
-                'major-changes/excluding-tasks.html?'
-                '#excluding-tasks-at-start-up-is-not-supported'
-            ),
-        },
-        re.compile(r'exclude at start-up\s*?='): {
-            'short': '``[cylc]exclude at start up`` is obsolete.',
-            'url': (
-                'major-changes/excluding-tasks.html?'
-                '#excluding-tasks-at-start-up-is-not-supported'
-            ),
-        },
-        re.compile(r'log resolved dependencies\s*?='): {
-            # Mainly for testing
-            'short': '``[cylc]log resolved dependencies`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'required run mode\s*?='): {
-            # Mainly for testing
-            'short': '``[cylc]required run mode`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'health check interval\s*?='): {
-            'short': '``[cylc]health check interval`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'abort if any task fails\s*?='): {
-            'short': '``[cylc]abort if any task fails`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'disable automatic shutdown\s*?='): {
-            'short': '``[cylc]disable automatic shutdown`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'reference test\s*?='): {
-            # Mainly for testing
-            'short': '``[cylc]reference test`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'disable suite event handlers\s*?='): {
-            'short': '``[cylc]disable suite event handlers`` is obsolete.',
-            'url': ''
-        },
-        re.compile(SECTION2.format('simulation')): {
-            'short': '``[cylc]simulation`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'spawn to max active cycle points\s*?='): {
-            'short': '``[cylc]spawn to max active cycle points`` is obsolete.',
-            'url': (
-                'https://cylc.github.io/cylc-doc/latest/html/reference'
-                '/config/workflow.html#flow.cylc[scheduling]runahead%20limit'
-            ),
-        },
-        re.compile(r'abort on stalled\s*?='): {
-            'short':
-                '``[cylc][events]abort on stalled`` is obsolete.',
-            'url': ''
-        },
-        re.compile(r'abort if .* handler fails\s*?='): {
-            'short': (
-                '``[cylc][events]abort if ___ handler fails`` commands are'
-                ' obsolete.'
-            ),
-            'url': ''
-        },
-        re.compile(r'mail to\s*='): {
-            'short': (
-                '``[events]mail to`` => ``[mail]to``'
-            ),
-            'url': ''
-        },
-        re.compile(r'mail from\s*='): {
-            'short': (
-                '``[events]mail from`` => ``[mail]from``'
-            ),
-            'url': ''
-        },
-        re.compile(r'mail footer\s*='): {
-            'short': (
-                '``[events]mail footer`` => ``[mail]footer``'
-            ),
-            'url': ''
-        },
-        re.compile(r'mail smtp\s*='): {
-            'short': (
-                '``[events]mail smtp`` => ``global.cylc[scheduler][mail]smtp``'
-            ),
-            'url': ''
-        },
-        re.compile(r'^\s*timeout\s*='): {
-            'short': (
-                '``[cylc][events]timeout`` => '
-                '``[scheduler][events]stall timeout``'
-            ),
-            'url': ''
-        },
-        re.compile(r'^\s*inactivity\s*='): {
-            'short': (
-                '``[cylc][events]inactivity`` => '
-                '``[scheduler][events]inactivity timeout``'
-            ),
-            'url': ''
-        },
-        re.compile(r'abort on inactivity\s*='): {
-            'short': (
-                '``[cylc][events]abort on inactivity`` => '
-                '``[scheduler][events]abort on inactivity timeout``'
-            ),
-            'url': ''
-        },
-        re.compile(r'force run mode\s*='): {
-            'short': (
-                '``[cylc]force run mode`` is obsolete.'
-            ),
-            'url': ''
-        },
-        re.compile(SECTION2.format('environment')): {
-            'short': (
-                '``[cylc][environment]`` is obsolete.'
-            ),
-            'url': ''
-        },
-        re.compile(r'.* handler\s*?='): {
-            'short': (
-                '``[cylc][<namespace>][events]___ handler`` commands are'
-                ' now "handlers".'
-            ),
-            'url': ''
-        },
-        re.compile(r'mail retry delays\s*?='): {
-            'short': (
-                '``[runtime][<namespace>][events]mail retry delays`` '
-                'is obsolete.'
-            ),
-            'url': ''
-        },
-        re.compile(r'extra log files\s*?='): {
-            'short': (
-                '``[runtime][<namespace>][events]extra log files`` '
-                'is obsolete.'
-            ),
-            'url': ''
-        },
-        re.compile(r'shell\s*?='): {
-            'short': (
-                '``[runtime][<namespace>]shell`` '
-                'is obsolete.'
-            ),
-            'url': ''
-        },
-        re.compile(r'suite definition directory\s*?='): {
-            'short': (
-                '``[runtime][<namespace>][remote]suite definition directory`` '
-                'is obsolete.'
-            ),
-            'url': 'summary.html#symlink-dirs'
-        },
-        re.compile(SECTION2.format('dependencies')): {
-            'short': '``[dependencies]`` is deprecated.',
-            'url': 'major-changes/config-changes.html#graph'
-        },
-        re.compile(r'graph\s*?='): {
-            'short': (
-                '``[cycle point]graph =`` is deprecated, '
-                'use ``cycle point = <graph>``'
-            ),
-            'url': 'major-changes/config-changes.html#graph'
-        },
-        re.compile(SECTION2.format('remote')): {
-            'short': (
-                '``[runtime][<namespace>][remote]host`` is deprecated, '
-                'use ``[runtime][<namespace>]platform``'
-            ),
-            'url': 'major-changes/platforms.html#platforms'
-        },
-        re.compile(r'suite state polling\s*='): {
-            'short': (
-                '``[runtime][<namespace>]suite state polling`` is deprecated, '
-                'use ``[runtime][<namespace>]workflow state polling``'
-            ),
-            'url': 'major-changes/platforms.html#platforms'
-        },
-        re.compile(SECTION3.format('job')): {
-            'short': (
-                '``[runtime][<namespace>][job]`` is deprecated, '
-                'use ``[runtime][<namespace>]platform``'
-            ),
-            'url': 'major-changes/platforms.html#platforms'
-        },
-        re.compile(SECTION2.format('parameter templates')): {
-            'short': (
-                '``[cylc][parameter templates]`` is deprecated, '
-                'use ``[task parameters][templates]``'
-            ),
-            'url': ''
-        },
-        re.compile(SECTION2.format('parameters')): {
-            'short': (
-                '``[cylc][parameters]`` is deprecated, '
-                'use ``[task parameters]``'
-            ),
-            'url': ''
-        },
-        re.compile(r'task event mail interval\s*?='): {
-            'short': (
-                '``[cylc][task event mail interval]`` is deprecated, '
-                'use ``[scheduler][mail][task event batch interval]``'
-            ),
-            'url': ''
-        },
-        re.compile(r'{{.*}}'): {
-            'short': (
-                f'{JINJA2_FOUND_WITHOUT_SHEBANG}'
-                '{{VARIABLE}}'
-            ),
-            'url': ''
-        },
-        re.compile(r'{%.*%}'): {
-            'short': (
-                f'{JINJA2_FOUND_WITHOUT_SHEBANG}'
-                '{% .* %}'
-            ),
-            'url': ''
-        },
-        re.compile(r'max active cycle points\s*='): {
-            'short': (
-                '``[scheduling]max active cycle points`` is deprecated'
-                'use [scheduling]runahead limit'
-            ),
-            'url': ''
-        },
-        re.compile(r'hold after point\s*='): {
-            'short': (
-                '``[scheduling]hold after point`` is deprecated'
-                'use [scheduling]hold after cycle point'
-            ),
-            'url': ''
-        },
+STYLE_CHECKS = {
+    re.compile(r'^\t'): {
+        'short': 'Use multiple spaces, not tabs',
+        'url': STYLE_GUIDE + 'tab-characters'
     },
-    'S': {
-        re.compile(r'^\t'): {
-            'short': 'Use multiple spaces, not tabs',
-            'url': STYLE_GUIDE + 'tab-characters'
-        },
-        # Not a full test, but if a non section is not indented...
-        re.compile(r'^[^\{\[|\s]'): {
-            'short': 'Item not indented.',
-            'url': STYLE_GUIDE + 'indentation'
-        },
-        #            [section]
-        re.compile(r'^\s+\[.*\]'): {
-            'short': 'Too many indents for top level section.',
-            'url': STYLE_GUIDE + 'indentation'
-        },
-        # 2 or 4 space indentation both seem reasonable:
-        re.compile(r'^(\s|\s{3}|\s{5,})\[\[.*\]\]'): {
-            'short': 'wrong number of indents for second level section.',
-            'url': STYLE_GUIDE + 'indentation'
-        },
-        re.compile(r'^(\s{1,3}|\s{5,7}|\s{9,})\[\[\[.*\]\]\]'): {
-            'short': 'wrong number of indents for third level section.',
-            'url': STYLE_GUIDE + 'indentation'
-        },
-        re.compile(r'\s$'): {
-            'short': 'trailing whitespace.',
-            'url': STYLE_GUIDE + 'trailing-whitespace'
-        },
-        # Consider re-adding this as an option later:
-        # re.compile(r'^.{80,}'): {
-        #     'short': 'line > 79 characters.',
-        #     'url': STYLE_GUIDE + 'line-length-and-continuation'
-        # },
-        re.compile(r'inherit\s*=\s*[a-z].*$'): {
-            'short': 'Family name contains lowercase characters.',
-            'url': STYLE_GUIDE + 'task-naming-conventions'
-        },
-    }
+    # Not a full test, but if a non section is not indented...
+    re.compile(r'^[^\{\[|\s]'): {
+        'short': 'Item not indented.',
+        'url': STYLE_GUIDE + 'indentation'
+    },
+    #            [section]
+    re.compile(r'^\s+\[.*\]'): {
+        'short': 'Too many indents for top level section.',
+        'url': STYLE_GUIDE + 'indentation'
+    },
+    # 2 or 4 space indentation both seem reasonable:
+    re.compile(r'^(\s|\s{3}|\s{5,})\[\[.*\]\]'): {
+        'short': 'wrong number of indents for second level section.',
+        'url': STYLE_GUIDE + 'indentation'
+    },
+    re.compile(r'^(\s{1,3}|\s{5,7}|\s{9,})\[\[\[.*\]\]\]'): {
+        'short': 'wrong number of indents for third level section.',
+        'url': STYLE_GUIDE + 'indentation'
+    },
+    re.compile(r'\s$'): {
+        'short': 'trailing whitespace.',
+        'url': STYLE_GUIDE + 'trailing-whitespace'
+    },
+    # Consider re-adding this as an option later:
+    # re.compile(r'^.{80,}'): {
+    #     'short': 'line > 79 characters.',
+    #     'url': STYLE_GUIDE + 'line-length-and-continuation'
+    # },
+    re.compile(r'inherit\s*=\s*[a-z].*$'): {
+        'short': 'Family name contains lowercase characters.',
+        'url': STYLE_GUIDE + 'task-naming-conventions'
+    },
 }
 
 
@@ -439,7 +182,7 @@ def parse_checks(check_arg):
     parsedchecks = {}
     purpose_filters = get_checkset_from_name(check_arg)
 
-    checks = {'U': get_upgrader_info(), 'S': CHECKS['S']}
+    checks = {'U': get_upgrader_info(), 'S': STYLE_CHECKS}
 
     for purpose, ruleset in checks.items():
         if purpose in purpose_filters:

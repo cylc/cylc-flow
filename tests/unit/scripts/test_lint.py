@@ -22,7 +22,7 @@ import pytest
 import re
 
 from cylc.flow.scripts.lint import (
-    CHECKS,
+    STYLE_CHECKS,
     check_cylc_file,
     get_cylc_files,
     get_reference_text,
@@ -30,6 +30,7 @@ from cylc.flow.scripts.lint import (
 )
 
 
+UPG_CHECKS = parse_checks('728')
 TEST_FILE = """
 [visualization]
 
@@ -102,6 +103,19 @@ TEST_FILE = """
         [[[events]]]
             mail retry delays = PT30S
             warning handler = frr.sh
+            submission timeout handler = faiuhdf
+            submission retry handler = vhbayhrbfgau
+            submission failed handler = giaSEHFUIHJ
+            execution timeout handler = sdfghjkl
+            expired handler = dafuhj
+            late handler = dafuhj
+            submitted handler = dafuhj
+            started handler = dafuhj
+            succeeded handler = dafuhj
+            custom handler = efrgh
+            critical handler = fgjdsfs
+            retry handler = dfaiuhfrgpa
+            sumbission handler = fas9hrfgaiuph
 
 """
 
@@ -134,7 +148,7 @@ def create_testable_file(monkeypatch, capsys):
 
 
 @pytest.mark.parametrize(
-    'number', range(1, len(CHECKS['U']) + 1)
+    'number', range(1, len(UPG_CHECKS) + 1)
 )
 def test_check_cylc_file_7to8(create_testable_file, number, capsys):
     # try:
@@ -159,7 +173,7 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
 
 
 @pytest.mark.parametrize(
-    'number', range(len(CHECKS['S']))
+    'number', range(len(STYLE_CHECKS))
 )
 def test_check_cylc_file_lint(create_testable_file, number):
     try:
@@ -168,7 +182,7 @@ def test_check_cylc_file_lint(create_testable_file, number):
     except AssertionError:
         raise AssertionError(
             f'missing error number S:{number:03d}'
-            f'{[*CHECKS["S"].keys()][number]}'
+            f'{[*STYLE_CHECKS.keys()][number]}'
         )
 
 
@@ -183,7 +197,7 @@ def create_testable_dir(tmp_path):
 
 
 @pytest.mark.parametrize(
-    'number', range(len(CHECKS['U']))
+    'number', range(len(UPG_CHECKS))
 )
 def test_check_cylc_file_inplace(create_testable_dir, number):
     try:
@@ -191,7 +205,7 @@ def test_check_cylc_file_inplace(create_testable_dir, number):
     except AssertionError:
         raise AssertionError(
             f'missing error number {number:03d}:7-to-8 - '
-            f'{[*CHECKS["U"].keys()][number]}'
+            f'{[*UPG_CHECKS.keys()][number]}'
         )
 
 
