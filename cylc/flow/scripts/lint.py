@@ -380,11 +380,11 @@ def get_upgrader_info():
         for upgrade in upgrades_for_version:
             # Set a flag indicating that a variable has been moved.
             if upgrade['new'] is None:
-                short = f'{list_to_config(upgrade["old"])} is not '
-                'available at Cylc 8'
+                short = (f'{list_to_config(upgrade["old"])} is not '
+                'available at Cylc 8')
             else:
-                short = f'{list_to_config(upgrade["old"])} is now '
-                '{list_to_config(upgrade["new"])}'
+                short = (f'{list_to_config(upgrade["old"])} is now '
+                f'{list_to_config(upgrade["new"])}')
 
             # Check whether upgrade is section:
             if upgrade['is_section']:
@@ -392,12 +392,11 @@ def get_upgrader_info():
                 start = r'\[' * section_depth
                 end = r'\]' * section_depth
                 name = upgrade["old"][-1]
-                regex = re.compile(fr'{start}\s*{name}\s*{end}')
+                regex = re.compile(fr'\*{start}\s*{name}\s*{end}')
             else:
                 name = upgrade["old"][-1]
                 expr = rf'{name}\s*=\s*.*'
                 regex = re.compile(expr)
-
 
             deprecations[regex] = {
                 'short': short,
@@ -462,6 +461,7 @@ def check_cylc_file(file_, checks, modify=False):
                     JINJA2_FOUND_WITHOUT_SHEBANG)
             ):
                 continue
+
             if check.findall(line) and not line.strip().startswith('#'):
                 count += 1
                 if modify:

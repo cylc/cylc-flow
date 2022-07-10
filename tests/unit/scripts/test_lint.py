@@ -20,6 +20,7 @@ import difflib
 from pathlib import Path
 import pytest
 import re
+from types import SimpleNamespace
 
 from cylc.flow.scripts.lint import (
     CHECKS,
@@ -38,6 +39,7 @@ TEST_FILE = """
     include at start-up = foo
     exclude at start-up = bar
     log resolved dependencies = True
+    reset inactivity timer = True
     required run mode = False
     health check interval = PT10M
     abort if any task fails = true
@@ -45,11 +47,11 @@ TEST_FILE = """
     disable automatic shutdown = false
     reference test = true
     spawn to max active cycle points = false
+    force run mode = dummy
     [[simulation]]
         disable suite event handlers = true
     [[authentication]]
     [[environment]]
-    force run mode = dummy
     [[events]]
         abort on stalled = True
         abort if startup handler fails= True  # deliberately not added a space.
@@ -121,24 +123,26 @@ LINT_TEST_FILE += ('\nscript = the quick brown fox jumps over the lazy dog '
 def create_testable_file(monkeypatch, capsys):
     def _inner(test_file, checks):
         monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
-        check_cylc_file(Path('x'), parse_checks(checks))
-        return capsys.readouterr()
+        checks = parse_checks(checks)
+        check_cylc_file(Path('x'), checks)
+        readouterr = capsys.readouterr()
+        return SimpleNamespace(**{
+            'out': readouterr.out,
+            'err': readouterr.err,
+            'checks': checks
+        })
     return _inner
 
 
-@pytest.mark.parametrize(
-    'number', range(len(parse_checks('728')))
-)
-def test_check_cylc_file_7to8(create_testable_file, number, capsys):
-    try:
-        result = create_testable_file(TEST_FILE, '728').out
-        assert f'[U{number:03d}]' in result
-    except AssertionError:
-        checks = parse_checks('728')
-        raise AssertionError(
-            f'missing error number U{number:03d}'
-            f'{[*checks.keys()][number]}'
-        )
+def test_check_cylc_file_7to8(create_testable_file):
+    result = create_testable_file(TEST_FILE, '728')
+    out = []
+    for check, meta in result.checks.items():
+        try:
+            assert f'[U{meta["index"]:03d}]' in result.out
+        except:
+            out
+
 
 
 def test_check_cylc_file_7to8_has_shebang(create_testable_file):

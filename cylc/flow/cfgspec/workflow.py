@@ -1586,7 +1586,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
-    u.obsolete('8.0.0', ['cylc', 'authentication'])
+    u.obsolete('8.0.0', ['cylc', 'authentication'], is_section=True)
     u.obsolete('8.0.0', ['cylc', 'include at start-up'])
     u.obsolete('8.0.0', ['cylc', 'exclude at start-up'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
@@ -1603,12 +1603,12 @@ def upg(cfg, descr):
     )
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
-    u.obsolete('8.0.0', ['cylc', 'environment'])
+    u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True)
     u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'simulation', 'disable suite event handlers'])
-    u.obsolete('8.0.0', ['cylc', 'simulation'])
+    u.obsolete('8.0.0', ['cylc', 'simulation'], is_section=True)
     u.obsolete('8.0.0', ['visualization'], is_section=True)
     u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points']),
     u.deprecate(
@@ -1622,12 +1622,14 @@ def upg(cfg, descr):
         ['cylc', 'parameters'],
         ['task parameters'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
         ['task parameters', 'templates'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
@@ -1757,6 +1759,7 @@ def upg(cfg, descr):
         ['cylc'],
         ['scheduler'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     u.upgrade()
 
