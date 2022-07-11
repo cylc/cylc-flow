@@ -1320,7 +1320,7 @@ with Conf(
                        job runner`.
                 ''')
                 Conf('batch submit command template', VDR.V_STRING, desc='''
-                    Set command used by chosen batch system.
+                    Override the default job submission command for the chosen batch system.
 
                     .. seealso::
 
@@ -1393,21 +1393,31 @@ with Conf(
                     )
                 ))
                 Conf('expired handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task has expired.
+                    Handlers to invoke if this task has expired.
 
                     .. caution::
 
-                       Due to changes to the Cylc 8 scheduling algorithm
-                       this event is unlikely to occur.
+                       Changes to the scheduling algorithm in Cylc 8 mean
+                       this event will not be triggered until the expired task
+                       is ready to run.  Earlier expired-task detection will be
+                       implemented in a future Cylc release.
                 ''')
                 Conf('late offset', VDR.V_INTERVAL, None, desc='''
-                    How long to wait for this task to be triggered before
-                    running
+                    Offset from cycle point, in real time, at which this task is
+                    considered to be "running late" (i.e. the time by which it
+                    would normally have started running).
+                    
+                    .. caution::
+                    
+                       Changes to the scheduling algorithm in Cylc 8 mean
+                       this event will not be triggered until the late task
+                       is ready to run.  Earlier late-task detection will be
+                       implemented in a future Cylc release.
                     :cylc:conf:`flow.cylc[runtime][<namespace>][events]
                     late handlers`.
                 ''')
                 Conf('late handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task is never active and is late.
+                    Handlers to be invoked if this task is late.
 
                     .. caution::
 
@@ -1416,10 +1426,10 @@ with Conf(
                        to submit anyway.
                 ''')
                 Conf('submitted handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task is submitted.
+                    Handlers to invoke if this task is submitted.
                 ''')
                 Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task is started.
+                    Invoke if this task is starts executing.
                 ''')
                 Conf('succeeded handlers', VDR.V_STRING_LIST, None, desc='''
                     Invoke if this task succeeds.
@@ -1454,12 +1464,12 @@ with Conf(
                 ''')
                 Conf('submission timeout handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Invoke if this task execution exceeds
+                        Invoke if this task exceeds
                         :cylc:conf:`flow.cylc[runtime][<namespace>]
-                        submission timeout`.
+                        submission timeout` in the submitted state.
                 ''')
                 Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task repors a message with severity
+                    Invoke if this task reports a message with severity
                     "CUSTOM".
                 ''')
 
