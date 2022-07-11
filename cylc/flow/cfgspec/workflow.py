@@ -699,7 +699,8 @@ with Conf(
                 The default queue - for all tasks not assigned to other queues.
             '''):
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
-                    Controls the total number of active tasks in the default queue.
+                    Controls the total number of active tasks in the default
+                    queue.
 
                     .. seealso::
 
@@ -1320,7 +1321,8 @@ with Conf(
                        job runner`.
                 ''')
                 Conf('batch submit command template', VDR.V_STRING, desc='''
-                    Override the default job submission command for the chosen batch system.
+                    Override the default job submission command for the chosen
+                    batch system.
 
                     .. seealso::
 
@@ -1403,12 +1405,12 @@ with Conf(
                        implemented in a future Cylc release.
                 ''')
                 Conf('late offset', VDR.V_INTERVAL, None, desc='''
-                    Offset from cycle point, in real time, at which this task is
-                    considered to be "running late" (i.e. the time by which it
-                    would normally have started running).
-                    
+                    Offset from cycle point, in real time, at which this task
+                    is considered to be "running late" (i.e. the time by which
+                    it would normally have started running).
+
                     .. caution::
-                    
+
                        Changes to the scheduling algorithm in Cylc 8 mean
                        this event will not be triggered until the late task
                        is ready to run.  Earlier late-task detection will be
