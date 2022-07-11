@@ -228,7 +228,11 @@ class TaskJobManager:
         prepared_tasks = []
         bad_tasks = []
         for itask in itasks:
-            if itask.state_reset(TASK_STATUS_PREPARING):
+            if not itask.state(TASK_STATUS_PREPARING):
+                # bump the submit_num *before* resetting the state so that the
+                # state transition message reflects the correct submit_num
+                itask.submit_num += 1
+                itask.state_reset(TASK_STATUS_PREPARING)
                 self.data_store_mgr.delta_task_state(itask)
                 self.workflow_db_mgr.put_update_task_state(itask)
             prep_task = self._prep_submit_task_job(
@@ -255,6 +259,7 @@ class TaskJobManager:
 
         Return (list): list of tasks that attempted submission.
         """
+
         if is_simulation:
             return self._simulation_submit_task_jobs(itasks, workflow)
         # Prepare tasks for job submission
@@ -996,6 +1001,7 @@ class TaskJobManager:
         """Simulation mode task jobs submission."""
         for itask in itasks:
             itask.waiting_on_job_prep = False
+            itask.submit_num += 1
             self._set_retry_timers(itask)
             itask.platform = {'name': 'SIMULATION'}
             itask.summary['job_runner_name'] = 'SIMULATION'
@@ -1037,7 +1043,6 @@ class TaskJobManager:
         self, workflow, itask, cmd_ctx, line
     ):
         """Helper for _submit_task_jobs_callback, on one task job."""
-        itask.submit_num -= 1
         self.task_events_mgr._retry_task(
             itask, time(), submit_retry=True
         )
@@ -1079,7 +1084,10 @@ class TaskJobManager:
     def _prep_submit_task_job(self, workflow, itask, check_syntax=True):
         """Prepare a task job submission.
 
-        Return itask on a good preparation.
+        Returns:
+            * itask - preparation complete.
+            * None - preparation in progress.
+            * False - perparation failed.
 
         """
         if itask.local_job_file_path:
@@ -1131,9 +1139,7 @@ class TaskJobManager:
                     rtconfig['platform'], PLATFORM_REC_COMMAND
                 )
         except PlatformError as exc:
-            # Submit number not yet incremented
             itask.waiting_on_job_prep = False
-            itask.submit_num += 1
             itask.summary['platforms_used'][itask.submit_num] = ''
             # Retry delays, needed for the try_num
             self._create_job_log_path(workflow, itask)
@@ -1170,9 +1176,7 @@ class TaskJobManager:
                 platform = get_platform(rtconfig, bad_hosts=self.bad_hosts)
 
             except PlatformLookupError as exc:
-                # Submit number not yet incremented
                 itask.waiting_on_job_prep = False
-                itask.submit_num += 1
                 itask.summary['platforms_used'][itask.submit_num] = ''
                 # Retry delays, needed for the try_num
                 self._create_job_log_path(workflow, itask)
@@ -1182,8 +1186,6 @@ class TaskJobManager:
                 return False
             else:
                 itask.platform = platform
-                # Submit number not yet incremented
-                itask.submit_num += 1
                 # Retry delays, needed for the try_num
                 self._set_retry_timers(itask, rtconfig)
 
