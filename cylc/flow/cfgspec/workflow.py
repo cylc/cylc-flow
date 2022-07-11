@@ -696,9 +696,7 @@ with Conf(
                     from the default queue.
                 ''')
             with Conf('default', meta=Queue, desc='''
-                The default queue - all tasks are assigned to this queue.
-                Designed to allow you to set
-                :cylc:conf:`flow.cylc[scheduling][queues][default]limit`.
+                The default queue - for all tasks not assigned to other queues.
             '''):
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
                     If no other queues are set up one can use this config
