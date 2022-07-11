@@ -48,6 +48,8 @@ from cylc.flow import LOG
 from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
+from cylc.flow.cfgspec.workflow import upg, SPEC
+from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.terminal import cli_function
 
 STYLE_GUIDE = (
@@ -113,8 +115,6 @@ def list_to_config(path_):
 
 def get_upgrader_info():
     """Extract info about obseletions and deprecations from Parsec Objects."""
-    from cylc.flow.cfgspec.workflow import upg, SPEC
-    from cylc.flow.parsec.config import ParsecConfig
     conf = ParsecConfig(SPEC, upg)
     upgrades = conf.upgrader(conf.dense, '').upgrades
     deprecations = {}
@@ -127,6 +127,10 @@ def get_upgrader_info():
                     f'{list_to_config(upgrade["old"])} is not '
                     'available at Cylc 8'
                 )
+                rst = (
+                    f'``{list_to_config(upgrade["old"])}`` is not '
+                    'available at Cylc 8'
+                )
             elif upgrade["old"][-1] == upgrade['new'][-1]:
                 # Where an item with the same name has been moved
                 # a 1 line regex isn't going to work.
@@ -135,6 +139,10 @@ def get_upgrader_info():
                 short = (
                     f'{list_to_config(upgrade["old"])} is now '
                     f'{list_to_config(upgrade["new"])}'
+                )
+                rst = (
+                    f'``{list_to_config(upgrade["old"])}`` is now '
+                    f'``{list_to_config(upgrade["new"])}``'
                 )
 
             # Check whether upgrade is section:
@@ -152,6 +160,7 @@ def get_upgrader_info():
             deprecations[regex] = {
                 'short': short,
                 'url': '',
+                'rst': rst,
             }
     return deprecations
 
@@ -268,17 +277,20 @@ def get_reference_rst(checks):
 
         # Fill a template with info about the issue.
         template = (
-            '{checkset}{index:003d}\n^^^^\n{summary}\n'
-            'see - {url}\n\n'
+            '{checkset}{index:003d}\n^^^^\n{summary}\n\n'
         )
         if meta['url'].startswith('http'):
             url = meta['url']
         else:
             url = URL_STUB + meta['url']
+        if 'rst' in meta:
+            summary = meta['rst']
+        else:
+            summary = meta['short']
         msg = template.format(
             title=check.pattern.replace('\\', ''),
             checkset=meta['purpose'],
-            summary=meta['short'],
+            summary=summary,
             url=url,
             index=meta['index'],
         )
@@ -305,8 +317,7 @@ def get_reference_text(checks):
 
         # Fill a template with info about the issue.
         template = (
-            '{checkset}{index:003d}:\n    {summary}\n'
-            '    see - {url}\n'
+            '{checkset}{index:003d}:\n    {summary}\n\n'
         )
         if meta['url'].startswith('http'):
             url = meta['url']

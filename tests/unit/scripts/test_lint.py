@@ -25,9 +25,14 @@ from cylc.flow.scripts.lint import (
     STYLE_CHECKS,
     check_cylc_file,
     get_cylc_files,
+    get_reference_rst,
     get_reference_text,
+    get_upgrader_info,
     parse_checks
 )
+from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
+from cylc.flow.parsec.upgrade import upgrader
+
 
 
 UPG_CHECKS = parse_checks('728')
@@ -134,7 +139,8 @@ LINT_TEST_FILE = """
 something\t
 """
 
-LINT_TEST_FILE += ('\nscript = the quick brown fox jumps over the lazy dog '
+LINT_TEST_FILE += (
+    '\nscript = the quick brown fox jumps over the lazy dog '
     'until it becomes clear that this line is far longer the 79 characters.')
 
 
@@ -165,6 +171,7 @@ def test_check_cylc_file_7to8_has_shebang(create_testable_file):
     """Jinja2 code comments will not be added if shebang present"""
     result = create_testable_file('#!jinja2\n{{FOO}}', '[scheduler]').out
     assert result == ''
+
 
 def test_check_cylc_file_line_no(create_testable_file, capsys):
     """It prints the correct line numbers"""
@@ -227,7 +234,26 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     assert result.sort() == expect.sort()
 
 
-def test_get_reference():
+def test_get_reference_rst():
+    """It produces a reference file for our linting."""
+    ref = get_reference_rst({
+        re.compile('not a regex'): {
+            'short': 'section `[vizualization]` has been removed.',
+            'url': 'some url or other',
+            'purpose': 'U',
+            'rst': 'section ``[vizualization]`` has been removed.',
+            'index': 42
+        },
+    })
+    expect = (
+        '\n7 to 8 upgrades\n---------------\n\n'
+        'U042\n^^^^\nsection ``[vizualization]`` has been '
+        'removed.\n\n\n'
+    )
+    assert ref == expect
+
+
+def test_get_reference_text():
     """It produces a reference file for our linting."""
     ref = get_reference_text({
         re.compile('not a regex'): {
@@ -240,8 +266,49 @@ def test_get_reference():
     expect = (
         '\n7 to 8 upgrades\n---------------\n\n'
         'U042:\n    section `[vizualization]` has been '
-        'removed.\n    see -'
-        ' https://cylc.github.io/cylc-doc/latest/html/7-to-8/some url'
-        ' or other\n\n'
+        'removed.\n\n\n'
     )
     assert ref == expect
+
+
+@pytest.fixture()
+def fixture_get_deprecations():
+    """Get the deprections list for cylc.flow.cfgspec.workflow"""
+    deprecations = get_upgrader_info()
+    return deprecations
+
+
+@pytest.mark.parametrize(
+    'findme',
+    [
+        pytest.param(
+            'template',
+            id='Item not available at Cylc 8'
+        ),
+        pytest.param(
+            'timeout',
+            id='Item renamed at Cylc 8'
+        ),
+        pytest.param(
+            '!execution retry delays',
+            id='Item moved, name unchanged at Cylc 8'
+        ),
+        pytest.param(
+            '[cylc]',
+            id='Section changed at Cylc 8'
+        ),
+    ]
+)
+def test_get_upg_info(fixture_get_deprecations, findme):
+    """It correctly scrapes the Cylc upgrader object.
+
+    n.b this is just sampling to ensure that the test it getting items.
+    """
+    if findme.startswith('!'):
+        assert findme[1:] not in str(fixture_get_deprecations)
+    elif findme.startswith('['):
+        pattern = f'\\[\\s*{findme.strip("[").strip("]")}\\s*\\]'
+        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
+    else:
+        pattern = f'{findme}\\s*=\\s*.*'
+        assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
