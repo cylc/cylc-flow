@@ -23,24 +23,27 @@ set_test_number 12
 cat > flow.cylc <<__HERE__
 # This is definately not an OK flow.cylc file.
 {{FOO}}
+[[visualization]]
 __HERE__
+
+rm etc/global.cylc
 
 TEST_NAME="${TEST_NAME_BASE}.vanilla"
 run_ok "${TEST_NAME}" cylc lint
-named_grep_ok "check-for-error-code" "U038" "${TEST_NAME}.stdout"
+named_grep_ok "check-for-error-code" "U021" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset"
 run_ok "${TEST_NAME}" cylc lint . -r 728
-named_grep_ok "check-for-error-code" "U038" "${TEST_NAME}.stdout"
+named_grep_ok "check-for-error-code" "U021" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.inplace"
 run_ok "${TEST_NAME}" cylc lint . -i
-named_grep_ok "check-for-error-code-in-file" "U038" flow.cylc
+named_grep_ok "check-for-error-code-in-file" "U021" flow.cylc
 
 rm flow.cylc
 
 cat > suite.rc <<__HERE__
-# This is definately not an OK flow.cylc file.
+# This is definitely not an OK flow.cylc file.
 {{FOO}}
 __HERE__
 
@@ -53,7 +56,6 @@ run_ok "${TEST_NAME}" cylc lint . -r all
 named_grep_ok "do-not-upgrade-check-if-compat-mode2" "only for style" "${TEST_NAME}.stderr"
 
 rm suite.rc
-rm etc/global.cylc
 
 cat > flow.cylc <<__HERE__
 # This one is fine

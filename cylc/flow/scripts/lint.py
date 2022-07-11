@@ -411,7 +411,6 @@ def main(parser: COP, options: 'Values', *targets) -> None:
         # Summing up:
         if count > 0:
             color = Fore.YELLOW
-            exit(1)
         else:
             color = Fore.GREEN
         msg = (
