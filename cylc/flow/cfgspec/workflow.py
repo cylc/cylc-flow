@@ -1311,7 +1311,7 @@ with Conf(
 
             ''') + REPLACED_BY_PLATFORMS):
                 Conf('batch system', VDR.V_STRING, desc='''
-                    Batch/Queuing system upon which to run jobs.
+                    Batch/Queuing system to submit task jobs to.
 
                     .. seealso::
 
