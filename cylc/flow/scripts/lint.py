@@ -283,10 +283,7 @@ def get_reference_rst(checks):
             url = meta['url']
         else:
             url = URL_STUB + meta['url']
-        if 'rst' in meta:
-            summary = meta['rst']
-        else:
-            summary = meta['short']
+        summary = meta.get("rst", meta['short'])
         msg = template.format(
             title=check.pattern.replace('\\', ''),
             checkset=meta['purpose'],
