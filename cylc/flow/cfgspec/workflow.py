@@ -699,8 +699,7 @@ with Conf(
                 The default queue - for all tasks not assigned to other queues.
             '''):
                 Conf('limit', VDR.V_INTEGER, 0, desc='''
-                    If no other queues are set up one can use this config
-                    item to control the total number of tasks running.
+                    Controls the total number of active tasks in the default queue.
 
                     .. seealso::
 
