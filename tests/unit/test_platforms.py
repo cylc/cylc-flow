@@ -609,6 +609,7 @@ def test_get_platform_from_OrderedDictWithDefaults(mock_glbl_cfg):
     Most tests use dictionaries to check platforms functionality.
     This one was added to catch an issue where the behaviour of
     dict.get != OrderedDictWithDefaults.get.
+    See - https://github.com/cylc/cylc-flow/issues/4979
     """
     mock_glbl_cfg(
         'cylc.flow.platforms.glbl_cfg',
