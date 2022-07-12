@@ -35,7 +35,6 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     GlobalConfigError
 )
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 
 
 PLATFORMS = {
