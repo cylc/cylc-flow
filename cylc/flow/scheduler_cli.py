@@ -281,7 +281,7 @@ def scheduler_cli(options: 'Values', workflow_id_raw: str) -> None:
     functionality.
 
     """
-    # Parse workflow name but delay Cylc 7 suiter.rc deprecation warning
+    # Parse workflow name but delay Cylc 7 suite.rc deprecation warning
     # until after the start-up splash is printed.
     # TODO: singleton
     (workflow_id,), _ = parse_ids(
