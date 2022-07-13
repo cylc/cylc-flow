@@ -80,6 +80,9 @@ now fails if
 [owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
 is used, as that setting no longer has any effect.
 
+[#4978](https://github.com/cylc/cylc-flow/pull/4978) - `cylc clean`: fix
+occasional failure to clean on remote hosts due to leftover contact file.
+
 [#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
 prompt if no matching workflows.
 
