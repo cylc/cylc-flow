@@ -51,6 +51,9 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#4975](https://github.com/cylc/cylc-flow/pull/4975) - Fix selection of
+platforms from `[job]` and `[remote]` configs.
+
 [#4970](https://github.com/cylc/cylc-flow/pull/4970) - Fix handling of suicide
 triggers in back-compat mode.
 
