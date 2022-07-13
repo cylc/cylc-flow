@@ -955,7 +955,7 @@ _get_test_platform () {
     required_platform="$(_parse_platform_spec "${requirement}")"
 
     for platform in "${PLATFORMS[@]}"; do
-        # we are purposfully allowing pattern matching here
+        # we are purposefully allowing pattern matching here
         # shellcheck disable=SC2053
         if [[ "$platform" == $required_platform ]]; then
             CYLC_TEST_PLATFORM="$platform"
@@ -1048,7 +1048,7 @@ _expand_test_platforms () {
     for pattern in "${PLATFORMS[@]}"; do
         for platform in "${all_platforms[@]}"; do
             # shellcheck disable=SC2053
-            # we are purposfully performing glob matching here
+            # we are purposefully performing glob matching here
             if [[ ${platform} == ${pattern} ]]; then
                 ret+=("${platform}")
             fi

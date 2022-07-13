@@ -381,7 +381,7 @@ class TaskJobManager:
                         )
                     continue
                 elif ri_map[install_target] == REMOTE_INIT_255:
-                    # Remote init previously failed becase a host was
+                    # Remote init previously failed because a host was
                     # unreachable, so start it again.
                     del ri_map[install_target]
                     self.task_remote_mgr.remote_init(

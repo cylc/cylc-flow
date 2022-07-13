@@ -44,7 +44,7 @@ def mock_entry_points(monkeypatch: pytest.MonkeyPatch):
 
     def _mocked_entry_points(include_bad: bool = False):
         commands = {
-            # an entry point with all dependences installed:
+            # an entry point with all dependencies installed:
             'good': SimpleNamespace(
                 name='good',
                 module_name='os.path',

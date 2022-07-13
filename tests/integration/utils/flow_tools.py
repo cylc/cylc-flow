@@ -64,7 +64,7 @@ def _make_scheduler():
     schd: Scheduler = None  # type: ignore
 
     def __make_scheduler(reg: str, **opts: Any) -> Scheduler:
-        # This allows paused_start to be overriden:
+        # This allows paused_start to be overridden:
         opts = {'paused_start': True, **opts}
         options = RunOptions(**opts)
         # create workflow

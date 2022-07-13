@@ -83,7 +83,7 @@ class JobFileWriter:
                     ['/usr/bin/env', 'bash', '-n', tmp_name],
                     stderr=PIPE,
                     stdin=DEVNULL,
-                    # * the purpose of this is to evaluate user devined code
+                    # * the purpose of this is to evaluate user defined code
                     #   prior to it being executed
                 ) as proc:
                     if proc.wait():
