@@ -1446,12 +1446,12 @@ with Conf(
                         Invoke if submission of this task fails.
                 ''')
                 Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task reports a message with severity
-                    "WARNING".
+                    Invoke if this handler if this task invokes Cylc message
+                    with severity level "WARNING".
                 ''')
                 Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task reports a message with severity
-                    "CRITICAL".
+                    Invoke if this handler if this task invokes Cylc message
+                    with severity level "CRITICAL".
                 ''')
                 Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
                     Invoke if this task failed but will retry.
@@ -1473,11 +1473,8 @@ with Conf(
                         submission timeout` in the submitted state.
                 ''')
                 Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task reports a message with severity
-                    "CUSTOM".
-
-                    Allows task message to trigger custom handlers using
-                    a severity of ``CUSTOM``.
+                    Invoke if this handler if this task invokes Cylc message
+                    with severity level "CUSTOM".
                 ''')
 
             with Conf('mail', desc='''
