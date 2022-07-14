@@ -1314,7 +1314,7 @@ with Conf(
                 Conf('batch system', VDR.V_STRING, desc='''
                     Batch/Queuing system to submit task jobs to.
 
-                    .. seealso::
+                    .. deprecated:: 8.0.0
 
                        Kept for back compatibility but replaced by
                        :cylc:conf:`global.cylc[platforms][<platform name>]
