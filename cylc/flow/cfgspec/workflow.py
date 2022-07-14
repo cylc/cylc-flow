@@ -1475,6 +1475,9 @@ with Conf(
                 Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
                     Invoke if this task reports a message with severity
                     "CUSTOM".
+
+                    Allows task message to trigger custom handlers using
+                    a severity of ``CUSTOM``.
                 ''')
 
             with Conf('mail', desc='''
