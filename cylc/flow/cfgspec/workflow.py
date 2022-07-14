@@ -1418,8 +1418,11 @@ with Conf(
                        this event will not be triggered until the late task
                        is ready to run.  Earlier late-task detection will be
                        implemented in a future Cylc release.
-                    :cylc:conf:`flow.cylc[runtime][<namespace>][events]
-                    late handlers`.
+
+                    .. seealso::
+
+                       :cylc:conf:`flow.cylc[runtime][<namespace>][events]
+                       late handlers`.
                 ''')
                 Conf('late handlers', VDR.V_STRING_LIST, None, desc='''
                     Handlers to be invoked if this task is late.
@@ -1470,7 +1473,7 @@ with Conf(
                 Conf('submission timeout handlers', VDR.V_STRING_LIST, None,
                      desc='''
                         Invoke if this task exceeds
-                        :cylc:conf:`flow.cylc[runtime][<namespace>]
+                        :cylc:conf:`flow.cylc[runtime][<namespace>][events]
                         submission timeout` in the submitted state.
                 ''')
                 Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
