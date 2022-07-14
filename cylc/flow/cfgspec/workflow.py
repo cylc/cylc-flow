@@ -1405,6 +1405,8 @@ with Conf(
                        implemented in a future Cylc release.
                 ''')
                 Conf('late offset', VDR.V_INTERVAL, None, desc='''
+                    Handlers to invoke if the task starts running behind schedule.
+
                     Offset from cycle point, in real time, at which this task
                     is considered to be "running late" (i.e. the time by which
                     it would normally have started running).
@@ -1444,11 +1446,11 @@ with Conf(
                         Invoke if submission of this task fails.
                 ''')
                 Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task repors a message with severity
+                    Invoke if this task reports a message with severity
                     "WARNING".
                 ''')
                 Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task repors a message with severity
+                    Invoke if this task reports a message with severity
                     "CRITICAL".
                 ''')
                 Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
