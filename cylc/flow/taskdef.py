@@ -341,7 +341,7 @@ class TaskDef:
 
         A task can have parents at some points and not at others.
 
-        Tasks are parentless they have no parents, of if the parents:
+        Tasks are parentless if they have no parents, or if the parents:
           - are below the workflow initial cycle point (we ignore them)
           - the parents are only absolute triggers (we can consider these
           satisfied once the first child is spawned).
