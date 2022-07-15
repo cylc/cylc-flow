@@ -138,7 +138,8 @@ class TaskProxy:
          flow_wait:
             wait for flow merge before spawning children
         .waiting_on_job_prep:
-            task waiting on job prep
+            True whilst task is awaiting job prep, reset to False once the
+            preparation has completed.
 
     Args:
         tdef: The definition object of this task.
@@ -246,7 +247,7 @@ class TaskProxy:
         self.expire_time: Optional[float] = None
         self.late_time: Optional[float] = None
         self.is_late = is_late
-        self.waiting_on_job_prep = True
+        self.waiting_on_job_prep = False
 
         self.state = TaskState(tdef, self.point, status, is_held)
 
