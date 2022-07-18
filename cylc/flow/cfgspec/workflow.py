@@ -63,8 +63,7 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REPLACED_BY_PLATFORMS = '''
 .. warning::
 
-   Deprecated section or item kept for compatibility with Cylc 7 workflow
-   definitions.
+   .. deprecated:: 8.0.0
 
    This will be removed in a future version of Cylc 8.
 
@@ -1408,6 +1407,8 @@ with Conf(
                     Handlers to invoke if the task starts running behind
                     schedule.
 
+                    Handlers to invoke if the task starts running behind schedule.
+
                     Offset from cycle point, in real time, at which this task
                     is considered to be "running late" (i.e. the time by which
                     it would normally have started running).
@@ -1425,7 +1426,7 @@ with Conf(
                        late handlers`.
                 ''')
                 Conf('late handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to be invoked if this task is late.
+                    Handlers to run if this task is late.
 
                     .. caution::
 
@@ -1437,7 +1438,7 @@ with Conf(
                     Handlers to invoke if this task is submitted.
                 ''')
                 Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task is starts executing.
+                    Handlers to run when this task starts executing.
                 ''')
                 Conf('succeeded handlers', VDR.V_STRING_LIST, None, desc='''
                     Invoke if this task succeeds.
@@ -1450,7 +1451,7 @@ with Conf(
                         Invoke if submission of this task fails.
                 ''')
                 Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this handler if this task invokes Cylc message
+                    Handlers to run if this task invokes ``cylc message``
                     with severity level "WARNING".
                 ''')
                 Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
