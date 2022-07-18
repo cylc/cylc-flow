@@ -105,12 +105,15 @@ STYLE_CHECKS = {
 }
 
 
-def list_to_config(path_):
+def list_to_config(path_, is_section=False):
     """Prettify a config list"""
     output = ''
     for item in path_[:-1]:
         output += f'[{item}]'
-    output += path_[-1]
+    if is_section:
+        output += f'[{path_[-1]}]'
+    else:
+        output += path_[-1]
     return output
 
 
@@ -124,27 +127,21 @@ def get_upgrader_info():
         for upgrade in upgrades_for_version:
             # Set a flag indicating that a variable has been moved.
             if upgrade['new'] is None:
-                short = (
-                    f'{list_to_config(upgrade["old"])} - not '
-                    'available at Cylc 8'
-                )
-                rst = (
-                    f'``{list_to_config(upgrade["old"])}`` is not '
-                    'available at Cylc 8'
-                )
+                section_name = list_to_config(
+                    upgrade["old"], upgrade["is_section"])
+                short = f'{section_name} - not available at Cylc 8'
+                rst = f'``{section_name}`` is not available at Cylc 8'
             elif upgrade["old"][-1] == upgrade['new'][-1]:
                 # Where an item with the same name has been moved
                 # a 1 line regex isn't going to work.
                 continue
             else:
-                short = (
-                    f'{list_to_config(upgrade["old"])} -> '
-                    f'{list_to_config(upgrade["new"])}'
-                )
-                rst = (
-                    f'``{list_to_config(upgrade["old"])}`` is now '
-                    f'``{list_to_config(upgrade["new"])}``'
-                )
+                old = list_to_config(
+                    upgrade["old"], upgrade["is_section"])
+                new = list_to_config(
+                    upgrade["new"], upgrade["is_section"])
+                short = f'{old} -> {new}'
+                rst = f'``{old}`` is now ``{new}``'
 
             # Check whether upgrade is section:
             if upgrade['is_section'] is True:
@@ -208,7 +205,7 @@ def check_cylc_file(file_, checks, modify=False):
     # Set mode as read-write or read only.
     outlines = []
 
-    # Open file, and read it's line to mempory.
+    # Open file, and read it's line to memory.
     lines = file_.read_text().split('\n')
     jinja_shebang = lines[0].strip().lower() == JINJA2_SHEBANG
     count = 0
