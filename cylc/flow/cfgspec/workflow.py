@@ -1477,7 +1477,7 @@ with Conf(
                         submission timeout` in the submitted state.
                 ''')
                 Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this handler if this task invokes Cylc message
+                    Handlers to run if this task invokes ``cylc message``
                     with severity level "CUSTOM".
                 ''')
 
