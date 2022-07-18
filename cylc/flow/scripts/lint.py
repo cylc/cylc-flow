@@ -14,18 +14,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-COP_DOC = """Cylc lint looks through one or more folders for
-"*.cylc" and "*.rc" files and
-search for Cylc 7 syntax which may be problematic at Cylc 8.
+COP_DOC = """cylc lint [OPTIONS] ARGS
+
+Cylc lint looks through one or more folders for "*.cylc" and "*.rc" files and
+searches for Cylc 7 syntax which may be problematic at Cylc 8.
 
 Can be run either as a linter or "in place" ("-i"), leaving comments
 in files.
 
 When run with "-i" ("--inplace") mode this will alter your files.
 We strongly recommend committing your workflow to version control
-before using ``Cylc lint -i``.
+before using "cylc lint -i".
 
-Usage
+Examples:
 
 # run as a linter
 cylc lint <paths to workflow directories to check>
@@ -36,7 +37,7 @@ cylc lint -i <paths to workflow directories to check>
 
 # Get information about errors:
 cylc lint --reference
-cylc lint -r
+cylc lint -R
 """
 from colorama import Fore
 from optparse import Values
@@ -124,7 +125,7 @@ def get_upgrader_info():
             # Set a flag indicating that a variable has been moved.
             if upgrade['new'] is None:
                 short = (
-                    f'{list_to_config(upgrade["old"])} is not '
+                    f'{list_to_config(upgrade["old"])} - not '
                     'available at Cylc 8'
                 )
                 rst = (
@@ -137,7 +138,7 @@ def get_upgrader_info():
                 continue
             else:
                 short = (
-                    f'{list_to_config(upgrade["old"])} is now '
+                    f'{list_to_config(upgrade["old"])} -> '
                     f'{list_to_config(upgrade["new"])}'
                 )
                 rst = (
@@ -428,4 +429,4 @@ def main(parser: COP, options: 'Values', *targets) -> None:
         print(f'{color}{"-" * len(msg)}\n{msg}')
 
 
-__doc__ = get_reference_rst(parse_checks('all'))
+__doc__ = get_reference_text(parse_checks('all'))
