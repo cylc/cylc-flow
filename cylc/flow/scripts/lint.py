@@ -106,13 +106,28 @@ STYLE_CHECKS = {
 
 
 def list_to_config(path_, is_section=False):
-    """Prettify a config list"""
+    """Prettify a config list
+
+    Args:
+        path_: list forming address in the config.
+        is_section: Is this item a section?
+
+    Examples:
+        >>> list_to_config(['foo', 'bar'], False)
+        '[foo]bar'
+
+        >>> list_to_config(['foo', 'bar'], True)
+        '[foo][bar]'
+    """
     output = ''
     for item in path_[:-1]:
+        # All but the last item must be sections:
         output += f'[{item}]'
     if is_section:
+        # Last item is section:
         output += f'[{path_[-1]}]'
     else:
+        # Last item not a section:
         output += path_[-1]
     return output
 
