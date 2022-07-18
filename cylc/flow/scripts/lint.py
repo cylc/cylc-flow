@@ -21,7 +21,7 @@ search for Cylc 7 syntax which may be problematic at Cylc 8.
 Can be run either as a linter or "in place" ("-i"), leaving comments
 in files.
 
-When run with ``-i`` (``--inplace``) mode ``Cylc lint`` changes your files.
+When run with "-i" ("--inplace") mode this will alter your files.
 We strongly recommend committing your workflow to version control
 before using ``Cylc lint -i``.
 
