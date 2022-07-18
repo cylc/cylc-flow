@@ -157,14 +157,14 @@ def create_testable_file(monkeypatch, capsys):
     'number', range(1, len(UPG_CHECKS) + 1)
 )
 def test_check_cylc_file_7to8(create_testable_file, number, capsys):
-    # try:
-    result = create_testable_file(TEST_FILE, '728').out
-    assert f'[U{number:03d}]' in result
-    # except AssertionError:
-    #     raise AssertionError(
-    #         f'missing error number U{number:03d}'
-    #         f'{[*CHECKS["U"].keys()][number]}'
-    #     )
+    try:
+        result = create_testable_file(TEST_FILE, '728').out
+        assert f'[U{number:03d}]' in result
+    except AssertionError:
+        raise AssertionError(
+            f'missing error number U{number:03d}'
+            f'{[*CHECKS["U"].keys()][number]}'
+        )
 
 
 def test_check_cylc_file_7to8_has_shebang(create_testable_file):
