@@ -1454,7 +1454,7 @@ with Conf(
                     with severity level "WARNING".
                 ''')
                 Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this handler if this task invokes Cylc message
+                    Handlers to run if this task invokes ``cylc message``
                     with severity level "CRITICAL".
                 ''')
                 Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
