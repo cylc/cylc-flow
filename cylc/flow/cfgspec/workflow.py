@@ -976,7 +976,7 @@ with Conf(
                 If no parents are listed default is ``root``.
             ''')
             Conf('script', VDR.V_STRING, desc=dedent('''
-                The main custom script invoked from the task job script.
+                The main custom script run from the task job script.
 
                 It can be an external command or script, or inlined scripting.
 
@@ -986,7 +986,7 @@ with Conf(
                 this='script', example='my_script.sh'
             ))
             Conf('init-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script before the task
+                Custom script run by the task job script before the task
                 execution environment is configured.
 
                 By running before the task execution environment is configured,
@@ -998,7 +998,7 @@ with Conf(
                 this should no longer be necessary.
             ''') + get_script_common_text(this='init-script'))
             Conf('env-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script between the
+                Custom script run by the task job script between the
                 cylc-defined environment (workflow and task identity, etc.) and
                 the user-defined task runtime environment.
 
@@ -1009,7 +1009,7 @@ with Conf(
             Conf('err-script', VDR.V_STRING, desc=('''
                 Script run when a task job error is detected.
 
-                Custom script to be invoked at the end of the error trap,
+                Custom script to be run at the end of the error trap,
                 which is triggered due to failure of a command in the task job
                 script or trappable job kill.
 
@@ -1024,7 +1024,7 @@ with Conf(
                 this='err-script', example='echo "Uh oh, received ${1}"'
             ))
             Conf('exit-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked at the very end of *successful* job
+                Custom script run at the very end of *successful* job
                 execution, just before the job script exits.
 
                 The exit-script should execute very quickly.
@@ -1035,7 +1035,7 @@ with Conf(
                 this='exit-script', example='rm -f "$TMP_FILES"'
             ))
             Conf('pre-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script immediately
+                Custom script run by the task job script immediately
                 before :cylc:conf:`[..]script`.
 
                 The pre-script can be an external command or script, or
@@ -1045,7 +1045,7 @@ with Conf(
                 example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
             ))
             Conf('post-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script immediately
+                Custom script run by the task job script immediately
                 after :cylc:conf:`[..]script`.
 
                 The post-script can be an external
@@ -1109,7 +1109,7 @@ with Conf(
                 Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a task job.
 
-                For ``background`` and ``at`` job runners Cylc invokes the
+                For ``background`` and ``at`` job runners Cylc runs the
                 job's script using the timeout command. For other job runners
                 Cylc will convert execution time limit to a :term:`directive`.
 
@@ -1394,7 +1394,11 @@ with Conf(
                     )
                 ))
                 Conf('expired handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to invoke if this task has expired.
+                    Handlers to run if this task has expired.
+
+                    .. seealso::
+
+                       :ref:`task-job-states`
 
                     .. caution::
 
@@ -1404,10 +1408,10 @@ with Conf(
                        implemented in a future Cylc release.
                 ''')
                 Conf('late offset', VDR.V_INTERVAL, None, desc='''
-                    Handlers to invoke if the task starts running behind
+                    Handlers to run if the task starts running behind
                     schedule.
 
-                    Handlers to invoke if the task starts running behind schedule.
+                    Handlers to run if the task starts running behind schedule.
 
                     Offset from cycle point, in real time, at which this task
                     is considered to be "running late" (i.e. the time by which
@@ -1435,50 +1439,55 @@ with Conf(
                        to submit anyway.
                 ''')
                 Conf('submitted handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to invoke if this task is submitted.
+                    Handlers to run if this task is submitted.
                 ''')
                 Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
                     Handlers to run when this task starts executing.
                 ''')
                 Conf('succeeded handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task succeeds.
+                    Run if this task succeeds.
                 ''')
                 Conf('failed handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task fails.
+                    Run if this task fails.
                 ''')
                 Conf('submission failed handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Invoke if submission of this task fails.
+                        Run if submission of this task fails.
                 ''')
                 Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to run if this task invokes ``cylc message``
+                    Handlers to run if this task runs ``cylc message``
                     with severity level "WARNING".
                 ''')
                 Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to run if this task invokes ``cylc message``
+                    Handlers to run if this task runs ``cylc message``
                     with severity level "CRITICAL".
                 ''')
                 Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
-                    Invoke if this task failed but will retry.
+                    Run if this task failed but will retry.
                 ''')
                 Conf('submission retry handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Invoke if this task failed to submit but will retry.
+                        Run if this task failed to submit but will retry.
+
+                        .. seealso::
+
+                           :ref:`task-job-states`
+
                 ''')
                 Conf('execution timeout handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Invoke if this task execution exceeds
+                        Run if this task execution exceeds
                         :cylc:conf:`flow.cylc[runtime][<namespace>]
                         execution time limit`.
                 ''')
                 Conf('submission timeout handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Invoke if this task exceeds
+                        Run if this task exceeds
                         :cylc:conf:`flow.cylc[runtime][<namespace>][events]
                         submission timeout` in the submitted state.
                 ''')
                 Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to run if this task invokes ``cylc message``
+                    Handlers to run if this task runs ``cylc message``
                     with severity level "CUSTOM".
                 ''')
 
@@ -1526,13 +1535,13 @@ with Conf(
 
                     The polling
                     ``cylc workflow-state`` command will be
-                    invoked on the remote account.
+                    run on the remote account.
                 ''')
                 Conf('host', VDR.V_STRING, desc='''
                     The hostname of the target workflow.
 
                     The polling
-                    ``cylc workflow-state`` command will be invoked there.
+                    ``cylc workflow-state`` command will be run there.
                 ''')
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
