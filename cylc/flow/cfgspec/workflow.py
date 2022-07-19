@@ -1408,11 +1408,6 @@ with Conf(
                        implemented in a future Cylc release.
                 ''')
                 Conf('late offset', VDR.V_INTERVAL, None, desc='''
-                    Handlers to run if the task starts running behind
-                    schedule.
-
-                    Handlers to run if the task starts running behind schedule.
-
                     Offset from cycle point, in real time, at which this task
                     is considered to be "running late" (i.e. the time by which
                     it would normally have started running).
@@ -1439,7 +1434,7 @@ with Conf(
                        to submit anyway.
                 ''')
                 Conf('submitted handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to run if this task is submitted.
+                    Handlers to run when this task is submitted.
                 ''')
                 Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
                     Handlers to run when this task starts executing.
@@ -1463,12 +1458,12 @@ with Conf(
                     with severity level "CRITICAL".
                 ''')
                 Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to run if this task failed but will retry.
+                    Handlers to run if this task failed but is retrying.
                 ''')
                 Conf('submission retry handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Handlers to run if this task failed to submit but will
-                        retry.
+                        Handlers to run if a job failed to submit but is
+                        retrying.
 
                         .. seealso::
 
