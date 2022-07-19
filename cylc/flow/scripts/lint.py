@@ -63,6 +63,28 @@ SECTION2 = r'\[\[\s*{}\s*\]\]'
 SECTION3 = r'\[\[\[\s*{}\s*\]\]\]'
 FILEGLOBS = ['*.rc', '*.cylc']
 JINJA2_SHEBANG = '#!jinja2'
+DEPENDENCY_SECTION_MSG = {
+    'text': (
+        '[scheduling][dependencies][<reccurence>]graph =" => '
+        '"[scheduling][graph]<reccurence>="'
+    ),
+    'rst': (
+        '[scheduling][dependencies][<reccurence>]graph =" => '
+        '"[scheduling][graph]<reccurence>="'
+    )
+}
+JOBANDREMOTE_SECTION_MSG = {
+    'text': (
+        'settings in "[runtime][<namespace>][{}]" have been moved to'
+        '"[runtime][<namespace>]" and "global.cylc[platforms]'
+        '[<platforms name>]"'
+    ),
+    'rst': (
+        'settings in ``[runtime][<namespace>][{}]`` have been moved to'
+        '``[runtime][<namespace>]`` and ``global.cylc[platforms]'
+        '[<platforms name>]``'
+    )
+}
 JINJA2_FOUND_WITHOUT_SHEBANG = 'jinja2 found: no shebang (#!jinja2)'
 CHECKS_DESC = {'U': '7 to 8 upgrades', 'S': 'Style'}
 STYLE_CHECKS = {
@@ -101,6 +123,41 @@ STYLE_CHECKS = {
     re.compile(r'inherit\s*=\s*[a-z].*$'): {
         'short': 'Family name contains lowercase characters.',
         'url': STYLE_GUIDE + 'task-naming-conventions'
+    },
+}
+# Subset of deprecations which are tricky (impossible?) to scrape from the
+# upgrader.
+MANUAL_DEPRECATIONS = {
+    re.compile(SECTION2.format('dependencies')): {
+        'short': DEPENDENCY_SECTION_MSG['text'],
+        'url': '',
+        'rst': DEPENDENCY_SECTION_MSG['rst']
+    },
+    re.compile(r'graph\s*=\s*'): {
+        'short': DEPENDENCY_SECTION_MSG['text'],
+        'url': '',
+        'rst': DEPENDENCY_SECTION_MSG['rst']
+    },
+    re.compile(SECTION3.format('remote')): {
+        'short': JOBANDREMOTE_SECTION_MSG['text'].format('remote'),
+        'url': '',
+        'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('remote')
+    },
+    re.compile(SECTION3.format('job')): {
+        'short': JOBANDREMOTE_SECTION_MSG['text'].format('job'),
+        'url': '',
+        'rst': JOBANDREMOTE_SECTION_MSG['rst'].format('job')
+    },
+    re.compile(r'batch system\s*=\s*'): {
+        'short': (
+            'flow.cylc[runtime][<namespace>][job]batch system =>'
+            'global.cylc[platforms][<platform name>]job runner'
+        ),
+        'url': '',
+        'rst': (
+            '``flow.cylc[runtime][<namespace>][job]batch system`` =>'
+            '``global.cylc[platforms][<platform name>]job runner``'
+        )
     },
 }
 
@@ -175,6 +232,9 @@ def get_upgrader_info():
                 'url': '',
                 'rst': rst,
             }
+    # Some deprecations are not specified in a straightforward to scrape
+    # way and these are specified in MANUAL_DEPRECATIONS:
+    deprecations.update(MANUAL_DEPRECATIONS)
     return deprecations
 
 

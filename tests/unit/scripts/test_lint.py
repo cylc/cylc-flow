@@ -90,8 +90,6 @@ TEST_FILE = """
         [[[R1]]]
             graph = foo
 
-
-
 [runtime]
     [[MYFAM]]
         extra log files = True
@@ -148,34 +146,37 @@ LINT_TEST_FILE += (
 def create_testable_file(monkeypatch, capsys):
     def _inner(test_file, checks):
         monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
-        check_cylc_file(Path('x'), parse_checks(checks))
-        return capsys.readouterr()
+        checks = parse_checks(checks)
+        check_cylc_file(Path('x'), checks)
+        return capsys.readouterr(), checks
     return _inner
 
 
 @pytest.mark.parametrize(
-    'number', range(1, len(UPG_CHECKS) + 1)
+    'number', range(1, len(UPG_CHECKS))
 )
 def test_check_cylc_file_7to8(create_testable_file, number, capsys):
     try:
-        result = create_testable_file(TEST_FILE, '728').out
-        assert f'[U{number:03d}]' in result
+        result, checks = create_testable_file(TEST_FILE, '728')
+        assert f'[U{number:03d}]' in result.out
     except AssertionError:
         raise AssertionError(
             f'missing error number U{number:03d}'
-            f'{[*CHECKS["U"].keys()][number]}'
+            f'{[*checks.keys()][number]}'
         )
 
 
 def test_check_cylc_file_7to8_has_shebang(create_testable_file):
     """Jinja2 code comments will not be added if shebang present"""
-    result = create_testable_file('#!jinja2\n{{FOO}}', '[scheduler]').out
+    result, _ = create_testable_file('#!jinja2\n{{FOO}}', '[scheduler]')
+    result = result.out
     assert result == ''
 
 
 def test_check_cylc_file_line_no(create_testable_file, capsys):
     """It prints the correct line numbers"""
-    result = create_testable_file(TEST_FILE, '728').out
+    result, _ = create_testable_file(TEST_FILE, '728')
+    result = result.out
     assert result.split()[1] == '2:'
 
 
@@ -184,8 +185,9 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
 )
 def test_check_cylc_file_lint(create_testable_file, number):
     try:
-        assert f'[S{number + 1:03d}]' in create_testable_file(
-            LINT_TEST_FILE, 'lint').out
+        result, _ = create_testable_file(
+            LINT_TEST_FILE, 'lint')
+        assert f'[S{number + 1:03d}]' in result.out
     except AssertionError:
         raise AssertionError(
             f'missing error number S:{number:03d}'
