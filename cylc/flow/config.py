@@ -1306,9 +1306,11 @@ class WorkflowConfig:
 
             # Dummy mode jobs should run on platform localhost
             # All Cylc 7 config items which conflict with platform are removed.
-            for section, key, _ in FORBIDDEN_WITH_PLATFORM:
-                if (section in rtc and key in rtc[section]):
-                    rtc[section][key] = None
+            for section, keys in FORBIDDEN_WITH_PLATFORM.items():
+                if section in rtc:
+                    for key in keys:
+                        if key in rtc[section]:
+                            rtc[section][key] = None
 
             rtc['platform'] = 'localhost'
 

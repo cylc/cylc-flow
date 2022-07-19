@@ -555,9 +555,12 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
 @pytest.mark.parametrize(
     'task_conf, expected',
     [
-        (
+        pytest.param(
             {
-                'remote': {'host': 'cylcdevbox'},
+                'remote': {
+                    'host': 'cylcdevbox',
+                    'retrieve job logs': True
+                },
                 'job': {
                     'batch system': 'pbs',
                     'batch submit command template': 'meow'
@@ -565,11 +568,13 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
             },
             [
                 '[runtime][task][job]batch submit command template = meow',
+                '[runtime][task][remote]retrieve job logs = True',
                 '[runtime][task][remote]host = cylcdevbox',
                 '[runtime][task][job]batch system = pbs'
-            ]
+            ],
+            id="All are deprecated settings"
         ),
-        (
+        pytest.param(
             {
                 'remote': {'host': 'localhost'},
                 'job': {
@@ -577,7 +582,17 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
                     'batch submit command template': None
                 }
             },
-            ['[runtime][task][job]batch system = pbs']
+            ['[runtime][task][job]batch system = pbs'],
+            id="Exclusions are excluded"
+        ),
+        pytest.param(
+            {
+                'environment filter': {
+                    'include': ['frodo', 'sam']
+                }
+            },
+            [],
+            id="No deprecated settings"
         )
     ]
 )
