@@ -1408,11 +1408,6 @@ with Conf(
                        implemented in a future Cylc release.
                 ''')
                 Conf('late offset', VDR.V_INTERVAL, None, desc='''
-                    Handlers to run if the task starts running behind
-                    schedule.
-
-                    Handlers to run if the task starts running behind schedule.
-
                     Offset from cycle point, in real time, at which this task
                     is considered to be "running late" (i.e. the time by which
                     it would normally have started running).
