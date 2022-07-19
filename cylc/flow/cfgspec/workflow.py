@@ -1434,7 +1434,7 @@ with Conf(
                        to submit anyway.
                 ''')
                 Conf('submitted handlers', VDR.V_STRING_LIST, None, desc='''
-                    Handlers to run if this task is submitted.
+                    Handlers to run when this task is submitted.
                 ''')
                 Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
                     Handlers to run when this task starts executing.
