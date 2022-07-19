@@ -1462,7 +1462,7 @@ with Conf(
                 ''')
                 Conf('submission retry handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Run if this task failed to submit but will retry.
+                        Handlers to run if a job failed to submit but is retrying.
 
                         .. seealso::
 
