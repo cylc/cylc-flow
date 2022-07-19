@@ -25,9 +25,9 @@ from cylc.flow.terminal import get_width
 
 # fmt: off
 CYLC_LOGO = [
-    "  <yellow>▪</yellow> <blue>■ </blue>",
-    "  <green>██</green>  ",
-    " <red>▝▘</red>   ",
+    " <yellow>▪</yellow> <blue>■ </blue>",
+    " <green>██</green>  ",
+    "<red>▝▘</red>   ",
 ]
 # fmt: on
 
