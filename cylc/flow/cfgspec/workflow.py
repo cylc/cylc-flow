@@ -1458,7 +1458,7 @@ with Conf(
                     with severity level "CRITICAL".
                 ''')
                 Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
-                    Run if this task failed but will retry.
+                    Handlers to run if this task failed but is retrying.
                 ''')
                 Conf('submission retry handlers', VDR.V_STRING_LIST, None,
                      desc='''
