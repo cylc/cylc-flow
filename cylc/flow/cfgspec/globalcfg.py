@@ -1170,8 +1170,7 @@ with Conf('global.cylc', desc='''
                 .. versionadded:: 8.0.0
             ''')
             Conf('job runner', VDR.V_STRING, 'background', desc=f'''
-                The batch system/job submit method used to run jobs on the
-                platform.
+                The system used to run jobs on the platform.
 
                 Examples:
 
