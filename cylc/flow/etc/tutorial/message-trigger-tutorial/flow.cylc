@@ -1,0 +1,37 @@
+[scheduler]
+    UTC mode = True
+[meta]
+    title = "test workflow to demo message triggers"
+[scheduling]
+    initial cycle point = 2019-06-27T00Z
+    final cycle point = 2019-10-27T00Z
+    [[graph]]
+        P2M = """
+            long_forecasting_task:update1 =>  another_weather_task
+            long_forecasting_task:update2 => different_weather_task
+            long_forecasting_task[-P2M] => long_forecasting_task
+        """
+[runtime]
+    [[long_forecasting_task]]
+        script = """
+            sleep 2
+            random.sh
+            cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" \
+                "Task partially complete, report ready to view"
+            sleep 2
+            random.sh
+            cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" \
+                "Task partially complete, report updated"
+            sleep 2
+            random.sh
+        """
+
+        [[[outputs]]]
+            update1 = "Task partially complete, report ready to view"
+            update2 = "Task partially complete, report updated"
+
+        [[[events]]]
+            mail events = update1, update2
+
+    [[another_weather_task, different_weather_task]]
+        script = sleep 1
