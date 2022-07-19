@@ -25,7 +25,7 @@ from cylc.flow.platforms import (
     get_platform,
     get_platform_deprecated_settings,
     get_random_platform_for_install_target, is_platform_definition_subshell,
-    platform_from_name, platform_from_job_info,
+    platform_from_name, platform_name_from_job_info,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
     generic_items_match,
@@ -208,7 +208,7 @@ def test_similar_but_not_exact_match():
 
 
 # ----------------------------------------------------------------------------
-# Tests of platform_from_job_info
+# Tests of platform_name_from_job_info
 # ----------------------------------------------------------------------------
 # Basic tests that we can select sensible platforms
 @pytest.mark.parametrize(
@@ -269,11 +269,11 @@ def test_similar_but_not_exact_match():
         ),
     ]
 )
-def test_platform_from_job_info_basic(job, remote, returns):
-    assert platform_from_job_info(PLATFORMS, job, remote) == returns
+def test_platform_name_from_job_info_basic(job, remote, returns):
+    assert platform_name_from_job_info(PLATFORMS, job, remote) == returns
 
 
-def test_platform_from_job_info_ordered_dict_comparison():
+def test_platform_name_from_job_info_ordered_dict_comparison():
     """Check that we are only comparing set items in OrderedDictWithDefaults.
     """
     job = {'batch system': 'background', 'Made up key': 'Zaphod'}
@@ -284,7 +284,7 @@ def test_platform_from_job_info_ordered_dict_comparison():
     platform.defaults_['Made up key'] = {}
     platform.update(PLATFORMS['hpc1-bg'])
     platforms = {'hpc1-bg': platform, 'dobbie': PLATFORMS['sugar']}
-    assert platform_from_job_info(platforms, job, remote) == 'hpc1-bg'
+    assert platform_name_from_job_info(platforms, job, remote) == 'hpc1-bg'
 
 
 # Cases where the error ought to be raised because no matching platform should
@@ -311,7 +311,7 @@ def test_platform_from_job_info_ordered_dict_comparison():
 )
 def test_reverse_PlatformLookupError(job, remote):
     with pytest.raises(PlatformLookupError):
-        platform_from_job_info(PLATFORMS, job, remote)
+        platform_name_from_job_info(PLATFORMS, job, remote)
 
 
 # An example of a global config with two Spice systems available
@@ -335,7 +335,7 @@ def test_reverse_PlatformLookupError(job, remote):
         )
     ]
 )
-def test_platform_from_job_info_two_spices(
+def test_platform_name_from_job_info_two_spices(
     job, remote, returns
 ):
     platforms = {
@@ -349,7 +349,7 @@ def test_platform_from_job_info_two_spices(
         },
 
     }
-    assert platform_from_job_info(platforms, job, remote) == returns
+    assert platform_name_from_job_info(platforms, job, remote) == returns
 
 
 # An example of two platforms with the same hosts and job runner settings
@@ -375,7 +375,7 @@ def test_platform_from_job_info_two_spices(
         ),
     ]
 )
-def test_platform_from_job_info_similar_platforms(
+def test_platform_name_from_job_info_similar_platforms(
     job, remote, returns
 ):
     platforms = {
@@ -396,7 +396,7 @@ def test_platform_from_job_info_similar_platforms(
             'job runner': 'background'
         },
     }
-    assert platform_from_job_info(platforms, job, remote) == returns
+    assert platform_name_from_job_info(platforms, job, remote) == returns
 
 
 # -----------------------------------------------------------------------------
@@ -582,7 +582,8 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
     ]
 )
 def test_get_platform_deprecated_settings(
-        task_conf: Dict[str, Any], expected: List[str]):
+    task_conf: Dict[str, Any], expected: List[str]
+):
     output = get_platform_deprecated_settings(task_conf, task_name='task')
     assert set(output) == set(expected)
 
@@ -621,14 +622,13 @@ def test_get_platform_from_OrderedDictWithDefaults(mock_glbl_cfg):
         '''
     )
     task_conf = OrderedDictWithDefaults()
-    task_conf.defaults_ = dict([
-        ('job', dict([
+    task_conf.defaults_ = OrderedDictWithDefaults([
+        ('job', OrderedDictWithDefaults([
             ('batch system', 'slurm')
         ])),
-        ('remote', dict([
+        ('remote', OrderedDictWithDefaults([
             ('host', 'foo')
-        ]))
+        ])),
     ])
     result = get_platform(task_conf)['name']
     assert result == 'skarloey'
-

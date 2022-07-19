@@ -110,7 +110,7 @@ def get_platform(
 
     Returns:
         platform: A platform definition dictionary. Uses either
-            get_platform() or platform_from_job_info(), but to the
+            get_platform() or platform_name_from_job_info(), but to the
             user these look the same.
     """
     if task_conf is None or isinstance(task_conf, str):  # noqa: SIM 114
@@ -142,7 +142,7 @@ def get_platform(
             task_remote_section = (
                 task_conf['remote'] if 'remote' in task_conf else {})
             return platform_from_name(
-                platform_from_job_info(
+                platform_name_from_job_info(
                     glbl_cfg(cached=False).get(['platforms']),
                     task_job_section,
                     task_remote_section
@@ -288,7 +288,7 @@ def get_platform_from_group(
         return HOST_SELECTION_METHODS[method](platform_names)
 
 
-def platform_from_job_info(
+def platform_name_from_job_info(
     platforms: Dict[str, Any],
     job: Dict[str, Any],
     remote: Dict[str, Any]
@@ -364,14 +364,14 @@ def platform_from_job_info(
         ... }
         >>> job = {'batch system': 'slurm'}
         >>> remote = {'host': 'localhost'}
-        >>> platform_from_job_info(platforms, job, remote)
+        >>> platform_name_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote = {}
-        >>> platform_from_job_info(platforms, job, remote)
+        >>> platform_name_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote ={'host': 'desktop92'}
         >>> job = {}
-        >>> platform_from_job_info(platforms, job, remote)
+        >>> platform_name_from_job_info(platforms, job, remote)
         'desktop92'
     """
 

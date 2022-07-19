@@ -18,7 +18,6 @@
 
 from typing import Dict, Optional
 import pytest
-import random
 from cylc.flow.platforms import (
     get_localhost_install_target,
     get_platform
@@ -167,7 +166,7 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
         )
     ]
 )
-def test_get_platform_using_platform_from_job_info(
+def test_get_platform_using_platform_name_from_job_info(
     mock_glbl_cfg, task_conf, expected_platform_name
 ):
     """Calculate platform from Cylc 7 config: n.b. If this fails we don't
