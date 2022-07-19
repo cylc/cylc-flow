@@ -702,7 +702,8 @@ class JobRunnerManager():
                     proc_stdin_value = proc_stdin_value.encode()
             if hasattr(job_runner, "SUBMIT_CMD_ENV"):
                 env.update(job_runner.SUBMIT_CMD_ENV)
-            job_runner_cmd_tmpl = submit_opts.get("job_runner_cmd_tmpl")
+            job_runner_cmd_tmpl = submit_opts.get(
+                "job_runner_command_template")
             if job_runner_cmd_tmpl:
                 # No need to catch OSError when using shell. It is unlikely
                 # that we do not have a shell, and still manage to get as far
@@ -774,7 +775,7 @@ class JobRunnerManager():
                         job_runner_name = line.replace(
                             self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
                     elif line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
-                        submit_opts["job_runner_cmd_tmpl"] = line.replace(
+                        submit_opts["job_runner_command_template"] = line.replace(
                             self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
                     elif line.startswith(
                         self.LINE_PREFIX_EXECUTION_TIME_LIMIT
@@ -820,7 +821,7 @@ class JobRunnerManager():
                 job_runner_name = cur_line.replace(
                     self.LINE_PREFIX_JOB_RUNNER_NAME, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL):
-                submit_opts["job_runner_cmd_tmpl"] = cur_line.replace(
+                submit_opts["job_runner_command_template"] = cur_line.replace(
                     self.LINE_PREFIX_JOB_RUNNER_CMD_TMPL, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
                 submit_opts["execution_time_limit"] = float(cur_line.replace(
