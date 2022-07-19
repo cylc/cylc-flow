@@ -263,12 +263,10 @@ def check_cylc_file(file_, checks, modify=False):
 def get_cylc_files(base: Path) -> Generator[Path, None, None]:
     """Given a directory yield paths to check.
     """
-    excludes = [Path('log')]
-
     for rglob in FILEGLOBS:
         for path in base.rglob(rglob):
             # Exclude log directory:
-            if path.relative_to(base).parents[0] not in excludes:
+            if not path.relative_to(base).parts[0].startswith('log'):
                 yield path
 
 

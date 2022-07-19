@@ -223,15 +223,15 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
 
     # Create a fake run directory, including the log file which should not
     # be searched:
-    dirs = ['etc', 'bin', 'log', 'an_other']
+    dirs = ['etc', 'bin', 'log', 'an_other', 'log/skarloey/']
     for path in dirs:
         thispath = tmp_path / path
-        thispath.mkdir()
+        thispath.mkdir(parents=True)
         (thispath / 'foo.rc').touch()
 
     # Run the test
     result = [(i.parent.name, i.name) for i in get_cylc_files(tmp_path)]
-    assert result.sort() == expect.sort()
+    assert sorted(result) == sorted(expect)
 
 
 def test_get_reference_rst():
