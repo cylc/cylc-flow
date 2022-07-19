@@ -1043,10 +1043,8 @@ class TaskJobManager:
         self, workflow, itask, cmd_ctx, line
     ):
         """Helper for _submit_task_jobs_callback, on one task job."""
-        self.task_events_mgr._retry_task(
-            itask, time(), submit_retry=True
-        )
-        return
+        # send this task back for submission again
+        itask.waiting_on_job_prep = True  # (task is in the preparing state)
 
     def _submit_task_job_callback(self, workflow, itask, cmd_ctx, line):
         """Helper for _submit_task_jobs_callback, on one task job."""
