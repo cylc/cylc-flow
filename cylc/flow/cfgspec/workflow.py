@@ -1445,14 +1445,14 @@ with Conf(
                     Handlers to run when this task starts executing.
                 ''')
                 Conf('succeeded handlers', VDR.V_STRING_LIST, None, desc='''
-                    Run if this task succeeds.
+                    Handlers to run if this task succeeds.
                 ''')
                 Conf('failed handlers', VDR.V_STRING_LIST, None, desc='''
-                    Run if this task fails.
+                    Handlers to run if this task fails.
                 ''')
                 Conf('submission failed handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Run if submission of this task fails.
+                        Handlers to run if submission of this task fails.
                 ''')
                 Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
                     Handlers to run if this task runs ``cylc message``
@@ -1463,11 +1463,12 @@ with Conf(
                     with severity level "CRITICAL".
                 ''')
                 Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
-                    Run if this task failed but will retry.
+                    Handlers to run if this task failed but will retry.
                 ''')
                 Conf('submission retry handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Run if this task failed to submit but will retry.
+                        Handlers to run if this task failed to submit but will
+                        retry.
 
                         .. seealso::
 
@@ -1476,13 +1477,13 @@ with Conf(
                 ''')
                 Conf('execution timeout handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Run if this task execution exceeds
+                        Handlers to run if this task execution exceeds
                         :cylc:conf:`flow.cylc[runtime][<namespace>]
                         execution time limit`.
                 ''')
                 Conf('submission timeout handlers', VDR.V_STRING_LIST, None,
                      desc='''
-                        Run if this task exceeds
+                        Handlers to run if this task exceeds
                         :cylc:conf:`flow.cylc[runtime][<namespace>][events]
                         submission timeout` in the submitted state.
                 ''')
@@ -1678,6 +1679,10 @@ with Conf(
             '''):
                 Conf('<parameter>', VDR.V_STRING, desc='''
                     .. deprecated:: 7.8.7/7.9.2
+
+                       Parameter environment templates have moved to
+                       :cylc:conf:`flow.cylc[runtime]
+                       [<namespace>][environment]`.
                 ''')
 
 
