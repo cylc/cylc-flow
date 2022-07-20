@@ -51,6 +51,10 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#4984](https://github.com/cylc/cylc-flow/pull/4984) -
+Fixes an issue with `cylc reload` which could cause preparing tasks to become
+stuck.
+
 [#4975](https://github.com/cylc/cylc-flow/pull/4975) - Fix selection of
 platforms from `[job]` and `[remote]` configs.
 
