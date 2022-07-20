@@ -225,7 +225,7 @@ def test_similar_but_not_exact_match():
         # returns to default, i.e. localhost.
         (
             {'batch system': 'background'},
-            {'retrieve job logs retry delays': 'None'},
+            {'retrieve job logs retry delays': None},
             'localhost'
         ),
         # Check that when the user asks for batch system = slurm alone
