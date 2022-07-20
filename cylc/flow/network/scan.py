@@ -138,7 +138,7 @@ def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
             if path.name == WorkflowFiles.LOG_DIR:
                 if (
                         (path / 'suite' / 'log').exists()
-                        and not (path / 'workflow').exists()
+                        and not (path / 'scheduler').exists()
                 ):
                     # ... already run by Cylc 7 (and not re-run by Cylc 8 after
                     # removing the DB)

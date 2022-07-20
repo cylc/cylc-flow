@@ -431,8 +431,8 @@ def cylc7_run_dir(tmp_path):
     cylc8 = tmp_path / 'cylc8'
     cylc8.mkdir()
     (cylc8 / WorkflowFiles.SUITE_RC).touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow', 'log').touch()
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler', 'log').touch()
 
     # a Cylc 7 workflow installed by Cylc 8 but not run yet.
     # (should appear in scan results)
@@ -449,8 +449,8 @@ def cylc7_run_dir(tmp_path):
     (cylc8 / WorkflowFiles.SUITE_RC).touch()
     Path(cylc8, WorkflowFiles.LOG_DIR, 'suite').mkdir(parents=True)
     Path(cylc8, WorkflowFiles.LOG_DIR, 'suite', 'log').touch()
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow').mkdir(parents=True)
-    Path(cylc8, WorkflowFiles.LOG_DIR, 'workflow', 'log').touch()
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler').mkdir(parents=True)
+    Path(cylc8, WorkflowFiles.LOG_DIR, 'scheduler', 'log').touch()
 
     return tmp_path
 

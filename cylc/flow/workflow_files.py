@@ -499,7 +499,7 @@ def detect_old_contact_file(reg: str, contact_data=None) -> None:
     # NOTE: can raise CylcError
     process_is_running = _is_process_running(old_host, old_pid, old_cmd)
 
-    fname = get_contact_file(reg)
+    fname = get_contact_file_path(reg)
     if process_is_running:
         # ... the process is running, raise an exception
         raise ServiceFileError(
@@ -541,7 +541,7 @@ def dump_contact_file(reg, data):
     # The double fsync logic ensures that if the contact file is written to
     # a shared file system e.g. via NFS, it will be immediately visible
     # from by a process on other hosts after the current process returns.
-    with open(get_contact_file(reg), "wb") as handle:
+    with open(get_contact_file_path(reg), "wb") as handle:
         for key, value in sorted(data.items()):
             handle.write(("%s=%s\n" % (key, value)).encode())
         os.fsync(handle.fileno())
@@ -550,7 +550,7 @@ def dump_contact_file(reg, data):
     os.close(dir_fileno)
 
 
-def get_contact_file(reg):
+def get_contact_file_path(reg: str) -> str:
     """Return name of contact file."""
     return os.path.join(
         get_workflow_srv_dir(reg), WorkflowFiles.Service.CONTACT)
@@ -607,10 +607,10 @@ def get_workflow_srv_dir(reg):
 
 def load_contact_file(reg: str) -> Dict[str, str]:
     """Load contact file. Return data as key=value dict."""
-    file_base = WorkflowFiles.Service.CONTACT
-    path = get_workflow_srv_dir(reg)
-    file_content = _load_local_item(file_base, path)
-    if not file_content:
+    try:
+        with open(get_contact_file_path(reg)) as f:
+            file_content = f.read()
+    except IOError:
         raise ServiceFileError("Couldn't load contact file")
     data: Dict[str, str] = {}
     for line in file_content.splitlines():
@@ -626,10 +626,7 @@ def load_contact_file(reg: str) -> Dict[str, str]:
 
 async def load_contact_file_async(reg, run_dir=None):
     if not run_dir:
-        path = Path(
-            get_workflow_srv_dir(reg),
-            WorkflowFiles.Service.CONTACT
-        )
+        path = Path(get_contact_file_path(reg))
     else:
         path = Path(
             run_dir,
@@ -745,6 +742,14 @@ def _clean_check(opts: 'Values', reg: str, run_dir: Path) -> None:
     # Thing to clean must be a dir or broken symlink:
     if not run_dir.is_dir() and not run_dir.is_symlink():
         raise FileNotFoundError(f"No directory to clean at {run_dir}")
+    db_path = (
+        run_dir / WorkflowFiles.Service.DIRNAME / WorkflowFiles.Service.DB
+    )
+    if opts.local_only and not db_path.is_file():
+        # Will reach here if this is cylc clean re-invoked on remote host
+        # (workflow DB only exists on scheduler host); don't need to worry
+        # about contact file.
+        return
     try:
         detect_old_contact_file(reg)
     except ServiceFileError as exc:
@@ -1145,15 +1150,6 @@ def get_workflow_title(reg):
             if match:
                 title = match.groups()[0].strip('"\'')
     return title
-
-
-def _load_local_item(item, path):
-    """Load and return content of a file (item) in path."""
-    try:
-        with open(os.path.join(path, item)) as file_:
-            return file_.read()
-    except IOError:
-        return None
 
 
 def get_platforms_from_db(run_dir):

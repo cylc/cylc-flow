@@ -1782,7 +1782,7 @@ class Scheduler:
         # from running event handlers), because the existence of the file is
         # used to determine if the workflow is running
         if self.contact_data:
-            fname = workflow_files.get_contact_file(self.workflow)
+            fname = workflow_files.get_contact_file_path(self.workflow)
             try:
                 os.unlink(fname)
             except OSError as exc:
