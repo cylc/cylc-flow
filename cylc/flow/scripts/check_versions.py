@@ -31,7 +31,8 @@ version if $CYLC_VERSION is defined.
 
 Use -v/--verbose to see the command invoked to determine the remote version
 (all remote cylc command invocations will be of the same form, which may be
-site dependent -- see cylc global config documentation."""
+site dependent -- see cylc global config documentation.
+"""
 
 import sys
 from typing import TYPE_CHECKING

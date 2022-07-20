@@ -35,6 +35,7 @@ grep_ok "REINSTALLED ${RND_WORKFLOW_NAME}/run1 from ${RND_WORKFLOW_SOURCE}" "${R
 popd || exit 1
 purge_rnd_workflow
 
+#------------------------------------------------------------------------------
 # Test install/reinstall executed from elsewhere in filesystem
 TEST_NAME="${TEST_NAME_BASE}-named-flow"
 make_rnd_workflow
@@ -46,11 +47,13 @@ __OUT__
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
 cmp_ok "${TEST_NAME}-reinstall.stdout" <<__OUT__
 REINSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
+Successfully reinstalled.
 __OUT__
 popd || exit 1
 purge_rnd_workflow
 rm -rf "${RUN_DIR:?}/${RND_WORKFLOW_NAME}/"
 
+#------------------------------------------------------------------------------
 # Test cylc reinstall succeeds if suite.rc file in source dir
 TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 make_rnd_workflow

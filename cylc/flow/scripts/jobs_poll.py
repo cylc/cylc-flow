@@ -20,8 +20,8 @@
 
 Read job status files to obtain the statuses of the jobs. If necessary, Invoke
 the relevant job runner commands to ask the job runners for more statuses.
-
 """
+
 from cylc.flow.job_runner_mgr import JobRunnerManager
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function

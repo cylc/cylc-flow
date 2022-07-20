@@ -50,7 +50,8 @@ line (cylc play --set 'FOO="bar"' WORKFLOW_ID) the same template settings apply
 to the reload (only changes to the flow.cylc file itself are reloaded).
 
 If the modified workflow definition does not parse, failure to reload will
-be reported but no harm will be done to the running workflow."""
+be reported but no harm will be done to the running workflow.
+"""
 
 from functools import partial
 from typing import TYPE_CHECKING

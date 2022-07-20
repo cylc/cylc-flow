@@ -21,7 +21,6 @@
 Remove ".service/contact" from a task remote (i.e. a [owner@]host).
 Remove ".service" directory on the remote if emptied.
 Remove authentication keys.
-
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
