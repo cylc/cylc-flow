@@ -63,7 +63,7 @@ REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 REPLACED_BY_PLATFORMS = '''
 .. warning::
 
-   Deprecated section kept for compatibility with Cylc 7 workflow definitions.
+   .. deprecated:: 8.0.0
 
    This will be removed in a future version of Cylc 8.
 
@@ -685,8 +685,19 @@ with Conf(
                     Assigned tasks will automatically be removed
                     from the default queue.
                 ''')
-            with Conf('default', meta=Queue):
-                Conf('limit', VDR.V_INTEGER, 0)
+            with Conf('default', meta=Queue, desc='''
+                The default queue for all tasks not assigned to other queues.
+            '''):
+                Conf('limit', VDR.V_INTEGER, 0, desc='''
+                    Controls the total number of active tasks in the default
+                    queue.
+
+                    .. seealso::
+
+                       - :cylc:conf:`flow.cylc[scheduling]
+                         [queues][<queue name>]limit`
+                       - :ref:`InternalQueues`
+                ''')
 
         with Conf('special tasks', desc='''
             This section is used to identify tasks with special behaviour.
@@ -956,7 +967,7 @@ with Conf(
                 If no parents are listed default is ``root``.
             ''')
             Conf('script', VDR.V_STRING, desc=dedent('''
-                The main custom script invoked from the task job script.
+                The main custom script run from the task job script.
 
                 It can be an external command or script, or inlined scripting.
 
@@ -966,7 +977,7 @@ with Conf(
                 this='script', example='my_script.sh'
             ))
             Conf('init-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script before the task
+                Custom script run by the task job script before the task
                 execution environment is configured.
 
                 By running before the task execution environment is configured,
@@ -978,7 +989,7 @@ with Conf(
                 this should no longer be necessary.
             ''') + get_script_common_text(this='init-script'))
             Conf('env-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script between the
+                Custom script run by the task job script between the
                 cylc-defined environment (workflow and task identity, etc.) and
                 the user-defined task runtime environment.
 
@@ -989,7 +1000,7 @@ with Conf(
             Conf('err-script', VDR.V_STRING, desc=('''
                 Script run when a task job error is detected.
 
-                Custom script to be invoked at the end of the error trap,
+                Custom script to be run at the end of the error trap,
                 which is triggered due to failure of a command in the task job
                 script or trappable job kill.
 
@@ -1004,7 +1015,7 @@ with Conf(
                 this='err-script', example='echo "Uh oh, received ${1}"'
             ))
             Conf('exit-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked at the very end of *successful* job
+                Custom script run at the very end of *successful* job
                 execution, just before the job script exits.
 
                 The exit-script should execute very quickly.
@@ -1015,7 +1026,7 @@ with Conf(
                 this='exit-script', example='rm -f "$TMP_FILES"'
             ))
             Conf('pre-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script immediately
+                Custom script run by the task job script immediately
                 before :cylc:conf:`[..]script`.
 
                 The pre-script can be an external command or script, or
@@ -1025,7 +1036,7 @@ with Conf(
                 example='echo "Hello from workflow ${CYLC_WORKFLOW_ID}!"'
             ))
             Conf('post-script', VDR.V_STRING, desc=dedent('''
-                Custom script invoked by the task job script immediately
+                Custom script run by the task job script immediately
                 after :cylc:conf:`[..]script`.
 
                 The post-script can be an external
@@ -1089,7 +1100,7 @@ with Conf(
                 Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a task job.
 
-                For ``background`` and ``at`` job runners Cylc invokes the
+                For ``background`` and ``at`` job runners Cylc runs the
                 job's script using the timeout command. For other job runners
                 Cylc will convert execution time limit to a :term:`directive`.
 
@@ -1290,14 +1301,31 @@ with Conf(
                 job scripts to run.
 
             ''') + REPLACED_BY_PLATFORMS):
-                Conf('batch system', VDR.V_STRING)
-                Conf('batch submit command template', VDR.V_STRING)
+                Conf('batch system', VDR.V_STRING, desc='''
+                    Batch/Queuing system to submit task jobs to.
+
+                    .. deprecated:: 8.0.0
+
+                       Kept for back compatibility but replaced by
+                       :cylc:conf:`global.cylc[platforms][<platform name>]
+                       job runner`.
+                ''')
+                Conf('batch submit command template', VDR.V_STRING, desc='''
+                    Override the default job submission command for the chosen
+                    batch system.
+
+                    .. seealso::
+
+                       Kept for back compatibility but replaced by
+                       :cylc:conf:`global.cylc[platforms][<platform name>]
+                       job runner command template`.
+                ''')
 
             with Conf('remote', desc=dedent('''
                 .. deprecated:: 8.0.0
 
             ''') + REPLACED_BY_PLATFORMS):
-                Conf('host', VDR.V_STRING)
+                Conf('host', VDR.V_STRING, desc=REPLACED_BY_PLATFORMS)
                 # TODO: Convert URL to a stable or latest release doc after 8.0
                 # https://github.com/cylc/cylc-flow/issues/4663
                 Conf('owner', VDR.V_STRING, desc="""
@@ -1309,10 +1337,13 @@ with Conf(
                        <https://cylc.github.io/cylc-doc/latest/html/
                        7-to-8/major-changes/remote-owner.html>`_
                 """)
-                Conf('retrieve job logs', VDR.V_BOOLEAN)
-                Conf('retrieve job logs max size', VDR.V_STRING)
+                Conf('retrieve job logs', VDR.V_BOOLEAN,
+                     desc=REPLACED_BY_PLATFORMS)
+                Conf('retrieve job logs max size', VDR.V_STRING,
+                     desc=REPLACED_BY_PLATFORMS)
                 Conf('retrieve job logs retry delays',
-                     VDR.V_INTERVAL_LIST, None)
+                     VDR.V_INTERVAL_LIST, None,
+                     desc=REPLACED_BY_PLATFORMS)
 
             with Conf('events', desc=(
                 global_default(TASK_EVENTS_DESCR, "[task events]")
@@ -1353,24 +1384,99 @@ with Conf(
                         "[task events]submission timeout"
                     )
                 ))
-                # TODO: add descriptions for the handlers below. Some of them
-                # didn't have any mention in the Cylc 7 suiterc ref docs, but
-                # a look at git blame indicates none of them are new in Cylc 8.
-                Conf('expired handlers', VDR.V_STRING_LIST, None)
-                Conf('late offset', VDR.V_INTERVAL, None)
-                Conf('late handlers', VDR.V_STRING_LIST, None)
-                Conf('submitted handlers', VDR.V_STRING_LIST, None)
-                Conf('started handlers', VDR.V_STRING_LIST, None)
-                Conf('succeeded handlers', VDR.V_STRING_LIST, None)
-                Conf('failed handlers', VDR.V_STRING_LIST, None)
-                Conf('submission failed handlers', VDR.V_STRING_LIST, None)
-                Conf('warning handlers', VDR.V_STRING_LIST, None)
-                Conf('critical handlers', VDR.V_STRING_LIST, None)
-                Conf('retry handlers', VDR.V_STRING_LIST, None)
-                Conf('submission retry handlers', VDR.V_STRING_LIST, None)
-                Conf('execution timeout handlers', VDR.V_STRING_LIST, None)
-                Conf('submission timeout handlers', VDR.V_STRING_LIST, None)
-                Conf('custom handlers', VDR.V_STRING_LIST, None)
+                Conf('expired handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task has expired.
+
+                    .. seealso::
+
+                       :ref:`task-job-states`
+
+                    .. caution::
+
+                       Changes to the scheduling algorithm in Cylc 8 mean
+                       this event will not be triggered until the expired task
+                       is ready to run.  Earlier expired-task detection will be
+                       implemented in a future Cylc release.
+                ''')
+                Conf('late offset', VDR.V_INTERVAL, None, desc='''
+                    Offset from cycle point, in real time, at which this task
+                    is considered to be "running late" (i.e. the time by which
+                    it would normally have started running).
+
+                    .. caution::
+
+                       Changes to the scheduling algorithm in Cylc 8 mean
+                       this event will not be triggered until the late task
+                       is ready to run.  Earlier late-task detection will be
+                       implemented in a future Cylc release.
+
+                    .. seealso::
+
+                       :cylc:conf:`flow.cylc[runtime][<namespace>][events]
+                       late handlers`.
+                ''')
+                Conf('late handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task is late.
+
+                    .. caution::
+
+                       Due to changes to the Cylc 8 scheduling algorithm
+                       this event is unlikely to occur until the task is about
+                       to submit anyway.
+                ''')
+                Conf('submitted handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run when this task is submitted.
+                ''')
+                Conf('started handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run when this task starts executing.
+                ''')
+                Conf('succeeded handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task succeeds.
+                ''')
+                Conf('failed handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task fails.
+                ''')
+                Conf('submission failed handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if submission of this task fails.
+                ''')
+                Conf('warning handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task runs ``cylc message``
+                    with severity level "WARNING".
+                ''')
+                Conf('critical handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task runs ``cylc message``
+                    with severity level "CRITICAL".
+                ''')
+                Conf('retry handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task failed but is retrying.
+                ''')
+                Conf('submission retry handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if a job failed to submit but is
+                        retrying.
+
+                        .. seealso::
+
+                           :ref:`task-job-states`
+
+                ''')
+                Conf('execution timeout handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if this task execution exceeds
+                        :cylc:conf:`flow.cylc[runtime][<namespace>]
+                        execution time limit`.
+                ''')
+                Conf('submission timeout handlers', VDR.V_STRING_LIST, None,
+                     desc='''
+                        Handlers to run if this task exceeds
+                        :cylc:conf:`flow.cylc[runtime][<namespace>][events]
+                        submission timeout` in the submitted state.
+                ''')
+                Conf('custom handlers', VDR.V_STRING_LIST, None, desc='''
+                    Handlers to run if this task runs ``cylc message``
+                    with severity level "CUSTOM".
+                ''')
 
             with Conf('mail', desc='''
                 Email notification settings for task events.
@@ -1416,13 +1522,13 @@ with Conf(
 
                     The polling
                     ``cylc workflow-state`` command will be
-                    invoked on the remote account.
+                    run on the remote account.
                 ''')
                 Conf('host', VDR.V_STRING, desc='''
                     The hostname of the target workflow.
 
                     The polling
-                    ``cylc workflow-state`` command will be invoked there.
+                    ``cylc workflow-state`` command will be run there.
                 ''')
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
@@ -1560,7 +1666,13 @@ with Conf(
                 prepended to the ``[environment]`` section when running
                 a workflow.
             '''):
-                Conf('<parameter>', VDR.V_STRING)
+                Conf('<parameter>', VDR.V_STRING, desc='''
+                    .. deprecated:: 7.8.7/7.9.2
+
+                       Parameter environment templates have moved to
+                       :cylc:conf:`flow.cylc[runtime]
+                       [<namespace>][environment]`.
+                ''')
 
 
 def upg(cfg, descr):

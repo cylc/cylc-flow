@@ -138,8 +138,9 @@ def get_platform(
             # Need to calculate platform
             task_job_section: Dict[Any, Any] = {}
             task_remote_section: Dict[Any, Any] = {}
-            task_job_section = task_conf.get("job", {})
-            task_remote_section = task_conf.get("remote", {})
+            task_job_section = task_conf['job'] if 'job' in task_conf else {}
+            task_remote_section = (
+                task_conf['remote'] if 'remote' in task_conf else {})
             return platform_from_name(
                 platform_from_job_info(
                     glbl_cfg(cached=False).get(['platforms']),
@@ -202,7 +203,7 @@ def platform_from_name(
     # later than site set platforms) to be matched first and override site
     # defined platforms.
     for platform_name_re in reversed(list(platforms)):
-        # We substitue commas with or without spaces to
+        # We substitute commas with or without spaces to
         # allow lists of platforms
         if (
             re.fullmatch(

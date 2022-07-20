@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional, Type
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
     get_all_platforms_for_install_target,
+    get_platform,
     get_platform_deprecated_settings,
     get_random_platform_for_install_target, is_platform_definition_subshell,
     platform_from_name, platform_from_job_info,
@@ -34,6 +35,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     GlobalConfigError
 )
+
 
 PLATFORMS = {
     'desktop[0-9]{2}|laptop[0-9]{2}': {
@@ -599,3 +601,34 @@ def test_is_platform_definition_subshell(
         assert err_msg in str(exc.value)
     else:
         assert is_platform_definition_subshell(plat_val) is expected
+
+
+def test_get_platform_from_OrderedDictWithDefaults(mock_glbl_cfg):
+    """Get platform works with OrderedDictWithDefaults.
+
+    Most tests use dictionaries to check platforms functionality.
+    This one was added to catch an issue where the behaviour of
+    dict.get != OrderedDictWithDefaults.get.
+    See - https://github.com/cylc/cylc-flow/issues/4979
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[skarloey]]
+                hosts = foo, bar
+                job runner = slurm
+        '''
+    )
+    task_conf = OrderedDictWithDefaults()
+    task_conf.defaults_ = dict([
+        ('job', dict([
+            ('batch system', 'slurm')
+        ])),
+        ('remote', dict([
+            ('host', 'foo')
+        ]))
+    ])
+    result = get_platform(task_conf)['name']
+    assert result == 'skarloey'
+

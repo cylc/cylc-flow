@@ -51,6 +51,9 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#4975](https://github.com/cylc/cylc-flow/pull/4975) - Fix selection of
+platforms from `[job]` and `[remote]` configs.
+
 [#4970](https://github.com/cylc/cylc-flow/pull/4970) - Fix handling of suicide
 triggers in back-compat mode.
 
@@ -266,7 +269,7 @@ renamed `cylc get-resources` and small changes made:
 - Cylc wrapper script made available.
 - Source argument now before target.
 - Metadata as well as names from ``--list`` option.
-- Files extracted to to ``target/source_name`` rather than ``target/full/source/path``.
+- Files extracted to ``target/source_name`` rather than ``target/full/source/path``.
 
 [#4548](https://github.com/cylc/cylc-flow/pull/4548) - Changed the
 workflow version control info log file format from modified-INI to JSON.
@@ -585,7 +588,7 @@ during workflow run and post pause.
 [#4168](https://github.com/cylc/cylc-flow/pull/4168) - Fix bug where any
 errors during workflow shutdown were not logged.
 
-[#4161](https://github.com/cylc/cylc-flow/pull/4161) - Fix bug in in `cylc install`
+[#4161](https://github.com/cylc/cylc-flow/pull/4161) - Fix bug in `cylc install`
 where a workflow would be installed with the wrong name.
 
 [#4188](https://github.com/cylc/cylc-flow/pull/4188) - Fix incorrect usage
