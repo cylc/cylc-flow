@@ -1,0 +1,27 @@
+# A task with no parents should auto-spawn out to the runahead limit, except
+# in cycle points where it does have parents. And those cycles, if any, should
+# not block spawning of subsequent parentless cycles - GitHub #4906.
+
+[scheduler]
+    [[events]]
+        inactivity timeout = PT60S
+        abort on inactivity timeout = True
+        expected task failures = 1/failer
+        # Unstall, to see if foo gets triggered by baz at point 2.
+        stall handlers = cylc trigger %(workflow)s//2/baz, \
+                           cylc remove %(workflow)s//1/failer
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 4
+    runahead limit = P2  # 1, 2, 3
+    [[graph]]
+        R1 = failer  # cause a runahead limit stall
+        R1/2 = "failer[^] => baz => foo"
+        # foo has no parents, so should spawn to the runahead limit...
+        P1 = "foo => bar"
+        # ...except at point 2, where it should be spawned by baz
+[runtime]
+    [[failer]]
+        script = false
+    [[foo, bar, baz]]

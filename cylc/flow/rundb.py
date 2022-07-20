@@ -820,7 +820,8 @@ class CylcWorkflowDAO:
             LEFT OUTER JOIN
                 %(task_outputs)s
             ON  %(task_pool)s.cycle == %(task_outputs)s.cycle AND
-                %(task_pool)s.name == %(task_outputs)s.name
+                %(task_pool)s.name == %(task_outputs)s.name AND
+                %(task_pool)s.flow_nums == %(task_outputs)s.flow_nums
         """
         form_data = {
             "task_pool": self.TABLE_TASK_POOL,

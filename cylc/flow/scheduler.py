@@ -689,27 +689,7 @@ class Scheduler:
             else "Cold"
         )
         LOG.info(f"{start_type} start from {self.config.start_point}")
-
-        flow_num = self.flow_mgr.get_new_flow(
-            f"original flow from {self.config.start_point}"
-        )
-        for name in self.config.get_task_name_list():
-            tdef = self.config.get_taskdef(name)
-            try:
-                point = sorted([
-                    point for point in
-                    (seq.get_first_point(self.config.start_point)
-                     for seq in tdef.sequences) if point
-                ])[0]
-            except IndexError:
-                # No points
-                continue
-            parent_points = tdef.get_parent_points(point)
-            if not parent_points or all(
-                    x < self.config.start_point for x in parent_points):
-                self.pool.add_to_pool(
-                    TaskProxy(tdef, point, {flow_num})
-                )
+        self.pool.load_from_point()
 
     def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
@@ -898,23 +878,20 @@ class Scheduler:
             self.pool.stop_flow(flow_num)
             return
 
-        if cycle_point:
+        if cycle_point is not None:
             # schedule shutdown after tasks pass provided cycle point
             point = TaskID.get_standardised_point(cycle_point)
-            if self.pool.set_stop_point(point):
+            if point is not None and self.pool.set_stop_point(point):
                 self.options.stopcp = str(point)
                 self.workflow_db_mgr.put_workflow_stop_cycle_point(
                     self.options.stopcp)
-            else:
-                # TODO: yield warning
-                pass
-        elif clock_time:
+        elif clock_time is not None:
             # schedule shutdown after wallclock time passes provided time
             parser = TimePointParser()
             self.set_stop_clock(
                 int(parser.parse(clock_time).seconds_since_unix_epoch)
             )
-        elif task:
+        elif task is not None:
             # schedule shutdown after task succeeds
             task_id = TaskID.get_standardised_taskid(task)
             self.pool.set_stop_task(task_id)
@@ -1293,6 +1270,7 @@ class Scheduler:
 
             # Start the job submission process.
             self.is_updated = True
+            self.reset_inactivity_timer()
 
             self.task_job_mgr.task_remote_mgr.rsync_includes = (
                 self.config.get_validated_rsync_includes())
@@ -1500,15 +1478,12 @@ class Scheduler:
                 self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
                     self.data_store_mgr.insert_db_job)
                 LOG.info("Reload completed.")
+                if self.pool.compute_runahead(force=True):
+                    self.pool.release_runahead_tasks()
                 self.is_reloaded = True
                 self.is_updated = True
 
             self.process_command_queue()
-
-            if self.pool.release_runahead_tasks():
-                self.is_updated = True
-                self.reset_inactivity_timer()
-
             self.proc_pool.process()
 
             # Tasks in the main pool that are waiting but not queued must be
@@ -1563,7 +1538,6 @@ class Scheduler:
                 self.xtrigger_mgr.housekeep(self.pool.get_tasks())
 
             self.pool.set_expired_tasks()
-
             self.release_queued_tasks()
 
             if self.pool.sim_time_check(self.message_queue):
@@ -1835,8 +1809,6 @@ class Scheduler:
             # Don't if paused.
             return False
 
-        self.pool.release_runahead_tasks()
-
         if self.check_workflow_stalled():
             return False
 
@@ -1847,8 +1819,10 @@ class Scheduler:
                 TASK_STATUS_SUBMITTED,
                 TASK_STATUS_RUNNING
             )
-            or (itask.state(TASK_STATUS_WAITING)
-                and not itask.state.is_runahead)
+            or (
+                itask.state(TASK_STATUS_WAITING)
+                and not itask.state.is_runahead
+            )
         ):
             # Don't if there are more tasks to run (if waiting and not
             # runahead, then held, queued, or xtriggered).
@@ -1856,10 +1830,8 @@ class Scheduler:
 
         # Can shut down.
         if self.pool.stop_point:
-            self.options.stopcp = None
-            self.pool.stop_point = None
+            # Forget early stop point in case of a restart.
             self.workflow_db_mgr.delete_workflow_stop_cycle_point()
-            self.update_data_store()
 
         return True
 

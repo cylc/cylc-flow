@@ -16,28 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
+# A task with no parents should auto-spawn out to the runahead limit, except
+# in cycle points where it does have parents. And those cycles, if any, should
+# not block spawning of subsequent parentless cycles - GitHub #4906.
+
 . "$(dirname "$0")/test_header"
-set_test_number 4
-
-install_and_validate "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" true
-DB="${WORKFLOW_RUN_DIR}/runN/log/db"
-
-reftest_run
-
-TEST_NAME="${TEST_NAME_BASE}-order-no-wait"
-QUERY="SELECT cycle, name,flow_nums,outputs FROM task_outputs;"
-
-run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
-
-cmp_ok "${TEST_NAME}.stdout" <<\__END__
-1|a|[1]|["submitted", "started", "succeeded"]
-1|b|[1]|["submitted", "started", "succeeded"]
-1|a|[2]|["submitted", "started", "succeeded"]
-1|c|[2]|["submitted", "started", "x"]
-1|x|[1, 2]|["submitted", "started", "succeeded"]
-1|c|[1, 2]|["submitted", "started", "succeeded", "x"]
-1|d|[1, 2]|["submitted", "started", "succeeded"]
-1|b|[2]|["submitted", "started", "succeeded"]
-__END__
-
-purge
+set_test_number 2
+reftest
+exit

@@ -58,9 +58,12 @@ workflow_run_ok "${TEST_NAME_BASE}-restart" \
     -s 'MANUAL_SHUTDOWN="1971"'
 grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1972"
 dumpdbtables
-# Note we have manually stopped before the stop point
+# Note we have manually stopped at 1971 before the stop point at 1972:
+#   1972: waiting
+#   1973: waiting and runahead limited
 cmp_ok db_taskpool.out.out << '__OUT__'
 1972|hello|waiting
+1973|hello|waiting
 __OUT__
 cmp_ok db_stopcp.out < /dev/null
 
@@ -74,6 +77,7 @@ dumpdbtables
 # Note we have manually stopped before the stop point
 cmp_ok db_taskpool.out.out << '__OUT__'
 1974|hello|waiting
+1975|hello|waiting
 __OUT__
 # Check CLI stop point is stored in DB
 cmp_ok db_stopcp.out <<< '1974'
@@ -100,6 +104,7 @@ dumpdbtables
 # Note we have manually stopped before the stop point
 cmp_ok db_taskpool.out.out << '__OUT__'
 1976|hello|waiting
+1977|hello|waiting
 __OUT__
 cmp_ok db_stopcp.out <<< '1978'
 
@@ -114,6 +119,7 @@ grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1979"
 dumpdbtables
 cmp_ok db_taskpool.out.out << '__OUT__'
 1977|hello|waiting
+1978|hello|waiting
 __OUT__
 # Stop point should be removed from DB if --stopcp=reload used
 cmp_ok db_stopcp.out < /dev/null
@@ -128,6 +134,7 @@ grep_workflow_log_ok "${TEST_NAME_BASE}-log-grep" "Stop point: 1971"
 dumpdbtables
 cmp_ok db_taskpool.out.out << '__OUT__'
 1977|hello|waiting
+1978|hello|waiting
 __OUT__
 cmp_ok db_stopcp.out < /dev/null
 
