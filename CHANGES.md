@@ -54,6 +54,10 @@ default job runner directives for platforms.
 [#4975](https://github.com/cylc/cylc-flow/pull/4975) - Fix selection of
 platforms from `[job]` and `[remote]` configs.
 
+[#4948](https://github.com/cylc/cylc-flow/pull/4948) - Fix lack of
+errors/warnings for deprecated `[runtime][<task>][remote]retrieve job logs *`
+settings.
+
 [#4970](https://github.com/cylc/cylc-flow/pull/4970) - Fix handling of suicide
 triggers in back-compat mode.
 
