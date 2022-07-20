@@ -57,8 +57,12 @@ triggers in back-compat mode.
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.
 
-[#4906](https://github.com/cylc/cylc-flow/pull/4906) - Fix delayed spawning of
-parentless tasks that have parents in some cycle points.
+[#4906](https://github.com/cylc/cylc-flow/pull/4906)
+- Fix delayed spawning of parentless tasks that do have parents in a previous
+  cycle point.
+- Make integer-interval runahead limits consistent with time-interval limits:
+  `P0` means just the runahead base point; `P1` the base point and the point
+  (i.e. one cycle interval), and so on.
 
 [#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
 error messages when workflow CLI commands fail.
