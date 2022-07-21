@@ -984,7 +984,9 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.0.0
         """):
-            with Conf('<install target>'):
+            with Conf('<install target>', desc="""
+                :ref:`Install target <Install targets>` on which to create the symlinks.
+            """):
                 Conf('run', VDR.V_STRING, None, desc="""
                     Alternative location for the run dir.
 
@@ -1641,9 +1643,25 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.0.0
         '''):
-            Conf('hosts', VDR.V_STRING_LIST, ['localhost'])
-            with Conf('selection', meta=Selection):
-                Conf('method', VDR.V_STRING, default='definition order')
+            Conf('hosts', VDR.V_STRING_LIST, ['localhost'], desc='''
+                .. seealso::
+
+                   :cylc:conf:`global.cylc[platforms][<platform name>]hosts`
+            ''')
+            with Conf(
+                'selection', meta=Selection,
+                desc=(
+                    ':cylc:conf:`global.cylc[platforms][<platform name>]'
+                    '[selection]`'
+                )
+            ):
+                Conf('method', VDR.V_STRING, default='definition order',
+                     desc='''
+                        .. seealso::
+
+                           :cylc:conf:`global.cylc[platforms][<platform name>]
+                           [selection]method`
+                ''')
 
     # Platform Groups
     with Conf('platform groups', desc='''
@@ -1668,7 +1686,10 @@ with Conf('global.cylc', desc='''
 
         .. versionadded:: 8.0.0
     '''):  # noqa: SIM117 (keep same format)
-        with Conf('<group>'):
+        with Conf('<group>', desc='''
+        The name of a :cylc:conf:`platform group
+        <global.cylc[platform groups]>`.
+        '''):
             with Conf('meta', desc=PLATFORM_META_DESCR):
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
@@ -1689,7 +1710,10 @@ with Conf('global.cylc', desc='''
                    host.
 
             ''')
-            with Conf('selection'):
+            with Conf(
+                'selection',
+                desc='Sets how platforms are selected from platform groups.'
+            ):
                 Conf(
                     'method', VDR.V_STRING, default='random',
                     options=['random', 'definition order'],
