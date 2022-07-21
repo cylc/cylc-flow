@@ -419,3 +419,4 @@ def main(
             tail_tmpl = os.path.expandvars(platform["tail command template"])
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
                            color=color)
+            sys.exit(out)
