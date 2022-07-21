@@ -32,7 +32,8 @@ Examples:
   $ cylc dump --tasks --sort WORKFLOW_ID | grep running
 
   # Display the state of all tasks in a particular cycle point:
-  $ cylc dump -t WORKFLOW_ID | grep 2010082406"""
+  $ cylc dump -t WORKFLOW_ID | grep 2010082406
+"""
 
 from graphene.utils.str_converters import to_snake_case
 import json

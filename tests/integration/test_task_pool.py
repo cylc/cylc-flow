@@ -44,7 +44,7 @@ EXAMPLE_FLOW_CFG = {
         'cycling mode': 'integer',
         'initial cycle point': 1,
         'final cycle point': 10,
-        'runahead limit': 'P4',
+        'runahead limit': 'P3',
         'graph': {
             'P1': 'foo & bar',
             'R1/2': 'foo[1] => pub'  # 2/pub doesn't spawn at start
@@ -333,13 +333,14 @@ async def test_match_taskdefs(
             id="Active & future tasks"
         ),
         param(
-            ['1/*', '2/*'], ['1/foo', '1/bar'],
-            ["No active tasks matching: 2/*"],
+            ['1/*', '2/*', '6/*'],
+            ['1/foo', '1/bar', '2/foo', '2/bar'],
+            ["No active tasks matching: 6/*"],
             id="Name globs hold active tasks only"
         ),
         param(
-            ['1/FAM', '2/FAM'], ['1/bar'],
-            ["No active tasks in the family FAM matching: 2/FAM"],
+            ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar'],
+            ["No active tasks in the family FAM matching: 6/FAM"],
             id="Family names hold active tasks only"
         ),
         param(
@@ -351,9 +352,9 @@ async def test_match_taskdefs(
             id="Non-existent task name or invalid cycle point"
         ),
         param(
-            ['1/foo:waiting', '1/foo:failed', '2/bar:waiting'], ['1/foo'],
+            ['1/foo:waiting', '1/foo:failed', '6/bar:waiting'], ['1/foo'],
             ["No active tasks matching: 1/foo:failed",
-             "No active tasks matching: 2/bar:waiting"],
+             "No active tasks matching: 6/bar:waiting"],
             id="Specifying task state works for active tasks, not future tasks"
         )
     ]
@@ -408,10 +409,11 @@ async def test_release_held_tasks(
     """
     # Setup
     task_pool = example_flow.pool
-    task_pool.hold_tasks(['1/foo', '1/bar', '2/pub'])
-    for itask in task_pool.get_all_tasks():
-        assert itask.state.is_held is True
     expected_tasks_to_hold_ids = sorted(['1/foo', '1/bar', '2/pub'])
+    task_pool.hold_tasks(expected_tasks_to_hold_ids)
+    for itask in task_pool.get_all_tasks():
+        hold_expected = itask.identity in expected_tasks_to_hold_ids
+        assert itask.state.is_held is hold_expected
     assert get_task_ids(task_pool.tasks_to_hold) == expected_tasks_to_hold_ids
     db_tasks_to_hold = db_select(example_flow, True, 'tasks_to_hold')
     assert get_task_ids(db_tasks_to_hold) == expected_tasks_to_hold_ids
@@ -432,8 +434,10 @@ async def test_release_held_tasks(
 @pytest.mark.parametrize(
     'hold_after_point, expected_held_task_ids',
     [
-        (0, ['1/foo', '1/bar']),
-        (1, [])
+        (0, ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
+             '4/bar', '5/foo', '5/bar']),
+        (1, ['2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
+             '4/bar', '5/foo', '5/bar'])
     ]
 )
 async def test_hold_point(

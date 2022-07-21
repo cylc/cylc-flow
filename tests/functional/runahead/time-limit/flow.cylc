@@ -9,14 +9,12 @@
     initial cycle point = 2020-01-01T00
     final cycle point = 2020-01-02T00
     [[graph]]
-        PT1H = foo & run_ok => bar
-        # foo fails on 1st cycle point (T00) only, succeeds on all others.
-        # SoD: run_ok ensures bar spawns as waiting in 1st cycle pt, to
-        # hold back the runahead.
-        # As runahead limit is consecutive, even though cycle points T01 and
-        # above succeed, workflow stalls after ^+PT4H
+        PT1H = "foo & spawn-bar => bar"
+        # foo fails first cycle point only.
+        # bar waiting should cause a runahead stall at T04 
+        # (PT4H limit allows T00, T01, T02, T03
 [runtime]
     [[root]]
         script = true
     [[foo]]
-        script = if [[ "$CYLC_TASK_JOB" == '20200101T0000Z/foo/01' ]]; then false; else true; fi
+        script = """[[ "$CYLC_TASK_JOB" != '20200101T0000Z/foo/01' ]]"""

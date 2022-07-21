@@ -78,7 +78,6 @@ Examples:
 
 The same workflow can be installed with multiple names; this results in
 multiple workflow run directories that link to the same workflow definition.
-
 """
 
 from pathlib import Path

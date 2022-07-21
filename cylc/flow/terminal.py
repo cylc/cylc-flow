@@ -40,6 +40,9 @@ from cylc.flow.parsec.exceptions import ParsecError
 # CLI exception message format
 EXC_EXIT = cparse('<red><bold>{name}: </bold>{exc}</red>')
 
+# default grey colour (do not use "dim", it is not sufficiently portable)
+DIM = 'fg 248'
+
 
 def is_terminal():
     """Determine if running in (and printing to) a terminal."""
@@ -174,7 +177,6 @@ def parse_dirty_json(stdout):
                 stdout = stdout.split('\n', 1)[1]
             except IndexError:
                 break
-    # raise ValueError(f'Invalid JSON: {orig}')
     raise ValueError(orig)
 
 
@@ -199,59 +201,87 @@ def cli_function(
                     If specified these will be passed to the option parser.
 
             """
-            use_color = False
-            wrapped_args, wrapped_kwargs = [], {}
-            if parser_function:
-                parser = parser_function()
-                opts, args = parser.parse_args(
-                    list(api_args),
-                    **parser_kwargs
-                )
-                if hasattr(opts, 'color'):
-                    use_color = (
-                        opts.color == 'always'
-                        or (opts.color == 'auto' and supports_color())
-                    )
-                wrapped_args = [parser, opts, *args]
-            if 'color' in inspect.signature(wrapped_function).parameters:
-                wrapped_kwargs['color'] = use_color
-
-            # configure Cylc to use colour
-            color_init(autoreset=True, strip=not use_color)
-            if use_color:
-                ansi_log()
-
             try:
-                # run the command
-                wrapped_function(*wrapped_args, **wrapped_kwargs)
-            except (CylcError, ParsecError) as exc:
-                if cylc.flow.flags.verbosity > 1:
-                    # raise the full traceback
-                    raise
-                # else catch "known" CylcErrors which should have sensible
-                # short summations of the issue, full traceback not necessary
-                print(
-                    EXC_EXIT.format(
-                        name=exc.__class__.__name__,
-                        exc=exc
-                    ),
-                    file=sys.stderr
-                )
-                sys.exit(1)
+                use_color = False
+                wrapped_args, wrapped_kwargs = [], {}
+                if parser_function:
+                    parser = parser_function()
+                    opts, args = parser.parse_args(
+                        list(api_args),
+                        **parser_kwargs
+                    )
+                    if hasattr(opts, 'color'):
+                        use_color = (
+                            opts.color == 'always'
+                            or (opts.color == 'auto' and supports_color())
+                        )
+                    wrapped_args = [parser, opts, *args]
+                if 'color' in inspect.signature(wrapped_function).parameters:
+                    wrapped_kwargs['color'] = use_color
 
-            except SystemExit as exc:
-                if exc.args and isinstance(exc.args[0], str):
-                    # catch and reformat sys.exit(<str>)
-                    # NOTE: sys.exit(a) is equivalent to:
-                    #       print(a, file=sys.stderr); sys.exit(1)
+                # configure Cylc to use colour
+                color_init(autoreset=True, strip=not use_color)
+                if use_color:
+                    ansi_log()
+
+                try:
+                    # run the command
+                    wrapped_function(*wrapped_args, **wrapped_kwargs)
+                except (CylcError, ParsecError) as exc:
+                    if cylc.flow.flags.verbosity > 1:
+                        # raise the full traceback
+                        raise
+                    # else catch "known" CylcErrors which should have sensible
+                    # short summations of the issue, full traceback not
+                    # necessary
                     print(
                         EXC_EXIT.format(
-                            name='ERROR',
-                            exc=exc.args[0]
+                            name=exc.__class__.__name__,
+                            exc=exc
                         ),
                         file=sys.stderr
                     )
                     sys.exit(1)
-                raise
+
+                except SystemExit as exc:
+                    if exc.args and isinstance(exc.args[0], str):
+                        # catch and reformat sys.exit(<str>)
+                        # NOTE: sys.exit(a) is equivalent to:
+                        #       print(a, file=sys.stderr); sys.exit(1)
+                        print(
+                            EXC_EXIT.format(
+                                name='ERROR',
+                                exc=exc.args[0]
+                            ),
+                            file=sys.stderr
+                        )
+                        sys.exit(1)
+                    raise
+            except UnicodeEncodeError as exc:
+                # this error can be raised from any code which attempts to
+                # write a UTF-8 character to a terminal which does not or is
+                # not configured to support UTF-8
+                try:
+                    # double check that this error is due to a non-UTF-8
+                    # compatible terminal and not an internal issue...
+                    print('😭')
+                except UnicodeEncodeError:
+                    # ... yep
+                    print(
+                        EXC_EXIT.format(
+                            name='UnicodeEncodeError',
+                            exc=(
+                                '- A UTF-8 compatible terminal is'
+                                ' required for this command.'
+                                '\nTry adding ".UTF-8" onto the LANG'
+                                ' environment variable e.g:'
+                                '\n$ LANG=C.UTF-8'
+                                f' cylc {" ".join(sys.argv[1:])}'
+                            ),
+                        ),
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+                raise exc from None
         return wrapper
     return inner

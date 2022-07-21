@@ -385,7 +385,8 @@ def test_clean_check__fail(
     stopped: bool,
     err: Type[Exception],
     err_msg: str,
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """Test that _clean_check() fails appropriately.
 
@@ -395,8 +396,6 @@ def test_clean_check__fail(
         err: Expected error class.
         err_msg: Message that is expected to be in the exception.
     """
-    run_dir = mock.Mock()
-
     def mocked_detect_old_contact_file(*a, **k):
         if not stopped:
             raise ServiceFileError('Mocked error')
@@ -407,7 +406,7 @@ def test_clean_check__fail(
     )
 
     with pytest.raises(err) as exc:
-        workflow_files._clean_check(CleanOptions(), reg, run_dir)
+        workflow_files._clean_check(CleanOptions(), reg, tmp_path)
     assert err_msg in str(exc.value)
 
 

@@ -35,6 +35,10 @@ Fourth Release Candidate for Cylc 8 suitable for acceptance testing.
 
 ### Enhancements
 
+[#4964](https://github.com/cylc/cylc-flow/pull/4964) -
+`cylc reinstall` now displays the changes it would make when run
+interactively and has improved help / documentaiton.
+
 [#4836](https://github.com/cylc/cylc-flow/pull/4836) - The log directory has
 been tidied. Workflow logs are now found in `log/scheduler` rather than
 `log/workflow`, filenames now include `start`/`restart`. Other minor directory
@@ -55,14 +59,28 @@ default job runner directives for platforms.
 Fixes an issue with `cylc reload` which could cause preparing tasks to become
 stuck.
 
+[#4976](https://github.com/cylc/cylc-flow/pull/4976) - Fix bug causing tasks
+to be stuck in UI due to discontinued graph of optional outputs.
+
 [#4975](https://github.com/cylc/cylc-flow/pull/4975) - Fix selection of
 platforms from `[job]` and `[remote]` configs.
+
+[#4948](https://github.com/cylc/cylc-flow/pull/4948) - Fix lack of
+errors/warnings for deprecated `[runtime][<task>][remote]retrieve job logs *`
+settings.
 
 [#4970](https://github.com/cylc/cylc-flow/pull/4970) - Fix handling of suicide
 triggers in back-compat mode.
 
 [#4887](https://github.com/cylc/cylc-flow/pull/4887) - Disallow relative paths
 in `global.cylc[install]source dirs`.
+
+[#4906](https://github.com/cylc/cylc-flow/pull/4906)
+- Fix delayed spawning of parentless tasks that do have parents in a previous
+  cycle point.
+- Make integer-interval runahead limits consistent with time-interval limits:
+  `P0` means just the runahead base point; `P1` the base point and the point
+  (i.e. one cycle interval), and so on.
 
 [#4936](https://github.com/cylc/cylc-flow/pull/4936) - Fix incorrect
 error messages when workflow CLI commands fail.
@@ -83,6 +101,9 @@ past jobs to be omitted in the UI.
 now fails if
 [owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
 is used, as that setting no longer has any effect.
+
+[#4978](https://github.com/cylc/cylc-flow/pull/4978) - `cylc clean`: fix
+occasional failure to clean on remote hosts due to leftover contact file.
 
 [#4889](https://github.com/cylc/cylc-flow/pull/4889) - `cylc clean`: don't
 prompt if no matching workflows.

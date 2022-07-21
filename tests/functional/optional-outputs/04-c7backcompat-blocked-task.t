@@ -34,7 +34,7 @@ grep_ok "${DEPR_MSG_1}" "${TEST_NAME}.stderr"
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play -n --reference-test --debug "${WORKFLOW_NAME}"
 
-grep_workflow_log_ok grep-1 "WARNING - Unsatisfied prerequisites"
+grep_workflow_log_ok grep-1 "WARNING - Partially satisfied prerequisites"
 grep_workflow_log_ok grep-2 "Workflow stalled"
 grep_workflow_log_ok grep-3 "1/bar is waiting on \['1/foo:x'\]"
 grep_workflow_log_ok grep-4 'Workflow shutting down \- "abort on stall timeout" is set'

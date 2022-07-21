@@ -62,7 +62,7 @@ from cylc.flow.workflow_files import (
     KeyOwner,
     KeyType,
     WorkflowFiles,
-    get_contact_file,
+    get_contact_file_path,
     get_workflow_srv_dir,
 )
 
@@ -596,7 +596,7 @@ class TaskRemoteMgr:
         if comms_meth in [CommsMeth.SSH, CommsMeth.ZMQ]:
             # Contact file
             items.append((
-                get_contact_file(self.workflow),
+                get_contact_file_path(self.workflow),
                 os.path.join(
                     WorkflowFiles.Service.DIRNAME,
                     WorkflowFiles.Service.CONTACT)))

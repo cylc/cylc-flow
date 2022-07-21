@@ -33,7 +33,6 @@ Return:
         - Print task_remote_cmd.REMOTE_INIT_DONE
     1:
         On failure.
-
 """
 
 from cylc.flow.option_parsers import CylcOptionParser as COP

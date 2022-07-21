@@ -23,8 +23,6 @@ Tasks
 [runtime]
     [[root]]
         script = true
-        [[[remote]]]
-            retrieve job logs = True
 
     [[badhosttask]]
         platform = badhostplatform

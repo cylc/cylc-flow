@@ -59,7 +59,8 @@ job poll and kill commands, however, will be executed prior to shutdown, unless
 --now is used.
 
 This command exits immediately unless --max-polls is greater than zero, in
-which case it polls to wait for workflow shutdown."""
+which case it polls to wait for workflow shutdown.
+"""
 
 from functools import partial
 import sys

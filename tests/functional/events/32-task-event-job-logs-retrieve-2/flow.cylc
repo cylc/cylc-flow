@@ -1,14 +1,11 @@
-#!jinja2
 [meta]
-    title=Task Event Job Log Retrieve 1
+    title = Task Event Job Log Retrieve 1
 
 [scheduling]
     [[graph]]
-        R1=t1
+        R1 = t1
 
 [runtime]
     [[t1]]
-        script=rm -f "${CYLC_TASK_LOG_ROOT}.err"
-        platform = {{ PLATFORM }}
-        [[[remote]]]
-            retrieve job logs = True
+        script = rm -f "${CYLC_TASK_LOG_ROOT}.err"
+        platform = treadstone

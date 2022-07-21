@@ -36,7 +36,7 @@ from textwrap import dedent
 from typing import Any, Dict, Optional, List, Tuple
 
 from cylc.flow import LOG
-from cylc.flow.terminal import supports_color
+from cylc.flow.terminal import supports_color, DIM
 import cylc.flow.flags
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
@@ -70,9 +70,29 @@ def format_shell_examples(string):
     return cparse(
         re.sub(
             r'^(\s*(?:\$[^#]+)?)(#.*)$',
-            r'\1<dim>\2</dim>',
+            rf'\1<{DIM}>\2</{DIM}>',
             string,
-            flags=re.M
+            flags=re.M,
+        )
+    )
+
+
+def format_help_headings(string):
+    """Put "headings" in bold.
+
+    Where "headings" are lines with no indentation which are followed by a
+    colon e.g:
+
+    Examples:
+      ...
+
+    """
+    return cparse(
+        re.sub(
+            r'^(\w.*:)$',
+            r'<bold>\1</bold>',
+            string,
+            flags=re.M,
         )
     )
 
@@ -183,7 +203,9 @@ class CylcHelpFormatter(IndentedHelpFormatter):
             )
         ):
             # Add color formatting to examples text.
-            text = format_shell_examples(text)
+            text = format_shell_examples(
+                format_help_headings(text)
+            )
         else:
             # Strip any hardwired formatting
             text = cstrip(text)

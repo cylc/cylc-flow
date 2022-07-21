@@ -16,17 +16,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test remote job logs retrieval OK with only "job.out" on a succeeded task.
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 5
 
+create_test_global_config "" "
+[platforms]
+    [[treadstone]]
+        hosts = ${CYLC_TEST_HOST}
+        install target = ${CYLC_TEST_INSTALL_TARGET}
+        retrieve job logs = True
+"
+
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach \
-        -s "PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
+    cylc play --reference-test -vv --no-detach "${WORKFLOW_NAME}"
 
 sed "/'job-logs-retrieve'/!d" \
     "${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job-activity.log" \
@@ -38,4 +44,3 @@ exists_ok "${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.out"
 exists_fail "${WORKFLOW_RUN_DIR}/log/job/1/t1/01/job.err"
 
 purge
-exit
