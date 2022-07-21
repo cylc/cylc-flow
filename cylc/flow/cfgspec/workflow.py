@@ -59,15 +59,14 @@ from cylc.flow.task_events_mgr import EventData
 # Regex to check whether a string is a command
 REC_COMMAND = re.compile(r'(`|\$\()\s*(.*)\s*([`)])$')
 
-# Cylc8 Deprecation note.
 REPLACED_BY_PLATFORMS = '''
-.. warning::
+.. deprecated:: 8.0.0
 
-   .. deprecated:: 8.0.0
-
-   This will be removed in a future version of Cylc 8.
-
-   Use :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
+   This is used to select a matching platform.
+   It will be removed in a future version of Cylc 8.
+   Please set a suitable platform in
+   :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
+   :ref:`See the migration guide <MajorChangesPlatforms>`.
 '''
 
 
@@ -214,11 +213,12 @@ with Conf(
         ''')
 
         Conf('install', VDR.V_STRING_LIST, desc='''
-            Configure directories and files to be installed on remote hosts.
+            Configure custom directories and files to be installed on remote
+            hosts.
 
             .. note::
 
-               The following directories are installed by default:
+               The following directories already get installed by default:
 
                * ``app/``
                * ``bin/``
@@ -1294,48 +1294,40 @@ with Conf(
                     excluded by omission from an ``include`` list.
                 ''')
 
-            with Conf('job', desc=dedent('''
-                .. deprecated:: 8.0.0
-
+            with Conf('job', desc=REPLACED_BY_PLATFORMS + dedent('''
                 This section configures the means by which cylc submits task
                 job scripts to run.
-
-            ''') + REPLACED_BY_PLATFORMS):
+            ''')):
                 Conf('batch system', VDR.V_STRING, desc='''
-                    Batch/Queuing system to submit task jobs to.
-
                     .. deprecated:: 8.0.0
 
                        Kept for back compatibility but replaced by
                        :cylc:conf:`global.cylc[platforms][<platform name>]
                        job runner`.
+
+                    Batch/queuing system (aka job runner) to submit task
+                    jobs to.
                 ''')
                 Conf('batch submit command template', VDR.V_STRING, desc='''
-                    Override the default job submission command for the chosen
-                    batch system.
-
-                    .. seealso::
+                    .. deprecated:: 8.0.0
 
                        Kept for back compatibility but replaced by
                        :cylc:conf:`global.cylc[platforms][<platform name>]
                        job runner command template`.
+
+                    Override the default job submission command for the chosen
+                    batch system.
                 ''')
 
-            with Conf('remote', desc=dedent('''
-                .. deprecated:: 8.0.0
-
-            ''') + REPLACED_BY_PLATFORMS):
+            with Conf('remote', desc=REPLACED_BY_PLATFORMS):
                 Conf('host', VDR.V_STRING, desc=REPLACED_BY_PLATFORMS)
-                # TODO: Convert URL to a stable or latest release doc after 8.0
-                # https://github.com/cylc/cylc-flow/issues/4663
                 Conf('owner', VDR.V_STRING, desc="""
-                    This setting is obsolete at Cylc 8.
+                    .. warning::
 
-                    .. seealso::
+                       This setting is obsolete at Cylc 8.
 
-                       `Documentation on changes to remote owner
-                       <https://cylc.github.io/cylc-doc/latest/html/
-                       7-to-8/major-changes/remote-owner.html>`_
+                       See :ref:`documentation on changes to remote owner
+                       <728.remote_owner>`
                 """)
                 Conf('retrieve job logs', VDR.V_BOOLEAN,
                      desc=REPLACED_BY_PLATFORMS)
