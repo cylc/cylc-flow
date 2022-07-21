@@ -381,7 +381,10 @@ with Conf(
                     )
                 ))
 
-        with Conf('events'):
+        with Conf('events', desc='''
+            Scheduler events allow users to specify custom actions
+            (event handlers) to be run when events occur in the scheduler.
+        '''):
             for item, desc in EVENTS_SETTINGS.items():
                 desc = global_default(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
