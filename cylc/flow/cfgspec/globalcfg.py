@@ -122,6 +122,29 @@ the logs. If ``False``, the local/system time zone will be used.
    :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
 '''
 
+LOG_RETR_SETTINGS = {
+    'retrieve job logs': dedent('''
+        Whether to retrieve job logs from the job platform.
+    '''),
+    'retrieve job logs command': dedent('''
+        The command used to retrieve job logs from the job platform.
+    '''),
+    'retrieve job logs max size': dedent('''
+        The maximum size of job logs to retrieve.
+
+        Can be anything
+        accepted by the ``--max-size=SIZE`` option of ``rsync``.
+    '''),
+    'retrieve job logs retry delays': dedent('''
+        Configure retries for unsuccessful job log retrieval.
+
+        If there is a significant delay between job completion and
+        logs appearing in their final location (due to the job runner)
+        you can configure time intervals here to delay the first and
+        subsequent retrieval attempts.
+    ''')
+}
+
 EVENTS_DESCR = '''
 Configure the workflow event handling system.
 '''
@@ -1402,7 +1425,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs', VDR.V_BOOLEAN,
                  desc=f'''
-                Whether to retrieve job logs from the job platform.
+                {LOG_RETR_SETTINGS['retrieve job logs']}
 
                 .. versionchanged:: 8.0.0
 
@@ -1411,7 +1434,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a',
                  desc=f'''
-                The command used to retrieve job logs from the job platform.
+                {LOG_RETR_SETTINGS['retrieve job logs command']}
 
                 .. versionchanged:: 8.0.0
 
@@ -1419,10 +1442,7 @@ with Conf('global.cylc', desc='''
                    command``.
             ''')
             Conf('retrieve job logs max size', VDR.V_STRING, desc=f'''
-                The maximum size of job logs to retrieve.
-                
-                Can be anything
-                accepted by the ``--max-size=SIZE`` option of ``rsync``.
+                {LOG_RETR_SETTINGS['retrieve job logs max size']}
 
                 .. versionchanged:: 8.0.0
 
@@ -1433,15 +1453,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc=f'''
-                Configure retries for unsuccessful job log retrieval.
-
-                By default Cylc makes a single attempt to retrieve jobs logs
-                as soon as a task finishes.
-
-                If there is a significant delay between job completion and
-                logs appearing in their final location (due to the job runner)
-                you can configure time intervals here to delay the first and
-                subsequent retrieval attempts.
+                {LOG_RETR_SETTINGS['retrieve job logs retry delays']}
 
                 .. versionchanged:: 8.0.0
 
