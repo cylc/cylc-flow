@@ -1419,7 +1419,9 @@ with Conf('global.cylc', desc='''
                    command``.
             ''')
             Conf('retrieve job logs max size', VDR.V_STRING, desc=f'''
-                The maximum size of job logs to retrieve. Can be anything
+                The maximum size of job logs to retrieve.
+                
+                Can be anything
                 accepted by the ``--max-size=SIZE`` option of ``rsync``.
 
                 .. versionchanged:: 8.0.0
