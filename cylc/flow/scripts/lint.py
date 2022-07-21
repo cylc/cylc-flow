@@ -69,8 +69,8 @@ DEPENDENCY_SECTION_MSG = {
         '"[scheduling][graph]<recurrence> ="'
     ),
     'rst': (
-        '[scheduling][dependencies][<reccurence>]graph =" => '
-        '"[scheduling][graph]<reccurence>="'
+        '``[scheduling][dependencies][<recurrence>]graph =`` -> '
+        '``[scheduling][graph]<recurrence> =``'
     )
 }
 JOBANDREMOTE_SECTION_MSG = {
