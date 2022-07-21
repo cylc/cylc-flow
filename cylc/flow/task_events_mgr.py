@@ -190,7 +190,7 @@ class EventData(Enum):
     """The task's cycle point."""
 
     SubmitNum = 'submit_num'
-    """The job's sumit number.
+    """The job's submit number.
 
     This starts at 1 and increments with each additional job submission.
     """
