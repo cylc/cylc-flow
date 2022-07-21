@@ -108,16 +108,22 @@ STYLE_CHECKS = {
     },
     #            [section]
     re.compile(r'^\s+\[[^\[.]*\]'): {
-        'short': 'Too many indents for top level section.',
+        'short': 'Top level sections should not be indented.',
         'url': STYLE_GUIDE + 'indentation'
     },
     # 2 or 4 space indentation both seem reasonable:
-    re.compile(r'^(\s|\s{3}|\s{5,})\[\[[^\[.]*\]\]'): {
-        'short': 'wrong number of indents for second level section.',
+    re.compile(r'^(|\s|\s{2,3}|\s{5,})\[\[[^\[.]*\]\]'): {
+        'short': (
+            'Second level sections should be indented exactly '
+            '4 spaces.'
+        ),
         'url': STYLE_GUIDE + 'indentation'
     },
-    re.compile(r'^(\s{1,3}|\s{5,7}|\s{9,})\[\[\[[^\[.]*\]\]\]'): {
-        'short': 'wrong number of indents for third level section.',
+    re.compile(r'^(|\s{1,7}|\s{9,})\[\[\[[^\[.]*\]\]\]'): {
+        'short': (
+            'Third level sections should be indented exactly '
+            '8 spaces.'
+        ),
         'url': STYLE_GUIDE + 'indentation'
     },
     re.compile(r'\s$'): {

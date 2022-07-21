@@ -163,14 +163,12 @@ async def test_holding_tasks_whilst_scheduler_paused(
     async with start(one):
         # capture any job submissions
         submitted_tasks = capture_submission(one)
-        assert one.pre_prep_tasks == []
         assert submitted_tasks == set()
 
         # release runahead/queued tasks
         # (nothing should happen because the scheduler is paused)
         one.pool.release_runahead_tasks()
         one.release_queued_tasks()
-        assert one.pre_prep_tasks == []
         assert submitted_tasks == set()
 
         # hold all tasks & resume the workflow
@@ -180,7 +178,6 @@ async def test_holding_tasks_whilst_scheduler_paused(
         # release queued tasks
         # (there should be no change because the task is still held)
         one.release_queued_tasks()
-        assert one.pre_prep_tasks == []
         assert submitted_tasks == set()
 
         # release all tasks
@@ -189,7 +186,6 @@ async def test_holding_tasks_whilst_scheduler_paused(
         # release queued tasks
         # (the task should be submitted)
         one.release_queued_tasks()
-        assert len(one.pre_prep_tasks) == 1
         assert len(submitted_tasks) == 1
 
 

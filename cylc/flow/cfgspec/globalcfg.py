@@ -122,6 +122,10 @@ the logs. If ``False``, the local/system time zone will be used.
    :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
 '''
 
+EVENTS_DESCR = '''
+Configure the workflow event handling system.
+'''
+
 EVENTS_SETTINGS = {  # workflow events
     'handlers': '''
         Configure :term:`event handlers` that run when certain workflow
@@ -398,26 +402,21 @@ want to configure more frequent polling.
 '''
 
 TASK_EVENTS_DESCR = '''
-Configure :term:`event handlers` that run when certain task events occur.
+Configure the task event handling system.
 
-This section configures specific *task* event handlers; see
-:cylc:conf:`flow.cylc[scheduler][events]` for *workflow* event handlers.
+See also :cylc:conf:`flow.cylc[scheduler][events]` for *workflow* events.
 
-Event handlers can be held in the workflow ``bin/`` directory, otherwise it is
-up to you to ensure their location is in ``$PATH`` (in the shell in which the
-scheduler runs). They should require little resource to run and return quickly.
+Task :term:`event handlers` are scripts to run when task events occur.
 
-Each task event handler can be specified as a list of command lines or command
-line templates. For a full list of supported template variables see
-:ref:`task_event_template_variables`.
+Event handlers can be stored in the workflow ``bin/`` directory, or
+anywhere the scheduler environment ``$PATH``. They should return quickly.
 
-For an explanation of the substitution syntax, see
+Multiple event handlers can be specified as a list of command line templates.
+For supported template variables see :ref:`task_event_template_variables`.
+Python template substitution syntax is used:
 `String Formatting Operations in the Python documentation
 <https://docs.python.org/3/library/stdtypes.html
 #printf-style-string-formatting>`_.
-
-Additional variables can be passed to event handlers using
-:ref:`Jinja2 <User Guide Jinja2>`.
 '''
 
 TASK_EVENTS_SETTINGS = {
@@ -787,9 +786,8 @@ with Conf('global.cylc', desc='''
                    {REPLACES}``[suite host self-identification]``.
             ''')
 
-        with Conf('events', desc='''
-            :Defaults For: :cylc:conf:`flow.cylc[scheduler][events]`.
-        '''):
+        with Conf('events',
+                  desc=default_for(EVENTS_DESCR, '[scheduler][events]')):
             for item, desc in EVENTS_SETTINGS.items():
                 desc = default_for(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
@@ -1402,7 +1400,10 @@ with Conf('global.cylc', desc='''
                    {REPLACES}``global.rc[hosts][<host>]copyable
                    environment variables``.
             ''')
-            Conf('retrieve job logs', VDR.V_BOOLEAN, desc=f'''
+            Conf('retrieve job logs', VDR.V_BOOLEAN,
+                 desc=f'''
+                Whether to retrieve job logs from the job platform.
+
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs``.
@@ -1410,9 +1411,7 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs command', VDR.V_STRING, 'rsync -a',
                  desc=f'''
-                If ``rsync -a`` is unavailable or insufficient to retrieve job
-                logs from a remote platform, you can use this setting to
-                specify a suitable command.
+                The command used to retrieve job logs from the job platform.
 
                 .. versionchanged:: 8.0.0
 
@@ -1421,7 +1420,6 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs max size', VDR.V_STRING, desc=f'''
                 The maximum size of job logs to retrieve.
-
                 Can be anything
                 accepted by the ``--max-size=SIZE`` option of ``rsync``.
 
@@ -1434,6 +1432,16 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc=f'''
+                Configure retries for unsuccessful job log retrieval.
+
+                By default Cylc makes a single attempt to retrieve jobs logs
+                as soon as a task finishes.
+
+                If there is a significant delay between job completion and
+                logs appearing in their final location (due to the job runner)
+                you can configure time intervals here to delay the first and
+                subsequent retrieval attempts.
+
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``global.rc[hosts][<host>]retrieve job logs
@@ -1604,14 +1612,14 @@ with Conf('global.cylc', desc='''
                 .. versionadded:: 8.0.0
             ''')
             with Conf('selection', desc='''
-                How to select platform from list of hosts.
+                How to select a host from the list of platform hosts.
 
                 .. versionadded:: 8.0.0
             ''') as Selection:
                 Conf('method', VDR.V_STRING, default='random',
                      options=['random', 'definition order'],
                      desc='''
-                    Method for choosing the job host from the platform.
+                    Host selection method for the platform.
 
                     .. rubric:: Available options
 
@@ -1636,19 +1644,20 @@ with Conf('global.cylc', desc='''
                      desc=short_descr(DIRECTIVES_ITEM_DESCR))
 
         with Conf('localhost', meta=Platform, desc='''
-            A default platform defining settings for jobs to be run on the
-            same host as the workflow scheduler.
+            A default platform for running jobs on the the scheduler host.
 
             .. attention::
 
-               It is common practice to run the Cylc scheduler on a dedicated
-               host: In this case **"localhost" will refer to the host where
-               the scheduler is running and not the computer where you
-               ran "cylc play"**.
+               It is common practice to start Cylc schedulers on dedicated
+               hosts, in which case **"localhost" is the scheduler host and
+               not necessarily where you ran "cylc play"**.
 
             .. versionadded:: 8.0.0
         '''):
             Conf('hosts', VDR.V_STRING_LIST, ['localhost'], desc='''
+                List of hosts for the localhost platform. You are unlikely to
+                need to change this.
+
                 .. seealso::
 
                    :cylc:conf:`global.cylc[platforms][<platform name>]hosts`
@@ -1656,12 +1665,16 @@ with Conf('global.cylc', desc='''
             with Conf(
                 'selection', meta=Selection,
                 desc=(
+                    'How to select a host on the "localhost" platform.'
+                    'You are unlikely to need to change this.'
                     ':cylc:conf:`global.cylc[platforms][<platform name>]'
                     '[selection]`'
                 )
             ):
                 Conf('method', VDR.V_STRING, default='definition order',
                      desc='''
+                        Host selection method for the "localhost" platform.
+
                         .. seealso::
 
                            :cylc:conf:`global.cylc[platforms][<platform name>]

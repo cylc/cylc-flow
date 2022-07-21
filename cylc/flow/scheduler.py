@@ -232,9 +232,6 @@ class Scheduler:
     auto_restart_mode: Optional[AutoRestartMode] = None
     auto_restart_time: Optional[float] = None
 
-    # queue-released tasks awaiting job preparation
-    pre_prep_tasks: Optional[List[TaskProxy]] = None
-
     # profiling
     _profile_amounts: Optional[dict] = None
     _profile_update_times: Optional[dict] = None
@@ -263,7 +260,6 @@ class Scheduler:
         # mutable defaults
         self._profile_amounts = {}
         self._profile_update_times = {}
-        self.pre_prep_tasks = []
         self.bad_hosts: Set[str] = set()
 
         self.restored_stop_task_id = None
@@ -1236,34 +1232,31 @@ class Scheduler:
         self.workflow_event_handler.handle(self, event, str(reason))
 
     def release_queued_tasks(self):
-        """Release queued tasks, and submit task jobs.
+        """Release queued tasks, and submit jobs.
 
         The task queue manages references to task proxies in the task pool.
 
-        Newly released tasks are passed to job submission multiple times until
-        associated asynchronous host select, remote init, and remote install
-        processes are done.
+        Tasks which have entered the submission pipeline but not yet finished
+        (pre_prep_tasks) are passed to job submission multiple times until they
+        have passed through a series of asynchronous operations (host select,
+        remote init, remote file install, etc).
+
+        Note:
+            We do not maintain a list of "pre_prep_tasks" between iterations
+            of this method as this creates an intermediate task staging pool
+            which has nasty consequences:
+
+            * https://github.com/cylc/cylc-flow/pull/4620
+            * https://github.com/cylc/cylc-flow/issues/4974
 
         """
-        # Forget tasks that are no longer preparing for job submission.
-        self.pre_prep_tasks = [
-            itask for itask in self.pre_prep_tasks if
-            itask.waiting_on_job_prep
-        ]
-
         if (
             not self.is_paused
             and self.stop_mode is None
             and self.auto_restart_time is None
         ):
-            # Add newly released tasks to those still preparing.
-            self.pre_prep_tasks += self.pool.release_queued_tasks(
-                # the number of tasks waiting to go through the task
-                # submission pipeline
-                self.pre_prep_tasks
-            )
-
-            if not self.pre_prep_tasks:
+            pre_prep_tasks = self.pool.release_queued_tasks()
+            if not pre_prep_tasks:
                 # No tasks to submit.
                 return
 
@@ -1279,7 +1272,7 @@ class Scheduler:
                 meth = LOG.info
             for itask in self.task_job_mgr.submit_task_jobs(
                 self.workflow,
-                self.pre_prep_tasks,
+                pre_prep_tasks,
                 self.server.curve_auth,
                 self.server.client_pub_key_dir,
                 self.config.run_mode('simulation')
