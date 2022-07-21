@@ -750,27 +750,44 @@ class TaskPool:
             self.data_store_mgr.delta_task_queued(itask)
             self.task_queue_mgr.push_task(itask)
 
-    def release_queued_tasks(self, pre_prep_tasks):
-        """Return list of queue-released tasks for job prep."""
-        released = self.task_queue_mgr.release_tasks(
-            Counter(
-                [
-                    # active tasks
-                    t.tdef.name
-                    for t in self.get_tasks()
-                    if t.state(
-                        TASK_STATUS_PREPARING,
-                        TASK_STATUS_SUBMITTED,
-                        TASK_STATUS_RUNNING
-                    )
-                ] + [
-                    # tasks await job preparation which have not yet
-                    # entered the preparing state
-                    itask.tdef.name
-                    for itask in pre_prep_tasks
-                ]
-            )
-        )
+    def release_queued_tasks(self):
+        """Return list of queue-released tasks awaiting job prep.
+
+        Note:
+            Tasks can hang about for a while between being released and
+            entering the PREPARING state for various reasons. This method
+            returns tasks which are awaiting job prep irrespective of whether
+            they have been previously returned.
+
+        """
+        # count active tasks by name
+        # {task_name: number_of_active_instances, ...}
+        active_task_counter = Counter()
+
+        # tasks which have entered the submission pipeline but have not yet
+        # entered the PREPARING state
+        pre_prep_tasks = []
+
+        for itask in self.get_tasks():
+            # populate active_task_counter and pre_prep_tasks together to
+            # avoid iterating the task pool twice
+            if itask.waiting_on_job_prep:
+                # a task which has entered the submission pipeline
+                # for the purposes of queue limiting this should be treated
+                # the same as an active task
+                active_task_counter.update([itask.tdef.name])
+                pre_prep_tasks.append(itask)
+            elif itask.state(
+                TASK_STATUS_PREPARING,
+                TASK_STATUS_SUBMITTED,
+                TASK_STATUS_RUNNING,
+            ):
+                # an active task
+                active_task_counter.update([itask.tdef.name])
+
+        # release queued tasks
+        released = self.task_queue_mgr.release_tasks(active_task_counter)
+
         for itask in released:
             itask.state_reset(is_queued=False)
             itask.waiting_on_job_prep = True
@@ -782,7 +799,8 @@ class TaskPool:
                 # prerequisites (which result in incomplete tasks in Cylc 8).
                 self.spawn_on_all_outputs(itask)
 
-        return released
+        # Note: released and pre_prep_tasks can overlap
+        return list(set(released + pre_prep_tasks))
 
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""

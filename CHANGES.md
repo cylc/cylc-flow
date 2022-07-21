@@ -55,6 +55,10 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#4984](https://github.com/cylc/cylc-flow/pull/4984) -
+Fixes an issue with `cylc reload` which could cause preparing tasks to become
+stuck.
+
 [#4976](https://github.com/cylc/cylc-flow/pull/4976) - Fix bug causing tasks
 to be stuck in UI due to discontinued graph of optional outputs.
 
