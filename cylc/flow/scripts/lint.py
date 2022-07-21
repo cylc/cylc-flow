@@ -80,7 +80,7 @@ JOBANDREMOTE_SECTION_MSG = {
         '[<platforms name>]"'
     ),
     'rst': (
-        'settings in ``[runtime][<namespace>][{}]`` have been moved to'
+        'settings in ``[runtime][<namespace>][{}]`` have been moved to '
         '``[runtime][<namespace>]`` and ``global.cylc[platforms]'
         '[<platforms name>]``'
     )
