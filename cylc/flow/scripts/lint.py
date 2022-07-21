@@ -75,7 +75,7 @@ DEPENDENCY_SECTION_MSG = {
 }
 JOBANDREMOTE_SECTION_MSG = {
     'text': (
-        'settings in "[runtime][<namespace>][{}]" have been moved to'
+        'settings in "[runtime][<namespace>][{}]" have been moved to '
         '"[runtime][<namespace>]" and "global.cylc[platforms]'
         '[<platforms name>]"'
     ),
