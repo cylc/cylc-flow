@@ -150,7 +150,7 @@ MANUAL_DEPRECATIONS = {
     },
     re.compile(r'batch system\s*=\s*'): {
         'short': (
-            'flow.cylc[runtime][<namespace>][job]batch system =>'
+            'flow.cylc[runtime][<namespace>][job]batch system -> '
             'global.cylc[platforms][<platform name>]job runner'
         ),
         'url': '',
