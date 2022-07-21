@@ -155,7 +155,7 @@ MANUAL_DEPRECATIONS = {
         ),
         'url': '',
         'rst': (
-            '``flow.cylc[runtime][<namespace>][job]batch system`` =>'
+            '``flow.cylc[runtime][<namespace>][job]batch system`` -> '
             '``global.cylc[platforms][<platform name>]job runner``'
         )
     },
