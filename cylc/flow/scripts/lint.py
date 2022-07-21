@@ -65,8 +65,8 @@ FILEGLOBS = ['*.rc', '*.cylc']
 JINJA2_SHEBANG = '#!jinja2'
 DEPENDENCY_SECTION_MSG = {
     'text': (
-        '[scheduling][dependencies][<reccurence>]graph =" => '
-        '"[scheduling][graph]<reccurence>="'
+        '"[scheduling][dependencies][<recurrence>]graph =" -> '
+        '"[scheduling][graph]<recurrence> ="'
     ),
     'rst': (
         '[scheduling][dependencies][<reccurence>]graph =" => '
