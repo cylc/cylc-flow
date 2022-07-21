@@ -105,7 +105,6 @@ from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_job_mgr import TaskJobManager
 from cylc.flow.task_pool import TaskPool
-from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_IN_PROGRESS, REMOTE_INIT_DONE,
     REMOTE_INIT_IN_PROGRESS)
