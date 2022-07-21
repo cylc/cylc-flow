@@ -36,7 +36,8 @@ triggering system is responding to.
 
 Use the retry options in case the target workflow is down or out of contact.
 
-Note: to manually trigger a task use 'cylc trigger', not this command."""
+Note: to manually trigger a task use 'cylc trigger', not this command.
+"""
 
 from time import sleep
 from typing import TYPE_CHECKING

@@ -284,7 +284,7 @@ async def parse_ids_async(
             match_active=match_active,
         )
 
-    # check the workflow part of the IDs are vaild
+    # check the workflow part of the IDs are valid
     _validate_workflow_ids(*tokens_list, src_path=src_path)
 
     if not multi_mode:

@@ -345,16 +345,7 @@ class TaskProxy:
 
     def next_point(self):
         """Return the next cycle point."""
-        p_next = None
-        adjusted = []
-        for seq in self.tdef.sequences:
-            nxt = seq.get_next_point(self.point)
-            if nxt:
-                # may be None if beyond the sequence bounds
-                adjusted.append(nxt)
-        if adjusted:
-            p_next = min(adjusted)
-        return p_next
+        return self.tdef.next_point(self.point)
 
     def is_ready_to_run(self) -> Tuple[bool, ...]:
         """Is this task ready to run?
@@ -439,15 +430,11 @@ class TaskProxy:
 
     def merge_flows(self, flow_nums: Set) -> None:
         """Merge another set of flow_nums with mine."""
-        if flow_nums == self.flow_nums:
-            # Not a merge if in the same flow. E.g. for "A & B => C" if A
-            # spawns C first, B will find C is already in the task pool.
-            return
+        self.flow_nums.update(flow_nums)
         LOG.info(
             f"[{self}] merged in flow(s) "
             f"{','.join(str(f) for f in flow_nums)}"
         )
-        self.flow_nums.update(flow_nums)
 
     def state_reset(
         self, status=None, is_held=None, is_queued=None, is_runahead=None,

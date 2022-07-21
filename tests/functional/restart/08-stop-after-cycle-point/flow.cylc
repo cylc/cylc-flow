@@ -12,7 +12,7 @@ description = """
     cycle point format = %Y
 
 [scheduling]
-    runahead limit = P1
+    runahead limit = P0
     initial cycle point = 1970
     final cycle point = 1980
     stop after cycle point = {{ environ['CFG_STOPCP'] }}

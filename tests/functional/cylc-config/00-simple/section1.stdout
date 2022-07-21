@@ -5,7 +5,7 @@ final cycle point constraints =
 hold after cycle point = 
 stop after cycle point = 
 cycling mode = integer
-runahead limit = P5
+runahead limit = P4
 [[queues]]
     [[[default]]]
         limit = 0

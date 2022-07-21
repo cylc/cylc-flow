@@ -18,7 +18,8 @@
 
 """cylc get-workflow-contact [OPTIONS] ARGS
 
-Print contact information of a running workflow."""
+Print contact information of a running workflow.
+"""
 
 from typing import TYPE_CHECKING
 

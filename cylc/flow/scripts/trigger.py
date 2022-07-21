@@ -17,16 +17,14 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Trigger tasks - i.e. tell them to run even if they are not ready.
+Force tasks to run despite unsatisfied prerequisites.
 
-Triggering an unqueued waiting task queues it, regardless of prerequisites.
-
-Triggering a queued waiting task submits it, regardless of queue limiting.
-
-Triggering a submitted or running task has no effect (already triggered).
+* Triggering an unqueued waiting task queues it, regardless of prerequisites.
+* Triggering a queued task submits it, regardless of queue limiting.
+* Triggering an active task has no effect (it already triggered).
 
 Incomplete and active-waiting tasks in the n=0 window already belong to a flow.
-Triggering them queues them to run (or rerun) in the same flow;
+Triggering them queues them to run (or rerun) in the same flow.
 
 Beyond n=0, triggered tasks get all current active flow numbers by default, or
 specified flow numbers via the --flow option. Those flows - if/when they catch

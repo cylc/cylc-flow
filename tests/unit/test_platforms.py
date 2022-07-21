@@ -22,9 +22,10 @@ from typing import Any, Dict, List, Optional, Type
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
     get_all_platforms_for_install_target,
+    get_platform,
     get_platform_deprecated_settings,
     get_random_platform_for_install_target, is_platform_definition_subshell,
-    platform_from_name, platform_from_job_info,
+    platform_from_name, platform_name_from_job_info,
     get_install_target_from_platform,
     get_install_target_to_platforms_map,
     generic_items_match,
@@ -34,6 +35,7 @@ from cylc.flow.exceptions import (
     PlatformLookupError,
     GlobalConfigError
 )
+
 
 PLATFORMS = {
     'desktop[0-9]{2}|laptop[0-9]{2}': {
@@ -206,7 +208,7 @@ def test_similar_but_not_exact_match():
 
 
 # ----------------------------------------------------------------------------
-# Tests of platform_from_job_info
+# Tests of platform_name_from_job_info
 # ----------------------------------------------------------------------------
 # Basic tests that we can select sensible platforms
 @pytest.mark.parametrize(
@@ -223,7 +225,7 @@ def test_similar_but_not_exact_match():
         # returns to default, i.e. localhost.
         (
             {'batch system': 'background'},
-            {'retrieve job logs retry delays': 'None'},
+            {'retrieve job logs retry delays': None},
             'localhost'
         ),
         # Check that when the user asks for batch system = slurm alone
@@ -267,11 +269,11 @@ def test_similar_but_not_exact_match():
         ),
     ]
 )
-def test_platform_from_job_info_basic(job, remote, returns):
-    assert platform_from_job_info(PLATFORMS, job, remote) == returns
+def test_platform_name_from_job_info_basic(job, remote, returns):
+    assert platform_name_from_job_info(PLATFORMS, job, remote) == returns
 
 
-def test_platform_from_job_info_ordered_dict_comparison():
+def test_platform_name_from_job_info_ordered_dict_comparison():
     """Check that we are only comparing set items in OrderedDictWithDefaults.
     """
     job = {'batch system': 'background', 'Made up key': 'Zaphod'}
@@ -282,7 +284,7 @@ def test_platform_from_job_info_ordered_dict_comparison():
     platform.defaults_['Made up key'] = {}
     platform.update(PLATFORMS['hpc1-bg'])
     platforms = {'hpc1-bg': platform, 'dobbie': PLATFORMS['sugar']}
-    assert platform_from_job_info(platforms, job, remote) == 'hpc1-bg'
+    assert platform_name_from_job_info(platforms, job, remote) == 'hpc1-bg'
 
 
 # Cases where the error ought to be raised because no matching platform should
@@ -309,7 +311,7 @@ def test_platform_from_job_info_ordered_dict_comparison():
 )
 def test_reverse_PlatformLookupError(job, remote):
     with pytest.raises(PlatformLookupError):
-        platform_from_job_info(PLATFORMS, job, remote)
+        platform_name_from_job_info(PLATFORMS, job, remote)
 
 
 # An example of a global config with two Spice systems available
@@ -333,7 +335,7 @@ def test_reverse_PlatformLookupError(job, remote):
         )
     ]
 )
-def test_platform_from_job_info_two_spices(
+def test_platform_name_from_job_info_two_spices(
     job, remote, returns
 ):
     platforms = {
@@ -347,7 +349,7 @@ def test_platform_from_job_info_two_spices(
         },
 
     }
-    assert platform_from_job_info(platforms, job, remote) == returns
+    assert platform_name_from_job_info(platforms, job, remote) == returns
 
 
 # An example of two platforms with the same hosts and job runner settings
@@ -373,7 +375,7 @@ def test_platform_from_job_info_two_spices(
         ),
     ]
 )
-def test_platform_from_job_info_similar_platforms(
+def test_platform_name_from_job_info_similar_platforms(
     job, remote, returns
 ):
     platforms = {
@@ -394,7 +396,7 @@ def test_platform_from_job_info_similar_platforms(
             'job runner': 'background'
         },
     }
-    assert platform_from_job_info(platforms, job, remote) == returns
+    assert platform_name_from_job_info(platforms, job, remote) == returns
 
 
 # -----------------------------------------------------------------------------
@@ -553,9 +555,12 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
 @pytest.mark.parametrize(
     'task_conf, expected',
     [
-        (
+        pytest.param(
             {
-                'remote': {'host': 'cylcdevbox'},
+                'remote': {
+                    'host': 'cylcdevbox',
+                    'retrieve job logs': True
+                },
                 'job': {
                     'batch system': 'pbs',
                     'batch submit command template': 'meow'
@@ -563,11 +568,13 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
             },
             [
                 '[runtime][task][job]batch submit command template = meow',
+                '[runtime][task][remote]retrieve job logs = True',
                 '[runtime][task][remote]host = cylcdevbox',
                 '[runtime][task][job]batch system = pbs'
-            ]
+            ],
+            id="All are deprecated settings"
         ),
-        (
+        pytest.param(
             {
                 'remote': {'host': 'localhost'},
                 'job': {
@@ -575,12 +582,23 @@ def test_get_all_platforms_for_install_target(mock_glbl_cfg):
                     'batch submit command template': None
                 }
             },
-            ['[runtime][task][job]batch system = pbs']
+            ['[runtime][task][job]batch system = pbs'],
+            id="Exclusions are excluded"
+        ),
+        pytest.param(
+            {
+                'environment filter': {
+                    'include': ['frodo', 'sam']
+                }
+            },
+            [],
+            id="No deprecated settings"
         )
     ]
 )
 def test_get_platform_deprecated_settings(
-        task_conf: Dict[str, Any], expected: List[str]):
+    task_conf: Dict[str, Any], expected: List[str]
+):
     output = get_platform_deprecated_settings(task_conf, task_name='task')
     assert set(output) == set(expected)
 
@@ -599,3 +617,33 @@ def test_is_platform_definition_subshell(
         assert err_msg in str(exc.value)
     else:
         assert is_platform_definition_subshell(plat_val) is expected
+
+
+def test_get_platform_from_OrderedDictWithDefaults(mock_glbl_cfg):
+    """Get platform works with OrderedDictWithDefaults.
+
+    Most tests use dictionaries to check platforms functionality.
+    This one was added to catch an issue where the behaviour of
+    dict.get != OrderedDictWithDefaults.get.
+    See - https://github.com/cylc/cylc-flow/issues/4979
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[skarloey]]
+                hosts = foo, bar
+                job runner = slurm
+        '''
+    )
+    task_conf = OrderedDictWithDefaults()
+    task_conf.defaults_ = OrderedDictWithDefaults([
+        ('job', OrderedDictWithDefaults([
+            ('batch system', 'slurm')
+        ])),
+        ('remote', OrderedDictWithDefaults([
+            ('host', 'foo')
+        ])),
+    ])
+    result = get_platform(task_conf)['name']
+    assert result == 'skarloey'

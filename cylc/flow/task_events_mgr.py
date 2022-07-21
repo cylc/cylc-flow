@@ -577,6 +577,10 @@ class TaskEventsManager():
             event_time = get_current_time_string()
         if submit_num is None:
             submit_num = itask.submit_num
+
+        # Any message represents activity.
+        self.reset_inactivity_timer_func()
+
         if not self._process_message_check(
                 itask, severity, message, event_time, flag, submit_num):
             return None
@@ -710,7 +714,6 @@ class TaskEventsManager():
                 itask.try_timers[TimerFlags.SUBMISSION_RETRY].num = 0
             itask.job_vacated = True
             # Believe this and change state without polling (could poll?).
-            self.reset_inactivity_timer_func()
             if itask.state_reset(TASK_STATUS_SUBMITTED):
                 itask.state_reset(is_queued=False)
                 self.data_store_mgr.delta_task_state(itask)
@@ -1075,7 +1078,6 @@ class TaskEventsManager():
             "run_status": 1,
             "time_run_exit": event_time,
         })
-        self.reset_inactivity_timer_func()
         if (
                 TimerFlags.EXECUTION_RETRY not in itask.try_timers
                 or itask.try_timers[TimerFlags.EXECUTION_RETRY].next() is None
@@ -1102,7 +1104,6 @@ class TaskEventsManager():
         if itask.job_vacated:
             itask.job_vacated = False
             LOG.warning(f"[{itask}] Vacated job restarted")
-        self.reset_inactivity_timer_func()
         job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
         self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_RUNNING)
@@ -1124,7 +1125,6 @@ class TaskEventsManager():
         job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
         self.data_store_mgr.delta_job_time(job_d, 'finished', event_time)
         self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUCCEEDED)
-        self.reset_inactivity_timer_func()
         itask.set_summary_time('finished', event_time)
         self.workflow_db_mgr.put_update_task_jobs(itask, {
             "run_status": 0,
@@ -1155,7 +1155,6 @@ class TaskEventsManager():
             "submit_status": 1,
         })
         itask.summary['submit_method_id'] = None
-        self.reset_inactivity_timer_func()
         if (
                 TimerFlags.SUBMISSION_RETRY not in itask.try_timers
                 or itask.try_timers[TimerFlags.SUBMISSION_RETRY].next() is None
@@ -1216,8 +1215,6 @@ class TaskEventsManager():
             # Unset started and finished times in case of resubmission.
             itask.set_summary_time('started')
             itask.set_summary_time('finished')
-
-            self.reset_inactivity_timer_func()
             if itask.state.status == TASK_STATUS_PREPARING:
                 # The job started message can (rarely) come in before the
                 # submit command returns - in which case do not go back to

@@ -116,22 +116,37 @@ def port_range():
 @pytest.fixture
 def capcall(monkeypatch):
     """Capture function calls without running the function.
-    Returns a list of captured calls.
-    For each function call a tuple (args: Tuple, kwargs: Dict) is added
-    to the list.
+
+    Returns a list which is populated with function calls.
+
+    Args:
+        function_string:
+            The function to replace as it would be specified to
+            monkeypatch.setattr.
+        substitute_function:
+            An optional function to replace it with, otherwise the captured
+            function will return None.
+
+    Returns:
+        [(args: Tuple, kwargs: Dict), ...]
+
     Example:
         def test_something(capcall):
             capsys = capcall('sys.exit')
             sys.exit(1)
             assert capsys == [(1,), {}]
+
     """
 
-    def _capcall(function_string):
+    def _capcall(function_string, substitute_function=None):
         calls = []
 
         def _call(*args, **kwargs):
             nonlocal calls
+            nonlocal substitute_function
             calls.append((args, kwargs))
+            if substitute_function:
+                return substitute_function(*args, **kwargs)
 
         monkeypatch.setattr(function_string, _call)
         return calls

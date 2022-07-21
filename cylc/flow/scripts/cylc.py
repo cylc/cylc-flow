@@ -26,7 +26,10 @@ from ansimarkup import parse as cparse
 import pkg_resources
 
 from cylc.flow import __version__, iter_entry_points
-from cylc.flow.option_parsers import format_shell_examples
+from cylc.flow.option_parsers import (
+    format_help_headings,
+    format_shell_examples,
+)
 from cylc.flow.scripts.common import cylc_header
 
 
@@ -46,32 +49,26 @@ def get_version(long=False):
 
 
 USAGE = f"""{cylc_header()}
-Cylc ("silk") orchestrates complex cycling (and non-cycling) workflows.
+Cylc ("silk") efficiently manages distributed cycling workflows.
+Cylc is Open Source software (GPL-3.0): see "cylc help license".
 
 Version:
-  $ cylc version --long           # print cylc-flow version and install path
+  $ cylc version --long
   {get_version(True)}
 
-Usage:
-  $ cylc help license             # view the Cylc license (GPL-3.0)
-  $ cylc help all                 # list all commands
-  $ cylc validate <workflow>      # validate a workflow configuration
-  $ cylc install <workflow>       # install a workflow
-  $ cylc play <workflow>          # run/resume a workflow
-  $ cylc scan                     # list all running workflows (by default)
-  $ cylc tui <workflow>           # view/control workflows in the terminal
-  $ cylc stop <workflow>          # stop a running workflow
+Quick Start:
+  $ cylc install <path>       # install a workflow
+  $ cylc play <workflow_id>   # run or resume a workflow
+  $ cylc stop <workflow_id>   # stop a workflow
+  $ cylc clean <workflow_id>  # delete an installed workflow
+  $ cylc gui                  # start the in-browser web UI
+  $ cylc tui <workflow_id>    # start the in-terminal UI
 
-Command Abbreviation:
-  # Commands can be abbreviated as long as there is no ambiguity in
-  # the abbreviated command:
-  $ cylc trigger WORKFLOW//CYCLE/TASK    # trigger TASK in WORKFLOW
-  $ cylc trig WORKFLOW//CYCLE/TASK       # ditto
-  $ cylc tr WORKFLOW//CYCLE/TASK         # ditto
-  $ cylc t                               # Error: ambiguous command
+  $ cylc help all             # see all cylc commands
+  $ cylc <command> --help     # specific command help
 
 Cylc IDs:
-  Cylc IDs take the form:
+  Workflows and tasks are identified by IDs of the form:
     workflow//cycle/task
 
   You can split an ID at the // so following two IDs are equivalent:
@@ -80,10 +77,15 @@ Cylc IDs:
 
   IDs can be written as globs:
     *//                 # All workflows
-    workflow//*         # All cycles in "workflow"
-    workflow//cycle/*   # All tasks in "workflow" in "cycle"
+    workflow//*         # All cycle points in "workflow"
+    workflow//cycle/*   # All tasks in cycle point "cycle" of "workflow"
 
-  For more information type "cylc help id".
+  $ cylc help id        # More information on IDs
+
+Cylc commands can be abbreviated:
+  $ cylc trigger workflow//cycle/task    # trigger task in workflow
+  $ cylc trig workflow//cycle/task       # trigger task in workflow
+  $ cylc t                               # error: trigger or tui?
 """
 
 ID_HELP = '''
@@ -174,8 +176,7 @@ Filters
 
 # because this command is not served from behind cli_function like the
 # other cylc commands we have to manually patch in colour support
-USAGE = format_shell_examples(USAGE)
-USAGE = cparse(USAGE)
+USAGE = cparse(format_help_headings(format_shell_examples(USAGE)))
 
 # all sub-commands
 # {name: entry_point}
@@ -431,25 +432,6 @@ def cli_help():
     from colorama import init as color_init
     color_init(autoreset=True, strip=False)
     print(USAGE)
-    print('Selected Sub-Commands:')
-    print_command_list(
-        # print a short list of the main cylc commands
-        commands=[
-            'hold',
-            'install',
-            'kill',
-            'pause',
-            'play',
-            'release',
-            'scan',
-            'stop',
-            'trigger',
-            'tui',
-            'validate'
-        ],
-        indent=2
-    )
-    print('\nTo see all commands run: cylc help all')
     sys.exit(0)
 
 

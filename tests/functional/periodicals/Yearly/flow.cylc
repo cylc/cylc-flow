@@ -3,7 +3,7 @@
 [scheduling]
     initial cycle point = 2011
     final cycle point = 2018
-    runahead limit = P1
+    runahead limit = P0
     [[graph]]
         2010/P3Y = "a"
 [runtime]

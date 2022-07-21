@@ -16,9 +16,8 @@
 #
 # Tests for the platform lookup module's get_platform method.
 
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 import pytest
-import random
 from cylc.flow.platforms import (
     get_localhost_install_target,
     get_platform
@@ -87,20 +86,62 @@ def test_get_platform_from_platform_name_str(mock_glbl_cfg, platform_re):
     assert platform['job runner'] == 'slurm'
 
 
-def test_get_platform_cylc7_8_syntax_mix_fails(mock_glbl_cfg):
+@pytest.mark.parametrize(
+    'task_conf, err_expected',
+    [
+        (
+            {
+                'platform': 'localhost',
+                'remote': {
+                    'host': 'localhost'
+                }
+            },
+            True
+        ),
+        (
+            {
+                'platform': 'gondor',
+                'remote': {
+                    'retrieve job logs': False
+                }
+            },
+            True
+        ),
+        (
+            {
+                'platform': 'gondor',
+                'remote': {
+                    'host': None
+                }
+            },
+            False
+        ),
+    ]
+)
+def test_get_platform_cylc7_8_syntax_mix_fails(
+    task_conf: dict, err_expected: bool, mock_glbl_cfg: Callable
+):
     """If a task with a mix of Cylc7 and 8 syntax is passed to get_platform
     this should return an error.
     """
-    task_conf = {
-        'platform': 'localhost',
-        'remote': {
-            'host': 'localhost'
-        }
-    }
-    with pytest.raises(
-        PlatformLookupError,
-        match=r'A mixture of Cylc 7 \(host\) and Cylc 8 \(platform\).*'
-    ):
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[gondor]]
+                hosts = denethor
+        '''
+    )
+    if err_expected:
+        with pytest.raises(
+            PlatformLookupError,
+            match=(
+                r"Task .* has the following deprecated '\[runtime\]' "
+                r"setting\(s\) which cannot be used with 'platform.*"
+            )
+        ):
+            get_platform(task_conf)
+    else:
         get_platform(task_conf)
 
 
@@ -167,7 +208,7 @@ def test_get_platform_from_config_with_platform_name(mock_glbl_cfg):
         )
     ]
 )
-def test_get_platform_using_platform_from_job_info(
+def test_get_platform_using_platform_name_from_job_info(
     mock_glbl_cfg, task_conf, expected_platform_name
 ):
     """Calculate platform from Cylc 7 config: n.b. If this fails we don't

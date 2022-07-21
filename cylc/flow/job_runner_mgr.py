@@ -204,8 +204,8 @@ class JobRunnerManager():
     CYLC_JOB_RUNNER_SUBMIT_TIME = "CYLC_JOB_RUNNER_SUBMIT_TIME"
     CYLC_JOB_RUNNER_EXIT_POLLED = "CYLC_JOB_RUNNER_EXIT_POLLED"
     FAIL_SIGNALS = ("EXIT", "ERR", "TERM", "XCPU")
-    LINE_PREFIX_JOB_RUNNER_NAME = "# Job submit method: "
-    LINE_PREFIX_JOB_RUNNER_CMD_TMPL = "# Job submit command template: "
+    LINE_PREFIX_JOB_RUNNER_NAME = "# Job runner: "
+    LINE_PREFIX_JOB_RUNNER_CMD_TMPL = "# Job runner command template: "
     LINE_PREFIX_EXECUTION_TIME_LIMIT = "# Execution time limit: "
     LINE_PREFIX_EOF = "#EOF: "
     LINE_PREFIX_JOB_LOG_DIR = "# Job log directory: "

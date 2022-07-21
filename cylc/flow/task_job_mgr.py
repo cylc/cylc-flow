@@ -36,6 +36,7 @@ from logging import (
 )
 from shutil import rmtree
 from time import time
+from typing import TYPE_CHECKING
 
 from cylc.flow import LOG
 from cylc.flow.job_runner_mgr import JobPollContext
@@ -111,6 +112,9 @@ from cylc.flow.wallclock import (
     get_utc_mode
 )
 from cylc.flow.cfgspec.globalcfg import SYSPATH
+
+if TYPE_CHECKING:
+    from cylc.flow.task_proxy import TaskProxy
 
 
 class TaskJobManager:
@@ -381,7 +385,7 @@ class TaskJobManager:
                         )
                     continue
                 elif ri_map[install_target] == REMOTE_INIT_255:
-                    # Remote init previously failed becase a host was
+                    # Remote init previously failed because a host was
                     # unreachable, so start it again.
                     del ri_map[install_target]
                     self.task_remote_mgr.remote_init(
@@ -1076,7 +1080,12 @@ class TaskJobManager:
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
 
-    def _prep_submit_task_job(self, workflow, itask, check_syntax=True):
+    def _prep_submit_task_job(
+        self,
+        workflow: str,
+        itask: 'TaskProxy',
+        check_syntax: bool = True
+    ):
         """Prepare a task job submission.
 
         Return itask on a good preparation.
@@ -1167,7 +1176,9 @@ class TaskJobManager:
                 rtconfig['remote']['host'] = host_n
 
             try:
-                platform = get_platform(rtconfig, bad_hosts=self.bad_hosts)
+                platform = get_platform(
+                    rtconfig, itask.tdef.name, bad_hosts=self.bad_hosts
+                )
 
             except PlatformLookupError as exc:
                 # Submit number not yet incremented

@@ -34,7 +34,7 @@ grep_ok "WARNING - Incomplete tasks:" "${TEST_NAME_BASE}-run.stderr"
 grep_ok "1/foo did not complete required outputs: \['succeeded'\]" \
     "${TEST_NAME_BASE}-run.stderr"
 
-grep_ok "WARNING - Unsatisfied prerequisites:" \
+grep_ok "WARNING - Partially satisfied prerequisites:" \
     "${TEST_NAME_BASE}-run.stderr"
 
 grep_ok "1/f_1 is waiting on \['1/foo:succeeded'\]" \

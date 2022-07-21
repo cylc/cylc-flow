@@ -282,4 +282,4 @@ jobs:
         with:
           name: '${{ github.workflow }} ${{ matrix.name }} ${{ matrix.chunk }}'
           flags: functional-tests
-          fail_ci_if_error: true
+          fail_ci_if_error: false

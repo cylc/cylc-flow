@@ -21,7 +21,7 @@
     cycling mode = integer
     initial cycle point = 1
     final cycle point = {{N_DATASETS}}
-    runahead limit = P3
+    runahead limit = P2
     [[graph]]
         R1 = prep => satsim & get_data
         P1 = """

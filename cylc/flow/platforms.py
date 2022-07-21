@@ -20,7 +20,7 @@ import random
 import re
 from copy import deepcopy
 from typing import (
-    Any, Dict, Iterable, List, Optional, Tuple, Set, Union, overload
+    TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Set, Union, overload
 )
 
 from cylc.flow import LOG
@@ -31,13 +31,24 @@ from cylc.flow.exceptions import (
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.hostuserutil import is_remote_host
 
+if TYPE_CHECKING:
+    from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+
 UNKNOWN_TASK = 'unknown task'
 
-FORBIDDEN_WITH_PLATFORM: Tuple[Tuple[str, str, List[Optional[str]]], ...] = (
-    ('remote', 'host', ['localhost', None]),
-    ('job', 'batch system', [None]),
-    ('job', 'batch submit command template', [None])
-)
+FORBIDDEN_WITH_PLATFORM: Dict[str, Dict[str, Set[Optional[str]]]] = {
+    'remote': {
+        # setting: exclusions
+        'host': {'localhost', None},
+        'retrieve job logs': {None},
+        'retrieve job logs max size': {None},
+        'retrieve job logs retry delays': {None},
+    },
+    'job': {
+        'batch system': {None},
+        'batch submit command template': {None}
+    }
+}
 
 DEFAULT_JOB_RUNNER = 'background'
 SINGLE_HOST_JOB_RUNNERS = ['background', 'at']
@@ -69,7 +80,7 @@ def log_platform_event(
 @overload
 def get_platform(
     task_conf: Optional[str] = None,
-    task_id: str = UNKNOWN_TASK,
+    task_name: str = UNKNOWN_TASK,
     bad_hosts: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     ...
@@ -77,8 +88,8 @@ def get_platform(
 
 @overload
 def get_platform(
-    task_conf: Dict[str, Any],
-    task_id: str = UNKNOWN_TASK,
+    task_conf: Union[dict, 'OrderedDictWithDefaults'],
+    task_name: str = UNKNOWN_TASK,
     bad_hosts: Optional[Set[str]] = None
 ) -> Optional[Dict[str, Any]]:
     ...
@@ -93,8 +104,8 @@ def get_platform(
 # remove at:
 #     Cylc8.x
 def get_platform(
-    task_conf: Union[str, Dict[str, Any], None] = None,
-    task_id: str = UNKNOWN_TASK,
+    task_conf: Union[str, dict, 'OrderedDictWithDefaults', None] = None,
+    task_name: str = UNKNOWN_TASK,
     bad_hosts: Optional[Set[str]] = None
 ) -> Optional[Dict[str, Any]]:
     """Get a platform.
@@ -105,21 +116,22 @@ def get_platform(
     Args:
         task_conf: If str this is assumed to be the platform name, otherwise
             this should be a configuration for a task.
-        task_id: Task identification string - help produce more helpful error
-            messages.
+        task_name: Help produce more helpful error messages.
 
     Returns:
         platform: A platform definition dictionary. Uses either
-            get_platform() or platform_from_job_info(), but to the
+            get_platform() or platform_name_from_job_info(), but to the
             user these look the same.
     """
     if task_conf is None or isinstance(task_conf, str):  # noqa: SIM 114
         # task_conf is a platform name, or get localhost if None
         return platform_from_name(task_conf, bad_hosts=bad_hosts)
 
+    # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
+    # https://github.com/cylc/cylc-flow/pull/4975
     elif 'platform' in task_conf and task_conf['platform']:
         # Check whether task has conflicting Cylc7 items.
-        fail_if_platform_and_host_conflict(task_conf, task_id)
+        fail_if_platform_and_host_conflict(task_conf, task_name)
 
         if is_platform_definition_subshell(task_conf['platform']):
             # Platform definition is using subshell e.g. platform = $(foo);
@@ -136,12 +148,12 @@ def get_platform(
             return platform_from_name()
         else:
             # Need to calculate platform
-            task_job_section: Dict[Any, Any] = {}
-            task_remote_section: Dict[Any, Any] = {}
-            task_job_section = task_conf.get("job", {})
-            task_remote_section = task_conf.get("remote", {})
+            # NOTE: Do NOT use .get() on OrderedDictWithDefaults - see above
+            task_job_section = task_conf['job'] if 'job' in task_conf else {}
+            task_remote_section = (
+                task_conf['remote'] if 'remote' in task_conf else {})
             return platform_from_name(
-                platform_from_job_info(
+                platform_name_from_job_info(
                     glbl_cfg(cached=False).get(['platforms']),
                     task_job_section,
                     task_remote_section
@@ -202,7 +214,7 @@ def platform_from_name(
     # later than site set platforms) to be matched first and override site
     # defined platforms.
     for platform_name_re in reversed(list(platforms)):
-        # We substitue commas with or without spaces to
+        # We substitute commas with or without spaces to
         # allow lists of platforms
         if (
             re.fullmatch(
@@ -239,7 +251,7 @@ def platform_from_name(
 
 
 def get_platform_from_group(
-    group: Dict[str, Any],
+    group: Union[dict, 'OrderedDictWithDefaults'],
     group_name: str,
     bad_hosts: Optional[Set[str]] = None
 ) -> str:
@@ -287,8 +299,8 @@ def get_platform_from_group(
         return HOST_SELECTION_METHODS[method](platform_names)
 
 
-def platform_from_job_info(
-    platforms: Dict[str, Any],
+def platform_name_from_job_info(
+    platforms: Union[dict, 'OrderedDictWithDefaults'],
     job: Dict[str, Any],
     remote: Dict[str, Any]
 ) -> str:
@@ -363,14 +375,14 @@ def platform_from_job_info(
         ... }
         >>> job = {'batch system': 'slurm'}
         >>> remote = {'host': 'localhost'}
-        >>> platform_from_job_info(platforms, job, remote)
+        >>> platform_name_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote = {}
-        >>> platform_from_job_info(platforms, job, remote)
+        >>> platform_name_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote ={'host': 'desktop92'}
         >>> job = {}
-        >>> platform_from_job_info(platforms, job, remote)
+        >>> platform_name_from_job_info(platforms, job, remote)
         'desktop92'
     """
 
@@ -379,6 +391,9 @@ def platform_from_job_info(
     #   - In the case of "host" we also want a regex match to the platform name
     #   - In the case of "batch system" we want to match the name of the
     #     system/job runner to a platform when host is localhost.
+
+    # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
+    # https://github.com/cylc/cylc-flow/pull/4975
     if 'host' in remote and remote['host']:
         task_host = remote['host']
     else:
@@ -388,6 +403,7 @@ def platform_from_job_info(
     else:
         # Necessary? Perhaps not if batch system default is 'background'
         task_job_runner = 'background'
+
     # Riffle through the platforms looking for a match to our task settings.
     # reverse dict order so that user config platforms added last are examined
     # before site config platforms.
@@ -508,42 +524,44 @@ def get_host_from_platform(
             return HOST_SELECTION_METHODS[method](goodhosts)
 
 
-def fail_if_platform_and_host_conflict(task_conf, task_name):
-    """Raise an error if task spec contains platform and forbidden host items.
+def fail_if_platform_and_host_conflict(
+    task_conf: Union[dict, 'OrderedDictWithDefaults'], task_name: str
+) -> None:
+    """Raise an error if [runtime][<task>] spec contains platform and
+    forbidden host items.
 
     Args:
-        task_conf(dict, OrderedDictWithDefaults):
-            A specification to be checked.
-        task_name(string):
-            A name to be given in an error.
+        task_conf: A specification to be checked.
+        task_name: A name to be given in an error.
 
     Raises:
         PlatformLookupError - if platform and host items conflict
 
     """
+    # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
+    # https://github.com/cylc/cylc-flow/pull/4975
     if 'platform' in task_conf and task_conf['platform']:
-        fail_items = ''
-        for section, key, _ in FORBIDDEN_WITH_PLATFORM:
+        fail_items = [
+            f'\n * [{section}]{key}'
+            for section, keys in FORBIDDEN_WITH_PLATFORM.items()
+            if section in task_conf
+            for key, _ in keys.items()
             if (
-                section in task_conf and
                 key in task_conf[section] and
                 task_conf[section][key] is not None
-            ):
-                fail_items += (
-                    f' * platform = {task_conf["platform"]} AND'
-                    f' [{section}]{key} = {task_conf[section][key]}\n'
-                )
-        if fail_items != '':
+            )
+        ]
+        if fail_items:
             raise PlatformLookupError(
-                f"A mixture of Cylc 7 (host) and Cylc 8 (platform) "
-                f"logic should not be used. In this case the task "
-                f"\"{task_name}\" has the following settings which "
-                f"are not compatible:\n{fail_items}"
+                f"Task '{task_name}' has the following deprecated '[runtime]' "
+                "setting(s) which cannot be used with "
+                f"'platform = {task_conf['platform']}':{''.join(fail_items)}"
             )
 
 
 def get_platform_deprecated_settings(
-    task_conf: Dict[str, Any], task_name: str = UNKNOWN_TASK
+    task_conf: Union[dict, 'OrderedDictWithDefaults'],
+    task_name: str = UNKNOWN_TASK
 ) -> List[str]:
     """Return deprecated [runtime][<task_name>] settings that should be
     upgraded to platforms.
@@ -552,18 +570,16 @@ def get_platform_deprecated_settings(
         task_conf: Runtime configuration for the task.
         task_name: The task name.
     """
-    result: List[str] = []
-    for section, key, exceptions in FORBIDDEN_WITH_PLATFORM:
+    return [
+        f'[runtime][{task_name}][{section}]{key} = {task_conf[section][key]}'
+        for section, keys in FORBIDDEN_WITH_PLATFORM.items()
+        if section in task_conf
+        for key, exclusions in keys.items()
         if (
-            section in task_conf and
             key in task_conf[section] and
-            task_conf[section][key] not in exceptions
-        ):
-            result.append(
-                f'[runtime][{task_name}][{section}]{key} = '
-                f'{task_conf[section][key]}'
-            )
-    return result
+            task_conf[section][key] not in exclusions
+        )
+    ]
 
 
 def is_platform_definition_subshell(value: str) -> bool:
@@ -663,7 +679,9 @@ def get_localhost_install_target() -> str:
     return get_install_target_from_platform(localhost)
 
 
-def _validate_single_host(platforms_cfg) -> None:
+def _validate_single_host(
+    platforms_cfg: Union[dict, 'OrderedDictWithDefaults']
+) -> None:
     """Check that single-host platforms only specify a single host.
 
     Some job runners don't work across multiple hosts; the job ID is only valid
@@ -671,6 +689,8 @@ def _validate_single_host(platforms_cfg) -> None:
     """
     bad_platforms = []
     runners = set()
+    name: str
+    config: dict
     for name, config in platforms_cfg.items():
         runner = config.get('job runner', DEFAULT_JOB_RUNNER)
         hosts = config.get('hosts', [])
