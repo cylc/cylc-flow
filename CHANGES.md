@@ -53,6 +53,12 @@ Jinja2 used by Cylc from 2.11 to 3.0.
 [#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
 default job runner directives for platforms.
 
+[#4993](https://github.com/cylc/cylc-flow/pull/4993) - Remove the few remaining
+uses of a configured text editor (via `cylc view` and `cylc cat-log` options).
+The primary uses of it (`cylc trigger --edit` and `cylc edit` in Cylc 7) have
+already been removed from Cylc 8.
+
+
 ### Fixes
 
 [#4984](https://github.com/cylc/cylc-flow/pull/4984) -
