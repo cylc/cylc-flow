@@ -26,6 +26,8 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.globalcfg import (
     DIRECTIVES_DESCR,
     DIRECTIVES_ITEM_DESCR,
+    LOG_RETR_SETTINGS,
+    EVENTS_DESCR,
     EVENTS_SETTINGS,
     EXECUTION_POLL_DESCR,
     MAIL_DESCR,
@@ -381,7 +383,8 @@ with Conf(
                     )
                 ))
 
-        with Conf('events'):
+        with Conf('events',
+                  desc=global_default(EVENTS_DESCR, '[scheduler][events]')):
             for item, desc in EVENTS_SETTINGS.items():
                 desc = global_default(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
@@ -1319,9 +1322,18 @@ with Conf(
                     batch system.
                 ''')
 
-            with Conf('remote', desc=REPLACED_BY_PLATFORMS):
-                Conf('host', VDR.V_STRING, desc=REPLACED_BY_PLATFORMS)
+            with Conf('remote', desc=f'''
+                      Job host settings.
+                      {REPLACED_BY_PLATFORMS}
+             '''):
+                Conf('host', VDR.V_STRING, desc=f'''
+                     Hostname or IP address of the job host.
+                     {REPLACED_BY_PLATFORMS}
+                ''')
                 Conf('owner', VDR.V_STRING, desc="""
+                    Your username on the job host, if different from that on
+                    the scheduler host.
+
                     .. warning::
 
                        This setting is obsolete at Cylc 8.
@@ -1330,13 +1342,21 @@ with Conf(
                        <728.remote_owner>`
                 """)
                 Conf('retrieve job logs', VDR.V_BOOLEAN,
-                     desc=REPLACED_BY_PLATFORMS)
+                     desc=f'''
+                     {LOG_RETR_SETTINGS['retrieve job logs']}
+                     {REPLACED_BY_PLATFORMS}
+                ''')
                 Conf('retrieve job logs max size', VDR.V_STRING,
-                     desc=REPLACED_BY_PLATFORMS)
+                     desc=f'''
+                     {LOG_RETR_SETTINGS['retrieve job logs max size']}
+                     {REPLACED_BY_PLATFORMS}
+                ''')
                 Conf('retrieve job logs retry delays',
                      VDR.V_INTERVAL_LIST, None,
-                     desc=REPLACED_BY_PLATFORMS)
-
+                     desc=f'''
+                     {LOG_RETR_SETTINGS['retrieve job logs retry delays']}
+                     {REPLACED_BY_PLATFORMS}
+                ''')
             with Conf('events', desc=(
                 global_default(TASK_EVENTS_DESCR, "[task events]")
             )):
