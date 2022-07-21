@@ -16,8 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 COP_DOC = """cylc lint [OPTIONS] ARGS
 
-Cylc lint looks through one or more folders for "*.cylc" and "*.rc" files and
-searches for Cylc 7 syntax which may be problematic at Cylc 8.
+Cylc lint looks through one or more folders for ".cylc" and ".rc" files.
+
+By default it will examine files for code style. If a workflow has been upgraded
+to Cylc 8 by changing the top level "suite.rc" to "flow.cylc" then it will also
+check for deprecated Cylc 7 syntax.
+
+You can run "cylc lint" with each set of rules alone using "cylc lint -r style"
+(for the style checks) or  "cylc lint -r 728" (for the Cylc 7 syntax checks).
 
 Can be run either as a linter or "in place" ("-i"), leaving comments
 in files.
@@ -423,7 +429,7 @@ def get_option_parser() -> COP:
             'Set of rules to use: '
             '("728", "style", "all")'
         ),
-        default='728',
+        default='all',
         choices=('728', 'style', 'all'),
         dest='linter'
     )
@@ -469,13 +475,14 @@ def main(parser: COP, options: 'Values', *targets) -> None:
             if not cylc8 and options.linter == '728':
                 LOG.error(
                     f'{target} not a Cylc 8 workflow: '
-                    'No checks will be made.'
+                    'Lint after renaming '
+                    '"suite.rc" to "flow.cylc"'
                 )
                 continue
             elif not cylc8 and options.linter == 'all':
-                LOG.error(
+                LOG.warn(
                     f'{target} not a Cylc 8 workflow: '
-                    'Checking only for style.'
+                    'Running style checks only...'
                 )
                 check_names = parse_checks('style')
             else:
