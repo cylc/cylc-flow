@@ -18,9 +18,10 @@ import contextlib
 import os
 import sqlite3
 import unittest
-
-from tempfile import mktemp
 from unittest import mock
+from tempfile import mktemp
+
+import pytest
 
 from cylc.flow.rundb import CylcWorkflowDAO
 
@@ -122,5 +123,35 @@ def test_remove_columns():
         dao.remove_columns('foo', ['bar', 'baz'])
 
         conn = dao.connect()
-        data = [row for row in conn.execute(r'SELECT * from foo')]
+        data = list(conn.execute(r'SELECT * from foo'))
         assert data == [('PUB',)]
+
+
+def test_operational_error(monkeypatch, tmp_path, caplog):
+    """Test logging on operational error."""
+    # create a db object
+    db_file = tmp_path / 'db'
+    dao = CylcWorkflowDAO(db_file)
+
+    # stage some stuff
+    dao.add_delete_item(CylcWorkflowDAO.TABLE_TASK_JOBS)
+    dao.add_insert_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
+    dao.add_update_item(CylcWorkflowDAO.TABLE_TASK_JOBS, ['pub'])
+
+    # connect the to DB
+    dao.connect()
+
+    # then delete the file - this will result in an OperationalError
+    db_file.unlink()
+
+    # execute & commit the staged items
+    with pytest.raises(sqlite3.OperationalError):
+        dao.execute_queued_items()
+
+    # ensure that the failed transaction is logged for debug purposes
+    assert len(caplog.messages) == 1
+    message = caplog.messages[0]
+    assert 'An error occurred when writing to the database' in message
+    assert 'DELETE FROM task_jobs' in message
+    assert 'INSERT OR REPLACE INTO task_jobs' in message
+    assert 'UPDATE task_jobs' in message
