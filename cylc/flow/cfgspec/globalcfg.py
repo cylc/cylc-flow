@@ -408,7 +408,7 @@ See also :cylc:conf:`flow.cylc[scheduler][events]` for *workflow* events.
 
 Task :term:`event handlers` are scripts to run when task events occur.
 
-Event handlers can be stored in the workflow ``bin/`` directory, or 
+Event handlers can be stored in the workflow ``bin/`` directory, or
 anywhere the scheduler environment ``$PATH``. They should return quickly.
 
 Multiple event handlers can be specified as a list of command line templates.
@@ -787,8 +787,7 @@ with Conf('global.cylc', desc='''
             ''')
 
         with Conf('events',
-                  desc=default_for(EVENTS_DESCR, '[scheduler][events]')
-             ):
+                  desc=default_for(EVENTS_DESCR, '[scheduler][events]')):
             for item, desc in EVENTS_SETTINGS.items():
                 desc = default_for(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
