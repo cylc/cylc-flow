@@ -326,7 +326,7 @@ def get_cylc_files(base: Path) -> Generator[Path, None, None]:
     for rglob in FILEGLOBS:
         for path in base.rglob(rglob):
             # Exclude log directory:
-            if not path.relative_to(base).parts[0].startswith('log'):
+            if path.relative_to(base).parts[0] != 'log':
                 yield path
 
 
