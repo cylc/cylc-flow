@@ -120,6 +120,12 @@ TEST_FILE = """
             retry handler = dfaiuhfrgpa
             sumbission handler = fas9hrfgaiuph
 
+# Shouldn't object to a comment, unlike the terrible indents below:
+   [[bad indent]]
+
+     [[remote]]
+
+ [meta]
 """
 
 

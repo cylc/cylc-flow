@@ -104,16 +104,16 @@ STYLE_CHECKS = {
         'url': STYLE_GUIDE + 'indentation'
     },
     #            [section]
-    re.compile(r'^\s+\[.*\]'): {
+    re.compile(r'^\s+\[[^\[.]*\]'): {
         'short': 'Too many indents for top level section.',
         'url': STYLE_GUIDE + 'indentation'
     },
     # 2 or 4 space indentation both seem reasonable:
-    re.compile(r'^(\s|\s{3}|\s{5,})\[\[.*\]\]'): {
+    re.compile(r'^(\s|\s{3}|\s{5,})\[\[[^\[.]*\]\]'): {
         'short': 'wrong number of indents for second level section.',
         'url': STYLE_GUIDE + 'indentation'
     },
-    re.compile(r'^(\s{1,3}|\s{5,7}|\s{9,})\[\[\[.*\]\]\]'): {
+    re.compile(r'^(\s{1,3}|\s{5,7}|\s{9,})\[\[\[[^\[.]*\]\]\]'): {
         'short': 'wrong number of indents for third level section.',
         'url': STYLE_GUIDE + 'indentation'
     },
@@ -499,8 +499,13 @@ def main(parser: COP, options: 'Values', *targets) -> None:
             color = Fore.YELLOW
         else:
             color = Fore.GREEN
+
+        if options.linter == 'all':
+            checks_done = "728 & style"
+        else:
+            checks_done = options.linter
         msg = (
-            f'Checked {target} against {check_names} '
+            f'Checked {target} against {checks_done} '
             f'rules and found {count} issues.'
         )
         print(f'{color}{"-" * len(msg)}\n{msg}')
