@@ -1431,6 +1431,8 @@ with Conf('global.cylc', desc='''
             ''')
             Conf('retrieve job logs retry delays', VDR.V_INTERVAL_LIST,
                  desc=f'''
+                Configure retries for unsuccessful job log retrieval.
+
                 By default Cylc makes a single attempt to retrieve jobs logs
                 as soon as a task finishes.
 
