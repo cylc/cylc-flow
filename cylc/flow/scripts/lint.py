@@ -16,14 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 COP_DOC = """cylc lint [OPTIONS] ARGS
 
-Cylc lint looks through one or more folders for ".cylc" and ".rc" files.
+Cylc lint looks through one or more folders for ".cylc" and ".rc"
+files.
 
-By default it will examine files for code style. If a workflow has been upgraded
-to Cylc 8 by changing the top level "suite.rc" to "flow.cylc" then it will also
-check for deprecated Cylc 7 syntax.
+By default it will examine files for code style.
+If a workflow has been upgraded to Cylc 8 by changing the top level
+"suite.rc" to "flow.cylc" then it will also check for deprecated
+Cylc 7 syntax.
 
-You can run "cylc lint" with each set of rules alone using "cylc lint -r style"
-(for the style checks) or  "cylc lint -r 728" (for the Cylc 7 syntax checks).
+You can run "cylc lint" with each set of rules alone using
+"cylc lint -r style" (for the style checks) or  "cylc lint -r 728"
+(for the Cylc 7 syntax checks).
 
 Can be run either as a linter or "in place" ("-i"), leaving comments
 in files.
