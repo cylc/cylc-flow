@@ -188,7 +188,8 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES}``shutdown handler``.
     ''',
     'abort handlers': f'''
-        Handlers to run if the scheduler aborts.
+        Handlers to run if the scheduler shuts down with error status due to
+        a configured timeout or a fatal error condition.
 
         .. versionchanged:: 8.0.0
 
@@ -206,7 +207,8 @@ EVENTS_SETTINGS = {  # workflow events
         .. versionadded:: 8.0.0
     ''',
     'abort on workflow timeout': '''
-        Whether to abort if the workflow timer times out.
+        Whether the scheduler should shut down immediately with error status if
+        the workflow timer times out.
 
         .. versionadded:: 8.0.0
     ''',
@@ -232,7 +234,8 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES}``timeout handler``.
     ''',
     'abort on stall timeout': f'''
-        Whether to abort if the stall timer times out.
+        Whether the scheduler should shut down immediately with error status if
+        the stall timer times out.
 
         .. versionchanged:: 8.0.0
 
@@ -254,7 +257,8 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES}``inactivity handler``.
     ''',
     'abort on inactivity timeout': f'''
-        Whether to abort if the inactivity timer times out.
+        Whether the scheduler should shut down immediately with error status if
+        the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
 
