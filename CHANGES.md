@@ -53,6 +53,11 @@ Jinja2 used by Cylc from 2.11 to 3.0.
 [#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
 default job runner directives for platforms.
 
+[#5009](https://github.com/cylc/cylc-flow/pull/5009) - Added new job
+environment variable `$CYLC_WORKFLOW_NAME_BASE` as the basename of
+`$CYLC_WORKFLOW_NAME`.
+
+
 ### Fixes
 
 [#4984](https://github.com/cylc/cylc-flow/pull/4984) -

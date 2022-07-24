@@ -13,15 +13,15 @@
    # First run: c stops the scheduler then fails.
    # On restart, kick-c retriggers c to run 'cylc show'.
    [[kick-c]]
-      script = cylc trigger "$CYLC_WORKFLOW_NAME//1/c"
+      script = cylc trigger "$CYLC_WORKFLOW_ID//1/c"
    [[c]]
       script = """
          if ((CYLC_TASK_SUBMIT_NUMBER == 1)); then
-            cylc stop --now --max-polls=10 --interval=1 $CYLC_WORKFLOW_NAME
+            cylc stop --now --max-polls=10 --interval=1 $CYLC_WORKFLOW_ID
             false
          else
-            cylc show "$CYLC_WORKFLOW_NAME//1/b" >> $CYLC_WORKFLOW_RUN_DIR/show-b.txt
-            cylc show "$CYLC_WORKFLOW_NAME//1/c" >> $CYLC_WORKFLOW_RUN_DIR/show-c.txt
-            cylc show "$CYLC_WORKFLOW_NAME//1/d" >> $CYLC_WORKFLOW_RUN_DIR/show-d.txt
+            cylc show "$CYLC_WORKFLOW_ID//1/b" >> $CYLC_WORKFLOW_RUN_DIR/show-b.txt
+            cylc show "$CYLC_WORKFLOW_ID//1/c" >> $CYLC_WORKFLOW_RUN_DIR/show-c.txt
+            cylc show "$CYLC_WORKFLOW_ID//1/d" >> $CYLC_WORKFLOW_RUN_DIR/show-d.txt
          fi
       """

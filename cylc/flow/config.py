@@ -1419,6 +1419,7 @@ class WorkflowConfig:
             **verbosity_to_env(cylc.flow.flags.verbosity),
             'CYLC_WORKFLOW_ID': self.workflow,
             'CYLC_WORKFLOW_NAME': self.workflow_name,
+            'CYLC_WORKFLOW_NAME_BASE': str(Path(self.workflow_name).name),
             'CYLC_WORKFLOW_RUN_DIR': self.run_dir,
             'CYLC_WORKFLOW_LOG_DIR': self.log_dir,
             'CYLC_WORKFLOW_WORK_DIR': self.work_dir,
