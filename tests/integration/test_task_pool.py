@@ -34,8 +34,10 @@ from cylc.flow.task_state import (
 )
 
 
-# NOTE: foo & bar have no parents so at start-up (even with the workflow
-# paused) they are spawned out to the runahead limit.
+# NOTE: foo and bar have no parents so at start-up (even with the workflow
+# paused) they get spawned out to the runahead limit. 2/pub gets spawned
+# immediately too, because we spawn autospawn absolute-triggered tasks as
+# well as parentless tasks.
 EXAMPLE_FLOW_CFG = {
     'scheduler': {
         'allow implicit tasks': True
@@ -47,7 +49,7 @@ EXAMPLE_FLOW_CFG = {
         'runahead limit': 'P3',
         'graph': {
             'P1': 'foo & bar',
-            'R1/2': 'foo[1] => pub'  # 2/pub doesn't spawn at start
+            'R1/2': 'foo[1] => pub'
         }
     },
     'runtime': {
@@ -146,8 +148,8 @@ async def example_flow(
         ),
         param(
             ['*:waiting'],
-            ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
-             '4/bar', '5/foo', '5/bar'], [], [],
+            ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar',
+             '4/foo', '4/bar', '5/foo', '5/bar'], [], [],
             id="Task state"
         ),
         param(
@@ -167,8 +169,8 @@ async def example_flow(
         ),
         param(
             ['*'],
-            ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
-             '4/bar', '5/foo', '5/bar'], [], [],
+            ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar',
+             '4/foo', '4/bar', '5/foo', '5/bar'], [], [],
             id="No items given - get all tasks"
         )
     ]
@@ -207,8 +209,8 @@ async def test_filter_task_proxies(
     [
         param(
             ['*:waiting'],
-            ['1/waz', '1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
-             '4/bar', '5/foo', '5/bar'], [], [],
+            ['1/waz', '1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo',
+             '3/bar', '4/foo', '4/bar', '5/foo', '5/bar'], [], [],
             id="Task state"
         ),
     ]
@@ -334,9 +336,9 @@ async def test_match_taskdefs(
         ),
         param(
             ['1/*', '2/*', '6/*'],
-            ['1/foo', '1/bar', '2/foo', '2/bar'],
+            ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub'],
             ["No active tasks matching: 6/*"],
-            id="Name globs hold active tasks only"
+            id="Name globs hold active tasks only"  # (active means n=0 here)
         ),
         param(
             ['1/FAM', '2/FAM', '6/FAM'], ['1/bar', '2/bar'],
@@ -434,9 +436,9 @@ async def test_release_held_tasks(
 @pytest.mark.parametrize(
     'hold_after_point, expected_held_task_ids',
     [
-        (0, ['1/foo', '1/bar', '2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
-             '4/bar', '5/foo', '5/bar']),
-        (1, ['2/foo', '2/bar', '3/foo', '3/bar', '4/foo',
+        (0, ['1/foo', '1/bar', '2/foo', '2/bar', '2/pub', '3/foo', '3/bar',
+             '4/foo', '4/bar', '5/foo', '5/bar']),
+        (1, ['2/foo', '2/bar', '2/pub', '3/foo', '3/bar', '4/foo',
              '4/bar', '5/foo', '5/bar'])
     ]
 )
