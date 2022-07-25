@@ -279,8 +279,6 @@ def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
         expected += '\nexport CYLC_ENV_NAME=\'myenv\''
     expected += '\nexport CYLC_WORKFLOW_ID="test_write_prelude"'
     expected += '\nexport CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\''
-    #expected += '\nexport CYLC_WORKFLOW_NAME="test_write_prelude"'
-    #expected += '\nexport CYLC_WORKFLOW_NAME_BASE="test_write_prelude"'
     job_conf = {
         "workflow_name": "test_write_prelude",
         "platform": fixture_get_platform({
