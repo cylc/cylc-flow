@@ -30,9 +30,6 @@ from cylc.flow.scripts.lint import (
     get_upgrader_info,
     parse_checks
 )
-from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
-from cylc.flow.parsec.upgrade import upgrader
-
 
 
 UPG_CHECKS = parse_checks('728')
@@ -153,7 +150,7 @@ def create_testable_file(monkeypatch, capsys):
     def _inner(test_file, checks):
         monkeypatch.setattr(Path, 'read_text', lambda _: test_file)
         checks = parse_checks(checks)
-        check_cylc_file(Path('x'), checks)
+        check_cylc_file(Path('x'), Path('x'), checks)
         return capsys.readouterr(), checks
     return _inner
 
@@ -183,7 +180,7 @@ def test_check_cylc_file_line_no(create_testable_file, capsys):
     """It prints the correct line numbers"""
     result, _ = create_testable_file(TEST_FILE, '728')
     result = result.out
-    assert result.split()[1] == '2:'
+    assert result.split()[1] == '.:2:'
 
 
 @pytest.mark.parametrize(
@@ -205,7 +202,12 @@ def test_check_cylc_file_lint(create_testable_file, number):
 def create_testable_dir(tmp_path):
     test_file = (tmp_path / 'suite.rc')
     test_file.write_text(TEST_FILE)
-    check_cylc_file(test_file, parse_checks('all'), modify=True)
+    check_cylc_file(
+        test_file.parent,
+        test_file,
+        parse_checks('all'),
+        modify=True,
+    )
     return '\n'.join([*difflib.Differ().compare(
         TEST_FILE.split('\n'), test_file.read_text().split('\n')
     )])
