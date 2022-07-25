@@ -99,7 +99,7 @@ from cylc.flow.wallclock import (
 )
 
 if TYPE_CHECKING:
-    from cylc.flow.cyclers import PointBase
+    from cylc.flow.cycling import PointBase
 
 
 EDGES = 'edges'
