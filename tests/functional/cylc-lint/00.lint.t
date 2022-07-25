@@ -18,7 +18,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 12
+set_test_number 11
 
 cat > flow.cylc <<__HERE__
 # This is definately not an OK flow.cylc file.
@@ -53,7 +53,6 @@ named_grep_ok "do-not-upgrade-check-if-compat-mode" "Lint after renaming" "${TES
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset2"
 run_ok "${TEST_NAME}" cylc lint . -r all
-named_grep_ok "do-not-upgrade-check-if-compat-mode2" "Running style checks" "${TEST_NAME}.stderr"
 
 rm suite.rc
 
@@ -64,6 +63,6 @@ __HERE__
 
 TEST_NAME="${TEST_NAME_BASE}.zero-issues"
 run_ok "${TEST_NAME}" cylc lint
-named_grep_ok "message on no errors" "found 0 issues" "${TEST_NAME}.stdout"
+named_grep_ok "message on no errors" "Found no issues" "${TEST_NAME}.stdout"
 
 rm flow.cylc

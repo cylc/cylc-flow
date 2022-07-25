@@ -14,19 +14,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Cylc configuration linter.
+
+Checks code style, deprecated syntax and other issues."""
+# NOTE: docstring needed for `cylc help all` output
+# (if editing check this still comes out as expected)
+
 COP_DOC = """cylc lint [OPTIONS] ARGS
 
 Cylc lint looks through one or more folders for ".cylc" and ".rc"
 files.
 
-By default it will examine files for code style.
-If a workflow has been upgraded to Cylc 8 by changing the top level
-"suite.rc" to "flow.cylc" then it will also check for deprecated
-Cylc 7 syntax.
-
-You can run "cylc lint" with each set of rules alone using
-"cylc lint -r style" (for the style checks) or  "cylc lint -r 728"
-(for the Cylc 7 syntax checks).
+Checks code style, deprecated syntax and other issues.
 
 Can be run either as a linter or "in place" ("-i"), leaving comments
 in files.
@@ -36,17 +35,16 @@ We strongly recommend committing your workflow to version control
 before using "cylc lint -i".
 
 Examples:
+  # run as a linter
+  $ cylc lint <paths to workflow directories to check>
 
-# run as a linter
-cylc lint <paths to workflow directories to check>
+  # run inplace
+  $ cylc lint --inplace <paths to workflow directories to check>
+  $ cylc lint -i <paths to workflow directories to check>
 
-# run inplace
-cylc lint --inplace <paths to workflow directories to check>
-cylc lint -i <paths to workflow directories to check>
-
-# Get information about errors:
-cylc lint --reference
-cylc lint -R
+  # Get information about errors:
+  $ cylc lint --reference
+  $ cylc lint -R
 """
 from colorama import Fore
 from optparse import Values
@@ -61,6 +59,7 @@ from cylc.flow.option_parsers import (
 from cylc.flow.cfgspec.workflow import upg, SPEC
 from cylc.flow.parsec.config import ParsecConfig
 from cylc.flow.terminal import cli_function
+from cylc.flow.workflow_files import check_flow_file
 
 STYLE_GUIDE = (
     'https://cylc.github.io/cylc-doc/latest/html/workflow-design-guide/'
@@ -290,8 +289,9 @@ def parse_checks(check_arg):
     return parsedchecks
 
 
-def check_cylc_file(file_, checks, modify=False):
+def check_cylc_file(dir_, file_, checks, modify=False):
     """Check A Cylc File for Cylc 7 Config"""
+    file_rel = file_.relative_to(dir_)
     # Set mode as read-write or read only.
     outlines = []
 
@@ -326,7 +326,7 @@ def check_cylc_file(file_, checks, modify=False):
                     print(
                         Fore.YELLOW +
                         f'[{message["purpose"]}{message["index"]:03d}]'
-                        f'{file_}: {line_no}: {message["short"]}'
+                        f' {file_rel}:{line_no}: {message["short"]}'
                     )
         if modify:
             outlines.append(line)
@@ -336,8 +336,7 @@ def check_cylc_file(file_, checks, modify=False):
 
 
 def get_cylc_files(base: Path) -> Generator[Path, None, None]:
-    """Given a directory yield paths to check.
-    """
+    """Given a directory yield paths to check."""
     for rglob in FILEGLOBS:
         for path in base.rglob(rglob):
             # Exclude log directory:
@@ -443,9 +442,9 @@ def get_option_parser() -> COP:
         dest='linter'
     )
     parser.add_option(
-        '--reference', '--ref', '-R',
+        '--list-codes',
         help=(
-            'Print Reference for error codes.'
+            'List all linter codes.'
         ),
         action='store_true',
         default=False,
@@ -457,7 +456,6 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', *targets) -> None:
-
     if options.ref_mode:
         print(get_reference_text(parse_checks(options.linter)))
         exit(0)
@@ -468,6 +466,10 @@ def main(parser: COP, options: 'Values', *targets) -> None:
         targets = tuple(Path(path).resolve() for path in targets)
     else:
         targets = (str(Path.cwd()),)
+
+    # make sure the targets are all src/run directories
+    for target in targets:
+        check_flow_file(target)
 
     # Get a list of checks bas ed on the checking options:
     count = 0
@@ -489,10 +491,6 @@ def main(parser: COP, options: 'Values', *targets) -> None:
                 )
                 continue
             elif not cylc8 and options.linter == 'all':
-                LOG.warn(
-                    f'{target} not a Cylc 8 workflow: '
-                    'Running style checks only...'
-                )
                 check_names = parse_checks('style')
             else:
                 check_names = options.linter
@@ -501,23 +499,36 @@ def main(parser: COP, options: 'Values', *targets) -> None:
             checks = parse_checks(check_names)
             for file_ in get_cylc_files(target):
                 LOG.debug(f'Checking {file_}')
-                count += check_cylc_file(file_, checks, options.inplace)
+                count += check_cylc_file(
+                    target,
+                    file_,
+                    checks,
+                    options.inplace,
+                )
 
         # Summing up:
-        if count > 0:
-            color = Fore.YELLOW
-        else:
-            color = Fore.GREEN
-
         if options.linter == 'all':
             checks_done = "728 & style"
         else:
             checks_done = options.linter
-        msg = (
-            f'Checked {target} against {checks_done} '
-            f'rules and found {count} issues.'
-        )
-        print(f'{color}{"-" * len(msg)}\n{msg}')
+
+        if count > 0:
+            msg = (
+                f'\n{Fore.YELLOW}'
+                f'Checked {target} against {checks_done} '
+                f'rules and found {count} issue'
+                f'{"s" if count > 1 else ""}.'
+            )
+        else:
+            msg = (
+                f'{Fore.GREEN}'
+                f'Checked {target} against {checks_done} '
+                'Found no issues.'
+            )
+
+        print(msg)
 
 
-__doc__ = get_reference_text(parse_checks('all'))
+# NOTE: use += so that this works with __import__
+# (docstring needed for `cylc help all` output)
+__doc__ += get_reference_text(parse_checks('all'))
