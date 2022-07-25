@@ -55,6 +55,9 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#5008](https://github.com/cylc/cylc-flow/pull/5008) -
+Autospawn absolute-triggered tasks exactly the same way as parentless tasks.
+
 [#4984](https://github.com/cylc/cylc-flow/pull/4984) -
 Fixes an issue with `cylc reload` which could cause preparing tasks to become
 stuck.
