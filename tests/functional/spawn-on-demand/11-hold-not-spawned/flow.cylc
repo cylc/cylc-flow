@@ -9,12 +9,12 @@
 [runtime]
     [[holder]]
         script = """
-            cylc hold "$CYLC_WORKFLOW_NAME//1/holdee"
+            cylc hold "$CYLC_WORKFLOW_ID//1/holdee"
         """
     [[holdee]]
         script = true
     [[stopper]]
         script = """
             cylc__job__poll_grep_workflow_log "\[1/holdee .* holding \(as requested earlier\)" -E
-            cylc stop $CYLC_WORKFLOW_NAME
+            cylc stop $CYLC_WORKFLOW_ID
         """

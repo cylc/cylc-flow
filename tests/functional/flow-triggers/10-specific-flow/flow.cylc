@@ -16,7 +16,7 @@
    [[a, b, c, d, e, f,g]]
    [[trigger-happy]]
       script = """
-         cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_NAME}//1/f
+         cylc trigger --flow=2 --wait ${CYLC_WORKFLOW_ID}//1/f
          cylc__job__poll_grep_workflow_log "1/d submitted job:01 .*started"
-         cylc trigger --flow=new ${CYLC_WORKFLOW_NAME}//1/b
+         cylc trigger --flow=new ${CYLC_WORKFLOW_ID}//1/b
       """

@@ -53,6 +53,10 @@ Jinja2 used by Cylc from 2.11 to 3.0.
 [#4896](https://github.com/cylc/cylc-flow/pull/4896) - Allow the setting of
 default job runner directives for platforms.
 
+[#5009](https://github.com/cylc/cylc-flow/pull/5009) - Added new job
+environment variable `$CYLC_WORKFLOW_NAME_BASE` as the basename of
+`$CYLC_WORKFLOW_NAME`.
+
 [#4993](https://github.com/cylc/cylc-flow/pull/4993) - Remove the few remaining
 uses of a configured text editor (via `cylc view` and `cylc cat-log` options).
 The primary uses of it (`cylc trigger --edit` and `cylc edit` in Cylc 7) have
