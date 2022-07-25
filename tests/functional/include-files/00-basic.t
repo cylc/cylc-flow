@@ -28,7 +28,7 @@ run_ok "${TEST_NAME}.1" cylc val "${WORKFLOW_NAME}"
 
 # test workflow validates as inlined during editing
 mkdir inlined
-cylc view --inline --stdout "${WORKFLOW_NAME}" > inlined/flow.cylc
+cylc view --inline "${WORKFLOW_NAME}" > inlined/flow.cylc
 run_ok "${TEST_NAME}.2" cylc val ./inlined
 #-------------------------------------------------------------------------------
 # compare inlined workflow def with reference copy
