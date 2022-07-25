@@ -23,6 +23,7 @@ from shutil import rmtree
 from typing import List, TYPE_CHECKING, Tuple, Set
 
 from cylc.flow.config import WorkflowConfig
+from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.scripts.validate import ValidateOptions
@@ -308,6 +309,21 @@ def db_select():
             pri_dao.close()
 
     return _inner
+
+
+@pytest.fixture
+def gql_query():
+    """Execute a GraphQL query given a workflow runtime client."""
+    async def _gql_query(
+        client: WorkflowRuntimeClient, query_str: str
+    ) -> object:
+        ret = await client.async_request(
+            'graphql', {
+                'request_string': 'query { ' + query_str + ' }'
+            }
+        )
+        return ret
+    return _gql_query
 
 
 @pytest.fixture
