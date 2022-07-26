@@ -22,23 +22,23 @@ set_test_number 11
 
 cat > flow.cylc <<__HERE__
 # This is definitely not an OK flow.cylc file.
-{{FOO}}
-[[visualization]]
+[cylc]
+   [[parameters]]
 __HERE__
 
 rm etc/global.cylc
 
 TEST_NAME="${TEST_NAME_BASE}.vanilla"
 run_ok "${TEST_NAME}" cylc lint
-named_grep_ok "check-for-error-code" "U021" "${TEST_NAME}.stdout"
+named_grep_ok "check-for-error-code" "S004" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset"
 run_ok "${TEST_NAME}" cylc lint . -r 728
-named_grep_ok "check-for-error-code" "U021" "${TEST_NAME}.stdout"
+named_grep_ok "check-for-error-code" "U024" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.inplace"
 run_ok "${TEST_NAME}" cylc lint . -i
-named_grep_ok "check-for-error-code-in-file" "U021" flow.cylc
+named_grep_ok "check-for-error-code-in-file" "U024" flow.cylc
 
 rm flow.cylc
 
