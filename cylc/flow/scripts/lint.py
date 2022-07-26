@@ -215,10 +215,10 @@ def get_upgrader_info():
             # Check whether upgrade is section:
             if upgrade['is_section'] is True:
                 section_depth = len(upgrade['old'])
-                start = (r'\[' * section_depth) + r'[^\[]'
+                start = r'\[' * section_depth
                 end = r'\]' * section_depth
                 name = upgrade["old"][-1]
-                regex = re.compile(fr'{start}\s*{name}\s*{end}')
+                regex = re.compile(fr'{start}\s*{name}\s*{end}\s*$')
             else:
                 name = upgrade["old"][-1]
                 expr = rf'{name}\s*=\s*.*'

@@ -317,7 +317,7 @@ def test_get_upg_info(fixture_get_deprecations, findme):
     if findme.startswith('!'):
         assert findme[1:] not in str(fixture_get_deprecations)
     elif findme.startswith('['):
-        pattern = f'\\[\\s*{findme.strip("[").strip("]")}\\s*\\]'
+        pattern = f'\\[\\s*{findme.strip("[").strip("]")}\\s*\\]\\s*$'
         assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
     else:
         pattern = f'{findme}\\s*=\\s*.*'
