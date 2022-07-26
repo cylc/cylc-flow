@@ -56,8 +56,20 @@ default job runner directives for platforms.
 [#4900](https://github.com/cylc/cylc-flow/pull/4900) - Added a command to assist
 with upgrading Cylc 7 workflows to Cylc 8: Try `cylc lint <workflow-dir>`.
 
+[#5009](https://github.com/cylc/cylc-flow/pull/5009) - Added new job
+environment variable `$CYLC_WORKFLOW_NAME_BASE` as the basename of
+`$CYLC_WORKFLOW_NAME`.
+
+[#4993](https://github.com/cylc/cylc-flow/pull/4993) - Remove the few remaining
+uses of a configured text editor (via `cylc view` and `cylc cat-log` options).
+The primary uses of it (`cylc trigger --edit` and `cylc edit` in Cylc 7) have
+already been removed from Cylc 8.
+
 
 ### Fixes
+
+[#5008](https://github.com/cylc/cylc-flow/pull/5008) -
+Autospawn absolute-triggered tasks exactly the same way as parentless tasks.
 
 [#4984](https://github.com/cylc/cylc-flow/pull/4984) -
 Fixes an issue with `cylc reload` which could cause preparing tasks to become

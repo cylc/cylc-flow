@@ -293,6 +293,8 @@ def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
         "directives": {"restart": "yes"},
     }
     monkeypatch.setenv("CYLC_WORKFLOW_INITIAL_CYCLE_POINT", "20200101T0000Z")
+    monkeypatch.setenv("CYLC_WORKFLOW_NAME", "test_write_prelude")
+    monkeypatch.setenv("CYLC_WORKFLOW_NAME_BASE", "test_write_prelude")
 
     with io.StringIO() as fake_file:
         # copyable environment variables
@@ -305,15 +307,19 @@ def test_write_workflow_environment(fixture_get_platform, monkeypatch):
     # set some workflow environment conditions
     monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
     workflow_env = {'CYLC_UTC': 'True',
-                    'CYLC_CYCLING_MODE': 'integer'}
+                    'CYLC_CYCLING_MODE': 'integer',
+                    'CYLC_WORKFLOW_NAME': 'blargh/quack',
+                    'CYLC_WORKFLOW_NAME_BASE': 'quack'}
     job_file_writer = JobFileWriter()
     job_file_writer.set_workflow_env(workflow_env)
     # workflow env not correctly setting...check this
     expected = ('\n\ncylc__job__inst__cylc_env() {\n    # CYLC WORKFLOW '
                 'ENVIRONMENT:\n    export CYLC_CYCLING_MODE="integer"\n  '
-                '  export CYLC_UTC="True"\n    export TZ="UTC"'
-                '\n   '
-                ' export CYLC_WORKFLOW_UUID="neigh"')
+                '  export CYLC_UTC="True"'
+                '\n    export CYLC_WORKFLOW_NAME="blargh/quack"'
+                '\n    export CYLC_WORKFLOW_NAME_BASE="quack"'
+                '\n    export TZ="UTC"'
+                '\n    export CYLC_WORKFLOW_UUID="neigh"')
     job_conf = {
         "platform": fixture_get_platform({
             "host": "localhost",

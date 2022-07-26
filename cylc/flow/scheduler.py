@@ -1134,6 +1134,7 @@ class Scheduler:
             'CYLC_UTC': str(get_utc_mode()),
             'CYLC_WORKFLOW_ID': self.workflow,
             'CYLC_WORKFLOW_NAME': self.workflow_name,
+            'CYLC_WORKFLOW_NAME_BASE': str(Path(self.workflow_name).name),
             'CYLC_CYCLING_MODE': str(
                 self.config.cfg['scheduling']['cycling mode']
             ),

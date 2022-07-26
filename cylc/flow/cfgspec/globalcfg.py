@@ -188,7 +188,8 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES}``shutdown handler``.
     ''',
     'abort handlers': f'''
-        Handlers to run if the scheduler aborts.
+        Handlers to run if the scheduler shuts down with error status due to
+        a configured timeout or a fatal error condition.
 
         .. versionchanged:: 8.0.0
 
@@ -206,7 +207,8 @@ EVENTS_SETTINGS = {  # workflow events
         .. versionadded:: 8.0.0
     ''',
     'abort on workflow timeout': '''
-        Whether to abort if the workflow timer times out.
+        Whether the scheduler should shut down immediately with error status if
+        the workflow timer times out.
 
         .. versionadded:: 8.0.0
     ''',
@@ -232,7 +234,8 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES}``timeout handler``.
     ''',
     'abort on stall timeout': f'''
-        Whether to abort if the stall timer times out.
+        Whether the scheduler should shut down immediately with error status if
+        the stall timer times out.
 
         .. versionchanged:: 8.0.0
 
@@ -254,7 +257,8 @@ EVENTS_SETTINGS = {  # workflow events
            {REPLACES}``inactivity handler``.
     ''',
     'abort on inactivity timeout': f'''
-        Whether to abort if the inactivity timer times out.
+        Whether the scheduler should shut down immediately with error status if
+        the inactivity timer times out.
 
         .. versionchanged:: 8.0.0
 
@@ -1071,55 +1075,6 @@ with Conf('global.cylc', desc='''
 
                     .. versionadded:: 8.0.0
                 """)
-
-    with Conf('editors', desc='''
-        Choose your favourite text editor for editing workflow configurations.
-    '''):
-        Conf('terminal', VDR.V_STRING, desc='''
-            An in-terminal text editor to be used by the Cylc command line.
-
-            If unspecified Cylc will use the environment variable
-            ``$EDITOR`` which is the preferred way to set your text editor.
-
-            .. Note::
-
-                You can set your ``$EDITOR`` in your shell profile file
-                (e.g. ``~.bashrc``)
-
-            If neither this or ``$EDITOR`` are specified then Cylc will
-            default to ``vi``.
-
-            Examples::
-
-               ed
-               emacs -nw
-               nano
-               vi
-        ''')
-        Conf('gui', VDR.V_STRING, desc='''
-            A graphical text editor to be used by cylc.
-
-            If unspecified Cylc will use the environment variable
-            ``$GEDITOR`` which is the preferred way to set your text editor.
-
-            .. Note::
-
-               You can set your ``$GEDITOR`` in your shell profile file
-               (e.g. ``~.bashrc``)
-
-            If neither this or ``$GEDITOR`` are specified then Cylc will
-            default to ``gvim -fg``.
-
-            Examples::
-
-               atom --wait
-               code --new-window --wait
-               emacs
-               gedit -s
-               gvim -fg
-               nedit
-        ''')
-
     with Conf('platforms', desc='''
         Platforms allow you to define compute resources available at your
         site.
@@ -1920,7 +1875,6 @@ class GlobalConfig(ParsecConfig):
         # Flesh out with defaults
         self.expand()
 
-        self._set_default_editors()
         self._no_platform_group_name_overlap()
         with suppress(KeyError):
             validate_platforms(self.sparse['platforms'])
@@ -1941,15 +1895,6 @@ class GlobalConfig(ParsecConfig):
                 raise ValidationError(
                     keys, value=item, msg="must be an absolute path"
                 )
-
-    def _set_default_editors(self):
-        # default to $[G]EDITOR unless an editor is defined in the config
-        # NOTE: use `or` to handle cases where an env var is set to ''
-        cfg = self.get(sparse=False)
-        if not cfg['editors']['terminal']:
-            cfg['editors']['terminal'] = os.environ.get('EDITOR') or 'vi'
-        if not cfg['editors']['gui']:
-            cfg['editors']['gui'] = os.environ.get('GEDITOR') or 'gvim -fg'
 
     def _no_platform_group_name_overlap(self):
         if (
