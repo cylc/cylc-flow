@@ -50,7 +50,6 @@ STYLE_GUIDE = (
     'style-guide.html#'
 )
 URL_STUB = "https://cylc.github.io/cylc-doc/latest/html/7-to-8/"
-SECTION1 = r'\[\s*{}\s*\]'
 SECTION2 = r'\[\[\s*{}\s*\]\]'
 SECTION3 = r'\[\[\[\s*{}\s*\]\]\]'
 FILEGLOBS = ['*.rc', '*.cylc']
@@ -216,7 +215,7 @@ def get_upgrader_info():
             # Check whether upgrade is section:
             if upgrade['is_section'] is True:
                 section_depth = len(upgrade['old'])
-                start = r'\[' * section_depth
+                start = (r'\[' * section_depth) + r'[^\[]'
                 end = r'\]' * section_depth
                 name = upgrade["old"][-1]
                 regex = re.compile(fr'{start}\s*{name}\s*{end}')
@@ -456,9 +455,9 @@ def main(parser: COP, options: 'Values', *targets) -> None:
         check_flow_file(target)
 
     # Get a list of checks bas ed on the checking options:
-    count = 0
     # Allow us to check any number of folders at once
     for target in targets:
+        count = 0
         target = Path(target)
         if not target.exists():
             LOG.warn(f'Path {target} does not exist.')
