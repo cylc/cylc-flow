@@ -475,7 +475,7 @@ def main(parser: COP, options: 'Values', *targets) -> None:
                 )
                 continue
             elif not cylc8 and options.linter == 'all':
-                check_names = parse_checks('style')
+                check_names = 'style'
             else:
                 check_names = options.linter
 
@@ -490,23 +490,17 @@ def main(parser: COP, options: 'Values', *targets) -> None:
                     options.inplace,
                 )
 
-        # Summing up:
-        if options.linter == 'all':
-            checks_done = "728 & style"
-        else:
-            checks_done = options.linter
-
         if count > 0:
             msg = (
                 f'\n{Fore.YELLOW}'
-                f'Checked {target} against {checks_done} '
+                f'Checked {target} against {check_names} checks'
                 f'rules and found {count} issue'
                 f'{"s" if count > 1 else ""}.'
             )
         else:
             msg = (
                 f'{Fore.GREEN}'
-                f'Checked {target} against {checks_done} '
+                f'Checked {target} against {check_names} checks'
                 'Found no issues.'
             )
 
