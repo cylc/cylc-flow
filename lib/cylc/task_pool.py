@@ -358,7 +358,10 @@ class TaskPool(object):
         except Exception:
             LOG.exception('could not load task %s' % name)
         else:
-            if status in (TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING):
+            if status in (
+                TASK_STATUS_SUBMITTED, TASK_STATUS_RUNNING, TASK_STATUS_FAILED,
+                TASK_STATUS_SUCCEEDED
+            ):
                 itask.state.set_prerequisites_all_satisfied()
                 # update the task proxy with user@host
                 try:
@@ -374,7 +377,7 @@ class TaskPool(object):
                 if timeout is not None:
                     itask.timeout = timeout
 
-            elif status in (TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED):
+            elif status in (TASK_STATUS_SUBMIT_FAILED):
                 itask.state.set_prerequisites_all_satisfied()
 
             elif status in (TASK_STATUS_QUEUED, TASK_STATUS_READY):
@@ -383,9 +386,6 @@ class TaskPool(object):
                 itask.state.set_prerequisites_all_satisfied()
 
             elif status in (TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING):
-                itask.state.set_prerequisites_all_satisfied()
-
-            elif status == TASK_STATUS_SUCCEEDED:
                 itask.state.set_prerequisites_all_satisfied()
 
             itask.state.reset_state(status)
