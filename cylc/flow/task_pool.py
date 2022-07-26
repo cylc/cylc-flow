@@ -455,6 +455,8 @@ class TaskPool:
             elif status == TASK_STATUS_PREPARING:
                 # put back to be readied again.
                 status = TASK_STATUS_WAITING
+                # Re-prepare same submit.
+                itask.submit_num -= 1
 
             # Running or finished task can have completed custom outputs.
             if itask.state(
@@ -466,7 +468,7 @@ class TaskPool:
                     itask.state.outputs.set_completion(message, True)
                     self.data_store_mgr.delta_task_output(itask, message)
 
-            if platform_name:
+            if platform_name and status != TASK_STATUS_WAITING:
                 itask.summary['platforms_used'][
                     int(submit_num)] = platform_name
             LOG.info(

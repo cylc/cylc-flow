@@ -77,7 +77,6 @@ from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
-    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -100,7 +99,7 @@ from cylc.flow.wallclock import (
 )
 
 if TYPE_CHECKING:
-    from cylc.flow.cyclers import PointBase
+    from cylc.flow.cycling import PointBase
 
 
 EDGES = 'edges'
@@ -150,7 +149,6 @@ DELTAS_MAP = {
 DELTA_FIELDS = {DELTA_ADDED, DELTA_UPDATED, DELTA_PRUNED}
 
 JOB_STATUSES_ALL = [
-    TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING,
@@ -1162,7 +1160,7 @@ class DataStoreMgr:
             return
 
         if status not in JOB_STATUS_SET:
-            status = TASK_STATUS_PREPARING
+            return
 
         j_buf = PbJob(
             stamp=f'{j_id}@{update_time}',
@@ -1244,7 +1242,7 @@ class DataStoreMgr:
             else:
                 status = TASK_STATUS_SUBMIT_FAILED
         else:
-            status = TASK_STATUS_PREPARING
+            return
 
         try:
             update_time = time()

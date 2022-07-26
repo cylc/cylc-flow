@@ -39,6 +39,7 @@ Examples:
 import argparse
 import json
 import sys
+from typing import Callable, Optional, Tuple, Type
 
 
 class Diff:
@@ -55,12 +56,14 @@ class Diff:
         self.that_name = that_name
 
     @classmethod
-    def _diff_method(cls, this, that):
+    def _diff_method(
+        cls, this: object, that: object
+    ) -> Tuple[Optional[Type], Optional[Callable]]:
         if isinstance(this, list) and isinstance(that, list):
             return list, cls.diff_list
         if isinstance(this, dict) and isinstance(that, dict):
             return dict, cls.diff_dict
-        return None
+        return None, None
 
     @classmethod
     def compute_diff(cls, this, that):
@@ -133,7 +136,7 @@ class Diff:
         for key, value in that.items():
             if key not in this:
                 changed.append(('+', (key, value)))
-            elif isinstance(value, dict) or isinstance(value, list):
+            elif isinstance(value, (dict, list)):
                 if cls._diff_method(this[key], that[key]):
                     this[key] = cls(this[key], that[key])
                     if this[key].changed:
