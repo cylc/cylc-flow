@@ -22,29 +22,13 @@ Checks code style, deprecated syntax and other issues."""
 
 COP_DOC = """cylc lint [OPTIONS] ARGS
 
-Cylc lint looks through one or more folders for ".cylc" and ".rc"
-files.
+Check .cylc and .rc files for code style, deprecated syntax and other issues.
 
-Checks code style, deprecated syntax and other issues.
+By default, suggestions are written to stdout.
 
-Can be run either as a linter or "in place" ("-i"), leaving comments
-in files.
+In-place mode ( "-i, --inplace") writes suggestions into the file as comments.
+Commit to version control before using this, in case you want to back out.
 
-When run with "-i" ("--inplace") mode this will alter your files.
-We strongly recommend committing your workflow to version control
-before using "cylc lint -i".
-
-Examples:
-  # run as a linter
-  $ cylc lint <paths to workflow directories to check>
-
-  # run inplace
-  $ cylc lint --inplace <paths to workflow directories to check>
-  $ cylc lint -i <paths to workflow directories to check>
-
-  # Get information about errors:
-  $ cylc lint --reference
-  $ cylc lint -R
 """
 from colorama import Fore
 from optparse import Values

@@ -21,7 +21,7 @@
 set_test_number 11
 
 cat > flow.cylc <<__HERE__
-# This is definately not an OK flow.cylc file.
+# This is definitely not an OK flow.cylc file.
 {{FOO}}
 [[visualization]]
 __HERE__
