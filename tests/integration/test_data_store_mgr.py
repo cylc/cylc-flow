@@ -330,12 +330,27 @@ def ghost_job_db(request: pytest.FixtureRequest):
 
 
 async def test_ghost_job(
-    flow, one_conf, scheduler, run, ghost_job_db, db_select, gql_query
+    flow, scheduler, run, ghost_job_db, db_select, gql_query
 ):
     """Test restarting when there is a "ghost job" in the DB
     (has a submit_time in task_jobs table but no submit_exit_time or run_time)
     """
-    reg = flow(one_conf)
+    flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'graph': {
+                'R1': 'one'
+            }
+        },
+        'runtime': {
+            'one': {
+                'script': 'cylc pause $CYLC_WORKFLOW_ID;sleep 3'
+            }
+        }
+    }
+    reg = flow(flow_def)
     ghost_job_db(get_workflow_srv_dir(reg))
     schd: Scheduler = scheduler(reg, paused_start=True)
 
@@ -343,7 +358,8 @@ async def test_ghost_job(
 
     async with run(schd):
         client = WorkflowRuntimeClient(reg)
-        await asyncio.sleep(1)  # yields control to main loop
+        # yield control to main loop.
+        await asyncio.sleep(1.8)
 
         # There will be 1 ghost job in DB:
         assert db_select(
@@ -363,20 +379,22 @@ async def test_ghost_job(
         ''') == {'jobs': []}
 
         schd.resume_workflow()
-        await asyncio.sleep(1)  # yields control to main loop
+
+        # yield control to main loop.
+        await asyncio.sleep(2.0)
 
         # Job should now be in data store:
-        # assert await gql_query(client, '''
-        #     jobs {
-        #         cyclePoint, name, submitNum
-        #     }
-        # ''') == {
-        #     'jobs': [{
-        #         'cyclePoint': '1',
-        #         'name': 'one',
-        #         'submitNum': 1
-        #     }]
-        # }
+        assert await gql_query(client, '''
+            jobs {
+                cyclePoint, name, submitNum
+            }
+        ''') == {
+            'jobs': [{
+                'cyclePoint': '1',
+                'name': 'one',
+                'submitNum': 1
+            }]
+        }
         # Job should have same submit number in DB:
         assert db_select(
             schd, False, DAO.TABLE_TASK_JOBS, *db_columns
