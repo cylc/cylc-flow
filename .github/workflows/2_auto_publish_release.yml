@@ -39,7 +39,7 @@ jobs:
       uses: cylc/release-actions/build-python-package@v1
 
     - name: Publish distribution to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.5.0
+      uses: pypa/gh-action-pypi-publish@v1.5.1
       with:
         user: __token__ # uses the API token feature of PyPI - least permissions possible
         password: ${{ secrets.PYPI_TOKEN }}
