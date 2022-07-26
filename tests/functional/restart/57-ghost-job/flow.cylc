@@ -1,0 +1,23 @@
+[scheduling]
+    [[graph]]
+        R1 = foo
+[runtime]
+    [[foo]]
+        # This task checks for its job in the data store and outputs it to file
+        script = """
+            set +e  # (read exits 1 for some reason)
+            read -r -d '' gqlQuery << _args_
+            {
+              "request_string": "
+            query {
+              workflows(ids: [\"${CYLC_WORKFLOW_ID}\"]) {
+                jobs {
+                  cyclePoint, name, submitNum
+                }
+              }
+            }"
+            }
+            _args_
+            set -e
+            cylc client "$CYLC_WORKFLOW_ID" graphql < <(echo $gqlQuery) > gqlResponse.json
+        """

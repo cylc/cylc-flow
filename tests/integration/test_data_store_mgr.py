@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
-from pathlib import Path
-import sqlite3
 import pytest
 from typing import TYPE_CHECKING
 
@@ -27,15 +24,12 @@ from cylc.flow.data_store_mgr import (
     TASK_PROXIES,
     WORKFLOW
 )
-from cylc.flow.network.client import WorkflowRuntimeClient
-from cylc.flow.rundb import CylcWorkflowDAO as DAO
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
 from cylc.flow.wallclock import get_current_time_string
-from cylc.flow.workflow_files import WorkflowFiles, get_workflow_srv_dir
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -309,99 +303,3 @@ def test_delta_task_prerequisite(harness):
         p.satisfied
         for t in schd.data_store_mgr.updated[TASK_PROXIES].values()
         for p in t.prerequisites})
-
-
-@pytest.fixture
-def ghost_job_db(request: pytest.FixtureRequest):
-    """Provide workflow DB for "ghost job" test."""
-    db_dump = (
-        request.path.parent / 'fixture-data' / 'ghost-job.sqlite3'
-    ).read_text()
-
-    def _ghost_job_db(srv_dir_path):
-        srv_dir_path = Path(srv_dir_path)
-        srv_dir_path.mkdir(parents=True, exist_ok=True)
-        con = sqlite3.connect(srv_dir_path / WorkflowFiles.Service.DB)
-        cur = con.cursor()
-        cur.executescript(db_dump)
-        con.close()
-
-    return _ghost_job_db
-
-
-async def test_ghost_job(
-    flow, scheduler, run, ghost_job_db, db_select, gql_query
-):
-    """Test restarting when there is a "ghost job" in the DB
-    (has a submit_time in task_jobs table but no submit_exit_time or run_time)
-    """
-    flow_def = {
-        'scheduler': {
-            'allow implicit tasks': True
-        },
-        'scheduling': {
-            'graph': {
-                'R1': 'one'
-            }
-        },
-        'runtime': {
-            'one': {
-                'script': 'cylc pause $CYLC_WORKFLOW_ID;sleep 3'
-            }
-        }
-    }
-    reg = flow(flow_def)
-    ghost_job_db(get_workflow_srv_dir(reg))
-    schd: Scheduler = scheduler(reg, paused_start=True)
-
-    db_columns = ('cycle', 'name', 'submit_num')
-
-    async with run(schd):
-        client = WorkflowRuntimeClient(reg)
-        # yield control to main loop.
-        await asyncio.sleep(1.8)
-
-        # There will be 1 ghost job in DB:
-        assert db_select(
-            schd, False, DAO.TABLE_TASK_JOBS, *db_columns
-        ) == [
-            ('1', 'one', 1)
-        ]
-        # Get submit timestamp for that job:
-        orig_submit_time = db_select(
-            schd, False, DAO.TABLE_TASK_JOBS, 'time_submit'
-        )[0][0]
-        # Ghost job should not be in data store:
-        assert await gql_query(client, '''
-            jobs {
-                cyclePoint, name, submitNum
-            }
-        ''') == {'jobs': []}
-
-        schd.resume_workflow()
-
-        # yield control to main loop.
-        await asyncio.sleep(2.0)
-
-        # Job should now be in data store:
-        assert await gql_query(client, '''
-            jobs {
-                cyclePoint, name, submitNum
-            }
-        ''') == {
-            'jobs': [{
-                'cyclePoint': '1',
-                'name': 'one',
-                'submitNum': 1
-            }]
-        }
-        # Job should have same submit number in DB:
-        assert db_select(
-            schd, False, DAO.TABLE_TASK_JOBS, *db_columns
-        ) == [
-            ('1', 'one', 1)
-        ]
-        # Job should have new submit timestamp:
-        assert db_select(
-            schd, False, DAO.TABLE_TASK_JOBS, 'time_submit'
-        )[0][0] != orig_submit_time
