@@ -106,6 +106,7 @@ TEST_FILE = """
             submission timeout handler = faiuhdf
             submission retry handler = vhbayhrbfgau
             submission failed handler = giaSEHFUIHJ
+            failed handler = woo
             execution timeout handler = sdfghjkl
             expired handler = dafuhj
             late handler = dafuhj
@@ -320,5 +321,5 @@ def test_get_upg_info(fixture_get_deprecations, findme):
         pattern = f'\\[\\s*{findme.strip("[").strip("]")}\\s*\\]\\s*$'
         assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
     else:
-        pattern = f'{findme}\\s*=\\s*.*'
+        pattern = f'^\\s*{findme}\\s*=\\s*.*'
         assert pattern in [i.pattern for i in fixture_get_deprecations.keys()]
