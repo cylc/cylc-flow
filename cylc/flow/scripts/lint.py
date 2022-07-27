@@ -221,7 +221,7 @@ def get_upgrader_info():
                 regex = re.compile(fr'{start}\s*{name}\s*{end}\s*$')
             else:
                 name = upgrade["old"][-1]
-                expr = rf'{name}\s*=\s*.*'
+                expr = rf'^\s*{name}\s*=\s*.*'
                 regex = re.compile(expr)
 
             deprecations[regex] = {
