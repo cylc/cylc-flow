@@ -492,7 +492,7 @@ def main(parser: COP, options: 'Values', *targets) -> None:
         if count > 0:
             msg = (
                 f'\n{Fore.YELLOW}'
-                f'Checked {target} against {check_names} checks'
+                f'Checked {target} against {check_names} checks '
                 f'rules and found {count} issue(s).'
                 f'{"s" if count > 1 else ""}.'
             )
