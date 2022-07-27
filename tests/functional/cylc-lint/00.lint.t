@@ -63,6 +63,6 @@ __HERE__
 
 TEST_NAME="${TEST_NAME_BASE}.zero-issues"
 run_ok "${TEST_NAME}" cylc lint
-named_grep_ok "message on no errors" "Found no issues" "${TEST_NAME}.stdout"
+named_grep_ok "message on no errors" "found no issues" "${TEST_NAME}.stdout"
 
 rm flow.cylc
