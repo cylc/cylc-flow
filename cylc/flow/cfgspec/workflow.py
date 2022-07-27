@@ -1704,7 +1704,7 @@ def upg(cfg, descr):
     u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
     u.obsolete('8.0.0', ['cylc', 'force run mode'])
     u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
-    u.obsolete('8.0.0', ['cylc', 'authentication'])
+    u.obsolete('8.0.0', ['cylc', 'authentication'], is_section=True)
     u.obsolete('8.0.0', ['cylc', 'include at start-up'])
     u.obsolete('8.0.0', ['cylc', 'exclude at start-up'])
     u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
@@ -1721,13 +1721,13 @@ def upg(cfg, descr):
     )
     u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
     u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
-    u.obsolete('8.0.0', ['cylc', 'environment'])
+    u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True)
     u.obsolete('8.0.0', ['cylc', 'reference test'])
     u.obsolete(
         '8.0.0',
         ['cylc', 'simulation', 'disable suite event handlers'])
-    u.obsolete('8.0.0', ['cylc', 'simulation'])
-    u.obsolete('8.0.0', ['visualization'])
+    u.obsolete('8.0.0', ['cylc', 'simulation'], is_section=True)
+    u.obsolete('8.0.0', ['visualization'], is_section=True)
     u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points']),
     u.deprecate(
         '8.0.0',
@@ -1740,12 +1740,14 @@ def upg(cfg, descr):
         ['cylc', 'parameters'],
         ['task parameters'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
         ['task parameters', 'templates'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
@@ -1802,6 +1804,7 @@ def upg(cfg, descr):
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True
     )
 
     for job_setting in [
@@ -1875,6 +1878,7 @@ def upg(cfg, descr):
         ['cylc'],
         ['scheduler'],
         silent=cylc.flow.flags.cylc7_back_compat,
+        is_section=True,
     )
     u.upgrade()
 
@@ -1883,6 +1887,8 @@ def upg(cfg, descr):
 
     warn_about_depr_platform(cfg)
     warn_about_depr_event_handler_tmpl(cfg)
+
+    return u
 
 
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
