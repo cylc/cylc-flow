@@ -508,4 +508,4 @@ def main(parser: COP, options: 'Values', *targets) -> None:
 
 # NOTE: use += so that this works with __import__
 # (docstring needed for `cylc help all` output)
-__doc__ += get_reference_text(parse_checks('all'))
+__doc__ += get_reference_rst(parse_checks('all'))
