@@ -54,8 +54,8 @@ def generate_graph_children(tdef, point):
                     graph_children[output].append((name, child_point, is_abs))
                 else:
                     LOG.warning(
-                        f"{tdef.name}.{point}: ignoring child on invalid"
-                        f" cycle point: {name}.{child_point}"
+                        f"Not spawning {point}/{tdef.name}: invalid cycle"
+                        f" point for {tdef.name}"
                     )
 
     if tdef.sequential:

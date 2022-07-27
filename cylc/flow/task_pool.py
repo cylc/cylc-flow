@@ -1429,8 +1429,8 @@ class TaskPool:
         # Spawn if on-sequence and within recurrence bounds.
         taskdef = self.config.get_taskdef(name)
         if not taskdef.is_valid_point(point):
-            LOG.debug(
-                f"Not spawning attempt {name}.{point}: invalid cycle point"
+            LOG.warning(
+                f"Not spawning {point}/{name}: invalid cycle point for {name}"
             )
             return None
 
