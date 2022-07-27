@@ -26,7 +26,7 @@ a workflow matches the version this script is run with.
 Note:
   Cylc supports multiple parallel installations at different versions via the
   Cylc wrapper script. For more information see the installation section of the
-  documemtation.
+  documentation.
 
 Use -v/--verbose to see the command invoked to determine the remote version
 (all remote Cylc command invocations will be of the same form, which may be
