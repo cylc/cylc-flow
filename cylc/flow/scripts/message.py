@@ -53,15 +53,16 @@ Examples:
 Note "${CYLC_WORKFLOW_ID}" and "${CYLC_TASK_JOB}" are available in task job
 environments - you do not need to write their actual values in task scripting.
 
-Each message can be prefixed with a severity level using the syntax 'SEVERITY:
-MESSAGE' (colons cannot be used unless such a prefix is provided).
+Each message can be prefixed with a severity level using the syntax
+'SEVERITY:MESSAGE' (colons cannot be used unless such a prefix is provided).
 
 The default message severity is INFO. The --severity=SEVERITY option can be
 used to set the default severity level for all unprefixed messages.
 
-Note: to abort a job script with a custom error message, use cylc__job_abort:
-  cylc__job_abort 'message...'
-(For technical reasons this is a shell function, not a cylc sub-command.)
+Note:
+  To abort a job script with a custom error message, use cylc__job_abort:
+    cylc__job_abort 'message...'
+  (For technical reasons this is a shell function, not a cylc sub-command).
 
 For backward compatibility, if number of arguments is less than or equal to 2,
 the command assumes the classic interface, where all arguments are messages.

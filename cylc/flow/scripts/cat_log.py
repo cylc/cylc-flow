@@ -49,7 +49,7 @@ Examples:
   $ cylc cat-log -f o foo//2020/bar
 
   # Print task stderr:
-  $cylc cat-log -f e foo//2020/bar
+  $ cylc cat-log -f e foo//2020/bar
 """
 
 import os

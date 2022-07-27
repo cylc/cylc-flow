@@ -20,8 +20,8 @@
 
 Artificially satisfy task outputs.
 
-Mark task outputs as completed and spawn downstream tasks that
-depend on those outputs. By default it marks tasks as succeeded.
+Mark task outputs as completed and spawn downstream tasks that depend on those
+outputs. By default it marks tasks as succeeded.
 
 This allows you to manually intervene with Cylc's scheduling algorithm by
 artificially satisfying outputs of tasks.
