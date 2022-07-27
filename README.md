@@ -26,12 +26,11 @@ forecasting - which is notorious for the size and complexity of its workflows.
 [![JOSS](http://joss.theoj.org/papers/10.21105/joss.00737/status.svg)](https://doi.org/10.21105/joss.00737)
 [![CISE](https://img.shields.io/website/https/ieeexplore.ieee.org/document/8675433.svg?color=orange&label=CISE&up_message=10.1109%2FMCSE.2019.2906593)](https://ieeexplore.ieee.org/document/8675433)
 
-### Cylc 7 (production)
+### Cylc 7 (legacy)
 
 ![python](https://img.shields.io/badge/python-2.6%20%7C%202.7-orange)
 [![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Fstable%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/stable/html/index.html)
 
-* Production ready.
 * HTTPS network layer.
 * PyGTK GUI.
 * On the `7.8.x` branch in the source code.
@@ -42,21 +41,19 @@ forecasting - which is notorious for the size and complexity of its workflows.
 [Website](https://cylc.github.io/) |
 [Documentation](https://cylc.github.io/documentation)
 
-### Cylc 8 (release candidate)
+### Cylc 8 (production)
 
 ![PyPI](https://img.shields.io/pypi/pyversions/cylc-flow.svg?color=green)
 [![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
 [![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Flatest%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/latest/html/index.html)
 
-* Pre-release for user acceptance testing.
 * ZMQ (TCP) network layer.
 * Text-based terminal user interface (TUI).
 * Optional web-based graphical user interface (GUI) provided by ([cylc-uiserver](https://github.com/cylc/cylc-uiserver)).
 * On the `master` branch in the source code.
 
-The first official Cylc 8 release will follow the stabilisation of the release candidates. Until then we recommend the latest
-Cylc 7 versions for production use.
+Cylc 8 is now production-ready.
 
 [Installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) |
 [Documentation](https://cylc.github.io/cylc-doc/latest/html/index.html)
