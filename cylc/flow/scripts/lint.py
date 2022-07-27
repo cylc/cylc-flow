@@ -493,7 +493,8 @@ def main(parser: COP, options: 'Values', *targets) -> None:
             msg = (
                 f'\n{Fore.YELLOW}'
                 f'Checked {target} against {check_names} '
-                f'rules and found {count} issue(s).'
+                f'rules and found {count} issue'
+                f'{"s" if count > 1 else ""}.'
             )
         else:
             msg = (
