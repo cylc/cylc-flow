@@ -218,7 +218,9 @@ class TaskPool:
                     "time_created": now,
                     "time_updated": now,
                     "status": itask.state.status,
-                    "flow_nums": serialise(itask.flow_nums)
+                    "flow_nums": serialise(itask.flow_nums),
+                    "flow_wait": itask.flow_wait,
+                    "force_triggered": itask.is_manual_submit
                 }
             )
             # Add row to "task_outputs" table:
@@ -420,8 +422,9 @@ class TaskPool:
         if row_idx == 0:
             LOG.info("LOADING task proxies")
         # Create a task proxy corresponding to this DB entry.
-        (cycle, name, flow_nums, is_late, status, is_held, submit_num, _,
-         platform_name, time_submit, time_run, timeout, outputs_str) = row
+        (cycle, name, flow_nums, flow_wait, force_triggered, is_late, status,
+         is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
+         outputs_str) = row
         try:
             itask = TaskProxy(
                 self.config.get_taskdef(name),
@@ -430,7 +433,9 @@ class TaskPool:
                 status=status,
                 is_held=is_held,
                 submit_num=submit_num,
-                is_late=bool(is_late)
+                is_late=bool(is_late),
+                flow_wait = bool(flow_wait),
+                is_manual_submit = bool(force_triggered)
             )
         except WorkflowConfigError:
             LOG.exception(
@@ -1206,14 +1211,7 @@ class TaskPool:
             if c_task is not None and c_task != itask:
                 # (Avoid self-suicide: A => !A)
                 self.merge_flows(c_task, itask.flow_nums)
-                self.workflow_db_mgr.put_insert_task_states(
-                    c_task,
-                    {
-                        "status": c_task.state.status,
-                        "flow_nums": serialise(c_task.flow_nums)
-                    }
-                )
-                # self.workflow_db_mgr.process_queued_ops()
+                self.workflow_db_mgr.put_update_task_state(c_task)
             elif (
                 c_task is None
                 and (itask.flow_nums or forced)
