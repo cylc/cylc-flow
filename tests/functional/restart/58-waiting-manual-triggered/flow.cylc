@@ -1,0 +1,22 @@
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+[scheduling]
+    cycling mode = integer
+    runahead limit = P1
+    final cycle point = 3
+    [[graph]]
+        P1 = foo[-P1] => foo
+[runtime]
+    [[foo]]
+        script = """
+            if (( CYLC_TASK_CYCLE_POINT == 3 )); then
+                # Order a normal shutdown: no more job submissions, and shut
+                # down after active jobs (i.e. this one) finish.
+                cylc stop "$CYLC_WORKFLOW_ID"
+                # Force-trigger 2/foo before shutdown. On restart it should be
+                # in the waiting state with the force-triggered flag set.
+                cylc trigger "${CYLC_WORKFLOW_ID}//2/foo"
+            fi
+        """
