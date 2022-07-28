@@ -361,3 +361,6 @@ class TaskDef:
             or all(x < self.start_point for x in parent_points)
             or self.has_only_abs_triggers(point)
         )
+
+    def __repr__(self) -> str:
+        return f"<TaskDef {self.name}>"
