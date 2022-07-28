@@ -439,7 +439,7 @@ class WorkflowDatabaseManager:
             "time_updated": itask.state.time_updated,
             "status": itask.state.status,
             "flow_wait": itask.flow_wait,
-            "force_triggered": itask.is_manual_submit
+            "is_manual_submit": itask.is_manual_submit
         }
         where_args = {
             "cycle": str(itask.point),

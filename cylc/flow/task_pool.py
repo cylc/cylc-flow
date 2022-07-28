@@ -220,7 +220,7 @@ class TaskPool:
                     "status": itask.state.status,
                     "flow_nums": serialise(itask.flow_nums),
                     "flow_wait": itask.flow_wait,
-                    "force_triggered": itask.is_manual_submit
+                    "is_manual_submit": itask.is_manual_submit
                 }
             )
             # Add row to "task_outputs" table:
@@ -422,7 +422,7 @@ class TaskPool:
         if row_idx == 0:
             LOG.info("LOADING task proxies")
         # Create a task proxy corresponding to this DB entry.
-        (cycle, name, flow_nums, flow_wait, force_triggered, is_late, status,
+        (cycle, name, flow_nums, flow_wait, is_manual_submit, is_late, status,
          is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
          outputs_str) = row
         try:
@@ -435,7 +435,7 @@ class TaskPool:
                 submit_num=submit_num,
                 is_late=bool(is_late),
                 flow_wait=bool(flow_wait),
-                is_manual_submit=bool(force_triggered)
+                is_manual_submit=bool(is_manual_submit)
             )
         except WorkflowConfigError:
             LOG.exception(

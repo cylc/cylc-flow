@@ -297,7 +297,7 @@ class CylcWorkflowDAO:
             ["submit_num", {"datatype": "INTEGER"}],
             ["status"],
             ["flow_wait", {"datatype": "INTEGER"}],
-            ["force_triggered", {"datatype": "INTEGER"}],
+            ["is_manual_submit", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_TIMEOUT_TIMERS: [
             ["cycle", {"is_primary_key": True}],
@@ -812,7 +812,7 @@ class CylcWorkflowDAO:
                 %(task_pool)s.name,
                 %(task_pool)s.flow_nums,
                 %(task_states)s.flow_wait,
-                %(task_states)s.force_triggered,
+                %(task_states)s.is_manual_submit,
                 %(task_late_flags)s.value,
                 %(task_pool)s.status,
                 %(task_pool)s.is_held,
