@@ -434,8 +434,8 @@ class TaskPool:
                 is_held=is_held,
                 submit_num=submit_num,
                 is_late=bool(is_late),
-                flow_wait = bool(flow_wait),
-                is_manual_submit = bool(force_triggered)
+                flow_wait=bool(flow_wait),
+                is_manual_submit=bool(force_triggered)
             )
         except WorkflowConfigError:
             LOG.exception(
