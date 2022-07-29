@@ -118,7 +118,7 @@ past jobs to be omitted in the UI.
 
 [#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow validation
 now fails if
-[owner setting](https://cylc.github.io/cylc-doc/8.0.0/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
+[owner setting](https://cylc.github.io/cylc-doc/stable/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
 is used, as that setting no longer has any effect.
 
 [#4978](https://github.com/cylc/cylc-flow/pull/4978) - `cylc clean`: fix
@@ -247,7 +247,7 @@ Second Release Candidate for Cylc 8 suitable for acceptance testing.
 remote file installation is now configurable.
 
 [#4655](https://github.com/cylc/cylc-flow/pull/4655) - Enhancements to the
-provided [wrapper script](https://cylc.github.io/cylc-doc/8.0.0/html/installation.html#managing-environments).
+provided [wrapper script](https://cylc.github.io/cylc-doc/stable/html/installation.html#managing-environments).
 
 ### Fixes
 
