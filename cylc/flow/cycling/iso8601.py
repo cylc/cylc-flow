@@ -58,16 +58,16 @@ WARNING_PARSE_EXPANDED_YEAR_DIGITS = (
 class WorkflowSpecifics:
 
     """Store workflow-setup-specific constants and utilities here."""
-    ASSUMED_TIME_ZONE: Optional[Tuple[int, int]] = None
-    DUMP_FORMAT: Optional[str] = None
+    ASSUMED_TIME_ZONE: Tuple[int, int]
+    DUMP_FORMAT: str
+    abbrev_util: CylcTimeParser
+    interval_parser: 'DurationParser'
+    point_parser: 'TimePointParser'
+    recurrence_parser: 'TimeRecurrenceParser'
+    iso8601_parsers: Tuple[
+        'TimePointParser', 'DurationParser', 'TimeRecurrenceParser'
+    ]
     NUM_EXPANDED_YEAR_DIGITS: int = 0
-    abbrev_util: Optional[CylcTimeParser] = None
-    interval_parser: 'DurationParser' = None
-    point_parser: 'TimePointParser' = None
-    recurrence_parser: 'TimeRecurrenceParser' = None
-    iso8601_parsers: Optional[
-        Tuple['TimePointParser', 'DurationParser', 'TimeRecurrenceParser']
-    ] = None
 
 
 class ISO8601Point(PointBase):
@@ -685,10 +685,8 @@ def ingest_time(value: str, now: Optional[str] = None) -> str:
     if offset is not None:
         # add/subtract offset duration to/from chosen timepoint
         duration_parser = WorkflowSpecifics.interval_parser
-
         offset = offset.replace('+', '')
-        offset = duration_parser.parse(offset)
-        cycle_point += offset
+        cycle_point += duration_parser.parse(offset)
 
     return str(cycle_point)
 

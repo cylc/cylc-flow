@@ -30,7 +30,7 @@ time for inter-cycle task references such as "foo[-P6Y] => foo".
 """
 
 import re
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Pattern, Tuple, Union, cast
 
 from metomi.isodatetime.data import Duration, TimeRecurrence
 from metomi.isodatetime.exceptions import IsodatetimeError
@@ -75,7 +75,7 @@ class CylcTimeParser:
           "'T00'?"))
     ]
 
-    RECURRENCE_FORMAT_REGEXES = [
+    RECURRENCE_FORMAT_REGEXES: List[Tuple[Pattern, int]] = [
         (re.compile(r"^(?P<start>[^PR/][^/]*)$"), 3),
         (re.compile(r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/]"
                     "[^/]*)$"), 1),
@@ -222,8 +222,8 @@ class CylcTimeParser:
             repetitions = result.groupdict().get("reps")
             if repetitions is not None:
                 repetitions = int(repetitions)
-            start = result.groupdict().get("start")
-            end = result.groupdict().get("end")
+            start: Optional[str] = result.groupdict().get("start")
+            end: Optional[str] = result.groupdict().get("end")
             start_required = (format_num in {1, 3})
             end_required = (format_num in {1, 4})
             start_point, start_offset = self._get_point_from_expression(
@@ -290,7 +290,9 @@ class CylcTimeParser:
                 # isodatetime only reverses bounded end-point recurrences.
                 # This is unbounded, and will come back in reverse order.
                 # We need to reverse it.
-                start_point = end_point
+                start_point = cast(  # (end pt can't be None if start is None)
+                    'TimePoint', end_point
+                )
                 repetitions = 1
                 while start_point > context_start_point:
                     start_point -= interval
@@ -355,7 +357,7 @@ class CylcTimeParser:
     def _get_min_from_expression(
         self,
         expr: str,
-        context: 'TimePoint'
+        context: Optional['TimePoint']
     ) -> str:
         points: List[str] = [
             x.strip() for x in re.findall(self.MIN_REGEX, expr)[0].split(",")
@@ -370,15 +372,15 @@ class CylcTimeParser:
                     cpoint += context
                 if offset is not None:
                     cpoint += offset
-            ptslist.append(cpoint)
-            if cpoint == min(ptslist):
-                min_entry = point
+                ptslist.append(cpoint)
+                if cpoint == min(ptslist):
+                    min_entry = point
         return min_entry
 
     def _get_point_from_expression(
         self,
         expr: Optional[str],
-        context: 'TimePoint',
+        context: Optional['TimePoint'],
         is_required: bool = False,
         allow_truncated: bool = False
     ) -> Tuple[Optional['TimePoint'], Optional[Duration]]:
