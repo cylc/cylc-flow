@@ -56,6 +56,9 @@ Maintenance release.
 
 ### Fixes
 
+[#5025](https://github.com/cylc/cylc-flow/pull/5025) - Fix a bug where polling
+causes a failed task to be shown as submitted when the workflow is reloaded.
+
 [#5045](https://github.com/cylc/cylc-flow/pull/5045) -
 Fix issue where unsatisfied xtriggers could be wiped on reload.
 
