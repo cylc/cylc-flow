@@ -267,6 +267,10 @@ async def test_filter_task_proxies_hidden(
             id="Name glob"
         ),
         param(
+            ['3'], ['3/foo', '3/bar', '3/asd'], [],
+            id="No name"
+        ),
+        param(
             ['2/FAM'], ['2/bar'], [],
             id="Family name"
         ),
