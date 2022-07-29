@@ -1574,7 +1574,7 @@ def test_check_flow_file(
             "Both flow.cylc and suite.rc files are present in "
             f"{tmp_path}. Please remove one and try again. "
             "For more information visit: "
-            "https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html"
+            "https://cylc.github.io/cylc-doc/stable/html/7-to-8/summary.html"
             "#backward-compatibility"
         )
 
@@ -1594,7 +1594,7 @@ def test_detect_both_flow_and_suite(tmp_path):
     assert str(exc.value) == (
         f"Both flow.cylc and suite.rc files are present in {tmp_path}. Please "
         "remove one and try again. For more information visit: "
-        "https://cylc.github.io/cylc-doc/latest/html/7-to-8/"
+        "https://cylc.github.io/cylc-doc/stable/html/7-to-8/"
         "summary.html#backward-compatibility"
     )
 

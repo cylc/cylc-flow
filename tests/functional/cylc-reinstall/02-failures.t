@@ -68,7 +68,7 @@ run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
 WorkflowFilesError: Both flow.cylc and suite.rc files are present in ${RND_WORKFLOW_SOURCE}. \
 Please remove one and try again. For more information visit: \
-https://cylc.github.io/cylc-doc/latest/html/7-to-8/summary.html#backward-compatibility
+https://cylc.github.io/cylc-doc/stable/html/7-to-8/summary.html#backward-compatibility
 __ERR__
 purge_rnd_workflow
 
