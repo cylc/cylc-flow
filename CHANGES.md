@@ -19,9 +19,9 @@ release.
   * `rose suite-run` -> `cylc install; cylc play <id>`
 * The core package containing Cylc scheduler program has been renamed cylc-flow.
 * Cylc review has been removed, the Cylc 7 version remains Cylc 8 compatible.
-* [New documentation](https://cylc.github.io/cylc-doc/latest).
+* [New documentation](https://cylc.github.io/cylc-doc/stable).
 
-See the [migration guide](https://cylc.github.io/cylc-doc/latest/html/7-to-8/index.html) for a full list of changes.
+See the [migration guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html) for a full list of changes.
 
 <!-- The topmost release date is automatically updated by GitHub Actions. When
 creating a new release entry be sure to copy & paste the span tag with the
@@ -118,7 +118,7 @@ past jobs to be omitted in the UI.
 
 [#4860](https://github.com/cylc/cylc-flow/pull/4860) - Workflow validation
 now fails if
-[owner setting](https://cylc.github.io/cylc-doc/latest/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
+[owner setting](https://cylc.github.io/cylc-doc/stable/html/reference/config/workflow.html#flow.cylc[runtime][%3Cnamespace%3E][remote]owner)
 is used, as that setting no longer has any effect.
 
 [#4978](https://github.com/cylc/cylc-flow/pull/4978) - `cylc clean`: fix
@@ -247,7 +247,7 @@ Second Release Candidate for Cylc 8 suitable for acceptance testing.
 remote file installation is now configurable.
 
 [#4655](https://github.com/cylc/cylc-flow/pull/4655) - Enhancements to the
-provided [wrapper script](https://cylc.github.io/cylc-doc/latest/html/installation.html#managing-environments).
+provided [wrapper script](https://cylc.github.io/cylc-doc/stable/html/installation.html#managing-environments).
 
 ### Fixes
 

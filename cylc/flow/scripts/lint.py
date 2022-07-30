@@ -46,10 +46,10 @@ from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import check_flow_file
 
 STYLE_GUIDE = (
-    'https://cylc.github.io/cylc-doc/latest/html/workflow-design-guide/'
+    'https://cylc.github.io/cylc-doc/stable/html/workflow-design-guide/'
     'style-guide.html#'
 )
-URL_STUB = "https://cylc.github.io/cylc-doc/latest/html/7-to-8/"
+URL_STUB = "https://cylc.github.io/cylc-doc/stable/html/7-to-8/"
 SECTION2 = r'\[\[\s*{}\s*\]\]'
 SECTION3 = r'\[\[\[\s*{}\s*\]\]\]'
 FILEGLOBS = ['*.rc', '*.cylc']

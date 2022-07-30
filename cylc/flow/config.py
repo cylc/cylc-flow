@@ -2076,7 +2076,7 @@ class WorkflowConfig:
             LOG.warning(
                 f"{suicides} suicide trigger(s) detected. These are rarely "
                 "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
-                "latest/html/7-to-8/major-changes/suicide-triggers.html"
+                "stable/html/7-to-8/major-changes/suicide-triggers.html"
             )
 
     def set_required_outputs(
@@ -2340,7 +2340,7 @@ class WorkflowConfig:
             # https://github.com/cylc/cylc-flow/issues/4663
             msg = (
                 '"[runtime][task][remote]owner" is obsolete at Cylc 8.'
-                '\nsee https://cylc.github.io/cylc-doc/nightly/'
+                '\nsee https://cylc.github.io/cylc-doc/stable/'
                 'html/7-to-8/major-changes/remote-owner.html'
                 f'\nFirst {min(len(owners), 5)} tasks:'
             )

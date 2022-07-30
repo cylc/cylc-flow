@@ -29,7 +29,7 @@ forecasting - which is notorious for the size and complexity of its workflows.
 ### Cylc 7 (legacy)
 
 ![python](https://img.shields.io/badge/python-2.6%20%7C%202.7-orange)
-[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Fstable%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/stable/html/index.html)
+[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2F7.9.3%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/7.9.3/html/index.html)
 
 * HTTPS network layer.
 * PyGTK GUI.
@@ -37,8 +37,7 @@ forecasting - which is notorious for the size and complexity of its workflows.
 * 7.8 - Python 2.6
 * 7.9 - Python 2.7
 
-[Quick Installation](INSTALL.md) |
-[Website](https://cylc.github.io/) |
+[Installation](https://github.com/cylc/cylc-flow/blob/7.8.x/INSTALL.md) |
 [Documentation](https://cylc.github.io/documentation)
 
 ### Cylc 8 (production)
@@ -46,7 +45,7 @@ forecasting - which is notorious for the size and complexity of its workflows.
 ![PyPI](https://img.shields.io/pypi/pyversions/cylc-flow.svg?color=green)
 [![PyPI](https://img.shields.io/pypi/v/cylc-flow.svg?color=yellow)](https://pypi.org/project/cylc-flow/)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/cylc-flow/badges/version.svg)](https://anaconda.org/conda-forge/cylc-flow)
-[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Flatest%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/latest/html/index.html)
+[![Documentation](https://img.shields.io/website?label=documentation&up_message=live&url=https%3A%2F%2Fcylc.github.io%2Fcylc-doc%2Fstable%2Fhtml%2Findex.html)](https://cylc.github.io/cylc-doc/latest/html/index.html)
 
 * ZMQ (TCP) network layer.
 * Text-based terminal user interface (TUI).
@@ -55,8 +54,8 @@ forecasting - which is notorious for the size and complexity of its workflows.
 
 Cylc 8 is now production-ready.
 
-[Installation](https://cylc.github.io/cylc-doc/latest/html/installation.html) |
-[Documentation](https://cylc.github.io/cylc-doc/latest/html/index.html)
+[Installation](https://cylc.github.io/cylc-doc/stable/html/installation.html) |
+[Documentation](https://cylc.github.io/cylc-doc/stable/html/index.html)
 
 ### Copyright and Terms of Use
 

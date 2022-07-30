@@ -309,7 +309,7 @@ class CylcTimeParser:
                 LOG.warning(
                     f"The recurrence '{expression}' is unlikely to behave "
                     "the same way as in Cylc 7 as that implementation was "
-                    "incorrect (see https://cylc.github.io/cylc-doc/latest/"
+                    "incorrect (see https://cylc.github.io/cylc-doc/stable/"
                     "html/user-guide/writing-workflows/scheduling.html"
                     "#format-1-r-limit-datetime-datetime)"
                 )
