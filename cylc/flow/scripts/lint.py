@@ -16,7 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc configuration linter.
 
-Checks code style, deprecated syntax and other issues."""
+Checks code style, deprecated syntax and other issues.
+
+"""
 # NOTE: docstring needed for `cylc help all` output
 # (if editing check this still comes out as expected)
 
