@@ -691,7 +691,7 @@ with Conf(
             with Conf('default', meta=Queue, desc='''
                 The default queue for all tasks not assigned to other queues.
             '''):
-                Conf('limit', VDR.V_INTEGER, 0, desc='''
+                Conf('limit', VDR.V_INTEGER, 100, desc='''
                     Controls the total number of active tasks in the default
                     queue.
 
