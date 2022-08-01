@@ -29,6 +29,17 @@ creating a new release entry be sure to copy & paste the span tag with the
 updated. Only the first match gets replaced, so it's fine to leave the old
 ones in. -->
 -------------------------------------------------------------------------------
+## __cylc-8.0.1 (<span actions:bind='release-date'>Upcoming</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5031](https://github.com/cylc/cylc-flow/pull/5031) - Fix bug where
+specifying multiple datetime offsets (e.g. `final cycle point = +P1M-P1D`)
+would not obey the given order.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
 
 Cylc 8 production-ready release.
