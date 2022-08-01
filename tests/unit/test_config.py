@@ -42,6 +42,8 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUCCEEDED
 )
 
+from cylc.flow.cycling.iso8601 import ISO8601Point
+
 
 Fixture = Any
 
@@ -1393,6 +1395,35 @@ def test_zero_interval(
         assert logged
     else:
         assert not logged
+
+
+@pytest.mark.parametrize(
+    'icp, fcp_expr, expected_fcp',
+    [
+        ('2021-02-28', '+P1M+P1D', '2021-03-29'),
+        ('2019-02-28', '+P1D+P1M', '2019-04-01'),
+        ('2008-07-01', '+P1M-P1D', '2008-07-31'),
+        ('2004-07-01', '-P1D+P1M', '2004-07-30'),
+    ]
+)
+def test_chain_expr(
+    icp: str, fcp_expr: str, expected_fcp: str, tmp_flow_config: Callable,
+):
+    """Test a "chain expression" final cycle point offset works in the
+    given order."""
+    reg = 'osgiliath'
+    flow_file: Path = tmp_flow_config(reg, f"""
+        [scheduler]
+            UTC mode = True
+            allow implicit tasks = True
+        [scheduling]
+            initial cycle point = {icp}
+            final cycle point = {fcp_expr}
+            [[graph]]
+                P1D = faramir
+    """)
+    cfg = WorkflowConfig(reg, flow_file, options=ValidateOptions())
+    assert cfg.final_point == ISO8601Point(expected_fcp).standardise()
 
 
 @pytest.mark.parametrize(
