@@ -835,13 +835,8 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         if '' not in symlink_dirs:
             # if run dir isn't a symlink dir and hasn't been deleted yet
             remove_dir_and_target(run_dir)
-    # Tidy up if necessary
-    # Remove any empty parents of run dir up to ~/cylc-run/
-    remove_empty_parents(run_dir, reg)
-    for symlink, target in symlink_dirs.items():
-        # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
-        remove_empty_parents(target, Path(reg, symlink))
 
+    # Tidy up if necessary
     # Remove `runN` symlink if it's now broken
     runN = run_dir.parent / WorkflowFiles.RUN_N
     if (
@@ -850,6 +845,20 @@ def clean(reg: str, run_dir: Path, rm_dirs: Optional[Set[str]] = None) -> None:
         os.readlink(str(runN)) == run_dir.name
     ):
         runN.unlink()
+    # Remove _cylc-install if it's the only thing left
+    cylc_install_dir = run_dir.parent / WorkflowFiles.Install.DIRNAME
+    for entry in run_dir.parent.iterdir():
+        if entry == cylc_install_dir:
+            continue
+        break
+    else:  # no break
+        if cylc_install_dir.is_dir():
+            remove_dir_or_file(cylc_install_dir)
+    # Remove any empty parents of run dir up to ~/cylc-run/
+    remove_empty_parents(run_dir, reg)
+    for symlink, target in symlink_dirs.items():
+        # Remove empty parents of symlink target up to <symlink_dir>/cylc-run/
+        remove_empty_parents(target, Path(reg, symlink))
 
 
 def get_symlink_dirs(reg: str, run_dir: Union[Path, str]) -> Dict[str, Path]:
