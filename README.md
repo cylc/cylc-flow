@@ -37,7 +37,10 @@ cat > ~/cylc-src/example/flow.cylc <<__CONFIG__
     initial cycle point = 1
     cycling mode = integer
     [[graph]]
-        P1 = a => b[-P1] => c & d
+        P1 = """
+            a => b => c & d
+            b[-P1] => b
+        """
 [runtime]
     [[a, b, c, d]]
         script = echo "Hello $CYLC_TASK_NAME"
