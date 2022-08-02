@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from optparse import Values
-from typing import Any, Callable, Dict, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Optional, Tuple, Type, List
 from pathlib import Path
 import pytest
 import logging
@@ -24,8 +24,9 @@ from unittest.mock import Mock
 
 from cylc.flow import CYLC_LOG
 from cylc.flow.config import WorkflowConfig
-from cylc.flow.cycling import loader
+from cylc.flow.cycling import loader, PointBase, SequenceBase
 from cylc.flow.cycling.loader import INTEGER_CYCLING_TYPE, ISO8601_CYCLING_TYPE
+from cylc.flow.cycling.integer import IntegerSequence, IntegerPoint
 from cylc.flow.exceptions import (
     PointParsingError,
     InputError,
@@ -1439,3 +1440,45 @@ def test_check_for_owner(runtime_cfg):
     else:
         # Assert function doesn't raise if no owner set:
         assert WorkflowConfig.check_for_owner(runtime_cfg) is None
+
+
+@pytest.mark.parametrize(
+    ('sequences', 'final_point', 'expected_point'),
+    [
+        pytest.param(
+            [
+                IntegerSequence('R1', 1, 5),  # 1
+                IntegerSequence('P1', 1, 5),  # 1,2,3,4,5
+                IntegerSequence('R/P1!4', 1, 5)  # 1,2,3,5
+            ],
+            IntegerPoint(5),
+            IntegerPoint(4)
+        ),
+        pytest.param(
+            [
+                IntegerSequence('R1', 1, 5),  # 1
+                IntegerSequence('R/P1!4', 1, 5)  # 1,2,3,5
+            ],
+            IntegerPoint(5),
+            IntegerPoint(3)
+        ),
+        pytest.param(
+            [
+                IntegerSequence('R//P2', 1, 5),  # 1,3,5
+                IntegerSequence('R2/P1/5', 1, 5),  # 4,5
+            ],
+            IntegerPoint(5),
+            IntegerPoint(4)
+        )
+    ]
+)
+def test_get_second_to_last_point(
+    sequences: List[SequenceBase],
+    final_point: PointBase,
+    expected_point: PointBase
+) -> None:
+    assert (
+        WorkflowConfig.get_second_to_last_point(
+            sequences, final_point
+        ) == expected_point
+    )

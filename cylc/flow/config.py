@@ -463,7 +463,18 @@ class WorkflowConfig:
         self.mem_log("config.py: after load_graph()")
 
         self.process_runahead_limit()
-        self.find_second_to_last_point()
+
+        if self.cfg['scheduling']['isolate final cycle point']:
+            if self.final_point is None:
+                LOG.warning(
+                    "Ignoring 'isolate final cycle point = True'"
+                    " (this workflow has no final cycle point."
+                )
+            else:
+                self.second_to_last_point = (
+                    self.get_second_to_last_point(
+                        self.sequences, self.final_point)
+                )
 
         if self.run_mode('simulation', 'dummy'):
             self.configure_sim_modes()
@@ -770,17 +781,18 @@ class WorkflowConfig:
             stopcp_str = str(self.stop_point) if self.stop_point else None
             self.cfg['scheduling']['stop after cycle point'] = stopcp_str
 
-    def find_second_to_last_point(self) -> None:
-        """Check each sequence to find the second-to-last point."""
-        if not self.cfg['scheduling']['isolate final cycle point']:
-            # Don't bother if we're not going to isolate the final point.
-            return
+    @staticmethod
+    def get_second_to_last_point(
+        sequences: List['SequenceBase'],
+        final_point: 'PointBase'
+    ) -> 'PointBase':
+        """Check each sequence to find the second-to-last cycle point."""
         prev_points = set()
-        for sequence in self.sequences:
-            seq_point = sequence.get_prev_point(self.final_point)
+        for sequence in sequences:
+            seq_point = sequence.get_prev_point(final_point)
             if seq_point is not None:
                 prev_points.add(seq_point)
-        self.second_to_last_point = max(prev_points)
+        return max(prev_points)
 
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
