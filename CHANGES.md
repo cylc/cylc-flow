@@ -34,9 +34,12 @@ ones in. -->
 
 ### Enhancements
 
+[#5036](https://github.com/cylc/cylc-flow/pull/5036) - optional isolation of
+initial and final cycle point graphs, to simplify use of workflow preparation
+and clean-up tasks.
+
 [#5032](https://github.com/cylc/cylc-flow/pull/5032) - set a default limit of
 100 for the "default" queue.
-
 
 -------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__

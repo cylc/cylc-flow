@@ -468,7 +468,7 @@ class WorkflowConfig:
             if self.final_point is None:
                 LOG.warning(
                     "Ignoring 'isolate final cycle point = True'"
-                    " (this workflow has no final cycle point."
+                    " (this workflow has no final cycle point)."
                 )
             else:
                 self.second_to_last_point = (
