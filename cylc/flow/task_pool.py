@@ -324,7 +324,6 @@ class TaskPool:
         if not points:
             return False
         base_point = min(points)
-
         if self._prev_runahead_base_point is None:
             self._prev_runahead_base_point = base_point
 
@@ -387,16 +386,36 @@ class TaskPool:
             limit_point = sorted(points)[-1]
 
         # Adjust for future offset and stop point, if necessary.
-        pre_adj_limit = limit_point
+        orig_limit = limit_point
         if self.max_future_offset is not None:
             limit_point += self.max_future_offset
-            LOG.debug(f"{pre_adj_limit} -> {limit_point} (future offset)")
+            LOG.debug(f"{orig_limit} -> {limit_point} (future offset)")
         if self.stop_point and limit_point > self.stop_point:
             limit_point = self.stop_point
-            LOG.debug(f"{pre_adj_limit} -> {limit_point} (stop point)")
-        LOG.info(f"Runahead limit: {limit_point}")
+            LOG.debug(f"{orig_limit} -> {limit_point} (stop point)")
 
+        orig_limit = limit_point
+        if (
+            self.config.cfg["scheduling"]["isolate initial cycle point"]
+            and base_point <= self.config.initial_point
+            and limit_point > self.config.initial_point
+        ):
+            limit_point = self.config.initial_point
+            LOG.debug(
+                f"{orig_limit} -> {limit_point} (isolate initial point)")
+
+        orig_limit = limit_point
+        if (
+            self.config.second_to_last_point is not None
+            and base_point <= self.config.second_to_last_point
+            and limit_point > self.config.second_to_last_point
+        ):
+            limit_point = self.config.second_to_last_point
+            LOG.debug(f"{orig_limit} -> {limit_point} (isolate final point)")
+
+        LOG.info(f"Runahead limit: {limit_point}")
         self.runahead_limit_point = limit_point
+
         return True
 
     def update_flow_mgr(self):

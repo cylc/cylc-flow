@@ -215,6 +215,8 @@ class WorkflowConfig:
         self.task_param_vars = {}  # type: ignore # TODO figure out type
         self.runahead_limit: Optional['IntervalBase'] = None
 
+        self.second_to_last_point = None
+
         # runtime hierarchy dicts keyed by namespace name:
         self.runtime: Dict[str, dict] = {  # TODO figure out type
             # lists of parent namespaces
@@ -461,6 +463,7 @@ class WorkflowConfig:
         self.mem_log("config.py: after load_graph()")
 
         self.process_runahead_limit()
+        self.find_second_to_last_point()
 
         if self.run_mode('simulation', 'dummy'):
             self.configure_sim_modes()
@@ -766,6 +769,18 @@ class WorkflowConfig:
                 self.stop_point = None
             stopcp_str = str(self.stop_point) if self.stop_point else None
             self.cfg['scheduling']['stop after cycle point'] = stopcp_str
+
+    def find_second_to_last_point(self) -> None:
+        """Check each sequence to find the second-to-last point."""
+        if not self.cfg['scheduling']['isolate final cycle point']:
+            # Don't bother if we're not going to isolate the final point.
+            return
+        prev_points = set()
+        for sequence in self.sequences:
+            seq_point = sequence.get_prev_point(self.final_point)
+            if seq_point is not None:
+                prev_points.add(seq_point)
+        self.second_to_last_point = max(prev_points)
 
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or

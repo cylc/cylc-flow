@@ -580,6 +580,22 @@ with Conf(
                :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
 
         ''')
+        Conf('isolate initial cycle point', VDR.V_BOOLEAN, default=False,
+             desc='''
+            Don't run any later-cycle tasks until the first cycle is finished.
+            If True, tasks in later cycles do not need to depend explitly on
+            initial-cycle workflow preparation tasks.
+
+            .. versionadded:: 8.0.0
+        ''')
+        Conf('isolate final cycle point', VDR.V_BOOLEAN, default=False,
+             desc='''
+            Don't run any final-cycle tasks until all previous cycles have
+            finished. If True, final cycle clean-up tasks do not need to
+            depend explicitly on tasks in earlier cycles.
+
+            .. versionadded:: 8.0.0
+        ''')
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
