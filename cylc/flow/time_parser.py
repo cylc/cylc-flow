@@ -178,12 +178,13 @@ class CylcTimeParser:
     ) -> 'TimePoint':
         """Parse an expression in abbrev. or full ISO date/time format.
 
-        expr: a string such as 20010205T00Z, or a truncated/abbreviated format
-            string such as T06 or -P2Y.
-        context_point: supplies the missing information for truncated
-            expressions. E.g. for inter-cycle dependency expressions,
-            it should be the task cycle point.
-            If None, self.context_start_point is used.
+        Args:
+            expr: a string such as 20010205T00Z, or a truncated/abbreviated
+                format string such as T06 or -P2Y.
+            context_point: supplies the missing information for truncated
+                expressions. E.g. for inter-cycle dependency expressions,
+                it should be the task cycle point.
+                If None, self.context_start_point is used.
 
         """
         if context_point is None:
