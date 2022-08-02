@@ -1,0 +1,5 @@
+1/prep -triggered off [] in flow 1
+1/foo -triggered off ['1/prep'] in flow 1
+2/foo -triggered off [] in flow 1
+3/foo -triggered off [] in flow 1
+3/clean -triggered off ['3/foo'] in flow 1

@@ -1,0 +1,30 @@
+# Test optional isolation of initial and final cycle point graphs.
+[scheduler]
+    [[events]]
+        stall timeout = PT0S
+        abort on stall timeout = True
+[scheduling]
+    cycling mode = integer
+    final cycle point = 3
+    isolate initial cycle point = True
+    isolate final cycle point = True
+    [[graph]]
+        R1 = "prep => foo"
+        P1 = "foo"
+        R1/$ = "foo => clean"
+[runtime]
+    [[prep]]
+        script = "sleep 5"
+    [[foo]]
+        script = """
+            # No foo instance should start before prep is finished.
+            grep -s "1/prep running .* succeeded" "${CYLC_WORKFLOW_LOG_DIR}/log"
+            if ((CYLC_TASK_CYCLE_POINT == 1)); then
+                sleep 5
+            fi
+        """
+    [[clean]]
+        script = """
+            # Clean should not run before 1/foo is finished.
+            grep -s "1/foo running .* succeeded" "${CYLC_WORKFLOW_LOG_DIR}/log"
+        """
