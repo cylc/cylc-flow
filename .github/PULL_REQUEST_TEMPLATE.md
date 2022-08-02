@@ -1,27 +1,17 @@
-<!-- Complete this Pull Request template. -->
+<!--
+Thanks for your contribution:
+* Please list any related issues with a "closes" or "addresses" tag.
+* For bugfixes we have maintenance branches e.g. `8.0.x`, please raise separate
+  pull requests against master and the maintenance release branches as appropriate.
+-->
 
-<!-- Significant PRs should address an existing Issue. Choose one: -->
+**Check List**
 
-These changes partially address #xxxx
-These changes close #xxxx
-This is a small change with no associated Issue.
-
-<!-- The following requirements must be satisfied (with "[x]"). -->
-<!-- Mark the PR as a Draft if all requirements are not yet satisfied. -->
-
-**Requirements check-list**
 - [ ] I have read `CONTRIBUTING.md` and added my name as a Code Contributor.
 - [ ] Contains logically grouped changes (else tidy your branch by rebase).
 - [ ] Does not contain off-topic changes (use other PRs for other changes).
 - [ ] Applied any dependency changes to both `setup.cfg` and `conda-environment.yml`.
-<!-- choose one: -->
-- [ ] Appropriate tests are included (unit and/or functional).
-- [ ] Already covered by existing tests.
-- [ ] Does not need tests (why?).
-<!-- choose one: -->
-- [ ] Appropriate change log entry included.
-- [ ] No change log entry required (why? e.g. invisible to users).
-<!-- choose one: -->
-- [ ] (master branch) I have opened a documentation PR at cylc/cylc-doc/pull/XXXX.
-- [ ] (7.8.x branch) I have updated the documentation in this PR branch.
-- [ ] No documentation update required.
+- [ ] Tests are included if required.
+- [ ] Changelog is included if required.
+- [ ] [Cylc-Doc](https://github.com/cylc/cylc-doc) pull request opened if required at cylc/cylc-doc/pull/XXXX.
+- [ ] [if bugfix] PRs raised to both master and the relevant bugfix branch.
