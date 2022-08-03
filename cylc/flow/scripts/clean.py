@@ -47,7 +47,7 @@ Examples:
   $ cylc clean foo/bar --rm log --rm work
 
   # Remove all job log files from the 2020 cycle points
-  cylc clean foo/bar --rm 'log/job/2020*'
+  $ cylc clean foo/bar --rm 'log/job/2020*'
 
   # Remove all .csv files
   $ cylc clean foo/bar --rm '**/*.csv'
