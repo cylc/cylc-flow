@@ -39,6 +39,16 @@ ones in. -->
 
 
 -------------------------------------------------------------------------------
+## __cylc-8.0.1 (<span actions:bind='release-date'>Upcoming</span>)__
+
+Maintenance release.
+
+### Fixes
+
+[#5007](https://github.com/cylc/cylc-flow/pull/5007) - Fix for `cylc broadcast`
+cycle point validation in the UI.
+
+-------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
 
 Cylc 8 production-ready release.
