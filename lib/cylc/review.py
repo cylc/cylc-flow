@@ -598,6 +598,7 @@ class CylcReviewService(object):
                    search_string=None, search_mode=None):
         """Search a text log file."""
         # get file or serve raw data
+        suite = urllib.unquote(suite)
         file_output = self.get_file(
             user, suite, path, path_in_tar=path_in_tar, mode=mode)
         if isinstance(file_output, tuple):
