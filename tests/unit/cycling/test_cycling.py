@@ -66,6 +66,7 @@ def test_parse_exclusions_list_spaces():
         'T01/PT1H!T03, PT17H, (T06, T09), PT5M',
         'T01/PT1H! PT8H, (T06, T09)',
         'T01/PT1H! T03, T06, T09',
+        'T01/PT1H !T03 !T06',
     ],
 )
 def test_parse_bad_exclusion(expression):
