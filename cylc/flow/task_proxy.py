@@ -284,6 +284,13 @@ class TaskProxy:
         reload_successor.state.is_runahead = self.state.is_runahead
         reload_successor.state.is_updated = self.state.is_updated
         reload_successor.state.prerequisites = self.state.prerequisites
+        reload_successor.state.xtriggers.update({
+            # copy across any special "_cylc" xtriggers which were added
+            # dynamically at runtime (i.e. execution retry xtriggers)
+            key: value
+            for key, value in self.state.xtriggers.items()
+            if key.startswith('_cylc')
+        })
         reload_successor.jobs = self.jobs
 
     @staticmethod
