@@ -39,6 +39,9 @@ Maintenance release.
 on a top level dir containing run dir(s) will now remove that top level dir
 in addition to the run(s) (if there is nothing else inside it).
 
+[#5007](https://github.com/cylc/cylc-flow/pull/5007) - Fix for `cylc broadcast`
+cycle point validation in the UI.
+
 -------------------------------------------------------------------------------
 ## __cylc-8.0.0 (<span actions:bind='release-date'>Released 2022-07-28</span>)__
 
