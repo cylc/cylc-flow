@@ -1412,6 +1412,28 @@ def test_remote_clean_cmd(
     assert constructed_cmd == ['clean', '--local-only', reg, *expected_args]
 
 
+def test_clean_top_level(tmp_run_dir: Callable):
+    """Test that cleaning last remaining run dir inside a workflow dir removes
+    the top level dir if it's empty (excluding _cylc-install)."""
+    # Setup
+    reg = 'blue/planet/run1'
+    run_dir: Path = tmp_run_dir(reg, installed=True, named=True)
+    cylc_install_dir = run_dir.parent / WorkflowFiles.Install.DIRNAME
+    assert cylc_install_dir.is_dir()
+    runN_symlink = run_dir.parent / WorkflowFiles.RUN_N
+    assert runN_symlink.exists()
+    # Test
+    clean(reg, run_dir)
+    assert not run_dir.parent.parent.exists()
+    # Now check that if the top level dir is not empty, it doesn't get removed
+    run_dir: Path = tmp_run_dir(reg, installed=True, named=True)
+    jellyfish_file = (run_dir.parent / 'jellyfish.txt')
+    jellyfish_file.touch()
+    clean(reg, run_dir)
+    assert cylc_install_dir.is_dir()
+    assert jellyfish_file.exists()
+
+
 def test_get_workflow_source_dir_numbered_run(tmp_path):
     """Test get_workflow_source_dir returns correct source for numbered run"""
     cylc_install_dir = (
