@@ -17,8 +17,9 @@
 Cylc (pronounced silk) is a general purpose workflow engine
 that specialises in cycling workflows and has strong scaling characteristics.
 
-Cylc was originally developed to meet the challenges of production weather
-forecasting - which is notorious for the size and complexity of its workflows.
+Cylc is a general purpose workflow engine that also orchestrates cycling systems very efficiently.
+It is used in production weather, climate, and environmental forecasting on HPC, but is
+not specialized to those domains.
 
 ### Quick Start
 
