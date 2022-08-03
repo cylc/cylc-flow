@@ -20,6 +20,8 @@ from cylc.flow.cycling.integer import (
     IntegerSequence,
     IntegerPoint,
     IntegerInterval,
+    IntervalParsingError,
+    SequenceParsingError,
 )
 
 
@@ -45,6 +47,13 @@ def test_multiple_exclusions_simple():
         point = sequence.get_next_point(point)
     assert [int(out) for out in output] == [1, 4, 5, 6, 8, 9, 10]
 
+    # duplicate excluded points should be ignored
+    sequence1 = IntegerSequence('R/P1!(2,2,2)', 1, 10)
+    sequence2 = IntegerSequence('R/P1!(2)', 1, 10)
+    assert (
+        sequence1.exclusions.exclusion_points
+    ) == sequence2.exclusions.exclusion_points
+
 
 def test_multiple_exclusions_integer_sequence():
     """Tests the multiple exclusion syntax for integer notation"""
@@ -55,6 +64,7 @@ def test_multiple_exclusions_integer_sequence():
         output.append(point)
         point = sequence.get_next_point(point)
     assert [int(out) for out in output] == [2, 4, 6, 8, 10]
+    assert sequence.exclusions[0] == IntegerSequence('P2', 1, 10)
 
 
 def test_multiple_exclusions_integer_sequence2():
@@ -179,3 +189,40 @@ def test_simple():
     assert sequence1 == sequence2
     sequence2.set_offset(IntegerInterval('-P1'))
     assert sequence1 != sequence2
+
+
+def test_interval_parsing_error():
+    """It should reject invalid intervals."""
+    with pytest.raises(IntervalParsingError):
+        IntegerInterval(42)
+    with pytest.raises(IntervalParsingError):
+        IntegerInterval('forty two')
+
+
+def test_sequence_parsing_error():
+    with pytest.raises(SequenceParsingError):
+        IntegerSequence('zz0+za', 1)
+
+
+def test_interval_arithmetic():
+    """It should do basic maths on integer intervals."""
+    a = IntegerInterval('P2')
+    b = IntegerInterval('P3')
+    p = IntegerPoint('3')
+
+    assert a + b == IntegerInterval('P5')
+    assert a + p == IntegerPoint('5')
+    assert a - b == IntegerInterval('-P1')
+    assert a - p == IntegerPoint('-1')
+
+    assert abs(IntegerInterval('-P2')) == IntegerInterval('P2')
+
+    assert a + IntegerInterval.get_null_offset() == a
+
+
+def test_async_expr():
+    """The async expression should run once and only once."""
+    point = IntegerPoint('5')
+    sequence = IntegerSequence(IntegerSequence.get_async_expr(point), 1, 10)
+    assert sequence.get_next_point(IntegerPoint('1')) == point
+    assert sequence.get_next_point(IntegerPoint('5')) is None
