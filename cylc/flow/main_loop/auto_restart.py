@@ -96,6 +96,7 @@ from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import get_fqdn_by_host
 from cylc.flow.main_loop import periodic
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.scheduler import SchedulerError
 from cylc.flow.workflow_status import AutoRestartMode
 from cylc.flow.wallclock import (
     get_time_string_from_unix_time as time2str
@@ -224,7 +225,7 @@ def _set_auto_restart(
     # This should raise an "abort" event and return a non-zero code to the
     # caller still attached to the workflow process.
     if scheduler.options.no_detach:
-        raise RuntimeError('Workflow host condemned in no detach mode')
+        raise SchedulerError('Workflow host condemned in no detach mode')
 
     # Check workflow is able to be safely restarted.
     if not _can_auto_restart():

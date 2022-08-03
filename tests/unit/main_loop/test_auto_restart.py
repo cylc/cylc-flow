@@ -20,7 +20,9 @@ from unittest.mock import Mock
 import pytest
 
 from cylc.flow import CYLC_LOG
-from cylc.flow.exceptions import CylcConfigError, HostSelectException
+from cylc.flow.exceptions import (
+    CylcConfigError, CylcError, HostSelectException
+)
 from cylc.flow.main_loop.auto_restart import (
     _can_auto_restart,
     _set_auto_restart,
@@ -28,6 +30,7 @@ from cylc.flow.main_loop.auto_restart import (
     auto_restart,
 )
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.workflow_status import (
     AutoRestartMode,
     StopMode
@@ -185,15 +188,16 @@ def test_set_auto_restart_already_restarting(caplog):
         assert caplog.record_tuples == []
 
 
-def test_set_auto_restart_no_detach(caplog):
-    """Ensure raises RuntimeError if running in no-detach mode."""
+def test_set_auto_restart_no_detach(caplog: pytest.LogCaptureFixture):
+    """Ensure raises a CylcError (or subclass) if running in no-detach mode."""
     scheduler = Mock(
+        spec=Scheduler,
         stop_mode=None,
         auto_restart_time=None,
         options=Mock(no_detach=True)
     )
     with caplog.at_level(level=logging.DEBUG, logger=CYLC_LOG):
-        with pytest.raises(RuntimeError):
+        with pytest.raises(CylcError):
             _set_auto_restart(scheduler)
         assert caplog.record_tuples == []
 

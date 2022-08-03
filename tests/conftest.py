@@ -24,6 +24,7 @@ import pytest
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import SPEC
 from cylc.flow.parsec.config import ParsecConfig
+from cylc.flow.parsec.validate import cylc_config_validate
 
 
 @pytest.fixture
@@ -62,7 +63,7 @@ def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         nonlocal tmp_path, monkeypatch
         global_config_path = tmp_path / 'global.cylc'
         global_config_path.write_text(global_config)
-        glbl_cfg = ParsecConfig(SPEC)
+        glbl_cfg = ParsecConfig(SPEC, validator=cylc_config_validate)
         glbl_cfg.loadcfg(global_config_path)
 
         def _inner(cached=False):
