@@ -20,9 +20,9 @@
 
 Validate a workflow configuration.
 
-If the workflow definition uses include-files reported line numbers
-will correspond to the inlined version seen by the parser; use
-'cylc view -i,--inline WORKFLOW' for comparison.
+If the workflow definition uses include-files, reported line numbers will
+correspond to the inlined version seen by the parser;
+use 'cylc view -i,--inline WORKFLOW' for comparison.
 """
 
 from ansimarkup import parse as cparse

@@ -20,9 +20,9 @@
 
 View Cylc workflow and job log files.
 
-Print, view-in-editor, or tail-follow content, print path, or list directory,
-of local or remote task job and scheduler logs. Job runner view commands
-(e.g. 'qcat') are used if defined in global config and the job is running.
+Print, tail-follow, print path, or list directory, of local or remote task job
+and scheduler logs. Job runner view commands (e.g. 'qcat') are used if defined
+in global config and the job is running.
 
 For standard log types use the short-cut option argument or full filename (e.g.
 for job stdout "-f o" or "-f job.out" will do).
@@ -49,7 +49,7 @@ Examples:
   $ cylc cat-log -f o foo//2020/bar
 
   # Print task stderr:
-  $cylc cat-log -f e foo//2020/bar
+  $ cylc cat-log -f e foo//2020/bar
 """
 
 import os
@@ -57,13 +57,10 @@ from contextlib import suppress
 from glob import glob
 from pathlib import Path
 import shlex
-from stat import S_IRUSR
 from subprocess import Popen, PIPE, DEVNULL
 import sys
-from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
-from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
@@ -121,7 +118,6 @@ MODES = {
     'd': 'print-dir',
     'c': 'cat',
     't': 'tail',
-    'e': 'edit'
 }
 
 
@@ -185,20 +181,8 @@ def view_log(logpath, mode, tailer_tmpl, batchview_cmd=None, remote=False,
         for entry in sorted(os.listdir(os.path.dirname(logpath))):
             print(entry)
         return 0
-    elif not remote and mode == 'edit':
-        # Copy the log to a temporary read-only file for viewing in editor.
-        # Copy only BUFSIZE bytes at time, in case the file is huge.
-        outfile = NamedTemporaryFile()
-        with open(logpath, 'rb') as log:
-            data = log.read(BUFSIZE)
-            while data:
-                outfile.write(data)
-                data = log.read(BUFSIZE)
-        os.chmod(outfile.name, S_IRUSR)
-        outfile.seek(0, 0)
-        return outfile
-    elif mode == 'cat' or (remote and mode == 'edit'):
-        # Just cat file contents to stdout.
+    elif mode == 'cat':
+        # print file contents to stdout.
         if batchview_cmd is not None:
             cmd = shlex.split(batchview_cmd)
         else:
@@ -265,11 +249,6 @@ def get_option_parser() -> COP:
         metavar="INT", action="store", dest="submit_num", default=NN)
 
     parser.add_option(
-        "-g", "--geditor",
-        help="edit mode: use your configured GUI editor.",
-        action="store_true", default=False, dest="geditor")
-
-    parser.add_option(
         "--remote-arg",
         help="(for internal use: continue processing on job host)",
         action="append", dest="remote_args")
@@ -300,33 +279,6 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
     return (task_job_data["platform_name"], job_runner_name, live_job_id)
 
 
-def tmpfile_edit(tmpfile, geditor=False):
-    """Edit a temporary read-only file containing the string filestr.
-
-    Detect and warn if the user forcibly writes to the temporary file.
-
-    """
-    if geditor:
-        editor = glbl_cfg().get(['editors', 'gui'])
-    else:
-        editor = glbl_cfg().get(['editors', 'terminal'])
-    modtime1 = os.stat(tmpfile.name).st_mtime
-    cmd = shlex.split(editor)
-    cmd.append(tmpfile.name)
-    proc = Popen(cmd, stderr=PIPE)  # nosec
-    # * editor command is user configurable
-    err = proc.communicate()[1].decode()
-    ret_code = proc.wait()
-    if ret_code == 0 and os.stat(tmpfile.name).st_mtime > modtime1:
-        sys.stderr.write(
-            'WARNING: you edited a TEMPORARY COPY of %s\n' % (
-                os.path.basename(tmpfile.name)
-            )
-        )
-    if ret_code and err:
-        sys.stderr.write(err)
-
-
 @cli_function(get_option_parser)
 def main(
     parser: COP,
@@ -337,7 +289,7 @@ def main(
     """Implement cylc cat-log CLI.
 
     Determine log path, user@host, batchview_cmd, and action (print, dir-list,
-    cat, edit, or tail), and then if the log path is:
+    cat, or tail), and then if the log path is:
       a) local: perform action on log path, or
       b) remote: re-invoke cylc cat-log as a) on the remote account
 
@@ -387,8 +339,6 @@ def main(
         out = view_log(logpath, mode, tail_tmpl, color=color)
         if out == 1:
             sys.exit(1)
-        if mode == 'edit':
-            tmpfile_edit(out, options.geditor)
         return
 
     else:
@@ -452,29 +402,15 @@ def main(
             if batchview_cmd:
                 cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
             cmd.append(workflow_id)
-            is_edit_mode = (mode == 'edit')
             # TODO: Add Intelligent Host selection to this
-            try:
-                proc = remote_cylc_cmd(
+            with suppress(KeyboardInterrupt):
+                # (Ctrl-C while tailing)
+                remote_cylc_cmd(
                     cmd,
                     platform,
-                    capture_process=is_edit_mode,
+                    capture_process=False,
                     manage=(mode == 'tail')
                 )
-            except KeyboardInterrupt:
-                # Ctrl-C while tailing.
-                pass
-            else:
-                if is_edit_mode:
-                    # Write remote stdout to a temp file for viewing in editor.
-                    # Only BUFSIZE bytes at a time in case huge stdout volume.
-                    out = NamedTemporaryFile()
-                    data = proc.stdout.read(BUFSIZE)
-                    while data:
-                        out.write(data)
-                        data = proc.stdout.read(BUFSIZE)
-                    os.chmod(out.name, S_IRUSR)
-                    out.seek(0, 0)
         else:
             # Local task job or local job log.
             logpath = os.path.normpath(get_workflow_run_job_dir(
@@ -483,7 +419,4 @@ def main(
             tail_tmpl = os.path.expandvars(platform["tail command template"])
             out = view_log(logpath, mode, tail_tmpl, batchview_cmd,
                            color=color)
-            if mode != 'edit':
-                sys.exit(out)
-        if mode == 'edit':
-            tmpfile_edit(out, options.geditor)
+            sys.exit(out)

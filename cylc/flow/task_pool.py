@@ -175,7 +175,7 @@ class TaskPool:
         for name in self.config.get_task_name_list():
             tdef = self.config.get_taskdef(name)
             point = tdef.first_point(self.config.start_point)
-            self.spawn_to_rh_limit(tdef, point, {flow_num}, abs_ok=False)
+            self.spawn_to_rh_limit(tdef, point, {flow_num})
 
     def add_to_pool(self, itask, is_new: bool = True) -> None:
         """Add a task to the hidden (if not satisfied) or main task pool.
@@ -190,6 +190,7 @@ class TaskPool:
             self.hidden_pool.setdefault(itask.point, {})
             self.hidden_pool[itask.point][itask.identity] = itask
             self.hidden_pool_changed = True
+            LOG.debug(f"[{itask}] added to hidden task pool")
         else:
             # Add to main pool.
             # First remove from hidden pool if necessary.
@@ -204,6 +205,7 @@ class TaskPool:
             self.main_pool.setdefault(itask.point, {})
             self.main_pool[itask.point][itask.identity] = itask
             self.main_pool_changed = True
+            LOG.debug(f"[{itask}] added to main task pool")
 
             self.create_data_store_elements(itask)
 
@@ -225,8 +227,6 @@ class TaskPool:
         if itask.tdef.max_future_prereq_offset is not None:
             # (Must do this once added to the pool).
             self.set_max_future_offset()
-
-        LOG.debug(f"[{itask}] added to task pool")
 
     def create_data_store_elements(self, itask):
         """Create the node window elements about given task proxy."""
@@ -455,6 +455,8 @@ class TaskPool:
             elif status == TASK_STATUS_PREPARING:
                 # put back to be readied again.
                 status = TASK_STATUS_WAITING
+                # Re-prepare same submit.
+                itask.submit_num -= 1
 
             # Running or finished task can have completed custom outputs.
             if itask.state(
@@ -466,7 +468,7 @@ class TaskPool:
                     itask.state.outputs.set_completion(message, True)
                     self.data_store_mgr.delta_task_output(itask, message)
 
-            if platform_name:
+            if platform_name and status != TASK_STATUS_WAITING:
                 itask.summary['platforms_used'][
                     int(submit_num)] = platform_name
             LOG.info(
@@ -625,7 +627,7 @@ class TaskPool:
             self.merge_flows(ntask, flow_nums)
         return ntask  # may be None
 
-    def spawn_to_rh_limit(self, tdef, point, flow_nums, abs_ok=True) -> None:
+    def spawn_to_rh_limit(self, tdef, point, flow_nums) -> None:
         """Spawn parentless task instances from point to runahead limit."""
         if not flow_nums:
             # force-triggered no-flow task.
@@ -633,7 +635,7 @@ class TaskPool:
         if self.runahead_limit_point is None:
             self.compute_runahead()
         while point is not None and (point <= self.runahead_limit_point):
-            if tdef.is_parentless(point, abs_ok):
+            if tdef.is_parentless(point):
                 ntask = self._get_spawned_or_merged_task(
                     point, tdef.name, flow_nums
                 )
@@ -643,7 +645,7 @@ class TaskPool:
             point = tdef.next_point(point)
 
         # Once more (for the rh-limited task: don't rh release it!)
-        if point is not None and tdef.is_parentless(point, abs_ok):
+        if point is not None and tdef.is_parentless(point):
             ntask = self._get_spawned_or_merged_task(
                 point, tdef.name, flow_nums
             )
@@ -656,11 +658,6 @@ class TaskPool:
         if reason:
             msg += f" ({reason})"
 
-        if reason == self.__class__.SUICIDE_MSG:
-            log = LOG.critical
-        else:
-            log = LOG.debug
-
         try:
             del self.hidden_pool[itask.point][itask.identity]
         except KeyError:
@@ -670,7 +667,7 @@ class TaskPool:
             self.hidden_pool_changed = True
             if not self.hidden_pool[itask.point]:
                 del self.hidden_pool[itask.point]
-            log(f"[{itask}] {msg}")
+            LOG.debug(f"[{itask}] {msg}")
             return
 
         try:
@@ -691,7 +688,7 @@ class TaskPool:
             # Event-driven final update of task_states table.
             # TODO: same for datastore (still updated by scheduler loop)
             self.workflow_db_mgr.put_update_task_state(itask)
-            log(f"[{itask}] {msg}")
+            LOG.debug(f"[{itask}] {msg}")
             del itask
 
     def get_all_tasks(self) -> List[TaskProxy]:
@@ -797,6 +794,8 @@ class TaskPool:
                 # Cylc 7 Back Compat: spawn downstream to cause Cylc 7 style
                 # stalls - with unsatisfied waiting tasks - even with single
                 # prerequisites (which result in incomplete tasks in Cylc 8).
+                # We do it here (rather than at runhead release) to avoid
+                # pre-spawning out to the runahead limit.
                 self.spawn_on_all_outputs(itask)
 
         # Note: released and pre_prep_tasks can overlap
@@ -1243,9 +1242,10 @@ class TaskPool:
                     self.data_store_mgr.delta_task_prerequisite(t)
                     # Add it to the hidden pool or move it to the main pool.
                     self.add_to_pool(t)
+
                     if t.point <= self.runahead_limit_point:
                         self.rh_release_and_queue(t)
-                        self.spawn_to_rh_limit(t.tdef, t.point, t.flow_nums)
+
                     # Event-driven suicide.
                     if (
                         t.state.suicide_prerequisites and
@@ -1345,6 +1345,7 @@ class TaskPool:
                 if c_task is not None:
                     # already spawned
                     continue
+
                 c_task = self.spawn_task(c_name, c_point, itask.flow_nums)
                 if c_task is None:
                     # not spawnable
@@ -1461,9 +1462,11 @@ class TaskPool:
                     f"the stop point ({self.stop_point})"
                 )
 
-        # Attempt to satisfy any absolute triggers.
-        # TODO: consider doing this only for tasks with absolute prerequisites.
-        if itask.state.prerequisites_are_not_all_satisfied():
+        # Satisfy any absolute triggers.
+        if (
+            itask.tdef.has_abs_triggers and
+            itask.state.prerequisites_are_not_all_satisfied()
+        ):
             itask.state.satisfy_me(self.abs_outputs_done)
 
         if flow_wait_done:
@@ -1601,6 +1604,7 @@ class TaskPool:
                 # (could also be unhandled failed)
                 self.data_store_mgr.delta_task_state(itask)
             # (No need to set prerequisites satisfied here).
+            self.add_to_pool(itask)  # move from hidden if necessary.
             if itask.state.is_runahead:
                 # Release from runahead, and queue it.
                 self.rh_release_and_queue(itask)

@@ -39,9 +39,8 @@ Examples:
   # shut down after the task foo in cycle 1234 has succeeded
   $ cylc stop my_flow//1234/foo
 
-By default stopping workflows wait for submitted and running tasks
-to complete before shutting down. You can change this behaviour
-with the --mode option.
+By default stopping workflows wait for submitted and running tasks to complete
+before shutting down. You can change this behaviour with the --mode option.
 
 There are several shutdown methods:
 

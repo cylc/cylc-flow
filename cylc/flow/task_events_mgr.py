@@ -1196,22 +1196,15 @@ class TaskEventsManager():
                 f"[{summary['submit_method_id']}]"
             )
 
-        # Register the newly submitted job with the database and datastore.
-        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
-        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
-
         itask.set_summary_time('submitted', event_time)
-        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
         if itask.tdef.run_mode == 'simulation':
             # Simulate job started as well.
             itask.set_summary_time('started', event_time)
-            self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
             if itask.state_reset(TASK_STATUS_RUNNING):
                 self.data_store_mgr.delta_task_state(itask)
             itask.state.outputs.set_completion(TASK_OUTPUT_STARTED, True)
             self.data_store_mgr.delta_task_output(itask, TASK_OUTPUT_STARTED)
         else:
-            self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
             # Unset started and finished times in case of resubmission.
             itask.set_summary_time('started')
             itask.set_summary_time('finished')
@@ -1229,6 +1222,17 @@ class TaskEventsManager():
                     self.data_store_mgr.delta_task_state(itask)
                     self.data_store_mgr.delta_task_queued(itask)
                 self._reset_job_timers(itask)
+
+        # Register the newly submitted job with the database and datastore.
+        # Do after itask has changed state
+        self._insert_task_job(itask, event_time, self.JOB_SUBMIT_SUCCESS_FLAG)
+        job_d = itask.tokens.duplicate(job=str(itask.submit_num)).relative_id
+        self.data_store_mgr.delta_job_time(job_d, 'submitted', event_time)
+        if itask.tdef.run_mode == 'simulation':
+            # Simulate job started as well.
+            self.data_store_mgr.delta_job_time(job_d, 'started', event_time)
+        else:
+            self.data_store_mgr.delta_job_state(job_d, TASK_STATUS_SUBMITTED)
 
     def _insert_task_job(
         self,

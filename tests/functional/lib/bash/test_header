@@ -41,7 +41,7 @@
 #         Run COMMAND with any following options/arguments and store stdout
 #         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
 #         This is expected to have a non-zero return code, which ok's the test.
-#     run_graphql_ok WORKFLOW TEST_NAME JSON
+#     run_graphql_ok TEST_NAME WORKFLOW JSON
 #         Send a graphql query to the workflow, extract the result from
 #         ${TEST_NAME}.stdout
 #     cmp_ok FILE_TEST FILE_CONTROL
@@ -54,7 +54,7 @@
 #         Match a file against a regex file line by line.
 #         Reads in the test and control files line by line and checks the test
 #         line re.match'es the control line.
-#     cmp_json FILE_TEST [FILE_CONTROL]
+#     cmp_json TEST_NAME FILE_TEST [FILE_CONTROL]
 #         Alternative implementation to cmp_json_ok, compare two JSON files
 #         and display any differences as a unified(ish) diff:
 #         * Works with nested dictionaries.
