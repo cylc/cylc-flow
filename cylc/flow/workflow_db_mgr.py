@@ -332,11 +332,8 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_UUID_STR, "value": schd.uuid_str},
             {"key": self.KEY_CYLC_VERSION, "value": CYLC_VERSION},
             {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
+            {"key": self.KEY_RESTART_COUNT, "value": self.n_restart},
         ])
-        if schd.is_restart is False:
-            self.put_workflow_params_1(
-                self.KEY_RESTART_COUNT, 0
-            )
         if schd.config.cycle_point_dump_format is not None:
             self.put_workflow_params_1(
                 self.KEY_CYCLE_POINT_FORMAT,
@@ -674,8 +671,8 @@ class WorkflowDatabaseManager:
         try:
             pri_dao.vacuum()
             self.n_restart = pri_dao.select_workflow_params_restart_count() + 1
-            self.put_workflow_params_1(
-                self.KEY_RESTART_COUNT, self.n_restart)
+            self.put_workflow_params_1(self.KEY_RESTART_COUNT, self.n_restart)
+            self.process_queued_ops()
         finally:
             pri_dao.close()
 
