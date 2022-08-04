@@ -74,7 +74,7 @@ from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.schema import WorkflowStopMode
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.option_parsers import verbosity_to_env
+from cylc.flow.option_parsers import verbosity_to_env, verbosity_to_opts
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
@@ -1411,7 +1411,10 @@ class Scheduler:
 
     def workflow_auto_restart(self, max_retries: int = 3) -> bool:
         """Attempt to restart the workflow assuming it has already stopped."""
-        cmd = ['cylc', 'play', quote(self.workflow)]
+        cmd = [
+            'cylc', 'play', quote(self.workflow),
+            *verbosity_to_opts(cylc.flow.flags.verbosity)
+        ]
         if self.options.abort_if_any_task_fails:
             cmd.append('--abort-if-any-task-fails')
         for attempt_no in range(max_retries):

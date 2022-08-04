@@ -84,7 +84,7 @@ run_ok "${TEST_NAME}-restart-success" cylc workflow-state "${WORKFLOW_NAME}" \
 
 # check the command the workflow has been restarted with
 run_ok "${TEST_NAME}-contact" cylc get-contact "${WORKFLOW_NAME}"
-grep_ok "cylc play ${WORKFLOW_NAME} --host=${CYLC_TEST_HOST} --host=localhost" \
+grep_ok "cylc play ${WORKFLOW_NAME} -v --host=${CYLC_TEST_HOST} --host=localhost" \
     "${TEST_NAME}-contact.stdout"
 
 # stop workflow
