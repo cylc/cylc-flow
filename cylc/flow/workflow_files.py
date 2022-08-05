@@ -1426,11 +1426,8 @@ def _open_install_log(rund, logger):
         WorkflowFiles.LOG_DIR,
         'install')
     log_files = get_sorted_logs_by_time(log_dir, '*.log')
-    if log_files:
-        log_num = get_next_log_number(log_files[-1])
-    else:
-        log_num = '01'
-    log_path = Path(log_dir, f"{log_num}-{log_type}.log")
+    log_num = get_next_log_number(log_files[-1]) if log_files else 1
+    log_path = Path(log_dir, f"{log_num:02d}-{log_type}.log")
     log_parent_dir = log_path.parent
     log_parent_dir.mkdir(exist_ok=True, parents=True)
     handler = logging.FileHandler(log_path)

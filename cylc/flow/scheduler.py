@@ -409,28 +409,29 @@ class Scheduler:
                 self.config.cfg['scheduler']['cycle point time zone'])
 
         # Note that the following lines must be present at the top of
-        # the workflow log file for use in reference test runs:
+        # the workflow log file for use in reference test runs.
+        # (These are also headers that get logged on each rollover)
         LOG.info(
             f'Run mode: {self.config.run_mode()}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
         LOG.info(
             f'Initial point: {self.config.initial_point}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
         if self.config.start_point != self.config.initial_point:
             LOG.info(
                 f'Start point: {self.config.start_point}',
-                extra=RotatingLogFileHandler.extra
+                extra=RotatingLogFileHandler.header_extra
             )
         LOG.info(
             f'Final point: {self.config.final_point}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
         if self.config.stop_point:
             LOG.info(
                 f'Stop point: {self.config.stop_point}',
-                extra=RotatingLogFileHandler.extra
+                extra=RotatingLogFileHandler.header_extra
             )
 
         self.broadcast_mgr.linearized_ancestors.update(
@@ -543,32 +544,38 @@ class Scheduler:
             LOG.setLevel(logging.INFO)
 
         # Print workflow name to disambiguate in case of inferred run number
+        # while in no-detach mode
         LOG.info(f"Workflow: {self.workflow}")
+        # Headers that also get logged on each rollover:
         LOG.info(
             self.START_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
                 'port': self.server.port,
                 'pid': os.getpid()},
-            extra=RotatingLogFileHandler.extra,
+            extra=RotatingLogFileHandler.header_extra,
         )
         LOG.info(
             self.START_PUB_MESSAGE_TMPL % {
                 'comms_method': 'tcp',
                 'host': self.host,
                 'port': self.server.pub_port},
-            extra=RotatingLogFileHandler.extra,
+            extra=RotatingLogFileHandler.header_extra,
         )
         restart_num = self.get_restart_num() + 1
         LOG.info(
-            'Run: (re)start number=%d, log rollover=%d',
-            restart_num,
-            1,  # hard code 1 which is updated later if required
-            extra=RotatingLogFileHandler.extra_num
+            f'Run: (re)start number={restart_num}, log rollover=%d',
+            # Hard code 1 in args, gets updated on log rollover (NOTE: this
+            # must be the only positional arg):
+            1,
+            extra={
+                **RotatingLogFileHandler.header_extra,
+                RotatingLogFileHandler.ROLLOVER_NUM: 1
+            }
         )
         LOG.info(
             f'Cylc version: {CYLC_VERSION}',
-            extra=RotatingLogFileHandler.extra
+            extra=RotatingLogFileHandler.header_extra
         )
 
         if is_quiet:
@@ -1108,10 +1115,7 @@ class Scheduler:
         config_dir = get_workflow_run_config_log_dir(
             self.workflow)
         config_logs = get_sorted_logs_by_time(config_dir, "*[0-9].cylc")
-        if config_logs:
-            log_num = get_next_log_number(config_logs[-1])
-        else:
-            log_num = '01'
+        log_num = get_next_log_number(config_logs[-1]) if config_logs else 1
         if is_reload:
             load_type = "reload"
             load_type_num = get_reload_start_number(config_logs)
@@ -1123,7 +1127,7 @@ class Scheduler:
             load_type = "start"
             load_type_num = '01'
         file_name = get_workflow_run_config_log_dir(
-            self.workflow, f"{log_num}-{load_type}-{load_type_num}.cylc")
+            self.workflow, f"{log_num:02d}-{load_type}-{load_type_num}.cylc")
         with open(file_name, "w") as handle:
             handle.write("# cylc-version: %s\n" % CYLC_VERSION)
             self.config.pcfg.idump(sparse=True, handle=handle)
@@ -1405,7 +1409,7 @@ class Scheduler:
             raise SchedulerError(
                 'Invalid auto_restart_mode=%s' % self.auto_restart_mode)
 
-    def workflow_auto_restart(self, max_retries=3):
+    def workflow_auto_restart(self, max_retries: int = 3) -> bool:
         """Attempt to restart the workflow assuming it has already stopped."""
         cmd = ['cylc', 'play', quote(self.workflow)]
         if self.options.abort_if_any_task_fails:
@@ -1419,6 +1423,7 @@ class Scheduler:
                 stdin=DEVNULL,
                 stdout=PIPE,
                 stderr=PIPE,
+                text=True
             )
             # * new_host comes from internal interface which can only return
             #   host names
@@ -1429,7 +1434,8 @@ class Scheduler:
                         f' will retry in {self.INTERVAL_AUTO_RESTART_ERROR}s')
                 LOG.critical(
                     f"{msg}. Restart error:\n",
-                    f"{proc.communicate()[1].decode()}")
+                    f"{proc.communicate()[1]}"
+                )
                 sleep(self.INTERVAL_AUTO_RESTART_ERROR)
             else:
                 LOG.info(f'Workflow now running on "{new_host}".')
@@ -1681,28 +1687,26 @@ class Scheduler:
 
     async def _shutdown(self, reason: Exception) -> None:
         """Shutdown the workflow."""
+        shutdown_msg = "Workflow shutting down"
         if isinstance(reason, SchedulerStop):
-            LOG.info(f'Workflow shutting down - {reason.args[0]}')
+            LOG.info(f'{shutdown_msg} - {reason.args[0]}')
             # Unset the "paused" status of the workflow if not auto-restarting
             if self.auto_restart_mode != AutoRestartMode.RESTART_NORMAL:
                 self.resume_workflow(quiet=True)
         elif isinstance(reason, SchedulerError):
-            LOG.error(f"Workflow shutting down - {reason}")
+            LOG.error(f"{shutdown_msg} - {reason}")
         elif isinstance(reason, CylcError) or (
             isinstance(reason, ParsecError) and reason.schd_expected
         ):
-            LOG.error(
-                f"Workflow shutting down - {type(reason).__name__}: {reason}"
-            )
+            LOG.error(f"{shutdown_msg} - {type(reason).__name__}: {reason}")
             if cylc.flow.flags.verbosity > 1:
                 # Print traceback
                 LOG.exception(reason)
         else:
             LOG.exception(reason)
             if str(reason):
-                LOG.critical(f'Workflow shutting down - {reason}')
-            else:
-                LOG.critical('Workflow shutting down')
+                shutdown_msg += f" - {reason}"
+            LOG.critical(shutdown_msg)
 
         if hasattr(self, 'proc_pool'):
             self.proc_pool.close()
