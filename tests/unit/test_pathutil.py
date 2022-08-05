@@ -320,8 +320,8 @@ def test_incorrect_environment_variables_raise_error(
     with pytest.raises(WorkflowFilesError) as excinfo:
         make_localhost_symlinks('rund', 'test_workflow')
     assert (
-        "'$doh/cylc-run/test_workflow' contains an invalid "
-        "environment variable"
+        "Can't symlink to $doh/cylc-run/test_workflow\n"
+        "Undefined variable in global config?"
     ) in str(excinfo.value)
 
 

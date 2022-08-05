@@ -176,9 +176,8 @@ def make_localhost_symlinks(
         target = expand_path(value)
         if '$' in target:
             raise WorkflowFilesError(
-                f'Unable to create symlink to {target}.'
-                f" '{value}' contains an invalid environment variable."
-                ' Please check configuration.')
+                f"Can't symlink to {target}\n"
+                "Undefined variable in global config?")
         symlink_success = make_symlink_dir(symlink_path, target)
         # Symlink info returned for logging purposes. Symlinks should be
         # created before logs as the log dir may be a symlink.
