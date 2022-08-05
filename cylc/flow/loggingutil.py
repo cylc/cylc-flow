@@ -154,7 +154,7 @@ class RotatingLogFileHandler(logging.FileHandler):
         # LOG.info(extra=RotatingLogFileHandler.[rollover_]header_extra)
         self.header_records: List[logging.LogRecord] = []
         self.restart_num = restart_num
-        self.log_num: Optional[int] = None
+        self.log_num: Optional[int] = None  # null value until log file created
 
     def emit(self, record):
         """Emit a record, rollover log if necessary."""
@@ -190,9 +190,7 @@ class RotatingLogFileHandler(logging.FileHandler):
 
     def should_rollover(self, record: logging.LogRecord) -> bool:
         """Should rollover?"""
-        if (self.stream is None or
-                self.load_type_change() or
-                self.log_num is None):
+        if self.log_num is None or self.stream is None:
             return True
         max_bytes = glbl_cfg().get(
             ['scheduler', 'logging', 'maximum size in bytes'])
@@ -216,17 +214,9 @@ class RotatingLogFileHandler(logging.FileHandler):
 
     def do_rollover(self) -> None:
         """Create and rollover log file if necessary."""
-        # Generate new file name
-        filename = self.get_new_log_filename()
-        os.makedirs(filename.parent, exist_ok=True)
-        # Touch file
-        with open(filename, 'w+'):
-            os.utime(filename, None)
-        # Update symlink
-        if os.path.lexists(self.baseFilename):
-            os.unlink(self.baseFilename)
-        os.symlink(os.path.basename(filename), self.baseFilename)
-        # Housekeep log files
+        # Create new log file
+        self.new_log_file()
+        # Housekeep old log files
         arch_len = glbl_cfg().get(
             ['scheduler', 'logging', 'rolling archive length'])
         if arch_len:
@@ -263,27 +253,31 @@ class RotatingLogFileHandler(logging.FileHandler):
         while len(log_files) > arch_len:
             os.unlink(log_files.pop(0))
 
-    def get_new_log_filename(self) -> Path:
-        """Build filename for log"""
+    def new_log_file(self) -> Path:
+        """Set self.log_num and create new log file."""
+        try:
+            log_file = os.readlink(self.baseFilename)
+        except OSError:
+            # "log" symlink not yet created, this is the first log
+            self.log_num = 1
+        else:
+            self.log_num = get_next_log_number(log_file)
         log_dir = Path(self.baseFilename).parent
         # User-facing restart num is 1 higher than backend value
         restart_num = self.restart_num + 1
-        self.set_log_num()
         filename = log_dir.joinpath(
             f'{self.log_num:02d}-{self.load_type}-{restart_num:02d}'
             f'{LOG_FILE_EXTENSION}'
         )
+        os.makedirs(filename.parent, exist_ok=True)
+        # Touch file
+        with open(filename, 'w+'):
+            os.utime(filename, None)
+        # Update symlink
+        if os.path.lexists(self.baseFilename):
+            os.unlink(self.baseFilename)
+        os.symlink(os.path.basename(filename), self.baseFilename)
         return filename
-
-    def set_log_num(self):
-        if not self.log_num:
-            try:
-                current_log = os.readlink(self.baseFilename)
-                self.log_num = int(get_next_log_number(current_log))
-            except OSError:
-                self.log_num = 1
-        else:
-            self.log_num = int(self.log_num) + 1
 
 
 class ReferenceLogFileHandler(logging.FileHandler):
