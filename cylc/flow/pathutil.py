@@ -42,6 +42,8 @@ EXPLICIT_RELATIVE_PATH_REGEX = re.compile(
 )
 """Matches relative paths that are explicit (starts with ./)"""
 
+SHELL_ENV_VARS = re.compile(r'\$[^$/]*')
+
 
 def expand_path(*args: Union[Path, str]) -> str:
     """Expand both vars and user in path and normalise it, joining any
@@ -174,10 +176,13 @@ def make_localhost_symlinks(
         else:
             symlink_path = os.path.join(rund, key)
         target = expand_path(value)
-        if '$' in target:
+        env_vars = SHELL_ENV_VARS.findall(target)
+        if env_vars:
             raise WorkflowFilesError(
                 f"Can't symlink to {target}\n"
-                "Undefined variable in global config?")
+                "Undefined variables, check "
+                f"global config: {', '.join(env_vars)}")
+
         symlink_success = make_symlink_dir(symlink_path, target)
         # Symlink info returned for logging purposes. Symlinks should be
         # created before logs as the log dir may be a symlink.

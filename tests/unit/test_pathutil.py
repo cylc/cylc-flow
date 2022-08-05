@@ -321,7 +321,7 @@ def test_incorrect_environment_variables_raise_error(
         make_localhost_symlinks('rund', 'test_workflow')
     assert (
         "Can't symlink to $doh/cylc-run/test_workflow\n"
-        "Undefined variable in global config?"
+        "Undefined variables, check global config: $doh"
     ) in str(excinfo.value)
 
 
