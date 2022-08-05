@@ -6,8 +6,12 @@ on:
       - 'conda-environment.yml'
       - '.github/workflows/test_conda-build.yml'
   schedule:
-    - cron: '17 22 * * 6'
+    - cron: '17 22 * * 6'  # Every Saturday at 22:17
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test_conda_install:
