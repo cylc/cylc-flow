@@ -1404,13 +1404,24 @@ def test_zero_interval(
         ('2019-02-28', '+P1D+P1M', '2019-04-01'),
         ('2008-07-01', '+P1M-P1D', '2008-07-31'),
         ('2004-07-01', '-P1D+P1M', '2004-07-30'),
+        ('1992-02-29', '+P1Y+P1M', '1993-03-28'),
+        ('1988-02-29', '+P1M+P1Y', '1989-03-29'),
+        ('1910-08-14', '+P2D-PT6H', '1910-08-15T18:00'),
+        ('1850-04-10', '+P1M-P1D+PT1H', '1850-05-09T01:00'),
+        pytest.param(
+            '1066-10-14', '+PT1H+PT1M', '1066-10-14T01:01',
+            marks=pytest.mark.xfail
+            # https://github.com/cylc/cylc-flow/issues/5047
+        ),
     ]
 )
 def test_chain_expr(
     icp: str, fcp_expr: str, expected_fcp: str, tmp_flow_config: Callable,
 ):
-    """Test a "chain expression" final cycle point offset works in the
-    given order."""
+    """Test a "chain expression" final cycle point offset.
+
+    Note the order matters when "nominal" units (years, months) are used.
+    """
     reg = 'osgiliath'
     flow_file: Path = tmp_flow_config(reg, f"""
         [scheduler]
