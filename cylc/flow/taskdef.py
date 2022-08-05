@@ -360,4 +360,11 @@ class TaskDef:
         )
 
     def __repr__(self) -> str:
-        return f"<TaskDef {self.name}>"
+        """
+        >>> TaskDef(
+        ...     name='oliver', rtcfg={}, run_mode='fake', start_point='1',
+        ...     initial_point='1'
+        ... )
+        <TaskDef 'oliver'>
+        """
+        return f"<TaskDef '{self.name}'>"
