@@ -21,7 +21,7 @@ from abc import ABCMeta, abstractmethod
 from cylc.flow.exceptions import CyclerTypeError
 
 
-def parse_exclusion(expr):
+def parse_exclusion(expr: str):
     count = expr.count('!')
     if count == 0:
         return expr, None

@@ -45,6 +45,10 @@ Maintenance release.
 
 ### Fixes
 
+[#5031](https://github.com/cylc/cylc-flow/pull/5031) - Fix bug where
+specifying multiple datetime offsets (e.g. `final cycle point = +P1M-P1D`)
+would not obey the given order.
+
 [#5033](https://github.com/cylc/cylc-flow/pull/5033) - Running `cylc clean`
 on a top level dir containing run dir(s) will now remove that top level dir
 in addition to the run(s) (if there is nothing else inside it).
