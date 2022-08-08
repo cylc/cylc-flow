@@ -74,7 +74,7 @@ ${BASE_GLOBAL_CONFIG}
 "
 
 LOG_FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
-log_scan "${TEST_NAME}-stop" "${LOG_FILE}" 40 1 \
+log_scan "${TEST_NAME}-stop-log-scan" "${LOG_FILE}" 40 1 \
     'The Cylc workflow host will soon become un-available' \
     'Waiting for jobs running on localhost to complete' \
     'Waiting for jobs running on localhost to complete' \
@@ -85,7 +85,8 @@ log_scan "${TEST_NAME}-stop" "${LOG_FILE}" 40 1 \
 grep_fail 'orphaned task' "$LOG_FILE"
 
 poll_workflow_restart
-named_grep_ok "restart-log-grep" "Workflow now running on \"${CYLC_TEST_HOST2}\"" "$LOG_FILE"
+log_scan "${TEST_NAME}-restart-log-scan" "$LOG_FILE" 20 1 \
+    "Workflow now running on \"${CYLC_TEST_HOST2}\""
 #-------------------------------------------------------------------------------
 # auto stop-restart - force mode:
 #     ensure the workflow DOESN'T WAIT for local jobs to complete before stopping
@@ -104,7 +105,7 @@ ${BASE_GLOBAL_CONFIG}
 "
 
 LOG_FILE="$(cylc cat-log "${WORKFLOW_NAME}" -m p |xargs readlink -f)"
-log_scan "${TEST_NAME}-stop" "${LOG_FILE}" 40 1 \
+log_scan "${TEST_NAME}-stop-log-scan" "${LOG_FILE}" 40 1 \
     'The Cylc workflow host will soon become un-available' \
     'This workflow will be shutdown as the workflow host is unable to continue' \
     'Workflow shutting down - REQUEST(NOW)' \
