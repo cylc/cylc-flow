@@ -2096,36 +2096,38 @@ class WorkflowConfig:
                     continue
                 taskdef.set_required_output(output, not optional)
 
-    def find_taskdefs(self, name: str) -> List[TaskDef]:
+    def find_taskdefs(self, name: str) -> Set[TaskDef]:
         """Find TaskDef objects in family "name" or matching "name".
 
         Return a list of TaskDef objects which:
         * have names that glob matches "name".
         * are in a family that glob matches "name".
         """
-        ret: List[TaskDef] = []
         if name in self.taskdefs:
             # Match a task name
-            ret.append(self.taskdefs[name])
-        else:
-            fams = self.runtime['first-parent descendants']
+            return {self.taskdefs[name]}
+
+        fams = self.runtime['first-parent descendants']
+        if name in fams:
             # Match a family name
-            if name in fams:
-                for member in fams[name]:
-                    if member in self.taskdefs:
-                        ret.append(self.taskdefs[member])
-            else:
-                # Glob match task names
-                for key, taskdef in self.taskdefs.items():
-                    if fnmatchcase(key, name):
-                        ret.append(taskdef)
-                # Glob match family names
-                for key, members in fams.items():
-                    if fnmatchcase(key, name):
-                        for member in members:
-                            if member in self.taskdefs:
-                                ret.append(self.taskdefs[member])
-        return ret
+            return {
+                self.taskdefs[member] for member in fams[name]
+                if member in self.taskdefs
+            }
+
+        # Glob match
+        from_task_names = {
+            taskdef for key, taskdef in self.taskdefs.items()
+            if fnmatchcase(key, name)
+        }
+        from_family_names = {
+            self.taskdefs[member]
+            for key, members in fams.items()
+            if fnmatchcase(key, name)
+            for member in members
+            if member in self.taskdefs
+        }
+        return from_task_names.union(from_family_names)
 
     def get_taskdef(
         self, name: str, orig_expr: Optional[str] = None
