@@ -606,16 +606,22 @@ class Scheduler:
         except SchedulerStop as exc:
             # deliberate stop
             await self.shutdown(exc)
-            if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
-                self.workflow_auto_restart()
-            # run shutdown coros
-            await asyncio.gather(
-                *main_loop.get_runners(
-                    self.main_loop_plugins,
-                    main_loop.CoroTypes.ShutDown,
-                    self
+            try:
+                if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
+                    self.workflow_auto_restart()
+                # run shutdown coros
+                await asyncio.gather(
+                    *main_loop.get_runners(
+                        self.main_loop_plugins,
+                        main_loop.CoroTypes.ShutDown,
+                        self
+                    )
                 )
-            )
+            except Exception as exc:
+                # Need to log traceback manually because otherwise this
+                # exception gets swallowed
+                LOG.exception(exc)
+                raise
 
         except (KeyboardInterrupt, asyncio.CancelledError, Exception) as exc:
             # Includes SchedulerError
