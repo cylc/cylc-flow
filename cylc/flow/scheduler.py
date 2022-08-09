@@ -1242,7 +1242,7 @@ class Scheduler:
                 return
         self.workflow_event_handler.handle(self, event, str(reason))
 
-    def release_queued_tasks(self):
+    def release_queued_tasks(self) -> None:
         """Release queued tasks, and submit jobs.
 
         The task queue manages references to task proxies in the task pool.
@@ -1267,36 +1267,48 @@ class Scheduler:
             and self.auto_restart_time is None
         ):
             pre_prep_tasks = self.pool.release_queued_tasks()
-            if not pre_prep_tasks:
-                # No tasks to submit.
-                return
 
-            # Start the job submission process.
-            self.is_updated = True
-            self.reset_inactivity_timer()
+        elif (
+            self.should_auto_restart_now()
+            and self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL
+        ):
+            # Need to get preparing tasks to submit before auto restart
+            pre_prep_tasks = [
+                itask for itask in self.pool.get_tasks()
+                if itask.state(TASK_STATUS_PREPARING)
+            ]
 
-            self.task_job_mgr.task_remote_mgr.rsync_includes = (
-                self.config.get_validated_rsync_includes())
+        # Return, if no tasks to submit.
+        else:
+            return
+        if not pre_prep_tasks:
+            return
 
-            meth = LOG.debug
-            if self.options.reftest or self.options.genref:
-                meth = LOG.info
-            for itask in self.task_job_mgr.submit_task_jobs(
-                self.workflow,
-                pre_prep_tasks,
-                self.server.curve_auth,
-                self.server.client_pub_key_dir,
-                self.config.run_mode('simulation')
-            ):
-                if itask.flow_nums:
-                    flow = ','.join(str(i) for i in itask.flow_nums)
-                else:
-                    flow = FLOW_NONE
-                meth(
-                    f"{itask.identity} -triggered off "
-                    f"{itask.state.get_resolved_dependencies()}"
-                    f" in flow {flow}"
-                )
+        # Start the job submission process.
+        self.is_updated = True
+        self.reset_inactivity_timer()
+
+        self.task_job_mgr.task_remote_mgr.rsync_includes = (
+            self.config.get_validated_rsync_includes())
+
+        log = LOG.debug
+        if self.options.reftest or self.options.genref:
+            log = LOG.info
+        for itask in self.task_job_mgr.submit_task_jobs(
+            self.workflow,
+            pre_prep_tasks,
+            self.server.curve_auth,
+            self.server.client_pub_key_dir,
+            is_simulation=self.config.run_mode('simulation')
+        ):
+            if itask.flow_nums:
+                flow = ','.join(str(i) for i in itask.flow_nums)
+            else:
+                flow = FLOW_NONE
+            log(
+                f"{itask.identity} -triggered off "
+                f"{itask.state.get_resolved_dependencies()} in flow {flow}"
+            )
 
     def process_workflow_db_queue(self):
         """Update workflow DB."""
@@ -1383,27 +1395,33 @@ class Scheduler:
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
-        if self.auto_restart_time is None or time() < self.auto_restart_time:
+        if not self.should_auto_restart_now():
             # ... no
             pass
         elif self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
-            # ... yes - wait for local jobs to complete before restarting
-            #           * Avoid polling issues see #2843
-            #           * Ensure the host can be safely taken down once the
-            #             workflow has stopped running.
+            # ... yes - wait for preparing jobs to see if they're local and
+            # wait for local jobs to complete before restarting
+            #    * Avoid polling issues - see #2843
+            #    * Ensure the host can be safely taken down once the
+            #      workflow has stopped running.
             for itask in self.pool.get_tasks():
+                if itask.state(TASK_STATUS_PREPARING):
+                    LOG.info(
+                        "Waiting for preparing jobs to submit before "
+                        "attempting restart"
+                    )
+                    break
                 if (
-                        itask.state(*TASK_STATUSES_ACTIVE)
-                        and itask.summary['job_runner_name']
-                        and not is_remote_platform(itask.platform)
-                        and self.task_job_mgr.job_runner_mgr
-                        .is_job_local_to_host(
-                            itask.summary['job_runner_name'])
+                    itask.state(*TASK_STATUSES_ACTIVE)
+                    and itask.summary['job_runner_name']
+                    and not is_remote_platform(itask.platform)
+                    and self.task_job_mgr.job_runner_mgr.is_job_local_to_host(
+                        itask.summary['job_runner_name'])
                 ):
                     LOG.info('Waiting for jobs running on localhost to '
                              'complete before attempting restart')
                     break
-            else:
+            else:  # no break
                 self._set_stop(StopMode.REQUEST_NOW_NOW)
         elif (  # noqa: SIM106
             self.auto_restart_mode == AutoRestartMode.FORCE_STOP
@@ -1414,6 +1432,13 @@ class Scheduler:
         else:
             raise SchedulerError(
                 'Invalid auto_restart_mode=%s' % self.auto_restart_mode)
+
+    def should_auto_restart_now(self) -> bool:
+        """Is it time for the scheduler to auto stop + restart?"""
+        return (
+            self.auto_restart_time is not None and
+            time() >= self.auto_restart_time
+        )
 
     def workflow_auto_restart(self, max_retries: int = 3) -> bool:
         """Attempt to restart the workflow assuming it has already stopped."""
